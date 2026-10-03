@@ -35,6 +35,7 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
     private readonly FrameRateMeter meter = new();
     private readonly WebGl gl = new();
     private readonly IDialog dialog;
+    private readonly Action tapped;
 
     private JSObject? canvas;
     private GpuFrameRenderer? renderer;
@@ -55,9 +56,11 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
     /// <summary>The program whose shader would not build, left alone until another comes.</summary>
     private CompiledPatch? refused;
 
-    public CanvasPreview(IDialog dialog)
+    /// <param name="tapped">Run when the picture is clicked or tapped; the canvas is the browser's, so Avalonia never sees it.</param>
+    public CanvasPreview(IDialog dialog, Action tapped)
     {
         this.dialog = dialog;
+        this.tapped = tapped;
         timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = UncappedInterval };
         timer.Tick += OnTick;
     }
@@ -145,7 +148,7 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
 
     protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
     {
-        canvas = CreateCanvas();
+        canvas = CreateCanvas(tapped);
         drawn = default;
         Said = null;
 
@@ -324,7 +327,7 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
     }
 
     [JSImport("createCanvas", PageModule.Name)]
-    private static partial JSObject CreateCanvas();
+    private static partial JSObject CreateCanvas([JSMarshalAs<JSType.Function>] Action tapped);
 
     [JSImport("showCanvas", PageModule.Name)]
     private static partial void ShowCanvas(JSObject canvas, bool shown);

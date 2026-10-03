@@ -6,6 +6,8 @@
 
 - A module or shut box is lifted off the canvas while it is carried: it shifts a little up and left, casts a soft shadow, and passes over everything else.
 - A wire running back past a shut box goes round the box, not round the modules inside it.
+- In the web editor, a click or tap on the picture plays and pauses.
+- On a phone, a patch's sound in the web editor and viewer stops other music and is not muted by the ringer switch (Safari; other browsers play as before).
 
 ## 0.7.0 — 2026-10-02
 

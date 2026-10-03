@@ -4,6 +4,7 @@
 
 import { dotnet } from './_framework/dotnet.js';
 import * as gl from './gl.js';
+import { takeAudio } from './session.js';
 
 const params = new URLSearchParams(location.search);
 /** Whether the patch's length plays round and round; the Loop button flips it. */
@@ -184,6 +185,7 @@ function status() {
 /** Starts the speaker, and says whether the browser let it: it holds sound back until the page is clicked. */
 async function startSound() {
   if (context === null) {
+    takeAudio();
     context = new AudioContext({ sampleRate: info.sampleRate, latencyHint: 'interactive' });
     await context.audioWorklet.addModule('sound.js');
 

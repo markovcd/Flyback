@@ -19,7 +19,7 @@ runtime.setModuleImports('gl', gl);
 runtime.setModuleImports('speakers', speakers);
 // The preview is a box holding the canvas and what is said in place of a picture it cannot draw.
 runtime.setModuleImports('page', {
-  createCanvas: () => {
+  createCanvas: tapped => {
     const box = document.createElement('div');
     box.style.cssText = 'position: relative; width: 100%; height: 100%;';
 
@@ -31,6 +31,18 @@ runtime.setModuleImports('page', {
       + 'padding: 16px; text-align: center; font: 13px/1.5 Inter, system-ui, sans-serif; color: #9a9ca3;';
 
     box.append(canvas, said);
+    // Avalonia takes the pointer on a press, so the release never lands on the box and no click does either.
+    let pressed = null;
+    box.addEventListener('pointerdown', event => {
+      pressed = event.isPrimary && event.button === 0 ? { id: event.pointerId, x: event.clientX, y: event.clientY, at: event.timeStamp } : null;
+    });
+    addEventListener('pointerup', event => {
+      const down = pressed;
+      pressed = null;
+      if (down !== null && event.pointerId === down.id && event.timeStamp - down.at < 500
+        && Math.hypot(event.clientX - down.x, event.clientY - down.y) < 10) tapped();
+    }, { capture: true });
+    addEventListener('pointercancel', () => { pressed = null; }, { capture: true });
     return box;
   },
   showCanvas: (box, shown) => { box.style.visibility = shown ? 'visible' : 'hidden'; },

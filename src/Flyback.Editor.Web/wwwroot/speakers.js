@@ -4,6 +4,8 @@
 // the sound joins where the picture is. The worker works the sound out a step lower
 // itself when it keeps falling behind; the editor never gives the sound up.
 
+import { takeAudio } from '../viewer/session.js';
+
 const worker = new Worker('../viewer/speaker.js', { type: 'module' });
 
 let rate = 48000;
@@ -56,7 +58,8 @@ worker.onmessage = ({ data }) => {
 worker.onerror = event => { failure = event.message || "The sound's worker would not start."; };
 
 // A browser holds sound back until the page is used, so any press may be the one that lets it.
-for (const kind of ['pointerdown', 'keydown']) {
+// A touch's pointerdown does not count as use in WebKit; its release does.
+for (const kind of ['pointerdown', 'pointerup', 'click', 'keydown']) {
   document.addEventListener(kind, () => {
     if (running && context !== null && context.state !== 'running') context.resume();
   }, { capture: true });
@@ -73,6 +76,7 @@ function report({ data }) {
 function open() {
   if (context !== null) return;
 
+  takeAudio();
   context = new AudioContext({ sampleRate: rate, latencyHint: 'interactive' });
   context.onstatechange = join;
   volume = new GainNode(context, { gain: loudness });

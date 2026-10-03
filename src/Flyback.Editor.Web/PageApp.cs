@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Flyback.Editor;
+using Flyback.Editor.Bars;
 using Flyback.Ui.Audio;
 using Flyback.Editor.Controls;
 using Flyback.Ui.Controls;
@@ -32,7 +33,9 @@ internal sealed class PageApp : Application
 
         var provider = EditorServices.Provider(new EditorSetup { Plugins = plugins, Host = new() { InPage = true, PresetSite = PageSite.Root, Home = PageSite.Home } }, services =>
         {
-            services.AddSingleton<Func<IGpuPreview>>(sp => () => new CanvasPreview(sp.GetRequiredService<IDialog>()));
+            services.AddSingleton<Func<IGpuPreview>>(sp => () => new CanvasPreview(
+                sp.GetRequiredService<IDialog>(),
+                () => sp.GetRequiredService<TransportControls>().TogglePause()));
             services.AddSingleton<ITitle, PageTitle>();
             services.AddSingleton<IFocus, PageFocus>();
             services.AddSingleton<IClose, PageClose>();
