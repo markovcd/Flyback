@@ -9,5 +9,6 @@ namespace Flyback.Plugins.Audio;
 /// </summary>
 public readonly record struct AudioFormat(int SampleRate, int Channels, int LatencyMilliseconds)
 {
+    /// <summary>Stereo at the engine's sample rate, with 30 ms of latency.</summary>
     public static AudioFormat Default => new(GlobalConstants.SampleRate, 2, 30);
 }

@@ -46,6 +46,7 @@ public readonly record struct PortSpec(
     bool Swept = false,
     bool PatchOnly = false)
 {
+    /// <summary>How many registers the socket's value takes: 3 for a color, 1 otherwise.</summary>
     public int Width => Kind == PortKind.Color ? 3 : 1;
 
     /// <summary>

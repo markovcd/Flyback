@@ -16,7 +16,9 @@
 /// <param name="Declared">The settings, in the order the inspector lists them.</param>
 public sealed record SettingsExtra(string StateKey, IReadOnlyList<ExtraField> Declared) : NodeExtra
 {
+    /// <inheritdoc/>
     public override string Key => StateKey;
 
+    /// <inheritdoc/>
     public override IReadOnlyList<ExtraField> Fields => Declared;
 }

@@ -8,6 +8,7 @@ public sealed record ArrangementExtra(IReadOnlyList<IReadOnlyList<PartLevel>> De
     /// <inheritdoc cref="StepsExtra.Name"/>
     public const string Name = "arrangement";
 
+    /// <inheritdoc/>
     public override string Key => Name;
 
     /// <summary>The parts as stored, one list of sections each, and none where it carries nothing.</summary>
@@ -18,6 +19,7 @@ public sealed record ArrangementExtra(IReadOnlyList<IReadOnlyList<PartLevel>> De
     public static void Set(NodeInstance node, IEnumerable<IEnumerable<PartLevel>> parts) =>
         node.SetState(Name, Write(parts.Select(part => part.ToList()).ToList()));
 
+    /// <inheritdoc/>
     public override void Seed(NodeInstance node) => Set(node, Default);
 
     /// <summary>
@@ -40,9 +42,11 @@ public sealed record ArrangementExtra(IReadOnlyList<IReadOnlyList<PartLevel>> De
         return sections == 0 ? [] : kept;
     }
 
+    /// <inheritdoc/>
     public override EmitContext Fold(EmitContext ctx, NodeInstance node, ExtraEnv env) =>
         ctx with { Parts = Tidy(Of(node)) };
 
+    /// <inheritdoc/>
     public override string Report(NodeInstance node)
     {
         if (Tidy(Of(node)) is not { Count: > 0 } parts) return "It has no parts.";
@@ -53,9 +57,11 @@ public sealed record ArrangementExtra(IReadOnlyList<IReadOnlyList<PartLevel>> De
         return $"{parts[0].Count} sections. {string.Join("; ", written)}.";
     }
 
+    /// <inheritdoc/>
     public override string Announce() =>
         $"  arrangement  up to {NodeCatalog.MaxParts} parts of up to {NodeCatalog.MaxSections} sections — not knobs";
 
+    /// <inheritdoc/>
     public override string Help =>
         "Each part's level in each section, one row a part. A level marked to glide travels "
         + "there from the section before's across its whole section.";

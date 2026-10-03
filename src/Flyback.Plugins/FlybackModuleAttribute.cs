@@ -17,5 +17,6 @@ public sealed class FlybackModuleAttribute(string id, string name) : Attribute
     /// <summary>The module's type id, as its <c>NodeDef.TypeId</c>.</summary>
     public string Id { get; } = id;
 
+    /// <summary>The module's name, as its <c>NodeDef.Name</c>.</summary>
     public string Name { get; } = name;
 }

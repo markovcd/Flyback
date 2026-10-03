@@ -14,6 +14,7 @@ namespace Flyback.Core.Graph;
 /// </remarks>
 public static class ControlMap
 {
+    /// <summary>What the links are filed under in <see cref="NodeInstance.State"/>.</summary>
     public const string StateKey = "controls";
 
     private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web);

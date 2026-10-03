@@ -32,14 +32,19 @@ public sealed record AssistantSchema(
     /// </summary>
     public const string ModelKey = "model";
 
+    /// <summary>The setting holding the provider's base URL.</summary>
     public const string EndpointKey = "endpoint";
 
+    /// <summary>The setting for whether the assistant is shown the picture.</summary>
     public const string VisionKey = "vision";
 
+    /// <summary>The setting for whether the assistant is given the sound.</summary>
     public const string HearingKey = "hearing";
 
+    /// <summary>The setting naming the model that describes the sound for one that cannot hear it.</summary>
     public const string EarKey = "ear";
 
+    /// <summary>The setting holding an <see cref="AssistantEffort"/>.</summary>
     public const string EffortKey = "effort";
 
     /// <summary>What this provider says about the key it needs.</summary>

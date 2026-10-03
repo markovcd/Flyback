@@ -10,6 +10,7 @@ public interface IAudioDevice : IDisposable
     /// <summary>The rate the device actually opened at, which may not be the one asked for.</summary>
     int SampleRate { get; }
 
+    /// <summary>Whether the device is calling the callback it was started with.</summary>
     bool IsRunning { get; }
 
     /// <summary>
@@ -18,7 +19,12 @@ public interface IAudioDevice : IDisposable
     /// </summary>
     TimeSpan Latency => TimeSpan.Zero;
 
+    /// <summary>
+    /// Starts calling <paramref name="fill"/> on the audio thread, once for each buffer, until
+    /// <see cref="Stop"/> or disposal.
+    /// </summary>
     void Start(AudioCallback fill);
 
+    /// <summary>Stops calling the callback it was started with.</summary>
     void Stop();
 }

@@ -27,6 +27,7 @@ namespace Flyback.Core.Graph;
 /// </param>
 public readonly record struct EmitContext(Slot[] Inputs)
 {
+    /// <summary>The compiled value wired to input socket <paramref name="port"/>.</summary>
     public Slot this[int port] => Inputs[port];
 
     /// <summary>

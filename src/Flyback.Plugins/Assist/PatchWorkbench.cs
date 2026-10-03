@@ -117,11 +117,13 @@ public sealed partial class PatchWorkbench
     /// <summary>The type ids whose descriptions <see cref="Briefing"/> leaves out.</summary>
     public IReadOnlySet<string> Undescribed { get; }
 
+    /// <summary>The tools the model is offered.</summary>
     public IReadOnlyList<PatchTool> Tools { get; }
 
     /// <summary>Whether the model is offered <c>listen</c>, which is the only way it hears or measures the sound.</summary>
     internal bool Hears => Tools.Any(tool => tool.Name == "listen");
 
+    /// <summary>Whether the model has put a patch forward as its answer.</summary>
     public bool HasProposal => proposal is not null;
 
     /// <summary>
@@ -141,6 +143,7 @@ public sealed partial class PatchWorkbench
         ToolCalls = 0;
     }
 
+    /// <summary>What the model said of its proposal, or nothing where there is none.</summary>
     public string ProposalSummary => proposal ?? string.Empty;
 
     /// <summary>How many edits this turn has made.</summary>

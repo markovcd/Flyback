@@ -12,7 +12,9 @@ namespace Flyback.Plugins;
 /// </remarks>
 public interface IFlybackPlugin
 {
+    /// <summary>Who wrote the plugin and what it is called.</summary>
     PluginInfo Info { get; }
 
+    /// <summary>Adds what the plugin provides to <paramref name="registry"/>.</summary>
     void Register(IPluginRegistry registry);
 }

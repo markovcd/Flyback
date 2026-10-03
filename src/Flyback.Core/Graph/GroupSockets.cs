@@ -15,6 +15,7 @@ public readonly record struct GroupSockets(
     IReadOnlyList<GroupSocket> Inputs,
     IReadOnlyList<GroupSocket> Outputs)
 {
+    /// <summary>How many sockets the box shows, inputs and outputs together.</summary>
     public int Rows => Inputs.Count + Outputs.Count;
 
     /// <summary>Where <paramref name="socket"/> sits among the inputs, or -1.</summary>

@@ -21,6 +21,7 @@ public static class Survey
 
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = false };
 
+    /// <summary>The survey as the one string the settings file holds.</summary>
     public static string Write(IEnumerable<ModelReport> found) =>
         JsonSerializer.Serialize(found.ToArray(), Options);
 

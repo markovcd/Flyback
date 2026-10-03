@@ -19,6 +19,7 @@ public partial class NodeCatalog
     /// <summary>As many sections as an Arrangement holds, on the same budget as a sequence's notes.</summary>
     public const int MaxSections = MaxSteps;
 
+    /// <summary>The type id of the Arrangement module.</summary>
     public const string ArrangementTypeId = "seq.arrangement";
 
     /// <summary>Three parts that come in one section after another, so an Arrangement shows what it is for the moment it is dropped.</summary>
@@ -66,6 +67,7 @@ public partial class NodeCatalog
     /// </remarks>
     private const float WidestGateEdge = 0.5f;
 
+    /// <summary>The type id of the Tempo module.</summary>
     public const string TempoTypeId = "seq.tempo";
 
     /// <summary>

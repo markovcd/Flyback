@@ -4,6 +4,7 @@ namespace Flyback.Core.Graph;
 
 public partial class NodeCatalog
 {
+    /// <summary>The type id of the Slew module.</summary>
     public const string SlewTypeId = "audio.slew";
 
     private const float Remaining = 0.01f;

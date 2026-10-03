@@ -61,8 +61,10 @@ public abstract record ExtraField(string Key, string Label)
     /// </remarks>
     public sealed record Number(string Key, string Label, PortSpec Spec) : ExtraField(Key, Label)
     {
+        /// <inheritdoc/>
         public override JsonNode Sane(JsonNode? stored) => JsonValue.Create(Value(stored));
 
+        /// <inheritdoc/>
         public override string Format(JsonNode? stored) => Spec.Format(Value(stored));
 
         /// <summary>This field's value as the number it is, always inside the range.</summary>
@@ -102,8 +104,10 @@ public abstract record ExtraField(string Key, string Label)
         IReadOnlyList<ChoiceOption> Options,
         string Fallback = "") : ExtraField(Key, Label)
     {
+        /// <inheritdoc/>
         public override JsonNode Sane(JsonNode? stored) => JsonValue.Create(Value(stored));
 
+        /// <inheritdoc/>
         public override string Format(JsonNode? stored) => Name(Value(stored));
 
         /// <summary>
@@ -164,6 +168,7 @@ public abstract record ExtraField(string Key, string Label)
         /// <summary>The most a value may hold, in characters.</summary>
         public const int Limit = 4096;
 
+        /// <inheritdoc/>
         public override JsonNode Sane(JsonNode? stored) => JsonValue.Create(Value(stored));
 
         /// <remarks>
@@ -191,8 +196,10 @@ public abstract record ExtraField(string Key, string Label)
     /// <param name="On">What a fresh instance carries.</param>
     public sealed record Toggle(string Key, string Label, bool On = false) : ExtraField(Key, Label)
     {
+        /// <inheritdoc/>
         public override JsonNode Sane(JsonNode? stored) => JsonValue.Create(Value(stored));
 
+        /// <inheritdoc/>
         public override string Format(JsonNode? stored) => Value(stored) ? "on" : "off";
 
         /// <summary>This field's value as the switch it is.</summary>

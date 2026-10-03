@@ -6,10 +6,15 @@ namespace Flyback.Core.Graph;
 /// </summary>
 public static class AutoRemap
 {
+    /// <summary>The input socket: the value to remap.</summary>
     public const int In = 0;
+    /// <summary>The socket for the input's low end.</summary>
     public const int InLow = 1;
+    /// <summary>The socket for the input's high end.</summary>
     public const int InHigh = 2;
+    /// <summary>The socket for the output's low end.</summary>
     public const int OutLow = 3;
+    /// <summary>The socket for the output's high end.</summary>
     public const int OutHigh = 4;
 
     /// <summary>Every Auto remap in <paramref name="patch"/>, by node id.</summary>

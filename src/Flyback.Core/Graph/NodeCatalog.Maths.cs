@@ -141,6 +141,7 @@ public partial class NodeCatalog
             + "end has no range, that pair is plain numbers, as on Remap.");
     }
 
+    /// <summary>The type id of the Auto remap module.</summary>
     public const string AutoRemapTypeId = "math.autoremap";
 
     /// <summary>
@@ -345,6 +346,7 @@ public partial class NodeCatalog
     private static PortSpec Operand(string name, float value = 0f) =>
         Any(name, value) with { Help = $"Read as '{name}' in the formula." };
 
+    /// <summary>The type id of the Expression module.</summary>
     public const string ExpressionTypeId = "math.expression";
 
     /// <summary>An Expression's formula as typed, and null for any other module.</summary>

@@ -15,6 +15,7 @@ public sealed class SettingValues : IEquatable<SettingValues>
 {
     private readonly Dictionary<string, string> held;
 
+    /// <summary>Holds a copy of <paramref name="from"/>, or nothing where there is none.</summary>
     public SettingValues(IEnumerable<KeyValuePair<string, string>>? from = null) =>
         held = from is null
             ? new Dictionary<string, string>(StringComparer.Ordinal)
@@ -38,6 +39,10 @@ public sealed class SettingValues : IEquatable<SettingValues>
     public string Text(string key, string fallback = "") =>
         held.TryGetValue(key, out var stored) && !string.IsNullOrWhiteSpace(stored) ? stored : fallback;
 
+    /// <summary>
+    /// A stored value read back as a switch, or <paramref name="fallback"/> where it is missing
+    /// or not one.
+    /// </summary>
     public bool Flag(string key, bool fallback = false) =>
         SettingField.Switch.Read(held.GetValueOrDefault(key), fallback);
 
@@ -46,6 +51,7 @@ public sealed class SettingValues : IEquatable<SettingValues>
         where TWord : struct, Enum =>
         Enum.TryParse<TWord>(held.GetValueOrDefault(key), ignoreCase: true, out var word) ? word : fallback;
 
+    /// <summary>Whether <paramref name="other"/> holds the same pairs.</summary>
     public bool Equals(SettingValues? other)
     {
         if (other is null) return false;
@@ -59,8 +65,10 @@ public sealed class SettingValues : IEquatable<SettingValues>
         return true;
     }
 
+    /// <summary>Whether <paramref name="obj"/> is a <see cref="SettingValues"/> holding the same pairs.</summary>
     public override bool Equals(object? obj) => Equals(obj as SettingValues);
 
+    /// <summary>A hash that agrees with <see cref="Equals(SettingValues?)"/>.</summary>
     public override int GetHashCode()
     {
         // Order-independent, because two bags holding the same pairs are the

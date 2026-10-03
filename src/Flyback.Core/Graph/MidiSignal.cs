@@ -43,6 +43,10 @@ public static class MidiSignal
     public static string Key(string source, int index, string signal) =>
         index == 0 ? $"{source}/auto/{signal}" : index == 1 ? $"{source}/{signal}" : $"{source}/{index}/{signal}";
 
+    /// <summary>
+    /// What one signal of the voice automatically given to module <paramref name="node"/> is
+    /// called, for a module whose voice index is 0.
+    /// </summary>
     public static string AutoKey(string source, Guid node, string signal) =>
         $"{source}/auto/{node:N}/{signal}";
 

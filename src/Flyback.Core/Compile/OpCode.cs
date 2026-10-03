@@ -59,28 +59,49 @@ public enum OpCode : byte
     Copy = 6,
 
     // --- unary ---
+    /// <summary>out = -a</summary>
     Neg = 7,
+    /// <summary>out = |a|</summary>
     Abs = 8,
+    /// <summary>out = sin(a), a in radians</summary>
     Sin = 9,
+    /// <summary>out = cos(a), a in radians</summary>
     Cos = 10,
+    /// <summary>out = tan(a), a in radians; 0 where the result is not finite</summary>
     Tan = 11,
+    /// <summary>out = sqrt(a); 0 for a at or below 0</summary>
     Sqrt = 12,
+    /// <summary>out = floor(a)</summary>
     Floor = 13,
+    /// <summary>out = ceil(a)</summary>
     Ceil = 14,
+    /// <summary>out = a - floor(a), always below 1</summary>
     Fract = 15,
+    /// <summary>out = -1, 0 or 1 by the sign of a; 0 for anything that is not a number</summary>
     Sign = 16,
+    /// <summary>out = e to the power a; 0 where the result is not finite</summary>
     Exp = 17,
+    /// <summary>out = the natural log of a; 0 for a at or below 0</summary>
     Log = 18,
 
     // --- binary ---
+    /// <summary>out = a + b</summary>
     Add = 19,
+    /// <summary>out = a - b</summary>
     Sub = 20,
+    /// <summary>out = a * b</summary>
     Mul = 21,
+    /// <summary>out = a / b; 0 where b is 0</summary>
     Div = 22,
+    /// <summary>out = a - b * floor(a / b), which takes the sign of b; 0 where b is 0</summary>
     Mod = 23,
+    /// <summary>out = a to the power b; 0 where the result is not finite</summary>
     Pow = 24,
+    /// <summary>out = the smaller of a and b</summary>
     Min = 25,
+    /// <summary>out = the larger of a and b</summary>
     Max = 26,
+    /// <summary>out = atan2(a, b), the angle of the point (x: b, y: a), in radians</summary>
     Atan2 = 27,
 
     /// <summary>out = b &lt; a ? 0 : 1 (GLSL step(edge: a, x: b))</summary>

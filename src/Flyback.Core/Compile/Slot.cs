@@ -6,8 +6,10 @@ namespace Flyback.Core.Compile;
 /// </summary>
 public readonly record struct Slot(int Base, int Width)
 {
+    /// <summary>A scalar signal held in <paramref name="register"/>.</summary>
     public static Slot Scalar(int register) => new(register, 1);
 
+    /// <summary>A color held in three registers from <paramref name="firstRegister"/>: red, green, blue.</summary>
     public static Slot Color(int firstRegister) => new(firstRegister, 3);
 
     /// <summary>

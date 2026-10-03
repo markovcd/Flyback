@@ -56,6 +56,7 @@ public abstract record SettingField(string Key, string Label)
         string Fallback = "",
         string Placeholder = "") : SettingField(Key, Label)
     {
+        /// <inheritdoc/>
         public override string Sane(string? stored) =>
             string.IsNullOrWhiteSpace(stored) ? Fallback : stored;
     }
@@ -113,6 +114,7 @@ public abstract record SettingField(string Key, string Label)
 
         private const string No = "0";
 
+        /// <inheritdoc/>
         public override string Sane(string? stored) => Spell(Read(stored, On));
 
         /// <summary>This field's value as the switch it is.</summary>

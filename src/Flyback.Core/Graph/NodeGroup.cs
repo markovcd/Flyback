@@ -29,6 +29,7 @@ public sealed class NodeGroup
     /// </summary>
     public const int Fewest = 2;
 
+    /// <summary>Names this group within its patch.</summary>
     public required Guid Id { get; init; }
 
     /// <summary>
@@ -94,6 +95,10 @@ public sealed class NodeGroup
         Name = string.IsNullOrEmpty(trimmed) || trimmed == Counted ? null : trimmed;
     }
 
+    /// <summary>
+    /// A copy holding the same members, under <paramref name="id"/> or, where none is given,
+    /// this group's own.
+    /// </summary>
     public NodeGroup Clone(Guid? id = null) => new()
     {
         Id = id ?? Id,

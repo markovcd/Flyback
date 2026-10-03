@@ -6,6 +6,7 @@ public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
     /// <inheritdoc cref="StepsExtra.Name"/>
     public const string Name = "scale";
 
+    /// <inheritdoc/>
     public override string Key => Name;
 
     /// <summary>
@@ -22,6 +23,7 @@ public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
     public static void Set(NodeInstance node, IEnumerable<int> classes) =>
         node.SetState(Name, Write(classes.ToList()));
 
+    /// <inheritdoc/>
     public override void Seed(NodeInstance node) => Set(node, Pitch.Scale(Default));
 
     /// <remarks>
@@ -35,6 +37,7 @@ public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
             Scale = Of(node) is { Count: > 0 } classes ? Pitch.Scale(classes) : [],
         };
 
+    /// <inheritdoc/>
     public override string Report(NodeInstance node)
     {
         if (Of(node) is not { Count: > 0 } scale)
@@ -48,8 +51,10 @@ public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
             : $"Scale: {named} ({numbers}).";
     }
 
+    /// <inheritdoc/>
     public override string Announce() =>
         $"  scale  which of the {Pitch.Classes} pitch classes are on — not knobs";
 
+    /// <inheritdoc/>
     public override string Help => "The notes the scale keeps. A note switched on is on in every octave.";
 }

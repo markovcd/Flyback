@@ -43,6 +43,10 @@ public sealed class PatchBuilder(ModuleCatalog? modules = null)
         return node;
     }
 
+    /// <summary>
+    /// Wires output <paramref name="sourcePort"/> of <paramref name="source"/> into input
+    /// <paramref name="targetPort"/> of <paramref name="target"/>.
+    /// </summary>
     public PatchBuilder Wire(NodeInstance source, int sourcePort, NodeInstance target, int targetPort)
     {
         Patch.Connect(source.Id, sourcePort, target.Id, targetPort);

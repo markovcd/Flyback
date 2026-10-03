@@ -22,8 +22,10 @@ public sealed class Patch
     /// </summary>
     public List<ModuleProvider>? Requires { get; set; }
 
+    /// <summary>Every module in the patch.</summary>
     public List<NodeInstance> Nodes { get; set; } = [];
 
+    /// <summary>Every wire in the patch.</summary>
     public List<Connection> Connections { get; set; } = [];
 
     /// <summary>
@@ -181,6 +183,7 @@ public sealed class Patch
         return kept.Length > limit ? TextLimit.Clip(kept, limit).TrimEnd() : kept;
     }
 
+    /// <summary>The module with <paramref name="id"/>, or null where there is none.</summary>
     public NodeInstance? Find(Guid id) => Nodes.FirstOrDefault(n => n.Id == id);
 
     /// <summary>The knob called <paramref name="id"/>, or null where the panel has none.</summary>
@@ -700,6 +703,10 @@ public sealed class Patch
         to?.Expose(new GroupSocket(targetNode, targetPort, IsOutput: false));
     }
 
+    /// <summary>
+    /// Removes the wire into socket <paramref name="targetPort"/> of module <paramref
+    /// name="targetNode"/>, if there is one.
+    /// </summary>
     public void Disconnect(Guid targetNode, int targetPort) =>
         Connections.RemoveAll(c => c.TargetNode == targetNode && c.TargetPort == targetPort);
 

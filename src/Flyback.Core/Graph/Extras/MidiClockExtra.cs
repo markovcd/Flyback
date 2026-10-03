@@ -15,12 +15,16 @@ namespace Flyback.Core.Graph.Extras;
 /// </remarks>
 public sealed record MidiClockExtra : NodeExtra
 {
+    /// <summary>What this is filed under, in a saved patch and on a context.</summary>
     public const string StateKey = MidiExtra.StateKey;
 
+    /// <summary>The field choosing which instrument's clock to follow.</summary>
     public const string DeviceField = MidiExtra.DeviceField;
 
+    /// <inheritdoc/>
     public override string Key => StateKey;
 
+    /// <inheritdoc/>
     public override IReadOnlyList<ExtraField> Fields => FieldsFor(MidiSources.All);
 
     internal static IReadOnlyList<ExtraField> FieldsFor(IReadOnlyList<MidiSource> sources) =>
@@ -73,6 +77,7 @@ public sealed record MidiClockExtra : NodeExtra
         return base.Fold(ctx, node, env);
     }
 
+    /// <inheritdoc/>
     public override string Announce()
     {
         var offered = string.Join(", ", MidiSources.All.Where(source => source.Id != MidiSources.Keyboard).Select(source => source.Id));

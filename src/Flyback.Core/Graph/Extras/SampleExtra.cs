@@ -8,6 +8,7 @@ public sealed record SampleExtra : NodeExtra
     /// <inheritdoc cref="StepsExtra.Name"/>
     public const string Name = "file";
 
+    /// <inheritdoc/>
     public override string Key => Name;
 
     /// <summary>
@@ -57,6 +58,7 @@ public sealed record SampleExtra : NodeExtra
         return ctx;
     }
 
+    /// <inheritdoc/>
     public override IEnumerable<string> Files(NodeInstance node)
     {
         var path = Of(node);
@@ -64,6 +66,7 @@ public sealed record SampleExtra : NodeExtra
         return string.IsNullOrWhiteSpace(path) ? [] : [path];
     }
 
+    /// <inheritdoc/>
     public override void Rebase(NodeInstance node, Func<string, string> renamed)
     {
         var path = Of(node);
@@ -71,6 +74,7 @@ public sealed record SampleExtra : NodeExtra
         if (!string.IsNullOrWhiteSpace(path)) Set(node, renamed(path));
     }
 
+    /// <inheritdoc/>
     public override string Report(NodeInstance node)
     {
         var path = Of(node);
@@ -80,8 +84,10 @@ public sealed record SampleExtra : NodeExtra
             : $"File: {path}.";
     }
 
+    /// <inheritdoc/>
     public override string Announce() =>
         "  file   a path to a WAV or an MP3 — not a knob";
 
+    /// <inheritdoc/>
     public override string Help => "The WAV or MP3 it plays. The patch keeps its path, so moving the file breaks it.";
 }

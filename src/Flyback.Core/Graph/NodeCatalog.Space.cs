@@ -121,6 +121,7 @@ public partial class NodeCatalog
     /// <summary>What a Transform's settings are filed under, and the one it has.</summary>
     public const string TransformStateKey = "transform";
 
+    /// <summary>The one setting a Transform has: whether it scales or rotates first.</summary>
     public const string TransformOrderKey = "order";
 
     /// <summary>The order that is not the default: Rotate first, then Scale.</summary>

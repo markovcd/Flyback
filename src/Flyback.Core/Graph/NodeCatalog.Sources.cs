@@ -33,8 +33,11 @@ public partial class NodeCatalog
     /// <summary>The knob module. Named here for the reason every other own mark is.</summary>
     public const string ValueTypeId = "value";
 
+    /// <summary>The output socket of the position source that carries x.</summary>
     public const int CoordXPort = 0;
+    /// <summary>The output socket of the position source that carries y.</summary>
     public const int CoordYPort = 1;
+    /// <summary>The output socket of the position source that carries the picture's aspect ratio.</summary>
     public const int CoordAspectPort = 4;
 
     private static IEnumerable<NodeDef> Sources()

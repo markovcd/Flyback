@@ -14,6 +14,7 @@ public sealed record PictureExtra : NodeExtra
     /// <inheritdoc cref="StepsExtra.Name"/>
     public const string Name = "picture";
 
+    /// <inheritdoc/>
     public override string Key => Name;
 
     /// <inheritdoc cref="SampleExtra.Of"/>
@@ -59,6 +60,7 @@ public sealed record PictureExtra : NodeExtra
         return ctx;
     }
 
+    /// <inheritdoc/>
     public override IEnumerable<string> Files(NodeInstance node)
     {
         var path = Of(node);
@@ -66,6 +68,7 @@ public sealed record PictureExtra : NodeExtra
         return string.IsNullOrWhiteSpace(path) ? [] : [path];
     }
 
+    /// <inheritdoc/>
     public override void Rebase(NodeInstance node, Func<string, string> renamed)
     {
         var path = Of(node);
@@ -73,6 +76,7 @@ public sealed record PictureExtra : NodeExtra
         if (!string.IsNullOrWhiteSpace(path)) Set(node, renamed(path));
     }
 
+    /// <inheritdoc/>
     public override string Report(NodeInstance node)
     {
         var path = Of(node);
@@ -82,8 +86,10 @@ public sealed record PictureExtra : NodeExtra
             : $"Picture: {path}.";
     }
 
+    /// <inheritdoc/>
     public override string Announce() =>
         "  picture   a path to a PNG — not a knob";
 
+    /// <inheritdoc/>
     public override string Help => "The PNG it shows. The patch keeps its path, so moving the file breaks it.";
 }

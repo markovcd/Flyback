@@ -4,6 +4,7 @@ namespace Flyback.Core.Graph;
 
 public partial class NodeCatalog
 {
+    /// <summary>The type id of the Clouds module.</summary>
     public const string CloudsTypeId = "pattern.clouds";
 
     private static IEnumerable<NodeDef> Patterns()

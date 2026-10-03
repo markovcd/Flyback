@@ -4,6 +4,7 @@ namespace Flyback.Core.Graph;
 
 public partial class NodeCatalog
 {
+    /// <summary>The type id of the ADSR module.</summary>
     public const string AdsrTypeId = "env.adsr";
 
     /// <summary>

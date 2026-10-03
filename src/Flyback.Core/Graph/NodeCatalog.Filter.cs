@@ -4,6 +4,7 @@ namespace Flyback.Core.Graph;
 
 public partial class NodeCatalog
 {
+    /// <summary>The type id of the Filter module.</summary>
     public const string FilterTypeId = "audio.filter";
 
     /// <summary>

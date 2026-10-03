@@ -8,7 +8,10 @@ namespace Flyback.Plugins.Assist;
 /// </remarks>
 public enum AssistantEffort
 {
+    /// <summary>Answer quickly, with little thought.</summary>
     Low = 0,
+    /// <summary>The default: a balance of speed and thought.</summary>
     Medium = 1,
+    /// <summary>Think hardest, and take longest.</summary>
     High = 2,
 }

@@ -45,9 +45,13 @@ public static partial class NodeCatalog
 
     // Port indices on the Output, named because three separate places index it
     // and a shifted socket would otherwise be a silent change of meaning.
+    /// <summary>The Output's color input, which is the screen.</summary>
     public const int OutputColorPort = 0;
+    /// <summary>The Output's left input, which is the left speaker.</summary>
     public const int OutputLeftPort = 1;
+    /// <summary>The Output's right input, which is the right speaker.</summary>
     public const int OutputRightPort = 2;
+    /// <summary>The Output's volume input, which scales both speakers.</summary>
     public const int OutputVolumePort = 3;
 
     private const float Tau = 6.283185307179586f;
@@ -66,10 +70,16 @@ public static partial class NodeCatalog
     /// </summary>
     public static void Install(ModuleCatalog catalog) => Current = catalog;
 
+    /// <summary>The categories the current catalog's modules are filed under.</summary>
     public static IEnumerable<string> Categories => Current.Categories;
 
+    /// <summary>The module with <paramref name="typeId"/> in the current catalog, or null where there is none.</summary>
     public static NodeDef? Get(string typeId) => Current.Get(typeId);
 
+    /// <summary>
+    /// The module with <paramref name="typeId"/> in the current catalog; throws <see
+    /// cref="KeyNotFoundException"/> where there is none.
+    /// </summary>
     public static NodeDef Require(string typeId) => Current.Require(typeId);
 
     /// <inheritdoc cref="ModuleCatalog.Normalled"/>
@@ -88,6 +98,7 @@ public static partial class NodeCatalog
     /// <summary>The hidden x and y every socket that wants a position is normalled to.</summary>
     public static PortNormal Across => new(CoordTypeId);
 
+    /// <summary>The hidden y every socket that wants a position down the screen is normalled to.</summary>
     public static PortNormal Down => new(CoordTypeId, CoordYPort);
 
     /// <summary>

@@ -30,8 +30,10 @@ public sealed class ModuleCatalog
     internal static ModuleCatalog Of(ModuleProvider provider, IReadOnlyList<NodeDef> modules) =>
         new(modules, [provider], modules.ToDictionary(m => m.TypeId, _ => provider));
 
+    /// <summary>Every module in the catalog.</summary>
     public IReadOnlyList<NodeDef> All { get; }
 
+    /// <summary>Who supplied the modules: the engine and each plugin.</summary>
     public IReadOnlyList<ModuleProvider> Providers { get; }
 
     /// <summary>
@@ -59,6 +61,10 @@ public sealed class ModuleCatalog
         index.GetValueOrDefault(typeId)
         ?? (NodeCatalog.LegacyTypeIds.TryGetValue(typeId, out var renamed) ? index.GetValueOrDefault(renamed) : null);
 
+    /// <summary>
+    /// The module with <paramref name="typeId"/>; throws <see cref="KeyNotFoundException"/>
+    /// where there is none.
+    /// </summary>
     public NodeDef Require(string typeId) =>
         Get(typeId) ?? throw new KeyNotFoundException($"Unknown node type '{typeId}'.");
 
@@ -86,6 +92,7 @@ public sealed class ModuleCatalog
         return def.Outputs.Count == 1 ? def.Name : $"{def.Name} {def.Outputs[bus.Port].Name}";
     }
 
+    /// <summary>Whether the provider with <paramref name="providerId"/> supplied any of the modules.</summary>
     public bool HasProvider(string providerId) => Providers.Any(p => p.Id == providerId);
 
     /// <summary>

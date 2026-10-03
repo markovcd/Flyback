@@ -19,11 +19,15 @@ public sealed record MidiExtra : NodeExtra
 
     /// <summary>The fields selecting the instrument, its channel and the polyphonic voice.</summary>
     public const string DeviceField = "device";
+    /// <summary>The field choosing the polyphonic voice.</summary>
     public const string IndexField = "index";
+    /// <summary>The field choosing the MIDI channel.</summary>
     public const string ChannelField = "channel";
 
+    /// <inheritdoc/>
     public override string Key => StateKey;
 
+    /// <inheritdoc/>
     public override IReadOnlyList<ExtraField> Fields =>
     [
         new ExtraField.Choice(

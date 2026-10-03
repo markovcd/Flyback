@@ -20,6 +20,7 @@ public static class Pitch
     /// <summary>The note number <see cref="ConcertPitch"/> belongs to — A4.</summary>
     public const float ConcertNote = 69f;
 
+    /// <summary>How many semitones make an octave.</summary>
     public const float Semitones = 12f;
 
     /// <summary>

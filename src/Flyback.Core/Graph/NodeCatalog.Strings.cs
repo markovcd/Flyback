@@ -4,6 +4,7 @@ namespace Flyback.Core.Graph;
 
 public partial class NodeCatalog
 {
+    /// <summary>The type id of the String module.</summary>
     public const string StringTypeId = "osc.string";
 
     /// <summary>The lowest pitch, which sizes the delay line.</summary>

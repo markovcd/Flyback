@@ -4,7 +4,9 @@ namespace Flyback.Core.Graph;
 
 public partial class NodeCatalog
 {
+    /// <summary>The type id of the Send module.</summary>
     public const string SendTypeId = "bus.send";
+    /// <summary>The type id of the Receive module.</summary>
     public const string ReceiveTypeId = "bus.receive";
 
     /// <summary>What a Send and a Receive file their bus under.</summary>

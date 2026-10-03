@@ -10,6 +10,7 @@ public sealed record StepsExtra(StepSpec Spec) : NodeExtra
     /// </summary>
     public const string Name = "notes";
 
+    /// <inheritdoc/>
     public override string Key => Name;
 
     /// <summary>The tune this instance plays, and none where it carries no notes.</summary>
@@ -19,6 +20,7 @@ public sealed record StepsExtra(StepSpec Spec) : NodeExtra
     public static void Set(NodeInstance node, IEnumerable<Step> notes) =>
         node.SetState(Name, Write(notes.ToList()));
 
+    /// <inheritdoc/>
     public override void Seed(NodeInstance node) => Set(node, Spec.Default);
 
     /// <remarks>
@@ -28,6 +30,7 @@ public sealed record StepsExtra(StepSpec Spec) : NodeExtra
     public override EmitContext Fold(EmitContext ctx, NodeInstance node, ExtraEnv env) =>
         ctx with { Steps = [.. Of(node).Select(s => s.Sane())] };
 
+    /// <inheritdoc/>
     public override string Report(NodeInstance node)
     {
         if (Of(node) is not { Count: > 0 } steps) return "It has no notes.";
@@ -40,9 +43,11 @@ public sealed record StepsExtra(StepSpec Spec) : NodeExtra
         return $"Notes: {string.Join(" ", written)}.";
     }
 
+    /// <inheritdoc/>
     public override string Announce() =>
         $"  notes  a list of up to {NodeCatalog.MaxSteps} — not knobs";
 
+    /// <inheritdoc/>
     public override string Help => "The steps it plays in turn: add, remove and reorder them here.";
 
     private static string Number(float value) =>

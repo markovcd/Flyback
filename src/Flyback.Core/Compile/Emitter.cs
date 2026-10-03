@@ -400,6 +400,10 @@ public sealed class Emitter
         return (memory = live).Value;
     }
 
+    /// <summary>
+    /// Emits <paramref name="code"/> on each component of <paramref name="a"/> and returns the
+    /// result, as wide as <paramref name="a"/>.
+    /// </summary>
     public Slot Unary(OpCode code, Slot a)
     {
         var first = Allocate(a.Width);
@@ -408,6 +412,10 @@ public sealed class Emitter
         return new Slot(first, a.Width);
     }
 
+    /// <summary>
+    /// Emits <paramref name="code"/> on each component of <paramref name="a"/> and <paramref
+    /// name="b"/>, the narrower broadcast, and returns the result, as wide as the wider.
+    /// </summary>
     public Slot Binary(OpCode code, Slot a, Slot b)
     {
         var width = Math.Max(a.Width, b.Width);
@@ -417,6 +425,10 @@ public sealed class Emitter
         return new Slot(first, width);
     }
 
+    /// <summary>
+    /// Emits <paramref name="code"/> on each component of its three operands, the narrower ones
+    /// broadcast, and returns the result, as wide as the widest.
+    /// </summary>
     public Slot Ternary(OpCode code, Slot a, Slot b, Slot c)
     {
         var width = Math.Max(a.Width, Math.Max(b.Width, c.Width));
@@ -524,6 +536,13 @@ public sealed class Emitter
     internal void Tap(int scope, Slot value) =>
         Add(new Op(OpCode.Tap, -1, value.Component(0), k: scope));
 
+    /// <summary>
+    /// Emits a delay-line op (<see cref="OpCode.Delay"/> or <see cref="OpCode.Allpass"/>) and
+    /// returns its scalar output.
+    /// <paramref name="gain"/> is the feedback, <paramref name="time"/> the delay in seconds
+    /// and <paramref name="maximum"/> the longest delay it will be asked for, in seconds, which
+    /// sizes the buffer.
+    /// </summary>
     public Slot DelayLine(OpCode code, Slot input, Slot gain, Slot time, float maximum)
     {
         var first = Allocate(1);
@@ -621,14 +640,19 @@ public sealed class Emitter
 
     // --- convenience wrappers used all over the node catalog ---
 
+    /// <summary>a + b</summary>
     public Slot Add(Slot a, Slot b) => Binary(OpCode.Add, a, b);
 
+    /// <summary>a - b</summary>
     public Slot Sub(Slot a, Slot b) => Binary(OpCode.Sub, a, b);
 
+    /// <summary>a * b</summary>
     public Slot Mul(Slot a, Slot b) => Binary(OpCode.Mul, a, b);
 
+    /// <summary>a * the constant b</summary>
     public Slot Mul(Slot a, float b) => Binary(OpCode.Mul, a, Constant(b));
 
+    /// <summary>a + the constant b</summary>
     public Slot Add(Slot a, float b) => Binary(OpCode.Add, a, Constant(b));
 
     /// <summary>Widens a scalar to three components; colors pass through.</summary>

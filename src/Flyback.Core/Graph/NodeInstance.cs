@@ -28,8 +28,10 @@ public sealed class NodeInstance
     /// </summary>
     public const double Down = 5_000d;
 
+    /// <summary>Names this module within its patch, which is what a <see cref="Connection"/> refers to.</summary>
     public required Guid Id { get; init; }
 
+    /// <summary>The <see cref="NodeDef.TypeId"/> of the module this is an instance of.</summary>
     public required string TypeId { get; init; }
 
     /// <summary>Where it sits. Always inside the canvas — see <see cref="Across"/>.</summary>

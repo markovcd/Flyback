@@ -4,6 +4,7 @@ namespace Flyback.Core.Graph;
 
 public partial class NodeCatalog
 {
+    /// <summary>The type id of the Duck module.</summary>
     public const string DuckTypeId = "audio.duck";
 
     /// <summary>The shortest time Duck's attack or release reaches, whatever is patched in.</summary>
