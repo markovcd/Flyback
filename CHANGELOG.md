@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `flyback-cli render --mute <group>` switches a named group off for the run, and `--solo <group>` plays it alone with what feeds it and carries it to the Output.
+
 - `flyback-cli info --by-group` lists the picture and sound ops each group adds, with `--json` for a script.
 
 - `flyback-viewer --report` prints, when the run ends, the frames a second it held, the slowest frame, what the sound cost, and what drew the picture.

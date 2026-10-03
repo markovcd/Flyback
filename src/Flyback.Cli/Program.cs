@@ -492,13 +492,30 @@ internal static class Program
 
         oversample.AcceptOnlyFromAmong([.. AudioRenderer.Oversamples.Select(factor => factor.ToString(System.Globalization.CultureInfo.InvariantCulture))]);
 
+        var mute = new Option<string[]>("--mute")
+        {
+            HelpName = "group",
+            Description = "Switch a group's modules off for the run, by its name (ADR-0117); give it again for more.",
+            Arity = ArgumentArity.ZeroOrMore,
+            AllowMultipleArgumentsPerToken = false,
+        };
+
+        var solo = new Option<string[]>("--solo")
+        {
+            HelpName = "group",
+            Description = "Hear a group alone: everything is switched off except what feeds it and what carries it to the Output, "
+                + "so it keeps its own echo and room. Give it again for more.",
+            Arity = ArgumentArity.ZeroOrMore,
+            AllowMultipleArgumentsPerToken = false,
+        };
+
         var command = new Command(
             "render",
             "Write a patch to a picture, a sound, or a clip of both. The size, rate, quality, format "
             + "and ffmpeg left out are the editor's: its preview size and Settings → Recording.")
         {
             patch, preset, presets, output, size, at, seconds, fps, quality, format, ffmpeg, loudness, interpreted, gpu,
-            processor, settings, oversample,
+            processor, settings, oversample, mute, solo,
         };
 
         command.SetAction((result, cancellation) =>
@@ -558,6 +575,9 @@ internal static class Program
             }
 
             var (loaded, samples, pictures) = opened;
+
+            if (!GroupSwitches.Apply(loaded, result.GetValue(mute) ?? [], result.GetValue(solo) ?? [], error))
+                return Task.FromResult(Exit.Failed);
 
             var (width, height) = result.GetValue(size);
             var into = result.GetRequiredValue(output);

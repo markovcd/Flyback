@@ -635,6 +635,10 @@ flyback-cli render drone.fbk -o drone.wav --seconds 30 --oversample 4
 flyback-cli render drone.fbk -o drone.mp4 --seconds 30 --processor
 flyback-cli render drone.fbk -o drone.mp4 --seconds 30 --gpu
 
+# one named group switched off, or heard alone with what feeds it and carries it to the Output
+flyback-cli render band.fbk -o band.wav --seconds 30 --mute Pad
+flyback-cli render band.fbk -o band.wav --seconds 30 --solo Bass
+
 # how loud it came out, in LUFS and true peak, as a streaming service measures it
 flyback-cli render drone.fbk -o drone.wav --seconds 30 --loudness
 
