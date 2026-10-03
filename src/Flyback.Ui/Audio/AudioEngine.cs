@@ -402,6 +402,8 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
 
     private void Fill(Span<float> buffer)
     {
+        using var traced = StallTrace.Step("sound callback");
+
         var state = Volatile.Read(ref activeState);
 
         if (Interlocked.Exchange(ref rewindPending, 0) == 1)

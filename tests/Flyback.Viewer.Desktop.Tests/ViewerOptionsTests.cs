@@ -134,6 +134,7 @@ public class ViewerOptionsTests
             "--no-overlay",
             "--stats",
             "--report",
+            "--trace", "stalls.txt",
             "--transport", "top",
             "--knob-grid", "off",
             "--title", "hello",
@@ -160,6 +161,7 @@ public class ViewerOptionsTests
         options.NoOverlay.ShouldBeTrue();
         options.Stats.ShouldBeTrue();
         options.Report.ShouldBeTrue();
+        Path.GetFileName(options.Trace).ShouldBe("stalls.txt");
         options.Transport.ShouldBe(TransportEdge.Top);
         options.KnobGrid.On.ShouldBeFalse();
         options.Title.ShouldBe("hello");

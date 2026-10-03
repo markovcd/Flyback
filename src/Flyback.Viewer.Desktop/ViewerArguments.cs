@@ -215,6 +215,12 @@ internal static class ViewerArguments
             Description = "When the run ends, print what it held: frames a second, the slowest frame, what the sound cost, and what drew the picture.",
         };
 
+        var trace = new Option<FileInfo>("--trace")
+        {
+            HelpName = "file",
+            Description = "Write every stall over 100 ms into the file: the UI thread held up, a frame, the sound callback, and the step it was in.",
+        };
+
         var title = new Option<string>("--title")
         {
             HelpName = "text",
@@ -243,7 +249,7 @@ internal static class ViewerArguments
             size, fps, gpu, cpu, noVideo, window, maximized, fullScreen,
             noAudio, volume, mute, latency, oversample,
             from, paused, duration, loop,
-            background, hidden, noOverlay, transport, knobGrid, stats, report, title, top, interpreted, file,
+            background, hidden, noOverlay, transport, knobGrid, stats, report, trace, title, top, interpreted, file,
         };
 
         root.SetAction(result =>
@@ -286,6 +292,7 @@ internal static class ViewerArguments
                 KnobGrid = KnobGrid.Read(result.GetValue(knobGrid)!) ?? new KnobGrid(),
                 Stats = result.GetValue(stats),
                 Report = result.GetValue(report),
+                Trace = result.GetValue(trace)?.FullName,
                 Title = result.GetValue(title),
                 Top = result.GetValue(top),
                 Interpreted = result.GetValue(interpreted),

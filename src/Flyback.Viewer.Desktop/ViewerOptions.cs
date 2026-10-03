@@ -90,6 +90,9 @@ internal sealed record ViewerOptions : IIlCompilerSetup
     /// <summary>Say how the run went when it ends: frames a second, the slowest frame, the sound's cost and what drew the picture.</summary>
     public bool Report { get; init; }
 
+    /// <summary>A file to write every stall over 100 ms into: the UI thread's, a frame's and the sound callback's, with the step it was in.</summary>
+    public string? Trace { get; init; }
+
     public string? Title { get; init; }
 
     /// <summary>Keep the window above the others.</summary>

@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
 using Avalonia.Threading;
+using Flyback.Ui;
 
 namespace Flyback.Viewer.Desktop;
 
@@ -29,6 +30,13 @@ public sealed class ViewerApp : Application
                 e.Cancel = true;
                 Dispatcher.UIThread.Post(() => desktop.Shutdown());
             };
+
+            if (StallTrace.On)
+            {
+                var watch = new StallWatch();
+
+                desktop.Exit += (_, _) => watch.Dispose();
+            }
 
             if (launch.Options.Hidden)
             {

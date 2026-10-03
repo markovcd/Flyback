@@ -244,7 +244,11 @@ public sealed class PreviewSurface : Control, IPreviewSurface
 
         var started = frameClock.Elapsed;
         await Task.Run(() =>
-            renderer.Render(program, time, size.Width, size.Height, buffer, stride, played));
+        {
+            using var traced = StallTrace.Step("CPU frame");
+
+            renderer.Render(program, time, size.Width, size.Height, buffer, stride, played);
+        });
         FrameMilliseconds = (frameClock.Elapsed - started).TotalMilliseconds;
 
         // The control may have been resized or detached while we were rendering.

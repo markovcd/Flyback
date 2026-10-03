@@ -665,7 +665,8 @@ flyback-cli viewer drone.fbk --hidden --for 10</code></pre>
     picture is drawn: frames a second, a frame's cost, the oversampling. <code>--hidden</code> opens no window at all, which is how
     to hear a patch without anything landing on the screen. <code>--report</code> prints, when the run ends, what it held:
     the frames a second, the slowest frame, what the sound cost, and what drew the picture, with the graphics card's
-    reason where it gave way to the processor.</p>
+    reason where it gave way to the processor. <code>--trace file</code> writes every stall over 100 ms into the
+    file, with the step it was in, so a freeze is one file to read.</p>
     <p>A patch made to be played is played here too: the computer's keys are notes, a MIDI In hears its
     device, and a knob bound to a MIDI controller follows it. The knobs wait behind the dots at the other edge of the
     picture from the transport, to be turned by hand.</p>

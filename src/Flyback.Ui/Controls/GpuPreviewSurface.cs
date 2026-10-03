@@ -399,7 +399,11 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IGpuPreview
 
         if (rewind) active.Rewind();
 
-        if (active.SetPatch(bound, snapshot) is { } compileError)
+        string? compileError;
+
+        using (StallTrace.Step("SetPatch")) compileError = active.SetPatch(bound, snapshot);
+
+        if (compileError is not null)
         {
             Fail(compileError);
             return;
@@ -421,13 +425,20 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IGpuPreview
 
         var started = frameClock.Elapsed;
 
-        if (active.Render(
+        string? renderError;
+
+        using (StallTrace.Step("GPU frame"))
+        {
+            renderError = active.Render(
                 bound,
                 fb,
                 new SurfaceSize(control.Width, control.Height),
                 new SurfaceSize(size.Width, size.Height),
                 at,
-                played) is { } renderError)
+                played);
+        }
+
+        if (renderError is not null)
         {
             Fail(renderError);
             return;

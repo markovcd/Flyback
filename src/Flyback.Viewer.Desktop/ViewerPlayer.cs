@@ -3,6 +3,7 @@ using Avalonia.Threading;
 using Avalonia.Input;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
+using Flyback.Ui;
 using Flyback.Ui.Audio;
 using Flyback.Ui.Controls;
 using Flyback.Ui.Midi;
@@ -87,6 +88,8 @@ internal sealed class ViewerPlayer : IDisposable
             surface.Resolution = options.Size;
             surface.Use(options.Gpu ? PreviewBackend.Gpu : PreviewBackend.Cpu);
             surface.FrameRate = options.FrameRate;
+
+            using var traced = StallTrace.Step("CompileForVideo");
 
             picture = patch.CompileForVideo(samples: samples, pictures: pictures, played: true).Program;
         }

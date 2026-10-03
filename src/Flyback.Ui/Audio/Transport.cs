@@ -67,6 +67,8 @@ internal sealed class Transport
     /// <param name="sound">The patch's sound compiled with <c>played: true</c> already, or null for the engine to compile it.</param>
     public bool Load(Patch patch, CompiledPatch? picture, ISampleLibrary? samples, Cue? start, CompiledPatch? sound = null)
     {
+        using var traced = StallTrace.Step("Transport.Load");
+
         if (preview is not null && picture is not null)
         {
             preview.Program = picture;

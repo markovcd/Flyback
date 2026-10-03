@@ -85,6 +85,20 @@ internal static class Program
 
         settings.LatencyMilliseconds = options.LatencyMilliseconds;
 
+        if (options.Trace is { } trace)
+        {
+            try
+            {
+                StallTrace.Open(trace);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: --trace {trace}: {ex.Message}");
+
+                return Exit.Failed;
+            }
+        }
+
         var device = Device(options, settings, plugins);
 
         ViewerApp.Launch = new ViewerLaunch(
@@ -96,12 +110,19 @@ internal static class Program
             Instruments = plugins.PreferredMidiInput,
         };
 
-        return AppBuilder.Configure<ViewerApp>()
-            .UsePlatformDetect()
-            .UseDriver(settings.Driver)
-            .WithInterFont()
-            .LogToTrace()
-            .StartWithClassicDesktopLifetime([]);
+        try
+        {
+            return AppBuilder.Configure<ViewerApp>()
+                .UsePlatformDetect()
+                .UseDriver(settings.Driver)
+                .WithInterFont()
+                .LogToTrace()
+                .StartWithClassicDesktopLifetime([]);
+        }
+        finally
+        {
+            StallTrace.Close();
+        }
     }
 
     private static int HandToEditor(string package)
