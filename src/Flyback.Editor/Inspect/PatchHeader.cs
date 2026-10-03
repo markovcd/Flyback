@@ -86,7 +86,7 @@ internal sealed class PatchHeader(NodeEditor editor, Document document, PatchFil
                 Glyphs.Person(16, Text.Muted),
                 new TextBlock
                 {
-                    Text = "Double-click to say who made it.",
+                    Text = "Click to say who made it.",
                     FontSize = Text.Emphasis,
                     FontStyle = FontStyle.Italic,
                     Foreground = Text.Muted,
