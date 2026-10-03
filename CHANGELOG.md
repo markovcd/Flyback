@@ -10,7 +10,7 @@
 - On a phone, a patch's sound in the web editor and viewer stops other music and is not muted by the ringer switch (Safari; other browsers play as before).
 - On Android, the web viewer's sound plays through an audio element, so other playback stops.
 - With nothing selected, the inspector lists the canvas's gestures in folding groups, each row with its keys drawn as caps.
-- With nothing selected, the inspector is headed with the patch's name, and its tags are chips with one to add more.
+- With nothing selected, the inspector is headed with the patch's name. Its tags are chips with a cross to take one off, and a dashed one that opens a box for one more.
 - A paused picture redraws at the new size when the editor goes full screen or comes back.
 
 ## 0.7.0 — 2026-10-02

@@ -56,21 +56,31 @@ public class PatchCreditsTests : EditorTest
         Settle(window);
     }
 
-    private static void TypeTags(MainWindow window, string text)
+    private static TextBox NewTagBox(MainWindow window)
     {
         All<Button>(window).Single(b => b.Name == "patch-tag-add").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Settle(window);
 
-        var box = Box(window).ShouldNotBeNull("the tags should have become a box");
-        box.Text = text;
-        box.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
+        return All<TextBox>(window).Single(t => t.Name == "patch-tag-new");
+    }
+
+    private static void Press(MainWindow window, TextBox box, Key key)
+    {
+        box.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = key });
         Settle(window);
+    }
+
+    private static void TypeTags(MainWindow window, string text)
+    {
+        var box = NewTagBox(window);
+        box.Text = text;
+        Press(window, box, Key.Enter);
     }
 
     private static string[] Chips(MainWindow window) =>
         All<WrapPanel>(window).Single(p => p.Name == "patch-tags").Children
-            .OfType<Button>().Where(b => b.Name is null)
-            .Select(b => ((TextBlock)((StackPanel)b.Content!).Children[0]).Text!).ToArray();
+            .OfType<Border>().Where(b => b.Child is StackPanel)
+            .Select(b => ((TextBlock)((StackPanel)b.Child!).Children[0]).Text!).ToArray();
 
     [AvaloniaFact]
     public void An_uncredited_patch_asks_who_made_it_and_for_tags()
@@ -94,14 +104,14 @@ public class PatchCreditsTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void Tags_are_typed_as_words_apart_by_spaces_or_commas()
+    public void Tags_are_typed_apart_by_commas_and_a_space_joins_a_tag()
     {
         var window = Open();
 
         TypeTags(window, "Drone, slow  ambient,drone");
 
-        Editor(window).History.Patch.Tags.ShouldBe(["drone", "slow", "ambient"]);
-        Chips(window).ShouldBe(["drone", "slow", "ambient"]);
+        Editor(window).History.Patch.Tags.ShouldBe(["drone", "slow-ambient"]);
+        Chips(window).ShouldBe(["drone", "slow-ambient"]);
     }
 
     [AvaloniaFact]
@@ -136,10 +146,86 @@ public class PatchCreditsTests : EditorTest
         Settle(window);
 
         Type(window, "patch-author", "Ada");
-        TypeTags(window, "drone slow");
+        TypeTags(window, "drone, slow");
 
         text.Text.ShouldStartWith("description \"A hum.\"\nauthor \"Ada\"\ntags \"drone\" \"slow\"\n\n");
         Editor(window).History.Patch.Author.ShouldBe("Ada");
         Editor(window).History.Patch.Tags.ShouldBe(["drone", "slow"]);
+    }
+
+    [AvaloniaFact]
+    public void A_tag_typed_is_added_to_the_ones_there_are()
+    {
+        var window = Open();
+
+        TypeTags(window, "drone");
+        TypeTags(window, "slow");
+
+        Chips(window).ShouldBe(["drone", "slow"]);
+    }
+
+    [AvaloniaFact]
+    public void The_cross_on_a_chip_takes_that_tag_away()
+    {
+        var window = Open();
+
+        TypeTags(window, "drone, slow, ambient");
+        All<Button>(window).Single(b => b.Name == "remove-tag-slow").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        Chips(window).ShouldBe(["drone", "ambient"]);
+        Editor(window).History.Patch.Tags.ShouldBe(["drone", "ambient"]);
+    }
+
+    [AvaloniaFact]
+    public void Taking_the_last_tag_away_leaves_the_patch_untagged_and_undo_puts_it_back()
+    {
+        var window = Open();
+
+        TypeTags(window, "drone");
+        All<Button>(window).Single(b => b.Name == "remove-tag-drone").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        Editor(window).History.Patch.Tags.ShouldBeNull();
+
+        Editor(window).History.Undo().ShouldBeTrue();
+        Settle(window);
+
+        Editor(window).History.Patch.Tags.ShouldBe(["drone"]);
+    }
+
+    [AvaloniaFact]
+    public void Escape_drops_what_was_typed_for_a_tag()
+    {
+        var window = Open();
+
+        var box = NewTagBox(window);
+        box.Text = "drone";
+        Press(window, box, Key.Escape);
+
+        Editor(window).History.Patch.Tags.ShouldBeNull();
+        All<TextBox>(window).ShouldNotContain(t => t.Name == "patch-tag-new");
+    }
+
+    [AvaloniaFact]
+    public void An_empty_box_adds_nothing_and_puts_the_chip_back()
+    {
+        var window = Open();
+
+        var box = NewTagBox(window);
+        Press(window, box, Key.Enter);
+
+        Editor(window).History.Patch.Tags.ShouldBeNull();
+        All<Button>(window).ShouldContain(b => b.Name == "patch-tag-add");
+    }
+
+    [AvaloniaFact]
+    public void A_patch_with_all_its_tags_offers_no_more()
+    {
+        var window = Open();
+
+        TypeTags(window, string.Join(',', Enumerable.Range(1, Patch.TagCount).Select(i => "t" + i)));
+
+        All<Button>(window).ShouldNotContain(b => b.Name == "patch-tag-add");
     }
 }

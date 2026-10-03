@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Core.Graph;
@@ -105,8 +106,8 @@ internal sealed class PatchHeader(NodeEditor editor, Document document, PatchFil
     }
 
     /// <summary>
-    /// The tags as chips, with a dashed one to add more. Any of them opens the whole
-    /// set as one line of words apart by spaces or commas.
+    /// The tags as chips, each with a cross that takes it off, and a dashed one that
+    /// turns into a box for one more.
     /// </summary>
     private WrapPanel Tags()
     {
@@ -117,61 +118,148 @@ internal sealed class PatchHeader(NodeEditor editor, Document document, PatchFil
         chips.IsVisible = !readOnly || tags.Count > 0;
 
         foreach (var tag in tags)
-        {
-            var chip = Chip(tag);
-            if (!readOnly) chip.Click += (_, _) => EditTags(chips);
-            chips.Children.Add(chip);
-        }
+            chips.Children.Add(readOnly ? Chip(tag) : Chip(tag, () => Remove(chips, tag)));
 
-        if (readOnly) return chips;
-
-        var add = Chip("Tag", Glyphs.Add());
-        add.Name = "patch-tag-add";
-        add.Background = Brushes.Transparent;
-        add.BorderThickness = new Thickness(0);
-        add.Margin = new Thickness(0);
-        add.Click += (_, _) => EditTags(chips);
-        chips.Children.Add(Dashed(add, radius: 14, margin: new Thickness(0, 0, 6, 6)));
+        if (!readOnly && tags.Count < Patch.TagCount) chips.Children.Add(AddChip(chips));
 
         return chips;
     }
 
-    private void EditTags(Control chips) =>
-        NameBox.Open(
-            chips,
-            new SolidColorBrush(Colors.Label),
-            Patch.Tags is { } held ? string.Join(' ', held) : null,
-            "drone slow ambient",
-            Patch.TagCount * (Patch.TagLimit + 2),
-            typed => Patch.Tag(typed?.Replace(',', ' ').Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)),
-            () => Patch.Tags is { } now ? string.Join(' ', now) : null,
-            Tags,
-            Finished,
-            prose: true);
+    private Control AddChip(WrapPanel chips)
+    {
+        var add = new Button
+        {
+            Name = "patch-tag-add",
+            Content = Glyphs.Line(Glyphs.Add(), new TextBlock { Text = "Tag", FontSize = Text.Body }),
+            Padding = new Thickness(10, 5, 12, 5),
+            MinHeight = 0,
+            CornerRadius = new CornerRadius(14),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Foreground = Text.Muted,
+        };
 
-    private static Button Chip(string text, Control? glyph = null)
+        var slot = Dashed(add, radius: 14, margin: new Thickness(0, 0, 6, 6));
+        add.Click += (_, _) => Adding(chips, slot);
+
+        return slot;
+    }
+
+    /// <summary>Swaps the dashed chip for a box; Enter or leaving it keeps what was typed, Esc drops it.</summary>
+    private void Adding(WrapPanel chips, Control slot)
+    {
+        var at = chips.Children.IndexOf(slot);
+        if (at < 0) return;
+
+        var box = new TextBox
+        {
+            Name = "patch-tag-new",
+            PlaceholderText = "New tag",
+            MaxLength = Patch.TagLimit,
+            Width = 120,
+            MinHeight = 0,
+            Height = 30,
+            Padding = new Thickness(12, 0),
+            Margin = new Thickness(0, 0, 6, 6),
+            CornerRadius = new CornerRadius(14),
+            FontSize = Text.Body,
+            VerticalContentAlignment = VerticalAlignment.Center,
+        };
+
+        var closed = false;
+
+        void Close(bool keep)
+        {
+            if (closed) return;
+            closed = true;
+
+            if (keep) Add(box.Text);
+
+            if (chips.Parent is Panel host && host.Children.IndexOf(chips) is var where and >= 0)
+                host.Children[where] = Tags();
+        }
+
+        box.KeyDown += (_, e) =>
+        {
+            if (e.Key is not (Key.Enter or Key.Escape)) return;
+
+            e.Handled = true;
+            Close(keep: e.Key == Key.Enter);
+        };
+
+        box.LostFocus += (_, _) => Close(keep: true);
+
+        chips.Children[at] = box;
+        box.Focus();
+    }
+
+    /// <summary>Adds what was typed, one tag to a comma, to the tags the patch has.</summary>
+    private void Add(string? typed)
+    {
+        var words = (typed ?? "").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length == 0) return;
+
+        Retag([.. Patch.Tags ?? [], .. words]);
+    }
+
+    private void Remove(WrapPanel chips, string tag)
+    {
+        Retag((Patch.Tags ?? []).Where(t => t != tag));
+
+        if (chips.Parent is Panel host && host.Children.IndexOf(chips) is var where and >= 0)
+            host.Children[where] = Tags();
+    }
+
+    private void Retag(IEnumerable<string> to)
+    {
+        var before = Patch.Tags is { } held ? string.Join(' ', held) : null;
+
+        Patch.Tag(to);
+
+        if ((Patch.Tags is { } now ? string.Join(' ', now) : null) != before) Finished();
+    }
+
+    private static Border Chip(string text, Action? remove = null)
     {
         var content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-
-        if (glyph is not null) content.Children.Add(glyph);
 
         content.Children.Add(new TextBlock
         {
             Text = text,
             FontSize = Text.Body,
+            Foreground = new SolidColorBrush(Colors.Label),
             VerticalAlignment = VerticalAlignment.Center,
         });
 
-        return new Button
+        if (remove is not null)
         {
-            Content = content,
+            var cross = new Button
+            {
+                Name = "remove-tag-" + text,
+                Content = Glyphs.Cross(12, Text.Muted),
+                Padding = new Thickness(3),
+                Margin = new Thickness(0, -3, -8, -3),
+                MinHeight = 0,
+                MinWidth = 0,
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(10),
+            };
+
+            ToolTip.SetTip(cross, "Remove tag " + text);
+            cross.Click += (_, _) => remove();
+            content.Children.Add(cross);
+        }
+
+        return new Border
+        {
+            Child = content,
             Padding = new Thickness(12, 5),
             Margin = new Thickness(0, 0, 6, 6),
             CornerRadius = new CornerRadius(14),
             Background = new SolidColorBrush(Colors.Toolbar),
             BorderBrush = new SolidColorBrush(Colors.Separator),
             BorderThickness = new Thickness(1),
-            Foreground = new SolidColorBrush(Colors.Label),
         };
     }
 
