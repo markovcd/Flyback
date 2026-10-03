@@ -23,3 +23,4 @@ Work the user has asked for and nobody has started. Take an item off when it lan
 - Make rendering site presets better (cli command) - it shouldn't access directly via shared folder but some form of admin api
 - Make rendering stills for site and page cached, so pipeline takes shorter
 - add audio input, add midi file playback, add sample recording, add midi recording (from highest to lowest priority)
+- https://github.com/vincentsch/explainroo
