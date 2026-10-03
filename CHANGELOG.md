@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.7.1 — 2026-10-03
+
+28 commits since 0.7.0.
+
 ### Editor
 
 - The web viewer shows who made a patch under its title, and an author row with their initial and the patch's tags above its description.
@@ -17,6 +21,10 @@
 - Who made the patch is a card with an initial, a pencil and a cross, and a button to say who when nobody is credited.
 - A click on the patch's description opens a box with Save and Cancel, the text staying where it was.
 - A paused picture redraws at the new size when the editor goes full screen or comes back.
+
+### Plugins
+
+- Every public member of the plugin contract has its description in the `.xml` files that ship beside `Flyback.Core.dll` and `Flyback.Plugins.dll`.
 
 ## 0.7.0 — 2026-10-02
 
