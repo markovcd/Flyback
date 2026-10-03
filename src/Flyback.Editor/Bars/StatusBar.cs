@@ -143,18 +143,15 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
     /// <summary>Says what the patch costs.</summary>
     internal void Update()
     {
-        var pictureOps = preview.Program.Ops.Length;
-        var soundOps = playback.SoundOps;
-
         // Which renderer produced the rate is part of what it means, so it is
         // said alongside — what is actually drawing, not what was asked for.
         var renderer = preview.Renderer is { } name ? $"   |   {name}" : "";
 
         // Nothing is said of the sound of a patch that has none.
-        var sound = playback.HasSound ? $" · {OversamplingText.Of(playback.Oversample)}" : "";
+        var sound = playback.HasSound ? $"{OversamplingText.Of(playback.Oversample)}   |   " : "";
 
         if (playback.HasSound && playback.SoundSpeed > 0)
-            sound += string.Create(CultureInfo.InvariantCulture, $" · sound renders at {playback.SoundSpeed:0.00}×");
+            sound = sound[..^"   |   ".Length] + string.Create(CultureInfo.InvariantCulture, $" · sound renders at {playback.SoundSpeed:0.00}×   |   ");
 
         // Only while the window is somebody's: a window behind others is drawn
         // at whatever rate the system leaves it, which says nothing about Flyback.
@@ -162,7 +159,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
 
         status.Text = string.Create(
             CultureInfo.InvariantCulture,
-            $"{pictureOps}/{soundOps} picture/sound ops{sound}   |   {preview.FramesPerSecond:0} fps{renderer}");
+            $"{sound}{preview.FramesPerSecond:0} fps{renderer}");
     }
 
     private static Button Glyph(string name, Control glyph, string tip)

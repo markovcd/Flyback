@@ -47,7 +47,7 @@ internal sealed class PictureWindow : Avalonia.Controls.Window
         Width = 160;
         Height = 90;
 
-        Stats = new StatsOverlay(preview, sound, counted: true, heard);
+        Stats = new StatsOverlay(preview, sound, heard);
 
         picture.Children.Add(preview);
         picture.Children.Add(Stats);

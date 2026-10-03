@@ -4,6 +4,7 @@
 
 ### Editor
 
+- The status bar and the full-screen stats line no longer count picture and sound ops.
 - A module or shut box is lifted off the canvas while it is carried: it shifts a little up and left, casts a soft shadow, and passes over everything else.
 - A wire running back past a shut box goes round the box, not round the modules inside it.
 - In the editor and the viewer, on the desktop and in a browser, a click or tap on the picture plays and pauses.

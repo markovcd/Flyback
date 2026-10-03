@@ -101,7 +101,7 @@ public class StatsOverlayTests : EditorTest
         PressF3(window);
 
         Stats(window).IsEffectivelyVisible.ShouldBeTrue();
-        Stats(window).Said.ShouldContain("picture/sound ops");
+        Stats(window).Said.ShouldNotContain("ops");
     }
 
     [AvaloniaFact]

@@ -32,24 +32,6 @@ public sealed class StatusCountTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void It_counts_the_ops_of_the_picture_and_of_the_sound()
-    {
-        var window = NewMainWindow();
-        window.Show();
-        Settle(window);
-
-        var bar = Service<StatusBar>(window);
-        var count = All<TextBlock>(window).Single(text => text.Name == "statusCount");
-
-        Until(() =>
-        {
-            bar.Update();
-            return count.Text?.Contains(Counted(Editor(window).History.Patch)) == true;
-        })
-            .ShouldBeTrue($"{count.Text} against {Counted(Editor(window).History.Patch)}");
-    }
-
-    [AvaloniaFact]
     public void It_says_how_fast_a_sound_renders_and_counts_no_modules_or_wires()
     {
         var speakers = new Loopback();
@@ -68,10 +50,11 @@ public sealed class StatusCountTests : EditorTest
         })
             .ShouldBeTrue(count.Text);
 
-        (count.Text ?? "").ShouldContain("picture/sound ops · 2× oversampling · sound renders at ");
+        (count.Text ?? "").ShouldContain("2× oversampling · sound renders at ");
 
         (count.Text ?? "").ShouldNotContain("modules");
         (count.Text ?? "").ShouldNotContain("wires");
+        (count.Text ?? "").ShouldNotContain("ops");
     }
 
     [AvaloniaFact]
@@ -124,10 +107,6 @@ public sealed class StatusCountTests : EditorTest
 
         public void Pull() => fill?.Invoke(new float[1024]);
     }
-
-    private static string Counted(Patch patch) =>
-        $"{patch.CompileForVideo(played: true).Program.Ops.Length}/"
-        + $"{patch.CompileForAudio(played: true).Program.Ops.Length} picture/sound ops";
 
     /// <summary>The output the loopback came from, which is what lets the editor start it.</summary>
     private sealed class Plug(IAudioDevice device) : IAudioOutput

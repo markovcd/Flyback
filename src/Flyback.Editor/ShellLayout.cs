@@ -381,7 +381,7 @@ internal sealed class ShellLayout(
         overlay.PauseClicked += transport.TogglePause;
         overlay.MuteClicked += playback.ToggleMute;
         overlay.RewindClicked += playback.RewindPressed;
-        transport.Stats = new StatsOverlay(preview, audio, counted: true, () => playback.HasSound);
+        transport.Stats = new StatsOverlay(preview, audio, () => playback.HasSound);
         row.Seek.Drive(overlay);
         TransportOverlay.Lay(settings.Current.Transport, overlay, knobs.Stage);
         grid.Children.Add(previewBox);

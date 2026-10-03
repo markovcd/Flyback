@@ -45,4 +45,3 @@ Feature: A full-screen picture can say how it is being drawn
     When the picture is given the whole window
     And F3 is pressed
     Then the editor's picture says how many frames a second it draws
-    And the editor's picture counts the picture's ops and the sound's apart
