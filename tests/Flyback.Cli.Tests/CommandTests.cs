@@ -195,6 +195,36 @@ public class CommandTests
         output.ShouldContain("nothing wired in");
     }
 
+    /// <summary>A group is costed by the ops that go with it, and the patch is as it was afterwards.</summary>
+    [Fact]
+    public void A_group_is_costed_by_what_it_adds()
+    {
+        var patch = Preset("Plasma");
+        var inside = patch.Nodes.Where(n => !NodeCatalog.IsSink(n.TypeId)).Take(3).Select(n => n.Id).ToArray();
+        var group = patch.Group(inside).ShouldNotBeNull();
+
+        group.Name = "Heart";
+
+        var (code, output, _) = Run((o, e) => InfoCommand.Run(patch, "plasma.fbk", true, o, e, byGroup: true));
+
+        code.ShouldBe(Exit.Ok);
+
+        var listed = JsonDocument.Parse(output).RootElement.GetProperty("groups").EnumerateArray().Single();
+
+        listed.GetProperty("name").GetString().ShouldBe("Heart");
+        listed.GetProperty("modules").GetInt32().ShouldBe(3);
+        listed.GetProperty("picture").GetInt32().ShouldBeGreaterThan(0);
+        patch.Nodes.ShouldAllBe(n => !inside.Contains(n.Id) || !n.Off);
+    }
+
+    [Fact]
+    public void A_patch_with_no_groups_says_so_under_by_group()
+    {
+        var (_, output, _) = Run((o, e) => InfoCommand.Run(Preset("Empty"), "empty.fbk", false, o, e, byGroup: true));
+
+        output.ShouldContain("groups    none");
+    }
+
     /// <summary>
     /// Said when there is some and left out when there is not, so that a row of
     /// zeroes never stands where a fact should be.

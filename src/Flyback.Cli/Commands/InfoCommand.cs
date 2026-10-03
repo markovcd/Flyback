@@ -27,11 +27,14 @@ internal static class InfoCommand
         TextWriter output,
         TextWriter error,
         ISampleLibrary? samples = null,
-        IImageLibrary? pictures = null)
+        IImageLibrary? pictures = null,
+        bool byGroup = false)
     {
         var picture = Costed(patch.CompileForVideo(samples: samples, pictures: pictures).Program);
         var sound = Costed(patch.CompileForAudio(samples: samples).Program);
         var reaches = patch.Reaches();
+
+        var groups = byGroup ? Groups(patch, picture, sound, samples, pictures) : null;
 
         var requires = (patch.Requires ?? [])
             .Select(r => r.Id)
@@ -52,6 +55,7 @@ internal static class InfoCommand
                     wired = new { picture = reaches.Picture, sound = reaches.Sound },
                     picture,
                     sound,
+                    groups = groups?.Select(g => new { g.Id, g.Name, g.Modules, picture = g.Picture, sound = g.Sound }),
                 },
                 Writing.Json));
 
@@ -66,9 +70,62 @@ internal static class InfoCommand
         Line("picture", Describe(picture, reaches.Picture));
         Line("sound", Describe(sound, reaches.Sound));
 
+        if (groups is not null)
+        {
+            output.WriteLine(groups.Count == 0 ? "  groups    none" : "  groups    ops each adds (picture, sound)");
+
+            foreach (var group in groups)
+                output.WriteLine($"    {group.Name}  {Writing.Count(group.Modules, "module")}  {group.Picture} picture, {group.Sound} sound");
+        }
+
         return Exit.Ok;
 
         void Line(string label, string value) => output.WriteLine($"  {label,-9} {value}");
+    }
+
+    /// <summary>
+    /// Each group's own cost: the ops the program loses with the group's modules switched
+    /// off, so a desk is counted by what it adds and not by everything upstream of it.
+    /// The Output cannot be switched off and is not counted.
+    /// </summary>
+    private static List<GroupCost> Groups(
+        Patch patch,
+        Cost picture,
+        Cost sound,
+        ISampleLibrary? samples,
+        IImageLibrary? pictures)
+    {
+        var costs = new List<GroupCost>();
+
+        foreach (var group in patch.Groups ?? [])
+        {
+            var members = patch.Nodes
+                .Where(n => group.Members.Contains(n.Id) && !NodeCatalog.IsSink(n.TypeId))
+                .ToArray();
+
+            var was = members.Select(n => n.Off).ToArray();
+
+            foreach (var node in members) node.Off = true;
+
+            try
+            {
+                var without = Costed(patch.CompileForVideo(samples: samples, pictures: pictures).Program);
+                var silent = Costed(patch.CompileForAudio(samples: samples).Program);
+
+                costs.Add(new GroupCost(
+                    group.Id,
+                    group.Name ?? $"group of {group.Members.Count}",
+                    group.Members.Count,
+                    picture.Ops - without.Ops,
+                    sound.Ops - silent.Ops));
+            }
+            finally
+            {
+                for (var i = 0; i < members.Length; i++) members[i].Off = was[i];
+            }
+        }
+
+        return costs;
     }
 
     /// <summary>A length the patch sets, or the default and what the viewers make of a patch with none.</summary>

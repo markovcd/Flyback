@@ -1214,9 +1214,14 @@ internal static class Program
             Description = "List what --preset would accept, and stop.",
         };
 
+        var byGroup = new Option<bool>("--by-group")
+        {
+            Description = "Also list what each group adds to the picture's and the sound's ops, so what makes a patch heavy is one command.",
+        };
+
         var command = new Command("info", "Say what a patch is made of and what each half of it costs.")
         {
-            patch, preset, presets, json,
+            patch, preset, presets, byGroup, json,
         };
 
         command.SetAction(result =>
@@ -1261,7 +1266,7 @@ internal static class Program
 
             return opened is not { } found
                 ? Exit.Failed
-                : InfoCommand.Run(found.Patch, name, result.GetValue(json), output, error, found.Samples, found.Pictures);
+                : InfoCommand.Run(found.Patch, name, result.GetValue(json), output, error, found.Samples, found.Pictures, result.GetValue(byGroup));
         });
 
         return command;
