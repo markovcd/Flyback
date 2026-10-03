@@ -73,6 +73,9 @@ internal sealed class Inspector
         Spacing = 8,
     };
 
+    /// <summary>The shortcut groups left unfolded, kept across rebuilds so a selection does not shut them.</summary>
+    private readonly HashSet<string> openShortcuts = ["Getting started"];
+
     /// <summary>
     /// The selected block's background, behind everything on the panel and fading
     /// out down it, with the block's mark set large in it.
@@ -220,15 +223,23 @@ internal sealed class Inspector
             panel.Children.Add(BuildPatchAuthor());
             panel.Children.Add(BuildPatchTags());
 
-            panel.Children.Add(new TextBlock
+            if (document.IsAdrift || editor.History.Locked)
             {
-                Text = document.IsAdrift
-                    ? document.IsAdriftBox ? InspectorHelp.AdriftingGroup : InspectorHelp.Adrifting
-                    : editor.History.Locked ? InspectorHelp.Locked(fingers) : InspectorHelp.Canvas(inPage, fingers),
-                TextWrapping = TextWrapping.Wrap,
-                Foreground = Text.Muted,
-                FontSize = Text.Body,
-            });
+                panel.Children.Add(new TextBlock
+                {
+                    Text = document.IsAdrift
+                        ? document.IsAdriftBox ? InspectorHelp.AdriftingGroup : InspectorHelp.Adrifting
+                        : InspectorHelp.Locked(fingers),
+                    TextWrapping = TextWrapping.Wrap,
+                    Foreground = Text.Muted,
+                    FontSize = Text.Body,
+                });
+            }
+            else
+            {
+                panel.Children.Add(ShortcutList.Of(InspectorHelp.Shortcuts(inPage, fingers), openShortcuts));
+            }
+
             return;
         }
 
@@ -1056,7 +1067,8 @@ internal sealed class Inspector
         typed => editor.History.Patch.Describe(typed),
         () => editor.History.Patch.Description,
         BuildPatchDescription,
-        new Thickness(0, 0, 0, 6));
+        new Thickness(0, 0, 0, 6),
+        Text.Heading);
 
     /// <summary>Who made the patch, under its description, edited the same way.</summary>
     private Control BuildPatchAuthor() => BuildPatchLine(
@@ -1104,7 +1116,8 @@ internal sealed class Inspector
         Action<string?> set,
         Func<string?> current,
         Func<Control> rebuild,
-        Thickness margin)
+        Thickness margin,
+        double size = Text.Body)
     {
         var ink = new SolidColorBrush(Colors.Label);
 
@@ -1113,7 +1126,7 @@ internal sealed class Inspector
             Name = name,
             Text = shown ?? asking,
             TextWrapping = TextWrapping.Wrap,
-            FontSize = Text.Body,
+            FontSize = size,
             FontStyle = shown is null ? FontStyle.Italic : FontStyle.Normal,
             Foreground = shown is null ? Text.Muted : ink,
             Background = Brushes.Transparent,

@@ -39,7 +39,7 @@ Feature: A hand on a touch screen patches without a mouse or keys
     Given the patch is open in the editor
     When a finger taps bare canvas
     Then the module panel says "Hold a finger on bare canvas"
-    And the module panel says "Open and Save are on the toolbar."
+    And the module panel says "Open and Save"
     And the module panel does not say "Ctrl+O"
 
   Scenario: A finger copies and pastes a module with buttons, with no keys

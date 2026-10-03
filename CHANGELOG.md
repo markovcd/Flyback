@@ -9,6 +9,7 @@
 - In the editor and the viewer, on the desktop and in a browser, a click or tap on the picture plays and pauses.
 - On a phone, a patch's sound in the web editor and viewer stops other music and is not muted by the ringer switch (Safari; other browsers play as before).
 - On Android, the web viewer's sound plays through an audio element, so other playback stops.
+- With nothing selected, the inspector lists the canvas's gestures in folding groups, each row with its keys drawn as caps.
 
 ## 0.7.0 — 2026-10-02
 

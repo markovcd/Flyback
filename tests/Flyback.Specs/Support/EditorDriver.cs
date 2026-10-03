@@ -436,6 +436,16 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
         string.Join(" ", Named<StackPanel>(open, "inspector")
             .GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text)));
 
+    /// <summary>Whether the shortcut group the empty panel calls <paramref name="title"/> shows its rows.</summary>
+    public bool ShortcutGroupOpen(string title) => ReadWindow(open =>
+        Named<Button>(open, "shortcuts:" + title).Parent is Panel { Children: [_, { IsVisible: true }] });
+
+    /// <summary>Presses the heading of the shortcut group the empty panel calls <paramref name="title"/>.</summary>
+    public void PressShortcutGroup(string title) =>
+        DoWindow((open, _) =>
+            Named<Button>(open, "shortcuts:" + title)
+                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
+
     /// <summary>How wide the report line at the foot of the window is laid out, beside the counts as they stand now.</summary>
     public double ReportWidth => ReadWindow(open =>
     {
