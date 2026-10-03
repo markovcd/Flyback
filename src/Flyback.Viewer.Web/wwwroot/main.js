@@ -285,7 +285,7 @@ function tooSlow(speed) {
   warning = `This patch's sound renders at ${speed.toFixed(2)}× real time here, so the picture plays alone. Press the speaker to hear it anyway.`;
 }
 
-/** An oversampling factor as the status line says it; 1× is none. */
+/** An oversampling factor as the console says it; 1× is none. */
 function oversampling(factor) {
   return factor > 1 ? `${factor}× oversampling` : 'no oversampling';
 }
@@ -302,8 +302,7 @@ function follow(was) {
     tooSlow(soundStatus.speed ?? 0);
     play();
   } else if (soundStatus.oversample < was.oversample) {
-    warning = `The sound kept falling behind at ${oversampling(was.oversample)}, so it is worked out with ${oversampling(soundStatus.oversample)} now.`;
-    paint();
+    console.warn(`The sound kept falling behind at ${oversampling(was.oversample)}, so it is worked out with ${oversampling(soundStatus.oversample)} now.`);
   }
 }
 
@@ -999,8 +998,6 @@ function paint() {
   const parts = [];
 
   if (ready) {
-    if (said.hasSound && said.oversample) parts.push(oversampling(said.oversample));
-    if (said.hasSound && said.speed > 0) parts.push(`sound renders at ${said.speed.toFixed(2)}×`);
     if (said.linking) parts.push('building the shader…');
   }
 
