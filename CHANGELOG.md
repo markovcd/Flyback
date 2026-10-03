@@ -12,6 +12,7 @@
 - With nothing selected, the inspector lists the canvas's gestures in folding groups, each row with its keys drawn as caps.
 - With nothing selected, the inspector is headed with the patch's name. Its tags are chips with a cross to take one off, and a dashed one that opens a box for one more.
 - Who made the patch is a card with an initial, a pencil and a cross, and a button to say who when nobody is credited.
+- A click on the patch's description opens a box with Save and Cancel, the text staying where it was.
 - A paused picture redraws at the new size when the editor goes full screen or comes back.
 
 ## 0.7.0 — 2026-10-02

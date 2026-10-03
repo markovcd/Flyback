@@ -2,6 +2,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Controls.Presenters;
+using Avalonia.VisualTree;
 using Avalonia.Input;
 using AvaloniaEdit;
 using Flyback.Editor.Inspect;
@@ -12,8 +14,8 @@ using Shouldly;
 namespace Flyback.Editor.Tests.Ui;
 
 /// <summary>
-/// With nothing selected the panel shows what the patch is for, and a double-click
-/// there edits it the way one on a module's name renames the module.
+/// With nothing selected the panel shows what the patch is for, and a click there
+/// opens a box with Save and Cancel.
 /// </summary>
 public class PatchDescriptionTests : EditorTest
 {
@@ -34,27 +36,24 @@ public class PatchDescriptionTests : EditorTest
         All<TextBlock>(window).Single(t => t.Name == "patch-description");
 
     private static TextBox? Box(MainWindow window) =>
-        All<TextBox>(window).FirstOrDefault(t => t.Classes.Contains(ModulePlate.NameBoxClass));
+        All<TextBox>(window).FirstOrDefault(t => t.Name == "patch-description-box");
 
-    private static void DoubleClickDescription(MainWindow window)
+    private static void Click(MainWindow window, string name)
     {
-        var description = Description(window);
-
-        var at = description.TranslatePoint(new Point(10, description.Bounds.Height / 2), window)
-            ?? throw new InvalidOperationException("the description is not in this window");
-
-        window.MouseDown(at, MouseButton.Left);
-        window.MouseUp(at, MouseButton.Left);
-        window.MouseDown(at, MouseButton.Left);
-        window.MouseUp(at, MouseButton.Left);
+        All<Button>(window).Single(b => b.Name == name).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Settle(window);
+    }
+
+    private static TextBox StartEditing(MainWindow window)
+    {
+        Click(window, "patch-description-button");
+
+        return Box(window).ShouldNotBeNull("the description should have become a box");
     }
 
     private static void Describe(MainWindow window, string text)
     {
-        DoubleClickDescription(window);
-
-        var box = Box(window).ShouldNotBeNull("the description should have become a box");
+        var box = StartEditing(window);
         box.Text = text;
         box.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
         Settle(window);
@@ -65,7 +64,7 @@ public class PatchDescriptionTests : EditorTest
     {
         var window = Open();
 
-        Description(window).Text.ShouldBe("Double-click to say what this patch is for.");
+        Description(window).Text.ShouldBe("Add a description");
     }
 
     [AvaloniaFact]
@@ -78,6 +77,65 @@ public class PatchDescriptionTests : EditorTest
         Editor(window).History.Patch.Description.ShouldBe("A green hum.");
         Description(window).Text.ShouldBe("A green hum.");
         Box(window).ShouldBeNull();
+    }
+
+    [AvaloniaFact]
+    public void Save_keeps_what_was_typed_and_Cancel_and_Escape_drop_it()
+    {
+        var window = Open();
+
+        var box = StartEditing(window);
+        box.Text = "A green hum.";
+        Click(window, "patch-description-save");
+        Editor(window).History.Patch.Description.ShouldBe("A green hum.");
+
+        box = StartEditing(window);
+        box.Text = "Something else.";
+        Click(window, "patch-description-cancel");
+        Editor(window).History.Patch.Description.ShouldBe("A green hum.");
+        Box(window).ShouldBeNull();
+
+        box = StartEditing(window);
+        box.Text = "Something else.";
+        box.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Escape });
+        Settle(window);
+        Editor(window).History.Patch.Description.ShouldBe("A green hum.");
+    }
+
+    [AvaloniaFact]
+    public void The_text_stays_where_it_was_when_the_box_opens()
+    {
+        var window = Open();
+
+        Describe(window, "Three drifting sine fields summed and read through a cosine palette, the hello world of video synths.");
+
+        var shown = Description(window);
+        var before = shown.TranslatePoint(new Point(0, 0), window)!.Value;
+        var lines = shown.Bounds.Height;
+        var width = All<Button>(window).Single(b => b.Name == "patch-description-button").Bounds.Width - 20;
+
+        var box = StartEditing(window);
+        var presenter = box.GetVisualDescendants().OfType<TextPresenter>().Single();
+        var after = presenter.TranslatePoint(new Point(0, 0), window)!.Value;
+
+        after.X.ShouldBe(before.X, 0.5);
+        after.Y.ShouldBe(before.Y, 0.5);
+        presenter.Bounds.Width.ShouldBe(width, 0.5);
+        presenter.Bounds.Height.ShouldBeGreaterThanOrEqualTo(lines - 0.5);
+    }
+
+    [AvaloniaFact]
+    public void Leaving_the_box_keeps_what_was_typed()
+    {
+        var window = Open();
+
+        var box = StartEditing(window);
+        box.Text = "A green hum.";
+
+        Editor(window).Selection.Select(Editor(window).History.Patch.Nodes[0].Id);
+        Settle(window);
+
+        Editor(window).History.Patch.Description.ShouldBe("A green hum.");
     }
 
     [AvaloniaFact]

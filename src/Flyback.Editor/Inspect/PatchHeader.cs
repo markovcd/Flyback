@@ -22,6 +22,8 @@ namespace Flyback.Editor.Inspect;
 /// </remarks>
 internal sealed class PatchHeader(NodeEditor editor, Document document, PatchFiles files)
 {
+    private PatchDescription? description;
+
     /// <summary>What the heading says of a patch with no file yet.</summary>
     internal const string Unnamed = "Patch";
 
@@ -52,18 +54,7 @@ internal sealed class PatchHeader(NodeEditor editor, Document document, PatchFil
 
     private Patch Patch => editor.History.Patch;
 
-    private TextBlock Description() => Line(
-        "patch-description",
-        Patch.Description,
-        Patch.Description,
-        "Double-click to say what this patch is for.",
-        "What is this patch for?",
-        Patch.DescriptionLimit,
-        typed => Patch.Describe(typed),
-        () => Patch.Description,
-        Description,
-        new Thickness(0, 0, 0, 6),
-        Text.Heading);
+    private Control Description() => (description ??= new(() => editor.History.Patch, document, Finished)).Shown();
 
     /// <summary>
     /// Who made the patch: a dashed button to say, a card once it is said, and a box
@@ -440,63 +431,7 @@ internal sealed class PatchHeader(NodeEditor editor, Document document, PatchFil
         return new Grid { Margin = margin, Children = { outline, content } };
     }
 
-    /// <summary>
-    /// One thing said about the whole patch, which a double-click turns into a box
-    /// to write it in.
-    /// </summary>
-    /// <param name="shown">What the panel shows, and null where nothing is said.</param>
-    /// <param name="held">What the box opens holding.</param>
-    /// <param name="asking">What the panel shows in its place where nothing is said.</param>
-    private TextBlock Line(
-        string name,
-        string? shown,
-        string? held,
-        string asking,
-        string fallback,
-        int limit,
-        Action<string?> set,
-        Func<string?> current,
-        Func<Control> rebuild,
-        Thickness margin,
-        double size = Text.Body)
-    {
-        var ink = new SolidColorBrush(Colors.Label);
-
-        var line = new TextBlock
-        {
-            Name = name,
-            Text = shown ?? asking,
-            TextWrapping = TextWrapping.Wrap,
-            FontSize = size,
-            FontStyle = shown is null ? FontStyle.Italic : FontStyle.Normal,
-            Foreground = shown is null ? Text.Muted : ink,
-            Background = Brushes.Transparent,
-            Margin = margin,
-        };
-
-        if (document.IsAdrift)
-        {
-            line.IsVisible = shown is not null;
-            return line;
-        }
-
-        if (shown is not null) ToolTip.SetTip(line, "Double-click to change it. Empty the box to take it away.");
-
-        line.Cursor = NameBox.Renaming;
-
-        line.DoubleTapped += (_, e) =>
-        {
-            e.Handled = true;
-            NameBox.Open(line, ink, held, fallback, limit, set, current, rebuild, Finished, prose: true);
-        };
-
-        return line;
-    }
-
-    /// <summary>
-    /// Finished as the box closes: Enter takes the box away before any key comes up
-    /// in the panel to say so.
-    /// </summary>
+    /// <summary>Finished as a box closes, which the panel is told of only after Enter has taken the box away.</summary>
     private void Finished()
     {
         document.Relaid();
