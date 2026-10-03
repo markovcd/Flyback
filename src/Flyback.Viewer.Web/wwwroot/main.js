@@ -282,7 +282,7 @@ let insisted = false;
 
 function tooSlow(speed) {
   soundAllowed = false;
-  warning = `This patch's sound renders at ${speed.toFixed(2)}× real time here, so the picture plays alone. Press the speaker to hear it anyway.`;
+  console.warn(`This patch's sound renders at ${speed.toFixed(2)}× real time here, so the picture plays alone. Press the speaker to hear it anyway.`);
 }
 
 /** An oversampling factor as the console says it; 1× is none. */
@@ -314,7 +314,7 @@ function toggleMute() {
     stop();
     soundAllowed = true;
     insisted = true;
-    warning = `${warning ?? ''} Sound on anyway; expect it to stutter.`.trim();
+    console.warn('Sound on anyway; expect it to stutter.');
     if (was) play();
   } else {
     muted = !muted;

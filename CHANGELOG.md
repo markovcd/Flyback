@@ -5,7 +5,7 @@
 ### Editor
 
 - The status bar and the full-screen stats line no longer count picture and sound ops.
-- The web viewer no longer says the sound's oversampling or how many times real time it renders at, and a sound that keeps falling behind is reported in the browser's console, not on the page.
+- The web viewer no longer says the sound's oversampling or how many times real time it renders at, and the notices that its sound keeps falling behind, is too slow to keep up or is turned on anyway go to the browser's console, not the page.
 - A module or shut box is lifted off the canvas while it is carried: it shifts a little up and left, casts a soft shadow, and passes over everything else.
 - A wire running back past a shut box goes round the box, not round the modules inside it.
 - In the editor and the viewer, on the desktop and in a browser, a click or tap on the picture plays and pauses.
