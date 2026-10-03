@@ -195,6 +195,27 @@ public class PatchCreditsTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void The_box_for_a_tag_stands_where_the_chip_stood_at_its_size_and_in_its_color()
+    {
+        var window = Open();
+
+        TypeTags(window, "drone");
+
+        var slot = (Control)All<Button>(window).Single(b => b.Name == "patch-tag-add").Parent!;
+        var before = slot.TranslatePoint(new Point(0, 0), window)!.Value;
+        var size = slot.Bounds.Size;
+        var drone = All<Border>(window).First(b => b.Child is StackPanel);
+
+        var box = NewTagBox(window);
+        var after = box.TranslatePoint(new Point(0, 0), window)!.Value;
+
+        after.ShouldBe(before);
+        box.Bounds.Height.ShouldBe(size.Height);
+        box.Bounds.Width.ShouldBeGreaterThanOrEqualTo(size.Width);
+        ((Avalonia.Media.ISolidColorBrush)box.Background!).Color.ShouldBe(((Avalonia.Media.ISolidColorBrush)drone.Background!).Color);
+    }
+
+    [AvaloniaFact]
     public void Escape_drops_what_was_typed_for_a_tag()
     {
         var window = Open();

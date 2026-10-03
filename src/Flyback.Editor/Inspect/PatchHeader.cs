@@ -151,20 +151,28 @@ internal sealed class PatchHeader(NodeEditor editor, Document document, PatchFil
         var at = chips.Children.IndexOf(slot);
         if (at < 0) return;
 
+        // The size and place of the chip it replaces, growing only if the tag is longer.
+        var chip = new SolidColorBrush(Colors.Toolbar);
+
         var box = new TextBox
         {
             Name = "patch-tag-new",
             PlaceholderText = "New tag",
             MaxLength = Patch.TagLimit,
-            Width = 120,
+            MinWidth = slot.Bounds.Width,
             MinHeight = 0,
-            Height = 30,
+            Height = slot.Bounds.Height,
             Padding = new Thickness(12, 0),
-            Margin = new Thickness(0, 0, 6, 6),
+            Margin = slot.Margin,
             CornerRadius = new CornerRadius(14),
             FontSize = Text.Body,
             VerticalContentAlignment = VerticalAlignment.Center,
+            Background = chip,
         };
+
+        box.Resources["TextControlBackground"] = chip;
+        box.Resources["TextControlBackgroundPointerOver"] = chip;
+        box.Resources["TextControlBackgroundFocused"] = chip;
 
         var closed = false;
 
