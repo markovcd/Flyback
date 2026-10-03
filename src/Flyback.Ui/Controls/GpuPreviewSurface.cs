@@ -235,6 +235,13 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IGpuPreview
         }
     }
 
+    /// <summary>A new size has something to draw at it, playing or not.</summary>
+    protected override void OnSizeChanged(SizeChangedEventArgs e)
+    {
+        base.OnSizeChanged(e);
+        Refresh();
+    }
+
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
