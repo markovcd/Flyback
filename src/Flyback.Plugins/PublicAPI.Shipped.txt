@@ -690,3 +690,13 @@ virtual Flyback.Plugins.Settings.SettingField.PrintMembers(System.Text.StringBui
 ~override Flyback.Plugins.Settings.SettingOption.Equals(object obj) -> bool
 ~override Flyback.Plugins.Settings.SettingOption.ToString() -> string
 Flyback.Plugins.Audio.IAudioDevice.Latency.get -> System.TimeSpan
+Flyback.Plugins.Assist.ExamplePrompt
+Flyback.Plugins.Assist.ExamplePrompt.ExamplePrompt(string! Name, string! Prompt, string! Description) -> void
+Flyback.Plugins.Assist.ExamplePrompt.Name.get -> string!
+Flyback.Plugins.Assist.ExamplePrompt.Name.init -> void
+Flyback.Plugins.Assist.ExamplePrompt.Prompt.get -> string!
+Flyback.Plugins.Assist.ExamplePrompt.Prompt.init -> void
+Flyback.Plugins.Assist.ExamplePrompt.Description.get -> string!
+Flyback.Plugins.Assist.ExamplePrompt.Description.init -> void
+Flyback.Plugins.Assist.IExamplePrompts
+Flyback.Plugins.Assist.IExamplePrompts.Examples(string? model = null) -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.ExamplePrompt!>!

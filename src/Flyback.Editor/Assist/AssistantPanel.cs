@@ -19,6 +19,7 @@ using Flyback.Editor.Statistics;
 using Flyback.Core;
 using Flyback.Assist;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using Colors = Flyback.Ui.Controls.Colors;
 
@@ -78,6 +79,28 @@ internal sealed class AssistantPanel : UserControl
         // right-hand side, so every other line still has the box to itself.
         Padding = new Thickness(8, 6, 8, 34),
     };
+
+    /// <summary>
+    /// Example prompts from the chosen provider, if any.
+    /// </summary>
+    private readonly ComboBox examples = new()
+    {
+        FontSize = Text.Small,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+        IsEnabled = false,
+        Name = "examples",
+    };
+
+    static AssistantPanel()
+    {
+        // Register the data template for example prompts in the dropdown.
+        ExamplePromptSelector = new FuncDataTemplate<ExamplePrompt?>((prompt, _) =>
+            prompt is null
+                ? new TextBlock { Text = "Choose an example…", Foreground = Text.Muted }
+                : new TextBlock { Text = prompt.Name, ToolTip = prompt.Description });
+    }
+
+    private static readonly FuncDataTemplate<ExamplePrompt?> ExamplePromptSelector;
 
     private readonly TranscriptView transcript = new();
 
@@ -392,8 +415,14 @@ internal sealed class AssistantPanel : UserControl
         providerBox.ItemsSource = new[] { NoProvider }.Concat(plugins.Assistants.Select(a => a.Name)).ToList();
 
         ShowProviderForm();
+        ShowExamples();
 
-        form.Changed += (_, _) => Refresh();
+        form.Changed += (_, _) =>
+        {
+            // A model change can change what examples apply.
+            ShowExamples();
+            Refresh();
+        };
 
         Refresh();
     }
@@ -523,6 +552,18 @@ internal sealed class AssistantPanel : UserControl
 
         var body = new DockPanel { Margin = new Thickness(12, 10) };
         DockPanel.SetDock(working, Dock.Top);
+
+        // Example prompts dropdown above the instruction box.
+        var prompts = new StackPanel { Spacing = 4 };
+        prompts.Children.Add(new TextBlock
+        {
+            Text = "Examples",
+            FontSize = Text.Small,
+            Foreground = Text.Muted,
+        });
+        examples.ItemTemplate = ExamplePromptSelector;
+        prompts.Children.Add(examples);
+
         // The button floats over the corner of the box rather than sitting
         // beside it, so the two are one thing to lay out.
         var writing = new Panel();
@@ -532,11 +573,15 @@ internal sealed class AssistantPanel : UserControl
 
         fresh.Click += (_, _) => StartOver();
 
-        DockPanel.SetDock(writing, Dock.Bottom);
+        var input = new StackPanel { Spacing = 8 };
+        input.Children.Add(prompts);
+        input.Children.Add(writing);
+
+        DockPanel.SetDock(input, Dock.Bottom);
         DockPanel.SetDock(footer, Dock.Bottom);
         body.Children.Add(working);
         body.Children.Add(footer);
-        body.Children.Add(writing);
+        body.Children.Add(input);
         body.Children.Add(transcript);
 
         // No height of its own. What this is worth is entirely a matter of what
@@ -605,7 +650,17 @@ internal sealed class AssistantPanel : UserControl
             // over. A setting means whatever the provider that declared it says
             // it means, and the two need not agree about anything but the name.
             ShowProviderForm();
+            ShowExamples();
             Refresh();
+        };
+
+        examples.SelectionChanged += (_, _) =>
+        {
+            if (examples.SelectedItem is ExamplePrompt chosen)
+            {
+                instruction.Text = chosen.Prompt;
+                examples.SelectedIndex = -1;
+            }
         };
 
         // No padding of its own: it is one section of the settings window, which
@@ -766,6 +821,34 @@ internal sealed class AssistantPanel : UserControl
         form.Show(
             chosenAssistant.Value is null ? null : chosenAssistant.Value.Form, 
             settingsRepository.Current.Of(chosenAssistant.Value?.Id ?? string.Empty));
+    }
+
+    /// <summary>
+    /// Fills the examples dropdown from the chosen provider, if it has any.
+    /// </summary>
+    private void ShowExamples()
+    {
+        var assistant = chosenAssistant.Value;
+        var model = assistant is not null
+            ? settingsRepository.Current.Of(assistant.Id).Text(AssistantSchema.ModelKey, string.Empty)
+            : null;
+
+        var prompts = assistant is IExamplePrompts examples && !string.IsNullOrEmpty(model)
+            ? examples.Examples(model)
+            : [];
+
+        if (prompts.Count == 0)
+        {
+            this.examples.ItemsSource = null;
+            this.examples.IsEnabled = false;
+            this.examples.IsVisible = false;
+            return;
+        }
+
+        this.examples.ItemsSource = new[] { (ExamplePrompt?)null }.Concat(prompts).ToList();
+        this.examples.SelectedIndex = 0;
+        this.examples.IsEnabled = true;
+        this.examples.IsVisible = true;
     }
 
     /// <summary>
