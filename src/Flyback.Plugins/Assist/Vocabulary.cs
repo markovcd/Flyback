@@ -22,6 +22,9 @@ internal static class Vocabulary
     /// <summary>Lays the computer keyboard out, which is the patch's and no module's.</summary>
     public const string SetKeyboard = "set_keyboard";
 
+    /// <summary>Says how long the patch plays for, which is the patch's and no module's.</summary>
+    public const string SetLength = "set_length";
+
     /// <summary>
     /// The tool that writes the extra filed under <paramref name="key"/>.
     /// </summary>

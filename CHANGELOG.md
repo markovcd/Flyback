@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The assistant can set how long a patch plays for.
+
 - The preset gallery narrows by heading, by sound or picture and by topic from a column on its left, and a click chooses a card and shows it larger on the right, where Use this preset, Enter or a double-click opens it.
 
 - With an assistant set up, the preset gallery has a card to type an idea in: Expand has the assistant write it out as a detailed brief, and Start opens an empty patch and sends it.

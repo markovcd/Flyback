@@ -985,6 +985,36 @@ public class PatchWorkbenchTests
         (await Call(Bench(), "set_keyboard", arguments)).Ok.ShouldBeFalse();
     }
 
+    /// <summary>
+    /// The length is the patch's rather than a module's, so it takes no handle, and
+    /// describe_patch reads it back in the language's own statement.
+    /// </summary>
+    [Fact]
+    public async Task The_patch_length_is_set_for_the_whole_patch()
+    {
+        var bench = Bench();
+
+        var set = await Call(bench, "set_length", """{"seconds":150.5}""");
+
+        set.Ok.ShouldBeTrue(set.Text);
+        set.Text.ShouldContain("2:30.50");
+        bench.Snapshot().Length.ShouldBe(150.5);
+        bench.Described.ShouldContain("length 2:30.50");
+    }
+
+    [Theory]
+    [InlineData("""{}""")]
+    [InlineData("""{"seconds":"90"}""")]
+    [InlineData("""{"seconds":0.01}""")]
+    [InlineData("""{"seconds":90000}""")]
+    public async Task A_length_that_is_missing_or_outside_what_a_patch_keeps_is_refused(string arguments)
+    {
+        var bench = Bench();
+
+        (await Call(bench, "set_length", arguments)).Ok.ShouldBeFalse();
+        bench.Snapshot().Length.ShouldBeNull();
+    }
+
     // --- a quantiser's scale --------------------------------------------------
 
     /// <summary>

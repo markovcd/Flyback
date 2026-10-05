@@ -118,6 +118,9 @@ internal static class Handbook
           computer keyboard out for a MIDI In in that scale, from its first
           note. The notes are one of an Auto Chord's scales. Leave it out for
           a piano.
+        - **`length 2:30.50`** or **`length 90s`**, on its own line, says how long
+          the patch plays for, from a tenth of a second to a day. `set_length`
+          does it to a patch that exists.
         - **`#` starts a comment**, to the end of the line. `//` is refused.
         - **`group "Bass" { … }`** draws the modules its statements place as one
           box, shut. Blocks with the same name are one group. A group holds
@@ -145,7 +148,7 @@ internal static class Handbook
         Nothing is adopted unless all of it reads, and a mistake comes back
         with its line and column and a code in brackets, such as
         `[pipe-lands-nowhere]` or `[bound-twice]`.
-        `keyboard`, `description`, `author` and `tags` each go once in a patch.
+        `keyboard`, `length`, `description`, `author` and `tags` each go once in a patch.
 
         ## Putting a patch together
 

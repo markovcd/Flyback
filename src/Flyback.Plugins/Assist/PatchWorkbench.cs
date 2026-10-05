@@ -442,6 +442,21 @@ public sealed partial class PatchWorkbench
         return Fine($"laid the computer keyboard out as {PatchPrinter.Keyboard(working.Keyboard)}. {Issues()}");
     }
 
+    /// <summary>How long the patch plays for, which is the patch's rather than any module's, so it takes no handle.</summary>
+    private ToolOutcome SetLength(JsonElement arguments)
+    {
+        if (!arguments.TryGetProperty("seconds", out var number) || number.ValueKind != JsonValueKind.Number
+            || !number.TryGetDouble(out var seconds) || !double.IsFinite(seconds)
+            || seconds is < PatchLength.Shortest or > PatchLength.Longest)
+            return ToolOutcome.Refused(
+                $"'seconds' is required: a number from {PatchLength.Shortest} to {PatchLength.Longest:0} (a day).");
+
+        working.Length = seconds;
+        Edits++;
+
+        return Fine($"the patch plays for {PatchLength.Say(working.Lasts)}. {Issues()}");
+    }
+
     /// <summary>
     /// Replaces a quantiser's scale outright, for the reason a tune is replaced
     /// outright: a set sent whole cannot come out in the wrong order or half
@@ -1235,6 +1250,20 @@ public sealed partial class PatchWorkbench
                     "scale": { "type": "string", "enum": [{{string.Join(", ", Chords.Scales.Select(scale => $"\"{scale.Id}\""))}}] }
                   },
                   "required": ["layout"]
+                }
+                """),
+
+            Does(Vocabulary.SetLength, SetLength,
+                "Says how long the patch plays for, in 'seconds', from a tenth of a second to a day. "
+                + "It is the end of the seek bar, where the patch stops or loops, and what a module "
+                + "reading t.length and t.progress measures against. A patch that never says plays for "
+                + "three minutes in the editor. One length for the whole patch.",
+                """
+                {
+                  "properties": {
+                    "seconds": { "type": "number", "minimum": 0.1, "maximum": 86400 }
+                  },
+                  "required": ["seconds"]
                 }
                 """),
 
