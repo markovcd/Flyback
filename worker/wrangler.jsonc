@@ -35,13 +35,12 @@
   },
 
   "env": {
-    // Filled in from deploy/cloudflare/README.md: the database's id and the hostname.
     "staging": {
       "name": "flyback-site-staging",
       "workers_dev": false,
       "routes": [{ "pattern": "flyback-staging.nasik2137.uk", "custom_domain": true }],
       "d1_databases": [
-        { "binding": "DB", "database_name": "flyback-site-staging", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+        { "binding": "DB", "database_name": "flyback-site-staging", "database_id": "fe116ff2-e3af-41d3-8141-c7059ece1bb0", "migrations_dir": "migrations" }
       ],
       "r2_buckets": [{ "binding": "FILES", "bucket_name": "flyback-site-staging" }],
       "triggers": { "crons": ["17 * * * *"] },
