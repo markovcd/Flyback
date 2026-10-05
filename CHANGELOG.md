@@ -30,6 +30,8 @@
 
 - `flyback-viewer --trace <file>` writes every stall over 100 ms into the file: the UI thread held up, a picture's frame, the sound callback, and the step it was in.
 
+- `flyback --trace <file>` does the same in the editor, naming a recompile, a plugin install or a bundle save when one held the UI thread up.
+
 - `flyback-cli render --mute <group>` switches a named group off for the run, and `--solo <group>` plays it alone with what feeds it and carries it to the Output.
 
 - `flyback-cli info --by-group` lists the picture and sound ops each group adds, with `--json` for a script.

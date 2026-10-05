@@ -7,6 +7,7 @@ using Flyback.Editor.Statistics;
 using Flyback.Editor.Desktop.Updates;
 using Flyback.Editor.Updates;
 using Flyback.Editor.Windows;
+using Flyback.Ui;
 using Flyback.Core;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +25,13 @@ public sealed class FlybackApp : Application
             throw new NotSupportedException("Flyback app is not initialized.");
         }
         
+        if (StallTrace.On)
+        {
+            var watch = new StallWatch();
+
+            desktop.Exit += (_, _) => watch.Dispose();
+        }
+
         // Before the window, because the window says what it started as as
         // soon as it has asked for a sound device (ADR-0094).
         var usage = Usage.Start(

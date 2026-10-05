@@ -62,6 +62,9 @@ internal static class Program
         // Taken out first: its id is a plain argument, and the plain argument is what
         // a file to open is.
         var (shared, rest) = Restart.Shared(args);
+        var (trace, withoutTrace) = TraceFlag.Taken(rest);
+
+        rest = withoutTrace;
 
         Startup.Load(
             rest.FirstOrDefault(a => !a.StartsWith('-')),
@@ -69,9 +72,30 @@ internal static class Program
             updates: updates,
             shared: shared);
 
-        return BuildAvaloniaApp()
-            .UseDriver(OutputSettings.Load(SettingsFile.Path).Driver)
-            .StartWithClassicDesktopLifetime(args);
+        if (trace is not null)
+        {
+            try
+            {
+                StallTrace.Open(trace);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {TraceFlag.Name} {trace}: {ex.Message}");
+
+                return 1;
+            }
+        }
+
+        try
+        {
+            return BuildAvaloniaApp()
+                .UseDriver(OutputSettings.Load(SettingsFile.Path).Driver)
+                .StartWithClassicDesktopLifetime(TraceFlag.Taken(args).Without);
+        }
+        finally
+        {
+            StallTrace.Close();
+        }
     }
 
     /// <remarks>

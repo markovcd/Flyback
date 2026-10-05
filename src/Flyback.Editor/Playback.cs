@@ -268,6 +268,8 @@ internal sealed class Playback
     /// </param>
     public void Recompile(bool opened = false)
     {
+        using var traced = StallTrace.Step("Recompile");
+
         var took = Stopwatch.StartNew();
         var (samples, images) = (sounds, pictures);
         var probe = Probed;
