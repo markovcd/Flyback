@@ -199,3 +199,54 @@ takes 50 s for one second of sound, which is usable from a script but not under 
   measured.
 - Reverse mode comes with drag (step 4), where one goal meets hundreds of knobs, and for
   sound slopes over many knobs, which then needs a tape through time.
+
+## Trial, 2026-10-05: one gesture on Machine Room
+
+Run on the preset site's default `Machine Room.fbk`: 304 modules and 24 panel knobs that drive
+both halves. The tool was `flyback-cli spike-grab`, on the spike branch at `015a1cb1`.
+
+The gesture asked for the middle of the frame to be 0.03 brighter at 30 s and 60 s, while
+holding the 63 Hz, 125 Hz, 2 kHz and 8 kHz octaves within 0.75 dB. Only the panel knobs
+could move, and `Tempo` was left out.
+
+The answer was one knob: `Echo` from 0.25 to 0.55. That takes the trails' persistence from
+0.80 to 0.86, and the echo's feedback from 0.33 to 0.54.
+
+It was checked on 62 s clips from `flyback-cli render`, measuring 2 s around each moment. The
+light went from 0.232 to 0.261 at both moments, and every octave stayed within ±0.4 dB. The
+modified file was not committed.
+
+**A quantizer at the end blinds every knob.** Exact slopes saw only the vignette. `posterise`
+floors the whole picture and the bitcrusher floors the whole mix, so every knob upstream had
+zero slope. The footprint can't help where a floor's input is flat across the frame.
+
+A dithered floor gave every panel knob a slope on both sides. Here a floor moves one for one
+with its input, as it does on average for an input that could sit anywhere between two
+steps. It belongs in step 1 beside the footprint rule.
+
+**The slopes steer and a real run judges.** Slopes taken against the frame before held still
+were 1.5–2× short of a 30-frame move through the trails and slews. `Crush` and `Resonance`
+had the wrong sign. Each step went where the slopes pointed, and was kept only if 30 real
+frames and a real render of the octaves agreed it helped.
+
+**Min-norm spreads a move thin.** The first answer turned 14 knobs a little. In the real
+render, at 60 s, it took 2–4 dB off everything from 1 kHz up. The solver missed this because
+it judged 0.17 s windows that started with a second of memory.
+
+A second pass with only the knobs that carried the first answer gave the one-knob result. A
+person wants the fewest knobs, so drag needs a sparse step: an L1 term, or this prune and
+solve again. Sound goals need windows as long as a person listens, here 0.68 s with 2 s of
+memory behind them.
+
+**Holding the octaves is not holding the sound.** The longer echo tails are plain to hear in
+a spectrum that did not move. A sound keep needs a measure of time as well as of level, such
+as decay or onset.
+
+**The picture needs the sound running.** Meters read the speakers' traces, and the spike's
+picture never filled them, so it solved on a cyan tunnel where the real one is amber. The
+light gesture transferred anyway, but a hue gesture would not have. Step 3 runs both halves
+together, as the editor does.
+
+**A still is not a check.** `render --at` draws one frame with no history, so the trails,
+planes and meters are missing. The check had to render clips and measure frames pulled from
+them.
