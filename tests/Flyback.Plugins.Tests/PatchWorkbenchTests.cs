@@ -1703,18 +1703,19 @@ public class PatchWorkbenchTests
     }
 
     [Fact]
-    public async Task A_render_looks_past_the_first_eight_seconds_and_stops_at_its_own_limit()
+    public async Task A_render_can_start_anywhere_and_only_warms_up_just_before_it()
     {
         var bench = await Lit(0.5f);
 
-        var late = await Call(bench, "render", """{"times":[20]}""");
+        var late = await Call(bench, "render", """{"from":3000,"times":[0.5,1]}""");
 
         late.Ok.ShouldBeTrue(late.Text);
-        late.Text.ShouldContain("at 20s");
+        late.Text.ShouldContain("at 3000.5s, 3001s");
+        late.Text.ShouldContain("warmed from 2999s");
 
-        var beyond = await Call(bench, "render", """{"times":[100000]}""");
+        var early = await Call(bench, "render", """{"times":[0.5]}""");
 
-        beyond.Text.ShouldContain("at 120s");
+        early.Text.ShouldContain("warmed from zero");
     }
 
     /// <summary>

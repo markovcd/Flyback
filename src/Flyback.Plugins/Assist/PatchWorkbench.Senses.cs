@@ -32,14 +32,17 @@ public sealed partial class PatchWorkbench
     /// forbids and which deadlocks besides. Doing it here makes that impossible for
     /// a plugin to get wrong.
     /// <para>
-    /// Frames are stepped from zero rather than jumped to, because the renderer owns
-    /// the history <c>feedback</c> reads. Several frames rather than one, because a
-    /// still cannot show motion.
+    /// Frames are stepped to rather than jumped to, because the renderer owns the
+    /// history <c>feedback</c> reads: from zero for a window that starts there, and
+    /// from <see cref="WorkbenchLimits.WarmUpLead"/> before it for one that does not,
+    /// so a late window costs no more than an early one. Several frames rather than
+    /// one, because a still cannot show motion.
     /// </para>
     /// </remarks>
     private Task<ToolOutcome> RenderAsync(JsonElement arguments, CancellationToken cancel)
     {
         var requested = Times(arguments);
+        var from = From(arguments);
 
         // Asked for directly, because the compiler does not remark on a color
         // socket left empty while the sound is wired — a patch built for the ear
@@ -74,7 +77,8 @@ public sealed partial class PatchWorkbench
                 var frame = new byte[frameStride * height];
                 var sheet = new byte[sheetStride * height];
 
-                var capture = requested.Select(t => (int)Math.Round(t / limits.WarmUpStep)).ToArray();
+                var begin = Math.Max(0d, from - limits.WarmUpLead);
+                var capture = requested.Select(t => (int)Math.Round((from + t - begin) / limits.WarmUpStep)).ToArray();
                 var renderer = new SynthRenderer();
 
                 IlCompiler.CompileOnce(patch.Program, IlParts.Staged);
@@ -83,7 +87,7 @@ public sealed partial class PatchWorkbench
                 {
                     cancel.ThrowIfCancellationRequested();
 
-                    renderer.Render(patch.Program, step * limits.WarmUpStep, width, height, frame, frameStride);
+                    renderer.Render(patch.Program, begin + step * limits.WarmUpStep, width, height, frame, frameStride);
 
                     for (var i = 0; i < capture.Length; i++)
                     {
@@ -104,16 +108,22 @@ public sealed partial class PatchWorkbench
                 var png = new MemoryStream();
                 PngWriter.WriteBgra(png, sheet, width * requested.Length, height, sheetStride);
 
-                var when = string.Join(", ", requested.Select(t => Number(t) + "s"));
+                var when = string.Join(", ", requested.Select(t => Number(from + t) + "s"));
 
                 return ToolOutcome.Looked(
                     png.ToArray(),
                     $"{requested.Length} frames left to right at {when}, {width} by {height} each, "
-                    + $"warmed from zero at thirty frames a second.{warned}");
+                    + $"warmed from {(begin > 0 ? Number(begin) + "s" : "zero")} at thirty frames a second.{warned}");
             },
             cancel);
     }
 
+    private double From(JsonElement arguments) =>
+        arguments.TryGetProperty("from", out var start) && start.ValueKind == JsonValueKind.Number
+            ? Math.Clamp(start.GetDouble(), 0d, limits.LatestStart)
+            : 0d;
+
+    /// <summary>Seconds after the window's start, so a window is never longer than <see cref="WorkbenchLimits.LatestTime"/>.</summary>
     private double[] Times(JsonElement arguments)
     {
         // Not from zero by default. A patch that reads the previous frame is
@@ -126,7 +136,7 @@ public sealed partial class PatchWorkbench
 
         var asked = times.EnumerateArray()
             .Where(t => t.ValueKind == JsonValueKind.Number)
-            .Select(t => Math.Clamp(t.GetDouble(), 0d, limits.LatestLook))
+            .Select(t => Math.Clamp(t.GetDouble(), 0d, limits.LatestTime))
             .Take(limits.MaxFrames)
             .Order()
             .ToArray();

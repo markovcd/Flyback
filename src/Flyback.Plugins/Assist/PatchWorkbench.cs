@@ -1373,9 +1373,13 @@ public sealed partial class PatchWorkbench
                 $$"""
                 {
                   "properties": {
+                    "from": {
+                      "type": "number",
+                      "description": "Where on the patch's timeline the frames start, up to {{Number(limits.LatestStart)}}. Defaults to 0. Drawing begins {{Number(limits.WarmUpLead)}}s before it, so anything that remembers earlier frames has only that much history."
+                    },
                     "times": {
                       "type": "array",
-                      "description": "Seconds on the patch's timeline to capture, at most {{limits.MaxFrames}} of them, any from 0 to {{Number(limits.LatestLook)}}. Defaults to 0.5, 1.5 and 3.5. Every frame before the latest is drawn first, so a later time costs more.",
+                      "description": "Seconds after 'from' to capture, at most {{limits.MaxFrames}} of them, up to {{Number(limits.LatestTime)}}. Defaults to 0.5, 1.5 and 3.5.",
                       "items": { "type": "number" }
                     },
                     "note": { "type": "string", "description": "What you are looking for, for your own record." }

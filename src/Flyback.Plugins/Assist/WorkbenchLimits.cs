@@ -8,8 +8,9 @@ namespace Flyback.Plugins.Assist;
 /// rather than retry.
 /// </remarks>
 /// <param name="MaxToolCalls">The cost fuse against a turn that never ends.</param>
-/// <param name="LatestTime">The furthest into a patch a <c>listen</c> may start, and how much of its sound <c>propose</c> checks for silence, in seconds.</param>
-/// <param name="LatestLook">The furthest into a patch a <c>render</c> may look, in seconds; every frame before it is stepped through, so it is what bounds the cost.</param>
+/// <param name="LatestTime">How far past its start a <c>render</c> may look, how far in a <c>listen</c> may start, and how much sound <c>propose</c> checks for silence, in seconds.</param>
+/// <param name="LatestStart">The furthest into a patch a <c>render</c> may start its window, in seconds.</param>
+/// <param name="WarmUpLead">How far before a window's start a <c>render</c> begins stepping frames, so feedback has a history; nothing earlier is drawn.</param>
 /// <param name="WarmUpStep">The frame interval stepped through before a render, so feedback has a real history.</param>
 /// <param name="ListenRate">The sample rate a <c>listen</c> renders at, kept low for the request size.</param>
 /// <param name="LongestListen">The most sound one call may render, in seconds.</param>
@@ -19,7 +20,8 @@ internal sealed record WorkbenchLimits(
     int FrameHeight = 180,
     int MaxFrames = 4,
     double LatestTime = 8d,
-    double LatestLook = 120d,
+    double LatestStart = 3600d,
+    double WarmUpLead = 1d,
     double WarmUpStep = 1d / 30d,
     int ListenRate = 24_000,
     double LongestListen = 4d);
