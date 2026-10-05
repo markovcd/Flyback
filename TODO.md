@@ -20,4 +20,7 @@ Work the user has asked for and nobody has started. Take an item off when it lan
 - Make rendering site presets better (cli command) - it shouldn't access directly via shared folder but some form of admin api
 - Make rendering stills for site and page cached, so pipeline takes shorter
 - add audio input, add midi file playback, add sample recording, add midi recording (from highest to lowest priority)
-- https://github.com/vincentsch/explainroo
+- https://github.com/vincentsch/explainroo- **`flyback-cli shot` from a dev build.** It hands over to `Flyback` beside it, which `src/Flyback.Cli/bin` does not have, so a shot from a build means calling `Flyback --shot` by hand. An `--editor <path>` flag, or looking in `src/Flyback.Editor.Desktop/bin` too.
+- **Headless tests that ignore `DISPLAY`.** On a Linux desktop session, `Flyback.Editor.Tests` and `Flyback.Specs` die with X `BadWindow` before a test runs unless `DISPLAY` and `WAYLAND_DISPLAY` are unset; the harness should clear them itself.
+- **`ExtraField.Number` reads any JSON number.** A field set in code as an int (`new JsonObject { ["voices"] = 3 }`) reads back as its default, since `TryGetValue<float>` refuses an int-typed value; a plugin setting state that way is silently ignored.
+- **`PatchCompiler.Compile` as a walker class.** One method of about 800 lines built from closures, with the voice being lowered a captured variable; a class with the walk's state as fields (`resolved`, `carried`, `loops`, the voice) and `Resolve`, `Lower`, `Arriving` as methods would read and test better.
