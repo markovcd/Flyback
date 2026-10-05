@@ -20,4 +20,3 @@ Work the user has asked for and nobody has started. Take an item off when it lan
 - Make rendering stills for site and page cached, so pipeline takes shorter
 - add audio input, add midi file playback, add sample recording, add midi recording (from highest to lowest priority)
 - https://github.com/vincentsch/explainroo
-- **Headless tests that ignore `DISPLAY`.** On a Linux desktop session, `Flyback.Editor.Tests` and `Flyback.Specs` die with X `BadWindow` before a test runs unless `DISPLAY` and `WAYLAND_DISPLAY` are unset; the harness should clear them itself.

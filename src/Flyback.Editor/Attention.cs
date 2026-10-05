@@ -51,7 +51,7 @@ internal static partial class Attention
 
     private static void RequestWindows(Window window)
     {
-        if (window.TryGetPlatformHandle() is not { } handle) return;
+        if (window.TryGetPlatformHandle() is not { HandleDescriptor: "HWND" } handle) return;
 
         var info = new FlashInfo
         {
@@ -126,7 +126,7 @@ internal static partial class Attention
     /// </summary>
     private static void EditUrgency(Window window, bool urgent)
     {
-        if (window.TryGetPlatformHandle() is not { } handle) return;
+        if (window.TryGetPlatformHandle() is not { HandleDescriptor: "XID" } handle) return;
 
         var display = XOpenDisplay(IntPtr.Zero);
         if (display == IntPtr.Zero) return;
