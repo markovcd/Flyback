@@ -64,13 +64,18 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
     /// The shared presets opened before, listed in their place while the site does not
     /// answer. A tile of theirs answers with its <see cref="KeptPreset"/>.
     /// </param>
+    /// <param name="prompting">
+    /// What a card to start from a prompt needs, shown first, or null for a gallery
+    /// without one. The card answers with a <see cref="PromptedStart"/>.
+    /// </param>
     public GalleryParts Build(
         IReadOnlyList<PatchPreset> ordered,
         PatchPreset? showing,
         Action<PointedTile?>? pointedAt = null,
         YourPresets? yours = null,
         PresetSite? site = null,
-        KeptSharedPresets? kept = null)
+        KeptSharedPresets? kept = null,
+        PromptStart? prompting = null)
     {
         var search = new Search { Elsewhere = site is not null, Typing = !lastPress.ByFinger };
 
@@ -82,6 +87,8 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
 
             // Thumbnails still waiting to be drawn when the gallery closes are not drawn.
             var closing = new CancellationTokenSource();
+
+            if (prompting is not null) gallery.Children.Add(PromptCard(prompting, open, closing.Token));
 
             foreach (var run in ordered.GroupBy(preset => preset.Kind))
             {

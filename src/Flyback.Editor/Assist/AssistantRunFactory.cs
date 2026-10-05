@@ -1,4 +1,5 @@
 using Flyback.Assist;
+using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
@@ -13,12 +14,13 @@ internal sealed class AssistantRunFactory(
     IAssistantEditor editor,
     AssistantSettingRepository settings)
 {
-    public AssistantRun Create(IPatchAssistant assistant, AssistantConfig config, SavedConversation? resuming = null) =>
+    /// <param name="over">The patch to work on, in place of the one on the canvas.</param>
+    public AssistantRun Create(IPatchAssistant assistant, AssistantConfig config, SavedConversation? resuming = null, Patch? over = null) =>
         new(
             assistant,
             config,
             plugins.Modules,
-            editor.Current,
+            over ?? editor.Current,
             settings.Current.TurnLimit,
             samples: editor.Samples,
             pictures: editor.Pictures,

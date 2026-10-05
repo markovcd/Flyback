@@ -47,6 +47,8 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
     private readonly Playback playback;
     private readonly PluginInstalls installs;
     private readonly RecordingState recording;
+    private readonly AssistantPanel assistant;
+    private readonly Reactions reactions;
 
     /// <summary>
     /// Not shown, and never opened: what this holds is which preset is on the
@@ -81,6 +83,8 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
     /// <param name="unsaved">The question every route out of a patch asks first.</param>
     /// <param name="playback">Puts a patch that has just arrived on the canvas, from its beginning.</param>
     /// <param name="installs">Offers the plugins a shared preset that could not be opened is short of.</param>
+    /// <param name="assistant">Writes out a prompt typed in the gallery, and is sent it once the patch is empty.</param>
+    /// <param name="reactions">Asks for the assistant's column, which a prompt sent from the gallery needs open.</param>
     public PresetSlot(
         NodeEditor editor,
         Document document,
@@ -97,8 +101,12 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
         Playback playback,
         PluginInstalls installs,
         RecordingState recording,
+        AssistantPanel assistant,
+        Reactions reactions,
         IDialog dialog)
     {
+        this.assistant = assistant;
+        this.reactions = reactions;
         this.dialog = dialog;
         this.editor = editor;
         this.document = document;
@@ -314,7 +322,8 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             pointedAt: audition.PointedAt,
             yours: Yours(),
             site: site.Presets(),
-            kept: site.Kept);
+            kept: site.Kept,
+            prompting: assistant.Ready ? new PromptStart(assistant.ExpandAsync) : null);
         var chosen = await dialog.Show("Start from a preset", parts.Tiles, parts.Filter, fill: true);
 
         audition.PointedAt(null);
@@ -335,7 +344,25 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             case KeptPreset kept:
                 if (await unsaved.MayReplaceThePatchAsync()) await OpenKeptAsync(kept);
                 break;
+
+            case PromptedStart prompted:
+                await StartFromPromptAsync(prompted.Prompt);
+                break;
         }
+    }
+
+    /// <summary>
+    /// Puts an empty patch on the canvas, opens the assistant's column and sends it
+    /// <paramref name="prompt"/>, unless the empty patch is not put there.
+    /// </summary>
+    private async Task StartFromPromptAsync(string prompt)
+    {
+        var blank = offered.Find(preset => preset.Name == PresetLibrary.Empty);
+
+        if (blank is null || !await SwitchToAsync(blank, offered.IndexOf(blank))) return;
+
+        await reactions.RaiseAsync(new AssistantAsked(true));
+        await assistant.SendAsync(prompt);
     }
 
     private async Task PickedAsync()
@@ -347,24 +374,32 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
         if (picker.SelectedItem is not PatchPreset preset) return;
         if (picker.SelectedIndex == showing) return;
 
+        await SwitchToAsync(preset, picker.SelectedIndex);
+    }
+
+    /// <summary>
+    /// Puts <paramref name="preset"/>, the row <paramref name="wanted"/> of the picker, on
+    /// the canvas after the questions every route out of a patch asks. Answers whether it
+    /// is there.
+    /// </summary>
+    private async Task<bool> SwitchToAsync(PatchPreset preset, int wanted)
+    {
         if (RefuseWhileRecording())
         {
             PutTheBoxBack();
-            return;
+            return false;
         }
-
-        var wanted = picker.SelectedIndex;
 
         if (!await unsaved.MayReplaceThePatchAsync())
         {
             PutTheBoxBack();
-            return;
+            return false;
         }
 
         if (RefuseWhileRecording())
         {
             PutTheBoxBack();
-            return;
+            return false;
         }
 
         try
@@ -396,11 +431,15 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             // file, and no preset. The row that was picked is picked again,
             // or the title would name a preset the list does not show.
             PutTheBoxBack();
+
+            return true;
         }
         catch (Exception ex)
         {
             report.Say($"Could not build the '{preset.Name}' preset: {ex.Message}");
             PutTheBoxBack();
+
+            return false;
         }
     }
 

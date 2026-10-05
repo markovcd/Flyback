@@ -35,6 +35,9 @@ public sealed class PresetLibrary
     /// <summary>What opens when nothing is chosen, or what was chosen is not offered.</summary>
     public const string Fallback = "Plasma";
 
+    /// <summary>The preset that is only the Output, which a patch built from nothing starts on.</summary>
+    public const string Empty = "Empty";
+
     /// <summary>
     /// The row of <paramref name="presets"/> holding the preset called
     /// <paramref name="name"/>, or the row holding <see cref="Fallback"/> for one

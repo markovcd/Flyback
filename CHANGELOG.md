@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- With an assistant set up, the preset gallery has a card to type an idea in: Expand has the assistant write it out as a detailed brief, and Start opens an empty patch and sends it.
+
 - The assistant can run on the Claude Code or the Codex you are signed in to, with no API key.
 
 - The assistant can look at, listen to and measure a patch from any point on its timeline, not only its first eight seconds.

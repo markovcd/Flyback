@@ -8,6 +8,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.Editor;
+using Flyback.Editor.Assist;
 using Flyback.Engine.Graph;
 using Flyback.Ui;
 using Flyback.Editor.Notices;
@@ -464,6 +465,50 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     /// <summary>Whether the open preset gallery has a section for the preset site.</summary>
     public bool GalleryListsSite => ReadWindow(open =>
         open.GetVisualDescendants().OfType<Control>().Any(c => c.Name == "site-presets"));
+
+    /// <summary>Whether the open preset gallery has the card to start from a prompt.</summary>
+    public bool GalleryOffersPrompt => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<Control>().Any(c => c.Name == "prompt-card"));
+
+    /// <summary>What the gallery's prompt card holds.</summary>
+    public string PromptText => ReadWindow(open => Named<TextBox>(open, "prompt-text").Text ?? string.Empty);
+
+    /// <summary>Types an idea into the gallery's prompt card.</summary>
+    public void TypePrompt(string idea) =>
+        DoWindow((open, _) => Named<TextBox>(open, "prompt-text").Text = idea);
+
+    /// <summary>Presses Expand on the prompt card and waits for what it holds to change.</summary>
+    public void ExpandPrompt() =>
+        Run(async () =>
+        {
+            var open = Window();
+            var words = Named<TextBox>(open, "prompt-text");
+            var idea = words.Text;
+
+            Named<Button>(open, "expand-prompt").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            await Until(() => words.Text != idea, () => $"the assistant to write the idea out. {Situation(open)}");
+
+            return true;
+        });
+
+    /// <summary>Presses Start on the prompt card and waits until <paramref name="sent"/> says the assistant has the prompt.</summary>
+    public void StartPrompt(Func<bool> sent) =>
+        Run(async () =>
+        {
+            var open = Window();
+
+            Named<Button>(open, "start-prompt").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            await Until(sent, () => $"the prompt to reach the assistant. {Situation(open)}");
+
+            context.Replace(Canvas().History.Patch);
+            return true;
+        });
+
+    /// <summary>Whether the assistant's column is open beside the canvas.</summary>
+    public bool AssistantColumnOpen => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<AssistantPanel>().Single().IsVisible);
 
     /// <summary>Whether the status bar shows the letter and the rule before it.</summary>
     public (bool Letter, bool Rule) StatusBarLetter => ReadWindow(open => (

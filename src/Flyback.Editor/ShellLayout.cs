@@ -221,6 +221,8 @@ internal sealed class ShellLayout(
     public void ShowAssistant(bool shown)
     {
         if (assistantColumn is null || assistantSplitter is null) return;
+        if (toolbar.Assistant.IsChecked != shown) toolbar.Assistant.IsChecked = shown;
+        if (shown == assistant.IsVisible) return;
         if (!shown && assistant.IsVisible) assistantShare = assistantColumn.Width;
         assistant.IsVisible = shown;
         assistantSplitter.IsVisible = shown;

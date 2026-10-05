@@ -329,6 +329,9 @@ internal sealed class AssistantPanel : UserControl
 
     private bool stopping;
 
+    /// <summary>The turn most recently begun, which a message sent from outside waits out.</summary>
+    private Task turn = Task.CompletedTask;
+
     /// <summary>
     /// Why a message cannot be sent, or null when one can. Kept rather than
     /// asked for, because the button is refreshed on every keystroke and the
@@ -483,6 +486,41 @@ internal sealed class AssistantPanel : UserControl
     /// </summary>
     public bool ConversationUnsaved => conversation.ConversationUnsaved;
 
+    // --- starting from a prompt -----------------------------------------------
+
+    /// <summary>Whether a message sent now would go: an assistant is chosen and has what it needs.</summary>
+    public bool Ready => chosenAssistant.Value is { } assistant
+        && Configured() is { } config
+        && AssistantRun.Unready(assistant, config) is null;
+
+    /// <summary>
+    /// The brief the chosen assistant writes for a short idea, or why it wrote none.
+    /// Asked of an empty patch and kept nowhere: it is not part of any conversation.
+    /// </summary>
+    public async Task<(string? Brief, string? Failure)> ExpandAsync(string idea, CancellationToken cancel)
+    {
+        if (chosenAssistant.Value is not { } assistant || Configured() is not { } config)
+            return (null, "No assistant is set up.");
+
+        if (AssistantRun.Unready(assistant, config) is { } why) return (null, why);
+
+        using var run = runs.Create(assistant, config, over: new Flyback.Core.Graph.Patch());
+
+        return await PromptExpansion.BriefAsync(run, idea, cancel);
+    }
+
+    /// <summary>
+    /// Sends <paramref name="text"/> as the next message, once the turn that was going
+    /// has ended, and returns when the new one has begun.
+    /// </summary>
+    public async Task SendAsync(string text)
+    {
+        await turn;
+
+        instruction.Text = text;
+        turn = AskAsync();
+    }
+
     // --- building -----------------------------------------------------------
 
     private Control Build()
@@ -497,7 +535,7 @@ internal sealed class AssistantPanel : UserControl
         {
             if (!asking)
             {
-                _ = AskAsync();
+                turn = AskAsync();
                 return;
             }
 
@@ -732,7 +770,7 @@ internal sealed class AssistantPanel : UserControl
 
         if (!breaking)
         {
-            _ = AskAsync();
+            turn = AskAsync();
             return;
         }
 
