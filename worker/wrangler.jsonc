@@ -1,0 +1,55 @@
+// The preset site as a Worker: the API, the media and the pages, with D1 for the rows
+// and R2 for the files. deploy/cloudflare/README.md says how each binding is made.
+//
+// The top level is what the tests run against and has no route; an environment is
+// what `wrangler deploy --env <name>` puts on the internet.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "flyback-site",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-15",
+  "workers_dev": false,
+
+  // public/ holds the pages, the viewer and the editor, assembled before a deploy. The
+  // API, the media, the admin page and the framework files whose caching the Worker sets
+  // reach it first; any other path the assets lack falls through to it too.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "html_handling": "none",
+    "not_found_handling": "none",
+    "run_worker_first": ["/api/*", "/media/*", "/admin.html", "/viewer/_framework/*", "/editor/_framework/*"]
+  },
+
+  "d1_databases": [
+    { "binding": "DB", "database_name": "flyback-site", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+  ],
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "flyback-site" }],
+
+  // Refused submissions and spent rate-limit windows are cleared hourly.
+  "triggers": { "crons": ["17 * * * *"] },
+
+  "vars": {
+    "GITHUB_REPOSITORY": "markovcd/Flyback",
+    "VALIDATE_WORKFLOW": "validate.yml"
+  },
+
+  "env": {
+    // Filled in from deploy/cloudflare/README.md: the database's id and the hostname.
+    "staging": {
+      "name": "flyback-site-staging",
+      "workers_dev": false,
+      "routes": [{ "pattern": "flyback-staging.nasik2137.uk", "custom_domain": true }],
+      "d1_databases": [
+        { "binding": "DB", "database_name": "flyback-site-staging", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+      ],
+      "r2_buckets": [{ "binding": "FILES", "bucket_name": "flyback-site-staging" }],
+      "triggers": { "crons": ["17 * * * *"] },
+      "vars": {
+        "GITHUB_REPOSITORY": "markovcd/Flyback",
+        "VALIDATE_WORKFLOW": "validate.yml",
+        "ACCESS_TEAM_DOMAIN": "https://nasik.cloudflareaccess.com"
+      }
+    }
+  }
+}

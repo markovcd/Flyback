@@ -36,10 +36,23 @@ ARG CONFIGURATION=Release
 # Usage, and .dockerignore leaves no commit here to mark the build otherwise.
 ARG VERSION=0.1.0-dev
 
+# The preset site's Worker (worker/), type-checked and tested in workerd against a
+# local D1 and R2. Its development packages are restored exactly as
+# package-lock.json has them, as the NuGet restore below is locked.
+FROM node:24-bookworm-slim AS worker
+WORKDIR /worker
+COPY worker/package.json worker/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY worker/ ./
+RUN npx tsc --noEmit && npx vitest run && touch /tested
+
 # Everything a change has to get past. An argument declared above the first FROM
 # is one default for both stages, and a stage asks for one by repeating it bare.
 FROM ${SDK} AS gate
 ARG CONFIGURATION
+
+# The Worker's tests are part of the gate: nothing past here is built if they fail.
+COPY --from=worker /tested /tmp/worker-tested
 
 # What the SDK image does not already have. libSkiaSharp is what the headless
 # UI tests rasterize with, and it will not load at all without fontconfig

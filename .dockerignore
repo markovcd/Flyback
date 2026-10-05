@@ -8,6 +8,11 @@ artifacts/
 dist/
 coverage/
 
+# The Worker's packages are restored inside the build, and what wrangler made is not source.
+**/node_modules/
+worker/.wrangler/
+worker/public/
+
 .git/
 .github/
 .idea/
