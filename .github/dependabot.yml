@@ -52,3 +52,11 @@ updates:
           - Microsoft.Testing.*
           - CsCheck
           - BenchmarkDotNet
+
+  # The Worker's development packages, locked in worker/package-lock.json.
+  - package-ecosystem: npm
+    directory: /worker
+    schedule:
+      interval: weekly
+    labels: []
+    open-pull-requests-limit: 5

@@ -1,5 +1,7 @@
 # The site
 
+The site is moving to a Cloudflare Worker, set up as [../cloudflare/README.md](../cloudflare/README.md) says. Until the move, this is how the live site runs.
+
 People submit presets and plugins to a small site on the NAS, and `flyback-cli render-presets` on another machine makes a picture, a loop and a sound of each one. The two share no API for media: the render machine writes files into a shared folder, and the site only reads that folder.
 
 ```

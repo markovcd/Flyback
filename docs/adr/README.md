@@ -172,6 +172,7 @@ context, decision, consequences.
 | [0138](0138-the-preset-site-starts-with-presets-kept-as-files.md) | The preset site starts with presets kept as files *(user-directed)* |
 | [0151](0151-a-built-preset-carries-its-files-in-its-assembly.md) | A built preset carries its files in its assembly *(user-directed)* |
 | [0141](0141-the-preset-site-starts-with-a-plugin-its-build-packs-and-the-release-key-signs.md) | The preset site starts with a plugin its build packs and the release key signs *(user-directed)* |
+| [0175](0175-the-preset-site-is-a-worker-and-github-reads-what-is-submitted.md) | The preset site is a Worker, and GitHub reads what is submitted *(user-directed)* |
 | [0025](0025-platform-io-behind-loadable-plugins.md) | Platform I/O behind plugins loaded at run time |
 | [0026](0026-modules-from-plugins-with-provenance-in-the-file.md) | Modules may come from plugins, and the file records which *(user-directed)* |
 | [0028](0028-publish-one-platform-at-a-time.md) | Publish one platform at a time, with only that platform's plugins |

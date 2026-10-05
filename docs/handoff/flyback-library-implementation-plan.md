@@ -3,8 +3,24 @@
 Written on 2026-10-02, against `main` at `3cd4ff1e`. It is on TODO.md; take it off there, and delete this file, in the commit that lands the last of it.
 
 - **Kind:** Plan
-- **Status:** Open
-- **Confirmed by reading:** `src/Flyback.Server/`, ADRs 0131, 0133, 0136, 0138, 0141, `deploy/site/`, `RenderPresetsCommand.cs`, Cloudflare's current Workers, D1 and Containers pages. Nothing here has been run.
+- **Status:** In progress
+- **Confirmed by reading:** `src/Flyback.Server/`, ADRs 0131, 0133, 0136, 0138, 0141, `deploy/site/`, `RenderPresetsCommand.cs`, Cloudflare's current Workers, D1 and Containers pages.
+
+## Where it stands
+
+Steps 2 to 5 are on `main`, dark: nothing is deployed and the NAS still serves the site. ADR-0175 records the shape, and [deploy/cloudflare/README.md](../../deploy/cloudflare/README.md) is the setup, the checks and the move, step by step.
+
+- `worker/`: the Worker, its D1 migrations, its Vitest suite in workerd (in the gate as a Node stage), `build-assets.sh` and `dev.sh`.
+- `src/Flyback.Site`: `flyback-site`, with `check-submission`, `validate-submissions [--lacks]`, `push-defaults` and `export-site`. It is a program of its own rather than commands of `flyback-cli`, because what a browser lacks is checked against the plugins the web pages link, which `flyback-cli`'s folder would then load twice. The readers moved into it, and the .NET site compiles the same files.
+- `flyback-cli render-presets` uploads without `--media`, and still writes the share with it.
+- `.github/workflows/validate.yml` and `worker.yml`, both off until the repository variables in the setup name the site.
+- The pages call the admin's routes under `/api/v1/admin`, which the .NET site answers too. The reports and letters lists moved there as well as the changes.
+
+Left: step 1 and step 6, which need the author's Cloudflare account, and step 7 after them.
+
+Measured on 2026-10-05: the pages come to 292 files and 60 MB, the ahead-of-time web viewer's `dotnet.native.wasm` is 17.5 MiB, and the web editor's is 55 MiB, past the 25 MiB a static asset may be. So `build-assets.sh` moves a fingerprinted framework file that large to `worker/large`, the Worker workflow puts it in R2, and the Worker serves it from there on the same path, as this plan said it would.
+
+The open choices below were answered with the recommendations: development dependencies locked, presets wait for Validate, the Worker dispatches with the schedule as the net, and Pages retires at the move.
 
 ## Goal
 

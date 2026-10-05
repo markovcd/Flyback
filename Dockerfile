@@ -199,6 +199,49 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 FROM scratch AS site-plugins
 COPY --from=packed /out/ /
 
+# What the preset site's Worker serves and starts with, for the Worker workflow to
+# deploy: the pages, the viewer and editor compiled ahead of time and the stills
+# (worker/build-assets.sh), the framework files too large to be assets, flyback-site,
+# and the default presets beside the site's
+# plugins packed and signed with the release key handed in as a build secret
+# (ADR-0141). Built from the SDK rather than the gate: CI has already gated the commit.
+FROM ${SDK} AS site-build
+ARG VERSION
+
+RUN apt-get update \
+ && apt-get install --yes --no-install-recommends python3 \
+ && rm -rf /var/lib/apt/lists/* \
+ && dotnet workload install wasm-tools
+
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+    DOTNET_NOLOGO=1
+
+WORKDIR /src
+COPY . .
+
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    set -eu; \
+    export Version="${VERSION}"; \
+    worker/build-assets.sh; \
+    mkdir -p /out/large; \
+    cp -r worker/public /out/public; \
+    if [ -d worker/large ]; then cp -r worker/large/. /out/large/; fi; \
+    dotnet publish src/Flyback.Site -c Release -o /out/flyback-site -nologo -v:q
+
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    --mount=type=secret,id=release-key,required=true \
+    set -eu; \
+    mkdir -p /out/defaults; \
+    cp src/Flyback.Server/Defaults/* /out/defaults/; \
+    dotnet msbuild src/Flyback.Server -t:ListSitePlugins -p:SitePluginsFile=/tmp/site-plugins -nologo -v:q; \
+    while IFS='|' read -r project name <&3; do \
+      Version=${VERSION} dotnet run --project src/Flyback.Cli -c Release -- \
+        pack-plugin "$project" -o "/out/defaults/$name.fbkp" --key /run/secrets/release-key; \
+    done 3< /tmp/site-plugins
+
+FROM scratch AS site-assets
+COPY --from=site-build /out/ /
+
 FROM gate AS publish
 ARG RIDS
 ARG CONFIGURATION

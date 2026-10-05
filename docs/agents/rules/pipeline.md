@@ -14,7 +14,7 @@
 - **The self-hosted runners are for `main` only**, never a pull request or another branch: the repo is public, so a fork's PR on that machine would be remote code execution. `ci.yml` waits for one, Windows or Linux, and either needs Docker with buildx; GitHub fails a job nothing picks up after 24 hours. The runner's location is machine-specific and lives in the assistant's memory, not here.
 - **Superseded runs are cancelled.** `concurrency` with `cancel-in-progress` on anything a push triggers; never on Pages or a release, which must finish what they started.
 - **Every job sets `timeout-minutes`**, a few times its usual length. The default is six hours of a hang.
-- **Deploys filter on paths.** `site.yml` lists what the image is built from; a new reference or site plugin is added there in the same commit.
+- **Deploys filter on paths.** `site.yml` lists what the image is built from, and `worker.yml` what the Worker and its pages are; a new reference or site plugin is added there in the same commit.
 - **Every workflow opens with a comment** saying what it does, what triggers it, and why anything surprising in it is there.
 
 ## A release is one script

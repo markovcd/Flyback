@@ -318,6 +318,9 @@ src/
   Flyback.Viewer.Desktop the viewer: opens a patch and plays it
   Flyback.Viewer.Web     the web viewer: the same, in a browser
   Flyback.Editor.Web     the web editor: the editor in a browser
+  Flyback.Site           flyback-site: reads what is submitted to the preset site, for its workflows
+
+worker/                  the preset site as a Cloudflare Worker (deploy/cloudflare/README.md)
 
 tests/
   Flyback.Core.Tests            core engine tests
@@ -329,6 +332,7 @@ tests/
   Flyback.Ui.Tests              shared control, audio and MIDI tests
   Flyback.Ui.Testing            the headless test harness (not a test project)
   Flyback.Cli.Tests             command line tests
+  Flyback.Site.Tests            flyback-site's checks and its talk with the site
   Flyback.Plugins.Tests         plugin and runtime behavior tests
   Flyback.Plugins.OpenAi.Tests  chat-completions session tests
   Flyback.Plugins.Gemini.Tests  generateContent session tests
