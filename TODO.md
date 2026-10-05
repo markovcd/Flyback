@@ -22,4 +22,3 @@ Work the user has asked for and nobody has started. Take an item off when it lan
 - add audio input, add midi file playback, add sample recording, add midi recording (from highest to lowest priority)
 - https://github.com/vincentsch/explainroo
 - **Headless tests that ignore `DISPLAY`.** On a Linux desktop session, `Flyback.Editor.Tests` and `Flyback.Specs` die with X `BadWindow` before a test runs unless `DISPLAY` and `WAYLAND_DISPLAY` are unset; the harness should clear them itself.
-- **`PatchCompiler.Compile` as a walker class.** One method of about 800 lines built from closures, with the voice being lowered a captured variable; a class with the walk's state as fields (`resolved`, `carried`, `loops`, the voice) and `Resolve`, `Lower`, `Arriving` as methods would read and test better.
