@@ -20,6 +20,12 @@
       "port": 8790
     },
     {
+      "name": "worker",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["worker/dev.sh"],
+      "port": 8787
+    },
+    {
       "name": "web",
       "runtimeExecutable": "dotnet",
       "runtimeArgs": ["run", "--project", "src/Flyback.Viewer.Web"],

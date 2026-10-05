@@ -80,7 +80,7 @@
         var init = act();
         if (!init) return;
         node.disabled = true;
-        fetch(api + "plugins/" + plugin.id, init).then(function (r) {
+        fetch(api + "admin/plugins/" + plugin.id, init).then(function (r) {
           if (r.status === 401) throw new Error("You are signed out.");
           if (!r.ok) throw new Error("That did not work.");
           done(init.method === "DELETE" ? "deleted" : "changed");
@@ -265,6 +265,11 @@
       if (!r.ok) throw new Error();
       return r.json();
     }).then(function (plugin) {
+      if (plugin.status === "unchecked" || plugin.status === "refused") {
+        waiting(page, plugin);
+        return;
+      }
+
       document.title = plugin.name + " — Flyback";
 
       var text = make("div");
@@ -309,6 +314,24 @@
     });
   }
 
+  /** A package still being read, which this page shows once it is, or one that was refused and why. */
+  function waiting(page, plugin) {
+    var text = make("div");
+    text.appendChild(make("span", { class: "eyebrow" }, "Plugin"));
+    text.appendChild(make("h1", null, plugin.fileName));
+
+    if (plugin.status === "refused") {
+      text.appendChild(make("p", { class: "lede" }, "It was not taken: " + plugin.reason));
+      text.appendChild(make("a", { class: "button", href: "submit-plugin.html" }, "Submit another"));
+    } else {
+      text.appendChild(make("p", { class: "lede" },
+        "Received. Flyback is reading it without running it, then it waits for review. This page shows what it says as soon as it has been read."));
+      setTimeout(function () { location.reload(); }, 30000);
+    }
+
+    page.replaceChildren(text);
+  }
+
   // ---- submitting ---------------------------------------------------------
 
   function submit() {
@@ -341,6 +364,11 @@
         if (r.status === 413) throw new Error("That package is too large.");
         return r.json().then(function (answer) {
           if (!r.ok) throw new Error(answer.error || "The plugin was not taken.");
+
+          if (answer.status === "unchecked") {
+            location.href = "plugin.html?id=" + answer.id;
+            return;
+          }
 
           tell("Received. " + answer.name + " is listed once it has been reviewed.");
           var card = make("article", { class: "card" });

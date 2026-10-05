@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ask } from "./site";
+import { asAdmin, ask } from "./site";
 
 describe("the pages", () => {
   it("are served from a folder's index", async () => {
@@ -16,6 +16,30 @@ describe("the pages", () => {
     expect(loader.status).toBe(200);
     expect(loader.headers.get("Cache-Control")).not.toContain("immutable");
     await loader.arrayBuffer();
+  });
+
+  it("serve a framework file too large to be an asset from R2, put there by the admin, kept for good", async () => {
+    const path = "editor/_framework/dotnet.native.0123456789.wasm";
+    expect((await ask("/" + path)).status).toBe(404);
+
+    const put = await ask(`/api/v1/admin/assets/${path}`, { method: "PUT", headers: await asAdmin(), body: new Uint8Array([0, 0x61, 0x73, 0x6d]) });
+    expect(put.status).toBe(204);
+
+    const served = await ask("/" + path);
+    expect(served.status).toBe(200);
+    expect(served.headers.get("Content-Type")).toBe("application/wasm");
+    expect(served.headers.get("Cache-Control")).toBe("public, max-age=31536000, immutable");
+    expect(new Uint8Array(await served.arrayBuffer())).toEqual(new Uint8Array([0, 0x61, 0x73, 0x6d]));
+  });
+
+  it("keep in R2 only the viewer's and editor's fingerprinted framework files, and only from the admin", async () => {
+    const put = async (path: string, admin = true) =>
+      (await ask(`/api/v1/admin/assets/${path}`, { method: "PUT", headers: admin ? await asAdmin() : {}, body: "x" })).status;
+
+    expect(await put("index.html")).toBe(400);
+    expect(await put("editor/_framework/dotnet.js")).toBe(400);
+    expect(await put("editor/_framework/../../index.html")).toBe(400);
+    expect(await put("viewer/_framework/dotnet.native.0123456789.wasm", false)).toBe(401);
   });
 
   it("tell a browser that came over HTTPS to keep to it", async () => {

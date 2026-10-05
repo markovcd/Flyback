@@ -23,7 +23,7 @@ window.FlybackLetters = (function () {
 
   /** Every letter, newest first, each with a Dismiss. */
   function list(into) {
-    fetch(api + "letters").then(function (r) {
+    fetch(api + "admin/letters").then(function (r) {
       if (!r.ok) throw new Error();
       return r.json();
     }).then(function (letters) {
@@ -50,7 +50,7 @@ window.FlybackLetters = (function () {
         var dismiss = make("button", { type: "button", class: "button small" }, "Dismiss");
         dismiss.addEventListener("click", function () {
           dismiss.disabled = true;
-          fetch(api + "letters/" + letter.id, { method: "DELETE" }).then(function (r) {
+          fetch(api + "admin/letters/" + letter.id, { method: "DELETE" }).then(function (r) {
             if (!r.ok) throw new Error();
             list(into);
           }).catch(function () { dismiss.disabled = false; });

@@ -26,6 +26,7 @@ import {
   presetShown,
   submitPreset,
 } from "./presets";
+import { FRAMEWORK, KEPT_FOR_GOOD, largeFile, putLargeFile } from "./large";
 import { giveRating, readRating } from "./ratings";
 import { dismissReport, listReports, report } from "./reports";
 
@@ -101,10 +102,8 @@ const ADMIN: Route[] = [
   ["DELETE", path("/api/v1/admin/letters/{id}"), (a) => dismissLetter(a.env, a.at[0]!)],
 
   ["PUT", path("/api/v1/admin/defaults/([^/]+)"), (a) => putDefault(a.env, a.request, a.at[0]!)],
+  ["PUT", path("/api/v1/admin/assets/(.+)"), (a) => putLargeFile(a.env, a.request, a.at[0]!)],
 ];
-
-/** The web viewer's and editor's files named with their fingerprint never change. */
-const FINGERPRINTED = /^\/(viewer|editor)\/_framework\/.+\.[a-z0-9]{10}\.[a-z]+$/;
 
 async function answer(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
@@ -149,7 +148,10 @@ async function route(routes: Route[], asked: Asked): Promise<Response> {
   return matched ? new Response(null, { status: 405 }) : notFound();
 }
 
-/** A page or a file: a folder's index.html, and the fingerprinted framework files kept for good. */
+/**
+ * A page or a file: a folder's index.html, and the fingerprinted framework files kept
+ * for good, from R2 where one was too large to be an asset.
+ */
 async function asset(request: Request, env: Env, url: URL): Promise<Response> {
   if (url.pathname.endsWith("/")) {
     const index = new URL(url.pathname + "index.html", url);
@@ -157,14 +159,15 @@ async function asset(request: Request, env: Env, url: URL): Promise<Response> {
   }
 
   const served = await env.ASSETS.fetch(request);
+  if (!FRAMEWORK.test(url.pathname)) return served;
 
-  if (served.ok && FINGERPRINTED.test(url.pathname)) {
-    const kept = new Response(served.body, served);
-    kept.headers.set("Cache-Control", "public, max-age=31536000, immutable");
-    return kept;
-  }
+  if (served.status === 404) return (await largeFile(env, request, url.pathname)) ?? served;
 
-  return served;
+  if (!served.ok) return served;
+
+  const kept = new Response(served.body, served);
+  kept.headers.set("Cache-Control", KEPT_FOR_GOOD);
+  return kept;
 }
 
 /** What a browser that came over HTTPS is told to keep to, as the .NET site told it. */

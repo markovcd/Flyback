@@ -12,6 +12,7 @@ coverage/
 **/node_modules/
 worker/.wrangler/
 worker/public/
+worker/large/
 
 .git/
 .github/

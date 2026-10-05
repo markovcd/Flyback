@@ -322,7 +322,8 @@ api.MapDelete("/admin/session", async (HttpContext http) =>
     return Results.NoContent();
 });
 
-api.MapPatch("/presets/{id}", (HttpContext http, string id, PresetChange change) =>
+// The admin's changes answer under /admin too, where the pages ask the Worker that replaces this site.
+IResult ChangePreset(HttpContext http, string id, PresetChange change)
 {
     if (!Signed(http)) return Results.Unauthorized();
 
@@ -335,9 +336,9 @@ api.MapPatch("/presets/{id}", (HttpContext http, string id, PresetChange change)
     if (change.Published is { } published && !store.Publish(id, published)) return Results.NotFound();
 
     return store.Find(id, unpublished: true) is { } preset ? Results.Ok(View(preset, ratings.Of(ReportStore.Preset, id))) : Results.NotFound();
-});
+}
 
-api.MapDelete("/presets/{id}", (HttpContext http, string id) =>
+IResult DeletePreset(HttpContext http, string id)
 {
     if (!Signed(http)) return Results.Unauthorized();
     if (!store.Delete(id)) return Results.NotFound();
@@ -346,13 +347,14 @@ api.MapDelete("/presets/{id}", (HttpContext http, string id) =>
     ratings.Forget(ReportStore.Preset, id);
 
     return Results.NoContent();
-});
+}
+
+api.MapPatch("/presets/{id}", ChangePreset);
+api.MapPatch("/admin/presets/{id}", ChangePreset);
+api.MapDelete("/presets/{id}", DeletePreset);
+api.MapDelete("/admin/presets/{id}", DeletePreset);
 
 app.Run();
-
-internal sealed record SignIn(string? User, string? Password);
-
-internal sealed record PresetChange(string? Name, bool? Published);
 
 /// <summary>The entry point, named so the tests can host it.</summary>
 public partial class Program;

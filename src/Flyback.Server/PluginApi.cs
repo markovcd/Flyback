@@ -85,7 +85,7 @@ internal static class PluginApi
         .RequireRateLimiting("submit")
         .WithMetadata(new RequestSizeLimitAttribute(PluginSubmissions.Limits.Packed + (1 << 20)));
 
-        api.MapPatch("/plugins/{id}", (HttpContext http, string id, PluginChange change) =>
+        IResult Change(HttpContext http, string id, PluginChange change)
         {
             if (!reviewing(http)) return Results.Unauthorized();
 
@@ -98,12 +98,16 @@ internal static class PluginApi
             if (change.Published is { } published && !store.Publish(id, published)) return Results.NotFound();
 
             return store.Find(id, unpublished: true) is { } plugin ? Results.Ok(View(plugin, ratings.Of(ReportStore.Plugin, id))) : Results.NotFound();
-        });
+        }
+
+        // Under /admin too, where the pages ask the Worker that replaces this site.
+        api.MapPatch("/plugins/{id}", Change);
+        api.MapPatch("/admin/plugins/{id}", Change);
 
         api.MapReport("/plugins/{id}/reports", ReportStore.Plugin, reports, id => store.Find(id) is not null);
         api.MapRating("/plugins/{id}/rating", ReportStore.Plugin, ratings, id => store.Find(id) is not null);
 
-        api.MapDelete("/plugins/{id}", (HttpContext http, string id) =>
+        IResult Delete(HttpContext http, string id)
         {
             if (!reviewing(http)) return Results.Unauthorized();
             if (!store.Delete(id)) return Results.NotFound();
@@ -112,7 +116,10 @@ internal static class PluginApi
             ratings.Forget(ReportStore.Plugin, id);
 
             return Results.NoContent();
-        });
+        }
+
+        api.MapDelete("/plugins/{id}", Delete);
+        api.MapDelete("/admin/plugins/{id}", Delete);
     }
 
     private static object View(StoredPlugin plugin, Rating rating) => new

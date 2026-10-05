@@ -565,6 +565,39 @@ public sealed class ServerTests : IDisposable
         Names(await Get("/api/v1/presets")).ShouldBe(["Drone"]);
     }
 
+    /// <summary>The pages ask the admin's routes under /admin, where the Worker that replaces this site answers them.</summary>
+    [Fact]
+    public async Task The_admin_is_answered_under_admin_too()
+    {
+        var id = (await Submit(PatchFile())).GetProperty("id").GetString()!;
+        (await Report(id, new { reason = "broken" })).ShouldBe(HttpStatusCode.NoContent);
+        (await Write(new { mood = "good", message = "Hello." })).ShouldBe(HttpStatusCode.NoContent);
+
+        async Task<HttpStatusCode> Rename(HttpClient by, string name)
+        {
+            using var response = await by.PatchAsJsonAsync(new Uri("/api/v1/admin/presets/" + id, UriKind.Relative), new { name }, TestContext.Current.CancellationToken);
+            return response.StatusCode;
+        }
+
+        (await Rename(client, "Mine now")).ShouldBe(HttpStatusCode.Unauthorized);
+        (await Status("/api/v1/admin/reports")).ShouldBe(HttpStatusCode.Unauthorized);
+        (await Status("/api/v1/admin/letters")).ShouldBe(HttpStatusCode.Unauthorized);
+
+        using var admin = await Admin();
+
+        (await Rename(admin, "Night bus")).ShouldBe(HttpStatusCode.OK);
+        Names(await Get("/api/v1/presets")).ShouldBe(["Night bus"]);
+
+        var report = (await admin.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/admin/reports", UriKind.Relative), TestContext.Current.CancellationToken))[0];
+        (await Delete(admin, "/api/v1/admin/reports/" + report.GetProperty("id").GetString())).ShouldBe(HttpStatusCode.NoContent);
+
+        var letter = (await admin.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/admin/letters", UriKind.Relative), TestContext.Current.CancellationToken))[0];
+        (await Delete(admin, "/api/v1/admin/letters/" + letter.GetProperty("id").GetString())).ShouldBe(HttpStatusCode.NoContent);
+
+        (await Delete(admin, "/api/v1/admin/presets/" + id)).ShouldBe(HttpStatusCode.NoContent);
+        (await Get("/api/v1/presets")).GetProperty("total").GetInt32().ShouldBe(0);
+    }
+
     [Fact]
     public async Task Signing_out_ends_admin_mode()
     {

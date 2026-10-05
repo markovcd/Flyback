@@ -92,7 +92,7 @@
   // ---- admin tools ----------------------------------------------------------
 
   function change(preset, body) {
-    return fetch(api + "presets/" + preset.id, body
+    return fetch(api + "admin/presets/" + preset.id, body
       ? { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
       : { method: "DELETE" }).then(function (r) {
       if (r.status === 401) throw new Error("You are signed out.");
@@ -389,6 +389,11 @@
     }).then(function (preset) {
       document.title = preset.name + " — Flyback Presets";
 
+      if (preset.status === "unchecked" || preset.status === "refused") {
+        waiting(page, preset);
+        return;
+      }
+
       var picture = make("div");
       picture.appendChild(frame(preset, null));
 
@@ -445,6 +450,24 @@
     }).catch(function () {
       page.replaceChildren(make("p", { class: "empty" }, "There is no such preset."));
     });
+  }
+
+  /** A submission still being read, which this page shows once it is on the shelf, or one that was refused and why. */
+  function waiting(page, preset) {
+    var text = make("div");
+    text.appendChild(make("span", { class: "eyebrow" }, "Preset"));
+    text.appendChild(make("h1", null, preset.name));
+
+    if (preset.status === "refused") {
+      text.appendChild(make("p", { class: "lede" }, "It was not taken: " + preset.reason));
+      text.appendChild(make("a", { class: "button", href: "submit.html" }, "Submit another"));
+    } else {
+      text.appendChild(make("p", { class: "lede" },
+        "Received. Flyback is reading it, and it joins the shelf in a few minutes. This page shows it as soon as it does."));
+      setTimeout(function () { location.reload(); }, 30000);
+    }
+
+    page.replaceChildren(text);
   }
 
   // ---- submitting -----------------------------------------------------------
@@ -534,13 +557,22 @@
       status.classList.toggle("bad", !!text);
     }
 
+    // Where Cloudflare Access is the sign-in, this page is only reached signed in, and signing out is Access's.
+    var access = false;
+
     admin.then(function (state) {
+      access = !!state.access;
       if (!state.enabled) {
-        document.getElementById("admin-lede").textContent = "Admin mode is off. Set Presets__Admin__User and " +
-          "Presets__Admin__Password in the container's configuration to turn it on.";
+        document.getElementById("admin-lede").textContent = access
+          ? "Admin mode is off. Set ACCESS_TEAM_DOMAIN and ACCESS_AUD on the Worker to turn it on."
+          : "Admin mode is off. Set Site__Admin__User and Site__Admin__Password in the container's configuration to turn it on.";
         return;
       }
       show(state.signedIn);
+      if (access && !state.signedIn) {
+        form.hidden = true;
+        document.getElementById("admin-lede").textContent = "Sign in through Cloudflare Access: open this page again.";
+      }
     });
 
     form.addEventListener("submit", function (e) {
@@ -566,7 +598,10 @@
     });
 
     document.getElementById("sign-out").addEventListener("click", function () {
-      fetch(api + "admin/session", { method: "DELETE" }).then(function () { show(false); });
+      fetch(api + "admin/session", { method: "DELETE" }).then(function () {
+        if (access) location.href = "/cdn-cgi/access/logout";
+        else show(false);
+      });
     });
   }
 

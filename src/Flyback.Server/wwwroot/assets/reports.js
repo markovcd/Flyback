@@ -97,7 +97,7 @@ window.FlybackReports = (function () {
 
   /** The admin's list of every report, newest first, each with a Dismiss. */
   function list(into) {
-    fetch(api + "reports").then(function (r) {
+    fetch(api + "admin/reports").then(function (r) {
       if (!r.ok) throw new Error();
       return r.json();
     }).then(function (reports) {
@@ -122,7 +122,7 @@ window.FlybackReports = (function () {
         var dismiss = make("button", { type: "button", class: "button small" }, "Dismiss");
         dismiss.addEventListener("click", function () {
           dismiss.disabled = true;
-          fetch(api + "reports/" + report.id, { method: "DELETE" }).then(function (r) {
+          fetch(api + "admin/reports/" + report.id, { method: "DELETE" }).then(function (r) {
             if (!r.ok) throw new Error();
             list(into);
           }).catch(function () { dismiss.disabled = false; });

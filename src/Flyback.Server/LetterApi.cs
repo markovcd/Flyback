@@ -28,13 +28,17 @@ internal static class LetterApi
         .DisableAntiforgery()
         .RequireRateLimiting("letter");
 
-        api.MapGet("/letters", (HttpContext http) =>
-            reviewing(http) ? Results.Ok(letters.List()) : Results.Unauthorized());
+        // Under /admin too, where the pages ask the Worker that replaces this site.
+        foreach (var at in new[] { "/letters", "/admin/letters" })
+        {
+            api.MapGet(at, (HttpContext http) =>
+                reviewing(http) ? Results.Ok(letters.List()) : Results.Unauthorized());
 
-        api.MapDelete("/letters/{id}", (HttpContext http, string id) =>
-            !reviewing(http) ? Results.Unauthorized()
-            : letters.Dismiss(id) ? Results.NoContent()
-            : Results.NotFound());
+            api.MapDelete(at + "/{id}", (HttpContext http, string id) =>
+                !reviewing(http) ? Results.Unauthorized()
+                : letters.Dismiss(id) ? Results.NoContent()
+                : Results.NotFound());
+        }
     }
 
     private static string? Said(string? text) => text?.Trim() is { Length: > 0 } said ? said : null;

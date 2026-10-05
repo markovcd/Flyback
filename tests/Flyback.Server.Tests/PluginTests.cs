@@ -334,6 +334,20 @@ public sealed class PluginTests : IDisposable
     }
 
     [Fact]
+    public async Task The_admin_publishes_and_deletes_under_admin_too()
+    {
+        var id = (await Submit(Package("win"))).GetProperty("id").GetString()!;
+        using var admin = await Admin();
+
+        (await Status(HttpMethod.Patch, $"/api/v1/admin/plugins/{id}", JsonContent.Create(new { published = true }))).ShouldBe(HttpStatusCode.Unauthorized);
+        (await Status(HttpMethod.Patch, $"/api/v1/admin/plugins/{id}", JsonContent.Create(new { published = true }), admin)).ShouldBe(HttpStatusCode.OK);
+        (await Get("/api/v1/plugins")).GetProperty("total").GetInt32().ShouldBe(1);
+
+        (await Status(HttpMethod.Delete, $"/api/v1/admin/plugins/{id}", by: admin)).ShouldBe(HttpStatusCode.NoContent);
+        (await Get("/api/v1/plugins")).GetProperty("total").GetInt32().ShouldBe(0);
+    }
+
+    [Fact]
     public async Task Publishing_and_deleting_need_the_admin()
     {
         var id = (await Submit(Package("win"))).GetProperty("id").GetString()!;
