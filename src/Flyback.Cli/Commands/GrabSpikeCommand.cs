@@ -350,45 +350,57 @@ internal static class GrabSpikeCommand
 
         private (double[] Z, double[] Current, double Error) Run(List<Row> rows, bool[] allowed, double[] z, double[] current, double error)
         {
+            const double widest = 0.1d;
+
+            // Each knob's own trust region: narrowed when it carried a step that failed, so the
+            // next solve leans on knobs whose slope held.
+            var caps = allowed.Select(free => free ? widest : 0d).ToArray();
+            var sound = rows.Any(row => !row.Picture);
+
             for (var iteration = 1; iteration <= 12 && error > 1d; iteration++)
             {
                 var jacobian = Jacobian(rows, z);
                 var residual = rows.Select((row, i) => row.Target - current[i]).ToArray();
-                var free = (bool[])allowed.Clone();
-                double[] dz = [];
-
-                // Knobs at an end of their travel that the step would push past it are held there.
-                for (var pass = 0; pass < 4; pass++)
-                {
-                    dz = MinNorm(jacobian, residual, rows, free);
-
-                    var stuck = Enumerable.Range(0, keys.Length).Where(k => free[k] && (z[k] <= 0d && dz[k] < 0d || z[k] >= 1d && dz[k] > 0d)).ToArray();
-                    if (stuck.Length == 0) break;
-                    foreach (var k in stuck) free[k] = false;
-                }
-
-                var size = Math.Sqrt(dz.Sum(d => d * d));
-                if (size == 0d) break;
-                if (size > 0.1d) for (var k = 0; k < dz.Length; k++) dz[k] *= 0.1d / size;
-
                 var taken = false;
 
-                for (var halving = 0; halving < 6 && !taken; halving++)
+                for (var attempt = 0; attempt < 8 && !taken; attempt++)
                 {
+                    var weight = caps.Select(cap => cap / widest).ToArray();
+                    double[] dz = [];
+
+                    // Knobs at an end of their travel that the step would push past it are held there.
+                    for (var pass = 0; pass < 4; pass++)
+                    {
+                        dz = MinNorm(jacobian, residual, rows, weight);
+
+                        var stuck = Enumerable.Range(0, keys.Length).Where(k => weight[k] > 0d && (z[k] <= 0d && dz[k] < 0d || z[k] >= 1d && dz[k] > 0d)).ToArray();
+                        if (stuck.Length == 0) break;
+                        foreach (var k in stuck) weight[k] = 0d;
+                    }
+
+                    for (var k = 0; k < dz.Length; k++) dz[k] = Math.Clamp(dz[k], -caps[k], caps[k]);
+
+                    if (dz.All(d => d == 0d)) break;
+
                     var tried = z.Select((value, k) => Math.Clamp(value + dz[k], 0d, 1d)).ToArray();
-                    var measured = Measure(tried, out var levels);
+                    var measured = Measure(tried, out var levels, sound);
                     var values = Values(rows, measured, levels);
                     var triedError = Error(rows, values);
 
-                    output.WriteLine($"  step {iteration}.{halving}: error {error:0.00} -> {triedError:0.00}");
-
                     if (triedError <= error)
                     {
+                        output.WriteLine($"  step {iteration}.{attempt}: error {error:0.00} -> {triedError:0.00}");
                         (z, current, error, taken) = (tried, values, triedError, true);
+
+                        for (var k = 0; k < caps.Length; k++) caps[k] = Math.Min(widest, caps[k] * 1.5d);
                     }
                     else
                     {
-                        for (var k = 0; k < dz.Length; k++) dz[k] *= 0.5d;
+                        var blamed = Enumerable.Range(0, keys.Length)
+                            .MaxBy(k => Enumerable.Range(0, rows.Count).Sum(i => Math.Abs(jacobian[i, k] * dz[k]) / rows[i].Tolerance));
+
+                        caps[blamed] *= 0.25d;
+                        output.WriteLine($"  step {iteration}.{attempt}: error {error:0.00} -> {triedError:0.00}, {labels[blamed]} trusted to {caps[blamed]:0.000}");
                     }
                 }
 
@@ -423,9 +435,11 @@ internal static class GrabSpikeCommand
             output.WriteLine("NEW " + string.Join(";", Enumerable.Range(0, keys.Length).Select(k => $"{keys[k]}={((float)z[k]).ToString("R", CultureInfo.InvariantCulture)}")));
         }
 
-        private (double Light, double Warmth)[] Measure(double[] z, out double[][] levels)
+        private (double Light, double Warmth)[] Measure(double[] z, out double[][] levels, bool sound = true)
         {
-            levels = [.. moments.Select(seconds => Sound(seconds, z))];
+            levels = sound
+                ? [.. moments.Select(seconds => Sound(seconds, z))]
+                : [.. moments.Select(_ => new double[SlopeReadings.Octaves.Count])];
             return [.. settled.Select(moment => Picture(moment, z))];
         }
 
@@ -471,7 +485,7 @@ internal static class GrabSpikeCommand
         }
 
         /// <summary>The smallest knob move the slopes say meets every row, each row weighed by its tolerance.</summary>
-        private static double[] MinNorm(double[,] jacobian, double[] residual, List<Row> rows, bool[] free)
+        private static double[] MinNorm(double[,] jacobian, double[] residual, List<Row> rows, double[] weight)
         {
             var m = rows.Count;
             var n = jacobian.GetLength(1);
@@ -481,7 +495,7 @@ internal static class GrabSpikeCommand
             for (var i = 0; i < m; i++)
             {
                 r[i] = residual[i] / rows[i].Tolerance;
-                for (var k = 0; k < n; k++) a[i, k] = free[k] ? jacobian[i, k] / rows[i].Tolerance : 0d;
+                for (var k = 0; k < n; k++) a[i, k] = weight[k] * jacobian[i, k] / rows[i].Tolerance;
             }
 
             var normal = new double[m, m];
@@ -499,7 +513,7 @@ internal static class GrabSpikeCommand
 
             for (var k = 0; k < n; k++)
                 for (var i = 0; i < m; i++)
-                    dz[k] += a[i, k] * w[i];
+                    dz[k] += weight[k] * a[i, k] * w[i];
 
             return dz;
         }
