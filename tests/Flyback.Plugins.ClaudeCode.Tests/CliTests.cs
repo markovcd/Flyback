@@ -26,6 +26,15 @@ public class CliTests
     }
 
     [Fact]
+    public void Every_process_runs_as_the_same_session_so_the_prompt_cache_is_hit()
+    {
+        var arguments = ClaudeCli.Arguments(Request());
+
+        arguments[arguments.ToList().IndexOf("--session-id") + 1].ShouldBe(ClaudeCli.SessionId);
+        Guid.TryParse(ClaudeCli.SessionId, out _).ShouldBeTrue();
+    }
+
+    [Fact]
     public void The_model_is_passed_and_effort_only_where_it_is_not_the_default()
     {
         var plain = ClaudeCli.Arguments(Request("opus"));
