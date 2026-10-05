@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The web viewer hides the Loop button for a patch with no length.
+
 - The Claude Code assistant now hits the prompt cache between requests.
 
 - `flyback-cli render-presets` uploads its renders through the preset site's admin API when no `--media` folder is given, `--limit` caps how many one pass renders, and `--still-only` makes the still alone.
