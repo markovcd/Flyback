@@ -53,14 +53,14 @@
       }
     },
 
-    // Not deployed until the move in deploy/cloudflare/README.md: the database id and the
-    // audience tag are the zeros until the resources exist.
+    // Not deployed until the move in deploy/cloudflare/README.md: the audience tag is
+    // the zeros until the Access application exists.
     "production": {
       "name": "flyback-site",
       "workers_dev": false,
       "routes": [{ "pattern": "flyback.nasik2137.uk", "custom_domain": true }],
       "d1_databases": [
-        { "binding": "DB", "database_name": "flyback-site", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+        { "binding": "DB", "database_name": "flyback-site", "database_id": "cec1920c-9891-4b01-9490-574cfda71fc7", "migrations_dir": "migrations" }
       ],
       "r2_buckets": [{ "binding": "FILES", "bucket_name": "flyback-site" }],
       "triggers": { "crons": ["17 * * * *"] },
