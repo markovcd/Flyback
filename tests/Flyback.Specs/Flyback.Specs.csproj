@@ -56,6 +56,7 @@
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" FolderName="OpenAi" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Gemini\Flyback.Plugins.Gemini.csproj" FolderName="Gemini" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.ClaudeCode\Flyback.Plugins.ClaudeCode.csproj" FolderName="ClaudeCode" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.WinIO\Flyback.Plugins.WinIO.csproj" FolderName="WinIO" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.MacIO\Flyback.Plugins.MacIO.csproj" FolderName="MacIO" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.LinuxIO\Flyback.Plugins.LinuxIO.csproj" FolderName="LinuxIO" />

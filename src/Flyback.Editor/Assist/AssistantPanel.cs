@@ -999,7 +999,7 @@ internal sealed class AssistantPanel : UserControl
     /// </remarks>
     private void ShowKeyState()
     {
-        keySection.IsVisible = chosenAssistant.Value is not null;
+        keySection.IsVisible = chosenAssistant.Value is { NeedsKey: true };
 
         if (chosenAssistant.Value is null)
         {

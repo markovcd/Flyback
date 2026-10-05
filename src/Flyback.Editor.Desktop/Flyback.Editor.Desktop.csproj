@@ -92,6 +92,7 @@
     <PluginProject Include="..\plugins\Flyback.Plugins.Keyring\Flyback.Plugins.Keyring.csproj" FolderName="Keyring" Platform="linux" />
     <PluginProject Include="..\plugins\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" FolderName="OpenAi" />
     <PluginProject Include="..\plugins\Flyback.Plugins.Gemini\Flyback.Plugins.Gemini.csproj" FolderName="Gemini" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.ClaudeCode\Flyback.Plugins.ClaudeCode.csproj" FolderName="ClaudeCode" />
     <PluginProject Include="..\plugins\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" FolderName="Picture" />
     <PluginProject Include="..\plugins\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" FolderName="Voice" />
     <PluginProject Include="..\plugins\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" FolderName="Effects" />

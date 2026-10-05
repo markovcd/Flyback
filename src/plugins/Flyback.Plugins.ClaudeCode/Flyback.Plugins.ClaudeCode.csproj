@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Flyback.Plugins.ClaudeCode</RootNamespace>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+
+    <!-- What the install dialog and the plugins window show. -->
+    <Product>Claude Code</Product>
+    <Authors>Flyback</Authors>
+    <Description>Builds patches through the Claude Code you are already signed in to, with no API key.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="Tags" Value="assistant; ai" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Both are host-owned; shipping either would give its types a second identity. -->
+    <ProjectReference Include="../../Flyback.Plugins/Flyback.Plugins.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime"
+                      GlobalPropertiesToRemove="OutDir" />
+    <ProjectReference Include="../../Flyback.Core/Flyback.Core.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime"
+                      GlobalPropertiesToRemove="OutDir" />
+  </ItemGroup>
+
+  <!--
+    No package. The CLI is a process with JSON lines in and out, which a few
+    dozen lines of System.Diagnostics speak without a dependency.
+  -->
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Flyback.Plugins.ClaudeCode.Tests" />
+  </ItemGroup>
+
+</Project>

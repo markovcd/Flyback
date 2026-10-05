@@ -24,6 +24,12 @@ public interface IPatchAssistant
     AssistantCredential Credential { get; }
 
     /// <summary>
+    /// Whether the person has to give this one a key. False for a provider that signs
+    /// itself in, and the window then draws no key box.
+    /// </summary>
+    bool NeedsKey => true;
+
+    /// <summary>
     /// Where a run configured this way sends its requests, or null where that is not
     /// an address yet. A key entered is bound to this origin (<see cref="IAssistantTransport"/>).
     /// </summary>

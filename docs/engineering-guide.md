@@ -430,6 +430,7 @@ folder out from under it.
 | WinIO, MacIO, LinuxIO | Sound and MIDI per platform ([0063](adr/0063-one-plugin-per-platform-for-sound-and-midi.md)) | `NAudio.Wasapi` in WinIO; the others are hand-written P/Invoke |
 | Dpapi, Keychain, Keyring | Where an API key is kept ([0034](adr/0034-settings-in-a-file-the-key-in-the-operating-system.md)) | `ProtectedData` in Dpapi |
 | Picture, Voice, Effects, Mastering | Modules and presets | none |
+| ClaudeCode | Patch assistant over the installed `claude` program, so a subscription pays and no key exists | none: a process with JSON lines in and out |
 | OpenAi, Gemini | Patch assistants ([0033](adr/0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md), [0066](adr/0066-a-second-wire-format-so-one-model-can-hear.md)) | none: hand-written JSON over HTTP |
 
 An assistant never touches the patch directly. Everything it does goes through
@@ -754,7 +755,7 @@ changed: saved patches name it.
 | `Flyback.Ui.Tests` | The shared controls, the audio engine, MIDI | Headless Avalonia for the controls |
 | `Flyback.Cli.Tests` | Commands run in-process | |
 | `Flyback.Plugins.Tests` | The host, every shipped module and preset | Loads real plugins off disk |
-| `Flyback.Plugins.OpenAi.Tests`, `.Gemini.Tests` | Wire translation and sessions | Reference the plugin directly: translation is pure |
+| `Flyback.Plugins.OpenAi.Tests`, `.Gemini.Tests`, `.ClaudeCode.Tests` | Wire translation and sessions | Reference the plugin directly: translation is pure |
 | `Flyback.Ui.Testing` | The headless harness: `UiTest`, the Avalonia xunit adapter | Not a test project |
 | `Flyback.Core.Benchmarks` | BenchmarkDotNet | Not a test project |
 | `Flyback.Plugins.Sample`, `.FakeAssistant` | Plugins the tests load | Not test projects |

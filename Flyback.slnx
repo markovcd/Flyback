@@ -51,6 +51,7 @@
     <Project Path="src/plugins/Flyback.Plugins.MacIO/Flyback.Plugins.MacIO.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Mastering/Flyback.Plugins.Mastering.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.OpenAi/Flyback.Plugins.OpenAi.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.ClaudeCode/Flyback.Plugins.ClaudeCode.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Picture/Flyback.Plugins.Picture.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Voice/Flyback.Plugins.Voice.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.WinIO/Flyback.Plugins.WinIO.csproj" />
@@ -68,6 +69,7 @@
     <Project Path="tests/Flyback.Plugins.FakeAssistant/Flyback.Plugins.FakeAssistant.csproj" />
     <Project Path="tests/Flyback.Plugins.Gemini.Tests/Flyback.Plugins.Gemini.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.OpenAi.Tests/Flyback.Plugins.OpenAi.Tests.csproj" />
+    <Project Path="tests/Flyback.Plugins.ClaudeCode.Tests/Flyback.Plugins.ClaudeCode.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.Sample/Flyback.Plugins.Sample.csproj" />
     <Project Path="tests/Flyback.Plugins.Tests/Flyback.Plugins.Tests.csproj" />
     <Project Path="tests/Flyback.Server.Tests/Flyback.Server.Tests.csproj" />

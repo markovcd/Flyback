@@ -239,7 +239,7 @@ internal static class ProbeCommand
         var values = settings.Of(assistant.Id);
         var config = new AssistantConfig(credentials.Transport(assistant, values), values);
 
-        if (!config.Transport.HasKey)
+        if (assistant.NeedsKey && !config.Transport.HasKey)
         {
             error.WriteLine($"No key for {assistant.Name}.");
 
