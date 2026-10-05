@@ -16,6 +16,9 @@ internal sealed class LinuxFileTypes(string data, string editor, string viewer, 
 
     public static LinuxFileTypes ForUser(string editor, string viewer) => new(DataFolder(), editor, viewer, Run);
 
+    /// <summary>The application's own icon, published beside the editor.</summary>
+    internal const string AppIcon = "flyback.png";
+
     internal string Entry => Path.Combine(data, "applications", $"{Id}.desktop");
 
     internal string Package => Path.Combine(data, "mime", "packages", $"{Id}.xml");
@@ -31,7 +34,9 @@ internal sealed class LinuxFileTypes(string data, string editor, string viewer, 
             Directory.CreateDirectory(Path.GetDirectoryName(Entry)!);
             Directory.CreateDirectory(Path.GetDirectoryName(Package)!);
 
-            File.WriteAllText(Entry, DesktopEntry(program, opener == FileOpener.Viewer));
+            var icon = Path.Combine(Path.GetDirectoryName(editor) ?? "", AppIcon);
+
+            File.WriteAllText(Entry, DesktopEntry(program, opener == FileOpener.Viewer, File.Exists(icon) ? icon : null));
             File.WriteAllText(Package, MimePackage());
 
             foreach (var kind in Kinds)
@@ -58,14 +63,14 @@ internal sealed class LinuxFileTypes(string data, string editor, string viewer, 
     /// The viewer is kept out of the applications menu: started from there it has no
     /// file, and plays the startup preset.
     /// </remarks>
-    internal static string DesktopEntry(string program, bool viewer) =>
+    internal static string DesktopEntry(string program, bool viewer, string? icon = null) =>
         $"""
         [Desktop Entry]
         Type=Application
         Name={(viewer ? "Flyback Viewer" : "Flyback")}
         Comment=Patchable synthesizer: one module graph makes a picture and a sound
         Exec={Quote(program)} %f
-        Terminal=false
+        {(icon is null ? "" : $"Icon={icon}\n")}Terminal=false
         NoDisplay={(viewer ? "true" : "false")}
         Categories=AudioVideo;Audio;Video;
         MimeType={string.Concat(Kinds.Select(kind => kind.MimeType + ";"))}

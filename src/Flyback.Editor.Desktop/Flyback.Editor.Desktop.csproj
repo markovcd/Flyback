@@ -127,6 +127,8 @@
       <Link>flyback.icns</Link>
     </None>
     <None Include="Info.plist" />
+    <!-- The 256 px frame of flyback.ico, which a Linux desktop entry names as its icon. -->
+    <None Include="..\..\flyback.png" Link="flyback.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

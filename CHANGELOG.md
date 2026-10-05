@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- On Linux, Flyback shows its icon in the applications menu after install.sh, and in the entry it writes when it opens your files.
+
 - A preset opened from the gallery stops counting as the open preset once the patch is edited.
 
 - The assistant can set how long a patch plays for.

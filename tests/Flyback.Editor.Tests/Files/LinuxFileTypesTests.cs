@@ -55,6 +55,21 @@ public sealed class LinuxFileTypesTests : IDisposable
     }
 
     [Fact]
+    public void The_entry_names_the_application_icon_when_it_ships_beside_the_editor()
+    {
+        var types = Build();
+
+        types.Apply(FileOpener.Editor);
+        File.ReadAllText(types.Entry).ShouldNotContain("Icon=");
+
+        var icon = Path.Combine(data, LinuxFileTypes.AppIcon);
+        File.WriteAllText(icon, "");
+
+        types.Apply(FileOpener.Editor);
+        File.ReadAllText(types.Entry).ShouldContain($"Icon={icon}\n");
+    }
+
+    [Fact]
     public void Nothing_removes_both_files()
     {
         var types = Build();

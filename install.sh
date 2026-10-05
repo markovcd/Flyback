@@ -238,6 +238,7 @@ Type=Application
 Name=Flyback
 Comment=A patchable synthesizer for picture and sound
 Exec="$programs/Flyback" %f
+Icon=$programs/flyback.png
 Terminal=false
 Categories=AudioVideo;Audio;Graphics;
 EOF
