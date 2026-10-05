@@ -13,7 +13,8 @@ internal sealed class WindowDialog(WindowHolder holder) : IDialog
             string title, 
             Func<Action<TResult>, Control> content, 
             Control? header = null, 
-            bool fill = false)
+            bool fill = false,
+            bool wide = false)
     {
         // Avalonia's own layer for things drawn over a window — what a flyout
         // or a tooltip is put in. Using it rather than a panel of our own
@@ -27,7 +28,7 @@ internal sealed class WindowDialog(WindowHolder holder) : IDialog
         // whatever had it is its own small rudeness.
         var before = holder.Instance.FocusManager.GetFocusedElement();
 
-        var overlay = new ModalOverlay(title, a => content(r => a(r)), header, fill);
+        var overlay = new ModalOverlay(title, a => content(r => a(r)), header, fill, wide);
 
         layer.Children.Add(overlay);
         overlay.Focus();

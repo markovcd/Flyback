@@ -17,6 +17,9 @@ internal sealed record Thumbnail(
     /// <summary>The build's still, as the file it drew, where it drew one (ADR-0163); shown in place of <see cref="Pixels"/>.</summary>
     public byte[]? Still { get; init; }
 
+    /// <summary>Which halves of the Output the patch has wired, and null where it would not open.</summary>
+    public (bool Picture, bool Sound)? Reaches { get; init; }
+
     /// <summary>
     /// A patch that is heard and never seen, which has no frame to take. Shown as a
     /// speaker, the words being what it says when pointed at.

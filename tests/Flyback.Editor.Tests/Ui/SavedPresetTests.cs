@@ -65,6 +65,13 @@ public class SavedPresetTests : EditorTest
         Settle(window);
     }
 
+    /// <summary>Chooses a tile and opens it with the button the gallery has for that.</summary>
+    private static void Use(Button tile, MainWindow window)
+    {
+        Click(tile, window);
+        Click(All<Button>(window).Single(b => b.Name == "use-preset"), window);
+    }
+
     private static WrapPanel Yours(MainWindow window) =>
         All<WrapPanel>(window).Single(p => p.Name == "yours");
 
@@ -91,7 +98,8 @@ public class SavedPresetTests : EditorTest
 
         var gallery = All<StackPanel>(window).Single(p => p.Name == "gallery");
 
-        gallery.Children[^2].ShouldBeOfType<TextBlock>().Text.ShouldBe(PresetGallery.YoursHeading);
+        gallery.Children[^2].ShouldBeOfType<Grid>().Children.OfType<TextBlock>().Single(t => t.Name == "run-title")
+            .Text.ShouldBe(PresetGallery.YoursHeading);
         gallery.Children[^1].ShouldBeSameAs(Yours(window));
 
         SavedTiles(window).ShouldBeEmpty("nothing has been saved yet");
@@ -117,7 +125,7 @@ public class SavedPresetTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void Clicking_a_saved_preset_puts_it_on_the_canvas()
+    public void Using_a_saved_preset_puts_it_on_the_canvas()
     {
         var window = Open();
         var editor = All<NodeEditor>(window).Single();
@@ -127,11 +135,11 @@ public class SavedPresetTests : EditorTest
         SaveAs(window, "Mine");
 
         // Somewhere else first, so arriving back is visibly the saved one.
-        Click(All<Button>(window).Single(b => b.Name == "tile" && ((PatchPreset)b.Tag!).Name == "Empty"), window);
+        Use(All<Button>(window).Single(b => b.Name == "tile" && ((PatchPreset)b.Tag!).Name == "Empty"), window);
         editor.History.Patch.Nodes.Count.ShouldBe(1);
 
         OpenGallery(window);
-        Click(All<Button>(Yours(window)).Single(b => b.Name == "tile"), window);
+        Use(All<Button>(Yours(window)).Single(b => b.Name == "tile"), window);
 
         (Presets(window).SelectedItem as PatchPreset)!.Name.ShouldBe("Mine");
         editor.History.Patch.Nodes.Select(n => n.TypeId).Order().ShouldBe(saved);
@@ -258,7 +266,7 @@ public class SavedPresetTests : EditorTest
         SavedTiles(window).Select(p => p.Name).ShouldBe(["Mine"]);
 
         // The question is gone, so the tile is an ordinary one again.
-        Click(All<Button>(Yours(window)).Single(b => b.Name == "tile"), window);
+        Use(All<Button>(Yours(window)).Single(b => b.Name == "tile"), window);
 
         All<ModalOverlay>(window).ShouldBeEmpty();
         (Presets(window).SelectedItem as PatchPreset)!.Name.ShouldBe("Mine");
@@ -331,7 +339,7 @@ public class SavedPresetTests : EditorTest
         All<Button>(window).ShouldNotContain(b => b.Name == "keep-preset");
         mine.ContextFlyout.ShouldBeNull();
 
-        Click(mine, window);
+        Use(mine, window);
 
         All<ModalOverlay>(window).Count().ShouldBe(1, "the settings are still up under the gallery");
         All<TextBlock>(row).Single(t => t.Name == "defaultPresetName").Text.ShouldBe("Mine");
@@ -383,16 +391,20 @@ public class SavedPresetTests : EditorTest
         SaveAs(window, "Mine");
 
         var tile = All<Button>(Yours(window)).Single(b => b.Name == "tile");
-        var tags = All<TextBlock>(tile).Single(t => t.Name == "tags");
+
+        Click(tile, window);
+
+        var tags = All<WrapPanel>(window).Single(p => p.Name == "detail-topics");
         var deadline = DateTime.UtcNow.AddSeconds(60);
 
-        while (!tags.IsVisible && DateTime.UtcNow < deadline)
+        while (tags.Children.Count == 0 && DateTime.UtcNow < deadline)
         {
             Dispatcher.UIThread.RunJobs();
             Thread.Sleep(20);
         }
 
-        tags.Text.ShouldBe("drone · quokka");
+        tags.Children.Select(chip => ((Button)chip).Content).ShouldBe(["drone", "quokka"]);
+        All<TextBlock>(window).Single(t => t.Name == "detail-credit").Text.ShouldBe("by Wendelin");
 
         var filter = All<TextBox>(window).Single(b => b.Name == "preset-filter");
 

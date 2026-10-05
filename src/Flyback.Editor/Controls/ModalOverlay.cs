@@ -26,7 +26,11 @@ internal sealed class ModalOverlay : Border
     /// <summary>How much of the window a dialog may take before it scrolls.</summary>
     private const double Inset = 40;
 
-    private const double Widest = 720;
+    private const double Usual = 720;
+
+    private const double Wide = 1280;
+
+    private readonly double widest;
 
     private readonly TaskCompletionSource<object?> answered = new();
 
@@ -42,8 +46,10 @@ internal sealed class ModalOverlay : Border
 
     private ScrollViewer? scroller;
 
-    public ModalOverlay(string title, Func<Action<object?>, Control> content, Control? header = null, bool fill = false)
+    public ModalOverlay(string title, Func<Action<object?>, Control> content, Control? header = null, bool fill = false, bool wide = false)
     {
+        widest = wide ? Wide : Usual;
+
         Name = "modal";
         Background = new SolidColorBrush(Colors.Scrim);
 
@@ -56,7 +62,7 @@ internal sealed class ModalOverlay : Border
         // when the sheet was clicked would be one a missed button press could
         // dismiss, and the two dialogs that are read rather than answered are
         // exactly the ones somebody clicks around in while reading.
-        Child = Frame(title, content(Answer), header, fill);
+        Child = Frame(title, content(Answer), header, fill, wide);
     }
 
     /// <summary>Completes when the dialog has been answered or dismissed.</summary>
@@ -126,7 +132,7 @@ internal sealed class ModalOverlay : Border
     {
         if (frame is null || scroller is null) return;
 
-        var narrowest = Math.Min(parts.Max(Needs) + 2, Widest);
+        var narrowest = Math.Min(parts.Max(Needs) + 2, widest);
         var side = Math.Clamp((window - narrowest) / 2, 0, Inset);
 
         frame.Margin = new Thickness(side, Inset, side, Inset);
@@ -164,7 +170,7 @@ internal sealed class ModalOverlay : Border
     private static double Needs(Control part)
         => Math.Max(part.MinWidth, double.IsNaN(part.Width) ? 0 : part.Width) + part.Margin.Left + part.Margin.Right;
 
-    private Control Frame(string title, Control content, Control? header, bool fill)
+    private Control Frame(string title, Control content, Control? header, bool fill, bool wide)
     {
         var heading = new TextBlock
         {
@@ -221,6 +227,7 @@ internal sealed class ModalOverlay : Border
         scroller = new ScrollViewer
         {
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = wide ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto,
             Content = content,
         };
 
@@ -250,7 +257,7 @@ internal sealed class ModalOverlay : Border
             HorizontalAlignment = fill ? HorizontalAlignment.Stretch : HorizontalAlignment.Center,
             VerticalAlignment = fill ? VerticalAlignment.Stretch : VerticalAlignment.Center,
             Margin = new Thickness(Inset),
-            MaxWidth = Widest,
+            MaxWidth = widest,
 
             // So a Tab does not walk out of the question and into the patch
             // behind it, which is the one thing left that a dimmed sheet cannot

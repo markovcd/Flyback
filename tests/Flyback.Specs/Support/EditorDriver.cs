@@ -462,6 +462,54 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
             Named<Button>(open, "presets-glyph")
                 .RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
 
+    /// <summary>Chooses the open gallery's card for the preset called <paramref name="name"/>.</summary>
+    public void ChooseCard(string name) =>
+        DoWindow((open, _) => Card(open, name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
+
+    /// <summary>The type of every module on the canvas, as it is now.</summary>
+    public IReadOnlyList<string> CanvasTypes => ReadWindow(open => (IReadOnlyList<string>)[.. CanvasIn(open).History.Patch.Nodes.Select(node => node.TypeId)]);
+
+    /// <summary>The name the gallery's column beside the cards describes.</summary>
+    public string? Described => ReadWindow(open => Named<TextBlock>(open, "detail-name").Text);
+
+    /// <summary>Presses the gallery's button that opens the chosen card, and waits for the gallery to come down.</summary>
+    public void UseChosenCard() =>
+        Run(async () =>
+        {
+            var open = Window();
+
+            Named<Button>(open, "use-preset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            await Until(() => !open.GetVisualDescendants().OfType<ModalOverlay>().Any(), () => $"the gallery to close. {Situation(open)}");
+
+            context.Replace(Canvas().History.Patch);
+            return true;
+        });
+
+    /// <summary>Presses the row of the gallery's left column labeled <paramref name="label"/>.</summary>
+    public void PressGalleryRow(string label) =>
+        DoWindow((open, _) => open.GetVisualDescendants().OfType<Button>()
+            .Single(b => b.Name == "filter-row" && (string)b.Tag! == label)
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
+
+    /// <summary>The presets whose cards the open gallery shows, once every card has said what it works with.</summary>
+    public IReadOnlyList<string> CardsShown =>
+        Run(async () =>
+        {
+            var open = Window();
+            var cards = open.GetVisualDescendants().OfType<Button>().Where(b => b.Name == "tile").ToList();
+
+            await Until(
+                () => cards.All(card => Named<StackPanel>(card, "badges").Children.Count > 0),
+                () => $"every card to say what it works with. {Situation(open)}");
+
+            return (IReadOnlyList<string>)[.. cards.Where(card => card.IsEffectivelyVisible).Select(card => ((PatchPreset)card.Tag!).Name)];
+        });
+
+    private static Button Card(MainWindow open, string name) =>
+        open.GetVisualDescendants().OfType<Button>().SingleOrDefault(b => b.Name == "tile" && ((PatchPreset)b.Tag!).Name == name)
+        ?? throw new InvalidOperationException($"the gallery has no card for {name}");
+
     /// <summary>Whether the open preset gallery has a section for the preset site.</summary>
     public bool GalleryListsSite => ReadWindow(open =>
         open.GetVisualDescendants().OfType<Control>().Any(c => c.Name == "site-presets"));

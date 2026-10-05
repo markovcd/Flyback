@@ -174,7 +174,7 @@ internal sealed class PresetThumbnails
             {
                 var (patch, _, _) = PresetLibrary.Open(preset, saved, modules);
 
-                return new Thumbnail(null, "", patch.Description, patch.Author, patch.Tags);
+                return new Thumbnail(null, "", patch.Description, patch.Author, patch.Tags) { Reaches = patch.Reaches() };
             }
             catch (Exception)
             {
@@ -208,14 +208,15 @@ internal sealed class PresetThumbnails
     /// <summary>The tile an entry makes, but for its picture.</summary>
     private static Thumbnail Tile(StillEntry entry)
     {
-        var words = entry.Still switch
+        var (words, reaches) = entry.Still switch
         {
-            StillKind.SoundOnly => Thumbnail.SoundOnly,
-            StillKind.Unavailable => Thumbnail.Unavailable,
-            _ => Thumbnail.Nothing,
+            StillKind.SoundOnly => (Thumbnail.SoundOnly, (false, true)),
+            StillKind.Unavailable => (Thumbnail.Unavailable, ((bool, bool)?)null),
+            StillKind.Picture => (Thumbnail.Nothing, (true, entry.Heard)),
+            _ => (Thumbnail.Nothing, (false, false)),
         };
 
-        return words with { Description = entry.Description, Author = entry.Author, Tags = entry.Tags };
+        return words with { Description = entry.Description, Author = entry.Author, Tags = entry.Tags, Reaches = reaches };
     }
 
     /// <summary>
@@ -251,7 +252,7 @@ internal sealed class PresetThumbnails
             var (patch, samples, pictures) = PresetLibrary.Open(preset, saved, modules);
             var (kind, pixels) = PresetStill.Draw(patch, samples, pictures, program => compiler?.Compile(program, IlLane.AuditionPicture));
 
-            var said = Tile(new StillEntry(preset.Name, preset.Kind, kind, null, patch.Description, patch.Author, patch.Tags));
+            var said = Tile(new StillEntry(preset.Name, preset.Kind, kind, null, patch.Description, patch.Author, patch.Tags, patch.Reaches().Sound));
 
             return said with { Pixels = pixels };
         }

@@ -52,9 +52,14 @@ internal interface IDialog
     /// content whose size changes while it is up — a gallery being filtered
     /// would otherwise shrink and grow the frame around whatever is typed.
     /// </param>
+    /// <param name="wide">
+    /// Lets the frame grow past the usual width, and gives the content its height to
+    /// scroll its own columns in rather than scrolling it whole.
+    /// </param>
     Task<TResult> Show<TResult>(
         string title, 
         Func<Action<TResult>, Control> content,
         Control? header = null,
-        bool fill = false);
+        bool fill = false,
+        bool wide = false);
 }

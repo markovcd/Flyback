@@ -97,7 +97,7 @@ public class PresetListTests : EditorTest
 
         for (var row = 0; row < gallery.Children.Count; row += 2)
         {
-            var heading = gallery.Children[row].ShouldBeOfType<TextBlock>();
+            var heading = Title(gallery.Children[row]);
             var tiles = gallery.Children[row + 1].ShouldBeOfType<WrapPanel>();
 
             var kinds = tiles.Children.Select(t => ((PatchPreset)((Button)t).Tag!).Kind).Distinct().ToList();
@@ -138,12 +138,24 @@ public class PresetListTests : EditorTest
         }
     }
 
+    /// <summary>The words over a run of tiles.</summary>
+    private static TextBlock Title(Control heading) =>
+        heading.ShouldBeOfType<Grid>().Children.OfType<TextBlock>().Single(t => t.Name == "run-title");
+
+    /// <summary>The run titles still showing.</summary>
+    private static List<string?> ShownHeadings(MainWindow window) =>
+        [.. All<StackPanel>(window).Single(p => p.Name == "gallery").Children
+            .Where(c => c.Name == "run-heading" && c.IsVisible)
+            .Select(c => Title(c).Text)];
+
+    private static string? Described(MainWindow window) => All<TextBlock>(window).Single(t => t.Name == "detail-name").Text;
+
     /// <summary>
-    /// Clicking a tile is choosing that preset: the canvas takes it and the gallery
-    /// comes down.
+    /// Clicking a tile chooses it: the column beside says what it is, and the
+    /// canvas keeps what it had until it is opened.
     /// </summary>
     [AvaloniaFact]
-    public void Clicking_a_tile_puts_that_preset_on_the_canvas()
+    public void Clicking_a_tile_chooses_it_and_says_what_it_is()
     {
         var window = Open();
         var editor = All<NodeEditor>(window).Single();
@@ -154,9 +166,42 @@ public class PresetListTests : EditorTest
         Tile(window, "Kaleidoscope").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Settle(window);
 
+        Described(window).ShouldBe("Kaleidoscope");
+        editor.History.Patch.Nodes.Select(n => n.Id).ShouldBe(before);
+        All<ModalOverlay>(window).ShouldHaveSingleItem("choosing is not answering the dialog");
+    }
+
+    /// <summary>The button under the chosen tile's description opens it: the canvas takes it and the gallery comes down.</summary>
+    [AvaloniaFact]
+    public void Using_the_chosen_tile_puts_that_preset_on_the_canvas()
+    {
+        var window = Open();
+        var editor = All<NodeEditor>(window).Single();
+        var before = editor.History.Patch.Nodes.Select(n => n.Id).ToList();
+
+        OpenGallery(window);
+
+        Tile(window, "Kaleidoscope").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        All<Button>(window).Single(b => b.Name == "use-preset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
         (Presets(window).SelectedItem as PatchPreset)!.Name.ShouldBe("Kaleidoscope");
         editor.History.Patch.Nodes.Select(n => n.Id).ShouldNotBe(before);
-        All<ModalOverlay>(window).ShouldBeEmpty("picking one is answering the dialog");
+        All<ModalOverlay>(window).ShouldBeEmpty("opening one is answering the dialog");
+    }
+
+    [AvaloniaFact]
+    public void Double_clicking_a_tile_puts_that_preset_on_the_canvas()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+
+        Tile(window, "Kaleidoscope").RaiseEvent(new TappedEventArgs(InputElement.DoubleTappedEvent, null!));
+        Settle(window);
+
+        (Presets(window).SelectedItem as PatchPreset)!.Name.ShouldBe("Kaleidoscope");
+        All<ModalOverlay>(window).ShouldBeEmpty();
     }
 
     private static TextBox Filter(MainWindow window) =>
@@ -199,8 +244,7 @@ public class PresetListTests : EditorTest
 
         Showing(window).Select(p => p.Name).ShouldBe(["Kaleidoscope"]);
 
-        var gallery = All<StackPanel>(window).Single(p => p.Name == "gallery");
-        gallery.Children.OfType<TextBlock>().Where(h => h.IsVisible).Select(h => h.Text).ShouldBe(["ONE IDEA"]);
+        ShownHeadings(window).ShouldBe(["ONE IDEA"]);
 
         PressKey(filter, Key.Enter);
         Settle(window);

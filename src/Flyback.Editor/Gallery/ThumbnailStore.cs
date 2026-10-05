@@ -12,7 +12,7 @@ internal sealed class ThumbnailStore(string folder)
 {
     public static string DefaultFolder => Path.Combine(GlobalConstants.DataFolder, "thumbnails");
 
-    private const int Format = 1;
+    private const int Format = 2;
 
     /// <summary>How long a thumbnail nobody has looked at is kept.</summary>
     private static readonly TimeSpan Unused = TimeSpan.FromDays(30);
@@ -44,6 +44,7 @@ internal sealed class ThumbnailStore(string folder)
                 var author = Maybe(reader);
                 var count = reader.ReadInt32();
                 string[]? tags = count < 0 ? null : [.. Enumerable.Range(0, count).Select(_ => reader.ReadString())];
+                var reaches = reader.ReadSByte();
                 byte[]? frame = null;
 
                 if (drawn && pixels)
@@ -54,7 +55,10 @@ internal sealed class ThumbnailStore(string folder)
                     unpacked.ReadExactly(frame);
                 }
 
-                found = new Thumbnail(frame, words, description, author, tags);
+                found = new Thumbnail(frame, words, description, author, tags)
+                {
+                    Reaches = reaches < 0 ? null : ((reaches & 1) != 0, (reaches & 2) != 0),
+                };
             }
 
             // Looked at, so kept another month.
@@ -88,6 +92,8 @@ internal sealed class ThumbnailStore(string folder)
                 writer.Write(thumbnail.Tags?.Count ?? -1);
 
                 foreach (var tag in thumbnail.Tags ?? []) writer.Write(tag);
+
+                writer.Write(thumbnail.Reaches is { } reaches ? (sbyte)((reaches.Picture ? 1 : 0) | (reaches.Sound ? 2 : 0)) : (sbyte)-1);
 
                 writer.Flush();
 

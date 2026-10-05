@@ -200,9 +200,10 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             [.. plugins.Presets],
             named,
             pointedAt: audition.PointedAt,
-            yours: Yours()?.ToPickFrom());
+            yours: Yours()?.ToPickFrom(),
+            use: "Open on this one");
 
-        var chosen = await dialog.Show("Startup patch", gallery.Tiles, gallery.Filter, fill: true);
+        var chosen = await dialog.Show("Startup patch", gallery.Tiles, fill: true, wide: true);
 
         audition.PointedAt(null);
 
@@ -324,7 +325,7 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             site: site.Presets(),
             kept: site.Kept,
             prompting: assistant.Ready ? new PromptStart(assistant.ExpandAsync) : null);
-        var chosen = await dialog.Show("Start from a preset", parts.Tiles, parts.Filter, fill: true);
+        var chosen = await dialog.Show("Start from a preset", parts.Tiles, fill: true, wide: true);
 
         audition.PointedAt(null);
 

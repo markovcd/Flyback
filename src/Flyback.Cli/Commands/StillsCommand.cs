@@ -84,7 +84,7 @@ internal static class StillsCommand
                 Jpeg.WriteBgra(written, pixels, PresetStill.Width, PresetStill.Height, PresetStill.Width * 4);
             }
 
-            return new StillEntry(preset.Name, preset.Kind, kind, file, patch.Description, patch.Author, patch.Tags);
+            return new StillEntry(preset.Name, preset.Kind, kind, file, patch.Description, patch.Author, patch.Tags, patch.Reaches().Sound);
         }
         catch (Exception)
         {

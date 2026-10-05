@@ -30,14 +30,7 @@ public sealed class SitePresetTests : EditorTest
             showing: null,
             site: site.Site());
         var tiles = parts.Tiles(_ => { });
-
-        var content = new DockPanel();
-
-        DockPanel.SetDock(parts.Filter, Dock.Top);
-        content.Children.Add(parts.Filter);
-        content.Children.Add(tiles);
-
-        var window = Show(content, width: 900);
+        var window = Show(tiles, width: 900);
         Attach(container, window);
         Pump(() => Status(tiles) != "Looking…");
         Settle(window);

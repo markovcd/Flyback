@@ -264,7 +264,7 @@ public class OutputSettingsTests : EditorTest
     private static List<string> Patches =>
         [.. PresetOrder.Of(Presets.All).Where(p => p.Kind is not PresetKind.Blank).Select(p => p.Name)];
 
-    /// <summary>Picks the startup patch the way a person would: the row's button, then a tile of the gallery it opens.</summary>
+    /// <summary>Picks the startup patch the way a person would: the row's button, then a tile of the gallery it opens, and its button.</summary>
     private static void PickStartupPreset(MainWindow window, ModalOverlay dialog, string name)
     {
         StartupPreset(dialog).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -275,6 +275,8 @@ public class OutputSettingsTests : EditorTest
         Settle(window);
 
         All<Button>(window).Single(b => b.Name == "tile" && ((PatchPreset)b.Tag!).Name == name)
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        All<Button>(window).Single(b => b.Name == "use-preset")
             .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
         for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Count() > 1; attempt++)

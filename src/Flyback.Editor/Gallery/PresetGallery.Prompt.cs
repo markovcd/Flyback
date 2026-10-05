@@ -87,23 +87,44 @@ internal sealed partial class PresetGallery
             Enable();
         };
 
+        var title = new TextBlock
+        {
+            Text = "Describe it instead",
+            FontSize = Text.Emphasis,
+            FontWeight = FontWeight.SemiBold,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        var top = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 8 };
+
+        Grid.SetColumn(expand, 1);
+        Grid.SetColumn(begin, 2);
+        top.Children.Add(title);
+        top.Children.Add(expand);
+        top.Children.Add(begin);
+
+        expand.Background = Brushes.Transparent;
+        expand.BorderBrush = new SolidColorBrush(Colors.Separator);
+        expand.BorderThickness = new Thickness(1);
+        expand.CornerRadius = begin.CornerRadius = new CornerRadius(8);
+        expand.Padding = new Thickness(14, 5);
+        begin.Padding = new Thickness(18, 5);
+        begin.FontWeight = FontWeight.SemiBold;
+        begin.Background = new SolidColorBrush(Accent);
+        begin.Foreground = new SolidColorBrush(Colors.Edge);
+
         return new Border
         {
             Name = "prompt-card",
-            CornerRadius = new CornerRadius(3),
+            CornerRadius = new CornerRadius(12),
+            Background = new SolidColorBrush(Colors.Toolbar),
             BorderBrush = new SolidColorBrush(Colors.Separator),
             BorderThickness = new Thickness(1),
-            Padding = new Thickness(8),
+            Padding = new Thickness(14, 12, 14, 14),
             Child = new StackPanel
             {
-                Spacing = 6,
-                Children =
-                {
-                    new TextBlock { Text = "Start with a prompt", FontSize = Text.Body, FontWeight = FontWeight.SemiBold },
-                    words,
-                    note,
-                    new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, Children = { expand, begin } },
-                },
+                Spacing = 10,
+                Children = { top, words, note },
             },
         };
 

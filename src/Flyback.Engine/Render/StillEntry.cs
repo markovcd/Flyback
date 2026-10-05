@@ -4,6 +4,7 @@ namespace Flyback.Engine.Render;
 
 /// <summary>One preset in a <see cref="StillIndex"/>: how it is offered, what it says of itself, and its still.</summary>
 /// <param name="File">The still's file beside the index, or null where <paramref name="Still"/> says there is none.</param>
+/// <param name="Heard">Whether anything is wired to the Output's sound, which a still cannot show.</param>
 public sealed record StillEntry(
     string Name,
     PresetKind Kind,
@@ -11,7 +12,8 @@ public sealed record StillEntry(
     string? File,
     string? Description = null,
     string? Author = null,
-    IReadOnlyList<string>? Tags = null)
+    IReadOnlyList<string>? Tags = null,
+    bool Heard = false)
 {
     /// <summary>The heading the editor lists the preset under.</summary>
     public string Heading => PresetKinds.Heading(Kind);

@@ -105,6 +105,36 @@ public sealed class PresetThumbnailsTests : IDisposable
     }
 
     [Fact]
+    public async Task Which_halves_of_the_Output_a_patch_wires_is_found_on_disk_too()
+    {
+        var preset = Counted();
+
+        var drawn = await new PresetThumbnails(PluginCatalog.Empty, folders: new() { ThumbnailFolder = folder }).Of(preset, TestContext.Current.CancellationToken);
+        var said = await new PresetThumbnails(PluginCatalog.Empty, folders: new() { ThumbnailFolder = folder }).Said(preset);
+
+        builds.ShouldBe(1);
+        drawn.Reaches.ShouldBe(preset.Build(NodeCatalog.BuiltIn).Reaches());
+        said.Reaches.ShouldBe(drawn.Reaches);
+    }
+
+    [Fact]
+    public async Task A_still_the_build_drew_says_whether_its_preset_is_heard()
+    {
+        var preset = Counted();
+        var shelf = new Shelf(new()
+        {
+            [StillIndex.FileName] = Encoding.UTF8.GetBytes(new StillIndex(StillIndex.ThisBuild,
+                [new StillEntry(preset.Name, preset.Kind, StillKind.Picture, "still.jpg", Heard: true)]).Write()),
+            ["still.jpg"] = [1, 2, 3],
+        });
+
+        var said = await new PresetThumbnails(PluginCatalog.Empty, shelf: shelf).Said(preset);
+
+        builds.ShouldBe(0);
+        said.Reaches.ShouldBe((true, true));
+    }
+
+    [Fact]
     public async Task What_a_patch_says_is_found_on_disk_without_opening_it()
     {
         var preset = Counted();
