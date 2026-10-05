@@ -7,23 +7,37 @@ namespace Flyback.Cli.Rendering;
 /// Written under a temporary name and renamed into place, so the site never serves
 /// half a file. <c>{id}.done</c> goes last and says the rest are there.
 /// </remarks>
-internal sealed class MediaWriter(string root)
+internal sealed class MediaWriter(string root) : IPresetMedia
 {
     public string Root { get; } = root;
 
     public bool Pending(string id) =>
         !File.Exists(Path.Combine(Root, id + ".done")) && !File.Exists(Path.Combine(Root, id + ".failed"));
 
-    public void Put(string id, string suffix, string from)
+    public Task Put(string id, string suffix, string from, CancellationToken cancellation)
     {
         var to = Path.Combine(Root, id + suffix);
         var partial = to + ".tmp";
 
         File.Copy(from, partial, overwrite: true);
         File.Move(partial, to, overwrite: true);
+
+        return Task.CompletedTask;
     }
 
-    public void Put(string id, string suffix, byte[] bytes)
+    public Task Done(string id, CancellationToken cancellation)
+    {
+        Write(id, ".done", []);
+        return Task.CompletedTask;
+    }
+
+    public Task Failed(string id, string why, CancellationToken cancellation)
+    {
+        Write(id, ".failed", System.Text.Encoding.UTF8.GetBytes(why));
+        return Task.CompletedTask;
+    }
+
+    public void Write(string id, string suffix, byte[] bytes)
     {
         var to = Path.Combine(Root, id + suffix);
         var partial = to + ".tmp";
@@ -31,8 +45,4 @@ internal sealed class MediaWriter(string root)
         File.WriteAllBytes(partial, bytes);
         File.Move(partial, to, overwrite: true);
     }
-
-    public void Done(string id) => Put(id, ".done", []);
-
-    public void Failed(string id, string why) => Put(id, ".failed", System.Text.Encoding.UTF8.GetBytes(why));
 }

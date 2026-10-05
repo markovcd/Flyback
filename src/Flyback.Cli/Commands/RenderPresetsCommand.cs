@@ -7,18 +7,20 @@ using Flyback.Cli.Common;
 using Flyback.Cli.Rendering;
 using Flyback.Core;
 using Flyback.Engine.Render;
+using Flyback.Site;
 using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
 
 /// <summary>
-/// Renders the preset site's shared presets into its media folder, for the
-/// machine that has the power to spare (ADR-0131).
+/// Renders the preset site's shared presets, for the machine that has the power to
+/// spare (ADR-0131), and uploads what it makes through the site's admin API, or
+/// writes it into the media folder where one is given.
 /// </summary>
 /// <remarks>
-/// The site says which presets are waiting and hands out their files; the only
-/// thing written is the share. A pass takes every preset still waiting, then
-/// another pass follows after the poll interval, unless <c>--once</c>.
+/// The site says which presets are waiting and hands out their files. A pass takes
+/// every preset still waiting, then another pass follows after the poll interval,
+/// unless <c>--once</c>.
 /// </remarks>
 internal static class RenderPresetsCommand
 {
@@ -32,10 +34,9 @@ internal static class RenderPresetsCommand
             Required = true,
         };
 
-        var media = new Option<DirectoryInfo>("--media")
+        var media = new Option<DirectoryInfo?>("--media")
         {
-            Description = "The site's media folder, as this machine sees the share.",
-            Required = true,
+            Description = $"The site's media folder, as this machine sees the share. Left out, the render is uploaded with the Access service token in {SiteAdmin.IdVariable} and {SiteAdmin.SecretVariable}.",
         };
 
         var ffmpeg = new Option<string>("--ffmpeg")
@@ -64,9 +65,9 @@ internal static class RenderPresetsCommand
 
         command.SetAction(async (result, cancellation) =>
         {
-            var folder = result.GetRequiredValue(media);
+            var folder = result.GetValue(media);
 
-            if (!folder.Exists)
+            if (folder is { Exists: false })
             {
                 Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {folder.FullName}: the media folder is not there. Mount the site's share.");
                 return Exit.Failed;
@@ -84,13 +85,23 @@ internal static class RenderPresetsCommand
                 return Exit.Failed;
             }
 
-            plugins.Ready();
+            string? problem = null;
 
-            using var site = new HttpClient { BaseAddress = new Uri(address.AbsoluteUri.TrimEnd('/') + "/") };
+            using var site = folder is null
+                ? SiteAdmin.Client(address.AbsoluteUri, Environment.GetEnvironmentVariable, out problem)
+                : new HttpClient { BaseAddress = new Uri(address.AbsoluteUri.TrimEnd('/') + "/") };
+
+            if (site is null)
+            {
+                Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {problem}");
+                return Exit.Failed;
+            }
+
+            plugins.Ready();
 
             var render = new PresetRender(
                 new PresetTools(found, TimeSpan.FromMinutes(result.GetValue(timeout))),
-                new MediaWriter(folder.FullName));
+                folder is null ? new MediaUpload(site) : new MediaWriter(folder.FullName));
 
             try
             {
@@ -150,7 +161,7 @@ internal static class RenderPresetsCommand
             }
             catch (HttpRequestException e)
             {
-                error.WriteLine($"{Now()} could not fetch {preset.Name}: {e.Message}");
+                error.WriteLine($"{Now()} could not fetch {preset.Name} or send its render: {e.Message}");
             }
             finally
             {

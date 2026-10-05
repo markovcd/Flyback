@@ -29,6 +29,11 @@
     <PackageReference Include="System.CommandLine" />
   </ItemGroup>
 
+  <!-- The preset site's admin client, which render-presets uploads through as flyback-site's commands do. -->
+  <ItemGroup>
+    <Compile Include="..\Flyback.Site\Admin\SiteAdmin.cs" Link="Rendering\SiteAdmin.cs" />
+  </ItemGroup>
+
   <!--
     No PluginProject items, unlike the shell, and the viewer declares none either.
     Plugins live in one folder beside the three programs and all three read it,

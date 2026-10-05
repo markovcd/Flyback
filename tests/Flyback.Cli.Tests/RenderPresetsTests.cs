@@ -245,14 +245,14 @@ public sealed class RenderPresetsTests : IDisposable
     }
 
     [Fact]
-    public void A_rendered_preset_is_no_longer_pending_and_neither_is_a_failed_one()
+    public async Task A_rendered_preset_is_no_longer_pending_and_neither_is_a_failed_one()
     {
         var writer = new MediaWriter(media);
 
         writer.Pending("a").ShouldBeTrue();
 
-        writer.Done("a");
-        writer.Failed("b", "no");
+        await writer.Done("a", TestContext.Current.CancellationToken);
+        await writer.Failed("b", "no", TestContext.Current.CancellationToken);
 
         writer.Pending("a").ShouldBeFalse();
         writer.Pending("b").ShouldBeFalse();
@@ -261,10 +261,57 @@ public sealed class RenderPresetsTests : IDisposable
     [Fact]
     public void A_file_is_put_in_place_whole_and_leaves_no_partial_copy()
     {
-        new MediaWriter(media).Put("a", ".webp", [1, 2, 3]);
+        new MediaWriter(media).Write("a", ".webp", [1, 2, 3]);
 
         Written().ShouldBe(["a.webp"]);
         File.ReadAllBytes(Path.Combine(media, "a.webp")).ShouldBe([1, 2, 3]);
+    }
+
+    /// <summary>The site's admin API, keeping what each upload was called and held.</summary>
+    private sealed class Uploads : HttpMessageHandler
+    {
+        public List<(string Path, byte[] Body)> Sent { get; } = [];
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            request.Method.ShouldBe(HttpMethod.Put);
+            Sent.Add((request.RequestUri!.AbsolutePath, await request.Content!.ReadAsByteArrayAsync(cancellationToken)));
+
+            return new HttpResponseMessage(HttpStatusCode.NoContent);
+        }
+    }
+
+    [Fact]
+    public async Task An_upload_sends_each_file_by_the_name_the_site_takes_and_done_last()
+    {
+        var uploads = new Uploads();
+        using var site = new HttpClient(uploads) { BaseAddress = new Uri("http://site/") };
+
+        (await new PresetRender(new FakeTools(), new MediaUpload(site)).Render("abc", Patch(Picture + Sound), TestContext.Current.CancellationToken))
+            .ShouldBeNull();
+
+        uploads.Sent.Select(s => s.Path).ShouldBe([
+            "/api/v1/admin/presets/abc/media/webp",
+            "/api/v1/admin/presets/abc/media/webm",
+            "/api/v1/admin/presets/abc/media/mp3",
+            "/api/v1/admin/presets/abc/media/peaks.json",
+            "/api/v1/admin/presets/abc/media/done",
+        ]);
+        Encoding.UTF8.GetString(uploads.Sent[0].Body).ShouldContain("libwebp", customMessage: "the still is the webp ffmpeg made");
+        uploads.Sent[^1].Body.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task An_upload_of_a_failed_render_says_why()
+    {
+        var uploads = new Uploads();
+        using var site = new HttpClient(uploads) { BaseAddress = new Uri("http://site/") };
+
+        await new PresetRender(new FakeTools { FailOn = "still.png" }, new MediaUpload(site)).Render("abc", Patch(Picture), TestContext.Current.CancellationToken);
+
+        var (path, body) = uploads.Sent.Single();
+        path.ShouldBe("/api/v1/admin/presets/abc/media/failed");
+        Encoding.UTF8.GetString(body).ShouldContain("refusing to render");
     }
 
     [Fact]

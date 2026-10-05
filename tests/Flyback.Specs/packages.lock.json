@@ -824,6 +824,22 @@
           "System.CommandLine": "[2.0.12, )"
         }
       },
+      "flyback-site": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Engine": "[0.1.0-dev, )",
+          "Flyback.Plugins": "[0.1.0-dev, )",
+          "Flyback.Plugins.Easy": "[0.1.0-dev, )",
+          "Flyback.Plugins.Effects": "[0.1.0-dev, )",
+          "Flyback.Plugins.Figures": "[0.1.0-dev, )",
+          "Flyback.Plugins.Fractals": "[0.1.0-dev, )",
+          "Flyback.Plugins.Mastering": "[0.1.0-dev, )",
+          "Flyback.Plugins.Picture": "[0.1.0-dev, )",
+          "Flyback.Plugins.Voice": "[0.1.0-dev, )",
+          "Microsoft.Data.Sqlite": "[10.0.12, )",
+          "System.CommandLine": "[2.0.12, )"
+        }
+      },
       "flyback-viewer": {
         "type": "Project",
         "dependencies": {

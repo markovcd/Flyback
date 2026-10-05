@@ -17,7 +17,6 @@ Work the user has asked for and nobody has started. Take an item off when it lan
 - **Expand a short prompt anywhere else.** The gallery's prompt card has Expand; the assistant panel's box beside Send does not, and `flyback-cli` has no flag printing the brief. Both would reuse `PromptExpansion`, and the panel's could pass the patch's description and tempo.
 - **Parked: grab the output and the knobs move.** Forward-mode derivatives through the instruction stream, so hovering the picture or the spectrogram shows which knobs own an area, and dragging a shape or brushing a quality turns them. `flyback-cli grad` first. The idea, the five gestures and the sequence are in [docs/handoff/grab-the-output.md](docs/handoff/grab-the-output.md).
 - **A live-patching mode.** A desktop-only editor mode where the picture fills the screen and the patch is edited over it, as either the canvas or the text view, for playing a patch live in front of people.
-- Make rendering site presets better (cli command) - it shouldn't access directly via shared folder but some form of admin api
 - Make rendering stills for site and page cached, so pipeline takes shorter
 - add audio input, add midi file playback, add sample recording, add midi recording (from highest to lowest priority)
 - https://github.com/vincentsch/explainroo

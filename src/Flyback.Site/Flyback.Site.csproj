@@ -46,6 +46,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Flyback.Site.Tests" />
+    <InternalsVisibleTo Include="Flyback.Specs" />
     <!-- export-site's test, which needs the .NET site to write the database it reads. -->
     <InternalsVisibleTo Include="Flyback.Server.Tests" />
   </ItemGroup>

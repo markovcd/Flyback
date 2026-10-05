@@ -9,7 +9,7 @@ using Flyback.Engine.Render;
 namespace Flyback.Cli.Rendering;
 
 /// <summary>
-/// Makes one preset's still, loop and track, and puts them in the share.
+/// Makes one preset's still, loop and track, and puts them where the site serves them from.
 /// </summary>
 /// <remarks>
 /// The still is 1280x720 at four seconds in, as webp at quality 88. The loop is six
@@ -18,7 +18,7 @@ namespace Flyback.Cli.Rendering;
 /// wires only a picture or only a sound gets only that half, and a silent one no
 /// track at all.
 /// </remarks>
-internal sealed class PresetRender(IPresetTools tools, MediaWriter media)
+internal sealed class PresetRender(IPresetTools tools, IPresetMedia media)
 {
     public const double StillAt = 4;
     public const double LoopSeconds = 6;
@@ -38,15 +38,15 @@ internal sealed class PresetRender(IPresetTools tools, MediaWriter media)
 
         try
         {
-            foreach (var (suffix, made) in await Make(file, work, cancellation)) media.Put(id, suffix, made);
+            foreach (var (suffix, made) in await Make(file, work, cancellation)) await media.Put(id, suffix, made, cancellation);
 
-            media.Done(id);
+            await media.Done(id, cancellation);
 
             return null;
         }
         catch (Failure failure)
         {
-            media.Failed(id, failure.Message);
+            await media.Failed(id, failure.Message, cancellation);
 
             return failure.Message;
         }
