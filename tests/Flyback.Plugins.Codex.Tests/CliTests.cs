@@ -162,7 +162,7 @@ public class CliTests
             for a in "$@"; do case "$a" in *picture-1.png) [ -s "$a" ] && seen=picture;; esac; done
             printf '{"type":"item.completed","item":{"id":"i","type":"agent_message","text":"%s,%s,key=%s,other=%s"}}\n' "$heard" "$seen" "${CODEX_API_KEY:-none}" "${OPENAI_API_KEY:-none}"
             printf '{"type":"turn.completed","usage":{}}\n'
-            """, TestContext.Current.CancellationToken);
+            """.ReplaceLineEndings("\n"), TestContext.Current.CancellationToken);
 
         if (!OperatingSystem.IsWindows())
             File.SetUnixFileMode(script, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);

@@ -90,8 +90,8 @@ public class ProtocolTests
             [new Turn(Turn.Flyback, "seen", [[1, 2, 3]]), new Turn(Turn.Model, "ok", []), new Turn(Turn.Flyback, "again", [[4]])]);
 
         prompt.ShouldStartWith("PRE");
-        prompt.ShouldContain("<flyback>\nseen\n</flyback>\n[Attached image 1 is shown here.]");
-        prompt.ShouldContain("<flyback>\nagain\n</flyback>\n[Attached image 2 is shown here.]");
+        prompt.ShouldContain("<flyback>\nseen\n</flyback>\n[Image #1 is attached to this turn.]");
+        prompt.ShouldContain("<flyback>\nagain\n</flyback>\n[Image #2 is attached to this turn.]");
         prompt.ShouldEndWith("Write your next turn now.");
         pictures.ShouldBe([[1, 2, 3], [4]]);
     }

@@ -112,7 +112,7 @@ public class CliTests
             input=$(cat)
             case "$input" in *'"text":"hi"'*) heard=heard;; *) heard=silent;; esac
             printf '{"type":"result","is_error":false,"result":"%s,key=%s","usage":{}}\n' "$heard" "${ANTHROPIC_API_KEY:-none}"
-            """, TestContext.Current.CancellationToken);
+            """.ReplaceLineEndings("\n"), TestContext.Current.CancellationToken);
 
         if (!OperatingSystem.IsWindows())
             File.SetUnixFileMode(script, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
