@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A preset opened from the gallery stops counting as the open preset once the patch is edited.
+
 - The assistant can set how long a patch plays for.
 
 - The preset gallery narrows by heading, by sound or picture and by topic from a column on its left, and a click chooses a card and shows it larger on the right, where Use this preset, Enter or a double-click opens it.

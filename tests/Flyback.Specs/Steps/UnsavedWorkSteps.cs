@@ -29,6 +29,12 @@ public sealed class UnsavedWorkSteps(PatchContext context, EditorDriver editor) 
     [Then("the editor shows the preset {string}")]
     public void ThenShowing(string name) => editor.Showing.ShouldBe(name);
 
+    [When("a module of the preset is deleted")]
+    public void WhenAModuleIsDeleted() => editor.DeleteAModule();
+
+    [Then("the editor shows no preset")]
+    public void ThenShowingNone() => editor.Showing.ShouldBeNull();
+
     /// <summary>What a crash leaves: the snapshot the window kept, and nobody holding it.</summary>
     [Given("Flyback stopped without closing, holding that patch unsaved as {string}")]
     public void GivenACrash(string name)

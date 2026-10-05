@@ -12,6 +12,13 @@ Feature: A preset is chosen in the gallery before it is opened
     When the chosen card is used
     Then the preset on the canvas is "Kaleidoscope"
 
+  Scenario: A preset stops being the one on the canvas once it is edited
+    Given a sine driven by Time
+    When the preset "Plasma" is picked
+    Then the editor shows the preset "Plasma"
+    When a module of the preset is deleted
+    Then the editor shows no preset
+
   Scenario: The gallery narrows to the presets that are heard
     When the preset gallery is opened
     And the gallery's "Sound" row is pressed

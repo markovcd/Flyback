@@ -906,6 +906,15 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
             canvas.Selection.Announce();
         });
 
+    /// <summary>Deletes the first module on the canvas that is not the Output, as selecting it and pressing Delete does.</summary>
+    public void DeleteAModule()
+    {
+        var module = CanvasIn(window!).History.Patch.Nodes.First(node => node.TypeId != NodeCatalog.OutputTypeId);
+
+        Select(module.Id);
+        Press(PhysicalKey.Delete);
+    }
+
     /// <summary>Presses a key, with Ctrl or anything else held, while the canvas has the focus.</summary>
     public void Press(PhysicalKey key, RawInputModifiers modifiers = RawInputModifiers.None) =>
         Do(canvas =>

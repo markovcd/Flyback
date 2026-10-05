@@ -29,7 +29,7 @@ namespace Flyback.Editor.Gallery;
 /// so the rows those are on stay put however many are saved. Saving one keeps a copy
 /// and nothing else: the patch on the canvas is still whatever document it was.
 /// </remarks>
-internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>, IReactTo<PatchShowing>
+internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>, IReactTo<PatchShowing>, IReactTo<HistoryChanged>
 {
     private readonly IDialog dialog;
     private readonly NodeEditor editor;
@@ -165,6 +165,14 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
     public Task On(PatchShowing notice)
     {
         Clear();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>An edited preset is a patch of its own, and no longer the preset it started as.</summary>
+    public Task On(HistoryChanged notice)
+    {
+        if (showing >= 0 && editor.History.IsModified) Clear();
+
         return Task.CompletedTask;
     }
 
