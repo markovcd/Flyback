@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- The assistant can run on the Claude Code you are signed in to, with no API key.
+- The assistant can run on the Claude Code or the Codex you are signed in to, with no API key.
 
 - `flyback-viewer --trace <file>` writes every stall over 100 ms into the file: the UI thread held up, a picture's frame, the sound callback, and the step it was in.
 

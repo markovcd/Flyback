@@ -690,8 +690,8 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
     <h2><span class="num">11</span>The assistant</h2>
 
     <p>The assistant builds and edits patches from a description. It works with any chat-completions endpoint,
-    with Gemini, whose models can also listen to what the patch sounds like, or through the Claude Code you are
-    already signed in to. It does not hand you text to
+    with Gemini, whose models can also listen to what the patch sounds like, or through the Claude Code or
+    Codex you are already signed in to. It does not hand you text to
     paste: it works the patch on a copy, module by module or as a whole text patch, reads the compiler's
     complaints after every edit, renders frames to look at the motion and, with hearing on, listens to a few
     seconds of the sound before it answers.</p>
@@ -702,7 +702,8 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
       <strong>Let it listen to the sound</strong>, with a model that can, to give it ears; it is off by default,
       because every listen is a second request. Choose <strong>Claude Code</strong> and there is no key to paste:
       Flyback runs the <code>claude</code> program you have installed and signed in to with <code>/login</code>, and
-      your plan pays for the turns. It looks at frames but cannot listen.</li>
+      your plan pays for the turns. <strong>Codex</strong> is the same with the <code>codex</code> program and
+      <code>codex login</code>. Neither can listen; both look at frames.</li>
       <li>Open <strong>Assistant</strong> on the toolbar, describe what you want, for example <em>"a slow kick
       drum that makes the rings flash"</em>, and press <kbd>Enter</kbd>.</li>
       <li>Nothing is sent until you ask. What comes back lands on the canvas as an ordinary edit:

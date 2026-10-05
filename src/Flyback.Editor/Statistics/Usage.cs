@@ -85,6 +85,7 @@ public sealed class Usage
     private static readonly string[] Shipped =
     [
         "flyback",
+        "flyback.codex",
         "flyback.dpapi",
         "flyback.effects",
         "flyback.gemini",
@@ -100,6 +101,7 @@ public sealed class Usage
         "alsa",
         "coreaudio",
         "wasapi",
+        "codex",
         "gemini",
         "openai",
     ];
@@ -129,6 +131,7 @@ public sealed class Usage
         "Flyback.Engine",
         "Flyback.Plugins",
         "Flyback.Plugins.ClaudeCode",
+        "Flyback.Plugins.Codex",
         "Flyback.Plugins.Dpapi",
         "Flyback.Plugins.Effects",
         "Flyback.Plugins.Gemini",
