@@ -1,0 +1,51 @@
+{
+  "items": [
+    {
+      "id": "0199a000000070008000000000000003",
+      "assembly": "Flyback.Plugins.Figures",
+      "name": "Figures",
+      "version": "1.2.0",
+      "author": "Flyback",
+      "description": "Shapes to draw with.",
+      "tags": [
+        "shapes"
+      ],
+      "adds": [
+        "modules"
+      ],
+      "reaches": [],
+      "builds": [
+        "win",
+        "linux"
+      ],
+      "contract": {
+        "Flyback.Core": "1.2.0",
+        "Flyback.Plugins": "1.2.0"
+      },
+      "modules": [
+        {
+          "id": "flyback.figures.circle",
+          "name": "Circle"
+        }
+      ],
+      "sha256": "f00df00df00df00df00df00df00df00df00df00df00df00df00df00df00df00d",
+      "signer": "SIGNER-FINGERPRINT",
+      "fileName": "Flyback.Plugins.Figures.fbkp",
+      "size": 4,
+      "submitted": "2026-09-03T10:00:00.0000000Z",
+      "downloads": 3,
+      "published": true,
+      "file": "/api/v1/plugins/0199a000000070008000000000000003/file",
+      "preview": "/api/v1/plugins/0199a000000070008000000000000003/preview",
+      "rating": {
+        "average": 0,
+        "count": 0
+      },
+      "status": "checked",
+      "reason": null
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "pageSize": 24
+}

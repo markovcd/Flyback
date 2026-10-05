@@ -1,6 +1,6 @@
 using System.IO.Compression;
 
-namespace Flyback.Server;
+namespace Flyback.Site;
 
 /// <summary>Which stored files are kept brotli-packed, and the packing of them.</summary>
 /// <remarks>A <c>.fbk</c> is JSON and packs to a seventh; a bundle is already a zip and stays as it came.</remarks>

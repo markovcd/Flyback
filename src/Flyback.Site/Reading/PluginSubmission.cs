@@ -1,6 +1,6 @@
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.Server;
+namespace Flyback.Site;
 
 /// <summary>A submitted plugin package, with what its assemblies say about it.</summary>
 /// <param name="Contract">Each contract assembly the plugin was compiled against, and its version.</param>

@@ -3,7 +3,7 @@ using System.Text.Json;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 
-namespace Flyback.Server;
+namespace Flyback.Site;
 
 internal static class Submissions
 {

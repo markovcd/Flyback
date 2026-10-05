@@ -78,6 +78,12 @@
     <PackageReference Include="Microsoft.Data.Sqlite" />
   </ItemGroup>
 
+  <!-- The readers a submission is checked with, which flyback-site runs for the Worker. -->
+  <ItemGroup>
+    <Compile Include="..\Flyback.Site\Reading\*.cs" LinkBase="Reading" />
+    <Using Include="Flyback.Site" />
+  </ItemGroup>
+
   <ItemGroup>
     <Content Update="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

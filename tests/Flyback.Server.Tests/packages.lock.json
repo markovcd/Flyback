@@ -534,6 +534,22 @@
           "xunit.v3.runner.common": "[4.0.1]"
         }
       },
+      "flyback-site": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Engine": "[0.1.0-dev, )",
+          "Flyback.Plugins": "[0.1.0-dev, )",
+          "Flyback.Plugins.Easy": "[0.1.0-dev, )",
+          "Flyback.Plugins.Effects": "[0.1.0-dev, )",
+          "Flyback.Plugins.Figures": "[0.1.0-dev, )",
+          "Flyback.Plugins.Fractals": "[0.1.0-dev, )",
+          "Flyback.Plugins.Mastering": "[0.1.0-dev, )",
+          "Flyback.Plugins.Picture": "[0.1.0-dev, )",
+          "Flyback.Plugins.Voice": "[0.1.0-dev, )",
+          "Microsoft.Data.Sqlite": "[10.0.12, )",
+          "System.CommandLine": "[2.0.12, )"
+        }
+      },
       "flyback.core": {
         "type": "Project"
       },
@@ -646,6 +662,12 @@
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.12"
         }
+      },
+      "System.CommandLine": {
+        "type": "CentralTransitive",
+        "requested": "[2.0.12, )",
+        "resolved": "2.0.12",
+        "contentHash": "FpW672e6qqrTd1EfKqsvUtFZaJWlTlszUR1o8tdakXhkzKbnEZVndtpfd4K3fUPCFcIs9UmcswMyYGJP1zp/rg=="
       },
       "xunit.v3.extensibility.core": {
         "type": "CentralTransitive",

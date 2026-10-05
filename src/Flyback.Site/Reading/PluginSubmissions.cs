@@ -1,6 +1,6 @@
 ﻿using Flyback.Plugins.Hosting;
 
-namespace Flyback.Server;
+namespace Flyback.Site;
 
 internal static class PluginSubmissions
 {

@@ -1,4 +1,4 @@
-namespace Flyback.Server;
+namespace Flyback.Site;
 
 /// <summary>A submitted preset file, with what it says about itself.</summary>
 internal sealed record Submission(

@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The preset site's own tool, run by its workflows rather than shipped: it reads a
+    submitted patch or package with the app's own readers, which the Worker cannot
+    run, and talks to the site's admin API with an Access service token.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>flyback-site</AssemblyName>
+    <RootNamespace>Flyback.Site</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flyback.Engine\Flyback.Engine.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
+  </ItemGroup>
+
+  <!--
+    The plugins the web viewer and editor link, named to BrowserPlugins, which checks a
+    shared preset against them. Every one a page may link is referenced whatever the
+    configuration, so the locked restore is the same in each.
+  -->
+  <Import Project="..\Flyback.Viewer.Web\LinkedPlugins.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\plugins\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" />
+    <ProjectReference Include="..\plugins\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" />
+    <ProjectReference Include="..\plugins\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" />
+    <ProjectReference Include="..\plugins\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" />
+    <ProjectReference Include="..\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
+    <ProjectReference Include="..\plugins\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
+    <ProjectReference Include="..\plugins\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />
+  </ItemGroup>
+
+  <Target Name="NameWebPlugins" BeforeTargets="GetAssemblyAttributes">
+    <ItemGroup>
+      <AssemblyMetadata Include="WebPlugin" Value="%(WebPlugin.Filename)" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="System.CommandLine" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Flyback.Site.Tests" />
+    <!-- export-site's test, which needs the .NET site to write the database it reads. -->
+    <InternalsVisibleTo Include="Flyback.Server.Tests" />
+  </ItemGroup>
+
+</Project>

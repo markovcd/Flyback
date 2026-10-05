@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Flyback.Site\Flyback.Site.csproj" />
+    <!-- One with tags and a preview. -->
+    <ProjectReference Include="..\Flyback.Plugins.Sample\Flyback.Plugins.Sample.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+</Project>

@@ -5,7 +5,7 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.Server;
+namespace Flyback.Site;
 
 /// <summary>
 /// The modules the web viewer and editor link in, and what a shared preset needs beyond them.

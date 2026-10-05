@@ -1,0 +1,49 @@
+{
+  "items": [
+    {
+      "id": "0199a000000070008000000000000001",
+      "name": "Łódź lantern",
+      "author": "Ada",
+      "description": "A glow; it says \"hi\" --twice.",
+      "tags": [
+        "ambient",
+        "glow"
+      ],
+      "fileName": "Lantern.fbk",
+      "size": 161,
+      "submitted": "2026-09-01T10:00:00.0000000Z",
+      "downloads": 7,
+      "published": true,
+      "file": "/api/v1/presets/0199a000000070008000000000000001/file",
+      "media": {
+        "still": "/media/0199a000000070008000000000000001.webp",
+        "loop": null,
+        "audio": null,
+        "peaks": [
+          0.5,
+          1
+        ],
+        "state": "done"
+      },
+      "rating": {
+        "average": 4,
+        "count": 1
+      },
+      "lacks": {
+        "plugins": [
+          {
+            "id": "example.lantern",
+            "name": "Lantern"
+          }
+        ],
+        "modules": 1,
+        "said": "Needs the Lantern plugin"
+      },
+      "status": "checked",
+      "reason": null
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "pageSize": 24
+}
