@@ -48,7 +48,9 @@
       "vars": {
         "GITHUB_REPOSITORY": "markovcd/Flyback",
         "VALIDATE_WORKFLOW": "validate.yml",
-        "ACCESS_TEAM_DOMAIN": "https://nasik.cloudflareaccess.com"
+        "ACCESS_TEAM_DOMAIN": "https://nasik.cloudflareaccess.com",
+        // The Access application's audience tag, which every token Access signs carries.
+        "ACCESS_AUD": "47c70731717ccc201b2577ffb8f8427e928b334318c0cb02461854932b3e0201"
       }
     }
   }

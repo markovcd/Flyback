@@ -62,17 +62,13 @@ Run wrangler from `worker/` after `npm ci`, signed in with `npx wrangler login`.
 
    `api/v1/admin` without the slash stays public: every page asks it whether the visitor is the admin. The Worker checks Access's token itself on every admin route, so a path Access was never told about is refused, not open.
 
-4. **The Worker's secrets.**
-
-   ```bash
-   npx wrangler secret put ACCESS_AUD --env staging
-   ```
+4. **The Worker's settings.** Put the application's audience tag in `wrangler.jsonc` as `ACCESS_AUD` under the environment's `vars`, beside `ACCESS_TEAM_DOMAIN`. It is not a secret: every token Access signs carries it. It is the 64-character hex string the application's API answers as `aud`.
 
    ```bash
    npx wrangler secret put GITHUB_DISPATCH_TOKEN --env staging
    ```
 
-   `ACCESS_AUD` is the audience tag. `GITHUB_DISPATCH_TOKEN` is a fine-grained GitHub token for `markovcd/Flyback` alone with *Actions: Read and write*, which is what starting a workflow takes; it can start any workflow in the repository, the Release one included. Leave it unset to let Validate's schedule pick submissions up instead, ten minutes later at most. `ACCESS_TEAM_DOMAIN` is in `wrangler.jsonc`.
+   `GITHUB_DISPATCH_TOKEN` is a fine-grained GitHub token for `markovcd/Flyback` alone with *Actions: Read and write*, which is what starting a workflow takes; it can start any workflow in the repository, the Release one included. Leave it unset to let Validate's schedule pick submissions up instead, ten minutes later at most.
 
 5. **GitHub.** Settings → Secrets and variables → Actions.
 
@@ -135,7 +131,7 @@ curl -X DELETE -H "CF-Access-Client-Id: $FLYBACK_ACCESS_ID" -H "CF-Access-Client
 
 What is left of [docs/handoff/flyback-library-implementation-plan.md](../../docs/handoff/flyback-library-implementation-plan.md): moving the live site, then removing the .NET one.
 
-1. **Production.** Repeat steps 1 to 4 for `flyback-site`: a database and a bucket of that name, an `env.production` in `wrangler.jsonc` with the route `flyback.nasik2137.uk` as a custom domain, the Access application's hostname, and the Worker's secrets with `--env production`.
+1. **Production.** Repeat steps 1 to 4 for `flyback-site`: a database and a bucket of that name, an `env.production` in `wrangler.jsonc` with the route `flyback.nasik2137.uk` as a custom domain, the Access application's hostname, and its audience tag and dispatch token for `--env production`.
 
 2. **The data.** With the NAS site quiet, copy its `data/presets.db` and `media/` here and export them:
 
