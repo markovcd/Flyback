@@ -1702,6 +1702,21 @@ public class PatchWorkbenchTests
         Height(looked.Png).ShouldBe(180);
     }
 
+    [Fact]
+    public async Task A_render_looks_past_the_first_eight_seconds_and_stops_at_its_own_limit()
+    {
+        var bench = await Lit(0.5f);
+
+        var late = await Call(bench, "render", """{"times":[20]}""");
+
+        late.Ok.ShouldBeTrue(late.Text);
+        late.Text.ShouldContain("at 20s");
+
+        var beyond = await Call(bench, "render", """{"times":[100000]}""");
+
+        beyond.Text.ShouldContain("at 120s");
+    }
+
     /// <summary>
     /// A patch for the speakers draws nothing, and the compiler does not remark
     /// on it — that is the point of it. Rendering one anyway would hand back a

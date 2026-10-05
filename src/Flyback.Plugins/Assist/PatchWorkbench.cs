@@ -1375,7 +1375,7 @@ public sealed partial class PatchWorkbench
                   "properties": {
                     "times": {
                       "type": "array",
-                      "description": "Seconds to capture, at most {{limits.MaxFrames}} of them, up to {{Number(limits.LatestTime)}}. Defaults to 0.5, 1.5 and 3.5.",
+                      "description": "Seconds on the patch's timeline to capture, at most {{limits.MaxFrames}} of them, any from 0 to {{Number(limits.LatestLook)}}. Defaults to 0.5, 1.5 and 3.5. Every frame before the latest is drawn first, so a later time costs more.",
                       "items": { "type": "number" }
                     },
                     "note": { "type": "string", "description": "What you are looking for, for your own record." }

@@ -126,7 +126,7 @@ public sealed partial class PatchWorkbench
 
         var asked = times.EnumerateArray()
             .Where(t => t.ValueKind == JsonValueKind.Number)
-            .Select(t => Math.Clamp(t.GetDouble(), 0d, limits.LatestTime))
+            .Select(t => Math.Clamp(t.GetDouble(), 0d, limits.LatestLook))
             .Take(limits.MaxFrames)
             .Order()
             .ToArray();
