@@ -85,6 +85,28 @@ public static class PatchCompiler
         return new MeasureProgram(compiled.Program, sockets, compiled.Issues);
     }
 
+    /// <summary>
+    /// Compiles a sink's program with every unstepped knob read as a live input,
+    /// so each has a register of its own to seed a slope at.
+    /// </summary>
+    internal static CompileResult CompileForSlopes(
+        this Patch patch,
+        bool sound,
+        ModuleCatalog? modules = null,
+        ISampleLibrary? samples = null,
+        IImageLibrary? pictures = null) =>
+        Compile(
+            patch,
+            sound ? NodeCatalog.Speakers : NodeCatalog.Screen,
+            modules,
+            samples: samples,
+            pictures: pictures,
+            played: true,
+            seeded: true);
+
+    /// <summary>The live input a socket's own knob is read from when compiled for slopes.</summary>
+    internal static string KnobKey(Guid node, int port) => $"knob/{node:N}/{port}";
+
     /// <param name="patch">The graph to lower.</param>
     /// <param name="sink">Which of the Output's results this program reads.</param>
     /// <param name="modules">
@@ -117,7 +139,8 @@ public static class PatchCompiler
         ISampleLibrary? samples = null,
         IImageLibrary? pictures = null,
         bool played = false,
-        (IReadOnlyCollection<Guid> Roots, List<MeasuredSocket> Sockets)? measured = null)
+        (IReadOnlyCollection<Guid> Roots, List<MeasuredSocket> Sockets)? measured = null,
+        bool seeded = false)
     {
         var catalog = modules ?? NodeCatalog.Current;
         var width = sink.Width;
@@ -641,7 +664,9 @@ public static class PatchCompiler
         Slot Turned(NodeInstance node, int port, PortSpec spec)
         {
             if (ControlMap.Of(node, port) is not { } link)
-                return emitter.Constant(DefaultFor(node, port, spec));
+                return seeded && !spec.Stepped
+                    ? emitter.Live(KnobKey(node.Id, port))
+                    : emitter.Constant(DefaultFor(node, port, spec));
 
             if (patch.Control(link.Control) is not { } control)
             {

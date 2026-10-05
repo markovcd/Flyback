@@ -587,6 +587,40 @@ public sealed class DelayState
         return line[first] + (line[second] - line[first]) * fraction;
     }
 
+    /// <summary>How many samples line <paramref name="slot"/> holds.</summary>
+    internal int LineLength(int slot) => lines[slot].Length;
+
+    /// <summary>What <see cref="Read"/> answered before the line's latest <see cref="Write"/>.</summary>
+    internal double ReadBeforeWrite(int slot, double seconds, float maximum)
+    {
+        positions[slot] = Index(positions[slot] - 1, lines[slot].Length);
+
+        var heard = Read(slot, seconds, maximum);
+
+        positions[slot] = Index(positions[slot] + 1, lines[slot].Length);
+
+        return heard;
+    }
+
+    /// <summary>
+    /// How fast <see cref="Read"/> moved per second of delay, as the line stood
+    /// before its latest <see cref="Write"/>; zero where the delay was clamped.
+    /// </summary>
+    internal double ReadSlopeBeforeWrite(int slot, double seconds, float maximum)
+    {
+        var line = lines[slot];
+
+        if (!double.IsFinite(seconds) || seconds <= 0d || seconds >= maximum) return 0d;
+
+        var samples = seconds * SampleRate;
+        if (samples >= line.Length - 2) return 0d;
+
+        var first = Index(positions[slot] - 1 - (int)samples, line.Length);
+        var second = Index(first - 1, line.Length);
+
+        return (line[second] - line[first]) * (double)SampleRate;
+    }
+
     /// <summary>Writes at the head of line <paramref name="slot"/> and advances it.</summary>
     /// <remarks>
     /// Narrowed before it is tested, because the line holds floats: a tail that is

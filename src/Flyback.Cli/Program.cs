@@ -82,11 +82,13 @@ internal static class Program
             Compare(plugins, json),
             Probe(plugins, json),
             Measure(plugins, json),
+            GradCommand.Build(plugins, json),
             Ask(plugins, json),
             ViewerCommand.Build(),
             ShotCommand.Build(plugins),
             RenderPresetsCommand.Build(plugins),
             StillsCommand.Build(plugins),
+            SlopeSpikeCommand.Build(plugins),
         };
 
         // What dotnet-suggest asks for completions with, and the only reason the
