@@ -89,7 +89,7 @@ internal static class ValidateSubmissionsCommand
                     // Another run got there first.
                     if (sent.StatusCode == HttpStatusCode.Conflict) continue;
 
-                    sent.EnsureSuccessStatusCode();
+                    await SiteAnswer.EnsureTaken(sent, cancellation);
                     progress = true;
 
                     output.WriteLine(Checks.Accepted(check)
@@ -140,7 +140,7 @@ internal static class ValidateSubmissionsCommand
                     new StringContent(lack is null ? "null" : Checks.ToJson(lack), Encoding.UTF8, "application/json"),
                     cancellation);
 
-                sent.EnsureSuccessStatusCode();
+                await SiteAnswer.EnsureTaken(sent, cancellation);
                 output.WriteLine($"{preset.Id} {preset.FileName}: {lack?.Said ?? "opens in a browser"}");
             }
             catch (HttpRequestException e)
