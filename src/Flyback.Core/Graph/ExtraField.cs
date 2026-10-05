@@ -70,12 +70,26 @@ public abstract record ExtraField(string Key, string Label)
         /// <summary>This field's value as the number it is, always inside the range.</summary>
         public float Value(JsonNode? stored)
         {
-            var value = stored?.GetValueKind() == JsonValueKind.Number
-                && stored.AsValue().TryGetValue<float>(out var stated)
-                    ? stated
-                    : Spec.Default;
+            var value = Stated(stored) ?? Spec.Default;
 
             return float.IsFinite(value) ? Math.Clamp(value, Spec.Min, Spec.Max) : Spec.Default;
+        }
+
+        // A value made in code holds the type it was made with, and TryGetValue
+        // takes only that one; a value read from a file takes any.
+        private static float? Stated(JsonNode? stored)
+        {
+            if (stored?.GetValueKind() != JsonValueKind.Number) return null;
+
+            var number = stored.AsValue();
+
+            if (number.TryGetValue<float>(out var single)) return single;
+            if (number.TryGetValue<double>(out var wide)) return (float)wide;
+            if (number.TryGetValue<int>(out var whole)) return whole;
+            if (number.TryGetValue<long>(out var big)) return big;
+            if (number.TryGetValue<decimal>(out var exact)) return (float)exact;
+
+            return null;
         }
     }
 
