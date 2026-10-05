@@ -4,7 +4,7 @@ Planned on 2026-10-01, on `main` at `9d667a68`. It is on TODO.md; take it off th
 delete this file, in the commit that lands the last of it.
 
 - **Kind:** Plan
-- **Status:** Open, parked
+- **Status:** Open, parked; spiked 2026-10-05 (below)
 
 ## What is wanted
 
@@ -86,3 +86,116 @@ sensitive the output is to it.
 4. Drag with *keep*.
 5. Brushes and direction sliders, then `fit` and the reference drop.
 6. An ADR at step 1, recording the derivative rule per opcode and the smoothing of flat spots.
+
+## Spike, 2026-10-05: do slopes through the ops hold up on real presets?
+
+Measured on `main` at `261b0bc9`, with code on the `claude/grab-the-output-spike` branch at
+`fad95ef2` (local, not landed). Knobs compile as live inputs (`CompileForSlopes`). After the
+interpreter runs, a second walk over the same ops carries one lane per knob, and the sound's
+memory carries its own lanes. `flyback-cli spike-slopes` runs all 60 shipped presets,
+plugins included. The picture is a 64×36 grid run from 0 to the frame at 2 s, with slopes
+taken against the frame before held still. The sound is the left channel at 96 kHz, octave
+levels over 8,192 samples ending at 1 s, for 8 knobs per preset. `flyback-cli grad` is
+there too. Nothing was looked at or listened to by a person.
+
+**The rules are right.** On the picture, every knob at 48 points per preset (about 326,000
+checks) matches a central difference to 0.1% in 99.3% of them, and none is wrong. The rest
+are of three kinds:
+
+- 1,126 are knobs resting on a kink, such as a clamp's edge or a hue sector's boundary. The
+  slope is one side's and the difference averages both sides, so they are off by exactly 2×.
+- Some are points within a difference's step of an edge.
+- 3 are a 0.4 Hz LFO driving FM hard enough that the difference's step moves a thin line off
+  the pixel.
+
+On the sound, through delay lines, allpasses, accumulators and loops, 80% agree. Another 18%
+are bands where two finite-difference step sizes disagree with each other. The 45 that
+disagree are all kinks at rest: a knob at its clamp's end, or a delay time on a whole number
+of samples, which is the corner of the line's interpolation. Two echoes' `Echo.left` was
+compared sample by sample to confirm the second kind.
+
+**Exact slopes miss hard edges.** The region check compares each of 48 blocks' mean light
+against a turn of 2% of each knob's travel. Of the 16,155 block-knob pairs that move
+smoothly, exact slopes see nothing in 16.3%. On showcase presets it is far worse: Acid 80%,
+Fracture 67%, Outrun 54%, and Spectrum 100%, whose bars are drawn by Step. These are the
+plan's flat spots. A shape drawn by Step, Floor or Fract, or by a smoothstep narrower than a
+pixel, has zero slope at every pixel center.
+
+**A pixel's footprint fixes most of it.** Two more lanes carry the slopes against x and y,
+which say how wide one pixel is in an op's own input. At Step, Floor, Ceil, Fract, Sign, Mod,
+Abs, Clamp, Smoothstep and a picture read, the knob lanes take the op's secant across that
+width instead of its derivative. This cuts blindness from 16.3% to 3.5% (Spectrum 1.9%,
+Acid 6.2%, Outrun 1.7%), and the share of slopes within 2× of the actual move rises from
+77.3% to 84.2%.
+
+It hurts deep iterated chains. Julia walk's within-2× share falls from 93.5% to 27.9%, and
+Dive's from 58% to 4%. The footprint grows through every iteration until the secant averages
+the slope away. Fracture (37%) and Overworld (26%) stay partly blind. The rule needs scoping,
+to small footprints or to the last edges before the sink. Which one is the first experiment
+of step 1.
+
+**Moves are short.** Of all block-knob pairs that move under a 2% turn, 46% cross something
+on the way: the two halves of the move disagree in sign or by 3×. An unranged socket travels
+-4 to 4, so 2% of it is 0.16. That is enough to push Trails' smoothstep `edge0` past `edge1`,
+or Captions' `softness` of 0.006 below zero. A drag is many steps of well under 1% of travel,
+and the travel of an unranged socket is no scale to measure them in.
+
+**A drag reaches its goal.** The solver is min-norm Gauss-Newton on one block's light, +0.1,
+with knobs measured in their travel. Each step is capped at 2% of travel and halved until the
+error is no worse. It reaches the goal on 49 of the 54 presets that have a block to move, or
+47 with footprint slopes. Holding a far corner's four blocks within 0.02 as well, it reaches
+19; a dozen one-knob presets cannot, as their one knob moves everything. Two things were
+needed:
+
+- Each knob is weighted down by how much it moves the whole frame. Unweighted, the solver
+  leans on a clock rate, whose slope is 10⁶ per travel and whose move falls below a float
+  knob's resolution.
+- A step that leaves the error equal is taken. A hard edge between pixel centers holds the
+  light flat until it crosses one.
+
+Phase misses every time: its block is a sub-pixel stroke moved by `Stroke.rate`.
+
+**What it costs.** Per pixel, the interpreter and then the slope walk, as a mean over the
+presets:
+
+| | Time | Against plain |
+|---|---|---|
+| Plain | 0.60 µs | 1× |
+| One knob | 3.98 µs | 6.6× |
+| Every knob | 25.3 µs | 42× |
+| Every knob, Overworld (216 knobs) | 221 µs | 91× |
+
+A heat map for one knob at 160×90 is 57 ms. The owners of a 32×32 area take 26 ms, and 226 ms
+on Overworld. The one-knob cost is the walk's own overhead: a span, a clear and three
+multiply-adds per op. A walk fused with the interpreter should come near the plan's 2×.
+
+On the sound, 8 lanes cost 7.5× a plain render. `grad --band` over all 213 of Acid's knobs
+takes 50 s for one second of sound, which is usable from a script but not under a finger.
+
+**What `grad` showed.**
+
+- It takes `--point x,y --at <seconds>` rather than `--at x,y,t`, because `--at` is a second
+  everywhere else.
+- Ranking knobs by their whole travel flatters wide ones, such as a Sine's freq over
+  0–20,000 Hz. A knob marked in decades or in Hz needs its own taper.
+- Two modules with one title print one label. It needs `measure`'s numbered handles.
+- A point is the wrong unit for hover. Beside every edge, the exact slope at a pixel center
+  is zero, so hover has to read a region with footprint slopes.
+
+**What changes in the plan.**
+
+- Step 1's derivative rule per opcode is its local partials. They are read off the values
+  the interpreter already left in the SSA registers, so nothing an op computes is written
+  twice, and the same table drives forward and reverse mode. Each stateful op carries its
+  memory's slopes beside the memory.
+- Flat spots are not a detail of fitting. Hover and drag are blind without the footprint, so
+  the x and y lanes and the secant rule belong in step 1, scoped so that iterated chains keep
+  their slopes.
+- At a kink, take the side the gesture moves toward, never whichever side the rule happens
+  to pick.
+- A drag weights knobs by their effect on the whole frame, keeps steps well under 1% of
+  travel, accepts a step that leaves the error flat, and stops the clock while it runs. How
+  far holding the frame before still is from the slope through the whole history was not
+  measured.
+- Reverse mode comes with drag (step 4), where one goal meets hundreds of knobs, and for
+  sound slopes over many knobs, which then needs a tape through time.
