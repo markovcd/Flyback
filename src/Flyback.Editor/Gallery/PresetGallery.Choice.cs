@@ -314,10 +314,30 @@ internal sealed partial class PresetGallery
             if (card is not null)
             {
                 Paint(card, chosen: true);
-                card.Button.BringIntoView();
+                Reveal(card.Button);
             }
 
             Changed?.Invoke();
+        }
+
+        /// <summary>Scrolls <paramref name="tile"/> into sight, waiting for its first layout when it has none yet.</summary>
+        private static void Reveal(Button tile)
+        {
+            if (tile.Bounds.Width > 0)
+            {
+                tile.BringIntoView();
+                return;
+            }
+
+            tile.LayoutUpdated += Laid;
+
+            void Laid(object? sender, EventArgs e)
+            {
+                if (tile.Bounds.Width <= 0) return;
+
+                tile.LayoutUpdated -= Laid;
+                Dispatcher.UIThread.Post(tile.BringIntoView, DispatcherPriority.Loaded);
+            }
         }
 
         /// <summary>Opens the chosen card's preset, unless it is being asked about.</summary>

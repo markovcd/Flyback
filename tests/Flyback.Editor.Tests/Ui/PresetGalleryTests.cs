@@ -120,6 +120,26 @@ public class PresetGalleryTests : EditorTest
         thumbnails.IsAsked(ordered[^1]).ShouldBeTrue();
     }
 
+    [AvaloniaFact]
+    public void The_preset_on_the_canvas_is_scrolled_into_sight_when_the_gallery_opens()
+    {
+        var container = Container();
+        var ordered = Presets.All.OrderBy(preset => preset.Kind).ToList();
+        var open = ordered[^1];
+        var parts = container.GetRequiredService<PresetGallery>().Build(ordered, showing: open);
+        var window = Show(parts.Tiles(_ => { }), width: 1100);
+        Attach(container, window);
+        var scroll = All<ScrollViewer>(window).Single(s => s.Name == "gallery-scroll");
+        var tile = All<Button>(window).Single(b => b.Name == "tile" && ((PatchPreset)b.Tag!).Name == open.Name);
+
+        Pump(() => scroll.Offset.Y > 0, window);
+
+        var top = tile.TranslatePoint(new Point(0, 0), scroll)!.Value.Y;
+
+        top.ShouldBeGreaterThanOrEqualTo(0);
+        (top + tile.Bounds.Height).ShouldBeLessThanOrEqualTo(scroll.Bounds.Height);
+    }
+
     private (Window Window, Control Picker) Picker(double width = 1100)
     {
         var container = Container();
