@@ -159,4 +159,6 @@ What is left of [docs/handoff/flyback-library-implementation-plan.md](../../docs
 
 4. **Check** the editor's preset gallery and plugins window against it, and a submission end to end. Then stop the container.
 
+5. **Pages redirects.** The Worker now serves the website too. `pages.yml` publishes a stub that sends `markovcd.github.io/Flyback/<path>` to the same path here, and the site's own URLs move to the new hostname (step 7 of the plan).
+
 The free plan's 10 ms of CPU a request is enough for everything but a large upload's form; check `wrangler tail` against real traffic before the move and take the paid plan if submissions are cut off.
