@@ -250,3 +250,52 @@ together, as the editor does.
 **A still is not a check.** `render --at` draws one frame with no history, so the trails,
 planes and meters are missing. The check had to render clips and measure frames pulled from
 them.
+
+## Another way: the same picture, a different sound
+
+A goal on the picture pins a number or two, and a patch has dozens of knobs, so many knob
+mixes reach the same picture. Where a knob feeds both halves, each of those mixes sounds
+different. Offering them one after another turns the sound's unpredictability into something
+a person can steer: the picture stays as asked, and they browse the tracks behind it.
+
+**Two ways on Machine Room.** The same gesture was run twice: the middle of the frame 0.03
+brighter at 30 s and 60 s, judged on real renders. Both reached it on the picture.
+
+| Way | Knobs | What the sound did |
+|---|---|---|
+| Sound held | `Echo` 0.25 → 0.55 | Every octave within ±0.4 dB; the echoes ring longer |
+| Sound free | `Crush` 0.44 → 0.70, `Resonance` 0.46 → 0.35, `Echo` 0.25 → 0.55 | Overall level the same; the top end up, +1.5 to +4.8 dB from 8 kHz, as the bitcrusher fizzes |
+
+The sound-free way also made the picture blockier, since `Crush` coarsens the pixelation. A
+goal on light holds nothing else about the picture, and that is part of what a person is
+choosing between.
+
+**Free needs per-knob trust.** With nothing held, the solver first leaned on `Filter`, whose
+slope is steepest. `Filter` rests mid-threshold in the hue formula, so every full step
+overshot and the gesture stalled at a third of its goal.
+
+Giving each knob its own trust region fixed it: a knob that carried a failed step is trusted
+to a quarter of its move, and the step is solved again. The free gesture then reached its
+goal in 29 s. The held gesture never had the problem, because holding the sound already
+ruled `Filter` out.
+
+**Finding the ways.**
+
+1. Solve the goal, sparsely, as now.
+2. Hold the knob that carried most of that answer at its resting value, and solve again.
+3. Repeat until no way is left or a few have been found.
+
+Each pass is a picture-only solve, about 30 s in the spike and needing to be under a second
+in the editor. The first few ways can be worked out behind the first answer while the
+person looks at it.
+
+**Order.** Fewest knobs first, then smallest move. The order is fixed, so the same gesture
+offers the same ways every time: unpredictable means not chosen by the person, never
+random.
+
+**Showing them.** The result strip names each way's knobs and what it does to the sound,
+from a loudness and octave reading on a real render. "Another way" steps to the next and
+back. Undo takes back the whole gesture, whichever way was showing.
+
+**What stays held.** Held knobs sit out every way, as they sit out randomize. The loudness
+guard applies to every way, since browsing sounds is the point and a jump of 10 dB is not.
