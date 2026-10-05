@@ -231,19 +231,20 @@ public sealed class CliSteps(PatchContext context) : IDisposable
     [When("flyback-cli shoots {string} at {int} second(s), cropped to the modules")]
     public void WhenShotCropped(string name, int seconds) => Shoot(name, seconds, "--crop");
 
+    [When("flyback-cli shoots {string} with the editor {string}")]
+    public void WhenShotWithEditor(string name, string editor) =>
+        Run(["shot", Path(name), "-o", Path(ShotName), "--editor", Path(editor)]);
+
+    [Then("the command says the editor is not there")]
+    public void ThenSaysNoEditor()
+    {
+        code.ShouldBe(Exit.Failed, said);
+        said.ShouldContain("the editor is not here");
+    }
+
     private void Shoot(string name, int seconds, params string[] more)
     {
-        var before = ShotCommand.Beside;
-        ShotCommand.Beside = BuiltEditor;
-
-        try
-        {
-            Run(["shot", Path(name), "--at", seconds.ToString(System.Globalization.CultureInfo.InvariantCulture), "-o", Path(ShotName), .. more]);
-        }
-        finally
-        {
-            ShotCommand.Beside = before;
-        }
+        Run(["shot", Path(name), "--at", seconds.ToString(System.Globalization.CultureInfo.InvariantCulture), "-o", Path(ShotName), "--editor", BuiltEditor(), .. more]);
     }
 
     /// <summary>

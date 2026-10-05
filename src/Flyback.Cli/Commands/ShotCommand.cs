@@ -20,7 +20,7 @@ namespace Flyback.Cli.Commands;
 internal static class ShotCommand
 {
     /// <summary>Where the editor is expected: beside this program, in the folder both publish into.</summary>
-    public static Func<string> Beside { get; set; } = () =>
+    private static string Beside() =>
         Path.Combine(AppContext.BaseDirectory, OperatingSystem.IsWindows() ? "Flyback.exe" : "Flyback");
 
     public static Command Build(PluginRegistry plugins)
@@ -74,9 +74,14 @@ internal static class ShotCommand
             Description = "Measure the outputs from --at, the selected module's or every module's, and pin them before the picture is taken.",
         };
 
+        var editor = new Option<FileInfo>("--editor")
+        {
+            Description = "The editor program to draw with, in place of the one beside this program. A dev build keeps it in src/Flyback.Editor.Desktop/bin.",
+        };
+
         var command = new Command("shot", "Draw the editor's window with a patch open, at a chosen second, into a PNG.")
         {
-            patch, preset, output, at, size, select, canvas, crop, measure,
+            patch, preset, output, at, size, select, canvas, crop, measure, editor,
         };
 
         command.SetAction(result =>
@@ -119,7 +124,7 @@ internal static class ShotCommand
 
             arguments.AddRange(file is not null ? [file.FullName] : ["--preset", named!]);
 
-            var code = Handover.Run(Beside(), "the editor", arguments, error);
+            var code = Handover.Run(result.GetValue(editor)?.FullName ?? Beside(), "the editor", arguments, error);
 
             if (code == Exit.Ok) result.InvocationConfiguration.Output.WriteLine(into.Name);
 

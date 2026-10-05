@@ -81,6 +81,14 @@ Feature: The command line says whether a patch works, and whether two are the sa
     When flyback-cli shoots "dawn.fbks" at 3 seconds
     Then the shot has a white picture in it
 
+  Scenario: A shot told to use an editor that is not there says so
+    Given the text saved as "tone.fbks":
+      """
+      sine(freq: 110) |> out.left
+      """
+    When flyback-cli shoots "tone.fbks" with the editor "nowhere/Flyback"
+    Then the command says the editor is not there
+
   Scenario: A cropped shot is the canvas around the modules, for a text patch too
     Given the text saved as "tone.fbks":
       """
