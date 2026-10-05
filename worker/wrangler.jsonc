@@ -51,6 +51,25 @@
         // The Access application's audience tag, which every token Access signs carries.
         "ACCESS_AUD": "47c70731717ccc201b2577ffb8f8427e928b334318c0cb02461854932b3e0201"
       }
+    },
+
+    // Not deployed until the move in deploy/cloudflare/README.md: the database id and the
+    // audience tag are the zeros until the resources exist.
+    "production": {
+      "name": "flyback-site",
+      "workers_dev": false,
+      "routes": [{ "pattern": "flyback.nasik2137.uk", "custom_domain": true }],
+      "d1_databases": [
+        { "binding": "DB", "database_name": "flyback-site", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+      ],
+      "r2_buckets": [{ "binding": "FILES", "bucket_name": "flyback-site" }],
+      "triggers": { "crons": ["17 * * * *"] },
+      "vars": {
+        "GITHUB_REPOSITORY": "markovcd/Flyback",
+        "VALIDATE_WORKFLOW": "validate.yml",
+        "ACCESS_TEAM_DOMAIN": "https://nasik.cloudflareaccess.com",
+        "ACCESS_AUD": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
     }
   }
 }
