@@ -3,7 +3,7 @@ using System.Text;
 namespace Flyback.Plugins.Assist;
 
 /// <summary>The host's <see cref="IAssistantTransport"/>: a key bound to one origin, put on requests there and nowhere else.</summary>
-internal sealed class KeyedTransport : IAssistantTransport
+internal sealed class KeyedTransport : IAssistantTransport, IEquatable<KeyedTransport>
 {
     /// <summary>
     /// Shared by every transport, so connections are pooled across runs. No redirects: a
@@ -89,6 +89,22 @@ internal sealed class KeyedTransport : IAssistantTransport
             return null;
         }
     }
+
+    /// <summary>
+    /// Alike when they carry the same key to the same origin the same way, because the
+    /// transport is rebuilt for every message and a conversation carries on only while
+    /// its configuration is unchanged.
+    /// </summary>
+    public bool Equals(KeyedTransport? other) =>
+        other is not null
+        && secret == other.secret
+        && Origin == other.Origin
+        && credential == other.credential
+        && ReferenceEquals(network, other.network);
+
+    public override bool Equals(object? obj) => Equals(obj as KeyedTransport);
+
+    public override int GetHashCode() => HashCode.Combine(secret, Origin, credential);
 
     public override string ToString() => HasKey ? $"a key for {Origin}" : "no key";
 }

@@ -11,6 +11,28 @@ public sealed class KeyedTransportTests
 {
     private static readonly AssistantCredential Bearer = new("KEY", "");
 
+    /// <summary>
+    /// A conversation carries on only while its configuration is the one it began with,
+    /// and the transport is rebuilt for every message, so two built alike must be equal.
+    /// </summary>
+    [Fact]
+    public void Transports_built_alike_are_the_same_configuration()
+    {
+        var values = Flyback.Plugins.Settings.SettingValues.None;
+
+        new AssistantConfig(new KeyedTransport("sk-secret", "https://a.test", Bearer), values)
+            .ShouldBe(new AssistantConfig(new KeyedTransport("sk-secret", "https://a.test", Bearer), values));
+
+        new AssistantConfig(new KeyedTransport(null, null, Bearer), values)
+            .ShouldBe(new AssistantConfig(new KeyedTransport(null, null, Bearer), values));
+
+        new AssistantConfig(new KeyedTransport("sk-secret", "https://a.test", Bearer), values)
+            .ShouldNotBe(new AssistantConfig(new KeyedTransport("sk-other", "https://a.test", Bearer), values));
+
+        new AssistantConfig(new KeyedTransport("sk-secret", "https://a.test", Bearer), values)
+            .ShouldNotBe(new AssistantConfig(new KeyedTransport("sk-secret", "https://b.test", Bearer), values));
+    }
+
     [Fact]
     public async Task The_key_goes_to_the_origin_it_is_bound_to_and_no_other()
     {
