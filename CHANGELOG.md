@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The assistant's column shows what the conversation has cost in tokens, under the box, and keeps the count when the conversation is saved with the patch.
+
 - The assistant reads a sound's spectrum when it listens: octave bands, brightness and the pitches in it.
 
 - On Linux, Flyback shows its icon in the applications menu after install.sh, and in the entry it writes when it opens your files.

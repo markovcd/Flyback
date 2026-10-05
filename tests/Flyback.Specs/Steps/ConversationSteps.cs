@@ -32,6 +32,21 @@ public sealed class ConversationSteps : IDisposable
         await Turn("make something");
     }
 
+    [Given("each turn it takes costs {int} tokens in, {int} of them cached, and {int} out")]
+    public void GivenEachTurnCosts(int input, int cached, int output) =>
+        assistant.Costs = new PatchEvent.Cost(input, cached, output);
+
+    [When("it is asked twice more")]
+    public async Task WhenAskedTwiceMore()
+    {
+        await Turn("once more");
+        await Turn("and again");
+    }
+
+    [Then("the conversation has cost {int} tokens in, {int} of them cached, and {int} out")]
+    public void ThenItHasCost(int input, int cached, int output) =>
+        Run.Tokens.ShouldBe(new TokensSpent(2, input, cached, output));
+
     [When("a knob is turned on the canvas")]
     public void WhenAKnobIsTurned() => first.InputValues[0] = 0.25f;
 

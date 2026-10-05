@@ -20,6 +20,9 @@ internal sealed class KnobSettingAssistant : IPatchAssistant, IPatchSession
     /// <summary><c>set_knobs</c> arguments for the next turn, or null to set none.</summary>
     public string? Knobs { get; set; }
 
+    /// <summary>What each turn reports it cost, or null to report none.</summary>
+    public PatchEvent.Cost? Costs { get; set; }
+
     public string Id => "knobs";
 
     public string Name => "Knobs";
@@ -53,6 +56,8 @@ internal sealed class KnobSettingAssistant : IPatchAssistant, IPatchSession
             await bench.InvokeAsync("set_knobs", JsonSerializer.Deserialize<JsonElement>(knobs), cancel);
             Knobs = null;
         }
+
+        if (Costs is { } cost) yield return cost;
 
         yield return new PatchEvent.Proposed(bench.Snapshot(), "as it stands");
     }

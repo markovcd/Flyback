@@ -141,13 +141,18 @@ public sealed class AssistantPanelTests : EditorTest
         return (window, panel);
     }
 
-    private static string Saved(params TranscriptLine[] transcript) => new SavedConversation(
+    private static string Saved(params TranscriptLine[] transcript) => Saved(null, transcript);
+
+    private static string Saved(TokensSpent? tokens, params TranscriptLine[] transcript) => new SavedConversation(
         "gemini",
         SavedConversation.SettingsOf(SettingValues.None),
         1,
         new WorkbenchState("""{"nodes":[]}""", """{"nodes":[]}""", new Dictionary<string, Guid>(), 1, 2),
         null,
-        transcript).ToJson();
+        transcript,
+        Tokens: tokens).ToJson();
+
+    private static TextBlock Spent(Window window) => All<TextBlock>(window).Single(block => block.Name == "spent");
 
     private static List<string?> Shown(Window window) =>
         [.. All<SelectableTextBlock>(window).Select(block => block.Text)];
@@ -165,6 +170,25 @@ public sealed class AssistantPanelTests : EditorTest
         Shown(window).ShouldContain("make a hard techno patch");
         Shown(window).ShouldContain("Here is a kick at 150 bpm.");
         panel.ConversationUnsaved.ShouldBeFalse("nothing has been said since it was opened");
+    }
+
+    [AvaloniaFact]
+    public void A_conversation_saved_with_its_cost_shows_the_total_under_the_box()
+    {
+        var (window, panel) = Over(new Patch());
+
+        Spent(window).IsVisible.ShouldBeFalse();
+
+        panel.Open(Saved(new TokensSpent(2, 87_040, 80_000, 3_100), new TranscriptLine(Voice.You, "hello")));
+        Settle(window);
+
+        Spent(window).IsVisible.ShouldBeTrue();
+        Spent(window).Text.ShouldBe("This conversation: 1 turn · 87k in (80k cached) · 3.1k out");
+
+        panel.StartOver();
+        Settle(window);
+
+        Spent(window).IsVisible.ShouldBeFalse();
     }
 
     /// <summary>

@@ -89,6 +89,17 @@ internal sealed class AssistantPanel : UserControl
         Name = "footer",
     };
 
+    /// <summary>What this conversation has cost in tokens, under the box; hidden until a request reports one.</summary>
+    private readonly TextBlock spent = new()
+    {
+        FontSize = Text.Small,
+        Foreground = Text.Muted,
+        TextWrapping = TextWrapping.Wrap,
+        IsVisible = false,
+        Margin = new Thickness(0, 4, 0, 0),
+        Name = "spent",
+    };
+
     /// <summary>
     /// Proof that something is still happening.
     /// </summary>
@@ -434,6 +445,7 @@ internal sealed class AssistantPanel : UserControl
 
         reactions.Raise(new ConversationChanged());
         ShowSendState();
+        ShowSpent();
     }
 
     /// <summary>
@@ -453,6 +465,7 @@ internal sealed class AssistantPanel : UserControl
 
         reactions.Raise(new ConversationChanged());
         ShowSendState();
+        ShowSpent();
     }
 
     /// <summary>Ends whatever conversation there is, of either kind, and empties the panel of it.</summary>
@@ -572,8 +585,10 @@ internal sealed class AssistantPanel : UserControl
 
         DockPanel.SetDock(writing, Dock.Bottom);
         DockPanel.SetDock(footer, Dock.Bottom);
+        DockPanel.SetDock(spent, Dock.Bottom);
         body.Children.Add(working);
         body.Children.Add(footer);
+        body.Children.Add(spent);
         body.Children.Add(writing);
         body.Children.Add(transcript);
 
@@ -945,6 +960,22 @@ internal sealed class AssistantPanel : UserControl
     }
 
     /// <summary>
+    /// The conversation's cost in tokens: the one going, or the one saved with the
+    /// patch and waiting to be carried on, or nothing where there is neither.
+    /// </summary>
+    private void ShowSpent()
+    {
+        var (tokens, turns) = session.Run is { } run
+            ? (run.Tokens, run.Turns)
+            : conversation.Waiting is { } waiting
+                ? (waiting.Tokens ?? new TokensSpent(), waiting.Turns)
+                : (new TokensSpent(), 0);
+
+        spent.IsVisible = !tokens.None;
+        spent.Text = tokens.None ? string.Empty : "This conversation: " + tokens.Told(turns);
+    }
+
+    /// <summary>
     /// The one button, in whichever of its two jobs applies. Reads and does not
     /// ask, because it runs on every keystroke. Dead until there is something to
     /// send, which says what the panel knew and never showed: an empty box or a
@@ -1224,6 +1255,8 @@ internal sealed class AssistantPanel : UserControl
 
         var conversation = Conversation(chosenAssistant.Value, config);
 
+        ShowSpent();
+
         usage?.Assistant(chosenAssistant.Value.Id);
 
         instruction.Text = string.Empty;
@@ -1242,6 +1275,8 @@ internal sealed class AssistantPanel : UserControl
                 // The tallies move as the workbench is driven, and an edit that
                 // lands is the strongest sign of all that this is alive.
                 Beat();
+
+                if (happened is PatchEvent.Cost) ShowSpent();
             }
 
             if (ReferenceEquals(conversation, session.Run))

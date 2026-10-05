@@ -113,6 +113,7 @@ internal sealed class AssistantRun : IDisposable
         }
 
         Turns = resuming!.Turns;
+        Tokens = resuming.Tokens ?? new TokensSpent();
 
         // The patch may have been saved again after this conversation's last turn,
         // with knobs the workbench never saw.
@@ -180,6 +181,9 @@ internal sealed class AssistantRun : IDisposable
     public bool Running => working is not null;
 
     public int Turns { get; private set; }
+
+    /// <summary>What the conversation has cost so far, across the sessions it was saved and carried on in.</summary>
+    public TokensSpent Tokens { get; private set; } = new();
 
     /// <summary>
     /// Whether the canvas gained or lost a module or a wire since the workbench last
@@ -275,7 +279,8 @@ internal sealed class AssistantRun : IDisposable
             Workbench.Save(),
             history,
             [.. transcript.Select(line => keyed?.Holds(line.Text) == true ? line with { Text = keyed.Scrubbed(line.Text)! } : line)],
-            PatchIO.ToJson(seen));
+            PatchIO.ToJson(seen),
+            Tokens);
     }
 
     /// <summary>The canvas a saved conversation last saw, or null where it did not say or will not read.</summary>
@@ -395,6 +400,10 @@ internal sealed class AssistantRun : IDisposable
                 {
                     Proposal = proposed.Patch;
                     ProposalSummary = proposed.Summary;
+                }
+                else if (happened is PatchEvent.Cost cost)
+                {
+                    Tokens = Tokens.Plus(cost);
                 }
 
                 yield return happened;

@@ -29,6 +29,8 @@ namespace Flyback.Assist;
 /// <param name="Bench"></param>
 /// <param name="History">The provider's own account of it, or null where it kept none.</param>
 /// <param name="Transcript"></param>
+/// <param name="Canvas">The canvas it last saw, as patch JSON.</param>
+/// <param name="Tokens">What it has cost, or null in a file written before that was kept.</param>
 internal sealed record SavedConversation(
     string Provider,
     string Settings,
@@ -36,7 +38,8 @@ internal sealed record SavedConversation(
     WorkbenchState Bench,
     string? History,
     IReadOnlyList<TranscriptLine> Transcript,
-    string? Canvas = null)
+    string? Canvas = null,
+    TokensSpent? Tokens = null)
 {
     /// <summary>
     /// The shape this writes. A file in any other is not read at all: a
@@ -110,6 +113,13 @@ internal sealed record SavedConversation(
             ["history"] = History is null ? null : Embedded(History),
             ["transcript"] = transcript,
             ["canvas"] = Canvas is null ? null : Embedded(Canvas),
+            ["tokens"] = Tokens is null ? null : new JsonObject
+            {
+                ["requests"] = Tokens.Requests,
+                ["input"] = Tokens.Input,
+                ["cacheRead"] = Tokens.CacheRead,
+                ["output"] = Tokens.Output,
+            },
         }.ToJsonString(Options);
     }
 
@@ -160,7 +170,10 @@ internal sealed record SavedConversation(
                 new WorkbenchState(start, working, handles, Number(body["edits"]), Number(body["toolCalls"])),
                 Raw(body["history"]),
                 transcript,
-                Raw(body["canvas"]));
+                Raw(body["canvas"]),
+                body["tokens"] is JsonObject spent
+                    ? new TokensSpent(Number(spent["requests"]), Number(spent["input"]), Number(spent["cacheRead"]), Number(spent["output"]))
+                    : null);
         }
         catch (Exception e) when (e is JsonException or ArgumentException or InvalidOperationException)
         {

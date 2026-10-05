@@ -724,6 +724,71 @@ public class AssistantRunTests
             carried.Workbench.Snapshot().Output.ShouldNotBeNull();
     }
 
+    // --- what it cost ---------------------------------------------------------
+
+    [Fact]
+    public async Task The_tokens_each_request_reports_add_up_across_turns()
+    {
+        using var run = RunOf(new ScriptedAssistant(new PatchEvent.Cost(100, 80, 10), new PatchEvent.Cost(50, 0, 5)));
+
+        await Drain(run);
+        await Drain(run);
+
+        run.Tokens.ShouldBe(new TokensSpent(4, 300, 160, 30));
+    }
+
+    [Fact]
+    public async Task What_a_conversation_cost_is_kept_when_it_is_saved_and_carried_on()
+    {
+        using var first = RunOf(new ScriptedAssistant(new PatchEvent.Cost(100, 80, 10)));
+
+        await Drain(first);
+
+        var saved = SavedConversation.Read(first.Save([]).ToJson()).ShouldNotBeNull();
+
+        using var carried = new AssistantRun(
+            new ScriptedAssistant(new PatchEvent.Cost(7, 0, 3)),
+            AssistantConfig.Unset,
+            NodeCatalog.BuiltIn,
+            new Patch(),
+            resuming: saved);
+
+        carried.Tokens.ShouldBe(new TokensSpent(1, 100, 80, 10));
+
+        await Drain(carried);
+
+        carried.Tokens.ShouldBe(new TokensSpent(2, 107, 80, 13));
+    }
+
+    /// <summary>A conversation saved before the cost was kept opens with none counted.</summary>
+    [Fact]
+    public void A_conversation_saved_without_its_cost_reads_as_having_none()
+    {
+        var saved = new SavedConversation(
+            "scripted",
+            string.Empty,
+            2,
+            new WorkbenchState("""{"nodes":[]}""", """{"nodes":[]}""", new Dictionary<string, Guid>(), 0, 0),
+            null,
+            []);
+
+        var read = SavedConversation.Read(saved.ToJson()).ShouldNotBeNull();
+
+        read.Tokens.ShouldBeNull();
+
+        using var carried = new AssistantRun(
+            new ScriptedAssistant(), AssistantConfig.Unset, NodeCatalog.BuiltIn, new Patch(), resuming: read);
+
+        carried.Tokens.None.ShouldBeTrue();
+    }
+
+    [Theory]
+    [InlineData(1, 0, 0, 0, "1 turn · 0 in (0 cached) · 0 out")]
+    [InlineData(3, 87_040, 80_000, 3_100, "3 turns · 87k in (80k cached) · 3.1k out")]
+    [InlineData(12, 1_250_000, 0, 999, "12 turns · 1.25M in (0 cached) · 999 out")]
+    public void The_footer_gives_counts_in_thousands(int turns, int input, int cached, int output, string told) =>
+        new TokensSpent(1, input, cached, output).Told(turns).ShouldBe(told);
+
     // --- the fake -----------------------------------------------------------
 
     /// <summary>
