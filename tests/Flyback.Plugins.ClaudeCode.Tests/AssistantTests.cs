@@ -1,4 +1,5 @@
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Programs;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
@@ -8,7 +9,7 @@ namespace Flyback.Plugins.ClaudeCode.Tests;
 /// <summary>What the assistant says about itself before anything is asked of it.</summary>
 public class AssistantTests
 {
-    private static readonly IClaudeCli Anything = new ScriptedCli();
+    private static readonly IProgram Anything = new Nothing();
 
     private static ClaudeCodeAssistant Installed => new(() => Anything);
 
@@ -64,5 +65,12 @@ public class AssistantTests
 
         senses.Vision.ShouldBeTrue();
         senses.Hearing.ShouldBe(Listener.None);
+    }
+
+    /// <summary>A program that is there and answers nothing; only whether it is installed matters.</summary>
+    private sealed class Nothing : IProgram
+    {
+        public Task<ProgramAnswer> Ask(ProgramQuestion question, CancellationToken cancel) =>
+            throw new NotSupportedException();
     }
 }

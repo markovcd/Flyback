@@ -40,6 +40,14 @@ Pictures go as files named with `--image`, which attaches them to the one user
 message; the prompt says which is which. The model setting `default` passes no model
 and leaves the choice to Codex, which knows what the plan offers.
 
+**What the two programs share is source, not an assembly.** The `<calls>` protocol,
+the session, the process runner and the locator are in `src/plugins/Shared/Programs`
+and compiled into each plugin. Putting them in `Flyback.Plugins` would grow the
+contract (ADR-0102) and the assembly a plugin is compiled against (ADR-0169); a
+shared assembly would be a second identity for the same types in every plugin that
+loads it; `Flyback.Assist` is the host's side. Each plugin keeps its command line, its
+way of writing a conversation and its way of reading an answer.
+
 ## Gemini is declined
 
 Personal Google sign-in for the Gemini CLI ended on 2026-06-18, so what is left is a

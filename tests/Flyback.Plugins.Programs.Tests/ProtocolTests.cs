@@ -1,8 +1,9 @@
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Programs;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.ClaudeCode.Tests;
+namespace Flyback.Plugins.Programs.Tests;
 
 /// <summary>How tools are offered in words and called in a block at the end of a reply.</summary>
 public class ProtocolTests
@@ -80,16 +81,5 @@ public class ProtocolTests
         preamble.ShouldContain("## add_module");
         preamble.ShouldContain("Adds one.");
         preamble.ShouldContain(Protocol.Open);
-    }
-
-    [Fact]
-    public void A_picture_goes_after_the_turn_it_belongs_to_as_a_base64_block()
-    {
-        var content = Protocol.Content("PRE", [new Turn(Turn.Flyback, "seen", [[1, 2, 3]])]);
-
-        content.Count.ShouldBe(4);
-        content[1]!["text"]!.GetValue<string>().ShouldContain("<flyback>");
-        content[2]!["type"]!.GetValue<string>().ShouldBe("image");
-        content[2]!["source"]!["data"]!.GetValue<string>().ShouldBe("AQID");
     }
 }

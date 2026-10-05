@@ -3,13 +3,13 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Flyback.Plugins.Assist;
 
-namespace Flyback.Plugins.ClaudeCode;
+namespace Flyback.Plugins.Programs;
 
 /// <summary>
-/// How a conversation is written to Claude Code and its calls read back.
+/// How a conversation is written to the program and its calls read back.
 /// </summary>
 /// <remarks>
-/// Claude Code is asked as a plain model with its own tools off, so the workbench's
+/// the program is asked as a plain model with its own tools off, so the workbench's
 /// tools are offered in words and called in a <c>&lt;calls&gt;</c> block at the end
 /// of a reply. Pure functions over text, since this is the part that fails by a
 /// model not following it.
@@ -19,16 +19,8 @@ internal static class Protocol
     public const string Open = "<calls>";
     public const string Close = "</calls>";
 
-    /// <summary>The name a block that would not read is called under, answered by <see cref="ClaudeCodeSession"/> with why.</summary>
+    /// <summary>The name a block that would not read is called under, answered by <see cref="ProgramSession"/> with why.</summary>
     public const string Malformed = "malformed_calls";
-
-    /// <summary>
-    /// The system prompt: short, because it is an argument and a command line is
-    /// short on Windows. Everything else is in the first message.
-    /// </summary>
-    public const string System =
-        "You are the model behind an assistant inside Flyback, a patchable synthesiser. "
-        + "The first message is your briefing; follow it.";
 
     /// <summary>What the model is told before the conversation: the briefing, the way to call tools and the tools.</summary>
     public static string Preamble(string briefing, IReadOnlyList<PatchTool> tools)
@@ -54,35 +46,6 @@ internal static class Protocol
         }
 
         return text.ToString();
-    }
-
-    /// <summary>The message sent for the conversation as it stands.</summary>
-    public static JsonArray Content(string preamble, IReadOnlyList<Turn> turns)
-    {
-        var blocks = new JsonArray { Text(preamble) };
-
-        foreach (var turn in turns)
-        {
-            blocks.Add(Text($"<{turn.Role}>\n{turn.Text}\n</{turn.Role}>"));
-
-            foreach (var png in turn.Pictures)
-            {
-                blocks.Add(new JsonObject
-                {
-                    ["type"] = "image",
-                    ["source"] = new JsonObject
-                    {
-                        ["type"] = "base64",
-                        ["media_type"] = "image/png",
-                        ["data"] = Convert.ToBase64String(png),
-                    },
-                });
-            }
-        }
-
-        blocks.Add(Text("Write your next turn now."));
-
-        return blocks;
     }
 
     /// <summary>The answers to a reply's calls, as one <c>flyback</c> entry's text.</summary>
@@ -154,6 +117,4 @@ internal static class Protocol
         new("call1", Malformed, $"nothing ran: {why} Send the calls again in the form described in the briefing.");
 
     private static string? Spoken(string text) => string.IsNullOrWhiteSpace(text) ? null : text.Trim();
-
-    private static JsonObject Text(string text) => new() { ["type"] = "text", ["text"] = text };
 }

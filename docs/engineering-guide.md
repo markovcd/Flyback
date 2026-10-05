@@ -434,6 +434,10 @@ folder out from under it.
 | Codex | The same over the installed `codex` program and a ChatGPT sign-in ([0173](adr/0173-codex-is-an-assistant-the-same-way-and-gemini-is-not.md)) | none: a process with text in and JSON lines out |
 | OpenAi, Gemini | Patch assistants ([0033](adr/0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md), [0066](adr/0066-a-second-wire-format-so-one-model-can-hear.md)) | none: hand-written JSON over HTTP |
 
+ClaudeCode and Codex share `src/plugins/Shared/Programs`, the `<calls>` protocol, the session, the process
+and the locator, as source compiled into each plugin: it is not a project, so no plugin needs another
+([0173](adr/0173-codex-is-an-assistant-the-same-way-and-gemini-is-not.md)).
+
 An assistant never touches the patch directly. Everything it does goes through
 `PatchWorkbench`, which is the tool surface, the limits and the senses (looking
 at a frame, hearing a clip). The two session loops in `OpenAiSession` and
@@ -756,7 +760,7 @@ changed: saved patches name it.
 | `Flyback.Ui.Tests` | The shared controls, the audio engine, MIDI | Headless Avalonia for the controls |
 | `Flyback.Cli.Tests` | Commands run in-process | |
 | `Flyback.Plugins.Tests` | The host, every shipped module and preset | Loads real plugins off disk |
-| `Flyback.Plugins.OpenAi.Tests`, `.Gemini.Tests`, `.ClaudeCode.Tests`, `.Codex.Tests` | Wire translation and sessions | Reference the plugin directly: translation is pure |
+| `Flyback.Plugins.OpenAi.Tests`, `.Gemini.Tests`, `.ClaudeCode.Tests`, `.Codex.Tests`, `.Programs.Tests` | Wire translation and sessions | Reference the plugin directly: translation is pure |
 | `Flyback.Ui.Testing` | The headless harness: `UiTest`, the Avalonia xunit adapter | Not a test project |
 | `Flyback.Core.Benchmarks` | BenchmarkDotNet | Not a test project |
 | `Flyback.Plugins.Sample`, `.FakeAssistant` | Plugins the tests load | Not test projects |

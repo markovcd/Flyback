@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Flyback.Plugins.Programs.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    What the plugins that run a program share is compiled in here, as it is into
+    each of them: what is checked is how a conversation is written to a program
+    and its calls read back, which is the same whichever program it is.
+  -->
+  <ItemGroup>
+    <Compile Include="..\..\src\plugins\Shared\Programs\*.cs" LinkBase="Programs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Flyback.Plugins\Flyback.Plugins.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Core\Flyback.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+</Project>

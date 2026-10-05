@@ -2,10 +2,10 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Flyback.Plugins.Assist;
 
-namespace Flyback.Plugins.Codex;
+namespace Flyback.Plugins.Programs;
 
 /// <summary>
-/// One conversation with Codex.
+/// One conversation with a program.
 /// </summary>
 /// <remarks>
 /// Only the format is here; the turn is <see cref="TurnLoop"/>'s, run by the host
@@ -13,22 +13,22 @@ namespace Flyback.Plugins.Codex;
 /// is what the prompt cache is for: the briefing and everything before the newest
 /// turn are the same bytes as last time.
 /// </remarks>
-internal sealed class CodexSession : IModelConversation
+internal sealed class ProgramSession : IModelConversation
 {
     /// <summary>Said where a picture was, once it has gone from the conversation.</summary>
     internal const string PictureGone = "[A picture was shown here and is not kept. Render again to look again.]";
 
     private readonly PatchWorkbench workbench;
     private readonly AssistantChoices chosen;
-    private readonly ICodexCli codex;
+    private readonly IProgram program;
     private readonly List<Turn> turns = [];
     private readonly string preamble;
 
-    public CodexSession(PatchWorkbench workbench, AssistantChoices chosen, ICodexCli codex)
+    public ProgramSession(PatchWorkbench workbench, AssistantChoices chosen, IProgram program)
     {
         this.workbench = workbench;
         this.chosen = chosen;
-        this.codex = codex;
+        this.program = program;
 
         preamble = Protocol.Preamble(workbench.Briefing, workbench.Tools);
     }
@@ -59,9 +59,8 @@ internal sealed class CodexSession : IModelConversation
 
     async Task<ModelReply> IModelConversation.Send(CancellationToken cancel)
     {
-        var (prompt, pictures) = Protocol.Conversation(preamble, turns);
-        var request = new CodexRequest(chosen.Model, chosen.Effort, prompt, pictures);
-        var answer = await codex.Ask(request, cancel).ConfigureAwait(false);
+        var question = new ProgramQuestion(chosen.Model, chosen.Effort, preamble, [.. turns]);
+        var answer = await program.Ask(question, cancel).ConfigureAwait(false);
 
         turns.Add(new Turn(Turn.Model, answer.Text, []));
 
@@ -70,7 +69,7 @@ internal sealed class CodexSession : IModelConversation
         return new ModelReply(text, calls, answer.Input, answer.Cached, answer.Output);
     }
 
-    /// <summary>Never asked: this provider offers no ear.</summary>
+    /// <summary>Never asked: these programs offer no ear.</summary>
     Task<string?> IModelConversation.Listen(string model, string briefing, byte[] wav, CancellationToken cancel) =>
         Task.FromResult<string?>(null);
 

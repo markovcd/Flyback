@@ -1,18 +1,19 @@
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Programs;
 using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.ClaudeCode;
 
 public sealed class ClaudeCodeAssistant : IPatchAssistant
 {
-    private readonly Func<IClaudeCli?> cli;
+    private readonly Func<IProgram?> cli;
 
     public ClaudeCodeAssistant()
         : this(() => ClaudeLocator.Find() is { } found ? new ClaudeCli(found) : null)
     {
     }
 
-    internal ClaudeCodeAssistant(Func<IClaudeCli?> cli) => this.cli = cli;
+    internal ClaudeCodeAssistant(Func<IProgram?> cli) => this.cli = cli;
 
     public string Id => "claude-code";
 
@@ -34,12 +35,7 @@ public sealed class ClaudeCodeAssistant : IPatchAssistant
     /// <summary>Nowhere: nothing is sent from here, so there is no origin for a key to be bound to.</summary>
     public Uri? Endpoint(SettingValues values) => null;
 
-    /// <summary>
-    /// The schema's questions less the two that have no answer here: there is no
-    /// address to set, and no model takes a sound.
-    /// </summary>
-    public IReadOnlyList<SettingField> Form(SettingValues values) =>
-        [.. Schema.Form(values).Where(field => field.Key is not (AssistantSchema.EndpointKey or AssistantSchema.HearingKey))];
+    public IReadOnlyList<SettingField> Form(SettingValues values) => ProgramAssistants.Form(Schema, values);
 
     public AssistantSenses Senses(SettingValues values) => Schema.Senses(values);
 
@@ -56,25 +52,9 @@ public sealed class ClaudeCodeAssistant : IPatchAssistant
             : null;
     }
 
-    public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => Session(workbench, config);
+    public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) =>
+        ProgramAssistants.Start(Name, workbench, Schema, config, cli());
 
-    public IPatchSession? Resume(PatchWorkbench workbench, AssistantConfig config, string saved)
-    {
-        var session = Session(workbench, config);
-
-        if (session.Take(saved)) return session;
-
-        session.Dispose();
-        return null;
-    }
-
-    private ClaudeCodeSession Session(PatchWorkbench workbench, AssistantConfig config) =>
-        new(workbench, Schema.Read(config.Values), cli() ?? new Missing());
-
-    /// <summary>What a session is given where Claude Code is not installed: every question is a failure that says so.</summary>
-    private sealed class Missing : IClaudeCli
-    {
-        public Task<ClaudeAnswer> Ask(ClaudeRequest request, CancellationToken cancel) =>
-            throw new ClaudeCodeFailure("Claude Code is not installed.");
-    }
+    public IPatchSession? Resume(PatchWorkbench workbench, AssistantConfig config, string saved) =>
+        ProgramAssistants.Resume(Name, workbench, Schema, config, cli(), saved);
 }

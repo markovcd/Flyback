@@ -1,4 +1,4 @@
-namespace Flyback.Plugins.Codex;
+namespace Flyback.Plugins.Programs;
 
 /// <summary>One entry of the conversation: who said it, what, and the pictures that went with it.</summary>
 internal sealed record Turn(string Role, string Text, IReadOnlyList<byte[]> Pictures)

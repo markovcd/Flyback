@@ -1,9 +1,10 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Programs;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.ClaudeCode.Tests;
+namespace Flyback.Plugins.Programs.Tests;
 
 /// <summary>A turn driven by the host's loop over canned replies from Claude Code.</summary>
 public class SessionTests
@@ -17,9 +18,9 @@ public class SessionTests
         </calls>
         """;
 
-    private static ClaudeCodeSession Session(ScriptedCli cli) => new(
+    private static ProgramSession Session(ScriptedProgram cli) => new(
         new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false),
-        new AssistantChoices("sonnet"),
+        new AssistantChoices("model"),
         cli);
 
     private static async Task<List<PatchEvent>> Drain(IPatchSession session, string instruction)
@@ -35,7 +36,7 @@ public class SessionTests
     [Fact]
     public async Task A_turn_builds_and_proposes_through_the_calls_in_the_reply()
     {
-        using var session = Session(new ScriptedCli(Building));
+        using var session = Session(new ScriptedProgram(Building));
 
         var events = await Drain(session, "make a gray field");
 
@@ -47,7 +48,7 @@ public class SessionTests
     [Fact]
     public async Task What_the_workbench_answered_goes_back_in_the_next_question()
     {
-        var cli = new ScriptedCli(
+        var cli = new ScriptedProgram(
             """<calls>[{"name":"add_module","arguments":{"type_id":"value","handle":"knob1"}}]</calls>""",
             "Done for now.");
 
@@ -55,8 +56,8 @@ public class SessionTests
 
         await Drain(session, "add a value");
 
-        cli.Sent.Count.ShouldBe(3);
-        ScriptedCli.TextOf(cli.Sent[1]).ShouldContain("<person>");
+        cli.Asked.Count.ShouldBe(3);
+        ScriptedProgram.Text(cli.Asked[1]).ShouldContain("<person>");
         cli.LastText.ShouldContain("<you>");
         cli.LastText.ShouldContain("Call 1 (add_module):");
         cli.LastText.ShouldContain("knob1");
@@ -65,20 +66,20 @@ public class SessionTests
     [Fact]
     public async Task A_block_that_would_not_read_is_answered_with_why_and_the_turn_goes_on()
     {
-        var cli = new ScriptedCli("<calls>[oops</calls>", Building);
+        var cli = new ScriptedProgram("<calls>[oops</calls>", Building);
 
         using var session = Session(cli);
 
         var events = await Drain(session, "make a gray field");
 
-        ScriptedCli.TextOf(cli.Sent[1]).ShouldContain("not valid JSON");
+        ScriptedProgram.Text(cli.Asked[1]).ShouldContain("not valid JSON");
         events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
     }
 
     [Fact]
     public async Task A_failure_is_a_failed_event_and_not_an_exception()
     {
-        using var session = Session(new ScriptedCli());
+        using var session = Session(new ScriptedProgram());
 
         var events = await Drain(session, "anything");
 
@@ -88,7 +89,7 @@ public class SessionTests
     [Fact]
     public async Task The_briefing_leads_every_question_and_is_the_same_bytes_each_time()
     {
-        var cli = new ScriptedCli(
+        var cli = new ScriptedProgram(
             """<calls>[{"name":"describe_patch"}]</calls>""",
             "ok");
 
@@ -96,17 +97,17 @@ public class SessionTests
 
         await Drain(session, "look");
 
-        var first = (string?)cli.Sent[0][0]!["text"];
+        var first = cli.Asked[0].Preamble;
 
         first.ShouldNotBeNullOrWhiteSpace();
         first.ShouldContain("## describe_patch");
-        ((string?)cli.Sent[1][0]!["text"]).ShouldBe(first);
+        cli.Asked[1].Preamble.ShouldBe(first);
     }
 
     [Fact]
     public async Task A_saved_conversation_carries_on_without_its_pictures()
     {
-        var first = Session(new ScriptedCli(Building));
+        var first = Session(new ScriptedProgram(Building));
 
         await Drain(first, "make a gray field");
 
@@ -114,7 +115,7 @@ public class SessionTests
 
         saved.ShouldNotBeNull();
 
-        var cli = new ScriptedCli("Sure.");
+        var cli = new ScriptedProgram("Sure.");
         var second = Session(cli);
 
         second.Take(saved).ShouldBeTrue();
@@ -132,17 +133,17 @@ public class SessionTests
     [InlineData("""[{"role":"you"}]""")]
     public void Something_that_is_not_a_saved_conversation_is_refused_whole(string saved)
     {
-        Session(new ScriptedCli()).Take(saved).ShouldBeFalse();
+        Session(new ScriptedProgram()).Take(saved).ShouldBeFalse();
     }
 
     [Fact]
     public void A_saved_conversation_holds_no_picture()
     {
-        IModelConversation conversation = Session(new ScriptedCli());
+        IModelConversation conversation = Session(new ScriptedProgram());
 
         conversation.Add([new ToolAnswer(new ToolCall("c", "render", "{}"), "drew it", [1, 2, 3])]);
 
-        ((ClaudeCodeSession)conversation).Save().ShouldContain(ClaudeCodeSession.PictureGone);
-        ((ClaudeCodeSession)conversation).Save().ShouldNotContain("AQID");
+        ((ProgramSession)conversation).Save().ShouldContain(ProgramSession.PictureGone);
+        ((ProgramSession)conversation).Save().ShouldNotContain("AQID");
     }
 }

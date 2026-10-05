@@ -1,4 +1,5 @@
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Programs;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
@@ -8,7 +9,7 @@ namespace Flyback.Plugins.Codex.Tests;
 /// <summary>What the assistant says about itself before anything is asked of it.</summary>
 public class AssistantTests
 {
-    private static readonly ICodexCli Anything = new ScriptedCli();
+    private static readonly IProgram Anything = new Nothing();
 
     private static CodexAssistant Installed => new(() => Anything);
 
@@ -71,5 +72,12 @@ public class AssistantTests
     {
         Installed.Schema.DefaultModel.ShouldBe(CodexCli.DefaultModel);
         Installed.Unavailable(Configured()).ShouldBeNull();
+    }
+
+    /// <summary>A program that is there and answers nothing; only whether it is installed matters.</summary>
+    private sealed class Nothing : IProgram
+    {
+        public Task<ProgramAnswer> Ask(ProgramQuestion question, CancellationToken cancel) =>
+            throw new NotSupportedException();
     }
 }

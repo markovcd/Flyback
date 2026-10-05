@@ -1,9 +1,8 @@
-using System.Diagnostics;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Programs;
 
 namespace Flyback.Plugins.ClaudeCode;
 
@@ -12,30 +11,28 @@ namespace Flyback.Plugins.ClaudeCode;
 /// </summary>
 /// <remarks>
 /// Every built-in tool, setting, skill and server is off, so what answers is the
-/// model and the signed-in plan and nothing of the person's setup. The conversation
-/// goes in on standard input because it outgrows a command line. The key
+/// model and the signed-in plan and nothing of the person's setup. The key
 /// variables are taken out of the environment it is given: a key there would be
 /// billed instead of the plan, and no key is what this is for.
 /// </remarks>
-internal sealed partial class ClaudeCli(string executable) : IClaudeCli
+internal sealed partial class ClaudeCli(string executable) : IProgram
 {
-    /// <summary>The longest one question may take, a backstop for a program that hangs.</summary>
-    private static readonly TimeSpan Longest = TimeSpan.FromMinutes(15);
+    private const string Name = "Claude Code";
 
     private static readonly string[] Keys = ["ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"];
 
     /// <summary>A model name the command line may carry: an alias or an id, never anything that reads as a flag.</summary>
     [GeneratedRegex(@"^[A-Za-z0-9][A-Za-z0-9._\[\]-]{0,63}$")]
-    private static partial Regex Name();
+    private static partial Regex ModelName();
 
     /// <summary>Whether <paramref name="model"/> may be handed to the program.</summary>
-    public static bool IsModel(string? model) => model is not null && Name().IsMatch(model);
+    public static bool IsModel(string? model) => model is not null && ModelName().IsMatch(model);
 
     /// <summary>The command line for <paramref name="request"/>.</summary>
     public static IReadOnlyList<string> Arguments(ClaudeRequest request)
     {
         if (!IsModel(request.Model))
-            throw new ClaudeCodeFailure($"'{request.Model}' is not a model name Claude Code takes.");
+            throw new ProgramFailure($"'{request.Model}' is not a model name Claude Code takes.");
 
         List<string> arguments =
         [
@@ -48,7 +45,7 @@ internal sealed partial class ClaudeCli(string executable) : IClaudeCli
             "--disable-slash-commands",
             "--setting-sources", "",
             "--no-session-persistence",
-            "--system-prompt", Protocol.System,
+            "--system-prompt", ClaudeWire.System,
             "--model", request.Model,
         ];
 
@@ -65,63 +62,28 @@ internal sealed partial class ClaudeCli(string executable) : IClaudeCli
         ["message"] = new JsonObject { ["role"] = "user", ["content"] = request.Content.DeepClone() },
     }.ToJsonString();
 
-    public async Task<ClaudeAnswer> Ask(ClaudeRequest request, CancellationToken cancel)
+    /// <summary>The question as Claude Code is sent it.</summary>
+    public static ClaudeRequest Request(ProgramQuestion question) =>
+        new(question.Model, question.Effort, ClaudeWire.Content(question.Preamble, question.Turns));
+
+    public Task<ProgramAnswer> Ask(ProgramQuestion question, CancellationToken cancel) => Ask(Request(question), cancel);
+
+    public async Task<ProgramAnswer> Ask(ClaudeRequest request, CancellationToken cancel)
     {
-        var start = new ProcessStartInfo(executable)
-        {
-            RedirectStandardInput = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            StandardInputEncoding = new UTF8Encoding(false),
-            StandardOutputEncoding = Encoding.UTF8,
-            StandardErrorEncoding = Encoding.UTF8,
-            WorkingDirectory = Quiet(),
-        };
+        var (output, errors, exitCode) = await ProgramProcess.Run(
+            Name,
+            executable,
+            Arguments(request),
+            Input(request) + "\n",
+            ProgramProcess.QuietFolder("flyback-claude-code"),
+            Keys,
+            cancel).ConfigureAwait(false);
 
-        foreach (var argument in Arguments(request)) start.ArgumentList.Add(argument);
-        foreach (var key in Keys) start.Environment.Remove(key);
-
-        using var process = new Process { StartInfo = start };
-
-        try
-        {
-            process.Start();
-        }
-        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException)
-        {
-            throw new ClaudeCodeFailure($"Claude Code would not start: {ex.Message}");
-        }
-
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancel);
-        timeout.CancelAfter(Longest);
-
-        await using var stopper = timeout.Token.Register(() => Stop(process));
-
-        var output = process.StandardOutput.ReadToEndAsync(CancellationToken.None);
-        var errors = process.StandardError.ReadToEndAsync(CancellationToken.None);
-
-        try
-        {
-            await process.StandardInput.WriteLineAsync(Input(request).AsMemory(), timeout.Token).ConfigureAwait(false);
-            process.StandardInput.Close();
-        }
-        catch (IOException)
-        {
-            // It exited before reading; what it said is in the output.
-        }
-
-        await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
-
-        cancel.ThrowIfCancellationRequested();
-
-        if (timeout.IsCancellationRequested)
-            throw new ClaudeCodeFailure($"Claude Code took longer than {Longest.TotalMinutes:0} minutes and was stopped.");
-
-        return Answer(await output.ConfigureAwait(false), await errors.ConfigureAwait(false), process.ExitCode);
+        return Answer(output, errors, exitCode);
     }
 
     /// <summary>What the program wrote, as the answer, or as the reason there is none.</summary>
-    public static ClaudeAnswer Answer(string output, string errors, int exitCode)
+    public static ProgramAnswer Answer(string output, string errors, int exitCode)
     {
         foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries).Reverse())
         {
@@ -141,58 +103,27 @@ internal sealed partial class ClaudeCli(string executable) : IClaudeCli
             var text = (string?)result["result"] ?? string.Empty;
 
             if (result["is_error"]?.GetValueKind() == JsonValueKind.True || exitCode != 0)
-                throw new ClaudeCodeFailure(Explained(text, errors));
+                throw new ProgramFailure(Explained(text, errors));
 
             var usage = result["usage"];
 
-            return new ClaudeAnswer(
+            return new ProgramAnswer(
                 text,
-                Count(usage, "input_tokens") + Count(usage, "cache_creation_input_tokens"),
-                Count(usage, "cache_read_input_tokens"),
-                Count(usage, "output_tokens"));
+                Tokens.Count(usage, "input_tokens") + Tokens.Count(usage, "cache_creation_input_tokens"),
+                Tokens.Count(usage, "cache_read_input_tokens"),
+                Tokens.Count(usage, "output_tokens"));
         }
 
-        throw new ClaudeCodeFailure(Explained(string.Empty, errors));
+        throw new ProgramFailure(Explained(string.Empty, errors));
     }
 
-    private static int Count(JsonNode? usage, string name) =>
-        usage?[name] is JsonValue value && value.TryGetValue<int>(out var count) ? count : 0;
-
-    /// <summary>Why it failed, with the one thing a person can do about being signed out said outright.</summary>
-    private static string Explained(string said, string errors)
-    {
-        var reason = !string.IsNullOrWhiteSpace(said) ? said.Trim() : errors.Trim();
-
-        if (reason.Length > 600) reason = reason[..600] + "…";
-
-        if (SignedOut().IsMatch(reason))
-            return "Claude Code is not signed in. Run `claude` in a terminal once and sign in with /login. " + reason;
-
-        return reason.Length > 0 ? $"Claude Code failed: {reason}" : "Claude Code exited without answering.";
-    }
+    private static string Explained(string said, string errors) => ProgramReason.Explained(
+        said,
+        errors,
+        Name,
+        SignedOut(),
+        "Claude Code is not signed in. Run `claude` in a terminal once and sign in with /login.");
 
     [GeneratedRegex(@"not logged in|/login|authenticat|credentials|unauthori[sz]ed|\b401\b", RegexOptions.IgnoreCase)]
     private static partial Regex SignedOut();
-
-    /// <summary>A folder with nothing in it, so no project's instructions are found by looking around.</summary>
-    private static string Quiet()
-    {
-        var folder = Path.Combine(Path.GetTempPath(), "flyback-claude-code");
-
-        Directory.CreateDirectory(folder);
-
-        return folder;
-    }
-
-    private static void Stop(Process process)
-    {
-        try
-        {
-            if (!process.HasExited) process.Kill(entireProcessTree: true);
-        }
-        catch (InvalidOperationException)
-        {
-            // Gone already.
-        }
-    }
 }

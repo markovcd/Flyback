@@ -333,7 +333,8 @@ tests/
   Flyback.Plugins.OpenAi.Tests  chat-completions session tests
   Flyback.Plugins.Gemini.Tests  generateContent session tests
   Flyback.Plugins.ClaudeCode.Tests  Claude Code session tests
-  Flyback.Plugins.Codex.Tests   Codex session tests
+  Flyback.Plugins.Codex.Tests   Codex command line and output tests
+  Flyback.Plugins.Programs.Tests  what the program-backed assistants share
 ```
 
 [`docs/engineering-guide.md`](docs/engineering-guide.md) is how the codebase is put together, how its code is written and how its tests are written. See the `docs/adr` folder for the architecture decisions behind it.

@@ -1,9 +1,8 @@
-using System.Diagnostics;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Programs;
 
 namespace Flyback.Plugins.Codex;
 
@@ -16,17 +15,16 @@ namespace Flyback.Plugins.Codex;
 /// answers is the model and the signed-in plan and nothing of the person's setup.
 /// What stays is the sandbox, read-only in an empty folder, around two tools that
 /// have no switch, and the person's global <c>AGENTS.md</c>, which the instructions
-/// tell the model to ignore. The conversation goes in on standard input because it outgrows a
-/// command line. The key variables are taken out of the environment it is given: a
-/// key there would be billed instead of the plan, and no key is what this is for.
+/// tell the model to ignore. The key variables are taken out of the environment it
+/// is given: a key there would be billed instead of the plan, and no key is what
+/// this is for.
 /// </remarks>
-internal sealed partial class CodexCli(string executable) : ICodexCli
+internal sealed partial class CodexCli(string executable) : IProgram
 {
     /// <summary>The model setting that leaves the choice to Codex, which knows what the plan offers.</summary>
     public const string DefaultModel = "default";
 
-    /// <summary>The longest one question may take, a backstop for a program that hangs.</summary>
-    private static readonly TimeSpan Longest = TimeSpan.FromMinutes(15);
+    private const string Name = "Codex";
 
     private static readonly string[] Keys = ["CODEX_API_KEY", "OPENAI_API_KEY"];
 
@@ -55,10 +53,10 @@ internal sealed partial class CodexCli(string executable) : ICodexCli
 
     /// <summary>A model name the command line may carry: an id, never anything that reads as a flag.</summary>
     [GeneratedRegex(@"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")]
-    private static partial Regex Name();
+    private static partial Regex ModelName();
 
     /// <summary>Whether <paramref name="model"/> may be handed to the program.</summary>
-    public static bool IsModel(string? model) => model is not null && (model == DefaultModel || Name().IsMatch(model));
+    public static bool IsModel(string? model) => model is not null && (model == DefaultModel || ModelName().IsMatch(model));
 
     /// <summary>The command line for <paramref name="request"/>.</summary>
     /// <param name="request">The question.</param>
@@ -67,7 +65,7 @@ internal sealed partial class CodexCli(string executable) : ICodexCli
     public static IReadOnlyList<string> Arguments(CodexRequest request, string instructions, IReadOnlyList<string> pictures)
     {
         if (!IsModel(request.Model))
-            throw new CodexFailure($"'{request.Model}' is not a model name Codex takes.");
+            throw new ProgramFailure($"'{request.Model}' is not a model name Codex takes.");
 
         // The prompt is standard input, named first so the pictures that end the line cannot take it.
         List<string> arguments =
@@ -102,21 +100,31 @@ internal sealed partial class CodexCli(string executable) : ICodexCli
     /// <summary>A path as a TOML string, which a configuration override is read as.</summary>
     public static string Toml(string path)
     {
-        if (path.Any(char.IsControl)) throw new CodexFailure("A file name with a control character cannot be handed to Codex.");
+        if (path.Any(char.IsControl)) throw new ProgramFailure("A file name with a control character cannot be handed to Codex.");
 
         return "\"" + path.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
     }
 
-    public async Task<CodexAnswer> Ask(CodexRequest request, CancellationToken cancel)
+    /// <summary>The question as Codex is sent it.</summary>
+    public static CodexRequest Request(ProgramQuestion question)
     {
-        var folder = Quiet();
+        var (prompt, pictures) = CodexWire.Conversation(question.Preamble, question.Turns);
+
+        return new CodexRequest(question.Model, question.Effort, prompt, pictures);
+    }
+
+    public Task<ProgramAnswer> Ask(ProgramQuestion question, CancellationToken cancel) => Ask(Request(question), cancel);
+
+    public async Task<ProgramAnswer> Ask(CodexRequest request, CancellationToken cancel)
+    {
+        var folder = ProgramProcess.QuietFolder("flyback-codex");
         var scratch = Directory.CreateDirectory(Path.Combine(folder, "ask-" + Guid.NewGuid().ToString("N"))).FullName;
 
         try
         {
             var instructions = Path.Combine(scratch, "instructions.md");
 
-            await File.WriteAllTextAsync(instructions, Protocol.System, cancel).ConfigureAwait(false);
+            await File.WriteAllTextAsync(instructions, CodexWire.System, cancel).ConfigureAwait(false);
 
             List<string> pictures = [];
 
@@ -128,7 +136,11 @@ internal sealed partial class CodexCli(string executable) : ICodexCli
                 pictures.Add(file);
             }
 
-            return await Run(request, instructions, pictures, folder, cancel).ConfigureAwait(false);
+            var (output, errors, exitCode) = await ProgramProcess.Run(
+                Name, executable, Arguments(request, instructions, pictures), request.Prompt, folder, Keys, cancel)
+                .ConfigureAwait(false);
+
+            return Answer(output, errors, exitCode);
         }
         finally
         {
@@ -143,69 +155,13 @@ internal sealed partial class CodexCli(string executable) : ICodexCli
         }
     }
 
-    private async Task<CodexAnswer> Run(
-        CodexRequest request, string instructions, IReadOnlyList<string> pictures, string folder, CancellationToken cancel)
-    {
-        var start = new ProcessStartInfo(executable)
-        {
-            RedirectStandardInput = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            StandardInputEncoding = new UTF8Encoding(false),
-            StandardOutputEncoding = Encoding.UTF8,
-            StandardErrorEncoding = Encoding.UTF8,
-            WorkingDirectory = folder,
-        };
-
-        foreach (var argument in Arguments(request, instructions, pictures)) start.ArgumentList.Add(argument);
-        foreach (var key in Keys) start.Environment.Remove(key);
-
-        using var process = new Process { StartInfo = start };
-
-        try
-        {
-            process.Start();
-        }
-        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException)
-        {
-            throw new CodexFailure($"Codex would not start: {ex.Message}");
-        }
-
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancel);
-        timeout.CancelAfter(Longest);
-
-        await using var stopper = timeout.Token.Register(() => Stop(process));
-
-        var output = process.StandardOutput.ReadToEndAsync(CancellationToken.None);
-        var errors = process.StandardError.ReadToEndAsync(CancellationToken.None);
-
-        try
-        {
-            await process.StandardInput.WriteAsync(request.Prompt.AsMemory(), timeout.Token).ConfigureAwait(false);
-            process.StandardInput.Close();
-        }
-        catch (IOException)
-        {
-            // It exited before reading; what it said is in the output.
-        }
-
-        await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
-
-        cancel.ThrowIfCancellationRequested();
-
-        if (timeout.IsCancellationRequested)
-            throw new CodexFailure($"Codex took longer than {Longest.TotalMinutes:0} minutes and was stopped.");
-
-        return Answer(await output.ConfigureAwait(false), await errors.ConfigureAwait(false), process.ExitCode);
-    }
-
     /// <summary>What the program wrote, as the answer, or as the reason there is none.</summary>
     /// <remarks>
     /// Events are lines of JSON. The answer is the last message the model wrote; an
     /// item that is not a message is a tool the sandbox met and is not read, and a
     /// warning about a setting the program does not know is an item of its own.
     /// </remarks>
-    public static CodexAnswer Answer(string output, string errors, int exitCode)
+    public static ProgramAnswer Answer(string output, string errors, int exitCode)
     {
         string? text = null;
         string? failed = null;
@@ -246,53 +202,22 @@ internal sealed partial class CodexCli(string executable) : ICodexCli
             }
         }
 
-        if (failed is not null) throw new CodexFailure(Explained(failed, errors));
+        if (failed is not null) throw new ProgramFailure(Explained(failed, errors));
 
-        if (text is null || exitCode != 0) throw new CodexFailure(Explained(string.Empty, errors));
+        if (text is null || exitCode != 0) throw new ProgramFailure(Explained(string.Empty, errors));
 
-        var cached = Count(usage, "cached_input_tokens");
+        var cached = Tokens.Count(usage, "cached_input_tokens");
 
-        return new CodexAnswer(text, Math.Max(0, Count(usage, "input_tokens") - cached), cached, Count(usage, "output_tokens"));
+        return new ProgramAnswer(text, Math.Max(0, Tokens.Count(usage, "input_tokens") - cached), cached, Tokens.Count(usage, "output_tokens"));
     }
 
-    private static int Count(JsonNode? usage, string name) =>
-        usage?[name] is JsonValue value && value.TryGetValue<int>(out var count) ? count : 0;
-
-    /// <summary>Why it failed, with the one thing a person can do about being signed out said outright.</summary>
-    private static string Explained(string said, string errors)
-    {
-        var reason = !string.IsNullOrWhiteSpace(said) ? said.Trim() : errors.Trim();
-
-        if (reason.Length > 600) reason = reason[..600] + "…";
-
-        if (SignedOut().IsMatch(reason))
-            return "Codex is not signed in. Run `codex login` in a terminal and sign in with ChatGPT. " + reason;
-
-        return reason.Length > 0 ? $"Codex failed: {reason}" : "Codex exited without answering.";
-    }
+    private static string Explained(string said, string errors) => ProgramReason.Explained(
+        said,
+        errors,
+        Name,
+        SignedOut(),
+        "Codex is not signed in. Run `codex login` in a terminal and sign in with ChatGPT.");
 
     [GeneratedRegex(@"not logged in|log ?in\b|authenticat|credentials|unauthori[sz]ed|\b401\b", RegexOptions.IgnoreCase)]
     private static partial Regex SignedOut();
-
-    /// <summary>A folder with nothing in it, so no project's instructions are found by looking around.</summary>
-    private static string Quiet()
-    {
-        var folder = Path.Combine(Path.GetTempPath(), "flyback-codex");
-
-        Directory.CreateDirectory(folder);
-
-        return folder;
-    }
-
-    private static void Stop(Process process)
-    {
-        try
-        {
-            if (!process.HasExited) process.Kill(entireProcessTree: true);
-        }
-        catch (InvalidOperationException)
-        {
-            // Gone already.
-        }
-    }
 }

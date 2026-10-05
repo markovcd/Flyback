@@ -32,6 +32,11 @@
   -->
 
   <ItemGroup>
+    <!-- What every plugin that runs a program shares, compiled into each so none needs the other. -->
+    <Compile Include="..\Shared\Programs\*.cs" LinkBase="Programs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="Flyback.Plugins.ClaudeCode.Tests" />
   </ItemGroup>
 

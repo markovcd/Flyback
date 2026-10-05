@@ -1,4 +1,5 @@
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Programs;
 using Shouldly;
 using Xunit;
 
@@ -68,7 +69,7 @@ public class CliTests
     [InlineData("-m")]
     public void A_model_name_that_could_read_as_a_flag_never_reaches_the_command_line(string model)
     {
-        Should.Throw<CodexFailure>(() => CodexCli.Arguments(Request(model), Instructions, []));
+        Should.Throw<ProgramFailure>(() => CodexCli.Arguments(Request(model), Instructions, []));
     }
 
     [Theory]
@@ -90,7 +91,7 @@ public class CliTests
     public void A_path_is_a_toml_string_whatever_it_holds()
     {
         CodexCli.Toml(@"C:\Users\O""Brien\i.md").ShouldBe("\"C:\\\\Users\\\\O\\\"Brien\\\\i.md\"");
-        Should.Throw<CodexFailure>(() => CodexCli.Toml("a\nb"));
+        Should.Throw<ProgramFailure>(() => CodexCli.Toml("a\nb"));
     }
 
     [Fact]
@@ -116,7 +117,7 @@ public class CliTests
     [Fact]
     public void Being_signed_out_says_what_to_do()
     {
-        var failure = Should.Throw<CodexFailure>(() => CodexCli.Answer(
+        var failure = Should.Throw<ProgramFailure>(() => CodexCli.Answer(
             """{"type":"turn.failed","error":{"message":"401 Unauthorized: please log in again"}}""", string.Empty, 1));
 
         failure.Message.ShouldContain("codex login");
@@ -125,7 +126,7 @@ public class CliTests
     [Fact]
     public void A_usage_limit_is_passed_on_as_it_was_said_and_is_not_taken_for_being_signed_out()
     {
-        var failure = Should.Throw<CodexFailure>(() => CodexCli.Answer(
+        var failure = Should.Throw<ProgramFailure>(() => CodexCli.Answer(
             """
             {"type":"error","message":"You have hit your usage limit. Try again at 3:34 PM."}
             {"type":"turn.failed","error":{"message":"You have hit your usage limit. Try again at 3:34 PM."}}
@@ -137,7 +138,7 @@ public class CliTests
     [Fact]
     public void No_message_at_all_reports_what_was_written_to_the_error_stream()
     {
-        Should.Throw<CodexFailure>(() => CodexCli.Answer("garbage", "boom", 2))
+        Should.Throw<ProgramFailure>(() => CodexCli.Answer("garbage", "boom", 2))
             .Message.ShouldContain("boom");
     }
 

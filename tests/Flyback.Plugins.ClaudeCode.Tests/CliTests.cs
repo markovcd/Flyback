@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Programs;
 using Shouldly;
 using Xunit;
 
@@ -44,7 +45,7 @@ public class CliTests
     [InlineData("-m")]
     public void A_model_name_that_could_read_as_a_flag_never_reaches_the_command_line(string model)
     {
-        Should.Throw<ClaudeCodeFailure>(() => ClaudeCli.Arguments(Request(model)));
+        Should.Throw<ProgramFailure>(() => ClaudeCli.Arguments(Request(model)));
     }
 
     [Theory]
@@ -82,7 +83,7 @@ public class CliTests
     [Fact]
     public void Being_signed_out_says_what_to_do()
     {
-        var failure = Should.Throw<ClaudeCodeFailure>(() => ClaudeCli.Answer(
+        var failure = Should.Throw<ProgramFailure>(() => ClaudeCli.Answer(
             """{"type":"result","is_error":true,"result":"Not logged in · Please run /login"}""", string.Empty, 1));
 
         failure.Message.ShouldContain("sign in with /login");
@@ -91,7 +92,7 @@ public class CliTests
     [Fact]
     public void No_result_at_all_reports_what_was_written_to_the_error_stream()
     {
-        Should.Throw<ClaudeCodeFailure>(() => ClaudeCli.Answer("garbage", "boom", 2))
+        Should.Throw<ProgramFailure>(() => ClaudeCli.Answer("garbage", "boom", 2))
             .Message.ShouldContain("boom");
     }
 
