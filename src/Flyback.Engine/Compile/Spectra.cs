@@ -91,16 +91,7 @@ public static class Spectra
 
                 memory.ReadTrace(slot, samples.AsSpan(0, length), age);
 
-                for (var n = 0; n < length; n++)
-                {
-                    real[n] = samples[n] * (0.5d - 0.5d * Math.Cos(2d * Math.PI * n / length));
-                    imaginary[n] = 0d;
-                }
-
-                Transform(real.AsSpan(0, length), imaginary.AsSpan(0, length));
-
-                for (var k = 0; k < bins; k++)
-                    power[k] += real[k] * real[k] + imaginary[k] * imaginary[k];
+                AddPower(samples.AsSpan(0, length), real, imaginary, power);
             }
 
             // A periodic Hann window sums to half its length, and a sine's energy
@@ -147,6 +138,56 @@ public static class Spectra
             ArrayPool<double>.Shared.Return(imaginary);
             ArrayPool<double>.Shared.Return(power);
         }
+    }
+
+    /// <summary>
+    /// The spectrum of a whole stretch of samples, as linear amplitude per bin: bin
+    /// <c>k</c> is at <c>k * rate / length</c>, and a sine of amplitude one reads one.
+    /// </summary>
+    /// <remarks>
+    /// The same averaged periodogram <see cref="Chart"/> draws, walked across all of
+    /// <paramref name="samples"/> in half-overlapping segments, for a reading of a
+    /// clip rather than a frame. <paramref name="length"/> must be a power of two no
+    /// longer than the samples.
+    /// </remarks>
+    public static double[] Amplitudes(ReadOnlySpan<float> samples, int length)
+    {
+        if (length < 2 || !BitOperations.IsPow2(length) || length > samples.Length)
+            throw new ArgumentOutOfRangeException(nameof(length), length, "A power of two no longer than the samples.");
+
+        var bins = length / 2 + 1;
+        var real = new double[length];
+        var imaginary = new double[length];
+        var power = new double[bins];
+        var hop = length / 2;
+        var segments = 1 + (samples.Length - length) / hop;
+
+        for (var s = 0; s < segments; s++)
+            AddPower(samples.Slice(s * hop, length), real, imaginary, power);
+
+        var calibration = 4d / length;
+        var amplitudes = new double[bins];
+
+        for (var k = 0; k < bins; k++) amplitudes[k] = Math.Sqrt(power[k] / segments) * calibration;
+
+        return amplitudes;
+    }
+
+    /// <summary>Adds the power of each bin of one Hann-windowed segment to <paramref name="power"/>.</summary>
+    private static void AddPower(ReadOnlySpan<float> segment, Span<double> real, Span<double> imaginary, Span<double> power)
+    {
+        var length = segment.Length;
+
+        for (var n = 0; n < length; n++)
+        {
+            real[n] = segment[n] * (0.5d - 0.5d * Math.Cos(2d * Math.PI * n / length));
+            imaginary[n] = 0d;
+        }
+
+        Transform(real[..length], imaginary[..length]);
+
+        for (var k = 0; k <= length / 2; k++)
+            power[k] += real[k] * real[k] + imaginary[k] * imaginary[k];
     }
 
     /// <summary>

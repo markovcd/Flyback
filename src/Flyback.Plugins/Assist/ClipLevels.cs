@@ -5,7 +5,7 @@ using Flyback.Engine.Render;
 
 namespace Flyback.Plugins.Assist;
 
-/// <summary>What <c>listen</c> measures in a rendered clip: its peak, its rms, its crest, its loudness and its level over time.</summary>
+/// <summary>What <c>listen</c> measures in a rendered clip: its peak, its rms, its crest, its loudness, its level over time and its spectrum.</summary>
 internal static class ClipLevels
 {
     /// <summary>Below this a buffer is called silence: -66 dBFS, and nothing a speaker would utter.</summary>
@@ -54,6 +54,10 @@ internal static class ClipLevels
 
         text.Append(". A row of near-identical figures is something continuous; a rhythm moves. ")
             .Append(Loudness(samples, sampleRate));
+
+        var spectrum = ClipSpectrum.Described(samples, sampleRate);
+
+        if (spectrum.Length > 0) text.Append(' ').Append(spectrum);
 
         return text.ToString();
     }

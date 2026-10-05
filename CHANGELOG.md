@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The assistant reads a sound's spectrum when it listens: octave bands, brightness and the pitches in it.
+
 - On Linux, Flyback shows its icon in the applications menu after install.sh, and in the entry it writes when it opens your files.
 
 - A preset opened from the gallery stops counting as the open preset once the patch is edited.

@@ -259,7 +259,9 @@ internal static class Handbook
         **The measurements are facts**, computed from the samples. Read crest,
         peak above rms, first: near 3 dB is a steady tone, 12 dB or more has
         hits in it. Near-identical slice levels are something continuous; a
-        rhythm moves.
+        rhythm moves. The spectrum is as much a fact: the octave bands say how
+        dark or bright the sound is, and the tones name the pitches in it,
+        a note and its harmonics, where noise has none.
 
         **The description is one listener's opinion.** It is not told what the
         patch is for, so that it can disagree with you. Treat it as evidence,
@@ -284,7 +286,9 @@ internal static class Handbook
         **The measurements are facts**, computed from the samples. Read crest,
         peak above rms, first: near 3 dB is a steady tone, 12 dB or more has
         hits in it. Near-identical slice levels are something continuous; a
-        rhythm moves.
+        rhythm moves. The spectrum is as much a fact: the octave bands say how
+        dark or bright the sound is, and the tones name the pitches in it,
+        a note and its harmonics, where noise has none.
 
         **What you hear is your own impression of a patch you built**, which
         already knows what it was hoping for. Say what is there rather than

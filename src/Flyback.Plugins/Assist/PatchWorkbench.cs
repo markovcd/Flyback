@@ -1418,7 +1418,7 @@ public sealed partial class PatchWorkbench
                 offered: vision),
 
             Does("listen", ListenAsync,
-                "Renders the patch's sound, measures it, and "
+                "Renders the patch's sound, measures its level, loudness and spectrum, and "
                 + (hearing is Listener.Itself
                     ? "plays it to you — the clip arrives after this reply, the way a rendered "
                       + "frame does. "
