@@ -1406,7 +1406,7 @@ public sealed partial class PatchWorkbench
                     },
                     "from": {
                       "type": "number",
-                      "description": "Where on the timeline to start, up to {{Number(limits.LatestTime)}}. Defaults to 0. Everything before it is still rendered, so delays arrive with the tail they would really have."
+                      "description": "Where on the timeline to start, up to {{Number(limits.LatestStart)}}. Defaults to 0. Sound begins {{Number(limits.ListenLead)}}s before it, so delays arrive with a tail but anything longer than that is missing."
                     },
                     "note": { "type": "string", "description": "What you are listening for, for your own record. {{Kept(hearing)}}" }
                   }
@@ -1427,7 +1427,8 @@ public sealed partial class PatchWorkbench
                 {
                   "properties": {
                     "handles": { "type": "array", "items": { "type": "string" }, "description": "Modules to measure. Left out, every module." },
-                    "seconds": { "type": "number", "description": "How long to run, from 0.25 to {{Number(LongestMeasure)}}. Defaults to 2. A repeat needs a few cycles in the window to be counted." }
+                    "seconds": { "type": "number", "description": "How long to run, from 0.25 to {{Number(LongestMeasure)}}. Defaults to 2. A repeat needs a few cycles in the window to be counted." },
+                    "from": { "type": "number", "description": "Where on the patch's timeline the window starts, up to {{Number(limits.LatestStart)}}. Defaults to 0. Anything that remembers earlier moments starts empty there." }
                   }
                 }
                 """),

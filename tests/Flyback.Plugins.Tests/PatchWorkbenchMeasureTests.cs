@@ -29,6 +29,20 @@ public class PatchWorkbenchMeasureTests
     }
 
     [Fact]
+    public async Task A_measurement_can_start_anywhere_on_the_timeline()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"lfo1","knobs":[{"port":"freq","value":3}]}""");
+
+        var measured = await Call(bench, "measure", """{"handles":["lfo1"],"from":3000}""");
+
+        measured.Ok.ShouldBeTrue(measured.Text);
+        measured.Text.ShouldContain("from 3000s");
+        measured.Text.ShouldContain("3 Hz");
+    }
+
+    [Fact]
     public async Task A_handle_nobody_has_is_refused()
     {
         var measured = await Call(Bench(), "measure", """{"handles":["nonesuch"]}""");

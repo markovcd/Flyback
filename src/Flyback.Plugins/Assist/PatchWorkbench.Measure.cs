@@ -36,6 +36,10 @@ public sealed partial class PatchWorkbench
             ? Math.Clamp(length.GetDouble(), 0.25d, LongestMeasure)
             : 2d;
 
+        var from = arguments.TryGetProperty("from", out var start) && start.ValueKind == JsonValueKind.Number
+            ? Math.Clamp(start.GetDouble(), 0d, limits.LatestStart)
+            : 0d;
+
         var patch = working;
 
         return Task.Run(
@@ -43,14 +47,14 @@ public sealed partial class PatchWorkbench
             {
                 var report = Measurements.Take(
                     patch,
-                    new MeasureOptions(seconds, Modules: chosen.Count == 0 ? null : chosen),
+                    new MeasureOptions(seconds, from, Modules: chosen.Count == 0 ? null : chosen),
                     modules,
                     samples,
                     pictures,
                     cancel: cancel);
 
                 var text = new StringBuilder(
-                    $"Measured {MeasurementWords.Number(seconds)}s from 0, with nothing played in. "
+                    $"Measured {MeasurementWords.Number(seconds)}s from {MeasurementWords.Number(from)}s, with nothing played in. "
                     + "The sound runs over time with memory; the picture runs over x, y and t without, "
                     + "so the two can differ.");
 

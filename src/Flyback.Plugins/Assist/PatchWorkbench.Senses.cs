@@ -156,9 +156,11 @@ public sealed partial class PatchWorkbench
     /// <see cref="WorkbenchLimits.LongestListen"/> is short and
     /// <see cref="WorkbenchLimits.ListenRate"/> is half what the speakers use.
     /// <para>
-    /// Warmed from zero rather than sought to: the audio path is the one with delay
-    /// lines behind it (ADR-0027), so a patch started halfway along would be handed
-    /// empty memory. Silence comes back as words rather than as a WAV — an
+    /// Started <see cref="WorkbenchLimits.ListenLead"/> before the window rather than
+    /// at it: the audio path is the one with delay lines behind it (ADR-0027), so a
+    /// patch started exactly there would be handed empty memory. The lead is sought
+    /// to and rendered, not rendered from zero, so a late window costs what an early
+    /// one does. Silence comes back as words rather than as a WAV — an
     /// oscillator whose <c>in</c> nothing drives is legal, compiles without a word
     /// and does not move, and a model played two seconds of nothing concludes the
     /// tool is broken.
@@ -201,9 +203,12 @@ public sealed partial class PatchWorkbench
 
                 // Thrown away, but not skipped: this is the warm-up, and what it
                 // leaves behind in the delay lines is the whole point of it.
+                var begin = Math.Max(0d, from - limits.ListenLead);
+
                 if (from > 0)
                 {
-                    var skipped = new float[Samples(from)];
+                    renderer.SeekTo(begin);
+                    var skipped = new float[Samples(from - begin)];
                     renderer.Render(patch.Program, skipped);
                 }
 
@@ -227,7 +232,7 @@ public sealed partial class PatchWorkbench
 
                 var caption = new StringBuilder(
                     $"{Number(seconds)}s of sound from {Number(from)}s, in stereo at "
-                    + $"{limits.ListenRate / 1000} kHz, rendered from zero.{warned}");
+                    + $"{limits.ListenRate / 1000} kHz, warmed from {(begin > 0 ? Number(begin) + "s" : "zero")}.{warned}");
 
                 caption.Append("\n\n").Append(ClipLevels.Measured(samples, peak, rms, renderer.SampleRate));
 
@@ -289,7 +294,7 @@ public sealed partial class PatchWorkbench
     private (double From, double Seconds) Window(JsonElement arguments)
     {
         var from = arguments.TryGetProperty("from", out var start) && start.ValueKind == JsonValueKind.Number
-            ? Math.Clamp(start.GetDouble(), 0d, limits.LatestTime)
+            ? Math.Clamp(start.GetDouble(), 0d, limits.LatestStart)
             : 0d;
 
         var seconds = arguments.TryGetProperty("seconds", out var length)

@@ -2016,10 +2016,20 @@ public class PatchWorkbenchTests
         DataBytes(heard.Wav).ShouldBe(24_000 * 2 * 2);
     }
 
+    [Fact]
+    public async Task Sound_can_start_anywhere_and_only_warms_up_just_before_it()
+    {
+        var late = await Call(await Heard(), "listen", """{"seconds":0.5,"from":3000}""");
+
+        late.Wav.ShouldNotBeNull();
+        late.Text.ShouldContain("from 3000s");
+        late.Text.ShouldContain("warmed from 2996s");
+    }
+
     /// <summary>
     /// The audio path is the one with a memory — delay lines and
     /// <c>feedback.unit</c>, per ADR-0027 — so a stretch starting at two seconds
-    /// has to arrive with the two seconds behind it having actually happened.
+    /// has to arrive with the seconds behind it having actually happened.
     /// A phasing patch is the cheapest thing that proves it: a delayed copy
     /// against the original cancels differently once the line has filled.
     /// </summary>
