@@ -50,12 +50,13 @@ internal sealed class ShotSound : IAudioEngine
 
     public void SeekTo(double seconds) => Time = double.IsFinite(seconds) ? Math.Max(0, seconds) : 0;
 
-    public void Update(Patch patch, ISampleLibrary? samples = null, Cue? start = null, CompiledPatch? sound = null)
+    public void Update(Patch patch, ISampleLibrary? samples = null, Cue? start = null, CompiledPatch? sound = null, Action<LiveValues>? seed = null)
     {
         var program = sound ?? patch.CompileForAudio(samples: samples, played: true).Program;
 
         Ops = program.Ops.Length;
         Live = new LiveValues(program.LiveInputs);
+        seed?.Invoke(Live);
     }
 
     public void Listen(CompiledPatch drawn, LiveValues watching)

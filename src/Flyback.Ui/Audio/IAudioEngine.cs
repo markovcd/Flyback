@@ -64,7 +64,8 @@ internal interface IAudioEngine
 
     /// <summary>Swaps in <paramref name="patch"/>'s sound, silent until <paramref name="start"/> goes.</summary>
     /// <param name="sound">The patch's sound compiled with <c>played: true</c> already, or null to compile it here.</param>
-    void Update(Patch patch, ISampleLibrary? samples = null, Cue? start = null, CompiledPatch? sound = null);
+    /// <param name="seed">Fills the new program's block with what is being held before the program is heard, so a held note does not drop out across the swap.</param>
+    void Update(Patch patch, ISampleLibrary? samples = null, Cue? start = null, CompiledPatch? sound = null, Action<LiveValues>? seed = null);
 
     /// <summary>Hands the picture what has been played: every Scope in <paramref name="drawn"/> and every Meter in <paramref name="watching"/>.</summary>
     void Listen(CompiledPatch drawn, LiveValues watching);

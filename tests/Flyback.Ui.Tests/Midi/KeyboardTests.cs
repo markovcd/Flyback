@@ -395,4 +395,20 @@ public class KeyboardTests
 
         told.ShouldBeGreaterThan(0);
     }
+
+    /// <summary>A program's new block can be filled from what is held before the hub is pointed at it.</summary>
+    [Fact]
+    public void A_new_block_is_filled_with_the_note_held_before_the_hub_follows_it()
+    {
+        var hub = new MidiHub(NoMidiInput.Instance);
+
+        hub.KeyDown(Key.Z);
+
+        var block = Block();
+
+        hub.Fill(block);
+
+        Read(block, Gate).ShouldBe(1d);
+        Read(block, Pitch).ShouldBe(48d);
+    }
 }

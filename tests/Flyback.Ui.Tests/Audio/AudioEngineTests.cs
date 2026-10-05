@@ -1,3 +1,5 @@
+using System.Text.Json.Nodes;
+using Flyback.Core.Graph.Extras;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Ui.Capture;
@@ -686,5 +688,49 @@ public class AudioEngineTests
         device.Pump();
 
         engine.Time.ShouldBeLessThan(0.1);
+    }
+
+    /// <summary>A held note is read as held by the first buffer of the program an edit swaps in.</summary>
+    /// <remarks>
+    /// The new program's block starts at nought, so a callback that ran before
+    /// whoever follows the keyboard had written into it heard the note let go and
+    /// came back to it a moment later: a pop on every edit made while a key was down.
+    /// </remarks>
+    [Fact]
+    public void A_held_note_is_not_let_go_by_the_edit_that_swaps_the_program_in()
+    {
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(new AudioSetup(device));
+
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var key = builder.Add(NodeCatalog.MidiTypeId, 0, 0);
+
+        key.SetState(MidiExtra.StateKey, new JsonObject { [MidiExtra.IndexField] = 1f });
+
+        var time = builder.Add("time", 0, 0);
+        var osc = builder.Add("osc.sine", 0, 0, (1, 220f));
+        var gated = builder.Add("math.mul", 0, 0);
+        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+
+        builder
+            .Wire(time, 0, osc, 0)
+            .Wire(osc, 0, gated, 0)
+            .Wire(key, 1, gated, 1)
+            .Wire(gated, 0, speaker, NodeCatalog.OutputLeftPort);
+
+        var gate = MidiSignal.Key(MidiSources.Keyboard, MidiSignal.Gate);
+
+        engine.Update(builder.Patch);
+        engine.Live.Set(gate, 1f);
+        engine.Start();
+
+        var before = device.Pump();
+
+        engine.Update(builder.Patch, seed: block => block.Set(gate, 1f));
+
+        var after = device.Pump();
+
+        // The end of the buffer, since the speakers' own filters are still ringing at its start.
+        Peak(after[^(BufferFrames / 2 * 2)..]).ShouldBeGreaterThan(Peak(before) * 0.5f, "the note went quiet across the edit");
     }
 }

@@ -4,6 +4,8 @@
 
 - `flyback-cli render-presets` uploads its renders through the preset site's admin API when no `--media` folder is given.
 
+- A note held while the patch is edited no longer pops: dragging a slider mid-chord keeps it sounding.
+
 - `flyback-cli shot --editor <path>` draws with the editor you name, so a shot works from a dev build.
 
 - A MIDI In plays chords down one chain: give it several `voices` and every module its wires reach plays once per voice, until a Merge or the Output adds them up. Voice numbers the voices and Spread fans one wire out into several.
