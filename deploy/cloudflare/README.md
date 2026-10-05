@@ -49,18 +49,18 @@ Run wrangler from `worker/` after `npm ci`, signed in with `npx wrangler login`.
 
    Put the database's id in `wrangler.jsonc` under `env.staging`, in place of the zeros, and commit it. The id is not a secret.
 
-2. **The Access application.** Zero Trust → Access controls → Applications → Add an application → Self-hosted, named *Flyback admin (staging)*, with two public hostname destinations:
+2. **The service tokens.** Zero Trust → Access controls → Service credentials → Create service token, twice: *flyback-github* for the workflows and *flyback-render* for the author's PC, so either can be revoked alone. Each shows its secret once.
+
+3. **The Access application.** Zero Trust → Access controls → Applications → Add an application → Self-hosted, named *Flyback admin (staging)*, with two public hostname destinations:
 
    | Subdomain | Domain | Path |
    |---|---|---|
    | `flyback-staging` | `nasik2137.uk` | `admin.html` |
    | `flyback-staging` | `nasik2137.uk` | `api/v1/admin/*` |
 
-   Two policies: *Only Me* (Allow, include Emails, the admin's address, one-time PIN), and *Machines* (Service Auth, include the service tokens below). Copy the application's audience tag from its overview.
+   Two policies, made under Access controls → Policies and attached on the application's Policies tab: *Only Me* (action Allow, include Emails, the admin's address, one-time PIN), and *Machines* (action Service Auth, include Service Token, both tokens above). Service Auth is what lets a request through on a token's headers alone; Allow would send a script to a sign-in page. Copy the application's audience tag from its overview.
 
    `api/v1/admin` without the slash stays public: every page asks it whether the visitor is the admin. The Worker checks Access's token itself on every admin route, so a path Access was never told about is refused, not open.
-
-3. **The service tokens.** Zero Trust → Access controls → Service credentials → Create service token, twice: *flyback-github* for the workflows and *flyback-render* for the author's PC, so either can be revoked alone. Add both to the *Machines* policy. Each shows its secret once.
 
 4. **The Worker's secrets.**
 
