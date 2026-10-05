@@ -242,4 +242,8 @@ public class SurveyTests
             return new JsonObject { ["data"] = models }.ToJsonString();
         }
     }
+
+    /// <summary>The settings' probe button is drawn only for a provider that is an <see cref="IModelSurvey"/>.</summary>
+    [Fact]
+    public void The_provider_can_be_surveyed() => new OpenAiAssistant().ShouldBeAssignableTo<IModelSurvey>();
 }

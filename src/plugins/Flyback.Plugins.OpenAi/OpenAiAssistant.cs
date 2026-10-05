@@ -3,7 +3,7 @@ using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.OpenAi;
 
-public sealed class OpenAiAssistant : IPatchAssistant
+public sealed class OpenAiAssistant : IPatchAssistant, IModelSurvey
 {
     public string Id => "openai";
 
