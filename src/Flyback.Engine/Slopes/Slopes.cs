@@ -24,6 +24,7 @@ internal sealed class Slopes
     private readonly double[] plus = new double[3];
     private readonly double[] minus = new double[3];
     private readonly double footprint;
+    private readonly bool dither;
 
     /// <param name="source"></param>
     /// <param name="knobs"></param>
@@ -31,10 +32,16 @@ internal sealed class Slopes
     /// A pixel's size in the patch's units, to give a hard edge the slope its pixels
     /// see as it moves; zero for the exact slope, which is flat on either side of an edge.
     /// </param>
-    public Slopes(SlopeProgram source, IReadOnlyList<int> knobs, double footprint = 0d)
+    /// <param name="dither">
+    /// Whether a floor with no footprint to spread over moves one for one with its input,
+    /// as it does on average for an input that sits anywhere between two steps: what a
+    /// posterize or a bitcrusher is, for a goal that wants what lies under it.
+    /// </param>
+    public Slopes(SlopeProgram source, IReadOnlyList<int> knobs, double footprint = 0d, bool dither = false)
     {
         this.source = source;
         this.footprint = footprint;
+        this.dither = dither;
         program = source.Program;
         ops = program.Ops;
         Knobs = [.. knobs];
@@ -123,13 +130,14 @@ internal sealed class Slopes
 
                 // Flat between jumps, so with a footprint a knob's slope is the jump as its pixels see it pass.
                 case OpCode.Floor:
-                    T(op.Out).Clear();
-                    Secant(op.Out, Math.Floor, v[op.A], Of(op.A));
-                    break;
-
                 case OpCode.Ceil:
                     T(op.Out).Clear();
-                    Secant(op.Out, Math.Ceiling, v[op.A], Of(op.A));
+
+                    if (footprint > 0d && Width(Of(op.A)) > 0d)
+                        Secant(op.Out, op.Code is OpCode.Floor ? Math.Floor : Math.Ceiling, v[op.A], Of(op.A));
+                    else if (dither)
+                        Of(op.A)[..KnobLanes].CopyTo(T(op.Out));
+
                     break;
 
                 case OpCode.Sign:

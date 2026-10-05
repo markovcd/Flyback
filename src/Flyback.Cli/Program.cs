@@ -89,6 +89,7 @@ internal static class Program
             RenderPresetsCommand.Build(plugins),
             StillsCommand.Build(plugins),
             SlopeSpikeCommand.Build(plugins),
+            GrabSpikeCommand.Build(plugins),
         };
 
         // What dotnet-suggest asks for completions with, and the only reason the

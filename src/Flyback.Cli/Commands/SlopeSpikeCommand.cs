@@ -48,14 +48,14 @@ internal static class SlopeSpikeCommand
 
             if (result.GetValue(trace) is { } heardTrace && heardTrace.StartsWith("sound:", StringComparison.Ordinal))
             {
-                var opened2 = ShippedPresets.Open(plugins.Catalog, names[0], error)!.Value.Opened;
+                var opened2 = File.Exists(names[0]) ? Patches.Open(new FileInfo(names[0]), error)!.Value : ShippedPresets.Open(plugins.Catalog, names[0], error)!.Value.Opened;
                 SoundTrace(opened2, heardTrace["sound:".Length..], result.GetValue(at), output);
                 return Task.FromResult(Exit.Ok);
             }
 
             if (result.GetValue(trace) is { } traced)
             {
-                var opened1 = ShippedPresets.Open(plugins.Catalog, names[0], error)!.Value.Opened;
+                var opened1 = File.Exists(names[0]) ? Patches.Open(new FileInfo(names[0]), error)!.Value : ShippedPresets.Open(plugins.Catalog, names[0], error)!.Value.Opened;
                 Trace(opened1, traced, result.GetValue(at), output);
                 return Task.FromResult(Exit.Ok);
             }
@@ -617,6 +617,10 @@ internal static class SlopeSpikeCommand
         var knob = Enumerable.Range(0, sp.Knobs.Count).First(k => sp.Knobs[k].Label == label);
         var program = sp.Program;
         var h = Step(sp.Knobs[knob]) / 16d;
+
+        if (Environment.GetEnvironmentVariable("SPIKE_OPS") is not null)
+            for (var i = 0; i < program.LiveInputs.Count; i++)
+                output.WriteLine($"live {i}: {program.LiveInputs[i]} -> knob {sp.KnobOf[i]} {(sp.KnobOf[i] >= 0 ? sp.Knobs[sp.KnobOf[i]].Label : "")}{(sp.KnobOf[i] == knob ? "  <- traced" : "")}");
         var rest = sp.Knobs[knob].Value;
         float up = (float)(rest + h), down = (float)(rest - h);
 
@@ -642,6 +646,16 @@ internal static class SlopeSpikeCommand
 
             worst = Math.Max(worst, Math.Abs(ad - fd));
             scale = Math.Max(scale, Math.Max(Math.Abs(ad), Math.Abs(fd)));
+
+            if (step + 1 == (long)(at * rate) && Environment.GetEnvironmentVariable("SPIKE_OPS") is { } dump)
+            {
+                using var file = new StreamWriter(dump);
+                foreach (var op in program.Ops)
+                {
+                    var width = Core.Compile.OpShape.Outputs(op.Code);
+                    file.WriteLine($"{op,-50} " + string.Join(" | ", Enumerable.Range(0, width).Select(w => $"{slopes.Values[op.Out + w]:G6} d {slopes.Of(op.Out + w)[0]:G6}")));
+                }
+            }
 
             if ((step + 1) % (rate / 20) == 0)
             {

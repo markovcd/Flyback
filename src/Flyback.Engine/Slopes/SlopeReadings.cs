@@ -79,18 +79,18 @@ internal static class SlopeReadings
     /// last <paramref name="window"/> of the left channel: each octave's level in
     /// decibels, and how many decibels it moves per unit of each lane's knob.
     /// </summary>
-    public static (double[] Levels, double[,] Slopes) Bands(SlopeProgram sp, int[] knobs, int rate, long steps, int window)
+    public static (double[] Levels, double[,] Slopes) Bands(SlopeProgram sp, int[] knobs, int rate, long steps, int window, long first = 0, bool dither = false)
     {
         var program = sp.Program;
         var delays = new DelayState(program, rate);
-        var slopes = new Slopes(sp, knobs);
+        var slopes = new Slopes(sp, knobs, dither: dither);
         var memory = new SlopeMemory(program, delays, slopes.Lanes);
         var signal = new Complex[window];
         var tangent = new Complex[slopes.Lanes][];
 
         for (var j = 0; j < slopes.Lanes; j++) tangent[j] = new Complex[window];
 
-        for (long step = 0; step < steps; step++)
+        for (var step = first; step < steps; step++)
         {
             slopes.Sample(step / (double)rate, 16d / 9d, delays, memory);
 
@@ -132,14 +132,14 @@ internal static class SlopeReadings
     }
 
     /// <summary>The same levels with no slopes, through the plain interpreter.</summary>
-    public static double[] Levels(SlopeProgram sp, int rate, long steps, int window)
+    public static double[] Levels(SlopeProgram sp, int rate, long steps, int window, long first = 0)
     {
         var program = sp.Program;
         var delays = new DelayState(program, rate);
         var registers = program.AllocateRegisters();
         var signal = new Complex[window];
 
-        for (long step = 0; step < steps; step++)
+        for (var step = first; step < steps; step++)
         {
             program.Evaluate(0d, 0d, step / (double)rate, registers, default, delays, 16d / 9d, sp.Live);
 
