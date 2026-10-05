@@ -31,11 +31,11 @@ permissions:
 
 jobs:
   release:
-    # Only from main, and only on the self-hosted runner, where ci.yml builds
+    # Only from main, and only on a self-hosted runner, where ci.yml builds
     # main: the gate that passed there is the one that runs here. The key is the
     # secret below, held in this step's environment and never written to a file.
     if: github.ref == 'refs/heads/main'
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: [self-hosted, X64]
     # A run is about six minutes; the default of six hours is what a hang costs.
     timeout-minutes: 30
     steps:
@@ -45,8 +45,19 @@ jobs:
 
       # Checks the key and the changelog before building, then builds, tests,
       # packs and signs into dist/. The input reaches the script as a variable,
-      # never as text spliced into it.
+      # never as text spliced into it. One step per OS, because `shell` takes no
+      # expression; whichever is skipped leaves its outputs empty.
       - name: Build the release
+        if: runner.os != 'Windows'
+        id: linux
+        env:
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+          VERSION: ${{ inputs.version }}
+        shell: bash --noprofile --norc -e -o pipefail {0}
+        run: bash scripts/release.sh "$VERSION"
+
+      - name: Build the release (Windows)
+        if: runner.os == 'Windows'
         id: version
         env:
           RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
@@ -59,8 +70,8 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ steps.version.outputs.tag }}
+          tag_name: ${{ steps.linux.outputs.tag || steps.version.outputs.tag }}
+          name: ${{ steps.linux.outputs.tag || steps.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
           files: |
             dist/*.zip
