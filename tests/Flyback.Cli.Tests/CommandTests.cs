@@ -262,6 +262,29 @@ public class CommandTests
         some.RootElement.GetProperty("length").GetProperty("set").GetBoolean().ShouldBeTrue();
     }
 
+    /// <summary>A polyphonic patch says how many voices it runs and on how many modules; any other says nothing.</summary>
+    [Fact]
+    public void Voices_are_mentioned_only_by_a_patch_that_has_some()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var voice = builder.Add(NodeCatalog.VoiceTypeId, 0, 0);
+        var add = builder.Add("math.add", 0, 0);
+        var output = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+
+        voice.SetState("voices", new System.Text.Json.Nodes.JsonObject { ["voices"] = 3f });
+        builder.Wire(voice, 0, add, 0).Wire(add, 0, output, NodeCatalog.OutputLeftPort);
+
+        var poly = Run((o, e) => InfoCommand.Run(builder.Patch, "chord.fbk", false, o, e));
+        var bare = Run((o, e) => InfoCommand.Run(Preset("Plasma"), "plasma.fbk", false, o, e));
+
+        using var read = JsonDocument.Parse(Run((o, e) => InfoCommand.Run(builder.Patch, "chord.fbk", true, o, e)).Out);
+
+        poly.Out.ShouldContain("voices    up to 3, on 2 modules");
+        bare.Out.ShouldNotContain("voices");
+        read.RootElement.GetProperty("voices").GetProperty("most").GetInt32().ShouldBe(3);
+        read.RootElement.GetProperty("voices").GetProperty("modules").GetInt32().ShouldBe(2);
+    }
+
     /// <summary>One of anything is not "1 things".</summary>
     [Fact]
     public void Counts_are_written_in_the_number_they_are()

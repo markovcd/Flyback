@@ -131,6 +131,11 @@ public static class PatchCompiler
         // numbers where a wire reaches something with no range, which is said.
         var spans = AutoRemap.Resolve(patch, catalog);
 
+        // How many voices each module runs, and the voice being lowered now: -1
+        // while the module being lowered runs one — see ADR-0174.
+        var voices = VoiceCounts.Of(patch, catalog);
+        var voice = -1;
+
         foreach (var (remap, span) in spans)
         {
             var title = patch.Find(remap)!.Title(catalog.Require(NodeCatalog.AutoRemapTypeId));
@@ -202,11 +207,11 @@ public static class PatchCompiler
                 IssueSeverity.Warning));
         }
 
-        // Each node as lowered so far, with the x, y and t it read. A sweep reuses
-        // one only where the domain it pushed left those registers alone: a clock
-        // read under a Probe's substituted domain is a different value from one
-        // read outside it, and a knob is the same knob.
-        var resolved = new Dictionary<Guid, List<(Slot[] Outputs, DomainRead Read)>>();
+        // Each node as lowered so far, per voice, with the x, y and t it read. A
+        // sweep reuses one only where the domain it pushed left those registers
+        // alone: a clock read under a Probe's substituted domain is a different
+        // value from one read outside it, and a knob is the same knob.
+        var resolved = new Dictionary<(Guid Node, int Voice), List<(Slot[] Outputs, DomainRead Read)>>();
 
         // The hidden modules, one instance each however many sockets are
         // normalled to them — see PortSpec.NormalledTo. Keyed by type id, which
@@ -215,15 +220,15 @@ public static class PatchCompiler
 
         var knobs = new Dictionary<(Guid Node, int Port), Slot>();
 
-        var visiting = new HashSet<Guid>();
+        var visiting = new HashSet<(Guid Node, int Voice)>();
 
         // The wires that run backwards, and the plane each carries its value
         // round in. One per output rather than one per wire, so an output feeding
         // two loops is one delayed value read twice rather than two planes
         // holding the same number.
         var backwards = Cycles.Backwards(patch);
-        var carried = new Dictionary<(Guid Node, int Port), int>();
-        var loops = new Queue<(Connection Wire, int Slot)>();
+        var carried = new Dictionary<(Guid Node, int Port, int Voice), int>();
+        var loops = new Queue<(Connection Wire, int Slot, int Voice)>();
 
         if (measured is { } measuring) return Measured(measuring.Roots, measuring.Sockets);
 
@@ -231,7 +236,7 @@ public static class PatchCompiler
         // the other half is never resolved. A probe is not a sink, so it
         // contributes its first output and nothing else — and a module with no
         // outputs contributes silence rather than throwing.
-        var outputs = Resolve(root!);
+        var outputs = Summed(root!);
 
         Slot[] result;
         if (probe is null) result = outputs[sink.Results];
@@ -276,7 +281,7 @@ public static class PatchCompiler
 
             while (loops.Count > 0)
             {
-                var (wire, slot) = loops.Dequeue();
+                var (wire, slot, at) = loops.Dequeue();
 
                 // Resolved here rather than where the read was, which is the whole of
                 // the trick: by now the walk has left the loop, so following the wire
@@ -285,7 +290,7 @@ public static class PatchCompiler
                 fills.Add((
                     slot,
                     patch.Find(wire.SourceNode) is { } from
-                        ? Pick(Resolve(from), wire.SourcePort)
+                        ? Pick(Resolve(from, at), wire.SourcePort)
                         : emitter.Constant(0f)));
             }
 
@@ -296,6 +301,9 @@ public static class PatchCompiler
             foreach (var (slot, carries) in fills) emitter.PlaneWrite(slot, carries);
 
             var value = pack();
+
+            // Once however many voices said it.
+            var said = issues.Distinct().ToList();
 
             return new CompileResult(
                 new CompiledPatch(
@@ -308,7 +316,7 @@ public static class PatchCompiler
                     emitter.LiveInputs,
                     emitter.Pictures,
                     emitter.Owners),
-                issues);
+                said);
         }
 
         // Every output of every root, side by side. A module switched off is out
@@ -323,7 +331,7 @@ public static class PatchCompiler
                 if (node.Off || !roots.Contains(node.Id)) continue;
                 if (catalog.Get(node.TypeId) is not { Outputs.Count: > 0 } def) continue;
 
-                var lowered = Resolve(node);
+                var lowered = Summed(node);
 
                 for (var port = 0; port < def.Outputs.Count; port++)
                 {
@@ -341,18 +349,19 @@ public static class PatchCompiler
             return Finished(() => emitter.Gather(gathered));
         }
 
-        Slot[] Resolve(NodeInstance node)
+        // A node lowered for one voice, or for the one it runs at -1.
+        Slot[] Resolve(NodeInstance node, int at)
         {
-            if (Earlier(resolved, node.Id) is { } cached) return cached;
+            if (Earlier(resolved, (node.Id, at)) is { } cached) return cached;
 
             var def = catalog.Get(node.TypeId);
             if (def is null)
             {
                 issues.Add(new CompileIssue(node.Id, $"Unknown module '{node.TypeId}'."));
-                return Remember(resolved, node.Id, ([emitter.Constant(0f)], default));
+                return Remember(resolved, (node.Id, at), ([emitter.Constant(0f)], default));
             }
 
-            if (!visiting.Add(node.Id))
+            if (!visiting.Add((node.Id, at)))
             {
                 // Unreachable through a patch: every loop has a wire running
                 // backwards and that wire is read rather than followed. A program
@@ -364,11 +373,55 @@ public static class PatchCompiler
                 return [.. def.Outputs.Select(_ => emitter.Constant(0f))];
             }
 
+            var outer = voice;
+
+            voice = at;
+
             var lowered = emitter.Reading(() => Lower(node, def));
 
-            visiting.Remove(node.Id);
-            return Remember(resolved, node.Id, lowered);
+            voice = outer;
+
+            visiting.Remove((node.Id, at));
+            return Remember(resolved, (node.Id, at), lowered);
         }
+
+        // Every output of a node with its voices added, for a root that hears
+        // them all at once.
+        Slot[] Summed(NodeInstance node)
+        {
+            var count = CountOf(node.Id);
+
+            if (count <= 1) return Resolve(node, -1);
+
+            return [.. Enumerable.Range(0, Resolve(node, 0).Length)
+                .Select(port => Added(at => Pick(Resolve(node, at), port), count))];
+        }
+
+        // What an output carries into the module being lowered now: its one voice
+        // whichever voice asks, the same voice, or every voice added for a module
+        // on one. A voice the output does not have is silent.
+        Slot Arriving(NodeInstance source, int port)
+        {
+            var count = CountOf(source.Id);
+
+            if (count <= 1) return Pick(Resolve(source, -1), port);
+            if (voice >= count) return emitter.Constant(0f);
+
+            return voice >= 0
+                ? Pick(Resolve(source, voice), port)
+                : Added(at => Pick(Resolve(source, at), port), count);
+        }
+
+        Slot Added(Func<int, Slot> one, int count)
+        {
+            var sum = one(0);
+
+            for (var at = 1; at < count; at++) sum = emitter.Add(sum, one(at));
+
+            return sum;
+        }
+
+        int CountOf(Guid node) => voices.GetValueOrDefault(node, 1);
 
         Slot[] Lower(NodeInstance node, NodeDef def)
         {
@@ -420,7 +473,7 @@ public static class PatchCompiler
                 }
                 else if (incoming is not null && patch.Find(incoming.SourceNode) is { } source)
                 {
-                    slotValue = Pick(Resolve(source), incoming.SourcePort);
+                    slotValue = Arriving(source, incoming.SourcePort);
                 }
                 else if (spec.NormalledFrom >= 0 && spec.NormalledFrom < port)
                 {
@@ -471,6 +524,7 @@ public static class PatchCompiler
                 new EmitContext(inputs)
                 {
                     Node = node.Id,
+                    Voice = Math.Max(voice, 0),
                     Trace = Watched(node, def),
                     Spans = spans.GetValueOrDefault(node.Id),
                     // A swept input is lowered where the module asks, under whatever it
@@ -622,7 +676,7 @@ public static class PatchCompiler
             if (incoming is not null && delayed)
                 slotValue = Delayed(incoming);
             else if (incoming is not null && patch.Find(incoming.SourceNode) is { } source)
-                slotValue = Pick(Resolve(source), incoming.SourcePort);
+                slotValue = Arriving(source, incoming.SourcePort);
             else if (spec.NormalledTo is { } bus && Hidden(bus) is { } carried)
                 slotValue = carried;
             else
@@ -690,9 +744,22 @@ public static class PatchCompiler
         // behind last evaluation, rather than the value it is about to have. The
         // write is queued for the drain, which is what puts an evaluation between
         // the two — see ADR-0075.
+        //
+        // A plane per voice, so a polyphonic loop keeps each voice's evaluation
+        // before apart, chosen and added as Arriving does.
         Slot Delayed(Connection wire)
         {
-            var output = (wire.SourceNode, wire.SourcePort);
+            var count = CountOf(wire.SourceNode);
+
+            if (count <= 1) return DelayedVoice(wire, -1);
+            if (voice >= count) return emitter.Constant(0f);
+
+            return voice >= 0 ? DelayedVoice(wire, voice) : Added(at => DelayedVoice(wire, at), count);
+        }
+
+        Slot DelayedVoice(Connection wire, int at)
+        {
+            var output = (wire.SourceNode, wire.SourcePort, at);
 
             if (carried.TryGetValue(output, out var already)) return emitter.PlaneRead(already);
 
@@ -709,7 +776,7 @@ public static class PatchCompiler
             emitter.Owner = outer;
 
             carried[output] = slot;
-            loops.Enqueue((wire, slot));
+            loops.Enqueue((wire, slot, at));
 
             return emitter.PlaneRead(slot);
         }

@@ -441,6 +441,22 @@ public sealed class PatchSteps(PatchContext context)
         context.Wire(voices == 1 ? "sounding 1" : $"mix {voices}", "out", "screen", "left");
     }
 
+    /// <summary>One MIDI In playing several notes down one chain, each heard as its pitch while its gate is open.</summary>
+    [Given("one MIDI In of {int} voices listening to a keyboard, each heard as its pitch while its gate is open")]
+    public void GivenAPolyphonicMidiIn(int voices) =>
+        Written(
+            $"let keys = midi.in(device: \"{PatchContext.Keyboard}\", voices: {voices}){(char)10}"
+            + "keys.pitch * keys.gate |> out.left");
+
+    [Given("a polyphonic wire of {int} voices numbered from 0, merged into the speakers")]
+    public void GivenMergedVoices(int voices) => Written($"voice(voices: {voices}) |> merge() |> out.left");
+
+    [Given("a polyphonic wire of {int} voices numbered from 0, into the speakers")]
+    public void GivenVoicesIntoTheSpeakers(int voices) => Written($"voice(voices: {voices}) |> out.left");
+
+    [Given("a polyphonic wire of {int} voices numbered from 0, on the screen")]
+    public void GivenVoicesOnTheScreen(int voices) => Written($"voice(voices: {voices}) |> out.color");
+
     [Given("the {word} of a drum machine's clock on the speakers")]
     public void GivenAClockSignal(string signal) =>
         Written($"let c = midi.clock(device: \"{PatchContext.Machine}\"){(char)10}c.{signal} |> out.left");

@@ -39,7 +39,7 @@ public class SavedGroupTests : EditorTest
     }
 
     /// <summary>A window with a two-module box in it, selected and named.</summary>
-    private MainWindow Open(out NodeGroup group, string? named = "Voice")
+    private MainWindow Open(out NodeGroup group, string? named = "Pad")
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
@@ -163,7 +163,7 @@ public class SavedGroupTests : EditorTest
         ToolTip.GetShowOnDisabled(grayed).ShouldBeTrue();
         ToolTip.GetTip(grayed).ShouldNotBeNull();
 
-        group.Rename("Voice");
+        group.Rename("Pad");
         Editor(window).History.Record();
         Settle(window);
 
@@ -181,7 +181,7 @@ public class SavedGroupTests : EditorTest
         var palette = Palette(window);
 
         Lines(palette).ShouldContain("GROUPS");
-        Captions(palette).ShouldContain("Voice");
+        Captions(palette).ShouldContain("Pad");
     }
 
     /// <summary>
@@ -196,7 +196,7 @@ public class SavedGroupTests : EditorTest
 
         Press(window, window, Keep);
         OpenList(window);
-        Press(window, Palette(window), "Voice");
+        Press(window, Palette(window), "Pad");
 
         editor.History.Patch.Nodes.Count(n => n.TypeId == "time").ShouldBe(2, "a second copy arrived");
         editor.History.Patch.Nodes.Count(n => n.TypeId == "osc.sine").ShouldBe(2);
@@ -204,7 +204,7 @@ public class SavedGroupTests : EditorTest
         var groups = editor.History.Patch.Groups.ShouldNotBeNull();
 
         groups.Count.ShouldBe(2, "the box came with the modules");
-        groups.Select(g => g.Name).ShouldAllBe(name => name == "Voice");
+        groups.Select(g => g.Name).ShouldAllBe(name => name == "Pad");
         groups.Select(g => g.Id).Distinct().Count().ShouldBe(2, "and it is a second box");
         groups.ShouldAllBe(g => g.Collapsed, "a kept group arrives shut, which is what makes it one thing");
     }
@@ -263,19 +263,19 @@ public class SavedGroupTests : EditorTest
 
         Press(window, palette, "forget");
 
-        Lines(palette).ShouldContain("Remove “Voice”?");
+        Lines(palette).ShouldContain("Remove “Pad”?");
         Buttons(palette).ShouldContain("yes", "the tick removes it");
         Buttons(palette).ShouldContain("no", "and the cross puts it back");
-        Captions(palette).ShouldNotContain("Voice", "the row is the question while it is being asked");
+        Captions(palette).ShouldNotContain("Pad", "the row is the question while it is being asked");
 
         // One row and not two: the question and its answers sit at the same
         // height, so the list does not jump under the hand that reached for it.
-        Middle(palette, Line(palette, "Remove “Voice”?"))
+        Middle(palette, Line(palette, "Remove “Pad”?"))
             .ShouldBe(Middle(palette, Button(palette, "yes")), tolerance: 2);
 
         Press(window, palette, "no");
 
-        Captions(palette).ShouldContain("Voice", "canceling leaves it exactly where it was");
+        Captions(palette).ShouldContain("Pad", "canceling leaves it exactly where it was");
         Directory.GetFiles(folder).Length.ShouldBe(1);
     }
 
@@ -292,7 +292,7 @@ public class SavedGroupTests : EditorTest
         Press(window, palette, "forget");
         Press(window, palette, "yes");
 
-        Captions(palette).ShouldNotContain("Voice");
+        Captions(palette).ShouldNotContain("Pad");
         Directory.GetFiles(folder).ShouldBeEmpty("the entry was the file");
     }
 
@@ -334,7 +334,7 @@ public class SavedGroupTests : EditorTest
 
         var again = Palette(window);
 
-        Captions(again).ShouldContain("Voice");
+        Captions(again).ShouldContain("Pad");
         Buttons(again).ShouldNotContain("yes", "the question did not survive the way out");
     }
 
@@ -353,7 +353,7 @@ public class SavedGroupTests : EditorTest
         var palette = Palette(window);
         var filter = All<TextBox>(palette).First();
 
-        filter.Text = "Voi";
+        filter.Text = "Pa";
         Settle(window);
 
         Press(window, palette, "forget");
@@ -364,7 +364,7 @@ public class SavedGroupTests : EditorTest
 
         filter.Text.ShouldBeNullOrEmpty("the box empties, as it always did");
         Buttons(palette).ShouldNotContain("yes", "and the question goes with it");
-        Captions(palette).ShouldContain("Voice", "the row is back");
+        Captions(palette).ShouldContain("Pad", "the row is back");
     }
 
     // --- keeping one over another -------------------------------------------
@@ -383,13 +383,13 @@ public class SavedGroupTests : EditorTest
 
         Press(window, window, Keep);
 
-        Lines(window).ShouldContain("Replace “Voice”?");
+        Lines(window).ShouldContain("Replace “Pad”?");
         Buttons(window).ShouldContain("yes");
         Buttons(window).ShouldNotContain(Keep, "the button is the question while it is asked");
 
         // One row, at the height the button was: the panel does not move under
         // the hand that has just pressed it.
-        Middle(window, Line(window, "Replace “Voice”?"))
+        Middle(window, Line(window, "Replace “Pad”?"))
             .ShouldBe(Middle(window, Button(window, "yes")), tolerance: 2);
     }
 
@@ -416,7 +416,7 @@ public class SavedGroupTests : EditorTest
 
         var second = editor.History.Patch.Group([other.Id, third.Id]).ShouldNotBeNull();
 
-        second.Rename("Voice");
+        second.Rename("Pad");
         editor.History.Record();
         SelectBox(window, editor.History.Patch, second);
 
@@ -447,7 +447,7 @@ public class SavedGroupTests : EditorTest
 
         var second = editor.History.Patch.Group([other.Id, third.Id]).ShouldNotBeNull();
 
-        second.Rename("Voice");
+        second.Rename("Pad");
         editor.History.Record();
         SelectBox(window, editor.History.Patch, second);
 
@@ -460,7 +460,7 @@ public class SavedGroupTests : EditorTest
         File.ReadAllText(files.Single()).ShouldNotBe(before, "and it is the new group in it");
 
         OpenList(window);
-        Captions(Palette(window)).ShouldContain("Voice");
+        Captions(Palette(window)).ShouldContain("Pad");
     }
 
     /// <summary>
@@ -474,7 +474,7 @@ public class SavedGroupTests : EditorTest
 
         Press(window, window, Keep);
 
-        Lines(window).ShouldNotContain("Replace “Voice”?");
+        Lines(window).ShouldNotContain("Replace “Pad”?");
         Directory.GetFiles(folder).Length.ShouldBe(1);
     }
 }

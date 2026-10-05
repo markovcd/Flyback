@@ -133,7 +133,11 @@ public partial class NodeCatalog
             // the speakers the other two. Which of them a given program
             // takes is the only difference between the two compilations.
             (em, i) => [i[0], em.Mul(i[1], i[3]), em.Mul(i[2], i[3])],
-            "The patch's one Output: the screen and the speakers.");
+            "The patch's one Output: the screen and the speakers. A polyphonic wire into it is "
+            + "heard and seen with its voices added.")
+        {
+            MergesVoices = true,
+        };
 
         yield return new NodeDef(
             "audio.note", "Note", ModuleCategories.Pitch,
@@ -532,6 +536,7 @@ public partial class NodeCatalog
             + "through. A Scope shows what the speakers actually played.")
         {
             Sinks = ModuleSinks.Video,
+            MergesVoices = true,
         };
 
     /// <summary>

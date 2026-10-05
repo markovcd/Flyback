@@ -34,6 +34,10 @@ internal static class InfoCommand
         var sound = Costed(patch.CompileForAudio(samples: samples).Program);
         var reaches = patch.Reaches();
 
+        // The modules lowered once per voice, and the most voices any of them runs.
+        var voices = VoiceCounts.Of(Buses.Joined(patch), NodeCatalog.Current);
+        var most = voices.Values.DefaultIfEmpty(1).Max();
+
         var groups = byGroup ? Groups(patch, picture, sound, samples, pictures) : null;
 
         var requires = (patch.Requires ?? [])
@@ -53,6 +57,7 @@ internal static class InfoCommand
                     requires,
                     length = new { seconds = patch.Lasts, set = patch.Length is not null },
                     wired = new { picture = reaches.Picture, sound = reaches.Sound },
+                    voices = new { most, modules = voices.Count },
                     picture,
                     sound,
                     groups = groups?.Select(g => new { g.Id, g.Name, g.Modules, picture = g.Picture, sound = g.Sound }),
@@ -67,6 +72,9 @@ internal static class InfoCommand
         Line("wires", patch.Connections.Count.ToString(CultureInfo.InvariantCulture));
         Line("requires", string.Join(", ", requires));
         Line("length", Length(patch));
+
+        if (voices.Count > 0)
+            Line("voices", $"up to {most}, on {Writing.Count(voices.Count, "module")}");
         Line("picture", Describe(picture, reaches.Picture));
         Line("sound", Describe(sound, reaches.Sound));
 

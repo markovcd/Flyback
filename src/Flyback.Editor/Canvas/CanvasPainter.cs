@@ -235,6 +235,13 @@ internal sealed class CanvasPainter(
     /// </summary>
     private const double LiftedWireThickness = 3.4;
 
+    /// <summary>
+    /// How much wider than its line a polyphonic wire's band is, and how strongly
+    /// the band is drawn: a cable of several signals, under the one line every
+    /// wire has, which works over any ground a group lays under it.
+    /// </summary>
+    private const double VoicesBand = 2.6, VoicesBandOpacity = 0.45;
+
 
     private static readonly IBrush LinkedBrush = new ImmutableSolidColorBrush(Colors.Attention, 0.85);
     private static readonly IBrush LinkableWash = new ImmutableSolidColorBrush(Colors.Attention, 0.07);
@@ -358,6 +365,10 @@ internal sealed class CanvasPainter(
         var backwards = Cycles.BackwardsThroughBuses(Patch);
         var scene = selection.Scene;
 
+        // Which wires carry voices, asked of the patch the compiler sees — see
+        // VoiceCounts — so a chain beyond a bus is drawn as what it carries.
+        var voices = VoiceCounts.Of(Buses.Joined(Patch), NodeCatalog.Current);
+
         foreach (var connection in Patch.Connections)
         {
             var mine = lifted.Contains(connection.SourceNode)
@@ -411,24 +422,45 @@ internal sealed class CanvasPainter(
                 ? Fading(color, opacity, scene.InPeek(connection.SourceNode) ? (from, to) : (to, from))
                 : new SolidColorBrush(color, opacity);
 
-            var pen = new Pen(ink, theirs ? LiftedWireThickness : WireThickness, dashes);
+            var thickness = theirs ? LiftedWireThickness : WireThickness;
+            var pen = new Pen(ink, thickness, dashes);
+            var count = voices.GetValueOrDefault(connection.SourceNode, 1);
+
+            if (count > 1)
+            {
+                Route(new Pen(new SolidColorBrush(color, opacity * VoicesBandOpacity), thickness * VoicesBand, dashes));
+                DrawVoiceCount(context, from, count, color, opacity);
+            }
+
+            Route(pen);
 
             // How a wire is routed is a question of where its ends are, not of
             // what it carries: one that has to travel leftwards goes round, and a
             // loop whose modules are laid out left to right is drawn like any
             // other chain. The dashes are what say which wire is the cut.
-            if (from.X > to.X)
+            void Route(IPen drawn)
             {
-                var run = WirePath.ReturnRun(
-                    scene.RouteBounds(source, sourceDef),
-                    scene.RouteBounds(target, targetDef));
+                if (from.X > to.X)
+                {
+                    var run = WirePath.ReturnRun(
+                        scene.RouteBounds(source, sourceDef),
+                        scene.RouteBounds(target, targetDef));
 
-                WirePath.DrawReturn(context, from, to, run, pen);
-                continue;
+                    WirePath.DrawReturn(context, from, to, run, drawn);
+                    return;
+                }
+
+                WirePath.Draw(context, from, to, drawn);
             }
-
-            WirePath.Draw(context, from, to, pen);
         }
+    }
+
+    /// <summary>How many voices a polyphonic wire carries, just past the output it leaves.</summary>
+    private static void DrawVoiceCount(DrawingContext context, Point from, int count, Color color, double opacity)
+    {
+        var text = CanvasText.Text($"×{count}", CanvasText.RowSize, new SolidColorBrush(color, opacity), 40, false);
+
+        context.DrawText(text, new Point(from.X + 8, from.Y - text.Height - 2));
     }
 
     /// <summary>A wire's ink, strongest at <paramref name="ends"/>'s first point and faint at its second.</summary>

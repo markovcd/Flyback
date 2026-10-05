@@ -21,6 +21,8 @@ public partial class NodeCatalog
     /// </summary>
     private const float ClockSettle = 0.25f;
 
+    private static readonly MidiExtra Played = new();
+
     private static IEnumerable<NodeDef> Midi()
     {
         yield return new NodeDef(
@@ -38,9 +40,11 @@ public partial class NodeCatalog
             ],
             EmitMidi,
             "Keyboard or MIDI input. The index selects a polyphonic voice; 'channel' hears one of "
-            + "an instrument's channels, or every one at 0.")
+            + "an instrument's channels, or every one at 0; 'voices' above 1 plays that many notes at "
+            + "once down polyphonic wires.")
         {
-            Extras = [new MidiExtra()],
+            Extras = [Played],
+            StartsVoices = Played.Voices,
         };
 
         yield return new NodeDef(
@@ -215,6 +219,12 @@ public partial class NodeCatalog
         // The computer's keys have no channel, so a module asking for one there
         // hears the keys anyway rather than nothing.
         if (device != MidiSources.Keyboard) device = MidiSignal.Channeled(device, channel);
+
+        // A polyphonic one reads a voice per voice of its wire, counting up from
+        // its own, and shares none out: the hub hands a note to the first free.
+        var voices = (int)(state?.Number(MidiExtra.VoicesField) ?? 1f);
+
+        if (voices > 1) index = Math.Max(1, index) + node.Voice;
 
         Func<string, string> key = index == 0
             ? (signal => MidiSignal.AutoKey(device, node.Node, signal))

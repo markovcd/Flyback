@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A MIDI In plays chords down one chain: give it several `voices` and every module its wires reach plays once per voice, until a Merge or the Output adds them up. Voice numbers the voices and Spread fans one wire out into several.
+
 - The assistant's column shows what the conversation has cost in tokens, under the box, and keeps the count when the conversation is saved with the patch.
 
 - The assistant reads a sound's spectrum when it listens: octave bands, brightness and the pitches in it.

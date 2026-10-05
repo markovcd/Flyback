@@ -1,7 +1,6 @@
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
-using Flyback.Core.Graph.Extras;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Hosting;
@@ -11,7 +10,7 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// The Played preset: four voices, each a key plucking a string, into a little reverb.
+/// The Played preset: a key plucking a string, four voices at once down one chain, into a little reverb.
 /// </summary>
 public class PlayedPresetTests
 {
@@ -35,22 +34,22 @@ public class PlayedPresetTests
     }
 
     [Fact]
-    public void It_is_four_voices_of_key_and_string_into_one_room()
+    public void It_is_one_key_and_string_on_four_voices_into_one_room()
     {
         var patch = Patch();
         var types = patch.Nodes.Select(n => n.TypeId).ToList();
 
-        types.Count(t => t == NodeCatalog.MidiTypeId).ShouldBe(Voices);
-        types.Count(t => t == NodeCatalog.StringTypeId).ShouldBe(Voices);
-        types.Count(t => t == "audio.note").ShouldBe(Voices);
+        types.Count(t => t == NodeCatalog.MidiTypeId).ShouldBe(1);
+        types.Count(t => t == NodeCatalog.StringTypeId).ShouldBe(1);
+        types.Count(t => t == "audio.note").ShouldBe(1);
         types.Count(t => t == NodeCatalog.ReverbTypeId).ShouldBe(1);
-        types.Count(t => t == "math.mixer").ShouldBe(1);
 
-        patch.Nodes
-            .Where(n => n.TypeId == NodeCatalog.MidiTypeId)
-            .Select(n => (int)n.StateOf(MidiExtra.StateKey)![MidiExtra.IndexField]!.GetValue<float>())
-            .Order()
-            .ShouldBe([1, 2, 3, 4]);
+        var counts = VoiceCounts.Of(patch, Loaded.Modules);
+        var pluck = patch.Nodes.Single(n => n.TypeId == NodeCatalog.StringTypeId);
+        var room = patch.Nodes.Single(n => n.TypeId == NodeCatalog.ReverbTypeId);
+
+        counts[pluck.Id].ShouldBe(Voices);
+        counts.ShouldNotContainKey(room.Id);
     }
 
     [Fact]

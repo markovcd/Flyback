@@ -26,6 +26,7 @@ public sealed partial class KeyboardSteps(PatchContext context) : IDisposable
     private readonly StandIn keyboard = new();
     private readonly List<(CompiledPatch Program, LiveValues Live)> probes = [];
     private MidiHub? hub;
+    private (CompiledPatch Program, LiveValues Live)? sound;
 
     [When($@"^{Notes} (?:is|are) (?:held|played)$")]
     public void WhenHeld(string notes)
@@ -46,6 +47,18 @@ public sealed partial class KeyboardSteps(PatchContext context) : IDisposable
 
         wanted.Length.ShouldBe(context.Voices);
         Sounding().ShouldBe(wanted, $"voices 1 to {context.Voices}, as note numbers with nought for silent");
+    }
+
+    /// <summary>What the speakers play, as note numbers added together, with every voice of the patch heard at once.</summary>
+    [Then($@"^the speakers play {Notes} added together$")]
+    public void ThenTheSpeakersPlayTogether(string expected)
+    {
+        var (program, live) = sound.ShouldNotBeNull("nothing was played");
+        var registers = program.AllocateRegisters();
+
+        program.Evaluate(0d, 0d, 0d, registers, default, live: live);
+
+        registers[program.OutputBase].ShouldBe(Parse(expected).Sum(), 1e-6);
     }
 
     /// <summary>
@@ -79,7 +92,9 @@ public sealed partial class KeyboardSteps(PatchContext context) : IDisposable
 
         hub = new MidiHub(keyboard);
 
-        var sound = context.Patch.CompileForAudio(played: true).Program;
+        var played = context.Patch.CompileForAudio(played: true).Program;
+
+        sound = (played, new LiveValues(played.LiveInputs));
 
         for (var voice = 1; voice <= context.Voices; voice++)
         {
@@ -87,7 +102,7 @@ public sealed partial class KeyboardSteps(PatchContext context) : IDisposable
             probes.Add((probe, new LiveValues(probe.LiveInputs)));
         }
 
-        hub.Follow([new LiveValues(sound.LiveInputs), .. probes.Select(p => p.Live)]);
+        hub.Follow([sound.Value.Live, .. probes.Select(p => p.Live)]);
     }
 
     private static IEnumerable<int> Parse(string notes) => Split(notes).Select(NoteNumber);

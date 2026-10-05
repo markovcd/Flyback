@@ -196,6 +196,14 @@ A panel knob, a MIDI voice and a meter reading arrive as `LiveValues`, a
 name-keyed `float[]` the program reads with a `Live` op. A single float is atomic
 and the block is not, deliberately: the audio thread takes no lock.
 
+**A polyphonic wire is lowered once per voice**
+([0174](adr/0174-a-polyphonic-wire-is-lowered-once-per-voice.md)). `VoiceCounts`
+says how many voices each module runs, from the modules that start a wire
+(`NodeDef.StartsVoices`) to the ones that add the voices back up
+(`NodeDef.MergesVoices`, and anything that taps or charts). `Resolve` is keyed by
+module and voice, so each voice claims memory of its own and the backends see an
+ordinary program; a wire short of voices is silent in the ones it lacks.
+
 A Probe is a second compile root ([0040](adr/0040-a-probe-is-a-second-compile-root.md)),
 a Scan is a Probe read backwards ([0043](adr/0043-a-scan-is-a-probe-read-backwards.md)),
 and both work by pushing a substitute domain onto the emitter before resolving a

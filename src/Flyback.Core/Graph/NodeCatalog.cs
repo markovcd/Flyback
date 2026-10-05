@@ -155,6 +155,7 @@ public static partial class NodeCatalog
             .Append(Reverb())
             .Concat(Maths())
             .Concat(Bus())
+            .Concat(Polyphony())
             .Concat(Space())
             .Concat(Patterns())
             .Concat(Color())

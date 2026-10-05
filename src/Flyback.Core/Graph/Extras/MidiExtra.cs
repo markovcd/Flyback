@@ -23,6 +23,8 @@ public sealed record MidiExtra : NodeExtra
     public const string IndexField = "index";
     /// <summary>The field choosing the MIDI channel.</summary>
     public const string ChannelField = "channel";
+    /// <summary>The field choosing how many voices it plays down one polyphonic wire.</summary>
+    internal const string VoicesField = "voices";
 
     /// <inheritdoc/>
     public override string Key => StateKey;
@@ -43,7 +45,25 @@ public sealed record MidiExtra : NodeExtra
         {
             Help = "0 hears every channel, 1 to 16 only that one.",
         },
+        new ExtraField.Number(VoicesField, "voices", new PortSpec("voices", PortKind.Scalar, 1f, 1f, VoiceCounts.Most, -1, PortDisplay.Integer))
+        {
+            Help = "How many notes it plays at once down its one set of wires, each a voice of a polyphonic "
+                + "wire: from 'voice' up, or from 1 when 'voice' shares them out.",
+        },
     ];
+
+    /// <summary>
+    /// How many voices a placed MIDI In plays, never past the last of the
+    /// <see cref="VoiceCounts.Most"/> its first one leaves.
+    /// </summary>
+    internal int Voices(NodeInstance node)
+    {
+        var held = node.StateOf(Key);
+        var voices = Fields[3] is ExtraField.Number count ? (int)count.Value(held?[VoicesField]) : 1;
+        var first = Math.Max(1, Fields[1] is ExtraField.Number index ? (int)index.Value(held?[IndexField]) : 0);
+
+        return Math.Clamp(voices, 1, VoiceCounts.Most - first + 1);
+    }
 
     /// <summary>
     /// The ordinary fold, and a word about a device that is not here, or a channel
@@ -91,6 +111,7 @@ public sealed record MidiExtra : NodeExtra
 
         return $"  midi   device, which instrument it listens to — one of {offered}, "
                + "as a string; not a knob; voice, 0 for automatic assignment or 1 to 8; "
-               + "channel, 0 for every channel or 1 to 16 for one of them";
+               + "channel, 0 for every channel or 1 to 16 for one of them; voices, 1 to 8 notes "
+               + "at once down one polyphonic wire, from 'voice' up";
     }
 }

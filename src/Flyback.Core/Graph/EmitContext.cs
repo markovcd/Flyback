@@ -84,6 +84,9 @@ public readonly record struct EmitContext(Slot[] Inputs)
     /// <summary>An Auto remap's ranges, read off its wires by the compiler, and null for every other module.</summary>
     internal RemapSpans? Spans { get; init; }
 
+    /// <summary>Which voice of a polyphonic wire this lowering is for, from 0; 0 for a module on one voice.</summary>
+    internal int Voice { get; init; }
+
     // --- what the instance carries, each put here by a Fold ----------------------
 
     /// <summary>

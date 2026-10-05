@@ -112,7 +112,10 @@ public partial class NodeCatalog
         ],
         ReverbEmit,
         "A room. 'out' and 'wide' are the tail smeared two ways: both for stereo, or 'out' "
-        + "alone. Audio only: a wire on the picture.");
+        + "alone. Audio only: a wire on the picture.")
+    {
+        MergesVoices = true,
+    };
 
     private static Slot[] ReverbEmit(Emitter em, EmitContext inputs)
     {

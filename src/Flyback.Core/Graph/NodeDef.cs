@@ -150,4 +150,20 @@ public sealed record NodeDef(
     /// holds for one of these is nothing.
     /// </remarks>
     internal bool AsksForItsInputs { get; init; }
+
+    /// <summary>
+    /// How many voices a placed module of this kind starts a polyphonic wire with,
+    /// or null for a module that starts none — see <see cref="VoiceCounts"/>.
+    /// </summary>
+    internal Func<NodeInstance, int>? StartsVoices { get; init; }
+
+    /// <summary>
+    /// Whether a polyphonic wire arriving here is summed to one voice in front of
+    /// the module, rather than the module being lowered once per voice.
+    /// </summary>
+    /// <remarks>
+    /// For what has to hear every voice at once: a sink, a chart, a meter, and a
+    /// reverb whose memory is too large to keep once per voice.
+    /// </remarks>
+    internal bool MergesVoices { get; init; }
 }

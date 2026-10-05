@@ -6,8 +6,6 @@ Work the user has asked for and nobody has started. Take an item off when it lan
 
 - **Replace the presets' repeated formulas with modules.** A Window (on between two points, soft or hard edged) and a Dice (a stable random for a whole number), then port the presets onto them. Which formulas, how many, where, and what was ruled out are in [docs/handoff/formulas-into-modules.md](docs/handoff/formulas-into-modules.md).
 
-- **A wire that carries a voice per channel.** The color wire already carries several signals as one (red, green, blue); a polyphonic wire would carry one signal per MIDI voice the same way, so a patch plays chords through one wire rather than a copy of the chain per voice. The shape, the places it cannot go and what is unread are in [docs/handoff/polyphonic-wire.md](docs/handoff/polyphonic-wire.md).
-
 - **`--trace <file>` on the editor.** The viewer has it (`StallTrace`, `StallWatch` in `Flyback.Ui`); the editor needs the same two lines at startup and steps around its own long work (`Recompile`, plugin install, bundle save), so a freeze report is one command there too.
 - figure how to accept legacy currencies
 - **A decision model behind the plugin boundary.** Laya in-process over ONNX (downloaded once, with consent, from a Hugging Face repo the maintainer owns), hosted Jev over HTTP, `flyback-cli decide`, a Decisions section in the settings, and three first uses: the assistant routed and gated, a module found by a phrase, diagnostics triaged. The contract, the plugins and the file-level sequence are in [docs/handoff/decision-model.md](docs/handoff/decision-model.md).
