@@ -46,14 +46,14 @@ jobs:
 
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
-      # The workload and the Python its Emscripten runs on, as in the site's Dockerfile.
+      # The workload and the Python its Emscripten runs on, as in the site's Dockerfile, and the ffmpeg the stills are encoded with.
       - name: Build the site as Pages serves it
         env:
           PRESETS_URL: ${{ vars.PRESETS_URL }}
         run: |
           docker run --rm -e PRESETS_URL -v "$PWD:/repo" -w /repo mcr.microsoft.com/dotnet/sdk:10.0 bash -euc '
             apt-get update
-            apt-get install --yes --no-install-recommends python3
+            apt-get install --yes --no-install-recommends python3 ffmpeg
             dotnet workload install wasm-tools
             ./scripts/pages.sh artifacts/pages
           '

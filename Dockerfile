@@ -208,8 +208,9 @@ COPY --from=packed /out/ /
 FROM ${SDK} AS site-build
 ARG VERSION
 
+# ffmpeg encodes the stills.
 RUN apt-get update \
- && apt-get install --yes --no-install-recommends python3 \
+ && apt-get install --yes --no-install-recommends python3 ffmpeg \
  && rm -rf /var/lib/apt/lists/* \
  && dotnet workload install wasm-tools
 

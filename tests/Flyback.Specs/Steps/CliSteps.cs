@@ -6,6 +6,7 @@ using System.Text.Json.Nodes;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Reqnroll;
+using Reqnroll.UnitTestProvider;
 using Shouldly;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
@@ -25,7 +26,7 @@ namespace Flyback.Specs.Steps;
 /// it: by its arguments, answered by its exit code and what it writes.
 /// </summary>
 [Binding]
-public sealed class CliSteps(PatchContext context) : IDisposable
+public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runtime) : IDisposable
 {
     private readonly DirectoryInfo folder = Directory.CreateTempSubdirectory("flyback-cli-specs");
 
@@ -193,7 +194,12 @@ public sealed class CliSteps(PatchContext context) : IDisposable
     }
 
     [When("flyback-cli draws the stills")]
-    public void WhenStillsDrawn() => Run("stills", "--out", Path("stills"));
+    public void WhenStillsDrawn()
+    {
+        if (Ffmpeg.OnPath() is null) runtime.TestIgnore("no ffmpeg on this machine, and the stills are WebP");
+
+        Run("stills", "--out", Path("stills"));
+    }
 
     [Then("the index lists every preset in the editor's order, under its heading, each picture with its still")]
     public void ThenEveryPresetIsIndexed()

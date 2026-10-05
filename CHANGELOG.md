@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The preset gallery's pictures are sharper, without the smudge around their edges.
+
 - The web viewer hides the Loop button for a patch with no length.
 
 - The Claude Code assistant now hits the prompt cache between requests.

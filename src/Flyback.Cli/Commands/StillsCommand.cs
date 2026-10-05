@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.Text;
 using Flyback.Cli.Common;
+using Flyback.Cli.Rendering;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
@@ -17,8 +18,11 @@ namespace Flyback.Cli.Commands;
 /// </summary>
 internal static class StillsCommand
 {
-    /// <summary>A JPEG a fifth the size of the PNG, which a gallery downloading sixty of them notices.</summary>
-    private static readonly JpegWriter Jpeg = new();
+    /// <summary>
+    /// WebP rather than JPEG, which rings around a still's sharp edges at this size, and
+    /// rather than PNG, which a gallery downloading sixty of them notices.
+    /// </summary>
+    private const string Quality = "90";
 
     public static Command Build(PluginRegistry plugins)
     {
@@ -28,18 +32,37 @@ internal static class StillsCommand
             Required = true,
         };
 
-        var command = new Command("stills", "Draw a still of every preset, for the galleries to show instead of drawing them.")
+        var ffmpeg = new Option<string>("--ffmpeg")
         {
-            output,
+            Description = "The ffmpeg to encode the stills with. Left out, the first on PATH is used.",
         };
 
-        command.SetAction(result => Run(plugins, result.GetRequiredValue(output), result.InvocationConfiguration.Output, result.InvocationConfiguration.Error));
+        var command = new Command("stills", "Draw a still of every preset, for the galleries to show instead of drawing them.")
+        {
+            output, ffmpeg,
+        };
+
+        command.SetAction((result, cancellation) => Run(
+            plugins,
+            result.GetRequiredValue(output),
+            result.GetValue(ffmpeg),
+            result.InvocationConfiguration.Output,
+            result.InvocationConfiguration.Error,
+            cancellation));
 
         return command;
     }
 
-    internal static int Run(PluginRegistry plugins, DirectoryInfo folder, TextWriter output, TextWriter error)
+    internal static async Task<int> Run(PluginRegistry plugins, DirectoryInfo folder, string? ffmpeg, TextWriter output, TextWriter error, CancellationToken cancellation)
     {
+        if (Ffmpeg.Resolve(ffmpeg) is not { } found)
+        {
+            error.WriteLine($"{GlobalConstants.ApplicationName}: the stills are WebP, which ffmpeg encodes, and there is no ffmpeg on PATH. Install it or point --ffmpeg at it.");
+            return Exit.Failed;
+        }
+
+        var tools = new PresetTools(found, TimeSpan.FromMinutes(1));
+
         try
         {
             folder.Create();
@@ -55,7 +78,13 @@ internal static class StillsCommand
 
         foreach (var preset in plugins.Catalog.Presets)
         {
-            var entry = Draw(preset, plugins.Catalog.Modules, folder, taken);
+            var (entry, pixels) = Draw(preset, plugins.Catalog.Modules, taken);
+
+            if (pixels is not null && await Encode(tools, pixels, Path.Combine(folder.FullName, entry.File!), cancellation) is { } why)
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: {preset.Name}: ffmpeg did not write its still. {why}");
+                return Exit.Failed;
+            }
 
             entries.Add(entry);
             output.WriteLine($"{preset.Name}: {Said(entry.Still)}");
@@ -66,29 +95,39 @@ internal static class StillsCommand
         return Exit.Ok;
     }
 
-    private static StillEntry Draw(PatchPreset preset, ModuleCatalog modules, DirectoryInfo folder, HashSet<string> taken)
+    /// <summary>The preset's entry, and the pixels of its still where it has one, named in the entry.</summary>
+    private static (StillEntry Entry, byte[]? Pixels) Draw(PatchPreset preset, ModuleCatalog modules, HashSet<string> taken)
     {
         try
         {
             var patch = preset.Build(modules);
             var within = preset.Files is { } files ? new BundleFiles(files()) : null;
             var (kind, pixels) = PresetStill.Draw(patch, within, within, program => IlCompiler.CompileOnce(program, IlParts.Staged));
+            var file = pixels is null ? null : Unique(Slug(preset.Name), taken) + ".webp";
 
-            string? file = null;
-
-            if (pixels is not null)
-            {
-                file = Unique(Slug(preset.Name), taken) + ".jpg";
-
-                using var written = File.Create(Path.Combine(folder.FullName, file));
-                Jpeg.WriteBgra(written, pixels, PresetStill.Width, PresetStill.Height, PresetStill.Width * 4);
-            }
-
-            return new StillEntry(preset.Name, preset.Kind, kind, file, patch.Description, patch.Author, patch.Tags, patch.Reaches().Sound);
+            return (new StillEntry(preset.Name, preset.Kind, kind, file, patch.Description, patch.Author, patch.Tags, patch.Reaches().Sound), pixels);
         }
         catch (Exception)
         {
-            return new StillEntry(preset.Name, preset.Kind, StillKind.Unavailable, null, preset.Description);
+            return (new StillEntry(preset.Name, preset.Kind, StillKind.Unavailable, null, preset.Description), null);
+        }
+    }
+
+    /// <summary>The still as WebP at <paramref name="to"/>, or what ffmpeg said where it did not write it.</summary>
+    private static async Task<string?> Encode(IPresetTools tools, byte[] pixels, string to, CancellationToken cancellation)
+    {
+        var png = to + ".png";
+        PngWriter.WriteBgra(png, pixels, PresetStill.Width, PresetStill.Height, PresetStill.Width * 4);
+
+        try
+        {
+            var ran = await tools.Ffmpeg(["-y", "-loglevel", "error", "-i", png, "-c:v", "libwebp", "-quality", Quality, "-compression_level", "6", to], cancellation);
+
+            return ran.Ok && File.Exists(to) ? null : ran.Error.Trim();
+        }
+        finally
+        {
+            File.Delete(png);
         }
     }
 

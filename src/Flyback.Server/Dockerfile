@@ -43,9 +43,10 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 
 # The web viewer and editor the site serves at /viewer/ and /editor/ are
 # compiled to WebAssembly (ADR-0160, ADR-0162), which needs a workload the SDK image does not carry,
-# and the Python its Emscripten runs on, which on Linux it does not bring.
+# and the Python its Emscripten runs on, which on Linux it does not bring. ffmpeg
+# encodes the stills.
 RUN apt-get update \
- && apt-get install --yes --no-install-recommends python3 \
+ && apt-get install --yes --no-install-recommends python3 ffmpeg \
  && rm -rf /var/lib/apt/lists/* \
  && dotnet workload install wasm-tools
 
