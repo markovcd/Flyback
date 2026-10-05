@@ -1,14 +1,14 @@
 # The preset site on Cloudflare
 
-The preset site as a Worker (ADR-0175): `worker/` answers `/api/v1`, serves the pages, the web viewer and the web editor, and keeps rows in D1 and files in R2. GitHub's machines read what is submitted with `flyback-site`, and the author's PC renders and uploads. Nothing of the author's listens for anything.
+The preset site as a Worker (ADR-0175): `worker/` answers `/api/v1`, serves the pages, the web viewer and the web editor, and keeps rows in D1 and files in R2. GitHub's machines read what is submitted with `flyback-site` and render what waits. No machine of the author's does anything for it.
 
 ```
 browser ──▶ Cloudflare ──▶ Access (admin.html, /api/v1/admin/*) ──▶ Worker ──▶ D1, R2
                                                                        │
                        Validate workflow ◀── starts on each submission ┘
-                       (flyback-site validate-submissions, service token)
-                                                                       ▲
-                       render-presets on the author's PC ── uploads ───┘
+                       ├ checks:  flyback-site validate-submissions (service token)
+                       └ renders: flyback-cli render-presets --media (no token)
+                                  then flyback-site push-media (service token)
 ```
 
 Until the move below, the Worker runs on a staging hostname and the NAS keeps serving `flyback.nasik2137.uk` ([../site/README.md](../site/README.md)). Secrets are set in Cloudflare and GitHub and written down nowhere here.
@@ -49,7 +49,7 @@ Run wrangler from `worker/` after `npm ci`, signed in with `npx wrangler login`.
 
    Put the database's id in `wrangler.jsonc` under `env.staging`, in place of the zeros, and commit it. The id is not a secret.
 
-2. **The service tokens.** Zero Trust → Access controls → Service credentials → Create service token, twice: *flyback-github* for the workflows and *flyback-render* for the author's PC, so either can be revoked alone. Each shows its secret once.
+2. **The service tokens.** Zero Trust → Access controls → Service credentials → Create service token, twice: *flyback-github* for the workflows, and *flyback-render* only if a machine of yours is to render as well, so either can be revoked alone. Each shows its secret once.
 
 3. **The Access application.** Zero Trust → Access controls → Applications → Add an application → Self-hosted, named *Flyback admin (staging)*, with two public hostname destinations:
 
@@ -113,13 +113,15 @@ Submit a preset at `/submit.html`: its page says it is being read, and within a 
 
 ## Rendering
 
-On the author's PC, with Flyback installed and ffmpeg on PATH, and the *flyback-render* token in the environment:
+The Validate workflow's render job does it: whenever `GET /api/v1/presets?pending=true` lists anything, it builds the Dockerfile's `renderer` stage and renders at most five presets, the rest waiting for the next run. The render runs a stranger's patch, so its step holds no token and writes into a folder; the next step sends the folder with `flyback-site push-media`, `done` or `failed` last. The picture is drawn on Mesa's software OpenGL, a few seconds a preset.
+
+A machine of yours can render too, uploading as it goes, with Flyback installed, ffmpeg on PATH and the *flyback-render* token in the environment:
 
 ```bash
 FLYBACK_ACCESS_ID=... FLYBACK_ACCESS_SECRET=... flyback-cli render-presets --server https://flyback-staging.nasik2137.uk/
 ```
 
-It renders every preset still waiting, uploads each file, `done` or `failed` last, then checks again every five minutes. `--once`, `--poll-minutes` and `--timeout-minutes` are as before. Revoking the token in Cloudflare cuts the PC off.
+It checks again every five minutes; `--once`, `--limit`, `--poll-minutes` and `--timeout-minutes` change that.
 
 To render a preset again, clear its render, which puts it back in the queue:
 

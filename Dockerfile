@@ -242,6 +242,33 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 FROM scratch AS site-assets
 COPY --from=site-build /out/ /
 
+# What renders the preset site's presets on GitHub's machines, for the Validate
+# workflow: flyback-cli beside the editor so the shipped plugins load, as a release
+# lays them out, with ffmpeg to encode and Mesa's software OpenGL to draw on, and
+# flyback-site to send what it made.
+FROM ${SDK} AS renderer
+ARG VERSION
+
+RUN apt-get update \
+ && apt-get install --yes --no-install-recommends ffmpeg libfontconfig1 libx11-6 \
+      libegl1 libegl-mesa0 libgl1-mesa-dri libopengl0 \
+ && rm -rf /var/lib/apt/lists/*
+
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+    DOTNET_NOLOGO=1
+
+WORKDIR /src
+COPY . .
+
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    set -eu; \
+    export Version="${VERSION}"; \
+    dotnet publish src/Flyback.Editor.Desktop -c Release -o /app -nologo -v:q; \
+    dotnet publish src/Flyback.Cli -c Release -o /app -nologo -v:q; \
+    dotnet publish src/Flyback.Site -c Release -o /app/site-tool -nologo -v:q
+
+WORKDIR /app
+
 FROM gate AS publish
 ARG RIDS
 ARG CONFIGURATION

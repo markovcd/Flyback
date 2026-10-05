@@ -12,7 +12,7 @@ Steps 2 to 5 are on `main`, dark: nothing is deployed and the NAS still serves t
 
 - `worker/`: the Worker, its D1 migrations, its Vitest suite in workerd (in the gate as a Node stage), `build-assets.sh` and `dev.sh`.
 - `src/Flyback.Site`: `flyback-site`, with `check-submission`, `validate-submissions [--lacks]`, `push-defaults` and `export-site`. It is a program of its own rather than commands of `flyback-cli`, because what a browser lacks is checked against the plugins the web pages link, which `flyback-cli`'s folder would then load twice. The readers moved into it, and the .NET site compiles the same files.
-- `flyback-cli render-presets` uploads without `--media`, and still writes the share with it.
+- Rendering moved to GitHub too, a change to this plan: a render job in the Validate workflow, at most five presets a run, with `render-presets --media` drawing into a folder in a step that holds no token and `flyback-site push-media` sending it. `render-presets` without `--media` uploads as it goes, for a machine of the author's. `--media` stays at the removal.
 - `.github/workflows/validate.yml` and `worker.yml`, both off until the repository variables in the setup name the site.
 - The pages call the admin's routes under `/api/v1/admin`, which the .NET site answers too. The reports and letters lists moved there as well as the changes.
 

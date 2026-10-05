@@ -245,6 +245,20 @@ public sealed class RenderPresetsTests : IDisposable
     }
 
     [Fact]
+    public async Task A_pass_with_a_limit_renders_that_many_and_leaves_the_rest_waiting()
+    {
+        var asked = new List<string>();
+        string[] waiting = ["a", "b", "c"];
+
+        using var site = new HttpClient(new Site(asked, Sound, waiting)) { BaseAddress = new Uri("http://site/") };
+        var render = new PresetRender(new FakeTools(), new MediaWriter(media));
+
+        await RenderPresetsCommand.Pass(site, render, TextWriter.Null, TextWriter.Null, TestContext.Current.CancellationToken, limit: 2);
+
+        waiting.Where(id => File.Exists(Path.Combine(media, id + ".done"))).ShouldBe(["a", "b"]);
+    }
+
+    [Fact]
     public async Task A_rendered_preset_is_no_longer_pending_and_neither_is_a_failed_one()
     {
         var writer = new MediaWriter(media);

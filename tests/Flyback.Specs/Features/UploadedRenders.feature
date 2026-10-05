@@ -9,6 +9,12 @@ Feature: A shared preset's render goes to the preset site through its admin API
     Then the site is sent the preset's still, loop, track and bars
     And it is told the render is done after the rest
 
+  Scenario: A render made apart from the site is sent with done last
+    Given a folder where render-presets left a finished render and an unfinished one
+    When flyback-site sends the folder to the preset site
+    Then the site is sent the finished render's files, and done after them
+    And nothing of the unfinished render is sent
+
   Scenario: A preset that does not open whole is sent as failed, saying why
     Given the preset site is waiting on a preset that names a module nothing here has
     When flyback-cli render-presets makes a pass with no media folder

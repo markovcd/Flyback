@@ -24,6 +24,7 @@ internal static class Program
             CheckSubmissionCommand.Build(),
             ValidateSubmissionsCommand.Build(),
             PushDefaultsCommand.Build(),
+            PushMediaCommand.Build(),
             ExportSiteCommand.Build(),
         };
 

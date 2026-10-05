@@ -4,7 +4,7 @@
 
 - The Claude Code assistant now hits the prompt cache between requests.
 
-- `flyback-cli render-presets` uploads its renders through the preset site's admin API when no `--media` folder is given.
+- `flyback-cli render-presets` uploads its renders through the preset site's admin API when no `--media` folder is given, and `--limit` caps how many one pass renders.
 
 - A note held while the patch is edited no longer pops: dragging a slider mid-chord keeps it sounding.
 
