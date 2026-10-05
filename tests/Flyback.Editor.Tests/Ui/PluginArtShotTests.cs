@@ -37,6 +37,8 @@ public class PluginArtShotTests : EditorTest
         ("keyring", dc => SecretStore(dc, Linux, "Secret Service  ·  GNOME Keyring  ·  KWallet")),
         ("gemini", dc => Assistant(dc, Colors.Feedback, sees: true, "Gemini  ·  sees the picture, hears the sound")),
         ("openai", dc => Assistant(dc, Colors.Form, sees: false, "any chat-completions endpoint")),
+        ("claudecode", dc => Cli(dc, Colors.Shaping, spark: true, "Claude Code  ·  already signed in, no API key")),
+        ("codex", dc => Cli(dc, Colors.Oscillator, spark: false, "Codex  ·  already signed in, no API key")),
     ];
 
     [AvaloniaFact]
@@ -126,13 +128,31 @@ public class PluginArtShotTests : EditorTest
             dc.DrawRectangle(bars, null, new Rect(bubble.X + 26, bubble.Y + 110, 104, 10), 5, 5);
         }
 
+        Patch(dc, bubble, accent);
+
+        Caption(dc, caption);
+    }
+
+    /// <summary>A terminal wiring up a small patch.</summary>
+    private static void Cli(DrawingContext dc, Color accent, bool spark, string caption)
+    {
+        var terminal = new Rect(36, 82, 236, 150);
+
+        Terminal(dc, terminal, accent, spark);
+        Patch(dc, terminal, accent);
+        Caption(dc, caption);
+    }
+
+    /// <summary>A sine and a filter into the output, the first two fed by wires out of <paramref name="source"/>.</summary>
+    private static void Patch(DrawingContext dc, Rect source, Color accent)
+    {
         var sine = new Rect(336, 48, 104, 72);
         var filter = new Rect(336, 196, 104, 72);
         var output = new Rect(512, 118, 104, 92);
         var grey = Colors.Value;
 
-        Wire(dc, new Point(bubble.Right, bubble.Y + 44), new Point(sine.X, sine.Y + 50), accent);
-        Wire(dc, new Point(bubble.Right, bubble.Y + 108), new Point(filter.X, filter.Y + 50), accent);
+        Wire(dc, new Point(source.Right, source.Y + 44), new Point(sine.X, sine.Y + 50), accent);
+        Wire(dc, new Point(source.Right, source.Y + 108), new Point(filter.X, filter.Y + 50), accent);
         Wire(dc, new Point(sine.Right, sine.Y + 50), new Point(output.X, output.Y + 50), grey);
         Wire(dc, new Point(filter.Right, filter.Y + 50), new Point(output.X, output.Y + 70), grey);
 
@@ -140,10 +160,8 @@ public class PluginArtShotTests : EditorTest
         Block(dc, filter, "Filter", Colors.Shaping, inputs: [50], outputs: [50]);
         Block(dc, output, "Output", Colors.Sink, inputs: [50, 70], outputs: []);
 
-        Socket(dc, new Point(bubble.Right, bubble.Y + 44), accent);
-        Socket(dc, new Point(bubble.Right, bubble.Y + 108), accent);
-
-        Caption(dc, caption);
+        Socket(dc, new Point(source.Right, source.Y + 44), accent);
+        Socket(dc, new Point(source.Right, source.Y + 108), accent);
     }
 
     // --- the parts -------------------------------------------------------------
@@ -285,6 +303,58 @@ public class PluginArtShotTests : EditorTest
         dc.DrawGeometry(fill, pen, tail);
         dc.DrawRectangle(fill, pen, bubble, 20, 20);
         dc.FillRectangle(fill, new Rect(bubble.X + 36, bubble.Bottom - 4, 34, 6));
+    }
+
+    /// <summary>A terminal window with a prompt typed into it.</summary>
+    private static void Terminal(DrawingContext dc, Rect window, Color accent, bool spark)
+    {
+        var pen = new Pen(new SolidColorBrush(accent), 2.5, lineJoin: PenLineJoin.Round);
+        var bars = new SolidColorBrush(Fade(Colors.Label, 0.45));
+
+        dc.DrawRectangle(new SolidColorBrush(Colors.Panel), pen, window, 16, 16);
+        dc.DrawLine(new Pen(new SolidColorBrush(Colors.Separator), 2), new Point(window.X + 2, window.Y + 32), new Point(window.Right - 2, window.Y + 32));
+
+        for (var i = 0; i < 3; i++)
+            dc.DrawEllipse(new SolidColorBrush(Colors.Inactive), null, new Point(window.X + 22 + i * 18, window.Y + 17), 4.5, 4.5);
+
+        if (spark)
+        {
+            Spark(dc, new Point(window.X + 34, window.Y + 62), accent);
+            dc.DrawRectangle(new SolidColorBrush(accent), null, new Rect(window.X + 60, window.Y + 57, 128, 10), 5, 5);
+            dc.DrawRectangle(bars, null, new Rect(window.X + 26, window.Y + 92, 176, 10), 5, 5);
+            dc.DrawRectangle(bars, null, new Rect(window.X + 26, window.Y + 116, 120, 10), 5, 5);
+        }
+        else
+        {
+            dc.DrawText(Text(">_", 24, accent), new Point(window.X + 20, window.Y + 46));
+            dc.DrawRectangle(new SolidColorBrush(accent), null, new Rect(window.X + 62, window.Y + 57, 110, 10), 5, 5);
+            dc.DrawRectangle(bars, null, new Rect(window.X + 26, window.Y + 88, 184, 10), 5, 5);
+            dc.DrawRectangle(bars, null, new Rect(window.X + 26, window.Y + 108, 150, 10), 5, 5);
+            dc.DrawRectangle(bars, null, new Rect(window.X + 26, window.Y + 128, 96, 10), 5, 5);
+        }
+    }
+
+    /// <summary>A four-pointed star, plain.</summary>
+    private static void Spark(DrawingContext dc, Point center, Color accent)
+    {
+        var star = new StreamGeometry();
+
+        using (var c = star.Open())
+        {
+            for (var i = 0; i < 8; i++)
+            {
+                var angle = i * Math.PI / 4 - Math.PI / 2;
+                var radius = i % 2 == 0 ? 16 : 5;
+                var point = new Point(center.X + radius * Math.Cos(angle), center.Y + radius * Math.Sin(angle));
+
+                if (i == 0) c.BeginFigure(point, true);
+                else c.LineTo(point);
+            }
+
+            c.EndFigure(true);
+        }
+
+        dc.DrawGeometry(new SolidColorBrush(accent), null, star);
     }
 
     /// <summary>An open eye.</summary>
