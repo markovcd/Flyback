@@ -50,13 +50,15 @@ because Access gates by path and the old `PATCH /presets/{id}` shared one with t
 public `GET`.
 
 **GitHub's machines render too**, in a job after Validate's checks, at most five
-presets a run and one run at a time. `flyback-cli render-presets --media` writes
-the still, the loop and the track into a folder in a step that holds no token,
+presets a run and one run at a time, and only their stills: a loop and a track
+are minutes of runner for what a page plays rarely. `flyback-cli render-presets
+--media --still-only` writes each still into a folder in a step that holds no token,
 since it runs a stranger's patch, and `flyback-site push-media` sends them through
 `PUT /api/v1/admin/presets/{id}/media/{name}`, `done` last. The picture is drawn on
 Mesa's software OpenGL, the path the gate's render tests take; a preset is seconds
-of it. `render-presets` without `--media` uploads as it goes, for a machine of the
-author's, should a GPU ever be wanted again.
+of it. `render-presets` without `--media` or `--still-only` makes all three and
+uploads as it goes, for a machine of the author's, should the loop and the track
+ever be wanted again.
 
 **The defaults are files sent by the Worker workflow** after each deploy, each with
 its check, and kept to the file as 0138 and 0141 say.

@@ -1,5 +1,5 @@
 # Checks what the preset site holds unchecked with the app's own readers and sends
-# each verdict back, then renders what waits for a still, a loop and a track
+# each verdict back, then renders the still of each preset that waits
 # (deploy/cloudflare/README.md). The Worker starts it on every submission; the
 # schedule is the net for a start that was lost.
 #
@@ -89,12 +89,12 @@ jobs:
         run: docker buildx build --target renderer --load -t flyback-renderer .
 
       # No token in this step: it runs a stranger's patch, and fetches only what the site serves to anyone.
-      - name: Render, at most LIMIT presets
+      - name: Render the stills of at most LIMIT presets
         if: steps.waiting.outputs.count != '0'
         run: |
           mkdir -p renders
           docker run --rm -e PRESET_SITE_URL -e LIMIT -v "$PWD/renders":/renders flyback-renderer \
-            sh -c 'dotnet flyback-cli.dll render-presets --server "$PRESET_SITE_URL" --media /renders --once --limit "$LIMIT"'
+            sh -c 'dotnet flyback-cli.dll render-presets --server "$PRESET_SITE_URL" --media /renders --once --limit "$LIMIT" --still-only'
 
       - name: Send the renders
         if: steps.waiting.outputs.count != '0'

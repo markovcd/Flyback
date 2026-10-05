@@ -16,9 +16,9 @@ namespace Flyback.Cli.Rendering;
 /// silent seconds at 640x360 in VP9. The track is the first thirty seconds brought
 /// to -16 LUFS with a four-second fade, as the Pages site's tracks are. A patch that
 /// wires only a picture or only a sound gets only that half, and a silent one no
-/// track at all.
+/// track at all. With <paramref name="stillOnly"/>, the still is all that is made.
 /// </remarks>
-internal sealed class PresetRender(IPresetTools tools, IPresetMedia media)
+internal sealed class PresetRender(IPresetTools tools, IPresetMedia media, bool stillOnly = false)
 {
     public const double StillAt = 4;
     public const double LoopSeconds = 6;
@@ -81,20 +81,25 @@ internal sealed class PresetRender(IPresetTools tools, IPresetMedia media)
         {
             var png = Path.Combine(work, "still.png");
             var webp = Path.Combine(work, "still.webp");
-            var raw = Path.Combine(work, "loop-raw.webm");
-            var loop = Path.Combine(work, "loop.webm");
 
             Render(patch, "the still", new RenderOptions(new FileInfo(png), 1280, 720, At: StillAt), cancellation);
             await Ffmpeg("the still's webp", cancellation, "-i", png, "-c:v", "libwebp", "-quality", "88", webp);
 
+            made.Add((".webp", webp));
+        }
+
+        if (reaches.Picture && !stillOnly)
+        {
+            var raw = Path.Combine(work, "loop-raw.webm");
+            var loop = Path.Combine(work, "loop.webm");
+
             Render(patch, "the loop", new RenderOptions(new FileInfo(raw), 640, 360, Seconds: LoopSeconds), cancellation);
             await Ffmpeg("the silent loop", cancellation, "-i", raw, "-an", "-c:v", "copy", loop);
 
-            made.Add((".webp", webp));
             made.Add((".webm", loop));
         }
 
-        if (reaches.Sound)
+        if (reaches.Sound && !stillOnly)
         {
             var wav = Path.Combine(work, "track.wav");
             var mp3 = Path.Combine(work, "track.mp3");

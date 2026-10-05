@@ -95,12 +95,20 @@ public sealed class SiteSteps
         patch = """{"Nodes":[{"Id":"8f9d1d3e-0000-4000-8000-000000000031","TypeId":"example.nowhere.module"}],"Connections":[]}""";
 
     [When("flyback-cli render-presets makes a pass with no media folder")]
-    public async Task WhenAPassIsMade()
+    public Task WhenAPassIsMade() => Pass(stillOnly: false);
+
+    [When("flyback-cli render-presets makes a pass with no media folder, the still alone")]
+    public Task WhenAStillIsMade() => Pass(stillOnly: true);
+
+    [Then("the site is sent the preset's still and done, and nothing else")]
+    public void ThenOnlyTheStill() => Names().ShouldBe(["webp", "done"]);
+
+    private async Task Pass(bool stillOnly)
     {
         var text = patch.StartsWith('{');
         using var site = new HttpClient(new Site(Waiting, text ? "preset.fbk" : "preset.fbks", patch, sent)) { BaseAddress = new Uri("https://presets.example.org/") };
 
-        await RenderPresetsCommand.Pass(site, new PresetRender(new StandIn(), new MediaUpload(site)), TextWriter.Null, TextWriter.Null, CancellationToken.None);
+        await RenderPresetsCommand.Pass(site, new PresetRender(new StandIn(), new MediaUpload(site), stillOnly), TextWriter.Null, TextWriter.Null, CancellationToken.None);
     }
 
     [Then("the site is sent the preset's still, loop, track and bars")]

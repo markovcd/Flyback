@@ -63,9 +63,11 @@ internal static class RenderPresetsCommand
             Description = "The most presets one pass renders; the rest wait for the next.",
         };
 
+        var stillOnly = new Option<bool>("--still-only") { Description = "Make only the still: no loop and no track." };
+
         var command = new Command("render-presets", "Give the preset site's waiting presets a still, a loop and a track.")
         {
-            server, media, ffmpeg, once, poll, timeout, limit,
+            server, media, ffmpeg, once, poll, timeout, limit, stillOnly,
         };
 
         command.SetAction(async (result, cancellation) =>
@@ -112,7 +114,8 @@ internal static class RenderPresetsCommand
 
             var render = new PresetRender(
                 new PresetTools(found, TimeSpan.FromMinutes(result.GetValue(timeout))),
-                folder is null ? new MediaUpload(site) : new MediaWriter(folder.FullName));
+                folder is null ? new MediaUpload(site) : new MediaWriter(folder.FullName),
+                result.GetValue(stillOnly));
 
             try
             {

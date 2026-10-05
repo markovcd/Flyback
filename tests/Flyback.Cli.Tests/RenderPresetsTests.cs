@@ -132,6 +132,18 @@ public sealed class RenderPresetsTests : IDisposable
     }
 
     [Fact]
+    public async Task A_render_of_the_still_alone_makes_no_loop_and_no_track()
+    {
+        var tools = new FakeTools();
+
+        (await new PresetRender(tools, new MediaWriter(media), stillOnly: true).Render("abc", Patch(Picture + Sound), TestContext.Current.CancellationToken))
+            .ShouldBeNull();
+
+        Written().ShouldBe(["abc.done", "abc.webp"]);
+        tools.Ran.ShouldNotContain(line => line.Contains("loop", StringComparison.Ordinal) || line.Contains("track", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task A_patch_that_only_makes_a_picture_gets_no_track()
     {
         var tools = new FakeTools();

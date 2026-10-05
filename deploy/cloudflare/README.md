@@ -113,15 +113,15 @@ Submit a preset at `/submit.html`: its page says it is being read, and within a 
 
 ## Rendering
 
-The Validate workflow's render job does it: whenever `GET /api/v1/presets?pending=true` lists anything, it builds the Dockerfile's `renderer` stage and renders at most five presets, the rest waiting for the next run. The render runs a stranger's patch, so its step holds no token and writes into a folder; the next step sends the folder with `flyback-site push-media`, `done` or `failed` last. The picture is drawn on Mesa's software OpenGL, a few seconds a preset.
+The Validate workflow's render job does it: whenever `GET /api/v1/presets?pending=true` lists anything, it builds the Dockerfile's `renderer` stage and renders the stills of at most five presets, the rest waiting for the next run. It makes no loop and no track; the pages show the still alone. The render runs a stranger's patch, so its step holds no token and writes into a folder; the next step sends the folder with `flyback-site push-media`, `done` or `failed` last. The picture is drawn on Mesa's software OpenGL, a few seconds a preset.
 
-A machine of yours can render too, uploading as it goes, with Flyback installed, ffmpeg on PATH and the *flyback-render* token in the environment:
+A machine of yours can render all three, the still, the loop and the track, uploading as it goes, with Flyback installed, ffmpeg on PATH and the *flyback-render* token in the environment:
 
 ```bash
 FLYBACK_ACCESS_ID=... FLYBACK_ACCESS_SECRET=... flyback-cli render-presets --server https://flyback-staging.nasik2137.uk/
 ```
 
-It checks again every five minutes; `--once`, `--limit`, `--poll-minutes` and `--timeout-minutes` change that.
+It checks again every five minutes; `--once`, `--limit`, `--still-only`, `--poll-minutes` and `--timeout-minutes` change that.
 
 To render a preset again, clear its render, which puts it back in the queue:
 
