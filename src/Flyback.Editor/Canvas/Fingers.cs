@@ -32,6 +32,9 @@ internal sealed class Fingers
     /// </summary>
     public const double MostReach = NodeGeometry.Width / 5;
 
+    /// <summary>How soon after the first, in milliseconds, a second finger lands for the two to have come down together.</summary>
+    private const ulong TogetherTime = 200;
+
     /// <summary>How close in time and place, in milliseconds and screen pixels, a second tap is to count as a double.</summary>
     private const ulong DoubleTapTime = 400;
     private const double DoubleTapDistance = 24;
@@ -65,6 +68,10 @@ internal sealed class Fingers
     private Control? canvas;
     private IPointer? first;
     private Point firstFrom;
+    private ulong firstAt;
+
+    /// <summary>How far a held finger's press was moved onto a socket, which its moves are moved by too.</summary>
+    private Vector grip;
 
     /// <summary>Whether a second finger is holding the view, as the middle button, over a gesture of the first.</summary>
     private bool panning;
@@ -93,7 +100,6 @@ internal sealed class Fingers
     public void Down(Control on, IPointer pointer, Point screen, ulong time)
     {
         canvas = on;
-        down[pointer.Id] = screen;
         lastPress.Finger();
 
         if (!seen)
@@ -102,16 +108,21 @@ internal sealed class Fingers
             reactions.Raise(new Touched());
         }
 
+        // A third finger counts for nothing from landing to lifting.
+        if (down.Count == 2) return;
+
+        down[pointer.Id] = screen;
+
         if (down.Count == 1)
         {
             phase = Phase.Waiting;
             first = pointer;
             firstFrom = screen;
+            firstAt = time;
+            grip = default;
             holdTimer.Start();
             return;
         }
-
-        if (down.Count != 2) return;
 
         span = Span();
 
@@ -122,9 +133,23 @@ internal sealed class Fingers
                 phase = Phase.Pinch;
                 break;
 
+            // Two fingers that came down together are a pinch, whatever the first one
+            // started on its way past the slop.
+            case Phase.Left when time >= firstAt && time - firstAt <= TogetherTime:
+                gestures.Abort(on);
+                phase = Phase.Pinch;
+                break;
+
             case Phase.Left:
                 panning = true;
                 gestures.Pressed(on, null, Middle(), MouseButton.Middle, KeyModifiers.None, 1);
+                break;
+
+            // A held finger is the right button held still, which a pinch takes back.
+            case Phase.Right:
+                gestures.Abort(on);
+                gestures.Released(on, first, firstFrom, MouseButton.Right, KeyModifiers.None);
+                phase = Phase.Pinch;
                 break;
         }
     }
@@ -153,7 +178,7 @@ internal sealed class Fingers
                 return;
 
             case Phase.Left or Phase.Right when pointer.Id == first?.Id:
-                gestures.Moved(on, phase == Phase.Left ? Wiring(screen) : screen, KeyModifiers.None, middleDown: false);
+                gestures.Moved(on, phase == Phase.Left ? Wiring(screen) : screen + grip, KeyModifiers.None, middleDown: false);
                 return;
 
             case Phase.Pinch:
@@ -193,8 +218,9 @@ internal sealed class Fingers
                 phase = Phase.Spent;
                 break;
 
+            // The finger left down goes on moving the view, and one put back pinches again.
             case Phase.Pinch:
-                phase = Phase.Spent;
+                span = Span();
                 break;
         }
 
@@ -204,7 +230,14 @@ internal sealed class Fingers
     /// <summary>A finger was taken away from the canvas without lifting: whatever it was doing ends where it is.</summary>
     public void Lost(Control on, IPointer pointer)
     {
-        if (!down.ContainsKey(pointer.Id)) return;
+        if (!down.TryGetValue(pointer.Id, out var at)) return;
+
+        // Only the first finger holds a gesture of its own, so any other is as good as lifted.
+        if (pointer.Id != first?.Id || phase == Phase.Pinch)
+        {
+            Up(on, pointer, at, 0);
+            return;
+        }
 
         down.Remove(pointer.Id);
         holdTimer.Stop();
@@ -223,7 +256,10 @@ internal sealed class Fingers
         if (phase != Phase.Waiting || canvas is null || first is null) return;
 
         phase = Phase.Right;
-        gestures.Pressed(canvas, first, Socket(firstFrom), MouseButton.Right, KeyModifiers.None, 1);
+
+        var at = Socket(firstFrom);
+        grip = at - firstFrom;
+        gestures.Pressed(canvas, first, at, MouseButton.Right, KeyModifiers.None, 1);
     }
 
     private void Tap(Control on, IPointer pointer, ulong time)
@@ -256,19 +292,22 @@ internal sealed class Fingers
         span = now;
     }
 
-    /// <summary>A point on the screen moved onto the socket within reach of it, if one is.</summary>
-    private Point Socket(Point screen)
+    /// <summary>
+    /// A point on the screen moved onto the socket within reach of it, if one is: an
+    /// output when <paramref name="isOutput"/> says so, an input when it says not, either when null.
+    /// </summary>
+    private Point Socket(Point screen, bool? isOutput = null)
     {
         var graph = view.ToGraph(screen);
         var scene = selection.Scene;
 
-        if (scene.HitPort(graph, out _, out _, out _)) return screen;
+        if (scene.HitPort(graph, out _, out _, out var output) && (isOutput is null || output == isOutput)) return screen;
 
-        return scene.NearestSocket(graph, Math.Min(Reach / view.Zoom, MostReach)) is { } at ? view.GraphToScreen.Transform(at) : screen;
+        return scene.NearestSocket(graph, Math.Min(Reach / view.Zoom, MostReach), isOutput) is { } at ? view.GraphToScreen.Transform(at) : screen;
     }
 
-    /// <summary>The same, only while a wire is being drawn, so a wire lands on the socket its end is beside.</summary>
-    private Point Wiring(Point screen) => gestures.PendingWireFrom is null ? screen : Socket(screen);
+    /// <summary>The same, only while a wire is being drawn, so a wire lands on the socket beside its end that can take it.</summary>
+    private Point Wiring(Point screen) => gestures.PendingWireTakesOutput is { } output ? Socket(screen, output) : screen;
 
     private Point Middle()
     {

@@ -230,6 +230,9 @@ internal sealed class CanvasGestures
         }
     }
 
+    /// <summary>Whether the wire being drawn plugs into an output rather than an input; null when none is being drawn.</summary>
+    public bool? PendingWireTakesOutput => PendingWireFrom is null ? null : !wireFromOutput;
+
     private string WireGesture => $"wire {wireGesture}";
 
     /// <summary>Opens the palette where the pointer last was, or in the middle of the view.</summary>

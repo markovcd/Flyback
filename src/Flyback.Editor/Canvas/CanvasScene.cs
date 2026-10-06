@@ -394,7 +394,8 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
     /// The reachable socket nearest <paramref name="graph"/> within <paramref name="reach"/>,
     /// or null: a fingertip landing beside a socket means the socket.
     /// </summary>
-    public Point? NearestSocket(Point graph, double reach)
+    /// <param name="isOutput">Only outputs when true, only inputs when false.</param>
+    public Point? NearestSocket(Point graph, double reach, bool? isOutput = null)
     {
         Point? nearest = null;
         var best = reach * reach;
@@ -406,7 +407,8 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
             var distance = dx * dx + dy * dy;
 
             // Through HitPort, so a socket under a box or behind the one being looked into is out of reach.
-            if (distance > best || !HitPort(at, out _, out _, out _)) continue;
+            if (distance > best || !HitPort(at, out _, out _, out var output)) continue;
+            if (isOutput is { } kind && output != kind) continue;
 
             nearest = at;
             best = distance;
