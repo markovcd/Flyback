@@ -9,4 +9,5 @@ internal sealed record Reply(
     JsonNode? RawContent,
     int Input,
     int Cached,
-    int Output);
+    int Output,
+    string? Model = null);

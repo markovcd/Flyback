@@ -212,6 +212,18 @@ public class TurnLoopTests
         conversation.Log.ShouldContain("add: make it bluer and louder");
     }
 
+    /// <summary>A provider that counts no tokens still says who answered.</summary>
+    [Fact]
+    public async Task The_cost_names_the_model_that_answered_even_with_no_tokens_counted()
+    {
+        var events = await Turn(Bench(), new Scripted(new ModelReply("done", []) { Model = "model-7" }));
+
+        var cost = events.OfType<PatchEvent.Cost>().ShouldHaveSingleItem();
+
+        cost.Model.ShouldBe("model-7");
+        (cost.Input, cost.Output).ShouldBe((0, 0));
+    }
+
     [Fact]
     public async Task Pictures_from_an_earlier_turn_are_forgotten_before_the_next_message()
     {

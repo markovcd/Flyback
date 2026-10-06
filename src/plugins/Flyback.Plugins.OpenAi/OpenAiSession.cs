@@ -111,7 +111,10 @@ internal sealed class OpenAiSession : IModelConversation
             [.. reply.Calls.Select(call => new ToolCall(call.Id, call.Name, call.Arguments))],
             reply.Input,
             reply.Cached,
-            reply.Output);
+            reply.Output)
+        {
+            Model = reply.Model,
+        };
     }
 
     /// <summary>

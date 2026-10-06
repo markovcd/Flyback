@@ -286,6 +286,16 @@ public class WireTests
         reply.Output.ShouldBe(940);
     }
 
+    [Fact]
+    public void The_model_that_answered_is_read_back()
+    {
+        var reply = Wire.Parse(JsonNode.Parse("""
+            { "candidates": [{ "content": { "parts": [{ "text": "done" }] } }], "modelVersion": "gemini-3.6-flash-002" }
+            """));
+
+        reply.Model.ShouldBe("gemini-3.6-flash-002");
+    }
+
     /// <summary>
     /// A candidate that stopped for safety carries no parts at all. That is an
     /// empty turn, which the loop ends on, rather than something to throw over.

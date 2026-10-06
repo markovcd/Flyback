@@ -62,6 +62,16 @@ public class CliTests
         Arguments(Request(effort: AssistantEffort.High)).ShouldContain("model_reasoning_effort=\"high\"");
     }
 
+    /// <summary>Codex's events do not name the model, so the answer names the one asked for, and none where Codex chose.</summary>
+    [Fact]
+    public void The_answer_names_the_model_only_where_one_was_asked_for()
+    {
+        var answer = new ProgramAnswer("ok", 1, 0, 1);
+
+        CodexCli.Named(answer, Request("gpt-5.6-terra")).Model.ShouldBe("gpt-5.6-terra");
+        CodexCli.Named(answer, Request(CodexCli.DefaultModel)).Model.ShouldBeNull();
+    }
+
     [Theory]
     [InlineData("--dangerously-bypass-approvals-and-sandbox")]
     [InlineData("gpt-5.5 --sandbox danger-full-access")]

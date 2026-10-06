@@ -122,6 +122,13 @@ internal sealed partial class CodexCli(string executable) : IProgram
 
     public Task<ProgramAnswer> Ask(ProgramQuestion question, CancellationToken cancel) => Ask(Request(question), cancel);
 
+    /// <summary>
+    /// <paramref name="answer"/> naming the model it was asked of, which Codex's events do not.
+    /// Null where the choice was left to Codex.
+    /// </summary>
+    public static ProgramAnswer Named(ProgramAnswer answer, CodexRequest request) =>
+        answer with { Model = request.Model == DefaultModel ? null : request.Model };
+
     public async Task<ProgramAnswer> Ask(CodexRequest request, CancellationToken cancel)
     {
         var folder = ProgramProcess.QuietFolder("flyback-codex");
@@ -147,7 +154,7 @@ internal sealed partial class CodexCli(string executable) : IProgram
                 Name, executable, Arguments(request, instructions, pictures), request.Prompt, folder, Keys, cancel)
                 .ConfigureAwait(false);
 
-            return Answer(output, errors, exitCode);
+            return Named(Answer(output, errors, exitCode), request);
         }
         finally
         {

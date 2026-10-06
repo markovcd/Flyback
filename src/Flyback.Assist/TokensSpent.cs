@@ -9,16 +9,22 @@ namespace Flyback.Assist;
 /// <param name="CacheRead">How many of those were read from the provider's cache.</param>
 /// <param name="Output">Tokens written.</param>
 /// <param name="Context">Tokens the newest request sent: how large the conversation has grown.</param>
-internal sealed record TokensSpent(int Requests = 0, int Input = 0, int CacheRead = 0, int Output = 0, int Context = 0)
+/// <param name="Model">The model that answered the newest request that named one.</param>
+internal sealed record TokensSpent(
+    int Requests = 0, int Input = 0, int CacheRead = 0, int Output = 0, int Context = 0, string? Model = null)
 {
     public bool None => Requests == 0;
 
     public TokensSpent Plus(PatchEvent.Cost cost) =>
-        new(Requests + 1, Input + cost.Input, CacheRead + cost.CacheRead, Output + cost.Output, cost.Input);
+        new(Requests + 1, Input + cost.Input, CacheRead + cost.CacheRead, Output + cost.Output, cost.Input, cost.Model ?? Model);
 
-    /// <summary>The footer's line: <c>3 turns · 87k in (80k cached) · 3.1k out · 36k of 100k context</c>.</summary>
+    /// <summary>
+    /// The footer's line: <c>claude-opus-5-5 · 3 turns · 87k in (80k cached) · 3.1k out · 36k of 100k context</c>,
+    /// without the model where none was named.
+    /// </summary>
     public string Told(int turns, int contextLimit) =>
-        $"{turns} {(turns == 1 ? "turn" : "turns")} · {Short(Input)} in ({Short(CacheRead)} cached) · {Short(Output)} out"
+        (Model is null ? string.Empty : Model + " · ")
+        + $"{turns} {(turns == 1 ? "turn" : "turns")} · {Short(Input)} in ({Short(CacheRead)} cached) · {Short(Output)} out"
         + $" · {Short(Context)} of {Short(contextLimit)} context";
 
     private static string Short(int count) => count switch

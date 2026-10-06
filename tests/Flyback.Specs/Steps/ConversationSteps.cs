@@ -41,6 +41,10 @@ public sealed class ConversationSteps : IDisposable
     public void GivenEachTurnCosts(int input, int cached, int output) =>
         assistant.Costs = new PatchEvent.Cost(input, cached, output);
 
+    [Given("each turn it takes is answered by {word}")]
+    public void GivenAnsweredBy(string model) =>
+        assistant.Costs = new PatchEvent.Cost(1000, 0, 50) { Model = model };
+
     [When("it is asked twice more")]
     public async Task WhenAskedTwiceMore()
     {
@@ -83,6 +87,10 @@ public sealed class ConversationSteps : IDisposable
     [Then("the conversation has cost {int} tokens in, {int} of them cached, and {int} out")]
     public void ThenItHasCost(int input, int cached, int output) =>
         (Run.Tokens.Requests, Run.Tokens.Input, Run.Tokens.CacheRead, Run.Tokens.Output).ShouldBe((2, input, cached, output));
+
+    [Then("what the conversation cost is told with {word}")]
+    public void ThenToldWith(string model) =>
+        Run.Tokens.Told(Run.Turns, AssistantRun.ContextLimit).ShouldStartWith(model + " · ");
 
     [When("a knob is turned on the canvas")]
     public void WhenAKnobIsTurned() => first.InputValues[0] = 0.25f;

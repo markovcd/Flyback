@@ -176,11 +176,12 @@ public class WireTests
     public void Plain_prose_is_read_back()
     {
         var reply = Wire.Parse(JsonNode.Parse("""
-            {"choices":[{"message":{"role":"assistant","content":"Building it now."}}],
+            {"model":"gpt-4o-2024-08-06","choices":[{"message":{"role":"assistant","content":"Building it now."}}],
              "usage":{"prompt_tokens":120,"completion_tokens":8,"prompt_tokens_details":{"cached_tokens":100}}}
             """));
 
         reply.Text.ShouldBe("Building it now.");
+        reply.Model.ShouldBe("gpt-4o-2024-08-06");
         reply.Calls.ShouldBeEmpty();
         reply.Input.ShouldBe(120);
         reply.Cached.ShouldBe(100);

@@ -776,6 +776,28 @@ public class AssistantRunTests
         carried.Tokens.ShouldBe(new TokensSpent(2, 107, 80, 13, Context: 7));
     }
 
+    /// <summary>The model is kept from the last request that named one, through a save.</summary>
+    [Fact]
+    public async Task The_model_that_answered_is_kept_when_it_is_saved_and_carried_on()
+    {
+        using var first = RunOf(new ScriptedAssistant(new PatchEvent.Cost(100, 80, 10) { Model = "model-7" }));
+
+        await Drain(first);
+
+        var saved = SavedConversation.Read(first.Save([]).ToJson()).ShouldNotBeNull();
+
+        using var carried = new AssistantRun(
+            new ScriptedAssistant(new PatchEvent.Cost(7, 0, 3)),
+            AssistantConfig.Unset,
+            NodeCatalog.BuiltIn,
+            new Patch(),
+            resuming: saved);
+
+        await Drain(carried);
+
+        carried.Tokens.Model.ShouldBe("model-7");
+    }
+
     /// <summary>A conversation saved before the cost was kept opens with none counted.</summary>
     [Fact]
     public void A_conversation_saved_without_its_cost_reads_as_having_none()
@@ -804,6 +826,11 @@ public class AssistantRunTests
     [InlineData(12, 1_250_000, 0, 999, 99_000, "12 turns · 1.25M in (0 cached) · 999 out · 99k of 100k context")]
     public void The_footer_gives_counts_in_thousands(int turns, int input, int cached, int output, int context, string told) =>
         new TokensSpent(1, input, cached, output, context).Told(turns, 100_000).ShouldBe(told);
+
+    [Fact]
+    public void The_footer_starts_with_the_model_that_answered() =>
+        new TokensSpent(1, 1_000, 0, 50, 1_000, "claude-opus-5-5").Told(1, 100_000)
+            .ShouldBe("claude-opus-5-5 · 1 turn · 1k in (0 cached) · 50 out · 1k of 100k context");
 
     // --- the fake -----------------------------------------------------------
 

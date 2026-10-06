@@ -297,7 +297,8 @@ internal static class Wire
             // a turn at high effort would otherwise report a fraction of what it
             // actually spent — and PatchEvent.Cost is the only place anybody
             // sees it.
-            Count(usage?["candidatesTokenCount"]) + Count(usage?["thoughtsTokenCount"]));
+            Count(usage?["candidatesTokenCount"]) + Count(usage?["thoughtsTokenCount"]),
+            Blank(response?["modelVersion"]));
     }
 
     /// <summary>

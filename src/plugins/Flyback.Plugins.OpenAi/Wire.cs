@@ -270,7 +270,8 @@ internal static class Wire
             message?.DeepClone(),
             Count(usage?["prompt_tokens"]),
             Count(usage?["prompt_tokens_details"]?["cached_tokens"]),
-            Count(usage?["completion_tokens"]));
+            Count(usage?["completion_tokens"]),
+            Blank(response?["model"]));
     }
 
     /// <summary>

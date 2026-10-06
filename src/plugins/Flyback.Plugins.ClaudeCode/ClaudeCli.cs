@@ -122,11 +122,18 @@ internal sealed partial class ClaudeCli(string executable) : IProgram
                 Tokens.Count(usage, "input_tokens") + Tokens.Count(usage, "cache_creation_input_tokens")
                     + Tokens.Count(usage, "cache_read_input_tokens"),
                 Tokens.Count(usage, "cache_read_input_tokens"),
-                Tokens.Count(usage, "output_tokens"));
+                Tokens.Count(usage, "output_tokens"),
+                Answering(result["modelUsage"]));
         }
 
         throw new ProgramFailure(Explained(string.Empty, errors));
     }
+
+    /// <summary>The model in <paramref name="usage"/> that wrote the most, which is the one an alias resolved to.</summary>
+    private static string? Answering(JsonNode? usage) =>
+        usage is JsonObject models
+            ? models.MaxBy(model => Tokens.Count(model.Value, "outputTokens")).Key
+            : null;
 
     private static string Explained(string said, string errors) => ProgramReason.Explained(
         said,

@@ -143,6 +143,7 @@ internal sealed class AskConversation : IDisposable
 
         var clock = Stopwatch.StartNew();
         int requests = 0, input = 0, cached = 0, written = 0;
+        string? model = null;
         var waited = TimeSpan.Zero;
 
         await foreach (var happened in session.Ask(message, cancel))
@@ -156,6 +157,7 @@ internal sealed class AskConversation : IDisposable
                 input += cost.Input;
                 cached += cost.CacheRead;
                 written += cost.Output;
+                model = cost.Model ?? model;
             }
             else if (TurnLoop.Waited(happened) is { } wait)
             {
@@ -163,7 +165,7 @@ internal sealed class AskConversation : IDisposable
             }
         }
 
-        Spent(requests, input, cached, written, waited, clock.Elapsed);
+        Spent(requests, input, cached, written, model, waited, clock.Elapsed);
 
         if (!answered) return;
 
@@ -198,11 +200,11 @@ internal sealed class AskConversation : IDisposable
     }
 
     /// <summary>What the turn cost: the requests that reported their tokens, and the time spent, waiting included.</summary>
-    private void Spent(int requests, int input, int cached, int output, TimeSpan waited, TimeSpan took)
+    private void Spent(int requests, int input, int cached, int output, string? model, TimeSpan waited, TimeSpan took)
     {
         var prose = string.Create(
             CultureInfo.InvariantCulture,
-            $"{ConsoleTranscript.Aside}{Writing.Count(requests, "request")}: {input} tokens in ({cached} cached), {output} out, in {took.TotalSeconds:0}s");
+            $"{ConsoleTranscript.Aside}{Writing.Count(requests, "request")}{(model is null ? "" : $" to {model}")}: {input} tokens in ({cached} cached), {output} out, in {took.TotalSeconds:0}s");
 
         if (waited > TimeSpan.Zero)
             prose += string.Create(CultureInfo.InvariantCulture, $", {waited.TotalSeconds:0}s of it waiting to be let back in");
@@ -213,6 +215,7 @@ internal sealed class AskConversation : IDisposable
             input,
             cacheRead = cached,
             output,
+            model,
             waited = Math.Round(waited.TotalSeconds, 1),
             seconds = Math.Round(took.TotalSeconds, 1),
         }, prose + ".");

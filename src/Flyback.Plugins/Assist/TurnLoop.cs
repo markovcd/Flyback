@@ -174,8 +174,8 @@ public static class TurnLoop
             foreach (var call in reply.Calls) gauge.Add(call.Name + call.Arguments);
 
             if (reply.Text is { } text) yield return new PatchEvent.Said(text);
-            if (reply.Input > 0 || reply.Output > 0)
-                yield return new PatchEvent.Cost(reply.Input, reply.Cached, reply.Output);
+            if (reply.Input > 0 || reply.Output > 0 || reply.Model is not null)
+                yield return new PatchEvent.Cost(reply.Input, reply.Cached, reply.Output) { Model = reply.Model };
 
             if (reply.Calls.Count > 0)
             {

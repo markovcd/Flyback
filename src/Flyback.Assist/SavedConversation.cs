@@ -120,6 +120,7 @@ internal sealed record SavedConversation(
                 ["cacheRead"] = Tokens.CacheRead,
                 ["output"] = Tokens.Output,
                 ["context"] = Tokens.Context,
+                ["model"] = Tokens.Model,
             },
         }.ToJsonString(Options);
     }
@@ -178,7 +179,8 @@ internal sealed record SavedConversation(
                         Number(spent["input"]),
                         Number(spent["cacheRead"]),
                         Number(spent["output"]),
-                        Number(spent["context"]))
+                        Number(spent["context"]),
+                        Word(spent["model"]))
                     : null);
         }
         catch (Exception e) when (e is JsonException or ArgumentException or InvalidOperationException)

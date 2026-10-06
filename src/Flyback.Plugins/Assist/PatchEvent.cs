@@ -51,7 +51,11 @@ public abstract record PatchEvent
     /// and a cache that has quietly stopped being hit is expensive rather than
     /// broken, so nothing else would surface it.
     /// </summary>
-    public sealed record Cost(int Input, int CacheRead, int Output) : PatchEvent;
+    public sealed record Cost(int Input, int CacheRead, int Output) : PatchEvent
+    {
+        /// <summary>The model that answered, as the provider named it, or null where it did not.</summary>
+        public string? Model { get; init; }
+    }
 
     /// <summary>
     /// It could not finish. A value rather than an exception, for the reason

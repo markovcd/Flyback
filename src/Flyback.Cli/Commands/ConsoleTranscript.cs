@@ -52,7 +52,7 @@ internal sealed class ConsoleTranscript(AskOptions options, TextWriter output, T
                 return;
 
             case PatchEvent.Cost cost:
-                Emit(spoken.Kind, new { text, input = cost.Input, cacheRead = cost.CacheRead, output = cost.Output }, Hung(Aside, text));
+                Emit(spoken.Kind, new { text, input = cost.Input, cacheRead = cost.CacheRead, output = cost.Output, model = cost.Model }, Hung(Aside, text));
                 return;
         }
 

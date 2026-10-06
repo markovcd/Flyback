@@ -88,7 +88,10 @@ internal sealed class GeminiSession : IModelConversation
             [.. reply.Calls.Select(call => new ToolCall(string.Empty, call.Name, call.Arguments?.ToJsonString() ?? "{}"))],
             reply.Input,
             reply.Cached,
-            reply.Output);
+            reply.Output)
+        {
+            Model = reply.Model,
+        };
     }
 
     /// <summary>

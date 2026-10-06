@@ -66,7 +66,7 @@ internal sealed class ProgramSession : IModelConversation
 
         var (text, calls) = Protocol.Parse(answer.Text);
 
-        return new ModelReply(text, calls, answer.Input, answer.Cached, answer.Output);
+        return new ModelReply(text, calls, answer.Input, answer.Cached, answer.Output) { Model = answer.Model };
     }
 
     /// <summary>Never asked: these programs offer no ear.</summary>

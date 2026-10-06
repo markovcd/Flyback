@@ -26,7 +26,8 @@ internal sealed record Spoken(TranscriptLine Line, string Kind, string Text, boo
 
     private static Spoken Spent(PatchEvent.Cost cost)
     {
-        var spent = $"{cost.Input} in ({cost.CacheRead} cached), {cost.Output} out.";
+        var spent = $"{cost.Input} in ({cost.CacheRead} cached), {cost.Output} out"
+            + (cost.Model is null ? "." : $", from {cost.Model}.");
 
         return new(new(Voice.Aside, spent), "cost", spent, Event: cost);
     }

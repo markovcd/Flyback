@@ -6,4 +6,8 @@ namespace Flyback.Plugins.Assist;
 /// <param name="Input">Tokens sent, where the endpoint says.</param>
 /// <param name="Cached">How many of those it had cached.</param>
 /// <param name="Output">Tokens it wrote.</param>
-public sealed record ModelReply(string? Text, IReadOnlyList<ToolCall> Calls, int Input = 0, int Cached = 0, int Output = 0);
+public sealed record ModelReply(string? Text, IReadOnlyList<ToolCall> Calls, int Input = 0, int Cached = 0, int Output = 0)
+{
+    /// <summary>The model that answered, as the endpoint named it, or null where it did not.</summary>
+    public string? Model { get; init; }
+}
