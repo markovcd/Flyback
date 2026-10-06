@@ -17,4 +17,22 @@ public class ClaudeWireTests
         content[2]!["type"]!.GetValue<string>().ShouldBe("image");
         content[2]!["source"]!["data"]!.GetValue<string>().ShouldBe("AQID");
     }
+
+    [Fact]
+    public void The_conversation_so_far_is_marked_for_the_cache_and_the_prompt_to_answer_is_not()
+    {
+        var content = ClaudeWire.Content("PRE", [new Turn(Turn.Person, "hi", []), new Turn(Turn.Flyback, "seen", [[1, 2, 3]])]);
+
+        content.Select(block => block!["cache_control"] is not null).ShouldBe([false, false, false, true, false]);
+        content[3]!["type"]!.GetValue<string>().ShouldBe("image");
+        content[3]!["cache_control"]!["ttl"]!.GetValue<string>().ShouldBe("1h");
+    }
+
+    [Fact]
+    public void With_no_turns_yet_the_briefing_is_what_is_marked()
+    {
+        var content = ClaudeWire.Content("PRE", []);
+
+        content[0]!["cache_control"].ShouldNotBeNull();
+    }
 }

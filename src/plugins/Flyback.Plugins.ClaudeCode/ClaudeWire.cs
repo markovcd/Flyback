@@ -15,6 +15,11 @@ internal static class ClaudeWire
         + "The first message is your briefing; follow it.";
 
     /// <summary>The message sent for the conversation as it stands.</summary>
+    /// <remarks>
+    /// The last turn carries the one cache breakpoint Claude Code leaves free, so the
+    /// next request reads everything before its newest turn from the cache. Its own
+    /// breakpoints are an hour long, and a shorter one ahead of them is refused.
+    /// </remarks>
     public static JsonArray Content(string preamble, IReadOnlyList<Turn> turns)
     {
         var blocks = new JsonArray { Text(preamble) };
@@ -38,6 +43,7 @@ internal static class ClaudeWire
             }
         }
 
+        blocks[^1]!["cache_control"] = new JsonObject { ["type"] = "ephemeral", ["ttl"] = "1h" };
         blocks.Add(Text("Write your next turn now."));
 
         return blocks;
