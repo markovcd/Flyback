@@ -18,7 +18,7 @@ Each time a shot is listed, look at the whole list. Once it holds **four or more
 
 ## The canvas-only shots come from a test, not a window
 
-`patch-*.webp` (the patch figures) and `skin-*.webp` (the plugin guide's backgrounds) are headless captures of a real `NodeEditor`, cropped to the modules. Nothing here is driven by hand:
+`patch-*.webp` (the patch figures) and `skin-*.webp` (the plugin guide's backgrounds, kept beside it in `docs/images/plugin-guide/`) are headless captures of a real `NodeEditor`, cropped to the modules. Nothing here is driven by hand:
 
 ```bash
 SHOT_DIR=<somewhere> ./tests/Flyback.Editor.Tests/bin/Release/net10.0/Flyback.Editor.Tests.exe -method "*PatchShotTests*"

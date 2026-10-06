@@ -462,7 +462,7 @@ at a frame, hearing a clip). The two session loops in `OpenAiSession` and
 `GeminiSession.cs`'s header.
 
 `tests/Flyback.Plugins.Sample` is the worked example of a module plugin, and
-[`site/plugins.html`](../site/plugins.html) is the published guide.
+[`docs/plugin-guide.md`](plugin-guide.md) is the published guide.
 
 ---
 
@@ -1060,7 +1060,7 @@ snapshots change. It moves the plugin contract's minor.
 
 **Add a module from a plugin.** Copy `tests/Flyback.Plugins.Sample`. Type ids
 start with the provider id. Add a `PluginProject` item to `Flyback.Editor.Desktop.csproj` and
-to `Flyback.Plugins.Tests.csproj`. Update `site/plugins.html` if the contract
+to `Flyback.Plugins.Tests.csproj`. Update `docs/plugin-guide.md` if the contract
 moved.
 
 **Add a CLI flag or command.** Declare it in `Program.cs`, run it in the command's

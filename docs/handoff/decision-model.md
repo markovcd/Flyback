@@ -314,7 +314,7 @@ F. Tests: `tests/Flyback.Plugins.FakeDecider/*`; `tests/Flyback.Plugins.Laya.Tes
    `IssueTriageTests`, `AssistantRunTests` additions; `Specs/Features/Decisions.feature`
    + `Steps/DecisionSteps.cs` (CLI through `PluginHost.Load` as `PresetSteps.cs:16`,
    not `PluginCatalog.Empty`).
-G. Docs, same commit: `site/plugins.html:270-289` ("six methods" → seven, a table row,
+G. Docs, same commit: `docs/plugin-guide.md` §4 (the method count, a table row,
    the plugin list), `site/index.html:439-447, 589-599`, `site/tutorials.html:530,
    580-620`; `docs/engineering-guide.md:333-341, 384-393, 700-711`;
    `docs/glossary.md:112-115, 138-149`; `CHANGELOG.md` one bullet under Unreleased; a

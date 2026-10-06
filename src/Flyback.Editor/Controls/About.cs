@@ -36,7 +36,7 @@ internal static class About
 
     public const string Author = "Arkadiusz Markowski";
 
-    /// <summary>Where the screenshots, the tutorials and the plugin guide live.</summary>
+    /// <summary>Where the screenshots and the tutorials live.</summary>
     public const string Website = "https://flybackmodular.app/";
 
     public const string License = "MIT";
