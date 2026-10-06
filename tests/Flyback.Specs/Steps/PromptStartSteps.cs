@@ -62,6 +62,12 @@ public sealed class PromptStartSteps(EditorDriver editor, PatchContext context) 
     [When("the message is expanded")]
     public void WhenTheMessageIsExpanded() => editor.ExpandMessage();
 
+    [When("the message is expanded again")]
+    public void WhenTheMessageIsExpandedAgain() => editor.ExpandMessageOnceDone();
+
+    [Then("the assistant's box still holds the assistant's detailed brief")]
+    public void ThenTheBoxStillHoldsTheBrief() => editor.MessageText.ShouldBe(BriefingAssistant.Brief);
+
     [Then("the assistant's box holds the assistant's detailed brief")]
     public void ThenTheBoxHoldsTheBrief() => editor.MessageText.ShouldBe(BriefingAssistant.Brief);
 

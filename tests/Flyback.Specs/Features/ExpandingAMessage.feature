@@ -23,3 +23,11 @@ Feature: A message to the assistant can be written out before it is sent
     Then the assistant's box holds the assistant's detailed brief
     And the assistant was asked to write out a new patch
     And nothing has been sent to build from
+
+  Scenario: A message the assistant starts building from is left as typed
+    Given an assistant is set up
+    When the assistant's column is opened
+    And "a slow dub track about a night train" is typed in the assistant's box
+    And the message is expanded
+    And the message is expanded again
+    Then the assistant's box still holds the assistant's detailed brief

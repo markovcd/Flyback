@@ -7,7 +7,7 @@ namespace Flyback.Specs.Support;
 
 /// <summary>
 /// An assistant with no model behind it: asked to write an idea out, it answers with
-/// <see cref="Brief"/>; asked anything else, it says it is on it. It remembers what
+/// <see cref="Brief"/>, or builds it where the idea already is that, as a model may; asked anything else, it says it is on it. It remembers what
 /// it was sent.
 /// </summary>
 internal sealed class BriefingAssistant : IPatchAssistant, IPatchSession
@@ -51,6 +51,14 @@ internal sealed class BriefingAssistant : IPatchAssistant, IPatchSession
         Heard.Enqueue(instruction);
 
         await Task.Yield();
+
+        if (instruction.Contains("build nothing") && instruction.Contains(Brief))
+        {
+            yield return new PatchEvent.Said("Building that now.");
+            yield return new PatchEvent.Did("set.");
+            yield return new PatchEvent.Said("Built it, and here is how.");
+            yield break;
+        }
 
         yield return new PatchEvent.Said(instruction.Contains("build nothing") ? Brief : "On it.");
     }

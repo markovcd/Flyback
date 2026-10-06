@@ -23,6 +23,7 @@ internal static class PromptExpansion
     private static async Task<(string? Brief, string? Failure)> WriteOutAsync(AssistantRun run, string asked, CancellationToken cancel)
     {
         string? brief = null;
+        var replied = false;
 
         await foreach (var happened in run.Ask(asked, cancel))
         {
@@ -30,7 +31,17 @@ internal static class PromptExpansion
             {
                 case PatchEvent.Said said when !string.IsNullOrWhiteSpace(said.Text):
                     brief = said.Text.Trim();
+                    replied = true;
                     break;
+
+                case PatchEvent.Said or PatchEvent.Cost:
+                    replied = true;
+                    break;
+
+                // A message that already reads as a full request can make the model build it,
+                // and what it says after that is a report, not the message.
+                case PatchEvent.Did or PatchEvent.Read or PatchEvent.Saw or PatchEvent.Heard or PatchEvent.Proposed when replied:
+                    return (null, "it began building instead of writing the message out");
 
                 case PatchEvent.Failed failed:
                     return (null, failed.Message);

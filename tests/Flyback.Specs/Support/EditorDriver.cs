@@ -580,6 +580,20 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
             return true;
         });
 
+    /// <summary>Presses Expand beside the assistant's box and waits for the box to be free again, whatever it then holds.</summary>
+    public void ExpandMessageOnceDone() =>
+        Run(async () =>
+        {
+            var open = Window();
+            var box = Named<TextBox>(open, "instruction");
+
+            Named<Button>(open, "expand-message").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            await Until(() => !box.IsReadOnly, () => $"the assistant to finish writing the message out. {Situation(open)}");
+
+            return true;
+        });
+
     /// <summary>Every line of the assistant's transcript, as it is kept.</summary>
     public IReadOnlyList<string> TranscriptLines => ReadWindow(open =>
         open.GetVisualDescendants().OfType<TranscriptView>().Single().Lines.Select(line => line.Text).ToList());
