@@ -8,24 +8,25 @@ namespace Flyback.Plugins.ClaudeCode.Tests;
 public class ClaudeWireTests
 {
     [Fact]
-    public void A_picture_goes_after_the_turn_it_belongs_to_as_a_base64_block()
+    public void A_picture_goes_inside_the_turn_it_belongs_to_as_a_base64_block()
     {
         var content = ClaudeWire.Content("PRE", [new Turn(Turn.Flyback, "seen", [[1, 2, 3]])]);
 
-        content.Count.ShouldBe(4);
-        content[1]!["text"]!.GetValue<string>().ShouldContain("<flyback>");
+        content.Count.ShouldBe(5);
+        content[1]!["text"]!.GetValue<string>().ShouldBe("<flyback>\nseen\n");
         content[2]!["type"]!.GetValue<string>().ShouldBe("image");
         content[2]!["source"]!["data"]!.GetValue<string>().ShouldBe("AQID");
+        content[3]!["text"]!.GetValue<string>().ShouldBe("</flyback>");
     }
 
     [Fact]
-    public void The_conversation_so_far_is_marked_for_the_cache_and_the_prompt_to_answer_is_not()
+    public void The_conversation_so_far_is_marked_for_the_cache_on_text_and_the_prompt_to_answer_is_not()
     {
         var content = ClaudeWire.Content("PRE", [new Turn(Turn.Person, "hi", []), new Turn(Turn.Flyback, "seen", [[1, 2, 3]])]);
 
-        content.Select(block => block!["cache_control"] is not null).ShouldBe([false, false, false, true, false]);
-        content[3]!["type"]!.GetValue<string>().ShouldBe("image");
-        content[3]!["cache_control"]!["ttl"]!.GetValue<string>().ShouldBe("1h");
+        content.Select(block => block!["cache_control"] is not null).ShouldBe([false, false, false, false, true, false]);
+        content[4]!["type"]!.GetValue<string>().ShouldBe("text");
+        content[4]!["cache_control"]!["ttl"]!.GetValue<string>().ShouldBe("1h");
     }
 
     [Fact]

@@ -18,7 +18,9 @@ internal static class ClaudeWire
     /// <remarks>
     /// The last turn carries the one cache breakpoint Claude Code leaves free, so the
     /// next request reads everything before its newest turn from the cache. Its own
-    /// breakpoints are an hour long, and a shorter one ahead of them is refused.
+    /// breakpoints are an hour long, and a shorter one ahead of them is refused. A
+    /// turn's pictures go inside it, so it ends on text: a breakpoint on an image
+    /// caches nothing the next request reads.
     /// </remarks>
     public static JsonArray Content(string preamble, IReadOnlyList<Turn> turns)
     {
@@ -26,7 +28,13 @@ internal static class ClaudeWire
 
         foreach (var turn in turns)
         {
-            blocks.Add(Text($"<{turn.Role}>\n{turn.Text}\n</{turn.Role}>"));
+            if (turn.Pictures.Count == 0)
+            {
+                blocks.Add(Text($"<{turn.Role}>\n{turn.Text}\n</{turn.Role}>"));
+                continue;
+            }
+
+            blocks.Add(Text($"<{turn.Role}>\n{turn.Text}\n"));
 
             foreach (var png in turn.Pictures)
             {
@@ -41,6 +49,8 @@ internal static class ClaudeWire
                     },
                 });
             }
+
+            blocks.Add(Text($"</{turn.Role}>"));
         }
 
         blocks[^1]!["cache_control"] = new JsonObject { ["type"] = "ephemeral", ["ttl"] = "1h" };
