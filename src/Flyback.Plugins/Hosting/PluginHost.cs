@@ -137,7 +137,8 @@ internal static class PluginHost
             Unclashed(registry.Assistants, a => a.Id, "assistant", providers, plugins, problems),
             Unclashed(registry.SecretStores, s => s.Id, "secret store", providers, plugins, problems),
             Unclashed(registry.MidiInputs, i => i.Id, "MIDI input", providers, plugins, problems),
-            providers);
+            providers,
+            Unclashed(registry.AudioInputs, i => i.Id, "audio input", providers, plugins, problems));
     }
 
     /// <summary>
@@ -362,6 +363,7 @@ internal static class PluginHost
         private readonly List<IPatchAssistant> assistants = [];
         private readonly List<ISecretStore> secretStores = [];
         private readonly List<IMidiInput> midiInputs = [];
+        private readonly List<IAudioInput> audioInputs = [];
 
         /// <summary>Who registered each thing kept above, keyed by the thing itself.</summary>
         private readonly Dictionary<object, PluginInfo> providers = new(ReferenceEqualityComparer.Instance);
@@ -382,15 +384,17 @@ internal static class PluginHost
 
         public IReadOnlyList<IMidiInput> MidiInputs => midiInputs;
 
+        public IReadOnlyList<IAudioInput> AudioInputs => audioInputs;
+
         /// <summary>Every module offered, accepted or not, in order.</summary>
         private readonly List<NodeDef> offered = [];
 
         /// <summary>How far everything had got, to undo a plugin's registration back to.</summary>
         public readonly record struct Checkpoint(
-            ModuleCatalog Modules, int Offered, int Presets, int AudioOutputs, int Assistants, int SecretStores, int MidiInputs, int Problems);
+            ModuleCatalog Modules, int Offered, int Presets, int AudioOutputs, int Assistants, int SecretStores, int MidiInputs, int AudioInputs, int Problems);
 
         public Checkpoint Mark() => new(
-            Modules, offered.Count, presets.Count, audioOutputs.Count, assistants.Count, secretStores.Count, midiInputs.Count, problems.Count);
+            Modules, offered.Count, presets.Count, audioOutputs.Count, assistants.Count, secretStores.Count, midiInputs.Count, audioInputs.Count, problems.Count);
 
         public IEnumerable<NodeDef> OfferedSince(Checkpoint mark) => offered.Skip(mark.Offered);
 
@@ -404,6 +408,7 @@ internal static class PluginHost
             Trim(assistants, mark.Assistants);
             Trim(secretStores, mark.SecretStores);
             Trim(midiInputs, mark.MidiInputs);
+            Trim(audioInputs, mark.AudioInputs);
             problems.RemoveRange(mark.Problems, problems.Count - mark.Problems);
         }
 
@@ -486,6 +491,12 @@ internal static class PluginHost
         public void AddMidiInput(IMidiInput input)
         {
             midiInputs.Add(input);
+            providers[input] = Source;
+        }
+
+        public void AddAudioInput(IAudioInput input)
+        {
+            audioInputs.Add(input);
             providers[input] = Source;
         }
     }

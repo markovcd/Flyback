@@ -61,6 +61,9 @@ internal sealed class LiveValues
     /// </summary>
     public double At(int index) => (uint)index < (uint)values.Length ? values[index] : 0d;
 
+    /// <summary>Where <paramref name="key"/> sits in <see cref="Storage"/>, or -1 where this program does not read it.</summary>
+    internal int IndexOf(string key) => Array.IndexOf(keys, key);
+
     /// <summary>Whether this program reads <paramref name="key"/> at all.</summary>
     public bool Reads(string key) => Array.IndexOf(keys, key) >= 0;
 

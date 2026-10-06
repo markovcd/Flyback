@@ -177,10 +177,10 @@ public sealed class PatchContext
     // --- the speakers ---------------------------------------------------------
 
     /// <summary>A short stereo buffer through the real renderer, oversampling and filters included.</summary>
-    public float[] RenderAudio(int frames = 2_000)
+    public float[] RenderAudio(int frames = 2_000, ILineInSource? input = null)
     {
         var buffer = new float[frames * 2];
-        new AudioRenderer().Render(Sound.Program, buffer);
+        new AudioRenderer { Input = input }.Render(Sound.Program, buffer);
         return buffer;
     }
 

@@ -16,6 +16,7 @@
 /// </param>
 /// <param name="Ffmpeg">Where ffmpeg is, for a format that needs one.</param>
 /// <param name="Oversample">How many times the output rate the sound is evaluated at.</param>
+/// <param name="Input">What a Line In hears, or null for silence.</param>
 public readonly record struct MovieSettings(
     int Width,
     int Height,
@@ -24,7 +25,8 @@ public readonly record struct MovieSettings(
     int Quality = JpegWriter.DefaultQuality,
     ClipFormat? Format = null,
     string? Ffmpeg = null,
-    int Oversample = AudioRenderer.DefaultOversample)
+    int Oversample = AudioRenderer.DefaultOversample,
+    ILineInSource? Input = null)
 {
     /// <summary>Always at least one, so the shortest export is still a picture.</summary>
     public int FrameCount => Math.Max(1, (int)Math.Round(Seconds * FramesPerSecond));

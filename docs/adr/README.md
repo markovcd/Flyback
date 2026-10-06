@@ -139,6 +139,7 @@ context, decision, consequences.
 | [0023](0023-oversample-the-audio-path.md) | Oversample the audio path rather than band-limiting modules *(2× and a setting by [0168](0168-the-sound-is-oversampled-2x-and-a-setting.md))* |
 | [0168](0168-the-sound-is-oversampled-2x-and-a-setting.md) | The sound is oversampled 2× by default, and the factor is a setting *(user-directed)* |
 | [0024](0024-audio-device-in-the-shell.md) | Sample generation in the engine, the audio device in the shell |
+| [0178](0178-a-line-in-hears-the-microphone-while-the-sound-plays.md) | A Line In hears the microphone while the sound plays *(user-directed)* |
 | [0027](0027-delay-lines-give-the-audio-path-a-memory.md) | Delay lines give the audio path a memory *(user-directed)* |
 | [0029](0029-linux-sound-through-alsa.md) | Linux sound through ALSA, on a thread of our own |
 | [0030](0030-oscillators-accumulate-their-phase.md) | Oscillators accumulate their phase on the audio path |

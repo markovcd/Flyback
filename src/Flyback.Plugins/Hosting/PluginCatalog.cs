@@ -35,7 +35,8 @@ internal sealed class PluginCatalog
         IReadOnlyList<IPatchAssistant>? assistants = null,
         IReadOnlyList<ISecretStore>? secretStores = null,
         IReadOnlyList<IMidiInput>? midiInputs = null,
-        IReadOnlyDictionary<object, PluginInfo>? providers = null)
+        IReadOnlyDictionary<object, PluginInfo>? providers = null,
+        IReadOnlyList<IAudioInput>? audioInputs = null)
     {
         // Copied under reference equality: two backends are the same one only if
         // they are the same object, whatever their ids or their Equals say.
@@ -51,6 +52,7 @@ internal sealed class PluginCatalog
         Assistants = assistants ?? [];
         SecretStores = secretStores ?? [];
         MidiInputs = midiInputs ?? [];
+        AudioInputs = audioInputs ?? [];
     }
 
     private readonly Dictionary<object, PluginInfo> providers;
@@ -67,6 +69,9 @@ internal sealed class PluginCatalog
 
     /// <summary>Every way installed of hearing what is plugged in.</summary>
     public IReadOnlyList<IMidiInput> MidiInputs { get; }
+
+    /// <summary>Every way installed of hearing a microphone or a line.</summary>
+    public IReadOnlyList<IAudioInput> AudioInputs { get; }
 
     /// <summary>
     /// The engine's modules with every plugin's folded in. Install it before
@@ -110,6 +115,16 @@ internal sealed class PluginCatalog
         .Where(o => Supported(o))
         .OrderByDescending(o => o.Priority)
         .ThenBy(o => o.Id, StringComparer.Ordinal)
+        .FirstOrDefault();
+
+    /// <summary>
+    /// The way of hearing a microphone to use here: supported, highest priority, ties broken
+    /// on id. Null where nothing can listen, and a Line In is then silent.
+    /// </summary>
+    public IAudioInput? PreferredAudioInput => AudioInputs
+        .Where(Supported)
+        .OrderByDescending(i => i.Priority)
+        .ThenBy(i => i.Id, StringComparer.Ordinal)
         .FirstOrDefault();
 
     /// <summary>
@@ -171,6 +186,19 @@ internal sealed class PluginCatalog
         .OrderByDescending(i => i.Priority)
         .ThenBy(i => i.Id, StringComparer.Ordinal)
         .FirstOrDefault() ?? NoMidiInput.Instance;
+
+    /// <summary>A backend that throws while answering whether it works here has answered no.</summary>
+    private static bool Supported(IAudioInput input)
+    {
+        try
+        {
+            return input.IsSupported;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
     /// <summary>A backend that throws while answering whether it works here has answered no.</summary>
     private static bool Supported(IMidiInput input)

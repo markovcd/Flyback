@@ -135,6 +135,8 @@ internal static class ModuleGlyphs
             "M2,5 L22,5 L22,19 L2,19 Z M9,5 L9,19 M16,5 L16,19 "
             + "M6,5 L6,13 L11,13 L11,5 M13,5 L13,13 L18,13 L18,5",
         [NodeCatalog.SampleTypeId] = "M4,9 L4,15 M8,5 L8,19 M12,8 L12,16 M16,3 L16,21 M20,10 L20,14",
+        [NodeCatalog.LineInTypeId] =
+            "M9,6 A3,3 0 0 1 15,6 L15,11 A3,3 0 0 1 9,11 Z M5,11 A7,7 0 0 0 19,11 M12,18 L12,21 M9,21 L15,21",
         [NodeCatalog.PictureTypeId] =
             "M3,5 L21,5 L21,19 L3,19 Z M3,16 L9,10 L13.5,14.5 L16.5,11.5 L21,16 "
             + "M14.9,9.4 A1.8,1.8 0 1 1 18.5,9.4 A1.8,1.8 0 1 1 14.9,9.4",

@@ -1,1 +1,5 @@
 #nullable enable
+Flyback.Core.Graph.LineInSignal
+const Flyback.Core.Graph.LineInSignal.Left = "line-in/left" -> string!
+const Flyback.Core.Graph.LineInSignal.Right = "line-in/right" -> string!
+const Flyback.Core.Graph.NodeCatalog.LineInTypeId = "audio.in" -> string!

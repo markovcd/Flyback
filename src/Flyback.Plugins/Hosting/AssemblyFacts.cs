@@ -102,6 +102,7 @@ internal sealed record AssemblyFacts(
         [nameof(IPluginRegistry.AddPresets)] = "presets",
         [nameof(IPluginRegistry.AddAudioOutput)] = "a sound output",
         [nameof(IPluginRegistry.AddMidiInput)] = "a MIDI input",
+        [nameof(IPluginRegistry.AddAudioInput)] = "a sound input",
         [nameof(IPluginRegistry.AddPatchAssistant)] = "an assistant",
         [nameof(IPluginRegistry.AddSecretStore)] = "a secret store",
     };

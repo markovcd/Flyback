@@ -1,2 +1,18 @@
 #nullable enable
 Flyback.Plugins.Assist.IPatchAssistant.NeedsKey.get -> bool
+Flyback.Plugins.Audio.AudioCaptureCallback
+virtual Flyback.Plugins.Audio.AudioCaptureCallback.Invoke(System.ReadOnlySpan<float> interleaved) -> void
+Flyback.Plugins.Audio.IAudioCapture
+Flyback.Plugins.Audio.IAudioCapture.Channels.get -> int
+Flyback.Plugins.Audio.IAudioCapture.IsRunning.get -> bool
+Flyback.Plugins.Audio.IAudioCapture.SampleRate.get -> int
+Flyback.Plugins.Audio.IAudioCapture.Start(Flyback.Plugins.Audio.AudioCaptureCallback! deliver) -> void
+Flyback.Plugins.Audio.IAudioCapture.Stop() -> void
+Flyback.Plugins.Audio.IAudioInput
+Flyback.Plugins.Audio.IAudioInput.Create(Flyback.Plugins.Audio.AudioFormat format, Flyback.Plugins.Settings.SettingValues! settings) -> Flyback.Plugins.Audio.IAudioCapture!
+Flyback.Plugins.Audio.IAudioInput.Form(Flyback.Plugins.Settings.SettingValues! values) -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Settings.SettingField!>!
+Flyback.Plugins.Audio.IAudioInput.Id.get -> string!
+Flyback.Plugins.Audio.IAudioInput.IsSupported.get -> bool
+Flyback.Plugins.Audio.IAudioInput.Name.get -> string!
+Flyback.Plugins.Audio.IAudioInput.Priority.get -> int
+Flyback.Plugins.IPluginRegistry.AddAudioInput(Flyback.Plugins.Audio.IAudioInput! input) -> void

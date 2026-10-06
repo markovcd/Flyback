@@ -62,6 +62,21 @@ internal sealed class SoundSection : ISettingsSection
     /// </summary>
     private readonly SettingsForm soundForm = new() { Name = "soundForm", Beside = true };
 
+    /// <summary>
+    /// The sound input backend's own settings — which microphone a Line In hears — drawn
+    /// from what it declares, like <see cref="soundForm"/>. Empty where none is installed.
+    /// </summary>
+    private readonly SettingsForm inputForm = new() { Name = "inputForm", Beside = true };
+
+    /// <summary>Which backend listens, and which plugin it came from, above the rows it asks for.</summary>
+    private readonly TextBlock inputNote = new()
+    {
+        Name = "inputNote",
+        FontSize = Text.Small,
+        Foreground = Text.Muted,
+        TextWrapping = TextWrapping.Wrap,
+    };
+
     /// <summary>Which backend plays, and which plugin it came from, above the rows it asks for.</summary>
     private readonly TextBlock soundNote = new()
     {
@@ -99,6 +114,14 @@ internal sealed class SoundSection : ISettingsSection
 
         rows.Children.Add(InspectorRows.Field("Latency", latency));
 
+        // A page has no microphone to offer, and a machine with no input plugin says nothing.
+        if (!host.InPage && plugins.PreferredAudioInput is { } input)
+        {
+            inputNote.Text = SettingRows.Attributed($"Heard by {input.Name}, for a Line In", plugins.Provider(input));
+            rows.Children.Add(inputNote);
+            rows.Children.Add(inputForm);
+        }
+
         // A page lowers its oversampling itself as the sound needs, so it has none to pick.
         if (host.InPage) return;
 
@@ -134,6 +157,8 @@ internal sealed class SoundSection : ISettingsSection
 
         if (settings.Current.LatencyMilliseconds != before.LatencyMilliseconds || SoundChanged(before, settings.Current))
             playback.ReopenAudio(settings.Current);
+
+        if (InputChanged(before, settings.Current)) playback.ReopenInput();
     }
 
     private void Show(OutputSettings current)
@@ -144,6 +169,9 @@ internal sealed class SoundSection : ISettingsSection
 
         if (plugins.PreferredAudioOutput is { } output)
             soundForm.Show(output.Form, current.SoundOf(output.Id));
+
+        if (plugins.PreferredAudioInput is { } input)
+            inputForm.Show(input.Form, current.SoundInOf(input.Id));
     }
 
     /// <summary>Writes what the controls hold into <paramref name="into"/>.</summary>
@@ -155,6 +183,7 @@ internal sealed class SoundSection : ISettingsSection
         into.StepDownOnDropouts = stepDown.IsChecked == true;
 
         if (plugins.PreferredAudioOutput is { } output) into.RememberSound(output.Id, soundForm.Values);
+        if (plugins.PreferredAudioInput is { } input) into.RememberSoundIn(input.Id, inputForm.Values);
     }
 
     /// <summary>
@@ -171,5 +200,16 @@ internal sealed class SoundSection : ISettingsSection
 
         return !output.Form(now).All(field =>
             field.Sane(before.SoundOf(output.Id).All.GetValueOrDefault(field.Key)) == field.Sane(now.All.GetValueOrDefault(field.Key)));
+    }
+
+    /// <summary>The input backend's counterpart of <see cref="SoundChanged"/>.</summary>
+    private bool InputChanged(OutputSettings before, OutputSettings after)
+    {
+        if (plugins.PreferredAudioInput is not { } input) return false;
+
+        var now = after.SoundInOf(input.Id);
+
+        return !input.Form(now).All(field =>
+            field.Sane(before.SoundInOf(input.Id).All.GetValueOrDefault(field.Key)) == field.Sane(now.All.GetValueOrDefault(field.Key)));
     }
 }

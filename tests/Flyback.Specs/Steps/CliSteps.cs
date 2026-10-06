@@ -8,6 +8,7 @@ using Flyback.Engine.Graph;
 using Reqnroll;
 using Reqnroll.UnitTestProvider;
 using Shouldly;
+using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Language;
@@ -51,6 +52,46 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     [Given("the text saved as {string}:")]
     public void GivenTextSaved(string name, string text) => File.WriteAllText(Path(name), text);
 
+    /// <summary>A mono 16-bit WAV of a sine, a second long at the engine's rate.</summary>
+    [Given("a {float} Hz tone saved as {string}")]
+    public void GivenToneSaved(float hertz, string name)
+    {
+        var tone = LineInSteps.Tone(hertz, GlobalConstants.SampleRate, 1);
+        var data = new byte[tone.Length * 2];
+
+        for (var i = 0; i < tone.Length; i++)
+            BitConverter.TryWriteBytes(data.AsSpan(i * 2), (short)(tone[i] * short.MaxValue));
+
+        using var file = File.Create(Path(name));
+        using var writer = new BinaryWriter(file);
+
+        writer.Write("RIFF"u8);
+        writer.Write(36 + data.Length);
+        writer.Write("WAVEfmt "u8);
+        writer.Write(16);
+        writer.Write((short)1);
+        writer.Write((short)1);
+        writer.Write(GlobalConstants.SampleRate);
+        writer.Write(GlobalConstants.SampleRate * 2);
+        writer.Write((short)2);
+        writer.Write((short)16);
+        writer.Write("data"u8);
+        writer.Write(data.Length);
+        writer.Write(data);
+    }
+
+    [Then("{string} plays a {float} Hz tone")]
+    public void ThenPlaysATone(string written, float hertz)
+    {
+        var clip = WavReader.Read(Path(written), out var fault).ShouldNotBeNull(fault.ToString());
+
+        LineInSteps.RisingCrossings([.. clip.Samples.Skip(200)], clip.SampleRate).ShouldBe(hertz, hertz * 0.02);
+    }
+
+    [Then("{string} is silent")]
+    public void ThenIsSilent(string written) =>
+        WavReader.Read(Path(written), out var fault).ShouldNotBeNull(fault.ToString()).Samples.ShouldAllBe(v => v == 0f);
+
     [Given("the editor's settings oversample the sound as they please")]
     public void GivenNoOversampleSetting() => File.WriteAllText(Path("settings.json"), "{}");
 
@@ -67,7 +108,7 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
             "render", Path(patch), "-o", Path(into),
             "--seconds", seconds.ToString(System.Globalization.CultureInfo.InvariantCulture),
             "--settings", Path("settings.json"),
-            .. flags.Split(' ', StringSplitOptions.RemoveEmptyEntries),
+            .. flags.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(Beside),
         ]);
 
         code.ShouldBe(0, said);
@@ -342,6 +383,9 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
 
         return PackageSigner.Sign(PluginPackage.Pack([(PluginPackage.AnyPlatform, System.IO.Path.Combine(PluginHost.DefaultDirectory, "Figures"))]), key);
     }
+
+    /// <summary>A flag's value that names a file saved by an earlier step is that file; anything else is itself.</summary>
+    private string Beside(string argument) => File.Exists(Path(argument)) ? Path(argument) : argument;
 
     private string Path(string name) => System.IO.Path.Combine(folder.FullName, name);
 

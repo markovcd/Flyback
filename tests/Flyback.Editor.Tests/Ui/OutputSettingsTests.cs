@@ -20,6 +20,9 @@ using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
 using Flyback.Engine.Render;
 using Flyback.Plugins;
+using Flyback.Plugins.Audio;
+using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 using Flyback.Ui;
@@ -60,9 +63,13 @@ public class OutputSettingsTests : EditorTest
     /// plugins loaded the catalog is empty and the audio device is silent,
     /// which is the same path a machine with no sound backend takes.
     /// </summary>
-    private MainWindow Open(string? settingsPath = null)
+    private MainWindow Open(string? settingsPath = null, PluginCatalog? plugins = null)
     {
-        var window = NewMainWindow(new EditorSetup { Folders = new() { SettingsPath = settingsPath } });
+        var window = NewMainWindow(new EditorSetup
+        {
+            Folders = new() { SettingsPath = settingsPath },
+            Plugins = plugins ?? PluginCatalog.Empty,
+        });
 
         window.Show();
         window.UpdateLayout();
@@ -520,6 +527,55 @@ public class OutputSettingsTests : EditorTest
 
         SettingRows.Attributed("Played by WASAPI (shared mode)", null)
             .ShouldBe("Played by WASAPI (shared mode).");
+    }
+
+    /// <summary>
+    /// A sound input backend's question is asked on the Sound tab, under the name of the
+    /// plugin that offered it, and the answer is kept apart from the sound output's.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_sound_input_is_chosen_on_the_sound_tab_and_kept_under_its_own_backend()
+    {
+        var plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, [.. Presets.All], [], audioInputs: [new TwoMicrophones()]);
+        var window = Open(settingsPath, plugins);
+        var dialog = OpenSettings(window, SoundTab);
+
+        Named<TextBlock>(dialog, "inputNote").Text.ShouldBe("Heard by Two microphones, for a Line In.");
+
+        var choice = All<ComboBox>(Named<SettingsForm>(dialog, "inputForm")).Single();
+        choice.SelectedIndex.ShouldBe(0);
+
+        choice.SelectedIndex = 1;
+        CloseSettings(window, dialog, save: true);
+
+        var kept = OutputSettings.Load(settingsPath);
+        kept.SoundInOf("two").Text("device", "").ShouldBe("rear");
+        kept.SoundOf("two").All.ShouldBeEmpty();
+    }
+
+    [AvaloniaFact]
+    public void Without_a_sound_input_the_sound_tab_asks_nothing_about_one()
+    {
+        var window = Open();
+        var dialog = OpenSettings(window, SoundTab);
+
+        All<SettingsForm>(dialog).Select(form => form.Name).ShouldNotContain("inputForm");
+    }
+
+    private sealed class TwoMicrophones : IAudioInput
+    {
+        public string Id => "two";
+
+        public string Name => "Two microphones";
+
+        public int Priority => 0;
+
+        public bool IsSupported => true;
+
+        public IReadOnlyList<SettingField> Form(SettingValues values) =>
+            [new SettingField.Pick("device", "Input", [new SettingOption("front", "Front"), new SettingOption("rear", "Rear")], "front")];
+
+        public IAudioCapture Create(AudioFormat format, SettingValues settings) => throw new NotSupportedException();
     }
 
     [AvaloniaFact]

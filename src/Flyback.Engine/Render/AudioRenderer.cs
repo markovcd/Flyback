@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using Flyback.Core.Compile;
 using Flyback.Core;
+using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 
 namespace Flyback.Engine.Render;
@@ -66,6 +67,12 @@ public sealed class AudioRenderer
 
     /// <summary>Sample-accurate position on the timeline. Audio cannot be advanced by wall-clock deltas.</summary>
     public double Time { get; private set; }
+
+    /// <summary>
+    /// What a Line In hears, or null for silence. Read once a frame, and left alone by
+    /// <see cref="Reset"/>: a microphone does not rewind.
+    /// </summary>
+    public ILineInSource? Input { get; set; }
 
     /// <summary>Clears filter state and rewinds. Equivalent to the video renderer's Reset.</summary>
     public void Reset()
@@ -198,8 +205,27 @@ public sealed class AudioRenderer
         var innerStep = 1.0 / (SampleRate * Oversample);
         var outerStep = 1.0 / SampleRate;
 
+        // An offline render has no block of its own to be played into, and a file
+        // standing in for the microphone still has to land somewhere.
+        if (live is null && Input is not null && program.LiveInputs.Count > 0) live = new LiveValues(program.LiveInputs);
+
+        var lineLeft = live?.IndexOf(LineInSignal.Left) ?? -1;
+        var lineRight = live?.IndexOf(LineInSignal.Right) ?? -1;
+        var heard = lineLeft >= 0 || lineRight >= 0 ? Input : null;
+
         for (var frame = 0; frame < frames; frame++)
         {
+            // Once a frame, so the oversampled evaluations inside it hear the same instant.
+            if (live is not null && (lineLeft >= 0 || lineRight >= 0))
+            {
+                var l = 0f;
+                var r = 0f;
+                heard?.Next(out l, out r);
+
+                if (lineLeft >= 0) live.Storage[lineLeft] = l;
+                if (lineRight >= 0) live.Storage[lineRight] = r;
+            }
+
             for (var k = 0; k < Oversample; k++)
             {
                 var t = Time + k * innerStep;

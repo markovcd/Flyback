@@ -42,4 +42,6 @@ internal sealed class ModuleCollector : IPluginRegistry
     public void AddSecretStore(ISecretStore store) { }
 
     public void AddMidiInput(IMidiInput input) { }
+
+    public void AddAudioInput(IAudioInput input) { }
 }

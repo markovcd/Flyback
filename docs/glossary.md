@@ -126,6 +126,7 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | **the web viewer** | The viewer in a browser: the engine compiled to WebAssembly behind a page. | `Flyback.Viewer.Web`; one patch playing is `WebPlayer` | web player, web app |
 | **transport** | Play, pause and rewind. | `Transport`, shared by `Playback` and `ViewerPlayer` | — |
 | **rewind** | Take the patch back to zero seconds, in the picture and the sound. | — | reset, restart |
+| **sound input** | The microphone or line input the machine hears, which a Line In plays. Opened only while the sound that is playing holds a Line In. | `IAudioInput`, `IAudioCapture`, `LineIn` | audio in, mic input; capture (a take is a recording) |
 | **record**, **take** | Recording the patch live from the editor (Ctrl+R), and the file one recording makes. | `Takes`, `LiveRecorder` | capture, clip |
 | **render** | Writing a patch to a file from the command line, exactly and at any speed. | `RenderCommand` | export (except as the menu's word for it), record |
 | **still**, **clip** | What a render writes: one picture, or picture and sound over a length of time. | — | screenshot, video |

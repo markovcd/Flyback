@@ -310,6 +310,12 @@
     over time. What a module reads across decides what it does: Coordinates for a picture, Time for a
     sound.</p>
 
+    <p>A sound does not have to be made. A <strong>Line In</strong> plays what the microphone or line input
+    hears, as it plays: wire its <code>left</code> into the Output, or through a filter or an echo first. It
+    listens only while the patch plays and reaches the speakers, and lets the microphone go the moment it stops.
+    Wear headphones, or the speakers will feed back into it. Choose which input listens in
+    <strong>Settings → Sound</strong>. Line In works on Linux for now; elsewhere it stays silent and says so.</p>
+
     <div class="note">
       <span class="tag">How one patch does both</span>
       <p>Flyback compiles the patch once. The preview runs that program for every pixel with <code>x</code> and
@@ -644,6 +650,9 @@ flyback-cli render drone.fbk -o drone.mp4 --seconds 30 --gpu
 # one named group switched off, or heard alone with what feeds it and carries it to the Output
 flyback-cli render band.fbk -o band.wav --seconds 30 --mute Pad
 flyback-cli render band.fbk -o band.wav --seconds 30 --solo Bass
+
+# a Line In has no microphone in a render, so it hears the sound file it is given
+flyback-cli render echo.fbks -o echo.wav --seconds 10 --input voice.wav
 
 # how loud it came out, in LUFS and true peak, as a streaming service measures it
 flyback-cli render drone.fbk -o drone.wav --seconds 30 --loudness

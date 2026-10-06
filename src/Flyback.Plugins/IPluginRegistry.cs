@@ -51,4 +51,10 @@ public interface IPluginRegistry
     /// somebody opens a picker, which is a different moment and a later one.
     /// </summary>
     void AddMidiInput(IMidiInput input);
+
+    /// <summary>
+    /// Offers a way of hearing a microphone or a line. Registering it must not open a
+    /// device and must not enumerate one.
+    /// </summary>
+    void AddAudioInput(IAudioInput input);
 }

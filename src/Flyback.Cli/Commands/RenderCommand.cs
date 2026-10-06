@@ -94,6 +94,23 @@ internal static class RenderCommand
         // Only the half being written. A patch wired for the eye and not the ear
         // has plenty to say about its audio program, and none of it is worth
         // saying to somebody asking for a picture.
+        // Read before anything is compiled, like ffmpeg above: a file that will not open is
+        // worth knowing in a second.
+        ILineInSource? heard = null;
+
+        if (options.Input is { } input && !still)
+        {
+            var library = new SampleLibrary();
+
+            if (library.Find(input.FullName) is not { } clip)
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: --input {input.Name}: {library.Explain(input.FullName)}");
+                return Exit.Failed;
+            }
+
+            heard = RecordedLineIn.From(clip, GlobalConstants.SampleRate);
+        }
+
         var wantsPicture = still || format!.HasPicture;
         var wantsSound = !still && (!format!.HasPicture || patch.Reaches().Sound);
 
@@ -154,12 +171,12 @@ internal static class RenderCommand
             }
             else if (!format!.HasPicture)
             {
-                Sound(audio!.Program, format, options, ffmpeg, loudness);
+                Sound(audio!.Program, format, options, ffmpeg, loudness, heard);
                 code = Exit.Ok;
             }
             else
             {
-                code = Movie(video!.Program, audio?.Program, frames, format, options, ffmpeg, error, progress, loudness, cancellation);
+                code = Movie(video!.Program, audio?.Program, frames, format, options, ffmpeg, error, progress, loudness, heard, cancellation);
             }
         }
         catch (Exception ex)
@@ -240,11 +257,11 @@ internal static class RenderCommand
     }
 
     private static void Sound(
-        CompiledPatch program, ClipFormat format, RenderOptions options, string? ffmpeg, LoudnessMeter? loudness)
+        CompiledPatch program, ClipFormat format, RenderOptions options, string? ffmpeg, LoudnessMeter? loudness, ILineInSource? heard)
     {
         // Nothing is drawn, but a patch reading Coordinates' aspect is still told
         // the frame it would have been drawn at.
-        var renderer = new AudioRenderer(oversample: options.Oversample) { Aspect = SynthRenderer.AspectOf(options.Width, options.Height) };
+        var renderer = new AudioRenderer(oversample: options.Oversample) { Aspect = SynthRenderer.AspectOf(options.Width, options.Height), Input = heard };
         var frames = (int)Math.Round(renderer.SampleRate * options.Seconds);
         var samples = new float[frames * NodeCatalog.AudioChannels];
 
@@ -274,10 +291,11 @@ internal static class RenderCommand
         TextWriter error,
         IProgress<double>? progress,
         LoudnessMeter? loudness,
+        ILineInSource? heard,
         CancellationToken cancellation)
     {
         var settings = new MovieSettings(
-            options.Width, options.Height, options.Seconds, options.Fps, options.Quality, format, ffmpeg, options.Oversample);
+            options.Width, options.Height, options.Seconds, options.Fps, options.Quality, format, ffmpeg, options.Oversample, heard);
 
         // Silence is not worth a track. A patch with nothing in its 'left' is
         // compiled for the eye only above, and gets a clip with no audio stream

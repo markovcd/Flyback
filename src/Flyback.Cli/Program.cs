@@ -492,6 +492,13 @@ internal static class Program
 
         oversample.AcceptOnlyFromAmong([.. AudioRenderer.Oversamples.Select(factor => factor.ToString(System.Globalization.CultureInfo.InvariantCulture))]);
 
+        var input = new Option<FileInfo?>("--input")
+        {
+            HelpName = "file",
+            Description = "A sound file for a Line In to hear, from its start, in place of the microphone a render has none of. "
+                + "Left out, a Line In is silent.",
+        };
+
         var mute = new Option<string[]>("--mute")
         {
             HelpName = "group",
@@ -515,7 +522,7 @@ internal static class Program
             + "and ffmpeg left out are the editor's: its preview size and Settings → Recording.")
         {
             patch, preset, presets, output, size, at, seconds, fps, quality, format, ffmpeg, loudness, interpreted, gpu,
-            processor, settings, oversample, mute, solo,
+            processor, settings, oversample, input, mute, solo,
         };
 
         command.SetAction((result, cancellation) =>
@@ -597,7 +604,8 @@ internal static class Program
                 result.GetValue(gpu) ? PictureBackend.Gpu
                 : result.GetValue(processor) ? PictureBackend.Processor
                 : PictureBackend.Any,
-                result.GetValue(oversample));
+                result.GetValue(oversample),
+                result.GetValue(input));
 
             return Task.FromResult(
                 RenderCommand.Run(

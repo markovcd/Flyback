@@ -283,6 +283,7 @@
           <tr><td><code>AddSecretStore</code></td><td>Somewhere the OS holds a secret, honored only from a plugin Flyback ships or one allowed with <code>--secrets</code></td><td>Read or write one</td></tr>
           <tr><td><code>AddPatchAssistant</code></td><td>Something that can author a patch, sending over the <code>IAssistantTransport</code> it is handed: the host puts the key on requests to the one origin it was entered for, and the assistant never holds it</td><td>Open a connection, or need a credential present</td></tr>
           <tr><td><code>AddMidiInput</code></td><td>A MIDI backend</td><td>Open a device, or list the ones plugged in</td></tr>
+          <tr><td><code>AddAudioInput</code></td><td>A sound input backend, which a Line In listens through</td><td>Open a device, or list the ones plugged in</td></tr>
         </tbody>
       </table>
     </div>
@@ -797,6 +798,17 @@ SampleExtra.Set(b.Add(NodeCatalog.SampleTypeId), <span class="s">"hello.wav"</sp
     <code>SampleRate</code>. Report how long a sample takes from the callback to the speaker through
     <code>Latency</code>, which a Clock In runs ahead by; left out, it is nought.</p>
 
+    <h3>Sound inputs</h3>
+
+    <p>A sound input is the mirror of a sound backend: <code>IAudioInput</code> offers itself with an
+    <code>Id</code>, <code>Name</code>, <code>Priority</code>, <code>IsSupported</code> and a
+    <code>Form</code>, and <code>Create</code> makes an <code>IAudioCapture</code> that opens nothing until
+    <code>Start</code> is handed a callback. The callback receives interleaved frames of <code>Channels</code>
+    samples at <code>SampleRate</code>, on the capture thread, and <strong>must not block, allocate or
+    throw</strong>. Flyback starts it only while the sound that is playing holds a Line In, and stops it
+    when the sound stops, so a patch that never listens never opens the microphone. The shipped one is in the
+    Linux plugin, through ALSA.</p>
+
     <h3>MIDI inputs</h3>
 
     <p>A MIDI backend has the same shape: <code>IMidiInput</code> offers itself with an <code>Id</code>,
@@ -989,7 +1001,7 @@ flyback-cli plugin describe ripple.fbkp --json</code></pre>
           <tr><td>A provider claiming ids that already exist</td><td>Refused — it could answer for modules saved patches mean something else by</td></tr>
           <tr><td>Two plugins with one <code>Info.Id</code></td><td>The second is ignored</td></tr>
           <tr><td>A preset name already offered</td><td>The later preset is ignored</td></tr>
-          <tr><td>A sound backend, MIDI input, assistant or secret store id registered twice</td><td>Refused to both, and each is named</td></tr>
+          <tr><td>A sound backend, sound input, MIDI input, assistant or secret store id registered twice</td><td>Refused to both, and each is named</td></tr>
           <tr><td>A folder nobody allowed, in a Release build</td><td>Not loaded, and listed as not yet allowed with the command that allows it</td></tr>
           <tr><td>An allowed or shipped folder with a file changed since</td><td>Not loaded, naming the file</td></tr>
           <tr><td>A secret store from a plugin not allowed to keep keys</td><td>Refused, and the plugin loads without it</td></tr>

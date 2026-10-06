@@ -22,17 +22,20 @@ internal sealed class Transport
     private readonly PreviewHost? preview;
     private readonly IlCompiler compiler;
     private readonly MidiHub midi;
+    private readonly LineIn? lineIn;
 
     /// <summary>Where the picture is held while <see cref="Paused"/>.</summary>
     private double frozenAt;
 
     /// <param name="preview">The picture's surface, or null where there is no picture.</param>
-    public Transport(IAudioEngine audio, PreviewHost? preview, IlCompiler compiler, MidiHub midi)
+    /// <param name="lineIn">The microphone, or null where there is none to hear.</param>
+    public Transport(IAudioEngine audio, PreviewHost? preview, IlCompiler compiler, MidiHub midi, LineIn? lineIn = null)
     {
         this.audio = audio;
         this.preview = preview;
         this.compiler = compiler;
         this.midi = midi;
+        this.lineIn = lineIn;
 
         // The renderer is the processor's for good if the graphics card refuses.
         if (preview is not null) preview.BackendChanged += _ => Submit();
@@ -87,6 +90,7 @@ internal sealed class Transport
 
         var relaid = midi.Lay(patch.Keyboard);
         midi.Follow(Blocks);
+        lineIn?.Follow();
 
         return relaid;
     }
@@ -95,6 +99,7 @@ internal sealed class Transport
     public void Start()
     {
         audio.Start();
+        lineIn?.Follow();
 
         // Each tick also hands the picture what the speakers just played: a Scope's
         // chart and a Meter's reading. No sound, no chart.
@@ -117,6 +122,7 @@ internal sealed class Transport
         if (preview is not null) preview.Clock = Paused ? () => frozenAt : null;
 
         audio.Stop();
+        lineIn?.Follow();
 
         if (preview is not null) audio.Deafen(preview.Live);
     }

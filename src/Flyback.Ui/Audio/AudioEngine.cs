@@ -50,6 +50,9 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
     private State activeState = new(CompiledPatch.Silent, null, LiveValues.None, new AudioRenderer(sound.Device.SampleRate));
     private IAudioSink? capture;
 
+    /// <summary>What a Line In hears, handed to every renderer made here.</summary>
+    private ILineInSource? lineIn;
+
     // One while a rewind is waiting for the callback to carry it out.
     private int rewindPending;
 
@@ -146,11 +149,21 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
             var state = Volatile.Read(ref activeState);
             if (value == state.Renderer.Oversample) return;
 
-            var renderer = new AudioRenderer(state.Renderer.SampleRate, value) { Aspect = Volatile.Read(ref aspect) };
+            var renderer = new AudioRenderer(state.Renderer.SampleRate, value) { Aspect = Volatile.Read(ref aspect), Input = lineIn };
             renderer.SeekTo(state.Renderer.Time);
             renderer.Prepare(state.Program);
 
             Volatile.Write(ref activeState, state with { Renderer = renderer, Memory = renderer.DelayMemoryFor(state.Program) });
+        }
+    }
+
+    public ILineInSource? Input
+    {
+        get => lineIn;
+        set
+        {
+            lineIn = value;
+            Volatile.Read(ref activeState).Renderer.Input = value;
         }
     }
 

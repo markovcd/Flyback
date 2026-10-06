@@ -138,7 +138,7 @@ public static class MovieRenderer
         // being written.
         var speaker = audio is null
             ? null
-            : new AudioRenderer(oversample: settings.Oversample) { Aspect = SynthRenderer.AspectOf(width, height) };
+            : new AudioRenderer(oversample: settings.Oversample) { Aspect = SynthRenderer.AspectOf(width, height), Input = settings.Input };
         var samples = Array.Empty<float>();
         var written = 0L;
 

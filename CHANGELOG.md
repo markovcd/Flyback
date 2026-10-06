@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A Line In module plays what the microphone hears, on Linux; `flyback-cli render --input <file>` gives a render a sound file to hear.
+
 - The website and the preset site are at flybackmodular.app, and the old GitHub Pages address sends you there. Editors up to 0.7.1 can no longer reach shared presets, shared plugins or letters until they update.
 
 - The preset gallery's pictures are sharper, without the smudge around their edges.

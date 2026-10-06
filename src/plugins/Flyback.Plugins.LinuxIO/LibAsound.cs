@@ -28,6 +28,7 @@ internal static partial class LibAsound
     public const string DefaultDevice = "default";
 
     public const int PlaybackStream = 0;    // SND_PCM_STREAM_PLAYBACK
+    public const int CaptureStream = 1;     // SND_PCM_STREAM_CAPTURE
     public const int Blocking = 0;          // the absence of SND_PCM_NONBLOCK
     public const int InterleavedAccess = 3; // SND_PCM_ACCESS_RW_INTERLEAVED
 
@@ -57,6 +58,13 @@ internal static partial class LibAsound
     /// </summary>
     [LibraryImport(Library, EntryPoint = "snd_pcm_writei")]
     public static unsafe partial nint WriteInterleaved(IntPtr pcm, float* buffer, nuint frames);
+
+    /// <summary>
+    /// Blocks until a period has been heard. Returns frames read, which may be fewer than
+    /// asked for, or a negative error code.
+    /// </summary>
+    [LibraryImport(Library, EntryPoint = "snd_pcm_readi")]
+    public static unsafe partial nint ReadInterleaved(IntPtr pcm, float* buffer, nuint frames);
 
     /// <summary>
     /// Puts the stream back after an underrun or a suspend, which are the two
@@ -92,12 +100,23 @@ internal static partial class LibAsound
     /// description ALSA gives it — the same list <c>aplay -L</c> prints.
     /// </summary>
     /// <remarks>
-    /// Devices that capture only are left out, and so are <c>null</c>, which plays
+    /// Devices that serve the other direction only are left out, and so are <c>null</c>, which plays
     /// nothing, <c>default</c>, which the caller offers under its own name, and raw
     /// <c>hw:</c> routes, which the float this plugin writes would not open.
     /// </remarks>
-    public static unsafe IReadOnlyList<(string Name, string Description)> PlaybackDevices()
+    public static IReadOnlyList<(string Name, string Description)> PlaybackDevices() => Devices(capture: false);
+
+    /// <summary>
+    /// Every PCM device that can listen, listed the way <see cref="PlaybackDevices"/> lists
+    /// what can play — the same list <c>arecord -L</c> prints.
+    /// </summary>
+    public static IReadOnlyList<(string Name, string Description)> CaptureDevices() => Devices(capture: true);
+
+    private static unsafe IReadOnlyList<(string Name, string Description)> Devices(bool capture)
     {
+        // A hint's IOID is the one direction it serves, and absent when it serves both.
+        var other = capture ? "Output" : "Input";
+
         if (Hints(-1, "pcm", out var hints) < 0 || hints == null) return [];
 
         var found = new List<(string, string)>();
@@ -109,7 +128,7 @@ internal static partial class LibAsound
                 var name = Take(Hint(*hint, "NAME"));
 
                 // Null is both directions, which is most of them.
-                if (name is null or "null" or DefaultDevice || Take(Hint(*hint, "IOID")) == "Input") continue;
+                if (name is null or "null" or DefaultDevice || Take(Hint(*hint, "IOID")) == other) continue;
 
                 // A bare hw: route takes the card exclusively and plays only the
                 // formats the chip does, float rarely among them. The plughw: route

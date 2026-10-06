@@ -43,6 +43,7 @@ internal sealed class Playback
     private readonly NodeEditor editor;
     private readonly IAudioEngine audio;
     private readonly MidiHub midi;
+    private readonly LineIn lineIn;
     private readonly Transport transport;
     private readonly ReportLine report;
     private readonly PluginCatalog plugins;
@@ -72,6 +73,7 @@ internal sealed class Playback
         IAudioEngine audio,
         IlCompiler compiler,
         MidiHub midi,
+        LineIn lineIn,
         AudioSetup sound,
         ChosenAssistant chosenAssistant,
         RecordingState recording,
@@ -82,7 +84,8 @@ internal sealed class Playback
         this.editor = editor;
         this.audio = audio;
         this.midi = midi;
-        transport = new Transport(audio, preview, compiler, midi);
+        this.lineIn = lineIn;
+        transport = new Transport(audio, preview, compiler, midi, lineIn);
         this.report = report;
         this.plugins = plugins;
         this.chosenAssistant = chosenAssistant;
@@ -102,6 +105,7 @@ internal sealed class Playback
         // through events rather than notices, and the instrument listens here.
         midi.Played += preview.Refresh;
         midi.Trouble += message => report.Say(message);
+        lineIn.Trouble += message => Dispatcher.UIThread.Post(() => report.Say(message));
         compiler.Failed += message => Dispatcher.UIThread.Post(() => report.Say(message));
     }
 
@@ -213,6 +217,9 @@ internal sealed class Playback
 
         SyncAudioToVolume();
     }
+
+    /// <summary>Puts the sound input settings just saved in force: a Line In is heard through the device they name.</summary>
+    public void ReopenInput() => lineIn.Reconfigure();
 
     private string FailureDetail() => PluginSummary.Text(plugins, Sound.Failure, chosenAssistant.Summary);
 

@@ -152,6 +152,13 @@ public sealed class OutputSettings
     /// </remarks>
     public Dictionary<string, Dictionary<string, string>> Sound { get; set; } = new(StringComparer.Ordinal);
 
+    /// <summary>
+    /// What each sound input backend's own form was last set to, filed under the backend's
+    /// id — the Sound section, kept apart from <see cref="Sound"/> because an input and an
+    /// output backend may share an id.
+    /// </summary>
+    public Dictionary<string, Dictionary<string, string>> SoundIn { get; set; } = new(StringComparer.Ordinal);
+
     /// <summary>What a MIDI controller does to a knob sitting somewhere else — the MIDI section.</summary>
     public Takeover Takeover { get; set; }
 
@@ -192,6 +199,14 @@ public sealed class OutputSettings
     /// <summary>Takes one backend's answers, leaving every other backend's alone.</summary>
     public void RememberSound(string backend, SettingValues values) =>
         Sound[backend] = new Dictionary<string, string>(values.All, StringComparer.Ordinal);
+
+    /// <summary>What is set for one sound input backend, and nothing for one nobody has configured.</summary>
+    public SettingValues SoundInOf(string backend) =>
+        SoundIn.TryGetValue(backend, out var held) ? new SettingValues(held) : SettingValues.None;
+
+    /// <summary>Takes one sound input backend's answers, leaving every other backend's alone.</summary>
+    public void RememberSoundIn(string backend, SettingValues values) =>
+        SoundIn[backend] = new Dictionary<string, string>(values.All, StringComparer.Ordinal);
 
     public const int LowestQuality = 1, HighestQuality = 100;
 
@@ -278,6 +293,7 @@ public sealed class OutputSettings
 
             // A "sound": null typed by hand is nothing chosen, not a fault.
             settings.Sound ??= new(StringComparer.Ordinal);
+            settings.SoundIn ??= new(StringComparer.Ordinal);
 
             if (!Enum.IsDefined(settings.Takeover)) settings.Takeover = Takeover.Jump;
             if (!Enum.IsDefined(settings.Keyboard)) settings.Keyboard = KeyboardLayout.Piano;

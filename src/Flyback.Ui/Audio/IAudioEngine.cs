@@ -43,6 +43,9 @@ internal interface IAudioEngine
     /// <summary>How many times real time the sound renders at lately, or 0 while nothing is measured.</summary>
     double Speed { get; }
 
+    /// <summary>What a Line In hears, or null for silence. The page and a still have no microphone, so they keep the default.</summary>
+    ILineInSource? Input { get => null; set { } }
+
     /// <summary>The block whoever is playing writes into, made anew by every <see cref="Update"/>.</summary>
     LiveValues Live { get; }
 

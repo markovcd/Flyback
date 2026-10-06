@@ -23,6 +23,12 @@ public partial class NodeCatalog
     public const string SampleTypeId = "audio.sample";
 
     /// <summary>
+    /// The sound input. Named here because the shell opens a capture device only while a
+    /// running patch holds one, and asks the compiled program rather than the patch.
+    /// </summary>
+    public const string LineInTypeId = "audio.in";
+
+    /// <summary>
     /// The picture module. Named here for the reason the sample player is: it is
     /// the one module whose instance carries a picture, and the editor, the
     /// compiler and the assistant all have to ask whether a given node is it —
@@ -108,6 +114,25 @@ public partial class NodeCatalog
             + "will break playback.")
         {
             Extras = [new SampleExtra()],
+            Sinks = ModuleSinks.Audio,
+        };
+
+        yield return new NodeDef(
+            LineInTypeId, "Line In", ModuleCategories.Sources,
+            [Num("gain", 1f, 0f, 4f) with { Help = "Multiplies what is heard." }],
+            [
+                Num("left", 0f, -1f, 1f) with { Help = "The left channel, or the only one." },
+                Num("right", 0f, -1f, 1f) with { Help = "The right channel, which is the left again for a mono microphone." },
+            ],
+            (em, i) =>
+            [
+                em.Mul(em.Live(LineInSignal.Left), i[0]),
+                em.Mul(em.Live(LineInSignal.Right), i[0]),
+            ],
+            "What the microphone or line input hears, as it plays. Silent while no input works, and in "
+            + "flyback-cli render unless --input gives it a sound file to hear. Wear headphones, "
+            + "or the speakers will feed back into it.")
+        {
             Sinks = ModuleSinks.Audio,
         };
 

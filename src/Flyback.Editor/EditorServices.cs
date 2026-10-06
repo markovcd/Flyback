@@ -109,6 +109,12 @@ internal static class EditorServices
 
         services.AddSingleton<IAudioEngine, AudioEngine>();
 
+        // Nothing is opened by this either: the microphone is listened to only while a running sound has a Line In.
+        services.AddSingleton(sp => new LineIn(
+            sp.GetRequiredService<PluginCatalog>(),
+            sp.GetRequiredService<IAudioEngine>(),
+            () => sp.GetRequiredService<OutputSettingRepository>().Current));
+
         // Nothing is opened by this: the backend is asked for a device only once a
         // compiled program is reading one.
         services.AddSingleton(setup.Plugins.PreferredMidiInput);

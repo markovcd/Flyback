@@ -298,6 +298,13 @@ The engine generates samples. `Flyback.Ui/Audio/AudioEngine` joins a program to 
 immutable `State` record with `Volatile` rather than locking. It is the master
 clock the preview follows.
 
+**The microphone is read once a frame** ([0178](adr/0178-a-line-in-hears-the-microphone-while-the-sound-plays.md)).
+A Line In reads two live inputs, and `AudioRenderer` writes them from an
+`ILineInSource` before each frame, so every backend and the interpreter agree
+and no op was added. `Flyback.Ui/Audio/LineIn` opens the plugin's `IAudioCapture`
+only while the playing program reads them and hands what it hears over in a
+`LineInFeed`; a render hears the file `--input` names, as a `RecordedLineIn`.
+
 **Time is seconds** ([0048](adr/0048-time-is-seconds-and-nothing-else.md)), and
 nothing in the engine reads a wall clock. `t` is an argument.
 
@@ -371,6 +378,7 @@ void AddPresets(IReadOnlyList<PatchPreset> presets);
 void AddPatchAssistant(IPatchAssistant assistant);
 void AddSecretStore(ISecretStore store);
 void AddMidiInput(IMidiInput input);
+void AddAudioInput(IAudioInput input);
 ```
 
 A new kind of extension is a new method. Existing plugins only call the
