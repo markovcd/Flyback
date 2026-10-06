@@ -50,12 +50,12 @@ public class CliTests
     }
 
     [Fact]
-    public void The_model_is_passed_unless_it_is_left_to_codex_and_effort_only_where_it_is_not_the_default()
+    public void The_model_is_passed_unless_it_is_left_to_codex_and_effort_always()
     {
         var plain = Arguments(Request("gpt-5.6-terra"));
 
         After(plain, "--model").ShouldBe("gpt-5.6-terra");
-        plain.ShouldNotContain(a => a.StartsWith("model_reasoning_effort", StringComparison.Ordinal));
+        plain.ShouldContain("model_reasoning_effort=\"medium\"");
 
         Arguments(Request(CodexCli.DefaultModel)).ShouldNotContain("--model");
         Arguments(Request(effort: AssistantEffort.Low)).ShouldContain("model_reasoning_effort=\"low\"");

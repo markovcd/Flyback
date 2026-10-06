@@ -139,6 +139,26 @@ public class SurveyTests
         box.Fallback.ShouldBe("gemini-9-flash");
     }
 
+    /// <summary>
+    /// Effort is sent only as a thinking budget a probe measured, so a model nobody
+    /// probed gets a picker that cannot be set.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void The_effort_picker_is_live_only_for_a_model_whose_thinking_was_measured(bool measured)
+    {
+        var report = new ModelReport("gemini-9-flash") { Hearing = true };
+        var found = Assist.Survey.Write([measured ? report with { Least = 128, Most = 32768 } : report]);
+        var values = SettingValues.None.With(Assist.Survey.Key, found);
+
+        var effort = new GeminiAssistant().Form(values)
+            .Single(f => f.Key == AssistantSchema.EffortKey);
+
+        effort.Enabled.ShouldBe(measured);
+        if (!measured) effort.Because.ShouldNotBeNull().ShouldContain("gemini-9-flash");
+    }
+
     private static async Task<IReadOnlyList<ModelReport>> Survey(
         Endpoint endpoint,
         SurveyOptions? options = null,

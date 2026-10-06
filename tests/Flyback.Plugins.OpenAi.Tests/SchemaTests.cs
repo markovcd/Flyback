@@ -139,6 +139,19 @@ public class SchemaTests
     }
 
     /// <summary>
+    /// Effort is never sent from here, so the picker cannot be set.
+    /// </summary>
+    [Fact]
+    public void The_effort_picker_is_grayed_out_because_no_effort_is_sent()
+    {
+        var effort = new OpenAiAssistant().Form(Set("gpt-4o"))
+            .Single(field => field.Key == AssistantSchema.EffortKey);
+
+        effort.Enabled.ShouldBeFalse();
+        effort.Because.ShouldNotBeNullOrWhiteSpace();
+    }
+
+    /// <summary>
     /// And the ear is only a question where the sound would go to a second
     /// model. Here every model that hears is one of those, so it is always
     /// asked; what governs it is whether anybody is listening at all.

@@ -58,6 +58,14 @@ internal sealed partial class CodexCli(string executable) : IProgram
     /// <summary>Whether <paramref name="model"/> may be handed to the program.</summary>
     public static bool IsModel(string? model) => model is not null && (model == DefaultModel || ModelName().IsMatch(model));
 
+    /// <summary>Effort as the program spells it. Sent at medium too, since the program's default can change.</summary>
+    private static string Spelled(AssistantEffort effort) => effort switch
+    {
+        AssistantEffort.Low => "low",
+        AssistantEffort.High => "high",
+        _ => "medium",
+    };
+
     /// <summary>The command line for <paramref name="request"/>.</summary>
     /// <param name="request">The question.</param>
     /// <param name="instructions">The file holding what Codex runs on.</param>
@@ -85,8 +93,7 @@ internal sealed partial class CodexCli(string executable) : IProgram
 
         if (request.Model != DefaultModel) arguments.AddRange(["--model", request.Model]);
 
-        if (request.Effort != AssistantEffort.Medium)
-            arguments.AddRange(["-c", $"model_reasoning_effort=\"{(request.Effort == AssistantEffort.Low ? "low" : "high")}\""]);
+        arguments.AddRange(["-c", $"model_reasoning_effort=\"{Spelled(request.Effort)}\""]);
 
         if (pictures.Count > 0)
         {

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The assistant's Effort setting is grayed out where it is not sent, on the OpenAI-compatible assistant and on a Gemini model nobody has probed, and Claude Code and Codex are sent it at Medium too.
+
 - A conversation with the assistant ends when it has grown past a context limit in tokens, set under Settings → Assistant or with `flyback-cli ask --context`, rather than after a number of turns, and the column's footer shows how close it is.
 
 - `flyback-cli ask` refuses a flag it does not have rather than sending it to the assistant as the message.

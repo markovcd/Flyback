@@ -18,3 +18,4 @@ Flyback.Plugins.Audio.IAudioInput.Priority.get -> int
 Flyback.Plugins.IPluginRegistry.AddAudioInput(Flyback.Plugins.Audio.IAudioInput! input) -> void
 const Flyback.Plugins.Assist.AssistantSchema.IdeasModelKey = "ideas" -> string!
 static Flyback.Plugins.Assist.AssistantSchema.Expanding(Flyback.Plugins.Settings.SettingValues! values) -> Flyback.Plugins.Settings.SettingValues!
+Flyback.Plugins.Assist.AssistantSchema.Form(Flyback.Plugins.Settings.SettingValues! values, string? effortIgnored) -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Settings.SettingField!>!

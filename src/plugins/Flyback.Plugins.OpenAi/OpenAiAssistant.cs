@@ -48,12 +48,14 @@ public sealed class OpenAiAssistant : IPatchAssistant, IModelSurvey
     public AssistantCredential Credential => Schema.Credential;
 
     /// <summary>
-    /// The ordinary five questions, declared by the schema rather than written
-    /// out here — see <see cref="AssistantSchema.Form"/>. There is nothing
-    /// peculiar about this provider's form, which is exactly why the declaration
-    /// of it is shared.
+    /// The ordinary questions, declared by the schema rather than written out here
+    /// — see <see cref="AssistantSchema.Form(SettingValues)"/>. Effort is grayed
+    /// out, since <see cref="OpenAiSession"/> never sends it.
     /// </summary>
-    public IReadOnlyList<SettingField> Form(SettingValues values) => Schema.Surveyed(values).Form(values);
+    public IReadOnlyList<SettingField> Form(SettingValues values) =>
+        Schema.Surveyed(values).Form(
+            values,
+            effortIgnored: "Never sent: the parameter differs from model to model, and a wrong guess is a 400.");
 
     public AssistantSenses Senses(SettingValues values) => Schema.Surveyed(values).Senses(values);
 

@@ -35,16 +35,20 @@ public class CliTests
     }
 
     [Fact]
-    public void The_model_is_passed_and_effort_only_where_it_is_not_the_default()
+    public void The_model_and_effort_are_always_passed()
     {
         var plain = ClaudeCli.Arguments(Request("opus"));
 
         plain[plain.ToList().IndexOf("--model") + 1].ShouldBe("opus");
-        plain.ShouldNotContain("--effort");
+        plain[plain.ToList().IndexOf("--effort") + 1].ShouldBe("medium");
 
         var high = ClaudeCli.Arguments(Request(effort: AssistantEffort.High));
 
         high[high.ToList().IndexOf("--effort") + 1].ShouldBe("high");
+
+        var low = ClaudeCli.Arguments(Request(effort: AssistantEffort.Low));
+
+        low[low.ToList().IndexOf("--effort") + 1].ShouldBe("low");
     }
 
     [Theory]

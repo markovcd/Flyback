@@ -31,6 +31,14 @@ internal sealed partial class ClaudeCli(string executable) : IProgram
     /// <summary>Whether <paramref name="model"/> may be handed to the program.</summary>
     public static bool IsModel(string? model) => model is not null && ModelName().IsMatch(model);
 
+    /// <summary>Effort as the program spells it. Sent at medium too, since the program's default can change.</summary>
+    private static string Spelled(AssistantEffort effort) => effort switch
+    {
+        AssistantEffort.Low => "low",
+        AssistantEffort.High => "high",
+        _ => "medium",
+    };
+
     /// <summary>The command line for <paramref name="request"/>.</summary>
     public static IReadOnlyList<string> Arguments(ClaudeRequest request)
     {
@@ -51,10 +59,8 @@ internal sealed partial class ClaudeCli(string executable) : IProgram
             "--session-id", SessionId,
             "--system-prompt", ClaudeWire.System,
             "--model", request.Model,
+            "--effort", Spelled(request.Effort),
         ];
-
-        if (request.Effort != AssistantEffort.Medium)
-            arguments.AddRange(["--effort", request.Effort == AssistantEffort.Low ? "low" : "high"]);
 
         return arguments;
     }

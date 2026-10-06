@@ -8,7 +8,7 @@ namespace Flyback.Plugins.Assist;
 /// </summary>
 /// <remarks>
 /// Shared by both adapters; another provider declares its own
-/// <see cref="SettingField"/> list. Keeps <see cref="Form"/> and
+/// <see cref="SettingField"/> list. Keeps <see cref="Form(SettingValues)"/> and
 /// <see cref="Read"/> in agreement.
 /// </remarks>
 /// <param name="DefaultModel">What an unconfigured provider starts on.</param>
@@ -185,6 +185,16 @@ public sealed record AssistantSchema(
 
         return fields;
     }
+
+    /// <summary>
+    /// <see cref="Form(SettingValues)"/> with the effort picker grayed out, giving
+    /// <paramref name="effortIgnored"/> as the reason, where that is not null.
+    /// </summary>
+    public IReadOnlyList<SettingField> Form(SettingValues values, string? effortIgnored) =>
+        effortIgnored is null
+            ? Form(values)
+            : [.. Form(values).Select(field =>
+                field.Key == EffortKey ? field with { Enabled = false, Because = effortIgnored } : field)];
 
     /// <summary>
     /// <paramref name="values"/> with the model that writes ideas out in place of the
