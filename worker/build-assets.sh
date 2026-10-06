@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Assembles worker/public, everything the Worker serves as a file: the Pages site, the
-# preset and plugin pages, the web viewer at /viewer/ (ADR-0160), the web editor at
-# /editor/ (ADR-0162) and every preset's still at /stills/ (ADR-0163). A framework file
-# past the 25 MiB a static asset may be goes to worker/large instead, for the Worker
-# workflow to put in R2, where the Worker serves it from on the same path.
+# Assembles worker/public, everything the Worker serves as a file: the pages of site/,
+# the web viewer at /viewer/ (ADR-0160), the web editor at /editor/ (ADR-0162) and every
+# preset's still at /stills/ (ADR-0163). A framework file past the 25 MiB a static asset
+# may be goes to worker/large instead, for the Worker workflow to put in R2, where the
+# Worker serves it from on the same path.
 #
 #   worker/build-assets.sh [--no-aot] [--no-editor] [--no-stills]
 #
@@ -36,7 +36,6 @@ rm -rf "$out" "$large"
 mkdir -p "$out"
 
 cp -r "$root/site/." "$out/"
-cp -r "$root/src/Flyback.Server/wwwroot/." "$out/"
 
 dotnet publish "$root/src/Flyback.Viewer.Web" -c Release -p:RunAOTCompilation=$aot -o "$work/viewer" -nologo -v:q
 cp -r "$work/viewer/wwwroot/." "$out/"

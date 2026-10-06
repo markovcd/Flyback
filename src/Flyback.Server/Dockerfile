@@ -26,8 +26,10 @@ COPY scripts/stills.sh scripts/
 # What Flyback.Editor.Desktop takes from the root, since stills.sh publishes it.
 COPY CHANGELOG.md flyback.ico flyback.icns flyback.png ./
 COPY site site
+COPY worker/defaults worker/defaults
+COPY worker/site-plugins.proj worker/
 # All of src/, since the plugins the site starts with are whatever
-# Flyback.Server.csproj lists.
+# worker/site-plugins.proj lists.
 COPY src src
 
 # Each plugin the site starts with, packed and signed here with the release key
@@ -35,10 +37,10 @@ COPY src src
 RUN --mount=type=cache,target=/root/.nuget/packages \
     --mount=type=secret,id=release-key,required=true \
     set -eu; \
-    dotnet msbuild src/Flyback.Server -t:ListSitePlugins -p:SitePluginsFile=/tmp/site-plugins -nologo -v:q; \
+    dotnet msbuild worker/site-plugins.proj -t:ListSitePlugins -p:SitePluginsFile=/tmp/site-plugins -nologo -v:q; \
     while IFS='|' read -r project name <&3; do \
       dotnet run --project src/Flyback.Cli -c Release -- pack-plugin "$project" \
-        -o "src/Flyback.Server/Defaults/$name.fbkp" --key /run/secrets/release-key; \
+        -o "worker/defaults/$name.fbkp" --key /run/secrets/release-key; \
     done 3< /tmp/site-plugins
 
 # The web viewer and editor the site serves at /viewer/ and /editor/ are

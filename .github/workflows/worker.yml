@@ -19,9 +19,6 @@ on:
     paths:
       - "worker/**"
       - "site/**"
-      - "src/Flyback.Server/wwwroot/**"
-      - "src/Flyback.Server/Defaults/**"
-      - "src/Flyback.Server/Flyback.Server.csproj"
       - "src/Flyback.Site/**"
       - "src/Flyback.Viewer.Web/**"
       - "src/Flyback.Editor.Web/**"

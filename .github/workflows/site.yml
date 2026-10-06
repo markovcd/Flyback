@@ -16,7 +16,7 @@ on:
   push:
     branches: [main]
     # Only what the image is built from: the server, the projects it references
-    # and the plugins it starts with (PluginProject in Flyback.Server.csproj).
+    # and the plugins it starts with (PluginProject in worker/site-plugins.proj).
     # The app, the CLI, the viewer and the other plugins are in the build context
     # but not in the image, so a change to them publishes nothing. A new
     # reference or site plugin has to be added here.
@@ -29,6 +29,8 @@ on:
       - "src/plugins/Flyback.Plugins.Fractals/**"
       - "src/plugins/Flyback.Plugins.Easy/**"
       - "site/**"
+      - "worker/defaults/**"
+      - "worker/site-plugins.proj"
       - ".editorconfig"
       - "Directory.Build.props"
       - "Directory.Build.targets"

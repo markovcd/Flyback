@@ -171,7 +171,7 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 FROM scratch AS coverage
 COPY --from=measured /src/TestResults/ /
 
-# Every plugin the preset site starts with (Flyback.Server.csproj's PluginProject
+# Every plugin the preset site starts with (worker/site-plugins.proj's PluginProject
 # items) as a signed package, at the release's version. The site is what hands
 # them out (ADR-0141), so only release.sh off GitHub asks for them, beside the
 # release in dist/. The key arrives as a build secret and leaves no trace in any
@@ -189,7 +189,7 @@ ARG VERSION
 RUN --mount=type=cache,target=/root/.nuget/packages \
     --mount=type=secret,id=release-key,required=true \
     set -eu; \
-    dotnet msbuild src/Flyback.Server -t:ListSitePlugins -p:SitePluginsFile=/tmp/site-plugins -nologo -v:q; \
+    dotnet msbuild worker/site-plugins.proj -t:ListSitePlugins -p:SitePluginsFile=/tmp/site-plugins -nologo -v:q; \
     mkdir -p /out; \
     while IFS='|' read -r project name <&3; do \
       Version=${VERSION} dotnet run --project src/Flyback.Cli -c ${CONFIGURATION} --no-build -- \
@@ -233,8 +233,8 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
     --mount=type=secret,id=release-key,required=true \
     set -eu; \
     mkdir -p /out/defaults; \
-    cp src/Flyback.Server/Defaults/* /out/defaults/; \
-    dotnet msbuild src/Flyback.Server -t:ListSitePlugins -p:SitePluginsFile=/tmp/site-plugins -nologo -v:q; \
+    cp worker/defaults/* /out/defaults/; \
+    dotnet msbuild worker/site-plugins.proj -t:ListSitePlugins -p:SitePluginsFile=/tmp/site-plugins -nologo -v:q; \
     while IFS='|' read -r project name <&3; do \
       Version=${VERSION} dotnet run --project src/Flyback.Cli -c Release -- \
         pack-plugin "$project" -o "/out/defaults/$name.fbkp" --key /run/secrets/release-key; \
