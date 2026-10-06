@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Expand beside the assistant's Send writes a short message out in full, in the box, to edit before sending: over a patch, as a change to it that says what makes the patch itself, what changes, what stays and how to tell it worked; over an empty canvas, as a new patch's brief.
+
 - A Beam module draws two signals against each other as an X-Y oscilloscope does, so oscilloscope music wired left to `x` and right to `y` shows as it was made to be seen; `flyback-cli render` of a still plays the sound up to it, so a Beam, Scope or Meter has something to show.
 
 - What the assistant did between two things it said folds into one line with a count, so the conversation can be read as its words alone; the run it is in the middle of stays open.

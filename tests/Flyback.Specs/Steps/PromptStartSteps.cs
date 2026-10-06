@@ -11,7 +11,10 @@ using Shouldly;
 
 namespace Flyback.Specs.Steps;
 
-/// <summary>The preset gallery's card for starting a new patch from a typed idea, driven through the open window.</summary>
+/// <summary>
+/// The preset gallery's card for starting a new patch from a typed idea, and the assistant's
+/// box writing a message out before it is sent, driven through the open window.
+/// </summary>
 [Binding]
 public sealed class PromptStartSteps(EditorDriver editor, PatchContext context) : IDisposable
 {
@@ -49,6 +52,29 @@ public sealed class PromptStartSteps(EditorDriver editor, PatchContext context) 
 
     [When("a patch is started from the prompt")]
     public void WhenAPatchIsStarted() => editor.StartPrompt(() => assistant.Heard.Any(heard => !Writing(heard)));
+
+    [When("the assistant's column is opened")]
+    public void WhenTheColumnIsOpened() => editor.Toggle("assistant", on: true);
+
+    [When("{string} is typed in the assistant's box")]
+    public void WhenAMessageIsTyped(string message) => editor.TypeMessage(message);
+
+    [When("the message is expanded")]
+    public void WhenTheMessageIsExpanded() => editor.ExpandMessage();
+
+    [Then("the assistant's box holds the assistant's detailed brief")]
+    public void ThenTheBoxHoldsTheBrief() => editor.MessageText.ShouldBe(BriefingAssistant.Brief);
+
+    [Then("the assistant was asked to write out a change to the patch")]
+    public void ThenAskedForAChange() =>
+        assistant.Heard.Where(Writing).ShouldHaveSingleItem().ShouldContain("request to change it");
+
+    [Then("the assistant was asked to write out a new patch")]
+    public void ThenAskedForANewPatch() =>
+        assistant.Heard.Where(Writing).ShouldHaveSingleItem().ShouldContain("short idea for a new patch");
+
+    [Then("nothing has been sent to build from")]
+    public void ThenNothingSent() => assistant.Heard.ShouldAllBe(heard => Writing(heard));
 
     [Then("the gallery has no card to start from a prompt")]
     public void ThenNoCard() => editor.GalleryOffersPrompt.ShouldBeFalse();

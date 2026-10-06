@@ -558,6 +558,28 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
             return true;
         });
 
+    /// <summary>What the assistant's box holds.</summary>
+    public string MessageText => ReadWindow(open => Named<TextBox>(open, "instruction").Text ?? string.Empty);
+
+    /// <summary>Types a message into the assistant's box.</summary>
+    public void TypeMessage(string message) =>
+        DoWindow((open, _) => Named<TextBox>(open, "instruction").Text = message);
+
+    /// <summary>Presses Expand beside the assistant's box and waits for what it holds to change.</summary>
+    public void ExpandMessage() =>
+        Run(async () =>
+        {
+            var open = Window();
+            var box = Named<TextBox>(open, "instruction");
+            var typed = box.Text;
+
+            Named<Button>(open, "expand-message").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            await Until(() => box.Text != typed && !box.IsReadOnly, () => $"the assistant to write the message out. {Situation(open)}");
+
+            return true;
+        });
+
     /// <summary>Every line of the assistant's transcript, as it is kept.</summary>
     public IReadOnlyList<string> TranscriptLines => ReadWindow(open =>
         open.GetVisualDescendants().OfType<TranscriptView>().Single().Lines.Select(line => line.Text).ToList());

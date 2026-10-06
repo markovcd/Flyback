@@ -69,6 +69,7 @@ internal sealed class AssistantPanel : UserControl
         AcceptsReturn = true,
         TextWrapping = TextWrapping.Wrap,
         PlaceholderText = "Describe the patch you want. Enter to ask, Ctrl+Enter for a new line.",
+        Name = "instruction",
         FontSize = Text.Body,
         MinHeight = 68,
 
@@ -185,6 +186,24 @@ internal sealed class AssistantPanel : UserControl
         Margin = new Thickness(4, 0, 0, 8),
         IsEnabled = false,
         Name = "fresh",
+    };
+
+    /// <summary>
+    /// Has the assistant write the box out in full, in the box: as a change to the
+    /// patch on the canvas, or as a new patch's brief when the canvas is empty.
+    /// </summary>
+    private readonly Button expand = new()
+    {
+        Content = "Expand",
+        FontSize = Text.Small,
+        Foreground = Text.Muted,
+        Background = Brushes.Transparent,
+        Padding = new Thickness(6, 2),
+        HorizontalAlignment = HorizontalAlignment.Right,
+        VerticalAlignment = VerticalAlignment.Bottom,
+        Margin = new Thickness(0, 0, 43, 8),
+        IsEnabled = false,
+        Name = "expand-message",
     };
 
     private readonly TextBox keyBox = new()
@@ -340,7 +359,7 @@ internal sealed class AssistantPanel : UserControl
 
     private bool stopping;
 
-    /// <summary>Stops an idea being written out before a patch starts from it; null when none is.</summary>
+    /// <summary>Stops a message being written out, in the box or before a patch starts from it; null when none is.</summary>
     private CancellationTokenSource? expanding;
 
     /// <summary>A note the next turn opens with, once its conversation has begun; null for none.</summary>
@@ -516,7 +535,14 @@ internal sealed class AssistantPanel : UserControl
     /// The brief the chosen assistant writes for a short idea, or why it wrote none.
     /// Asked of an empty patch and kept nowhere: it is not part of any conversation.
     /// </summary>
-    public async Task<(string? Brief, string? Failure)> ExpandAsync(string idea, CancellationToken cancel)
+    public Task<(string? Brief, string? Failure)> ExpandAsync(string idea, CancellationToken cancel) =>
+        WriteOutAsync(idea, new Flyback.Core.Graph.Patch(), cancel);
+
+    /// <summary>
+    /// The brief the chosen assistant writes for <paramref name="typed"/> over <paramref name="over"/>:
+    /// a change to it, or a new patch where it holds only the Output.
+    /// </summary>
+    private async Task<(string? Brief, string? Failure)> WriteOutAsync(string typed, Flyback.Core.Graph.Patch over, CancellationToken cancel)
     {
         if (chosenAssistant.Value is not { } assistant || Configured() is not { } config)
             return (null, "No assistant is set up.");
@@ -525,9 +551,55 @@ internal sealed class AssistantPanel : UserControl
 
         if (AssistantRun.Unready(assistant, writing) is { } why) return (null, why);
 
-        using var run = runs.Create(assistant, writing, over: new Flyback.Core.Graph.Patch());
+        using var run = runs.Create(assistant, writing, over: over);
 
-        return await PromptExpansion.BriefAsync(run, idea, cancel);
+        return over.Nodes.All(node => node.TypeId == Flyback.Core.Graph.NodeCatalog.OutputTypeId)
+            ? await PromptExpansion.BriefAsync(run, typed, cancel)
+            : await PromptExpansion.ChangeBriefAsync(run, typed, cancel);
+    }
+
+    /// <summary>Writes what is in the box out in full, over the patch on the canvas, for the person to edit before sending.</summary>
+    private async Task ExpandMessageAsync()
+    {
+        var typed = instruction.Text ?? string.Empty;
+
+        if (asking || string.IsNullOrWhiteSpace(typed)) return;
+
+        using var stop = new CancellationTokenSource();
+
+        expanding = stop;
+        instruction.IsReadOnly = true;
+        StartWorking();
+        ShowSendState();
+
+        (string? Brief, string? Failure) answer;
+
+        try
+        {
+            answer = await WriteOutAsync(typed, editor.Current, stop.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            transcript.Put(Voice.Note, "Stopped before the message was written out. The box holds it as typed.", keep: false);
+            return;
+        }
+        finally
+        {
+            expanding = null;
+            instruction.IsReadOnly = false;
+            StopWorking();
+            ShowSendState();
+        }
+
+        if (answer.Brief is { } brief)
+        {
+            instruction.Text = brief;
+            instruction.CaretIndex = brief.Length;
+        }
+        else
+        {
+            transcript.Put(Voice.Note, $"The message could not be written out ({answer.Failure}). The box holds it as typed.", keep: false);
+        }
     }
 
     /// <summary>
@@ -633,9 +705,11 @@ internal sealed class AssistantPanel : UserControl
         var writing = new Panel();
         writing.Children.Add(instruction);
         writing.Children.Add(fresh);
+        writing.Children.Add(expand);
         writing.Children.Add(send);
 
         fresh.Click += (_, _) => StartOver();
+        expand.Click += async (_, _) => await ExpandMessageAsync();
 
         DockPanel.SetDock(writing, Dock.Bottom);
         DockPanel.SetDock(footer, Dock.Bottom);
@@ -1041,6 +1115,11 @@ internal sealed class AssistantPanel : UserControl
 
         send.IsEnabled = asking
             || (blocked is null && !string.IsNullOrWhiteSpace(instruction.Text));
+
+        expand.IsEnabled = !asking && blocked is null && !string.IsNullOrWhiteSpace(instruction.Text);
+
+        ToolTip.SetTip(expand, "Have the assistant write this out in full, here, for you to edit before sending: "
+            + "as a change to the patch on the canvas, or as a new patch's brief when the canvas is empty.");
 
         fresh.IsEnabled = !asking && (transcript.Lines.Count > 0 || session.Run is not null || conversation.Waiting is not null);
 
