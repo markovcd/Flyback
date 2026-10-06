@@ -34,12 +34,16 @@ internal static class PromptExpansion
 
     private static string Request(string idea) =>
         "[From Flyback, not the person: build nothing, edit nothing and call no tools. The person typed a short idea "
-        + "for a new patch, below. Write it out as the detailed brief they would have given had they known what to ask "
-        + "for, in their voice, as plain text with no preamble and nothing after it. Decide what the idea leaves open, "
-        + "such as tempo, key and length, rather than asking. Cover, in this order: the feel in two sentences; the length "
-        + "and the sections, each with its bars or seconds; the sound, one line per instrument or layer; the picture; how "
-        + "the sound drives the picture; the constraints (one clock for the tempo, every melodic voice in the key, a master "
-        + "limiter, groups labeled, a few panel knobs for what is worth playing with); and a last line asking for a short "
-        + "report of what it did differently and why. Leave out any part the idea does not call for.]"
+        + "for a new patch, below. Write it out as the brief they would have given had they thought it through, in their "
+        + "voice, as plain text with no preamble and nothing after it. "
+        + "Open with the one idea that makes this patch itself and no other: a single mechanism the whole piece is built "
+        + "around, shared by the sound and the picture. A break chopped by bending the clock it reads is such an idea; so "
+        + "is a tune played by where a bouncing shape strikes the frame, or one chord whose overtones are the picture's "
+        + "colors. Find the one this idea asks for, not one of those. "
+        + "Then say how it feels, how it unfolds over its length and why that follows from the idea, the few sounds it "
+        + "needs and what is on screen. Describe what is heard and seen, never how to build it: name no module and no "
+        + "socket. Nothing is a default: a beat, a key, a tempo, sections, a limiter, panel knobs each appear only if this "
+        + "idea needs them. Decide what it leaves open rather than asking. Keep it under 250 words, and end with one line "
+        + "asking for a short report of what was done differently and why.]"
         + Environment.NewLine + Environment.NewLine + idea;
 }
