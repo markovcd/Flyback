@@ -36,7 +36,7 @@
   -->
   <PropertyGroup>
     <PresetSite Condition="'$(PresetSite)' == '' and '$(Configuration)' == 'Debug'">http://localhost:8790/</PresetSite>
-    <PresetSite Condition="'$(PresetSite)' == ''">https://flyback.nasik2137.uk/</PresetSite>
+    <PresetSite Condition="'$(PresetSite)' == ''">https://flybackmodular.app/</PresetSite>
   </PropertyGroup>
 
   <ItemGroup>

@@ -11,7 +11,7 @@ browser ──▶ Cloudflare ──▶ Access (admin.html, /api/v1/admin/*) ─�
                                   then flyback-site push-media (service token)
 ```
 
-Until the move below, the Worker runs on a staging hostname and the NAS keeps serving `flyback.nasik2137.uk` ([../site/README.md](../site/README.md)). Secrets are set in Cloudflare and GitHub and written down nowhere here.
+The Worker runs at `flybackmodular.app` and, for the editors shipped with it as their address, at `flyback.nasik2137.uk`; a staging copy runs at `flyback-staging.nasik2137.uk`. The NAS's site is described in [../site/README.md](../site/README.md) until it is removed. Secrets are set in Cloudflare and GitHub and written down nowhere here.
 
 ## Working on it
 
@@ -129,36 +129,12 @@ To render a preset again, clear its render, which puts it back in the queue:
 curl -X DELETE -H "CF-Access-Client-Id: $FLYBACK_ACCESS_ID" -H "CF-Access-Client-Secret: $FLYBACK_ACCESS_SECRET" https://flyback-staging.nasik2137.uk/api/v1/admin/presets/<id>/media
 ```
 
-## The move
+## Production
 
-What is left of [docs/handoff/flyback-library-implementation-plan.md](../../docs/handoff/flyback-library-implementation-plan.md): moving the live site, then removing the .NET one.
+What is left of [docs/handoff/flyback-library-implementation-plan.md](../../docs/handoff/flyback-library-implementation-plan.md) is removing the .NET site.
 
-1. **Production.** Repeat steps 1 to 4 for `flyback-site`: a database and a bucket of that name, an `env.production` in `wrangler.jsonc` with the route `flyback.nasik2137.uk` as a custom domain, the Access application's hostname, and its audience tag and dispatch token for `--env production`.
+`env.production` in `wrangler.jsonc` names a database and a bucket called `flyback-site`, and two custom domains: `flybackmodular.app`, the website's address, and `flyback.nasik2137.uk`, which shipped editors still read the API at. Made the way steps 1 to 4 say, for those hostnames: the Access application has both hostnames as destinations, and its audience tag is `ACCESS_AUD`. `WORKER_ENVIRONMENT` is `production` and `PRESET_SITE_URL` is `https://flybackmodular.app`.
 
-2. **The data.** With the NAS site quiet, copy its `data/presets.db` and `media/` here and export them:
+GitHub Pages holds only `deploy/pages/redirect.html`, which sends `markovcd.github.io/Flyback/<path>` to the same path on the website.
 
-   ```bash
-   dotnet run --project src/Flyback.Site -c Release -- export-site --db presets.db --media media --out export
-   ```
-
-   It writes `export/rows.sql` and every file under `export/files/` at the key the Worker reads it from, ids kept, so every link, rating and kept shared preset in an editor still resolves. Load them from `worker/`:
-
-   ```bash
-   npx wrangler d1 migrations apply DB --remote --env production
-   ```
-
-   ```bash
-   npx wrangler d1 execute DB --remote --env production --file ../export/rows.sql
-   ```
-
-   ```bash
-   (cd ../export/files && find . -type f | sed 's|^\./||') | while read -r key; do npx wrangler r2 object put "flyback-site/$key" --file "../export/files/$key" --remote; done
-   ```
-
-3. **The hostname.** Remove `flyback.nasik2137.uk` from the tunnel's published applications and the `flyback-fallback` Worker's route, set `WORKER_ENVIRONMENT` to `production` and `PRESET_SITE_URL` to `https://flyback.nasik2137.uk`, and run the Worker workflow. The custom domain takes the hostname.
-
-4. **Check** the editor's preset gallery and plugins window against it, and a submission end to end. Then stop the container.
-
-5. **Pages redirects.** The Worker now serves the website too. `pages.yml` publishes a stub that sends `markovcd.github.io/Flyback/<path>` to the same path here, and the site's own URLs move to the new hostname (step 7 of the plan).
-
-The free plan's 10 ms of CPU a request is enough for everything but a large upload's form; check `wrangler tail` against real traffic before the move and take the paid plan if submissions are cut off.
+The free plan's 10 ms of CPU a request is enough for everything but a large upload's form; check `wrangler tail` against real traffic and take the paid plan if submissions are cut off.

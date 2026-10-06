@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- The website is at flyback.nasik2137.uk, and the old address sends you there.
+- The website is at flybackmodular.app, and the old addresses send you there.
 
 - The preset gallery's pictures are sharper, without the smudge around their edges.
 

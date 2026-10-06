@@ -11,7 +11,7 @@ public sealed class BuiltPresetSiteTests
 #if DEBUG
     private const string Expected = "http://localhost:8790/";
 #else
-    private const string Expected = "https://flyback.nasik2137.uk/";
+    private const string Expected = "https://flybackmodular.app/";
 #endif
 
     [Fact]
