@@ -479,7 +479,8 @@ public class NodeEditorTests : EditorTest
     /// <summary>
     /// How many pixels of wire are visible inside a module's body. Inset off its
     /// own outline, which is drawn in a color of its own and would otherwise be
-    /// counted as part of what is on top of it.
+    /// counted as part of what is on top of it. Matched almost exactly, because
+    /// antialiased label text passes through nearby grays.
     /// </summary>
     private static int WirePixelsOver(NodeEditor editor, Window window, NodeInstance node)
     {
@@ -494,7 +495,7 @@ public class NodeEditorTests : EditorTest
 
         for (var y = (int)Math.Ceiling(topLeft.Y); y < (int)bottomRight.Y; y++)
         for (var x = (int)Math.Ceiling(topLeft.X); x < (int)bottomRight.X; x++)
-            if (Within(pixels, x, y) && Near(pixels[x, y], Colors.ScalarPort))
+            if (Within(pixels, x, y) && Near(pixels[x, y], Colors.ScalarPort, 2))
                 count++;
 
         return count;
