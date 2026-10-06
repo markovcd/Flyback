@@ -1,5 +1,6 @@
 using Shouldly;
 using Xunit;
+using Flyback.Site.Admin;
 
 namespace Flyback.Site.Tests;
 

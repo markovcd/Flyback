@@ -1,6 +1,6 @@
 using Flyback.Core.Graph;
 
-namespace Flyback.Site;
+namespace Flyback.Site.Reading;
 
 /// <summary>
 /// Why the web viewer and editor cannot open a shared preset: the plugins it names that

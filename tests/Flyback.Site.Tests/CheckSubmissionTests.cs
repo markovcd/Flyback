@@ -6,6 +6,8 @@ using Flyback.Plugins.Hosting;
 using Flyback.Site.Commands;
 using Shouldly;
 using Xunit;
+using Flyback.Site.Checking;
+using Flyback.Site.Reading;
 
 namespace Flyback.Site.Tests;
 

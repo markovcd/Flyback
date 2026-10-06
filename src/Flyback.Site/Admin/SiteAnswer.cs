@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
+using Flyback.Site.Checking;
 
-namespace Flyback.Site;
+namespace Flyback.Site.Admin;
 
 /// <summary>What the site said when it did not take a request: its status and the reason it gave.</summary>
 internal static class SiteAnswer
