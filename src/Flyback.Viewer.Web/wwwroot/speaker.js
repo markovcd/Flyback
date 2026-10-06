@@ -9,7 +9,7 @@
 // From the speaker, besides its count: { heard }, what the microphone heard, for a Line In.
 //
 // From the editor instead of { open }: { edit, aspect }, of which only the latest is kept,
-// { keep, bytes }, { forget }, { play, values }, { watch, charts, windows, spectra, meters }, { oversample } and { aspect }. To the
+// { keep, bytes }, { forget }, { play, values }, { watch, charts, windows, kinds, meters }, { oversample } and { aspect }. To the
 // editor: { edited, error, status } and { readings, meters, status }.
 
 import { dotnet } from './_framework/dotnet.js';
@@ -270,7 +270,7 @@ function handle(data) {
       flyback.Play(key, data.values[i]);
     });
   } else if (data.watch !== undefined) {
-    watched = flyback.Watch(data.watch, data.charts ?? [], data.windows ?? [], data.spectra ?? []);
+    watched = flyback.Watch(data.watch, data.charts ?? [], data.windows ?? [], data.kinds ?? []);
     meters = data.meters;
   } else if (data.oversample !== undefined) {
     flyback.Oversample(data.oversample);

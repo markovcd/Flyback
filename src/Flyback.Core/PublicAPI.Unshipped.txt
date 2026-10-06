@@ -81,3 +81,8 @@ static Flyback.Core.Graph.Extras.MidiLineExtra.Channel(Flyback.Core.Graph.NodeIn
 static Flyback.Core.Graph.Extras.MidiLineExtra.operator ==(Flyback.Core.Graph.Extras.MidiLineExtra? left, Flyback.Core.Graph.Extras.MidiLineExtra? right) -> bool
 static Flyback.Core.Graph.Extras.MidiLineExtra.operator !=(Flyback.Core.Graph.Extras.MidiLineExtra? left, Flyback.Core.Graph.Extras.MidiLineExtra? right) -> bool
 static Flyback.Core.Graph.Extras.MidiLineExtra.Voice(Flyback.Core.Graph.NodeInstance! node) -> int
+const Flyback.Core.Graph.NodeCatalog.BeamTypeId = "beam" -> string!
+Flyback.Core.Graph.NodeDef.ChartsBeam.get -> bool
+Flyback.Core.Graph.NodeDef.ChartsBeam.init -> void
+Flyback.Core.Graph.NodeDef.TappedInputs.get -> int
+Flyback.Core.Graph.NodeDef.TappedInputs.init -> void

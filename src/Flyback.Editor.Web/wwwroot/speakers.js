@@ -218,11 +218,11 @@ export function play(keys, values) {
 
 /**
  * Names the Meters the picture reads and the charts it draws, by module, window and
- * whether each is a spectrum, and answers the number their readings will come back under.
+ * kind (trace, spectrum or beam), and answers the number their readings will come back under.
  */
-export function watch(keys, charts, windows, spectra) {
+export function watch(keys, charts, windows, kinds) {
   metered = keys.length;
-  worker.postMessage({ watch: keys, charts, windows: Array.from(windows), spectra: Array.from(spectra), meters: ++meters });
+  worker.postMessage({ watch: keys, charts, windows: Array.from(windows), kinds: Array.from(kinds), meters: ++meters });
   return meters;
 }
 

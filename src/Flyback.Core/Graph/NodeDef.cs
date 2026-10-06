@@ -130,6 +130,24 @@ public sealed record NodeDef(
     public bool ChartsSpectrum { get; init; }
 
     /// <summary>
+    /// Whether the chart draws its first two inputs against each other, across and
+    /// up, as the trace an X-Y oscilloscope's beam leaves: whether this module is a
+    /// Beam.
+    /// </summary>
+    /// <remarks>
+    /// Means nothing without <see cref="ChartsSignal"/>, and taps
+    /// <see cref="TappedInputs"/> of two. The buffer holds the phosphor as a square
+    /// picture rather than a stretch of time — see <c>Compile.Beams</c>.
+    /// </remarks>
+    public bool ChartsBeam { get; init; }
+
+    /// <summary>
+    /// How many of the first inputs <see cref="TapsSignal"/> makes roots of the
+    /// speakers' program, each a ring of its own.
+    /// </summary>
+    public int TappedInputs { get; init; } = 1;
+
+    /// <summary>
     /// Which sink this module means something at. An init property defaulting to
     /// <see cref="ModuleSinks.Both"/>, so a plugin compiled against an earlier
     /// build neither has to say nor can be wrong.

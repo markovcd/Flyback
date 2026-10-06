@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A Beam module draws two signals against each other as an X-Y oscilloscope does, so oscilloscope music wired left to `x` and right to `y` shows as it was made to be seen; `flyback-cli render` of a still plays the sound up to it, so a Beam, Scope or Meter has something to show.
+
 - What the assistant did between two things it said folds into one line with a count, so the conversation can be read as its words alone; the run it is in the middle of stays open.
 
 - Closing the window, or opening another patch, while the assistant is mid-turn asks first, and says the turn is lost: saving the patch does not keep it.

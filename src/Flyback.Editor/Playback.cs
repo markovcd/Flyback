@@ -329,6 +329,9 @@ internal sealed class Playback
                 NodeCatalog.ScopeTypeId =>
                     "Showing the Scope — it charts what the speakers played, so turn the Output's "
                     + "Volume up to see anything. Select another module for the picture.",
+                NodeCatalog.BeamTypeId =>
+                    "Showing the Beam — it draws what the speakers played on 'x' against 'y', so "
+                    + "turn the Output's Volume up to see anything. Select another module for the picture.",
                 NodeCatalog.AnalyzerTypeId =>
                     "Showing the Analyzer — it charts the spectrum of what the speakers played, so "
                     + "turn the Output's Volume up to see anything. Select another module for the picture.",

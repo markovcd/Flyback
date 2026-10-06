@@ -31,7 +31,7 @@ public partial class NodeCatalog
     public const string AnalyzerTypeId = "analyzer";
 
     /// <summary>Whether a module is one the shell will show in place of the picture.</summary>
-    public static bool IsChart(string typeId) => typeId is ProbeTypeId or ScopeTypeId or AnalyzerTypeId;
+    public static bool IsChart(string typeId) => typeId is ProbeTypeId or ScopeTypeId or AnalyzerTypeId or BeamTypeId;
 
     /// <summary>
     /// The level meter. Named here because what it reads is filled in from
@@ -163,6 +163,7 @@ public partial class NodeCatalog
         yield return Probe();
         yield return Scope();
         yield return Analyzer();
+        yield return Beam();
         yield return Meter();
         yield return Scan();
     }

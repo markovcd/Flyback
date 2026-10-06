@@ -211,23 +211,31 @@ public static partial class WebExports
 
     /// <summary>
     /// Says which Meters <see cref="Readings"/> measures, by the names the editor's picture
-    /// reads them on, and which charts it refills, by module, window and whether each is a
-    /// spectrum (1) or a trace (0). Answers how many floats the readings take.
+    /// reads them on, and which charts it refills, by module, window and kind: a trace (0),
+    /// a spectrum (1) or a beam (2). Answers how many floats the readings take.
     /// </summary>
     [JSExport]
-    public static int Watch(string[] keys, string[] charts, double[] windows, int[] spectra)
+    public static int Watch(string[] keys, string[] charts, double[] windows, int[] kinds)
     {
         watched = new LiveValues(keys);
         charted =
         [
             .. charts
                 .Select((node, i) => (Ok: Guid.TryParse(node, out var id), Id: id, At: i))
-                .Where(chart => chart.Ok && chart.At < windows.Length && chart.At < spectra.Length)
-                .Select(chart => new TapSpec(chart.Id, (float)windows[chart.At], Traces.Buffer(), spectra[chart.At] != 0)),
+                .Where(chart => chart.Ok && chart.At < windows.Length && chart.At < kinds.Length)
+                .Select(chart => Charted(chart.Id, (float)windows[chart.At], kinds[chart.At])),
         ];
 
         return watched.Count + charted.Sum(chart => chart.Trace.Samples.Length);
     }
+
+    private static TapSpec Charted(Guid node, float window, int kind) =>
+        kind switch
+        {
+            2 => new TapSpec(node, window, Beams.Buffer(), ChartKind.Beam),
+            1 => new TapSpec(node, window, Traces.Buffer(), ChartKind.Spectrum),
+            _ => new TapSpec(node, window, Traces.Buffer()),
+        };
 
     /// <summary>
     /// Measures the Meters <see cref="Watch"/> named and refills its charts, in its order,

@@ -215,8 +215,11 @@ internal sealed class PatchWalk
                 if (catalog.Get(node.TypeId) is not { TapsSignal: true } def) continue;
                 if (def.Inputs.Count == 0) continue;
 
-                emitter.Tap(taps.Count, ResolveInput(node, def, 0));
-                taps.Add(new TapSpec(node.Id, PatchCompiler.WindowOf(node, def), Traces.Silence));
+                for (var port = 0; port < Math.Min(def.TappedInputs, def.Inputs.Count); port++)
+                {
+                    emitter.Tap(taps.Count, ResolveInput(node, def, port));
+                    taps.Add(new TapSpec(node.Id, PatchCompiler.WindowOf(node, def), Traces.Silence, Port: port));
+                }
             }
         }
 
@@ -577,8 +580,9 @@ internal sealed class PatchWalk
         // the tap would have given it both.
         if (!def.ChartsSignal || hears || def.Inputs.Count == 0) return null;
 
-        var buffer = Traces.Buffer();
-        taps.Add(new TapSpec(node.Id, PatchCompiler.WindowOf(node, def), buffer, def.ChartsSpectrum));
+        var chart = def.ChartsBeam ? ChartKind.Beam : def.ChartsSpectrum ? ChartKind.Spectrum : ChartKind.Trace;
+        var buffer = chart is ChartKind.Beam ? Beams.Buffer() : Traces.Buffer();
+        taps.Add(new TapSpec(node.Id, PatchCompiler.WindowOf(node, def), buffer, chart));
 
         return buffer;
     }

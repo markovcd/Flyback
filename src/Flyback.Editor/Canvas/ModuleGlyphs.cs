@@ -196,9 +196,9 @@ internal static class ModuleGlyphs
             + "M13.6,8 A1.4,1.4 0 1 1 16.4,8 A1.4,1.4 0 1 1 13.6,8 "
             + "M14.6,16 A1.4,1.4 0 1 1 17.4,16 A1.4,1.4 0 1 1 14.6,16",
 
-        // Measurement's five ways of looking at a signal: two charts, one
+        // Measurement's six ways of looking at a signal: two charts, one
         // ruled where it is now and one biased into the past, that same past
-        // turned into a spectrum, a level read as a number instead of drawn,
+        // turned into a spectrum or drawn as an X-Y trace, a level read as a number instead of drawn,
         // and a loop read as a waveform.
         [NodeCatalog.ProbeTypeId] =
             "M3,5 L21,5 L21,19 L3,19 Z M12,5 L12,19 "
@@ -206,6 +206,8 @@ internal static class ModuleGlyphs
         [NodeCatalog.ScopeTypeId] =
             "M3,5 L21,5 L21,19 L3,19 Z M5.5,15 C7.5,15 7.5,9 10,9 C12.5,9 12.5,15 15,15 C17,15 17,10 18.5,10",
         [NodeCatalog.AnalyzerTypeId] = "M4,20 L4,13 M8,20 L8,6 M12,20 L12,10 M16,20 L16,4 M20,20 L20,15 M2,21.5 L22,21.5",
+        [NodeCatalog.BeamTypeId] =
+            "M3,4 L21,4 L21,20 L3,20 Z M12,7 C17,7 17,17 12,17 C7,17 7,7 12,7 C15,7 15,12 12,12 C9,12 9,17 12,17",
         [NodeCatalog.MeterTypeId] = "M8,4 L13,4 L13,20 L8,20 Z M15.5,6 L19.5,6 M15.5,11 L19.5,11 M15.5,16 L19.5,16",
         [NodeCatalog.ScanTypeId] =
             "M3,5 L21,5 L21,19 L3,19 Z M5,12 L19,12 "

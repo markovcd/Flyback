@@ -34,7 +34,7 @@ internal sealed partial class PageSound : IAudioEngine
 
     /// <summary>The Meters the picture reads and the charts it draws, as the worker was last told, and the number their readings come back under.</summary>
     private string[] watched = [];
-    private (Guid Node, float Window, bool Spectrum)[] charted = [];
+    private (Guid Node, float Window, ChartKind Chart)[] charted = [];
     private int watching;
 
     public bool IsRunning { get; private set; }
@@ -191,7 +191,7 @@ internal sealed partial class PageSound : IAudioEngine
     private void Watch(LiveValues watching, IReadOnlyList<TapSpec> taps)
     {
         var keys = watching.Keys.Where(MeterSignals.Is).ToArray();
-        (Guid Node, float Window, bool Spectrum)[] charts = [.. taps.Select(tap => (tap.Node, tap.Window, tap.Spectrum))];
+        (Guid Node, float Window, ChartKind Chart)[] charts = [.. taps.Select(tap => (tap.Node, tap.Window, tap.Chart))];
 
         if (keys.AsSpan().SequenceEqual(watched) && charts.AsSpan().SequenceEqual(charted)) return;
 
@@ -201,7 +201,7 @@ internal sealed partial class PageSound : IAudioEngine
             keys,
             [.. charts.Select(chart => chart.Node.ToString())],
             [.. charts.Select(chart => (double)chart.Window)],
-            [.. charts.Select(chart => chart.Spectrum ? 1 : 0)]);
+            [.. charts.Select(chart => (int)chart.Chart)]);
     }
 
     [JSImport("time", Module)] private static partial double JsTime();
@@ -227,7 +227,7 @@ internal sealed partial class PageSound : IAudioEngine
         [JSMarshalAs<JSType.Array<JSType.String>>] string[] keys,
         [JSMarshalAs<JSType.Array<JSType.String>>] string[] charts,
         [JSMarshalAs<JSType.Array<JSType.Number>>] double[] windows,
-        [JSMarshalAs<JSType.Array<JSType.Number>>] int[] spectra);
+        [JSMarshalAs<JSType.Array<JSType.Number>>] int[] kinds);
 
     [JSImport("read", Module)]
     [return: JSMarshalAs<JSType.Array<JSType.Number>>]

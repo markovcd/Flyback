@@ -67,10 +67,19 @@ public static class Traces
         for (var slot = 0; slot < heard.Taps.Count; slot++)
         {
             var played = heard.Taps[slot];
+            if (played.Port != 0) continue;
 
             foreach (var shown in charts)
             {
                 if (shown.Node != played.Node) continue;
+
+                if (shown.Chart is ChartKind.Beam)
+                {
+                    if (Partner(heard, slot) is { } up)
+                        Beams.Draw(memory, slot, up, shown.Trace.Samples, shown.Window);
+
+                    continue;
+                }
 
                 // The chart's window, in evaluations of the program that wrote
                 // the ring. At least one, so a window turned to nothing is a
@@ -83,9 +92,19 @@ public static class Traces
                     1,
                     DelayState.TraceSamples);
 
-                if (shown.Spectrum) Spectra.Chart(memory, slot, shown.Trace.Samples, span);
+                if (shown.Chart is ChartKind.Spectrum) Spectra.Chart(memory, slot, shown.Trace.Samples, span);
                 else memory.CopyTrace(slot, shown.Trace.Samples, span);
             }
         }
+    }
+
+    // The ring of the same module's second input, which a Beam draws upward.
+    private static int? Partner(CompiledPatch heard, int slot)
+    {
+        for (var other = 0; other < heard.Taps.Count; other++)
+            if (heard.Taps[other] is { Port: 1 } tap && tap.Node == heard.Taps[slot].Node)
+                return other;
+
+        return null;
     }
 }

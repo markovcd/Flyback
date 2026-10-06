@@ -1,11 +1,12 @@
-﻿using Flyback.Core.Compile;
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 
 namespace Flyback.Engine.Compile;
 
 /// <summary>
-/// One Scope, as the two programs of a patch see it between them: the speakers'
-/// program writes into it and the screen's program reads out of it.
+/// One tapped input of a Scope, Analyzer, Meter or Beam, as the two programs of a
+/// patch see it between them: the speakers' program writes into it and the
+/// screen's program reads out of it.
 /// </summary>
 /// <param name="Node">
 /// Which module this belongs to. The two programs eliminate different dead code,
@@ -22,8 +23,8 @@ namespace Flyback.Engine.Compile;
 /// program as an ordinary <see cref="OpCode.Table"/>. Empty in the speakers'
 /// program, which writes the ring rather than the buffer.
 /// </param>
-/// <param name="Spectrum">
-/// Whether the buffer is filled with the window's frequency content rather than
-/// the window itself — see <see cref="Flyback.Core.Graph.NodeDef.ChartsSpectrum"/>.
+/// <param name="Chart">What fills the buffer from the window.</param>
+/// <param name="Port">
+/// Which input was tapped, in the speakers' program: a Beam taps two.
 /// </param>
-public sealed record TapSpec(Guid Node, float Window, LoadedSample Trace, bool Spectrum = false);
+public sealed record TapSpec(Guid Node, float Window, LoadedSample Trace, ChartKind Chart = ChartKind.Trace, int Port = 0);

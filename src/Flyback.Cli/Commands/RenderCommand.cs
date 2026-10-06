@@ -115,6 +115,10 @@ internal static class RenderCommand
         var wantsSound = !still && (!format!.HasPicture || patch.Reaches().Sound);
 
         var video = wantsPicture ? patch.CompileForVideo(samples: samples, pictures: pictures) : null;
+
+        // A still of a Scope, a Beam or a Meter is of the sound played up to it.
+        if (still && video is not null && Listens(video.Program)) wantsSound = true;
+
         var audio = wantsSound ? patch.CompileForAudio(samples: samples) : null;
 
         var issues = (video?.Issues ?? [])
@@ -166,7 +170,7 @@ internal static class RenderCommand
         {
             if (still)
             {
-                Still(video!.Program, frames, options);
+                Still(video!.Program, audio?.Program, frames, options, heard);
                 code = Exit.Ok;
             }
             else if (!format!.HasPicture)
@@ -246,12 +250,37 @@ internal static class RenderCommand
         return null;
     }
 
-    private static void Still(CompiledPatch program, IFrameRenderer frames, RenderOptions options)
+    // Whether the picture reads what the speakers played: a chart's buffer or a Meter's reading.
+    private static bool Listens(CompiledPatch program) =>
+        program.Taps.Count > 0 || program.LiveInputs.Any(MeterSignals.Is);
+
+    private static void Still(
+        CompiledPatch program, CompiledPatch? audio, IFrameRenderer frames, RenderOptions options, ILineInSource? input)
     {
         var stride = options.Width * 4;
         var pixels = new byte[stride * options.Height];
+        var heard = new LiveValues(program.LiveInputs);
 
-        frames.Render(program, options.At, options.Width, options.Height, pixels, stride);
+        if (audio is not null && options.At > 0d)
+        {
+            var speaker = new AudioRenderer(oversample: options.Oversample)
+            {
+                Aspect = SynthRenderer.AspectOf(options.Width, options.Height),
+                Input = input,
+            };
+
+            // A second at a time, so a still an hour in does not hold the hour.
+            var left = (long)Math.Round(options.At * speaker.SampleRate);
+            var chunk = new float[speaker.SampleRate * NodeCatalog.AudioChannels];
+
+            for (; left > 0; left -= speaker.SampleRate)
+                speaker.Render(audio, chunk.AsSpan(0, (int)Math.Min(left, speaker.SampleRate) * NodeCatalog.AudioChannels));
+
+            Meters.Refresh(audio, speaker.Memory, heard);
+            Traces.Refresh(program, audio, speaker.Memory);
+        }
+
+        frames.Render(program, options.At, options.Width, options.Height, pixels, stride, heard);
 
         PngWriter.WriteBgra(options.Out.FullName, pixels, options.Width, options.Height, stride);
     }

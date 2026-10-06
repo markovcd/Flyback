@@ -109,7 +109,7 @@ public class AnalyzerTests
         Count(drawn, OpCode.Sin).ShouldBe(0);
         Count(drawn, OpCode.Table).ShouldBe(1);
 
-        drawn.Taps.ShouldHaveSingleItem().Spectrum.ShouldBeTrue();
+        drawn.Taps.ShouldHaveSingleItem().Chart.ShouldBe(ChartKind.Spectrum);
     }
 
     /// <summary>And a Scope's buffer goes on holding the waveform.</summary>
@@ -121,7 +121,7 @@ public class AnalyzerTests
         var scope = b.Add(NodeCatalog.ScopeTypeId, 400, 0);
 
         b.Patch.CompileForProbe(scope.Id, NodeCatalog.BuiltIn).Program
-            .Taps.ShouldHaveSingleItem().Spectrum.ShouldBeFalse();
+            .Taps.ShouldHaveSingleItem().Chart.ShouldBe(ChartKind.Trace);
     }
 
     /// <summary>

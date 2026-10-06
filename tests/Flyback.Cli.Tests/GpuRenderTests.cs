@@ -70,6 +70,32 @@ public class GpuRenderTests
         Agrees(program);
     }
 
+    /// <summary>A Beam's phosphor, drawn from a circle the sound played, which the shader reads as two squares of texels.</summary>
+    [Fact]
+    public void The_GPU_draws_a_Beam_as_the_processor_does()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var across = b.Add("osc.sine", 0, 0, (1, 100f), (3, 0.5f));
+        var up = b.Add("osc.sine", 0, 100, (1, 100f), (2, 0.25f), (3, 0.5f));
+        var beam = b.Add(NodeCatalog.BeamTypeId, 100, 0);
+        var output = b.Add(NodeCatalog.OutputTypeId, 200, 0);
+
+        b.Wire(across, 0, beam, 0);
+        b.Wire(up, 0, beam, 1);
+        b.Wire(beam, 0, output, NodeCatalog.OutputColorPort);
+
+        var program = b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
+        var heard = b.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
+
+        var speaker = new AudioRenderer();
+        speaker.Render(heard, new float[speaker.SampleRate / 4 * 2]);
+        Traces.Refresh(program, heard, speaker.Memory);
+
+        program.Taps.ShouldHaveSingleItem().Trace.Samples.Max().ShouldBeGreaterThan(0f);
+
+        Agrees(program);
+    }
+
     /// <summary>A clip played into the picture, longer than a row of its texture, so the read wraps onto the next.</summary>
     [Fact]
     public void The_GPU_draws_a_Sample_as_the_processor_does()

@@ -80,6 +80,59 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
         writer.Write(data);
     }
 
+    /// <summary>A sine across and the same sine a quarter turn on up, at half full scale.</summary>
+    [Given("a circle played as oscilloscope music onto a Beam, saved as {string}")]
+    public void GivenCircleSaved(string name) =>
+        File.WriteAllText(Path(name), """
+            let left = sine(freq: 100, amp: 0.5)
+            let right = sine(freq: 100, phase: 0.25, amp: 0.5)
+            left |> out.left
+            right |> out.right
+            beam(x: left, y: right) |> out.color
+            """);
+
+    [When("flyback-cli draws a still of {string} at {float} second(s)")]
+    public void WhenStill(string name, float seconds)
+    {
+        Run([
+            "render", Path(name), "-o", Path(ShotName), "--size", "640x360", "--processor",
+            "--at", seconds.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        ]);
+
+        code.ShouldBe(0, said);
+    }
+
+    [Then("the still is a ring half as wide as the picture is tall, dark inside and out")]
+    public void ThenRing()
+    {
+        var still = Shot();
+
+        // The brightest green across a few pixels either side of a radius, so a
+        // line a pixel wide is found wherever it falls between pixel centers.
+        double Green(double x, double y)
+        {
+            Span<double> rgb = stackalloc double[3];
+            var most = 0d;
+
+            for (var step = -4; step <= 4; step++)
+            {
+                var along = 1d + step * 0.01d;
+                still.At(x * along, y * along, rgb);
+                most = Math.Max(most, rgb[1]);
+            }
+
+            return most;
+        }
+
+        new[] { Green(0.5, 0), Green(0, 0.5), Green(-0.5, 0), Green(0, -0.5) }.ShouldAllBe(lit => lit > 0.3);
+
+        Green(0.05, 0).ShouldBeLessThan(0.02);
+        Green(0.9, 0).ShouldBeLessThan(0.02);
+    }
+
+    [Then("the still is black")]
+    public void ThenStillBlack() => Shot().Pixels.ShouldAllBe(value => value == 0f);
+
     [Then("{string} plays a {float} Hz tone")]
     public void ThenPlaysATone(string written, float hertz)
     {
