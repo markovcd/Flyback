@@ -19,12 +19,16 @@ namespace Flyback.Editor.Tests.Assist;
 /// </summary>
 public class AssistantRunTests
 {
-    private static AssistantRun RunOf(IPatchAssistant assistant, Patch? start = null, int maxTurns = 12) =>
+    private static AssistantRun RunOf(IPatchAssistant assistant, Patch? start = null, int maxContext = AssistantRun.ContextLimit) =>
         new(assistant,
             AssistantConfig.Unset,
             NodeCatalog.BuiltIn,
             start ?? new Patch(),
-            maxTurns);
+            maxContext);
+
+    /// <summary>A turn that says hello and reports sending <paramref name="sent"/> tokens.</summary>
+    private static ScriptedAssistant Sending(int sent) =>
+        new(new PatchEvent.Said("hello"), new PatchEvent.Cost(sent, 0, 10));
 
     private static async Task<List<PatchEvent>> Drain(AssistantRun run, string instruction = "make something")
     {
@@ -156,13 +160,24 @@ public class AssistantRunTests
     }
 
     [Fact]
-    public async Task A_conversation_that_has_had_its_turns_says_so()
+    public async Task A_conversation_whose_last_request_reached_the_limit_is_spent()
     {
-        using var run = RunOf(new ScriptedAssistant(new PatchEvent.Said("hello")), maxTurns: 1);
+        using var run = RunOf(Sending(50_000), maxContext: 50_000);
 
         run.Exhausted.ShouldBeFalse();
         await Drain(run);
         run.Exhausted.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task However_many_turns_a_small_conversation_has_it_carries_on()
+    {
+        using var run = RunOf(Sending(1_000), maxContext: 50_000);
+
+        for (var turn = 0; turn < 20; turn++) await Drain(run);
+
+        run.Turns.ShouldBe(20);
+        run.Exhausted.ShouldBeFalse();
     }
 
     /// <summary>
@@ -170,14 +185,14 @@ public class AssistantRunTests
     /// one that ran out can carry on rather than having to start again.
     /// </summary>
     [Fact]
-    public async Task Raising_the_limit_gives_a_conversation_more_turns()
+    public async Task Raising_the_limit_lets_a_conversation_carry_on()
     {
-        using var run = RunOf(new ScriptedAssistant(new PatchEvent.Said("hello")), maxTurns: 1);
+        using var run = RunOf(Sending(50_000), maxContext: 50_000);
 
         await Drain(run);
         run.Exhausted.ShouldBeTrue();
 
-        run.MaxTurns = 2;
+        run.MaxContext = 100_000;
 
         run.Exhausted.ShouldBeFalse();
     }
@@ -294,16 +309,16 @@ public class AssistantRunTests
     }
 
     [Fact]
-    public async Task A_conversation_runs_out_of_turns_rather_than_running_forever()
+    public async Task A_conversation_past_its_limit_takes_no_more_messages()
     {
-        using var run = RunOf(new ScriptedAssistant(new PatchEvent.Did("a step")), maxTurns: 2);
+        using var run = RunOf(Sending(60_000), maxContext: 50_000);
 
         await Drain(run);
-        await Drain(run);
-        var third = await Drain(run);
+        var second = await Drain(run);
 
-        run.Turns.ShouldBe(2);
-        third.OfType<PatchEvent.Failed>().ShouldHaveSingleItem().Message.ShouldContain("turns");
+        run.Turns.ShouldBe(1);
+        second.ShouldHaveSingleItem().ShouldBeOfType<PatchEvent.Failed>().Message
+            .ShouldBe("this conversation has grown to 60,000 tokens, past its limit of 50,000. Start another one.");
     }
 
     // --- the patch moving underneath ----------------------------------------
@@ -658,25 +673,26 @@ public class AssistantRunTests
     }
 
     [Fact]
-    public async Task A_conversation_carried_on_still_runs_out_of_turns()
+    public async Task A_conversation_carried_on_remembers_how_large_it_had_grown()
     {
         SavedConversation saved;
 
-        using (var first = RunOf(new ScriptedAssistant(new PatchEvent.Said("hello")), maxTurns: 2))
+        using (var first = RunOf(Sending(60_000), maxContext: 100_000))
         {
             await Drain(first);
-            saved = first.Save([]);
+            first.Exhausted.ShouldBeFalse();
+            saved = SavedConversation.Read(first.Save([]).ToJson()).ShouldNotBeNull();
         }
 
+        saved.Unresumable(50_000, null, SettingValues.None).ShouldBe(AssistantRun.Grown);
+
         using var carried = new AssistantRun(
-            new ScriptedAssistant(new PatchEvent.Said("hello")),
+            Sending(60_000),
             AssistantConfig.Unset,
             NodeCatalog.BuiltIn,
             new Patch(),
-            maxTurns: 2,
+            maxContext: 50_000,
             resuming: saved);
-
-        await Drain(carried);
 
         carried.Exhausted.ShouldBeTrue();
     }
@@ -734,7 +750,7 @@ public class AssistantRunTests
         await Drain(run);
         await Drain(run);
 
-        run.Tokens.ShouldBe(new TokensSpent(4, 300, 160, 30));
+        run.Tokens.ShouldBe(new TokensSpent(4, 300, 160, 30, Context: 50));
     }
 
     [Fact]
@@ -753,11 +769,11 @@ public class AssistantRunTests
             new Patch(),
             resuming: saved);
 
-        carried.Tokens.ShouldBe(new TokensSpent(1, 100, 80, 10));
+        carried.Tokens.ShouldBe(new TokensSpent(1, 100, 80, 10, Context: 100));
 
         await Drain(carried);
 
-        carried.Tokens.ShouldBe(new TokensSpent(2, 107, 80, 13));
+        carried.Tokens.ShouldBe(new TokensSpent(2, 107, 80, 13, Context: 7));
     }
 
     /// <summary>A conversation saved before the cost was kept opens with none counted.</summary>
@@ -783,11 +799,11 @@ public class AssistantRunTests
     }
 
     [Theory]
-    [InlineData(1, 0, 0, 0, "1 turn · 0 in (0 cached) · 0 out")]
-    [InlineData(3, 87_040, 80_000, 3_100, "3 turns · 87k in (80k cached) · 3.1k out")]
-    [InlineData(12, 1_250_000, 0, 999, "12 turns · 1.25M in (0 cached) · 999 out")]
-    public void The_footer_gives_counts_in_thousands(int turns, int input, int cached, int output, string told) =>
-        new TokensSpent(1, input, cached, output).Told(turns).ShouldBe(told);
+    [InlineData(1, 0, 0, 0, 0, "1 turn · 0 in (0 cached) · 0 out · 0 of 100k context")]
+    [InlineData(3, 87_040, 80_000, 3_100, 36_200, "3 turns · 87k in (80k cached) · 3.1k out · 36.2k of 100k context")]
+    [InlineData(12, 1_250_000, 0, 999, 99_000, "12 turns · 1.25M in (0 cached) · 999 out · 99k of 100k context")]
+    public void The_footer_gives_counts_in_thousands(int turns, int input, int cached, int output, int context, string told) =>
+        new TokensSpent(1, input, cached, output, context).Told(turns, 100_000).ShouldBe(told);
 
     // --- the fake -----------------------------------------------------------
 

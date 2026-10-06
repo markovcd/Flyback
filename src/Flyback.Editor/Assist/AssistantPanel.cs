@@ -247,16 +247,16 @@ internal sealed class AssistantPanel : UserControl
     };
 
     /// <summary>
-    /// How many turns a conversation may have — see
-    /// <see cref="AssistantSettings.TurnLimit"/>. Whole numbers only, so a value
-    /// typed with a fraction is rounded rather than refused.
+    /// How many tokens a request may send — see
+    /// <see cref="AssistantSettings.ContextLimit"/>. Stepped in tens of thousands,
+    /// and a value typed with a fraction is rounded rather than refused.
     /// </summary>
-    private readonly NumericUpDown turnBox = new()
+    private readonly NumericUpDown contextBox = new()
     {
-        Name = "turnLimit",
-        Minimum = AssistantSettings.FewestTurns,
-        Maximum = AssistantSettings.MostTurns,
-        Increment = 1,
+        Name = "contextLimit",
+        Minimum = AssistantSettings.LeastContext,
+        Maximum = AssistantSettings.MostContext,
+        Increment = 10_000,
         FormatString = "0",
         FontSize = Text.Body,
         HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -395,7 +395,7 @@ internal sealed class AssistantPanel : UserControl
         lookupsBox.IsChecked = settingsRepository.Current.ShowLookups;
         transcript.Shows(Voice.Briefing, settingsRepository.Current.ShowBriefing);
         transcript.Shows(Voice.Handbook, settingsRepository.Current.ShowLookups);
-        turnBox.Value = settingsRepository.Current.TurnLimit;
+        contextBox.Value = settingsRepository.Current.ContextLimit;
         proseBox.Value = settingsRepository.Current.ProseBudget;
 
         Recount();
@@ -682,8 +682,8 @@ internal sealed class AssistantPanel : UserControl
         fields.Children.Add(form);
         fields.Children.Add(keySection);
         fields.Children.Add(probeSection);
-        ToolTip.SetTip(turnBox, "How many turns a conversation may take before it stops.");
-        fields.Children.Add(InspectorRows.Field("Turns", turnBox));
+        ToolTip.SetTip(contextBox, "How many tokens a conversation may grow to before it stops.");
+        fields.Children.Add(InspectorRows.Field("Context", contextBox));
         fields.Children.Add(logBox);
         fields.Children.Add(briefingBox);
         fields.Children.Add(lookupsBox);
@@ -760,7 +760,7 @@ internal sealed class AssistantPanel : UserControl
         logBox.IsChecked = settingsRepository.Current.LogConversations;
         briefingBox.IsChecked = settingsRepository.Current.ShowBriefing;
         lookupsBox.IsChecked = settingsRepository.Current.ShowLookups;
-        turnBox.Value = settingsRepository.Current.TurnLimit;
+        contextBox.Value = settingsRepository.Current.ContextLimit;
         proseBox.Value = settingsRepository.Current.ProseBudget;
 
         ShowProviderForm();
@@ -841,10 +841,10 @@ internal sealed class AssistantPanel : UserControl
         transcript.Shows(Voice.Handbook, settingsRepository.Current.ShowLookups);
 
         // An emptied box keeps what was saved rather than becoming nought.
-        if (turnBox.Value is { } turns)
-            settingsRepository.Current.TurnLimit = Math.Clamp((int)Math.Round(turns), AssistantSettings.FewestTurns, AssistantSettings.MostTurns);
+        if (contextBox.Value is { } context)
+            settingsRepository.Current.ContextLimit = Math.Clamp((int)Math.Round(context), AssistantSettings.LeastContext, AssistantSettings.MostContext);
 
-        turnBox.Value = settingsRepository.Current.TurnLimit;
+        contextBox.Value = settingsRepository.Current.ContextLimit;
 
         if (proseBox.Value is { } prose)
             settingsRepository.Current.ProseBudget = Math.Clamp((int)Math.Round(prose), AssistantSettings.LeastProse, AssistantSettings.MostProse);
@@ -853,7 +853,7 @@ internal sealed class AssistantPanel : UserControl
 
         // Into the conversation already going, as well as the next one: a limit
         // raised because a conversation ran out is raised for that conversation.
-        if (session.Run is { } run) run.MaxTurns = settingsRepository.Current.TurnLimit;
+        if (session.Run is { } run) run.MaxContext = settingsRepository.Current.ContextLimit;
 
         settingsRepository.Current.Provider = chosenAssistant.Value?.Id ?? string.Empty;
 
@@ -972,7 +972,7 @@ internal sealed class AssistantPanel : UserControl
                 : (new TokensSpent(), 0);
 
         spent.IsVisible = !tokens.None;
-        spent.Text = tokens.None ? string.Empty : "This conversation: " + tokens.Told(turns);
+        spent.Text = tokens.None ? string.Empty : "This conversation: " + tokens.Told(turns, settingsRepository.Current.ContextLimit);
     }
 
     /// <summary>
@@ -1201,7 +1201,7 @@ internal sealed class AssistantPanel : UserControl
     /// </remarks>
     private string? Unresumable(SavedConversation saved, AssistantConfig config)
     {
-        if (saved.Unresumable(settingsRepository.Current.TurnLimit, chosenAssistant.Value, config.Values) is { } why)
+        if (saved.Unresumable(settingsRepository.Current.ContextLimit, chosenAssistant.Value, config.Values) is { } why)
             return why;
 
         return conversation.WaitingMoved(editor.Current)

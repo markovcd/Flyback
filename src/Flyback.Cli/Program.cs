@@ -317,10 +317,10 @@ internal static class Program
             Description = "Print the briefing the assistant is handed when a conversation starts.",
         };
 
-        var turns = new Option<int?>("--turns")
+        var context = new Option<int?>("--context")
         {
-            Description = $"How many turns the conversation may have, {AssistantSettings.FewestTurns} to "
-                + $"{AssistantSettings.MostTurns}. Defaults to the editor's Settings → Assistant.",
+            Description = $"How many tokens a request may send before the conversation stops, {AssistantSettings.LeastContext} to "
+                + $"{AssistantSettings.MostContext}. Defaults to the editor's Settings → Assistant.",
         };
 
         var command = new Command(
@@ -328,13 +328,13 @@ internal static class Program
             "Ask the assistant to change a patch, the way the editor's assistant column does, and write "
             + "the patch back with the conversation, so the next ask, or the editor, carries it on.")
         {
-            patch, message, preset, output, provider, model, set, fresh, seen, briefing, turns, json,
+            patch, message, preset, output, provider, model, set, fresh, seen, briefing, context, json,
         };
 
         command.Validators.Add(result =>
         {
-            if (result.GetValue(turns) is { } limit and (< AssistantSettings.FewestTurns or > AssistantSettings.MostTurns))
-                result.AddError($"--turns is {AssistantSettings.FewestTurns} to {AssistantSettings.MostTurns}.");
+            if (result.GetValue(context) is { } limit and (< AssistantSettings.LeastContext or > AssistantSettings.MostContext))
+                result.AddError($"--context is {AssistantSettings.LeastContext} to {AssistantSettings.MostContext}.");
         });
 
         command.SetAction((result, cancellation) =>
@@ -372,7 +372,7 @@ internal static class Program
                     result.GetValue(json),
                     result.GetValue(seen),
                     result.GetValue(briefing),
-                    result.GetValue(turns)),
+                    result.GetValue(context)),
                 result.InvocationConfiguration.Output,
                 error,
                 Console.In,

@@ -8,16 +8,18 @@ namespace Flyback.Assist;
 /// <param name="Input">Tokens sent, cached ones included.</param>
 /// <param name="CacheRead">How many of those were read from the provider's cache.</param>
 /// <param name="Output">Tokens written.</param>
-internal sealed record TokensSpent(int Requests = 0, int Input = 0, int CacheRead = 0, int Output = 0)
+/// <param name="Context">Tokens the newest request sent: how large the conversation has grown.</param>
+internal sealed record TokensSpent(int Requests = 0, int Input = 0, int CacheRead = 0, int Output = 0, int Context = 0)
 {
     public bool None => Requests == 0;
 
     public TokensSpent Plus(PatchEvent.Cost cost) =>
-        new(Requests + 1, Input + cost.Input, CacheRead + cost.CacheRead, Output + cost.Output);
+        new(Requests + 1, Input + cost.Input, CacheRead + cost.CacheRead, Output + cost.Output, cost.Input);
 
-    /// <summary>The footer's line: <c>3 turns · 87k in (80k cached) · 3.1k out</c>.</summary>
-    public string Told(int turns) =>
-        $"{turns} {(turns == 1 ? "turn" : "turns")} · {Short(Input)} in ({Short(CacheRead)} cached) · {Short(Output)} out";
+    /// <summary>The footer's line: <c>3 turns · 87k in (80k cached) · 3.1k out · 36k of 100k context</c>.</summary>
+    public string Told(int turns, int contextLimit) =>
+        $"{turns} {(turns == 1 ? "turn" : "turns")} · {Short(Input)} in ({Short(CacheRead)} cached) · {Short(Output)} out"
+        + $" · {Short(Context)} of {Short(contextLimit)} context";
 
     private static string Short(int count) => count switch
     {

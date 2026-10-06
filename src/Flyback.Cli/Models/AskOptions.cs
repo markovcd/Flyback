@@ -8,7 +8,7 @@ namespace Flyback.Cli.Models;
 /// <param name="Json">One JSON object a line, for each thing that happens.</param>
 /// <param name="Seen">Where the pictures it looked at and the sounds it heard are written, or null for nowhere.</param>
 /// <param name="Briefing">Print the briefing the assistant is handed.</param>
-/// <param name="Turns">How many turns the conversation may have, or null for the settings' limit.</param>
+/// <param name="Context">How many tokens a request may send, or null for the settings' limit.</param>
 internal sealed record AskOptions(
     string? Message,
     string? Provider,
@@ -17,4 +17,4 @@ internal sealed record AskOptions(
     bool Json,
     DirectoryInfo? Seen,
     bool Briefing,
-    int? Turns);
+    int? Context);

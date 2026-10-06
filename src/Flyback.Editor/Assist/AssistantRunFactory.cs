@@ -21,7 +21,7 @@ internal sealed class AssistantRunFactory(
             config,
             plugins.Modules,
             over ?? editor.Current,
-            settings.Current.TurnLimit,
+            settings.Current.ContextLimit,
             samples: editor.Samples,
             pictures: editor.Pictures,
             resuming: resuming,

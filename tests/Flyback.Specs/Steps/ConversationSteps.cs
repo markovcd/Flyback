@@ -21,13 +21,18 @@ public sealed class ConversationSteps : IDisposable
     private AssistantRun Run => run.ShouldNotBeNull();
 
     [Given("a conversation with the assistant about a patch")]
-    public async Task GivenAConversation()
+    public Task GivenAConversation() => Start(AssistantRun.ContextLimit);
+
+    [Given("a conversation with the assistant limited to {int} tokens of context")]
+    public Task GivenALimitedConversation(int limit) => Start(limit);
+
+    private async Task Start(int maxContext)
     {
         canvas.Nodes.Add(first);
         canvas.Nodes.Add(second);
         canvas.EnsureOutput();
 
-        run = new AssistantRun(assistant, AssistantConfig.Unset, NodeCatalog.BuiltIn, canvas);
+        run = new AssistantRun(assistant, AssistantConfig.Unset, NodeCatalog.BuiltIn, canvas, maxContext);
 
         await Turn("make something");
     }
@@ -43,9 +48,41 @@ public sealed class ConversationSteps : IDisposable
         await Turn("and again");
     }
 
+    [When("it is asked once more")]
+    public Task WhenAskedOnceMore() => Turn("once more");
+
+    [When("it is asked {int} times more")]
+    public async Task WhenAskedTimesMore(int times)
+    {
+        for (var time = 0; time < times; time++) await Turn("and again");
+    }
+
+    [Then("it still takes the next message")]
+    public async Task ThenItStillTakes()
+    {
+        var turns = Run.Turns;
+
+        Run.Exhausted.ShouldBeFalse();
+        await Turn("and again");
+
+        Run.Turns.ShouldBe(turns + 1);
+    }
+
+    [Then("it takes no more messages, saying it has grown past its limit")]
+    public async Task ThenItTakesNoMore()
+    {
+        Run.Exhausted.ShouldBeTrue();
+
+        var events = new List<PatchEvent>();
+
+        await foreach (var happened in Run.Ask("and again")) events.Add(happened);
+
+        events.ShouldHaveSingleItem().ShouldBeOfType<PatchEvent.Failed>().Message.ShouldContain("past its limit");
+    }
+
     [Then("the conversation has cost {int} tokens in, {int} of them cached, and {int} out")]
     public void ThenItHasCost(int input, int cached, int output) =>
-        Run.Tokens.ShouldBe(new TokensSpent(2, input, cached, output));
+        (Run.Tokens.Requests, Run.Tokens.Input, Run.Tokens.CacheRead, Run.Tokens.Output).ShouldBe((2, input, cached, output));
 
     [When("a knob is turned on the canvas")]
     public void WhenAKnobIsTurned() => first.InputValues[0] = 0.25f;

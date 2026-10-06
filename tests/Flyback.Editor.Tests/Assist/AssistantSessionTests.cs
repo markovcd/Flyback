@@ -81,11 +81,11 @@ public sealed class AssistantSessionTests
     }
 
     [Fact]
-    public async Task A_conversation_that_had_its_turns_is_spent()
+    public async Task A_conversation_that_grew_past_its_context_limit_is_spent()
     {
         using var session = new AssistantSession(transcript);
 
-        session.Begin(Run(maxTurns: 1), assistant, AssistantConfig.Unset, new AssistantSettings(), resumed: false, null);
+        session.Begin(Run(maxContext: 1), assistant, AssistantConfig.Unset, new AssistantSettings(), resumed: false, null);
 
         session.Spent(assistant, AssistantConfig.Unset).ShouldBeNull();
 
@@ -93,7 +93,7 @@ public sealed class AssistantSessionTests
         {
         }
 
-        session.Spent(assistant, AssistantConfig.Unset).ShouldNotBeNull().ShouldContain("had its turns");
+        session.Spent(assistant, AssistantConfig.Unset).ShouldNotBeNull().ShouldBe(AssistantRun.Grown);
     }
 
     [Fact]
@@ -130,8 +130,8 @@ public sealed class AssistantSessionTests
         return session;
     }
 
-    private AssistantRun Run(SavedConversation? resuming = null, int maxTurns = 12) =>
-        new(assistant, AssistantConfig.Unset, NodeCatalog.BuiltIn, new Patch(), maxTurns, resuming: resuming);
+    private AssistantRun Run(SavedConversation? resuming = null, int maxContext = AssistantRun.ContextLimit) =>
+        new(assistant, AssistantConfig.Unset, NodeCatalog.BuiltIn, new Patch(), maxContext, resuming: resuming);
 
     /// <summary>A conversation saved by another run, which <see cref="Talking"/> cannot take back.</summary>
     private SavedConversation Saved()

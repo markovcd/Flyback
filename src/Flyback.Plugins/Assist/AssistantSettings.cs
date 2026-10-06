@@ -66,18 +66,19 @@ internal sealed class AssistantSettings
     /// <summary>Whether the conversation shows the handbook text the assistant looks up.</summary>
     public bool ShowLookups { get; set; } = true;
 
-    /// <summary>What <see cref="TurnLimit"/> is until somebody changes it.</summary>
-    public const int DefaultTurnLimit = 12;
+    /// <summary>What <see cref="ContextLimit"/> is until somebody changes it: under the smallest window a shipped provider offers.</summary>
+    public const int DefaultContextLimit = 100_000;
 
-    /// <summary>The fewest and most turns <see cref="TurnLimit"/> may be set to.</summary>
-    public const int FewestTurns = 1, MostTurns = 100;
+    /// <summary>The fewest and most tokens <see cref="ContextLimit"/> may be set to. The briefing alone is over 20k.</summary>
+    public const int LeastContext = 40_000, MostContext = 1_000_000;
 
     /// <summary>
-    /// How many turns one conversation may have before it has to be started
-    /// again. A cap on what one request can cost, and so a choice about this
-    /// machine's account rather than about any provider.
+    /// How many tokens one request may send before the conversation has to be
+    /// started again. Every request carries the whole conversation, so this caps
+    /// what one can cost: a choice about this machine's account rather than about
+    /// any provider. A provider that reports no tokens is not held to it.
     /// </summary>
-    public int TurnLimit { get; set; } = DefaultTurnLimit;
+    public int ContextLimit { get; set; } = DefaultContextLimit;
 
     /// <summary>What <see cref="ProseBudget"/> is until somebody changes it.</summary>
     public const int DefaultProseBudget = 100_000;
@@ -151,7 +152,7 @@ internal sealed class AssistantSettings
 
             // A file edited by hand to nought would leave a conversation that
             // cannot be started at all.
-            settings.TurnLimit = Math.Clamp(settings.TurnLimit, FewestTurns, MostTurns);
+            settings.ContextLimit = Math.Clamp(settings.ContextLimit, LeastContext, MostContext);
             settings.ProseBudget = Math.Clamp(settings.ProseBudget, LeastProse, MostProse);
 
             return settings;

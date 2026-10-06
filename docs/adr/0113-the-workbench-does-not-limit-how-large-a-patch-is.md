@@ -65,3 +65,9 @@ measurement, and the first patch it met was the largest preset.
 `MaxToolCalls` counts from each turn's start rather than for the whole
 conversation, and never refuses `propose`;
 [0159](0159-a-turn-pays-only-for-what-is-new.md).
+
+## Amendment, 2026-10-06: the turn limit is a context limit
+
+A conversation ends when a request has sent as many tokens as Settings → Assistant
+allows, not after a number of turns, and the check runs before every request;
+[0180](0180-a-conversation-is-bounded-by-how-large-it-has-grown.md).

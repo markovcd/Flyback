@@ -179,11 +179,11 @@ public sealed class AssistantPanelTests : EditorTest
 
         Spent(window).IsVisible.ShouldBeFalse();
 
-        panel.Open(Saved(new TokensSpent(2, 87_040, 80_000, 3_100), new TranscriptLine(Voice.You, "hello")));
+        panel.Open(Saved(new TokensSpent(2, 87_040, 80_000, 3_100, 45_000), new TranscriptLine(Voice.You, "hello")));
         Settle(window);
 
         Spent(window).IsVisible.ShouldBeTrue();
-        Spent(window).Text.ShouldBe("This conversation: 1 turn · 87k in (80k cached) · 3.1k out");
+        Spent(window).Text.ShouldBe("This conversation: 1 turn · 87k in (80k cached) · 3.1k out · 45k of 100k context");
 
         panel.StartOver();
         Settle(window);
@@ -1261,26 +1261,26 @@ public sealed class AssistantPanelTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void The_turn_limit_shows_what_was_saved_and_keeps_what_is_saved()
+    public void The_context_limit_shows_what_was_saved_and_keeps_what_is_saved()
     {
-        var saved = new AssistantSettings { TurnLimit = 20 };
+        var saved = new AssistantSettings { ContextLimit = 200_000 };
         var window = Showing(With(new Deaf()), saved);
         var panel = All<AssistantPanel>(window).Single();
 
         var host = Settings(window);
-        var turns = All<NumericUpDown>(host).Single(c => c.Name == "turnLimit");
+        var context = All<NumericUpDown>(host).Single(c => c.Name == "contextLimit");
 
-        turns.Value.ShouldBe(20);
+        context.Value.ShouldBe(200_000);
 
-        turns.Value = 40;
+        context.Value = 400_000;
         Settle(host);
 
-        saved.TurnLimit.ShouldBe(20, "nothing is kept until Save");
+        saved.ContextLimit.ShouldBe(200_000, "nothing is kept until Save");
 
         panel.SaveSettings();
         Settle(host);
 
-        saved.TurnLimit.ShouldBe(40);
+        saved.ContextLimit.ShouldBe(400_000);
     }
 
     [AvaloniaFact]
@@ -1364,21 +1364,21 @@ public sealed class AssistantPanelTests : EditorTest
 
     /// <summary>Closing some way other than Save puts the box back to what was saved.</summary>
     [AvaloniaFact]
-    public void Discarding_puts_the_turn_limit_back()
+    public void Discarding_puts_the_context_limit_back()
     {
-        var saved = new AssistantSettings { TurnLimit = 20 };
+        var saved = new AssistantSettings { ContextLimit = 200_000 };
         var window = Showing(With(new Deaf()), saved);
         var panel = All<AssistantPanel>(window).Single();
 
         var host = Settings(window);
-        var turns = All<NumericUpDown>(host).Single(c => c.Name == "turnLimit");
+        var context = All<NumericUpDown>(host).Single(c => c.Name == "contextLimit");
 
-        turns.Value = 5;
+        context.Value = 50_000;
         panel.DiscardSettings();
         Settle(host);
 
-        turns.Value.ShouldBe(20);
-        saved.TurnLimit.ShouldBe(20);
+        context.Value.ShouldBe(200_000);
+        saved.ContextLimit.ShouldBe(200_000);
     }
 
     /// <summary>

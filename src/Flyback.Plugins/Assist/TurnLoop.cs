@@ -82,10 +82,21 @@ public static class TurnLoop
         """;
 
     /// <summary>Asks <paramref name="instruction"/> of <paramref name="conversation"/>, over its workbench.</summary>
-    public static async IAsyncEnumerable<PatchEvent> Run(
+    public static IAsyncEnumerable<PatchEvent> Run(
         IModelConversation conversation,
         string instruction,
-        [EnumeratorCancellation] CancellationToken cancel = default)
+        CancellationToken cancel = default) => Run(conversation, instruction, int.MaxValue, cancel);
+
+    /// <summary>
+    /// Asks <paramref name="instruction"/> of <paramref name="conversation"/>, and
+    /// stops before a request once the last one sent <paramref name="contextLimit"/>
+    /// tokens or more.
+    /// </summary>
+    internal static async IAsyncEnumerable<PatchEvent> Run(
+        IModelConversation conversation,
+        string instruction,
+        int contextLimit,
+        [EnumeratorCancellation] CancellationToken cancel)
     {
         ArgumentNullException.ThrowIfNull(conversation);
 
@@ -112,10 +123,17 @@ public static class TurnLoop
         conversation.Add(instruction);
 
         var nudged = false;
+        var sent = 0;
 
         for (var exchange = 0; exchange < MaxExchanges; exchange++)
         {
             if (cancel.IsCancellationRequested) yield break;
+
+            if (sent >= contextLimit)
+            {
+                yield return new PatchEvent.Failed(Grown(sent, contextLimit));
+                yield break;
+            }
 
             // The send is guarded and the yielding happens after it, because a
             // yield may not sit inside a catch.
@@ -144,6 +162,8 @@ public static class TurnLoop
                 yield return new PatchEvent.Failed(failure ?? "the endpoint said nothing at all.");
                 yield break;
             }
+
+            sent = reply.Input;
 
             if (reply.Text is { } text) yield return new PatchEvent.Said(text);
             if (reply.Input > 0 || reply.Output > 0)
@@ -249,6 +269,11 @@ public static class TurnLoop
         yield return new PatchEvent.Failed(
             $"stopped after {MaxExchanges} exchanges in one turn, which is as many as there are.");
     }
+
+    /// <summary>Why a conversation whose last request sent <paramref name="sent"/> tokens takes no more.</summary>
+    internal static string Grown(int sent, int contextLimit) => string.Create(
+        System.Globalization.CultureInfo.InvariantCulture,
+        $"this conversation has grown to {sent:N0} tokens, past its limit of {contextLimit:N0}. Start another one.");
 
     /// <summary>
     /// Runs <paramref name="request"/>, writing each wait it tells of that is at

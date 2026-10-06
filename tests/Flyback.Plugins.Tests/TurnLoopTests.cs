@@ -27,13 +27,14 @@ public class TurnLoopTests
         Scripted conversation,
         CancellationTokenSource? stop = null,
         Func<PatchEvent, bool>? stopAt = null,
-        string instruction = "make something")
+        string instruction = "make something",
+        int contextLimit = int.MaxValue)
     {
         var events = new List<PatchEvent>();
 
         conversation.Workbench = bench;
 
-        await foreach (var happened in TurnLoop.Run(conversation, instruction, stop?.Token ?? TestContext.Current.CancellationToken))
+        await foreach (var happened in TurnLoop.Run(conversation, instruction, contextLimit, stop?.Token ?? TestContext.Current.CancellationToken))
         {
             events.Add(happened);
 
@@ -53,6 +54,32 @@ public class TurnLoopTests
 
         events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem().Summary.ShouldBe("a gray field");
         conversation.Sent.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task A_turn_asks_nothing_more_once_a_request_has_reached_the_context_limit()
+    {
+        var bench = Bench();
+        var conversation = new Scripted(new ModelReply(null, Building, Input: 60_000), new ModelReply(null, [Proposing]));
+
+        var events = await Turn(bench, conversation, contextLimit: 50_000);
+
+        conversation.Sent.ShouldBe(1);
+        conversation.Answered.ShouldHaveSingleItem().Count.ShouldBe(2, "the calls already asked for are answered");
+        events[^1].ShouldBeOfType<PatchEvent.Failed>().Message
+            .ShouldBe("this conversation has grown to 60,000 tokens, past its limit of 50,000. Start another one.");
+    }
+
+    [Fact]
+    public async Task A_proposal_in_the_request_that_reached_the_context_limit_still_ends_the_turn()
+    {
+        var bench = Bench();
+        var conversation = new Scripted(new ModelReply(null, [.. Building, Proposing], Input: 60_000));
+
+        var events = await Turn(bench, conversation, contextLimit: 50_000);
+
+        events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
+        events.OfType<PatchEvent.Failed>().ShouldBeEmpty();
     }
 
     [Fact]

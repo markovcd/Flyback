@@ -22,17 +22,20 @@ namespace Flyback.Assist;
 /// </remarks>
 internal sealed class AssistantRun : IDisposable
 {
-    /// <summary>How many turns a conversation may have before another has to be started, until a setting says otherwise.</summary>
-    public const int TurnLimit = AssistantSettings.DefaultTurnLimit;
+    /// <summary>How many tokens a request may send before another conversation has to be started, until a setting says otherwise.</summary>
+    public const int ContextLimit = AssistantSettings.DefaultContextLimit;
+
+    /// <summary>Why the next message starts a new conversation when this one has grown past its limit.</summary>
+    public const string Grown = "That conversation grew past its context limit. Starting another.";
 
     private readonly IPatchSession session;
 
     /// <summary>
-    /// How many turns this conversation may have. Settable rather than fixed at
-    /// the start, so a limit saved in the settings reaches the conversation
-    /// already going rather than only the next one.
+    /// How many tokens a request of this conversation may send. Settable rather
+    /// than fixed at the start, so a limit saved in the settings reaches the
+    /// conversation already going rather than only the next one.
     /// </summary>
-    public int MaxTurns { get; set; }
+    public int MaxContext { get; set; }
 
     /// <summary>Who this is with and what they were set to, which a saved conversation is checked against.</summary>
     private readonly string provider;
@@ -67,7 +70,7 @@ internal sealed class AssistantRun : IDisposable
     /// an edit underneath is noticed against — for a conversation carried on as
     /// much as for a new one.
     /// </param>
-    /// <param name="maxTurns"></param>
+    /// <param name="maxContext"></param>
     /// <param name="limits"></param>
     /// <param name="samples"></param>
     /// <param name="pictures"></param>
@@ -79,7 +82,7 @@ internal sealed class AssistantRun : IDisposable
         AssistantConfig config,
         ModuleCatalog modules,
         Patch startingPoint,
-        int maxTurns = TurnLimit,
+        int maxContext = ContextLimit,
         WorkbenchLimits? limits = null,
         ISampleLibrary? samples = null,
         IImageLibrary? pictures = null,
@@ -88,7 +91,7 @@ internal sealed class AssistantRun : IDisposable
         IReadOnlyList<PatchPreset>? presets = null)
     {
         See(startingPoint);
-        MaxTurns = maxTurns;
+        MaxContext = maxContext;
 
         provider = assistant.Id;
         values = config.Values;
@@ -168,8 +171,8 @@ internal sealed class AssistantRun : IDisposable
         }
     }
 
-    /// <summary>Whether this conversation has had all the turns it may have.</summary>
-    public bool Exhausted => Turns >= MaxTurns;
+    /// <summary>Whether this conversation's last request sent as many tokens as it may.</summary>
+    public bool Exhausted => Tokens.Context >= MaxContext;
 
     public PatchWorkbench Workbench { get; }
 
@@ -346,10 +349,9 @@ internal sealed class AssistantRun : IDisposable
             yield break;
         }
 
-        if (Turns >= MaxTurns)
+        if (Exhausted)
         {
-            yield return new PatchEvent.Failed(
-                $"this conversation has had its {MaxTurns} turns. Start another one.");
+            yield return new PatchEvent.Failed(TurnLoop.Grown(Tokens.Context, MaxContext));
             yield break;
         }
 
@@ -451,7 +453,7 @@ internal sealed class AssistantRun : IDisposable
         try
         {
             var turn = session is IModelConversation conversation
-                ? TurnLoop.Run(conversation, instruction, cancel)
+                ? TurnLoop.Run(conversation, instruction, MaxContext, cancel)
                 : session.Ask(instruction, cancel);
 
             events = turn.GetAsyncEnumerator(cancel);

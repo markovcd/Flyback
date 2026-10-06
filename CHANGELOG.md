@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A conversation with the assistant ends when it has grown past a context limit in tokens, set under Settings → Assistant or with `flyback-cli ask --context`, rather than after a number of turns, and the column's footer shows how close it is.
+
 - Fingers on the canvas no longer lose a wire to the socket beside the one meant, edit the patch when two land together to pan, jump a held socket's value on the first move, or stop a pinch when one finger lifts.
 
 - A MIDI File module plays a `.mid` file on the patch's clock, a voice and a channel of it at a time, so it sounds the same in an export as on the speakers.

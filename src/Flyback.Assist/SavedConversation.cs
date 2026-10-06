@@ -69,9 +69,9 @@ internal sealed record SavedConversation(
     /// Why this conversation cannot be carried on with <paramref name="assistant"/>
     /// set to <paramref name="values"/>, or null when it can.
     /// </summary>
-    public string? Unresumable(int turnLimit, IPatchAssistant? assistant, SettingValues values)
+    public string? Unresumable(int contextLimit, IPatchAssistant? assistant, SettingValues values)
     {
-        if (Turns >= turnLimit) return "That conversation had its turns. Starting another.";
+        if ((Tokens?.Context ?? 0) >= contextLimit) return AssistantRun.Grown;
 
         return assistant is null
             || !string.Equals(Provider, assistant.Id, StringComparison.Ordinal)
@@ -119,6 +119,7 @@ internal sealed record SavedConversation(
                 ["input"] = Tokens.Input,
                 ["cacheRead"] = Tokens.CacheRead,
                 ["output"] = Tokens.Output,
+                ["context"] = Tokens.Context,
             },
         }.ToJsonString(Options);
     }
@@ -172,7 +173,12 @@ internal sealed record SavedConversation(
                 transcript,
                 Raw(body["canvas"]),
                 body["tokens"] is JsonObject spent
-                    ? new TokensSpent(Number(spent["requests"]), Number(spent["input"]), Number(spent["cacheRead"]), Number(spent["output"]))
+                    ? new TokensSpent(
+                        Number(spent["requests"]),
+                        Number(spent["input"]),
+                        Number(spent["cacheRead"]),
+                        Number(spent["output"]),
+                        Number(spent["context"]))
                     : null);
         }
         catch (Exception e) when (e is JsonException or ArgumentException or InvalidOperationException)

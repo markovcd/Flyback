@@ -32,7 +32,7 @@ internal sealed class AssistantSession(ITranscript transcript, string? logFolder
     public string? Spent(IPatchAssistant with, AssistantConfig config)
     {
         if (Run is null) return null;
-        if (Run.Exhausted) return "That conversation had its turns. Starting another.";
+        if (Run.Exhausted) return AssistantRun.Grown;
 
         return !ReferenceEquals(Assistant, with) || Config != config
             ? "The settings changed, so this is a new conversation."

@@ -55,7 +55,7 @@ internal sealed class AskConversation : IDisposable
         this.store = store;
         this.error = error;
 
-        limit = options.Turns ?? settings.TurnLimit;
+        limit = options.Context ?? settings.ContextLimit;
         current = about.Opened.Patch;
 
         transcript = new ConsoleTranscript(options, output, error, () => session?.Run?.Turns ?? 0);
@@ -102,7 +102,8 @@ internal sealed class AskConversation : IDisposable
             provider = assistant.Id,
             conversation = resuming is null ? "new" : "resumed",
             turn = run.Turns,
-            turnLimit = limit,
+            context = run.Tokens.Context,
+            contextLimit = limit,
             file = about.Into.FullName,
             sees = senses.Vision,
             hears = senses.Hearing.ToString().ToLowerInvariant(),
@@ -190,10 +191,10 @@ internal sealed class AskConversation : IDisposable
             file = about.Into.FullName,
             proposed = proposed is not null,
             turn = run.Turns,
-            turnLimit = limit,
-        }, proposed is null
-            ? $"Kept the conversation with {about.Into.Name} — turn {run.Turns} of {limit}."
-            : $"Wrote {about.Into.Name} — turn {run.Turns} of {limit}.");
+            context = run.Tokens.Context,
+            contextLimit = limit,
+        }, (proposed is null ? $"Kept the conversation with {about.Into.Name}" : $"Wrote {about.Into.Name}")
+            + string.Create(CultureInfo.InvariantCulture, $" — turn {run.Turns}, {run.Tokens.Context:N0} of {limit:N0} tokens of context."));
     }
 
     /// <summary>What the turn cost: the requests that reported their tokens, and the time spent, waiting included.</summary>

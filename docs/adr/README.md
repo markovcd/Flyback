@@ -204,6 +204,7 @@ context, decision, consequences.
 | [0115](0115-the-assistant-may-read-the-presets.md) | The assistant may read the presets *(user-directed)* |
 | [0156](0156-a-conversation-follows-its-patch-while-the-modules-and-wires-hold.md) | A conversation follows its patch while the modules and wires hold *(user-directed)* |
 | [0159](0159-a-turn-pays-only-for-what-is-new.md) | A turn pays only for what is new *(user-directed)* |
+| [0180](0180-a-conversation-is-bounded-by-how-large-it-has-grown.md) | A conversation is bounded by how large it has grown *(user-directed)* |
 | [0161](0161-a-turn-is-the-hosts-and-a-provider-writes-only-its-format.md) | A turn is the host's, and a provider writes only its format *(user-directed)* |
 | [0169](0169-the-hosts-side-of-a-conversation-is-a-project-of-its-own.md) | The host's side of a conversation is a project of its own *(user-directed)* |
 | [0172](0172-claude-code-is-an-assistant-by-running-the-program-the-person-signed-in.md) | Claude Code is an assistant by running the program the person signed in *(user-directed)* |

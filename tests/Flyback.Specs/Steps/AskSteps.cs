@@ -122,7 +122,7 @@ public sealed class AskSteps : IDisposable
 
         var waiting = conversation.Waiting.ShouldNotBeNull();
 
-        waiting.Unresumable(AssistantSettings.DefaultTurnLimit, Assistant, SettingValues.None).ShouldBeNull();
+        waiting.Unresumable(AssistantSettings.DefaultContextLimit, Assistant, SettingValues.None).ShouldBeNull();
 
         using var run = new AssistantRun(Assistant, AssistantConfig.Unset, NodeCatalog.BuiltIn, loaded.Patch, resuming: waiting);
 
