@@ -1,3 +1,4 @@
+using System.CommandLine;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -13,6 +14,7 @@ using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
+using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Tests;
 
@@ -246,9 +248,55 @@ public sealed class AskCommandTests : IDisposable
         error.ToString().ShouldContain("the extension says what to write");
     }
 
+    [Fact]
+    public void A_flag_ask_does_not_have_is_refused_rather_than_asked()
+    {
+        var (code, complained) = Run("ask", Path("field.fbk"), "--turns", "1");
+
+        code.ShouldBe(Exit.Failed);
+        complained.ShouldContain("--turns");
+        complained.ShouldContain("--help");
+        assistant.Heard.ShouldBeEmpty();
+        File.Exists(Path("field.fbk")).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void A_flag_where_the_patch_goes_is_refused_too()
+    {
+        var (code, complained) = Run("ask", "--turns", "1");
+
+        code.ShouldBe(Exit.Failed);
+        complained.ShouldContain("ask has no --turns");
+    }
+
+    [Theory]
+    [InlineData("--", "--turns", "1")]
+    [InlineData("make", "it", "-3", "dB")]
+    public void A_message_with_a_dash_in_it_is_still_a_message(params string[] words)
+    {
+        // The extension is refused next, so getting that far means the words passed.
+        var (code, complained) = Run(["ask", Path("field.txt"), .. words]);
+
+        code.ShouldBe(Exit.Failed);
+        complained.ShouldNotContain("ask has no");
+        complained.ShouldContain("the extension says what to write");
+    }
+
     private string Path(string name) => System.IO.Path.Combine(folder.FullName, name);
 
     private PluginCatalog Catalog() => new([], [], NodeCatalog.BuiltIn, Presets.All, [], [assistant]);
+
+    private (int Code, string Complained) Run(params string[] args)
+    {
+        using var complained = new StringWriter();
+
+        var code = Program.Run(
+            args,
+            new PluginRegistry(Catalog, "nowhere", null),
+            new InvocationConfiguration { Output = TextWriter.Null, Error = complained });
+
+        return (code, complained.ToString());
+    }
 
     private async Task<(int Code, string Said, string Complained)> Ask(
         string patch,

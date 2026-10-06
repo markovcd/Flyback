@@ -272,7 +272,7 @@ internal static class Program
         var message = new Argument<string[]>("message")
         {
             Description = "What to ask. Left out, it is read from standard input, "
-                + "or asked for line by line at a terminal.",
+                + "or asked for line by line at a terminal. One that starts with a dash goes after --.",
             Arity = ArgumentArity.ZeroOrMore,
         };
 
@@ -339,9 +339,18 @@ internal static class Program
 
         command.SetAction((result, cancellation) =>
         {
+            var error = result.InvocationConfiguration.Error;
+
+            if (AskCommand.Stray(result, [.. result.GetResult(patch)?.Tokens ?? [], .. result.GetResult(message)?.Tokens ?? []]) is { } stray)
+            {
+                error.WriteLine(AskedPatch.Complaint(
+                    $"ask has no {stray}; `ask --help` lists what it takes. A message that starts with a dash goes after --."));
+
+                return Task.FromResult(Exit.Failed);
+            }
+
             plugins.Ready();
 
-            var error = result.InvocationConfiguration.Error;
             var file = result.GetValue(patch);
             var named = result.GetValue(preset);
             var words = result.GetValue(message) ?? [];

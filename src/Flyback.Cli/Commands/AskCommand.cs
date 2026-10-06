@@ -1,3 +1,5 @@
+using System.CommandLine;
+using System.CommandLine.Parsing;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core;
@@ -112,6 +114,41 @@ internal static class AskCommand
         }
 
         return conversation.Failed ? Exit.Failed : Exit.Ok;
+    }
+
+    /// <summary>
+    /// The first of <paramref name="words"/> that reads as a flag <c>ask</c> does not have, or null.
+    /// </summary>
+    /// <remarks>
+    /// The parser hands an unknown flag to the message. Words after <c>--</c> are the message
+    /// whatever they look like, and a dash before a digit is a number.
+    /// </remarks>
+    public static string? Stray(ParseResult parsed, IEnumerable<Token> words)
+    {
+        var tokens = parsed.Tokens;
+        var end = tokens.Count;
+
+        for (var i = 0; i < tokens.Count; i++)
+        {
+            if (tokens[i].Type != TokenType.DoubleDash) continue;
+
+            end = i;
+            break;
+        }
+
+        foreach (var word in words)
+        {
+            var at = 0;
+
+            while (at < end && !ReferenceEquals(tokens[at], word)) at++;
+
+            if (at < end && Flag(word.Value)) return word.Value;
+        }
+
+        return null;
+
+        static bool Flag(string word) =>
+            word.StartsWith("--", StringComparison.Ordinal) || (word.Length > 1 && word[0] == '-' && !char.IsDigit(word[1]) && word[1] != '.');
     }
 
     /// <summary>

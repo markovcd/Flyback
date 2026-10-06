@@ -1,3 +1,4 @@
+using System.CommandLine;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -13,6 +14,7 @@ using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
 using Reqnroll;
 using Shouldly;
+using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Specs.Steps;
 
@@ -53,6 +55,19 @@ public sealed class AskSteps : IDisposable
     [When("flyback-cli asks it about {string} for {string} as JSON")]
     public Task WhenAskedForJson(string patch, string message) => Ask(patch, message, json: true);
 
+    [When("flyback-cli asks it about {string} with {string} after the patch")]
+    public void WhenRunWith(string patch, string rest)
+    {
+        var error = new StringWriter();
+
+        code = Cli.Program.Run(
+            ["ask", Path(patch), .. rest.Split(' ')],
+            new PluginRegistry(() => Catalog, folder.FullName, null),
+            new InvocationConfiguration { Output = TextWriter.Null, Error = error });
+
+        said = error.ToString();
+    }
+
     private async Task Ask(string patch, string message, bool json)
     {
         var output = new StringWriter();
@@ -91,6 +106,17 @@ public sealed class AskSteps : IDisposable
     /// <summary>Asked for, at the end of what it was sent: a conversation's first message opens with the patch.</summary>
     [Then("the assistant remembers being asked for {string}")]
     public void ThenItRemembers(string earlier) => Assistant.Remembered.ShouldContain(asked => asked.EndsWith(earlier, StringComparison.Ordinal));
+
+    [Then("the command is refused, naming {string}")]
+    public void ThenRefused(string flag)
+    {
+        code.ShouldBe(Exit.Failed);
+        said.ShouldContain(flag);
+        said.ShouldContain("--help");
+    }
+
+    [Then("the assistant was asked nothing")]
+    public void ThenAskedNothing() => Assistant.Asked.ShouldBe(0);
 
     [Then("the turn's last line counts its requests and the tokens they took")]
     public void ThenTheTurnIsCounted()
@@ -140,6 +166,8 @@ public sealed class AskSteps : IDisposable
 
         public List<string> Remembered { get; } = [];
 
+        public int Asked { get; set; }
+
         public string Id => "remembering";
 
         public string Name => "Remembering";
@@ -172,6 +200,7 @@ public sealed class AskSteps : IDisposable
             public async IAsyncEnumerable<PatchEvent> Ask(string instruction, [EnumeratorCancellation] CancellationToken cancel)
             {
                 history.Add(instruction);
+                owner.Asked++;
 
                 yield return new PatchEvent.Cost(Input, Cached, Output);
 
@@ -198,7 +227,9 @@ public sealed class AskSteps : IDisposable
 
             public string? Save() => JsonSerializer.Serialize(history);
 
-            public void Dispose() => _ = owner;
+            public void Dispose()
+            {
+            }
         }
     }
 }

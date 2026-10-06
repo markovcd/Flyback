@@ -24,3 +24,9 @@ Feature: The assistant can be asked from the command line
     Given an assistant that builds a gray field when asked
     When flyback-cli asks it about "field.fbk" for "a gray field" as JSON
     Then the turn's last line counts its requests and the tokens they took
+
+  Scenario: A flag ask does not have is refused rather than sent to the assistant
+    Given an assistant that builds a gray field when asked
+    When flyback-cli asks it about "field.fbk" with "--turns 1" after the patch
+    Then the command is refused, naming "--turns"
+    And the assistant was asked nothing
