@@ -27,6 +27,7 @@ import {
   submitPreset,
 } from "./presets";
 import { FRAMEWORK, KEPT_FOR_GOOD, largeFile, putLargeFile } from "./large";
+import { readCached } from "./readCache";
 import { giveRating, readRating } from "./ratings";
 import { dismissReport, listReports, report } from "./reports";
 
@@ -72,7 +73,7 @@ const PUBLIC: Route[] = [
   // Every page asks whether the visitor is the admin; access says the sign-in is Cloudflare Access's.
   ["GET", path("/api/v1/admin"), (a) => json({ enabled: adminEnabled(a.env), signedIn: a.admin, access: true })],
 
-  ["GET", path("/media/([^/]+)"), (a) => serveMedia(a.env, a.request, a.at[0]!)],
+  ["GET", path("/media/([^/]+)"), (a) => serveMedia(a.env, a.request, a.url, a.at[0]!)],
 ];
 
 /** What only the admin may ask, under the one prefix Access guards: the admin's tools, Validate, the render and the defaults. */
@@ -116,7 +117,7 @@ async function answer(request: Request, env: Env, ctx: ExecutionContext): Promis
   }
 
   if (pathname.startsWith("/api/") || pathname.startsWith("/media/"))
-    return route(PUBLIC, { request, env, ctx, url, at: [], admin });
+    return readCached(env, ctx, request, url, admin, () => route(PUBLIC, { request, env, ctx, url, at: [], admin }));
 
   if (pathname === "/admin.html" && !admin)
     return new Response("Sign in through Cloudflare Access to reach the admin page.", { status: 401 });

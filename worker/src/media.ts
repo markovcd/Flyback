@@ -1,6 +1,7 @@
 import type { Env } from "./env";
 import { badRequest, noContent, notFound, refused } from "./http";
 import { mediaFile } from "./keys";
+import { KEPT_FOR_GOOD } from "./large";
 
 /**
  * What flyback-cli render-presets makes of a preset, by the name it uploads each under:
@@ -26,13 +27,14 @@ interface MediaColumns {
   id: string;
   media_state: string;
   media: string;
+  media_rev: number;
   peaks: string | null;
 }
 
 /** The media part of a preset's entry: where each file is, the bars, and whether the render is done. */
 export function mediaOf(row: MediaColumns) {
   const has = new Set(row.media ? row.media.split(",") : []);
-  const url = (name: Served) => (has.has(name) ? `/media/${row.id}${SERVED[name].suffix}` : null);
+  const url = (name: Served) => (has.has(name) ? `/media/${row.id}${SERVED[name].suffix}?v=${row.media_rev}` : null);
 
   return {
     still: url("webp"),
@@ -43,8 +45,11 @@ export function mediaOf(row: MediaColumns) {
   };
 }
 
-/** GET /media/{id}.{suffix}, with ranges for the player and a check before each use, since a new render keeps the name. */
-export async function serveMedia(env: Env, request: Request, name: string): Promise<Response> {
+/**
+ * GET /media/{id}.{suffix}, with ranges for the player. A URL with the revision (?v=) is kept for good,
+ * since a new render changes it; one without is checked before each use.
+ */
+export async function serveMedia(env: Env, request: Request, url: URL, name: string): Promise<Response> {
   const match = /^([0-9a-f]{32})(\.webp|\.webm|\.mp3|\.peaks\.json)$/.exec(name);
   if (match === null) return notFound();
 
@@ -58,7 +63,7 @@ export async function serveMedia(env: Env, request: Request, name: string): Prom
 
   const headers = new Headers({
     "Content-Type": type,
-    "Cache-Control": "no-cache",
+    "Cache-Control": url.searchParams.has("v") ? KEPT_FOR_GOOD : "no-cache",
     ETag: object.httpEtag,
     "Accept-Ranges": "bytes",
   });
@@ -120,7 +125,7 @@ export async function putMedia(env: Env, request: Request, id: string, name: str
   const has = new Set(row?.media ? row.media.split(",") : []);
   has.add(name);
 
-  await env.DB.prepare(`UPDATE presets SET media = ?${peaks === null ? "" : ", peaks = ?"} WHERE id = ?`)
+  await env.DB.prepare(`UPDATE presets SET media = ?, media_rev = media_rev + 1${peaks === null ? "" : ", peaks = ?"} WHERE id = ?`)
     .bind(...[[...has].sort().join(","), ...(peaks === null ? [] : [peaks]), id])
     .run();
 
@@ -130,7 +135,7 @@ export async function putMedia(env: Env, request: Request, id: string, name: str
 /** DELETE /admin/presets/{id}/media: forgets the render, which puts the preset back in the queue. */
 export async function clearMedia(env: Env, id: string): Promise<Response> {
   const { meta } = await env.DB.prepare(
-    "UPDATE presets SET media_state = 'pending', media = '', media_reason = NULL, peaks = NULL WHERE id = ?",
+    "UPDATE presets SET media_state = 'pending', media = '', media_rev = media_rev + 1, media_reason = NULL, peaks = NULL WHERE id = ?",
   )
     .bind(id)
     .run();

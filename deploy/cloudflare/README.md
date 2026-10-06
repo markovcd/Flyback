@@ -129,6 +129,13 @@ To render a preset again, clear its render, which puts it back in the queue:
 curl -X DELETE -H "CF-Access-Client-Id: $FLYBACK_ACCESS_ID" -H "CF-Access-Client-Secret: $FLYBACK_ACCESS_SECRET" https://flyback-staging.nasik2137.uk/api/v1/admin/presets/<id>/media
 ```
 
+## What is cached
+
+- **Pages and framework files** are assets, served without the Worker running, which is free. Only the `.wasm` files reach the Worker first, since one too large to be an asset is in R2.
+- **Media** URLs carry a revision (`/media/<id>.webm?v=3`), bumped by every write, and are kept for good. A URL without it is checked on each use.
+- **Anonymous reads** of the lists and single entries are kept at the edge and in the browser for `READ_CACHE_SECONDS` (60); the admin, the render queue, files and ratings never are. Unset, nothing is kept.
+- **Writes** are limited per visitor in D1. Reads are not: put a rate-limiting rule on `/api/*` and `/media/*` in the dashboard (Security → WAF), which turns a flood away before the Worker is billed.
+
 ## Production
 
 `env.production` in `wrangler.jsonc` names a database and a bucket called `flyback-site`, and the custom domain `flybackmodular.app`, made the way steps 1 to 4 say: the Access application has that hostname as its destinations, and its audience tag is `ACCESS_AUD`. `WORKER_ENVIRONMENT` is `production` and `PRESET_SITE_URL` is `https://flybackmodular.app`.

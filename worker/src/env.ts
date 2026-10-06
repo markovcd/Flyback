@@ -17,6 +17,9 @@ export interface Env {
   /** A token that can start workflows in GITHUB_REPOSITORY; without one, Validate's schedule picks submissions up. */
   GITHUB_DISPATCH_TOKEN?: string;
 
+  /** Seconds an anonymous read is kept at the edge and in the browser; unset keeps nothing. */
+  READ_CACHE_SECONDS?: string;
+
   POSTS_PER_HOUR?: string;
   REPORTS_PER_HOUR?: string;
   LETTERS_PER_HOUR?: string;
