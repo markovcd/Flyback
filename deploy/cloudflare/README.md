@@ -11,7 +11,7 @@ browser ──▶ Cloudflare ──▶ Access (admin.html, /api/v1/admin/*) ─�
                                   then flyback-site push-media (service token)
 ```
 
-The Worker runs at `flybackmodular.app` and, for the editors shipped with it as their address, at `flyback.nasik2137.uk`; a staging copy runs at `flyback-staging.nasik2137.uk`. The NAS's site is described in [../site/README.md](../site/README.md) until it is removed. Secrets are set in Cloudflare and GitHub and written down nowhere here.
+The Worker runs at `flybackmodular.app`; a staging copy runs at `flyback-staging.nasik2137.uk`. The NAS's site is described in [../site/README.md](../site/README.md) until it is removed. Secrets are set in Cloudflare and GitHub and written down nowhere here.
 
 ## Working on it
 
@@ -133,7 +133,7 @@ curl -X DELETE -H "CF-Access-Client-Id: $FLYBACK_ACCESS_ID" -H "CF-Access-Client
 
 What is left of [docs/handoff/flyback-library-implementation-plan.md](../../docs/handoff/flyback-library-implementation-plan.md) is removing the .NET site.
 
-`env.production` in `wrangler.jsonc` names a database and a bucket called `flyback-site`, and two custom domains: `flybackmodular.app`, the website's address, and `flyback.nasik2137.uk`, which shipped editors still read the API at. Made the way steps 1 to 4 say, for those hostnames: the Access application has both hostnames as destinations, and its audience tag is `ACCESS_AUD`. `WORKER_ENVIRONMENT` is `production` and `PRESET_SITE_URL` is `https://flybackmodular.app`.
+`env.production` in `wrangler.jsonc` names a database and a bucket called `flyback-site`, and the custom domain `flybackmodular.app`, made the way steps 1 to 4 say: the Access application has that hostname as its destinations, and its audience tag is `ACCESS_AUD`. `WORKER_ENVIRONMENT` is `production` and `PRESET_SITE_URL` is `https://flybackmodular.app`.
 
 GitHub Pages holds only `deploy/pages/redirect.html`, which sends `markovcd.github.io/Flyback/<path>` to the same path on the website.
 

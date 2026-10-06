@@ -57,11 +57,7 @@
     "production": {
       "name": "flyback-site",
       "workers_dev": false,
-      // The old hostname stays: shipped editors read the API at it.
-      "routes": [
-        { "pattern": "flybackmodular.app", "custom_domain": true },
-        { "pattern": "flyback.nasik2137.uk", "custom_domain": true }
-      ],
+      "routes": [{ "pattern": "flybackmodular.app", "custom_domain": true }],
       "d1_databases": [
         { "binding": "DB", "database_name": "flyback-site", "database_id": "cec1920c-9891-4b01-9490-574cfda71fc7", "migrations_dir": "migrations" }
       ],

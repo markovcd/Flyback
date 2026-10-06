@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- The website is at flybackmodular.app, and the old addresses send you there.
+- The website and the preset site are at flybackmodular.app, and the old GitHub Pages address sends you there. Editors up to 0.7.1 can no longer reach shared presets, shared plugins or letters until they update.
 
 - The preset gallery's pictures are sharper, without the smudge around their edges.
 

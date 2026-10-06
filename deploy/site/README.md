@@ -57,8 +57,6 @@ To build the image here without pushing it:
 docker build --secret id=release-key,env=RELEASE_SIGNING_KEY -f src/Flyback.Server/Dockerfile -t flyback-site .
 ```
 
-[cloudflare.md](cloudflare.md) is how the live site at `flyback.nasik2137.uk` is set up: the tunnel, Access on the admin sign-in, and the worker that falls back to GitHub Pages.
-
 It listens on port 8080, published to nothing: put a Cloudflare Tunnel or the NAS reverse proxy on a Docker network with it, and point that at `http://flyback:8080`. Joining the tunnel's network is a few lines in `compose.yaml`:
 
 ```yaml
