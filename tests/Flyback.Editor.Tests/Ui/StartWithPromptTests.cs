@@ -170,7 +170,7 @@ public class StartWithPromptTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void Starting_closes_the_gallery_empties_the_patch_and_sends_the_prompt()
+    public void Starting_closes_the_gallery_empties_the_patch_and_sends_the_prompt_written_out()
     {
         var assistant = new Briefing();
         var window = Open(assistant);
@@ -185,12 +185,14 @@ public class StartWithPromptTests : EditorTest
 
         Press(window, "start-prompt");
 
-        Until(() => !assistant.Heard.IsEmpty);
+        Until(() => assistant.Heard.Count == 2);
 
         All<ModalOverlay>(window).ShouldBeEmpty("the gallery has closed");
         editor.History.Patch.Nodes.Count.ShouldBe(1, "the Empty preset is on the canvas");
         All<AssistantPanel>(window).Single().IsVisible.ShouldBeTrue();
         All<ToggleButton>(window).Single(b => b.Name == "assistant").IsChecked.ShouldBe(true);
-        assistant.Heard.Single().ShouldEndWith("a slow dub track about a night train");
+        assistant.Heard.First().ShouldContain("build nothing", customMessage: "the idea is written out first");
+        assistant.Heard.First().ShouldEndWith("a slow dub track about a night train");
+        assistant.Heard.Last().ShouldEndWith(Briefing.Brief);
     }
 }

@@ -20,19 +20,26 @@ public sealed class PromptStartSteps(EditorDriver editor, PatchContext context) 
     [Given("no assistant is set up")]
     public void GivenNoAssistant() => editor.Setup = editor.Setup with { Plugins = PluginCatalog.Empty };
 
+    private readonly AssistantSettings settings = new();
+
     [Given("an assistant is set up")]
     public void GivenAnAssistant()
     {
         var folders = editor.Setup.Folders;
+
+        settings.Provider = assistant.Id;
 
         editor.Setup = editor.Setup with
         {
             Plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, [], [assistant]),
         };
 
-        editor.Services = services => services.AddSingleton(
-            new AssistantSettingRepository(folders, new AssistantSettings { Provider = assistant.Id }));
+        editor.Services = services => services.AddSingleton(new AssistantSettingRepository(folders, settings));
     }
+
+    [Given("ideas are written out by {string}")]
+    public void GivenAnIdeasModel(string model) =>
+        settings.Choices[assistant.Id] = new Dictionary<string, string> { [AssistantSchema.IdeasModelKey] = model };
 
     [When("{string} is typed in the prompt card")]
     public void WhenAnIdeaIsTyped(string idea) => editor.TypePrompt(idea);
@@ -41,7 +48,7 @@ public sealed class PromptStartSteps(EditorDriver editor, PatchContext context) 
     public void WhenThePromptIsExpanded() => editor.ExpandPrompt();
 
     [When("a patch is started from the prompt")]
-    public void WhenAPatchIsStarted() => editor.StartPrompt(() => !assistant.Heard.IsEmpty);
+    public void WhenAPatchIsStarted() => editor.StartPrompt(() => assistant.Heard.Any(heard => !Writing(heard)));
 
     [Then("the gallery has no card to start from a prompt")]
     public void ThenNoCard() => editor.GalleryOffersPrompt.ShouldBeFalse();
@@ -56,9 +63,22 @@ public sealed class PromptStartSteps(EditorDriver editor, PatchContext context) 
     [Then("the assistant's column is open")]
     public void ThenTheColumnIsOpen() => editor.AssistantColumnOpen.ShouldBeTrue();
 
-    [Then("the assistant has been sent {string}")]
-    public void ThenTheAssistantWasSent(string prompt) =>
-        assistant.Heard.ShouldHaveSingleItem().ShouldEndWith(prompt);
+    [Then("the transcript says the idea was written out first")]
+    public void ThenTheTranscriptSaysSo() =>
+        editor.TranscriptLines.ShouldContain(line => line.Contains("written out as the brief below"));
+
+    [Then("the assistant was asked to write the idea out once")]
+    public void ThenWrittenOutOnce() => assistant.Heard.Count(Writing).ShouldBe(1);
+
+    [Then("the assistant has been sent the brief")]
+    public void ThenTheBriefWasSent() =>
+        assistant.Heard.Where(heard => !Writing(heard)).ShouldHaveSingleItem().ShouldEndWith(BriefingAssistant.Brief);
+
+    [Then("the idea was written out by {string} and the patch built by {string}")]
+    public void ThenTheModels(string writer, string builder) => assistant.Models.ShouldBe([writer, builder]);
+
+    /// <summary>Whether a message to the assistant is the request to write an idea out.</summary>
+    private static bool Writing(string heard) => heard.Contains("build nothing");
 
     public void Dispose() => assistant.Dispose();
 }

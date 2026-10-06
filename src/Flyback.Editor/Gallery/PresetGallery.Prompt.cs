@@ -34,11 +34,18 @@ internal sealed partial class PresetGallery
         var begin = new Button { Name = "start-prompt", Content = "Start", FontSize = Text.Body, IsEnabled = false };
 
         ToolTip.SetTip(expand, "Have the assistant write this out as a detailed brief, here, for you to edit.");
-        ToolTip.SetTip(begin, "Start from an empty patch and send this to the assistant  (Ctrl+Enter)");
+        ToolTip.SetTip(begin, "Start from an empty patch and send this to the assistant, written out first unless it already is  (Ctrl+Enter)");
 
         var expanding = false;
 
-        words.TextChanged += (_, _) => Enable();
+        // Set by Expand and kept through edits to what it wrote; cleared with the text.
+        var written = false;
+
+        words.TextChanged += (_, _) =>
+        {
+            if (string.IsNullOrWhiteSpace(words.Text)) written = false;
+            Enable();
+        };
 
         words.KeyDown += (_, e) =>
         {
@@ -77,6 +84,7 @@ internal sealed partial class PresetGallery
             {
                 words.Text = brief;
                 words.CaretIndex = brief.Length;
+                written = true;
                 note.IsVisible = false;
             }
             else
@@ -143,6 +151,6 @@ internal sealed partial class PresetGallery
             note.IsVisible = true;
         }
 
-        void Begin() => open(new PromptedStart((words.Text ?? string.Empty).Trim()));
+        void Begin() => open(new PromptedStart((words.Text ?? string.Empty).Trim(), written));
     }
 }

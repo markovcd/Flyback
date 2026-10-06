@@ -47,6 +47,9 @@ public sealed record AssistantSchema(
     /// <summary>The setting holding an <see cref="AssistantEffort"/>.</summary>
     public const string EffortKey = "effort";
 
+    /// <summary>The setting naming the model that writes a typed idea out as a brief, blank for <see cref="ModelKey"/>'s.</summary>
+    public const string IdeasModelKey = "ideas";
+
     /// <summary>What this provider says about the key it needs.</summary>
     public AssistantCredential Credential => new(EnvironmentVariable, CredentialHelp);
 
@@ -171,8 +174,26 @@ public sealed record AssistantSchema(
             Enum.GetValues<AssistantEffort>().Select(e => new SettingOption(e.ToString(), e.ToString())).ToList(),
             nameof(AssistantEffort.Medium)));
 
+        fields.Add(new SettingField.Pick(
+            IdeasModelKey,
+            "Ideas written out by",
+            SuggestedModels.Select(m => new SettingOption(m.Id, m.Id)).ToList(),
+            Editable: true)
+        {
+            Note = "The model that turns an idea typed in the gallery into a brief. Left empty, the model above does.",
+        });
+
         return fields;
     }
+
+    /// <summary>
+    /// <paramref name="values"/> with the model that writes ideas out in place of the
+    /// one that builds, or unchanged where none is named.
+    /// </summary>
+    public static SettingValues Expanding(SettingValues values) =>
+        values.Text(IdeasModelKey) is { } ideas && !string.IsNullOrWhiteSpace(ideas)
+            ? values.With(ModelKey, ideas.Trim())
+            : values;
 
     /// <summary>
     /// What a survey should ask about, with <see cref="SurveyOptions.Chosen"/>

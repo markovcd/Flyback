@@ -19,6 +19,9 @@ internal sealed class BriefingAssistant : IPatchAssistant, IPatchSession
     /// <summary>Every message it was sent, as it arrived.</summary>
     public ConcurrentQueue<string> Heard { get; } = [];
 
+    /// <summary>The model each run it was started for was configured with, in order.</summary>
+    public ConcurrentQueue<string> Models { get; } = [];
+
     public string Id => "briefing";
 
     public string Name => "Briefing";
@@ -37,7 +40,11 @@ internal sealed class BriefingAssistant : IPatchAssistant, IPatchSession
 
     public string? Unavailable(AssistantConfig config) => null;
 
-    public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => this;
+    public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config)
+    {
+        Models.Enqueue(schema.Read(config.Values).Model);
+        return this;
+    }
 
     public async IAsyncEnumerable<PatchEvent> Ask(string instruction, [EnumeratorCancellation] CancellationToken cancel)
     {

@@ -340,6 +340,12 @@ internal sealed class AssistantPanel : UserControl
 
     private bool stopping;
 
+    /// <summary>Stops an idea being written out before a patch starts from it; null when none is.</summary>
+    private CancellationTokenSource? expanding;
+
+    /// <summary>A note the next turn opens with, once its conversation has begun; null for none.</summary>
+    private string? preface;
+
     /// <summary>The turn most recently begun, which a message sent from outside waits out.</summary>
     private Task turn = Task.CompletedTask;
 
@@ -515,11 +521,53 @@ internal sealed class AssistantPanel : UserControl
         if (chosenAssistant.Value is not { } assistant || Configured() is not { } config)
             return (null, "No assistant is set up.");
 
-        if (AssistantRun.Unready(assistant, config) is { } why) return (null, why);
+        var writing = config with { Values = AssistantSchema.Expanding(config.Values) };
 
-        using var run = runs.Create(assistant, config, over: new Flyback.Core.Graph.Patch());
+        if (AssistantRun.Unready(assistant, writing) is { } why) return (null, why);
+
+        using var run = runs.Create(assistant, writing, over: new Flyback.Core.Graph.Patch());
 
         return await PromptExpansion.BriefAsync(run, idea, cancel);
+    }
+
+    /// <summary>
+    /// Writes <paramref name="idea"/> out as a brief, saying so in the transcript, and
+    /// sends the brief; the idea as typed where it could not be written out.
+    /// </summary>
+    public async Task StartFromIdeaAsync(string idea)
+    {
+        await turn;
+
+        // Gone when the conversation begins, which empties the transcript; the preface says it again.
+        transcript.Put(Voice.Note, "Writing the idea out as a brief first, and sending that.", keep: false);
+
+        using var stop = new CancellationTokenSource();
+
+        expanding = stop;
+        StartWorking();
+
+        (string? Brief, string? Failure) answer;
+
+        try
+        {
+            answer = await ExpandAsync(idea, stop.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            transcript.Put(Voice.Note, "Stopped before the idea was written out. Nothing was sent.");
+            return;
+        }
+        finally
+        {
+            expanding = null;
+            StopWorking();
+        }
+
+        preface = answer.Brief is null
+            ? $"Started from the idea as typed, \"{idea}\": it could not be written out first ({answer.Failure})."
+            : $"Started from the idea \"{idea}\", written out as the brief below.";
+
+        await SendAsync(answer.Brief ?? idea);
     }
 
     /// <summary>
@@ -549,6 +597,12 @@ internal sealed class AssistantPanel : UserControl
             if (!asking)
             {
                 turn = AskAsync();
+                return;
+            }
+
+            if (expanding is { } writing)
+            {
+                writing.Cancel();
                 return;
             }
 
@@ -1254,6 +1308,9 @@ internal sealed class AssistantPanel : UserControl
         if (string.IsNullOrWhiteSpace(wanted)) return;
 
         var conversation = Conversation(chosenAssistant.Value, config);
+
+        if (preface is { } note) transcript.Put(Voice.Note, note);
+        preface = null;
 
         ShowSpent();
 

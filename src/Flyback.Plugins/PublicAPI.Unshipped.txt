@@ -16,3 +16,5 @@ Flyback.Plugins.Audio.IAudioInput.IsSupported.get -> bool
 Flyback.Plugins.Audio.IAudioInput.Name.get -> string!
 Flyback.Plugins.Audio.IAudioInput.Priority.get -> int
 Flyback.Plugins.IPluginRegistry.AddAudioInput(Flyback.Plugins.Audio.IAudioInput! input) -> void
+const Flyback.Plugins.Assist.AssistantSchema.IdeasModelKey = "ideas" -> string!
+static Flyback.Plugins.Assist.AssistantSchema.Expanding(Flyback.Plugins.Settings.SettingValues! values) -> Flyback.Plugins.Settings.SettingValues!

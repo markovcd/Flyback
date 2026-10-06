@@ -355,23 +355,26 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
                 break;
 
             case PromptedStart prompted:
-                await StartFromPromptAsync(prompted.Prompt);
+                await StartFromPromptAsync(prompted);
                 break;
         }
     }
 
     /// <summary>
     /// Puts an empty patch on the canvas, opens the assistant's column and sends it
-    /// <paramref name="prompt"/>, unless the empty patch is not put there.
+    /// <paramref name="prompted"/>, written out first unless it already was, and
+    /// nothing at all unless the empty patch is put there.
     /// </summary>
-    private async Task StartFromPromptAsync(string prompt)
+    private async Task StartFromPromptAsync(PromptedStart prompted)
     {
         var blank = offered.Find(preset => preset.Name == PresetLibrary.Empty);
 
         if (blank is null || !await SwitchToAsync(blank, offered.IndexOf(blank))) return;
 
         await reactions.RaiseAsync(new AssistantAsked(true));
-        await assistant.SendAsync(prompt);
+
+        if (prompted.Written) await assistant.SendAsync(prompted.Prompt);
+        else await assistant.StartFromIdeaAsync(prompted.Prompt);
     }
 
     private async Task PickedAsync()

@@ -554,6 +554,10 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
             return true;
         });
 
+    /// <summary>Every line of the assistant's transcript, as it is kept.</summary>
+    public IReadOnlyList<string> TranscriptLines => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<TranscriptView>().Single().Lines.Select(line => line.Text).ToList());
+
     /// <summary>Whether the assistant's column is open beside the canvas.</summary>
     public bool AssistantColumnOpen => ReadWindow(open =>
         open.GetVisualDescendants().OfType<AssistantPanel>().Single().IsVisible);
