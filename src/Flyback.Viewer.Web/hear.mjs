@@ -74,8 +74,11 @@ program.attach({
 });
 const web = (await runtime.getAssemblyExports(runtime.getConfig().mainAssemblyName)).Flyback.Viewer.Web.WebExports;
 
+// Exiting straight after a write to a pipe can cut it off, so the line is flushed first.
+const print = line => new Promise(done => process.stdout.write(line + '\n', done));
+
 if (values.presets) {
-  console.log(web.Presets());
+  await print(web.Presets());
   process.exit(0);
 }
 
@@ -203,5 +206,5 @@ if (values.state) {
   await writeFile(values.state, new Uint8Array(state.buffer));
 }
 
-console.log(JSON.stringify({ ...JSON.parse(web.Status()), knobs }));
+await print(JSON.stringify({ ...JSON.parse(web.Status()), knobs }));
 process.exit(0);
