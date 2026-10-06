@@ -2,7 +2,7 @@
 
 ## One gate, the same everywhere
 
-`docker build --target gate .` is the gate, and CI runs exactly that (`ci.yml`), not a list of steps that resembles it (ADR-0120). The image carries the fonts the headless UI tests rasterize with and the ffmpeg the recording tests look for, so nothing skips in CI that runs locally. The stages stack: `publish` builds on `gate`, so no artifact exists unless every test passed. Restores are locked to the committed `packages.lock.json` files, so a version that moved fails the gate instead of building.
+`docker build --target gate .` is the gate, and CI runs exactly that through `scripts/gate.sh` (`ci.yml`), not a list of steps that resembles it (ADR-0120). The image carries the fonts the headless UI tests rasterize with and the ffmpeg the recording tests look for, so nothing skips in CI that runs locally. The stages stack: `publish` builds on `gate`, so no artifact exists unless every test passed. Restores are locked to the committed `packages.lock.json` files, so a version that moved fails the gate instead of building.
 
 **Why:** two descriptions of what a change has to pass drift apart, and the one that drifts is the one nobody runs locally.
 
@@ -12,7 +12,7 @@
 - **Least permission.** Each workflow declares `permissions:`, `contents: read` unless it publishes.
 - **Secrets only where needed.** `RELEASE_SIGNING_KEY` reaches the Release and Site workflows and nothing triggered by a pull request.
 - **The self-hosted runners are for `main` only**, never a pull request or another branch: the repo is public, so a fork's PR on that machine would be remote code execution. `ci.yml` waits for one, Windows or Linux, and either needs Docker with buildx; GitHub fails a job nothing picks up after 24 hours. The runner's location is machine-specific and lives in the assistant's memory, not here.
-- **A runner's leaked builders are pruned.** A cancelled or killed job leaves its buildx builder and gigabytes of layer cache on the self-hosted runner; `.github/actions/prune-buildx` removes them right after `setup-buildx-action`, in every workflow that runs there.
+- **One builder, a capped cache.** A self-hosted machine builds on the single `flyback` buildx builder that `scripts/builder.sh` creates, its layer cache held under 15 GB by `scripts/buildkitd.toml`, so a cancelled job leaves nothing behind and disk use is bounded. GitHub's own runners use a fresh builder and GitHub's cache.
 - **Superseded runs are cancelled.** `concurrency` with `cancel-in-progress` on anything a push triggers; never on Pages or a release, which must finish what they started.
 - **Every job sets `timeout-minutes`**, a few times its usual length. The default is six hours of a hang.
 - **Deploys filter on paths.** `worker.yml` lists what the Worker, its pages and the plugins it starts with are built from; a new reference or site plugin is added there in the same commit.

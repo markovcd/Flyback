@@ -38,6 +38,7 @@ github=false
 [ "${GITHUB_ACTIONS:-}" = true ] && github=true
 
 . ./scripts/release-key.sh
+. ./scripts/builder.sh
 
 temp="$(mktemp -d)"
 trap 'rm -rf "$temp" "$lock"' EXIT
@@ -103,7 +104,7 @@ here=()
 $github || here=(--build-arg RELEASE_PUBLIC_KEY --build-arg PACKAGE=folders)
 
 rm -rf dist
-docker build --build-arg VERSION="$version" "${here[@]}" --target release \
+docker buildx build "${builder[@]}" --build-arg VERSION="$version" "${here[@]}" --target release \
   --secret id=release-key,env=RELEASE_SIGNING_KEY --output dist .
 
 # What every copy of Flyback will check it against, before anything is published.
@@ -114,7 +115,7 @@ fi
 # The preset site's plugins reach people from the site, never from a release.
 # The same arguments as above, so everything up to the pack comes from the cache.
 if ! $github; then
-  docker build --build-arg VERSION="$version" "${here[@]}" --target site-plugins \
+  docker buildx build "${builder[@]}" --build-arg VERSION="$version" "${here[@]}" --target site-plugins \
     --secret id=release-key,env=RELEASE_SIGNING_KEY --output "$temp/site-plugins" .
   cp "$temp/site-plugins/"*.fbkp dist/
 fi

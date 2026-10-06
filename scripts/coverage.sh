@@ -13,13 +13,13 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-build=(docker buildx build --target coverage --output type=local,dest=coverage)
+. ./scripts/builder.sh
 
-if [ "${GITHUB_ACTIONS:-}" = true ]; then
-  # Reads the Build workflow's cache and writes none of its own, so a run here
-  # never evicts what the gate depends on.
-  build+=(--cache-from type=gha)
-else
+build=(docker buildx build "${builder[@]}" "${cache[@]}" --target coverage --output type=local,dest=coverage)
+
+# GitHub's runners read the Build workflow's cache and write none of their own,
+# so a run never evicts what the gate depends on.
+if [ "${GITHUB_ACTIONS:-}" != true ]; then
   # Built as release.sh builds here, so the gate's layers are shared with it.
   . ./scripts/release-key.sh
   build+=(--build-arg RELEASE_PUBLIC_KEY)

@@ -1,0 +1,8 @@
+# The persistent builder's cache stays under this ceiling; the least recently
+# used layers go first.
+[worker.oci]
+  gc = true
+
+[[worker.oci.gcpolicy]]
+  all = true
+  keepBytes = "15GB"
