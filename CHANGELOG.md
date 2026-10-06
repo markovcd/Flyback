@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- What the assistant did between two things it said folds into one line with a count, so the conversation can be read as its words alone; the run it is in the middle of stays open.
+
 - Closing the window, or opening another patch, while the assistant is mid-turn asks first, and says the turn is lost: saving the patch does not keep it.
 
 - The assistant's footer and `flyback-cli ask` name the model that answered, as the provider resolved it: `opus` shows as `claude-opus-5-5`.

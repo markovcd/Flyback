@@ -38,6 +38,9 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
     /// </summary>
     private SelectableTextBlock? saying;
 
+    /// <summary>The run of working the transcript is in the middle of, or null when the last thing was words.</summary>
+    private StepsGroup? working;
+
     /// <summary>The blocks drawn for each voice <see cref="Shows"/> can hide, and the voices hidden now.</summary>
     private readonly Dictionary<Voice, List<Control>> hideable = new()
     {
@@ -104,6 +107,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
         lines.Clear();
         foreach (var blocks in hideable.Values) blocks.Clear();
         saying = null;
+        working = null;
     }
 
     /// <summary>
@@ -125,7 +129,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
                 break;
 
             case Voice.Aside:
-                Add(text, Text.Muted, 11);
+                Add(text, Text.Muted, 11, work: true);
                 break;
 
             // The answer, however long it runs. Folding it would hide the one
@@ -147,7 +151,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
                 break;
 
             default:
-                Add(text, Text.Muted, Text.Small);
+                Add(text, Text.Muted, Text.Small, work: true);
                 break;
         }
     }
@@ -192,7 +196,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
 
         saying = null;
 
-        saidPanel.Children.Add(new Border
+        Working().Add(new Border
         {
             Name = "frame",
             BorderBrush = new SolidColorBrush(Colors.Edge),
@@ -208,13 +212,43 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
                 Stretch = Stretch.Uniform,
                 MaxHeight = 260,
             },
-        });
+        }, counted: false);
     }
 
     internal static string Tally(int count, string noun) =>
         count == 1 ? $"1 {noun}" : $"{count} {noun}s";
 
-    private void Add(string text, IBrush color, double size, bool fold = true)
+    /// <summary>Puts a block into the run of working, or at the top level, where it ends the run.</summary>
+    private void Place(Control block, bool work)
+    {
+        if (work)
+        {
+            Working().Add(block);
+            return;
+        }
+
+        Closed();
+        saidPanel.Children.Add(block);
+    }
+
+    private StepsGroup Working()
+    {
+        if (working is null)
+        {
+            working = new StepsGroup();
+            saidPanel.Children.Add(working);
+        }
+
+        return working;
+    }
+
+    private void Closed()
+    {
+        working?.Close();
+        working = null;
+    }
+
+    private void Add(string text, IBrush color, double size, bool fold = true, bool work = false)
     {
         // Anything else in the transcript ends the paragraph the assistant was
         // in the middle of. Without this, prose lands on the end of whatever
@@ -224,17 +258,17 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
 
         if (fold && Rows(text) > FoldsOver)
         {
-            Fold(text, color, size);
+            Fold(text, color, size, work);
             return;
         }
 
-        saidPanel.Children.Add(new SelectableTextBlock
+        Place(new SelectableTextBlock
         {
             Text = text,
             TextWrapping = TextWrapping.Wrap,
             Foreground = color,
             FontSize = size,
-        });
+        }, work);
     }
 
     /// <summary>
@@ -246,7 +280,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
     /// text between one thing the assistant said and the next. Folded, the
     /// transcript is the conversation again, and the working is a click away.
     /// </remarks>
-    private void Fold(string text, IBrush color, double size)
+    private void Fold(string text, IBrush color, double size, bool work)
     {
         var body = new SelectableTextBlock
         {
@@ -283,7 +317,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
         block.Children.Add(header);
         block.Children.Add(body);
 
-        saidPanel.Children.Add(block);
+        Place(block, work);
     }
 
     /// <summary>
@@ -320,6 +354,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
     private void Asked(string text)
     {
         saying = null;
+        Closed();
 
         saidPanel.Children.Add(new SelectableTextBlock
         {
@@ -340,6 +375,8 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
             saying.Text += text;
             return;
         }
+
+        Closed();
 
         saying = new SelectableTextBlock
         {
