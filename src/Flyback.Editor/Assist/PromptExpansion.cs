@@ -40,10 +40,11 @@ internal static class PromptExpansion
         + "around, shared by the sound and the picture. A break chopped by bending the clock it reads is such an idea; so "
         + "is a tune played by where a bouncing shape strikes the frame, or one chord whose overtones are the picture's "
         + "colors. Find the one this idea asks for, not one of those. "
-        + "Then say how it feels, how it unfolds over its length and why that follows from the idea, the few sounds it "
-        + "needs and what is on screen. Describe what is heard and seen, never how to build it: name no module and no "
-        + "socket. Nothing is a default: a beat, a key, a tempo, sections, a limiter, panel knobs each appear only if this "
-        + "idea needs them. Decide what it leaves open rather than asking. Keep it under 250 words, and end with one line "
-        + "asking for a short report of what was done differently and why.]"
+        + "Then say how it feels, and how it develops over its length: what changes from one part to the next and which "
+        + "layers come in and drop out, so something is always moving, even in a still piece. Give it enough layers to "
+        + "fill the space, each there for a reason, and say what is on screen. Describe what is heard and seen, never how "
+        + "to build it: name no module and no socket. Nothing is a default: a beat, a key, a tempo, a limiter, panel knobs "
+        + "each appear only if this idea needs them. Decide what it leaves open rather than asking. Keep it under 300 "
+        + "words, and end with one line asking for a short report of what was done differently and why.]"
         + Environment.NewLine + Environment.NewLine + idea;
 }
