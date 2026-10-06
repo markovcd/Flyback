@@ -4,6 +4,7 @@
 // the sound joins where the picture is. The worker works the sound out a step lower
 // itself when it keeps falling behind; the editor never gives the sound up.
 
+import { Microphone } from '../viewer/microphone.js';
 import { takeAudio } from '../viewer/session.js';
 
 const worker = new Worker('../viewer/speaker.js', { type: 'module' });
@@ -19,6 +20,9 @@ let attached = false;
 let loudness = 1;
 
 let running = false;
+
+/** The microphone, held open for a Line In while the editor asks for it. */
+const microphone = new Microphone();
 
 /** Whether the speaker is the clock: the browser lets it play, the worker is up, and it has joined. */
 let heard = false;
@@ -82,8 +86,9 @@ function open() {
   volume = new GainNode(context, { gain: loudness });
 
   context.audioWorklet.addModule('../viewer/sound.js').then(() => {
-    const queue = new AudioWorkletNode(context, 'flyback-queue', { numberOfInputs: 0, outputChannelCount: [2] });
+    const queue = new AudioWorkletNode(context, 'flyback-queue', { outputChannelCount: [2], channelCount: 2, channelCountMode: 'explicit' });
     queue.connect(volume).connect(context.destination);
+    microphone.attach(context, queue);
     queue.port.onmessage = report;
 
     // The worker feeds the speaker straight, so a busy page never keeps the sound waiting.
@@ -152,6 +157,16 @@ export function stop() {
   running = false;
   worker.postMessage({ run: false });
   if (heard) context.suspend();
+}
+
+/** Opens the microphone for a Line In, or lets it go. */
+export function listen(on) {
+  microphone.want(on);
+}
+
+/** Has <say> told of a sentence whenever the microphone will not open or stops. */
+export function onMicrophoneTrouble(say) {
+  microphone.onTrouble = say;
 }
 
 export function seekTo(seconds) {
@@ -232,6 +247,8 @@ export function status() {
     late: soundStatus.late ?? 0,
     volume: loudness,
     handed,
+    microphone: { wanted: microphone.wanted, listening: microphone.listening, trouble: microphone.trouble },
+    lineIn: soundStatus.lineIn ?? false,
     meters: Array.from(readings.values.subarray(0, metered)),
   };
 }

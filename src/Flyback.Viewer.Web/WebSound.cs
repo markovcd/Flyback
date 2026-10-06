@@ -31,8 +31,15 @@ internal sealed class WebSound : IDisposable
     private readonly VoicePool typed = new(MidiSources.Keyboard);
     private readonly LiveValues[] blocks;
     private readonly SoundPace pace;
+    private readonly LineInFeed microphone;
 
     private double rendered;
+
+    /// <summary>
+    /// Frames of the microphone held back before it is played, so the chunks the worker
+    /// renders ahead of the speaker are not caught short by when its frames arrive.
+    /// </summary>
+    private const int MicrophoneCushion = 2048;
 
     public WebSound(Opened opened, int width, int height)
         : this(opened, SynthRenderer.AspectOf(width, height), withPicture: true, after: null)
@@ -62,7 +69,9 @@ internal sealed class WebSound : IDisposable
         sound = patch.CompileForAudio(samples: samples, pictures: pictures, played: true).Program;
         picture = withPicture ? patch.CompileForVideo(samples: samples, pictures: pictures, played: true).Program : null;
 
+        microphone = after?.microphone ?? new LineInFeed { Cushion = MicrophoneCushion };
         speakers = after?.speakers ?? new AudioRenderer();
+        speakers.Input = microphone;
         speakers.Aspect = aspect;
         speakers.Prepare(sound);
         memory = speakers.DelayMemoryFor(sound, after?.memory);
@@ -139,7 +148,7 @@ internal sealed class WebSound : IDisposable
 
         script?.Dispose();
 
-        speakers = new AudioRenderer(speakers.SampleRate, factor) { Aspect = speakers.Aspect };
+        speakers = new AudioRenderer(speakers.SampleRate, factor) { Aspect = speakers.Aspect, Input = microphone };
         speakers.Prepare(sound);
         speakers.SeekTo(at);
         memory = speakers.DelayMemoryFor(sound);
@@ -148,6 +157,12 @@ internal sealed class WebSound : IDisposable
         Interpreted = why;
         pace.Renew();
     }
+
+    /// <summary>Whether the sound reads a Line In, so the page should have the microphone open.</summary>
+    public bool HearsMicrophone => sound.LiveInputs.Contains(LineInSignal.Left) || sound.LiveInputs.Contains(LineInSignal.Right);
+
+    /// <summary>Takes what the microphone just heard, as interleaved stereo frames.</summary>
+    public void Overhear(ReadOnlySpan<float> interleavedStereo) => microphone.Write(interleavedStereo, channels: 2);
 
     /// <summary>How long the patch plays for, in seconds, or null for one that has not said and plays on.</summary>
     public double? Length { get; }

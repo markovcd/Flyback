@@ -68,6 +68,32 @@ public class JsProgramTests
         ShouldMatch(Interpret(before, 1_000, (after, 400)), Script(before, 1_000, (after, 400)), "retuned");
     }
 
+    /// <summary>A Line In's two inputs are written into the script once a frame, from what the renderer hears, as the interpreter's renderer writes them.</summary>
+    [Fact]
+    public void A_line_in_is_heard_a_frame_at_a_time()
+    {
+        Assert.SkipWhen(NodeJs.Path is null, "no Node on this machine");
+
+        var builder = new PatchBuilder();
+        var line = builder.Add(NodeCatalog.LineInTypeId, 0, 0, (0, 0.8f));
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        builder.Wire(line, 0, sink, NodeCatalog.OutputLeftPort).Wire(line, 1, sink, NodeCatalog.OutputRightPort);
+
+        var program = builder.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
+        var heard = new float[2_000 * 2];
+
+        for (var i = 0; i < 2_000; i++)
+        {
+            heard[i * 2] = 0.5f * MathF.Sin(i * 0.05f);
+            heard[i * 2 + 1] = 0.25f * MathF.Cos(i * 0.031f);
+        }
+
+        var interpreted = Interpret(program, 1_000, input: heard);
+
+        interpreted.ShouldContain(sample => Math.Abs(sample) > 0.1f, "the interpreter heard nothing, so agreeing with it proves nothing");
+        ShouldMatch(interpreted, Script(program, 1_000, input: heard), "line in");
+    }
+
     /// <summary>A sine heard on the left, before and after its frequency is turned from 220 to 331.</summary>
     private static (CompiledPatch Before, CompiledPatch After) SineTurned()
     {
@@ -145,11 +171,13 @@ public class JsProgramTests
     /// What the interpreter makes of <paramref name="frames"/> frames, at the times the script
     /// makes them, playing <paramref name="turned"/>'s program on from its frame where given.
     /// </summary>
-    private static float[] Interpret(CompiledPatch program, int frames, (CompiledPatch Program, int At)? turned = null)
+    private static float[] Interpret(CompiledPatch program, int frames, (CompiledPatch Program, int At)? turned = null, float[]? input = null)
     {
         var memory = new AudioRenderer(oversample: Oversample).DelayMemoryFor(program);
         var registers = program.AllocateRegisters();
         var live = new LiveValues(program.LiveInputs);
+        var lineLeft = live.IndexOf(LineInSignal.Left);
+        var lineRight = live.IndexOf(LineInSignal.Right);
         var left = program.OutputBase;
         var right = program.OutputWidth > 1 ? program.OutputBase + 1 : program.OutputBase;
         var inner = 1.0 / (SampleRate * Oversample);
@@ -161,6 +189,12 @@ public class JsProgramTests
         for (var frame = 0; frame < frames; frame++)
         {
             var playing = turned is { } t && frame >= t.At ? t.Program : program;
+
+            if (input is not null)
+            {
+                if (lineLeft >= 0) live.Storage[lineLeft] = input[frame * 2];
+                if (lineRight >= 0) live.Storage[lineRight] = input[frame * 2 + 1];
+            }
 
             for (var k = 0; k < Oversample; k++)
             {
@@ -179,7 +213,7 @@ public class JsProgramTests
     /// What the emitted script makes of the same, under Node, on fresh memory of its own,
     /// retuned to <paramref name="turned"/>'s constants at its frame where given.
     /// </summary>
-    private static float[] Script(CompiledPatch program, int frames, (CompiledPatch Program, int At)? turned = null)
+    private static float[] Script(CompiledPatch program, int frames, (CompiledPatch Program, int At)? turned = null, float[]? input = null)
     {
         var source = JsEmitter.Emit(program);
         source.ShouldNotBeNull();
@@ -194,6 +228,7 @@ public class JsProgramTests
             var layout = JsLayout.Of(program, memory, live, SampleRate, Oversample, heap.Place);
             var count = frames * Oversample * 2;
             var output = heap.Floats(count);
+            var heard = input is null ? 0 : heap.Place(input) / sizeof(float);
 
             var path = (string name) => Path.Combine(folder.FullName, name);
 
@@ -207,7 +242,7 @@ public class JsProgramTests
             File.WriteAllText(path("turned.json"), constants);
 
             NodeJs.Run(path("run.mjs"), path("heap.bin"), path("layout.json"), path("program.js"), path("out.bin"),
-                $"{frames}", $"{output}", $"{count}", path("turned.json"), $"{turned?.At ?? frames}");
+                $"{frames}", $"{output}", $"{count}", path("turned.json"), $"{turned?.At ?? frames}", $"{heard}");
 
             return ScriptHeap.ReadFloats(path("out.bin"), count);
         }
@@ -255,7 +290,7 @@ public class JsProgramTests
         """
         import { readFileSync, writeFileSync } from 'node:fs';
 
-        const [heapFile, layoutFile, programFile, outFile, frames, out, count, turnedFile, at] = process.argv.slice(2);
+        const [heapFile, layoutFile, programFile, outFile, frames, out, count, turnedFile, at, input] = process.argv.slice(2);
         const saved = readFileSync(heapFile);
         const buffer = new ArrayBuffer(Number(saved.readBigInt64LE(0)));
         const bytes = new Uint8Array(buffer);
@@ -275,11 +310,11 @@ public class JsProgramTests
 
         const render = new Function(`return ${readFileSync(programFile, 'utf8')}`)()(m);
         const split = Math.min(Number(at), Number(frames));
-        render(0, split, 1, Number(out));
+        render(0, split, 1, Number(out), Number(input));
 
         if (split < Number(frames)) {
           render.retune(JSON.parse(readFileSync(turnedFile, 'utf8')));
-          render(split / m.sampleRate, Number(frames) - split, 1, Number(out) + split * m.oversample * 2);
+          render(split / m.sampleRate, Number(frames) - split, 1, Number(out) + split * m.oversample * 2, Number(input) + split * 2);
         }
 
         writeFileSync(outFile, bytes.subarray(Number(out) * 4, (Number(out) + Number(count)) * 4));

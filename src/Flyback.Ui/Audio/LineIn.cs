@@ -20,6 +20,7 @@ internal sealed class LineIn : IDisposable
     private readonly PluginCatalog plugins;
     private readonly IAudioEngine audio;
     private readonly Func<OutputSettings> settings;
+    private readonly IAudioInput? own;
     private readonly LineInFeed feed = new();
 
     private IAudioCapture? capture;
@@ -27,11 +28,13 @@ internal sealed class LineIn : IDisposable
     /// <summary>Set once a device has refused or stopped, so an edit does not retry it every frame of a drag.</summary>
     private bool refused;
 
-    public LineIn(PluginCatalog plugins, IAudioEngine audio, Func<OutputSettings> settings)
+    /// <param name="input">The sound input to listen through, where the host has one of its own; otherwise the plugins' preferred.</param>
+    public LineIn(PluginCatalog plugins, IAudioEngine audio, Func<OutputSettings> settings, IAudioInput? input = null)
     {
         this.plugins = plugins;
         this.audio = audio;
         this.settings = settings;
+        own = input;
 
         audio.Input = feed;
     }
@@ -72,7 +75,7 @@ internal sealed class LineIn : IDisposable
     {
         if (capture is not null || refused) return;
 
-        if (plugins.PreferredAudioInput is not { } input)
+        if ((own ?? plugins.PreferredAudioInput) is not { } input)
         {
             Refuse("A Line In is silent: no sound input is installed.");
             return;

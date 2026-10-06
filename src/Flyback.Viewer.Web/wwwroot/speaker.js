@@ -6,6 +6,7 @@
 // From the page: { open, width, height, opened }, { speaker: port }, { seek, generation },
 // { run }, { turn, value }, { strike, down } and { release }. To the page: { ready }, { opened, error, status, speed },
 // { opened, state, status } and { failure }. To the speaker: { clear } and { generation, samples }.
+// From the speaker, besides its count: { heard }, what the microphone heard, for a Line In.
 //
 // From the editor instead of { open }: { edit, aspect }, of which only the latest is kept,
 // { keep, bytes }, { forget }, { play, values }, { watch, charts, windows, spectra, meters }, { oversample } and { aspect }. To the
@@ -18,7 +19,7 @@ import * as program from './program.js';
 const CHUNK = 1024;
 const AHEAD = 0.25;
 
-/** The queue for a patch played on the computer keyboard or edited: short, so a key or an edit is heard as it is made. */
+/** The queue for a patch played on the computer keyboard, edited or listening to the microphone: short, so a key, an edit or a voice is heard as it is made. */
 const SHORT_AHEAD = 0.1;
 
 /**
@@ -68,6 +69,9 @@ let judgedAt = -Infinity;
 /** How long the last packing of the picture's state took, in milliseconds. */
 let listening = 0;
 
+/** Whether the patch playing reads a Line In. */
+let lineIn = false;
+
 /** Where the speaker's count starts, in seconds: the last seek. */
 let origin = 0;
 
@@ -94,7 +98,7 @@ function pump() {
   let rendered = false;
 
   // A few chunks a call at most, so a message from the page is never kept waiting long.
-  for (let i = 0; i < 8 && (sent - played) / rate < ahead; i++) {
+  for (let i = 0; i < 8 && (sent - played) / rate < (lineIn ? Math.min(ahead, SHORT_AHEAD) : ahead); i++) {
     const at = flyback.Hear(CHUNK) / 4;
     const samples = runtime.localHeapViewF32().slice(at, at + CHUNK * 2);
     speaker.postMessage({ generation, samples }, [samples.buffer]);
@@ -173,7 +177,9 @@ function takeEdit() {
 
   if (!error) {
     for (const [key, value] of written) flyback.Play(key, value);
-    rate = JSON.parse(flyback.Status()).sampleRate;
+    const now = JSON.parse(flyback.Status());
+    rate = now.sampleRate;
+    lineIn = now.lineIn;
   }
 
   postMessage({ edited: true, error, status: JSON.parse(flyback.Status()) });
@@ -183,7 +189,23 @@ function status() {
   return { ...JSON.parse(flyback.Status()), queued: (sent - played) / rate, listening, knobs: JSON.parse(flyback.Knobs()) };
 }
 
+/** Hands the sound what the microphone heard, for a Line In to play. */
+function overhear(samples) {
+  if (flyback === null) return;
+
+  const frames = samples.length / 2;
+  const at = flyback.Hearing(frames) / 4;
+
+  runtime.localHeapViewF32().set(samples, at);
+  flyback.Overhear(frames);
+}
+
 function report({ data }) {
+  if (data.heard !== undefined) {
+    overhear(data.heard);
+    return;
+  }
+
   if (data.generation !== generation) return;
 
   played = data.played;
@@ -203,6 +225,7 @@ function open({ open: what, width, height, opened: id }) {
 
   const opening = status();
   rate = opening.sampleRate;
+  lineIn = opening.lineIn;
   stateLength = opening.stateLength;
   ahead = opening.played ? SHORT_AHEAD : AHEAD;
   warm = opening.soundBackend === 'javascript' ? WARM_UP : 0;

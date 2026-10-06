@@ -7,6 +7,7 @@ using Flyback.Ui.Audio;
 using Flyback.Editor.Controls;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Gallery;
+using Flyback.Editor.Settings;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
@@ -44,6 +45,16 @@ internal sealed class PageApp : Application
             services.AddSingleton<IViewer>(sp => sp.GetRequiredService<PageViewer>());
             services.AddSingleton<IAudioEngine, PageSound>();
             services.AddSingleton(new AudioSetup(new SilentAudioDevice(), new PageSpeakers()));
+            services.AddSingleton(sp =>
+            {
+                var report = sp.GetRequiredService<ReportLine>();
+
+                return new LineIn(
+                    plugins,
+                    sp.GetRequiredService<IAudioEngine>(),
+                    () => sp.GetRequiredService<OutputSettingRepository>().Current,
+                    new PageMicrophone(message => report.Say(message)));
+            });
         });
 
         var view = provider.View();

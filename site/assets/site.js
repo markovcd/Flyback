@@ -188,7 +188,7 @@
       var frame = document.createElement("iframe");
       frame.src = link.href;
       frame.title = "The Flyback editor";
-      frame.allow = "fullscreen; autoplay";
+      frame.allow = "fullscreen; autoplay; microphone";
       frame.addEventListener("load", function () { frame.focus(); });
 
       var holder = link.parentNode;

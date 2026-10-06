@@ -3,7 +3,7 @@
 **Status:** Accepted · 2026-10-06 · *user-directed* · follows
 [0025](0025-platform-io-behind-loadable-plugins.md), which put sound out behind
 plugins, and [0024](0024-audio-device-in-the-shell.md); implemented in
-`Flyback.Ui/Audio/LineIn` and `src/plugins/Flyback.Plugins.LinuxIO`
+`Flyback.Ui/Audio/LineIn`, `src/plugins/Flyback.Plugins.LinuxIO` and `src/Flyback.Viewer.Web`
 
 ## Context
 
@@ -44,13 +44,28 @@ about 85 ms. An empty ring is silence.
 `RecordedLineIn`, resampled to the engine's rate; without it the Line In is
 silent. It is what makes the module checkable with no hardware.
 
+**A page hears it through the speaker's worklet.** The browser's microphone plays
+into the worklet that already feeds the speakers, which hands what it hears to the
+sound's worker, where a `LineInFeed` with a cushion of 2048 frames takes it: the worker
+renders ahead of the speakers, so frames would otherwise arrive too late for the chunk
+that wants them. The script (0160) reads the two live inputs from a per-frame buffer
+that `JsSound` fills from the same feed, so it hears what the interpreter would. The
+web editor opens the microphone through `LineIn` itself, with a `PageMicrophone` as its
+sound input; the web viewer opens it when the worker's status says the patch reads
+one. Both ask only while the sound plays, with the browser's call processing off, and
+let go when it stops. The queue is held to a tenth of a second while a Line In plays.
+
 ## Consequences
 
 Hearing and playing run on two clocks, so the feed drops or repeats a few frames
 over a long run and adds the capture buffer to the latency. Feedback from the
 speakers is the person's to avoid, and the module's help says so.
 
-Only Linux has a backend (ALSA, through the plugin that already plays and routes
-MIDI). On Windows and macOS a Line In is silent and the window says no input is
-installed; their backends are in `TODO.md`. macOS will also need the microphone's
-usage string and entitlement in the app bundle, which no part of the build has.
+Linux has a backend (ALSA, through the plugin that already plays and routes MIDI), and
+a browser has its own. On Windows and macOS a Line In is silent and the window says no
+input is installed; their backends are in `TODO.md`. In a page the voice is heard a
+queue and a cushion late, 150 to 250 ms, which suits an echo or a filter and not
+monitoring, and Firefox may refuse a microphone whose rate is not the page's.
+
+macOS will also need the microphone's usage string and entitlement in the app bundle,
+which no part of the build has.

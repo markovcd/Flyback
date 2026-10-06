@@ -33,13 +33,15 @@ internal static class JsEmitter
 
     /// <summary>
     /// A function expression that takes a layout and returns
-    /// <c>render(time, frames, aspect, out)</c>, or null for a program this cannot
+    /// <c>render(time, frames, aspect, out, input)</c>, or null for a program this cannot
     /// run: one that reads a picture, which only a picture's program carries.
     /// </summary>
     /// <remarks>
     /// <c>render</c> writes two floats an evaluation, left then right, from element
     /// <c>out</c> of the heap's floats, and steps the clock the way
-    /// <c>AudioRenderer.Render</c> does, so the same times reach the same ops.
+    /// <c>AudioRenderer.Render</c> does, so the same times reach the same ops. A program
+    /// with a Line In reads two floats a frame, left then right, from element <c>input</c>,
+    /// and plays them into its two live inputs once a frame, as the renderer does.
     /// </remarks>
     public static string? Emit(CompiledPatch program)
     {
@@ -75,10 +77,21 @@ internal static class JsEmitter
         var left = program.OutputBase;
         var right = program.OutputWidth > 1 ? program.OutputBase + 1 : program.OutputBase;
 
-        text.Append("const render = function render(time, frames, aspect, out) {\n");
+        var lineLeft = program.LiveInputs.ToList().IndexOf(LineInSignal.Left);
+        var lineRight = program.LiveInputs.ToList().IndexOf(LineInSignal.Right);
+
+        text.Append("const render = function render(time, frames, aspect, out, input) {\n");
         text.Append("F32 = m.f32(); F64 = m.f64(); I32 = m.i32(); U8 = m.u8();\n");
-        text.Append("let clock = time, o = out;\n");
+        text.Append("let clock = time, o = out, i = input;\n");
         text.Append("for (let f = 0; f < frames; f++) {\n");
+
+        if (lineLeft >= 0 || lineRight >= 0)
+        {
+            text.Append("const heardLeft = F32[i++], heardRight = F32[i++];\n");
+            if (lineLeft >= 0) text.Append(CultureInfo.InvariantCulture, $"F32[LIVE + {lineLeft}] = heardLeft;\n");
+            if (lineRight >= 0) text.Append(CultureInfo.InvariantCulture, $"F32[LIVE + {lineRight}] = heardRight;\n");
+        }
+
         text.Append("for (let k = 0; k < OS; k++) {\n");
         text.Append("const t = clock + k * INNER;\n");
 

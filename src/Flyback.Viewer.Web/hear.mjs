@@ -10,6 +10,7 @@
 //   node hear.mjs --preset "Sidebands" --warm 3
 //   node hear.mjs --preset "Acid" --oversample 4 --judge --seconds 10
 //   node hear.mjs --preset "Duck" --seconds 1 --state duck.state
+//   node hear.mjs listen.fbks --seconds 1 --input voice.f32
 //
 // Prints what the viewer's status says as JSON, with how fast the sound rendered and the
 // panel's knobs, and writes the samples as raw 32-bit floats, left and right interleaved,
@@ -26,6 +27,9 @@
 // worker does every half second while it plays, stepping itself down or saying it is behind.
 // --state writes what the sound hands the picture once it has played, as the page's worker
 // packs it: the Meters' readings, then each Scope's and Analyzer's buffer, as raw floats.
+// --input plays a raw file of 32-bit floats, left and right interleaved as --out writes them,
+// to a Line In, as the page's speaker hands the worker what the microphone heard: a chunk
+// of 1,024 frames before each chunk of sound is rendered. Past its end the microphone is silent.
 // With --presets it prints the viewer's preset list as JSON instead, and plays nothing.
 
 import { existsSync } from 'node:fs';
@@ -48,6 +52,7 @@ const { values, positionals } = parseArgs({
     size: { type: 'string', default: '960x540' },
     out: { type: 'string' },
     state: { type: 'string' },
+    input: { type: 'string' },
     oversample: { type: 'string' },
     warm: { type: 'string' },
     judge: { type: 'boolean' },
@@ -133,6 +138,7 @@ for (const turned of values.knob) {
 }
 
 const chunk = 1024;
+const microphone = values.input !== undefined ? new Float32Array(new Uint8Array(await readFile(values.input)).buffer) : null;
 const status = JSON.parse(web.Status());
 
 if (values.warm !== undefined) {
@@ -176,6 +182,14 @@ for (let at = 0; at < frames; at += chunk) {
   }
 
   const count = Math.min(chunk, frames - at);
+
+  if (microphone !== null) {
+    const heard = new Float32Array(count * 2);
+    heard.set(microphone.subarray(at * 2, (at + count) * 2));
+    runtime.localHeapViewF32().set(heard, web.Hearing(count) / 4);
+    web.Overhear(count);
+  }
+
   const pointer = web.Hear(count) / 4;
   sound.set(runtime.localHeapViewF32().subarray(pointer, pointer + count * 2), at * 2);
 }

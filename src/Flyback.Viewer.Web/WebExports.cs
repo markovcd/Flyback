@@ -52,6 +52,9 @@ public static partial class WebExports
     /// <summary>Where <see cref="Hear"/> leaves its samples, pinned so the page can read them in place.</summary>
     private static readonly Pinned<float> Samples = new();
 
+    /// <summary>Where the page leaves what the microphone heard, for <see cref="Overhear"/>.</summary>
+    private static readonly Pinned<float> Microphone = new();
+
     /// <summary>Where <see cref="Listen"/> packs what the picture knows of the sound, and <see cref="Apply"/> reads it.</summary>
     private static readonly Pinned<float> State = new();
 
@@ -329,6 +332,22 @@ public static partial class WebExports
     }
 
     /// <summary>
+    /// Makes room for <paramref name="frames"/> frames of what the microphone heard, and
+    /// answers the address the page writes them at, interleaved stereo, before it calls
+    /// <see cref="Overhear"/>.
+    /// </summary>
+    [JSExport]
+    public static int Hearing(int frames)
+    {
+        Microphone.Take(frames * 2);
+        return Microphone.Address;
+    }
+
+    /// <summary>Hands the sound the <paramref name="frames"/> frames the page wrote at <see cref="Hearing"/>'s address, for a Line In to play.</summary>
+    [JSExport]
+    public static void Overhear(int frames) => sound?.Overhear(Microphone.Take(frames * 2));
+
+    /// <summary>
     /// Judges the chunks heard since the last look, at <paramref name="seconds"/> on the
     /// worker's clock, and works the sound out a step lower when they keep falling behind;
     /// <c>oversample</c> and <c>behind</c> in <see cref="Status"/> say what came of it.
@@ -486,6 +505,7 @@ public static partial class WebExports
             status["interpreted"] = sound.Interpreted;
             status["stateLength"] = sound.StateLength;
             status["played"] = sound.Played;
+            status["lineIn"] = sound.HearsMicrophone;
             status["sounding"] = new JsonArray([.. sound.Sounding.Select(note => JsonValue.Create(note))]);
         }
 

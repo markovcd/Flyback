@@ -43,8 +43,8 @@ export function retune(id, constants) {
   programs.get(id).retune(constants);
 }
 
-export function render(id, time, frames, aspect, out) {
-  programs.get(id)(time, frames, aspect, out);
+export function render(id, time, frames, aspect, out, input) {
+  programs.get(id)(time, frames, aspect, out, input);
 }
 
 export function release(id) {

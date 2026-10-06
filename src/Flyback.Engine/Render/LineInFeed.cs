@@ -7,7 +7,8 @@ namespace Flyback.Engine.Render;
 /// A ring with one writer and one reader. The reader never lets the lag grow past
 /// <see cref="MaxLag"/> frames: it skips to <see cref="Target"/> instead, so a stalled
 /// sound or a drifting clock costs a click rather than an echo that grows. An empty ring
-/// reads as silence.
+/// reads as silence. A reader that renders ahead of the device, as a page's sound does,
+/// asks for a <see cref="Cushion"/> so that jitter in when frames arrive is not heard.
 /// </remarks>
 public sealed class LineInFeed : ILineInSource
 {
@@ -24,6 +25,13 @@ public sealed class LineInFeed : ILineInSource
     private readonly float[] rights = new float[Capacity];
     private long written;
     private long read;
+    private bool primed;
+
+    /// <summary>
+    /// Frames that must be waiting before reading starts, or starts again after the ring has
+    /// run dry, with silence until then. Nought reads at once.
+    /// </summary>
+    public int Cushion { get; init; }
 
     /// <summary>Frames waiting to be read.</summary>
     public int Pending => (int)Math.Min(Volatile.Read(ref written) - read, Capacity);
@@ -59,8 +67,11 @@ public sealed class LineInFeed : ILineInSource
 
         if (end - read > MaxLag) read = end - Target;
 
-        if (read >= end)
+        if (!primed && end - read >= Cushion) primed = true;
+
+        if (!primed || read >= end)
         {
+            primed = false;
             left = right = 0f;
             return;
         }
@@ -71,7 +82,11 @@ public sealed class LineInFeed : ILineInSource
     }
 
     /// <summary>Forgets what was heard, so a restart does not play it.</summary>
-    public void Clear() => read = Volatile.Read(ref written);
+    public void Clear()
+    {
+        read = Volatile.Read(ref written);
+        primed = false;
+    }
 
     private static float Finite(float value) => float.IsFinite(value) ? Math.Clamp(value, -1f, 1f) : 0f;
 }

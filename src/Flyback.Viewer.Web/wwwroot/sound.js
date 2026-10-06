@@ -4,6 +4,12 @@
 //
 // The page hands it { feed: port }, the worker's end of a channel. On the feed come
 // { clear } and { generation, samples }; a chunk from before the last clear is dropped.
+//
+// While the page says { listening: true }, whatever reaches the node's input, the
+// microphone, goes back down the feed as { heard }, interleaved stereo in buffers of 512 frames.
+
+/** Frames of the microphone sent to the worker at once. */
+const HEARD = 512;
 
 class Queue extends AudioWorkletProcessor {
   constructor() {
@@ -14,8 +20,16 @@ class Queue extends AudioWorkletProcessor {
     this.generation = 0;
     this.quanta = 0;
     this.feed = null;
+    this.listening = false;
+    this.heard = new Float32Array(HEARD * 2);
+    this.heardAt = 0;
 
     this.port.onmessage = ({ data }) => {
+      if (data.listening !== undefined) {
+        this.listening = data.listening;
+        this.heardAt = 0;
+      }
+
       if (data.feed === undefined) return;
 
       this.feed = data.feed;
@@ -35,9 +49,30 @@ class Queue extends AudioWorkletProcessor {
     if (data.generation === this.generation) this.chunks.push(data.samples);
   }
 
+  /** Sends the worker what the microphone hears, a buffer at a time. */
+  overhear(input) {
+    if (!this.listening || this.feed === null || input.length === 0) return;
+
+    const left = input[0];
+    const right = input[1] ?? left;
+
+    for (let i = 0; i < left.length; i++) {
+      this.heard[this.heardAt++] = left[i];
+      this.heard[this.heardAt++] = right[i];
+
+      if (this.heardAt === this.heard.length) {
+        this.feed.postMessage({ heard: this.heard }, [this.heard.buffer]);
+        this.heard = new Float32Array(HEARD * 2);
+        this.heardAt = 0;
+      }
+    }
+  }
+
   process(inputs, outputs) {
     const [left, right] = outputs[0];
     const frames = left.length;
+
+    this.overhear(inputs[0]);
     let i = 0;
 
     while (i < frames && this.chunks.length > 0) {

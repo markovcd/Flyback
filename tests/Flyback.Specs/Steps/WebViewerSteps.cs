@@ -36,6 +36,7 @@ public sealed class WebViewerSteps(Session session, PatchContext context, IUnitT
     private float[] handed = [];
     private double seconds;
     private JsonNode? said;
+    private string? microphone;
     private (string Name, float Value)? turned;
     private (int Note, float From, float To)? struck;
 
@@ -302,7 +303,42 @@ public sealed class WebViewerSteps(Session session, PatchContext context, IUnitT
         var file = Path.Combine(folder.FullName, "patch.fbk");
         File.WriteAllText(file, PatchIO.ToJson(context.Patch, Installed.Value.Modules));
 
-        said = JsonNode.Parse(Hear(file, "--seconds", length.ToString(System.Globalization.CultureInfo.InvariantCulture), "--size", $"{Width}x{Height}"));
+        var output = Path.Combine(folder.FullName, "heard.f32");
+
+        said = JsonNode.Parse(Hear([
+            file,
+            "--seconds", length.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            "--size", $"{Width}x{Height}",
+            "--out", output,
+            .. microphone is null ? [] : new[] { "--input", microphone },
+        ]));
+
+        heard = MemoryMarshal.Cast<byte, float>(File.ReadAllBytes(output)).ToArray();
+    }
+
+    [Given("the web viewer's microphone hears a {float} Hz tone")]
+    public void GivenTheMicrophoneHears(float hertz)
+    {
+        microphone = Path.Combine(folder.FullName, "microphone.f32");
+
+        var tone = LineInSteps.Tone(hertz, GlobalConstants.SampleRate, 1);
+        File.WriteAllBytes(microphone, MemoryMarshal.AsBytes(tone.SelectMany(sample => new[] { sample, sample }).ToArray().AsSpan()).ToArray());
+    }
+
+    [Then("the web viewer says it reads a Line In")]
+    public void ThenItReadsALineIn() => ((bool?)said!["lineIn"]).ShouldBe(true);
+
+    [Then("the web viewer says it reads no Line In")]
+    public void ThenItReadsNoLineIn() => ((bool?)said!["lineIn"]).ShouldBe(false);
+
+    /// <summary>The left speaker's pitch, from its rising crossings of nought, past the first few frames where the filters settle.</summary>
+    [Then("the web viewer plays a {float} Hz tone")]
+    public void ThenTheWebViewerPlays(float hertz)
+    {
+        ((string?)said!["soundBackend"]).ShouldBe("javascript", "the script is what carries the microphone, and the interpreter's answer is the desktop's");
+
+        LineInSteps.RisingCrossings([.. heard.Where((_, i) => i % 2 == 0).Skip(2400)], GlobalConstants.SampleRate)
+            .ShouldBe(hertz, hertz * 0.02);
     }
 
     [Then("the web viewer says it has sound")]

@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.Versioning;
 using Flyback.Core.Compile;
+using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Render;
 
@@ -27,6 +28,11 @@ internal sealed partial class JsSound : IDisposable
 
     private float[] evaluated = [];
     private GCHandle evaluatedPin;
+
+    /// <summary>What a Line In hears for each frame of a buffer, left then right, where the program reads one.</summary>
+    private bool hearsLineIn;
+    private float[] lineIn = [];
+    private GCHandle lineInPin;
 
     /// <summary>What the script was made of and made for, which a program must share to be played on it by <see cref="Retune"/>.</summary>
     private string source = "";
@@ -69,6 +75,7 @@ internal sealed partial class JsSound : IDisposable
             if (sound.id != 0)
             {
                 Made++;
+                sound.hearsLineIn = program.LiveInputs.Contains(LineInSignal.Left) || program.LiveInputs.Contains(LineInSignal.Right);
                 sound.source = source;
                 sound.memory = memory;
                 sound.live = live;
@@ -130,9 +137,35 @@ internal sealed partial class JsSound : IDisposable
             evaluatedPin = GCHandle.Alloc(evaluated, GCHandleType.Pinned);
         }
 
-        JsRender(id, renderer.Time, frames, renderer.Aspect, (int)(evaluatedPin.AddrOfPinnedObject() / sizeof(float)));
+        JsRender(id, renderer.Time, frames, renderer.Aspect, Element(evaluatedPin), hearsLineIn ? Hear(frames) : 0);
         renderer.Decimate(evaluated.AsSpan(0, count), interleavedStereo);
     }
+
+    /// <summary>Takes <paramref name="frames"/> frames from the renderer's input, as it would a frame at a time, and answers where the script finds them.</summary>
+    private int Hear(int frames)
+    {
+        if (lineIn.Length < frames * 2)
+        {
+            if (lineInPin.IsAllocated) lineInPin.Free();
+
+            lineIn = new float[frames * 2];
+            lineInPin = GCHandle.Alloc(lineIn, GCHandleType.Pinned);
+        }
+
+        for (var frame = 0; frame < frames; frame++)
+        {
+            var left = 0f;
+            var right = 0f;
+            renderer.Input?.Next(out left, out right);
+
+            lineIn[frame * 2] = left;
+            lineIn[frame * 2 + 1] = right;
+        }
+
+        return Element(lineInPin);
+    }
+
+    private static int Element(GCHandle pin) => (int)(pin.AddrOfPinnedObject() / sizeof(float));
 
     public void Dispose()
     {
@@ -143,6 +176,7 @@ internal sealed partial class JsSound : IDisposable
         pins.Clear();
 
         if (evaluatedPin.IsAllocated) evaluatedPin.Free();
+        if (lineInPin.IsAllocated) lineInPin.Free();
     }
 
     [JSImport("compile", Module)] private static partial int JsCompile(string source, string layout);
@@ -151,6 +185,6 @@ internal sealed partial class JsSound : IDisposable
     [JSImport("retune", Module)]
     private static partial void JsRetune(int id, [JSMarshalAs<JSType.Array<JSType.Number>>] double[] constants);
 
-    [JSImport("render", Module)] private static partial void JsRender(int id, double time, int frames, double aspect, int output);
+    [JSImport("render", Module)] private static partial void JsRender(int id, double time, int frames, double aspect, int output, int input);
     [JSImport("release", Module)] private static partial void JsRelease(int id);
 }

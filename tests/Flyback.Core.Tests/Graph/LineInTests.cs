@@ -160,6 +160,27 @@ public class LineInTests
     }
 
     [Fact]
+    public void A_feed_with_a_cushion_is_silent_until_it_holds_one_and_again_after_it_runs_dry()
+    {
+        var feed = new LineInFeed { Cushion = 4 };
+
+        feed.Write([0.1f, 0.2f, 0.3f], channels: 1);
+        feed.Next(out var early, out _);
+
+        feed.Write([0.4f], channels: 1);
+        feed.Next(out var first, out _);
+        feed.Next(out var second, out _);
+        feed.Next(out var third, out _);
+        feed.Next(out var fourth, out _);
+        feed.Next(out var dry, out _);
+
+        feed.Write([0.5f], channels: 1);
+        feed.Next(out var waiting, out _);
+
+        (early, first, second, third, fourth, dry, waiting).ShouldBe((0f, 0.1f, 0.2f, 0.3f, 0.4f, 0f, 0f));
+    }
+
+    [Fact]
     public void A_number_that_is_not_one_is_not_heard()
     {
         var feed = new LineInFeed();

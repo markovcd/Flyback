@@ -4,6 +4,7 @@
 
 import { dotnet } from './_framework/dotnet.js';
 import * as gl from './gl.js';
+import { Microphone } from './microphone.js';
 import { takeAudio, throughElement } from './session.js';
 import { onTap } from './tap.js';
 
@@ -49,6 +50,10 @@ const tabs = ['controls', 'keys', 'about'].map(name => ({ name, tab: $(`tab-${na
 
 /** A screen too narrow for the panel beside the picture, which puts it in a sheet under it. */
 const narrow = matchMedia('(max-width: 640px)');
+
+/** The microphone, held open only while the sound that is playing reads a Line In. */
+const microphone = new Microphone();
+microphone.onTrouble = () => paint();
 
 /** The sound's thread, what it last said of the sound, and why it stopped where it did. */
 const speaker = new Worker('speaker.js', { type: 'module' });
@@ -156,6 +161,7 @@ function hearState({ opened, state, status }) {
     const was = soundStatus;
     soundStatus = status;
     follow(was);
+    listen();
   }
 
   if (info === null || state.length === 0 || state.length !== info.stateLength) return;
@@ -193,7 +199,8 @@ async function startSound() {
     context = new AudioContext({ sampleRate: info.sampleRate, latencyHint: 'interactive' });
     await context.audioWorklet.addModule('sound.js');
 
-    queue = new AudioWorkletNode(context, 'flyback-queue', { numberOfInputs: 0, outputChannelCount: [2] });
+    queue = new AudioWorkletNode(context, 'flyback-queue', { outputChannelCount: [2], channelCount: 2, channelCountMode: 'explicit' });
+    microphone.attach(context, queue);
     volume = new GainNode(context, { gain: muted ? 0 : loudness });
     queue.connect(volume);
     element = throughElement(context, volume);
@@ -253,6 +260,7 @@ async function play() {
   playing = true;
   ui.cover.hidden = true;
   speaker.postMessage({ run: heard });
+  listen();
   keepAwake();
   paint();
 }
@@ -268,7 +276,13 @@ function pause() {
   if (heard) context.suspend();
   element?.pause();
   keepAwake();
+  listen();
   paint();
+}
+
+/** Opens the microphone while the sound is heard and reads a Line In, and lets it go otherwise. */
+function listen() {
+  microphone.want(playing && heard && Boolean(soundStatus.lineIn));
 }
 
 /** Stops, and forgets the speaker's queue, so the next play starts both halves at one moment. */
@@ -1025,7 +1039,7 @@ function paint() {
 
   ui.status.replaceChildren(parts.join(' · '));
 
-  for (const [text, kind] of [[warning, 'warn'], [held, 'warn'], [noPicture, 'error'], [error, 'error']]) {
+  for (const [text, kind] of [[warning, 'warn'], [held, 'warn'], [microphone.trouble, 'warn'], [noPicture, 'error'], [error, 'error']]) {
     if (!text) continue;
 
     const span = document.createElement('span');
@@ -1157,6 +1171,7 @@ window.flyback = {
     ...status(),
     name, preview, playing, looped, picture: pictureOn, awake: awake !== null, time: now(), sound: heard, soundAllowed, held, muted, volume: loudness,
     queued: soundStatus.queued ?? 0, warning, error, speakerFailure,
+    microphone: { wanted: microphone.wanted, listening: microphone.listening, trouble: microphone.trouble },
   }),
   loop: setLooped,
   volume: setVolume,
