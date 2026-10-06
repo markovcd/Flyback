@@ -1,22 +1,21 @@
-Feature: The preset site serves the whole website
-  The website on GitHub Pages is the static part. The preset site serves the
-  same pages beside its presets and plugins, so one address has all of it.
+Feature: The Worker serves the whole website
+  The preset site's Worker serves the website's pages beside the presets and
+  plugins, so one address has all of it.
 
-  Scenario: The preset site opens on the overview
+  Scenario: The website opens on the overview
     When someone opens the preset site
     Then they read what Flyback is
 
-  Scenario: Every link between the website's pages leads somewhere on the preset site
+  Scenario: Every link between the website's pages leads somewhere
     When someone follows every link between the preset site's pages
     Then none of them is missing
 
-  Scenario: The preset site's presets page is the GitHub Pages one, with the shared presets too
+  Scenario: The presets page lists the built-in presets and the shared ones
     When someone opens the preset site's presets page
     Then they can submit a preset there
     And it lists the presets Flyback ships with, marked as built in, beside the shared ones
     And it lists the built-in showcases first, then sound and picture, then one idea
 
-  Scenario: A shared preset needing a plugin the browser lacks is offered to download, not to play
-    When a preset needing the "Lantern" plugin is shared on the preset site
-    Then the preset site says Flyback in a browser lacks the "Lantern" plugin for it
-    And the presets page offers it to download rather than to play or edit in the browser
+  Scenario: A shared preset a browser cannot play is offered to download
+    When someone opens the preset site's presets page
+    Then the presets page offers it to download rather than to play or edit in the browser

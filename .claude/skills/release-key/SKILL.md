@@ -7,7 +7,7 @@ description: Use when a build or a release needs RELEASE_SIGNING_KEY - what it s
 
 ## One variable, and a missing one is made
 
-Everything that signs reads `RELEASE_SIGNING_KEY`, the variable the Release workflow reads its secret into: `release.sh`, `deploy/site/publish-dev.sh`, the site's image build and a Release run of the site. On this machine it holds a local test key, a P-256 PEM kept in the user environment. A Debug build checks no keys at any stage.
+Everything that signs reads `RELEASE_SIGNING_KEY`, the variable the Release workflow reads its secret into: `release.sh`, the Worker workflow's build of the site's plugins and a Release run. On this machine it holds a local test key, a P-256 PEM kept in the user environment. A Debug build checks no keys at any stage.
 
 If it is missing, make a new one without asking: `. ./scripts/release-key.sh` does it, and so do a build of the app and a Release run of the site. The app's public key is never edited by hand: a local build derives it from the variable into `obj/`, and `release.sh` and `coverage.sh` hand it to Docker, while the committed `release-key.pem` stays the real one. Never ask for the real release key and never put it in the variable.
 

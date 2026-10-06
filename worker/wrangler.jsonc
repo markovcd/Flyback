@@ -11,14 +11,15 @@
   "workers_dev": false,
 
   // public/ holds the pages, the viewer and the editor, assembled before a deploy. The
-  // API, the media, the admin page and the framework files whose caching the Worker sets
-  // reach it first; any other path the assets lack falls through to it too.
+  // API, the media, the admin page and the .wasm files reach the Worker first, the last
+  // because one too large to be an asset is in R2; every other asset is served without
+  // the Worker running, which costs nothing.
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
     "html_handling": "none",
     "not_found_handling": "none",
-    "run_worker_first": ["/api/*", "/media/*", "/admin.html", "/viewer/_framework/*", "/editor/_framework/*"]
+    "run_worker_first": ["/api/*", "/media/*", "/admin.html", "/viewer/_framework/*.wasm", "/editor/_framework/*.wasm"]
   },
 
   "d1_databases": [
@@ -35,20 +36,43 @@
   },
 
   "env": {
-    // Filled in from deploy/cloudflare/README.md: the database's id and the hostname.
     "staging": {
       "name": "flyback-site-staging",
       "workers_dev": false,
       "routes": [{ "pattern": "flyback-staging.nasik2137.uk", "custom_domain": true }],
       "d1_databases": [
-        { "binding": "DB", "database_name": "flyback-site-staging", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+        { "binding": "DB", "database_name": "flyback-site-staging", "database_id": "fe116ff2-e3af-41d3-8141-c7059ece1bb0", "migrations_dir": "migrations" }
       ],
       "r2_buckets": [{ "binding": "FILES", "bucket_name": "flyback-site-staging" }],
       "triggers": { "crons": ["17 * * * *"] },
       "vars": {
         "GITHUB_REPOSITORY": "markovcd/Flyback",
         "VALIDATE_WORKFLOW": "validate.yml",
-        "ACCESS_TEAM_DOMAIN": "https://nasik.cloudflareaccess.com"
+        // Anonymous reads of the lists and entries are kept this long, so a change shows within a minute.
+        "READ_CACHE_SECONDS": "60",
+        "ACCESS_TEAM_DOMAIN": "https://nasik.cloudflareaccess.com",
+        // The Access application's audience tag, which every token Access signs carries.
+        "ACCESS_AUD": "47c70731717ccc201b2577ffb8f8427e928b334318c0cb02461854932b3e0201"
+      }
+    },
+
+    // Not deployed until the move in deploy/cloudflare/README.md.
+    "production": {
+      "name": "flyback-site",
+      "workers_dev": false,
+      "routes": [{ "pattern": "flybackmodular.app", "custom_domain": true }],
+      "d1_databases": [
+        { "binding": "DB", "database_name": "flyback-site", "database_id": "cec1920c-9891-4b01-9490-574cfda71fc7", "migrations_dir": "migrations" }
+      ],
+      "r2_buckets": [{ "binding": "FILES", "bucket_name": "flyback-site" }],
+      "triggers": { "crons": ["17 * * * *"] },
+      "vars": {
+        "GITHUB_REPOSITORY": "markovcd/Flyback",
+        "VALIDATE_WORKFLOW": "validate.yml",
+        // Anonymous reads of the lists and entries are kept this long, so a change shows within a minute.
+        "READ_CACHE_SECONDS": "60",
+        "ACCESS_TEAM_DOMAIN": "https://nasik.cloudflareaccess.com",
+        "ACCESS_AUD": "61859ae4a70258068910153ebc327b34307d4fe30494efacc69c0dfb78440ca7"
       }
     }
   }

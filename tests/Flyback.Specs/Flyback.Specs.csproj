@@ -25,7 +25,6 @@
     <ProjectReference Include="..\..\src\Flyback.Editor.Desktop\Flyback.Editor.Desktop.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Viewer.Desktop\Flyback.Viewer.Desktop.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Cli\Flyback.Cli.csproj" />
-    <ProjectReference Include="..\..\src\Flyback.Server\Flyback.Server.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Site\Flyback.Site.csproj" />
   </ItemGroup>
 
@@ -70,7 +69,6 @@
   <ItemGroup>
     <PackageReference Include="Avalonia.Headless" />
     <PackageReference Include="Avalonia.Skia" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Reqnroll.xunit.v3" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit.v3" />

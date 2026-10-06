@@ -75,12 +75,15 @@ internal sealed class Transport
             Submit();
         }
 
-        audio.Update(patch, samples, start, sound);
+        // A note held through an edit is written into the new blocks before the next
+        // frame or buffer, so it is not cut off: the sound's before it is swapped in,
+        // since its callback may run at any moment.
+        var seen = preview is not null && picture is not null ? new LiveValues(picture.LiveInputs) : null;
+
+        audio.Update(patch, samples, start, sound, heard => midi.Fill(heard, seen ?? preview?.Live));
         start?.Give();
 
-        // A note held through an edit is written into the new blocks before the next
-        // frame or buffer, so it is not cut off.
-        if (preview is not null && picture is not null) preview.Live = new LiveValues(picture.LiveInputs);
+        if (seen is not null) preview!.Live = seen;
 
         var relaid = midi.Lay(patch.Keyboard);
         midi.Follow(Blocks);

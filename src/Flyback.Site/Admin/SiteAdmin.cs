@@ -1,4 +1,4 @@
-namespace Flyback.Site;
+namespace Flyback.Site.Admin;
 
 /// <summary>
 /// A client for the preset site's admin API, carrying the Cloudflare Access service token

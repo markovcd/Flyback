@@ -2,6 +2,7 @@ using System.Net;
 using Flyback.Site.Commands;
 using Shouldly;
 using Xunit;
+using Flyback.Site.Reading;
 
 namespace Flyback.Site.Tests;
 
@@ -34,9 +35,23 @@ public sealed class PushDefaultsTests : IDisposable
         var (method, path, body) = site.Asked.Single();
         method.ShouldBe(HttpMethod.Put);
         path.ShouldBe("/api/v1/admin/defaults/Machine%20Room.fbk");
-        body!.ShouldContain("name=check");
+        body!.ShouldContain("name=\"check\"", customMessage: "the Worker's form parser takes only a quoted field name");
+        body!.ShouldContain("name=\"file\"; filename=\"Machine Room.fbk\"");
         body!.ShouldContain("\"name\":\"Machine Room\"");
         output.ToString().ShouldBe($"Machine Room.fbk: added (d1){Environment.NewLine}");
+    }
+
+    [Fact]
+    public async Task A_default_the_site_will_not_take_fails_the_run_saying_why()
+    {
+        using var client = new FakeSite((_, _) => FakeSite.Json("""{ "error": "The check is not JSON." }""", HttpStatusCode.BadRequest)).Client();
+        var error = new StringWriter();
+
+        var code = await PushDefaultsCommand.Run(
+            client, [Write("Drone.fbk", Files.Patch())], BrowserPlugins.Linked(), TextWriter.Null, error, TestContext.Current.CancellationToken);
+
+        code.ShouldBe(Exit.Failed);
+        error.ToString().ShouldContain("Drone.fbk: the site answered 400 (Bad Request): The check is not JSON.");
     }
 
     [Fact]

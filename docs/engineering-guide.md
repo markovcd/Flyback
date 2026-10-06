@@ -73,7 +73,7 @@ layer between the layers: a shell calls the engine's concrete types
 | `Flyback.Editor.Desktop` | `Program`, `FlybackApp`, `Startup`, installing an update, the shipped plugins | The desktop program around `Flyback.Editor`. |
 | `Flyback.Viewer.Desktop` | A window, a transport and an argument parser | Writes nothing to disk ([0123](adr/0123-a-third-program-plays-a-patch-and-writes-nothing.md)). |
 | `Flyback.Viewer.Web` | `WebSound`, `WebPicture`, `WebExports`, `JsSound`, the page, its sound worker, and `hear.mjs` for Node | The sound as JavaScript in a worker, the interpreter where it cannot be; ahead-of-time compiled only on publish; a patch too heavy to keep up plays its picture alone ([0160](adr/0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md)). |
-| `Flyback.Editor.Web` | `PageApp`, `CanvasPreview`, `PageSound`, `PageExports`, the page | `Flyback.Editor` under Avalonia.Browser, with the page's own preview, sound, title, focus and close registered in its container; the picture on a canvas of its own, the sound in the web viewer's worker. Served by the preset site at `/editor/`, which builds it; built with `Flyback.slnx`, which therefore needs the wasm-tools workload; the gate's image installs it ([0162](adr/0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)). |
+| `Flyback.Editor.Web` | `PageApp`, `CanvasPreview`, `PageSound`, `PageExports`, the page | `Flyback.Editor` under Avalonia.Browser, with the page's own preview, sound, title, focus and close registered in its container; the picture on a canvas of its own, the sound in the web viewer's worker. Served by the preset site's Worker at `/editor/`, built into its pages by `worker/build-assets.sh`; also built with `Flyback.slnx`, which therefore needs the wasm-tools workload; the gate's image installs it ([0162](adr/0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)). |
 | `Flyback.Cli` | One file per command over `System.CommandLine` | The only place export lives ([0078](adr/0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md)); on the GPU where there is one, and exact to the bit with `--processor` ([0157](adr/0157-flyback-cli-render-draws-on-the-gpu.md)). |
 | `Flyback.Site` | `flyback-site`: the readers a submission is checked with, and the commands the preset site's workflows run | Run by GitHub and the author, never shipped; references the plugins the web pages link, to say what a browser lacks ([0175](adr/0175-the-preset-site-is-a-worker-and-github-reads-what-is-submitted.md)). The Worker itself is TypeScript in `worker/`, tested with Vitest. |
 
@@ -615,10 +615,9 @@ from the sum of the rest, for the Coverage workflow and locally alike, as
 restore is locked to the committed lock files, so a version that moved fails
 there rather than building.
 
-`pages.yml` publishes what `pages.sh` builds on every push to `main` that
-touches the site: `site/` as it stands, with the web viewer, the web editor and
-the stills built in. Nothing in that build reads the prose, so nothing catches a
-stale sentence, which is why a site edit goes in the same commit as the change
+`worker.yml` deploys the website on every push to `main` that touches the site:
+`site/` as it stands, with the web viewer, the web editor and the stills built
+in. Nothing in that build reads the prose, so nothing catches a stale sentence, which is why a site edit goes in the same commit as the change
 it describes.
 
 A release passes `-p:Version=`; every other build reports a suffixed version,

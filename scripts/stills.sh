@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Draws every preset's still, with the index the galleries read them by, into the
 # folder given (ADR-0163). The editor and the command line are published side by side
-# first, as a release lays them out, so the plugins the build ships load.
+# first, as a release lays them out, so the plugins the build ships load. The stills
+# are WebP, which needs ffmpeg on PATH.
 #
 #   ./scripts/stills.sh <folder>
 #

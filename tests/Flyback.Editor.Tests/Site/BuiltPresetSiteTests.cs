@@ -9,9 +9,9 @@ namespace Flyback.Editor.Tests.Site;
 public sealed class BuiltPresetSiteTests
 {
 #if DEBUG
-    private const string Expected = "http://localhost:8790/";
+    private const string Expected = "http://localhost:8787/";
 #else
-    private const string Expected = "https://flyback.nasik2137.uk/";
+    private const string Expected = "https://flybackmodular.app/";
 #endif
 
     [Fact]

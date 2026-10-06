@@ -9,6 +9,7 @@ using Flyback.Core;
 using Flyback.Engine.Render;
 using Flyback.Site;
 using PluginRegistry = Flyback.Cli.Plugins;
+using Flyback.Site.Admin;
 
 namespace Flyback.Cli.Commands;
 
@@ -58,9 +59,16 @@ internal static class RenderPresetsCommand
             DefaultValueFactory = _ => 10d,
         };
 
+        var limit = new Option<int?>("--limit")
+        {
+            Description = "The most presets one pass renders; the rest wait for the next.",
+        };
+
+        var stillOnly = new Option<bool>("--still-only") { Description = "Make only the still: no loop and no track." };
+
         var command = new Command("render-presets", "Give the preset site's waiting presets a still, a loop and a track.")
         {
-            server, media, ffmpeg, once, poll, timeout,
+            server, media, ffmpeg, once, poll, timeout, limit, stillOnly,
         };
 
         command.SetAction(async (result, cancellation) =>
@@ -70,6 +78,12 @@ internal static class RenderPresetsCommand
             if (folder is { Exists: false })
             {
                 Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {folder.FullName}: the media folder is not there. Mount the site's share.");
+                return Exit.Failed;
+            }
+
+            if (result.GetValue(limit) is < 1)
+            {
+                Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: --limit {result.GetValue(limit)}: a pass renders at least one preset.");
                 return Exit.Failed;
             }
 
@@ -101,13 +115,14 @@ internal static class RenderPresetsCommand
 
             var render = new PresetRender(
                 new PresetTools(found, TimeSpan.FromMinutes(result.GetValue(timeout))),
-                folder is null ? new MediaUpload(site) : new MediaWriter(folder.FullName));
+                folder is null ? new MediaUpload(site) : new MediaWriter(folder.FullName),
+                result.GetValue(stillOnly));
 
             try
             {
                 while (true)
                 {
-                    await Pass(site, render, Console.Out, Console.Error, cancellation);
+                    await Pass(site, render, Console.Out, Console.Error, cancellation, result.GetValue(limit));
 
                     if (result.GetValue(once)) return Exit.Ok;
 
@@ -123,9 +138,11 @@ internal static class RenderPresetsCommand
         return command;
     }
 
-    /// <summary>Renders every preset the site says is waiting, oldest first.</summary>
-    internal static async Task Pass(HttpClient site, PresetRender render, TextWriter output, TextWriter error, CancellationToken cancellation)
+    /// <summary>Renders the presets the site says are waiting, oldest first, at most <paramref name="limit"/> of them where one is given.</summary>
+    internal static async Task Pass(HttpClient site, PresetRender render, TextWriter output, TextWriter error, CancellationToken cancellation, int? limit = null)
     {
+        var rendered = 0;
+
         List<Waiting> waiting;
 
         try
@@ -142,6 +159,7 @@ internal static class RenderPresetsCommand
         foreach (var preset in waiting)
         {
             if (!render.Pending(preset.Id)) continue;
+            if (rendered++ == limit) return;
 
             var folder = Directory.CreateTempSubdirectory("flyback-preset-");
 

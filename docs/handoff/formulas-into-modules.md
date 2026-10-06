@@ -10,7 +10,7 @@ delete this file, in the commit that lands the last module it asks for.
 
 Every shipped preset was printed as text (`flyback-cli print --preset <name>`, with
 the Effects, Voice, Picture, Mastering, Easy, Figures and Fractals plugins in the
-CLI's `plugins/`), plus Tranquility from `src/Flyback.Server/Defaults/`. A preset
+CLI's `plugins/`), plus Tranquility from `worker/defaults/`. A preset
 built in C# arrives fused (ADR-0108), so its `Times`/`Plus`/`Product` chains print
 as formulas too and the count sees them. 498 formulas, about 1,600 operators and
 calls, in 15 of 58 presets. Counting `+ - * / %` and each call as one:

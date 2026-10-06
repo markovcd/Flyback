@@ -45,3 +45,10 @@ files out in the first place.
 - A build takes about fifteen seconds more to draw about sixty presets.
 - A local build has no stills and draws its gallery, as it always did.
 - A preset whose drawing changes shows the new still with the build that changed it.
+
+## Amendment, 2026-10-06: WebP
+
+The stills are WebP at quality 90, encoded by ffmpeg, not JPEG: at 320 by 180 a JPEG
+rings around a patch's sharp edges. The engine writes no WebP, so `flyback-cli stills`
+needs ffmpeg, which every image that draws the stills now installs, and stops with a
+message where there is none rather than writing JPEGs.

@@ -1,6 +1,7 @@
 using Flyback.Plugins.Hosting;
+using Flyback.Site.Reading;
 
-namespace Flyback.Site;
+namespace Flyback.Site.Checking;
 
 /// <summary>What check-submission says of a plugin package: refused with a reason, or what its assemblies say about it.</summary>
 /// <param name="Signer">The public key that signed it, as the site compares one package's signer with another's.</param>

@@ -3,11 +3,11 @@
 # Flyback
 
 [![Build](https://github.com/markovcd/Flyback/actions/workflows/ci.yml/badge.svg)](https://github.com/markovcd/Flyback/actions/workflows/ci.yml)
-[![Site](https://github.com/markovcd/Flyback/actions/workflows/site.yml/badge.svg)](https://github.com/markovcd/Flyback/actions/workflows/site.yml)
+[![Worker](https://github.com/markovcd/Flyback/actions/workflows/worker.yml/badge.svg)](https://github.com/markovcd/Flyback/actions/workflows/worker.yml)
 
 Flyback is a patchable synthesiser for .NET 10. One graph can generate both a picture and a sound. The visual path and the audio path share the same module graph and are compiled down to the same flat instruction stream.
 
-The [website](https://markovcd.github.io/Flyback/) has screenshots, tutorials and the plugin guide. See [CHANGELOG.md](CHANGELOG.md) for what changed in each release, and the [releases page](https://github.com/markovcd/Flyback/releases) for downloads.
+The [website](https://flybackmodular.app/) has screenshots, tutorials and the plugin guide. See [CHANGELOG.md](CHANGELOG.md) for what changed in each release, and the [releases page](https://github.com/markovcd/Flyback/releases) for downloads.
 
 ## The premise
 
@@ -288,17 +288,17 @@ node artifacts/web/hear.mjs --preset "Sidebands" --seconds 2 --out sidebands.f32
 
 ## Web editor
 
-`src/Flyback.Editor.Web` is the editor itself in a browser: the same window under Avalonia.Browser, the picture drawn on a canvas of its own by the desktop's GPU renderer (ADR-0162). It keeps nothing between visits, carries every plugin that makes modules, as the viewer does, and plays its sound in the web viewer's worker. The Flyback mark first on its toolbar goes back to the site, and the browser asks before the page is left with an edit on it. The presets page's Edit opens a preset in it, a shipped one by `?preset=<name>` and a shared one by `?file=<url>` (with `&name=` and `&title=` as the viewer takes them). The preset site serves it at `/editor/`; `-p:EditorWeb=false` builds the site without it:
+`src/Flyback.Editor.Web` is the editor itself in a browser: the same window under Avalonia.Browser, the picture drawn on a canvas of its own by the desktop's GPU renderer (ADR-0162). It keeps nothing between visits, carries every plugin that makes modules, as the viewer does, and plays its sound in the web viewer's worker. The Flyback mark first on its toolbar goes back to the site, and the browser asks before the page is left with an edit on it. The presets page's Edit opens a preset in it, a shipped one by `?preset=<name>` and a shared one by `?file=<url>` (with `&name=` and `&title=` as the viewer takes them). The preset site's Worker serves it at `/editor/`; `worker/build-assets.sh --no-editor` builds the site without it, and `worker/dev.sh` serves what it built:
 
 ```bash
-dotnet run --project src/Flyback.Server
+worker/dev.sh
 ```
 
-The gallery shows the build's stills from `/stills/` where the site has them (ADR-0163), and draws each preset on the page's one thread where it does not; `./scripts/stills.sh src/Flyback.Server/wwwroot/stills` gives a local run of the site the stills.
+The gallery shows the build's stills from `/stills/` where the site has them (ADR-0163), and draws each preset on the page's one thread where it does not; `worker/build-assets.sh` draws them.
 
 `window.flyback` drives the page from a script: `state()` says which preset is open, how many modules and wires it has, which renderer draws the picture and at what rate, and the last thing the editor said; `preset(name)` opens a shipped preset, as `/editor/?preset=<name>` does on load; `openUrl(url, fileName, title)` fetches a shared one and opens it, as `?file=` does, answering null or why it could not; `text()` reads the open patch in the language; `apply(text)` applies text as the text view's Apply does, one edit that one undo takes back, and answers null or what is wrong with it; `sound()` says how the sound is going; `view()` presses View it, which opens the patch as it stands in the web viewer in a tab of its own, and answers the viewer's address, or null where the browser refused the tab.
 
-`./scripts/pages.sh artifacts/pages` builds the site as GitHub Pages serves it, the viewer, the editor and the stills built in, and the `pages` entry in `.claude/launch.json` serves that folder; `AOT=false` makes it quicker.
+`worker/build-assets.sh` builds the website as the Worker serves it, the viewer, the editor and the stills built in, and `worker/dev.sh` serves it; `--no-aot` makes it quicker.
 
 ## How it works
 

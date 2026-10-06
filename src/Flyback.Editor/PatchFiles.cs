@@ -1,4 +1,5 @@
 using Avalonia.Platform.Storage;
+using Flyback.Ui;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Files;
@@ -320,7 +321,7 @@ internal sealed class PatchFiles
 
             // The conversation goes inside, since a bundle is the whole of the
             // document wherever it is taken — ADR-0072.
-            packing = Pack(packed);
+            using (StallTrace.Step("Bundle save")) packing = Pack(packed);
 
             packed.Position = 0;
 

@@ -1,0 +1,20 @@
+<Project>
+
+  <!--
+    The plugins the preset site starts with (ADR-0141), by the folder each is named for.
+    The builds that pack them ask for the list:
+
+      dotnet msbuild worker/site-plugins.proj -t:ListSitePlugins -p:SitePluginsFile=<file>
+  -->
+  <ItemGroup>
+    <PluginProject Include="..\src\plugins\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" />
+    <PluginProject Include="..\src\plugins\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" FolderName="Fractals" />
+    <PluginProject Include="..\src\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" />
+  </ItemGroup>
+
+  <!-- Writes each as "project|FolderName", a line apiece. -->
+  <Target Name="ListSitePlugins">
+    <WriteLinesToFile File="$(SitePluginsFile)" Lines="@(PluginProject->'%(FullPath)|%(FolderName)')" Overwrite="true" />
+  </Target>
+
+</Project>

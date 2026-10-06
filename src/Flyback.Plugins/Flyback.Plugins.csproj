@@ -32,7 +32,6 @@
     <InternalsVisibleTo Include="Flyback.Viewer.Desktop.Tests" />
     <InternalsVisibleTo Include="Flyback.Editor.Desktop.Tests" />
     <InternalsVisibleTo Include="Flyback.Cli.Tests" />
-    <InternalsVisibleTo Include="Flyback.Server.Tests" />
     <InternalsVisibleTo Include="Flyback.Site.Tests" />
     <InternalsVisibleTo Include="Flyback.Plugins.Gemini.Tests" />
     <InternalsVisibleTo Include="Flyback.Plugins.OpenAi.Tests" />
@@ -46,7 +45,6 @@
     <InternalsVisibleTo Include="Flyback.Assist" />
     <InternalsVisibleTo Include="flyback-cli" />
     <InternalsVisibleTo Include="flyback-viewer" />
-    <InternalsVisibleTo Include="Flyback.Server" />
     <InternalsVisibleTo Include="flyback-site" />
     <InternalsVisibleTo Include="Flyback.Viewer.Web" />
     <InternalsVisibleTo Include="Flyback.Editor.Web" />

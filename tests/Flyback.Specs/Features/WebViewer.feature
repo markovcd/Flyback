@@ -75,7 +75,7 @@ Feature: The web viewer
     When the web viewer lists its presets
     Then they are the editor's, in its order, under its headings and with their descriptions, less the blank canvas
 
-  Scenario: The preset site serves the web viewer
+  Scenario: The web viewer's page and scripts are there
     When someone opens the web viewer on the preset site
     Then its page and everything it loads to start are there
 
@@ -94,4 +94,3 @@ Feature: The web viewer
   Scenario: The web viewer leaves picking a preset to the presets page
     When someone opens the web viewer on the preset site
     Then it offers no presets of its own, only a way back to the presets page
-    And a browser that kept an earlier build of it asks for this one

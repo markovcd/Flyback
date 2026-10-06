@@ -34,7 +34,6 @@
     <Project Path="src/Flyback.Plugins/Flyback.Plugins.csproj" />
     <Project Path="src/Flyback.Ui/Flyback.Ui.csproj" />
     <Project Path="src/Flyback.Viewer.Desktop/Flyback.Viewer.Desktop.csproj" />
-    <Project Path="src/Flyback.Server/Flyback.Server.csproj" />
     <Project Path="src/Flyback.Site/Flyback.Site.csproj" />
     <Project Path="src/Flyback.Viewer.Web/Flyback.Viewer.Web.csproj" />
     <Project Path="src/Flyback.Editor.Web/Flyback.Editor.Web.csproj" />
@@ -76,7 +75,6 @@
     <Project Path="tests/Flyback.Plugins.Programs.Tests/Flyback.Plugins.Programs.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.Sample/Flyback.Plugins.Sample.csproj" />
     <Project Path="tests/Flyback.Plugins.Tests/Flyback.Plugins.Tests.csproj" />
-    <Project Path="tests/Flyback.Server.Tests/Flyback.Server.Tests.csproj" />
     <Project Path="tests/Flyback.Site.Tests/Flyback.Site.Tests.csproj" />
   </Folder>
 </Solution>

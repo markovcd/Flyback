@@ -1,11 +1,12 @@
-# Checks what the preset site holds unchecked with the app's own readers, and sends
-# each verdict back (deploy/cloudflare/README.md). The Worker starts it on every
-# submission; the schedule is the net for a start that was lost.
+# Checks what the preset site holds unchecked with the app's own readers and sends
+# each verdict back, then renders the still of each preset that waits
+# (deploy/cloudflare/README.md). The Worker starts it on every submission; the
+# schedule is the net for a start that was lost.
 #
 # Off until the repository variable PRESET_SITE_URL names the site, so nothing runs
 # before the site does. It runs on GitHub's machines and never the self-hosted
 # runner: what it reads is a stranger's file. flyback-site reads a package and never
-# runs it.
+# runs it, and the render, which does run a patch, holds no token.
 
 name: Validate
 
@@ -17,7 +18,8 @@ on:
 permissions:
   contents: read
 
-# One at a time, and never cancelled: a verdict half sent is a submission checked twice.
+# One run at a time, so one render at a time, and never cancelled: a verdict half
+# sent is a submission checked twice.
 concurrency:
   group: validate
   cancel-in-progress: false
@@ -44,6 +46,8 @@ jobs:
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: steps.waiting.outputs.count != '0'
+        with:
+          persist-credentials: false
 
       # The SDK image the gate builds on, so nothing here installs a .NET of its own.
       - name: Check each one and send the verdicts
@@ -53,3 +57,51 @@ jobs:
           -e DOTNET_CLI_TELEMETRY_OPTOUT=1 -e DOTNET_NOLOGO=1
           -v "$PWD":/src -w /src mcr.microsoft.com/dotnet/sdk:10.0
           sh -c 'dotnet run --project src/Flyback.Site -c Release -- validate-submissions --server "$PRESET_SITE_URL"'
+
+  # After the checks, so a preset taken in this run renders in it too, and whatever the checks did.
+  render:
+    needs: validate
+    if: ${{ !cancelled() && vars.PRESET_SITE_URL != '' }}
+    runs-on: ubuntu-latest
+    # Five presets at up to ten minutes each, and the renderer's build.
+    timeout-minutes: 90
+    env:
+      PRESET_SITE_URL: ${{ vars.PRESET_SITE_URL }}
+      # How many presets one run renders; the rest wait for the next run.
+      LIMIT: "5"
+    steps:
+      - name: Ask what waits for a render
+        id: waiting
+        run: |
+          count="$(curl -fsS --max-time 60 "${PRESET_SITE_URL%/}/api/v1/presets?pending=true" | jq '.total')"
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.waiting.outputs.count != '0'
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        if: steps.waiting.outputs.count != '0'
+
+      - name: Build the renderer
+        if: steps.waiting.outputs.count != '0'
+        run: docker buildx build --target renderer --load -t flyback-renderer .
+
+      # No token in this step: it runs a stranger's patch, and fetches only what the site serves to anyone.
+      - name: Render the stills of at most LIMIT presets
+        if: steps.waiting.outputs.count != '0'
+        run: |
+          mkdir -p renders
+          docker run --rm -e PRESET_SITE_URL -e LIMIT -v "$PWD/renders":/renders flyback-renderer \
+            sh -c 'dotnet flyback-cli.dll render-presets --server "$PRESET_SITE_URL" --media /renders --once --limit "$LIMIT" --still-only'
+
+      - name: Send the renders
+        if: steps.waiting.outputs.count != '0'
+        env:
+          FLYBACK_ACCESS_ID: ${{ secrets.FLYBACK_ACCESS_ID }}
+          FLYBACK_ACCESS_SECRET: ${{ secrets.FLYBACK_ACCESS_SECRET }}
+        run: >-
+          docker run --rm -e PRESET_SITE_URL -e FLYBACK_ACCESS_ID -e FLYBACK_ACCESS_SECRET
+          -v "$PWD/renders":/renders flyback-renderer
+          sh -c 'dotnet site-tool/flyback-site.dll push-media --server "$PRESET_SITE_URL" /renders'

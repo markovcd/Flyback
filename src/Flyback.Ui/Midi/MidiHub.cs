@@ -145,6 +145,23 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
     }
 
     /// <summary>
+    /// Writes what is held into <paramref name="block"/>, a new program's, before
+    /// that program is heard, so a note held across an edit is never read as let go.
+    /// </summary>
+    /// <param name="alongside">The block the other running program will read, which shares out the automatic voices with this one.</param>
+    public void Fill(LiveValues block, LiveValues? alongside = null)
+    {
+        LiveValues[] blocks = alongside is null ? [block] : [alongside, block];
+
+        lock (gate)
+        {
+            foreach (var pool in voices.Values) pool.WriteTo(block, blocks);
+
+            foreach (var (source, clock) in clocks) clock.WriteTo(block, source);
+        }
+    }
+
+    /// <summary>
     /// Keeps <paramref name="devices"/> open alongside whatever the running programs
     /// read, for the knobs bound to their controllers and while a knob is learning
     /// one. Replaces the previous set.

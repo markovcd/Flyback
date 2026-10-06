@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://markovcd.github.io/Flyback/</loc></url>
-  <url><loc>https://markovcd.github.io/Flyback/tutorials.html</loc></url>
-  <url><loc>https://markovcd.github.io/Flyback/tutorials/syntakt.html</loc></url>
-  <url><loc>https://markovcd.github.io/Flyback/tutorials/beat.html</loc></url>
-  <url><loc>https://markovcd.github.io/Flyback/tutorials/echoes.html</loc></url>
-  <url><loc>https://markovcd.github.io/Flyback/plugins.html</loc></url>
-  <url><loc>https://markovcd.github.io/Flyback/presets.html</loc></url>
+  <url><loc>https://flybackmodular.app/</loc></url>
+  <url><loc>https://flybackmodular.app/tutorials.html</loc></url>
+  <url><loc>https://flybackmodular.app/tutorials/syntakt.html</loc></url>
+  <url><loc>https://flybackmodular.app/tutorials/beat.html</loc></url>
+  <url><loc>https://flybackmodular.app/tutorials/echoes.html</loc></url>
+  <url><loc>https://flybackmodular.app/plugins.html</loc></url>
+  <url><loc>https://flybackmodular.app/presets.html</loc></url>
 </urlset>

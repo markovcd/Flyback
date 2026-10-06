@@ -1,5 +1,8 @@
 using System.CommandLine;
 using System.Net.Http.Json;
+using Flyback.Site.Admin;
+using Flyback.Site.Checking;
+using Flyback.Site.Reading;
 
 namespace Flyback.Site.Commands;
 
@@ -73,16 +76,17 @@ internal static class PushDefaultsCommand
                 continue;
             }
 
+            // Quoted, as a browser sends them: the Worker's form parser takes no bare field name.
             using var form = new MultipartFormDataContent
             {
-                { new ByteArrayContent(bytes), "file", file.Name },
-                { new StringContent(Checks.ToJson(check)), "check" },
+                { new ByteArrayContent(bytes), "\"file\"", "\"" + file.Name.Replace("\"", "", StringComparison.Ordinal) + "\"" },
+                { new StringContent(Checks.ToJson(check)), "\"check\"" },
             };
 
             try
             {
                 using var sent = await site.PutAsync($"api/v1/admin/defaults/{Uri.EscapeDataString(file.Name)}", form, cancellation);
-                sent.EnsureSuccessStatusCode();
+                await SiteAnswer.EnsureTaken(sent, cancellation);
 
                 var said = await sent.Content.ReadFromJsonAsync<Seeded>(Checks.Json, cancellation);
                 output.WriteLine($"{file.Name}: {said?.State} ({said?.Id})");

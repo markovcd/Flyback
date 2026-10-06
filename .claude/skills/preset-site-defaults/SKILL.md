@@ -1,11 +1,11 @@
 ---
 name: preset-site-defaults
-description: Use when a change to the file format, a module, or a plugin would stop one of the preset site's default .fbk/.fbkb files in src/Flyback.Server/Defaults/ from opening or compiling cleanly - migrating those files in the same commit.
+description: Use when a change to the file format, a module, or a plugin would stop one of the preset site's default .fbk/.fbkb files in worker/defaults/ from opening or compiling cleanly - migrating those files in the same commit.
 ---
 
 # The preset site's defaults are files, and are migrated
 
-`src/Flyback.Server/Defaults/` holds the presets the preset site starts with (ADR-0138), as `.fbk` and `.fbkb` files rather than C#. A file does not follow the code the way a preset class does, so any change that stops one opening or compiling cleanly rewrites it in the same commit:
+`worker/defaults/` holds the presets the preset site starts with (ADR-0138), as `.fbk` and `.fbkb` files rather than C#. A file does not follow the code the way a preset class does, so any change that stops one opening or compiling cleanly rewrites it in the same commit:
 
 - a change to the file format (`PatchIO.FormatVersion` raised, a field renamed or moved);
 - a module removed or renamed, or its sockets reordered, renumbered or given a different meaning;

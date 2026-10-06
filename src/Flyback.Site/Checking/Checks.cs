@@ -1,8 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Flyback.Plugins.Hosting;
+using Flyback.Site.Reading;
 
-namespace Flyback.Site;
+namespace Flyback.Site.Checking;
 
 /// <summary>The check of whichever kind of file a submission is, and the JSON it is sent to the site as.</summary>
 internal static class Checks

@@ -171,7 +171,7 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 FROM scratch AS coverage
 COPY --from=measured /src/TestResults/ /
 
-# Every plugin the preset site starts with (Flyback.Server.csproj's PluginProject
+# Every plugin the preset site starts with (worker/site-plugins.proj's PluginProject
 # items) as a signed package, at the release's version. The site is what hands
 # them out (ADR-0141), so only release.sh off GitHub asks for them, beside the
 # release in dist/. The key arrives as a build secret and leaves no trace in any
@@ -189,7 +189,7 @@ ARG VERSION
 RUN --mount=type=cache,target=/root/.nuget/packages \
     --mount=type=secret,id=release-key,required=true \
     set -eu; \
-    dotnet msbuild src/Flyback.Server -t:ListSitePlugins -p:SitePluginsFile=/tmp/site-plugins -nologo -v:q; \
+    dotnet msbuild worker/site-plugins.proj -t:ListSitePlugins -p:SitePluginsFile=/tmp/site-plugins -nologo -v:q; \
     mkdir -p /out; \
     while IFS='|' read -r project name <&3; do \
       Version=${VERSION} dotnet run --project src/Flyback.Cli -c ${CONFIGURATION} --no-build -- \
@@ -208,8 +208,9 @@ COPY --from=packed /out/ /
 FROM ${SDK} AS site-build
 ARG VERSION
 
+# ffmpeg encodes the stills.
 RUN apt-get update \
- && apt-get install --yes --no-install-recommends python3 \
+ && apt-get install --yes --no-install-recommends python3 ffmpeg \
  && rm -rf /var/lib/apt/lists/* \
  && dotnet workload install wasm-tools
 
@@ -232,8 +233,8 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
     --mount=type=secret,id=release-key,required=true \
     set -eu; \
     mkdir -p /out/defaults; \
-    cp src/Flyback.Server/Defaults/* /out/defaults/; \
-    dotnet msbuild src/Flyback.Server -t:ListSitePlugins -p:SitePluginsFile=/tmp/site-plugins -nologo -v:q; \
+    cp worker/defaults/* /out/defaults/; \
+    dotnet msbuild worker/site-plugins.proj -t:ListSitePlugins -p:SitePluginsFile=/tmp/site-plugins -nologo -v:q; \
     while IFS='|' read -r project name <&3; do \
       Version=${VERSION} dotnet run --project src/Flyback.Cli -c Release -- \
         pack-plugin "$project" -o "/out/defaults/$name.fbkp" --key /run/secrets/release-key; \
@@ -241,6 +242,33 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 
 FROM scratch AS site-assets
 COPY --from=site-build /out/ /
+
+# What renders the preset site's presets on GitHub's machines, for the Validate
+# workflow: flyback-cli beside the editor so the shipped plugins load, as a release
+# lays them out, with ffmpeg to encode and Mesa's software OpenGL to draw on, and
+# flyback-site to send what it made.
+FROM ${SDK} AS renderer
+ARG VERSION
+
+RUN apt-get update \
+ && apt-get install --yes --no-install-recommends ffmpeg libfontconfig1 libx11-6 \
+      libegl1 libegl-mesa0 libgl1-mesa-dri libopengl0 \
+ && rm -rf /var/lib/apt/lists/*
+
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+    DOTNET_NOLOGO=1
+
+WORKDIR /src
+COPY . .
+
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    set -eu; \
+    export Version="${VERSION}"; \
+    dotnet publish src/Flyback.Editor.Desktop -c Release -o /app -nologo -v:q; \
+    dotnet publish src/Flyback.Cli -c Release -o /app -nologo -v:q; \
+    dotnet publish src/Flyback.Site -c Release -o /app/site-tool -nologo -v:q
+
+WORKDIR /app
 
 FROM gate AS publish
 ARG RIDS

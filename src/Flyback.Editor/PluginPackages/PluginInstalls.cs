@@ -1,5 +1,6 @@
 using Avalonia.Platform.Storage;
 using Flyback.Core.Graph;
+using Flyback.Ui;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Notices;
@@ -182,6 +183,8 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
 
         try
         {
+            using var traced = StallTrace.Step("Plugin install");
+
             installer!.Stage(package, platform);
         }
         catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)

@@ -789,7 +789,7 @@ async function open(opening, label, at = 0, keepKnobs = false) {
     else if (info.hasSound && sound.speed !== null && sound.speed < FAST_ENOUGH) tooSlow(sound.speed);
 
     document.title = `${shown} · Flyback Viewer`;
-    ui.seek.hidden = !Number.isFinite(end());
+    ui.seek.hidden = ui.loop.hidden = !Number.isFinite(end());
     if (!ui.seek.hidden) ui.seek.max = end();
   }
 

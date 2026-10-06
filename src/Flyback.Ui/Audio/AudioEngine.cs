@@ -244,7 +244,7 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
     /// For a patch just opened: silent, with the clock stopped, until the cue goes,
     /// which is once the sound runs compiled and the picture is ready too.
     /// </param>
-    public void Update(Patch patch, ISampleLibrary? samples = null, Cue? start = null, CompiledPatch? sound = null)
+    public void Update(Patch patch, ISampleLibrary? samples = null, Cue? start = null, CompiledPatch? sound = null, Action<LiveValues>? seed = null)
     {
         var program = sound ?? patch.CompileForAudio(samples: samples, played: true).Program;
         if (start is not null) program.WaitFor(start);
@@ -263,12 +263,12 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
         var memory = renderer.DelayMemoryFor(program, Volatile.Read(ref activeState).Memory);
 
         // A fresh block rather than the old one carried over, even where the
-        // program asks for the same inputs. What was being held is written back
-        // into it at once by whoever is following, so nothing is dropped, and
-        // sharing one across a swap would mean the callback reading a block being
-        // resized under it.
+        // program asks for the same inputs: sharing one across a swap would mean
+        // the callback reading a block being resized under it. What is held is
+        // written into it before the swap, so no buffer hears it empty.
         var live = new LiveValues(program.LiveInputs);
         Lead(live);
+        seed?.Invoke(live);
 
         Volatile.Write(ref activeState, new State(program, memory, live, renderer));
     }

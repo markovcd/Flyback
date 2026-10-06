@@ -85,19 +85,9 @@ returns a `Task` in all three platforms.
 - `TakeRecording.Start` → `LiveRecorder` → `ClipWriter.Open` starts ffmpeg, and
   `Ffmpeg.Resolve` scans PATH. Tens of ms; `Process.Start` has no async form.
 - `ConversationStore.Keep`/`Find`: one JSON file that grows with the chat.
-- The server's `MediaFolder` (`src/Flyback.Server/MediaFolder.cs:20-49`) does up to
-  six `File.Exists` and a peaks read per preset on every `GET /presets`, and
-  `?pending=true` walks every published preset. Cache the media state; async does
-  not help, since `File.Exists` has none.
 
 ## Ruled out
 
-- The server's SQLite stores (`PresetStore`, `PluginStore`, `ReportStore`,
-  `RatingStore`, `LetterStore`): Microsoft.Data.Sqlite's `*Async` runs synchronously.
-  The real cost is `Download`/`Preview` loading a whole blob (up to 20 MB) into a
-  `byte[]`; `SqliteBlob` streaming if it ever matters.
-- Kestrel uploads already use `ReadFormAsync`/`CopyToAsync`; `AllowSynchronousIO`
-  is never needed.
 - The assistant contract: `IAssistantTransport.Send`, `IModelConversation.Send`
   and `IModelSurvey.Survey` already return `Task`, and Gemini and OpenAi await.
 - The CLI: `RenderPresetsCommand` is async and sequential on purpose; `ProbeCommand`

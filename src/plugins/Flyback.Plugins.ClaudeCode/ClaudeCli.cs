@@ -21,6 +21,9 @@ internal sealed partial class ClaudeCli(string executable) : IProgram
 
     private static readonly string[] Keys = ["ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"];
 
+    /// <summary>Claude Code puts its session id in the prompt, so a fresh one per process would make every request miss the cache.</summary>
+    internal const string SessionId = "f1a4b0c2-7e3d-4a58-9b16-2c5d8e0f4a71";
+
     /// <summary>A model name the command line may carry: an alias or an id, never anything that reads as a flag.</summary>
     [GeneratedRegex(@"^[A-Za-z0-9][A-Za-z0-9._\[\]-]{0,63}$")]
     private static partial Regex ModelName();
@@ -45,6 +48,7 @@ internal sealed partial class ClaudeCli(string executable) : IProgram
             "--disable-slash-commands",
             "--setting-sources", "",
             "--no-session-persistence",
+            "--session-id", SessionId,
             "--system-prompt", ClaudeWire.System,
             "--model", request.Model,
         ];

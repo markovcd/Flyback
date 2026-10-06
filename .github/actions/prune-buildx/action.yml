@@ -1,0 +1,22 @@
+# Removes builders earlier jobs on this runner leaked (scripts/prune-buildx.sh).
+# Runs after setup-buildx-action, and keeps the builder that step made.
+name: Prune leaked buildx builders
+description: Remove buildx builders left behind by cancelled or killed jobs.
+inputs:
+  keep:
+    description: The current builder's name, from setup-buildx-action's `name` output.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Prune
+      if: runner.os != 'Windows'
+      shell: bash
+      run: bash "$GITHUB_ACTION_PATH/../../../scripts/prune-buildx.sh" "${{ inputs.keep }}"
+
+    # A bare `bash` on the Windows runner is WSL's, which cannot read the
+    # runner's script paths; Git's is the one wanted.
+    - name: Prune (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: '& "C:/Program Files/Git/bin/bash.exe" "$env:GITHUB_ACTION_PATH/../../../scripts/prune-buildx.sh" "${{ inputs.keep }}"'

@@ -30,6 +30,7 @@ export interface PresetRow {
   lacks: string | null;
   media_state: string;
   media: string;
+  media_rev: number;
   peaks: string | null;
   tag_list: string | null;
 }

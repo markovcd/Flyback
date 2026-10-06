@@ -19,9 +19,6 @@ on:
     paths:
       - "worker/**"
       - "site/**"
-      - "src/Flyback.Server/wwwroot/**"
-      - "src/Flyback.Server/Defaults/**"
-      - "src/Flyback.Server/Flyback.Server.csproj"
       - "src/Flyback.Site/**"
       - "src/Flyback.Viewer.Web/**"
       - "src/Flyback.Editor.Web/**"
@@ -93,6 +90,16 @@ jobs:
           docker run --rm -e CLOUDFLARE_API_TOKEN -e CLOUDFLARE_ACCOUNT_ID -e WORKER_ENVIRONMENT -e CI=true -e WRANGLER_SEND_METRICS=false \
             -v "$PWD/worker":/w -w /w node:24-bookworm-slim \
             sh -c 'npm ci --no-audit --no-fund && npx wrangler d1 migrations apply DB --remote --env "$WORKER_ENVIRONMENT" && npx wrangler deploy --env "$WORKER_ENVIRONMENT"'
+
+      # A hostname the deploy has just taken takes a minute to resolve.
+      - name: Wait for the site to answer
+        run: |
+          for _ in $(seq 30); do
+            curl -fsS -m 10 -o /dev/null "${PRESET_SITE_URL%/}/api/v1/presets" && exit 0
+            sleep 10
+          done
+          echo "${PRESET_SITE_URL} did not answer in five minutes." >&2
+          exit 1
 
       # A framework file past the 25 MiB a static asset may be is served from R2 on the same path.
       - name: Put the framework files too large to be assets in R2

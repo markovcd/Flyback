@@ -9,6 +9,8 @@ using Flyback.Engine.Graph;
 using Flyback.Site;
 using Reqnroll;
 using Shouldly;
+using Flyback.Site.Checking;
+using Flyback.Site.Reading;
 
 namespace Flyback.Specs.Steps;
 
@@ -17,6 +19,9 @@ namespace Flyback.Specs.Steps;
 public sealed class SiteSteps
 {
     private const string Waiting = "0199a000000070008000000000000009";
+    private const string Unfinished = "0199a00000007000800000000000000a";
+
+    private DirectoryInfo? folder;
 
     private byte[] submitted = [];
     private string fileName = "submitted.fbk";
@@ -92,12 +97,20 @@ public sealed class SiteSteps
         patch = """{"Nodes":[{"Id":"8f9d1d3e-0000-4000-8000-000000000031","TypeId":"example.nowhere.module"}],"Connections":[]}""";
 
     [When("flyback-cli render-presets makes a pass with no media folder")]
-    public async Task WhenAPassIsMade()
+    public Task WhenAPassIsMade() => Pass(stillOnly: false);
+
+    [When("flyback-cli render-presets makes a pass with no media folder, the still alone")]
+    public Task WhenAStillIsMade() => Pass(stillOnly: true);
+
+    [Then("the site is sent the preset's still and done, and nothing else")]
+    public void ThenOnlyTheStill() => Names().ShouldBe(["webp", "done"]);
+
+    private async Task Pass(bool stillOnly)
     {
         var text = patch.StartsWith('{');
         using var site = new HttpClient(new Site(Waiting, text ? "preset.fbk" : "preset.fbks", patch, sent)) { BaseAddress = new Uri("https://presets.example.org/") };
 
-        await RenderPresetsCommand.Pass(site, new PresetRender(new StandIn(), new MediaUpload(site)), TextWriter.Null, TextWriter.Null, CancellationToken.None);
+        await RenderPresetsCommand.Pass(site, new PresetRender(new StandIn(), new MediaUpload(site), stillOnly), TextWriter.Null, TextWriter.Null, CancellationToken.None);
     }
 
     [Then("the site is sent the preset's still, loop, track and bars")]
@@ -113,6 +126,37 @@ public sealed class SiteSteps
         Names().ShouldBe(["failed"]);
         Encoding.UTF8.GetString(sent.Single().Body).ShouldStartWith("The patch did not open whole.");
     }
+
+    [Given("a folder where render-presets left a finished render and an unfinished one")]
+    public void GivenAFolder()
+    {
+        folder = Directory.CreateTempSubdirectory("flyback-renders-");
+        File.WriteAllText(Path.Combine(folder.FullName, Waiting + ".webp"), "still");
+        File.WriteAllText(Path.Combine(folder.FullName, Waiting + ".mp3"), "track");
+        File.WriteAllText(Path.Combine(folder.FullName, Waiting + ".done"), "");
+        File.WriteAllText(Path.Combine(folder.FullName, Unfinished + ".webp"), "half");
+    }
+
+    [When("flyback-site sends the folder to the preset site")]
+    public async Task WhenTheFolderIsSent()
+    {
+        using var site = new HttpClient(new Site(Waiting, "preset.fbk", "{}", sent)) { BaseAddress = new Uri("https://presets.example.org/") };
+
+        try
+        {
+            (await Flyback.Site.Commands.PushMediaCommand.Run(site, folder!, TextWriter.Null, TextWriter.Null, CancellationToken.None)).ShouldBe(0);
+        }
+        finally
+        {
+            folder!.Delete(recursive: true);
+        }
+    }
+
+    [Then("the site is sent the finished render's files, and done after them")]
+    public void ThenTheFinishedRenderIsSent() => Names().ShouldBe(["webp", "mp3", "done"]);
+
+    [Then("nothing of the unfinished render is sent")]
+    public void ThenNothingUnfinished() => sent.ShouldNotContain(s => s.Path.Contains(Unfinished, StringComparison.Ordinal));
 
     private string[] Names() =>
         [.. sent.Select(s => s.Path).Where(p => p.StartsWith($"/api/v1/admin/presets/{Waiting}/media/", StringComparison.Ordinal)).Select(p => p[(p.LastIndexOf('/') + 1)..])];

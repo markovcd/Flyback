@@ -132,6 +132,18 @@ public sealed class RenderPresetsTests : IDisposable
     }
 
     [Fact]
+    public async Task A_render_of_the_still_alone_makes_no_loop_and_no_track()
+    {
+        var tools = new FakeTools();
+
+        (await new PresetRender(tools, new MediaWriter(media), stillOnly: true).Render("abc", Patch(Picture + Sound), TestContext.Current.CancellationToken))
+            .ShouldBeNull();
+
+        Written().ShouldBe(["abc.done", "abc.webp"]);
+        tools.Ran.ShouldNotContain(line => line.Contains("loop", StringComparison.Ordinal) || line.Contains("track", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task A_patch_that_only_makes_a_picture_gets_no_track()
     {
         var tools = new FakeTools();
@@ -242,6 +254,20 @@ public sealed class RenderPresetsTests : IDisposable
 
         asked.ShouldBe(["/api/v1/presets?pending=true", $"/api/v1/presets/{waiting}/file?count=false"]);
         File.Exists(Path.Combine(media, waiting + ".done")).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task A_pass_with_a_limit_renders_that_many_and_leaves_the_rest_waiting()
+    {
+        var asked = new List<string>();
+        string[] waiting = ["a", "b", "c"];
+
+        using var site = new HttpClient(new Site(asked, Sound, waiting)) { BaseAddress = new Uri("http://site/") };
+        var render = new PresetRender(new FakeTools(), new MediaWriter(media));
+
+        await RenderPresetsCommand.Pass(site, render, TextWriter.Null, TextWriter.Null, TestContext.Current.CancellationToken, limit: 2);
+
+        waiting.Where(id => File.Exists(Path.Combine(media, id + ".done"))).ShouldBe(["a", "b"]);
     }
 
     [Fact]

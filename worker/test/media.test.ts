@@ -15,7 +15,7 @@ describe("a preset's render", () => {
     expect((await upload(id, "done", "")).status).toBe(204);
 
     expect((await askJson(`/api/v1/presets/${id}`)).media).toEqual({
-      still: `/media/${id}.webp`,
+      still: `/media/${id}.webp?v=2`,
       loop: null,
       audio: null,
       peaks: [0.5, 1],
@@ -26,6 +26,24 @@ describe("a preset's render", () => {
     expect(new Uint8Array(await still.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
     expect(still.headers.get("Content-Type")).toBe("image/webp");
     expect(still.headers.get("Cache-Control")).toBe("no-cache");
+
+    const kept = await ask(`/media/${id}.webp?v=2`);
+    expect(kept.headers.get("Cache-Control")).toBe("public, max-age=31536000, immutable");
+    await kept.arrayBuffer();
+  });
+
+  it("gets a new URL each time its files change, so an old one never serves a new render", async () => {
+    const id = await published("Drone");
+    await upload(id, "webp", new Uint8Array([1]));
+    const first = (await askJson(`/api/v1/presets/${id}`)).media.still;
+
+    await upload(id, "webp", new Uint8Array([2]));
+    const second = (await askJson(`/api/v1/presets/${id}`)).media.still;
+    expect(second).not.toBe(first);
+
+    await admin(`/api/v1/admin/presets/${id}/media`, "DELETE");
+    await upload(id, "webp", new Uint8Array([3]));
+    expect((await askJson(`/api/v1/presets/${id}`)).media.still).not.toBe(second);
   });
 
   it("stops the preset waiting once done or failed", async () => {

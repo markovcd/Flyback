@@ -2,7 +2,17 @@
 
 ## Unreleased
 
-- `flyback-cli render-presets` uploads its renders through the preset site's admin API when no `--media` folder is given.
+- The website and the preset site are at flybackmodular.app, and the old GitHub Pages address sends you there. Editors up to 0.7.1 can no longer reach shared presets, shared plugins or letters until they update.
+
+- The preset gallery's pictures are sharper, without the smudge around their edges.
+
+- The web viewer hides the Loop button for a patch with no length.
+
+- The Claude Code assistant now hits the prompt cache between requests.
+
+- `flyback-cli render-presets` uploads its renders through the preset site's admin API when no `--media` folder is given, `--limit` caps how many one pass renders, and `--still-only` makes the still alone.
+
+- A note held while the patch is edited no longer pops: dragging a slider mid-chord keeps it sounding.
 
 - `flyback-cli shot --editor <path>` draws with the editor you name, so a shot works from a dev build.
 
@@ -27,6 +37,8 @@
 - The assistant can look at, listen to and measure a patch from any point on its timeline, not only its first eight seconds.
 
 - `flyback-viewer --trace <file>` writes every stall over 100 ms into the file: the UI thread held up, a picture's frame, the sound callback, and the step it was in.
+
+- `flyback --trace <file>` does the same in the editor, naming a recompile, a plugin install or a bundle save when one held the UI thread up.
 
 - `flyback-cli render --mute <group>` switches a named group off for the run, and `--solo <group>` plays it alone with what feeds it and carries it to the Output.
 

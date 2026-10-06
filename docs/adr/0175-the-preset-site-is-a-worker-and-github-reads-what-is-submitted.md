@@ -11,7 +11,7 @@ implemented in `worker/` and `src/Flyback.Site`
 
 The preset site runs in a container on the author's NAS behind a Cloudflare
 Tunnel, and its media is rendered on another PC that writes into a share. The
-author wants no machine of theirs serving or storing anything for it. Cloudflare
+author wants no machine of theirs serving, storing or rendering anything for it. Cloudflare
 can hold the state and answer every request, but a Worker runs JavaScript and
 WebAssembly in 128 MB, and a submission is checked by the app's own readers:
 `PatchIO`, `PatchBundle`, `PluginPackage` and the module catalog that decides what
@@ -45,13 +45,20 @@ those assemblies would be loaded twice.
 
 **Admin is Cloudflare Access, and the Worker checks Access's signed token itself**
 on every route under `/api/v1/admin/`, from the header Access adds or the cookie it
-leaves. A service token is how Validate, the Worker workflow and `render-presets` on
-the author's PC reach those routes. Every admin-only route moved under that prefix,
+leaves. A service token is how the Validate and Worker workflows reach those routes. Every admin-only route moved under that prefix,
 because Access gates by path and the old `PATCH /presets/{id}` shared one with the
 public `GET`.
 
-**The author's PC still renders, and uploads what it makes** through
-`PUT /api/v1/admin/presets/{id}/media/{name}`, `done` last. It listens for nothing.
+**GitHub's machines render too**, in a job after Validate's checks, at most five
+presets a run and one run at a time, and only their stills: a loop and a track
+are minutes of runner for what a page plays rarely. `flyback-cli render-presets
+--media --still-only` writes each still into a folder in a step that holds no token,
+since it runs a stranger's patch, and `flyback-site push-media` sends them through
+`PUT /api/v1/admin/presets/{id}/media/{name}`, `done` last. The picture is drawn on
+Mesa's software OpenGL, the path the gate's render tests take; a preset is seconds
+of it. `render-presets` without `--media` or `--still-only` makes all three and
+uploads as it goes, for a machine of the author's, should the loop and the track
+ever be wanted again.
 
 **The defaults are files sent by the Worker workflow** after each deploy, each with
 its check, and kept to the file as 0138 and 0141 say.
@@ -68,7 +75,7 @@ its check, and kept to the file as 0138 and 0141 say.
 - The gate builds a Node stage and runs the Worker's tests in workerd. The npm
   packages are development dependencies only, locked in `package-lock.json`.
 - Until the move is finished the .NET site keeps serving, answers the new admin
-  paths too, and `render-presets --media` keeps writing its share. At the move,
+  paths too, and the share stays where the NAS reads its media. At the move,
   `flyback-site export-site` carries its rows and files over with their ids, and
   this ADR replaces what 0131, 0133, 0136, 0138 and 0141 say of the NAS, the share
   and the container.

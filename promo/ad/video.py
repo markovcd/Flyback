@@ -61,7 +61,10 @@ out_tex = ctx.texture((W, H), 3, dtype="f1")
 out_fbo = ctx.framebuffer([out_tex])
 
 ui_arr = np.zeros((H, W, 4), np.uint8)
-ui_surf = skia.Surface(ui_arr)
+# BGRA on purpose: the composite shader reads the texture with .zyxw. skia.Surface(array)
+# defaults to RGBA on Linux, which swaps red and blue in the render.
+ui_surf = skia.Surface.MakeRasterDirect(
+    skia.ImageInfo.Make(W, H, skia.kBGRA_8888_ColorType, skia.kPremul_AlphaType), ui_arr, W * 4)
 ui_canvas = ui_surf.getCanvas()
 
 AUDIO = np.load("music.npy")

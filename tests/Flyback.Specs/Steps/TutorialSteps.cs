@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.RegularExpressions;
 using Flyback.Engine.Compile;
+using Flyback.Specs.Support;
 using Flyback.Engine.Graph;
 using Reqnroll;
 using Shouldly;
@@ -29,8 +30,7 @@ public sealed partial class TutorialSteps
     [Given("the patch the tutorial {string} ends with")]
     public void GivenTheTutorialsPatch(string page)
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "wwwroot", page);
-        var finished = Finished().Match(File.ReadAllText(path));
+        var finished = Finished().Match(SiteFiles.Read("/" + page));
 
         finished.Success.ShouldBeTrue($"{page} marks no block as the finished patch");
 

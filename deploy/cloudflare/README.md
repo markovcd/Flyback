@@ -1,17 +1,17 @@
 # The preset site on Cloudflare
 
-The preset site as a Worker (ADR-0175): `worker/` answers `/api/v1`, serves the pages, the web viewer and the web editor, and keeps rows in D1 and files in R2. GitHub's machines read what is submitted with `flyback-site`, and the author's PC renders and uploads. Nothing of the author's listens for anything.
+The preset site as a Worker (ADR-0175): `worker/` answers `/api/v1`, serves the pages, the web viewer and the web editor, and keeps rows in D1 and files in R2. GitHub's machines read what is submitted with `flyback-site` and render what waits. No machine of the author's does anything for it.
 
 ```
 browser ──▶ Cloudflare ──▶ Access (admin.html, /api/v1/admin/*) ──▶ Worker ──▶ D1, R2
                                                                        │
                        Validate workflow ◀── starts on each submission ┘
-                       (flyback-site validate-submissions, service token)
-                                                                       ▲
-                       render-presets on the author's PC ── uploads ───┘
+                       ├ checks:  flyback-site validate-submissions (service token)
+                       └ renders: flyback-cli render-presets --media (no token)
+                                  then flyback-site push-media (service token)
 ```
 
-Until the move below, the Worker runs on a staging hostname and the NAS keeps serving `flyback.nasik2137.uk` ([../site/README.md](../site/README.md)). Secrets are set in Cloudflare and GitHub and written down nowhere here.
+The Worker runs at `flybackmodular.app`; a staging copy runs at `flyback-staging.nasik2137.uk`. Secrets are set in Cloudflare and GitHub and written down nowhere here.
 
 ## Working on it
 
@@ -49,30 +49,26 @@ Run wrangler from `worker/` after `npm ci`, signed in with `npx wrangler login`.
 
    Put the database's id in `wrangler.jsonc` under `env.staging`, in place of the zeros, and commit it. The id is not a secret.
 
-2. **The Access application.** Zero Trust → Access controls → Applications → Add an application → Self-hosted, named *Flyback admin (staging)*, with two public hostname destinations:
+2. **The service tokens.** Zero Trust → Access controls → Service credentials → Create service token, twice: *flyback-github* for the workflows, and *flyback-render* only if a machine of yours is to render as well, so either can be revoked alone. Each shows its secret once.
+
+3. **The Access application.** Zero Trust → Access controls → Applications → Add an application → Self-hosted, named *Flyback admin (staging)*, with two public hostname destinations:
 
    | Subdomain | Domain | Path |
    |---|---|---|
    | `flyback-staging` | `nasik2137.uk` | `admin.html` |
    | `flyback-staging` | `nasik2137.uk` | `api/v1/admin/*` |
 
-   Two policies: *Only Me* (Allow, include Emails, the admin's address, one-time PIN), and *Machines* (Service Auth, include the service tokens below). Copy the application's audience tag from its overview.
+   Two policies, made under Access controls → Policies and attached on the application's Policies tab: *Only Me* (action Allow, include Emails, the admin's address, one-time PIN), and *Machines* (action Service Auth, include Service Token, both tokens above). Service Auth is what lets a request through on a token's headers alone; Allow would send a script to a sign-in page. Copy the application's audience tag from its overview.
 
    `api/v1/admin` without the slash stays public: every page asks it whether the visitor is the admin. The Worker checks Access's token itself on every admin route, so a path Access was never told about is refused, not open.
 
-3. **The service tokens.** Zero Trust → Access controls → Service credentials → Create service token, twice: *flyback-github* for the workflows and *flyback-render* for the author's PC, so either can be revoked alone. Add both to the *Machines* policy. Each shows its secret once.
-
-4. **The Worker's secrets.**
-
-   ```bash
-   npx wrangler secret put ACCESS_AUD --env staging
-   ```
+4. **The Worker's settings.** Put the application's audience tag in `wrangler.jsonc` as `ACCESS_AUD` under the environment's `vars`, beside `ACCESS_TEAM_DOMAIN`. It is not a secret: every token Access signs carries it. It is the 64-character hex string the application's API answers as `aud`.
 
    ```bash
    npx wrangler secret put GITHUB_DISPATCH_TOKEN --env staging
    ```
 
-   `ACCESS_AUD` is the audience tag. `GITHUB_DISPATCH_TOKEN` is a fine-grained GitHub token for `markovcd/Flyback` alone with *Actions: Read and write*, which is what starting a workflow takes; it can start any workflow in the repository, the Release one included. Leave it unset to let Validate's schedule pick submissions up instead, ten minutes later at most. `ACCESS_TEAM_DOMAIN` is in `wrangler.jsonc`.
+   `GITHUB_DISPATCH_TOKEN` is a fine-grained GitHub token for `markovcd/Flyback` alone with *Actions: Read and write*, which is what starting a workflow takes; it can start any workflow in the repository, the Release one included. Leave it unset to let Validate's schedule pick submissions up instead, ten minutes later at most.
 
 5. **GitHub.** Settings → Secrets and variables → Actions.
 
@@ -117,13 +113,15 @@ Submit a preset at `/submit.html`: its page says it is being read, and within a 
 
 ## Rendering
 
-On the author's PC, with Flyback installed and ffmpeg on PATH, and the *flyback-render* token in the environment:
+The Validate workflow's render job does it: whenever `GET /api/v1/presets?pending=true` lists anything, it builds the Dockerfile's `renderer` stage and renders the stills of at most five presets, the rest waiting for the next run. It makes no loop and no track; the pages show the still alone. The render runs a stranger's patch, so its step holds no token and writes into a folder; the next step sends the folder with `flyback-site push-media`, `done` or `failed` last. The picture is drawn on Mesa's software OpenGL, a few seconds a preset.
+
+A machine of yours can render all three, the still, the loop and the track, uploading as it goes, with Flyback installed, ffmpeg on PATH and the *flyback-render* token in the environment:
 
 ```bash
 FLYBACK_ACCESS_ID=... FLYBACK_ACCESS_SECRET=... flyback-cli render-presets --server https://flyback-staging.nasik2137.uk/
 ```
 
-It renders every preset still waiting, uploads each file, `done` or `failed` last, then checks again every five minutes. `--once`, `--poll-minutes` and `--timeout-minutes` are as before. Revoking the token in Cloudflare cuts the PC off.
+It checks again every five minutes; `--once`, `--limit`, `--still-only`, `--poll-minutes` and `--timeout-minutes` change that.
 
 To render a preset again, clear its render, which puts it back in the queue:
 
@@ -131,34 +129,17 @@ To render a preset again, clear its render, which puts it back in the queue:
 curl -X DELETE -H "CF-Access-Client-Id: $FLYBACK_ACCESS_ID" -H "CF-Access-Client-Secret: $FLYBACK_ACCESS_SECRET" https://flyback-staging.nasik2137.uk/api/v1/admin/presets/<id>/media
 ```
 
-## The move
+## What is cached
 
-What is left of [docs/handoff/flyback-library-implementation-plan.md](../../docs/handoff/flyback-library-implementation-plan.md): moving the live site, then removing the .NET one.
+- **Pages and framework files** are assets, served without the Worker running, which is free. Only the `.wasm` files reach the Worker first, since one too large to be an asset is in R2.
+- **Media** URLs carry a revision (`/media/<id>.webm?v=3`), bumped by every write, and are kept for good. A URL without it is checked on each use.
+- **Anonymous reads** of the lists and single entries are kept at the edge and in the browser for `READ_CACHE_SECONDS` (60); the admin, the render queue, files and ratings never are. Unset, nothing is kept.
+- **Writes** are limited per visitor in D1. Reads are not: put a rate-limiting rule on `/api/*` and `/media/*` in the dashboard (Security → WAF), which turns a flood away before the Worker is billed.
 
-1. **Production.** Repeat steps 1 to 4 for `flyback-site`: a database and a bucket of that name, an `env.production` in `wrangler.jsonc` with the route `flyback.nasik2137.uk` as a custom domain, the Access application's hostname, and the Worker's secrets with `--env production`.
+## Production
 
-2. **The data.** With the NAS site quiet, copy its `data/presets.db` and `media/` here and export them:
+`env.production` in `wrangler.jsonc` names a database and a bucket called `flyback-site`, and the custom domain `flybackmodular.app`, made the way steps 1 to 4 say: the Access application has that hostname as its destinations, and its audience tag is `ACCESS_AUD`. `WORKER_ENVIRONMENT` is `production` and `PRESET_SITE_URL` is `https://flybackmodular.app`.
 
-   ```bash
-   dotnet run --project src/Flyback.Site -c Release -- export-site --db presets.db --media media --out export
-   ```
+GitHub Pages holds only `deploy/pages/redirect.html`, which sends `markovcd.github.io/Flyback/<path>` to the same path on the website.
 
-   It writes `export/rows.sql` and every file under `export/files/` at the key the Worker reads it from, ids kept, so every link, rating and kept shared preset in an editor still resolves. Load them from `worker/`:
-
-   ```bash
-   npx wrangler d1 migrations apply DB --remote --env production
-   ```
-
-   ```bash
-   npx wrangler d1 execute DB --remote --env production --file ../export/rows.sql
-   ```
-
-   ```bash
-   (cd ../export/files && find . -type f | sed 's|^\./||') | while read -r key; do npx wrangler r2 object put "flyback-site/$key" --file "../export/files/$key" --remote; done
-   ```
-
-3. **The hostname.** Remove `flyback.nasik2137.uk` from the tunnel's published applications and the `flyback-fallback` Worker's route, set `WORKER_ENVIRONMENT` to `production` and `PRESET_SITE_URL` to `https://flyback.nasik2137.uk`, and run the Worker workflow. The custom domain takes the hostname.
-
-4. **Check** the editor's preset gallery and plugins window against it, and a submission end to end. Then stop the container.
-
-The free plan's 10 ms of CPU a request is enough for everything but a large upload's form; check `wrangler tail` against real traffic before the move and take the paid plan if submissions are cut off.
+The free plan's 10 ms of CPU a request is enough for everything but a large upload's form; check `wrangler tail` against real traffic and take the paid plan if submissions are cut off.

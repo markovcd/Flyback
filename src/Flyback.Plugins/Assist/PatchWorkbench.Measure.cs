@@ -10,7 +10,7 @@ namespace Flyback.Plugins.Assist;
 public sealed partial class PatchWorkbench
 {
     /// <summary>The longest window a measurement runs, long enough to count a slow LFO's turns.</summary>
-    private const double LongestMeasure = 10d;
+    private const double LongestMeasure = 60d;
 
     /// <summary>
     /// Runs the patch offline and says what each output of the named modules carried,
