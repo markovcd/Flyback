@@ -105,6 +105,10 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
         Service<TakeRecording>().Mark();
     });
 
+    /// <summary>Puts the assistant mid-turn, as the panel does while a message is being answered.</summary>
+    public void AssistantStartsWorking() =>
+        DoWindow((_, _) => Service<AssistantConversation>().Working = true);
+
     /// <summary>Tries the window close action and says whether the window remained open.</summary>
     public bool TryClose() => ReadWindow(open =>
     {

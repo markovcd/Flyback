@@ -26,6 +26,9 @@ internal sealed class AssistantConversation
 
     public bool ConversationUnsaved => unsaved && Belongs();
 
+    /// <summary>Whether a turn is in flight, which nothing can save: closing the patch ends it.</summary>
+    public bool Working { get; set; }
+
     public event EventHandler? Opened;
     public event EventHandler? Saved;
 

@@ -24,3 +24,14 @@ Feature: Work nobody saved is asked about before anything replaces it
     And the question is answered "Discard changes"
     Then the editor shows the preset "Plasma"
     And the patch has no unsaved changes
+
+  Scenario: Closing while the assistant works warns that its turn is lost
+    Given the assistant is working on the patch
+    When the preset "Plasma" is picked
+    Then the editor warns that the assistant will be stopped
+
+  Scenario: Cancel lets the assistant carry on
+    Given the assistant is working on the patch
+    When the preset "Plasma" is picked
+    And the question is answered "Cancel"
+    Then the editor shows no preset

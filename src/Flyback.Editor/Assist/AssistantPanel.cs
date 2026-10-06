@@ -1087,6 +1087,7 @@ internal sealed class AssistantPanel : UserControl
     private void StartWorking()
     {
         asking = true;
+        conversation.Working = true;
         stopping = false;
         startedAt = DateTime.UtcNow;
         pulse = 0;
@@ -1102,6 +1103,7 @@ internal sealed class AssistantPanel : UserControl
     {
         heartbeat.Stop();
         asking = false;
+        conversation.Working = false;
         stopping = false;
         working.IsVisible = false;
         transcript.Thinking.IsVisible = false;

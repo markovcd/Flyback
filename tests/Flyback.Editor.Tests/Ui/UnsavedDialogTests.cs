@@ -6,6 +6,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Flyback.Editor.Assist;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Ui.Controls;
@@ -140,6 +141,64 @@ public sealed class UnsavedDialogTests : EditorTest
         labels.ShouldContain("Save…");
         labels.ShouldContain("Discard changes");
         labels.ShouldContain("Cancel");
+    }
+
+    /// <summary>
+    /// A turn in flight is lost on close and no save keeps it, so the question is its
+    /// own, with no Save… in it, and asks even over a patch nobody edited.
+    /// </summary>
+    [AvaloniaFact]
+    public void Closing_while_the_assistant_works_asks_something_saving_cannot_answer()
+    {
+        var window = NewMainWindow();
+
+        window.Show();
+        Settle(window);
+
+        Service<AssistantConversation>(window).Working = true;
+
+        window.Close();
+
+        var dialog = Asking(window);
+        var labels = All<Button>(dialog).Select(b => b.Content as string).OfType<string>().ToList();
+
+        Words(dialog).ShouldContain("Assistant is working");
+        labels.ShouldBe(["Stop the assistant", "Cancel"], ignoreOrder: true);
+    }
+
+    [AvaloniaFact]
+    public void Stopping_the_assistant_lets_the_window_close()
+    {
+        var window = NewMainWindow();
+
+        window.Show();
+        Settle(window);
+
+        Service<AssistantConversation>(window).Working = true;
+
+        window.Close();
+        Press(Asking(window), "Stop the assistant");
+
+        for (var attempt = 0; attempt < 20 && window.IsVisible; attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        window.IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Canceling_while_the_assistant_works_keeps_the_window()
+    {
+        var window = NewMainWindow();
+
+        window.Show();
+        Settle(window);
+
+        Service<AssistantConversation>(window).Working = true;
+
+        window.Close();
+        Press(Asking(window), "Cancel");
+
+        window.IsVisible.ShouldBeTrue();
     }
 
     /// <summary>

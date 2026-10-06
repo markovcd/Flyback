@@ -78,7 +78,8 @@ public sealed class AssistantPanelTests : EditorTest
         PluginCatalog? plugins = null,
         AssistantSettings? saved = null,
         Action<string, string?>? report = null,
-        string? logs = null)
+        string? logs = null,
+        AssistantConversation? conversation = null)
     {
         var catalog = plugins ?? PluginCatalog.Empty;
         var setup = Kept with { ConversationLogFolder = logs };
@@ -89,7 +90,7 @@ public sealed class AssistantPanelTests : EditorTest
             new ChosenAssistant(repository, catalog),
             catalog,
             editor,
-            new AssistantConversation(() => patch),
+            conversation ?? new AssistantConversation(() => patch),
             new AssistantRunFactory(catalog, editor, repository),
             new Credentials(catalog.PreferredSecretStore),
             repository,
@@ -438,6 +439,30 @@ public sealed class AssistantPanelTests : EditorTest
         Settle(window);
 
         Thinking(window).IsVisible.ShouldBeFalse("the turn ended");
+    }
+
+    [AvaloniaFact]
+    public void The_conversation_is_working_for_as_long_as_a_turn_is_in_flight()
+    {
+        var held = new Held();
+        var conversation = new AssistantConversation(() => Presets.Plasma(NodeCatalog.BuiltIn));
+        var window = Showing(With(held), Configured("held"), conversation: conversation);
+
+        conversation.Working.ShouldBeFalse();
+
+        Instruction(window).Text = "make something";
+        Settle(window);
+
+        SendButton(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        conversation.Working.ShouldBeTrue();
+
+        held.Release.SetResult();
+        Settle(window);
+        Settle(window);
+
+        conversation.Working.ShouldBeFalse();
     }
 
     // --- a frame the assistant looked at --------------------------------------

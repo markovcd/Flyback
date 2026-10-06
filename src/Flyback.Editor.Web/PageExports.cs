@@ -51,7 +51,7 @@ internal static partial class PageExports
 
     /// <summary>Whether leaving the page would lose an edit, which the page asks about before it goes.</summary>
     [JSExport]
-    public static bool Unsaved() => Provider is not null && Get<UnsavedWork>().SomethingToLose;
+    public static bool Unsaved() => Provider is not null && Get<UnsavedWork>().MustAsk;
 
     /// <summary>Opens the preset called <paramref name="name"/>, or the first on the list where none is.</summary>
     [JSExport]

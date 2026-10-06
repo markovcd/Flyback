@@ -26,6 +26,13 @@ public sealed class UnsavedWorkSteps(PatchContext context, EditorDriver editor) 
     [Then("the editor asks about unsaved changes")]
     public void ThenItAsks() => editor.Asking.ShouldNotBeNull("nothing was asked").ShouldContain("not been saved");
 
+    [Given("the assistant is working on the patch")]
+    public void GivenTheAssistantWorks() => editor.AssistantStartsWorking();
+
+    [Then("the editor warns that the assistant will be stopped")]
+    public void ThenItWarnsAboutTheAssistant() =>
+        editor.Asking.ShouldNotBeNull("nothing was asked").ShouldContain("still working");
+
     [Then("the editor shows the preset {string}")]
     public void ThenShowing(string name) => editor.Showing.ShouldBe(name);
 

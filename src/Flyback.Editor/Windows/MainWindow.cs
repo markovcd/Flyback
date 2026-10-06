@@ -168,7 +168,7 @@ internal sealed class MainWindow : Window
         // whether to save. Closing calls it off whatever the answer (ADR-0090).
         Recording.CallOffCount();
 
-        if (!unsaved.SomethingToLose) return;
+        if (!unsaved.MustAsk) return;
 
         e.Cancel = true;
 

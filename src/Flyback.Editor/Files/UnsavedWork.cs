@@ -81,6 +81,15 @@ internal sealed class UnsavedWork(
     public bool SomethingToLose =>
         History.IsModified || Document.IsUnapplied || conversation.ConversationUnsaved;
 
+    /// <summary>
+    /// Whether the assistant is mid-turn, which closing or replacing the patch ends.
+    /// Not <see cref="SomethingToLose"/>: saving the patch does not keep it.
+    /// </summary>
+    public bool AssistantWorking => conversation.Working;
+
+    /// <summary>Whether closing the patch has to ask anything.</summary>
+    public bool MustAsk => AssistantWorking || SomethingToLose;
+
     /// <summary>Lets the next close through without asking.</summary>
     public void Leave() => Leaving = true;
 
@@ -90,6 +99,10 @@ internal sealed class UnsavedWork(
     /// </summary>
     public async Task<bool> MayReplaceThePatchAsync()
     {
+        // First, and on its own: no answer to the question below keeps a turn, and
+        // what the assistant has not finished is worth stopping to say so.
+        if (AssistantWorking && !await StopsTheAssistantAsync()) return false;
+
         if (!SomethingToLose) return true;
 
         return await AnsweredAsync(
@@ -97,6 +110,29 @@ internal sealed class UnsavedWork(
             History.IsModified || Document.IsUnapplied
                 ? "This patch has changes that have not been saved. Closing it now would lose them."
                 : "The conversation about this patch has not been saved. Closing it now would lose it.");
+    }
+
+    /// <summary>Whether the turn in flight may be stopped, as closing the patch would.</summary>
+    private async Task<bool> StopsTheAssistantAsync()
+    {
+        // Refused rather than queued behind the answer already on the screen.
+        if (Asking) return false;
+
+        Asking = true;
+
+        try
+        {
+            return await AskAsync(
+                "Assistant is working",
+                "The assistant is still working on this patch. Going on now stops it and loses "
+                + "what it has not finished. Saving the patch does not keep that.",
+                discard: "Stop the assistant",
+                offerSave: false) == Unsaved.Discard;
+        }
+        finally
+        {
+            Asking = false;
+        }
     }
 
     /// <summary>
