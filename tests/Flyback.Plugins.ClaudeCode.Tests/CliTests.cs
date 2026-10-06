@@ -84,7 +84,7 @@ public class CliTests
         var answer = ClaudeCli.Answer(Output, string.Empty, 0);
 
         answer.Text.ShouldBe("Done.");
-        answer.Input.ShouldBe(15);
+        answer.Input.ShouldBe(915);
         answer.Cached.ShouldBe(900);
         answer.Output.ShouldBe(7);
     }

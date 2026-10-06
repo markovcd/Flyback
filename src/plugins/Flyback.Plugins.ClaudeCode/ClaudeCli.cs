@@ -113,7 +113,8 @@ internal sealed partial class ClaudeCli(string executable) : IProgram
 
             return new ProgramAnswer(
                 text,
-                Tokens.Count(usage, "input_tokens") + Tokens.Count(usage, "cache_creation_input_tokens"),
+                Tokens.Count(usage, "input_tokens") + Tokens.Count(usage, "cache_creation_input_tokens")
+                    + Tokens.Count(usage, "cache_read_input_tokens"),
                 Tokens.Count(usage, "cache_read_input_tokens"),
                 Tokens.Count(usage, "output_tokens"));
         }

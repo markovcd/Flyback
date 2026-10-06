@@ -109,7 +109,7 @@ public class CliTests
         var answer = CodexCli.Answer(Output, string.Empty, 0);
 
         answer.Text.ShouldBe("Done.");
-        answer.Input.ShouldBe(100);
+        answer.Input.ShouldBe(1000);
         answer.Cached.ShouldBe(900);
         answer.Output.ShouldBe(7);
     }

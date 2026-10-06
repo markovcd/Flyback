@@ -206,9 +206,11 @@ internal sealed partial class CodexCli(string executable) : IProgram
 
         if (text is null || exitCode != 0) throw new ProgramFailure(Explained(string.Empty, errors));
 
-        var cached = Tokens.Count(usage, "cached_input_tokens");
-
-        return new ProgramAnswer(text, Math.Max(0, Tokens.Count(usage, "input_tokens") - cached), cached, Tokens.Count(usage, "output_tokens"));
+        return new ProgramAnswer(
+            text,
+            Tokens.Count(usage, "input_tokens"),
+            Tokens.Count(usage, "cached_input_tokens"),
+            Tokens.Count(usage, "output_tokens"));
     }
 
     private static string Explained(string said, string errors) => ProgramReason.Explained(
