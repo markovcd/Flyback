@@ -25,7 +25,6 @@ internal static class Program
             ValidateSubmissionsCommand.Build(),
             PushDefaultsCommand.Build(),
             PushMediaCommand.Build(),
-            ExportSiteCommand.Build(),
         };
 
         var parsed = root.Parse(args);

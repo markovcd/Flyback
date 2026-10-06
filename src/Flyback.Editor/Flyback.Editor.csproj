@@ -35,7 +35,7 @@
     makes, asks the site running locally; -p:PresetSite= names another.
   -->
   <PropertyGroup>
-    <PresetSite Condition="'$(PresetSite)' == '' and '$(Configuration)' == 'Debug'">http://localhost:8790/</PresetSite>
+    <PresetSite Condition="'$(PresetSite)' == '' and '$(Configuration)' == 'Debug'">http://localhost:8787/</PresetSite>
     <PresetSite Condition="'$(PresetSite)' == ''">https://flybackmodular.app/</PresetSite>
   </PropertyGroup>
 

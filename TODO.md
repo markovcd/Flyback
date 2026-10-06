@@ -2,7 +2,7 @@
 
 Work the user has asked for and nobody has started. Take an item off when it lands on `main`.
 
-- **Move the preset site to Cloudflare.** Retire the NAS container, the tunnel and the render PC: a Worker with D1 and R2 serves the same `/api/v1`, GitHub Actions runs the C# that validates submissions, the author's PC still renders and uploads through the admin API, and Access guards the admin. Shared sounds and pictures come after as a third store. The Worker, the tooling and the workflows are on `main`, and staging works end to end; the move and the removal are left, in [docs/handoff/flyback-library-implementation-plan.md](docs/handoff/flyback-library-implementation-plan.md) and [deploy/cloudflare/README.md](deploy/cloudflare/README.md).
+- **Shared sounds and pictures on the preset site.** A third store on the Worker, beside presets and plugins: WAV and PNG only, unchecked and then unpublished until the admin publishes it, a license from a short list, kept as an R2 object by id. The free plan's 10 ms of CPU a request has not been checked against real traffic; take the paid plan if submissions are cut off.
 
 - **Replace the presets' repeated formulas with modules.** A Window (on between two points, soft or hard edged) and a Dice (a stable random for a whole number), then port the presets onto them. Which formulas, how many, where, and what was ruled out are in [docs/handoff/formulas-into-modules.md](docs/handoff/formulas-into-modules.md).
 

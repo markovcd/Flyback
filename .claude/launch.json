@@ -8,12 +8,6 @@
       "port": 8777
     },
     {
-      "name": "presets",
-      "runtimeExecutable": "dotnet",
-      "runtimeArgs": ["run", "--project", "src/Flyback.Server"],
-      "port": 8790
-    },
-    {
       "name": "worker",
       "runtimeExecutable": "bash",
       "runtimeArgs": ["worker/dev.sh"],

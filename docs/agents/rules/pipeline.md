@@ -15,7 +15,7 @@
 - **A runner's leaked builders are pruned.** A cancelled or killed job leaves its buildx builder and gigabytes of layer cache on the self-hosted runner; `.github/actions/prune-buildx` removes them right after `setup-buildx-action`, in every workflow that runs there.
 - **Superseded runs are cancelled.** `concurrency` with `cancel-in-progress` on anything a push triggers; never on Pages or a release, which must finish what they started.
 - **Every job sets `timeout-minutes`**, a few times its usual length. The default is six hours of a hang.
-- **Deploys filter on paths.** `site.yml` lists what the image is built from, and `worker.yml` what the Worker and its pages are; a new reference or site plugin is added there in the same commit.
+- **Deploys filter on paths.** `worker.yml` lists what the Worker, its pages and the plugins it starts with are built from; a new reference or site plugin is added there in the same commit.
 - **Every workflow opens with a comment** saying what it does, what triggers it, and why anything surprising in it is there.
 
 ## A release is one script

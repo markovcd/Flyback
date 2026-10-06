@@ -1,6 +1,6 @@
 # ADR-0131: Shared presets live on a site that only reads its media
 
-**Status:** Accepted · 2026-09-22 · *user-directed* · builds on
+**Status:** Superseded in part by [0177](0177-the-net-site-is-gone.md) · 2026-09-22 · *user-directed* · builds on
 [0020](0020-json-patch-files-keyed-by-string-type-ids.md) for the file that is
 shared and [0060](0060-a-bundle-is-a-patch-and-what-it-names.md) for the bundle
 

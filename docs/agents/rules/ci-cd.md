@@ -31,4 +31,4 @@ Continuous integration is a practice, not a server: changes land on `main` small
 
 - Release on demand, small and often; each release is a minor unless there is a reason.
 - The build that passed is the build that ships: `release.sh` runs the gate and publishes from the same image, and nothing is rebuilt between the two.
-- The website is deployed continuously: `worker.yml` deploys `site/` with the Worker on every push to `main` that touches it, and the preset site's `:dev` image is built on every push. That is why a site edit lands with the change it describes; there is no release step to catch a stale page.
+- The website is deployed continuously: `worker.yml` deploys `site/` with the Worker on every push to `main` that touches it. That is why a site edit lands with the change it describes; there is no release step to catch a stale page.
