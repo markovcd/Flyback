@@ -513,16 +513,19 @@ public sealed partial class PatchWorkbench
         if (!Node(arguments, "handle", out var node, out var def, out var refusal))
             return ToolOutcome.Refused(refusal);
 
-        if (def.Extra<SampleExtra>() is null)
+        var midi = def.Extra<MidiFileExtra>() is not null;
+
+        if (def.Extra<SampleExtra>() is null && !midi)
         {
             return ToolOutcome.Refused(
-                $"{Handle(node)} is a {def.Name}, which reads no file. Only the Sample module does.");
+                $"{Handle(node)} is a {def.Name}, which reads no file. Only the Sample and MIDI File modules do.");
         }
 
         if (!Text(arguments, "path", out var path))
-            return ToolOutcome.Refused("'path' is required: where the sound file is.");
+            return ToolOutcome.Refused($"'path' is required: where the {(midi ? "MIDI" : "sound")} file is.");
 
-        SampleExtra.Set(node, path);
+        if (midi) MidiFileExtra.Set(node, path);
+        else SampleExtra.Set(node, path);
         Edits++;
 
         return Fine($"{Handle(node)} now reads {path}. {Issues()}");
@@ -1268,18 +1271,19 @@ public sealed partial class PatchWorkbench
                 """),
 
             Does(Vocabulary.SetSample, SetSample,
-                "Points a Sample module at a sound file. The path is neither a knob nor a wire, "
+                "Points a Sample module at a sound file, or a MIDI File module at a .mid file. The path is neither a knob nor a wire, "
                 + "so this is the only way to set one — and it is the one thing in a patch that "
                 + "refers to something outside it, so the file has to exist where you say it "
                 + "does. A WAV (mono or stereo, 8 to 32 bit or float) or an MP3, no other format. The "
                 + "answer says whether it could be read, so a path that is wrong is answered "
                 + "now rather than by silence later. Ask the person for a path rather than "
-                + "guessing at one — nothing here can list what is on their machine.",
+                + "guessing at one — nothing here can list what is on their machine. A MIDI File's voice "
+                + "and channel are set with set_extra.",
                 """
                 {
                   "properties": {
                     "handle": { "type": "string" },
-                    "path": { "type": "string", "description": "Where the WAV or MP3 is, absolute or beside the patch." }
+                    "path": { "type": "string", "description": "Where the WAV, MP3 or MIDI file is, absolute or beside the patch." }
                   },
                   "required": ["handle", "path"]
                 }

@@ -3,7 +3,7 @@ using Flyback.Core.Compile;
 namespace Flyback.Engine.Render;
 
 /// <summary>
-/// The sound files a patch names, read once and kept.
+/// The sound and MIDI files a patch names, read once and kept.
 /// </summary>
 /// <remarks>
 /// A cache rather than a loader, which is the point of its existing: every edit
@@ -17,6 +17,9 @@ namespace Flyback.Engine.Render;
 public sealed class SampleLibrary : ISampleLibrary
 {
     private readonly Dictionary<string, (LoadedSample? Clip, SoundFault Fault)> known =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    private readonly Dictionary<string, (LoadedMidi? Song, MidiFault Fault)> knownMidi =
         new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
@@ -37,7 +40,7 @@ public sealed class SampleLibrary : ISampleLibrary
             if (string.Equals(field, value, StringComparison.OrdinalIgnoreCase)) return;
 
             field = value;
-            known.Clear();
+            Clear();
         }
     }
 
@@ -53,7 +56,7 @@ public sealed class SampleLibrary : ISampleLibrary
             if (string.Equals(field, value, StringComparison.OrdinalIgnoreCase)) return;
 
             field = value;
-            known.Clear();
+            Clear();
         }
     }
 
@@ -70,11 +73,25 @@ public sealed class SampleLibrary : ISampleLibrary
             if (string.Equals(field, value, StringComparison.OrdinalIgnoreCase)) return;
 
             field = value;
-            known.Clear();
+            Clear();
         }
     } = string.Empty;
 
     public LoadedSample? Find(string path) => Look(path).Clip;
+
+    public LoadedMidi? FindMidi(string path) => LookMidi(path).Song;
+
+    public string ExplainMidi(string path) => LookMidi(path).Fault switch
+    {
+        MidiFault.Missing => "there is no file there.",
+        MidiFault.NotMidi => "it is not a MIDI file.",
+        MidiFault.Unsupported => "it is a MIDI file this cannot read.",
+        MidiFault.Elsewhere => "it is on another machine. Copy it beside the patch.",
+        MidiFault.Empty => "there are no notes in it.",
+        MidiFault.TooLong => $"it runs longer than {MidiFileReader.MostSeconds / 60f:0} minutes.",
+        MidiFault.TooBig => "it is too big: more than 8 MB or 200,000 notes.",
+        _ => "it could not be read.",
+    };
 
     public string Explain(string path) => Look(path).Fault switch
     {
@@ -94,8 +111,18 @@ public sealed class SampleLibrary : ISampleLibrary
     /// </summary>
     public void Forget(string? path = null)
     {
-        if (path is null) known.Clear();
-        else known.Remove(path);
+        if (path is null) Clear();
+        else
+        {
+            known.Remove(path);
+            knownMidi.Remove(path);
+        }
+    }
+
+    private void Clear()
+    {
+        known.Clear();
+        knownMidi.Clear();
     }
 
     /// <summary>How many files this is holding, which only a test asks, to see a cache work.</summary>
@@ -111,5 +138,17 @@ public sealed class SampleLibrary : ISampleLibrary
 
         var clip = SoundReader.Read(full, Ffmpeg.Resolve(FfmpegPath), out var fault);
         return known[path] = (clip, fault);
+    }
+
+    private (LoadedMidi? Song, MidiFault Fault) LookMidi(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return (null, MidiFault.Missing);
+
+        if (knownMidi.TryGetValue(path, out var already)) return already;
+
+        if (PatchPaths.Resolve(path, Beside, Library) is not { } full) return knownMidi[path] = (null, MidiFault.Elsewhere);
+
+        var song = MidiFileReader.Read(full, out var fault);
+        return knownMidi[path] = (song, fault);
     }
 }

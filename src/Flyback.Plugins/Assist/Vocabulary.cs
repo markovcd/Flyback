@@ -40,6 +40,7 @@ internal static class Vocabulary
         ScaleExtra.Name => SetScale,
         ArrangementExtra.Name => SetArrangement,
         SampleExtra.Name => SetSample,
+        MidiFileExtra.Name => SetSample,
         PictureExtra.Name => SetPicture,
         _ => SetExtra,
     };

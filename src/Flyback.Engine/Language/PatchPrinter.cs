@@ -193,6 +193,7 @@ public static class PatchPrinter
     public static string? Held(NodeInstance node, NodeDef def) =>
         def.Extra<SampleExtra>() is not null ? SampleExtra.Of(node)
             : def.Extra<PictureExtra>() is not null ? PictureExtra.Of(node)
+            : def.Extra<MidiFileExtra>() is not null ? MidiFileExtra.Of(node)
             : null;
 
     /// <summary>
@@ -1203,6 +1204,7 @@ public static class PatchPrinter
         {
             var path = def.Extra<SampleExtra>() is not null ? SampleExtra.Of(node)
                 : def.Extra<PictureExtra>() is not null ? PictureExtra.Of(node)
+                : def.Extra<MidiFileExtra>() is not null ? MidiFileExtra.Of(node)
                 : string.Empty;
 
             // A quote would end the string and there is no escape for one, so a

@@ -1455,6 +1455,7 @@ public sealed class Binder
 
         if (def.Extra<SampleExtra>() is not null) SampleExtra.Set(instance, path);
         else if (def.Extra<PictureExtra>() is not null) PictureExtra.Set(instance, path);
+        else if (def.Extra<MidiFileExtra>() is not null) MidiFileExtra.Set(instance, path);
         else Complain(IssueCode.NoFile, line, column, $"'{def.Name}' names no file.");
     }
 

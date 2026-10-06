@@ -261,6 +261,39 @@ public class PrinterTests
     }
 
     /// <summary>
+    /// A MIDI File's path and its voice and channel, which are three things the text
+    /// has to hold between them.
+    /// </summary>
+    [Fact]
+    public void A_midi_file_comes_back_with_its_path_voice_and_channel()
+    {
+        var patch = new Patch();
+        patch.EnsureOutput(NodeCatalog.BuiltIn);
+
+        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.MidiFileTypeId);
+        var song = NodeInstance.Create(def, 0, 0);
+
+        MidiFileExtra.Set(song, "tunes/riff.mid");
+        song.SetState(MidiLineExtra.Name, new System.Text.Json.Nodes.JsonObject { ["voice"] = 2, ["channel"] = 3 });
+        patch.Nodes.Add(song);
+        patch.Connect(song.Id, 1, patch.Output.Id, NodeCatalog.OutputLeftPort);
+
+        var source = PatchPrinter.Print(patch, NodeCatalog.BuiltIn);
+
+        source.ShouldContain("tunes/riff.mid");
+
+        var again = PatchLanguage.Build(source, NodeCatalog.BuiltIn);
+
+        again.Issues.ShouldBeEmpty(again.Report);
+
+        var back = again.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.MidiFileTypeId);
+
+        MidiFileExtra.Of(back).ShouldBe("tunes/riff.mid");
+        MidiLineExtra.Voice(back).ShouldBe(2);
+        MidiLineExtra.Channel(back).ShouldBe(3);
+    }
+
+    /// <summary>
     /// A module with no <c>in</c> is piped on the socket its chain arrives at,
     /// wherever that sits, and the names and coordinates go in the brackets.
     /// Piped on its first socket, the chain would be lifted out as a binding

@@ -17,4 +17,11 @@ public interface ISampleLibrary
 
     /// <summary>Why the last <see cref="Find"/> of this path came back empty, for the complaint.</summary>
     string Explain(string path);
+
+    /// <summary>The notes a path names, or null where there are none to be had.</summary>
+    /// <remarks>A default, so a library that reads sound alone answers that no MIDI file can be opened.</remarks>
+    LoadedMidi? FindMidi(string path) => null;
+
+    /// <summary>Why the last <see cref="FindMidi"/> of this path came back empty, for the complaint.</summary>
+    string ExplainMidi(string path) => "nothing here can open a MIDI file.";
 }

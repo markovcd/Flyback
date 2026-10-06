@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A MIDI File module plays a `.mid` file on the patch's clock, a voice and a channel of it at a time, so it sounds the same in an export as on the speakers.
+
 - A Line In module plays what the microphone hears, on Linux; `flyback-cli render --input <file>` gives a render a sound file to hear.
 
 - The website and the preset site are at flybackmodular.app, and the old GitHub Pages address sends you there. Editors up to 0.7.1 can no longer reach shared presets, shared plugins or letters until they update.

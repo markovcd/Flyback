@@ -27,6 +27,7 @@ public sealed class BundleFiles(
 {
     private readonly Dictionary<string, LoadedSample?> clips = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, LoadedImage?> pictures = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, LoadedMidi?> songs = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>What a bundle read out of a stream holds, ready to be compiled against.</summary>
     public static BundleFiles Of(LoadedBundle bundle) => new(bundle.Files);
@@ -37,6 +38,19 @@ public sealed class BundleFiles(
     LoadedSample? ISampleLibrary.Find(string path) =>
         Cached<LoadedSample, SoundFault>(clips, path, Sound)
         ?? behindSounds?.Find(path);
+
+    LoadedMidi? ISampleLibrary.FindMidi(string path)
+    {
+        if (!songs.TryGetValue(path, out var song))
+            songs[path] = song = files.TryGetValue(path, out var bytes) ? MidiFileReader.Read(bytes, out _) : null;
+
+        return song ?? behindSounds?.FindMidi(path);
+    }
+
+    string ISampleLibrary.ExplainMidi(string path) =>
+        files.ContainsKey(path)
+            ? "the bundle holds it, but it could not be read."
+            : behindSounds?.ExplainMidi(path) ?? "the bundle does not hold it.";
 
     LoadedImage? IImageLibrary.Find(string path) =>
         Cached<LoadedImage, PngFault>(pictures, path, PngReader.Read)

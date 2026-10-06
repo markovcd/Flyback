@@ -433,6 +433,14 @@ out.volume = 0.6</code></pre>
     instead. <strong>Settings → MIDI</strong> names the plugin doing the hearing and sets whether the first MIDI
     In added to a patch lays the computer keyboard out as a piano or as a scale.</p>
 
+    <p>To play a <code>.mid</code> file instead, add a <strong>MIDI File</strong> module, pick the file, and wire its
+    <code>pitch</code>, <code>gate</code>, <code>velocity</code> and <code>trigger</code> as you would a MIDI In's. It
+    plays on the patch's clock, so it sounds the same in an export as on the speakers; wire <code>in</code> to speed
+    it up, loop it or scrub it. Its <code>length</code> is the file's. A file's notes held together are shared out
+    one to a voice, so put several MIDI Files on it and set each one's <strong>voice</strong> from 1 to 8 to play a
+    chord, or leave <strong>voice</strong> at 0 to play the newest note held. <strong>channel</strong> hears one of
+    the file's channels. The patch keeps the file's path, so move the file with the patch.</p>
+
     <p>An instrument Flyback knows by name is also at the top of the module list, under <strong>Instruments</strong>,
     while it is plugged in. Picking it adds the whole box: a Clock In and a MIDI In per track, each on its channel and
     named after it. Delete the tracks you will not use.</p>

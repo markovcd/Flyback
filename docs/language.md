@@ -416,7 +416,7 @@ binding to be said by, including the `x` and `t` of section 5.
 
 ## 8. What a module carries that is not a knob
 
-A sequencer's notes, a Quantiser's scale, an Arrangement's parts, a Sample's file
+A sequencer's notes, a Quantiser's scale, an Arrangement's parts, a Sample's or a MIDI File's file
 ([0061](adr/0061-what-a-module-carries-is-kept-in-one-store.md)) go in a
 trailing block:
 
@@ -426,6 +426,7 @@ let snap  = quantiser() [ C D E G A ]
 let song  = arrangement(rate: 1/32) [ 1 1 0 1 | 0 >1 1 0 ]
 let clip  = sample("kick.wav")
 let photo = picture("sunset.png")
+let tune  = midi.file("riff.mid", voice: 2, channel: 1)
 ```
 
 How the computer keyboard is laid out belongs to the patch rather than to any

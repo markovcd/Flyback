@@ -12,6 +12,13 @@ public partial class NodeCatalog
     /// </summary>
     public const string MidiTypeId = "midi.in";
 
+    /// <summary>
+    /// The module that plays a MIDI file. Named here because the editor, the
+    /// compiler and the assistant all have to ask whether a given node is it — see
+    /// <see cref="MidiFileExtra"/>.
+    /// </summary>
+    public const string MidiFileTypeId = "midi.file";
+
     /// <summary>The module that keeps a patch to an instrument's clock.</summary>
     public const string ClockTypeId = "midi.clock";
 
@@ -45,6 +52,28 @@ public partial class NodeCatalog
         {
             Extras = [Played],
             StartsVoices = Played.Voices,
+        };
+
+        yield return new NodeDef(
+            MidiFileTypeId, "MIDI File", ModuleCategories.Sources,
+            [Domain("in", "The playback position, in seconds. Time without a wire, so it plays from the start.")],
+            [
+                new PortSpec("pitch", PortKind.Scalar, 60f, 0f, 127f, -1, PortDisplay.Note) { Help = "The current note." },
+                Num("gate", 0f, 0f, 1f) with
+                {
+                    Help = "High while a note is held. Drops for an instant as each new note lands, so "
+                        + "legato notes still retrigger an envelope.",
+                },
+                Num("velocity", 0f, 0f, 1f) with { Help = "Follows note strength." },
+                Num("trigger", 0f, 0f, 1f) with { Help = "Fires on each note start." },
+                Num("length") with { Help = "The file's length in seconds, for loop timing or scrubbing." },
+            ],
+            EmitMidiFile,
+            "Plays a .mid file as a MIDI In would play a keyboard. 'voice' takes one of the notes held "
+            + "at once, so several of these on one file play a chord; 'channel' hears one of the file's "
+            + "channels. The file path is stored with the patch, so moving or renaming it will break playback.")
+        {
+            Extras = [new MidiFileExtra(), new MidiLineExtra()],
         };
 
         yield return new NodeDef(
@@ -159,6 +188,32 @@ public partial class NodeCatalog
         var beats = em.Add(expected, slip);
 
         return [beats, bpm, running, restarted];
+    }
+
+    /// <summary>
+    /// One voice of a file, read at a position.
+    /// </summary>
+    /// <remarks>
+    /// Four table reads at the same moment, so nothing here counts or remembers: the
+    /// gate's dip and the trigger's pulse were written into the tables when the file
+    /// was loaded. No file is silence on the key a MIDI In rests on, for the three
+    /// reasons <see cref="EmitSample"/> gives.
+    /// </remarks>
+    private static Slot[] EmitMidiFile(Emitter em, EmitContext node)
+    {
+        if (node.Midi is not { } line)
+            return [em.Constant(60f), em.Constant(0f), em.Constant(0f), em.Constant(0f), em.Constant(0f)];
+
+        var position = node[0];
+
+        return
+        [
+            em.Table(position, line.Pitch),
+            em.Table(position, line.Gate),
+            em.Table(position, line.Velocity),
+            em.Table(position, line.Trigger),
+            em.Constant(line.Seconds),
+        ];
     }
 
     /// <summary>

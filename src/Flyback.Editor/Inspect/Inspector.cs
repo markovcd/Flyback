@@ -1219,6 +1219,7 @@ internal sealed class Inspector
         // button rather than a control with a range.
         SampleExtra => BuildSampleRow(node),
         PictureExtra => BuildPictureRow(node),
+        MidiFileExtra => BuildMidiFileRow(node),
 
         // Anything else is a plugin's own kind, which ships no control and is
         // drawn from what it declares instead — see ADR-0055. A kind that
@@ -1500,6 +1501,21 @@ internal sealed class Inspector
             pictureFolder.Forget(named);
         });
 
+    /// <summary>The same row for a MIDI file — see <see cref="MidiFileExtra"/>.</summary>
+    private Control BuildMidiFileRow(NodeInstance node) => BuildFileRow(
+        node,
+        "midi file",
+        MidiFileExtra.Of(node),
+        "Choose a MIDI file",
+        MidiFileType,
+        picked =>
+        {
+            var named = PatchPaths.Named(picked, soundFolder.Library);
+
+            MidiFileExtra.Set(node, named);
+            soundFolder.Forget(named);
+        });
+
     /// <summary>
     /// A file this instance carries: what it is called, what it currently is, and a
     /// button that goes and finds another. One row for both kinds, which differ in
@@ -1580,6 +1596,13 @@ internal sealed class Inspector
     {
         Patterns = ["*.wav", "*.mp3"],
         MimeTypes = ["audio/wav", "audio/x-wav", "audio/mpeg"],
+    };
+
+    /// <summary>And what the MIDI picker offers.</summary>
+    private static FilePickerFileType MidiFileType => new("MIDI files")
+    {
+        Patterns = ["*.mid", "*.midi"],
+        MimeTypes = ["audio/midi", "audio/x-midi"],
     };
 
     /// <summary>And what the picture picker offers, for the same reason.</summary>

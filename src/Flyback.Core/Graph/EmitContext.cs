@@ -132,6 +132,17 @@ public readonly record struct EmitContext(Slot[] Inputs)
     public LoadedSample? Sample { get; init; }
 
     /// <summary>
+    /// The one voice of a MIDI file this instance plays, already built, and null
+    /// where there is none to play.
+    /// </summary>
+    /// <remarks>
+    /// Null for the reasons <see cref="Sample"/>'s is, minus the screen: both
+    /// programs play a file, since a voice is four tables and tables are read by
+    /// either.
+    /// </remarks>
+    public MidiLine? Midi { get; init; }
+
+    /// <summary>
     /// The picture this instance shows, already read, and null where there is
     /// none to show.
     /// </summary>
