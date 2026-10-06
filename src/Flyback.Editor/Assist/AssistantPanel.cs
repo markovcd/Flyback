@@ -1,12 +1,14 @@
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
@@ -42,6 +44,16 @@ internal sealed class AssistantPanel : UserControl
     /// <summary>The middle of <see cref="LogoMark"/>'s sweep, borrowed for the one thing here that is alive.</summary>
     private static readonly IBrush Live = new ImmutableSolidColorBrush(Colors.Feedback);
 
+    private static readonly IBrush LiveInk = new ImmutableSolidColorBrush(Colors.Blend(Colors.Feedback, Avalonia.Media.Colors.White, 0.3));
+    private static readonly IBrush LiveGround = new ImmutableSolidColorBrush(Colors.Faded(Colors.Feedback, 0.13));
+    private static readonly IBrush Idle = new ImmutableSolidColorBrush(Colors.Node);
+    private static readonly IBrush Ink = new ImmutableSolidColorBrush(Colors.Label);
+    private static readonly IBrush Chrome = new ImmutableSolidColorBrush(Colors.Panel);
+    private static readonly IBrush Rule = new ImmutableSolidColorBrush(Colors.Edge);
+
+    /// <summary>The class the message box and the send button are styled by; see <see cref="Dress"/>.</summary>
+    private const string Composing = "composing";
+
     private readonly PluginCatalog plugins;
     private readonly ChosenAssistant chosenAssistant;
 
@@ -68,16 +80,13 @@ internal sealed class AssistantPanel : UserControl
     {
         AcceptsReturn = true,
         TextWrapping = TextWrapping.Wrap,
-        PlaceholderText = "Describe the patch you want. Enter to ask, Ctrl+Enter for a new line.",
+        PlaceholderText = "Describe the patch you want",
         Name = "instruction",
         FontSize = Text.Body,
-        MinHeight = 68,
-
-        // A strip along the bottom for the send button to sit in. Reserved as
-        // padding rather than left to overlap, so no line of a long message ever
-        // runs underneath it — and across the whole width rather than down the
-        // right-hand side, so every other line still has the box to itself.
-        Padding = new Thickness(8, 6, 8, 34),
+        MinHeight = 40,
+        MaxHeight = 240,
+        Padding = new Thickness(0, 2),
+        Classes = { Composing },
     };
 
     private readonly TranscriptView transcript = new();
@@ -87,18 +96,21 @@ internal sealed class AssistantPanel : UserControl
         FontSize = Text.Small,
         Foreground = Text.Muted,
         TextWrapping = TextWrapping.Wrap,
+        Margin = new Thickness(2, 0, 2, 8),
         Name = "footer",
     };
 
-    /// <summary>What this conversation has cost in tokens, under the box; hidden until a request reports one.</summary>
-    private readonly TextBlock spent = new()
+    /// <summary>How full the context is and what this conversation has cost, under the header.</summary>
+    private readonly ContextStrip spent = new();
+
+    /// <summary>Which model answered last, or which provider will, under the panel's name.</summary>
+    private readonly TextBlock model = new()
     {
-        FontSize = Text.Small,
+        Name = "model",
+        FontSize = Text.Caption,
+        FontFamily = Text.Mono,
         Foreground = Text.Muted,
-        TextWrapping = TextWrapping.Wrap,
-        IsVisible = false,
-        Margin = new Thickness(0, 4, 0, 0),
-        Name = "spent",
+        TextTrimming = TextTrimming.CharacterEllipsis,
     };
 
     /// <summary>
@@ -120,70 +132,64 @@ internal sealed class AssistantPanel : UserControl
 
     private readonly TextBlock progress = new()
     {
+        Name = "progress",
         FontSize = Text.Small,
-        Foreground = Live,
+        FontWeight = FontWeight.Medium,
         VerticalAlignment = VerticalAlignment.Center,
     };
 
-    private readonly StackPanel working = new()
+    /// <summary>The pill in the header holding the beacon: working, ready, or not set up.</summary>
+    private readonly Border status = new()
     {
-        Orientation = Orientation.Horizontal,
-        Spacing = 7,
-        Margin = new Thickness(0, 0, 0, 6),
-        IsVisible = false,
+        Name = "status",
+        CornerRadius = new CornerRadius(99),
+        Padding = new Thickness(9, 4),
+        VerticalAlignment = VerticalAlignment.Center,
     };
 
     private readonly DispatcherTimer heartbeat = new() { Interval = TimeSpan.FromMilliseconds(200) };
 
     /// <summary>What the one button shows in each of its two jobs.</summary>
-    private const string SendGlyph = "⏎";
+    private readonly Control sendMark = Glyphs.Send();
 
-    private const string StopGlyph = "■";
+    private readonly Control stopMark = Glyphs.Stop();
 
     /// <summary>
     /// Send and stop, which are one button because they are never both offered: a
     /// turn is either wanted or under way, and the way to interrupt a run belongs
     /// where the hand that started it last was.
     /// </summary>
-    /// <remarks>
-    /// In the instruction box's own corner rather than out with Apply and
-    /// Settings, because this is part of writing the message — and it is the first
-    /// thing here to say that a message can be sent at all.
-    /// </remarks>
     private readonly Button send = new()
     {
-        Content = SendGlyph,
-        Width = 30,
-        Height = 26,
+        Name = "send",
+        Width = 34,
+        Height = 34,
         Padding = new Thickness(0),
-        FontSize = Text.Heading,
-        HorizontalAlignment = HorizontalAlignment.Right,
-        VerticalAlignment = VerticalAlignment.Bottom,
+        CornerRadius = new CornerRadius(8),
         HorizontalContentAlignment = HorizontalAlignment.Center,
         VerticalContentAlignment = VerticalAlignment.Center,
-        Margin = new Thickness(0, 0, 7, 7),
         IsEnabled = false,
+        Classes = { Composing },
     };
 
     /// <summary>
     /// Sets the conversation aside for an empty one about the same patch.
     /// </summary>
     /// <remarks>
-    /// In the strip the send button sits in, at the other end of it: the two are
-    /// what is done to a conversation, and this is the rarer, so it is the quieter.
-    /// Dead while a turn runs — stopping one is the other button's job — and when
+    /// Dead while a turn runs — stopping one is the send button's job — and when
     /// there is nothing to set aside.
     /// </remarks>
     private readonly Button fresh = new()
     {
-        Content = "New conversation",
-        FontSize = Text.Small,
+        Content = Glyphs.Add(),
+        Width = 30,
+        Height = 30,
+        Padding = new Thickness(0),
         Foreground = Text.Muted,
         Background = Brushes.Transparent,
-        Padding = new Thickness(6, 2),
-        HorizontalAlignment = HorizontalAlignment.Left,
-        VerticalAlignment = VerticalAlignment.Bottom,
-        Margin = new Thickness(4, 0, 0, 8),
+        HorizontalContentAlignment = HorizontalAlignment.Center,
+        VerticalContentAlignment = VerticalAlignment.Center,
+        VerticalAlignment = VerticalAlignment.Center,
         IsEnabled = false,
         Name = "fresh",
     };
@@ -198,10 +204,8 @@ internal sealed class AssistantPanel : UserControl
         FontSize = Text.Small,
         Foreground = Text.Muted,
         Background = Brushes.Transparent,
-        Padding = new Thickness(6, 2),
-        HorizontalAlignment = HorizontalAlignment.Right,
-        VerticalAlignment = VerticalAlignment.Bottom,
-        Margin = new Thickness(0, 0, 43, 8),
+        Padding = new Thickness(8, 4),
+        VerticalAlignment = VerticalAlignment.Center,
         IsEnabled = false,
         Name = "expand-message",
     };
@@ -694,30 +698,26 @@ internal sealed class AssistantPanel : UserControl
             if (e.Property == TextBox.TextProperty) ShowSendState();
         };
 
-        working.Children.Add(beacon);
-        working.Children.Add(progress);
         heartbeat.Tick += (_, _) => Beat();
-
-        var body = new DockPanel { Margin = new Thickness(12, 10) };
-        DockPanel.SetDock(working, Dock.Top);
-        // The button floats over the corner of the box rather than sitting
-        // beside it, so the two are one thing to lay out.
-        var writing = new Panel();
-        writing.Children.Add(instruction);
-        writing.Children.Add(fresh);
-        writing.Children.Add(expand);
-        writing.Children.Add(send);
 
         fresh.Click += (_, _) => StartOver();
         expand.Click += async (_, _) => await ExpandMessageAsync();
 
-        DockPanel.SetDock(writing, Dock.Bottom);
-        DockPanel.SetDock(footer, Dock.Bottom);
-        DockPanel.SetDock(spent, Dock.Bottom);
-        body.Children.Add(working);
-        body.Children.Add(footer);
-        body.Children.Add(spent);
-        body.Children.Add(writing);
+        Dress();
+
+        var body = new DockPanel { Background = new SolidColorBrush(Colors.Window) };
+
+        var top = new StackPanel();
+        top.Children.Add(Header());
+        top.Children.Add(spent);
+
+        var head = new Border { Child = top, Background = Chrome, BorderBrush = Rule, BorderThickness = new Thickness(0, 0, 0, 1) };
+        var bottom = Composer();
+
+        DockPanel.SetDock(head, Dock.Top);
+        DockPanel.SetDock(bottom, Dock.Bottom);
+        body.Children.Add(head);
+        body.Children.Add(bottom);
         body.Children.Add(transcript);
 
         // No height of its own. What this is worth is entirely a matter of what
@@ -726,12 +726,139 @@ internal sealed class AssistantPanel : UserControl
         // for the instruction box and a button to both still be there.
         return new Border
         {
-            Background = new SolidColorBrush(Colors.Panel),
-            BorderBrush = new SolidColorBrush(Colors.Edge),
+            BorderBrush = Rule,
             BorderThickness = new Thickness(0, 1, 0, 0),
             MinHeight = 140,
             Child = body,
         };
+    }
+
+    /// <summary>The mark, the name and the model, the status pill, and a new conversation.</summary>
+    private Control Header()
+    {
+        var mark = new Border
+        {
+            Width = 28,
+            Height = 28,
+            CornerRadius = new CornerRadius(7),
+            Background = new SolidColorBrush(Colors.Faded(Colors.Feedback, 0.14)),
+            Child = Glyphs.Spark(16, Live),
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        var name = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 1 };
+        name.Children.Add(new TextBlock { Text = "Assistant", FontSize = Text.Emphasis, FontWeight = FontWeight.SemiBold, Foreground = Brushes.White });
+        name.Children.Add(model);
+
+        var pill = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        pill.Children.Add(beacon);
+        pill.Children.Add(progress);
+        status.Child = pill;
+
+        var header = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"),
+            ColumnSpacing = 10,
+            Margin = new Thickness(12, 9, 6, 9),
+        };
+
+        header.Children.Add(mark);
+        header.Children.Add(name);
+        header.Children.Add(status);
+        header.Children.Add(fresh);
+        Grid.SetColumn(name, 1);
+        Grid.SetColumn(status, 2);
+        Grid.SetColumn(fresh, 3);
+
+        return header;
+    }
+
+    /// <summary>
+    /// The box a message is written in, with the keys that send it, Expand and the
+    /// send button along its foot, and above it whatever is stopping a send.
+    /// </summary>
+    private Control Composer()
+    {
+        var keys = Text.Quiet("Enter to ask · Ctrl+Enter for a new line", Text.Caption);
+        keys.VerticalAlignment = VerticalAlignment.Center;
+        keys.TextTrimming = TextTrimming.CharacterEllipsis;
+
+        var foot = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 6 };
+        foot.Children.Add(keys);
+        foot.Children.Add(expand);
+        foot.Children.Add(send);
+        Grid.SetColumn(expand, 1);
+        Grid.SetColumn(send, 2);
+
+        var writing = new StackPanel { Spacing = 4 };
+        writing.Children.Add(instruction);
+        writing.Children.Add(foot);
+
+        var field = new Border
+        {
+            Name = "composer",
+            Background = new SolidColorBrush(Colors.Toolbar),
+            BorderBrush = new SolidColorBrush(Colors.Separator),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(10),
+            Padding = new Thickness(12, 8, 6, 6),
+            Child = writing,
+        };
+
+        // A click anywhere in the field is a click in the box.
+        field.PointerPressed += (_, _) => instruction.Focus();
+
+        var column = new StackPanel { Margin = new Thickness(10, 10, 10, 10) };
+        column.Children.Add(footer);
+        column.Children.Add(field);
+
+        return new Border
+        {
+            Background = Chrome,
+            BorderBrush = Rule,
+            BorderThickness = new Thickness(0, 1, 0, 0),
+            Child = column,
+        };
+    }
+
+    /// <summary>
+    /// Undresses the message box, which sits in a field of its own, and fills the
+    /// send button. The theme sets both inside their templates, which only a style
+    /// reaching the same part can override.
+    /// </summary>
+    private void Dress()
+    {
+        var box = new Style(x => x.OfType<TextBox>().Class(Composing).Template().OfType<Border>().Name("PART_BorderElement"));
+        box.Setters.Add(new Setter(Border.BackgroundProperty, Brushes.Transparent));
+        box.Setters.Add(new Setter(Border.BorderThicknessProperty, new Thickness(0)));
+        Styles.Add(box);
+
+        // The quiet buttons stay quiet when they cannot be pressed: the glyph dims, no gray box.
+        var off = new Style(x => x.OfType<Button>().Not(y => y.Class(Composing)).Class(":disabled")
+            .Template().OfType<ContentPresenter>().Name("PART_ContentPresenter"));
+        off.Setters.Add(new Setter(ContentPresenter.BackgroundProperty, Brushes.Transparent));
+        off.Setters.Add(new Setter(ContentPresenter.ForegroundProperty, new ImmutableSolidColorBrush(Colors.Inactive)));
+        Styles.Add(off);
+
+        foreach (var (state, ground, ink) in new (string?, Color, Color)[]
+                 {
+                     (null, Colors.Label, Colors.Window),
+                     (":pointerover", Colors.BeamCore, Colors.Window),
+                     (":pressed", Colors.Value, Colors.Window),
+                     (":disabled", Colors.Node, Colors.Inactive),
+                 })
+        {
+            var style = new Style(x =>
+            {
+                var button = x.OfType<Button>().Class(Composing);
+                if (state is not null) button = button.Class(state);
+                return button.Template().OfType<ContentPresenter>().Name("PART_ContentPresenter");
+            });
+
+            style.Setters.Add(new Setter(ContentPresenter.BackgroundProperty, new ImmutableSolidColorBrush(ground)));
+            style.Setters.Add(new Setter(ContentPresenter.ForegroundProperty, new ImmutableSolidColorBrush(ink)));
+            Styles.Add(style);
+        }
     }
 
     /// <summary>
@@ -1085,6 +1212,7 @@ internal sealed class AssistantPanel : UserControl
             footer.Text = excuse;
             footer.Foreground = Amber;
         }
+        ShowSpent();
     }
 
     /// <summary>
@@ -1099,8 +1227,8 @@ internal sealed class AssistantPanel : UserControl
                 ? (waiting.Tokens ?? new TokensSpent(), waiting.Turns)
                 : (new TokensSpent(), 0);
 
-        spent.IsVisible = !tokens.None;
-        spent.Text = tokens.None ? string.Empty : "This conversation: " + tokens.Told(turns, settingsRepository.Current.ContextLimit);
+        spent.Show(tokens, turns, settingsRepository.Current.ContextLimit);
+        model.Text = tokens.Model ?? chosenAssistant.Value?.Name ?? "No provider";
     }
 
     /// <summary>
@@ -1111,7 +1239,7 @@ internal sealed class AssistantPanel : UserControl
     /// </summary>
     private void ShowSendState()
     {
-        send.Content = asking ? StopGlyph : SendGlyph;
+        send.Content = asking ? stopMark : sendMark;
 
         send.IsEnabled = asking
             || (blocked is null && !string.IsNullOrWhiteSpace(instruction.Text));
@@ -1129,6 +1257,21 @@ internal sealed class AssistantPanel : UserControl
         ToolTip.SetTip(send, asking
             ? "Stop — it ends at the next thing the assistant does"
             : blocked ?? "Ask  (Enter)");
+
+        ShowStatus();
+    }
+
+    /// <summary>The header's pill: working and for how long, ready, or not set up.</summary>
+    private void ShowStatus()
+    {
+        if (asking) return;
+
+        beacon.Opacity = 1;
+        beacon.Fill = blocked is null ? Text.Muted : Amber;
+        progress.Text = blocked is null ? "Ready" : "Not set up";
+        progress.Foreground = Ink;
+        status.Background = Idle;
+        ToolTip.SetTip(status, blocked);
     }
 
     // --- showing that it is working -----------------------------------------
@@ -1154,9 +1297,11 @@ internal sealed class AssistantPanel : UserControl
             ? string.Empty
             : $" · {TranscriptView.Tally(bench.ToolCalls, "tool call")}, {TranscriptView.Tally(bench.Edits, "edit")}";
 
-        progress.Text = stopping
+        progress.Text = $"{(stopping ? "Stopping" : "Working")} · {Spell(elapsed)}";
+
+        ToolTip.SetTip(status, stopping
             ? $"Stopping — it ends at the next thing the assistant does · {Spell(elapsed)}"
-            : $"Working · {Spell(elapsed)}{done}";
+            : $"Working · {Spell(elapsed)}{done}");
 
         // Every third tick, so the dots are read as a rhythm rather than as a
         // flicker. Three of them, then none again.
@@ -1171,7 +1316,9 @@ internal sealed class AssistantPanel : UserControl
         startedAt = DateTime.UtcNow;
         pulse = 0;
 
-        working.IsVisible = true;
+        beacon.Fill = Live;
+        progress.Foreground = LiveInk;
+        status.Background = LiveGround;
         transcript.Thinking.IsVisible = true;
         heartbeat.Start();
         Beat();
@@ -1184,8 +1331,8 @@ internal sealed class AssistantPanel : UserControl
         asking = false;
         conversation.Working = false;
         stopping = false;
-        working.IsVisible = false;
         transcript.Thinking.IsVisible = false;
+        ShowStatus();
     }
 
     private static string Spell(TimeSpan elapsed) => elapsed.TotalSeconds < 60d

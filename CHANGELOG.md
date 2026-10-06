@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The assistant's column is redrawn as a conversation: a header with the model and whether it is working, a context bar that opens onto what the conversation cost, your messages in bubbles with long ones cut short behind Show all, and proposals and failures in cards of their own.
+
 - Expand beside the assistant's Send writes a short message out in full, in the box, to edit before sending: over a patch, as a change to it that says what makes the patch itself, what changes, what stays and how to tell it worked; over an empty canvas, as a new patch's brief.
 
 - A Beam module draws two signals against each other as an X-Y oscilloscope does, so oscilloscope music wired left to `x` and right to `y` shows as it was made to be seen; `flyback-cli render` of a still plays the sound up to it, so a Beam, Scope or Meter has something to show.

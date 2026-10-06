@@ -1,7 +1,9 @@
 ﻿﻿using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Media.Imaging;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using Flyback.Editor.Assist;
@@ -31,9 +33,6 @@ namespace Flyback.Editor.Tests.Ui;
 /// </remarks>
 public sealed class AssistantPanelTests : EditorTest
 {
-    /// <summary>What the button shows when pressing it would ask.</summary>
-    private const string Send = "⏎";
-
     /// <summary>
     /// Where a panel under test writes settings to, so pressing the real Save
     /// button in a test cannot land on the machine's own <c>assistant.json</c>.
@@ -154,7 +153,13 @@ public sealed class AssistantPanelTests : EditorTest
         transcript,
         Tokens: tokens).ToJson();
 
-    private static TextBlock Spent(Window window) => All<TextBlock>(window).Single(block => block.Name == "spent");
+    private static ContextStrip Spent(Window window) => All<ContextStrip>(window).Single();
+
+    private static string Reading(Window window, string name) =>
+        All<TextBlock>(window).Single(block => block.Name == name).Text ?? string.Empty;
+
+    private static List<string?> Counts(Window window) =>
+        [.. All<TextBlock>(window).Where(block => block.Name == "count").Select(block => block.Text)];
 
     private static List<string?> Shown(Window window) =>
         [.. All<SelectableTextBlock>(window).Select(block => block.Text)];
@@ -175,22 +180,57 @@ public sealed class AssistantPanelTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void A_conversation_saved_with_its_cost_shows_the_total_under_the_box()
+    public void A_conversation_saved_with_its_cost_shows_its_context_and_total_under_the_header()
     {
         var (window, panel) = Over(new Patch());
 
         Spent(window).IsVisible.ShouldBeFalse();
 
-        panel.Open(Saved(new TokensSpent(2, 87_040, 80_000, 3_100, 45_000), new TranscriptLine(Voice.You, "hello")));
+        panel.Open(Saved(new TokensSpent(2, 87_040, 80_000, 3_100, 45_000, "claude-opus-5-5"), new TranscriptLine(Voice.You, "hello")));
         Settle(window);
 
         Spent(window).IsVisible.ShouldBeTrue();
-        Spent(window).Text.ShouldBe("This conversation: 1 turn · 87k in (80k cached) · 3.1k out · 45k of 100k context");
+        Reading(window, "contextReading").ShouldBe("45k / 100k");
+        Counts(window).ShouldBe(["87k", "80k", "3.1k", "1"]);
+        Reading(window, "model").ShouldBe("claude-opus-5-5");
 
         panel.StartOver();
         Settle(window);
 
         Spent(window).IsVisible.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// Draws the column with a conversation in it, every voice once, for looking at
+    /// the panel without a provider. Run by hand with SHOT_DIR naming a folder.
+    /// </summary>
+    [AvaloniaFact]
+    public void Draw_a_conversation()
+    {
+        if (Environment.GetEnvironmentVariable("SHOT_DIR") is not { } folder) return;
+
+        var (window, panel) = Over(new Patch());
+
+        window.Width = 360;
+        window.Height = 980;
+
+        panel.Open(Saved(
+            new TokensSpent(4, 147_200, 93_500, 18_300, 53_100, "claude-opus-5-5"),
+            new TranscriptLine(Voice.You, string.Join("\n", Enumerable.Repeat(
+                "The rider is drawn side-on, two wheels and a profile, while the grid races straight out toward the sun.", 6))),
+            new TranscriptLine(Voice.Note, "Read the patch: 214 modules, 388 wires."),
+            new TranscriptLine(Voice.Aside, "53083 in (51623 cached), 1121 out, from claude-opus-5-5."),
+            new TranscriptLine(Voice.Said, "Side-on reads wrong because the grid converges on the sun, so the bike has to face away."),
+            new TranscriptLine(Voice.Proposed, "Proposed: Adds a 'Picture: Rider' group: a dark motorbike seen from behind on the grid, bobbing on the kick."),
+            new TranscriptLine(Voice.You, "Lower him a little."),
+            new TranscriptLine(Voice.Failed, "The provider said the request was too large.")));
+        Settle(window);
+
+        Directory.CreateDirectory(folder);
+
+        using var frame = window.CaptureRenderedFrame() ?? throw new InvalidOperationException("the window rendered nothing");
+
+        frame.Save(Path.Combine(folder, "assistant-panel.png"), new PngBitmapEncoderOptions());
     }
 
     /// <summary>
@@ -614,8 +654,9 @@ public sealed class AssistantPanelTests : EditorTest
 
         working.Children[at - 1].ShouldBeOfType<SelectableTextBlock>().Text.ShouldBe("1 frame at 0.5s, 2 by 1.");
 
-        var flow = (Panel)working.Parent!.Parent!;
-        var after = flow.Children[flow.Children.IndexOf((Control)working.Parent!) + 1];
+        var steps = frame.FindAncestorOfType<StepsGroup>()!;
+        var flow = (Panel)steps.Parent!;
+        var after = flow.Children[flow.Children.IndexOf(steps) + 1];
 
         after.ShouldBeOfType<SelectableTextBlock>().Text.ShouldBe("that is a blue field.");
         frame.Child.ShouldBeOfType<Image>().Source.ShouldNotBeNull();
@@ -845,7 +886,7 @@ public sealed class AssistantPanelTests : EditorTest
     }
 
     private static Button SendButton(Window window) =>
-        All<Button>(window).Single(b => b.Content as string == Send);
+        All<Button>(window).Single(b => b.Name == "send");
 
     /// <summary>The message box, told apart from the key field by taking newlines.</summary>
     private static TextBox Instruction(Window window) =>
@@ -1812,16 +1853,16 @@ public sealed class AssistantPanelTests : EditorTest
     }
 
     /// <summary>
-    /// In the box rather than beside it, and in the corner one finishes typing
-    /// nearest. The box keeps a strip of padding along its bottom for it, so
-    /// this is over the padding rather than over anything anybody wrote.
+    /// In the field the message is written in rather than beside it, and in the
+    /// corner one finishes typing nearest, on a row of its own under the text.
     /// </summary>
     [AvaloniaFact]
-    public void The_button_sits_in_the_bottom_right_of_the_instruction_box()
+    public void The_button_sits_in_the_bottom_right_of_the_message_field()
     {
         var window = Showing();
 
-        var box = On(window, Instruction(window));
+        var box = On(window, All<Border>(window).Single(b => b.Name == "composer"));
+        var text = On(window, Instruction(window));
         var button = On(window, SendButton(window));
 
         button.Width.ShouldBeLessThan(box.Width / 4, "it is a small square, not a bar");
@@ -1831,6 +1872,7 @@ public sealed class AssistantPanelTests : EditorTest
 
         (box.Right - button.Right).ShouldBeLessThan(12, "hard against the right edge");
         (box.Bottom - button.Bottom).ShouldBeLessThan(12, "and the bottom one");
+        button.Top.ShouldBeGreaterThanOrEqualTo(text.Bottom, "under the text, never over it");
     }
 
     /// <summary>

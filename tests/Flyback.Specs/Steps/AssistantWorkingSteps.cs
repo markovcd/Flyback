@@ -15,6 +15,9 @@ public sealed class AssistantWorkingSteps(HeadlessTurn turn) : IDisposable
 {
     private TranscriptView? transcript;
 
+    /// <summary>What the assistant said, in the order it said it.</summary>
+    private readonly List<string> said = [];
+
     private TranscriptView Transcript => transcript.ShouldNotBeNull();
 
     [Given("the assistant said {string}, did three things, and said {string}")]
@@ -35,7 +38,11 @@ public sealed class AssistantWorkingSteps(HeadlessTurn turn) : IDisposable
 
     [Then("both sayings are outside it")]
     public void ThenOutside() =>
-        Headless.Run(() => Sayings().ShouldAllBe(said => !said.GetLogicalAncestors().OfType<StepsGroup>().Any()));
+        Headless.Run(() =>
+        {
+            Sayings().Count().ShouldBe(said.Count);
+            Sayings().ShouldAllBe(block => !block.GetLogicalAncestors().OfType<StepsGroup>().Any());
+        });
 
     public void Dispose()
     {
@@ -53,12 +60,16 @@ public sealed class AssistantWorkingSteps(HeadlessTurn turn) : IDisposable
         {
             transcript = new TranscriptView();
 
+            said.Add(first);
             transcript.Put(Voice.Said, first);
             transcript.Put(Voice.Note, "added blipecho");
             transcript.Put(Voice.Note, "wired blip.out -> blipecho.in");
             transcript.Put(Voice.Aside, "75910 in, 3833 out");
 
-            if (last is not null) transcript.Put(Voice.Said, last);
+            if (last is null) return;
+
+            said.Add(last);
+            transcript.Put(Voice.Said, last);
         });
     }
 
@@ -76,5 +87,5 @@ public sealed class AssistantWorkingSteps(HeadlessTurn turn) : IDisposable
         Transcript.GetLogicalDescendants().OfType<Button>().Where(button => button.Name == "steps");
 
     private IEnumerable<SelectableTextBlock> Sayings() =>
-        Transcript.GetLogicalDescendants().OfType<SelectableTextBlock>().Where(block => block.Foreground == Avalonia.Media.Brushes.White);
+        Transcript.GetLogicalDescendants().OfType<SelectableTextBlock>().Where(block => said.Contains(block.Text ?? string.Empty));
 }

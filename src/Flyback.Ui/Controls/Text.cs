@@ -53,6 +53,9 @@ internal static class Text
     /// <summary>The program's own name, which is said once.</summary>
     public const double Display = 22;
 
+    /// <summary>Numbers and code set in a column, where every figure is the same width.</summary>
+    public static readonly FontFamily Mono = new("Consolas, Menlo, DejaVu Sans Mono, monospace");
+
     // --- quiet text ---------------------------------------------------------
 
     /// <summary>

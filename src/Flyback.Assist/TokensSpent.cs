@@ -19,7 +19,7 @@ internal sealed record TokensSpent(
         new(Requests + 1, Input + cost.Input, CacheRead + cost.CacheRead, Output + cost.Output, cost.Input, cost.Model ?? Model);
 
     /// <summary>
-    /// The footer's line: <c>claude-opus-5-5 · 3 turns · 87k in (80k cached) · 3.1k out · 36k of 100k context</c>,
+    /// The context line's tip: <c>claude-opus-5-5 · 3 turns · 87k in (80k cached) · 3.1k out · 36k of 100k context</c>,
     /// without the model where none was named.
     /// </summary>
     public string Told(int turns, int contextLimit) =>
@@ -27,7 +27,8 @@ internal sealed record TokensSpent(
         + $"{turns} {(turns == 1 ? "turn" : "turns")} · {Short(Input)} in ({Short(CacheRead)} cached) · {Short(Output)} out"
         + $" · {Short(Context)} of {Short(contextLimit)} context";
 
-    private static string Short(int count) => count switch
+    /// <summary>A count the way the column writes it: <c>87k</c>, <c>3.1k</c>, <c>1.2M</c>.</summary>
+    public static string Short(int count) => count switch
     {
         >= 1_000_000 => (count / 1_000_000d).ToString("0.##", CultureInfo.InvariantCulture) + "M",
         >= 1_000 => (count / 1_000d).ToString("0.#", CultureInfo.InvariantCulture) + "k",

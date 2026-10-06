@@ -113,6 +113,10 @@ internal static class Glyphs
     public static Control Tick(double size = Box, IBrush? ink = null) =>
         Stroked("M3.5,8.5 L6.5,11.5 L12.5,4.5", size, ink);
 
+    /// <summary>An arrow pointing up: send what is written.</summary>
+    public static Control Send(double size = Box, IBrush? ink = null) =>
+        Stroked("M8,13 L8,3.5 M4,7.5 L8,3.5 L12,7.5", size, ink);
+
     /// <summary>A small triangle pointing down, filled: a list that opens, or a block that is open.</summary>
     public static Control Down(double size = Box, IBrush? ink = null) =>
         Filled(Geometry.Parse("M4.5,6 L11.5,6 L8,10.5 Z"), size, ink);

@@ -15,6 +15,16 @@ namespace Flyback.Editor.Assist;
 internal sealed class TranscriptView : ScrollViewer, ITranscript
 {
     private static readonly IBrush Amber = new ImmutableSolidColorBrush(Colors.Attention);
+    private static readonly IBrush Ink = new ImmutableSolidColorBrush(Colors.Label);
+    private static readonly IBrush Live = new ImmutableSolidColorBrush(Colors.Feedback);
+
+    /// <summary>The person's side, in the Forms periwinkle: nothing else in the column is that color.</summary>
+    private static readonly Color You = Colors.Form;
+
+    private static readonly Color Bubble = Colors.Blend(Colors.Window, You, 0.16);
+
+    /// <summary>How tall a long message stands before it is cut short behind "Show all".</summary>
+    private const double Shortened = 132;
 
     /// <summary>How many lines a block may run to before it arrives folded.</summary>
     /// <remarks>
@@ -26,7 +36,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
     /// <summary>How much of a folded block's first line its header shows.</summary>
     private const int Widest = 52;
 
-    private readonly StackPanel saidPanel = new() { Spacing = 4, Margin = new Thickness(10, 8) };
+    private readonly StackPanel saidPanel = new() { Spacing = 6, Margin = new Thickness(12, 12, 12, 8) };
 
     /// <summary>The transcript as shown, line by line, which is what is saved with the patch.</summary>
     private readonly List<TranscriptLine> lines = [];
@@ -78,8 +88,9 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
     {
         Name = "thinking",
         FontSize = Text.Body,
-        Foreground = new SolidColorBrush(Colors.Feedback),
-        Margin = new Thickness(10, 0, 10, 8),
+        FontWeight = FontWeight.Medium,
+        Foreground = Live,
+        Margin = new Thickness(12, 0, 12, 12),
         IsVisible = false,
     };
 
@@ -128,18 +139,19 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
                 Append(text);
                 break;
 
+            // Not the steps' summary: a cost line says nothing about what was done.
             case Voice.Aside:
-                Add(text, Text.Muted, 11, work: true);
+                Add(text, Text.Muted, Text.Small, work: true, gist: false);
                 break;
 
             // The answer, however long it runs. Folding it would hide the one
             // thing the turn was for.
             case Voice.Proposed:
-                Add(text, Brushes.White, Text.Body, fold: false);
+                Card(text, Colors.Feedback, Glyphs.Tick(10, Live), "Proposed patch", "Proposed: ");
                 break;
 
             case Voice.Failed:
-                Add(text, Amber, Text.Small);
+                Card(text, Colors.Attention, Glyphs.Warning(10, Amber), "Failed", null);
                 break;
 
             case Voice.Briefing or Voice.Handbook:
@@ -219,11 +231,11 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
         count == 1 ? $"1 {noun}" : $"{count} {noun}s";
 
     /// <summary>Puts a block into the run of working, or at the top level, where it ends the run.</summary>
-    private void Place(Control block, bool work)
+    private void Place(Control block, bool work, string? text = null)
     {
         if (work)
         {
-            Working().Add(block);
+            Working().Add(block, text: text);
             return;
         }
 
@@ -248,7 +260,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
         working = null;
     }
 
-    private void Add(string text, IBrush color, double size, bool fold = true, bool work = false)
+    private void Add(string text, IBrush color, double size, bool fold = true, bool work = false, bool gist = true)
     {
         // Anything else in the transcript ends the paragraph the assistant was
         // in the middle of. Without this, prose lands on the end of whatever
@@ -258,7 +270,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
 
         if (fold && Rows(text) > FoldsOver)
         {
-            Fold(text, color, size, work);
+            Fold(text, color, size, work, gist);
             return;
         }
 
@@ -268,7 +280,57 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
             TextWrapping = TextWrapping.Wrap,
             Foreground = color,
             FontSize = size,
-        }, work);
+        }, work, gist ? text : null);
+    }
+
+    /// <summary>
+    /// A block that ends a turn, set apart in a card of its accent: what was
+    /// proposed, or why it stopped.
+    /// </summary>
+    /// <param name="prefix">What the line opens with that the title already says, left off the body.</param>
+    private void Card(string text, Color accent, Control mark, string title, string? prefix)
+    {
+        saying = null;
+        Closed();
+
+        var said = prefix is not null && text.StartsWith(prefix, StringComparison.Ordinal) ? text[prefix.Length..] : text;
+
+        var heading = Glyphs.Line(
+            new Border
+            {
+                Width = 18,
+                Height = 18,
+                CornerRadius = new CornerRadius(9),
+                Background = new ImmutableSolidColorBrush(Colors.Faded(accent, 0.16)),
+                Child = mark,
+            },
+            new TextBlock { Text = title, FontSize = Text.Body, FontWeight = FontWeight.SemiBold, Foreground = Brushes.White });
+
+        heading.Spacing = 8;
+
+        var inside = new StackPanel { Spacing = 6 };
+
+        inside.Children.Add(heading);
+        inside.Children.Add(new SelectableTextBlock
+        {
+            Text = said,
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = Ink,
+            FontSize = Text.Body,
+            LineHeight = 18,
+        });
+
+        saidPanel.Children.Add(new Border
+        {
+            Name = "card",
+            Background = new ImmutableSolidColorBrush(Colors.Blend(Colors.Window, accent, 0.06)),
+            BorderBrush = new ImmutableSolidColorBrush(Colors.Blend(Colors.Window, accent, 0.32)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(12, 10),
+            Margin = new Thickness(0, 2, 0, 2),
+            Child = inside,
+        });
     }
 
     /// <summary>
@@ -280,7 +342,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
     /// text between one thing the assistant said and the next. Folded, the
     /// transcript is the conversation again, and the working is a click away.
     /// </remarks>
-    private void Fold(string text, IBrush color, double size, bool work)
+    private void Fold(string text, IBrush color, double size, bool work, bool gist)
     {
         var body = new SelectableTextBlock
         {
@@ -317,7 +379,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
         block.Children.Add(header);
         block.Children.Add(body);
 
-        Place(block, work);
+        Place(block, work, gist ? text : null);
     }
 
     /// <summary>
@@ -344,27 +406,140 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
     private static int Rows(string text) => text.AsSpan().Count('\n') + 1;
 
     /// <summary>
-    /// What the person just asked for, set apart from what comes back.
+    /// What the person just asked for, in a bubble on the right, and the mark the
+    /// assistant's side opens under.
     /// </summary>
     /// <remarks>
-    /// A conversation is kept now rather than cleared per message, so the two
-    /// sides have to be told apart by looking: a gap above, and the accent the
-    /// rest of the panel uses for its own voice.
+    /// A message long enough to push the reply off the column stands cut short,
+    /// with a fade and a button to show the rest. The whole of it is drawn either
+    /// way, so it can still be selected and read by anything walking the tree.
     /// </remarks>
     private void Asked(string text)
     {
         saying = null;
         Closed();
 
-        saidPanel.Children.Add(new SelectableTextBlock
+        var said = new SelectableTextBlock
         {
             Text = text,
             TextWrapping = TextWrapping.Wrap,
             Foreground = Brushes.White,
             FontSize = Text.Body,
+            LineHeight = 18,
+        };
+
+        var inside = new StackPanel { Spacing = 6 };
+
+        if (Rows(text) > FoldsOver || text.Length > 480)
+        {
+            var fade = new Border
+            {
+                Height = 36,
+                VerticalAlignment = VerticalAlignment.Bottom,
+                IsHitTestVisible = false,
+                Background = new LinearGradientBrush
+                {
+                    StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                    EndPoint = new RelativePoint(0, 1, RelativeUnit.Relative),
+                    GradientStops =
+                    {
+                        new GradientStop(Colors.Faded(Bubble, 0), 0),
+                        new GradientStop(Bubble, 1),
+                    },
+                },
+            };
+
+            var clipped = new Panel { Name = "message", MaxHeight = Shortened, ClipToBounds = true };
+
+            clipped.Children.Add(said);
+            clipped.Children.Add(fade);
+
+            var more = new Button
+            {
+                Name = "more",
+                FontSize = Text.Small,
+                FontWeight = FontWeight.Medium,
+                Foreground = new ImmutableSolidColorBrush(Colors.Blend(You, Avalonia.Media.Colors.White, 0.45)),
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(0, 2),
+                MinHeight = 0,
+                HorizontalAlignment = HorizontalAlignment.Left,
+            };
+
+            void Show()
+            {
+                var open = double.IsPositiveInfinity(clipped.MaxHeight);
+                fade.IsVisible = !open;
+                more.Content = Glyphs.Line(open ? Glyphs.Down(10) : Glyphs.Right(10), new TextBlock { Text = open ? "Show less" : "Show all" });
+            }
+
+            more.Click += (_, _) =>
+            {
+                clipped.MaxHeight = double.IsPositiveInfinity(clipped.MaxHeight) ? Shortened : double.PositiveInfinity;
+                Show();
+            };
+
+            Show();
+            inside.Children.Add(clipped);
+            inside.Children.Add(more);
+        }
+        else
+        {
+            inside.Children.Add(said);
+        }
+
+        var turn = new StackPanel
+        {
+            Spacing = 5,
+            Margin = new Thickness(28, saidPanel.Children.Count > 0 ? 18 : 0, 0, 6),
+        };
+
+        turn.Children.Add(new TextBlock
+        {
+            Text = "You",
+            FontSize = Text.Small,
             FontWeight = FontWeight.SemiBold,
-            Margin = new Thickness(0, saidPanel.Children.Count > 0 ? 14 : 0, 0, 2),
+            Foreground = new ImmutableSolidColorBrush(Colors.Blend(You, Avalonia.Media.Colors.White, 0.35)),
+            HorizontalAlignment = HorizontalAlignment.Right,
         });
+
+        turn.Children.Add(new Border
+        {
+            Name = "you",
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Background = new ImmutableSolidColorBrush(Bubble),
+            BorderBrush = new ImmutableSolidColorBrush(Colors.Blend(Colors.Window, You, 0.4)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(12, 3, 12, 12),
+            Padding = new Thickness(12, 9),
+            Child = inside,
+        });
+
+        saidPanel.Children.Add(turn);
+
+        var mark = new Border
+        {
+            Width = 20,
+            Height = 20,
+            CornerRadius = new CornerRadius(6),
+            Background = new ImmutableSolidColorBrush(Colors.Faded(Colors.Feedback, 0.14)),
+            Child = Glyphs.Spark(12, Live),
+        };
+
+        var assistant = Glyphs.Line(mark, new TextBlock
+        {
+            Text = "Assistant",
+            FontSize = Text.Small,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = new ImmutableSolidColorBrush(Colors.Blend(Colors.Feedback, Avalonia.Media.Colors.White, 0.3)),
+            VerticalAlignment = VerticalAlignment.Center,
+        });
+
+        assistant.Spacing = 7;
+        assistant.Margin = new Thickness(0, 4, 0, 0);
+
+        saidPanel.Children.Add(assistant);
     }
 
     /// <summary>Streamed prose arrives in pieces, so it lands on the end of the last one.</summary>
@@ -382,8 +557,9 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
         {
             Text = text,
             TextWrapping = TextWrapping.Wrap,
-            Foreground = Brushes.White,
+            Foreground = Ink,
             FontSize = Text.Body,
+            LineHeight = 18,
         };
 
         saidPanel.Children.Add(saying);
