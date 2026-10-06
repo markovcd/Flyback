@@ -835,7 +835,7 @@ def draw_logo_scene(c, t):
     ap = lin(t, S_LOGO + 4 * B, S_LOGO + 4 * B + 0.5)
     if ap > 0:
         fu = font(28, 620, True)
-        url = "markovcd.github.io/Flyback"
+        url = "flyback.nasik2137.uk"
         tw, _ = measure(url, fu, 0)
         pw, ph = tw + 110, 70
         sc = 0.8 + 0.2 * ease_out_back(ap, 2.4)

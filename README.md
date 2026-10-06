@@ -7,7 +7,7 @@
 
 Flyback is a patchable synthesiser for .NET 10. One graph can generate both a picture and a sound. The visual path and the audio path share the same module graph and are compiled down to the same flat instruction stream.
 
-The [website](https://markovcd.github.io/Flyback/) has screenshots, tutorials and the plugin guide. See [CHANGELOG.md](CHANGELOG.md) for what changed in each release, and the [releases page](https://github.com/markovcd/Flyback/releases) for downloads.
+The [website](https://flyback.nasik2137.uk/) has screenshots, tutorials and the plugin guide. See [CHANGELOG.md](CHANGELOG.md) for what changed in each release, and the [releases page](https://github.com/markovcd/Flyback/releases) for downloads.
 
 ## The premise
 
@@ -298,7 +298,7 @@ The gallery shows the build's stills from `/stills/` where the site has them (AD
 
 `window.flyback` drives the page from a script: `state()` says which preset is open, how many modules and wires it has, which renderer draws the picture and at what rate, and the last thing the editor said; `preset(name)` opens a shipped preset, as `/editor/?preset=<name>` does on load; `openUrl(url, fileName, title)` fetches a shared one and opens it, as `?file=` does, answering null or why it could not; `text()` reads the open patch in the language; `apply(text)` applies text as the text view's Apply does, one edit that one undo takes back, and answers null or what is wrong with it; `sound()` says how the sound is going; `view()` presses View it, which opens the patch as it stands in the web viewer in a tab of its own, and answers the viewer's address, or null where the browser refused the tab.
 
-`./scripts/pages.sh artifacts/pages` builds the site as GitHub Pages serves it, the viewer, the editor and the stills built in, and the `pages` entry in `.claude/launch.json` serves that folder; `AOT=false` makes it quicker.
+`worker/build-assets.sh` builds the website as the Worker serves it, the viewer, the editor and the stills built in, and `worker/dev.sh` serves it; `--no-aot` makes it quicker.
 
 ## How it works
 

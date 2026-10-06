@@ -8,12 +8,6 @@
       "port": 8777
     },
     {
-      "name": "pages",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8778", "--directory", "artifacts/pages"],
-      "port": 8778
-    },
-    {
       "name": "presets",
       "runtimeExecutable": "dotnet",
       "runtimeArgs": ["run", "--project", "src/Flyback.Server"],

@@ -35,9 +35,7 @@ trap 'rm -rf "$work"' EXIT
 rm -rf "$out" "$large"
 mkdir -p "$out"
 
-# The files that name the github.io address stay behind.
 cp -r "$root/site/." "$out/"
-rm -f "$out/sitemap.xml" "$out"/google*.html
 cp -r "$root/src/Flyback.Server/wwwroot/." "$out/"
 
 dotnet publish "$root/src/Flyback.Viewer.Web" -c Release -p:RunAOTCompilation=$aot -o "$work/viewer" -nologo -v:q

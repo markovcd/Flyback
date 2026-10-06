@@ -1,10 +1,8 @@
-# Publishes the website in site/ to GitHub Pages, as it stands on main, with the
-# web viewer (ADR-0160) and the web editor built into it.
-#
-# pages.sh does the building, so a run here and a run on a desk give the same folder.
-# It runs in the SDK image, as the preset site's image builds the viewer, so no build
-# of it is ever committed. Pages must be set to deploy from GitHub Actions
-# (Settings -> Pages -> Source) before the first run can publish.
+# Publishes the page that sends GitHub Pages' visitors to the website on the preset
+# site's Worker (deploy/pages/redirect.html), as index.html and as 404.html, so any
+# path under /Flyback/ goes to the same path there. Pages cannot send an HTTP
+# redirect, and shipped editors still open this address, so the stub stays.
+# Pages must be set to deploy from GitHub Actions (Settings -> Pages -> Source).
 #
 # The actions are pinned to commits rather than tags, as in every workflow here.
 
@@ -14,14 +12,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "site/**"
-      - "src/**"
-      - "Directory.Build.props"
-      - "Directory.Build.targets"
-      - "Directory.Packages.props"
-      - "global.json"
-      - "scripts/stills.sh"
-      - "scripts/pages.sh"
+      - "deploy/pages/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -37,7 +28,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -46,17 +37,11 @@ jobs:
 
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
-      # The workload and the Python its Emscripten runs on, as in the site's Dockerfile, and the ffmpeg the stills are encoded with.
-      - name: Build the site as Pages serves it
-        env:
-          PRESETS_URL: ${{ vars.PRESETS_URL }}
+      - name: Make the pages
         run: |
-          docker run --rm -e PRESETS_URL -v "$PWD:/repo" -w /repo mcr.microsoft.com/dotnet/sdk:10.0 bash -euc '
-            apt-get update
-            apt-get install --yes --no-install-recommends python3 ffmpeg
-            dotnet workload install wasm-tools
-            ./scripts/pages.sh artifacts/pages
-          '
+          mkdir -p artifacts/pages
+          cp deploy/pages/redirect.html artifacts/pages/index.html
+          cp deploy/pages/redirect.html artifacts/pages/404.html
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
