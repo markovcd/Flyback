@@ -136,15 +136,6 @@ curl -X DELETE -H "CF-Access-Client-Id: $FLYBACK_ACCESS_ID" -H "CF-Access-Client
 - **Anonymous reads** of the lists and single entries are kept at the edge and in the browser for `READ_CACHE_SECONDS` (60); the admin, the render queue, files and ratings never are. Unset, nothing is kept.
 - **Writes** are limited per visitor in D1. Reads are not: put a rate-limiting rule on `/api/*` and `/media/*` in the dashboard (Security → WAF), which turns a flood away before the Worker is billed.
 
-## What costs money
-
-A static asset is served without the Worker and costs nothing; everything the Worker answers is a billed request, and each R2 read and D1 row read is billed on top. So:
-
-- Only `/api/*`, `/media/*`, `admin.html` and the `.wasm` files (one may be in R2) reach the Worker first; every other page and framework file is an asset.
-- A media URL carries the render's revision (`?v=`) and is kept for good by browsers and the edge; one without it is checked before each use.
-- Anonymous reads of the lists and single entries are kept for `READ_CACHE_SECONDS` (60) at the edge. The admin's, the render queue's, files and ratings never are.
-- Reads are not rate limited by the Worker. A rate limiting rule on `/api/*` and `/media/*` in the dashboard (Security → WAF) turns a flood away before it is billed.
-
 ## Production
 
 `env.production` in `wrangler.jsonc` names a database and a bucket called `flyback-site`, and the custom domain `flybackmodular.app`, made the way steps 1 to 4 say: the Access application has that hostname as its destinations, and its audience tag is `ACCESS_AUD`. `WORKER_ENVIRONMENT` is `production` and `PRESET_SITE_URL` is `https://flybackmodular.app`.
