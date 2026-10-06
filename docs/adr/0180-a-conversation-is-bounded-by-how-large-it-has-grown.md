@@ -34,8 +34,11 @@ briefing alone is 22k to 34k.
 
 A long conversation about a small patch carries on; a large rebuild stops sooner.
 
-A provider that reports no tokens is not bounded by this, only by
-`TurnLoop.MaxExchanges` within a turn. Every shipped one reports them.
+A provider that reports no tokens is held to an estimate instead: `ContextGauge`
+counts the briefing, the tools and everything said since at four characters a
+token, and each picture or clip still in the conversation at 500. It counts low
+where JSON packs more tokens to a character, so it bounds a runaway rather than
+fitting a window exactly.
 
 A conversation that reaches the limit ends rather than shrinking. Cutting old tool
 answers to a line, as pictures already are after their turn, would let it carry

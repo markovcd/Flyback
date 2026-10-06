@@ -34,7 +34,7 @@ public class TurnLoopTests
 
         conversation.Workbench = bench;
 
-        await foreach (var happened in TurnLoop.Run(conversation, instruction, contextLimit, stop?.Token ?? TestContext.Current.CancellationToken))
+        await foreach (var happened in TurnLoop.Run(conversation, instruction, null, contextLimit, stop?.Token ?? TestContext.Current.CancellationToken))
         {
             events.Add(happened);
 
@@ -68,6 +68,18 @@ public class TurnLoopTests
         conversation.Answered.ShouldHaveSingleItem().Count.ShouldBe(2, "the calls already asked for are answered");
         events[^1].ShouldBeOfType<PatchEvent.Failed>().Message
             .ShouldBe("this conversation has grown to 60,000 tokens, past its limit of 50,000. Start another one.");
+    }
+
+    [Fact]
+    public async Task A_provider_that_reports_no_tokens_is_held_to_an_estimate_of_what_it_was_sent()
+    {
+        var bench = Bench();
+        var conversation = new Scripted(new ModelReply(new string('x', 200_000), Building), new ModelReply(null, [Proposing]));
+
+        var events = await Turn(bench, conversation, contextLimit: 50_000);
+
+        conversation.Sent.ShouldBe(1);
+        events[^1].ShouldBeOfType<PatchEvent.Failed>().Message.ShouldContain("past its limit of 50,000");
     }
 
     [Fact]

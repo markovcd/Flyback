@@ -76,7 +76,7 @@ internal sealed class AssistantSettings
     /// How many tokens one request may send before the conversation has to be
     /// started again. Every request carries the whole conversation, so this caps
     /// what one can cost: a choice about this machine's account rather than about
-    /// any provider. A provider that reports no tokens is not held to it.
+    /// any provider. A provider that reports no tokens is held to an estimate.
     /// </summary>
     public int ContextLimit { get; set; } = DefaultContextLimit;
 

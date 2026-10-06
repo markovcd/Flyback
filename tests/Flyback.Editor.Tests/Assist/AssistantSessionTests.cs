@@ -85,7 +85,7 @@ public sealed class AssistantSessionTests
     {
         using var session = new AssistantSession(transcript);
 
-        session.Begin(Run(maxContext: 1), assistant, AssistantConfig.Unset, new AssistantSettings(), resumed: false, null);
+        session.Begin(Run(maxContext: Talking.Sent - 1), assistant, AssistantConfig.Unset, new AssistantSettings(), resumed: false, null);
 
         session.Spent(assistant, AssistantConfig.Unset).ShouldBeNull();
 
@@ -169,6 +169,9 @@ public sealed class AssistantSessionTests
     /// <summary>Says one thing a turn and remembers nothing.</summary>
     private sealed class Talking : IPatchAssistant
     {
+        /// <summary>How many tokens each turn reports sending: more than the briefing alone is estimated at.</summary>
+        public const int Sent = 60_000;
+
         public string Id => "talking";
 
         public string Name => "Talking";
@@ -194,7 +197,7 @@ public sealed class AssistantSessionTests
                 await Task.Yield();
 
                 yield return new PatchEvent.Said(JsonSerializer.Serialize(instruction));
-                yield return new PatchEvent.Cost(1, 0, 1);
+                yield return new PatchEvent.Cost(Sent, 0, 1);
             }
 
             public void Dispose()

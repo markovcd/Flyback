@@ -59,6 +59,9 @@ internal sealed class AssistantRun : IDisposable
     private CancellationTokenSource? working;
     private bool spent;
 
+    /// <summary>How large the conversation has grown, as reported or, where nothing is, estimated.</summary>
+    private readonly ContextGauge gauge;
+
     /// <summary>Whether the model has been shown the patch, which a conversation it remembers already has.</summary>
     private bool introduced;
 
@@ -112,11 +115,13 @@ internal sealed class AssistantRun : IDisposable
         if (restored is null)
         {
             session = assistant.Start(Workbench, config);
+            gauge = ContextGauge.Of(Workbench);
             return;
         }
 
         Turns = resuming!.Turns;
         Tokens = resuming.Tokens ?? new TokensSpent();
+        gauge = ContextGauge.Of(Workbench, Tokens.Context, resuming.Transcript.Select(line => line.Text));
 
         // The patch may have been saved again after this conversation's last turn,
         // with knobs the workbench never saw.
@@ -171,8 +176,8 @@ internal sealed class AssistantRun : IDisposable
         }
     }
 
-    /// <summary>Whether this conversation's last request sent as many tokens as it may.</summary>
-    public bool Exhausted => Tokens.Context >= MaxContext;
+    /// <summary>Whether this conversation's last request sent as many tokens as it may, or is estimated to have.</summary>
+    public bool Exhausted => gauge.Tokens >= MaxContext;
 
     public PatchWorkbench Workbench { get; }
 
@@ -351,7 +356,7 @@ internal sealed class AssistantRun : IDisposable
 
         if (Exhausted)
         {
-            yield return new PatchEvent.Failed(TurnLoop.Grown(Tokens.Context, MaxContext));
+            yield return new PatchEvent.Failed(TurnLoop.Grown(gauge.Tokens, MaxContext));
             yield break;
         }
 
@@ -406,6 +411,7 @@ internal sealed class AssistantRun : IDisposable
                 else if (happened is PatchEvent.Cost cost)
                 {
                     Tokens = Tokens.Plus(cost);
+                    gauge.Report(cost.Input);
                 }
 
                 yield return happened;
@@ -453,7 +459,7 @@ internal sealed class AssistantRun : IDisposable
         try
         {
             var turn = session is IModelConversation conversation
-                ? TurnLoop.Run(conversation, instruction, MaxContext, cancel)
+                ? TurnLoop.Run(conversation, instruction, gauge, MaxContext, cancel)
                 : session.Ask(instruction, cancel);
 
             events = turn.GetAsyncEnumerator(cancel);

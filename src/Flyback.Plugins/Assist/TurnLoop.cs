@@ -85,20 +85,24 @@ public static class TurnLoop
     public static IAsyncEnumerable<PatchEvent> Run(
         IModelConversation conversation,
         string instruction,
-        CancellationToken cancel = default) => Run(conversation, instruction, int.MaxValue, cancel);
+        CancellationToken cancel = default) => Run(conversation, instruction, null, int.MaxValue, cancel);
 
     /// <summary>
     /// Asks <paramref name="instruction"/> of <paramref name="conversation"/>, and
-    /// stops before a request once the last one sent <paramref name="contextLimit"/>
-    /// tokens or more.
+    /// stops before a request once <paramref name="gauge"/> reads
+    /// <paramref name="contextLimit"/> tokens or more.
     /// </summary>
+    /// <param name="gauge">The conversation's size, carried from turn to turn; a new one where null.</param>
     internal static async IAsyncEnumerable<PatchEvent> Run(
         IModelConversation conversation,
         string instruction,
+        ContextGauge? gauge,
         int contextLimit,
         [EnumeratorCancellation] CancellationToken cancel)
     {
         ArgumentNullException.ThrowIfNull(conversation);
+
+        gauge ??= ContextGauge.Of(conversation.Workbench);
 
         var workbench = conversation.Workbench;
 
@@ -113,6 +117,7 @@ public static class TurnLoop
         // Pictures and clips from earlier turns go as a line each: every request of
         // this turn would otherwise carry them again, and the model can look again.
         conversation.Forget();
+        gauge.ForgetMedia();
 
         if (!workbench.Hears && Unheard.Asked(instruction))
         {
@@ -121,17 +126,17 @@ public static class TurnLoop
         }
 
         conversation.Add(instruction);
+        gauge.Add(instruction);
 
         var nudged = false;
-        var sent = 0;
 
         for (var exchange = 0; exchange < MaxExchanges; exchange++)
         {
             if (cancel.IsCancellationRequested) yield break;
 
-            if (sent >= contextLimit)
+            if (gauge.Tokens >= contextLimit)
             {
-                yield return new PatchEvent.Failed(Grown(sent, contextLimit));
+                yield return new PatchEvent.Failed(Grown(gauge.Tokens, contextLimit));
                 yield break;
             }
 
@@ -163,7 +168,10 @@ public static class TurnLoop
                 yield break;
             }
 
-            sent = reply.Input;
+            gauge.Report(reply.Input);
+            gauge.Add(reply.Text);
+
+            foreach (var call in reply.Calls) gauge.Add(call.Name + call.Arguments);
 
             if (reply.Text is { } text) yield return new PatchEvent.Said(text);
             if (reply.Input > 0 || reply.Output > 0)
@@ -220,6 +228,10 @@ public static class TurnLoop
                     }
 
                     answers.Add(new ToolAnswer(call, said, outcome.Png, conversation.HearsItself ? outcome.Wav : null));
+                    gauge.Add(said);
+
+                    if (outcome.Png is not null) gauge.AddMedia();
+                    if (outcome.Wav is not null && conversation.HearsItself) gauge.AddMedia();
 
                     if (outcome.Png is { } png) yield return new PatchEvent.Saw(png, said);
                     else if (outcome.Wav is { } wav) yield return new PatchEvent.Heard(wav, said);
@@ -249,6 +261,7 @@ public static class TurnLoop
                 {
                     nudged = true;
                     conversation.Add(Unproposed);
+                    gauge.Add(Unproposed);
                     continue;
                 }
 
