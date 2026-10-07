@@ -23,7 +23,7 @@ internal sealed class Decisions(
     public static readonly TimeSpan Deadline = TimeSpan.FromSeconds(10);
 
     /// <summary>No model: every question answers null.</summary>
-    public static Decisions None { get; } = new([], new DecisionSettings { Model = DecisionSettings.Off }, new Credentials(null), new ModelStore(ModelStore.DefaultRoot));
+    public static Decisions None { get; } = new([], new DecisionSettings { Model = DecisionSettings.Off }, new Credentials(null), new ModelStore(null));
 
     public Decisions(PluginCatalog plugins, DecisionSettings settings, Credentials credentials, ModelStore store)
         : this(plugins.DecisionModels, settings, credentials, store)
@@ -115,7 +115,9 @@ internal sealed class Decisions(
 
         try
         {
-            var decision = await model.DecideAsync(request, Config(model), late.Token).ConfigureAwait(false);
+            // Off the caller's thread: a model that runs here may work before its first await.
+            var config = Config(model);
+            var decision = await Task.Run(() => model.DecideAsync(request, config, late.Token), late.Token).ConfigureAwait(false);
             Problem = null;
             return decision;
         }

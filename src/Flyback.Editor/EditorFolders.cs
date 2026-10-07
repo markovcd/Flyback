@@ -4,6 +4,7 @@ using Flyback.Editor.Files;
 using Flyback.Editor.Gallery;
 using Flyback.Editor.Site;
 using Flyback.Editor.Windows;
+using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui.Midi;
 using Flyback.Ui;
@@ -53,6 +54,9 @@ public sealed record EditorFolders : IPresetFolder
     /// <summary>Where each shared preset opened is kept, to open again while the site does not answer. Null keeps none.</summary>
     public string? SharedPresetFolder { get; init; }
 
+    /// <summary>Where decision models keep their downloaded files. Null keeps none, so no model that needs one can answer.</summary>
+    public string? ModelFolder { get; init; }
+
     /// <summary>Where this machine keeps everything.</summary>
     public static EditorFolders ThisMachine() => new()
     {
@@ -66,5 +70,6 @@ public sealed record EditorFolders : IPresetFolder
         PluginFolder = PluginHost.DefaultDirectory,
         AllowedPluginsPath = PluginAllowances.DefaultFile,
         SharedPresetFolder = KeptSharedPresets.DefaultFolder,
+        ModelFolder = ModelStore.DefaultRoot,
     };
 }

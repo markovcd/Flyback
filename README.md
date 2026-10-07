@@ -43,6 +43,7 @@ dotnet run --project src/Flyback.Editor.Desktop -c Release
 - Plugin-based architecture for platform-specific audio/video backends and extensions
 - Patch bundles that package the patch with its referenced sample and image files
 - Agentic patch authoring through a model-backed assistant that can listen, propose changes and work inside the same patch graph — over any chat-completions endpoint, over Gemini, whose models hear the patch themselves, or through the Claude Code or Codex you are signed in to, with no API key
+- A decision model, run here or hosted, that answers small questions about words with a probability: the module list finds a module by what a phrase means (Settings → Decisions), and does without one exactly as before
 - Cross-platform publish targets for Windows, macOS and Linux
 - Updates itself from signed GitHub releases: downloads a new release in the background and installs it at the next start (Settings → Privacy to turn off)
 - Counts how it is used — version, operating system, plugins and sound backend, the rough size of the machine, the kinds of module in a patch that plays, which assistant is asked, how long a run lasts and what it did, and where it crashed — anonymously, in coarse bands, and with nothing about any patch in it (Settings → Privacy to turn off)
@@ -177,6 +178,7 @@ flyback-cli probe --provider all
 flyback-cli ask drone.fbk "slower, and warmer"
 flyback-cli decide "make the bass slower" --yes-no "Does this ask for an edit?" --json
 flyback-cli decide --status
+flyback-cli modules --find "a mirror maze of shards"
 flyback-cli ask --preset "Plasma" -o plasma.fbkb --model gpt-4.1 "make it blue"
 flyback-cli viewer nebula.fbk
 ```
@@ -197,7 +199,7 @@ flyback-cli viewer nebula.fbk
 - `print`: writes the patch out as text in the language, and can check that the text builds back to the same program; `--preset` prints a shipped preset by name, and `--presets` lists them
 - `save`: saves the patch as the file `--out`'s extension names: `.fbk`, `.fbks` or `.fbkb`; `--preset` saves a shipped preset as a patch to open and change. A preset that plays recordings it carries saved as `.fbk` or `.fbks` is written, and exits `1` saying `.fbkb` would take them along
 - `compare`: plays two patches side by side for `--seconds` at `--size` and says whether they are the same instrument, sample for sample and pixel for pixel, and where they first part when they are not; it exits `1` when they differ
-- `modules`: lists the modules this build has, and which plugin defines each; given one by type id or name, it describes that module: each socket's default and range, where `|>` lands, what it carries besides its sockets and what it does
+- `modules`: lists the modules this build has, and which plugin defines each; given one by type id or name, it describes that module: each socket's default and range, where `|>` lands, what it carries besides its sockets and what it does; `--find "<phrase>"` lists the modules a phrase describes, likeliest first, as the decision model ranks them
 - `probe`: asks an assistant which models it has and what each one accepts
 - `ask`: asks the assistant the editor is set to about a patch, and writes its answer back into the file with the conversation, where the next `ask` and the editor carry it on: inside a `.fbkb`, beside a `.fbk` or `.fbks`. A file that does not exist yet starts empty, and `--out` writes elsewhere. With no message it reads one from standard input, or asks line by line at a terminal. `--provider`, `--model` and `--set key=value` change the settings for one run, `--fresh` starts a new conversation, `--seen` keeps every picture it looked at and sound it heard, `--briefing` prints what it is handed, `--expand` prints the message written out in full, as the editor's Expand does, and builds and writes nothing, and `--json` writes one object a line, each tool call and its arguments included. Each turn ends with what it cost: its requests, the tokens they sent, had cached and wrote, and any time spent waiting out a rate limit. It exits `2` when a turn fails
 - `decide`: asks the decision model the settings choose typed questions about some text, given as an argument or `-` for standard input: `--yes-no`, `--choice` with `--option label=description`, `--score` with `--level`, or a file of them in the System One format with `--ask`. Each answer comes with its probability, and `--json` writes the format's own answer. `--model` asks another, `--status` lists them and what each lacks, and `--prepare` downloads what one needs after a yes, which `--yes` gives for a script

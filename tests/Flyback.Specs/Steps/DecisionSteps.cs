@@ -1,5 +1,9 @@
 using System.Text.Json.Nodes;
 using Flyback.Cli.Commands;
+using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
+using Flyback.Plugins.Assist;
+using Flyback.Plugins.Settings;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Plugins.Decide;
@@ -34,7 +38,46 @@ public sealed class DecisionSteps : IDisposable
     }
 
     [Given("decisions are turned off")]
-    public void GivenOff() => new DecisionSettings { Model = DecisionSettings.Off }.Save(SettingsPath);
+    public void GivenOff()
+    {
+        catalog ??= PluginHost.Load(PluginHost.DefaultDirectory, PluginTrust.Shipped(PluginHost.DefaultDirectory));
+        new DecisionSettings { Model = DecisionSettings.Off }.Save(SettingsPath);
+    }
+
+    [Given("a decision model that takes {string} to mean a Kaleidoscope")]
+    public void GivenKaleidoscopic(string phrase)
+    {
+        catalog = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, [], decisionModels: [new Meaning(phrase, "space.kaleidoscope", "Geometry")]);
+        new DecisionSettings().Save(SettingsPath);
+    }
+
+    [When("flyback-cli finds the modules {string} describes")]
+    public async Task WhenFound(string phrase)
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        code = await ModulesCommand.FindAsync(
+            catalog.ShouldNotBeNull(),
+            NodeCatalog.BuiltIn,
+            phrase,
+            json: true,
+            output,
+            error,
+            CancellationToken.None,
+            SettingsPath,
+            Path.Combine(folder.FullName, "models"));
+
+        said = output.ToString();
+        complained = error.ToString();
+    }
+
+    [Then("the first module found is the Kaleidoscope")]
+    public void ThenKaleidoscope()
+    {
+        code.ShouldBe(Exit.Ok, complained);
+        JsonNode.Parse(said)!.AsArray()[0]!["typeId"]!.GetValue<string>().ShouldBe("space.kaleidoscope");
+    }
 
     [When("flyback-cli decides whether {string} is about money, as JSON")]
     public async Task WhenDecided(string state)
@@ -72,5 +115,34 @@ public sealed class DecisionSteps : IDisposable
     {
         code.ShouldBe(Exit.Failed);
         complained.ShouldContain("No decision model is in use");
+    }
+
+    /// <summary>Takes one phrase to mean one module of one category, and anything else to mean none of them.</summary>
+    private sealed class Meaning(string phrase, string module, string category) : IDecisionModel
+    {
+        public string Id => "meaning";
+
+        public string Name => "Meaning";
+
+        public int Priority => 0;
+
+        public AssistantCredential? Credential => null;
+
+        public IReadOnlyList<SettingField> Form(SettingValues values) => [];
+
+        public string? Unavailable(DecisionConfig config) => null;
+
+        public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel) =>
+            Task.FromResult(new Decision("meaning", request.Questions.ToDictionary(q => q.Key, q => Chosen(request.State, (Question.Choice)q.Value)), DecisionUsage.None));
+
+        private Answer Chosen(string state, Question.Choice choice)
+        {
+            var wanted = state != phrase ? "none"
+                : choice.Options.Any(o => o.Label == module) ? module
+                : choice.Options.Any(o => o.Label == category) ? category
+                : "none";
+
+            return new Answer.Chosen(wanted, choice.Options.ToDictionary(o => o.Label, o => o.Label == wanted ? 0.9 : 0.1 / choice.Options.Count), 0.9);
+        }
     }
 }

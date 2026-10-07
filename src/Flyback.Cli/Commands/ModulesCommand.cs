@@ -3,6 +3,10 @@ using System.Text.Json;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
+using Flyback.Plugins.Assist;
+using Flyback.Plugins.Decide;
+using Flyback.Plugins.Hosting;
 using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
@@ -27,16 +31,24 @@ internal static class ModulesCommand
             Arity = ArgumentArity.ZeroOrOne,
         };
 
-        var command = new Command("modules", "Say what modules this build has, or everything about one of them.")
+        var find = new Option<string?>("--find")
         {
-            module, json,
+            Description = "List the modules a phrase describes, likeliest first, as the decision model the settings choose ranks them.",
         };
 
-        command.SetAction(result =>
+        var command = new Command("modules", "Say what modules this build has, or everything about one of them.")
+        {
+            module, find, json,
+        };
+
+        command.SetAction(async (result, cancel) =>
         {
             plugins.Ready();
 
             var output = result.InvocationConfiguration.Output;
+
+            if (result.GetValue(find) is { } phrase)
+                return await FindAsync(plugins.Catalog, NodeCatalog.Current, phrase, result.GetValue(json), output, result.InvocationConfiguration.Error, cancel);
 
             return result.GetValue(module) is { } wanted
                 ? Describe(
@@ -45,6 +57,57 @@ internal static class ModulesCommand
         });
 
         return command;
+    }
+
+    /// <summary>The modules <paramref name="phrase"/> describes, by meaning, with how likely each is.</summary>
+    /// <param name="settingsPath">Somewhere other than the usual place, for the tests.</param>
+    public static async Task<int> FindAsync(
+        PluginCatalog plugins,
+        ModuleCatalog catalog,
+        string phrase,
+        bool json,
+        TextWriter output,
+        TextWriter error,
+        CancellationToken cancel,
+        string? settingsPath = null,
+        string? modelsRoot = null)
+    {
+        var decisions = new Decisions(
+            plugins,
+            DecisionSettings.Load(settingsPath),
+            new Credentials(plugins.PreferredSecretStore),
+            new ModelStore(modelsRoot ?? ModelStore.DefaultRoot));
+
+        if (decisions.Unavailable() is { } why)
+        {
+            error.WriteLine(why);
+            return Exit.Failed;
+        }
+
+        var candidates = catalog.All.Where(d => !NodeCatalog.IsSink(d.TypeId) && !ExpressionFusion.Retired(d)).ToList();
+        var found = await new ModuleFinder(decisions).Find(phrase, candidates, cancel).ConfigureAwait(false);
+
+        if (found.Count == 0 && decisions.Problem is { } problem)
+        {
+            error.WriteLine(problem);
+            return Exit.Failed;
+        }
+
+        if (json)
+        {
+            output.WriteLine(JsonSerializer.Serialize(
+                found.Select(f => new { typeId = f.Module.TypeId, name = f.Module.Name, category = f.Module.Category, probability = f.Probability }),
+                Writing.Json));
+
+            return Exit.Ok;
+        }
+
+        if (found.Count == 0) output.WriteLine($"No module was taken to mean “{phrase}”.");
+
+        foreach (var f in found)
+            output.WriteLine($"{f.Module.TypeId,-24} {f.Module.Name,-20} {f.Probability.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)}");
+
+        return Exit.Ok;
     }
 
     public static int Run(ModuleCatalog catalog, bool json, TextWriter output)

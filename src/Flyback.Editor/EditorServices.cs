@@ -6,6 +6,7 @@ using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Capture;
 using Flyback.Editor.Controls;
+using Flyback.Editor.Decide;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Files;
 using Flyback.Editor.Gallery;
@@ -20,6 +21,7 @@ using Flyback.Editor.Statistics;
 using Flyback.Editor.Updates;
 using Flyback.Editor.Windows;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Flyback.Ui;
@@ -88,6 +90,9 @@ internal static class EditorServices
                 AutomaticDecompression = DecompressionMethods.Brotli | DecompressionMethods.GZip | DecompressionMethods.Deflate,
             });
 
+        // A model is hundreds of megabytes, so a download has no deadline but a cancel.
+        services.AddHttpClient(DecisionsSection.Client, http => http.Timeout = Timeout.InfiniteTimeSpan);
+
         services.AddSingleton<IlCompiler>();
 
         services.AddSingleton<IPresetFolder>(setup.Folders);
@@ -129,6 +134,14 @@ internal static class EditorServices
         services.AddSingleton<AssistantSettingsPage>();
         services.AddPart<ChosenAssistant>();
 
+        services.AddSingleton<DecisionSettingRepository>();
+        services.AddSingleton(sp => new Decisions(
+            sp.GetRequiredService<PluginCatalog>(),
+            sp.GetRequiredService<DecisionSettingRepository>().Current,
+            sp.GetRequiredService<Credentials>(),
+            new ModelStore(sp.GetRequiredService<EditorFolders>().ModelFolder)));
+        services.AddSingleton<ModuleFinder>();
+
         services.AddPart<WorkKeeper>();
         services.AddPart<WindowLayoutKeeper>();
 
@@ -166,6 +179,7 @@ internal static class EditorServices
         services.AddPart<CanvasSection>();
         services.AddPart<FilesSection>();
         services.AddPart<AssistantSection>();
+        services.AddPart<DecisionsSection>();
         services.AddPart<UpdatesSection>();
         services.AddPart<UsageSection>();
         services.AddPart<PrivacySection>();

@@ -11,6 +11,8 @@ using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Knobs;
 using Flyback.Core.Graph;
+using FoundModule = Flyback.Plugins.Decide.FoundModule;
+using ModuleFinder = Flyback.Plugins.Decide.ModuleFinder;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Canvas;
@@ -52,6 +54,18 @@ public sealed class ModulePalette : UserControl
     private readonly Action<string> chosen;
     private readonly GroupLibrary groups;
     private readonly Action<SavedGroup> adding;
+
+    /// <summary>What finds a module by what a phrase means, or null where nothing can.</summary>
+    private readonly ModuleFinder? finder;
+
+    /// <summary>The search by meaning still under way, which the next keystroke stops.</summary>
+    private CancellationTokenSource? seeking;
+
+    /// <summary>What the last search by meaning found, and for which phrase.</summary>
+    private (string Phrase, IReadOnlyList<FoundModule> Found) likely = ("", []);
+
+    /// <summary>How long typing has to pause before a phrase is asked about.</summary>
+    internal static TimeSpan Pause { get; set; } = TimeSpan.FromMilliseconds(250);
 
     /// <summary>
     /// The instruments plugged in that Flyback knows by name, asked on the way
@@ -129,14 +143,17 @@ public sealed class ModulePalette : UserControl
     /// <param name="adding">Called with the kept group that was picked.</param>
     /// <param name="instruments">The instruments plugged in and known by name, listed above the groups.</param>
     /// <param name="addingInstrument">Called with the instrument that was picked.</param>
+    /// <param name="finder">What finds a module by what a phrase means, or null for spelling alone.</param>
     internal ModulePalette(
         ModuleCatalog catalog,
         Action<string> chosen,
         GroupLibrary groups,
         Action<SavedGroup> adding,
         Func<IReadOnlyList<PanelInstrument>>? instruments = null,
-        Action<PanelInstrument>? addingInstrument = null)
+        Action<PanelInstrument>? addingInstrument = null,
+        ModuleFinder? finder = null)
     {
+        this.finder = finder;
         this.catalog = catalog;
         this.chosen = chosen;
         this.groups = groups;
@@ -378,7 +395,19 @@ public sealed class ModulePalette : UserControl
         listed.Clear();
         highlighted = -1;
 
-        if (matches.Count == 0 && kept.Count == 0 && plugged.Count == 0)
+        Seek(text, matches.Count);
+
+        var meant = likely.Phrase == text && text.Length > 0 ? likely.Found : [];
+
+        // First, so Enter adds the likeliest: a phrase is asked about only when what it spells finds little.
+        if (meant.Count > 0)
+        {
+            modules.Children.Add(Heading("LIKELY", Colors.Muted));
+
+            foreach (var found in meant) modules.Children.Add(Row(found.Module, ModuleButton(found.Module)));
+        }
+
+        if (matches.Count == 0 && kept.Count == 0 && plugged.Count == 0 && meant.Count == 0)
         {
             modules.Children.Add(Hint(
                 hidden.Count == catalog.Providers.Count ? "No plugins are ticked."
@@ -420,44 +449,84 @@ public sealed class ModulePalette : UserControl
             modules.Children.Add(Heading(category.ToUpperInvariant(), Colors.Accent(category)));
 
             foreach (var def in matches.Where(d => d.Category == category))
-            {
-                // A Maths module an Expression stands for is found by its name and
-                // added as the Expression, so it says which (ADR-0109).
-                var retired = ExpressionFusion.Retired(def);
-
-                var button = new Button
-                {
-                    Content = retired ? $"{def.Name}: {ExpressionFusion.Template(def)}" : def.Name,
-                    HorizontalAlignment = HorizontalAlignment.Stretch,
-                    HorizontalContentAlignment = HorizontalAlignment.Left,
-                    Padding = new Thickness(8, 4),
-                    FontSize = Text.Body,
-                };
-
-                // Naming the plugin only where it is not the engine keeps the
-                // built-in modules reading as they always did, and tells you
-                // which patches will need something installed to open.
-                var from = catalog.ProviderOf(def.TypeId);
-                var origin = from is null || from.Id == NodeCatalog.BuiltInProvider.Id
-                    ? string.Empty
-                    : $"{Environment.NewLine}{Environment.NewLine}From {from.Name} ({from.Id})";
-
-                var tip = (retired ? $"Adds an Expression, {ExpressionFusion.Template(def)}.{Environment.NewLine}{Environment.NewLine}" : string.Empty)
-                    + def.Description + origin;
-                if (tip.Length > 0) ToolTip.SetTip(button, tip);
-
-                var typeId = def.TypeId;
-                button.Click += (_, _) => chosen(typeId);
-
-                modules.Children.Add(Row(def, button));
-                listed.Add(button);
-            }
+                modules.Children.Add(Row(def, ModuleButton(def)));
         }
 
         // The first match, so that typing a few letters and pressing Enter adds
         // what you were after without a single arrow key. That is the fast path,
         // and there is no sense in which the list has no answer yet.
         Highlight(0);
+    }
+
+    /// <summary>A module's button, listed for the arrows to reach.</summary>
+    private Button ModuleButton(NodeDef def)
+    {
+        // A Maths module an Expression stands for is found by its name and
+        // added as the Expression, so it says which (ADR-0109).
+        var retired = ExpressionFusion.Retired(def);
+
+        var button = new Button
+        {
+            Content = retired ? $"{def.Name}: {ExpressionFusion.Template(def)}" : def.Name,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+            Padding = new Thickness(8, 4),
+            FontSize = Text.Body,
+        };
+
+        // Naming the plugin only where it is not the engine keeps the
+        // built-in modules reading as they always did, and tells you
+        // which patches will need something installed to open.
+        var from = catalog.ProviderOf(def.TypeId);
+        var origin = from is null || from.Id == NodeCatalog.BuiltInProvider.Id
+            ? string.Empty
+            : $"{Environment.NewLine}{Environment.NewLine}From {from.Name} ({from.Id})";
+
+        var tip = (retired ? $"Adds an Expression, {ExpressionFusion.Template(def)}.{Environment.NewLine}{Environment.NewLine}" : string.Empty)
+            + def.Description + origin;
+        if (tip.Length > 0) ToolTip.SetTip(button, tip);
+
+        var typeId = def.TypeId;
+        button.Click += (_, _) => chosen(typeId);
+
+        listed.Add(button);
+        return button;
+    }
+
+    /// <summary>
+    /// Asks what <paramref name="text"/> means once typing pauses, where what it spells found
+    /// little, and lists the answer when it arrives for the phrase still in the box.
+    /// </summary>
+    private void Seek(string text, int spelled)
+    {
+        seeking?.Cancel();
+        seeking = null;
+
+        if (finder is null || likely.Phrase == text || !ModuleFinder.Wanted(text, spelled)) return;
+
+        var stop = new CancellationTokenSource();
+        seeking = stop;
+
+        _ = Asked();
+
+        async Task Asked()
+        {
+            try
+            {
+                await Task.Delay(Pause, stop.Token);
+
+                var found = await finder.Find(text, [.. catalog.All.Where(d => Matches(d, string.Empty))], stop.Token);
+
+                if (stop.IsCancellationRequested || (filter.Text?.Trim() ?? string.Empty) != text) return;
+
+                likely = (text, found);
+                if (found.Count > 0) Fill();
+            }
+            catch (OperationCanceledException)
+            {
+                // The next keystroke asked something else.
+            }
+        }
     }
 
     /// <summary>

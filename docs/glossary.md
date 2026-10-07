@@ -120,7 +120,7 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | **question**, **answer** | What a decision model is asked, of three kinds: a **choice** of options, a **score** on a scale, a **yes-no**; and what it says back, with a **confidence**. | `Question`, `Answer`; the wire spells yes-no `noul` | prompt, label, prediction |
 | **workbench** | Everything an assistant may do to a patch, and its limits. | `PatchWorkbench` | tools |
 | **conversation** | What was said to an assistant, saved with the patch it is about. | — | chat, thread, session |
-| **Settings** | The settings window and its sections: Picture, Sound, MIDI, Recording, Canvas, Files, Assistant, Privacy. | `MainWindow` builds it | preferences, options |
+| **Settings** | The settings window and its sections: Picture, Sound, MIDI, Recording, Canvas, Files, Assistant, Decisions, Privacy. | `MainWindow` builds it | preferences, options |
 
 ## Playing and recording
 

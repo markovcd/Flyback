@@ -5,6 +5,7 @@ using Flyback.Ui.Midi;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Statistics;
 using Flyback.Core.Graph;
+using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.Editor.Canvas;
@@ -67,7 +68,8 @@ internal sealed class Palette
         PanelKnobs knobs,
         OutputSettingRepository repository,
         EditorFolders folders,
-        LastPress lastPress)
+        LastPress lastPress,
+        ModuleFinder finder)
     {
         var groupFolder = folders.GroupFolder ?? Path.Combine(Path.GetTempPath(), "flyback-no-groups", Guid.NewGuid().ToString("N"));
 
@@ -82,7 +84,7 @@ internal sealed class Palette
 
         // Built when first shown: it lays out a button for every module and asks
         // the hardware which instruments are plugged in.
-        list = new Lazy<ModulePalette>(() => new ModulePalette(plugins.Modules, Add, Groups, AddGroup, knobs.View.Instruments, AddInstrument));
+        list = new Lazy<ModulePalette>(() => new ModulePalette(plugins.Modules, Add, Groups, AddGroup, knobs.View.Instruments, AddInstrument, finder));
 
         Flyout.FlyoutPresenterClasses.Add(ModulePalette.PresenterClass);
 

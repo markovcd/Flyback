@@ -201,7 +201,7 @@ public class OutputSettingsTests : EditorTest
         var tabs = Tabs(dialog);
 
         tabs.Items.Cast<TabItem>().Select(t => (t.Header as TextBlock)?.Text)
-            .ShouldBe(["Picture", "Sound", "MIDI", "Recording", "Canvas", "Files", "Assistant", "Privacy"]);
+            .ShouldBe(["Picture", "Sound", "MIDI", "Recording", "Canvas", "Files", "Assistant", "Decisions", "Privacy"]);
         tabs.SelectedIndex.ShouldBe(0);
         tabs.TabStripPlacement.ShouldBe(Dock.Left, "the sections are a list down the left");
         tabs.Items.Cast<TabItem>().Select(t => t.Bounds.X).Distinct().Count()

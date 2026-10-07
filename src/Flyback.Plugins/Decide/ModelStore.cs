@@ -7,15 +7,16 @@ namespace Flyback.Plugins.Decide;
 /// Where a decision model's files are kept, one folder per model, and the one way they get
 /// there: downloaded beside, hashed on the way in, and moved into place only when the hash is the pinned one.
 /// </summary>
-internal sealed class ModelStore(string root)
+internal sealed class ModelStore(string? root)
 {
     /// <summary>Where this machine keeps models.</summary>
     public static string DefaultRoot => Path.Combine(GlobalConstants.DataFolder, "models");
 
-    public string Root => root;
+    /// <summary>Where models are kept, or null where none are, which leaves every model that needs files unprepared.</summary>
+    public string? Root => root;
 
     /// <summary>The folder <paramref name="model"/>'s files go in, or null for an id that cannot name one.</summary>
-    public string? FolderOf(IDecisionModel model) => FolderName(model.Id) ? Path.Combine(root, model.Id) : null;
+    public string? FolderOf(IDecisionModel model) => root is not null && FolderName(model.Id) ? Path.Combine(root, model.Id) : null;
 
     /// <summary>Whether <paramref name="model"/> needs nothing it does not already have.</summary>
     public bool Prepared(IDecisionModel model)
@@ -52,7 +53,7 @@ internal sealed class ModelStore(string root)
 
         if (model is not IPreparedModel prepared) return;
 
-        var folder = FolderOf(model) ?? throw new InvalidDataException($"'{model.Id}' cannot name a folder.");
+        var folder = FolderOf(model) ?? throw new InvalidDataException(root is null ? "There is nowhere to keep a model." : $"'{model.Id}' cannot name a folder.");
         var wanted = prepared.Needs.Where(f => !Present(folder, f)).ToList();
 
         foreach (var file in wanted)
