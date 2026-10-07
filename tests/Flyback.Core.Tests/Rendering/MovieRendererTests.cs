@@ -150,6 +150,26 @@ public class MovieRendererTests
         BinaryPrimitives.ReadUInt32LittleEndian(avi.AsSpan(4)).ShouldBe((uint)(avi.Length - 8));
     }
 
+    /// <summary>
+    /// A clip from a second in is the tail of the clip from the start: the picture's
+    /// history and the sound are in the state they would have been in.
+    /// </summary>
+    [Fact]
+    public void A_clip_from_a_second_in_is_the_tail_of_the_whole_clip()
+    {
+        var whole = Export(new MovieSettings(64, 48, 1d, 10d));
+        var tail = Export(new MovieSettings(64, 48, 0.5d, 10d, From: 0.5d));
+
+        Chunks(tail, "00dc").ShouldBe(5);
+
+        Contents(tail, "00dc").ShouldBe(Contents(whole, "00dc").Skip(5));
+        Contents(tail, "01wb").ShouldBe(Contents(whole, "01wb").Skip(5));
+    }
+
+    [Fact]
+    public void A_clip_cannot_start_before_the_patch_does() =>
+        Should.Throw<ArgumentOutOfRangeException>(() => Export(Small with { From = -1d }));
+
     [Fact]
     public void A_zero_length_export_is_refused_rather_than_written_empty()
     {
@@ -415,6 +435,9 @@ public class MovieRendererTests
     }
 
     private static int Chunks(byte[] avi, string fourCc) => Movi(avi, fourCc).Count;
+
+    private static List<string> Contents(byte[] avi, string fourCc) =>
+        [.. Movi(avi, fourCc).Select(chunk => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(avi.AsSpan(chunk.Offset, (int)chunk.Size))))];
 
     private static byte[] FirstFrame(byte[] avi)
     {

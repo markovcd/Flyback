@@ -17,6 +17,10 @@
 /// <param name="Ffmpeg">Where ffmpeg is, for a format that needs one.</param>
 /// <param name="Oversample">How many times the output rate the sound is evaluated at.</param>
 /// <param name="Input">What a Line In hears, or null for silence.</param>
+/// <param name="From">
+/// The second the clip starts at. The patch is played up to it unrecorded, so feedback, sequencers
+/// and the sound arrive in the state they would be in.
+/// </param>
 public readonly record struct MovieSettings(
     int Width,
     int Height,
@@ -26,10 +30,14 @@ public readonly record struct MovieSettings(
     ClipFormat? Format = null,
     string? Ffmpeg = null,
     int Oversample = AudioRenderer.DefaultOversample,
-    ILineInSource? Input = null)
+    ILineInSource? Input = null,
+    double From = 0d)
 {
     /// <summary>Always at least one, so the shortest export is still a picture.</summary>
     public int FrameCount => Math.Max(1, (int)Math.Round(Seconds * FramesPerSecond));
+
+    /// <summary>The frames played before the first one written.</summary>
+    public int SkippedFrames => (int)Math.Round(From * FramesPerSecond);
 
     /// <summary>The format asked for, or the one written here.</summary>
     public ClipFormat Written => Format ?? ClipFormats.MotionJpegAvi;

@@ -106,6 +106,7 @@ public static class MovieRenderer
     {
         if (settings.Width <= 0 || settings.Height <= 0) throw new ArgumentOutOfRangeException(nameof(settings), "A frame needs both dimensions.");
         if (settings.FramesPerSecond <= 0d) throw new ArgumentOutOfRangeException(nameof(settings), "A frame rate has to be positive.");
+        if (!double.IsFinite(settings.From) || settings.From < 0d) throw new ArgumentOutOfRangeException(nameof(settings), "A clip cannot start before the patch does.");
         if (settings.Seconds <= 0d) throw new ArgumentOutOfRangeException(nameof(settings), "An export has to have a length.");
         if (!settings.Written.HasPicture) throw new ArgumentOutOfRangeException(nameof(settings), "A clip of a patch has a picture in it.");
     }
@@ -128,6 +129,7 @@ public static class MovieRenderer
         var width = settings.Width;
         var height = settings.Height;
 
+        var skipped = settings.SkippedFrames;
         var total = settings.FrameCount;
         var rate = settings.FramesPerSecond;
         var stride = width * 4;
@@ -148,9 +150,12 @@ public static class MovieRenderer
         // then this whole apparatus is one allocation of nothing.
         var heard = new LiveValues(video.LiveInputs);
 
-        for (var frame = 0; frame < total; frame++)
+        // The frames before the start are played and not written: the picture's history is state too.
+        for (var frame = 0; frame < skipped + total; frame++)
         {
             if (cancellation.IsCancellationRequested) break;
+
+            var recorded = frame >= skipped;
 
             var sounded = 0;
 
@@ -170,7 +175,7 @@ public static class MovieRenderer
                     if (samples.Length < sounded) samples = new float[sounded];
 
                     speaker.Render(audio, samples.AsSpan(0, sounded));
-                    loudness?.Add(samples.AsSpan(0, sounded));
+                    if (recorded) loudness?.Add(samples.AsSpan(0, sounded));
                     written = due;
                 }
 
@@ -194,11 +199,14 @@ public static class MovieRenderer
             // track that counts its own samples exactly.
             frames.Render(video, frame / rate, width, height, pixels, stride, heard);
 
-            clip.WriteFrame(pixels, stride);
+            if (recorded)
+            {
+                clip.WriteFrame(pixels, stride);
 
-            if (sounded > 0) clip.WriteAudio(samples.AsSpan(0, sounded));
+                if (sounded > 0) clip.WriteAudio(samples.AsSpan(0, sounded));
+            }
 
-            progress?.Report((frame + 1) / (double)total);
+            progress?.Report((frame + 1) / (double)(skipped + total));
         }
 
         return (int)clip.FrameCount;

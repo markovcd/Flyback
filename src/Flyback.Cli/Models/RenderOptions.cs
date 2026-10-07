@@ -19,6 +19,7 @@ namespace Flyback.Cli.Models;
 /// <param name="Backend">What draws the picture.</param>
 /// <param name="Oversample">How many times the output rate the sound is evaluated at: one of <see cref="AudioRenderer.Oversamples"/>.</param>
 /// <param name="Input">A sound file a Line In hears in place of a microphone, from its start; null for silence.</param>
+/// <param name="From">The second a clip or a sound starts at; the patch is played up to it unrecorded.</param>
 internal sealed record RenderOptions(
     FileInfo Out,
     int Width = 1920,
@@ -33,4 +34,5 @@ internal sealed record RenderOptions(
     bool Interpreted = false,
     PictureBackend Backend = PictureBackend.Any,
     int Oversample = AudioRenderer.DefaultOversample,
-    FileInfo? Input = null);
+    FileInfo? Input = null,
+    double From = 0d);

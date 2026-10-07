@@ -344,6 +344,39 @@ public class CommandTests
         output.ShouldContain("no sound to measure");
     }
 
+    [Fact]
+    public void A_sound_from_a_second_in_is_the_tail_of_the_whole_sound()
+    {
+        using var directory = new Scratch();
+        var whole = directory.File("whole.wav");
+        var tail = directory.File("tail.wav");
+
+        Run((_, e) => RenderCommand.Run(Preset("Drone"), new RenderOptions(whole, 64, 36, Seconds: 1.5d), e)).Code.ShouldBe(Exit.Ok);
+        Run((_, e) => RenderCommand.Run(Preset("Drone"), new RenderOptions(tail, 64, 36, Seconds: 0.5d, From: 1d), e)).Code.ShouldBe(Exit.Ok);
+
+        var all = WavReader.Read(whole.FullName, out _).ShouldNotBeNull().Samples;
+        var rest = WavReader.Read(tail.FullName, out _).ShouldNotBeNull().Samples;
+
+        rest.Length.ShouldBe(all.Length / 3);
+        rest.ShouldBe(all[^rest.Length..]);
+    }
+
+    [Theory]
+    [InlineData("out.png", 1d, "--at picks a still's moment")]
+    [InlineData("out.wav", -1d, "from 0")]
+    public void A_start_a_file_cannot_have_is_refused_before_anything_is_written(string name, double from, string said)
+    {
+        using var directory = new Scratch();
+        var file = directory.File(name);
+
+        var (code, _, error) = Run((_, e) => RenderCommand.Run(Preset("Drone"), new RenderOptions(file, 64, 36, From: from), e));
+
+        code.ShouldBe(Exit.Failed);
+        error.ShouldContain(said);
+        file.Refresh();
+        file.Exists.ShouldBeFalse();
+    }
+
     /// <summary>
     /// A file made of stand-ins looks exactly like a real one, so it is not
     /// written at all.

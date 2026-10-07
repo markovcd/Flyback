@@ -42,6 +42,18 @@ internal static class RenderCommand
 
         var still = options.Out.Extension.Equals(".png", StringComparison.OrdinalIgnoreCase);
 
+        if (!double.IsFinite(options.From) || options.From < 0d)
+        {
+            error.WriteLine($"{GlobalConstants.ApplicationName}: --from is a second of the patch, from 0.");
+            return Exit.Failed;
+        }
+
+        if (still && options.From > 0d)
+        {
+            error.WriteLine($"{GlobalConstants.ApplicationName}: --from starts a clip or a sound; --at picks a still's moment.");
+            return Exit.Failed;
+        }
+
         var asked = still ? null : options.Format;
 
         if (asked is not null && ClipFormats.ById(asked) is null)
@@ -269,12 +281,7 @@ internal static class RenderCommand
                 Input = input,
             };
 
-            // A second at a time, so a still an hour in does not hold the hour.
-            var left = (long)Math.Round(options.At * speaker.SampleRate);
-            var chunk = new float[speaker.SampleRate * NodeCatalog.AudioChannels];
-
-            for (; left > 0; left -= speaker.SampleRate)
-                speaker.Render(audio, chunk.AsSpan(0, (int)Math.Min(left, speaker.SampleRate) * NodeCatalog.AudioChannels));
+            Play(speaker, audio, options.At);
 
             Meters.Refresh(audio, speaker.Memory, heard);
             Traces.Refresh(program, audio, speaker.Memory);
@@ -285,12 +292,26 @@ internal static class RenderCommand
         PngWriter.WriteBgra(options.Out.FullName, pixels, options.Width, options.Height, stride);
     }
 
+    /// <summary>Plays <paramref name="program"/> through <paramref name="speaker"/> for <paramref name="seconds"/> and keeps none of it.</summary>
+    private static void Play(AudioRenderer speaker, CompiledPatch program, double seconds)
+    {
+        // A second at a time, so a start an hour in does not hold the hour.
+        var left = (long)Math.Round(seconds * speaker.SampleRate);
+        var chunk = new float[speaker.SampleRate * NodeCatalog.AudioChannels];
+
+        for (; left > 0; left -= speaker.SampleRate)
+            speaker.Render(program, chunk.AsSpan(0, (int)Math.Min(left, speaker.SampleRate) * NodeCatalog.AudioChannels));
+    }
+
     private static void Sound(
         CompiledPatch program, ClipFormat format, RenderOptions options, string? ffmpeg, LoudnessMeter? loudness, ILineInSource? heard)
     {
         // Nothing is drawn, but a patch reading Coordinates' aspect is still told
         // the frame it would have been drawn at.
         var renderer = new AudioRenderer(oversample: options.Oversample) { Aspect = SynthRenderer.AspectOf(options.Width, options.Height), Input = heard };
+
+        Play(renderer, program, options.From);
+
         var frames = (int)Math.Round(renderer.SampleRate * options.Seconds);
         var samples = new float[frames * NodeCatalog.AudioChannels];
 
@@ -324,7 +345,7 @@ internal static class RenderCommand
         CancellationToken cancellation)
     {
         var settings = new MovieSettings(
-            options.Width, options.Height, options.Seconds, options.Fps, options.Quality, format, ffmpeg, options.Oversample, heard);
+            options.Width, options.Height, options.Seconds, options.Fps, options.Quality, format, ffmpeg, options.Oversample, heard, options.From);
 
         // Silence is not worth a track. A patch with nothing in its 'left' is
         // compiled for the eye only above, and gets a clip with no audio stream

@@ -444,6 +444,12 @@ internal static class Program
             DefaultValueFactory = _ => 10d,
         };
 
+        var from = new Option<double>("--from")
+        {
+            Description = "Which second a clip or a sound starts at. The patch is played up to it unrecorded, "
+                + "so feedback and sequencers are in the state they would be in; --seconds counts from there.",
+        };
+
         var fps = new Option<double>("--fps")
         {
             Description = "Frames a second, for a clip.",
@@ -537,7 +543,7 @@ internal static class Program
             "Write a patch to a picture, a sound, or a clip of both. The size, rate, quality, format "
             + "and ffmpeg left out are the editor's: its preview size and Settings → Recording.")
         {
-            patch, preset, presets, output, size, at, seconds, fps, quality, format, ffmpeg, loudness, interpreted, gpu,
+            patch, preset, presets, output, size, at, seconds, from, fps, quality, format, ffmpeg, loudness, interpreted, gpu,
             processor, settings, oversample, input, mute, solo,
         };
 
@@ -621,7 +627,8 @@ internal static class Program
                 : result.GetValue(processor) ? PictureBackend.Processor
                 : PictureBackend.Any,
                 result.GetValue(oversample),
-                result.GetValue(input));
+                result.GetValue(input),
+                result.GetValue(from));
 
             return Task.FromResult(
                 RenderCommand.Run(

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `flyback-cli render --from <seconds>` starts a clip or a sound at that second: the patch is played up to it unrecorded, so feedback and sequencers are in the state they would be in, and `--seconds` counts from there.
+
 - `flyback-cli ask --expand` prints a short message written out in full, as Expand does in the editor: a change to the patch given, or a new patch's brief where the file is empty or does not exist. It builds and saves nothing.
 
 - A Lissajous preset: two sines a fifth apart, one to each speaker, drawn against each other on a Beam.
