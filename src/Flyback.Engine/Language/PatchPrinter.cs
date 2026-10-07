@@ -323,7 +323,6 @@ public static class PatchPrinter
 
         private readonly List<Part> statements = [];
         private readonly HashSet<Guid> done = [];
-        private readonly Dictionary<Guid, int> where = [];
 
         /// <summary>
         /// The wires that run backwards, which are the only ones this does not
@@ -605,7 +604,6 @@ public static class PatchPrinter
         private void Place(Part statement)
         {
             statements.Add(statement);
-            where[Guid.Empty] = statements.Count;
         }
 
         /// <summary>
