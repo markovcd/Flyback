@@ -828,7 +828,6 @@ const Flyback.Core.Graph.Extras.MidiExtra.StateKey = "midi" -> string!
 const Flyback.Core.Graph.Extras.MidiFileExtra.Name = "midifile" -> string!
 const Flyback.Core.Graph.Extras.MidiLineExtra.ChannelField = "channel" -> string!
 const Flyback.Core.Graph.Extras.MidiLineExtra.Name = "midi" -> string!
-const Flyback.Core.Graph.Extras.MidiLineExtra.VoiceField = "voice" -> string!
 const Flyback.Core.Graph.Extras.PictureExtra.Name = "picture" -> string!
 const Flyback.Core.Graph.Extras.SampleExtra.Name = "file" -> string!
 const Flyback.Core.Graph.Extras.ScaleExtra.Name = "scale" -> string!

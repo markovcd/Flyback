@@ -12,7 +12,7 @@ public sealed record MidiLineExtra : NodeExtra
     public const string Name = "midi";
 
     /// <summary>The field choosing the voice.</summary>
-    public const string VoiceField = "voice";
+    private const string VoiceField = "voice";
 
     /// <summary>The field choosing the MIDI channel.</summary>
     public const string ChannelField = "channel";
