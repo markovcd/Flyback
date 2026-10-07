@@ -72,6 +72,23 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
     /// reserves it when nothing on the module has a reading. 60 fits the widest
     /// there is: a duration just under a second, as "999.9 ms".
     /// </remarks>
+    /// <summary>
+    /// A socket's or a setting's row with its help as its tip, over the whole row
+    /// rather than the name alone. A row with no help is handed back as it was.
+    /// </summary>
+    internal static Control Helped(Control row, string help)
+    {
+        if (help.Length == 0) return row;
+
+        // A panel with no background is only hit where its children are, which
+        // would leave the gaps between them without the tip.
+        if (row is Panel { Background: null } panel) panel.Background = Brushes.Transparent;
+
+        ToolTip.SetTip(row, help);
+
+        return row;
+    }
+
     internal static Grid KnobRow(bool reading) => Row(reading ? "*,60,84" : "*,84");
 
     /// <summary>A labeled row in the settings window, on the gutter its declared rows use too.</summary>

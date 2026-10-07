@@ -54,10 +54,17 @@ internal sealed class Inspector
     private readonly Document document;
     private readonly PatchHeader header;
 
+    /// <summary>The panel's editable rows, which report an edit to the canvas and the hand coming off to the text.</summary>
+    private readonly InspectorRows rows;
+
     /// <summary>The rows for the files a module carries.</summary>
     private readonly FileRows files;
-    private readonly MidiHub midi;
-    private readonly InstrumentLibrary instruments;
+
+    /// <summary>The rows for the fields a plugin's module declares.</summary>
+    private readonly FieldRows fieldRows;
+
+    /// <summary>The rows for the computer keyboard, on a MIDI In listening to it.</summary>
+    private readonly KeyboardSection keyboard;
     private readonly Func<GroupLibrary?> groups;
     private readonly Action<NodeGroup> saveGroup;
 
@@ -105,8 +112,9 @@ internal sealed class Inspector
         this.document = document;
         header = new PatchHeader(editor, document, files);
         this.files = new FileRows(pickers, document, files.SoundFolder, files.PictureFolder);
-        this.midi = midi;
-        instruments = knobs.Instruments;
+        rows = new InspectorRows(because => editor.History.Record(because), document.HandCameOff);
+        fieldRows = new FieldRows(editor, document, midi, knobs.Instruments, rows);
+        keyboard = new KeyboardSection(editor, document, rows);
         groups = () => palette.Groups;
         saveGroup = palette.SaveGroup;
 
@@ -304,7 +312,7 @@ internal sealed class Inspector
         var reading = InspectorRows.ShowsReading(def) || def.TypeId == NodeCatalog.AutoRemapTypeId;
 
         for (var i = 0; i < def.Inputs.Count; i++)
-            panel.Children.Add(Edged(Helped(BuildInputRow(def, node, def.Inputs[i], i, reading), def.Inputs[i].Help), node, i, output: false));
+            panel.Children.Add(Edged(InspectorRows.Helped(BuildInputRow(def, node, def.Inputs[i], i, reading), def.Inputs[i].Help), node, i, output: false));
 
         // Whatever the module carries that is not a knob, each kind edited by the
         // control that suits it. This mapping lives here rather than on the extra
@@ -312,9 +320,9 @@ internal sealed class Inspector
         // engine does not reference.
         foreach (var extra in def.Extras)
             if (EditorFor(extra, node, def, reading) is { } control)
-                panel.Children.Add(extra.Fields.Count == 0 ? Helped(control, extra.Help) : control);
+                panel.Children.Add(extra.Fields.Count == 0 ? InspectorRows.Helped(control, extra.Help) : control);
 
-        if (BuildKeyboardSection(node, def) is { } keyboard) panel.Children.Add(keyboard);
+        if (keyboard.Build(node) is { } laid) panel.Children.Add(laid);
 
         if (def.Inputs.Count == 0 && def.Extras.Count == 0)
             panel.Children.Add(new TextBlock
@@ -474,7 +482,7 @@ internal sealed class Inspector
 
         for (var i = 0; i < def.Outputs.Count; i++)
         {
-            panel.Children.Add(Edged(Helped(BuildOutputRow(node, def.Outputs[i].Name, i), def.Outputs[i].Help), node, i, output: true));
+            panel.Children.Add(Edged(InspectorRows.Helped(BuildOutputRow(node, def.Outputs[i].Name, i), def.Outputs[i].Help), node, i, output: true));
 
             foreach (var shown in measuredRows.Under(node, i)) panel.Children.Add(shown);
         }
@@ -545,23 +553,6 @@ internal sealed class Inspector
             Grid.SetColumn(wired, 1);
             row.Children.Add(wired);
         }
-
-        return row;
-    }
-
-    /// <summary>
-    /// A socket's or a setting's row with its help as its tip, over the whole row
-    /// rather than the name alone. A row with no help is handed back as it was.
-    /// </summary>
-    private static Control Helped(Control row, string help)
-    {
-        if (help.Length == 0) return row;
-
-        // A panel with no background is only hit where its children are, which
-        // would leave the gaps between them without the tip.
-        if (row is Panel { Background: null } panel) panel.Background = Brushes.Transparent;
-
-        ToolTip.SetTip(row, help);
 
         return row;
     }
@@ -820,7 +811,7 @@ internal sealed class Inspector
 
             row.Children.Add(body);
 
-            var helped = Helped(row, spec.Help);
+            var helped = InspectorRows.Helped(row, spec.Help);
 
             if (!socket.IsOutput || measuredRows.Under(node, socket.Port).ToList() is not { Count: > 0 } under) return helped;
 
@@ -1087,240 +1078,8 @@ internal sealed class Inspector
         // Anything else is a plugin's own kind, which ships no control and is
         // drawn from what it declares instead — see ADR-0055. A kind that
         // declares nothing simply gets no rows.
-        _ => BuildDeclaredRows(node, extra, reading),
+        _ => fieldRows.Declared(node, extra, reading),
     };
-
-    /// <summary>
-    /// How the computer keyboard is laid out, on a MIDI In that listens to it.
-    /// </summary>
-    /// <remarks>
-    /// The patch's setting rather than the module's (ADR-0099), shown here
-    /// because this is where somebody playing the keys is looking. Every MIDI In
-    /// on the keyboard shows the same one, and the heading says so, so that
-    /// changing it on one and finding it changed on another is what was
-    /// expected. Not shown on a module listening to a device, whose notes are
-    /// its own.
-    /// </remarks>
-    /// <summary>
-    /// The channels a MIDI In may listen to, as the tracks of the instrument it
-    /// is listening to, or null where that instrument is not one Flyback knows.
-    /// </summary>
-    private IReadOnlyList<ChoiceOption>? TracksOf(NodeInstance node)
-    {
-        var device = new ExtraState(new MidiExtra().Fields, node.StateOf(MidiExtra.StateKey)).Chosen(MidiExtra.DeviceField);
-        var source = midi.Sources.FirstOrDefault(s => s.Id == device);
-
-        if (source.Id is null || instruments.For(source) is not { Tracks.Count: > 0 } profile) return null;
-
-        return
-        [
-            new ChoiceOption("0", "Every channel"),
-            .. profile.Tracks.Select(track => new ChoiceOption(
-                track.Channel.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                $"{track.Name} · channel {track.Channel}")),
-        ];
-    }
-
-    private Control? BuildKeyboardSection(NodeInstance node, NodeDef def)
-    {
-        if (node.TypeId != NodeCatalog.MidiTypeId) return null;
-
-        var device = new ExtraState(new MidiExtra().Fields, node.StateOf(MidiExtra.StateKey)).Chosen(MidiExtra.DeviceField);
-
-        if (!string.IsNullOrWhiteSpace(device) && device != MidiSources.Keyboard) return null;
-
-        var panel = new StackPanel { Margin = new Thickness(0, 14, 0, 0) };
-
-        panel.Children.Add(new TextBlock
-        {
-            Text = "computer keyboard — the whole patch's, the same on every MIDI In",
-            FontSize = Text.Micro,
-            Foreground = Text.Muted,
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 0, 0, 4),
-        });
-
-        var layout = new ExtraField.Choice(
-            "layout",
-            "layout",
-            [new ChoiceOption(Piano, "Piano"), new ChoiceOption(ByScale, "Scale")],
-            Piano);
-
-        panel.Children.Add(Rows.ChoiceRow(
-            layout,
-            editor.History.Patch.Keyboard is null ? Piano : ByScale,
-            picked =>
-            {
-                // A scale left behind is picked up again, so trying the piano
-                // for a moment does not cost the scale that had been chosen.
-                if (picked == ByScale) editor.History.Patch.Keyboard = keptKeyboard ?? KeyboardScale.Major;
-                else
-                {
-                    keptKeyboard = editor.History.Patch.Keyboard;
-                    editor.History.Patch.Keyboard = null;
-                }
-
-                document.Relaid();
-
-                // After the picker has finished with its own event, since what
-                // is rebuilt includes the picker.
-                Dispatcher.UIThread.Post(Build);
-            }));
-
-        if (editor.History.Patch.Keyboard is not { } scale) return panel;
-
-        panel.Children.Add(Helped(
-            Rows.ChoiceRow(
-                new ExtraField.Choice("tonic", "tonic", [.. Tonics.Select(name => new ChoiceOption(name, name))], Tonics[0]),
-                Tonics[scale.TonicClass],
-                picked => Lay(editor.History.Patch.Keyboard! with { Tonic = Array.IndexOf(Tonics, picked) })),
-            "The note each row starts on, at the left."));
-
-        // The scales an Auto Chord builds in, so the two read alike.
-        panel.Children.Add(Helped(
-            Rows.ChoiceRow(
-                new ExtraField.Choice("scale", "scale", [.. Chords.Scales.Select(s => new ChoiceOption(s.Id, s.Name))], Chords.Scales[0].Id),
-                scale.Mode.Id,
-                picked => Lay(editor.History.Patch.Keyboard! with { Scale = picked })),
-            "The scale along each row, one note a key."));
-
-        return panel;
-
-        void Lay(KeyboardScale next)
-        {
-            editor.History.Patch.Keyboard = next;
-            document.Relaid();
-        }
-    }
-
-    private const string Piano = "piano";
-    private const string ByScale = "scale";
-
-    private static readonly string[] Tonics = [.. Enumerable.Range(0, Pitch.Classes).Select(Pitch.ClassName)];
-
-    /// <summary>The scale last switched away from, for switching back to.</summary>
-    private KeyboardScale? keptKeyboard;
-
-    /// <summary>The panel's editable rows, which report an edit to the canvas and the hand coming off to the text.</summary>
-    private InspectorRows Rows => field ??= new InspectorRows(because => editor.History.Record(because), document.HandCameOff);
-
-    /// <summary>
-    /// A plugin's extra, drawn from its <see cref="NodeExtra.Fields"/>.
-    /// </summary>
-    /// <remarks>
-    /// Knowledge of the vocabulary rather than of any plugin: nothing here could
-    /// tell you which one it is drawing. A field shape this build has never heard
-    /// of is skipped rather than drawn wrongly.
-    /// </remarks>
-    private Control? BuildDeclaredRows(NodeInstance node, NodeExtra extra, bool reading)
-    {
-        if (extra.Fields.Count == 0) return null;
-
-        var panel = new StackPanel { Margin = new Thickness(0, 8, 0, 0) };
-
-        panel.Children.Add(new TextBlock
-        {
-            Text = extra.Key,
-            FontSize = Text.Micro,
-            Foreground = Text.Muted,
-            Margin = new Thickness(0, 0, 0, 4),
-        });
-
-        foreach (var field in extra.Fields)
-            if (BuildFieldRow(node, extra, field, reading) is { } control)
-                panel.Children.Add(Helped(control, field.Help));
-
-        return panel;
-    }
-
-    private Control? BuildFieldRow(NodeInstance node, NodeExtra extra, ExtraField field, bool reading) => field switch
-    {
-        // A MIDI In's channel is a list of tracks where its instrument is known by name.
-        ExtraField.Number number when extra is MidiExtra && field.Key == MidiExtra.ChannelField
-            && TracksOf(node) is { } tracks => Rows.ChoiceRow(
-                new ExtraField.Choice(field.Key, field.Label, tracks, "0"),
-                ((int)number.Value(node.StateOf(extra.Key)?[field.Key])).ToString(System.Globalization.CultureInfo.InvariantCulture),
-                next => Store(node, extra, field, JsonValue.Create(float.TryParse(next, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var channel) ? channel : 0f))),
-
-        ExtraField.Number number => Rows.ValueRow(
-            field.Label,
-            number.Spec,
-            number.Value(node.StateOf(extra.Key)?[field.Key]),
-            $"{node.Id} {extra.Key} {field.Key}",
-            next => Store(node, extra, field, JsonValue.Create(next)),
-            reading),
-
-        ExtraField.Toggle toggle => Rows.ToggleRow(
-            field.Label,
-            toggle.Value(node.StateOf(extra.Key)?[field.Key]),
-            next => Store(node, extra, field, JsonValue.Create(next))),
-
-        ExtraField.Choice choice => Rows.ChoiceRow(
-            choice,
-            choice.Value(node.StateOf(extra.Key)?[field.Key]),
-            next =>
-            {
-                Store(node, extra, field, JsonValue.Create(next));
-
-                // The keyboard's section belongs to a MIDI In on the keyboard,
-                // and the channel row's shape to its instrument, so both come and
-                // go with the device.
-                if (extra is MidiExtra && field.Key == MidiExtra.DeviceField) Dispatcher.UIThread.Post(Build);
-            },
-
-            // What the same field would say if asked again. An extra is free to
-            // compute its fields afresh — MidiExtra does, because what it lists
-            // is what is plugged in — and this is how the list gets a second
-            // chance to be right without the panel being rebuilt.
-            () => extra.Fields
-                .OfType<ExtraField.Choice>()
-                .FirstOrDefault(again => again.Key == field.Key)?.Options ?? choice.Options),
-
-        ExtraField.Text text => Rows.TextRow(
-            text,
-            text.Value(node.StateOf(extra.Key)?[field.Key]),
-            next =>
-            {
-                if (node.TypeId != NodeCatalog.SendTypeId)
-                {
-                    Store(node, extra, field, JsonValue.Create(next));
-                    return;
-                }
-
-                // A Send's only text is its bus, and its Receives go where it goes.
-                foreach (var receive in BusEdits.Rename(editor.History.Patch, node, next)) document.Restated(receive.Id, field.Key);
-
-                document.Restated(node.Id, field.Key);
-            },
-
-            // An Expression's formula is the one field whose text is a language,
-            // so it is the one that can be marked as unread.
-            node.TypeId == NodeCatalog.ExpressionTypeId ? NodeCatalog.FormulaProblem : null),
-
-        _ => null,
-    };
-
-    /// <summary>
-    /// Writes one field of a plugin's extra back, making the stored object first
-    /// where the module arrived without one.
-    /// </summary>
-    /// <remarks>
-    /// Through the field's own tidying, which is where an extra's range differs
-    /// from a knob's: a socket's <see cref="PortSpec.Min"/> is the editor's
-    /// suggestion and a saved value outside it widens the slider, where a field's
-    /// range is what the value means.
-    /// </remarks>
-    private void Store(NodeInstance node, NodeExtra extra, ExtraField field, JsonNode value)
-    {
-        var held = extra.Stored(node.StateOf(extra.Key));
-        held[field.Key] = field.Sane(value);
-
-        node.SetState(extra.Key, held);
-
-        // Noted rather than written, for the reason a knob is: a field on a
-        // slider is dragged, and the text should be edited once at the end of it.
-        document.Restated(node.Id, field.Key);
-    }
 
     /// <param name="name">What the row is captioned, the socket's own name unless given.</param>
     private Control BuildInputRow(NodeDef def, NodeInstance node, PortSpec spec, int index, bool reading, string? name = null)
@@ -1418,7 +1177,7 @@ internal sealed class Inspector
 
         // Named after the socket, so a slider dragged across its range is one
         // step to undo rather than one per frame of the drag.
-        return Rows.ValueRow(name, spec, value, $"{node.Id} input {index}", next =>
+        return rows.ValueRow(name, spec, value, $"{node.Id} input {index}", next =>
         {
             if (index < node.InputValues.Length) node.InputValues[index] = next;
 
