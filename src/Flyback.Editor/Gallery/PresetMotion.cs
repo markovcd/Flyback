@@ -11,6 +11,7 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
+using Flyback.Ui.Audio;
 
 namespace Flyback.Editor.Gallery;
 
@@ -54,17 +55,19 @@ internal sealed class PresetMotion : IDisposable
     /// <param name="width">How wide the frames are drawn, a tile's width by default.</param>
     /// <param name="height">How tall they are drawn, which is what sets the aspect.</param>
     /// <param name="compiler">What builds the picture's IL, or null to leave it interpreted.</param>
+    /// <param name="audition">The sound being heard, which a Scope or Beam in the picture draws from.</param>
     public static PresetMotion Play(
         Opened opened,
         Image picture,
         Func<double>? clock,
         int width = PresetThumbnails.Width,
         int height = PresetThumbnails.Height,
-        IlCompiler? compiler = null)
+        IlCompiler? compiler = null,
+        AudioEngine.Audition? audition = null)
     {
         var motion = new PresetMotion(picture, width, height);
 
-        _ = Task.Run(() => motion.RunAsync(opened, clock ?? WallClock(), compiler, motion.stop.Token));
+        _ = Task.Run(() => motion.RunAsync(opened, clock ?? WallClock(), compiler, audition, motion.stop.Token));
 
         return motion;
     }
@@ -75,7 +78,7 @@ internal sealed class PresetMotion : IDisposable
         return () => watch.Elapsed.TotalSeconds;
     }
 
-    private async Task RunAsync(Opened opened, Func<double> clock, IlCompiler? compiler, CancellationToken token)
+    private async Task RunAsync(Opened opened, Func<double> clock, IlCompiler? compiler, AudioEngine.Audition? audition, CancellationToken token)
     {
         CompiledPatch program;
 
@@ -110,6 +113,7 @@ internal sealed class PresetMotion : IDisposable
 
             try
             {
+                audition?.Listen(program);
                 renderer.Render(program, clock(), width, height, pixels, stride);
             }
             catch (Exception)

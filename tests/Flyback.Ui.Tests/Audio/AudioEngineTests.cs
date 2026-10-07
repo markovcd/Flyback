@@ -521,6 +521,34 @@ public class AudioEngineTests
     }
 
     /// <summary>
+    /// A preset's picture that draws what the speakers played, a Beam, has
+    /// something to draw while the preset is auditioned.
+    /// </summary>
+    [Fact]
+    public void An_audition_hands_its_beam_what_it_played()
+    {
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(new AudioSetup(device));
+
+        var patch = Presets.All.Single(p => p.Name == "Lissajous").Build(NodeCatalog.BuiltIn);
+        var picture = patch.CompileForVideo().Program;
+        var beam = picture.Taps.Single(tap => tap.Chart is ChartKind.Beam).Trace.Samples;
+
+        engine.Start();
+
+        var audition = engine.PrepareAudition(patch).ShouldNotBeNull();
+        engine.StartAudition(audition);
+
+        for (var i = 0; i < 40; i++) device.Pump();
+
+        beam.ShouldAllBe(texel => texel == 0f);
+
+        audition.Listen(picture);
+
+        beam.ShouldContain(texel => texel > 0f);
+    }
+
+    /// <summary>
     /// The patch that was playing goes quiet while a preset is auditioned, rather
     /// than the two being heard at once, and comes back when it ends.
     /// </summary>

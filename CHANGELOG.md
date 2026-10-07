@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A Beam, such as the Lissajous preset's, draws on its gallery tile while the preset is tried, instead of staying black.
+
 - `install.sh --no-links` writes only the copy, leaving the command links, menu entry, shortcut and PATH as they were.
 
 - Asked to listen, an assistant that has no model able to hear, such as Claude Code or Codex, says it cannot hear without pointing at a setting it does not have.

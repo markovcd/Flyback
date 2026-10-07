@@ -124,7 +124,7 @@ internal sealed class PresetAudition
             clock = () => audition.Time;
         }
 
-        motion = PresetMotion.Play(opened, tile.Picture, clock, compiler: compiler);
+        motion = PresetMotion.Play(opened, tile.Picture, clock, compiler: compiler, audition: audition);
     }
 
     /// <summary>

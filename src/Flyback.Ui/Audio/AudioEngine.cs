@@ -359,6 +359,9 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
             Renderer = renderer;
         }
 
+        /// <summary>Refills the Scopes and Beams of <paramref name="drawn"/> from what has been played so far.</summary>
+        public void Listen(CompiledPatch drawn) => Traces.Refresh(drawn, Program, Memory);
+
         internal CompiledPatch Program { get; }
         internal DelayState? Memory { get; }
         internal LiveValues Live { get; }
