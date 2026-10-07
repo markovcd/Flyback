@@ -4,13 +4,13 @@ using Flyback.Core.Graph.Extras;
 namespace Flyback.Plugins.Effects;
 
 /// <summary>
-/// The patch the echoes tutorial builds: a pluck through an Echo, and a ring that a
-/// Trails carries down a tunnel, both held by one panel knob.
+/// The patch the "One knob, two echoes" video builds: a pluck through an Echo, and a ring
+/// that a Trails carries down a tunnel, both held by one panel knob.
 /// </summary>
 /// <remarks>
-/// The tutorial's text, module for module, so the preset and the page are one instrument.
-/// The knob is the point: it sets how much comes round again in the sound and in the
-/// picture at once, each over the range that makes the two last about as long.
+/// The video's patch, module for module, so a viewer can open the finished one to compare
+/// with theirs. The knob is the point: it sets how much comes round again in the sound and
+/// in the picture at once, each over its own range.
 /// </remarks>
 internal sealed class TwoEchoesPreset(ModuleCatalog modules) : PresetBench(modules)
 {
