@@ -74,39 +74,6 @@
 
   <ItemGroup>
     <!--
-      The host and its tests see internals, so public is reserved for what a plugin
-      may name (ADR-0102). A plugin, in the box or under tests/, is never listed here.
-    -->
-    <InternalsVisibleTo Include="Flyback.Engine" />
-    <InternalsVisibleTo Include="Flyback.Editor" />
-    <InternalsVisibleTo Include="Flyback" />
-    <InternalsVisibleTo Include="Flyback.Ui" />
-    <InternalsVisibleTo Include="Flyback.Gpu" />
-    <InternalsVisibleTo Include="Flyback.Assist" />
-    <InternalsVisibleTo Include="flyback-cli" />
-    <InternalsVisibleTo Include="flyback-viewer" />
-    <InternalsVisibleTo Include="Flyback.Viewer.Web" />
-    <InternalsVisibleTo Include="flyback-site" />
-    <InternalsVisibleTo Include="Flyback.Core.Tests" />
-    <InternalsVisibleTo Include="Flyback.Core.Benchmarks" />
-    <InternalsVisibleTo Include="Flyback.Cli.Tests" />
-    <InternalsVisibleTo Include="Flyback.Editor.Tests" />
-    <InternalsVisibleTo Include="Flyback.Editor.Desktop.Tests" />
-    <InternalsVisibleTo Include="Flyback.Plugins.Tests" />
-    <InternalsVisibleTo Include="Flyback.Plugins.Programs.Tests" />
-    <InternalsVisibleTo Include="Flyback.Plugins.ClaudeCode.Tests" />
-    <InternalsVisibleTo Include="Flyback.Plugins.Codex.Tests" />
-    <InternalsVisibleTo Include="Flyback.Plugins.OpenAi.Tests" />
-    <InternalsVisibleTo Include="Flyback.Plugins.Gemini.Tests" />
-    <InternalsVisibleTo Include="Flyback.Site.Tests" />
-    <InternalsVisibleTo Include="Flyback.Specs" />
-    <InternalsVisibleTo Include="Flyback.Ui.Testing" />
-    <InternalsVisibleTo Include="Flyback.Ui.Tests" />
-    <InternalsVisibleTo Include="Flyback.Viewer.Desktop.Tests" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!--
       Holds the public surface to PublicAPI.Shipped.txt and PublicAPI.Unshipped.txt
       beside this file, which is what a plugin is compiled against written down.
       It runs in the compiler and is gone from what is built: nothing here
