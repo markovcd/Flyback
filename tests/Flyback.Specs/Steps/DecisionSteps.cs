@@ -72,6 +72,35 @@ public sealed class DecisionSteps : IDisposable
         complained = error.ToString();
     }
 
+    [Given("a decision model that blames the module {string}")]
+    public void GivenBlaming(string module)
+    {
+        catalog = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, [], decisionModels: [new Blaming(module)]);
+        new DecisionSettings().Save(SettingsPath);
+    }
+
+    [When("flyback-cli checks a patch missing two modules, likeliest first")]
+    public void WhenTriaged()
+    {
+        var patch = Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn);
+
+        foreach (var (missing, port) in new[] { ("osc.nonesuch", NodeCatalog.OutputColorPort), ("osc.nothere", NodeCatalog.OutputLeftPort) })
+        {
+            patch.Nodes.Add(new NodeInstance { Id = Guid.NewGuid(), TypeId = missing });
+            patch.Connect(patch.Nodes[^1].Id, 0, patch.Output.Id, port);
+        }
+
+        var decisions = new Decisions(catalog.ShouldNotBeNull(), DecisionSettings.Load(SettingsPath), new Credentials(null), new ModelStore(null));
+        var output = new StringWriter();
+
+        code = CheckCommand.Run(patch, "patch.fbk", true, output, TextWriter.Null, rank: c => CheckCommand.Rank(decisions, patch, c));
+        said = output.ToString();
+    }
+
+    [Then("the first complaint is about {string}")]
+    public void ThenFirst(string module) =>
+        JsonNode.Parse(said)!["issues"]!.AsArray()[0]!["message"]!.GetValue<string>().ShouldContain(module);
+
     [Then("the first module found is the Kaleidoscope")]
     public void ThenKaleidoscope()
     {
@@ -144,5 +173,30 @@ public sealed class DecisionSteps : IDisposable
 
             return new Answer.Chosen(wanted, choice.Options.ToDictionary(o => o.Label, o => o.Label == wanted ? 0.9 : 0.1 / choice.Options.Count), 0.9);
         }
+    }
+
+    /// <summary>Scores a complaint that names one module as surely why, and every other as not.</summary>
+    private sealed class Blaming(string module) : IDecisionModel
+    {
+        public string Id => "blaming";
+
+        public string Name => "Blaming";
+
+        public int Priority => 0;
+
+        public AssistantCredential? Credential => null;
+
+        public IReadOnlyList<SettingField> Form(SettingValues values) => [];
+
+        public string? Unavailable(DecisionConfig config) => null;
+
+        public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel) =>
+            Task.FromResult(new Decision("blaming", request.Questions.ToDictionary(q => q.Key, q =>
+            {
+                var score = (Question.Score)q.Value;
+                var top = score.Instructions.Contains(module, StringComparison.Ordinal) ? score.Levels.Count - 1 : 0;
+
+                return (Answer)new Answer.Scored(top, score.Levels, [.. score.Levels.Select((_, i) => i == top ? 1.0 : 0)], 1);
+            }), DecisionUsage.None));
     }
 }

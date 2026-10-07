@@ -8,6 +8,8 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
+using Flyback.Plugins.Assist;
+using Flyback.Plugins.Decide;
 using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
@@ -48,9 +50,14 @@ internal static class CheckCommand
             Description = "Fail on warnings as well as on errors.",
         };
 
+        var triage = new Option<bool>("--triage")
+        {
+            Description = "Put the complaints likeliest to be why the patch is silent or dark first, as the decision model the settings choose judges.",
+        };
+
         var command = new Command("check", "Compile a patch and report what is wrong with it.")
         {
-            patch, preset, presets, json, strict,
+            patch, preset, presets, json, strict, triage,
         };
 
         command.SetAction(result =>
@@ -88,7 +95,8 @@ internal static class CheckCommand
                         error,
                         shipped.Opened.Samples,
                         shipped.Opened.Pictures,
-                        result.GetValue(strict));
+                        result.GetValue(strict),
+                        rank: result.GetValue(triage) ? Ranked(plugins, shipped.Opened.Patch, error) : null);
             }
 
             var read = Patches.Sourced(file) && file.Exists ? PatchLanguage.Build(File.ReadAllText(file.FullName)) : null;
@@ -117,12 +125,38 @@ internal static class CheckCommand
                     opened.Samples,
                     opened.Pictures,
                     result.GetValue(strict),
-                    read?.Issues);
+                    read?.Issues,
+                    result.GetValue(triage) ? Ranked(plugins, opened.Patch, result.InvocationConfiguration.Error) : null);
         });
 
         return command;
     }
 
+    /// <summary>What the decision model the settings choose makes of a patch's complaints, as <c>--triage</c> asks.</summary>
+    private static Func<IReadOnlyList<Complaint>, IReadOnlyList<double>?> Ranked(PluginRegistry plugins, Patch patch, TextWriter error) =>
+        complaints =>
+        {
+            var decisions = new Decisions(
+                plugins.Catalog,
+                DecisionSettings.Load(),
+                new Credentials(plugins.Catalog.PreferredSecretStore),
+                new ModelStore(ModelStore.DefaultRoot));
+
+            var likely = Rank(decisions, patch, complaints);
+
+            if (likely is null) error.WriteLine($"Not put in order: {decisions.Problem}");
+
+            return likely;
+        };
+
+    /// <summary>Each complaint's likelihood, or null where there is nothing to order or nothing answered.</summary>
+    internal static IReadOnlyList<double>? Rank(Decisions decisions, Patch patch, IReadOnlyList<Complaint> complaints) =>
+        new IssueTriage(decisions)
+            .Likelihoods([.. complaints.Select(c => c.Module is null ? c.Message : $"{c.Module}: {c.Message}")], IssueTriage.Summary(patch, NodeCatalog.Current), CancellationToken.None)
+            .GetAwaiter()
+            .GetResult();
+
+    /// <param name="rank">Each complaint's likelihood, which puts the likeliest first; null leaves them in the compiler's order.</param>
     public static int Run(
         Patch patch,
         string name,
@@ -132,7 +166,8 @@ internal static class CheckCommand
         ISampleLibrary? samples = null,
         IImageLibrary? pictures = null,
         bool strict = false,
-        IReadOnlyList<LanguageIssue>? read = null)
+        IReadOnlyList<LanguageIssue>? read = null,
+        Func<IReadOnlyList<Complaint>, IReadOnlyList<double>?>? rank = null)
     {
         var video = patch.CompileForVideo(samples: samples, pictures: pictures);
         var audio = patch.CompileForAudio(samples: samples);
@@ -150,6 +185,9 @@ internal static class CheckCommand
                     NameOf(patch, i.NodeId),
                     i.Message)))
             .ToArray();
+
+        if (complaints.Length > 1 && rank?.Invoke(complaints) is { } likely)
+            complaints = [.. IssueTriage.Ordered([.. complaints.Select((c, i) => c with { Likely = Math.Round(likely[i], 2) })], likely)];
 
         var errors = complaints.Count(c => c.Severity == "error");
 
@@ -228,7 +266,8 @@ internal static class CheckCommand
             var about = complaint.Module is not null ? $"{complaint.Module}: "
                 : complaint.Line is { } line ? $"{line}:{complaint.Column}: "
                 : string.Empty;
-            output.WriteLine($"  {complaint.Severity,-7}  {about}{complaint.Message}");
+            var likely = complaint.Likely is { } p ? $" ({p.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)} likely)" : string.Empty;
+            output.WriteLine($"  {complaint.Severity,-7}  {about}{complaint.Message}{likely}");
         }
 
         var warnings = complaints.Length - errors;

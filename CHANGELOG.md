@@ -16,6 +16,8 @@
 
 - Typed into the module list, a phrase whose words name no module finds the modules it describes, likeliest first, when a decision model is chosen under Settings → Decisions; `flyback-cli modules --find` lists the same.
 
+- With a decision model chosen, a patch's complaints on the status line are said again likeliest first, the one most likely why it is silent or dark leading; `flyback-cli check --triage` orders them the same way.
+
 - `flyback-cli decide` asks a decision model typed questions about some text and answers each with a probability, through TypeSafe's Jev or a laya-serve of your own.
 
 - Asked to listen, an assistant that has no model able to hear, such as Claude Code or Codex, says it cannot hear without pointing at a setting it does not have.

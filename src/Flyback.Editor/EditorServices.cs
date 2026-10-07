@@ -141,6 +141,7 @@ internal static class EditorServices
             sp.GetRequiredService<Credentials>(),
             new ModelStore(sp.GetRequiredService<EditorFolders>().ModelFolder)));
         services.AddSingleton<ModuleFinder>();
+        services.AddSingleton<IssueOrdering>();
 
         services.AddPart<WorkKeeper>();
         services.AddPart<WindowLayoutKeeper>();

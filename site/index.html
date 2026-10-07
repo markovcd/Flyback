@@ -690,6 +690,7 @@ dotnet run --project src/Flyback.Editor.Desktop -c Release</code></pre>
 flyback-cli render drone.fbk -o drone.mp4 --seconds 30 --fps 30
 flyback-cli render --preset "Plasma" -o plasma.png --at 1
 flyback-cli check nebula.fbk --strict
+flyback-cli check nebula.fbk --triage --json
 flyback-cli compare nebula.fbk nebula-ported.fbk
 flyback-cli measure nebula.fbk LFO Mixer.out --seconds 10
 flyback-cli print nebula.fbk -o nebula.fbks

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Flyback.Editor.Decide;
 using Flyback.Editor.Assist;
 using Flyback.Engine.Compile;
 using Flyback.Ui.Audio;
@@ -50,6 +51,7 @@ internal sealed class Playback
     private readonly RecordingState recording;
     private readonly Reactions reactions;
     private readonly Usage usage;
+    private readonly IssueOrdering? ordering;
 
     /// <summary>How a page's edits reach <see cref="Recompile"/>, or null on the desktop, where each edit compiles at once.</summary>
     private readonly RecompilePacing? pacing;
@@ -78,8 +80,10 @@ internal sealed class Playback
         RecordingState recording,
         Reactions reactions,
         Usage usage,
-        EditorHost host)
+        EditorHost host,
+        IssueOrdering? ordering = null)
     {
+        this.ordering = ordering;
         this.editor = editor;
         this.audio = audio;
         this.midi = midi;
@@ -313,10 +317,13 @@ internal sealed class Playback
         // means the video pass never visits a module only the speakers reach —
         // and stops at the first line when there is no screen at all — so a
         // patch built for sound had nothing said about it, however wrong it was.
-        var said = result.Issues
+        var issues = result.Issues
             .Concat(heard.Issues)
             .Select(i => i.Message)
-            .Distinct();
+            .Distinct()
+            .ToList();
+
+        var said = issues.AsEnumerable();
 
         // That the screen is showing a chart rather than the patch is said here
         // and nowhere else. Without it a probe left selected looks exactly like
@@ -346,7 +353,9 @@ internal sealed class Playback
         // Each of them, rather than one sentence with bullets between: they are
         // separate problems, they arrive and are fixed separately, and the log
         // behind the line gives each its own row.
-        report.Say(said.ToList());
+        var line = said.ToList();
+        report.Say(line);
+        ordering?.Order(line[..^issues.Count], issues, editor.History.Patch);
 
         SyncAudioToVolume();
 
