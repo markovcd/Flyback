@@ -8,7 +8,7 @@ namespace Flyback.Plugins.Assist;
 /// turns, so a knob somebody turned is neither a new conversation nor undone by
 /// the next proposal.
 /// </summary>
-public sealed partial class PatchWorkbench
+internal sealed class CanvasChanges(WorkingPatch bench)
 {
     /// <summary>The most settings named in one line; past it the model is pointed at describe_patch.</summary>
     private const int MostTold = 24;
@@ -18,19 +18,19 @@ public sealed partial class PatchWorkbench
     /// <paramref name="was"/> to <paramref name="now"/> on the canvas, except where
     /// this workbench changed the same one itself. Not while a turn runs.
     /// </summary>
-    internal List<Retuned> Follow(Patch was, Patch now) => Retuning.Carry(was, now, working);
+    public List<Retuned> Follow(Patch was, Patch now) => Retuning.Carry(was, now, bench.Patch);
 
     /// <summary>
     /// Takes every setting on the canvas that differs from the patch being built,
     /// for a conversation carried on over a patch that was saved after it.
     /// </summary>
-    internal List<Retuned> Follow(Patch now) => Retuning.Carry(Retuning.Copy(working), now, working);
+    public List<Retuned> Follow(Patch now) => Retuning.Carry(Retuning.Copy(bench.Patch), now, bench.Patch);
 
     /// <summary>
     /// The settings in <paramref name="carried"/>, in the handles the modules
     /// answer to: <c>osc1.freq=330, knob "Cutoff"=0.7</c>.
     /// </summary>
-    internal string Told(IReadOnlyCollection<Retuned> carried)
+    public string Told(IReadOnlyCollection<Retuned> carried)
     {
         var told = new StringBuilder();
         var named = 0;
@@ -56,12 +56,12 @@ public sealed partial class PatchWorkbench
     {
         if (change.Module is not { } id) return change.Field;
 
-        var node = working.Find(id);
-        var handle = Handle(node);
+        var node = bench.Patch.Find(id);
+        var handle = bench.Handle(node);
 
         if (change.Port < 0) return $"{handle}.{change.Field}";
 
-        return node is not null && modules.Get(node.TypeId) is { } def && change.Port < def.Inputs.Count
+        return node is not null && bench.Modules.Get(node.TypeId) is { } def && change.Port < def.Inputs.Count
             ? $"{handle}.{def.Inputs[change.Port].Name.Replace(' ', '_')}"
             : $"{handle}.{change.Port}";
     }

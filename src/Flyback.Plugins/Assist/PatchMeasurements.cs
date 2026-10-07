@@ -7,17 +7,17 @@ namespace Flyback.Plugins.Assist;
 /// <summary>
 /// <c>measure</c>: what each output carries, as numbers, without drawing or playing anything.
 /// </summary>
-public sealed partial class PatchWorkbench
+internal sealed class PatchMeasurements(WorkingPatch bench, WorkbenchLimits limits)
 {
     /// <summary>The longest window a measurement runs, long enough to count a slow LFO's turns.</summary>
-    private const double LongestMeasure = 60d;
+    public const double LongestMeasure = 60d;
 
     /// <summary>
     /// Runs the patch offline and says what each output of the named modules carried,
     /// to the speakers and to the screen apart.
     /// </summary>
-    /// <remarks>On a pool thread, for the reason <see cref="RenderAsync"/> gives.</remarks>
-    private Task<ToolOutcome> MeasureAsync(JsonElement arguments, CancellationToken cancel)
+    /// <remarks>On a pool thread, for the reason <see cref="PatchSenses.RenderAsync"/> gives.</remarks>
+    public Task<ToolOutcome> MeasureAsync(JsonElement arguments, CancellationToken cancel)
     {
         var chosen = new List<Guid>();
 
@@ -25,7 +25,7 @@ public sealed partial class PatchWorkbench
         {
             foreach (var handle in handles.EnumerateArray())
             {
-                if (!Node(handle.GetString() ?? string.Empty, out var node, out _, out var refusal))
+                if (!bench.Node(handle.GetString() ?? string.Empty, out var node, out _, out var refusal))
                     return Task.FromResult(ToolOutcome.Refused(refusal));
 
                 chosen.Add(node.Id);
@@ -40,7 +40,7 @@ public sealed partial class PatchWorkbench
             ? Math.Clamp(start.GetDouble(), 0d, limits.LatestStart)
             : 0d;
 
-        var patch = working;
+        var patch = bench.Patch;
 
         return Task.Run(
             () =>
@@ -48,9 +48,9 @@ public sealed partial class PatchWorkbench
                 var report = Measurements.Take(
                     patch,
                     new MeasureOptions(seconds, from, Modules: chosen.Count == 0 ? null : chosen),
-                    modules,
-                    samples,
-                    pictures,
+                    bench.Modules,
+                    bench.Samples,
+                    bench.Pictures,
                     cancel: cancel);
 
                 var text = new StringBuilder(
@@ -62,7 +62,7 @@ public sealed partial class PatchWorkbench
 
                 foreach (var m in report.Measurements)
                 {
-                    text.Append('\n').Append(Handle(patch.Find(m.Node))).Append('.').Append(m.Socket);
+                    text.Append('\n').Append(bench.Handle(patch.Find(m.Node))).Append('.').Append(m.Socket);
                     if (m.Differs) text.Append("  (sound and picture differ)");
 
                     foreach (var line in MeasurementWords.Half("sound", m.Sound, seconds)) text.Append("\n  ").Append(line);

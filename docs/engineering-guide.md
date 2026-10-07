@@ -457,7 +457,10 @@ and the locator, as source compiled into each plugin: it is not a project, so no
 
 An assistant never touches the patch directly. Everything it does goes through
 `PatchWorkbench`, which is the tool surface, the limits and the senses (looking
-at a frame, hearing a clip). The two session loops in `OpenAiSession` and
+at a frame, hearing a clip). It is a facade: `WorkingPatch` holds the patch and
+the handles its modules answer to, `ToolTable` says what each tool is and which
+class runs it, and the edits, reports, senses and measurements are a class
+apiece beside them in `Flyback.Plugins/Assist`. The two session loops in `OpenAiSession` and
 `GeminiSession` are similar on purpose and stay separate; the reason is in
 `GeminiSession.cs`'s header.
 

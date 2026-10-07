@@ -18,7 +18,7 @@ namespace Flyback.Plugins.Assist;
 /// told. That is also what makes them the only asynchronous tools, and the only two
 /// withheld from a model which cannot see or hear — see <see cref="Listener"/>.
 /// </remarks>
-public sealed partial class PatchWorkbench
+internal sealed class PatchSenses(WorkingPatch bench, WorkbenchLimits limits)
 {
     // --- rendering ----------------------------------------------------------
 
@@ -39,7 +39,7 @@ public sealed partial class PatchWorkbench
     /// one, because a still cannot show motion.
     /// </para>
     /// </remarks>
-    private Task<ToolOutcome> RenderAsync(JsonElement arguments, CancellationToken cancel)
+    public Task<ToolOutcome> RenderAsync(JsonElement arguments, CancellationToken cancel)
     {
         var requested = Times(arguments);
         var from = From(arguments);
@@ -49,14 +49,14 @@ public sealed partial class PatchWorkbench
         // is a deliberate thing, not a complaint waiting to happen. It is still
         // nothing to look at: what would come back is a black rectangle, and an
         // assistant shown black goes and "fixes" a patch that was working.
-        if (working.IncomingTo(working.Output.Id, NodeCatalog.OutputColorPort) is null)
+        if (bench.Patch.IncomingTo(bench.Patch.Output.Id, NodeCatalog.OutputColorPort) is null)
         {
             return Task.FromResult(ToolOutcome.Refused(
                 "nothing is wired into the Output's 'color', so this patch draws nothing and "
                 + "there is nothing to look at. Patch something in if it is meant to be seen."));
         }
 
-        var patch = working.CompileForVideo(modules, samples, pictures);
+        var patch = bench.CompileForVideo();
 
         if (patch.HasErrors)
         {
@@ -166,19 +166,19 @@ public sealed partial class PatchWorkbench
     /// tool is broken.
     /// </para>
     /// </remarks>
-    private Task<ToolOutcome> ListenAsync(JsonElement arguments, CancellationToken cancel)
+    public Task<ToolOutcome> ListenAsync(JsonElement arguments, CancellationToken cancel)
     {
         // Asked of the graph rather than of the compiler, which is content with
         // an unwired sink: silence is a legal program, and what would come back
         // is a WAV full of zeroes rather than a complaint.
-        if (!working.Reaches().Sound)
+        if (!bench.Patch.Reaches().Sound)
         {
             return Task.FromResult(ToolOutcome.Refused(
                 "nothing is wired into the Output's 'left' or 'right', so this patch makes no "
                 + "sound and there is nothing to hear. Patch something in if it is meant to be heard."));
         }
 
-        var patch = working.CompileForAudio(modules, samples);
+        var patch = bench.CompileForAudio();
 
         if (patch.HasErrors)
         {
@@ -242,7 +242,7 @@ public sealed partial class PatchWorkbench
     }
 
     /// <summary>Why a patch that is wired and compiles cleanly is silent, which the compiler cannot see.</summary>
-    private const string SilenceCauses =
+    public const string SilenceCauses =
         "The compiler has already said whatever it can see, so look at what it "
         + "cannot: 'volume' on the Output sitting at zero, or an 'in' that is wired "
         + "but never moves — a knob, or anything else holding one value, drives a "
@@ -255,7 +255,7 @@ public sealed partial class PatchWorkbench
     /// <see cref="WorkbenchLimits.LatestTime"/> seconds, rendered from zero.
     /// </summary>
     /// <remarks>Rendered a slice at a time and stopped at the first that sounds, so a patch that plays costs one slice.</remarks>
-    private Task<bool> SilentAsync(CompileResult patch, CancellationToken cancel) => Task.Run(
+    public Task<bool> SilentAsync(CompileResult patch, CancellationToken cancel) => Task.Run(
         () =>
         {
             var renderer = new AudioRenderer(limits.ListenRate)
