@@ -149,14 +149,17 @@ internal sealed class AssistantSettingsPage
         Credentials credentials,
         AssistantSettingRepository settingsRepository,
         IAssistantEditor editor,
-        string? settingsPath)
+        EditorFolders? folders = null)
     {
         this.chosenAssistant = chosenAssistant;
         this.plugins = plugins;
         this.credentials = credentials;
         this.settingsRepository = settingsRepository;
         this.editor = editor;
-        this.settingsPath = settingsPath;
+        settingsPath = folders?.SettingsPath;
+
+        // The choice is the page's to show from the start, so it is read before the box is.
+        chosenAssistant.Load();
 
         probeSection = new ProbeSection(() => chosenAssistant.Value, KeyOnTheForm, form, () => Changed?.Invoke(this, EventArgs.Empty));
 

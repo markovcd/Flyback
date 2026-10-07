@@ -64,14 +64,18 @@ public sealed class AssistantColumnSteps(HeadlessTurn turn) : IDisposable
             var folders = new EditorFolders { SettingsPath = settings };
             var repository = new AssistantSettingRepository(folders, new AssistantSettings());
             var editor = new Holding(patch);
+            var chosen = new ChosenAssistant(repository, catalog);
+            var credentials = new Credentials(catalog.PreferredSecretStore);
+
             var panel = new AssistantPanel(
-                new ChosenAssistant(repository, catalog),
+                chosen,
                 catalog,
                 editor,
                 new AssistantConversation(() => patch),
                 new AssistantRunFactory(catalog, editor, repository),
-                new Credentials(catalog.PreferredSecretStore),
+                credentials,
                 repository,
+                new AssistantSettingsPage(chosen, catalog, credentials, repository, editor, folders),
                 folders);
 
             panel.Open(saved);

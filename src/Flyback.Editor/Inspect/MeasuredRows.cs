@@ -14,8 +14,7 @@ namespace Flyback.Editor.Inspect;
 /// What the last measurement found, under an output's row: its numbers and,
 /// for a color, its picture, turning between the window's start and its end.
 /// </summary>
-/// <param name="panel">The rows these go on, which is how the pictures know they are in a window.</param>
-internal sealed class MeasuredRows(MeasureLabels measured, StackPanel panel)
+internal sealed class MeasuredRows(MeasureLabels measured)
 {
     /// <summary>The measurement lines on the panel, dimmed in place by an edit rather than rebuilt under a hand on a knob.</summary>
     private readonly List<TextBlock> measurements = [];
@@ -133,7 +132,7 @@ internal sealed class MeasuredRows(MeasureLabels measured, StackPanel panel)
     public void Turn()
     {
         // A panel out of its window has nobody to turn them for.
-        if (TopLevel.GetTopLevel(panel) is null)
+        if (measuredPictures.Count == 0 || TopLevel.GetTopLevel(measuredPictures[0]) is null)
         {
             turning?.Stop();
             return;

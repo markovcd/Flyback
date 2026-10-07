@@ -14,7 +14,8 @@ namespace Flyback.Editor.Inspect;
 /// The inspector's row for a file a module carries: what it is called, what it
 /// currently is, and a button that goes and finds another.
 /// </summary>
-internal sealed class FileRows(IFilePickers pickers, Document document, SampleLibrary soundFolder, ImageLibrary pictureFolder)
+/// <param name="files">The folders the patch reads its sound files and pictures from.</param>
+internal sealed class FileRows(IFilePickers pickers, Document document, PatchFiles files)
 {
     /// <summary>
     /// The sound file a player reads: what it is called, and a button to pick
@@ -34,13 +35,13 @@ internal sealed class FileRows(IFilePickers pickers, Document document, SampleLi
         SoundFileType,
         picked =>
         {
-            var named = PatchPaths.Named(picked, soundFolder.Library);
+            var named = PatchPaths.Named(picked, files.SoundFolder.Library);
 
             SampleExtra.Set(node, named);
 
             // Forgotten first, so a file that has been replaced since it was
             // last read is read again rather than answered from the cache.
-            soundFolder.Forget(named);
+            files.SoundFolder.Forget(named);
         });
 
     /// <summary>The same row for the other kind of file — see <see cref="PictureExtra"/>.</summary>
@@ -52,10 +53,10 @@ internal sealed class FileRows(IFilePickers pickers, Document document, SampleLi
         PictureFileType,
         picked =>
         {
-            var named = PatchPaths.Named(picked, pictureFolder.Library);
+            var named = PatchPaths.Named(picked, files.PictureFolder.Library);
 
             PictureExtra.Set(node, named);
-            pictureFolder.Forget(named);
+            files.PictureFolder.Forget(named);
         });
 
     /// <summary>The same row for a MIDI file — see <see cref="MidiFileExtra"/>.</summary>
@@ -67,10 +68,10 @@ internal sealed class FileRows(IFilePickers pickers, Document document, SampleLi
         MidiFileType,
         picked =>
         {
-            var named = PatchPaths.Named(picked, soundFolder.Library);
+            var named = PatchPaths.Named(picked, files.SoundFolder.Library);
 
             MidiFileExtra.Set(node, named);
-            soundFolder.Forget(named);
+            files.SoundFolder.Forget(named);
         });
 
     /// <summary>

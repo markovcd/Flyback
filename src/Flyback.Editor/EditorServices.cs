@@ -127,6 +127,7 @@ internal static class EditorServices
 
         services.AddSingleton<IAssistantEditor, AssistantEditor>();
         services.AddPart<AssistantPanel>();
+        services.AddSingleton<AssistantSettingsPage>();
         services.AddPart<ChosenAssistant>();
 
         services.AddPart<WorkKeeper>();
@@ -175,6 +176,17 @@ internal static class EditorServices
         services.AddPart<KnobRandomizer>();
         services.AddPart<Palette>();
         services.AddPart<Inspector>();
+        services.AddSingleton<InspectorSurface>();
+        services.AddSingleton(sp => new InspectorRows(
+            because => sp.GetRequiredService<NodeEditor>().History.Record(because),
+            sp.GetRequiredService<Document>().HandCameOff));
+        services.AddSingleton<PatchHeader>();
+        services.AddSingleton<MeasuredRows>();
+        services.AddSingleton<SocketRows>();
+        services.AddSingleton<FileRows>();
+        services.AddSingleton<FieldRows>();
+        services.AddSingleton<KeyboardSection>();
+        services.AddSingleton<GroupInspector>();
         services.AddPart<PluginInstalls>();
         services.AddPart<PresetAudition>();
         services.AddPart<PresetSlot>();

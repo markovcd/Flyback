@@ -1,25 +1,15 @@
-using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Platform.Storage;
-using Avalonia.Threading;
 using Flyback.Editor.Assist;
-using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Engine.Graph;
-using Flyback.Engine.Measure;
 using Flyback.Ui.Controls;
-using Flyback.Editor.Knobs;
-using Flyback.Ui.Midi;
 using Flyback.Editor.Notices;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
-using Flyback.Engine.Render;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Inspect;
@@ -42,91 +32,59 @@ internal sealed class Inspector
         IReactTo<DocumentSaved>,
         IReactTo<Touched>
 {
-    /// <summary>
-    /// How far the panel's rows keep off its edges. Named because the plate at the
-    /// head of it takes the inset back off again to reach them.
-    /// </summary>
-    internal const double PanelInset = 12;
-
     private readonly NodeEditor editor;
-    private readonly MeasuredRows measuredRows;
-
     private readonly Document document;
     private readonly PatchHeader header;
-
-    /// <summary>The panel's editable rows, which report an edit to the canvas and the hand coming off to the text.</summary>
-    private readonly InspectorRows rows;
-
-    /// <summary>The rows for a module's sockets.</summary>
+    private readonly MeasuredRows measuredRows;
     private readonly SocketRows socketRows;
+    private readonly FileRows files;
+    private readonly FieldRows fieldRows;
+    private readonly KeyboardSection keyboard;
 
     /// <summary>The panel a group gets instead of a module's.</summary>
     private readonly GroupInspector groups;
 
-    /// <summary>The rows for the files a module carries.</summary>
-    private readonly FileRows files;
-
-    /// <summary>The rows for the fields a plugin's module declares.</summary>
-    private readonly FieldRows fieldRows;
-
-    /// <summary>The rows for the computer keyboard, on a MIDI In listening to it.</summary>
-    private readonly KeyboardSection keyboard;
-
-    /// <summary>
-    /// Named so a test can find it. It is the one panel here that is switched
-    /// off whole while the text owns the patch, and there is nothing else about it
-    /// to tell it apart by.
-    /// </summary>
-    private readonly StackPanel panel = new()
-    {
-        Name = "inspector",
-        Margin = new Thickness(PanelInset),
-        Spacing = 8,
-    };
+    private readonly StackPanel panel;
+    private readonly ModuleWash wash;
+    private readonly ContentControl plateHost;
 
     /// <summary>The shortcut groups left unfolded, kept across rebuilds so a selection does not shut them.</summary>
     private readonly HashSet<string> openShortcuts = ["Getting started"];
 
-    /// <summary>
-    /// The selected block's background, behind everything on the panel and fading
-    /// out down it, with the block's mark set large in it.
-    /// </summary>
-    private readonly ModuleWash wash = new();
-
-    /// <summary>
-    /// Where the plate stands: above the scroller rather than in it, so the name and
-    /// the buttons are there at every scroll position.
-    /// </summary>
-    private readonly ContentControl plateHost = new() { Name = "plate-host" };
-
-    /// <param name="knobs">The instruments a MIDI In can be played from.</param>
-    /// <param name="files">The folders the patch reads its sound files and pictures from.</param>
     /// <summary>Whether the editor is in a page, which has no files, settings or recording for the help to name.</summary>
     private readonly bool inPage;
 
     /// <summary>Whether a finger has touched the canvas, so the help names what a finger does.</summary>
     private bool fingers;
 
-    public Inspector(NodeEditor editor, Document document, MidiHub midi, PanelKnobs knobs, PatchFiles files, Palette palette, IFilePickers pickers, EditorHost host, MeasureLabels measured)
+    public Inspector(
+        NodeEditor editor,
+        Document document,
+        EditorHost host,
+        InspectorSurface surface,
+        PatchHeader header,
+        MeasuredRows measuredRows,
+        SocketRows socketRows,
+        FileRows files,
+        FieldRows fieldRows,
+        KeyboardSection keyboard,
+        GroupInspector groups)
     {
-        measuredRows = new MeasuredRows(measured, panel);
-        inPage = host.InPage;
         this.editor = editor;
         this.document = document;
-        header = new PatchHeader(editor, document, files);
-        this.files = new FileRows(pickers, document, files.SoundFolder, files.PictureFolder);
-        rows = new InspectorRows(because => editor.History.Record(because), document.HandCameOff);
-        socketRows = new SocketRows(editor, document, rows);
-        socketRows.Settled += (_, _) => inspectorShape = InspectorShape.Of(editor);
-        fieldRows = new FieldRows(editor, document, midi, knobs.Instruments, rows);
-        groups = new GroupInspector(editor, panel, wash, plateHost, palette, socketRows, measuredRows);
-        keyboard = new KeyboardSection(editor, document, rows);
+        this.header = header;
+        this.measuredRows = measuredRows;
+        this.socketRows = socketRows;
+        this.files = files;
+        this.fieldRows = fieldRows;
+        this.keyboard = keyboard;
+        this.groups = groups;
+        inPage = host.InPage;
+        panel = surface.Panel;
+        wash = surface.Wash;
+        plateHost = surface.PlateHost;
 
-        // A drag on a slider is one edit, written into the text once the hand is off it.
-        panel.AddHandler(InputElement.PointerReleasedEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble, handledEventsToo: true);
-        panel.AddHandler(InputElement.LostFocusEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble);
-        panel.AddHandler(InputElement.KeyUpEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble, handledEventsToo: true);
-        panel.AddHandler(InputElement.PointerWheelChangedEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble, handledEventsToo: true);
+        socketRows.Settled += (_, _) => inspectorShape = InspectorShape.Of(editor);
     }
 
     public Task On(PatchChanged notice)

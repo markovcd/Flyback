@@ -24,9 +24,7 @@ namespace Flyback.Editor.Inspect;
 /// <param name="palette">The kept groups, and keeping one under its name.</param>
 internal sealed class GroupInspector(
     NodeEditor editor,
-    StackPanel panel,
-    ModuleWash wash,
-    ContentControl plateHost,
+    InspectorSurface surface,
     Palette palette,
     SocketRows socketRows,
     MeasuredRows measured)
@@ -39,8 +37,8 @@ internal sealed class GroupInspector(
         // no category, so there is no accent to carry over.
         var plate = ModulePlate.Box();
 
-        wash.ShowBox();
-        wash.Off = editor.Edits.SelectionIsOff;
+        surface.Wash.ShowBox();
+        surface.Wash.Off = editor.Edits.SelectionIsOff;
 
         plate.Named.Children.Add(Title(group, plate.Ink));
 
@@ -52,12 +50,12 @@ internal sealed class GroupInspector(
             TextAlignment = TextAlignment.Right,
         });
 
-        plateHost.Content = plate;
+        surface.PlateHost.Content = plate;
 
         // Under the name, above the description, where a module's own row sits.
         var above = plate.Under.Children.Count;
 
-        panel.Children.Add(new TextBlock
+        surface.Panel.Children.Add(new TextBlock
         {
             Text = "Several modules drawn as one. Nothing about the patch changes — the modules "
                  + "are where they were and so are the wires between them.",
@@ -79,7 +77,7 @@ internal sealed class GroupInspector(
         Edge("Out", sockets.Outputs);
 
         if (sockets.Rows == 0)
-            panel.Children.Add(new TextBlock
+            surface.Panel.Children.Add(new TextBlock
             {
                 Text = "Nothing has been wired across its edge, so the box has no sockets yet.",
                 TextWrapping = TextWrapping.Wrap,
@@ -160,7 +158,7 @@ internal sealed class GroupInspector(
         {
             if (sockets.Count == 0) return;
 
-            panel.Children.Add(new TextBlock
+            surface.Panel.Children.Add(new TextBlock
             {
                 Text = heading,
                 FontSize = Text.Small,
@@ -171,7 +169,7 @@ internal sealed class GroupInspector(
 
             foreach (var socket in sockets)
                 if (editor.Selection.Scene.Named(socket) is var (_, spec) && editor.History.Patch.Find(socket.Node) is { } node)
-                    panel.Children.Add(Socket(socket, node, spec));
+                    surface.Panel.Children.Add(Socket(socket, node, spec));
         }
 
         // The row the module's own panel has for the port, and — on one with nothing plugged into it — the way to

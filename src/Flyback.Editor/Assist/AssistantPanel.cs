@@ -282,6 +282,7 @@ internal sealed class AssistantPanel : UserControl
         AssistantRunFactory runs,
         Credentials credentials,
         AssistantSettingRepository settingsRepository,
+        AssistantSettingsPage settings,
         EditorFolders? folders = null,
         Usage? usage = null,
         Reactions? reactions = null)
@@ -299,8 +300,7 @@ internal sealed class AssistantPanel : UserControl
         this.settingsRepository = settingsRepository;
         conversation.Opened += Opened;
         conversation.Saved += (_, _) => this.reactions.Raise(new ConversationChanged());
-        chosenAssistant.Load();
-        settings = new AssistantSettingsPage(chosenAssistant, plugins, credentials, settingsRepository, editor, folders?.SettingsPath);
+        this.settings = settings;
         settings.Changed += (_, _) => Refresh();
 
         Content = Build();

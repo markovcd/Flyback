@@ -87,14 +87,18 @@ public sealed class AssistantPanelTests : EditorTest
         var repository = new AssistantSettingRepository(setup, saved ?? new AssistantSettings());
         var patch = Presets.Plasma(NodeCatalog.BuiltIn);
         var editor = new Holding(() => patch, report);
+        var chosen = new ChosenAssistant(repository, catalog);
+        var credentials = new Credentials(catalog.PreferredSecretStore);
+
         var panel = new AssistantPanel(
-            new ChosenAssistant(repository, catalog),
+            chosen,
             catalog,
             editor,
             conversation ?? new AssistantConversation(() => patch),
             new AssistantRunFactory(catalog, editor, repository),
-            new Credentials(catalog.PreferredSecretStore),
+            credentials,
             repository,
+            new AssistantSettingsPage(chosen, catalog, credentials, repository, editor, setup),
             setup,
             reactions: reactions);
 
@@ -127,14 +131,18 @@ public sealed class AssistantPanelTests : EditorTest
         var catalog = PluginCatalog.Empty;
         var repository = new AssistantSettingRepository(Kept, settings);
         var editor = new Holding(patch);
+        var chosen = new ChosenAssistant(repository, catalog);
+        var credentials = new Credentials(catalog.PreferredSecretStore);
+
         var panel = new AssistantPanel(
-            new ChosenAssistant(repository, catalog),
+            chosen,
             catalog,
             editor,
             new AssistantConversation(patch),
             new AssistantRunFactory(catalog, editor, repository),
-            new Credentials(catalog.PreferredSecretStore),
+            credentials,
             repository,
+            new AssistantSettingsPage(chosen, catalog, credentials, repository, editor, Kept),
             Kept);
         var window = Show(panel, 760);
 
