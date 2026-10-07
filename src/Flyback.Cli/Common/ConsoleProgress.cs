@@ -19,7 +19,7 @@ internal static class ConsoleProgress
             if (percent == last) return;
 
             last = percent;
-            Console.Error.Write($"\rrendering… {percent,3}%");
+            Console.Error.Write($"\r{doing}… {percent,3}%");
 
             if (percent >= 100) Console.Error.WriteLine();
         });
