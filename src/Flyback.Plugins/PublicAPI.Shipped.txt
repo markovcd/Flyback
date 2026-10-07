@@ -485,7 +485,6 @@ Flyback.Plugins.Settings.SettingValues.Word<TWord>(string! key, TWord fallback) 
 abstract Flyback.Plugins.Assist.PatchEvent.<Clone>$() -> Flyback.Plugins.Assist.PatchEvent!
 abstract Flyback.Plugins.Settings.SettingField.<Clone>$() -> Flyback.Plugins.Settings.SettingField!
 abstract Flyback.Plugins.Settings.SettingField.Sane(string? stored) -> string!
-const Flyback.Plugins.Assist.AssistantPost.MaxAttempts = 5 -> int
 const Flyback.Plugins.Assist.AssistantSchema.EarKey = "ear" -> string!
 const Flyback.Plugins.Assist.AssistantSchema.EffortKey = "effort" -> string!
 const Flyback.Plugins.Assist.AssistantSchema.EndpointKey = "endpoint" -> string!
@@ -693,7 +692,6 @@ static Flyback.Plugins.Settings.SettingField.operator ==(Flyback.Plugins.Setting
 static Flyback.Plugins.Settings.SettingOption.operator !=(Flyback.Plugins.Settings.SettingOption left, Flyback.Plugins.Settings.SettingOption right) -> bool
 static Flyback.Plugins.Settings.SettingOption.operator ==(Flyback.Plugins.Settings.SettingOption left, Flyback.Plugins.Settings.SettingOption right) -> bool
 static Flyback.Plugins.Settings.SettingValues.None.get -> Flyback.Plugins.Settings.SettingValues!
-static readonly Flyback.Plugins.Assist.AssistantPost.LongestWait -> System.TimeSpan
 virtual Flyback.Plugins.Assist.PatchEvent.EqualityContract.get -> System.Type!
 virtual Flyback.Plugins.Assist.PatchEvent.Equals(Flyback.Plugins.Assist.PatchEvent? other) -> bool
 virtual Flyback.Plugins.Assist.PatchEvent.PrintMembers(System.Text.StringBuilder! builder) -> bool
