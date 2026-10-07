@@ -3,7 +3,7 @@
 Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an idea when one comes up, move it to Made when it is made, and onto `site/tutorials.html` when it is posted. It is on TODO.md; it stays as long as the channel wants videos.
 
 - **Kind:** Backlog
-- **Status:** Open: three made and posted, the rest proposed
+- **Status:** Open: four made, three posted, the rest proposed
 
 ## How one is made
 
@@ -13,6 +13,7 @@ Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an ide
 - **The real editor, not a drawing of it.** `flyback-cli shot <patch> --editor <Flyback> --size 1920x1080 --at <s> --select <module>` draws the whole window headless at the video's own size, so a screen is a full frame and the camera zooms into it. Write each step as `.fbks`, `flyback-cli save` it to `.fbk` so the canvas is the document, and shoot it; a module with no wire is dropped by the text, so that step is the next one's `.fbk` with its wire taken out. The preview in a shot is one frame: lay the step's `flyback-cli render` over it, at x 1254, y 88, 666x375 in a 1920x1080 shot. What Is Flyback drew its modules in `scenes.js` instead; ADR-0119's reason holds for videos too, and a drawing goes stale when a module changes.
 - **Real output, not illustrations of it.** Clips from `flyback-cli render`, cut into JPEG frames (24 fps at 960x540 is plenty; 30 where it must stay in step with sound) and drawn by time. Stills for a gallery from `--size 480x270 --at 6`.
 - **Flyback's sound, not explainroo's music.** `"music": false` and `"sfx": "minimal"`, then `~/.explainroo/work/mix-bed.sh <project> <bed.wav> [offset] [gain]` lays a preset's render (Slow weather so far) about 16 LU under the voice with a limiter. A preset at full level in a scene with no narration is aligned to that scene's start in `build/timeline.json`. `verify` on the remuxed file checks the voice still reads.
+- **Feedback is per frame.** A Trails or a Feedback dims once a frame, so a clip of one is rendered at 30 fps and looped by whole turns of its tune, never stretched to another rate.
 - **Truth.** Every claim is from the site, the glossary or the code (`InspectorHelp.cs` for gestures and shortcuts); the voice says *picture* and *sound*, *socket*, *wire*. Check what a picture does before saying it: the Rings in Your first patch travel inward, not out. A homophone the speech check flags ("Sine" heard as "sign", freq as "freak") is fine.
 
 `flyback-cli render` cannot start part way in, so a stretch from the middle of a preset is rendered from 0 and cut (TODO.md's `--from` item).
@@ -24,15 +25,15 @@ Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an ide
 | What is Flyback? | `FhKpYZxMlec` | 2:03 | Modules, sockets, wires, the Output, one Sine driving both, normalled inputs, per pixel and per sample, live rebuilds, F2, the assistant, the presets, 7 s of Whole band. Sources lost with the scratchpad; the MP4 is on the channel. |
 | Your first patch | `npkO3aYA_CA` | 1:27 | Empty, Space and sine, a wire into color, `in` following the clock, Coordinates for stripes, freq to four, Rings with no wires, Time into offset, Ctrl+S. Every screen a `flyback-cli shot`. `~/.explainroo/videos/first-patch`. |
 | Make a beat you can see | `SxKHeOr8l0g` | 1:54 | Tempo, a Stroke into a Drum, a Euclid into a Hiss, a Note Sequencer through a Saw, an ADSR and a Filter, the levels, Rings lit by the Stroke, a panel knob on the cutoff. Ends as the Beat you can see preset, bit for bit. Each scene plays its own step's sound, ducked under the voice by `~/.explainroo/work/beat/mix.py`. Replaced `tutorials/beat.html`. |
+| One knob, two echoes | not posted | 2:12 | A Tempo stepping a Note Sequencer into a Triangle, an ADSR and an Expression for the pluck, an Echo on the tempo (taps, feedback), a Circle's outline lit by a Stroke with the hue on the tune, a Trails for the tunnel, a Repeats knob linked to feedback and persist, then turned to 0.1 and 0.95. Ends as the Two echoes preset, bit for bit. Every step is cut from the preset's own `.fbk` by `~/.explainroo/work/echoes/place.py`, so no module moves between screens. From the tunnel on, the picture and `mix.py`'s sound run on one clock (`clock.py`), so the rings flash on the notes. Replaces `tutorials/echoes.html` once posted. |
 
 ## Proposed
 
 Roughly in the order worth making. Each is 60 to 120 seconds unless it says otherwise.
 
-Two of them replace the written tutorials still under `site/tutorials/`. When one is posted, its page goes, with every link to it, and its row in `tests/Flyback.Specs/Features/Tutorials.feature` (echoes) or its `PatchShotTests` lines (syntakt) go in the same commit.
+One made video and one proposed replace the written tutorials still under `site/tutorials/`. When one is posted, its page goes, with every link to it, and its row in `tests/Flyback.Specs/Features/Tutorials.feature` (echoes) or its `PatchShotTests` lines (syntakt) go in the same commit.
 
 - **Your first sound.** A Sine at 220 into `left`, `right` following it, and `volume`. The Scope beside it so the ear and the eye agree.
-- **One knob, two echoes.** Replaces `tutorials/echoes.html`. A tune through an echo that keeps time, a ring on every note carried down a tunnel, and one knob that sets how long both last; it ends as the Two echoes preset.
 - **Play it from an Elektron Syntakt.** Replaces `tutorials/syntakt.html`. The box's MIDI and USB settings, the whole Syntakt added in one pick, a MIDI track sequencing a Flyback voice, a Flyback sequencer kept to its clock, a picture lit by its tracks, and its knobs on the panel. Needs the real box filmed or captured; the editor half can be `flyback-cli shot`.
 - **Feedback for the eyes and the ears.** A loop is a delay: a comb or an echo in the sound, a trail or a tunnel in the picture. Feedback tunnel and Echo chamber side by side.
 - **Seeing a sound.** Scope, Analyzer and Beam: what the speakers play, its spectrum, and two channels drawn against each other. Waveform and the Flyback Theme preset.
