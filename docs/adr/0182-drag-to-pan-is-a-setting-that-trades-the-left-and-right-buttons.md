@@ -34,6 +34,15 @@ pan, a held one opens the list) and the setting is read only for a mouse or pen.
 **The help follows it.** The empty inspector names the gestures in use, and is
 rebuilt when the setting is saved.
 
+**A page gets it too, on a panel of its own.** The web editor is where a newcomer
+on a laptop meets Flyback first, and it had no settings at all
+([0162](0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)). Its toolbar gains the gear, which opens a
+small panel off the button rather than the desktop's tabbed window: drag to pan
+and compact modules, each applied and kept as it is ticked, with no Save. Nothing
+about plugins, since a page ships none of its own. The browser's local storage
+keeps them, behind `IBrowserStore`; a browser that keeps nothing simply forgets.
+Once a finger has touched the canvas, drag to pan leaves the panel.
+
 ## Consequences
 
 **Two schemes to keep working.** Every empty-canvas gesture is tested in both,

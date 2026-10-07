@@ -16,8 +16,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Flyback.Editor.Web;
 
 /// <summary>
-/// The editor in a page (ADR-0162): the shipped plugins that make modules, nothing kept
-/// between visits, the picture on a canvas of its own, and the site it is served from.
+/// The editor in a page (ADR-0162): the shipped plugins that make modules, only its few
+/// settings kept between visits, the picture on a canvas of its own, and the site it is served from.
 /// </summary>
 internal sealed class PageApp : Application
 {
@@ -39,6 +39,7 @@ internal sealed class PageApp : Application
                 () => sp.GetRequiredService<TransportControls>().TogglePause()));
             services.AddSingleton<ITitle, PageTitle>();
             services.AddSingleton<IFocus, PageFocus>();
+            services.AddSingleton<IBrowserStore, PageStore>();
             services.AddSingleton<IClose, PageClose>();
             services.AddSingleton<IStillShelf, PageStills>();
             services.AddSingleton<PageViewer>();

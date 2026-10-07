@@ -122,3 +122,8 @@ paid on every frame, to keep overlays that can sit beside the preview instead.
 - The release key's public half is `src/Flyback.Editor/Updates/release-key.pem`,
   embedded in the library whose `ReleaseSignature` reads it
   ([0088](0088-a-release-installs-itself-at-the-next-start.md)).
+
+**Amended 2026-10-07: a page has a few settings.** The gear is back on a page's
+toolbar, opening a small panel of the settings that make sense there, applied at
+once and kept in the browser's local storage
+([0182](0182-drag-to-pan-is-a-setting-that-trades-the-left-and-right-buttons.md)).

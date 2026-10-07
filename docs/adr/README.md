@@ -23,7 +23,7 @@ context, decision, consequences.
 | [0144](0144-a-pipe-lands-where-the-text-says.md) | A pipe lands where the text says *(user-directed)* |
 | [0145](0145-the-panel-is-written-in-the-text.md) | The panel is written in the text *(user-directed)* |
 | [0160](0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md) | A patch plays in a browser on the engine compiled to WebAssembly *(user-directed)* |
-| [0162](0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md) | The editor runs in a browser, with the picture on a canvas of its own *(user-directed)* |
+| [0162](0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md) | The editor runs in a browser, with the picture on a canvas of its own *(user-directed; a few settings given back by [0182](0182-drag-to-pan-is-a-setting-that-trades-the-left-and-right-buttons.md))* |
 | [0163](0163-a-build-draws-every-presets-still-once.md) | A build draws every preset's still once, for every program to show *(user-directed)* |
 | [0166](0166-flyback-cli-shot-draws-the-editors-window-with-no-screen.md) | flyback-cli shot draws the editor's window with no screen *(user-directed)* |
 

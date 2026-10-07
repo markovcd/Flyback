@@ -92,7 +92,20 @@ public sealed class CanvasSettings
     {
         try
         {
-            var loaded = SettingsFile.Read(path, Section) is { } json
+            return Parse(SettingsFile.Read(path, Section));
+        }
+        catch
+        {
+            return new CanvasSettings();
+        }
+    }
+
+    /// <summary>Never throws: what cannot be read is the defaults.</summary>
+    public static CanvasSettings Parse(string? json)
+    {
+        try
+        {
+            var loaded = json is not null
                 ? JsonSerializer.Deserialize<CanvasSettings>(json, Options) ?? new()
                 : new CanvasSettings();
 
@@ -115,6 +128,8 @@ public sealed class CanvasSettings
     /// <summary>Throws if it cannot write, so the caller can say so.</summary>
     public void Save(string path)
     {
-        SettingsFile.Write(path, Section, JsonSerializer.Serialize(this, Options));
+        SettingsFile.Write(path, Section, Json());
     }
+
+    public string Json() => JsonSerializer.Serialize(this, Options);
 }

@@ -68,17 +68,21 @@ internal sealed class CanvasSection : ISettingsSection
 
     private readonly NodeEditor canvas;
 
+    /// <summary>Where <see cref="saved"/> is kept in a page, which has no settings file.</summary>
+    private readonly IBrowserStore browser;
+
     private readonly Action<string, string?> report;
 
     /// <param name="canvas">The canvas, redrawn whenever what it draws changes.</param>
     /// <param name="source">The text view, whose font size is this section's setting.</param>
-    public CanvasSection(EditorFolders folders, NodeEditor canvas, ReportLine report, SourceView source)
+    public CanvasSection(EditorFolders folders, NodeEditor canvas, ReportLine report, SourceView source, IBrowserStore browser)
     {
         path = folders.SettingsPath;
         this.canvas = canvas;
+        this.browser = browser;
         this.report = (message, detail) => report.Say(message, detail);
 
-        if (path is not null) saved = CanvasSettings.Load(path);
+        saved = path is not null ? CanvasSettings.Load(path) : CanvasSettings.Parse(browser.Read(CanvasSettings.Section));
 
         source.EditorFontSize = saved.EditorFontSize;
         canvas.Gestures.DragToPan = saved.DragToPan;
@@ -206,6 +210,20 @@ internal sealed class CanvasSection : ISettingsSection
         Write();
     }
 
+    /// <summary>Whether the left button pans empty canvas, as last saved.</summary>
+    internal bool DragToPan => saved.DragToPan;
+
+    /// <summary>Whether modules are drawn compact, as last saved.</summary>
+    internal bool CompactModules => saved.CompactModules;
+
+    /// <summary>Changes a setting and saves it at once, for a page's panel that has no Save.</summary>
+    internal void Change(Action<CanvasSettings> change)
+    {
+        change(saved);
+        Show();
+        Write();
+    }
+
     /// <summary>How long Measure runs the patch for, as last saved.</summary>
     internal double MeasureSeconds => saved.MeasureSeconds;
 
@@ -242,7 +260,11 @@ internal sealed class CanvasSection : ISettingsSection
 
     private void Write()
     {
-        if (path is null) return;
+        if (path is null)
+        {
+            browser.Write(CanvasSettings.Section, saved.Json());
+            return;
+        }
 
         try
         {

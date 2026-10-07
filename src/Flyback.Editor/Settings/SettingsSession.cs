@@ -15,13 +15,15 @@ namespace Flyback.Editor.Settings;
 internal sealed class SettingsSession(
     IEnumerable<ISettingsSection> sections,
     IDialog dialog,
-    Usage usage)
+    Usage usage,
+    EditorHost host)
     : IReactTo<SettingsAsked>
 {
     /// <summary>Whether the settings sheet is waiting for an answer.</summary>
     public bool IsShowing { get; private set; }
-    
-    public Task On(SettingsAsked notice) => ShowAsync();
+
+    /// <summary>A page has its own few settings instead, in <see cref="PageSettings"/>.</summary>
+    public Task On(SettingsAsked notice) => host.InPage ? Task.CompletedTask : ShowAsync();
 
     /// <summary>Shows all sections, then saves their drafts or restores the last saved values.</summary>
     private async Task ShowAsync()

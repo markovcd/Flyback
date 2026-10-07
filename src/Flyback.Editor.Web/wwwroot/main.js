@@ -50,6 +50,13 @@ runtime.setModuleImports('page', {
   },
   attachGl: box => gl.attach(box.firstChild, () => runtime.localHeapViewU8()),
   hasFocus: () => document.hasFocus(),
+  // A browser that keeps nothing (a private window, storage blocked) forgets the settings rather than failing.
+  readSetting: section => {
+    try { return localStorage.getItem(`flyback.editor.${section}`); } catch { return null; }
+  },
+  writeSetting: (section, json) => {
+    try { localStorage.setItem(`flyback.editor.${section}`, json); } catch { }
+  },
   stillsUrl: () => new URL('../stills/', location.href).href,
   // The preset site behind the page, which its <html> names; GitHub Pages has none.
   siteUrl: () => {

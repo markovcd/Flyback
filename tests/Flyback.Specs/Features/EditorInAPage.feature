@@ -1,6 +1,7 @@
 Feature: The editor in a page offers only what a page can do
   In a browser page the editor opens, saves and records nothing, and has no assistant,
-  settings, plugins or About. Its picture stays where the layout puts it, drawn small.
+  plugins or About; its settings are a few, on a panel off the gear, kept by the
+  browser. Its picture stays where the layout puts it, drawn small.
   It reaches the preset site it is served from, for shared presets and letters; served
   from anywhere else, it offers neither.
 
@@ -8,8 +9,17 @@ Feature: The editor in a page offers only what a page can do
     Given a rainbow across the screen
     And the editor is in a page
     And the patch is open in the editor
-    Then the toolbar has none of "open, save, assistant, settings, plugins, about"
-    And the toolbar still has "undo, redo, tidy, code, controls, swap, side, transport, view-it"
+    Then the toolbar has none of "open, save, assistant, plugins, about"
+    And the toolbar still has "undo, redo, tidy, code, controls, swap, side, transport, view-it, settings"
+
+  Scenario: A page's gear offers drag to pan and compact modules, and nothing about plugins
+    Given a rainbow across the screen
+    And the editor is in a page
+    And the patch is open in the editor
+    Then the page's settings offer "Drag empty canvas to pan, Compact modules"
+    When "Drag empty canvas to pan" is ticked on the page's settings
+    Then the left button pans empty canvas
+    And the page's browser keeps it for the next visit
 
   Scenario: A page's toolbar leads with the Flyback mark, which goes back to the site
     Given a rainbow across the screen

@@ -144,6 +144,7 @@ internal static class EditorServices
         services.AddSingleton<IFocus, WindowFocus>();
         services.AddSingleton<IClose, WindowClose>();
         services.AddSingleton<ITitle, WindowTitle>();
+        services.AddSingleton<IBrowserStore, NoBrowserStore>();
         services.AddSingleton<IViewer, NoViewer>();
         services.AddPart<EditState>();
         services.AddPart<SiteAccess>();
@@ -168,6 +169,7 @@ internal static class EditorServices
         services.AddPart<UpdatesSection>();
         services.AddPart<UsageSection>();
         services.AddPart<PrivacySection>();
+        services.AddPart<PageSettings>();
 
         services.AddPart<PanelKnobs>();
         services.AddPart<KnobRandomizer>();

@@ -239,9 +239,14 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         // does not belong in the path of the things reached for constantly.
         var program = ToolbarButtons.Group();
 
+        // A page has only its own few settings (PageSettings), and no plugins or About.
         program.Children.Add(Settings);
-        program.Children.Add(Plugins);
-        program.Children.Add(About);
+
+        if (full)
+        {
+            program.Children.Add(Plugins);
+            program.Children.Add(About);
+        }
 
         // Left to right, rather than the program group docked to the far edge —
         // everything reached from the toolbar sits together at the near side instead
@@ -253,12 +258,8 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         var programRule = ToolbarButtons.Separator();
 
         bar.Children.Add(patchwork);
-
-        if (full)
-        {
-            bar.Children.Add(programRule);
-            bar.Children.Add(program);
-        }
+        bar.Children.Add(programRule);
+        bar.Children.Add(program);
 
         // The first to fold is the first listed: the program's own buttons, reached
         // for once a session, before the files, and the views last.
@@ -284,7 +285,7 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
                 (Paste, "Paste"),
                 (Frame, "Bring the whole patch into view"),
             ],
-            full ? [(program, programRule)] : []);
+            [(program, programRule)]);
 
         bar.Children.Add(Overflow.More);
 

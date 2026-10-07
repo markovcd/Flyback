@@ -5,6 +5,7 @@ using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
+using Avalonia.LogicalTree;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.Editor;
@@ -707,6 +708,27 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
 
             tabs.SelectedItem = tabs.Items.OfType<TabItem>().Single(item => (item.Header as TextBlock)?.Text == tab);
         });
+
+    /// <summary>The labels of the switches the page's gear offers, opening its panel.</summary>
+    public IReadOnlyList<string> PageSettings => ReadWindow(open =>
+    {
+        Named<Button>(open, "settings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        return (IReadOnlyList<string>)[.. PageSwitches().Where(box => Ancestors(box).Prepend(box).All(c => c.IsVisible)).Select(box => (string)box.Content!)];
+    });
+
+    /// <summary>Ticks or clears the switch so labeled on the page's settings panel, which is open.</summary>
+    public void TickOnPage(string label, bool on) =>
+        DoWindow((_, _) => PageSwitches().Single(box => box.Content as string == label).IsChecked = on);
+
+    private IEnumerable<CheckBox> PageSwitches() =>
+        ((Control)Service<Flyback.Editor.Settings.PageSettings>().Flyout.Content!).GetLogicalDescendants().OfType<CheckBox>();
+
+    private static IEnumerable<Control> Ancestors(Control control)
+    {
+        for (var at = control.Parent as Control; at is not null; at = at.Parent as Control) yield return at;
+    }
 
     /// <summary>Ticks or clears the box so labeled on the question up over the window.</summary>
     public void Tick(string label, bool on) =>

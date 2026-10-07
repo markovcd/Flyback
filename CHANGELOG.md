@@ -4,7 +4,7 @@
 
 - `install.sh` makes the macOS app startable: it clears the download quarantine and signs the bundle for this Mac.
 
-- Settings → Canvas → Drag empty canvas to pan moves the view with the left button, for a mouse or trackpad with no middle button; the right button then draws the selection band, and a right click still adds a module.
+- Settings → Canvas → Drag empty canvas to pan moves the view with the left button, for a mouse or trackpad with no middle button; the right button then draws the selection band, and a right click still adds a module. The web editor has it too, with Compact modules, on a small panel off a gear on its toolbar, kept by the browser.
 
 - The settings window is wide enough that no option is cut short, Save is drawn in the accent color, and the knob grid's Columns and Rows sit indented under the switch they depend on.
 

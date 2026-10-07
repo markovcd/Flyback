@@ -15,13 +15,20 @@ public sealed class PageSteps(EditorDriver editor, PatchContext context)
 {
     private readonly HandedViewer viewer = new();
 
+    /// <summary>The page's local storage.</summary>
+    private readonly KeptByBrowser browser = new();
+
     private int homed;
 
     [Given("the editor is in a page")]
     public void GivenInAPage()
     {
         editor.Setup = editor.Setup with { Host = editor.Setup.Host with { InPage = true, Home = () => homed++ } };
-        editor.Services += services => services.AddSingleton<IViewer>(viewer);
+        editor.Services += services =>
+        {
+            services.AddSingleton<IViewer>(viewer);
+            services.AddSingleton<IBrowserStore>(browser);
+        };
     }
 
     [When("View it is pressed")]
@@ -56,6 +63,20 @@ public sealed class PageSteps(EditorDriver editor, PatchContext context)
         at.ShouldBeGreaterThanOrEqualTo(0, $"the toolbar has no {before}");
         offered.ElementAtOrDefault(at + 1).ShouldBe(name);
     }
+
+    [Then("the page's settings offer {string}")]
+    public void ThenPageSettingsOffer(string labels) =>
+        editor.PageSettings.ShouldBe(labels.Split(", "));
+
+    [When("{string} is ticked on the page's settings")]
+    public void WhenTickedOnPage(string label) => editor.TickOnPage(label, on: true);
+
+    [Then("the left button pans empty canvas")]
+    public void ThenLeftPans() => editor.Read(canvas => canvas.Gestures.DragToPan).ShouldBeTrue();
+
+    [Then("the page's browser keeps it for the next visit")]
+    public void ThenBrowserKeeps() =>
+        Flyback.Editor.Canvas.CanvasSettings.Parse(browser.Read(Flyback.Editor.Canvas.CanvasSettings.Section)).DragToPan.ShouldBeTrue();
 
     [When("the Flyback mark is pressed")]
     public void WhenMarkPressed() => editor.PressPanelButton("home");
