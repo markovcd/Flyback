@@ -175,6 +175,8 @@ flyback-cli probe --keys
 flyback-cli shot --preset "Flyback Theme" -o theme.png --at 30.3 --select "Picture: Scope"
 flyback-cli probe --provider all
 flyback-cli ask drone.fbk "slower, and warmer"
+flyback-cli decide "make the bass slower" --yes-no "Does this ask for an edit?" --json
+flyback-cli decide --status
 flyback-cli ask --preset "Plasma" -o plasma.fbkb --model gpt-4.1 "make it blue"
 flyback-cli viewer nebula.fbk
 ```
@@ -198,6 +200,7 @@ flyback-cli viewer nebula.fbk
 - `modules`: lists the modules this build has, and which plugin defines each; given one by type id or name, it describes that module: each socket's default and range, where `|>` lands, what it carries besides its sockets and what it does
 - `probe`: asks an assistant which models it has and what each one accepts
 - `ask`: asks the assistant the editor is set to about a patch, and writes its answer back into the file with the conversation, where the next `ask` and the editor carry it on: inside a `.fbkb`, beside a `.fbk` or `.fbks`. A file that does not exist yet starts empty, and `--out` writes elsewhere. With no message it reads one from standard input, or asks line by line at a terminal. `--provider`, `--model` and `--set key=value` change the settings for one run, `--fresh` starts a new conversation, `--seen` keeps every picture it looked at and sound it heard, `--briefing` prints what it is handed, `--expand` prints the message written out in full, as the editor's Expand does, and builds and writes nothing, and `--json` writes one object a line, each tool call and its arguments included. Each turn ends with what it cost: its requests, the tokens they sent, had cached and wrote, and any time spent waiting out a rate limit. It exits `2` when a turn fails
+- `decide`: asks the decision model the settings choose typed questions about some text, given as an argument or `-` for standard input: `--yes-no`, `--choice` with `--option label=description`, `--score` with `--level`, or a file of them in the System One format with `--ask`. Each answer comes with its probability, and `--json` writes the format's own answer. `--model` asks another, `--status` lists them and what each lacks, and `--prepare` downloads what one needs after a yes, which `--yes` gives for a script
 - `stills`: draws a still of every preset into `--out`, with the `index.json` the galleries show them by in place of drawing them (ADR-0163); `./scripts/stills.sh <folder>` lays out the plugins a build ships first, and every release and site build runs it
 
 `check` exits with:
@@ -207,7 +210,7 @@ flyback-cli viewer nebula.fbk
 - `2`: the job could not run
 
 `--strict` makes a warning fail as well. `check`, `compare`, `info`, `measure`, `pack`, `modules`,
-`probe` and `ask` each take `--json`, which writes the same answer as a document instead of
+`probe`, `ask` and `decide` each take `--json`, which writes the same answer as a document instead of
 as prose.
 
 `info` says what a patch requires and `modules` says what is installed to meet

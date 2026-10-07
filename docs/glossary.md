@@ -116,6 +116,8 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | **the document** | Whichever of the canvas and the text owns the patch, decided by the file that was opened. | `Document` | — |
 | **notice** | A fact one part of the editor announces, which any part may react to by declaring it. | `Flyback.Editor.Notices`, `IReactTo<T>`, `Reactions` | event (that is a control talking to its owner), message, signal |
 | **assistant** | The AI that edits a patch through the workbench, in a column beside it. | `IPatchAssistant`, `AssistantPanel` | agent (that is the one building Flyback), AI, copilot, bot |
+| **decision model** | What answers typed questions about some text with a probability rather than with prose. | `IDecisionModel`, `Decisions` | classifier, System One, oracle, judge |
+| **question**, **answer** | What a decision model is asked, of three kinds: a **choice** of options, a **score** on a scale, a **yes-no**; and what it says back, with a **confidence**. | `Question`, `Answer`; the wire spells yes-no `noul` | prompt, label, prediction |
 | **workbench** | Everything an assistant may do to a patch, and its limits. | `PatchWorkbench` | tools |
 | **conversation** | What was said to an assistant, saved with the patch it is about. | — | chat, thread, session |
 | **Settings** | The settings window and its sections: Picture, Sound, MIDI, Recording, Canvas, Files, Assistant, Privacy. | `MainWindow` builds it | preferences, options |
@@ -148,7 +150,7 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 
 | Say | Means | Code | Not |
 |---|---|---|---|
-| **plugin** | A folder under `plugins/` holding one class that registers modules, presets, sound or MIDI backends, secret stores or assistants. | `IFlybackPlugin` | extension, add-on |
+| **plugin** | A folder under `plugins/` holding one class that registers modules, presets, sound or MIDI backends, secret stores, assistants or decision models. | `IFlybackPlugin` | extension, add-on |
 | **provider**, **provider id** | Who a plugin's modules belong to, and the prefix of their type ids. | `ModuleProvider` | vendor, namespace |
 | **contract** | What a plugin is compiled against, with a version of its own. | `PluginContractVersion` in Directory.Build.props | API alone, SDK |
 | **plugin problem** | A plugin, or a part of one, that was refused, and why. | `PluginProblem` | error, failure |

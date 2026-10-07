@@ -74,6 +74,7 @@ internal static class Program
             ModulesCommand.Build(plugins, json),
             CompareCommand.Build(plugins, json),
             ProbeCommand.Build(plugins, json),
+            DecideCommand.Build(plugins, json),
             MeasureCommand.Build(plugins, json),
             AskCommand.Build(plugins, json),
             ViewerCommand.Build(),

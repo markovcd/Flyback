@@ -5,7 +5,7 @@ namespace Flyback.Plugins.Assist;
 
 /// <summary>
 /// Where an assistant's key comes from, in order of preference, and the transport that
-/// sends it (<see cref="Transport"/>): the key itself never reaches the assistant.
+/// sends it (<see cref="Transport(IPatchAssistant, SettingValues, HttpMessageHandler)"/>): the key itself never reaches the assistant.
 /// </summary>
 /// <remarks>
 /// A key somebody entered wins, because entering one is a deliberate act and an
@@ -44,9 +44,20 @@ internal sealed class Credentials(ISecretStore? store)
     /// <param name="network">Where signed requests go; the network unless a test says otherwise.</param>
     public IAssistantTransport Transport(IPatchAssistant assistant, SettingValues values, HttpMessageHandler? network = null)
     {
-        var key = Of(assistant.Id, assistant.Credential.EnvironmentVariable, KeyedTransport.OriginOf(assistant, values));
+        return Transport(assistant.Id, assistant.Credential, KeyedTransport.OriginOf(assistant, values), network);
+    }
 
-        return new KeyedTransport(key?.Secret, key?.Origin, assistant.Credential, network);
+    /// <summary>
+    /// What a provider filed under <paramref name="account"/> sends over, to <paramref name="origin"/>:
+    /// no key where it names no <paramref name="credential"/>.
+    /// </summary>
+    public IAssistantTransport Transport(string account, AssistantCredential? credential, string? origin, HttpMessageHandler? network = null)
+    {
+        if (credential is null) return network is null ? KeyedTransport.None : new KeyedTransport(null, null, new AssistantCredential("", ""), network);
+
+        var key = Of(account, credential.EnvironmentVariable, origin);
+
+        return new KeyedTransport(key?.Secret, key?.Origin, credential, network);
     }
 
     /// <summary>

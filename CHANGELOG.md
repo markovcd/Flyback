@@ -14,6 +14,8 @@
 
 - `install.sh --no-links` writes only the copy, leaving the command links, menu entry, shortcut and PATH as they were.
 
+- `flyback-cli decide` asks a decision model typed questions about some text and answers each with a probability, through TypeSafe's Jev or a laya-serve of your own.
+
 - Asked to listen, an assistant that has no model able to hear, such as Claude Code or Codex, says it cannot hear without pointing at a setting it does not have.
 
 ### Fixes

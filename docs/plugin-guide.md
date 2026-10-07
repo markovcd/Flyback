@@ -143,7 +143,7 @@ Nothing stops an assembly holding more than one plugin class, and each is instan
 
 ## 4. What you can contribute
 
-`IPluginRegistry` has seven methods. New kinds of extension arrive as new methods, so a plugin compiled against an older contract keeps working.
+`IPluginRegistry` has eight methods. New kinds of extension arrive as new methods, so a plugin compiled against an older contract keeps working.
 
 | Method | Contributes | Must not, when registering |
 |---|---|---|
@@ -154,8 +154,13 @@ Nothing stops an assembly holding more than one plugin class, and each is instan
 | `AddPatchAssistant` | Something that can author a patch, sending over the `IAssistantTransport` it is handed: the host puts the key on requests to the one origin it was entered for, and the assistant never holds it | Open a connection, or need a credential present |
 | `AddMidiInput` | A MIDI backend | Open a device, or list the ones plugged in |
 | `AddAudioInput` | A sound input backend, which a Line In listens through | Open a device, or list the ones plugged in |
+| `AddDecisionModel` | Something that answers typed questions about some text with probabilities, sending over the transport it is handed as an assistant does | Load a model, open a connection, or need a credential or a file present |
 
 A single plugin may call several. The Voice plugin adds eleven modules and four presets; a platform plugin such as WinIO adds a sound backend and a MIDI input and nothing else. Every kind is keyed by an id, and an id registered twice is refused to both, whichever plugins it comes from, so no folder can stand in for a plugin it shares an id with.
+
+### Decision models
+
+An `IDecisionModel` answers a `DecisionRequest`: a state, which is text, and up to 64 questions about it, each a `Question.Choice` of labeled options, a `Question.Score` on an ordered scale or a `Question.YesNo`. Each comes back as an `Answer` with its probabilities, so a feature can act only when the model is sure. `SystemOneWire` reads and writes the `POST /v1/systemone` format, and the shipped Jev plugin is the whole of an HTTP one. A model that runs here and needs files also implements `IPreparedModel`: it names each file with its address, size and SHA-256, and the host asks before downloading them into the folder it passes as `DecisionConfig.Folder`, refusing any file that hashes otherwise. The plugin itself never downloads anything.
 
 ## 5. Authoring a module
 

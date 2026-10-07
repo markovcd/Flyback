@@ -214,3 +214,4 @@ context, decision, consequences.
 | [0169](0169-the-hosts-side-of-a-conversation-is-a-project-of-its-own.md) | The host's side of a conversation is a project of its own *(user-directed)* |
 | [0172](0172-claude-code-is-an-assistant-by-running-the-program-the-person-signed-in.md) | Claude Code is an assistant by running the program the person signed in *(user-directed)* |
 | [0173](0173-codex-is-an-assistant-the-same-way-and-gemini-is-not.md) | Codex is an assistant the same way, and Gemini is not *(user-directed)* |
+| [0186](0186-a-decision-model-answers-typed-questions-behind-the-plugin-boundary.md) | A decision model answers typed questions behind the plugin boundary *(user-directed)* |
