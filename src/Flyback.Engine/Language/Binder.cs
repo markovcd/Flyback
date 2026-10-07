@@ -24,8 +24,10 @@ namespace Flyback.Engine.Language;
 public sealed class Binder
 {
     private readonly ModuleCatalog modules;
-    private readonly List<LanguageIssue> issues;
-    private readonly Patch patch = new();
+    private readonly Issues issues;
+    private readonly Wiring wiring;
+    private readonly Patch patch;
+    private readonly NodeIdentity identity;
 
     private readonly ModuleNames moduleNames;
     private readonly ExpressionBinder expressions;
@@ -33,9 +35,6 @@ public sealed class Binder
     private readonly HashSet<string> expanding = new(StringComparer.Ordinal);
 
     private readonly SourceSites sourceSites = new();
-
-    /// <summary>The line that wired each socket the text wires.</summary>
-    private readonly Dictionary<(Guid Node, int Port), int> wired = [];
 
     /// <summary>Each group the text opens and the modules its blocks placed, a name's blocks gathered into one.</summary>
     private readonly List<(string? Name, List<Guid> Members)> boxes = [];
@@ -49,27 +48,23 @@ public sealed class Binder
     /// <summary>Plugins a <c>requires</c> line named that this build does not have.</summary>
     private readonly List<string> missing = [];
 
-    /// <summary>The line that set each knob the text sets.</summary>
-    private readonly Dictionary<(Guid Node, int Port), int> turned = [];
-
-    private Guid coordinates;
-    private Guid clock;
-
     /// <summary>The line each top-level name is bound on, for saying so where one is read above it.</summary>
     private readonly Dictionary<string, int> boundOn = [];
-
-    private readonly NodeIdentity identity = new();
 
     public Binder(ModuleCatalog modules, List<LanguageIssue> issues)
     {
         this.modules = modules;
-        this.issues = issues;
+        this.issues = new Issues(issues);
+
+        wiring = new Wiring(modules, this.issues, sourceSites);
+        patch = wiring.Patch;
+        identity = wiring.Identity;
 
         moduleNames = new ModuleNames(modules);
         expressions = new ExpressionBinder(new ExpressionBinder.Context
         {
             Source = Source,
-            Clock = () => new Placed(Shared(ref clock, NodeCatalog.TimeTypeId), modules.Require(NodeCatalog.TimeTypeId)),
+            Clock = wiring.Clock,
             Unknown = Unknown,
             Mention = Mention,
             Refuse = Refuse,
@@ -77,9 +72,9 @@ public sealed class Binder
             Pipe = Pipe,
             Placeholder = Placeholder,
             ExpressionModule = (line, column) => Module(NodeCatalog.ExpressionTypeId, line, column),
-            Place = (def, inputs, line, column) => Place(def, inputs, line, column),
-            ConfigureExpression = ConfigureExpression,
-            Complain = Complain,
+            Place = (def, inputs, line, column) => wiring.Place(def, inputs, line, column),
+            ConfigureExpression = wiring.Formula,
+            Complain = this.issues.Complain,
         });
     }
 
@@ -138,10 +133,9 @@ public sealed class Binder
                 var (line, column) = opened.First(open => open.Box == i).Where;
 
                 // A warning, since the modules are built all the same and only the box is missing.
-                issues.Add(new LanguageIssue(line, column, IssueCode.GroupTooSmall,
+                issues.Warn(IssueCode.GroupTooSmall, line, column,
                     $"a group is drawn round {NodeGroup.Fewest} modules or more, and this one has {members.Count}, "
-                    + "so it is left out. Put a lone module outside any group, or in the group it belongs to.",
-                    IssueSeverity.Warning));
+                    + "so it is left out. Put a lone module outside any group, or in the group it belongs to.");
                 continue;
             }
 
@@ -167,26 +161,23 @@ public sealed class Binder
         return patch;
     }
 
-    private void Complain(string code, int line, int column, string message) =>
-        issues.Add(new LanguageIssue(line, column, code, message));
-
     private void Unknown(NameExpr expr)
     {
         if (boundOn.TryGetValue(expr.Name, out var line) && line > expr.Line)
         {
-            Complain(IssueCode.UsedBeforeBound, expr.Line, expr.Column,
+            issues.Complain(IssueCode.UsedBeforeBound, expr.Line, expr.Column,
                 $"'{expr.Name}' is bound on line {line}, below where it is read. Bind it before reading it.");
             return;
         }
 
         if (expr.Port is null && ExpressionBinder.StatementWord(expr.Name) is { } example)
         {
-            Complain(IssueCode.UnknownName, expr.Line, expr.Column,
+            issues.Complain(IssueCode.UnknownName, expr.Line, expr.Column,
                 $"'{expr.Name}' starts a statement only with what it says after it: {example}.");
             return;
         }
 
-        Complain(IssueCode.UnknownName, expr.Line, expr.Column, $"nothing here is called '{expr.Name}'.");
+        issues.Complain(IssueCode.UnknownName, expr.Line, expr.Column, $"nothing here is called '{expr.Name}'.");
     }
 
     private static string? Builtin(string name) => name switch
@@ -208,13 +199,13 @@ public sealed class Binder
     {
         if (Builtin(name) is { } what)
         {
-            Complain(IssueCode.ReservedName, line, column, $"'{name}' is already {what}. Call this something else.");
+            issues.Complain(IssueCode.ReservedName, line, column, $"'{name}' is already {what}. Call this something else.");
             return false;
         }
 
         if (scope.Entry(name) is { } first)
         {
-            Complain(IssueCode.BoundTwice, line, column, $"'{name}' is already bound on line {first.Line}. A name is bound once.");
+            issues.Complain(IssueCode.BoundTwice, line, column, $"'{name}' is already bound on line {first.Line}. A name is bound once.");
             return false;
         }
 
@@ -278,25 +269,25 @@ public sealed class Binder
         {
             case DefStatement def:
                 if (!defs.TryAdd(def.Name, def))
-                    Complain(IssueCode.DefTwice, def.Line, def.Column, $"'{def.Name}' is already the name of a def.");
+                    issues.Complain(IssueCode.DefTwice, def.Line, def.Column, $"'{def.Name}' is already the name of a def.");
 
                 for (var i = 0; i < def.Parameters.Count; i++)
                 {
                     var (parameter, fallback, _, _) = def.Parameters[i];
 
                     if (Builtin(parameter) is { } what)
-                        Complain(IssueCode.ReservedName, def.Line, def.Column, $"'{parameter}' is already {what}. Call this something else.");
+                        issues.Complain(IssueCode.ReservedName, def.Line, def.Column, $"'{parameter}' is already {what}. Call this something else.");
                     else if (def.Parameters.Take(i).Any(p => p.Name == parameter))
-                        Complain(IssueCode.BoundTwice, def.Line, def.Column, $"'{def.Name}' takes two parameters called '{parameter}'.");
+                        issues.Complain(IssueCode.BoundTwice, def.Line, def.Column, $"'{def.Name}' takes two parameters called '{parameter}'.");
 
                     if (fallback is not null && !Constant(fallback))
                     {
-                        Complain(IssueCode.DefaultNotAValue, fallback.Line, fallback.Column,
+                        issues.Complain(IssueCode.DefaultNotAValue, fallback.Line, fallback.Column,
                             $"a default is a number, a note, a duration or a text. Pass '{parameter}' a signal as an argument instead.");
                     }
                     else if (fallback is null && def.Parameters.Take(i).FirstOrDefault(p => p.Default is not null) is { } earlier)
                     {
-                        Complain(IssueCode.DefaultBeforeRequired, def.Parameters[i].Line, def.Parameters[i].Column,
+                        issues.Complain(IssueCode.DefaultBeforeRequired, def.Parameters[i].Line, def.Parameters[i].Column,
                             $"'{parameter}' has no default and comes after '{earlier.Name}', which has one. Put it first.");
                     }
                 }
@@ -436,7 +427,7 @@ public sealed class Binder
 
             if (statement.Names.Take(i).Contains(name, StringComparer.Ordinal))
             {
-                Complain(IssueCode.BoundTwice, statement.Line, statement.Column, $"'{name}' is written twice. A name is bound once.");
+                issues.Complain(IssueCode.BoundTwice, statement.Line, statement.Column, $"'{name}' is written twice. A name is bound once.");
                 return;
             }
         }
@@ -445,14 +436,14 @@ public sealed class Binder
 
         if (value is not Several several)
         {
-            Complain(IssueCode.TupleMismatch, statement.Line, statement.Column,
+            issues.Complain(IssueCode.TupleMismatch, statement.Line, statement.Column,
                 "this hands back one thing, so it cannot be taken apart into several.");
             return;
         }
 
         if (several.Items.Count != statement.Names.Count)
         {
-            Complain(IssueCode.TupleMismatch, statement.Line, statement.Column,
+            issues.Complain(IssueCode.TupleMismatch, statement.Line, statement.Column,
                 $"this hands back {several.Items.Count} things and {statement.Names.Count} names are waiting for them.");
             return;
         }
@@ -471,18 +462,18 @@ public sealed class Binder
 
         if (value is Dial dial)
         {
-            Link(node, def, port, dial, statement.Line, statement.Column);
+            wiring.Link(node, def, port, dial, statement.Line, statement.Column);
             return;
         }
 
         if (value is not Figure figure)
         {
-            Complain(IssueCode.KnobNeedsNumber, statement.Line, statement.Column,
+            issues.Complain(IssueCode.KnobNeedsNumber, statement.Line, statement.Column,
                 "a knob takes a number or a panel knob. Use '<-' to wire a signal into it.");
             return;
         }
 
-        Knob(node, def, port, figure, statement.Line, statement.Column);
+        wiring.Knob(node, def, port, figure, statement.Line, statement.Column);
     }
 
     private void Backwards(BackWireStatement statement, Scope scope)
@@ -490,7 +481,7 @@ public sealed class Binder
         if (Input(statement.Target, scope) is not var (node, _, port)) return;
         if (Bind(statement.Value, scope) is not { } value) return;
 
-        Feed(value, 0, node.Id, port, statement.Line, statement.Column);
+        wiring.Feed(value, 0, node.Id, port, statement.Line, statement.Column);
     }
 
     /// <summary>
@@ -502,7 +493,7 @@ public sealed class Binder
 
         if (target.Name == "out")
         {
-            Complain(IssueCode.OutputCannotBeOff, target.Line, target.Column,
+            issues.Complain(IssueCode.OutputCannotBeOff, target.Line, target.Column,
                 "the Output cannot be switched off. Switch off what is patched into it, "
                 + "or write 'out.volume = 0'.");
             return;
@@ -518,7 +509,7 @@ public sealed class Binder
 
         if (value is not Placed placed || patch.Find(placed.Id) is not { } node)
         {
-            Complain(IssueCode.NotAModule, target.Line, target.Column,
+            issues.Complain(IssueCode.NotAModule, target.Line, target.Column,
                 $"'{target.Name}' is not a module, so there is nothing to switch off.");
             return;
         }
@@ -536,7 +527,7 @@ public sealed class Binder
 
             missing.Add(plugin);
 
-            Complain(IssueCode.MissingPlugin, statement.Line, statement.Column,
+            issues.Complain(IssueCode.MissingPlugin, statement.Line, statement.Column,
                 $"this build has no plugin '{plugin}', which this patch needs. Install it, or open the patch where it is.");
         }
     }
@@ -552,7 +543,7 @@ public sealed class Binder
         // Stamped out per call, a def would put a knob on the panel per call.
         if (expanding.Count > 0)
         {
-            Complain(IssueCode.PanelInDef, line, column,
+            issues.Complain(IssueCode.PanelInDef, line, column,
                 "a panel knob belongs to the patch, so it is declared outside a def and passed in.");
             return;
         }
@@ -563,7 +554,7 @@ public sealed class Binder
         // module's name or a def's.
         if (Known(statement.Name))
         {
-            Complain(IssueCode.ReservedName, line, column,
+            issues.Complain(IssueCode.ReservedName, line, column,
                 $"'{statement.Name}' is already a module's name, and a knob is called like one. "
                 + $"Call this something else, such as '{statement.Name}_knob'.");
             return;
@@ -572,7 +563,7 @@ public sealed class Binder
         if (Bind(statement.Value, scope) is not Figure { Style: NumberStyle.Plain } resting
             || resting.Amount is < 0d or > 1d or double.NaN)
         {
-            Complain(IssueCode.OutOfRange, line, column,
+            issues.Complain(IssueCode.OutOfRange, line, column,
                 "a panel knob rests somewhere from 0 to 1, and the sockets that follow it say what that means to them.");
             return;
         }
@@ -608,7 +599,7 @@ public sealed class Binder
                     break;
 
                 default:
-                    Complain(IssueCode.UnknownSetting, setting.Line, setting.Column,
+                    issues.Complain(IssueCode.UnknownSetting, setting.Line, setting.Column,
                         "a panel knob takes 'label: \"…\"', 'cc: 0 to 127', 'channel: 1 to 16', 'device: \"…\"' and 'held'.");
                     return;
             }
@@ -616,14 +607,14 @@ public sealed class Binder
 
         if (controller is null && (device is not null || channel != 0))
         {
-            Complain(IssueCode.UnknownSetting, line, column,
+            issues.Complain(IssueCode.UnknownSetting, line, column,
                 "'device' and 'channel' say which controller 'cc' is, so they come with one.");
             return;
         }
 
         if (controller is not null && device is null)
         {
-            Complain(IssueCode.UnknownSetting, line, column,
+            issues.Complain(IssueCode.UnknownSetting, line, column,
                 "a controller is known by its device: add 'device: \"…\"', as the instrument's profile names it.");
             return;
         }
@@ -701,19 +692,19 @@ public sealed class Binder
                 // A box is drawn round modules, and each of these is about the
                 // whole patch or the panel, which no box holds.
                 case GroupStatement nested:
-                    Complain(IssueCode.GroupInGroup, nested.Line, nested.Column,
+                    issues.Complain(IssueCode.GroupInGroup, nested.Line, nested.Column,
                         "a group cannot hold another group. Close this one first.");
                     Unmade(Declared(nested.Body), scope, nested.Line);
                     break;
 
                 case PanelStatement panel:
-                    Complain(IssueCode.PanelInGroup, panel.Line, panel.Column,
+                    issues.Complain(IssueCode.PanelInGroup, panel.Line, panel.Column,
                         "a panel knob belongs to the whole patch, so it is declared outside a group.");
                     Unmade([panel.Name], scope, panel.Line);
                     break;
 
                 case RequiresStatement requires:
-                    Complain(IssueCode.RequiresInGroup, requires.Line, requires.Column,
+                    issues.Complain(IssueCode.RequiresInGroup, requires.Line, requires.Column,
                         "what a patch requires is said once, outside every group, before anything else.");
                     break;
 
@@ -728,7 +719,7 @@ public sealed class Binder
         // and the coordinates a bare word reaches for are the whole patch's, so
         // they are in no box however early a block reads them.
         var made = patch.Nodes
-            .Where(n => !before.Contains(n.Id) && n.Id != clock && n.Id != coordinates)
+            .Where(n => !before.Contains(n.Id) && !wiring.IsShared(n.Id))
             .Select(n => n.Id)
             .ToList();
 
@@ -768,17 +759,9 @@ public sealed class Binder
 
     private Value? Bind(Expr expr, Scope scope) => expressions.Bind(expr, scope);
 
-    private void ConfigureExpression(Value value, string formula, int line, int column)
-    {
-        if (value is not Placed { Id: var id } || patch.Find(id) is not { } node) return;
-
-        node.SetState(FormulaExtra.StateKey, new JsonObject { [FormulaExtra.FormulaField] = formula });
-        sourceSites.Mention(new Site(line, column), id);
-    }
-
     private Value? Refuse(string code, int line, int column, string message)
     {
-        Complain(code, line, column, message);
+        issues.Complain(code, line, column, message);
         return null;
     }
 
@@ -795,25 +778,9 @@ public sealed class Binder
             _ => -1,
         };
 
-        if (port >= 0) return new Socket(Shared(ref coordinates, NodeCatalog.CoordTypeId), modules.Require(NodeCatalog.CoordTypeId), port);
+        if (port >= 0) return wiring.Coordinates().Part(port);
 
-        return name == "t" ? new Socket(Shared(ref clock, NodeCatalog.TimeTypeId), modules.Require(NodeCatalog.TimeTypeId), 0) : null;
-    }
-
-    private Guid Shared(ref Guid held, string typeId)
-    {
-        if (held != Guid.Empty) return held;
-
-        // Named for what it is rather than for where it was first mentioned:
-        // there is one clock and one pair of coordinates in a patch however many
-        // lines reach for them, and moving the first mention should not make it
-        // a different module.
-        var node = NodeInstance.Create(modules.Require(typeId), 0d, 0d, NodeIdentity.FromName("~" + typeId));
-
-        patch.Nodes.Add(node);
-        held = node.Id;
-
-        return held;
+        return name == "t" ? wiring.Clock().Part(0) : null;
     }
 
     // --- the pipe rule -------------------------------------------------------
@@ -855,7 +822,7 @@ public sealed class Binder
 
             if (Input(socket, scope) is not var (node, _, port)) return null;
 
-            Feed(value, 0, node.Id, port, socket.Line, socket.Column);
+            wiring.Feed(value, 0, node.Id, port, socket.Line, socket.Column);
             return value;
         }
 
@@ -884,7 +851,7 @@ public sealed class Binder
         }
 
         var taken = new HashSet<int>();
-        var wiring = new List<(int Port, Value Value)>();
+        var wires = new List<(int Port, Value Value)>();
 
         // Where each argument's value is written, so a complaint about one points at it.
         var sites = new Dictionary<int, Site>();
@@ -900,7 +867,7 @@ public sealed class Binder
             {
                 if (Placeholder(argument.Value))
                 {
-                    Complain(IssueCode.PlaceholderMisplaced, argument.Line, argument.Column,
+                    issues.Complain(IssueCode.PlaceholderMisplaced, argument.Line, argument.Column,
                         "'_' goes in a named argument, 'socket: _', so it says which socket.");
                 }
 
@@ -923,23 +890,23 @@ public sealed class Binder
                     continue;
                 }
 
-                Complain(IssueCode.UnknownSocket, argument.Line, argument.Column,
+                issues.Complain(IssueCode.UnknownSocket, argument.Line, argument.Column,
                     $"'{def.Name}' has no socket called '{argument.Name}'. It has {SocketNames.List(def.Inputs)}.");
                 continue;
             }
 
             if (!taken.Add(port))
             {
-                Complain(IssueCode.GivenTwice, argument.Line, argument.Column, $"'{argument.Name}' is given twice.");
+                issues.Complain(IssueCode.GivenTwice, argument.Line, argument.Column, $"'{argument.Name}' is given twice.");
                 continue;
             }
 
             if (Placeholder(argument.Value))
             {
                 if (piped is null)
-                    Complain(IssueCode.PlaceholderMisplaced, argument.Line, argument.Column, "'_' stands for what is piped in, and nothing is.");
+                    issues.Complain(IssueCode.PlaceholderMisplaced, argument.Line, argument.Column, "'_' stands for what is piped in, and nothing is.");
                 else if (landing is not null)
-                    Complain(IssueCode.PlaceholderTwice, argument.Line, argument.Column, "'_' is written twice, and a pipe brings one signal.");
+                    issues.Complain(IssueCode.PlaceholderTwice, argument.Line, argument.Column, "'_' is written twice, and a pipe brings one signal.");
                 else
                     landing = port;
 
@@ -948,7 +915,7 @@ public sealed class Binder
 
             if (!Piped(argument) && Bind(argument.Value, scope) is { } value)
             {
-                wiring.Add((port, value));
+                wires.Add((port, value));
                 sites[port] = new Site(Leftmost(argument.Value).Line, Leftmost(argument.Value).Column);
             }
         }
@@ -963,7 +930,7 @@ public sealed class Binder
 
             if (result.Issue is { } issue)
             {
-                Complain(issue.Code, expr.Line, expr.Column, issue.Message);
+                issues.Complain(issue.Code, expr.Line, expr.Column, issue.Message);
                 return null;
             }
 
@@ -993,7 +960,7 @@ public sealed class Binder
             {
                 if (free.Count == 0)
                 {
-                    Complain(IssueCode.TooManyArguments, argument.Line, argument.Column,
+                    issues.Complain(IssueCode.TooManyArguments, argument.Line, argument.Column,
                         $"'{def.Name}' has no socket left for this. It has {SocketNames.List(def.Inputs)}.");
                     break;
                 }
@@ -1003,13 +970,13 @@ public sealed class Binder
 
                 if (!refused && Bind(part, scope) is { } value)
                 {
-                    wiring.Add((port, value));
+                    wires.Add((port, value));
                     sites[port] = new Site(Leftmost(part).Line, Leftmost(part).Column);
                 }
             }
         }
 
-        var node = Place(def, [.. piping, .. wiring], expr.Line, expr.Column, sites);
+        var node = wiring.Place(def, [.. piping, .. wires], expr.Line, expr.Column, sites);
 
         if (node is Placed made)
         {
@@ -1062,7 +1029,7 @@ public sealed class Binder
 
         var start = Leftmost(argument.Value);
 
-        Complain(IssueCode.PipelineInArgument, start.Line, start.Column,
+        issues.Complain(IssueCode.PipelineInArgument, start.Line, start.Column,
             "a pipeline cannot go inside an argument. Bind it with 'let' above and name it here.");
         return true;
     }
@@ -1087,227 +1054,6 @@ public sealed class Binder
         _ => false,
     };
 
-    // --- placing and wiring --------------------------------------------------
-
-    /// <param name="sites">Where the text gives each socket its value, where it gives it one; the call's own place otherwise.</param>
-    private Value Place(NodeDef def, IReadOnlyList<(int Port, Value Value)> inputs, int line, int column, IReadOnlyDictionary<int, Site>? sites = null)
-    {
-        var node = NodeInstance.Create(def, 0d, 0d, identity.Next());
-        patch.Nodes.Add(node);
-
-        foreach (var (port, value) in inputs)
-        {
-            var (atLine, atColumn) = sites is not null && sites.TryGetValue(port, out var site) ? (site.Line, site.Column) : (line, column);
-
-            if (value is Figure figure) Knob(node, def, port, figure, atLine, atColumn);
-            else if (value is Dial dial) Link(node, def, port, dial, atLine, atColumn);
-            else if (value is Named) Complain(IssueCode.NotASignal, atLine, atColumn, $"'{def.Inputs[port].Name}' takes a number or a signal, not text.");
-            else Feed(value, 0, node.Id, port, atLine, atColumn);
-        }
-
-        return new Placed(node.Id, def);
-    }
-
-    /// <summary>Wires one signal of <paramref name="value"/> into a socket.</summary>
-    private void Feed(Value value, int index, Guid target, int port, int line, int column)
-    {
-        switch (value)
-        {
-            case Socket socket:
-                Wire(socket.Id, socket.Port, target, port, line, column);
-                break;
-
-            case Placed placed:
-                Wire(placed.Id, 0, target, port, line, column);
-                break;
-
-            case Several several when several.Items.Count > index:
-                Feed(several.Items[index], 0, target, port, line, column);
-                break;
-
-            case Figure figure:
-                if (patch.Find(target) is { } node && modules.Get(node.TypeId) is { } def)
-                    Knob(node, def, port, figure, line, column);
-
-                break;
-
-            case Dial dial:
-                Complain(IssueCode.PanelNotASignal, line, column,
-                    $"'{dial.Word}' is a panel knob, which a socket follows where a number would go: 'freq: {dial.Word}'.");
-                break;
-
-            default:
-                Complain(IssueCode.NotASignal, line, column, "this is not a signal, so nothing can be wired from it.");
-                break;
-        }
-    }
-
-    /// <summary>
-    /// A wire, refused where the text already wired that socket: the graph keeps
-    /// one, and dropping the other without a word is a patch that reads wrong.
-    /// </summary>
-    private void Wire(Guid source, int output, Guid target, int port, int line, int column)
-    {
-        if (wired.TryGetValue((target, port), out var first))
-        {
-            if (patch.IncomingTo(target, port) is { } wire && wire.SourceNode == source && wire.SourcePort == output) return;
-
-            Complain(IssueCode.WiredTwice, line, column,
-                $"'{SocketName(target, port)}' is already wired on line {first}. A socket takes one wire.");
-            return;
-        }
-
-        wired[(target, port)] = line;
-        patch.Connect(source, output, target, port);
-    }
-
-    /// <summary>A socket as the text would say it: the module's name, a dot and the socket.</summary>
-    private string SocketName(Guid node, int port) =>
-        patch.Find(node) is { } instance && modules.Get(instance.TypeId) is { } def
-            ? (sourceSites.NameOf(node) ?? def.Name) + "." + def.Inputs[port].Name.Replace(' ', '_')
-            : "this socket";
-
-    /// <summary>
-    /// Sets a knob, having first asked whether the socket has one and whether it
-    /// reads numbers on the scale this one was written on.
-    /// </summary>
-    private void Knob(NodeInstance node, NodeDef def, int port, Figure figure, int line, int column)
-    {
-        if (!Settable(node, def, port, line, column)) return;
-
-        var spec = def.Inputs[port];
-
-        if (!Reads(spec, figure, line, column)) return;
-
-        node.InputValues[port] = (float)figure.Amount;
-        turned[(node.Id, port)] = line;
-
-        // Only once a knob has actually been set, so that a refused number is
-        // not offered as a place to write another one into. By the socket's own
-        // spelling, because that is what a caller asking for it will have.
-        sourceSites.Write(node.Id, spec.Name.Replace(' ', '_'), figure.Where);
-    }
-
-    /// <summary>
-    /// Has a socket follow a panel knob, over the range the text gives or, where
-    /// it gives none, the socket's own.
-    /// </summary>
-    private void Link(NodeInstance node, NodeDef def, int port, Dial dial, int line, int column)
-    {
-        if (!Settable(node, def, port, line, column)) return;
-
-        var spec = def.Inputs[port];
-        ControlLink link;
-
-        if (dial is { Low: { } low, High: { } high })
-        {
-            if (!Reads(spec, low, line, column) || !Reads(spec, high, line, column)) return;
-
-            link = new ControlLink(dial.Control.Id, (float)low.Amount, (float)high.Amount)
-            {
-                Knee = dial.Knee is { } knee ? (float)knee.Amount : spec.Knee,
-            };
-        }
-        else
-        {
-            link = ControlLink.For(dial.Control.Id, spec, node.InputValues[port]);
-        }
-
-        node.InputValues[port] = link.At(dial.Control.Value);
-        ControlMap.Link(node, port, link);
-        turned[(node.Id, port)] = line;
-    }
-
-    /// <summary>Whether a socket's knob may be set here, said where it may not.</summary>
-    private bool Settable(NodeInstance node, NodeDef def, int port, int line, int column)
-    {
-        if (port < 0 || port >= def.Inputs.Count) return false;
-
-        // One number per knob: a second would win without a word, and the first
-        // would read as though it still counted.
-        if (turned.TryGetValue((node.Id, port), out var first))
-        {
-            Complain(IssueCode.KnobSetTwice, line, column,
-                $"'{SocketName(node.Id, port)}' is already set on line {first}. A knob is set once.");
-            return false;
-        }
-
-        var spec = def.Inputs[port];
-
-        // A normalled socket is already carrying something and the stored value
-        // is never read, so a number here would be a knob nobody can turn
-        // (ADR-0050). The same refusal the assistant's set_knobs makes.
-        if (modules.Normalled(spec) is { } driver)
-        {
-            Complain(IssueCode.NormalledSocket, line, column,
-                $"'{spec.Name}' is normalled to {driver} and has no knob. "
-                + "Patch a Value in if it really should stand still.");
-            return false;
-        }
-
-        return true;
-    }
-
-    /// <summary>Whether a number is written the way a socket reads, said where it is not.</summary>
-    private bool Reads(PortSpec spec, Figure figure, int line, int column)
-    {
-        var wanted = figure.Style switch
-        {
-            NumberStyle.Note => PortDisplay.Note,
-            NumberStyle.Duration => PortDisplay.Duration,
-            _ => spec.Display,
-        };
-
-        if (wanted != spec.Display)
-        {
-            var written = figure.Style == NumberStyle.Note ? "a note" : "a length of time";
-
-            Complain(IssueCode.WrongLiteral, line, column, $"'{spec.Name}' is not read as {written}.");
-            return false;
-        }
-
-        // A bare number on a socket that holds time is the trap the literal was
-        // added to remove: the socket holds a power of ten, so "attack: 0.01"
-        // meaning ten milliseconds is a second, and the drum is a drone. Nothing
-        // about the value says which was meant, so the complaint says both.
-        if (spec.Display == PortDisplay.Duration && figure.Style == NumberStyle.Plain)
-        {
-            Complain(IssueCode.BareDuration, line, column,
-                $"'{spec.Name}' is a length of time, and a bare number on one is a power of ten: "
-                + $"{Number(figure.Amount)} means {spec.Format((float)figure.Amount)}. "
-                + $"Write {Literal(figure.Amount)} if you meant {Number(figure.Amount)} seconds.");
-            return false;
-        }
-
-        if (!double.IsFinite(figure.Amount))
-        {
-            Complain(IssueCode.OutOfRange, line, column, $"'{spec.Name}' cannot hold that.");
-            return false;
-        }
-
-        return true;
-    }
-
-    /// <summary>A number as it was written, for saying it back in a complaint.</summary>
-    private static string Number(double value) =>
-        value.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
-
-    /// <summary>
-    /// <paramref name="seconds"/> written as the literal that would mean it, for
-    /// offering back to somebody who wrote a bare number meaning seconds.
-    /// </summary>
-    private static string Literal(double seconds)
-    {
-        var (scale, unit) = Math.Abs(seconds) switch
-        {
-            < 1e-3d => (1e6d, "us"),
-            < 1d => (1e3d, "ms"),
-            _ => (1d, "s"),
-        };
-
-        return Number(seconds * scale) + unit;
-    }
-
     // --- what a module carries -----------------------------------------------
 
     private void File(Value placed, NodeDef def, string path, int line, int column)
@@ -1317,7 +1063,7 @@ public sealed class Binder
         if (def.Extra<SampleExtra>() is not null) SampleExtra.Set(instance, path);
         else if (def.Extra<PictureExtra>() is not null) PictureExtra.Set(instance, path);
         else if (def.Extra<MidiFileExtra>() is not null) MidiFileExtra.Set(instance, path);
-        else Complain(IssueCode.NoFile, line, column, $"'{def.Name}' names no file.");
+        else issues.Complain(IssueCode.NoFile, line, column, $"'{def.Name}' names no file.");
     }
 
     /// <summary>
@@ -1331,7 +1077,7 @@ public sealed class Binder
 
         if (def.Extra<StepsExtra>() is { } steps)
         {
-            var read = StepNotation.Read(block, steps.Spec.Display == PortDisplay.Note, opened.Line, opened.Column, issues);
+            var read = StepNotation.Read(block, steps.Spec.Display == PortDisplay.Note, opened.Line, opened.Column, issues.List);
 
             StepsExtra.Set(node, read.Steps);
 
@@ -1344,17 +1090,17 @@ public sealed class Binder
 
         if (def.Extra<ScaleExtra>() is not null)
         {
-            ScaleExtra.Set(node, StepNotation.Classes(block, opened.Line, opened.Column, issues));
+            ScaleExtra.Set(node, StepNotation.Classes(block, opened.Line, opened.Column, issues.List));
             return;
         }
 
         if (def.Extra<ArrangementExtra>() is not null)
         {
-            ArrangementExtra.Set(node, ArrangementNotation.Read(block, opened.Line, opened.Column, issues));
+            ArrangementExtra.Set(node, ArrangementNotation.Read(block, opened.Line, opened.Column, issues.List));
             return;
         }
 
-        Complain(IssueCode.NoBlock, line, column, $"'{def.Name}' carries nothing a block could say.");
+        issues.Complain(IssueCode.NoBlock, line, column, $"'{def.Name}' carries nothing a block could say.");
     }
 
     /// <summary>Divides a sequencer's rate, by the knob where there is one and by a Multiply where there is not.</summary>
@@ -1388,7 +1134,7 @@ public sealed class Binder
     {
         if (laid)
         {
-            Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
+            issues.Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
                 "the keyboard is already laid out further up. A patch has one keyboard, so it says so once.");
             return;
         }
@@ -1404,14 +1150,14 @@ public sealed class Binder
     private KeyboardScale? Scale(string block, int line, int column)
     {
         var said = issues.Count;
-        var notes = StepNotation.Classes(block, line, column, issues);
+        var notes = StepNotation.Classes(block, line, column, issues.List);
 
         // A word that is not a note has been said already, and the scale it spoils is not worth saying too.
         if (issues.Count > said) return null;
 
         if (notes.Count == 0)
         {
-            Complain(IssueCode.UnknownScale, line, column,
+            issues.Complain(IssueCode.UnknownScale, line, column,
                 "the keyboard's scale has no notes. Spell one from its tonic, as in 'keyboard scale [ D E F G A B C ]'.");
             return null;
         }
@@ -1422,7 +1168,7 @@ public sealed class Binder
         if (Chords.Scales.FirstOrDefault(scale => scale.Classes.SequenceEqual(classes)) is { } mode)
             return new KeyboardScale(tonic, mode.Id);
 
-        Complain(IssueCode.UnknownScale, line, column,
+        issues.Complain(IssueCode.UnknownScale, line, column,
             $"{string.Join(" ", notes.Select(Pitch.ClassName))} is not a scale from {Pitch.ClassName(tonic)}. "
             + "The keyboard plays the seven-note scales an Auto Chord builds in, from the first note.");
         return null;
@@ -1433,7 +1179,7 @@ public sealed class Binder
     {
         if (patch.Length is not null)
         {
-            Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
+            issues.Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
                 "the patch's length is already said further up. It has one length, so it says so once.");
             return;
         }
@@ -1446,7 +1192,7 @@ public sealed class Binder
     {
         if (patch.Description is not null)
         {
-            Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
+            issues.Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
                 "the patch is already described further up. It has one description, so it says so once.");
             return;
         }
@@ -1459,7 +1205,7 @@ public sealed class Binder
     {
         if (patch.Author is not null)
         {
-            Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
+            issues.Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
                 "the patch is already credited further up. It has one author line, so it says so once.");
             return;
         }
@@ -1472,7 +1218,7 @@ public sealed class Binder
     {
         if (patch.Tags is not null)
         {
-            Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
+            issues.Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
                 "the patch is already tagged further up. It has one tags line, so it says so once.");
             return;
         }
@@ -1511,7 +1257,7 @@ public sealed class Binder
         };
 
         if (written is null)
-            Complain(IssueCode.FieldNeedsValue, argument.Line, argument.Column, $"'{field.Label}' is set to a value, not to a signal.");
+            issues.Complain(IssueCode.FieldNeedsValue, argument.Line, argument.Column, $"'{field.Label}' is set to a value, not to a signal.");
 
         return written;
     }
@@ -1614,13 +1360,13 @@ public sealed class Binder
 
             if (index < 0)
             {
-                Complain(IssueCode.UnknownParameter, argument.Line, argument.Column,
+                issues.Complain(IssueCode.UnknownParameter, argument.Line, argument.Column,
                     $"'{macro.Name}' has no parameter called '{argument.Name}'. It has {Listed(parameters)}.");
                 sound = false;
             }
             else if (given[index])
             {
-                Complain(IssueCode.GivenTwice, argument.Line, argument.Column, $"'{argument.Name}' is given twice.");
+                issues.Complain(IssueCode.GivenTwice, argument.Line, argument.Column, $"'{argument.Name}' is given twice.");
                 sound = false;
             }
             else
@@ -1719,7 +1465,7 @@ public sealed class Binder
 
     private Value[]? Refused(string code, CallExpr call, string message)
     {
-        Complain(code, call.Line, call.Column, message);
+        issues.Complain(code, call.Line, call.Column, message);
         return null;
     }
 
@@ -1738,7 +1484,7 @@ public sealed class Binder
         // missing plugin's, and naming it again says nothing new.
         if (code == IssueCode.UnknownModule && missing.Count > 0) return null;
 
-        Complain(code, line, column, refusal);
+        issues.Complain(code, line, column, refusal);
         return null;
     }
 
@@ -1747,7 +1493,7 @@ public sealed class Binder
     {
         if (target.Port is null)
         {
-            Complain(IssueCode.SocketUnsaid, target.Line, target.Column, "say which socket this is.");
+            issues.Complain(IssueCode.SocketUnsaid, target.Line, target.Column, "say which socket this is.");
             return null;
         }
 
@@ -1772,7 +1518,7 @@ public sealed class Binder
         {
             // A name bound to one output, a number or a def's several results:
             // it is there, and it is not something with sockets.
-            Complain(IssueCode.NotAModule, target.Line, target.Column, $"'{target.Name}' is not a module, so it has no sockets.");
+            issues.Complain(IssueCode.NotAModule, target.Line, target.Column, $"'{target.Name}' is not a module, so it has no sockets.");
             return null;
         }
         else
@@ -1792,7 +1538,7 @@ public sealed class Binder
             return (node, def, port);
         }
 
-        Complain(IssueCode.UnknownSocket, target.Line, target.Column,
+        issues.Complain(IssueCode.UnknownSocket, target.Line, target.Column,
             $"'{def.Name}' has no socket called '{target.Port}'. It has {SocketNames.List(def.Inputs)}.");
 
         return null;
