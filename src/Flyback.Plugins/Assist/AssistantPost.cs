@@ -7,14 +7,14 @@ namespace Flyback.Plugins.Assist;
 public static class AssistantPost
 {
     /// <summary>How many times one request may be sent before it is given up on.</summary>
-    private const int MaxAttempts = 5;
+    public const int MaxAttempts = 5;
 
     /// <summary>
     /// The longest a refusal is waited out: a minute, so a tokens-per-minute limit
     /// is ridden out. One that resets beyond it is a quota, and no amount of
     /// waiting is the answer to a quota.
     /// </summary>
-    private static readonly TimeSpan LongestWait = TimeSpan.FromSeconds(60);
+    public static readonly TimeSpan LongestWait = TimeSpan.FromSeconds(60);
 
     private static readonly AsyncLocal<Action<TimeSpan, int>?> WaitingAsyncLocal = new();
 
