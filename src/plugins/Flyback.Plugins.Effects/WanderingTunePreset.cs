@@ -5,20 +5,19 @@ namespace Flyback.Plugins.Effects;
 
 /// <summary>
 /// The patch the "Music that writes itself" video builds: a wandering value snapped
-/// to a pentatonic and played when a coin lets a note through, drawn as a score that
+/// to a pentatonic, one note a beat of a wandering length, drawn as a score that
 /// scrolls as it plays.
 /// </summary>
 /// <remarks>
-/// The picture reads the same Quantiser as the sound, but a hold is the sound's alone,
-/// so the dot is lit only at each strike: lit any longer, it would slide to the next
-/// note while the last still rang.
+/// Nothing is held: every Wander walks across whole beats, so a note's pitch cannot
+/// move while it sounds, and the picture reads the very pitch the speakers play.
 /// </remarks>
 internal sealed class WanderingTunePreset(ModuleCatalog modules) : PresetBench(modules)
 {
     public const string Name = "Wandering tune";
 
     public const string Description =
-        "A melody nobody wrote: a wandering value snapped to a pentatonic, a coin for each note, drawn as it plays.";
+        "A melody nobody wrote: a wandering value snapped to a pentatonic, each note its own length, drawn as it plays.";
 
     /// <summary>C, D, E, G and A: a pentatonic, so no two notes it picks can clash.</summary>
     private static readonly int[] Pentatonic = [0, 2, 4, 7, 9];
@@ -32,31 +31,39 @@ internal sealed class WanderingTunePreset(ModuleCatalog modules) : PresetBench(m
 
     private Patch Patch()
     {
-        // An eighth note at a time, and a coin for each: six in ten play.
-        var clock = b.Add("seq.tempo", (0, 150f));
-        var pulse = b.Add("osc.pulse", (3, 0.3f));
-        var coin = b.Add("seq.chance", (1, 0.6f));
+        // One note a beat. The Wanders walk across the beat count rounded down, so each
+        // holds one value for a whole beat, the same on the picture as in the speakers.
+        var clock = b.Add("seq.tempo", (0, 300f));
+        var step = b.Add("math.floor");
+        var phase = b.Add("math.fract");
 
-        // Two octaves of drift, D3 to E5, held to the scale for each note's length.
-        var drift = b.Add(WanderType, (1, 0.7f), (2, 3f), (3, 50f), (4, 76f));
+        // Two octaves of drift, D3 to E5, snapped to the scale.
+        var drift = b.Add(WanderType, (1, 0.14f), (2, 3f), (3, 50f), (4, 76f));
         var pitch = b.Add("audio.quantiser");
         ScaleExtra.Set(pitch, Pentatonic);
 
-        var strike = b.Add(NodeCatalog.AdsrTypeId, (1, Decades(0.002)), (2, Decades(0.7)), (3, 0f), (4, Decades(0.4)));
+        // How much of its beat each note lasts; below nought, it is a rest.
+        var length = b.Add(WanderType, (1, 3.1f), (2, 11f), (3, -0.4f), (4, 0.8f));
+        var gate = b.Add("math.step");
+
+        var strike = b.Add(NodeCatalog.AdsrTypeId, (1, Decades(0.004)), (2, Decades(0.15)), (3, 0.6f), (4, Decades(0.03)));
         var note = b.Add("audio.note");
         var voice = b.Add("osc.triangle");
-        var echo = b.Add(EchoModule.TypeId, (4, 0.4f), (5, 0.35f));
+        var echo = b.Add(EchoModule.TypeId, (2, 6f), (3, 4f), (4, 0.4f), (5, 0.35f));
 
         // The strike itself, read fast enough to be over before the next note.
         var heard = b.Add(NodeCatalog.MeterTypeId, (1, -2f), (2, 0.6f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.6f));
 
-        b.Wire(clock, 0, pulse, 1)
-         .Wire(pulse, 0, coin, 0)
+        b.Wire(clock, 1, step, 0)
+         .Wire(clock, 1, phase, 0)
+         .Wire(step, 0, drift, 0)
+         .Wire(step, 0, length, 0)
          .Wire(drift, 0, pitch, 0)
-         .Wire(coin, 0, pitch, 1)
-         .Wire(coin, 0, strike, 0)
+         .Wire(phase, 0, gate, 0)
+         .Wire(length, 0, gate, 1)
+         .Wire(gate, 0, strike, 0)
          .Wire(pitch, 0, note, 0)
          .Wire(note, 0, voice, 1)
          .Wire(strike, 0, voice, 3)

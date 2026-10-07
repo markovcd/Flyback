@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- A Wandering tune preset plays a melody nobody wrote, a wandering value snapped to a pentatonic and thinned by a coin, and draws it as a scrolling score.
+- A Wandering tune preset plays a melody nobody wrote, a wandering value snapped to a pentatonic with each note its own length, and draws it as a scrolling score.
 
 - A Visualizer preset draws whatever the Line In hears as a turning kaleidoscope the kick flashes, without playing it back, so a monitor of the speakers can be its input.
 
