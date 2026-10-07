@@ -48,6 +48,12 @@ public sealed class CanvasSettings
     /// </summary>
     public bool CompactModules { get; set; }
 
+    /// <summary>
+    /// Whether the left button drags empty canvas to pan and the right draws the rubber
+    /// band, for a mouse with no middle button to speak of (ADR-0182).
+    /// </summary>
+    public bool DragToPan { get; set; }
+
     /// <summary>The text editor's font size, set by Ctrl+scroll over it.</summary>
     public double EditorFontSize { get; set; } = DefaultEditorFontSize;
 

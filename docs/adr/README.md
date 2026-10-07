@@ -104,7 +104,8 @@ context, decision, consequences.
 | [0039](0039-one-window-class-across-a-file-per-region.md) | One window class, across a file per region *(superseded by [0148](0148-the-window-is-its-hubs-and-the-regions-around-them.md))* |
 | [0044](0044-lay-patches-out-in-layers-not-with-springs.md) | Lay patches out in layers, not with springs *(user-directed; what becomes of a drawing too large for the canvas settled by [0092](0092-a-drawing-too-wide-for-the-canvas-shuts-a-box.md); runnable over a selection by [0110](0110-the-layout-can-be-given-the-selection-instead-of-the-patch.md))* |
 | [0045](0045-what-is-copied-is-a-patch-file.md) | What is copied is a patch file *(user-directed)* |
-| [0046](0046-the-module-list-is-a-gesture-not-a-panel.md) | The module list is a gesture, not a panel *(user-directed)* |
+| [0046](0046-the-module-list-is-a-gesture-not-a-panel.md) | The module list is a gesture, not a panel *(user-directed; a left-drag pan offered as a setting by [0182](0182-drag-to-pan-is-a-setting-that-trades-the-left-and-right-buttons.md))* |
+| [0182](0182-drag-to-pan-is-a-setting-that-trades-the-left-and-right-buttons.md) | Drag to pan is a setting that trades the left and right buttons *(user-directed)* |
 | [0070](0070-a-preset-declares-no-coordinates.md) | A preset declares no coordinates *(user-directed)* |
 | [0071](0071-two-undo-stacks-and-which-one-a-press-lands-on.md) | Two undo stacks, and which one a press lands on |
 | [0078](0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md) | Export leaves the shell for the CLI that already writes it *(user-directed; its Output-panel `Record…` row moved to the toolbar by [0080](0080-record-moves-to-the-toolbar-with-a-glyph-and-ctrl-r.md); playing without the editor is [0123](0123-a-third-program-plays-a-patch-and-writes-nothing.md))* |

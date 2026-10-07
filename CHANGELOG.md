@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Settings → Canvas → Drag empty canvas to pan moves the view with the left button, for a mouse or trackpad with no middle button; the right button then draws the selection band, and a right click still adds a module.
+
 - The settings window is wide enough that no option is cut short, Save is drawn in the accent color, and the knob grid's Columns and Rows sit indented under the switch they depend on.
 
 - The assistant's column is redrawn as a conversation: a header with the model and whether it is working, a context bar that opens onto what the conversation cost, your messages in bubbles with long ones cut short behind Show all, and proposals and failures in cards of their own.

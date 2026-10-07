@@ -77,4 +77,18 @@ public class ShortcutListTests : EditorTest
             .Select(r => r.Title)
             .ShouldNotContain("Save");
     }
+
+    [AvaloniaFact]
+    public void Drag_to_pan_is_what_the_help_names()
+    {
+        string Keys(bool dragToPan, string title) =>
+            InspectorHelp.Shortcuts(inPage: false, fingers: false, dragToPan).SelectMany(g => g.Rows).Single(r => r.Title == title).Keys;
+
+        Keys(dragToPan: false, "Pan").ShouldBe("Middle-drag");
+        Keys(dragToPan: false, "Select").ShouldBe("Drag");
+        Keys(dragToPan: true, "Pan").ShouldBe("Drag");
+        Keys(dragToPan: true, "Select").ShouldBe("Right-drag");
+
+        InspectorHelp.Locked(fingers: false, dragToPan: true).ShouldNotContain("middle");
+    }
 }

@@ -22,6 +22,14 @@ internal sealed class CanvasSection : ISettingsSection
         VerticalAlignment = VerticalAlignment.Center,
     };
 
+    private readonly CheckBox dragToPan = new()
+    {
+        Name = "dragToPan",
+        Content = "Drag empty canvas to pan",
+        FontSize = Text.Body,
+        VerticalAlignment = VerticalAlignment.Center,
+    };
+
     private readonly CheckBox pluginSkins = new()
     {
         Name = "pluginSkins",
@@ -73,11 +81,16 @@ internal sealed class CanvasSection : ISettingsSection
         if (path is not null) saved = CanvasSettings.Load(path);
 
         source.EditorFontSize = saved.EditorFontSize;
+        canvas.Gestures.DragToPan = saved.DragToPan;
         source.EditorFontSizeChanged += (_, size) => SaveEditorFontSize(size);
 
         ToolTip.SetTip(compactModules,
             "Put each input beside an output on one row, and show a knob's value when "
             + "its socket is hovered rather than on the row.");
+
+        ToolTip.SetTip(dragToPan,
+            "Drag empty canvas with the left button to move the view. The right button then "
+            + "selects: drag it across modules, or click it to add one.");
 
         ToolTip.SetTip(pluginSkins,
             "A plugin may give its modules a color, a texture or a picture of their own. "
@@ -93,6 +106,17 @@ internal sealed class CanvasSection : ISettingsSection
         {
             Text = "Tidy spaces modules for the size they are drawn at, so a patch tidied "
                 + "compact may overlap once this is cleared.",
+            FontSize = Text.Small,
+            Foreground = Text.Muted,
+            TextWrapping = TextWrapping.Wrap,
+        });
+
+        View.Children.Add(dragToPan);
+
+        View.Children.Add(new TextBlock
+        {
+            Text = "For a mouse or trackpad without a middle button. Cleared, the middle button "
+                + "pans and the left one selects.",
             FontSize = Text.Small,
             Foreground = Text.Muted,
             TextWrapping = TextWrapping.Wrap,
@@ -150,6 +174,7 @@ internal sealed class CanvasSection : ISettingsSection
     public void Show()
     {
         compactModules.IsChecked = saved.CompactModules;
+        dragToPan.IsChecked = saved.DragToPan;
         pluginSkins.IsChecked = saved.PluginSkins;
         animateSkins.IsChecked = saved.AnimateSkins;
         measureWindow.SelectedIndex = Math.Max(0, CanvasSettings.MeasureWindows.ToList().IndexOf(saved.MeasureSeconds));
@@ -157,6 +182,14 @@ internal sealed class CanvasSection : ISettingsSection
         measurePicture.SelectedIndex = (int)saved.MeasurePicture;
 
         canvas.Geometry.Compact = saved.CompactModules;
+
+        // The empty inspector names the gestures, so it is told when they change.
+        if (canvas.Gestures.DragToPan != saved.DragToPan)
+        {
+            canvas.Gestures.DragToPan = saved.DragToPan;
+            canvas.Selection.Announce();
+        }
+
         ModuleSkins.Honored = saved.PluginSkins;
         ModuleSkins.Animated = saved.AnimateSkins;
 
@@ -194,6 +227,7 @@ internal sealed class CanvasSection : ISettingsSection
         saved = new CanvasSettings
         {
             CompactModules = compactModules.IsChecked == true,
+            DragToPan = dragToPan.IsChecked == true,
             PluginSkins = pluginSkins.IsChecked == true,
             AnimateSkins = animateSkins.IsChecked == true,
             EditorFontSize = saved.EditorFontSize,

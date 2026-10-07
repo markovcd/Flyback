@@ -123,6 +123,26 @@ public sealed class CanvasSettingsTests : EditorTest
         Compact(OpenSettings(Open(settingsPath))).IsChecked.ShouldBe(true);
     }
 
+    [AvaloniaFact]
+    public void Switching_drag_to_pan_on_changes_the_gestures_and_the_help_at_once()
+    {
+        var window = Open(settingsPath);
+        bool Names(string keys) => All<TextBlock>(window).Any(t => t.Text == keys);
+
+        Names("Middle-drag").ShouldBeTrue();
+
+        var dialog = OpenSettings(window);
+        All<CheckBox>(dialog).Single(c => c.Name == "dragToPan").IsChecked = true;
+        Close(window, dialog, "Save");
+
+        Editor(window).Gestures.DragToPan.ShouldBeTrue();
+        Names("Middle-drag").ShouldBeFalse();
+        Names("Right-drag").ShouldBeTrue();
+        CanvasSettings.Load(settingsPath).DragToPan.ShouldBeTrue();
+
+        Editor(Open(settingsPath)).Gestures.DragToPan.ShouldBeTrue();
+    }
+
     /// <summary>
     /// Switched off, a skinned module is its category again — which is what the
     /// canvas asks <see cref="ModuleSkins"/> for, so this is the whole of the

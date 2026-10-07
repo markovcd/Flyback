@@ -34,7 +34,7 @@ internal sealed class CanvasGestures
     private static readonly Cursor NodeCursor = new(StandardCursorType.SizeAll);
 
     /// <summary>
-    /// While the middle button is dragging the view. A hand rather than the four-way
+    /// While a button is dragging the view. A hand rather than the four-way
     /// arrow a module gets, because what is moving is not in the patch.
     /// </summary>
     private static readonly Cursor PanCursor = new(StandardCursorType.Hand);
@@ -49,6 +49,9 @@ internal sealed class CanvasGestures
         new ImmutableDashStyle([4, 3], 0));
 
     private static readonly IBrush MarqueeFill = new ImmutableSolidColorBrush(Colors.Attention, 0.08);
+
+    /// <summary>How far, in screen pixels, a press may wander and still be a click.</summary>
+    private const double ClickSlop = 4;
 
     private readonly CanvasHistory history;
     private readonly CanvasSelection selection;
@@ -103,6 +106,12 @@ internal sealed class CanvasGestures
 
     /// <summary>What was selected when the rubber band began, which backing out of one puts back.</summary>
     private readonly HashSet<Guid> marqueeWas = [];
+
+    /// <summary>The button drawing the rubber band.</summary>
+    private MouseButton marqueeButton;
+
+    /// <summary>Where a press that is still a click went down, in screen space; null once it has moved off.</summary>
+    private Point? stillAt;
 
     private Guid wireNode;
     private int wirePort;
@@ -233,6 +242,13 @@ internal sealed class CanvasGestures
     /// <summary>Whether the wire being drawn plugs into an output rather than an input; null when none is being drawn.</summary>
     public bool? PendingWireTakesOutput => PendingWireFrom is null ? null : !wireFromOutput;
 
+    /// <summary>
+    /// Whether a mouse drags empty canvas with the left button to pan, and with the right
+    /// to draw the rubber band, a right-click there opening the list (ADR-0182). Off, the
+    /// middle button pans and the left draws the band.
+    /// </summary>
+    public bool DragToPan { get; set; }
+
     private string WireGesture => $"wire {wireGesture}";
 
     /// <summary>Opens the palette where the pointer last was, or in the middle of the view.</summary>
@@ -263,7 +279,7 @@ internal sealed class CanvasGestures
         var graph = view.ToGraph(screen);
         var scene = selection.Scene;
 
-        // Panning is the middle button and nothing else (ADR-0046). It pans
+        // The middle button pans whatever the setting (ADR-0046, ADR-0182). It pans
         // mid-gesture too: whatever was under way is put on hold and picks back up
         // once the button comes up.
         if (button == MouseButton.Middle)
@@ -279,6 +295,11 @@ internal sealed class CanvasGestures
         // After the pan, which leaves the grip of a carry it puts on hold where it was.
         dragOrigin = graph;
 
+        // Over a module Ctrl adds to the selection; over an output it lifts a wire off.
+        var ctrl = (modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
+
+        var dragToPan = DragToPan && pointer?.Type != PointerType.Touch;
+
         if (button == MouseButton.Right)
         {
             // Over an unpatched input, the button held down is a knob for its value.
@@ -289,13 +310,22 @@ internal sealed class CanvasGestures
                 return true;
             }
 
+            var bare = !scene.HitPort(graph, out _, out _, out _)
+                && scene.HitBox(graph) is null
+                && scene.HitNode(graph) is null;
+
+            // Dragged, it is a rubber band; let go where it went down, the list opens.
+            if (dragToPan && bare && drag == Drag.None)
+            {
+                StartMarquee(graph, ctrl, MouseButton.Right);
+                stillAt = screen;
+                pointer?.Capture(canvas);
+                return false;
+            }
+
             // Not over a module, where a right-click is about that module, and not on
             // a locked canvas, where the next evaluation would take it straight off.
-            if (!history.Locked
-                && !scene.HitPort(graph, out _, out _, out _)
-                && scene.HitBox(graph) is null
-                && scene.HitNode(graph) is null)
-                MenuRequested?.Invoke(this, graph);
+            if (!history.Locked && bare) MenuRequested?.Invoke(this, graph);
 
             // Over a module or a shut box, the button is held to flip it.
             if (!scene.HitPort(graph, out _, out _, out _))
@@ -311,9 +341,6 @@ internal sealed class CanvasGestures
         }
 
         if (button != MouseButton.Left) return false;
-
-        // Over a module Ctrl adds to the selection; over an output it lifts a wire off.
-        var ctrl = (modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
 
         // Only the very next press walks on from the wire lifted last.
         var liftedLast = liftedOffOutput;
@@ -388,22 +415,38 @@ internal sealed class CanvasGestures
             return false;
         }
 
+        if (dragToPan)
+        {
+            drag = Drag.Pan;
+            panOrigin = screen;
+            stillAt = screen;
+            canvas.Cursor = PanCursor;
+            pointer?.Capture(canvas);
+            return false;
+        }
+
         // Left on empty canvas draws a rubber band. A band that sweeps nothing selects
         // nothing, which is what a click on empty canvas does.
-        marqueeFrom = marqueeTo = graph;
-
-        marqueeBase.Clear();
-        if (ctrl) marqueeBase.UnionWith(selection.Ids);
-
-        marqueeWas.Clear();
-        marqueeWas.UnionWith(selection.Ids);
-
-        drag = Drag.Marquee;
+        StartMarquee(graph, ctrl, MouseButton.Left);
         Sweep();
 
         pointer?.Capture(canvas);
         repaint.Request();
         return false;
+    }
+
+    private void StartMarquee(Point graph, bool adding, MouseButton button)
+    {
+        marqueeFrom = marqueeTo = graph;
+        marqueeButton = button;
+
+        marqueeBase.Clear();
+        if (adding) marqueeBase.UnionWith(selection.Ids);
+
+        marqueeWas.Clear();
+        marqueeWas.UnionWith(selection.Ids);
+
+        drag = Drag.Marquee;
     }
 
     public void Moved(Control canvas, PointerEventArgs e) =>
@@ -418,6 +461,8 @@ internal sealed class CanvasGestures
         var graph = view.ToGraph(screen);
 
         LastPointer = graph;
+
+        if (stillAt is { } at && Math.Abs(screen.X - at.X) + Math.Abs(screen.Y - at.Y) > ClickSlop) stillAt = null;
 
         if (dial.Turning)
         {
@@ -469,7 +514,8 @@ internal sealed class CanvasGestures
                 repaint.Request();
                 return;
 
-            case Drag.Marquee:
+            // A right-click must not take the selection away on its way to the list.
+            case Drag.Marquee when stillAt is null:
                 marqueeTo = graph;
                 Sweep();
                 repaint.Request();
@@ -478,6 +524,9 @@ internal sealed class CanvasGestures
             case Drag.Wire:
                 wireEnd = graph;
                 repaint.Request();
+                return;
+
+            case Drag.Marquee:
                 return;
 
             default:
@@ -501,6 +550,20 @@ internal sealed class CanvasGestures
             if (EndTurn(canvas)) pointer?.Capture(null);
 
             held.Release();
+
+            if (drag == Drag.Marquee && marqueeButton == MouseButton.Right)
+            {
+                var click = stillAt is not null;
+                var at = marqueeFrom;
+
+                End();
+                canvas.Cursor = CursorOver(graph);
+                pointer?.Capture(null);
+                repaint.Request();
+
+                if (click && !history.Locked) MenuRequested?.Invoke(this, at);
+            }
+
             return;
         }
 
@@ -533,6 +596,10 @@ internal sealed class CanvasGestures
         // where it was carried to, and a wire is dropped, since its end was let go of
         // over a view that was moving.
         if (drag == Drag.Pan && panSuspended == Drag.Node) RecordMove();
+
+        // A left pan that never moved was a click on empty canvas, which selects nothing.
+        var ctrl = (modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
+        if (drag == Drag.Pan && panSuspended == Drag.None && stillAt is not null && !ctrl) selection.Select(null);
 
         if (drag == Drag.Wire) CompleteWire(graph);
 
@@ -648,6 +715,7 @@ internal sealed class CanvasGestures
 
         drag = Drag.None;
         panSuspended = Drag.None;
+        stillAt = null;
 
         pendingNarrow = null;
         dragOrigins.Clear();

@@ -243,7 +243,7 @@ internal sealed class Inspector
                 {
                     Text = document.IsAdrift
                         ? document.IsAdriftBox ? InspectorHelp.AdriftingGroup : InspectorHelp.Adrifting
-                        : InspectorHelp.Locked(fingers),
+                        : InspectorHelp.Locked(fingers, editor.Gestures.DragToPan),
                     TextWrapping = TextWrapping.Wrap,
                     Foreground = Text.Muted,
                     FontSize = Text.Body,
@@ -251,7 +251,7 @@ internal sealed class Inspector
             }
             else
             {
-                panel.Children.Add(ShortcutList.Of(InspectorHelp.Shortcuts(inPage, fingers), openShortcuts));
+                panel.Children.Add(ShortcutList.Of(InspectorHelp.Shortcuts(inPage, fingers, editor.Gestures.DragToPan), openShortcuts));
             }
 
             return;

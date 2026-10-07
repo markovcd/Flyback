@@ -10,16 +10,17 @@ internal static class InspectorHelp
     /// in groups. A page has no files, settings or recording to name, and a finger
     /// has no keys.
     /// </summary>
-    internal static IReadOnlyList<HelpGroup> Shortcuts(bool inPage, bool fingers)
+    /// <param name="dragToPan">Whether the left button pans and the right one selects (ADR-0182).</param>
+    internal static IReadOnlyList<HelpGroup> Shortcuts(bool inPage, bool fingers, bool dragToPan = false)
     {
-        List<HelpGroup> groups = fingers ? FingerGroups(inPage) : KeyGroups(inPage);
+        List<HelpGroup> groups = fingers ? FingerGroups(inPage) : KeyGroups(inPage, dragToPan);
         groups.RemoveAll(g => g.Rows.Count == 0);
         return groups;
     }
 
     private static HelpRow Row(string title, string detail = "", string keys = "") => new(title, detail, keys);
 
-    private static List<HelpGroup> KeyGroups(bool inPage) =>
+    private static List<HelpGroup> KeyGroups(bool inPage, bool dragToPan) =>
     [
         new("Getting started",
         [
@@ -50,8 +51,8 @@ internal static class InspectorHelp
         ]),
         new("Selecting and moving",
         [
-            Row("Select", "Drag the background.", "Drag"),
-            Row("Pan", keys: "Middle-drag"),
+            dragToPan ? Row("Select", "Right-drag the background.", "Right-drag") : Row("Select", "Drag the background.", "Drag"),
+            dragToPan ? Row("Pan", "Drag the background.", "Drag") : Row("Pan", keys: "Middle-drag"),
             Row("Zoom", keys: "Wheel"),
             Row("Add to selection", keys: "Ctrl+Click"),
             Row("Select all", keys: "Ctrl+A"),
@@ -114,7 +115,7 @@ internal static class InspectorHelp
     /// that writes is gone; naming the gestures that are switched off would leave
     /// somebody concluding the program was broken.
     /// </summary>
-    internal static string Locked(bool fingers) =>
+    internal static string Locked(bool fingers, bool dragToPan = false) =>
         "The text is the document, and this is a view of what it builds. "
         + (fingers ? "Tap the code button, on the toolbar," : "Press F2")
         + " to go back to it — modules and wires are added and removed there, "
@@ -125,7 +126,9 @@ internal static class InspectorHelp
         + "writes the new value into the code, where the code already says it.\n\n"
         + (fingers
             ? "Drag bare canvas to select. Two fingers drag the view, and spread or pinch to zoom."
-            : "Drag the background to select, middle-drag to pan, wheel to zoom.\n"
+            : (dragToPan
+                  ? "Right-drag the background to select, drag it to pan, wheel to zoom.\n"
+                  : "Drag the background to select, middle-drag to pan, wheel to zoom.\n")
               + "Ctrl+click adds to a selection, Ctrl+A takes everything.\n"
               + "Ctrl+C copies what is selected, Ctrl+F frames the patch.");
 

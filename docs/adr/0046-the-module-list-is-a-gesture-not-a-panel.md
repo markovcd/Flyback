@@ -151,3 +151,9 @@ where it stands. In the panel and not over the window, for the reason the list's
 own question is in the list: it can lose one entry and not any work, and a sheet
 over the shell for that would move the panel under the hand that just pressed the
 button.
+
+**Amended 2026-10-07: the middle button is the default, not the only way.**
+[0182](0182-drag-to-pan-is-a-setting-that-trades-the-left-and-right-buttons.md)
+adds a setting for a mouse with no middle button: the left button drags empty
+canvas to pan, and the right one draws the band or, clicked, opens this list on
+the release.

@@ -226,6 +226,18 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
         return sum;
     }
 
+    /// <summary>Drags <paramref name="button"/> from one point of the patch to another, in one move.</summary>
+    public void DragCanvas(Point from, Point to, MouseButton button) =>
+        DoWindow((open, canvas) =>
+        {
+            var start = OnWindow(open, canvas, from);
+            var end = OnWindow(open, canvas, to);
+
+            open.MouseDown(start, button);
+            open.MouseMove(end);
+            open.MouseUp(end, button);
+        });
+
     /// <summary>Right-clicks a point of the patch, which over bare canvas or an open group opens the list of modules.</summary>
     public void RightClick(Point at) =>
         DoWindow((open, canvas) =>
