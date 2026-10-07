@@ -14,10 +14,10 @@ namespace Flyback.Core.Compile;
 public sealed class MidiLine
 {
     /// <summary>How many table entries a second holds.</summary>
-    public const int Rate = 1000;
+    internal const int Rate = 1000;
 
     /// <summary>The most notes held at once that have a voice of their own.</summary>
-    public const int Voices = 8;
+    internal const int Voices = 8;
 
     /// <summary>How long a note's trigger stays high, in table entries.</summary>
     private const int PulseWidth = 5;

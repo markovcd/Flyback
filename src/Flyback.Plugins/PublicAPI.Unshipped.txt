@@ -5,3 +5,5 @@ Flyback.Plugins.Assist.AssistantSenses.AssistantSenses(bool Vision = true, Flyba
 Flyback.Plugins.Assist.AssistantSenses.Deconstruct(out bool Vision, out Flyback.Plugins.Assist.Listener Hearing, out bool EarOffered) -> void
 Flyback.Plugins.Assist.AssistantSenses.EarOffered.get -> bool
 Flyback.Plugins.Assist.AssistantSenses.EarOffered.init -> void
+*REMOVED*const Flyback.Plugins.Assist.AssistantSchema.IdeasModelKey = "ideas" -> string!
+*REMOVED*static Flyback.Plugins.Assist.AssistantSchema.Expanding(Flyback.Plugins.Settings.SettingValues! values) -> Flyback.Plugins.Settings.SettingValues!

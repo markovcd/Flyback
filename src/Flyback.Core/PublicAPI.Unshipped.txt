@@ -1,1 +1,11 @@
 #nullable enable
+*REMOVED*Flyback.Core.Graph.LineInSignal
+*REMOVED*Flyback.Core.Graph.NodeDef.ChartsBeam.get -> bool
+*REMOVED*Flyback.Core.Graph.NodeDef.ChartsBeam.init -> void
+*REMOVED*const Flyback.Core.Compile.MidiLine.Rate = 1000 -> int
+*REMOVED*const Flyback.Core.Compile.MidiLine.Voices = 8 -> int
+*REMOVED*const Flyback.Core.Graph.Extras.MidiLineExtra.ChannelField = "channel" -> string!
+*REMOVED*const Flyback.Core.Graph.LineInSignal.Left = "line-in/left" -> string!
+*REMOVED*const Flyback.Core.Graph.LineInSignal.Right = "line-in/right" -> string!
+*REMOVED*static Flyback.Core.Graph.Extras.MidiLineExtra.Channel(Flyback.Core.Graph.NodeInstance! node) -> int
+*REMOVED*static Flyback.Core.Graph.Extras.MidiLineExtra.Voice(Flyback.Core.Graph.NodeInstance! node) -> int

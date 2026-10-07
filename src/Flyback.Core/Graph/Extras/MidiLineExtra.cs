@@ -15,7 +15,7 @@ public sealed record MidiLineExtra : NodeExtra
     private const string VoiceField = "voice";
 
     /// <summary>The field choosing the MIDI channel.</summary>
-    public const string ChannelField = "channel";
+    internal const string ChannelField = "channel";
 
     /// <inheritdoc/>
     public override string Key => Name;
@@ -34,10 +34,10 @@ public sealed record MidiLineExtra : NodeExtra
     ];
 
     /// <summary>The voice this instance plays.</summary>
-    public static int Voice(NodeInstance node) => (int)Of(node, VoiceField);
+    internal static int Voice(NodeInstance node) => (int)Of(node, VoiceField);
 
     /// <summary>The channel this instance hears.</summary>
-    public static int Channel(NodeInstance node) => (int)Of(node, ChannelField);
+    internal static int Channel(NodeInstance node) => (int)Of(node, ChannelField);
 
     private static float Of(NodeInstance node, string field) =>
         new MidiLineExtra().Fields.OfType<ExtraField.Number>().First(f => f.Key == field).Value(node.StateOf(Name)?[field]);

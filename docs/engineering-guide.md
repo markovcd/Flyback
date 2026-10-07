@@ -429,7 +429,10 @@ or minor needs a newer Flyback. `PublicAPI.Shipped.txt` and
 `PublicAPI.Unshipped.txt` beside both projects are enforced by an analyzer, so
 neither project builds until a surface change is written down. The first
 `*REMOVED*` line since a release moves the major; the first added line moves the
-minor.
+minor. Both projects give the host and its tests `InternalsVisibleTo`, so a member
+only the host reads is `internal`: `public` is reserved for what a plugin may
+name, and the fix for the analyzer's complaint is `internal` unless a plugin
+needs the member, in which case the new line is a decision named in the commit.
 
 **Building.** Plugins are not project references. A host project lists
 `PluginProject` items and `Directory.Build.targets` builds each one straight into

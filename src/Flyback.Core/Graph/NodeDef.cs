@@ -139,7 +139,7 @@ public sealed record NodeDef(
     /// <see cref="TappedInputs"/> of two. The buffer holds the phosphor as a square
     /// picture rather than a stretch of time — see <c>Compile.Beams</c>.
     /// </remarks>
-    public bool ChartsBeam { get; init; }
+    internal bool ChartsBeam { get; init; }
 
     /// <summary>
     /// How many of the first inputs <see cref="TapsSignal"/> makes roots of the

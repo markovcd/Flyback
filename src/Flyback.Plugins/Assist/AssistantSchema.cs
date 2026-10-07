@@ -48,7 +48,7 @@ public sealed record AssistantSchema(
     public const string EffortKey = "effort";
 
     /// <summary>The setting naming the model that writes a typed idea out as a brief, blank for <see cref="ModelKey"/>'s.</summary>
-    public const string IdeasModelKey = "ideas";
+    internal const string IdeasModelKey = "ideas";
 
     /// <summary>What this provider says about the key it needs.</summary>
     public AssistantCredential Credential => new(EnvironmentVariable, CredentialHelp);
@@ -200,7 +200,7 @@ public sealed record AssistantSchema(
     /// <paramref name="values"/> with the model that writes ideas out in place of the
     /// one that builds, or unchanged where none is named.
     /// </summary>
-    public static SettingValues Expanding(SettingValues values) =>
+    internal static SettingValues Expanding(SettingValues values) =>
         values.Text(IdeasModelKey) is { } ideas && !string.IsNullOrWhiteSpace(ideas)
             ? values.With(ModelKey, ideas.Trim())
             : values;
