@@ -1,23 +1,24 @@
 using Flyback.Core.Graph;
 using Flyback.Engine.Language.Ast;
 using Flyback.Engine.Language.Ast.Expressions;
+using Flyback.Engine.Language.Values;
 
 namespace Flyback.Engine.Language;
 
 /// <summary>Binds numeric expressions to folded values or Formula-backed Expression modules.</summary>
 internal sealed class ArithmeticBinder
 {
-    private readonly Func<Expr, Binder.Scope, Binder.Value?> bind;
+    private readonly Func<Expr, Scope, Value?> bind;
     private readonly Func<int, int, NodeDef?> expressionModule;
-    private readonly Func<NodeDef, IReadOnlyList<(int Port, Binder.Value Value)>, int, int, Binder.Value> place;
-    private readonly Action<Binder.Value, string, int, int> configureExpression;
+    private readonly Func<NodeDef, IReadOnlyList<(int Port, Value Value)>, int, int, Value> place;
+    private readonly Action<Value, string, int, int> configureExpression;
     private readonly Action<string, int, int, string> complain;
 
     internal ArithmeticBinder(
-        Func<Expr, Binder.Scope, Binder.Value?> bind,
+        Func<Expr, Scope, Value?> bind,
         Func<int, int, NodeDef?> expressionModule,
-        Func<NodeDef, IReadOnlyList<(int Port, Binder.Value Value)>, int, int, Binder.Value> place,
-        Action<Binder.Value, string, int, int> configureExpression,
+        Func<NodeDef, IReadOnlyList<(int Port, Value Value)>, int, int, Value> place,
+        Action<Value, string, int, int> configureExpression,
         Action<string, int, int, string> complain)
     {
         this.bind = bind;
@@ -29,7 +30,7 @@ internal sealed class ArithmeticBinder
 
     internal const string Scaled = "arithmetic on a note or a duration would be done on a scale nobody meant.";
 
-    internal Binder.Value? Bind(Expr expr, Binder.Scope scope) => Reckon(expr, scope) switch
+    internal Value? Bind(Expr expr, Scope scope) => Reckon(expr, scope) switch
     {
         Operand operand => operand.Figure,
         Signal signal => signal.Value,
@@ -39,13 +40,13 @@ internal sealed class ArithmeticBinder
 
     private abstract record Reckoned;
 
-    private sealed record Operand(Binder.Figure Figure) : Reckoned;
+    private sealed record Operand(Figure Figure) : Reckoned;
 
-    private sealed record Signal(Binder.Value Value, (Guid Node, int Port) From) : Reckoned;
+    private sealed record Signal(Value Value, (Guid Node, int Port) From) : Reckoned;
 
     private sealed record Operation(char Sign, Reckoned Left, Reckoned? Right, int Line, int Column) : Reckoned;
 
-    private Reckoned? Reckon(Expr expr, Binder.Scope scope)
+    private Reckoned? Reckon(Expr expr, Scope scope)
     {
         switch (expr)
         {
@@ -89,10 +90,10 @@ internal sealed class ArithmeticBinder
             {
                 if (bind(expr, scope) is not { } value) return null;
 
-                if (value is Binder.Figure figure) return new Operand(figure);
+                if (value is Figure figure) return new Operand(figure);
 
                 // Each reference to a panel knob is a distinct formula input.
-                if (value is Binder.Dial) return new Signal(value, (Guid.NewGuid(), 0));
+                if (value is Dial) return new Signal(value, (Guid.NewGuid(), 0));
 
                 if (Output(value) is { } from) return new Signal(value, from);
 
@@ -102,7 +103,7 @@ internal sealed class ArithmeticBinder
         }
     }
 
-    private Operand? Folded(BinaryExpr expr, Binder.Figure a, Binder.Figure b)
+    private Operand? Folded(BinaryExpr expr, Figure a, Figure b)
     {
         if (a.Style != NumberStyle.Plain || b.Style != NumberStyle.Plain)
         {
@@ -122,7 +123,7 @@ internal sealed class ArithmeticBinder
             _ => b.Amount == 0d ? 0d : a.Amount - b.Amount * Math.Floor(a.Amount / b.Amount),
         };
 
-        return new Operand(new Binder.Figure(folded, NumberStyle.Plain));
+        return new Operand(new Figure(folded, NumberStyle.Plain));
     }
 
     /// <summary>Splits an operation until each Formula module reads at most its available sockets.</summary>
@@ -178,7 +179,7 @@ internal sealed class ArithmeticBinder
     }
 
     /// <summary>Places an operation as an Expression module and records its formula and source location.</summary>
-    private Binder.Value? Expression(Operation operation)
+    private Value? Expression(Operation operation)
     {
         var inputs = Inputs(operation);
 
@@ -253,11 +254,11 @@ internal sealed class ArithmeticBinder
         _ => 4,
     };
 
-    private static (Guid Node, int Port)? Output(Binder.Value value) => value switch
+    private static (Guid Node, int Port)? Output(Value value) => value switch
     {
-        Binder.Placed placed => (placed.Id, 0),
-        Binder.Socket socket => (socket.Id, socket.Port),
-        Binder.Several { Items.Count: > 0 } several => Output(several.Items[0]),
+        Placed placed => (placed.Id, 0),
+        Socket socket => (socket.Id, socket.Port),
+        Several { Items.Count: > 0 } several => Output(several.Items[0]),
         _ => null,
     };
 }

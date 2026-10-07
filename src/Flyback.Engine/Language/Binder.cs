@@ -6,6 +6,7 @@ using Flyback.Engine.Graph;
 using Flyback.Engine.Language.Ast;
 using Flyback.Engine.Language.Ast.Expressions;
 using Flyback.Engine.Language.Ast.Statements;
+using Flyback.Engine.Language.Values;
 
 namespace Flyback.Engine.Language;
 
@@ -28,7 +29,6 @@ public sealed class Binder
 
     private readonly ModuleNames moduleNames;
     private readonly ExpressionBinder expressions;
-    private readonly PipeLanding pipeLanding;
     private readonly Dictionary<string, DefStatement> defs = new(StringComparer.Ordinal);
     private readonly HashSet<string> expanding = new(StringComparer.Ordinal);
 
@@ -66,15 +66,12 @@ public sealed class Binder
         this.issues = issues;
 
         moduleNames = new ModuleNames(modules);
-        pipeLanding = new PipeLanding(Find, List, KindOf);
         expressions = new ExpressionBinder(new ExpressionBinder.Context
         {
             Source = Source,
             Clock = () => new Placed(Shared(ref clock, NodeCatalog.TimeTypeId), modules.Require(NodeCatalog.TimeTypeId)),
             Unknown = Unknown,
             Mention = Mention,
-            Find = Find,
-            List = List,
             Refuse = Refuse,
             Call = Call,
             Pipe = Pipe,
@@ -168,60 +165,6 @@ public sealed class Binder
         PatchLayout.Arrange(patch, modules);
 
         return patch;
-    }
-
-    // --- what a name is worth ------------------------------------------------
-
-    /// <summary>Anything a name or an expression can stand for while binding.</summary>
-    internal abstract record Value;
-
-    /// <summary>A number, which becomes a knob rather than a module.</summary>
-    /// <param name="Where">
-    /// Where the file writes it, so the knob can be changed where the text
-    /// already says it. Null for a number no single figure stands for —
-    /// <c>1/12</c> is one knob and two numbers.
-    /// </param>
-    internal sealed record Figure(double Amount, NumberStyle Style, Site? Where = null) : Value;
-
-    /// <summary>A placed module, standing for every one of its outputs at once.</summary>
-    internal sealed record Placed(Guid Id, NodeDef Def) : Value;
-
-    /// <summary>One output of a placed module.</summary>
-    internal sealed record Socket(Guid Id, int Port) : Value;
-
-    /// <summary>What a def with several results hands back.</summary>
-    internal sealed record Several(IReadOnlyList<Value> Items) : Value;
-
-    /// <summary>
-    /// A name whose statement was refused. Bound all the same, so every line that
-    /// reads it fails without a word: the text is refused whole already, and a
-    /// complaint per reader would bury the one mistake there is.
-    /// </summary>
-    internal sealed record Failed : Value;
-
-    /// <summary>A file a module names rather than carries (ADR-0052).</summary>
-    internal sealed record Named(string Path) : Value;
-
-    /// <summary>
-    /// A panel knob, and the range a socket reads it over where the text gives
-    /// one: <c>cutoff</c>, or <c>cutoff(200..4000, knee: 20)</c>.
-    /// </summary>
-    /// <param name="Word">What the text calls it.</param>
-    internal sealed record Dial(PatchControl Control, string Word, Figure? Low = null, Figure? High = null, Figure? Knee = null)
-        : Value;
-
-    /// <summary>Names in sight, and the names the enclosing scope had.</summary>
-    internal sealed class Scope(Scope? parent)
-    {
-        private readonly Dictionary<string, (Value Value, int Line)> names = new(StringComparer.Ordinal);
-
-        /// <param name="line">Where the name is bound, for a second binding to point back at.</param>
-        public void Set(string name, Value value, int line) => names[name] = (value, line);
-
-        public Value? Find(string name) => Entry(name)?.Value;
-
-        public (Value Value, int Line)? Entry(string name) =>
-            names.TryGetValue(name, out var entry) ? entry : parent?.Entry(name);
     }
 
     private void Complain(string code, int line, int column, string message) =>
@@ -852,9 +795,9 @@ public sealed class Binder
             _ => -1,
         };
 
-        if (port >= 0) return new Socket(Shared(ref coordinates, NodeCatalog.CoordTypeId), port);
+        if (port >= 0) return new Socket(Shared(ref coordinates, NodeCatalog.CoordTypeId), modules.Require(NodeCatalog.CoordTypeId), port);
 
-        return name == "t" ? new Socket(Shared(ref clock, NodeCatalog.TimeTypeId), 0) : null;
+        return name == "t" ? new Socket(Shared(ref clock, NodeCatalog.TimeTypeId), modules.Require(NodeCatalog.TimeTypeId), 0) : null;
     }
 
     private Guid Shared(ref Guid held, string typeId)
@@ -926,22 +869,6 @@ public sealed class Binder
         return Refuse(IssueCode.BadStage, expr.Line, expr.Column, "only a module or a socket may follow '|>'.");
     }
 
-    /// <summary>How many signals a value carries when it is piped.</summary>
-    private static int Width(Value value) => value switch
-    {
-        Placed placed => placed.Def.Outputs.Count,
-        Several several => several.Items.Count,
-        _ => 1,
-    };
-
-    /// <summary>The <paramref name="index"/>th signal of a value, for wiring.</summary>
-    private static Value Part(Value value, int index) => value switch
-    {
-        Placed placed => new Socket(placed.Id, index),
-        Several several => several.Items[index],
-        _ => value,
-    };
-
     private Value? Call(CallExpr expr, Scope scope, Value? piped)
     {
         if (scope.Find(expr.Target) is Failed) return null;
@@ -980,7 +907,7 @@ public sealed class Binder
                 continue;
             }
 
-            var port = Find(def.Inputs, argument.Name);
+            var port = SocketNames.Find(def.Inputs, argument.Name);
 
             if (port < 0)
             {
@@ -997,7 +924,7 @@ public sealed class Binder
                 }
 
                 Complain(IssueCode.UnknownSocket, argument.Line, argument.Column,
-                    $"'{def.Name}' has no socket called '{argument.Name}'. It has {List(def.Inputs)}.");
+                    $"'{def.Name}' has no socket called '{argument.Name}'. It has {SocketNames.List(def.Inputs)}.");
                 continue;
             }
 
@@ -1029,10 +956,10 @@ public sealed class Binder
         var piping = new List<(int Port, Value Value)>();
 
         if (landing is { } at)
-            piping.Add((at, Part(piped!, 0)));
+            piping.Add((at, piped!.Part(0)));
         else if (piped is not null)
         {
-            var result = pipeLanding.Resolve(def, piped, taken, expr);
+            var result = PipeLanding.Resolve(def, piped, taken, expr);
 
             if (result.Issue is { } issue)
             {
@@ -1067,7 +994,7 @@ public sealed class Binder
                 if (free.Count == 0)
                 {
                     Complain(IssueCode.TooManyArguments, argument.Line, argument.Column,
-                        $"'{def.Name}' has no socket left for this. It has {List(def.Inputs)}.");
+                        $"'{def.Name}' has no socket left for this. It has {SocketNames.List(def.Inputs)}.");
                     break;
                 }
 
@@ -1111,21 +1038,6 @@ public sealed class Binder
 
         return node;
     }
-
-    /// <summary>
-    /// What the first signal of a value is declared as, or null where nothing
-    /// declares it — a number, or a Maths module passing on whatever it reads.
-    /// </summary>
-    private PortKind? KindOf(Value value) => value switch
-    {
-        Placed placed => placed.Def.Outputs.Count > 0 ? placed.Def.Outputs[0].Kind : null,
-        Socket socket => patch.Find(socket.Id) is { } node && modules.Get(node.TypeId) is { } def
-            && socket.Port < def.Outputs.Count
-                ? def.Outputs[socket.Port].Kind
-                : null,
-        Several several when several.Items.Count > 0 => KindOf(several.Items[0]),
-        _ => null,
-    };
 
     /// <summary>Whether an argument is <c>_</c>, which stands for what is piped in.</summary>
     private static bool Placeholder(Expr value) => value is NameExpr { Name: "_", Port: null };
@@ -1448,7 +1360,7 @@ public sealed class Binder
     /// <summary>Divides a sequencer's rate, by the knob where there is one and by a Multiply where there is not.</summary>
     private void Slower(NodeInstance node, NodeDef def, int by, int line, int column)
     {
-        var rate = Find(def.Inputs, "rate");
+        var rate = SocketNames.Find(def.Inputs, "rate");
         if (rate < 0) return;
 
         if (patch.IncomingTo(node.Id, rate) is not { } wire)
@@ -1578,7 +1490,7 @@ public sealed class Binder
     {
         foreach (var extra in def.Extras)
             foreach (var field in extra.Fields)
-                if (Same(field.Key, name) || Same(field.Label, name)) return (extra, field);
+                if (SocketNames.Same(field.Key, name) || SocketNames.Same(field.Label, name)) return (extra, field);
 
         return null;
     }
@@ -1830,24 +1742,6 @@ public sealed class Binder
         return null;
     }
 
-    /// <summary>
-    /// A socket by name, with a space in the catalog's spelling standing for an
-    /// underscore in the language's — <c>gate length</c> is <c>gate_length</c>.
-    /// </summary>
-    private static int Find(IReadOnlyList<PortSpec> ports, string name)
-    {
-        for (var i = 0; i < ports.Count; i++)
-            if (Same(ports[i].Name, name)) return i;
-
-        return -1;
-    }
-
-    internal static bool Same(string port, string written) =>
-        string.Equals(port.Replace(' ', '_'), written, StringComparison.OrdinalIgnoreCase);
-
-    private static string List(IReadOnlyList<PortSpec> ports) =>
-        ports.Count == 0 ? "none" : string.Join(", ", ports.Select(p => $"'{p.Name.Replace(' ', '_')}'"));
-
     /// <summary>The node and socket a written name points at, for a knob or a wire.</summary>
     private (NodeInstance Node, NodeDef Def, int Port)? Input(NameExpr target, Scope scope)
     {
@@ -1887,7 +1781,7 @@ public sealed class Binder
             return null;
         }
 
-        var port = Find(def.Inputs, target.Port);
+        var port = SocketNames.Find(def.Inputs, target.Port);
 
         if (port >= 0)
         {
@@ -1899,7 +1793,7 @@ public sealed class Binder
         }
 
         Complain(IssueCode.UnknownSocket, target.Line, target.Column,
-            $"'{def.Name}' has no socket called '{target.Port}'. It has {List(def.Inputs)}.");
+            $"'{def.Name}' has no socket called '{target.Port}'. It has {SocketNames.List(def.Inputs)}.");
 
         return null;
     }

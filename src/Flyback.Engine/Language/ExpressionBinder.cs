@@ -1,39 +1,36 @@
 using Flyback.Core.Graph;
 using Flyback.Engine.Language.Ast;
 using Flyback.Engine.Language.Ast.Expressions;
+using Flyback.Engine.Language.Values;
 
 namespace Flyback.Engine.Language;
 
 /// <summary>Binds expression syntax, delegating calls and pipes to the patch binder.</summary>
 internal sealed class ExpressionBinder
 {
-    private readonly Func<string, Binder.Value?> source;
-    private readonly Func<Binder.Value> clock;
+    private readonly Func<string, Value?> source;
+    private readonly Func<Value> clock;
     private readonly Action<NameExpr> unknown;
-    private readonly Action<Expr, Binder.Value> mention;
-    private readonly Func<IReadOnlyList<PortSpec>, string, int> find;
-    private readonly Func<IReadOnlyList<PortSpec>, string> list;
-    private readonly Func<string, int, int, string, Binder.Value?> refuse;
-    private readonly Func<CallExpr, Binder.Scope, Binder.Value?, Binder.Value?> call;
-    private readonly Func<PipeExpr, Binder.Scope, Binder.Value?> pipe;
+    private readonly Action<Expr, Value> mention;
+    private readonly Func<string, int, int, string, Value?> refuse;
+    private readonly Func<CallExpr, Scope, Value?, Value?> call;
+    private readonly Func<PipeExpr, Scope, Value?> pipe;
     private readonly Func<Expr, bool> placeholder;
     private readonly ArithmeticBinder arithmetic;
 
     internal sealed class Context
     {
-        internal required Func<string, Binder.Value?> Source { get; init; }
-        internal required Func<Binder.Value> Clock { get; init; }
+        internal required Func<string, Value?> Source { get; init; }
+        internal required Func<Value> Clock { get; init; }
         internal required Action<NameExpr> Unknown { get; init; }
-        internal required Action<Expr, Binder.Value> Mention { get; init; }
-        internal required Func<IReadOnlyList<PortSpec>, string, int> Find { get; init; }
-        internal required Func<IReadOnlyList<PortSpec>, string> List { get; init; }
-        internal required Func<string, int, int, string, Binder.Value?> Refuse { get; init; }
-        internal required Func<CallExpr, Binder.Scope, Binder.Value?, Binder.Value?> Call { get; init; }
-        internal required Func<PipeExpr, Binder.Scope, Binder.Value?> Pipe { get; init; }
+        internal required Action<Expr, Value> Mention { get; init; }
+        internal required Func<string, int, int, string, Value?> Refuse { get; init; }
+        internal required Func<CallExpr, Scope, Value?, Value?> Call { get; init; }
+        internal required Func<PipeExpr, Scope, Value?> Pipe { get; init; }
         internal required Func<Expr, bool> Placeholder { get; init; }
         internal required Func<int, int, NodeDef?> ExpressionModule { get; init; }
-        internal required Func<NodeDef, IReadOnlyList<(int Port, Binder.Value Value)>, int, int, Binder.Value> Place { get; init; }
-        internal required Action<Binder.Value, string, int, int> ConfigureExpression { get; init; }
+        internal required Func<NodeDef, IReadOnlyList<(int Port, Value Value)>, int, int, Value> Place { get; init; }
+        internal required Action<Value, string, int, int> ConfigureExpression { get; init; }
         internal required Action<string, int, int, string> Complain { get; init; }
     }
 
@@ -43,8 +40,6 @@ internal sealed class ExpressionBinder
         clock = context.Clock;
         unknown = context.Unknown;
         mention = context.Mention;
-        find = context.Find;
-        list = context.List;
         refuse = context.Refuse;
         call = context.Call;
         pipe = context.Pipe;
@@ -57,10 +52,10 @@ internal sealed class ExpressionBinder
             context.Complain);
     }
 
-    internal Binder.Value? Bind(Expr expr, Binder.Scope scope) => expr switch
+    internal Value? Bind(Expr expr, Scope scope) => expr switch
     {
-        NumberExpr number => new Binder.Figure(number.Value, number.Style, new Site(number.Line, number.Column)),
-        TextExpr text => new Binder.Named(text.Value),
+        NumberExpr number => new Figure(number.Value, number.Style, new Site(number.Line, number.Column)),
+        TextExpr text => new Named(text.Value),
         NegateExpr or BinaryExpr => arithmetic.Bind(expr, scope),
         NameExpr name => Read(name, scope),
         CallExpr call => this.call(call, scope, null),
@@ -70,7 +65,7 @@ internal sealed class ExpressionBinder
         _ => null,
     };
 
-    private Binder.Value? Read(NameExpr expr, Binder.Scope scope)
+    private Value? Read(NameExpr expr, Scope scope)
     {
         if (expr.Port is null && source(expr.Name) is { } value) return value;
 
@@ -91,13 +86,13 @@ internal sealed class ExpressionBinder
             return null;
         }
 
-        if (bound is Binder.Failed) return null;
+        if (bound is Failed) return null;
 
         mention(expr, bound);
 
         if (expr.Port is null) return bound;
 
-        if (bound is not Binder.Placed)
+        if (bound is not Placed)
             return refuse(IssueCode.NotAModule, expr.Line, expr.Column, $"'{expr.Name}' is not a module, so it has no sockets.");
 
         return Output(bound, expr.Port, expr.Line, expr.Column);
@@ -115,7 +110,7 @@ internal sealed class ExpressionBinder
         _ => null,
     };
 
-    internal Binder.Value? Select(SelectExpr expr, Binder.Scope scope, Binder.Value? piped)
+    internal Value? Select(SelectExpr expr, Scope scope, Value? piped)
     {
         var source = expr.Source switch
         {
@@ -127,19 +122,19 @@ internal sealed class ExpressionBinder
         return source is null ? null : Output(source, expr.Port, expr.Line, expr.Column);
     }
 
-    private Binder.Value? Output(Binder.Value value, string name, int line, int column)
+    private Value? Output(Value value, string name, int line, int column)
     {
-        if (value is not Binder.Placed placed)
+        if (value is not Placed placed)
             return refuse(IssueCode.NotAModule, line, column, $"this is not a module, so it has no output called '{name}'.");
 
-        var port = find(placed.Def.Outputs, name);
+        var port = SocketNames.Find(placed.Def.Outputs, name);
 
         if (port < 0)
         {
             return refuse(IssueCode.UnknownOutput, line, column,
-                $"'{placed.Def.Name}' has no output called '{name}'. It has {list(placed.Def.Outputs)}.");
+                $"'{placed.Def.Name}' has no output called '{name}'. It has {SocketNames.List(placed.Def.Outputs)}.");
         }
 
-        return new Binder.Socket(placed.Id, port);
+        return new Socket(placed.Id, placed.Def, port);
     }
 }
