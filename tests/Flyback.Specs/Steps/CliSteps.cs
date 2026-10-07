@@ -198,6 +198,19 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
         code.ShouldBe(0, said);
     }
 
+    [When("flyback-cli renders the preset {string} as {string} for {float} seconds, {}")]
+    public void WhenPresetRenderedWith(string name, string into, float seconds, string flags)
+    {
+        RunShipped([
+            "render", "--preset", name, "-o", Path(into),
+            "--seconds", seconds.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            "--settings", Path("settings.json"),
+            .. flags.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(Beside),
+        ]);
+
+        code.ShouldBe(0, said);
+    }
+
     /// <summary>The file against the patch rendered here at <paramref name="factor"/>, and unlike it at every other factor.</summary>
     [Then("{string} is the patch's sound worked out at {int} times the output rate")]
     public void ThenWorkedOutAt(string written, int factor)

@@ -25,6 +25,11 @@ Feature: A Line In plays what the microphone hears
     When flyback-cli renders "listen.fbks" as "heard.wav" for 1 seconds, --input voice.wav
     Then "heard.wav" plays a 440 Hz tone
 
+  Scenario: The Visualizer listens to the Line In without playing it, so a monitor cannot feed back
+    Given a 440 Hz tone saved as "voice.wav"
+    When flyback-cli renders the preset "Visualizer" as "heard.wav" for 1 seconds, --input voice.wav
+    Then "heard.wav" is silent
+
   Scenario: A Line In in the web viewer plays what the page's microphone hears
     Given a Line In is patched into the speakers
     And the web viewer's microphone hears a 440 Hz tone

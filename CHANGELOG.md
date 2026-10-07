@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A Visualizer preset draws whatever the Line In hears as a turning kaleidoscope the kick flashes, without playing it back, so a monitor of the speakers can be its input.
+
 - `flyback-cli render` of a clip whose picture listens to the sound, through a Meter, a Scope, an Analyzer or a Beam, plays that sound even where none of it reaches the speakers, as a still already did.
 
 - A Beam, such as the Lissajous preset's, draws on its gallery tile while the preset is tried, instead of staying black.

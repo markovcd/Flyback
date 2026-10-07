@@ -75,6 +75,7 @@ color.vignette
 
 feedback
 feedback.trails
+meter
 
 # From the plugins Flyback ships with: the voice of nearly every track, and the
 # shapes most pictures start from.

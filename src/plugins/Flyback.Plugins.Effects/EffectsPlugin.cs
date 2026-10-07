@@ -78,6 +78,14 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 Tags = ["echo", "feedback", "knobs"],
             },
             new PatchPreset(
+                VisualizerPreset.Name,
+                VisualizerPreset.Build,
+                VisualizerPreset.Description,
+                PresetKind.Idea)
+            {
+                Tags = ["visualizer", "line-in", "kaleidoscope"],
+            },
+            new PatchPreset(
                 AcidPreset.Name,
                 AcidPreset.Build,
                 "A whole acid techno track: a hundred and twenty-eight bars of a 303 line in two "
