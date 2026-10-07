@@ -22,7 +22,7 @@ Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an ide
 | Video | YouTube | Length | Notes |
 |---|---|---|---|
 | What is Flyback? | `FhKpYZxMlec` | 2:03 | Modules, sockets, wires, the Output, one Sine driving both, normalled inputs, per pixel and per sample, live rebuilds, F2, the assistant, the presets, 7 s of Whole band. Sources lost with the scratchpad; the MP4 is on the channel. |
-| Your first patch | not posted | 1:27 | Empty, Space and sine, a wire into color, `in` following the clock, Coordinates for stripes, freq to four, Rings with no wires, Time into offset, Ctrl+S. Every screen a `flyback-cli shot`. `~/.explainroo/videos/first-patch`. |
+| Your first patch | `npkO3aYA_CA` | 1:27 | Empty, Space and sine, a wire into color, `in` following the clock, Coordinates for stripes, freq to four, Rings with no wires, Time into offset, Ctrl+S. Every screen a `flyback-cli shot`. `~/.explainroo/videos/first-patch`. |
 
 ## Proposed
 
