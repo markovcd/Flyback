@@ -55,7 +55,7 @@ internal static class JsLayout
         }.ToJsonString();
     }
 
-    private static JsonArray Indices(Array[] arrays, int size, Func<Array, long> address) =>
+    private static JsonArray Indices(IReadOnlyList<Array> arrays, int size, Func<Array, long> address) =>
         new([.. arrays.Select(array => (JsonNode)Index(array, size, address))]);
 
     /// <summary>An element index, or zero for an array that is missing or empty and so never read.</summary>
