@@ -9,6 +9,7 @@ namespace Flyback.Cli.Models;
 /// <param name="Seen">Where the pictures it looked at and the sounds it heard are written, or null for nowhere.</param>
 /// <param name="Briefing">Print the briefing the assistant is handed.</param>
 /// <param name="Context">How many tokens a request may send, or null for the settings' limit.</param>
+/// <param name="Expand">Print the message written out in full, and build nothing.</param>
 internal sealed record AskOptions(
     string? Message,
     string? Provider,
@@ -17,4 +18,5 @@ internal sealed record AskOptions(
     bool Json,
     DirectoryInfo? Seen,
     bool Briefing,
-    int? Context);
+    int? Context,
+    bool Expand = false);

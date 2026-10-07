@@ -30,3 +30,9 @@ Feature: The assistant can be asked from the command line
     When flyback-cli asks it about "field.fbk" with "--turns 1" after the patch
     Then the command is refused, naming "--turns"
     And the assistant was asked nothing
+
+  Scenario: A short idea is written out in full and nothing is built
+    Given an assistant that writes ideas out in full
+    When flyback-cli expands "a slow tide" over "idea.fbk"
+    Then the brief is printed
+    And "idea.fbk" does not exist

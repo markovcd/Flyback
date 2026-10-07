@@ -323,12 +323,18 @@ internal static class Program
                 + $"{AssistantSettings.MostContext}. Defaults to the editor's Settings → Assistant.",
         };
 
+        var expand = new Option<bool>("--expand")
+        {
+            Description = "Print the message written out in full, as the editor's Expand does, over the patch as a change "
+                + "to it, or over an empty one as a new patch's brief. Builds and writes nothing.",
+        };
+
         var command = new Command(
             "ask",
             "Ask the assistant to change a patch, the way the editor's assistant column does, and write "
             + "the patch back with the conversation, so the next ask, or the editor, carries it on.")
         {
-            patch, message, preset, output, provider, model, set, fresh, seen, briefing, context, json,
+            patch, message, preset, output, provider, model, set, fresh, seen, briefing, context, expand, json,
         };
 
         command.Validators.Add(result =>
@@ -363,7 +369,7 @@ internal static class Program
                 file = null;
             }
 
-            if (AskCommand.Open(plugins.Catalog, file, named, result.GetValue(output), error) is not { } about)
+            if (AskCommand.Open(plugins.Catalog, file, named, result.GetValue(output), error, writing: !result.GetValue(expand)) is not { } about)
                 return Task.FromResult(Exit.Failed);
 
             var settings = (result.GetValue(set) ?? []).ToList();
@@ -381,7 +387,8 @@ internal static class Program
                     result.GetValue(json),
                     result.GetValue(seen),
                     result.GetValue(briefing),
-                    result.GetValue(context)),
+                    result.GetValue(context),
+                    result.GetValue(expand)),
                 result.InvocationConfiguration.Output,
                 error,
                 Console.In,

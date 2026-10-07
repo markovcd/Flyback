@@ -103,6 +103,76 @@ public sealed class AskCommandTests : IDisposable
     }
 
     [Fact]
+    public async Task Expand_prints_the_brief_and_writes_nothing()
+    {
+        var (code, said, complained) = await Ask("idea.fbk", "just talk", options => options with { Expand = true });
+
+        code.ShouldBe(Exit.Ok, complained);
+        said.Trim().ShouldBe("heard 1 messages");
+        assistant.Heard.ShouldHaveSingleItem().ShouldContain("idea for a new patch");
+        File.Exists(Path("idea.fbk")).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Expand_over_a_patch_asks_for_a_change_and_leaves_the_file_and_conversation_alone()
+    {
+        await Ask("field.fbk", "a gray field");
+        var before = File.ReadAllText(Path("field.fbk"));
+        var saved = Directory.GetFiles(Path("sessions"), "*", SearchOption.AllDirectories).Length;
+
+        var (code, said, complained) = await Ask("field.fbk", "just talk", options => options with { Expand = true });
+
+        code.ShouldBe(Exit.Ok, complained);
+        said.Trim().ShouldBe("heard 1 messages");
+        assistant.Heard.Last().ShouldContain("request to change it");
+        assistant.Resumed.ShouldBeEmpty();
+        File.ReadAllText(Path("field.fbk")).ShouldBe(before);
+        Directory.GetFiles(Path("sessions"), "*", SearchOption.AllDirectories).Length.ShouldBe(saved);
+    }
+
+    [Fact]
+    public async Task Expand_as_json_is_one_brief_object()
+    {
+        var (code, said, _) = await Ask("idea.fbk", "just talk", options => options with { Expand = true, Json = true });
+
+        code.ShouldBe(Exit.Ok);
+
+        var line = JsonDocument.Parse(said).RootElement;
+
+        line.GetProperty("kind").GetString().ShouldBe("brief");
+        line.GetProperty("text").GetString().ShouldBe("heard 1 messages");
+    }
+
+    [Fact]
+    public async Task Expand_at_a_terminal_with_no_message_says_what_it_needs()
+    {
+        var (code, _, complained) = await Ask("idea.fbk", null, options => options with { Expand = true }, console: "");
+
+        code.ShouldBe(Exit.Failed);
+        complained.ShouldContain("--expand needs the message");
+        assistant.Heard.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Expand_reads_the_message_from_standard_input_when_there_is_no_terminal()
+    {
+        var (code, said, complained) = await Ask("idea.fbk", null, options => options with { Expand = true }, input: "just talk");
+
+        code.ShouldBe(Exit.Ok, complained);
+        said.Trim().ShouldBe("heard 1 messages");
+    }
+
+    [Fact]
+    public void Expand_over_a_preset_needs_no_out()
+    {
+        var (code, complained) = Run("ask", "--preset", Presets.All[0].Name, "--expand", "--provider", "nobody", "talk");
+
+        code.ShouldBe(Exit.Failed);
+        complained.ShouldNotContain("--out");
+        complained.ShouldContain("nobody");
+    }
+
+    [Fact]
     public async Task Out_writes_the_answer_elsewhere_and_leaves_the_patch_alone()
     {
         await Ask("field.fbk", "a gray field");

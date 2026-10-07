@@ -52,6 +52,47 @@ public sealed class AskSteps : IDisposable
     [When("flyback-cli asks it about {string} for {string}")]
     public Task WhenAsked(string patch, string message) => Ask(patch, message, json: false);
 
+    [Given("an assistant that writes ideas out in full")]
+    public void GivenAnAssistantThatWrites()
+    {
+        assistant = new Remembering { Brief = "A slow tide, heard and seen as one slow swell, building over four minutes." };
+        new AssistantSettings { Provider = Assistant.Id }.Save(SettingsPath);
+    }
+
+    [When("flyback-cli expands {string} over {string}")]
+    public async Task WhenExpanded(string idea, string patch)
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var about = AskCommand.Open(Catalog, new FileInfo(Path(patch)), null, null, error, Store).ShouldNotBeNull(error.ToString());
+
+        code = await AskCommand.Run(
+            Catalog,
+            about,
+            new AskOptions(idea, null, [], false, false, null, false, null, Expand: true),
+            output,
+            error,
+            TextReader.Null,
+            null,
+            CancellationToken.None,
+            SettingsPath,
+            Store,
+            Path("logs"));
+
+        said = output + error.ToString();
+    }
+
+    [Then("the brief is printed")]
+    public void ThenTheBriefIsPrinted()
+    {
+        code.ShouldBe(Exit.Ok, said);
+        said.Trim().ShouldBe(Assistant.Brief);
+    }
+
+    [Then("{string} does not exist")]
+    public void ThenDoesNotExist(string patch) => File.Exists(Path(patch)).ShouldBeFalse();
+
     [When("flyback-cli asks it about {string} for {string} as JSON")]
     public Task WhenAskedForJson(string patch, string message) => Ask(patch, message, json: true);
 
@@ -166,6 +207,9 @@ public sealed class AskSteps : IDisposable
 
         public List<string> Remembered { get; } = [];
 
+        /// <summary>What it says to a message that asks it to build nothing, or null to build.</summary>
+        public string? Brief { get; init; }
+
         public int Asked { get; set; }
 
         public string Id => "remembering";
@@ -201,6 +245,12 @@ public sealed class AskSteps : IDisposable
             {
                 history.Add(instruction);
                 owner.Asked++;
+
+                if (owner.Brief is { } brief)
+                {
+                    yield return new PatchEvent.Said(brief);
+                    yield break;
+                }
 
                 yield return new PatchEvent.Cost(Input, Cached, Output);
 

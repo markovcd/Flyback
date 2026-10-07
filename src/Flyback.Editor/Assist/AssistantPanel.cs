@@ -557,9 +557,7 @@ internal sealed class AssistantPanel : UserControl
 
         using var run = runs.Create(assistant, writing, over: over);
 
-        return over.Nodes.All(node => node.TypeId == Flyback.Core.Graph.NodeCatalog.OutputTypeId)
-            ? await PromptExpansion.BriefAsync(run, typed, cancel)
-            : await PromptExpansion.ChangeBriefAsync(run, typed, cancel);
+        return await PromptExpansion.ExpandAsync(run, typed, over, cancel);
     }
 
     /// <summary>Writes what is in the box out in full, over the patch on the canvas, for the person to edit before sending.</summary>

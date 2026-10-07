@@ -1,11 +1,20 @@
-using Flyback.Assist;
+using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 
-namespace Flyback.Editor.Assist;
+namespace Flyback.Assist;
 
 /// <summary>A short message to the assistant, written out by it as the brief to build from.</summary>
 internal static class PromptExpansion
 {
+    /// <summary>
+    /// The brief <paramref name="run"/> writes for <paramref name="typed"/> over <paramref name="over"/>:
+    /// a change to it, or a new patch where it holds only the Output.
+    /// </summary>
+    public static Task<(string? Brief, string? Failure)> ExpandAsync(AssistantRun run, string typed, Patch over, CancellationToken cancel) =>
+        over.Nodes.All(node => node.TypeId == NodeCatalog.OutputTypeId)
+            ? BriefAsync(run, typed, cancel)
+            : ChangeBriefAsync(run, typed, cancel);
+
     /// <summary>
     /// The brief <paramref name="run"/> writes for <paramref name="idea"/>, or why it wrote none.
     /// Nothing it proposes is kept: the run is a throwaway.

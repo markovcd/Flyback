@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `flyback-cli ask --expand` prints a short message written out in full, as Expand does in the editor: a change to the patch given, or a new patch's brief where the file is empty or does not exist. It builds and saves nothing.
+
 - A Lissajous preset: two sines a fifth apart, one to each speaker, drawn against each other on a Beam.
 
 - The Analyzer's `scale` help says what it does: the loudness a sine needs to reach the top edge, not a divisor of it.

@@ -69,8 +69,14 @@ internal static class AskCommand
 
         var message = options.Message;
 
+        if (options.Expand && message is null && console is not null)
+        {
+            error.WriteLine(AskedPatch.Complaint("--expand needs the message to write out: after the patch, or on standard input."));
+            return Exit.Failed;
+        }
+
         // Read before anything is started, so a pipe with nothing in it costs nothing.
-        if (message is null && console is null)
+        if (message is null && (console is null || options.Expand))
         {
             message = await input.ReadToEndAsync(cancel).ConfigureAwait(false);
 
@@ -79,6 +85,13 @@ internal static class AskCommand
                 error.WriteLine(AskedPatch.Complaint("say what to ask: a message after the patch, or one on standard input."));
                 return Exit.Failed;
             }
+        }
+
+        if (options.Expand)
+        {
+            return await AskExpansion
+                .Run(assistant, config, settings, settingsPath ?? SettingsFile.Path, plugins.Modules, plugins.Presets, about, options, message!.Trim(), output, error, cancel)
+                .ConfigureAwait(false);
         }
 
         using var conversation = new AskConversation(
@@ -162,7 +175,8 @@ internal static class AskCommand
         string? preset,
         FileInfo? into,
         TextWriter error,
-        ConversationStore? store = null)
+        ConversationStore? store = null,
+        bool writing = true)
     {
         if ((file is null) == (preset is null))
         {
@@ -170,7 +184,8 @@ internal static class AskCommand
             return null;
         }
 
-        var target = into ?? file;
+        // Nothing is written when the message is only being written out, so a preset needs no --out.
+        var target = into ?? file ?? (writing ? null : new FileInfo($"{preset}.{PatchIO.FileExtension}"));
 
         if (target is null)
         {
@@ -178,7 +193,7 @@ internal static class AskCommand
             return null;
         }
 
-        if (!AskedPatch.Writable(target))
+        if (writing && !AskedPatch.Writable(target))
         {
             error.WriteLine(AskedPatch.Complaint($"{target.Name}: the extension says what to write, {AskedPatch.Formats}."));
             return null;
