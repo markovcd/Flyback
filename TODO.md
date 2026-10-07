@@ -28,3 +28,4 @@ Work the user has asked for and nobody has started. Take an item off when it lan
 - Make rendering stills for site and page cached, so pipeline takes shorter
 - add audio input, add sample recording, add midi recording (from highest to lowest priority)
 - https://github.com/vincentsch/explainroo
+- **Capture the real window on Linux with one command.** On KDE Wayland there is no `xdotool`, and a script cannot focus, size or pick a window by process, so the full-window shots (`settings.webp`, `presets-list.webp`, `assistant.webp`) need a person at the desktop. A script that launches Flyback, sizes it with `kdotool`, captures it with `spectacle -b -n -a`, and kills only the process it started would put them in the `site-screenshots` skill beside the Windows recipe.
