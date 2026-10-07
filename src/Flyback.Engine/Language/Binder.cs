@@ -138,14 +138,13 @@ public sealed class Binder
         _ => null,
     };
 
-    private static string? Builtin(string name) => name switch
+    private string? Builtin(string name) => name switch
     {
         "t" => "the clock",
-        "x" or "y" or "radius" or "angle" or "aspect" => "one of the picture's coordinates",
         "out" => "the Output",
         "_" => "what a pipe brings in",
         "let" or "def" or "group" => "a word of the language",
-        _ => null,
+        _ => Coordinate(name) >= 0 ? "one of the picture's coordinates" : null,
     };
 
     /// <summary>
@@ -785,19 +784,22 @@ public sealed class Binder
     /// <summary>The shared Coordinates or Time a bare word stands for, if it is one.</summary>
     private Value? Source(string name)
     {
-        var port = name switch
-        {
-            "x" => NodeCatalog.CoordXPort,
-            "y" => NodeCatalog.CoordYPort,
-            "radius" => 2,
-            "angle" => 3,
-            "aspect" => NodeCatalog.CoordAspectPort,
-            _ => -1,
-        };
+        if (name == "t") return wiring.Clock().Part(0);
 
-        if (port >= 0) return wiring.Coordinates().Part(port);
+        var port = Coordinate(name);
 
-        return name == "t" ? wiring.Clock().Part(0) : null;
+        return port < 0 ? null : wiring.Coordinates().Part(port);
+    }
+
+    /// <summary>The output of the Coordinates a bare word reads, or -1 where the word is not one of them.</summary>
+    private int Coordinate(string name)
+    {
+        var outputs = modules.Require(NodeCatalog.CoordTypeId).Outputs;
+
+        for (var i = 0; i < outputs.Count; i++)
+            if (outputs[i].Name == name) return i;
+
+        return -1;
     }
 
     // --- the pipe rule -------------------------------------------------------
