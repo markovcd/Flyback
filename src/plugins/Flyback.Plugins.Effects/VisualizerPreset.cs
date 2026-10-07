@@ -3,7 +3,7 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Effects;
 
 /// <summary>
-/// The patch the music visualizer video builds: whatever the Line In hears, drawn as a
+/// The patch the "Turn any music into a picture" video builds: whatever the Line In hears, drawn as a
 /// turning kaleidoscope of clouds that the kick flashes and the loudness colors.
 /// </summary>
 /// <remarks>
