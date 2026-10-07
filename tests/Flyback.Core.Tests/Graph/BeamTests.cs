@@ -185,14 +185,28 @@ public class BeamTests
     }
 
     /// <summary>
-    /// Noise crosses the whole screen every evaluation. Drawing it stays cheap and
-    /// still lights the screen, rather than freezing the frame.
+    /// Noise crosses the whole screen every evaluation. Drawing it costs about what a
+    /// figure the beam can follow does, and still lights the screen, rather than
+    /// freezing the frame.
     /// </summary>
     [Fact]
     public void Noise_draws_as_a_haze_in_good_time()
     {
-        var (patch, _) = Drawing(("audio.noise", []), ("audio.noise", [(2, 1f)]), (Persistence, -1f));
+        var noise = Drawer(Drawing(("audio.noise", []), ("audio.noise", [(2, 1f)]), (Persistence, -1f)).Patch);
+        var circle = Drawer(Circle((Persistence, -1f)).Patch);
 
+        // Each timed against the other in the same moment, so a busy machine slows
+        // both alike; the best of three sheds a pause in either.
+        var took = Enumerable.Range(0, 3).Select(_ => (Noise: noise.Time(), Circle: circle.Time())).ToArray();
+
+        // A noise drawn whole costs about a hundred circles.
+        took.Min(t => t.Noise).ShouldBeLessThan(took.Min(t => t.Circle) * 5);
+        Lit(noise.Drawn, 0, 0).ShouldBeGreaterThan(0d);
+    }
+
+    /// <summary>A second of <paramref name="patch"/> played, and a way to time drawing its screen from it.</summary>
+    private static (CompiledPatch Drawn, Func<double> Time) Drawer(Patch patch)
+    {
         var heard = patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
         var drawn = patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
 
@@ -200,11 +214,11 @@ public class BeamTests
         var memory = renderer.DelayMemoryFor(heard);
         renderer.Render(heard, new float[renderer.SampleRate * 2], memory);
 
-        var took = System.Diagnostics.Stopwatch.StartNew();
-        Traces.Refresh(drawn, heard, memory);
-        took.Stop();
-
-        took.ElapsedMilliseconds.ShouldBeLessThan(250);
-        Lit(drawn, 0, 0).ShouldBeGreaterThan(0d);
+        return (drawn, () =>
+        {
+            var took = System.Diagnostics.Stopwatch.StartNew();
+            Traces.Refresh(drawn, heard, memory);
+            return took.Elapsed.TotalMilliseconds;
+        });
     }
 }
