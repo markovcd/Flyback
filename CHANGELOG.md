@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The preset site's plugin shelf lists a plugin once, at its newest published version, with the older versions linked from its page.
+
 - `install.sh` makes the macOS app startable: it clears the download quarantine and signs the bundle for this Mac.
 
 - Settings → Canvas → Drag empty canvas to pan moves the view with the left button, for a mouse or trackpad with no middle button; the right button then draws the selection band, and a right click still adds a module. The web editor has it too, with Compact modules, on a small panel off a gear on its toolbar, kept by the browser.

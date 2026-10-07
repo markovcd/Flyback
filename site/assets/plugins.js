@@ -63,6 +63,7 @@
   function facts(plugin) {
     var row = make("div", { class: "facts" });
     row.appendChild(make("span", null, "Version " + plugin.version));
+    if (plugin.versions > 1) row.appendChild(make("span", null, plugin.versions + " versions"));
     if (plugin.author) row.appendChild(make("span", null, "by " + plugin.author));
     row.appendChild(make("span", null, builtFor(plugin)));
     return row;
@@ -247,10 +248,24 @@
     if (contract.length) row("Built against", contract.join(", "));
 
     row("Assembly", plugin.assembly);
+    if (plugin.versions > 1) row("Versions", versions(plugin));
     if (plugin.signer) row("Signed by", make("code", { class: "hash" }, plugin.signer));
     row("SHA-256", make("code", { class: "hash" }, plugin.sha256));
 
     into.appendChild(dl);
+  }
+
+  /** Every published version of the plugin, each linking to its own page; filled in once the list arrives. */
+  function versions(plugin) {
+    var list = make("div", { class: "chips" });
+    fetch(api + "plugins?assembly=" + encodeURIComponent(plugin.assembly)).then(function (r) { return r.json(); }).then(function (found) {
+      found.items.forEach(function (other) {
+        list.appendChild(other.id === plugin.id
+          ? make("span", { class: "chip", "aria-current": "true" }, other.version)
+          : make("a", { class: "chip", href: "plugin.html?id=" + other.id, title: day(other.submitted) }, other.version));
+      });
+    });
+    return list;
   }
 
   function one() {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { admin, ask, askJson, form, freshAddress } from "./site";
+import { admin, asAdmin, ask, askJson, form, freshAddress } from "./site";
 
 /** A zip's first bytes and something after them, unique to seed. */
 const PACKAGE = (seed: string) => new Uint8Array([0x50, 0x4b, 0x03, 0x04, ...new TextEncoder().encode(seed)]);
@@ -142,6 +142,39 @@ describe("the plugin shelf", () => {
     expect(await names("module=example.kite")).toEqual([]);
     expect(await names("q=string")).toEqual(["Kite"]);
     expect((await ask("/api/v1/plugins?platform=amiga")).status).toBe(400);
+  });
+
+  it("lists a plugin once, at its newest published version, and every version by assembly", async () => {
+    const first = await accepted("Example.Lantern", { version: "1.0.0" });
+    const second = await accepted("Example.Lantern", { version: "1.1.0" });
+    const draft = await accepted("Example.Lantern", { version: "1.2.0" });
+    await publish(first);
+    await publish(second);
+
+    const shelf = await askJson("/api/v1/plugins");
+    expect(shelf.items.map((p: { id: string }) => p.id)).toEqual([second]);
+    expect(shelf.items[0]).toMatchObject({ version: "1.1.0", versions: 2 });
+    expect(shelf.total).toBe(1);
+
+    const all = await askJson("/api/v1/plugins?assembly=example.lantern");
+    expect(all.items.map((p: { version: string }) => p.version)).toEqual(["1.1.0", "1.0.0"]);
+
+    expect((await ask(`/api/v1/plugins/${first}/file`)).status).toBe(200);
+    expect((await askJson(`/api/v1/plugins/${first}`)).versions).toBe(2);
+
+    const reviewed = await (await ask("/api/v1/plugins", { headers: await asAdmin() })).json<{ items: { id: string }[] }>();
+    expect(reviewed.items.map((p) => p.id).sort()).toEqual([first, second, draft].sort());
+  });
+
+  it("brings an older version back when the newer is unpublished", async () => {
+    const first = await accepted("Example.Lantern", { version: "1.0.0" });
+    const second = await accepted("Example.Lantern", { version: "1.1.0" });
+    await publish(first);
+    await publish(second);
+
+    await admin(`/api/v1/admin/plugins/${second}`, "PATCH", { published: false });
+
+    expect((await askJson("/api/v1/plugins")).items.map((p: { id: string }) => p.id)).toEqual([first]);
   });
 
   it("downloads a package, counted", async () => {

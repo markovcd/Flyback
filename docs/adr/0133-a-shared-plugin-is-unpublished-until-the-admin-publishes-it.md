@@ -70,3 +70,7 @@ request limit.
 ## Amendment, 2026-09-29: the public address
 
 The editor asks the site its build names, `PresetSite` in Flyback.Editor.Desktop.csproj: `https://flyback.nasik2137.uk/` for a release and `http://localhost:8790/` for a Debug build, as Rider makes. It is fixed at build time and never read at run time, so nothing outside the binary can send the editor to another site.
+
+## Amendment, 2026-10-07: the shelf lists a plugin once
+
+An update is still a new submission, reviewed and published like any other. The public listing shows each assembly once, at the newest published package (by submission time), with `versions` counting what is published. `GET /plugins?assembly=` lists every published version of one, newest first, and each version keeps its own page and file, so a patch or a link to an older one still resolves. The admin's listing is not collapsed. Unpublishing the newest brings the one before it back. Supersedes the consequence that the listing has no notion of one package replacing another.

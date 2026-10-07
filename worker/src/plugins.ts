@@ -38,10 +38,20 @@ export interface PluginRow {
   signer_fingerprint: string | null;
   status: "unchecked" | "checked" | "refused";
   reason: string | null;
+  versions: number;
 }
 
 /** A package arrives unpublished and is seen by nobody but the admin until it is published. */
 const visible = (admin: boolean): string => (admin ? "p.status = 'checked'" : "p.status = 'checked' AND p.published = 1");
+
+/** How many published versions the plugin's assembly has, itself included. */
+const VERSIONS = `(SELECT count(*) FROM plugins v WHERE v.published = 1 AND v.status = 'checked'
+  AND v.assembly = p.assembly COLLATE NOCASE) AS versions`;
+
+/** Unless a newer published package of the same assembly exists: the shelf lists a plugin once. */
+const NEWEST = `NOT EXISTS (SELECT 1 FROM plugins n WHERE n.published = 1 AND n.status = 'checked'
+  AND n.assembly = p.assembly COLLATE NOCASE
+  AND (n.submitted_at > p.submitted_at OR (n.submitted_at = p.submitted_at AND n.id > p.id)))`;
 
 export function pluginView(row: PluginRow, rating: Rating) {
   return {
@@ -71,6 +81,7 @@ export function pluginView(row: PluginRow, rating: Rating) {
     size: row.size,
     submitted: row.submitted_at,
     downloads: row.downloads,
+    versions: row.versions,
     published: row.published !== 0,
     file: `/api/v1/plugins/${row.id}/file`,
     preview: row.preview_type === null ? null : `/api/v1/plugins/${row.id}/preview`,
@@ -81,14 +92,15 @@ export function pluginView(row: PluginRow, rating: Rating) {
 }
 
 export const findPlugin = (env: Env, id: string, where = "1 = 1"): Promise<PluginRow | null> =>
-  env.DB.prepare(`SELECT p.* FROM plugins p WHERE p.id = ? AND ${where}`).bind(id).first<PluginRow>();
+  env.DB.prepare(`SELECT p.*, ${VERSIONS} FROM plugins p WHERE p.id = ? AND ${where}`).bind(id).first<PluginRow>();
 
 export const pluginShown = async (env: Env, id: string): Promise<boolean> =>
   (await findPlugin(env, id, visible(false))) !== null;
 
 /**
  * GET /plugins: newest first, matching all of q's words, tagged tag, with a build that
- * installs on platform, and declaring module's type id, each where given.
+ * installs on platform, and declaring module's type id, each where given. A visitor sees
+ * each assembly once, at its newest published package; assembly lists every version of one.
  */
 export async function listPlugins(env: Env, url: URL, admin: boolean): Promise<Response> {
   const page = whole(url, "page");
@@ -100,6 +112,12 @@ export async function listPlugins(env: Env, url: URL, admin: boolean): Promise<R
   const at = Math.max(1, page ?? 1);
   const where = [visible(admin)];
   const values: unknown[] = [];
+
+  const assembly = url.searchParams.get("assembly")?.trim();
+  if (assembly) {
+    where.push("p.assembly = ? COLLATE NOCASE");
+    values.push(assembly);
+  } else if (!admin) where.push(NEWEST);
 
   for (const word of words(url.searchParams.get("q"))) {
     where.push("p.search LIKE ? ESCAPE '\\'");
@@ -128,7 +146,7 @@ export async function listPlugins(env: Env, url: URL, admin: boolean): Promise<R
   const filter = "WHERE " + where.join(" AND ");
   const [counted, listed] = await env.DB.batch<{ n: number } | PluginRow>([
     env.DB.prepare(`SELECT count(*) AS n FROM plugins p ${filter}`).bind(...values),
-    env.DB.prepare(`SELECT p.* FROM plugins p ${filter} ORDER BY p.submitted_at DESC, p.id DESC LIMIT ? OFFSET ?`).bind(
+    env.DB.prepare(`SELECT p.*, ${VERSIONS} FROM plugins p ${filter} ORDER BY p.submitted_at DESC, p.id DESC LIMIT ? OFFSET ?`).bind(
       ...values,
       PAGE_SIZE,
       (at - 1) * PAGE_SIZE,
