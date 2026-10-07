@@ -3,7 +3,7 @@
 Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an idea when one comes up, move it to Made when it is made, and onto `site/tutorials.html` when it is posted. It is on TODO.md; it stays as long as the channel wants videos.
 
 - **Kind:** Backlog
-- **Status:** Open: two made and posted, the rest proposed
+- **Status:** Open: three made, two posted, the rest proposed
 
 ## How one is made
 
@@ -23,6 +23,7 @@ Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an ide
 |---|---|---|---|
 | What is Flyback? | `FhKpYZxMlec` | 2:03 | Modules, sockets, wires, the Output, one Sine driving both, normalled inputs, per pixel and per sample, live rebuilds, F2, the assistant, the presets, 7 s of Whole band. Sources lost with the scratchpad; the MP4 is on the channel. |
 | Your first patch | `npkO3aYA_CA` | 1:27 | Empty, Space and sine, a wire into color, `in` following the clock, Coordinates for stripes, freq to four, Rings with no wires, Time into offset, Ctrl+S. Every screen a `flyback-cli shot`. `~/.explainroo/videos/first-patch`. |
+| Make a beat you can see | not posted | 1:54 | Tempo, a Stroke into a Drum, a Euclid into a Hiss, a Note Sequencer through a Saw, an ADSR and a Filter, the levels, Rings lit by the Stroke, a panel knob on the cutoff. Ends as the Beat you can see preset, bit for bit. Each scene plays its own step's sound, ducked under the voice by `~/.explainroo/work/beat/mix.py`. Replaces `tutorials/beat.html` once posted. |
 
 ## Proposed
 
@@ -31,7 +32,6 @@ Roughly in the order worth making. Each is 60 to 120 seconds unless it says othe
 Three of them replace the written tutorials still under `site/tutorials/`. When one is posted, its page goes, with every link to it, and its row in `tests/Flyback.Specs/Features/Tutorials.feature` (beat and echoes) or its `PatchShotTests` lines (syntakt) go in the same commit.
 
 - **Your first sound.** A Sine at 220 into `left`, `right` following it, and `volume`. The Scope beside it so the ear and the eye agree.
-- **Make a beat you can see.** Replaces `tutorials/beat.html`. A kick, a Euclidean hat and a bass line on one Tempo, mixed and leveled, rings the kick lights up, and a knob for the bass filter; it ends as the Beat you can see preset, so the kick that is heard is the flash that is seen.
 - **One knob, two echoes.** Replaces `tutorials/echoes.html`. A tune through an echo that keeps time, a ring on every note carried down a tunnel, and one knob that sets how long both last; it ends as the Two echoes preset.
 - **Play it from an Elektron Syntakt.** Replaces `tutorials/syntakt.html`. The box's MIDI and USB settings, the whole Syntakt added in one pick, a MIDI track sequencing a Flyback voice, a Flyback sequencer kept to its clock, a picture lit by its tracks, and its knobs on the panel. Needs the real box filmed or captured; the editor half can be `flyback-cli shot`.
 - **Feedback for the eyes and the ears.** A loop is a delay: a comb or an echo in the sound, a trail or a tunnel in the picture. Feedback tunnel and Echo chamber side by side.
