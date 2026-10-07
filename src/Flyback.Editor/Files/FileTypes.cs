@@ -1,7 +1,6 @@
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Hosting;
 using Flyback.Editor.Updates;
-using Flyback.Core.Graph;
 using Flyback.Engine.Language;
 
 namespace Flyback.Editor.Files;

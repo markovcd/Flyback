@@ -3,7 +3,6 @@ using Avalonia;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Hosting;
-using Flyback.Viewer.Desktop;
 using Shouldly;
 using Xunit;
 using Flyback.Ui;

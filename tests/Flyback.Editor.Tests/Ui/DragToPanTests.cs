@@ -6,7 +6,6 @@ using Avalonia.Input;
 using Flyback.Editor.Canvas;
 using Flyback.Core.Graph;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.Editor.Tests.Ui;
 

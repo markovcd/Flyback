@@ -2,7 +2,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Flyback.Editor.Bars;
-using Flyback.Editor.Canvas;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Windows;
 using Shouldly;

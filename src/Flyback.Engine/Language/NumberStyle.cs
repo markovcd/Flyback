@@ -1,6 +1,4 @@
-﻿using Flyback.Core.Graph;
-
-namespace Flyback.Engine.Language;
+﻿namespace Flyback.Engine.Language;
 
 /// <summary>How a number was written, which decides what sockets will take it.</summary>
 public enum NumberStyle

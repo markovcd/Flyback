@@ -7,7 +7,6 @@ using Avalonia.VisualTree;
 using Flyback.Engine.Graph;
 using Flyback.Ui;
 using Flyback.Ui.Controls;
-using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
 using Flyback.Viewer.Desktop;
 

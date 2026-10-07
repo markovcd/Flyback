@@ -19,7 +19,6 @@ using Flyback.Editor.Site;
 using Flyback.Editor.Statistics;
 using Flyback.Editor.Updates;
 using Flyback.Editor.Windows;
-using Flyback.Core.Compile;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;

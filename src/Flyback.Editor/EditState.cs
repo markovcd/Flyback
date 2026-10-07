@@ -4,7 +4,6 @@ using Flyback.Editor.Bars;
 using Flyback.Editor.Files;
 using Flyback.Editor.Inspect;
 using Flyback.Editor.Notices;
-using Flyback.Editor.Windows;
 
 namespace Flyback.Editor;
 

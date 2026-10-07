@@ -8,8 +8,6 @@ using Avalonia.Media;
 using Flyback.Editor.Bars;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Windows;
-using Flyback.Core.Graph;
-using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Flyback.Ui;
 

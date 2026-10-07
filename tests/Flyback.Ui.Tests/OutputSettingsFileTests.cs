@@ -3,7 +3,6 @@ using Flyback.Engine.Render;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
-using Flyback.Ui;
 
 namespace Flyback.Ui.Tests;
 

@@ -1,8 +1,6 @@
 using Flyback.Core;
-using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
-using Flyback.Engine.Graph;
 using Shouldly;
 using Xunit;
 

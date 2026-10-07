@@ -1,5 +1,4 @@
 using System.CommandLine;
-using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Flyback.Editor.Assist;

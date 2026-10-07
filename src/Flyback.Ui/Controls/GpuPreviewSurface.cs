@@ -5,8 +5,6 @@ using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
 using Avalonia.Threading;
 using Flyback.Engine.Compile;
-using Flyback.Ui.Capture;
-using Flyback.Core.Compile;
 using Flyback.Gpu;
 
 namespace Flyback.Ui.Controls;

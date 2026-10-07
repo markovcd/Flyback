@@ -1,6 +1,4 @@
-﻿using Flyback.Core.Graph;
-
-namespace Flyback.Engine.Language;
+﻿namespace Flyback.Engine.Language;
 
 /// <summary>What one piece of source text is.</summary>
 public enum TokenKind

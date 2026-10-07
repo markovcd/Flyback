@@ -1,6 +1,4 @@
-﻿using Flyback.Engine.Graph;
-
-namespace Flyback.Editor.Files;
+﻿namespace Flyback.Editor.Files;
 
 /// <summary>
 /// Unsaved work as it stood a moment ago, written where the next start can find it

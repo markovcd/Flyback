@@ -9,7 +9,6 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Render;
 using Flyback.Viewer.Desktop;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.Editor.Tests.Ui;
 

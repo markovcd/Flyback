@@ -2,7 +2,6 @@ using System.CommandLine;
 using System.Globalization;
 using Flyback.Cli.Common;
 using Flyback.Core;
-using Flyback.Engine.Render;
 using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;

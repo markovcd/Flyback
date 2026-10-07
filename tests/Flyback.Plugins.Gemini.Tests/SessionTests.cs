@@ -2,7 +2,6 @@ using System.Net;
 using System.Text.Json.Nodes;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
-using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 

@@ -1,4 +1,3 @@
-using Flyback.Editor.Desktop;
 using Flyback.Editor.Updates;
 using Shouldly;
 using Xunit;

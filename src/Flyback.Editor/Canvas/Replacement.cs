@@ -1,6 +1,4 @@
-﻿using Flyback.Engine.Graph;
-
-namespace Flyback.Editor.Canvas;
+﻿namespace Flyback.Editor.Canvas;
 
 /// <summary>How the patch on the canvas came to be a different object.</summary>
 internal enum Replacement

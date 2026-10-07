@@ -2,11 +2,9 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
-using Avalonia.Threading;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Engine.Graph;
-using Flyback.Ui.Controls;
 using Flyback.Editor.Gallery;
 using Flyback.Editor.Site;
 using Flyback.Core;

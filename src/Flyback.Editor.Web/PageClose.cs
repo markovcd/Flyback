@@ -1,5 +1,3 @@
-using Flyback.Editor;
-
 namespace Flyback.Editor.Web;
 
 /// <summary>A page is closed by its tab, never by the editor, so asking does nothing.</summary>

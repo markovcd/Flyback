@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
-using Flyback.Engine.Graph;
 
 namespace Flyback.Editor.Windows;
 

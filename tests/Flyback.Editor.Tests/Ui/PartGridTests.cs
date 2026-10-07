@@ -8,7 +8,6 @@ using Flyback.Editor.Inspect;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.Editor.Tests.Ui;
 

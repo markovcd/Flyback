@@ -8,7 +8,6 @@ using Avalonia.Threading;
 using AvaloniaEdit;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Controls;
-using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Knobs;
 using Flyback.Editor.Windows;

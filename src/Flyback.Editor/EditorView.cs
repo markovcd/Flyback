@@ -12,7 +12,6 @@ using Flyback.Editor.Knobs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Windows;
-using Flyback.Ui.Controls;
 using Flyback.Ui.Midi;
 using Colors = Flyback.Ui.Controls.Colors;
 

@@ -8,7 +8,6 @@ using Avalonia.Media;
 using Avalonia.Platform;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Notices;
-using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;

@@ -4,7 +4,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Media;
 using Flyback.Editor.Bars;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Windows;

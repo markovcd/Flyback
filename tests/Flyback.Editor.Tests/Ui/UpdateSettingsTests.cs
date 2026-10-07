@@ -5,7 +5,6 @@ using Avalonia.Threading;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Updates;
 using Flyback.Editor.Windows;
-using Flyback.Ui.Controls;
 using Shouldly;
 
 namespace Flyback.Editor.Tests.Ui;

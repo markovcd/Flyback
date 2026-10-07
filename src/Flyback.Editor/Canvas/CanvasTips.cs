@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Flyback.Editor.Assist;
 using Flyback.Core.Graph;
-using Flyback.Engine.Graph;
 
 namespace Flyback.Editor.Canvas;
 

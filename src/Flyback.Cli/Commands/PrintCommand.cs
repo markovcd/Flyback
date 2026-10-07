@@ -1,6 +1,5 @@
 using System.CommandLine;
 using Flyback.Cli.Common;
-using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;

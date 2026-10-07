@@ -1,5 +1,3 @@
-using Flyback.Core.Graph;
-
 namespace Flyback.Engine.Language;
 
 /// <summary>Names placed modules by their source path so rebuilds keep their identities.</summary>

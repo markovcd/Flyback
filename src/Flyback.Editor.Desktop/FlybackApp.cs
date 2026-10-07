@@ -5,7 +5,6 @@ using Avalonia.Platform.Storage;
 using Flyback.Editor.Files;
 using Flyback.Editor.Statistics;
 using Flyback.Editor.Desktop.Updates;
-using Flyback.Editor.Updates;
 using Flyback.Editor.Windows;
 using Flyback.Ui;
 using Flyback.Core;

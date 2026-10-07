@@ -1,6 +1,5 @@
 using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.Versioning;
-using Flyback.Engine.Compile;
 
 namespace Flyback.Gpu;
 

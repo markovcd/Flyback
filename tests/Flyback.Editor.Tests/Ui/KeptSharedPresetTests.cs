@@ -3,14 +3,11 @@ using Avalonia.Headless.XUnit;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Engine.Graph;
-using Flyback.Ui.Controls;
-using Flyback.Editor.Gallery;
 using Flyback.Editor.Site;
 using Flyback.Editor.Windows;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.Editor.Tests.Ui;
 

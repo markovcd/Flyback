@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Flyback.Ui.Controls;
 using Shouldly;
-using Flyback.Ui;
 
 namespace Flyback.Ui.Tests.Controls;
 

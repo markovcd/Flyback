@@ -1,5 +1,4 @@
 using Avalonia.Headless;
-using Avalonia.Headless.XUnit;
 using Flyback.Ui.Testing;
 using Flyback.Ui.Testing.Headless;
 using Xunit;

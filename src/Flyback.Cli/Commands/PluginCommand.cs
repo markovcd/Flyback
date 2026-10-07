@@ -1,7 +1,6 @@
 using System.CommandLine;
 using System.Text.Json;
 using Flyback.Cli.Common;
-using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Plugins.Hosting;
 using PluginRegistry = Flyback.Cli.Plugins;

@@ -8,7 +8,6 @@ using Flyback.Editor.Site;
 using Flyback.Editor.Statistics;
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Hosting;
-using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.PluginPackages;
 

@@ -4,7 +4,6 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
-using Flyback.Editor.Controls;
 using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 

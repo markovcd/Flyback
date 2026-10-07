@@ -7,7 +7,6 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Flyback.Editor.Controls;
-using Flyback.Ui.Controls;
 using Shouldly;
 using Xunit;
 

@@ -1,5 +1,4 @@
 using Avalonia.Input;
-using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 
 namespace Flyback.Ui.Midi;

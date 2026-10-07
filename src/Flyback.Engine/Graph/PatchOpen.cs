@@ -1,6 +1,4 @@
-﻿using Flyback.Core.Graph;
-
-namespace Flyback.Engine.Graph;
+﻿namespace Flyback.Engine.Graph;
 
 /// <summary>
 /// What opening a path came to: the patch to play, or null when there is none,

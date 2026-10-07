@@ -1,10 +1,8 @@
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.Editor.Capture;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Notices;
 using Colors = Flyback.Ui.Controls.Colors;

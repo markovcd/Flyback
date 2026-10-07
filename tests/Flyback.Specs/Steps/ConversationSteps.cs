@@ -1,6 +1,5 @@
 using Flyback.Assist;
 using Flyback.Core.Graph;
-using Flyback.Editor.Assist;
 using Flyback.Plugins.Assist;
 using Flyback.Specs.Support;
 using Reqnroll;

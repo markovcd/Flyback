@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.Assist;
 using Flyback.Core;
 using Flyback.Editor.Inspect;
 using Flyback.Editor.Settings;

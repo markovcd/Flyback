@@ -1,6 +1,4 @@
-﻿using Flyback.Core.Graph;
-
-namespace Flyback.Engine.Language;
+﻿namespace Flyback.Engine.Language;
 
 /// <summary>
 /// One token, and where it came from so that a complaint can point at it.

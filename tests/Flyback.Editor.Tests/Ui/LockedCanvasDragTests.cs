@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Headless.XUnit;
-using Flyback.Editor.Canvas;
 using Flyback.Core.Graph;
 using Shouldly;
 
