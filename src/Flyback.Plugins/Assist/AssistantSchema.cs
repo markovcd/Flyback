@@ -17,13 +17,18 @@ namespace Flyback.Plugins.Assist;
 /// <param name="CredentialHelp">One line saying where a key comes from, shown under the field.</param>
 /// <param name="DefaultBaseUrl">Null when the endpoint is not the caller's business.</param>
 /// <param name="BaseUrlEditable">True for an endpoint shape many providers share, such as OpenAI's.</param>
+/// <param name="HearingAsked">
+/// Whether the form asks about listening at all. False for a program signed in by
+/// its person: nothing it runs takes a sound, so there is no switch to gray out.
+/// </param>
 public sealed record AssistantSchema(
     string DefaultModel,
     IReadOnlyList<AssistantModel> SuggestedModels,
     string EnvironmentVariable,
     string CredentialHelp,
     string? DefaultBaseUrl = null,
-    bool BaseUrlEditable = false)
+    bool BaseUrlEditable = false,
+    bool HearingAsked = true)
 {
     /// <summary>
     /// What each setting is filed under. Public because a plugin that borrows this
@@ -131,31 +136,20 @@ public sealed record AssistantSchema(
                       + "endpoint that will not take a picture answers with a 400."
                     : Handles(known),
             },
+        };
 
-            new SettingField.Text(EndpointKey, "Endpoint", DefaultBaseUrl ?? string.Empty)
+        // No address and nothing to type one into is a question with no answer, so
+        // the field goes rather than sitting empty and gray.
+        if (DefaultBaseUrl is not null || BaseUrlEditable)
+            fields.Add(new SettingField.Text(EndpointKey, "Endpoint", DefaultBaseUrl ?? string.Empty)
             {
                 Enabled = BaseUrlEditable,
                 Because = BaseUrlEditable ? null : "This format is spoken in one place.",
-            },
+            });
 
-            // The tick is left alone whatever the model refuses, and that is
-            // deliberate: a disabled box that keeps its state is a preference
-            // parked, and one that clears itself is a preference destroyed by
-            // passing through a model on the way to another. Read is what makes
-            // it safe — it sends no picture to a model recorded as refusing one,
-            // whatever the box still shows.
-            new SettingField.Switch(VisionKey, "Let it look at the picture", On: true)
-            {
-                Enabled = known?.Vision != false,
-                Because = known is null ? null : $"{known.Id} does not take pictures.",
-            },
+        fields.Add(VisionSwitch(known));
 
-            new SettingField.Switch(HearingKey, "Let it listen to the sound")
-            {
-                Enabled = ears.Count > 0,
-                Because = ears.Count > 0 ? null : "This provider has no model that takes a sound.",
-            },
-        };
+        if (HearingSwitch() is { } hearing) fields.Add(hearing);
 
         // A model that takes a sound itself is played the clip directly, so
         // there is no second model and no question to put. The field goes rather
@@ -185,6 +179,33 @@ public sealed record AssistantSchema(
 
         return fields;
     }
+
+    /// <summary>
+    /// The looking switch as the form shows it. The tick is left alone whatever the
+    /// model refuses: a disabled box that keeps its state is a preference parked,
+    /// and one that clears itself is a preference destroyed by passing through a
+    /// model on the way to another. <see cref="Read"/> sends no picture to a model
+    /// recorded as refusing one, whatever the box still shows.
+    /// </summary>
+    private static SettingField.Switch VisionSwitch(AssistantModel? known) =>
+        new(VisionKey, "Let it look at the picture", On: true)
+        {
+            Enabled = known?.Vision != false,
+            Because = known is null ? null : $"{known.Id} does not take pictures.",
+        };
+
+    /// <summary>The listening switch as the form shows it, or null where the form has none.</summary>
+    private SettingField.Switch? HearingSwitch() =>
+        !HearingAsked ? null
+        : new SettingField.Switch(HearingKey, "Let it listen to the sound")
+        {
+            Enabled = Ears.Any(),
+            Because = Ears.Any() ? null : "This provider has no model that takes a sound.",
+        };
+
+    /// <summary>Whether a switch as shown is on: enabled, and ticked or defaulting to ticked.</summary>
+    private static bool On(SettingField.Switch? field, SettingValues values) =>
+        field is { Enabled: true } && values.Flag(field.Key, field.On);
 
     /// <summary>
     /// <see cref="Form(SettingValues)"/> with the effort picker grayed out, giving
@@ -230,11 +251,12 @@ public sealed record AssistantSchema(
     /// says.
     /// </summary>
     /// <remarks>
-    /// Two settings are held to what the chosen model can do rather than to what the
-    /// switch shows: a picture sent to a model recorded as refusing one is a 400,
-    /// and listening with nobody to listen is a tool answered with a sentence saying
-    /// nobody heard it. <see cref="AssistantChoices.EarModel"/> is null where the model takes a sound
-    /// itself, since an ear names the model asked instead.
+    /// Two settings are read as the switches <see cref="Form(SettingValues)"/> shows
+    /// them, on only where enabled and ticked: a picture sent to a model recorded as
+    /// refusing one is a 400, and listening with nobody to listen is a tool answered
+    /// with a sentence saying nobody heard it. <see cref="AssistantChoices.EarModel"/>
+    /// is null where the model takes a sound itself, since an ear names the model
+    /// asked instead.
     /// </remarks>
     public AssistantChoices Read(SettingValues values)
     {
@@ -249,19 +271,20 @@ public sealed record AssistantSchema(
         return new AssistantChoices(
             model,
             Blank(endpoint) ?? DefaultBaseUrl,
-            values.Flag(VisionKey, true) && known?.Vision != false,
-            values.Flag(HearingKey) && (ear is not null || known?.Hearing == true),
+            On(VisionSwitch(known), values),
+            On(HearingSwitch(), values) && (ear is not null || known?.Hearing == true),
             ear,
             values.Word(EffortKey, AssistantEffort.Medium));
     }
 
     /// <summary>What a run configured this way may be handed.</summary>
     /// <remarks>
-    /// Whose ear it is falls out of the two facts the form was built from: listening
-    /// has to be on, and the model either takes a sound or does not. A model nobody
-    /// wrote down falls to the second-hand arrangement, which is the safe direction:
-    /// being wrong that way costs a description, and being wrong the other way loses
-    /// every turn from the first <c>listen</c> onwards.
+    /// Read off the same switches the form shows, so the two cannot disagree: an ear
+    /// is on offer exactly where the listening switch is enabled and off. Whose ear
+    /// it is falls out of whether the model takes a sound. A model nobody wrote down
+    /// falls to the second-hand arrangement, which is the safe direction: being wrong
+    /// that way costs a description, and being wrong the other way loses every turn
+    /// from the first <c>listen</c> onwards.
     /// </remarks>
     public AssistantSenses Senses(SettingValues values)
     {
@@ -272,7 +295,7 @@ public sealed record AssistantSchema(
             !chosen.Hearing ? Listener.None
             : Known(chosen.Model)?.Hearing == true ? Listener.Itself
             : Listener.Another,
-            EarOffered: !chosen.Hearing && Ears.Any());
+            EarOffered: !chosen.Hearing && HearingSwitch() is { Enabled: true });
     }
 
     /// <summary>

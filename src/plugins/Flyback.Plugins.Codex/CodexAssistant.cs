@@ -35,7 +35,8 @@ public sealed class CodexAssistant : IPatchAssistant
             new AssistantModel("gpt-6-luna"),
         ],
         string.Empty,
-        "Not needed: Flyback runs the Codex you are signed in to.");
+        "Not needed: Flyback runs the Codex you are signed in to.",
+        HearingAsked: false);
 
     public AssistantCredential Credential => Schema.Credential;
 
@@ -44,7 +45,7 @@ public sealed class CodexAssistant : IPatchAssistant
     /// <summary>Nowhere: nothing is sent from here, so there is no origin for a key to be bound to.</summary>
     public Uri? Endpoint(SettingValues values) => null;
 
-    public IReadOnlyList<SettingField> Form(SettingValues values) => ProgramAssistants.Form(Schema, values);
+    public IReadOnlyList<SettingField> Form(SettingValues values) => Schema.Form(values);
 
     public AssistantSenses Senses(SettingValues values) => Schema.Senses(values);
 

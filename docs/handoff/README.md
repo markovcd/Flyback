@@ -14,7 +14,6 @@ Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or 
 | [ios-editor.md](ios-editor.md) | An iPhone and iPad editor: what differs from Android | Plan | Open, parked |
 | [shapes-as-sound.md](shapes-as-sound.md) | A Path module: a drawing, a 3D model or a picture played as sound that draws it | Plan | Open, parked |
 | [touch-bugs.md](touch-bugs.md) | What a finger still cannot do, on the desktop and in the page | Issue | Open: 7 of 20 fixed, the rest not yet checked on a phone |
-| [assistant-senses-one-source.md](assistant-senses-one-source.md) | What an assistant can see and hear is worked out twice, in its settings form and its senses | Issue | Open |
 | [youtube-videos.md](youtube-videos.md) | Videos for the YouTube channel: how one is made, what was made, what is proposed | Backlog | Open, grows |
 
 Severity, for an issue: **Critical**, act now; **High**, a security or data problem in a release; **Medium**, wrong behavior or real risk; **Low**, friction or latent risk.

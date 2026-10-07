@@ -115,15 +115,13 @@ internal sealed class AskConversation : IDisposable
     }
 
     /// <summary>What it can take in, said before anything is asked, with the setting that would let it hear.</summary>
-    private string Senses(AssistantSenses senses)
+    private static string Senses(AssistantSenses senses)
     {
         var sees = senses.Vision ? "It sees the picture" : "It cannot see the picture";
 
         if (senses.Hearing != Listener.None) return $"{sees} and hears the sound.";
 
-        var switchable = assistant.Form(config.Values).Any(field => field.Key == AssistantSchema.HearingKey);
-
-        return switchable
+        return senses.EarOffered
             ? $"{sees}, and cannot hear the sound: --set {AssistantSchema.HearingKey}=true lets it."
             : $"{sees}, and cannot hear the sound.";
     }

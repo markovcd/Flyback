@@ -1,18 +1,10 @@
 using Flyback.Plugins.Assist;
-using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.Programs;
 
 /// <summary>What an assistant that is a program signed in by its person has in common.</summary>
 internal static class ProgramAssistants
 {
-    /// <summary>
-    /// The schema's questions less the two that have no answer: there is no address
-    /// to set, and no model takes a sound.
-    /// </summary>
-    public static IReadOnlyList<SettingField> Form(AssistantSchema schema, SettingValues values) =>
-        [.. schema.Form(values).Where(field => field.Key is not (AssistantSchema.EndpointKey or AssistantSchema.HearingKey))];
-
     /// <summary>A conversation over <paramref name="program"/>, which every question fails to reach where it is not installed.</summary>
     public static ProgramSession Start(
         string name, PatchWorkbench workbench, AssistantSchema schema, AssistantConfig config, IProgram? program) =>
