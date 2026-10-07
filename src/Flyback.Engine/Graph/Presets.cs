@@ -380,7 +380,7 @@ internal static partial class Presets
     /// <summary>
     /// One patch heard and seen at once. A single slow oscillator sets both the
     /// hue of the image and the tremolo on the tone, so the two sinks are
-    /// visibly and audibly the same signal.
+    /// visibly and audibly the same signal. "The patch as text" reads it line by line.
     /// </summary>
     public static Patch Drone(ModuleCatalog modules)
     {
