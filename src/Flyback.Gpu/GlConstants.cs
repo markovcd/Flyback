@@ -1,6 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Flyback.Gpu;
 
 /// <summary>The OpenGL enumerants the renderer names, spelled as the specification spells them.</summary>
+[SuppressMessage("ReSharper", "InconsistentNaming")]
 internal static class GlConstants
 {
     public const int GL_NO_ERROR = 0;
