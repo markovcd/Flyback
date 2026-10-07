@@ -35,10 +35,8 @@ Roughly in the order worth making. Each is 60 to 120 seconds unless it says othe
 
 One of them replaces the written tutorial still under `site/tutorials/`. When it is posted, `tutorials/syntakt.html` goes, with every link to it and its `PatchShotTests` lines, in the same commit.
 
-- **Your first sound.** A Sine at 220 into `left`, `right` following it, and `volume`. The Scope beside it so the ear and the eye agree.
 - **Play it from an Elektron Syntakt.** Replaces `tutorials/syntakt.html`. The box's MIDI and USB settings, the whole Syntakt added in one pick, a MIDI track sequencing a Flyback voice, a Flyback sequencer kept to its clock, a picture lit by its tracks, and its knobs on the panel. Needs the real box filmed or captured; the editor half can be `flyback-cli shot`.
 - **Feedback for the eyes and the ears.** A loop is a delay: a comb or an echo in the sound, a trail or a tunnel in the picture. Feedback tunnel and Echo chamber side by side.
-- **Hearing a picture.** Probe and Scan: a field read along a path at audio rate, so the picture is the waveform. Ring scan and Shape scan.
 - **Ask the assistant.** One real conversation, recorded: a short ask, Expand, the patch it wires, the frames it looks at, a change asked for after, Ctrl + Z. Which models it works with and how to set one up. Needs a real run, never a staged one.
 - **Play it.** The computer keyboard as an instrument, a MIDI controller, chords down a polyphonic wire, knobs learned to a controller, the die. Played and No Sense Dub.
 - **Inside the Whole band.** A hundred and sixty-two modules in fourteen boxes: the clock, the song, seven instruments, the room, the desk and three boxes for the picture, opened one at a time while it plays. Could run three minutes.
