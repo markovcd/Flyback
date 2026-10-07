@@ -15,7 +15,7 @@ namespace Flyback.Plugins.Assist;
 /// this yields as it goes. A provider supplies only its format, through
 /// <see cref="IModelConversation"/> (ADR-0161).
 /// </remarks>
-public static class TurnLoop
+internal static class TurnLoop
 {
     /// <summary>
     /// How many times the model may be asked in one turn. The workbench caps tool

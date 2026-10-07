@@ -1,7 +1,7 @@
 namespace Flyback.Core.Graph;
 
 /// <summary>What each <see cref="PresetKind"/> is called in a list of presets.</summary>
-public static class PresetKinds
+internal static class PresetKinds
 {
     /// <summary>
     /// The heading over a kind's run of presets, in the words somebody choosing a

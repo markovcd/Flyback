@@ -1,7 +1,7 @@
 namespace Flyback.Core.Graph;
 
 /// <summary>Shortens typed text without splitting a character in two.</summary>
-public static class TextLimit
+internal static class TextLimit
 {
     /// <summary>
     /// At most <paramref name="limit"/> UTF-16 units of <paramref name="text"/>, one

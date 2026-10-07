@@ -261,7 +261,7 @@ public sealed class Patch
     }
 
     /// <summary>The group holding <paramref name="nodeId"/>, or null where none does.</summary>
-    public NodeGroup? GroupOf(Guid nodeId)
+    internal NodeGroup? GroupOf(Guid nodeId)
     {
         if (Groups is null) return null;
 
@@ -276,7 +276,7 @@ public sealed class Patch
     /// The group holding <paramref name="nodeId"/> if it is collapsed, which is
     /// the question every drawing and hit-testing decision asks.
     /// </summary>
-    public NodeGroup? CollapsedGroupOf(Guid nodeId) =>
+    internal NodeGroup? CollapsedGroupOf(Guid nodeId) =>
         GroupOf(nodeId) is { Collapsed: true } group ? group : null;
 
     /// <summary>
@@ -290,7 +290,7 @@ public sealed class Patch
     /// empty selection, the sink on its own, or fewer than
     /// <see cref="NodeGroup.Fewest"/> modules.
     /// </returns>
-    public NodeGroup? Group(IEnumerable<Guid> members)
+    internal NodeGroup? Group(IEnumerable<Guid> members)
     {
         var inside = members
             .Distinct()
@@ -454,7 +454,7 @@ public sealed class Patch
     /// canvas and then across it, and free to change on the next edit, since a
     /// row's position is never written down.
     /// </remarks>
-    public GroupSockets SocketsOf(NodeGroup group)
+    internal GroupSockets SocketsOf(NodeGroup group)
     {
         var inside = group.Members.ToHashSet();
 
@@ -507,7 +507,7 @@ public sealed class Patch
     /// Whether a wire is on this socket right now, which decides whether it can
     /// be taken off the edge — one that is wired comes straight back.
     /// </summary>
-    public bool Wired(NodeGroup group, GroupSocket socket)
+    internal bool Wired(NodeGroup group, GroupSocket socket)
     {
         var inside = group.Members.ToHashSet();
 
@@ -535,7 +535,7 @@ public sealed class Patch
     /// Whether <paramref name="socket"/> can be put on <paramref name="group"/>'s
     /// edge: a port of a module inside, with no wire on it, not there already.
     /// </summary>
-    public bool Exposable(NodeGroup group, GroupSocket socket)
+    internal bool Exposable(NodeGroup group, GroupSocket socket)
     {
         if (!group.Members.Contains(socket.Node) || group.Exposed.Contains(socket)) return false;
         if (Find(socket.Node) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return false;

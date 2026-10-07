@@ -11,7 +11,7 @@ namespace Flyback.Core.Graph;
 /// for it, and a socket that asks for a name with no standard is refused — see
 /// <see cref="Missing"/>.
 /// </remarks>
-public static class SocketHelp
+internal static class SocketHelp
 {
     /// <summary>
     /// What a domain input is for, whatever it is called: the axis a module runs

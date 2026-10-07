@@ -4,7 +4,7 @@ namespace Flyback.Core.Graph;
 /// Works out an Auto remap's ranges from what it is wired to: its input's from
 /// the output feeding it, its output's from the sockets it feeds.
 /// </summary>
-public static class AutoRemap
+internal static class AutoRemap
 {
     /// <summary>The input socket: the value to remap.</summary>
     public const int In = 0;

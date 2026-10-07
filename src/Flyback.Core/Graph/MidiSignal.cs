@@ -8,7 +8,7 @@ namespace Flyback.Core.Graph;
 /// hand moving at another — see <see cref="Compile.OpCode.LoadLive"/>. Both ends
 /// spell them from here.
 /// </remarks>
-public static class MidiSignal
+internal static class MidiSignal
 {
     /// <summary>How many clock ticks MIDI sends a beat, as it settled on in 1983.</summary>
     public const int TicksPerBeat = 24;

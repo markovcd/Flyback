@@ -50,6 +50,13 @@
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" />
   </ItemGroup>
 
+  <!-- The plugins' sources, for the contract-surface test: a constant a plugin names leaves no trace in its IL. -->
+  <ItemGroup>
+    <None Include="..\..\src\plugins\**\*.cs;..\Flyback.Plugins.Sample\**\*.cs;..\Flyback.Plugins.FakeAssistant\**\*.cs"
+          Exclude="..\..\src\plugins\**\obj\**;..\..\src\plugins\**\bin\**;..\Flyback.Plugins.Sample\obj\**;..\Flyback.Plugins.Sample\bin\**;..\Flyback.Plugins.FakeAssistant\obj\**;..\Flyback.Plugins.FakeAssistant\bin\**"
+          LinkBase="PluginSources" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <!-- The preset site's defaults, which have to open and compile against the plugins above (ADR-0138). -->
   <ItemGroup>
     <None Include="..\..\worker\defaults\**" LinkBase="Defaults" CopyToOutputDirectory="PreserveNewest" />

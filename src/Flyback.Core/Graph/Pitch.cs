@@ -12,7 +12,7 @@ namespace Flyback.Core.Graph;
 /// naming a knob value, and giving the tests something independent to check the
 /// emitted ops against.
 /// </remarks>
-public static class Pitch
+internal static class Pitch
 {
     /// <summary>Concert A, the one note whose frequency is fixed by definition.</summary>
     public const float ConcertPitch = 440f;

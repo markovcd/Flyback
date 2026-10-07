@@ -12,7 +12,7 @@ namespace Flyback.Core.Graph;
 /// because devices are plugged in and pulled out while the program runs; what is
 /// frozen is the choice a patch stores, which is a string.
 /// </remarks>
-public static class MidiSources
+internal static class MidiSources
 {
     /// <summary>
     /// The computer's own keyboard, which is always there and needs no driver.

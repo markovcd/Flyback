@@ -8,7 +8,7 @@ namespace Flyback.Core.Graph;
 /// Every chord is played as four notes. A triad's fourth is its root an octave up;
 /// a two-note chord's third and fourth are its two notes an octave up.
 /// </remarks>
-public static class Chords
+internal static class Chords
 {
     /// <summary>Every chord a Chord knows, in the order its 'chord' input counts them.</summary>
     public static IReadOnlyList<ChordShape> All { get; } =

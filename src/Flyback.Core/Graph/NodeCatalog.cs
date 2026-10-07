@@ -35,13 +35,13 @@ public static partial class NodeCatalog
     /// said here.
     /// </param>
     /// <param name="Results">Which of the sink's emit results this program reads.</param>
-    public readonly record struct SinkKind(string Name, Range Inputs, Range Results, int Width);
+    internal readonly record struct SinkKind(string Name, Range Inputs, Range Results, int Width);
 
     /// <summary>The screen's program, walking back from the Output's color.</summary>
-    public static SinkKind Screen => new("screen", OutputColorPort..OutputLeftPort, 0..1, VideoChannels);
+    internal static SinkKind Screen => new("screen", OutputColorPort..OutputLeftPort, 0..1, VideoChannels);
 
     /// <summary>The speakers' program, walking back from left, right and volume.</summary>
-    public static SinkKind Speakers => new("speakers", OutputLeftPort..(OutputVolumePort + 1), 1..3, AudioChannels);
+    internal static SinkKind Speakers => new("speakers", OutputLeftPort..(OutputVolumePort + 1), 1..3, AudioChannels);
 
     // Port indices on the Output, named because three separate places index it
     // and a shifted socket would otherwise be a silent change of meaning.

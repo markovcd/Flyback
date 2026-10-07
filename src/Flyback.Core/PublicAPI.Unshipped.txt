@@ -9,3 +9,141 @@
 *REMOVED*const Flyback.Core.Graph.LineInSignal.Right = "line-in/right" -> string!
 *REMOVED*static Flyback.Core.Graph.Extras.MidiLineExtra.Channel(Flyback.Core.Graph.NodeInstance! node) -> int
 *REMOVED*static Flyback.Core.Graph.Extras.MidiLineExtra.Voice(Flyback.Core.Graph.NodeInstance! node) -> int
+*REMOVED*Flyback.Core.Compile.MeterSignals
+*REMOVED*Flyback.Core.Compile.SpectrumAxis
+*REMOVED*Flyback.Core.Graph.AutoRemap
+*REMOVED*Flyback.Core.Graph.ChordShape
+*REMOVED*Flyback.Core.Graph.ChordShape.<Clone>$() -> Flyback.Core.Graph.ChordShape!
+*REMOVED*Flyback.Core.Graph.ChordShape.ChordShape(string! Name, int[]! Intervals) -> void
+*REMOVED*Flyback.Core.Graph.ChordShape.Deconstruct(out string! Name, out int[]! Intervals) -> void
+*REMOVED*Flyback.Core.Graph.ChordShape.Equals(Flyback.Core.Graph.ChordShape? other) -> bool
+*REMOVED*Flyback.Core.Graph.ChordShape.Intervals.get -> int[]!
+*REMOVED*Flyback.Core.Graph.ChordShape.Intervals.init -> void
+*REMOVED*Flyback.Core.Graph.ChordShape.Name.get -> string!
+*REMOVED*Flyback.Core.Graph.ChordShape.Name.init -> void
+*REMOVED*Flyback.Core.Graph.Chords
+*REMOVED*Flyback.Core.Graph.Cycles
+*REMOVED*Flyback.Core.Graph.GroupSockets
+*REMOVED*Flyback.Core.Graph.GroupSockets.Deconstruct(out System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.GroupSocket>! Inputs, out System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.GroupSocket>! Outputs) -> void
+*REMOVED*Flyback.Core.Graph.GroupSockets.Equals(Flyback.Core.Graph.GroupSockets other) -> bool
+*REMOVED*Flyback.Core.Graph.GroupSockets.GroupSockets() -> void
+*REMOVED*Flyback.Core.Graph.GroupSockets.GroupSockets(System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.GroupSocket>! Inputs, System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.GroupSocket>! Outputs) -> void
+*REMOVED*Flyback.Core.Graph.GroupSockets.IndexOfInput(Flyback.Core.Graph.GroupSocket socket) -> int
+*REMOVED*Flyback.Core.Graph.GroupSockets.IndexOfOutput(Flyback.Core.Graph.GroupSocket socket) -> int
+*REMOVED*Flyback.Core.Graph.GroupSockets.Inputs.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.GroupSocket>!
+*REMOVED*Flyback.Core.Graph.GroupSockets.Inputs.init -> void
+*REMOVED*Flyback.Core.Graph.GroupSockets.Outputs.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.GroupSocket>!
+*REMOVED*Flyback.Core.Graph.GroupSockets.Outputs.init -> void
+*REMOVED*Flyback.Core.Graph.GroupSockets.Rows.get -> int
+*REMOVED*Flyback.Core.Graph.MidiSignal
+*REMOVED*Flyback.Core.Graph.MidiSource
+*REMOVED*Flyback.Core.Graph.MidiSource.Conducts.get -> bool
+*REMOVED*Flyback.Core.Graph.MidiSource.Conducts.init -> void
+*REMOVED*Flyback.Core.Graph.MidiSource.Deconstruct(out string! Id, out string! Name) -> void
+*REMOVED*Flyback.Core.Graph.MidiSource.Equals(Flyback.Core.Graph.MidiSource other) -> bool
+*REMOVED*Flyback.Core.Graph.MidiSource.Id.get -> string!
+*REMOVED*Flyback.Core.Graph.MidiSource.Id.init -> void
+*REMOVED*Flyback.Core.Graph.MidiSource.MidiSource() -> void
+*REMOVED*Flyback.Core.Graph.MidiSource.MidiSource(string! Id, string! Name) -> void
+*REMOVED*Flyback.Core.Graph.MidiSource.Name.get -> string!
+*REMOVED*Flyback.Core.Graph.MidiSource.Name.init -> void
+*REMOVED*Flyback.Core.Graph.MidiSources
+*REMOVED*Flyback.Core.Graph.Patch.CollapsedGroupOf(System.Guid nodeId) -> Flyback.Core.Graph.NodeGroup?
+*REMOVED*Flyback.Core.Graph.Patch.Exposable(Flyback.Core.Graph.NodeGroup! group, Flyback.Core.Graph.GroupSocket socket) -> bool
+*REMOVED*Flyback.Core.Graph.Patch.Group(System.Collections.Generic.IEnumerable<System.Guid>! members) -> Flyback.Core.Graph.NodeGroup?
+*REMOVED*Flyback.Core.Graph.Patch.GroupOf(System.Guid nodeId) -> Flyback.Core.Graph.NodeGroup?
+*REMOVED*Flyback.Core.Graph.Patch.SocketsOf(Flyback.Core.Graph.NodeGroup! group) -> Flyback.Core.Graph.GroupSockets
+*REMOVED*Flyback.Core.Graph.Patch.Wired(Flyback.Core.Graph.NodeGroup! group, Flyback.Core.Graph.GroupSocket socket) -> bool
+*REMOVED*Flyback.Core.Graph.Pitch
+*REMOVED*Flyback.Core.Graph.PresetKinds
+*REMOVED*Flyback.Core.Graph.SocketHelp
+*REMOVED*Flyback.Core.Graph.TextLimit
+*REMOVED*const Flyback.Core.Compile.MeterSignals.Level = "level" -> string!
+*REMOVED*const Flyback.Core.Compile.MeterSignals.Peak = "peak" -> string!
+*REMOVED*const Flyback.Core.Compile.SpectrumAxis.Highest = 20000 -> double
+*REMOVED*const Flyback.Core.Compile.SpectrumAxis.Lowest = 20 -> double
+*REMOVED*const Flyback.Core.Graph.AutoRemap.In = 0 -> int
+*REMOVED*const Flyback.Core.Graph.AutoRemap.InHigh = 2 -> int
+*REMOVED*const Flyback.Core.Graph.AutoRemap.InLow = 1 -> int
+*REMOVED*const Flyback.Core.Graph.AutoRemap.OutHigh = 4 -> int
+*REMOVED*const Flyback.Core.Graph.AutoRemap.OutLow = 3 -> int
+*REMOVED*const Flyback.Core.Graph.Chords.Major = 4 -> int
+*REMOVED*const Flyback.Core.Graph.Chords.Notes = 4 -> int
+*REMOVED*const Flyback.Core.Graph.MidiSignal.Beat = "beat" -> string!
+*REMOVED*const Flyback.Core.Graph.MidiSignal.Bpm = "bpm" -> string!
+*REMOVED*const Flyback.Core.Graph.MidiSignal.Gate = "gate" -> string!
+*REMOVED*const Flyback.Core.Graph.MidiSignal.Pitch = "pitch" -> string!
+*REMOVED*const Flyback.Core.Graph.MidiSignal.Rate = "rate" -> string!
+*REMOVED*const Flyback.Core.Graph.MidiSignal.Running = "running" -> string!
+*REMOVED*const Flyback.Core.Graph.MidiSignal.Starts = "starts" -> string!
+*REMOVED*const Flyback.Core.Graph.MidiSignal.Strikes = "strikes" -> string!
+*REMOVED*const Flyback.Core.Graph.MidiSignal.TicksPerBeat = 24 -> int
+*REMOVED*const Flyback.Core.Graph.MidiSignal.Velocity = "velocity" -> string!
+*REMOVED*const Flyback.Core.Graph.MidiSources.Keyboard = "keyboard" -> string!
+*REMOVED*const Flyback.Core.Graph.Pitch.Classes = 12 -> int
+*REMOVED*const Flyback.Core.Graph.Pitch.ConcertNote = 69 -> float
+*REMOVED*const Flyback.Core.Graph.Pitch.ConcertPitch = 440 -> float
+*REMOVED*const Flyback.Core.Graph.Pitch.Semitones = 12 -> float
+*REMOVED*override Flyback.Core.Graph.ChordShape.Equals(object? obj) -> bool
+*REMOVED*override Flyback.Core.Graph.ChordShape.GetHashCode() -> int
+*REMOVED*override Flyback.Core.Graph.ChordShape.ToString() -> string!
+*REMOVED*override Flyback.Core.Graph.GroupSockets.GetHashCode() -> int
+*REMOVED*override Flyback.Core.Graph.MidiSource.GetHashCode() -> int
+*REMOVED*static Flyback.Core.Compile.MeterSignals.Key(System.Guid node, string! signal) -> string!
+*REMOVED*static Flyback.Core.Compile.SpectrumAxis.FrequencyAt(int point, int points) -> double
+*REMOVED*static Flyback.Core.Graph.ChordShape.operator !=(Flyback.Core.Graph.ChordShape? left, Flyback.Core.Graph.ChordShape? right) -> bool
+*REMOVED*static Flyback.Core.Graph.ChordShape.operator ==(Flyback.Core.Graph.ChordShape? left, Flyback.Core.Graph.ChordShape? right) -> bool
+*REMOVED*static Flyback.Core.Graph.Chords.All.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.ChordShape!>!
+*REMOVED*static Flyback.Core.Graph.Chords.Diatonic(Flyback.Core.Graph.ScaleMode! scale, int degree) -> int[]!
+*REMOVED*static Flyback.Core.Graph.Chords.Index(float value) -> int
+*REMOVED*static Flyback.Core.Graph.Chords.Label(float value) -> string!
+*REMOVED*static Flyback.Core.Graph.Chords.Scale(string! id) -> Flyback.Core.Graph.ScaleMode!
+*REMOVED*static Flyback.Core.Graph.Chords.Scales.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.ScaleMode!>!
+*REMOVED*static Flyback.Core.Graph.Chords.Steps(Flyback.Core.Graph.ScaleMode! scale, int semitones) -> int
+*REMOVED*static Flyback.Core.Graph.Chords.Voiced(int index) -> int[]!
+*REMOVED*static Flyback.Core.Graph.Cycles.Backwards(Flyback.Core.Graph.Patch! patch) -> System.Collections.Generic.IReadOnlySet<Flyback.Core.Graph.Connection!>!
+*REMOVED*static Flyback.Core.Graph.Cycles.BackwardsThroughBuses(Flyback.Core.Graph.Patch! patch) -> System.Collections.Generic.IReadOnlySet<Flyback.Core.Graph.Connection!>!
+*REMOVED*static Flyback.Core.Graph.Cycles.Owner(Flyback.Core.Graph.Connection! wire) -> System.Guid
+*REMOVED*static Flyback.Core.Graph.GroupSockets.operator !=(Flyback.Core.Graph.GroupSockets left, Flyback.Core.Graph.GroupSockets right) -> bool
+*REMOVED*static Flyback.Core.Graph.GroupSockets.operator ==(Flyback.Core.Graph.GroupSockets left, Flyback.Core.Graph.GroupSockets right) -> bool
+*REMOVED*static Flyback.Core.Graph.MidiSignal.AutoKey(string! source, System.Guid node, string! signal) -> string!
+*REMOVED*static Flyback.Core.Graph.MidiSignal.Channeled(string! source, int channel) -> string!
+*REMOVED*static Flyback.Core.Graph.MidiSignal.ClockKey(string! source, string! signal) -> string!
+*REMOVED*static Flyback.Core.Graph.MidiSignal.Key(string! source, int index, string! signal) -> string!
+*REMOVED*static Flyback.Core.Graph.MidiSignal.Key(string! source, string! signal) -> string!
+*REMOVED*static Flyback.Core.Graph.MidiSignal.SourceOf(string! key) -> string!
+*REMOVED*static Flyback.Core.Graph.MidiSource.operator !=(Flyback.Core.Graph.MidiSource left, Flyback.Core.Graph.MidiSource right) -> bool
+*REMOVED*static Flyback.Core.Graph.MidiSource.operator ==(Flyback.Core.Graph.MidiSource left, Flyback.Core.Graph.MidiSource right) -> bool
+*REMOVED*static Flyback.Core.Graph.MidiSources.All.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.MidiSource>!
+*REMOVED*static Flyback.Core.Graph.Pitch.ClassName(int pitchClass) -> string!
+*REMOVED*static Flyback.Core.Graph.Pitch.Name(float note) -> string!
+*REMOVED*static Flyback.Core.Graph.Pitch.Nearest(float note) -> float
+*REMOVED*static Flyback.Core.Graph.Pitch.Scale(System.Collections.Generic.IEnumerable<int>? classes) -> System.Collections.Generic.List<int>!
+*REMOVED*static Flyback.Core.Graph.PresetKinds.Heading(Flyback.Core.Graph.PresetKind kind) -> string!
+*REMOVED*static Flyback.Core.Graph.SocketHelp.Inputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+*REMOVED*static Flyback.Core.Graph.SocketHelp.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+*REMOVED*static Flyback.Core.Graph.TextLimit.Clip(string! text, int limit) -> string!
+*REMOVED*~override Flyback.Core.Graph.GroupSockets.Equals(object obj) -> bool
+*REMOVED*~override Flyback.Core.Graph.GroupSockets.ToString() -> string
+*REMOVED*~override Flyback.Core.Graph.MidiSource.Equals(object obj) -> bool
+*REMOVED*~override Flyback.Core.Graph.MidiSource.ToString() -> string
+*REMOVED*Flyback.Core.Graph.NodeCatalog.SinkKind
+*REMOVED*Flyback.Core.Graph.NodeCatalog.SinkKind.Deconstruct(out string! Name, out System.Range Inputs, out System.Range Results, out int Width) -> void
+*REMOVED*Flyback.Core.Graph.NodeCatalog.SinkKind.Equals(Flyback.Core.Graph.NodeCatalog.SinkKind other) -> bool
+*REMOVED*Flyback.Core.Graph.NodeCatalog.SinkKind.Inputs.get -> System.Range
+*REMOVED*Flyback.Core.Graph.NodeCatalog.SinkKind.Inputs.init -> void
+*REMOVED*Flyback.Core.Graph.NodeCatalog.SinkKind.Name.get -> string!
+*REMOVED*Flyback.Core.Graph.NodeCatalog.SinkKind.Name.init -> void
+*REMOVED*Flyback.Core.Graph.NodeCatalog.SinkKind.Results.get -> System.Range
+*REMOVED*Flyback.Core.Graph.NodeCatalog.SinkKind.Results.init -> void
+*REMOVED*Flyback.Core.Graph.NodeCatalog.SinkKind.SinkKind() -> void
+*REMOVED*Flyback.Core.Graph.NodeCatalog.SinkKind.SinkKind(string! Name, System.Range Inputs, System.Range Results, int Width) -> void
+*REMOVED*Flyback.Core.Graph.NodeCatalog.SinkKind.Width.get -> int
+*REMOVED*Flyback.Core.Graph.NodeCatalog.SinkKind.Width.init -> void
+*REMOVED*override Flyback.Core.Graph.NodeCatalog.SinkKind.GetHashCode() -> int
+*REMOVED*static Flyback.Core.Graph.NodeCatalog.Screen.get -> Flyback.Core.Graph.NodeCatalog.SinkKind
+*REMOVED*static Flyback.Core.Graph.NodeCatalog.SinkKind.operator !=(Flyback.Core.Graph.NodeCatalog.SinkKind left, Flyback.Core.Graph.NodeCatalog.SinkKind right) -> bool
+*REMOVED*static Flyback.Core.Graph.NodeCatalog.SinkKind.operator ==(Flyback.Core.Graph.NodeCatalog.SinkKind left, Flyback.Core.Graph.NodeCatalog.SinkKind right) -> bool
+*REMOVED*static Flyback.Core.Graph.NodeCatalog.Speakers.get -> Flyback.Core.Graph.NodeCatalog.SinkKind
+*REMOVED*~override Flyback.Core.Graph.NodeCatalog.SinkKind.Equals(object obj) -> bool
+*REMOVED*~override Flyback.Core.Graph.NodeCatalog.SinkKind.ToString() -> string

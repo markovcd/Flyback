@@ -11,7 +11,7 @@
 /// never shares, where several wires leaving one inner output are one socket with
 /// several wires on it.
 /// </remarks>
-public readonly record struct GroupSockets(
+internal readonly record struct GroupSockets(
     IReadOnlyList<GroupSocket> Inputs,
     IReadOnlyList<GroupSocket> Outputs)
 {

@@ -12,7 +12,7 @@ namespace Flyback.Core.Graph;
 /// order keeps a drag on the canvas from moving the cut; unreachable modules are
 /// walked afterwards in a stable order.
 /// </remarks>
-public static class Cycles
+internal static class Cycles
 {
     /// <summary>
     /// The wires that close a loop, or an empty set for the usual patch that has

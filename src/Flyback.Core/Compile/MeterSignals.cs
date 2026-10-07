@@ -9,7 +9,7 @@ namespace Flyback.Core.Compile;
 /// sides: a Meter is a module and asks for a name while it is lowered, and the
 /// measurement is made outside both programs from the rings the speakers fill.
 /// </remarks>
-public static class MeterSignals
+internal static class MeterSignals
 {
     /// <summary>
     /// What a Meter listens on, before the signal it wants. The prefix is a word

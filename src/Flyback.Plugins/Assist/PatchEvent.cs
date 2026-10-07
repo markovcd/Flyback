@@ -23,7 +23,7 @@ public abstract record PatchEvent
     public sealed record Did(string Summary) : PatchEvent;
 
     /// <summary>Handbook text it looked up: a module, a search of the catalog or a preset.</summary>
-    public sealed record Read(string Text) : PatchEvent;
+    internal sealed record Read(string Text) : PatchEvent;
 
     /// <summary>A frame it drew and looked at, as PNG bytes.</summary>
     public sealed record Saw(byte[] Png, string Caption) : PatchEvent;
@@ -37,7 +37,7 @@ public abstract record PatchEvent
     /// only offer to play a sound, so a panel that could not tell them apart
     /// would have to guess which it had been handed.
     /// </remarks>
-    public sealed record Heard(byte[] Wav, string Caption) : PatchEvent;
+    internal sealed record Heard(byte[] Wav, string Caption) : PatchEvent;
 
     /// <summary>
     /// The finished patch, laid out and copied. The turn is over; nothing has

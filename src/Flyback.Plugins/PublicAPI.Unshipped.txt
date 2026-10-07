@@ -7,3 +7,34 @@ Flyback.Plugins.Assist.AssistantSenses.EarOffered.get -> bool
 Flyback.Plugins.Assist.AssistantSenses.EarOffered.init -> void
 *REMOVED*const Flyback.Plugins.Assist.AssistantSchema.IdeasModelKey = "ideas" -> string!
 *REMOVED*static Flyback.Plugins.Assist.AssistantSchema.Expanding(Flyback.Plugins.Settings.SettingValues! values) -> Flyback.Plugins.Settings.SettingValues!
+*REMOVED*Flyback.Plugins.Assist.PatchEvent.Heard
+*REMOVED*Flyback.Plugins.Assist.PatchEvent.Heard.Caption.get -> string!
+*REMOVED*Flyback.Plugins.Assist.PatchEvent.Heard.Caption.init -> void
+*REMOVED*Flyback.Plugins.Assist.PatchEvent.Heard.Deconstruct(out byte[]! Wav, out string! Caption) -> void
+*REMOVED*Flyback.Plugins.Assist.PatchEvent.Heard.Equals(Flyback.Plugins.Assist.PatchEvent.Heard? other) -> bool
+*REMOVED*Flyback.Plugins.Assist.PatchEvent.Heard.Heard(byte[]! Wav, string! Caption) -> void
+*REMOVED*Flyback.Plugins.Assist.PatchEvent.Heard.Wav.get -> byte[]!
+*REMOVED*Flyback.Plugins.Assist.PatchEvent.Heard.Wav.init -> void
+*REMOVED*Flyback.Plugins.Assist.PatchEvent.Read
+*REMOVED*Flyback.Plugins.Assist.PatchEvent.Read.Deconstruct(out string! Text) -> void
+*REMOVED*Flyback.Plugins.Assist.PatchEvent.Read.Equals(Flyback.Plugins.Assist.PatchEvent.Read? other) -> bool
+*REMOVED*Flyback.Plugins.Assist.PatchEvent.Read.Read(string! Text) -> void
+*REMOVED*Flyback.Plugins.Assist.PatchEvent.Read.Text.get -> string!
+*REMOVED*Flyback.Plugins.Assist.PatchEvent.Read.Text.init -> void
+*REMOVED*Flyback.Plugins.Assist.TurnLoop
+*REMOVED*const Flyback.Plugins.Assist.TurnLoop.MaxExchanges = 40 -> int
+*REMOVED*override Flyback.Plugins.Assist.PatchEvent.Heard.<Clone>$() -> Flyback.Plugins.Assist.PatchEvent.Heard!
+*REMOVED*override Flyback.Plugins.Assist.PatchEvent.Heard.Equals(object? obj) -> bool
+*REMOVED*override Flyback.Plugins.Assist.PatchEvent.Heard.GetHashCode() -> int
+*REMOVED*override Flyback.Plugins.Assist.PatchEvent.Heard.ToString() -> string!
+*REMOVED*override Flyback.Plugins.Assist.PatchEvent.Read.<Clone>$() -> Flyback.Plugins.Assist.PatchEvent.Read!
+*REMOVED*override Flyback.Plugins.Assist.PatchEvent.Read.Equals(object? obj) -> bool
+*REMOVED*override Flyback.Plugins.Assist.PatchEvent.Read.GetHashCode() -> int
+*REMOVED*override Flyback.Plugins.Assist.PatchEvent.Read.ToString() -> string!
+*REMOVED*override sealed Flyback.Plugins.Assist.PatchEvent.Heard.Equals(Flyback.Plugins.Assist.PatchEvent? other) -> bool
+*REMOVED*override sealed Flyback.Plugins.Assist.PatchEvent.Read.Equals(Flyback.Plugins.Assist.PatchEvent? other) -> bool
+*REMOVED*static Flyback.Plugins.Assist.PatchEvent.Heard.operator !=(Flyback.Plugins.Assist.PatchEvent.Heard? left, Flyback.Plugins.Assist.PatchEvent.Heard? right) -> bool
+*REMOVED*static Flyback.Plugins.Assist.PatchEvent.Heard.operator ==(Flyback.Plugins.Assist.PatchEvent.Heard? left, Flyback.Plugins.Assist.PatchEvent.Heard? right) -> bool
+*REMOVED*static Flyback.Plugins.Assist.PatchEvent.Read.operator !=(Flyback.Plugins.Assist.PatchEvent.Read? left, Flyback.Plugins.Assist.PatchEvent.Read? right) -> bool
+*REMOVED*static Flyback.Plugins.Assist.PatchEvent.Read.operator ==(Flyback.Plugins.Assist.PatchEvent.Read? left, Flyback.Plugins.Assist.PatchEvent.Read? right) -> bool
+*REMOVED*static Flyback.Plugins.Assist.TurnLoop.Run(Flyback.Plugins.Assist.IModelConversation! conversation, string! instruction, System.Threading.CancellationToken cancel = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Flyback.Plugins.Assist.PatchEvent!>!

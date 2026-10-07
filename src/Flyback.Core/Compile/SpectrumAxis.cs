@@ -9,7 +9,7 @@ namespace Flyback.Core.Compile;
 /// has to know the axis too — where the decade lines go, and where a given
 /// frequency falls — and knows nothing else about how the buffer was filled.
 /// </remarks>
-public static class SpectrumAxis
+internal static class SpectrumAxis
 {
     /// <summary>The frequency at the left-hand edge of the chart, in hertz.</summary>
     public const double Lowest = 20d;
