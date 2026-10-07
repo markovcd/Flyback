@@ -871,7 +871,8 @@ statement  = comment
            | selector "=" expr
            | selector "<-" pipeline
            | "off" ident
-           | "panel" ident "=" number { "," ident ":" ( number | string ) }
+           | "panel" ident "=" number { "," ( ident ":" ( number | string ) | "held" ) }
+           | "keyboard" ( "piano" | "scale" "[" { pitch } "]" )
            | "requires" plugin { "," plugin }
            | "group" [ string ] "{" { statement } "}"
            | "description" string { string }
@@ -907,7 +908,8 @@ note       = ("A".."G") [ "#" | "b" ] [ "-" ] digit ;
 duration   = number ( "us" | "ms" | "s" ) ;
 ```
 
-`step` is the mini-notation of section 8. A `name` with dots is a type id
+`step` is the mini-notation of section 8, and `pitch` a note with no octave,
+`D` or `F#`, or its number from 0 to 11. A `name` with dots is a type id
 written in full; a `selector` with a dot is a binding and one of its ports.
 `outputs` is the same choice made on a module with no name. The grammar lets
 one follow another and the binder refuses the second, since one output has no
