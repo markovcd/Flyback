@@ -9,6 +9,7 @@ using Flyback.Cli.Models;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
 using Reqnroll;
@@ -37,7 +38,9 @@ public sealed class AskSteps : IDisposable
 
     private ConversationStore Store => new(Path("sessions"));
 
-    private PluginCatalog Catalog => new([], [], NodeCatalog.BuiltIn, Presets.All, [], [Assistant]);
+    private IDecisionModel? reader;
+
+    private PluginCatalog Catalog => new([], [], NodeCatalog.BuiltIn, Presets.All, [], [Assistant], decisionModels: reader is null ? null : [reader]);
 
     public void Dispose() => folder.Delete(recursive: true);
 
@@ -155,6 +158,12 @@ public sealed class AskSteps : IDisposable
         said.ShouldContain("--help");
     }
 
+    [Given("a decision model that reads every message as a question about the patch")]
+    public void GivenAQuestionReader() => reader = new QuestionReader();
+
+    [Then("the assistant was told to answer rather than build")]
+    public void ThenToldToAnswer() => Assistant.Sent.ShouldHaveSingleItem().ShouldContain(TurnReading.Answering);
+
     [Then("the assistant was asked nothing")]
     public void ThenAskedNothing() => Assistant.Asked.ShouldBe(0);
 
@@ -206,6 +215,9 @@ public sealed class AskSteps : IDisposable
 
         public List<string> Remembered { get; } = [];
 
+        /// <summary>Every instruction it was sent, this run.</summary>
+        public List<string> Sent { get; } = [];
+
         /// <summary>What it says to a message that asks it to build nothing, or null to build.</summary>
         public string? Brief { get; init; }
 
@@ -243,6 +255,7 @@ public sealed class AskSteps : IDisposable
             public async IAsyncEnumerable<PatchEvent> Ask(string instruction, [EnumeratorCancellation] CancellationToken cancel)
             {
                 history.Add(instruction);
+                owner.Sent.Add(instruction);
                 owner.Asked++;
 
                 if (owner.Brief is { } brief)
@@ -280,5 +293,28 @@ public sealed class AskSteps : IDisposable
             {
             }
         }
+    }
+
+    /// <summary>Reads every message as a question about the patch, surely.</summary>
+    private sealed class QuestionReader : IDecisionModel
+    {
+        public string Id => "question-reader";
+
+        public string Name => "Question reader";
+
+        public int Priority => 0;
+
+        public AssistantCredential? Credential => null;
+
+        public IReadOnlyList<SettingField> Form(SettingValues values) => [];
+
+        public string? Unavailable(DecisionConfig config) => null;
+
+        public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel) =>
+            Task.FromResult(new Decision("reader", request.Questions.ToDictionary(q => q.Key, q => q.Value switch
+            {
+                Question.Choice choice => (Answer)new Answer.Chosen("question", choice.Options.ToDictionary(o => o.Label, o => o.Label == "question" ? 0.9 : 0.02), 0.9),
+                _ => new Answer.YesNo(1),
+            }), DecisionUsage.None));
     }
 }

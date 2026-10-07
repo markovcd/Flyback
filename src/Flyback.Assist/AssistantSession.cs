@@ -1,5 +1,7 @@
 using System.Runtime.CompilerServices;
+using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Decide;
 
 namespace Flyback.Assist;
 
@@ -13,9 +15,15 @@ namespace Flyback.Assist;
 /// canvas edited underneath it, and makes the run, since only it knows the patch.
 /// </remarks>
 /// <param name="logFolder">Somewhere other than the usual place for the log, for the tests.</param>
-internal sealed class AssistantSession(ITranscript transcript, string? logFolder = null) : IDisposable
+/// <param name="decisions">What reads a message before it is sent and the proposal once it comes back; none reads nothing.</param>
+internal sealed class AssistantSession(ITranscript transcript, string? logFolder = null, Decisions? decisions = null) : IDisposable
 {
     private ConversationLog log = ConversationLog.Start(false, string.Empty);
+
+    private readonly TurnReading? reading = decisions is null ? null : new TurnReading(decisions);
+
+    /// <summary>The message last held back as not about Flyback, which is sent if it is sent again.</summary>
+    private string? heldBack;
 
     /// <summary>The conversation going, or null before the first message.</summary>
     public AssistantRun? Run { get; private set; }
@@ -100,8 +108,27 @@ internal sealed class AssistantSession(ITranscript transcript, string? logFolder
 
         if (run.Unsaid is { } told) Put(Voice.Aside, "told", $"Told it what changed on the canvas: {told}.", told);
 
+        var sent = message;
+
+        if (reading is not null && decisions?.Chosen is not null
+            && await reading.Read(message, IssueTriage.Summary(run.Workbench.Snapshot(), NodeCatalog.Current), cancel).ConfigureAwait(true) is { } read)
+        {
+            Put(Voice.Aside, "intent", $"Read as {read.Said} ({read.Probability:0.00}).");
+
+            if (read.Elsewhere && heldBack != message)
+            {
+                heldBack = message;
+                Put(Voice.Note, "note", "That reads as not about Flyback, so it was not sent. Send it again to send it anyway.");
+                yield break;
+            }
+
+            if (read.Asks) sent = TurnReading.Answering + Environment.NewLine + Environment.NewLine + message;
+        }
+
+        heldBack = null;
+
         // On the caller's context, since the transcript may be a control.
-        await foreach (var happened in run.Ask(message, cancel).ConfigureAwait(true))
+        await foreach (var happened in run.Ask(sent, cancel).ConfigureAwait(true))
         {
             // Ended or replaced while it ran: what is still on its way belongs to
             // no conversation the transcript shows.
@@ -113,6 +140,13 @@ internal sealed class AssistantSession(ITranscript transcript, string? logFolder
             log.Write(spoken.Kind, spoken.Text);
 
             yield return happened;
+        }
+
+        if (reading is not null && decisions?.Chosen is not null && ReferenceEquals(Run, run) && run.Proposal is { } proposal
+            && await reading.Does(message, run.ProposalSummary, IssueTriage.Summary(proposal, NodeCatalog.Current), cancel).ConfigureAwait(true) is { } does
+            && does < TurnReading.Doubted)
+        {
+            Put(Voice.Aside, "doubt", $"This may not be what was asked for ({does:0.00} that it is). Ctrl+Z puts the patch back.");
         }
     }
 

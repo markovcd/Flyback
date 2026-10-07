@@ -5,6 +5,7 @@ using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Decide;
 
 namespace Flyback.Cli.Commands;
 
@@ -42,7 +43,8 @@ internal sealed class AskConversation : IDisposable
         ConversationStore store,
         string? logFolder,
         TextWriter output,
-        TextWriter error)
+        TextWriter error,
+        Decisions? decisions = null)
     {
         this.assistant = assistant;
         this.config = config;
@@ -58,7 +60,7 @@ internal sealed class AskConversation : IDisposable
         current = about.Opened.Patch;
 
         transcript = new ConsoleTranscript(options, output, error, () => session?.Run?.Turns ?? 0);
-        session = new AssistantSession(transcript, logFolder);
+        session = new AssistantSession(transcript, logFolder, decisions);
 
         var saved = SavedConversation.Read(about.Conversation);
 

@@ -7,6 +7,7 @@ using Flyback.Core;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
 using PluginRegistry = Flyback.Cli.Plugins;
@@ -246,7 +247,8 @@ internal static class AskCommand
             store ?? new ConversationStore(),
             logFolder,
             output,
-            error);
+            error,
+            new Decisions(plugins, DecisionSettings.Load(settingsPath), new Credentials(plugins.PreferredSecretStore), new ModelStore(ModelStore.DefaultRoot)));
 
         if (message is not null)
         {

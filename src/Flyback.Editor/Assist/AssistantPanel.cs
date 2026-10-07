@@ -17,6 +17,7 @@ using Flyback.Editor.Notices;
 using Flyback.Editor.Statistics;
 using Flyback.Assist;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Colors = Flyback.Ui.Controls.Colors;
 
@@ -278,7 +279,8 @@ internal sealed class AssistantPanel : UserControl
         AssistantSettingsPage settings,
         EditorFolders? folders = null,
         Usage? usage = null,
-        Reactions? reactions = null)
+        Reactions? reactions = null,
+        Decisions? decisions = null)
     {
         this.reactions = reactions ?? new Reactions();
         this.chosenAssistant = chosenAssistant;
@@ -288,7 +290,7 @@ internal sealed class AssistantPanel : UserControl
         this.runs = runs;
         this.usage = usage;
         logFolder = folders?.ConversationLogFolder;
-        session = new AssistantSession(transcript, logFolder);
+        session = new AssistantSession(transcript, logFolder, decisions);
         this.settingsRepository = settingsRepository;
         conversation.Opened += Opened;
         conversation.Saved += (_, _) => this.reactions.Raise(new ConversationChanged());
