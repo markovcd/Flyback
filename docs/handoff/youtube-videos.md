@@ -3,7 +3,7 @@
 Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an idea when one comes up, move it to Made when it is made, and onto `site/tutorials.html` when it is posted. It is on TODO.md; it stays as long as the channel wants videos.
 
 - **Kind:** Backlog
-- **Status:** Open: seven made and posted, the rest proposed
+- **Status:** Open: eight made, seven posted, the rest proposed
 
 ## How one is made
 
@@ -29,6 +29,7 @@ Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an ide
 | Seeing a sound | `6aPxkERSXdc` | 1:45 | One Sine on a Scope (two cycles in 18 ms), the same Sine on an Analyzer (one peak past 100 Hz), a second Sine at 165 Hz on a Beam, the 3:2 knot and its loops, then 165.2 Hz so the knot turns, back to the same shape every 2.5 s. Ends as the Lissajous preset, the picture within one step of 255 (the preset's persistence is 29.999 ms). `~/.explainroo/videos/seeing`. |
 | The patch as text | `B9JqyT0UJlg` | 1:56 | The Drone preset on the canvas, F2, the text line by line (a `let`, pipes and `_`, `t`, a name read twice), `freq` from 0.15 to 0.6 and Ctrl+Enter, a text that does not read leaving the patch playing, `.fbks` as plain text in a diff. Ends on the Drone preset and points at Plasma on the home page. One clock for the whole video, switching to the edited patch at Ctrl+Enter. `~/.explainroo/videos/text`. |
 | Ask the assistant | `c1X-H2UjlyM` | 2:20 | One real conversation through `flyback-cli ask` with Claude Code on Opus, High: what you choose in its settings (Claude Code and Codex on a plan, OpenAI, Gemini, any chat-completions endpoint, effort), that it sees and Gemini also hears while Claude Code says it cannot, Expand on "rain on a window at night", the column during a turn, the proposal and its report, a follow-up asking for 17 dB more and brighter drops, Ctrl+Z, the conversation kept, and sharing. Every column screen is `flyback-cli shot --assistant` of the patch each turn left, with its saved conversation (`~/.config/Flyback/sessions`, keyed by the patch's path, copied aside between turns). Ends on Rain on a Window, the second turn's patch, now a default on the preset site. `~/.explainroo/videos/assist2`, work in `~/.explainroo/work/assist3`. |
+| Turn any music into a picture | not posted | 1:50 | The Visualizer preset built up: a Line In (Linux and the web editor), a Filter under 150 Hz into a fast Meter for the kick, Clouds folded by a Kaleidoscope and turned by a slow Saw, a Palette whose spread a slow Meter sets, a Gain on the kick's peak, Trails outward, nothing to the speakers. Then drawing a music player through a PulseAudio monitor, and a Sample with a WAV or an MP3 for anyone without an input. Every step is cut from the preset's layout; the music is Machine Room from the preset site, fed by `render --input` and mixed under the voice on the same clock. `~/.explainroo/videos/visualizer`. |
 
 ## Proposed
 
