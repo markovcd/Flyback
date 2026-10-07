@@ -651,7 +651,7 @@ public partial class NodeCatalog
                 Swept("in") with { Help = "The sound whose frequencies are shown." },
                 Seconds("window", -1f) with { Help = "How long it listens. Short follows every note, long settles." },
                 Num("range", 96f, 12f, 144f) with { Help = "In dB: how far below the top edge the bottom is." },
-                Num("scale", 1f, 0.01f, 16f) with { Help = "The top edge is a full-scale sine divided by this." },
+                Num("scale", 1f, 0.01f, 16f) with { Help = "How loud a sine reaches the top edge: 1 is full scale, 0.1 is 20 dB down." },
             ],
             [Col("out") with { Help = ChartHelp }],
             (em, node) =>
