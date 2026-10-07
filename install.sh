@@ -5,8 +5,9 @@
 #   curl -fsSL https://raw.githubusercontent.com/markovcd/Flyback/main/install.sh | bash -s -- --uninstall
 #
 # FLYBACK_VERSION=0.4.0 installs that release instead. FLYBACK_DIR is where the copy
-# goes: a folder on Linux and Windows, the .app on macOS. --uninstall removes the copy
-# and everything this script put beside it.
+# goes: a folder on Linux and Windows, the .app on macOS. With it set, only the copy is
+# written: no links, menu entry, shortcut or PATH change, so a trial leaves a real install
+# as it was. --uninstall removes the copy and everything this script put beside it.
 
 set -euo pipefail
 
@@ -30,7 +31,7 @@ for argument in "$@"; do
     -h | --help)
       say "usage: install.sh [--uninstall]"
       say "  FLYBACK_VERSION  the release to install, rather than the latest"
-      say "  FLYBACK_DIR      where the copy goes (the .app on macOS)"
+      say "  FLYBACK_DIR      where the copy goes (the .app on macOS), and nothing else is touched"
       exit 0
       ;;
     *) die "unknown option $argument" ;;
@@ -232,14 +233,16 @@ fi
 
 on_path() { case ":$PATH:" in *":$1:"*) return 0 ;; esac; return 1; }
 
-case "$os" in
-  linux | osx)
-    mkdir -p "$bin"
-    for command in "${commands[@]}"; do ln -sf "$(target "$command")" "$bin/$command"; done
+# The commands on PATH, the menu entry and the shortcut: what makes it the machine's Flyback.
+put_beside() {
+  case "$os" in
+    linux | osx)
+      mkdir -p "$bin"
+      for command in "${commands[@]}"; do ln -sf "$(target "$command")" "$bin/$command"; done
 
-    if [ "$os" = linux ]; then
-      mkdir -p "$applications"
-      cat > "$applications/flyback.desktop" <<EOF
+      if [ "$os" = linux ]; then
+        mkdir -p "$applications"
+        cat > "$applications/flyback.desktop" <<EOF
 [Desktop Entry]
 Type=Application
 Name=Flyback
@@ -249,22 +252,29 @@ Icon=$programs/flyback.png
 Terminal=false
 Categories=AudioVideo;Audio;Graphics;
 EOF
-    fi
+      fi
 
-    on_path "$bin" || say "Add $bin to PATH for flyback-cli and flyback-viewer."
-    ;;
-  win)
-    powershell.exe -NoProfile -Command "
-      \$ErrorActionPreference = 'Stop'
-      \$shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath('Programs') + '\\Flyback.lnk')
-      \$shortcut.TargetPath = '$windows\\Flyback.exe'
-      \$shortcut.WorkingDirectory = '$windows'
-      \$shortcut.Save()
-      \$path = @([Environment]::GetEnvironmentVariable('Path', 'User') -split ';' | Where-Object { \$_ })
-      if (\$path -notcontains '$windows') {
-        [Environment]::SetEnvironmentVariable('Path', ((\$path + '$windows') -join ';'), 'User')
-      }" >/dev/null || say "Could not add the Start menu shortcut or put $windows on PATH."
-    ;;
-esac
+      on_path "$bin" || say "Add $bin to PATH for flyback-cli and flyback-viewer."
+      ;;
+    win)
+      powershell.exe -NoProfile -Command "
+        \$ErrorActionPreference = 'Stop'
+        \$shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath('Programs') + '\\Flyback.lnk')
+        \$shortcut.TargetPath = '$windows\\Flyback.exe'
+        \$shortcut.WorkingDirectory = '$windows'
+        \$shortcut.Save()
+        \$path = @([Environment]::GetEnvironmentVariable('Path', 'User') -split ';' | Where-Object { \$_ })
+        if (\$path -notcontains '$windows') {
+          [Environment]::SetEnvironmentVariable('Path', ((\$path + '$windows') -join ';'), 'User')
+        }" >/dev/null || say "Could not add the Start menu shortcut or put $windows on PATH."
+      ;;
+  esac
+}
+
+if [ -n "${FLYBACK_DIR:-}" ]; then
+  say "FLYBACK_DIR is set, so no command link, menu entry, shortcut or PATH entry was written."
+else
+  put_beside
+fi
 
 say "Flyback $version is installed in $dest."

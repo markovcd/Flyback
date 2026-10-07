@@ -158,13 +158,18 @@ the script, the unzip and the removal, for real. Git Bash reports `MINGW*` and
 takes the `win` branch. `bash -n install.sh` costs nothing, and `shellcheck` if
 it is on the machine.
 
-**`FLYBACK_DIR` does not contain the Windows run.** It also writes the Start menu
-shortcut and puts its folder on the user's PATH, and `--uninstall` then takes
-both away. Where the user already has Flyback installed that leaves them without
-a Start menu entry. So look for `Flyback.lnk` under their Start menu first, and
-if one is there, do the fetching and checking by hand instead — the three curls,
-the `openssl dgst -verify` and the checksum compare out of the script — and leave
-the install to a machine that does not have one.
+With `FLYBACK_DIR` set the script writes the copy and nothing else: no command
+links, menu entry, Start menu shortcut or PATH change, so these runs leave a
+real install as it was. They do not exercise those, so on Linux and macOS run
+the default install once under a throwaway home, which keeps `~/.local` yours:
+
+```bash
+HOME="$SCRATCH/home" bash install.sh
+HOME="$SCRATCH/home" bash install.sh --uninstall
+```
+
+Never run the default install on the user's own account to test it, and on
+Windows, where the shortcut and PATH cannot be redirected, not at all.
 
 **After** the workflow finishes, the same run with no `FLYBACK_VERSION`. That one
 is the point: it says the artifacts just published are installable.
