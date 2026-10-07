@@ -26,6 +26,7 @@ context, decision, consequences.
 | [0162](0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md) | The editor runs in a browser, with the picture on a canvas of its own *(user-directed; a few settings given back by [0182](0182-drag-to-pan-is-a-setting-that-trades-the-left-and-right-buttons.md))* |
 | [0163](0163-a-build-draws-every-presets-still-once.md) | A build draws every preset's still once, for every program to show *(user-directed)* |
 | [0166](0166-flyback-cli-shot-draws-the-editors-window-with-no-screen.md) | flyback-cli shot draws the editor's window with no screen *(user-directed)* |
+| [0183](0183-the-binder-is-one-walk-and-what-it-asks-for-is-handed-nothing-back.md) | The binder is one walk, and what it asks for is handed nothing back *(user-directed)* |
 
 ### The engine
 
