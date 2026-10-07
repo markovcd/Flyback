@@ -50,7 +50,6 @@ public sealed class AviWriter : IDisposable
     private long videoStreamPosition;
     private long audioStreamPosition;
 
-    private int frames;
     private long audioSamples;
     private int largestChunk;
     private bool closed;
@@ -87,13 +86,13 @@ public sealed class AviWriter : IDisposable
     public double FramesPerSecond { get; }
 
     /// <summary>Frames written so far.</summary>
-    public int FrameCount => frames;
+    public int FrameCount { get; private set; }
 
     /// <summary>Appends one encoded JPEG as the next frame.</summary>
     public void WriteFrame(ReadOnlySpan<byte> jpeg)
     {
         WriteChunk(VideoChunkId, jpeg);
-        frames++;
+        FrameCount++;
     }
 
     /// <summary>
@@ -127,16 +126,16 @@ public sealed class AviWriter : IDisposable
         // Read before the first Patch, because patching seeks and every length
         // below is measured against where the file actually ended.
         var end = output.Position;
-        var seconds = frames / FramesPerSecond;
+        var seconds = FrameCount / FramesPerSecond;
 
         Patch(4, (uint)(end - 8));                                     // RIFF size
         Patch(moviPosition - 4, (uint)(moviEnd - moviPosition + 4));   // 'movi' LIST size
 
         Patch(headerPosition + 4, seconds > 0d ? (uint)Math.Round(end / seconds) : 0u);
-        Patch(headerPosition + 16, (uint)frames);
+        Patch(headerPosition + 16, (uint)FrameCount);
         Patch(headerPosition + 28, (uint)largestChunk);
 
-        Patch(videoStreamPosition + 32, (uint)frames);
+        Patch(videoStreamPosition + 32, (uint)FrameCount);
         Patch(videoStreamPosition + 36, (uint)largestChunk);
 
         if (channels > 0)

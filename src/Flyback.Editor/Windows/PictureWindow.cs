@@ -16,7 +16,7 @@ namespace Flyback.Editor.Windows;
 /// picture or pressing Escape closes it, and closing hands the preview back: the
 /// renderer is built again once each way.
 /// </remarks>
-internal sealed class PictureWindow : Avalonia.Controls.Window
+internal sealed class PictureWindow : Window
 {
     private readonly Panel picture = new();
 

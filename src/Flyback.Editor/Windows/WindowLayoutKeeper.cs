@@ -24,7 +24,7 @@ internal sealed class WindowLayoutKeeper(EditorFolders folders)
     }
 
     /// <summary>Follows the size <paramref name="window"/> is dragged to.</summary>
-    public void Track(Avalonia.Controls.Window window) =>
+    public void Track(Window window) =>
         // Only a drag of the frame: maximizing resizes the window too, and that is
         // not a size to come back to.
         window.Resized += (_, e) =>
@@ -33,7 +33,7 @@ internal sealed class WindowLayoutKeeper(EditorFolders folders)
         };
 
     /// <summary>Puts <paramref name="window"/>'s size, state and monitor back. Before it is shown.</summary>
-    public void Apply(Avalonia.Controls.Window window)
+    public void Apply(Window window)
     {
         if (Saved is not { } saved) return;
 

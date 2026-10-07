@@ -16,8 +16,6 @@ internal sealed class CapturePacer
 {
     private readonly double framesPerSecond;
 
-    private long emitted;
-
     public CapturePacer(double framesPerSecond)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(framesPerSecond);
@@ -26,7 +24,7 @@ internal sealed class CapturePacer
     }
 
     /// <summary>Frames handed out so far, duplicates included — the file's length.</summary>
-    public long Emitted => emitted;
+    public long Emitted { get; private set; }
 
     /// <summary>
     /// How many frames the file owes as of <paramref name="seconds"/>. Zero while
@@ -40,7 +38,7 @@ internal sealed class CapturePacer
 
         // Floor rather than round: frame n is due once the clock has actually
         // reached n / rate, never before it.
-        var due = (long)Math.Floor(seconds * framesPerSecond) - emitted;
+        var due = (long)Math.Floor(seconds * framesPerSecond) - Emitted;
 
         return due <= 0 ? 0 : (int)due;
     }
@@ -48,6 +46,6 @@ internal sealed class CapturePacer
     /// <summary>Records that many frames as written.</summary>
     public void Commit(int count)
     {
-        if (count > 0) emitted += count;
+        if (count > 0) Emitted += count;
     }
 }

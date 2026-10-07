@@ -47,7 +47,7 @@ internal static class SaveCommand
 
         var output = new Option<FileInfo>("--out", "-o")
         {
-            Description = $"Where to write it. The extension says what to write: {SaveCommand.Formats}.",
+            Description = $"Where to write it. The extension says what to write: {Formats}.",
         };
 
         var command = new Command(
@@ -83,16 +83,16 @@ internal static class SaveCommand
 
             if (result.GetValue(output) is not { } into)
             {
-                error.WriteLine($"{GlobalConstants.ApplicationName}: --out says where to save it, {SaveCommand.Formats}.");
+                error.WriteLine($"{GlobalConstants.ApplicationName}: --out says where to save it, {Formats}.");
 
                 return Exit.Failed;
             }
 
-            if (file is not null) return SaveCommand.Run(file, into, plugins.Catalog.Modules, error, writer);
+            if (file is not null) return Run(file, into, plugins.Catalog.Modules, error, writer);
 
             if (ShippedPresets.Open(plugins.Catalog, named!, error) is not { } shipped) return Exit.Failed;
 
-            return SaveCommand.Run(
+            return Run(
                 shipped.Opened.Patch,
                 shipped.Name,
                 (shipped.Opened.Samples as BundleFiles)?.Bytes,

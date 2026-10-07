@@ -191,7 +191,7 @@ public sealed class SiteSteps
         public int Render(Opened patch, RenderOptions options, TextWriter error, CancellationToken cancellation)
         {
             File.WriteAllText(options.Out.FullName, options.Out.Name);
-            return Flyback.Cli.Common.Exit.Ok;
+            return Cli.Common.Exit.Ok;
         }
 
         public Task<Ran> Ffmpeg(IReadOnlyList<string> arguments, CancellationToken cancellation)

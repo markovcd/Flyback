@@ -111,7 +111,7 @@ internal static class AskCommand
         {
             var error = result.InvocationConfiguration.Error;
 
-            if (AskCommand.Stray(result, [.. result.GetResult(patch)?.Tokens ?? [], .. result.GetResult(message)?.Tokens ?? []]) is { } stray)
+            if (Stray(result, [.. result.GetResult(patch)?.Tokens ?? [], .. result.GetResult(message)?.Tokens ?? []]) is { } stray)
             {
                 error.WriteLine(AskedPatch.Complaint(
                     $"ask has no {stray}; `ask --help` lists what it takes. A message that starts with a dash goes after --."));
@@ -133,14 +133,14 @@ internal static class AskCommand
                 file = null;
             }
 
-            if (AskCommand.Open(plugins.Catalog, file, named, result.GetValue(output), error, writing: !result.GetValue(expand)) is not { } about)
+            if (Open(plugins.Catalog, file, named, result.GetValue(output), error, writing: !result.GetValue(expand)) is not { } about)
                 return Task.FromResult(Exit.Failed);
 
             var settings = (result.GetValue(set) ?? []).ToList();
 
             if (result.GetValue(model) is { } chosen) settings.Add($"{AssistantSchema.ModelKey}={chosen}");
 
-            return AskCommand.Run(
+            return Run(
                 plugins.Catalog,
                 about,
                 new AskOptions(

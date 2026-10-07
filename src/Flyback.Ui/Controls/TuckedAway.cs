@@ -36,7 +36,6 @@ public abstract class TuckedAway : Border
     /// <summary>A dark rim under the light strokes, so they read on a white frame and a black one alike.</summary>
     protected static DropShadowEffect Halo() => new() { OffsetX = 0, OffsetY = 0, BlurRadius = 3, Color = Avalonia.Media.Colors.Black, Opacity = 0.9 };
 
-    private readonly Control dots;
     private readonly Control contents;
     private readonly DispatcherTimer tuck = new() { Interval = Grace };
 
@@ -56,7 +55,7 @@ public abstract class TuckedAway : Border
     {
         this.contents = contents;
 
-        dots = new ContentControl
+        Dots = new ContentControl
         {
             Width = 40,
             Height = 36,
@@ -76,13 +75,13 @@ public abstract class TuckedAway : Border
         var layout = new Panel();
 
         layout.Children.Add(contents);
-        layout.Children.Add(dots);
+        layout.Children.Add(Dots);
 
         Child = layout;
         HorizontalAlignment = side;
         Edge = edge;
 
-        dots.PointerEntered += (_, _) =>
+        Dots.PointerEntered += (_, _) =>
         {
             Shown();
             arriving = GuardsArrival;
@@ -138,7 +137,7 @@ public abstract class TuckedAway : Border
 
             tuck.Stop();
             Hidden();
-            dots.Opacity = Floor;
+            Dots.Opacity = Floor;
         };
     }
 
@@ -155,16 +154,16 @@ public abstract class TuckedAway : Border
         set
         {
             VerticalAlignment = value;
-            dots.VerticalAlignment = value;
+            Dots.VerticalAlignment = value;
             contents.VerticalAlignment = value;
         }
     }
 
     /// <summary>The dots, for the tests that steer a pointer at them.</summary>
-    internal Control Dots => dots;
+    internal Control Dots { get; }
 
     /// <summary>How solid the dots are now.</summary>
-    internal double DotsOpacity => dots.Opacity;
+    internal double DotsOpacity => Dots.Opacity;
 
     /// <summary>Whether the contents are showing.</summary>
     internal bool IsOpen => contents.IsHitTestVisible;
@@ -177,7 +176,7 @@ public abstract class TuckedAway : Border
     {
         IsPinned = true;
         Shown();
-        dots.IsVisible = false;
+        Dots.IsVisible = false;
         contents.Transitions = null;
         contents.Opacity = 1;
     }
@@ -234,8 +233,8 @@ public abstract class TuckedAway : Border
         tuck.Stop();
         contents.Opacity = 1;
         contents.IsHitTestVisible = true;
-        dots.Opacity = 0;
-        dots.IsHitTestVisible = false;
+        Dots.Opacity = 0;
+        Dots.IsHitTestVisible = false;
 
         // Solid only while open, so the gaps between the contents hold the pointer,
         // and the tucked-away contents' place takes no clicks from the picture.
@@ -263,18 +262,18 @@ public abstract class TuckedAway : Border
         tuck.Stop();
     }
 
-    private void Left(object? sender, PointerEventArgs e) => dots.Opacity = Floor;
+    private void Left(object? sender, PointerEventArgs e) => Dots.Opacity = Floor;
 
-    private bool OnDots(PointerEventArgs e) => new Rect(dots.Bounds.Size).Contains(e.GetPosition(dots));
+    private bool OnDots(PointerEventArgs e) => new Rect(Dots.Bounds.Size).Contains(e.GetPosition(Dots));
 
     private void Approached(object? sender, PointerEventArgs e)
     {
         if (!IsVisible || IsOpen) return;
 
-        var at = e.GetPosition(dots);
-        var middle = new Point(dots.Bounds.Width / 2, dots.Bounds.Height / 2);
+        var at = e.GetPosition(Dots);
+        var middle = new Point(Dots.Bounds.Width / 2, Dots.Bounds.Height / 2);
 
-        dots.Opacity = Proximity(Math.Sqrt(Math.Pow(at.X - middle.X, 2) + Math.Pow(at.Y - middle.Y, 2)));
+        Dots.Opacity = Proximity(Math.Sqrt(Math.Pow(at.X - middle.X, 2) + Math.Pow(at.Y - middle.Y, 2)));
     }
 
     private void Released()
@@ -291,8 +290,8 @@ public abstract class TuckedAway : Border
 
         contents.Opacity = 0;
         contents.IsHitTestVisible = false;
-        dots.Opacity = Floor;
-        dots.IsHitTestVisible = true;
+        Dots.Opacity = Floor;
+        Dots.IsHitTestVisible = true;
         Background = null;
         arriving = false;
     }

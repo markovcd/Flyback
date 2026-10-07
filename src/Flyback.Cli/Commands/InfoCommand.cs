@@ -96,7 +96,7 @@ internal static class InfoCommand
 
             return opened is not { } found
                 ? Exit.Failed
-                : InfoCommand.Run(found.Patch, name, result.GetValue(json), output, error, found.Samples, found.Pictures, result.GetValue(byGroup));
+                : Run(found.Patch, name, result.GetValue(json), output, error, found.Samples, found.Pictures, result.GetValue(byGroup));
         });
 
         return command;

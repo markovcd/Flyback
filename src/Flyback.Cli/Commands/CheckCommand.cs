@@ -80,7 +80,7 @@ internal static class CheckCommand
             {
                 return ShippedPresets.Open(plugins.Catalog, named!, error) is not { } shipped
                     ? Exit.Failed
-                    : CheckCommand.Run(
+                    : Run(
                         shipped.Opened.Patch,
                         shipped.Name,
                         result.GetValue(json),
@@ -98,7 +98,7 @@ internal static class CheckCommand
             // error does.
             if (read is { Ok: false } unread)
             {
-                return CheckCommand.Unread(
+                return Unread(
                     unread.Issues,
                     file.Name,
                     result.GetValue(json),
@@ -108,7 +108,7 @@ internal static class CheckCommand
 
             return Patches.Open(file, result.InvocationConfiguration.Error) is not { } opened
                 ? Exit.Failed
-                : CheckCommand.Run(
+                : Run(
                     opened.Patch,
                     file.Name,
                     result.GetValue(json),

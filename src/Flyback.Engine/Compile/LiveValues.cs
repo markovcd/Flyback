@@ -28,14 +28,13 @@ namespace Flyback.Engine.Compile;
 internal sealed class LiveValues
 {
     private readonly string[] keys;
-    private readonly float[] values;
 
     public LiveValues(IReadOnlyList<string> names)
     {
         ArgumentNullException.ThrowIfNull(names);
 
         keys = [.. names];
-        values = new float[keys.Length];
+        Storage = new float[keys.Length];
     }
 
     /// <summary>
@@ -48,10 +47,10 @@ internal sealed class LiveValues
     /// <summary>What the program asks for, in the order <see cref="OpCode.LoadLive"/> numbers them.</summary>
     public IReadOnlyList<string> Keys => keys;
 
-    public int Count => values.Length;
+    public int Count => Storage.Length;
 
     /// <summary>The values themselves, for a backend that reads them where they are.</summary>
-    internal float[] Storage => values;
+    internal float[] Storage { get; }
 
     /// <summary>
     /// Live input <paramref name="index"/>, and zero for one this program does not
@@ -59,7 +58,7 @@ internal sealed class LiveValues
     /// are swapped separately: a callback holding the previous program for one more
     /// buffer is reading the new program's block, and must not fault for it.
     /// </summary>
-    public double At(int index) => (uint)index < (uint)values.Length ? values[index] : 0d;
+    public double At(int index) => (uint)index < (uint)Storage.Length ? Storage[index] : 0d;
 
     /// <summary>Where <paramref name="key"/> sits in <see cref="Storage"/>, or -1 where this program does not read it.</summary>
     internal int IndexOf(string key) => Array.IndexOf(keys, key);
@@ -68,7 +67,7 @@ internal sealed class LiveValues
     public bool Reads(string key) => Array.IndexOf(keys, key) >= 0;
 
     /// <summary>What <paramref name="key"/> is played at, or null where this program does not read it.</summary>
-    public float? Find(string key) => Array.IndexOf(keys, key) is var at and >= 0 ? values[at] : null;
+    public float? Find(string key) => Array.IndexOf(keys, key) is var at and >= 0 ? Storage[at] : null;
 
     /// <summary>
     /// Plays <paramref name="key"/>, and does nothing at all where the program does
@@ -86,7 +85,7 @@ internal sealed class LiveValues
 
         for (var i = 0; i < keys.Length; i++)
             if (keys[i] == key)
-                values[i] = live;
+                Storage[i] = live;
     }
 
     /// <summary>
@@ -96,7 +95,7 @@ internal sealed class LiveValues
     /// </summary>
     public void CopyTo(Span<float> destination)
     {
-        var span = values.AsSpan(0, Math.Min(values.Length, destination.Length));
+        var span = Storage.AsSpan(0, Math.Min(Storage.Length, destination.Length));
 
         span.CopyTo(destination);
         destination[span.Length..].Clear();

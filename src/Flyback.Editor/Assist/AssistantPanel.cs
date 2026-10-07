@@ -407,13 +407,13 @@ internal sealed class AssistantPanel : UserControl
     /// Asked of an empty patch and kept nowhere: it is not part of any conversation.
     /// </summary>
     public Task<(string? Brief, string? Failure)> ExpandAsync(string idea, CancellationToken cancel) =>
-        WriteOutAsync(idea, new Flyback.Core.Graph.Patch(), cancel);
+        WriteOutAsync(idea, new Core.Graph.Patch(), cancel);
 
     /// <summary>
     /// The brief the chosen assistant writes for <paramref name="typed"/> over <paramref name="over"/>:
     /// a change to it, or a new patch where it holds only the Output.
     /// </summary>
-    private async Task<(string? Brief, string? Failure)> WriteOutAsync(string typed, Flyback.Core.Graph.Patch over, CancellationToken cancel)
+    private async Task<(string? Brief, string? Failure)> WriteOutAsync(string typed, Core.Graph.Patch over, CancellationToken cancel)
     {
         if (chosenAssistant.Value is not { } assistant || settings.Configured() is not { } config)
             return (null, "No assistant is set up.");

@@ -89,7 +89,7 @@ internal static class MeasureCommand
 
             if (opened is not { } found) return Task.FromResult(Exit.Failed);
 
-            return Task.FromResult(MeasureCommand.Run(
+            return Task.FromResult(Run(
                 found.Patch,
                 named,
                 new MeasureOptions(result.GetValue(seconds), result.GetValue(from)),

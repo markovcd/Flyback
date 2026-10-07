@@ -17,11 +17,9 @@ internal sealed class ComponentTracker(double steppedShare, double fastest)
     /// <summary>How much the gaps between rises may vary for the signal to count as repeating.</summary>
     private const double Regularity = 1.25;
 
-    private long count;
     private long changes;
     private double min = double.PositiveInfinity;
     private double max = double.NegativeInfinity;
-    private double sum;
     private double last;
     private double lastTime;
     private double slope;
@@ -39,9 +37,9 @@ internal sealed class ComponentTracker(double steppedShare, double fastest)
 
     public double Max => max;
 
-    public double Sum => sum;
+    public double Sum { get; private set; }
 
-    public long Count => count;
+    public long Count { get; private set; }
 
     public bool Changed => changes > 0;
 
@@ -49,7 +47,7 @@ internal sealed class ComponentTracker(double steppedShare, double fastest)
     {
         if (!double.IsFinite(value)) value = 0d;
 
-        if (count > 0 && value != last)
+        if (Count > 0 && value != last)
         {
             if (changes++ == 0) firstChange = time;
             lastChange = time;
@@ -60,8 +58,8 @@ internal sealed class ComponentTracker(double steppedShare, double fastest)
 
         min = Math.Min(min, value);
         max = Math.Max(max, value);
-        sum += value;
-        count++;
+        Sum += value;
+        Count++;
         last = value;
         lastTime = time;
 
@@ -107,7 +105,7 @@ internal sealed class ComponentTracker(double steppedShare, double fastest)
     /// <param name="overall">The min, max and mean to report in place of this one's, for a picture's many pixels.</param>
     public ComponentStats Finish(double seconds, bool across = false, (double Min, double Max, double Mean)? overall = null)
     {
-        var (low, high, mean) = overall ?? (count == 0 ? (0d, 0d, 0d) : (min, max, sum / count));
+        var (low, high, mean) = overall ?? (Count == 0 ? (0d, 0d, 0d) : (min, max, Sum / Count));
 
         if (changes == 0) return new ComponentStats(low, high, mean, OverTime: false, across);
 
@@ -120,7 +118,7 @@ internal sealed class ComponentTracker(double steppedShare, double fastest)
             if (hz <= fastest) return new ComponentStats(low, high, mean, true, across, Hz: hz);
         }
 
-        if (changes < count * steppedShare && seconds > 0d)
+        if (changes < Count * steppedShare && seconds > 0d)
         {
             // Timed between the first jump and the last, so the hold before the
             // first and after the last do not dilute the rate.

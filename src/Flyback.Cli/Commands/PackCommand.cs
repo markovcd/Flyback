@@ -93,13 +93,13 @@ internal static class PackCommand
                 return Exit.Failed;
             }
 
-            if (file is not null) return PackCommand.Run(file, into, error, writer, result.GetValue(json));
+            if (file is not null) return Run(file, into, error, writer, result.GetValue(json));
 
             if (ShippedPresets.Open(plugins.Catalog, named!, error) is not { } shipped) return Exit.Failed;
 
             var carried = (shipped.Opened.Samples as BundleFiles)?.Bytes;
 
-            return PackCommand.Run(
+            return Run(
                 shipped.Opened.Patch,
                 path => carried?.GetValueOrDefault(path),
                 into,

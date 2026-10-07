@@ -39,9 +39,9 @@ internal static class ModulesCommand
             var output = result.InvocationConfiguration.Output;
 
             return result.GetValue(module) is { } wanted
-                ? ModulesCommand.Describe(
+                ? Describe(
                     NodeCatalog.Current, wanted, result.GetValue(json), output, result.InvocationConfiguration.Error)
-                : ModulesCommand.Run(NodeCatalog.Current, result.GetValue(json), output);
+                : Run(NodeCatalog.Current, result.GetValue(json), output);
         });
 
         return command;

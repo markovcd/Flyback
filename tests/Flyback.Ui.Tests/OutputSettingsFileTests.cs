@@ -312,7 +312,7 @@ public class OutputSettingsFileTests : IDisposable
     [Fact]
     public void A_pad_learned_to_randomize_comes_back_a_pad()
     {
-        var pad = new Flyback.Core.Graph.MidiBinding("midi:pads", 0, 36) { Note = true };
+        var pad = new Core.Graph.MidiBinding("midi:pads", 0, 36) { Note = true };
         new OutputSettings { Randomize = { Amount = 0.3, GlideSeconds = 2, Trigger = pad } }.Save(File);
 
         var back = OutputSettings.Load(File).Randomize;

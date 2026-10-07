@@ -8,7 +8,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// <summary>With nothing selected the panel is headed with the patch's name, the file it is.</summary>
 public class PatchHeaderTests : EditorTest
 {
-    private static string Heading(Avalonia.Controls.Window window) =>
+    private static string Heading(Window window) =>
         All<TextBlock>(window).Single(t => t.Name == "patch-name").Text!;
 
     [AvaloniaFact]

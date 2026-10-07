@@ -60,7 +60,7 @@ public sealed class CompiledPatch
             .DefaultIfEmpty(0)
             .Max();
         tableArray = tables as LoadedSample[] ?? [.. tables ?? []];
-        pictureArray = pictures as LoadedImage[] ?? [.. pictures ?? []];
+        PictureArray = pictures as LoadedImage[] ?? [.. pictures ?? []];
     }
 
     internal Op[] Ops { get; }
@@ -119,7 +119,7 @@ public sealed class CompiledPatch
     /// program carries none and reads black. It is also what the shader is handed
     /// before a frame — one texture per entry, in this order.
     /// </remarks>
-    public IReadOnlyList<LoadedImage> Pictures => pictureArray;
+    public IReadOnlyList<LoadedImage> Pictures => PictureArray;
 
 
     /// <summary>
@@ -130,13 +130,11 @@ public sealed class CompiledPatch
     /// </summary>
     private readonly LoadedSample[] tableArray;
 
-    private readonly LoadedImage[] pictureArray;
-
     /// <summary>The clips as the IL backend hands them to its methods, for the reason the interpreter indexes them.</summary>
     internal LoadedSample[] TableArray => tableArray;
 
     /// <summary>The pictures, likewise.</summary>
-    internal LoadedImage[] PictureArray => pictureArray;
+    internal LoadedImage[] PictureArray { get; }
 
     private IlProgram? il;
 
@@ -480,8 +478,8 @@ public sealed class CompiledPatch
                     // Black where the program carries no pictures, which is
                     // every audio program and any video one whose file was not
                     // there — the same answer a Table gives silence for.
-                    if ((uint)picture < (uint)pictureArray.Length)
-                        pictureArray[picture].At(Reg(ref bank, op.A), Reg(ref bank, op.B), rgb);
+                    if ((uint)picture < (uint)PictureArray.Length)
+                        PictureArray[picture].At(Reg(ref bank, op.A), Reg(ref bank, op.B), rgb);
                     else
                         rgb[0] = rgb[1] = rgb[2] = 0d;
 

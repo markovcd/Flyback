@@ -25,7 +25,7 @@ internal static class PluginKeyCommand
             output,
         };
 
-        command.SetAction(result => PluginKeyCommand.Run(
+        command.SetAction(result => Run(
             result.GetRequiredValue(output),
             result.InvocationConfiguration.Output,
             result.InvocationConfiguration.Error));

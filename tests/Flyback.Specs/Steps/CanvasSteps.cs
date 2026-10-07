@@ -55,7 +55,7 @@ public sealed class CanvasSteps(PatchContext context, EditorDriver editor)
         var filter = context.Node("Filter");
 
         // On the row's name, clear of the socket's dot.
-        editor.Hover(canvas => canvas.Geometry.InputPort(filter, Filter, Cutoff) + new Avalonia.Vector(30, 0));
+        editor.Hover(canvas => canvas.Geometry.InputPort(filter, Filter, Cutoff) + new Vector(30, 0));
         editor.Tip.ShouldBe($"{value}\n{Filter.Inputs[Cutoff].Help}");
     }
 

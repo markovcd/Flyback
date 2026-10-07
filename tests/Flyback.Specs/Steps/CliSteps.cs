@@ -178,7 +178,7 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     public void GivenNoOversampleSetting() => File.WriteAllText(Path("settings.json"), "{}");
 
     [Given("the editor's settings oversample the sound {int} times")]
-    public void GivenOversampleSetting(int factor) => new Flyback.Ui.OutputSettings { Oversample = factor }.Save(Path("settings.json"));
+    public void GivenOversampleSetting(int factor) => new Ui.OutputSettings { Oversample = factor }.Save(Path("settings.json"));
 
     [When("flyback-cli renders {string} as {string} for {float} seconds")]
     public void WhenRendered(string patch, string into, float seconds) => WhenRenderedWith(patch, into, seconds, "");
@@ -346,7 +346,7 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
 
         index.Current.ShouldBeTrue();
         index.Presets.Select(entry => entry.Name).ShouldBe(ordered.Select(preset => preset.Name));
-        System.Text.Json.Nodes.JsonNode.Parse(json)!["presets"]!.AsArray().Select(entry => (string)entry!["heading"]!)
+        JsonNode.Parse(json)!["presets"]!.AsArray().Select(entry => (string)entry!["heading"]!)
             .ShouldBe(ordered.Select(preset => PresetKinds.Heading(preset.Kind)));
         index.Presets.ShouldContain(entry => entry.Still == StillKind.Picture);
 

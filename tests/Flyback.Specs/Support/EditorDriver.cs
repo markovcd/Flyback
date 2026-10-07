@@ -441,8 +441,8 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     public void RandomizeAtOnce() =>
         DoWindow((_, _) =>
         {
-            Service<Flyback.Editor.Settings.OutputSettingRepository>().Current.Randomize = new RandomizeSettings { Amount = 1, GlideSeconds = 0 };
-            Service<Flyback.Editor.Knobs.KnobRandomizer>().Random = new Random(1);
+            Service<Editor.Settings.OutputSettingRepository>().Current.Randomize = new RandomizeSettings { Amount = 1, GlideSeconds = 0 };
+            Service<Editor.Knobs.KnobRandomizer>().Random = new Random(1);
         });
 
     /// <summary>Where the editor's panel knob called <paramref name="name"/> rests.</summary>
@@ -707,7 +707,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
         DoWindow((_, _) => PageSwitches().Single(box => box.Content as string == label).IsChecked = on);
 
     private IEnumerable<CheckBox> PageSwitches() =>
-        ((Control)Service<Flyback.Editor.Settings.PageSettings>().Flyout.Content!).GetLogicalDescendants().OfType<CheckBox>();
+        ((Control)Service<Editor.Settings.PageSettings>().Flyout.Content!).GetLogicalDescendants().OfType<CheckBox>();
 
     private static IEnumerable<Control> Ancestors(Control control)
     {
@@ -736,7 +736,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
         DoWindow((open, _) =>
         {
             var names = open.GetVisualDescendants().OfType<TextBlock>()
-                .Where(text => text.Name == "knob-name" && text.FindAncestorOfType<Flyback.Editor.Knobs.ControlsPanel>() is not null)
+                .Where(text => text.Name == "knob-name" && text.FindAncestorOfType<Editor.Knobs.ControlsPanel>() is not null)
                 .ToList();
             var held = names.Single(text => text.Text == name);
             var cell = names.Single(text => text.Text == onto).FindAncestorOfType<Border>()!;
@@ -752,7 +752,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     /// <summary>The knob panel's knobs by name, a row at a time from the top, each left to right.</summary>
     public IReadOnlyList<string> KnobRows => ReadWindow(open =>
         open.GetVisualDescendants().OfType<TextBlock>()
-            .Where(name => name.Name == "knob-name" && name.FindAncestorOfType<Flyback.Editor.Knobs.ControlsPanel>() is not null)
+            .Where(name => name.Name == "knob-name" && name.FindAncestorOfType<Editor.Knobs.ControlsPanel>() is not null)
             .Select(name => (Name: name.Text ?? string.Empty, At: name.TranslatePoint(default, open)!.Value))
             .GroupBy(knob => Math.Round(knob.At.Y))
             .OrderBy(row => row.Key)
@@ -1013,7 +1013,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     }
 
     /// <summary>What the last measurement pinned on one output, or null where nothing is.</summary>
-    internal Flyback.Engine.Measure.Measurement? Measured(Guid node, int port) => Run(() => Service<MeasureLabels>().Of(node, port));
+    internal Engine.Measure.Measurement? Measured(Guid node, int port) => Run(() => Service<MeasureLabels>().Of(node, port));
 
     /// <summary>Sets Settings → Canvas → Measure for, and saves it.</summary>
     public void MeasureFor(double seconds) =>
@@ -1218,7 +1218,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
 
     /// <summary>Opens a shared preset's file as a page sent one by <c>?file=</c> does, and answers whether it opened.</summary>
     public bool OpenShared(string name, string fileName, byte[] bytes) =>
-        Run(() => Service<Flyback.Editor.Gallery.PresetSlot>().OpenSharedAsync(name, fileName, bytes));
+        Run(() => Service<Editor.Gallery.PresetSlot>().OpenSharedAsync(name, fileName, bytes));
 
     /// <summary>Presses Ctrl+V in the text view, with the caret at the end of the text.</summary>
     public void PasteIntoText() =>

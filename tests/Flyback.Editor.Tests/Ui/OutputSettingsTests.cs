@@ -380,7 +380,7 @@ public class OutputSettingsTests : EditorTest
 
             var page = (Visual)tab.Content!;
 
-            foreach (var text in All<TextBlock>(page).Where(t => t.IsEffectivelyVisible && t.TextWrapping == Avalonia.Media.TextWrapping.NoWrap))
+            foreach (var text in All<TextBlock>(page).Where(t => t.IsEffectivelyVisible && t.TextWrapping == TextWrapping.NoWrap))
             {
                 if (string.IsNullOrEmpty(text.Text) || text.FindAncestorOfType<ComboBox>() is not null) continue;
 
@@ -402,7 +402,7 @@ public class OutputSettingsTests : EditorTest
 
         clipped.ShouldBeEmpty();
 
-        static double Natural(Avalonia.Media.FontFamily family, double size, Avalonia.Media.FontWeight weight, string said)
+        static double Natural(FontFamily family, double size, FontWeight weight, string said)
         {
             var probe = new TextBlock { Text = said, FontFamily = family, FontSize = size, FontWeight = weight };
             probe.Measure(Avalonia.Size.Infinity);
@@ -505,7 +505,7 @@ public class OutputSettingsTests : EditorTest
 
         var next = Open(settingsPath);
 
-        next.Title.ShouldBe($"{chosen} — {Core.GlobalConstants.ApplicationName}");
+        next.Title.ShouldBe($"{chosen} — {GlobalConstants.ApplicationName}");
         StartupName(OpenSettings(next, FilesTab)).ShouldBe(chosen);
     }
 

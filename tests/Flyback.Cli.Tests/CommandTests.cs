@@ -59,8 +59,8 @@ public class CommandTests
         var (_, json, _) = Run((o, e) => CheckCommand.Run(Preset("Plasma"), "plasma.fbk", true, o, e));
 
         text.ShouldContain("plugins: ");
-        System.Text.Json.JsonDocument.Parse(json).RootElement.TryGetProperty("plugins", out var plugins).ShouldBeTrue(json);
-        plugins.ValueKind.ShouldBe(System.Text.Json.JsonValueKind.Array);
+        JsonDocument.Parse(json).RootElement.TryGetProperty("plugins", out var plugins).ShouldBeTrue(json);
+        plugins.ValueKind.ShouldBe(JsonValueKind.Array);
     }
 
     [Fact]

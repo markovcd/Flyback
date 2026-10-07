@@ -53,7 +53,6 @@ public sealed class FfmpegClipWriter : IClipWriter
     private readonly string? soundPath;
 
     private readonly Stream input;
-    private long frames;
     private bool closed;
 
     /// <param name="target">What the clip is. Its format has to be one that needs ffmpeg.</param>
@@ -101,7 +100,7 @@ public sealed class FfmpegClipWriter : IClipWriter
         input = encoder.StandardInput.BaseStream;
     }
 
-    public long FrameCount => frames;
+    public long FrameCount { get; private set; }
 
     public void WriteFrame(ReadOnlySpan<byte> bgra, int stride, int repeat = 1)
     {
@@ -125,7 +124,7 @@ public sealed class FfmpegClipWriter : IClipWriter
                 for (var y = 0; y < target.Height; y++) Feed(bgra.Slice(y * stride, tight));
             }
 
-            frames++;
+            FrameCount++;
         }
     }
 
@@ -247,7 +246,7 @@ public sealed class FfmpegClipWriter : IClipWriter
         {
             if (encoder.WaitForExit(Patience)) encoder.WaitForExit();
 
-            throw Failed($"ffmpeg stopped after {frames} frames");
+            throw Failed($"ffmpeg stopped after {FrameCount} frames");
         }
     }
 

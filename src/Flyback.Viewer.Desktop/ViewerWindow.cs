@@ -36,7 +36,6 @@ internal sealed class ViewerWindow : Window
 
     private readonly PreviewHost? preview;
     private readonly Border previewBox;
-    private readonly ViewerPlayer player;
 
     /// <summary>What the window was before it went full screen, for a maximized one does not return to normal.</summary>
     private WindowState stateBefore = WindowState.Normal;
@@ -76,7 +75,7 @@ internal sealed class ViewerWindow : Window
         ShowActivated = !options.Background;
 
         this.preview = preview;
-        this.player = player;
+        Player = player;
 
         previewBox = new Border { Background = Brushes.Black, Child = preview };
 
@@ -170,7 +169,7 @@ internal sealed class ViewerWindow : Window
     }
 
     /// <summary>The player behind the window, for whoever drives it.</summary>
-    internal ViewerPlayer Player => player;
+    internal ViewerPlayer Player { get; }
 
     /// <summary>The picture's surface, or null for a run with no picture.</summary>
     internal PreviewHost? Preview => preview;
@@ -188,11 +187,11 @@ internal sealed class ViewerWindow : Window
     {
         var knobs = Knobs = new StageKnobs { KnobGrid = grid };
 
-        knobs.Show(player.Patch);
+        knobs.Show(Player.Patch);
         knobs.IsVisible = knobs.Any;
-        knobs.Turning += player.Turn;
+        knobs.Turning += Player.Turn;
 
-        player.Turned += (id, value) => Dispatcher.UIThread.Post(() => knobs.Move(id, value));
+        Player.Turned += (id, value) => Dispatcher.UIThread.Post(() => knobs.Move(id, value));
 
         return knobs;
     }
@@ -201,29 +200,29 @@ internal sealed class ViewerWindow : Window
     {
         var overlay = Overlay = new TransportOverlay()
         {
-            Muted = player.Muted,
-            Paused = player.Paused,
-            Sounding = player.Sounding,
-            HasSound = player.Patch.Reaches().Sound,
+            Muted = Player.Muted,
+            Paused = Player.Paused,
+            Sounding = Player.Sounding,
+            HasSound = Player.Patch.Reaches().Sound,
         };
 
         overlay.MuteClicked += () =>
         {
-            player.Mute(!player.Muted);
-            overlay.Muted = player.Muted;
+            Player.Mute(!Player.Muted);
+            overlay.Muted = Player.Muted;
         };
 
         overlay.PauseClicked += TogglePause;
 
-        overlay.RewindClicked += player.Rewind;
-        overlay.Sought += player.SeekTo;
+        overlay.RewindClicked += Player.Rewind;
+        overlay.Sought += Player.SeekTo;
         overlay.LoopClicked += () =>
         {
-            player.Looped = !player.Looped;
+            Player.Looped = !Player.Looped;
             Followed();
         };
 
-        overlay.Follow(player.Time, player.Length, player.Looped);
+        overlay.Follow(Player.Time, Player.Length, Player.Looped);
 
         return overlay;
     }
@@ -233,18 +232,18 @@ internal sealed class ViewerWindow : Window
     {
         if (Overlay is not { } overlay) return;
 
-        overlay.Follow(player.Time, player.Length, player.Looped);
-        overlay.Paused = player.Paused;
+        overlay.Follow(Player.Time, Player.Length, Player.Looped);
+        overlay.Paused = Player.Paused;
     }
 
     private void TogglePause()
     {
-        player.Toggle();
+        Player.Toggle();
 
         if (Overlay is not { } overlay) return;
 
-        overlay.Paused = player.Paused;
-        overlay.Sounding = player.Sounding;
+        overlay.Paused = Player.Paused;
+        overlay.Sounding = Player.Sounding;
     }
 
     /// <summary>The picture, fitted inside <see cref="LargestStart"/> at its own shape.</summary>

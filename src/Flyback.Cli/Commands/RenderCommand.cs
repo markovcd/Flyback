@@ -142,7 +142,7 @@ internal static class RenderCommand
             DefaultValueFactory = _ => defaults.Oversample,
         };
 
-        oversample.AcceptOnlyFromAmong([.. AudioRenderer.Oversamples.Select(factor => factor.ToString(System.Globalization.CultureInfo.InvariantCulture))]);
+        oversample.AcceptOnlyFromAmong([.. AudioRenderer.Oversamples.Select(factor => factor.ToString(CultureInfo.InvariantCulture))]);
 
         var input = new Option<FileInfo?>("--input")
         {
@@ -261,7 +261,7 @@ internal static class RenderCommand
                 result.GetValue(from));
 
             return Task.FromResult(
-                RenderCommand.Run(
+                Run(
                     loaded,
                     options,
                     result.InvocationConfiguration.Error,

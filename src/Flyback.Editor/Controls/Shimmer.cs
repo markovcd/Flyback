@@ -34,7 +34,7 @@ internal sealed class Shimmer : TextBlock
     public Shimmer(string text)
     {
         Text = text;
-        FontSize = Flyback.Ui.Controls.Text.Body;
+        FontSize = Ui.Controls.Text.Body;
         VerticalAlignment = VerticalAlignment.Center;
         IsVisible = false;
 

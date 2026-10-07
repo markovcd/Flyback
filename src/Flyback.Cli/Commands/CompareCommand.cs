@@ -65,7 +65,7 @@ internal static class CompareCommand
 
             var (width, height) = result.GetValue(size);
 
-            return Task.FromResult(CompareCommand.Run(
+            return Task.FromResult(Run(
                 before,
                 first.Name,
                 after,

@@ -41,10 +41,6 @@ internal sealed class Inspector
     /// <summary>The panel a group gets instead of a module's.</summary>
     private readonly GroupInspector groups;
 
-    private readonly StackPanel panel;
-    private readonly ModuleWash wash;
-    private readonly ContentControl plateHost;
-
     /// <summary>The shortcut groups left unfolded, kept across rebuilds so a selection does not shut them.</summary>
     private readonly HashSet<string> openShortcuts = ["Getting started"];
 
@@ -77,9 +73,9 @@ internal sealed class Inspector
         this.keyboard = keyboard;
         this.groups = groups;
         inPage = host.InPage;
-        panel = surface.Panel;
-        wash = surface.Wash;
-        plateHost = surface.PlateHost;
+        Panel = surface.Panel;
+        Wash = surface.Wash;
+        PlateHost = surface.PlateHost;
 
         socketRows.Settled += (_, _) => inspectorShape = InspectorShape.Of(editor);
     }
@@ -140,16 +136,16 @@ internal sealed class Inspector
     }
 
     /// <summary>The rows, which scroll.</summary>
-    public StackPanel Panel => panel;
+    public StackPanel Panel { get; }
 
     /// <summary>Shows the other of each measured color's two pictures, for a test that cannot wait for the timer.</summary>
     internal void TurnPictures() => measuredRows.Turn();
 
     /// <summary>The block's face, behind the whole column.</summary>
-    public ModuleWash Wash => wash;
+    public ModuleWash Wash { get; }
 
     /// <summary>The plate, docked above the rows.</summary>
-    public ContentControl PlateHost => plateHost;
+    public ContentControl PlateHost { get; }
 
     /// <summary>
     /// What the panel's rows are, as against what is in them: which module is being
@@ -181,9 +177,9 @@ internal sealed class Inspector
     public void Build()
     {
         inspectorShape = InspectorShape.Of(editor);
-        panel.Children.Clear();
+        Panel.Children.Clear();
         measuredRows.Clear();
-        plateHost.Content = null;
+        PlateHost.Content = null;
 
         // What an empty panel says depends on which canvas is under it. Naming
         // gestures that are switched off would be worse than saying nothing: a
@@ -191,14 +187,14 @@ internal sealed class Inspector
         // than that the patch belongs to the text — see ADR-0068.
         if (editor.Selection.Focused is not { } node || NodeCatalog.Get(node.TypeId) is not { } def)
         {
-            wash.Clear();
-            plateHost.Content = null;
+            Wash.Clear();
+            PlateHost.Content = null;
 
-            foreach (var part in header.Build()) panel.Children.Add(part);
+            foreach (var part in header.Build()) Panel.Children.Add(part);
 
             if (document.IsAdrift || editor.History.Locked)
             {
-                panel.Children.Add(new TextBlock
+                Panel.Children.Add(new TextBlock
                 {
                     Text = document.IsAdrift
                         ? document.IsAdriftBox ? InspectorHelp.AdriftingGroup : InspectorHelp.Adrifting
@@ -210,7 +206,7 @@ internal sealed class Inspector
             }
             else
             {
-                panel.Children.Add(ShortcutList.Of(InspectorHelp.Shortcuts(inPage, fingers, editor.Gestures.DragToPan), openShortcuts));
+                Panel.Children.Add(ShortcutList.Of(InspectorHelp.Shortcuts(inPage, fingers, editor.Gestures.DragToPan), openShortcuts));
             }
 
             return;
@@ -231,8 +227,8 @@ internal sealed class Inspector
         // below stay on the panel, which is what a column of numbers is read on.
         var plate = ModulePlate.Of(def);
 
-        wash.Show(def);
-        wash.Off = node.Off;
+        Wash.Show(def);
+        Wash.Off = node.Off;
 
         plate.Named.Children.Add(BuildTitle(node, def, plate.Ink));
 
@@ -244,7 +240,7 @@ internal sealed class Inspector
             TextAlignment = TextAlignment.Right,
         });
 
-        plateHost.Content = plate;
+        PlateHost.Content = plate;
 
         // What can be done to the module goes under its name, above the
         // description — see ActionRow. Where it goes is settled here and what is
@@ -253,7 +249,7 @@ internal sealed class Inspector
         var above = plate.Under.Children.Count;
 
         if (!string.IsNullOrEmpty(def.Description))
-            panel.Children.Add(new TextBlock
+            Panel.Children.Add(new TextBlock
             {
                 Text = def.Description,
                 TextWrapping = TextWrapping.Wrap,
@@ -262,7 +258,7 @@ internal sealed class Inspector
                 Margin = new Thickness(0, 4, 0, 6),
             });
 
-        if (BuildNormalledNote(node, def) is { } normalled) panel.Children.Add(normalled);
+        if (BuildNormalledNote(node, def) is { } normalled) Panel.Children.Add(normalled);
 
         // Checked once for the whole panel rather than row by row, so that a
         // bar is the same width down the entire module: a module where nothing
@@ -271,7 +267,7 @@ internal sealed class Inspector
         var reading = InspectorRows.ShowsReading(def) || def.TypeId == NodeCatalog.AutoRemapTypeId;
 
         for (var i = 0; i < def.Inputs.Count; i++)
-            panel.Children.Add(socketRows.Edged(InspectorRows.Helped(socketRows.Input(def, node, def.Inputs[i], i, reading), def.Inputs[i].Help), node, i, output: false));
+            Panel.Children.Add(socketRows.Edged(InspectorRows.Helped(socketRows.Input(def, node, def.Inputs[i], i, reading), def.Inputs[i].Help), node, i, output: false));
 
         // Whatever the module carries that is not a knob, each kind edited by the
         // control that suits it. This mapping lives here rather than on the extra
@@ -279,12 +275,12 @@ internal sealed class Inspector
         // engine does not reference.
         foreach (var extra in def.Extras)
             if (EditorFor(extra, node, def, reading) is { } control)
-                panel.Children.Add(extra.Fields.Count == 0 ? InspectorRows.Helped(control, extra.Help) : control);
+                Panel.Children.Add(extra.Fields.Count == 0 ? InspectorRows.Helped(control, extra.Help) : control);
 
-        if (keyboard.Build(node) is { } laid) panel.Children.Add(laid);
+        if (keyboard.Build(node) is { } laid) Panel.Children.Add(laid);
 
         if (def.Inputs.Count == 0 && def.Extras.Count == 0)
-            panel.Children.Add(new TextBlock
+            Panel.Children.Add(new TextBlock
             {
                 Text = "This module has nothing to set — it only produces.",
                 Foreground = Text.Muted,
@@ -325,7 +321,7 @@ internal sealed class Inspector
         {
             if (!editor.Tags.Types.Contains(def.TypeId)) return;
 
-            panel.Children.Add(new TextBlock
+            Panel.Children.Add(new TextBlock
             {
                 Name = "undescribedNote",
                 Text = AssistantPanel.UndescribedNote,
@@ -345,7 +341,7 @@ internal sealed class Inspector
     {
         if (def.Outputs.Count == 0) return;
 
-        panel.Children.Add(new TextBlock
+        Panel.Children.Add(new TextBlock
         {
             Text = "Outputs",
             FontSize = Text.Small,
@@ -356,9 +352,9 @@ internal sealed class Inspector
 
         for (var i = 0; i < def.Outputs.Count; i++)
         {
-            panel.Children.Add(socketRows.Edged(InspectorRows.Helped(socketRows.Output(node, def.Outputs[i].Name, i), def.Outputs[i].Help), node, i, output: true));
+            Panel.Children.Add(socketRows.Edged(InspectorRows.Helped(socketRows.Output(node, def.Outputs[i].Name, i), def.Outputs[i].Help), node, i, output: true));
 
-            foreach (var shown in measuredRows.Under(node, i)) panel.Children.Add(shown);
+            foreach (var shown in measuredRows.Under(node, i)) Panel.Children.Add(shown);
         }
     }
 

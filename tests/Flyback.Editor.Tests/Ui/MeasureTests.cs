@@ -251,10 +251,10 @@ public class MeasureTests : EditorTest
 
         picture.Source.ShouldBe(labels.Frame(found));
 
-        Service<Flyback.Editor.Inspect.Inspector>(window).TurnPictures();
+        Service<Inspect.Inspector>(window).TurnPictures();
         picture.Source.ShouldBe(labels.Frame(found, 1));
 
-        Service<Flyback.Editor.Inspect.Inspector>(window).TurnPictures();
+        Service<Inspect.Inspector>(window).TurnPictures();
         picture.Source.ShouldBe(labels.Frame(found));
     }
 
@@ -311,7 +311,7 @@ public class MeasureTests : EditorTest
         var labels = Service<MeasureLabels>(window);
         var found = labels.Of(color.Id, 0)!;
         var picture = All<Image>(window).Single(i => i.Name == "measuredPicture");
-        var inspector = Service<Flyback.Editor.Inspect.Inspector>(window);
+        var inspector = Service<Inspect.Inspector>(window);
         var over = picture.TranslatePoint(new Point(5, 5), window)!.Value;
 
         window.MouseMove(over);
@@ -354,6 +354,6 @@ public class MeasureTests : EditorTest
         Settle(window);
 
         measuring.Mode.ShouldBe(MeasureMode.Ready);
-        ToolTip.GetTip(button).ShouldBe(Flyback.Editor.Bars.Toolbar.MeasureTip);
+        ToolTip.GetTip(button).ShouldBe(Bars.Toolbar.MeasureTip);
     }
 }

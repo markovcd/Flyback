@@ -28,8 +28,6 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
     /// <summary>Drag to pan and its note, which a finger has no use for.</summary>
     private readonly Border panRow;
 
-    private readonly Flyout flyout = new() { Placement = PlacementMode.BottomEdgeAlignedRight };
-
     public PageSettings(EditorHost host, Toolbar toolbar, CanvasSection canvas)
     {
         this.host = host;
@@ -37,7 +35,7 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
         this.canvas = canvas;
 
         var close = ToolbarButtons.Drawn("page-settings-close", Glyphs.Cross(), "Close the settings.");
-        close.Click += (_, _) => flyout.Hide();
+        close.Click += (_, _) => Flyout.Hide();
 
         var title = new TextBlock
         {
@@ -68,7 +66,7 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
         var compactRow = Row(compactModules, "Puts each input beside an output on one row.");
         compactRow.Margin = new Thickness(8, 4, 8, 4);
 
-        flyout.Content = new StackPanel
+        Flyout.Content = new StackPanel
         {
             Name = "pageSettings",
             Width = PanelWidth,
@@ -77,7 +75,7 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
         };
 
         // Opening sets the boxes to what is saved, so the handlers below hear only a hand.
-        flyout.Opening += (_, _) =>
+        Flyout.Opening += (_, _) =>
         {
             dragToPan.IsChecked = canvas.DragToPan;
             compactModules.IsChecked = canvas.CompactModules;
@@ -88,14 +86,14 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
     }
 
     /// <summary>The panel, open or shut; for a test.</summary>
-    internal Flyout Flyout => flyout;
+    internal Flyout Flyout { get; } = new() { Placement = PlacementMode.BottomEdgeAlignedRight };
 
     public Task On(SettingsAsked notice)
     {
         if (!host.InPage) return Task.CompletedTask;
 
         // From the gear, or from the menu it has folded into.
-        flyout.ShowAt(toolbar.Settings.IsVisible ? toolbar.Settings : toolbar.Overflow.More);
+        Flyout.ShowAt(toolbar.Settings.IsVisible ? toolbar.Settings : toolbar.Overflow.More);
 
         return Task.CompletedTask;
     }
@@ -108,7 +106,7 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
 
     private void Change(Action<CanvasSettings> change)
     {
-        if (flyout.IsOpen) canvas.Change(change);
+        if (Flyout.IsOpen) canvas.Change(change);
     }
 
     private static CheckBox Switch(string name, string label) => new()

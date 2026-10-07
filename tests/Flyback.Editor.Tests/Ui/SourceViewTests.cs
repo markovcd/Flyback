@@ -1451,7 +1451,7 @@ public class SourceViewTests : EditorTest
     // --- and a knob turned in it reaches the text ---------------------------
 
     /// <summary>A patch whose first module has knobs to turn.</summary>
-    private static Patch Plasma() => Flyback.Engine.Graph.Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn);
+    private static Patch Plasma() => Engine.Graph.Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn);
 
     /// <summary>Turns the first knob the panel is showing, and lets go of it.</summary>
     private static void Turn(MainWindow window, double to)

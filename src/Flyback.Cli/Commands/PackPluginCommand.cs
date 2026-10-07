@@ -58,7 +58,7 @@ internal static class PackPluginCommand
             source, output, key,
         };
 
-        command.SetAction(result => PackPluginCommand.Run(
+        command.SetAction(result => Run(
             result.GetRequiredValue(source),
             result.GetRequiredValue(output),
             result.InvocationConfiguration.Output,

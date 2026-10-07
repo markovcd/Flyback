@@ -75,7 +75,7 @@ public sealed class PageSteps(EditorDriver editor, PatchContext context)
 
     [Then("the page's browser keeps it for the next visit")]
     public void ThenBrowserKeeps() =>
-        Flyback.Editor.Canvas.CanvasSettings.Parse(browser.Read(Flyback.Editor.Canvas.CanvasSettings.Section)).DragToPan.ShouldBeTrue();
+        Editor.Canvas.CanvasSettings.Parse(browser.Read(Editor.Canvas.CanvasSettings.Section)).DragToPan.ShouldBeTrue();
 
     [When("the Flyback mark is pressed")]
     public void WhenMarkPressed() => editor.PressPanelButton("home");
@@ -132,7 +132,7 @@ public sealed class PageSteps(EditorDriver editor, PatchContext context)
 
     [When("the page hands the editor the shared preset {string} as {string}")]
     public void WhenHandedShared(string name, string fileName) =>
-        editor.OpenShared(name, fileName, System.Text.Encoding.UTF8.GetBytes(Flyback.Engine.Graph.PatchIO.ToJson(context.Patch)));
+        editor.OpenShared(name, fileName, System.Text.Encoding.UTF8.GetBytes(PatchIO.ToJson(context.Patch)));
 
     [Then("the editor says it opened {string} from the preset site")]
     public void ThenOpenedShared(string name) => editor.Reported.ShouldContain($"Opened “{name}” from the preset site.");

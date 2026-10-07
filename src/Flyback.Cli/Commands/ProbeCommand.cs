@@ -73,7 +73,7 @@ internal static class ProbeCommand
             provider, model, all, bounds, dry, keys, yes, json,
         };
 
-        command.SetAction((result, cancellation) => ProbeCommand.Run(
+        command.SetAction((result, cancellation) => Run(
             plugins.Catalog,
             new ProbeOptions(
                 result.GetValue(provider),

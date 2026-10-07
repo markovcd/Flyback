@@ -428,7 +428,7 @@ internal sealed class PartGrid
         {
             (Cell, Part, Section, Home, Last, From, Low, High, Anchor) = (cell, part, section, home, home, from, low, high, anchor);
 
-            if (anchor is not null) cell.Cursor = PartGrid.Hidden;
+            if (anchor is not null) cell.Cursor = Hidden;
         }
 
         public Border Cell { get; }

@@ -38,7 +38,6 @@ public sealed class TransportOverlay : TuckedAway
     private readonly Button pauseButton;
     private readonly Button muteButton;
     private readonly Button loopButton;
-    private readonly SeekTrack track = new(stage: true) { Width = Wide };
 
     public TransportOverlay()
         : this(new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gap })
@@ -65,16 +64,16 @@ public sealed class TransportOverlay : TuckedAway
         engaged.Setters.Add(new Setter(ContentPresenter.ForegroundProperty, On));
         Styles.Add(engaged);
 
-        track.Name = "seekOver";
-        track.Margin = new Thickness(6, 0);
-        track.Sought += seconds => Sought?.Invoke(seconds);
-        track.DoubleTapped += (_, e) => e.Handled = true;
+        Track.Name = "seekOver";
+        Track.Margin = new Thickness(6, 0);
+        Track.Sought += seconds => Sought?.Invoke(seconds);
+        Track.DoubleTapped += (_, e) => e.Handled = true;
 
-        ToolTip.SetTip(track, "Drag to move the patch's clock, in the picture and in the sound.");
+        ToolTip.SetTip(Track, "Drag to move the patch's clock, in the picture and in the sound.");
 
         row.Children.Add(pauseButton);
         row.Children.Add(rewind);
-        row.Children.Add(track);
+        row.Children.Add(Track);
         row.Children.Add(loopButton);
         row.Children.Add(muteButton);
 
@@ -97,7 +96,7 @@ public sealed class TransportOverlay : TuckedAway
         var width = Math.Clamp(availableSize.Width - Beside, 60, Wide);
 
         // ReSharper disable once CompareOfFloatsByEqualityOperator
-        if (track.Width != width) track.Width = width;
+        if (Track.Width != width) Track.Width = width;
 
         return base.MeasureOverride(availableSize);
     }
@@ -118,7 +117,7 @@ public sealed class TransportOverlay : TuckedAway
     public event Action? LoopClicked;
 
     /// <summary>The strip, for the tests that aim a pointer along it.</summary>
-    internal SeekTrack Track => track;
+    internal SeekTrack Track { get; } = new(stage: true) { Width = Wide };
 
     /// <summary>Whether play is held. The pause button shows what a press does next.</summary>
     public bool Paused
@@ -166,8 +165,8 @@ public sealed class TransportOverlay : TuckedAway
     /// <summary>Whether the strip can be used: not during a take, which is paced by its own samples.</summary>
     public bool CanSeek
     {
-        get => track.IsEnabled;
-        set => track.IsEnabled = value;
+        get => Track.IsEnabled;
+        set => Track.IsEnabled = value;
     }
 
     /// <summary>
@@ -176,12 +175,12 @@ public sealed class TransportOverlay : TuckedAway
     /// </summary>
     public void Follow(double seconds, double? length, bool loops)
     {
-        track.IsVisible = loopButton.IsVisible = length is not null;
+        Track.IsVisible = loopButton.IsVisible = length is not null;
 
         if (length is { } end)
         {
-            track.Maximum = end;
-            if (!track.Held) track.Value = Math.Min(seconds, end);
+            Track.Maximum = end;
+            if (!Track.Held) Track.Value = Math.Min(seconds, end);
         }
 
         if (Looped == loops) return;

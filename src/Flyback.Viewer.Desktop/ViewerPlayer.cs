@@ -33,13 +33,11 @@ internal sealed class ViewerPlayer : IDisposable
 {
     private readonly ViewerOptions options;
     private readonly PreviewHost? preview;
-    private readonly AudioEngine audio;
     private readonly IlCompiler compiler;
     private readonly MidiHub midi;
     private readonly ControlHub controls;
     private readonly WallClock clock;
     private readonly Transport transport;
-    private readonly Patch patch;
 
     private DispatcherTimer? ticker;
     private TimeSpan last;
@@ -63,7 +61,7 @@ internal sealed class ViewerPlayer : IDisposable
 
         this.options = options;
         this.preview = options.Video ? preview : null;
-        this.audio = audio;
+        Audio = audio;
         this.compiler = compiler;
         this.midi = midi;
         this.controls = controls;
@@ -72,7 +70,7 @@ internal sealed class ViewerPlayer : IDisposable
 
         var (patch, samples, pictures) = opened;
 
-        this.patch = patch;
+        Patch = patch;
 
         audio.Aspect = SynthRenderer.AspectOf(options.Size.Width, options.Size.Height);
         audio.Oversample = options.Oversample;
@@ -125,7 +123,7 @@ internal sealed class ViewerPlayer : IDisposable
     }
 
     /// <summary>The sound engine, for the tests that read its clock and its blocks.</summary>
-    internal AudioEngine Audio => audio;
+    internal AudioEngine Audio { get; }
 
     /// <summary>Completes once the patch opened here runs compiled, which is when it starts to play.</summary>
     internal Task Compiled() => compiler.Settled();
@@ -153,7 +151,7 @@ internal sealed class ViewerPlayer : IDisposable
     public double Time => transport.Time;
 
     /// <summary>How long the patch plays for, in seconds, or null for one that has not said and plays on.</summary>
-    public double? Length => patch.Length;
+    public double? Length => Patch.Length;
 
     /// <summary>Whether the patch comes round to nought at the end of its length rather than stopping there.</summary>
     public bool Looped { get; set; }
@@ -162,7 +160,7 @@ internal sealed class ViewerPlayer : IDisposable
     public void SeekTo(double seconds) => transport.SeekTo(seconds);
 
     /// <summary>The patch playing, whose knobs are there to be turned.</summary>
-    public Patch Patch => patch;
+    public Patch Patch { get; }
 
     /// <summary>A controller turned a knob: its id and where it now sits. Raised on the driver's thread.</summary>
     public event Action<Guid, float>? Turned;
@@ -170,7 +168,7 @@ internal sealed class ViewerPlayer : IDisposable
     /// <summary>Turns a knob by hand.</summary>
     public void Turn(Guid id, float value)
     {
-        if (patch.Control(id) is not { } control) return;
+        if (Patch.Control(id) is not { } control) return;
 
         control.Value = value;
         controls.Set(id, value);
@@ -317,9 +315,9 @@ internal sealed class ViewerPlayer : IDisposable
             preview?.Frames ?? 0,
             preview?.SlowestFrameMilliseconds ?? 0,
             Sounding,
-            audio.Oversample,
-            audio.Speed,
-            audio.Timing);
+            Audio.Oversample,
+            Audio.Speed,
+            Audio.Timing);
 
     /// <summary>Stops playing. The container disposes the engine, the compiler and MIDI after it.</summary>
     public void Dispose()
@@ -333,6 +331,6 @@ internal sealed class ViewerPlayer : IDisposable
             foreach (var line in Report().Lines()) Console.Out.WriteLine(line);
         }
 
-        audio.Stop();
+        Audio.Stop();
     }
 }

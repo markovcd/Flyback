@@ -18,7 +18,7 @@ public sealed class KeyedTransportTests
     [Fact]
     public void Transports_built_alike_are_the_same_configuration()
     {
-        var values = Flyback.Plugins.Settings.SettingValues.None;
+        var values = Settings.SettingValues.None;
 
         new AssistantConfig(new KeyedTransport("sk-secret", "https://a.test", Bearer), values)
             .ShouldBe(new AssistantConfig(new KeyedTransport("sk-secret", "https://a.test", Bearer), values));

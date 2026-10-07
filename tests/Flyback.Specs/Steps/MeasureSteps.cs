@@ -27,7 +27,7 @@ public sealed class MeasureSteps(PatchContext context, EditorDriver editor)
     public void ThenPicture()
     {
         var frame = editor.Measured(context.Node("tint").Id, 0).ShouldNotBeNull().Frames.ShouldNotBeNull()[0];
-        var columns = new Flyback.Engine.Measure.MeasureOptions().Columns;
+        var columns = new Engine.Measure.MeasureOptions().Columns;
 
         frame[0].ShouldBeLessThan(frame[(columns - 1) * 3]);
     }

@@ -25,8 +25,8 @@ internal static class PluginCommand
 
         var allow = new Command("allow", "Load a plugin folder from the next start, as its files stand now.") { folder, secrets };
 
-        allow.SetAction(result => PluginCommand.Allow(
-            PluginCommand.Resolve(result.GetRequiredValue(folder), plugins.Directory),
+        allow.SetAction(result => Allow(
+            Resolve(result.GetRequiredValue(folder), plugins.Directory),
             result.GetValue(secrets),
             plugins.Trust().Allowances,
             result.InvocationConfiguration.Output,
@@ -39,15 +39,15 @@ internal static class PluginCommand
 
         var deny = new Command("deny", "Stop loading a plugin folder that was allowed.") { denied };
 
-        deny.SetAction(result => PluginCommand.Deny(
-            PluginCommand.Resolve(result.GetRequiredValue(denied), plugins.Directory),
+        deny.SetAction(result => Deny(
+            Resolve(result.GetRequiredValue(denied), plugins.Directory),
             plugins.Trust().Allowances,
             result.InvocationConfiguration.Output,
             result.InvocationConfiguration.Error));
 
         var list = new Command("list", "Say which plugin folders load, and why the others do not.") { json };
 
-        list.SetAction(result => PluginCommand.List(
+        list.SetAction(result => List(
             plugins.Directory,
             plugins.Trust(),
             result.GetValue(json),

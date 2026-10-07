@@ -108,7 +108,7 @@ internal static class PrintCommand
             {
                 if (ShippedPresets.Open(plugins.Catalog, named!, error) is not { } shipped) return Exit.Failed;
 
-                return PrintCommand.Run(
+                return Run(
                     shipped.Opened.Patch,
                     null,
                     into,
@@ -126,7 +126,7 @@ internal static class PrintCommand
             // against itself would prove nothing about the first.
             return Patches.Open(file, result.InvocationConfiguration.Error) is not { } opened
                 ? Exit.Failed
-                : PrintCommand.Run(
+                : Run(
                     opened.Patch,
                     file,
                     into,

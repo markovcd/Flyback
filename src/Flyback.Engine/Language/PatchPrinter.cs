@@ -330,7 +330,7 @@ public static class PatchPrinter
         /// and round for ever. Each is said once at the end instead, as the
         /// back-wire it is — see <see cref="Cycles"/>.
         /// </summary>
-        private readonly IReadOnlySet<Connection> backwards = Flyback.Core.Graph.Cycles.Backwards(patch);
+        private readonly IReadOnlySet<Connection> backwards = Core.Graph.Cycles.Backwards(patch);
 
         /// <summary>
         /// What feeds a socket, unless what feeds it runs backwards — in which

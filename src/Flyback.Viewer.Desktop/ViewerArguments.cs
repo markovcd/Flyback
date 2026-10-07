@@ -130,7 +130,7 @@ internal static class ViewerArguments
             DefaultValueFactory = _ => settings.Oversample,
         };
 
-        oversample.AcceptOnlyFromAmong([.. AudioRenderer.Oversamples.Select(factor => factor.ToString(System.Globalization.CultureInfo.InvariantCulture))]);
+        oversample.AcceptOnlyFromAmong([.. AudioRenderer.Oversamples.Select(factor => factor.ToString(CultureInfo.InvariantCulture))]);
 
         latency.Validators.Add(result =>
         {
