@@ -30,7 +30,6 @@ public sealed class Binder
     private readonly NodeIdentity identity;
 
     private readonly ModuleNames moduleNames;
-    private readonly ExpressionBinder expressions;
     private readonly Dictionary<string, DefStatement> defs = new(StringComparer.Ordinal);
     private readonly HashSet<string> expanding = new(StringComparer.Ordinal);
 
@@ -61,21 +60,6 @@ public sealed class Binder
         identity = wiring.Identity;
 
         moduleNames = new ModuleNames(modules);
-        expressions = new ExpressionBinder(new ExpressionBinder.Context
-        {
-            Source = Source,
-            Clock = wiring.Clock,
-            Unknown = Unknown,
-            Mention = Mention,
-            Refuse = Refuse,
-            Call = Call,
-            Pipe = Pipe,
-            Placeholder = Placeholder,
-            ExpressionModule = (line, column) => Module(NodeCatalog.ExpressionTypeId, line, column),
-            Place = (def, inputs, line, column) => wiring.Place(def, inputs, line, column),
-            ConfigureExpression = wiring.Formula,
-            Complain = this.issues.Complain,
-        });
     }
 
     /// <summary>
@@ -170,7 +154,7 @@ public sealed class Binder
             return;
         }
 
-        if (expr.Port is null && ExpressionBinder.StatementWord(expr.Name) is { } example)
+        if (expr.Port is null && StatementWord(expr.Name) is { } example)
         {
             issues.Complain(IssueCode.UnknownName, expr.Line, expr.Column,
                 $"'{expr.Name}' starts a statement only with what it says after it: {example}.");
@@ -179,6 +163,19 @@ public sealed class Binder
 
         issues.Complain(IssueCode.UnknownName, expr.Line, expr.Column, $"nothing here is called '{expr.Name}'.");
     }
+
+    /// <summary>What a line starting with this word of the language looks like, for a name that is one.</summary>
+    private static string? StatementWord(string name) => name switch
+    {
+        "requires" => "requires flyback.picture",
+        "keyboard" => "keyboard piano",
+        "off" => "off drone",
+        "description" => "description \"A slow drone\"",
+        "author" => "author \"Ada\"",
+        "tags" => "tags \"drone\" \"slow\"",
+        "panel" => "panel level = 0.5",
+        _ => null,
+    };
 
     private static string? Builtin(string name) => name switch
     {
@@ -757,7 +754,186 @@ public sealed class Binder
 
     // --- expressions ---------------------------------------------------------
 
-    private Value? Bind(Expr expr, Scope scope) => expressions.Bind(expr, scope);
+    private Value? Bind(Expr expr, Scope scope) => expr switch
+    {
+        NumberExpr number => new Figure(number.Value, number.Style, new Site(number.Line, number.Column)),
+        TextExpr text => new Named(text.Value),
+        NegateExpr or BinaryExpr => Sum(expr, scope),
+        NameExpr name => Read(name, scope),
+        CallExpr call => Call(call, scope, null),
+        SelectExpr select => Select(select, scope, piped: null),
+        PipeExpr pipe => Pipe(pipe, scope),
+        RangeExpr range => Refuse(IssueCode.RangeOutsideArgument, range.Line, range.Column, "a range only means something as an argument."),
+        _ => null,
+    };
+
+    private Value? Read(NameExpr expr, Scope scope)
+    {
+        if (expr.Port is null && Source(expr.Name) is { } value) return value;
+
+        if (expr is { Name: "t", Port: { } port }) return Output(wiring.Clock(), port, expr.Line, expr.Column);
+
+        if (expr.Name == "out")
+        {
+            return Refuse(IssueCode.OutputIsNotASource, expr.Line, expr.Column,
+                "the Output has nothing to read. Pipe something into 'out.color' or 'out.left'.");
+        }
+
+        if (Placeholder(expr))
+            return Refuse(IssueCode.PlaceholderMisplaced, expr.Line, expr.Column, "'_' stands for what is piped in, as a call's argument: 'socket: _'.");
+
+        if (scope.Find(expr.Name) is not { } bound)
+        {
+            Unknown(expr);
+            return null;
+        }
+
+        if (bound is Failed) return null;
+
+        Mention(expr, bound);
+
+        if (expr.Port is null) return bound;
+
+        if (bound is not Placed)
+            return Refuse(IssueCode.NotAModule, expr.Line, expr.Column, $"'{expr.Name}' is not a module, so it has no sockets.");
+
+        return Output(bound, expr.Port, expr.Line, expr.Column);
+    }
+
+    private Value? Select(SelectExpr expr, Scope scope, Value? piped)
+    {
+        var source = expr.Source switch
+        {
+            CallExpr call => Call(call, scope, piped),
+            SelectExpr inner => Select(inner, scope, piped),
+            _ => Bind(expr.Source, scope),
+        };
+
+        return source is null ? null : Output(source, expr.Port, expr.Line, expr.Column);
+    }
+
+    private Value? Output(Value value, string name, int line, int column)
+    {
+        if (value is not Placed placed)
+            return Refuse(IssueCode.NotAModule, line, column, $"this is not a module, so it has no output called '{name}'.");
+
+        var port = SocketNames.Find(placed.Def.Outputs, name);
+
+        if (port < 0)
+        {
+            return Refuse(IssueCode.UnknownOutput, line, column,
+                $"'{placed.Def.Name}' has no output called '{name}'. It has {SocketNames.List(placed.Def.Outputs)}.");
+        }
+
+        return new Socket(placed.Id, placed.Def, port);
+    }
+
+    // --- sums ----------------------------------------------------------------
+
+    /// <summary>
+    /// A sum: a number where it is all numbers, and otherwise an Expression
+    /// module reading the signals in it (ADR-0106).
+    /// </summary>
+    private Value? Sum(Expr expr, Scope scope) => Term(expr, scope) switch
+    {
+        Formulas.Operand operand => operand.Figure,
+        Formulas.Signal signal => signal.Value,
+        Formulas.Operation operation => Expression(operation),
+        _ => null,
+    };
+
+    private Formulas.Term? Term(Expr expr, Scope scope)
+    {
+        switch (expr)
+        {
+            case NegateExpr negate:
+            {
+                if (Term(negate.Value, scope) is not { } value) return null;
+
+                // The sign belongs to the number for diagnostics and write-back.
+                if (value is Formulas.Operand operand)
+                {
+                    return new Formulas.Operand(operand.Figure with
+                    {
+                        Amount = -operand.Figure.Amount,
+                        Where = new Site(negate.Line, negate.Column),
+                    });
+                }
+
+                return Fit(new Formulas.Operation('-', value, null, negate.Line, negate.Column));
+            }
+
+            case BinaryExpr binary:
+            {
+                if (Term(binary.Left, scope) is not { } left) return null;
+                if (Term(binary.Right, scope) is not { } right) return null;
+
+                if (left is Formulas.Operand a && right is Formulas.Operand b)
+                    return Formulas.Fold(binary.Operator, a.Figure, b.Figure, binary.Line, binary.Column, issues);
+
+                return Fit(new Formulas.Operation(Formulas.Sign(binary.Operator), left, right, binary.Line, binary.Column));
+            }
+
+            default:
+            {
+                if (Bind(expr, scope) is not { } value) return null;
+
+                if (value is Figure figure) return new Formulas.Operand(figure);
+
+                // Each reference to a panel knob is a distinct formula input.
+                if (value is Dial) return new Formulas.Signal(value, (Guid.NewGuid(), 0));
+
+                if (Formulas.From(value) is { } from) return new Formulas.Signal(value, from);
+
+                issues.Complain(IssueCode.NotASignal, expr.Line, expr.Column, "this is not a signal, so nothing can be wired from it.");
+                return null;
+            }
+        }
+    }
+
+    /// <summary>Splits an operation until each Expression reads no more signals than it has sockets.</summary>
+    private Formulas.Term? Fit(Formulas.Operation operation)
+    {
+        while (Formulas.Overflows(operation))
+        {
+            var left = Formulas.Inputs(operation.Left).Count;
+            var right = operation.Right is null ? 0 : Formulas.Inputs(operation.Right).Count;
+
+            if (left >= right)
+            {
+                if (Settled(operation.Left) is not { } settled) return null;
+                operation = operation with { Left = settled };
+            }
+            else
+            {
+                if (Settled(operation.Right!) is not { } settled) return null;
+                operation = operation with { Right = settled };
+            }
+        }
+
+        return operation;
+    }
+
+    /// <summary>An operation placed as a module and read as one signal, so the operation around it has a socket to spare.</summary>
+    private Formulas.Term? Settled(Formulas.Term term) =>
+        term is not Formulas.Operation operation ? term
+        : Expression(operation) is { } placed && Formulas.From(placed) is { } from ? new Formulas.Signal(placed, from)
+        : null;
+
+    /// <summary>Places an operation as an Expression module carrying its formula.</summary>
+    private Value? Expression(Formulas.Operation operation)
+    {
+        var inputs = Formulas.Inputs(operation);
+
+        if (Formulas.Written(operation, inputs, issues) is not { } formula) return null;
+        if (Module(NodeCatalog.ExpressionTypeId, operation.Line, operation.Column) is not { } def) return null;
+
+        var placed = wiring.Place(def, [.. inputs.Select((input, socket) => (socket, input.Value))], operation.Line, operation.Column);
+
+        wiring.Formula(placed, formula, operation.Line, operation.Column);
+
+        return placed;
+    }
 
     private Value? Refuse(string code, int line, int column, string message)
     {
@@ -831,7 +1007,7 @@ public sealed class Binder
         // 'beats |> notes() [ A3 C4 ].gate' is the sequencer with the beats
         // arriving, and then its gate: the selector binds tighter than the pipe,
         // so it is the stage's output that is chosen and not the source's.
-        if (expr.Stage is SelectExpr select) return expressions.Select(select, scope, value);
+        if (expr.Stage is SelectExpr select) return Select(select, scope, value);
 
         return Refuse(IssueCode.BadStage, expr.Line, expr.Column, "only a module or a socket may follow '|>'.");
     }
