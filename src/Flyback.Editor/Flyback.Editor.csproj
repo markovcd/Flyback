@@ -22,6 +22,7 @@
     <!-- The programs around it start the editor, and the UI tests and scenarios drive its internal controls. -->
     <InternalsVisibleTo Include="Flyback" />
     <InternalsVisibleTo Include="Flyback.Editor.Web" />
+    <InternalsVisibleTo Include="Flyback.Editor.Android" />
     <InternalsVisibleTo Include="Flyback.Editor.Tests" />
     <InternalsVisibleTo Include="Flyback.Ui.Tests" />
     <InternalsVisibleTo Include="Flyback.Viewer.Desktop.Tests" />

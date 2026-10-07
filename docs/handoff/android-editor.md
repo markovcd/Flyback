@@ -1,16 +1,31 @@
 # An Android editor
 
 Planned on 2026-10-06, on `main` at `7a65ff53`. It is on TODO.md; take it off there, and
-delete this file, in the commit that lands it.
+delete this file, in the commit that lands the last step.
 
 - **Kind:** Plan
-- **Status:** Open, parked
+- **Status:** In progress. Steps 1 and 2 of the order are done (ADR-0184).
 
 ## What is wanted
 
 `Flyback.Editor.Android`: the editor as an app on an Android tablet or phone, a third shell
 beside `Flyback.Editor.Desktop` and `Flyback.Editor.Web`. Nothing here was run; it is read
-from the code.
+from the code, except where the order says done.
+
+## Where it stands
+
+`src/Flyback.Editor.Android` boots to the canvas on an emulator and plays the picture on
+GLES at 49 fps, silent. The toolchain is user-local: a Microsoft .NET SDK in `~/.dotnet`
+(Ubuntu's packaged SDK takes no workloads) with the android workload, a JDK in
+`~/Android/jdk`, the SDK in `~/Android/Sdk` and an AVD named `flyback` (Pixel Tablet,
+API 36, x86_64). Build and install with `DOTNET_ROOT=~/.dotnet`, `JAVA_HOME` and
+`ANDROID_HOME` set:
+`dotnet build src/Flyback.Editor.Android -t:Install -p:RuntimeIdentifier=android-x64`.
+The emulator boots headless with `-no-window -gpu swiftshader_indirect`; it hangs and dies
+while a full test run has the machine loaded.
+
+Not yet checked on a device: the dialogs (`WindowDialog`), the file pickers, the gallery's
+download from the preset site, and anything after a rotation.
 
 ## What already carries over
 
@@ -62,12 +77,10 @@ from the code.
 
 ## The order
 
-1. A spike: the app boots to the node canvas on an emulator, no sound, no picture. It
-   answers whether Avalonia 12 on Android and the editor get along.
-2. The picture on GLES.
+1. ~~A spike: the app boots to the node canvas on an emulator.~~ Done.
+2. ~~The picture on GLES.~~ Done: the desktop's `GpuPreviewSurface` draws as it is.
 3. Sound through `AudioTrack`, and the IL check on a device.
 4. The touch bugs, then a tablet layout.
 5. A phone layout, Line In and MIDI.
 
-An ADR comes first: Avalonia stays (ADR-0015), and what is new is a shell that cannot load
-plugins from a folder.
+The ADR is ADR-0184.

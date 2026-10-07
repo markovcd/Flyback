@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The editor on an Android tablet or phone (ADR-0184): Flyback.Editor under
+    Avalonia.Android, with the module plugins linked in as the page links them.
+    Needs the android workload, a JDK and the Android SDK, none of which the gate
+    image carries, so it is built by path and kept out of Flyback.slnx.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>26</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Flyback.Editor.Android</RootNamespace>
+    <ApplicationId>app.flybackmodular.editor</ApplicationId>
+    <ApplicationTitle>Flyback</ApplicationTitle>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
+    <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+
+    <!-- As the page: the patch reader deserializes by reflection, so Flyback is not trimmed. -->
+    <TrimMode>partial</TrimMode>
+    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+
+    <!-- As the page: the packages the workload adds are versioned with it. -->
+    <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Android" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flyback.Editor\Flyback.Editor.csproj" />
+  </ItemGroup>
+
+  <!-- The page's plugins: the ones that make modules. -->
+  <Import Project="..\Flyback.Viewer.Web\LinkedPlugins.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="@(WebPlugin)" LinkedPlugin="true" />
+  </ItemGroup>
+
+</Project>

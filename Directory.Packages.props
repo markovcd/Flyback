@@ -24,6 +24,7 @@
   <!-- The shell: Avalonia, and the two controls it does not come with. -->
   <ItemGroup>
     <PackageVersion Include="Avalonia" Version="12.1.3" />
+    <PackageVersion Include="Avalonia.Android" Version="12.1.3" />
     <PackageVersion Include="Avalonia.Browser" Version="12.1.3" />
     <PackageVersion Include="Avalonia.Desktop" Version="12.1.3" />
     <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.1.3" />

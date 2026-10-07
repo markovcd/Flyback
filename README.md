@@ -301,6 +301,14 @@ The gallery shows the build's stills from `/stills/` where the site has them (AD
 
 `worker/build-assets.sh` builds the website as the Worker serves it, the viewer, the editor and the stills built in, and `worker/dev.sh` serves it; `--no-aot` makes it quicker.
 
+## Android editor
+
+`src/Flyback.Editor.Android` is the editor as an Android app, with the module plugins linked in and its files in the app's private folder (ADR-0184). It is not finished: there is no sound yet. It needs the android workload on a .NET SDK from Microsoft, a JDK and the Android SDK, so it sits outside `Flyback.slnx` and the gate and is built by path:
+
+```bash
+dotnet build src/Flyback.Editor.Android -t:Run -p:RuntimeIdentifier=android-x64
+```
+
 ## How it works
 
 A patch is a graph, but during rendering it is compiled into a flat straight-line program over registers. Unused sections are not compiled, and the inner loop is designed to be cheap and predictable.
