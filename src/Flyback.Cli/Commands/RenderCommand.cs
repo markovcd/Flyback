@@ -124,14 +124,12 @@ internal static class RenderCommand
         }
 
         var wantsPicture = still || format!.HasPicture;
-        var wantsSound = !still && (!format!.HasPicture || patch.Reaches().Sound);
 
         var video = wantsPicture ? patch.CompileForVideo(samples: samples, pictures: pictures) : null;
 
-        // A still of a Scope, a Beam or a Meter is of the sound played up to it.
-        if (still && video is not null && Listens(video.Program)) wantsSound = true;
-
-        var audio = wantsSound ? patch.CompileForAudio(samples: samples) : null;
+        var audio = WantsSound(still, format?.HasPicture ?? true, patch.Reaches().Sound, video?.Program)
+            ? patch.CompileForAudio(samples: samples)
+            : null;
 
         var issues = (video?.Issues ?? [])
             .Concat(audio?.Issues ?? [])
@@ -261,6 +259,13 @@ internal static class RenderCommand
 
         return null;
     }
+
+    /// <summary>
+    /// Whether a render plays the sound: to write it, or because the picture is of what
+    /// the speakers played, a Scope's, a Beam's or a Meter's, in a still and a clip alike.
+    /// </summary>
+    internal static bool WantsSound(bool still, bool hasPicture, bool reachesSound, CompiledPatch? picture) =>
+        (!still && (!hasPicture || reachesSound)) || (picture is not null && Listens(picture));
 
     // Whether the picture reads what the speakers played: a chart's buffer or a Meter's reading.
     private static bool Listens(CompiledPatch program) =>
