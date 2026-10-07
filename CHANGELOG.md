@@ -17,7 +17,7 @@
 
 - A Lissajous preset: two sines a fifth apart, one to each speaker, drawn against each other on a Beam.
 - The preset gallery narrows by heading, by sound or picture and by topic, and a click shows a card larger.
-- With an assistant set up, the preset gallery has a card to type an idea in: Expand writes it out as a detailed brief, and Start opens an empty patch and sends it.
+- With an assistant set up, the preset gallery has a card to type an idea in: Start opens an empty patch, has the assistant write the idea out as a detailed brief and sends it.
 - The preset gallery's pictures are sharper, without the smudge around their edges.
 - A preset opened from the gallery stops counting as the open preset once the patch is edited.
 

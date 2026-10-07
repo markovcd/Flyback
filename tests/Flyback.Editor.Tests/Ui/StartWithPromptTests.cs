@@ -136,40 +136,6 @@ public class StartWithPromptTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void Expanding_writes_the_brief_over_the_idea_where_it_stands()
-    {
-        var window = Open(new Briefing());
-
-        OpenGallery(window);
-
-        Words(window).Text = "a slow dub track about a night train";
-        Settle(window);
-
-        Press(window, "expand-prompt");
-        Until(() => Words(window).Text == Briefing.Brief);
-
-        Words(window).IsReadOnly.ShouldBeFalse("the brief is there to be edited");
-        All<Button>(window).Single(b => b.Name == "start-prompt").IsEnabled.ShouldBeTrue();
-    }
-
-    [AvaloniaFact]
-    public void A_refused_expansion_says_why_and_leaves_the_idea_alone()
-    {
-        var window = Open(new Briefing(fails: "the key was refused"));
-
-        OpenGallery(window);
-
-        Words(window).Text = "a slow dub track";
-        Settle(window);
-
-        Press(window, "expand-prompt");
-        Until(() => All<TextBlock>(window).Any(note => note.Name == "prompt-note" && note.Text == "the key was refused"));
-
-        Words(window).Text.ShouldBe("a slow dub track");
-        Words(window).IsReadOnly.ShouldBeFalse();
-    }
-
-    [AvaloniaFact]
     public void Starting_closes_the_gallery_empties_the_patch_and_sends_the_prompt_written_out()
     {
         var assistant = new Briefing();

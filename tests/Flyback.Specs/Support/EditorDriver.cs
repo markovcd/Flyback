@@ -542,21 +542,6 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     public void TypePrompt(string idea) =>
         DoWindow((open, _) => Named<TextBox>(open, "prompt-text").Text = idea);
 
-    /// <summary>Presses Expand on the prompt card and waits for what it holds to change.</summary>
-    public void ExpandPrompt() =>
-        Run(async () =>
-        {
-            var open = Window();
-            var words = Named<TextBox>(open, "prompt-text");
-            var idea = words.Text;
-
-            Named<Button>(open, "expand-prompt").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
-            await Until(() => words.Text != idea, () => $"the assistant to write the idea out. {Situation(open)}");
-
-            return true;
-        });
-
     /// <summary>Presses Start on the prompt card and waits until <paramref name="sent"/> says the assistant has the prompt.</summary>
     public void StartPrompt(Func<bool> sent) =>
         Run(async () =>

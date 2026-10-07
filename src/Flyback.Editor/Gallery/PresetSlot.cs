@@ -332,7 +332,7 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             yours: Yours(),
             site: site.Presets(),
             kept: site.Kept,
-            prompting: assistant.Ready ? new PromptStart(assistant.ExpandAsync) : null);
+            prompting: assistant.Ready);
         var chosen = await dialog.Show("Start from a preset", parts.Tiles, fill: true, wide: true);
 
         audition.PointedAt(null);
@@ -362,8 +362,7 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
 
     /// <summary>
     /// Puts an empty patch on the canvas, opens the assistant's column and sends it
-    /// <paramref name="prompted"/>, written out first unless it already was, and
-    /// nothing at all unless the empty patch is put there.
+    /// <paramref name="prompted"/>, written out first, and nothing at all unless the empty patch is put there.
     /// </summary>
     private async Task StartFromPromptAsync(PromptedStart prompted)
     {
@@ -373,8 +372,7 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
 
         await reactions.RaiseAsync(new AssistantAsked(true));
 
-        if (prompted.Written) await assistant.SendAsync(prompted.Prompt);
-        else await assistant.StartFromIdeaAsync(prompted.Prompt);
+        await assistant.StartFromIdeaAsync(prompted.Prompt);
     }
 
     private async Task PickedAsync()

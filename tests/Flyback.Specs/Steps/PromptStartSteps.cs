@@ -47,9 +47,6 @@ public sealed class PromptStartSteps(EditorDriver editor, PatchContext context) 
     [When("{string} is typed in the prompt card")]
     public void WhenAnIdeaIsTyped(string idea) => editor.TypePrompt(idea);
 
-    [When("the prompt is expanded")]
-    public void WhenThePromptIsExpanded() => editor.ExpandPrompt();
-
     [When("a patch is started from the prompt")]
     public void WhenAPatchIsStarted() => editor.StartPrompt(() => assistant.Heard.Any(heard => !Writing(heard)));
 

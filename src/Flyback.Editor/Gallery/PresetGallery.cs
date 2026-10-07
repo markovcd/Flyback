@@ -62,8 +62,8 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
     /// answer. A tile of theirs answers with its <see cref="KeptPreset"/>.
     /// </param>
     /// <param name="prompting">
-    /// What a card to start from a prompt needs, shown first, or null for a gallery
-    /// without one. The card answers with a <see cref="PromptedStart"/>.
+    /// Whether to show a card to start from a prompt, first. It answers with a
+    /// <see cref="PromptedStart"/>.
     /// </param>
     /// <param name="use">What the button that opens the chosen card says.</param>
     public GalleryParts Build(
@@ -73,7 +73,7 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
         YourPresets? yours = null,
         PresetSite? site = null,
         KeptSharedPresets? kept = null,
-        PromptStart? prompting = null,
+        bool prompting = false,
         string use = "Use this preset")
     {
         var choice = new Choice { Elsewhere = site is not null, Typing = !lastPress.ByFinger };
@@ -110,7 +110,7 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
 
             var main = new StackPanel { Margin = new Thickness(20, 16, 20, 24), Spacing = 16 };
 
-            if (prompting is not null) main.Children.Add(PromptCard(prompting, open, closing.Token));
+            if (prompting) main.Children.Add(PromptCard(open));
 
             main.Children.Add(choice.Hint);
             main.Children.Add(gallery);
