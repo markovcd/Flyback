@@ -8,6 +8,13 @@
 
 - Asked to listen, an assistant that has no model able to hear, such as Claude Code or Codex, says it cannot hear without pointing at a setting it does not have.
 
+### Fixes
+
+- A MIDI file with thousands of tempo changes opens at once instead of freezing the editor, and of two changes at one moment the later one holds.
+- A Beam fed a signal too large for a number draws instead of failing every frame.
+- `flyback-cli render` refuses a `--seconds`, `--from`, `--at` or `--fps` it cannot use instead of overflowing or running for ever.
+- `flyback-cli compare` refuses a `--seconds` of nothing instead of calling any two patches the same.
+
 ## 0.8.0 — 2026-10-07
 
 154 commits since 0.7.1.

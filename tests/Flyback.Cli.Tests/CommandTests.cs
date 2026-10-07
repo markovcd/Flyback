@@ -378,6 +378,38 @@ public class CommandTests
     }
 
     /// <summary>
+    /// Every one of these is multiplied by a rate into a count of samples or frames,
+    /// so each is refused by name rather than overflowing or playing for ever.
+    /// </summary>
+    [Theory]
+    [InlineData("out.wav", -1d, 0d, 0d, 30d, "--seconds")]
+    [InlineData("out.wav", double.NaN, 0d, 0d, 30d, "--seconds")]
+    [InlineData("out.wav", 1e6, 0d, 0d, 30d, "--seconds")]
+    [InlineData("out.avi", double.PositiveInfinity, 0d, 0d, 30d, "--seconds")]
+    [InlineData("out.wav", 1d, 1e12, 0d, 30d, "--from")]
+    [InlineData("out.avi", 1d, 1e12, 0d, 30d, "--from")]
+    [InlineData("out.png", 1d, 0d, 1e12, 30d, "--at")]
+    [InlineData("out.png", 1d, 0d, double.NaN, 30d, "--at")]
+    [InlineData("out.png", 1d, 0d, -5d, 30d, "--at")]
+    [InlineData("out.avi", 1d, 0d, 0d, double.NaN, "--fps")]
+    [InlineData("out.avi", 1d, 0d, 0d, 1e9, "--fps")]
+    [InlineData("out.avi", 1d, 0d, 0d, -1d, "--fps")]
+    public void A_number_a_render_cannot_use_is_refused_before_anything_is_written(
+        string name, double seconds, double from, double at, double fps, string said)
+    {
+        using var directory = new Scratch();
+        var file = directory.File(name);
+
+        var (code, _, error) = Run((_, e) => RenderCommand.Run(
+            Preset("Drone"), new RenderOptions(file, 64, 36, At: at, Seconds: seconds, Fps: fps, From: from), e));
+
+        code.ShouldBe(Exit.Failed);
+        error.ShouldContain(said);
+        file.Refresh();
+        file.Exists.ShouldBeFalse();
+    }
+
+    /// <summary>
     /// A file made of stand-ins looks exactly like a real one, so it is not
     /// written at all.
     /// </summary>
@@ -824,6 +856,23 @@ public class CommandTests
 
         code.ShouldBe(Exit.Ok);
         output.ShouldContain("are the same instrument");
+    }
+
+    /// <summary>No time at all compares nothing, which is not two patches being the same.</summary>
+    [Theory]
+    [InlineData(0d)]
+    [InlineData(-1d)]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    public void A_length_that_compares_nothing_is_refused(double seconds)
+    {
+        var (code, output, error) = Run((o, e) => CompareCommand.Run(
+            Written(Hello), "was.fbks", Written(Hello.Replace("freq: 220", "freq: 221", StringComparison.Ordinal)), "now.fbks",
+            new CompareOptions(seconds, 64, 36), o, e, TestContext.Current.CancellationToken));
+
+        code.ShouldBe(Exit.Failed);
+        error.ShouldContain("--seconds");
+        output.ShouldBeEmpty();
     }
 
     /// <summary>Only the half that was turned parts, and a script can read which.</summary>

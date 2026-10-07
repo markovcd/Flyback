@@ -105,11 +105,12 @@ public static class Beams
         // every evaluation. Past a budget, every stride'th evaluation is drawn with
         // the weight of the ones skipped, which costs a picture of noise its detail
         // and nothing else.
+        // Measured in texels, which are finite whatever was played.
         var travel = 0d;
         for (var i = 1; i < span; i++)
-            travel += MathF.Abs(xs[i] - xs[i - 1]) + MathF.Abs(ys[i] - ys[i - 1]);
+            travel += MathF.Abs(Texel(xs[i]) - Texel(xs[i - 1])) + MathF.Abs(Texel(ys[i]) - Texel(ys[i - 1]));
 
-        var stride = (int)Math.Clamp(Math.Ceiling(travel * Size * 0.5d / Budget), 1, span - 1);
+        var stride = (int)Math.Clamp(Math.Ceiling(travel / Budget), 1, span - 1);
 
         // Each evaluation's share of the window, newest largest, summing to one.
         var stretch = 1d - Math.Pow(fade, stride);

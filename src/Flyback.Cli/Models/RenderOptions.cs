@@ -35,4 +35,11 @@ internal sealed record RenderOptions(
     PictureBackend Backend = PictureBackend.Any,
     int Oversample = AudioRenderer.DefaultOversample,
     FileInfo? Input = null,
-    double From = 0d);
+    double From = 0d)
+{
+    /// <summary>The longest a render runs, starts at or is a still of, in seconds: three hours.</summary>
+    public const double MostSeconds = 10_800d;
+
+    /// <summary>The most frames a second a clip is drawn at.</summary>
+    public const double MostFps = 240d;
+}

@@ -221,8 +221,7 @@ public static class MidiFileReader
     private static LoadedMidi? Placed(
         List<Pressed> events, List<(long Tick, double Micros)> tempos, Division division, ref MidiFault fault)
     {
-        // Sorted by tick, a change at the same tick as an earlier one replacing it.
-        tempos.Sort((a, b) => a.Tick.CompareTo(b.Tick));
+        var map = Map(tempos, division);
 
         var open = new Dictionary<(int Channel, int Note), Queue<Pressed>>();
         var notes = new List<MidiNote>();
@@ -242,7 +241,7 @@ public static class MidiFileReader
             {
                 var start = queue.Dequeue();
 
-                notes.Add(Note(start, Seconds(press.Tick, tempos, division)));
+                notes.Add(Note(start, Seconds(press.Tick, map, division)));
             }
         }
 
@@ -251,7 +250,7 @@ public static class MidiFileReader
 
         foreach (var queue in open.Values)
             foreach (var start in queue)
-                notes.Add(Note(start, Seconds(finish, tempos, division)));
+                notes.Add(Note(start, Seconds(finish, map, division)));
 
         if (notes.Count == 0)
         {
@@ -276,28 +275,50 @@ public static class MidiFileReader
         return new LoadedMidi(notes, last);
 
         MidiNote Note(Pressed start, double end) =>
-            new((float)Seconds(start.Tick, tempos, division), (float)Math.Max(end, Seconds(start.Tick, tempos, division)), start.Note, start.Velocity, start.Channel);
+            new((float)Seconds(start.Tick, map, division), (float)Math.Max(end, Seconds(start.Tick, map, division)), start.Note, start.Velocity, start.Channel);
     }
 
-    /// <summary>A tick in seconds, through every tempo change before it.</summary>
-    private static double Seconds(long tick, List<(long Tick, double Micros)> tempos, Division division)
+    /// <summary>
+    /// Each tempo change with the second it falls on, one to a tick: of two at the
+    /// same tick, the later in the file wins.
+    /// </summary>
+    private static List<(long Tick, double At, double Micros)> Map(List<(long Tick, double Micros)> tempos, Division division)
+    {
+        var map = new List<(long Tick, double At, double Micros)> { (0L, 0d, DefaultTempo) };
+
+        if (division.TicksPerSecond > 0d) return map;
+
+        // OrderBy is stable, which is what keeps the file's order within a tick.
+        foreach (var (tick, micros) in tempos.OrderBy(t => t.Tick))
+        {
+            var (from, at, tempo) = map[^1];
+            var change = (tick, at + (tick - from) * tempo / 1e6d / division.PerQuarter, micros);
+
+            if (tick == from) map[^1] = change;
+            else map.Add(change);
+        }
+
+        return map;
+    }
+
+    /// <summary>A tick in seconds, from the last tempo change at or before it.</summary>
+    private static double Seconds(long tick, List<(long Tick, double At, double Micros)> map, Division division)
     {
         if (division.TicksPerSecond > 0d) return tick / division.TicksPerSecond;
 
-        var seconds = 0d;
-        var at = 0L;
-        var tempo = DefaultTempo;
+        var (lo, hi) = (0, map.Count - 1);
 
-        foreach (var (changed, micros) in tempos)
+        while (lo < hi)
         {
-            if (changed >= tick) break;
+            var mid = (lo + hi + 1) / 2;
 
-            seconds += (changed - at) * tempo / 1e6d / division.PerQuarter;
-            at = changed;
-            tempo = micros;
+            if (map[mid].Tick <= tick) lo = mid;
+            else hi = mid - 1;
         }
 
-        return seconds + (tick - at) * tempo / 1e6d / division.PerQuarter;
+        var (from, at, tempo) = map[lo];
+
+        return at + (tick - from) * tempo / 1e6d / division.PerQuarter;
     }
 
     /// <summary>A variable-length quantity, at most four bytes, false where the bytes end first.</summary>

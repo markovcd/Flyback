@@ -62,6 +62,19 @@ public sealed class MidiFileTests : IDisposable
     }
 
     [Fact]
+    public void Of_two_tempo_changes_at_one_tick_the_later_in_the_file_wins()
+    {
+        // Enough changes that an unstable sort would reorder a pair: a second to the
+        // quarter, then half that, at each of forty ticks.
+        var changes = Enumerable.Range(0, 40)
+            .SelectMany(tick => new[] { Tempo(tick == 0 ? 0 : 1, 1_000_000), Tempo(0, 500_000) });
+
+        var song = Song(File(480, Track([.. changes, On(0, 1, 60), Off(480, 1, 60)])));
+
+        song.Notes.Single().Start.ShouldBe(39 * 0.5f / 480, 1e-5f);
+    }
+
+    [Fact]
     public void A_note_on_of_velocity_nought_lets_the_note_go_and_running_status_is_read()
     {
         // 90 3C 64 | delta 480, running status: 3C 00 — a note-on of velocity 0.
@@ -154,6 +167,29 @@ public sealed class MidiFileTests : IDisposable
 
         song.ShouldBeNull();
         fault.ShouldBe(MidiFault.TooLong);
+    }
+
+    /// <summary>
+    /// Each note is placed through every tempo change before it, so the changes are
+    /// looked up rather than walked: a file under a megabyte must not take a minute.
+    /// </summary>
+    [Fact]
+    public void A_file_of_many_tempo_changes_and_many_notes_reads_in_good_time()
+    {
+        var tempos = Enumerable.Range(0, 100_000).Select(_ => Tempo(1, 500_000));
+        var notes = Enumerable.Range(0, 50_000).SelectMany(_ => new byte[] { 0, 60, 0, 0, 60, 100 });
+
+        var bytes = File(96, Track([.. tempos]), Track(On(100_001, 1, 60), [.. notes]));
+
+        var took = System.Diagnostics.Stopwatch.StartNew();
+        var song = Song(bytes);
+        took.Stop();
+
+        song.Notes.Count.ShouldBe(50_001);
+
+        // Tens of milliseconds alone. Walking the changes for each note took over a
+        // minute, so ten seconds tells the two apart on a machine running every suite.
+        took.Elapsed.TotalSeconds.ShouldBeLessThan(10d);
     }
 
     [Fact]

@@ -105,9 +105,10 @@ public static class MovieRenderer
     private static void Check(MovieSettings settings)
     {
         if (settings.Width <= 0 || settings.Height <= 0) throw new ArgumentOutOfRangeException(nameof(settings), "A frame needs both dimensions.");
-        if (settings.FramesPerSecond <= 0d) throw new ArgumentOutOfRangeException(nameof(settings), "A frame rate has to be positive.");
+        if (!(settings.FramesPerSecond > 0d)) throw new ArgumentOutOfRangeException(nameof(settings), "A frame rate has to be positive.");
         if (!double.IsFinite(settings.From) || settings.From < 0d) throw new ArgumentOutOfRangeException(nameof(settings), "A clip cannot start before the patch does.");
-        if (settings.Seconds <= 0d) throw new ArgumentOutOfRangeException(nameof(settings), "An export has to have a length.");
+        if (!(settings.Seconds > 0d)) throw new ArgumentOutOfRangeException(nameof(settings), "An export has to have a length.");
+        if ((settings.From + settings.Seconds) * settings.FramesPerSecond >= int.MaxValue) throw new ArgumentOutOfRangeException(nameof(settings), "A clip has more frames than can be counted.");
         if (!settings.Written.HasPicture) throw new ArgumentOutOfRangeException(nameof(settings), "A clip of a patch has a picture in it.");
     }
 

@@ -160,6 +160,20 @@ public class BeamTests
         Older((Persistence, -0.5f)).ShouldBeGreaterThan(0.2);
     }
 
+    /// <summary>
+    /// A product too large for a float plays as infinity, and infinity less itself
+    /// is not a number: the beam is drawn off the screen's edge rather than failing.
+    /// </summary>
+    [Fact]
+    public void A_signal_past_the_largest_number_is_drawn_without_failing()
+    {
+        var (patch, _) = Drawing(("math.mul", [(0, 1e30f), (1, 1e30f)]), (Value, [(0, 0f)]));
+
+        var drawn = Shown(patch);
+
+        Lit(drawn, 0, 0).ShouldBe(0d);
+    }
+
     [Fact]
     public void Nothing_played_is_nothing_drawn()
     {

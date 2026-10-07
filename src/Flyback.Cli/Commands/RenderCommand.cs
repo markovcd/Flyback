@@ -42,9 +42,9 @@ internal static class RenderCommand
 
         var still = options.Out.Extension.Equals(".png", StringComparison.OrdinalIgnoreCase);
 
-        if (!double.IsFinite(options.From) || options.From < 0d)
+        if (Refuse(options, still) is { } wrong)
         {
-            error.WriteLine($"{GlobalConstants.ApplicationName}: --from is a second of the patch, from 0.");
+            error.WriteLine($"{GlobalConstants.ApplicationName}: {wrong}");
             return Exit.Failed;
         }
 
@@ -290,6 +290,20 @@ internal static class RenderCommand
         frames.Render(program, options.At, options.Width, options.Height, pixels, stride, heard);
 
         PngWriter.WriteBgra(options.Out.FullName, pixels, options.Width, options.Height, stride);
+    }
+
+    /// <summary>What is wrong with the numbers a render was given, or null.</summary>
+    /// <remarks>Each is multiplied by a rate into a count of samples or frames, so each has a ceiling.</remarks>
+    private static string? Refuse(RenderOptions options, bool still)
+    {
+        const double most = RenderOptions.MostSeconds;
+
+        if (!(options.From >= 0d && options.From <= most)) return $"--from is a second of the patch, from 0 to {most:0}.";
+        if (still && !(options.At >= 0d && options.At <= most)) return $"--at is a second of the patch, from 0 to {most:0}.";
+        if (!still && !(options.Seconds > 0d && options.Seconds <= most)) return $"--seconds runs above 0 and up to {most:0}.";
+        if (!still && !(options.Fps > 0d && options.Fps <= RenderOptions.MostFps)) return $"--fps runs above 0 and up to {RenderOptions.MostFps:0}.";
+
+        return null;
     }
 
     /// <summary>Plays <paramref name="program"/> through <paramref name="speaker"/> for <paramref name="seconds"/> and keeps none of it.</summary>

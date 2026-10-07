@@ -34,6 +34,13 @@ internal static class CompareCommand
         TextWriter error,
         CancellationToken cancellation = default)
     {
+        // No time at all would compare nothing and call any two patches the same.
+        if (!(options.Seconds > 0d && options.Seconds <= RenderOptions.MostSeconds))
+        {
+            error.WriteLine($"{GlobalConstants.ApplicationName}: --seconds runs above 0 and up to {RenderOptions.MostSeconds:0}.");
+            return Exit.Failed;
+        }
+
         if (Playing.Start(was, wasName, options, error) is not { } first
             || Playing.Start(now, nowName, options, error) is not { } second)
             return Exit.Problems;
