@@ -7,4 +7,9 @@
 /// </summary>
 /// <param name="Line">Where the output's name is, which is what a complaint is about.</param>
 /// <param name="Column">Where the output's name is, which is what a complaint is about.</param>
-public sealed record SelectExpr(Expr Source, string Port, int Line, int Column) : Expr(Line, Column);
+public sealed record SelectExpr(Expr Source, string Port, int Line, int Column) : Expr(Line, Column)
+{
+    public override bool Pipes => Source.Pipes;
+
+    public override Expr Leftmost => Source.Leftmost;
+}

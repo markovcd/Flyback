@@ -200,7 +200,7 @@ public sealed class Binder
                     else if (def.Parameters.Take(i).Any(p => p.Name == parameter))
                         issues.Complain(IssueCode.BoundTwice, def.Line, def.Column, $"'{def.Name}' takes two parameters called '{parameter}'.");
 
-                    if (fallback is not null && !Constant(fallback))
+                    if (fallback is not null && !fallback.Constant)
                     {
                         issues.Complain(IssueCode.DefaultNotAValue, fallback.Line, fallback.Column,
                             $"a default is a number, a note, a duration or a text. Pass '{parameter}' a signal as an argument instead.");
@@ -619,7 +619,7 @@ public sealed class Binder
                 "the Output has nothing to read. Pipe something into 'out.color' or 'out.left'.");
         }
 
-        if (Placeholder(expr))
+        if (expr.Placeholder)
             return Refuse(IssueCode.PlaceholderMisplaced, expr.Line, expr.Column, "'_' stands for what is piped in, as a call's argument: 'socket: _'.");
 
         if (scope.Find(expr.Name) is not { } bound)
@@ -884,7 +884,7 @@ public sealed class Binder
         {
             if (argument.Name is null)
             {
-                if (Placeholder(argument.Value))
+                if (argument.Value.Placeholder)
                 {
                     issues.Complain(IssueCode.PlaceholderMisplaced, argument.Line, argument.Column,
                         "'_' goes in a named argument, 'socket: _', so it says which socket.");
@@ -920,7 +920,7 @@ public sealed class Binder
                 continue;
             }
 
-            if (Placeholder(argument.Value))
+            if (argument.Value.Placeholder)
             {
                 if (piped is null)
                     issues.Complain(IssueCode.PlaceholderMisplaced, argument.Line, argument.Column, "'_' stands for what is piped in, and nothing is.");
@@ -935,7 +935,7 @@ public sealed class Binder
             if (!Piped(argument) && Bind(argument.Value, scope) is { } value)
             {
                 wires.Add((port, value));
-                sites[port] = new Site(Leftmost(argument.Value).Line, Leftmost(argument.Value).Column);
+                sites[port] = new Site(argument.Value.Leftmost.Line, argument.Value.Leftmost.Column);
             }
         }
 
@@ -962,7 +962,7 @@ public sealed class Binder
 
         foreach (var argument in expr.Arguments)
         {
-            if (argument.Name is not null || Placeholder(argument.Value)) continue;
+            if (argument.Name is not null || argument.Value.Placeholder) continue;
 
             if (argument.Value is TextExpr text)
             {
@@ -990,7 +990,7 @@ public sealed class Binder
                 if (!refused && Bind(part, scope) is { } value)
                 {
                     wires.Add((port, value));
-                    sites[port] = new Site(Leftmost(part).Line, Leftmost(part).Column);
+                    sites[port] = new Site(part.Leftmost.Line, part.Leftmost.Column);
                 }
             }
         }
@@ -1025,18 +1025,6 @@ public sealed class Binder
         return node;
     }
 
-    /// <summary>Whether an argument is <c>_</c>, which stands for what is piped in.</summary>
-    private static bool Placeholder(Expr value) => value is NameExpr { Name: "_", Port: null };
-
-    /// <summary>Whether an expression is written wholly in literals, and so places no module.</summary>
-    private static bool Constant(Expr expr) => expr switch
-    {
-        NumberExpr or TextExpr => true,
-        NegateExpr negate => Constant(negate.Value),
-        BinaryExpr binary => Constant(binary.Left) && Constant(binary.Right),
-        _ => false,
-    };
-
     /// <summary>
     /// Whether an argument holds a pipeline, said where it does. A pipeline is a
     /// statement's spine, so one inside an argument is written as a <c>let</c>
@@ -1044,34 +1032,14 @@ public sealed class Binder
     /// </summary>
     private bool Piped(Argument argument)
     {
-        if (!Pipes(argument.Value)) return false;
+        if (!argument.Value.Pipes) return false;
 
-        var start = Leftmost(argument.Value);
+        var start = argument.Value.Leftmost;
 
         issues.Complain(IssueCode.PipelineInArgument, start.Line, start.Column,
             "a pipeline cannot go inside an argument. Bind it with 'let' above and name it here.");
         return true;
     }
-
-    /// <summary>Where an expression begins in the text, which an operator's own position is not.</summary>
-    private static Expr Leftmost(Expr expr) => expr switch
-    {
-        PipeExpr pipe => Leftmost(pipe.Source),
-        BinaryExpr binary => Leftmost(binary.Left),
-        SelectExpr select => Leftmost(select.Source),
-        RangeExpr range => Leftmost(range.Low),
-        _ => expr,
-    };
-
-    private static bool Pipes(Expr expr) => expr switch
-    {
-        PipeExpr => true,
-        BinaryExpr binary => Pipes(binary.Left) || Pipes(binary.Right),
-        NegateExpr negate => Pipes(negate.Value),
-        SelectExpr select => Pipes(select.Source),
-        RangeExpr range => Pipes(range.Low) || Pipes(range.High),
-        _ => false,
-    };
 
     /// <summary>
     /// The field a name means, where the module declares one. A plugin's fields
@@ -1189,7 +1157,7 @@ public sealed class Binder
         var landing = -1;
         var sound = true;
 
-        var placed = call.Arguments.Count(a => Placeholder(a.Value));
+        var placed = call.Arguments.Count(a => a.Value.Placeholder);
 
         if (placed > 1)
             return Refused(IssueCode.PlaceholderTwice, call, "'_' is written twice, and a pipe brings one signal.");
@@ -1283,7 +1251,7 @@ public sealed class Binder
 
             if (slots[i] < 0) continue;
 
-            if (Placeholder(argument.Value)) values[slots[i]] = piped;
+            if (argument.Value.Placeholder) values[slots[i]] = piped;
             else if (!Piped(argument) && Bind(argument.Value, scope) is { } value) values[slots[i]] = value;
             else sound = false;
         }
