@@ -86,6 +86,14 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 Tags = ["visualizer", "line-in", "kaleidoscope"],
             },
             new PatchPreset(
+                WanderingTunePreset.Name,
+                WanderingTunePreset.Build,
+                WanderingTunePreset.Description,
+                PresetKind.Interplay)
+            {
+                Tags = ["generative", "melody", "scales"],
+            },
+            new PatchPreset(
                 AcidPreset.Name,
                 AcidPreset.Build,
                 "A whole acid techno track: a hundred and twenty-eight bars of a 303 line in two "
