@@ -42,7 +42,6 @@ internal sealed class Inspector
         IReactTo<DocumentSaved>,
         IReactTo<Touched>
 {
-    private readonly IFilePickers pickers;
     /// <summary>
     /// How far the panel's rows keep off its edges. Named because the plate at the
     /// head of it takes the inset back off again to reach them.
@@ -57,10 +56,11 @@ internal sealed class Inspector
     private readonly List<Control> measuredPictures = [];
     private readonly Document document;
     private readonly PatchHeader header;
+
+    /// <summary>The rows for the files a module carries.</summary>
+    private readonly FileRows files;
     private readonly MidiHub midi;
     private readonly InstrumentLibrary instruments;
-    private readonly SampleLibrary soundFolder;
-    private readonly ImageLibrary pictureFolder;
     private readonly Func<GroupLibrary?> groups;
     private readonly Action<NodeGroup> saveGroup;
 
@@ -104,14 +104,12 @@ internal sealed class Inspector
     {
         this.measured = measured;
         inPage = host.InPage;
-        this.pickers = pickers;
         this.editor = editor;
         this.document = document;
         header = new PatchHeader(editor, document, files);
+        this.files = new FileRows(pickers, document, files.SoundFolder, files.PictureFolder);
         this.midi = midi;
         instruments = knobs.Instruments;
-        soundFolder = files.SoundFolder;
-        pictureFolder = files.PictureFolder;
         groups = () => palette.Groups;
         saveGroup = palette.SaveGroup;
 
@@ -1217,9 +1215,9 @@ internal sealed class Inspector
 
         // The one a node carries that is not a number, so it is a name and a
         // button rather than a control with a range.
-        SampleExtra => BuildSampleRow(node),
-        PictureExtra => BuildPictureRow(node),
-        MidiFileExtra => BuildMidiFileRow(node),
+        SampleExtra => files.Sample(node),
+        PictureExtra => files.Picture(node),
+        MidiFileExtra => files.MidiFile(node),
 
         // Anything else is a plugin's own kind, which ships no control and is
         // drawn from what it declares instead — see ADR-0055. A kind that
@@ -1458,159 +1456,6 @@ internal sealed class Inspector
         // slider is dragged, and the text should be edited once at the end of it.
         document.Restated(node.Id, field.Key);
     }
-
-    /// <summary>
-    /// The sound file a player reads: what it is called, and a button to pick
-    /// another.
-    /// </summary>
-    /// <remarks>
-    /// The name alone rather than the whole path, with the full one on the tooltip
-    /// — a file that has gone is found again by knowing where it was supposed to
-    /// be. Nothing here says whether it could be read: that is the compiler's to
-    /// say, in the status bar, naming the module.
-    /// </remarks>
-    private Control BuildSampleRow(NodeInstance node) => BuildFileRow(
-        node,
-        "file",
-        SampleExtra.Of(node),
-        "Choose a sound",
-        SoundFileType,
-        picked =>
-        {
-            var named = PatchPaths.Named(picked, soundFolder.Library);
-
-            SampleExtra.Set(node, named);
-
-            // Forgotten first, so a file that has been replaced since it was
-            // last read is read again rather than answered from the cache.
-            soundFolder.Forget(named);
-        });
-
-    /// <summary>The same row for the other kind of file — see <see cref="PictureExtra"/>.</summary>
-    private Control BuildPictureRow(NodeInstance node) => BuildFileRow(
-        node,
-        "picture",
-        PictureExtra.Of(node),
-        "Choose a picture",
-        PictureFileType,
-        picked =>
-        {
-            var named = PatchPaths.Named(picked, pictureFolder.Library);
-
-            PictureExtra.Set(node, named);
-            pictureFolder.Forget(named);
-        });
-
-    /// <summary>The same row for a MIDI file — see <see cref="MidiFileExtra"/>.</summary>
-    private Control BuildMidiFileRow(NodeInstance node) => BuildFileRow(
-        node,
-        "midi file",
-        MidiFileExtra.Of(node),
-        "Choose a MIDI file",
-        MidiFileType,
-        picked =>
-        {
-            var named = PatchPaths.Named(picked, soundFolder.Library);
-
-            MidiFileExtra.Set(node, named);
-            soundFolder.Forget(named);
-        });
-
-    /// <summary>
-    /// A file this instance carries: what it is called, what it currently is, and a
-    /// button that goes and finds another. One row for both kinds, which differ in
-    /// the picker's title, the label, the filter and what to do with what comes
-    /// back.
-    /// </summary>
-    private Control BuildFileRow(
-        NodeInstance node,
-        string label,
-        string? held,
-        string title,
-        FilePickerFileType kind,
-        Action<string> store)
-    {
-        var chosen = held ?? string.Empty;
-
-        var row = InspectorRows.Row("*,Auto");
-        row.Margin = new Thickness(0, 8, 0, 0);
-
-        var caption = InspectorRows.Caption(label);
-
-        var name = new TextBlock
-        {
-            Text = chosen.Length == 0 ? "none chosen" : Path.GetFileName(chosen),
-            FontSize = Text.Body,
-            Opacity = chosen.Length == 0 ? 0.45 : 0.75,
-            VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            Margin = new Thickness(4, 0),
-        };
-
-        if (chosen.Length > 0) ToolTip.SetTip(name, chosen);
-
-        var choose = new Button { Content = "Choose…", FontSize = Text.Small };
-
-        choose.Click += async (_, _) =>
-        {
-            var files = await pickers.Open(new FilePickerOpenOptions
-            {
-                Title = title,
-                AllowMultiple = false,
-                FileTypeFilter = [kind],
-            });
-
-            if (files.Count == 0 || files[0].TryGetLocalPath() is not { } picked) return;
-
-            store(picked);
-
-            // The shape of the panel has not changed, so it is not rebuilt — the
-            // one row that did is written here, the way a knob writes its own.
-            name.Text = Path.GetFileName(picked);
-            name.Opacity = 0.75;
-            ToolTip.SetTip(name, picked);
-
-            document.Edited(node);
-
-            // Every other control in the panel is written into the text by the
-            // hand coming off it, and the hand came off this button before the
-            // dialog opened: the file arrives after that release, with nothing
-            // left to flush it. Said here, because the gesture is over the
-            // moment the picker answers.
-            document.HandCameOff();
-        };
-
-        Grid.SetColumn(caption, 0);
-        Grid.SetColumn(name, 1);
-        Grid.SetColumn(choose, 2);
-
-        row.Children.Add(caption);
-        row.Children.Add(name);
-        row.Children.Add(choose);
-
-        return row;
-    }
-
-    /// <summary>What the sound picker offers, which is what the reader can read.</summary>
-    private static FilePickerFileType SoundFileType => new("WAV or MP3 audio")
-    {
-        Patterns = ["*.wav", "*.mp3"],
-        MimeTypes = ["audio/wav", "audio/x-wav", "audio/mpeg"],
-    };
-
-    /// <summary>And what the MIDI picker offers.</summary>
-    private static FilePickerFileType MidiFileType => new("MIDI files")
-    {
-        Patterns = ["*.mid", "*.midi"],
-        MimeTypes = ["audio/midi", "audio/x-midi"],
-    };
-
-    /// <summary>And what the picture picker offers, for the same reason.</summary>
-    private static FilePickerFileType PictureFileType => new("PNG images")
-    {
-        Patterns = ["*.png"],
-        MimeTypes = ["image/png"],
-    };
 
     /// <param name="name">What the row is captioned, the socket's own name unless given.</param>
     private Control BuildInputRow(NodeDef def, NodeInstance node, PortSpec spec, int index, bool reading, string? name = null)
