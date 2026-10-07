@@ -130,6 +130,37 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
         Green(0.9, 0).ShouldBeLessThan(0.02);
     }
 
+    /// <summary>
+    /// A loop is a trace that goes out to an edge and back, so a line just inside
+    /// that edge crosses it twice for every loop.
+    /// </summary>
+    [Then("the still has {int} loops along its top and {int} along its side")]
+    public void ThenLoops(int across, int up)
+    {
+        var still = Shot();
+
+        int Crossings(Func<double, (double X, double Y)> along)
+        {
+            Span<double> rgb = stackalloc double[3];
+            var crossings = 0;
+            var lit = false;
+
+            for (var step = -99; step <= 99; step++)
+            {
+                var (x, y) = along(step / 100d);
+                still.At(x, y, rgb);
+
+                if (rgb[1] > 0.25 && !lit) crossings++;
+                lit = rgb[1] > 0.25;
+            }
+
+            return crossings;
+        }
+
+        Crossings(t => (t, 0.8)).ShouldBe(across * 2, "crossings near the top");
+        Crossings(t => (0.8, t)).ShouldBe(up * 2, "crossings near the side");
+    }
+
     [Then("the still is black")]
     public void ThenStillBlack() => Shot().Pixels.ShouldAllBe(value => value == 0f);
 

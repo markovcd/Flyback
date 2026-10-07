@@ -9,6 +9,11 @@ Feature: Oscilloscope music draws on a Beam as it would on an oscilloscope
     When flyback-cli draws a still of "circle.fbks" at 1 second
     Then the still is a ring half as wide as the picture is tall, dark inside and out
 
+  Scenario: The Lissajous preset draws a fifth as three loops across and two up
+    When flyback-cli saves the preset "Lissajous" as "lissajous.fbks"
+    And flyback-cli draws a still of "lissajous.fbks" at 1 second
+    Then the still has 3 loops along its top and 2 along its side
+
   Scenario: Before anything has played the screen is dark
     Given a circle played as oscilloscope music onto a Beam, saved as "circle.fbks"
     When flyback-cli draws a still of "circle.fbks" at 0 seconds

@@ -1351,6 +1351,25 @@ of the two ambiguous short names. And the split is `y |> step()` rather than
 `step(y)`, because Threshold is `[edge, in]` — a positional `y` would have
 become the edge.
 
+### Lissajous — [:925](../src/Flyback.Engine/Graph/Presets.cs)
+
+```
+description "Two sines a fifth apart, left against right on a Beam: a knot that turns"
+  "because the fifth is a little sharp."
+
+let left  = sine(freq: 110, amp: 0.85)
+let right = sine(freq: 165.2, amp: 0.85)
+
+left |> out.left
+right |> out.right
+beam(x: left, y: right, persistence: 30ms, intensity: 1.2) |> out.color
+
+out.volume = 0.2
+```
+
+Each sine is one speaker and one axis of the Beam, so what is drawn is the stereo
+being heard. Three cycles across against two up is a fifth's knot.
+
 ### Ring scan — [:294](../src/Flyback.Engine/Graph/Presets.cs)
 
 ```

@@ -36,7 +36,7 @@ One of them replaces the written tutorial still under `site/tutorials/`. When it
 - **Your first sound.** A Sine at 220 into `left`, `right` following it, and `volume`. The Scope beside it so the ear and the eye agree.
 - **Play it from an Elektron Syntakt.** Replaces `tutorials/syntakt.html`. The box's MIDI and USB settings, the whole Syntakt added in one pick, a MIDI track sequencing a Flyback voice, a Flyback sequencer kept to its clock, a picture lit by its tracks, and its knobs on the panel. Needs the real box filmed or captured; the editor half can be `flyback-cli shot`.
 - **Feedback for the eyes and the ears.** A loop is a delay: a comb or an echo in the sound, a trail or a tunnel in the picture. Feedback tunnel and Echo chamber side by side.
-- **Seeing a sound.** Scope, Analyzer and Beam: what the speakers play, its spectrum, and two channels drawn against each other. Waveform and the Flyback Theme preset.
+- **Seeing a sound.** Builds the Lissajous preset: two sines a fifth apart on a Beam, and why the knot turns. The Scope and the Analyzer come in along the way, as the other two ways to look at what the speakers play (Waveform and Sidebands use them).
 - **Hearing a picture.** Probe and Scan: a field read along a path at audio rate, so the picture is the waveform. Ring scan and Shape scan.
 - **The patch as text.** F2, the language line by line on Plasma, editing a number and pressing Ctrl + Enter, `.fbks` files in git.
 - **Ask the assistant.** One real conversation, recorded: a short ask, Expand, the patch it wires, the frames it looks at, a change asked for after, Ctrl + Z. Which models it works with and how to set one up. Needs a real run, never a staged one.

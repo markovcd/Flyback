@@ -188,6 +188,18 @@ public class LanguageTests
         """);
 
     [Fact]
+    public void Lissajous() => Alike("Lissajous", """
+        let left  = sine(freq: 110, amp: 0.85)
+        let right = sine(freq: 165.2, amp: 0.85)
+
+        left |> out.left
+        right |> out.right
+        beam(x: left, y: right, persistence: 30ms, intensity: 1.2) |> out.color
+
+        out.volume = 0.2
+        """);
+
+    [Fact]
     public void Sequence() => Same("Sequence", """
         let steps = notes(rate: 3, gate_length: 0.66) [ A3 C4 D4 E4 G4 E4 D4 C4 ]
 

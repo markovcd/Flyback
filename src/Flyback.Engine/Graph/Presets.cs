@@ -103,6 +103,9 @@ internal static partial class Presets
         new("Ahead and behind", AheadAndBehind,
             "A Probe and a Scope on one signal, which is the only way to see how they differ.",
             PresetKind.Interplay) { Tags = ["basics", "scope", "scan"] },
+        new("Lissajous", Lissajous,
+            "Two sines a fifth apart, left against right on a Beam: a knot that turns because the fifth is a little sharp.",
+            PresetKind.Interplay) { Tags = ["basics", "stereo", "scope"] },
         new("In key", InKey,
             "One cloud field snapped to a pentatonic: heard as a melody, seen as the terraces it was cut into.",
             PresetKind.Interplay) { Tags = ["melody", "scales", "generative"] },
@@ -910,6 +913,32 @@ internal static partial class Presets
          .Wire(ahead, 0, split, 1)
          .Wire(half, 0, split, 2)
          .Wire(split, 0, output, NodeCatalog.OutputColorPort);
+
+        return b.Build();
+    }
+
+    /// <summary>
+    /// Two sines, one to each speaker, drawn against each other by a Beam. A
+    /// fifth is three cycles against two, which is the knot; the right one is a
+    /// fifth of a hertz sharp, so the knot turns once every five seconds.
+    /// </summary>
+    public static Patch Lissajous(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        var left = b.Add("osc.sine", (1, 110f), (3, 0.85f));
+        var right = b.Add("osc.sine", (1, 165.2f), (3, 0.85f));
+
+        // Thirty milliseconds of phosphor, in decades: a few turns of the knot.
+        var screen = b.Add(NodeCatalog.BeamTypeId, (2, -1.5229f), (3, 1.2f));
+
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.2f));
+
+        b.Wire(left, 0, screen, 0)
+         .Wire(right, 0, screen, 1)
+         .Wire(left, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(right, 0, output, NodeCatalog.OutputRightPort)
+         .Wire(screen, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Build();
     }

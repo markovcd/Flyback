@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A Lissajous preset: two sines a fifth apart, one to each speaker, drawn against each other on a Beam.
+
 - The Analyzer's `scale` help says what it does: the loudness a sine needs to reach the top edge, not a divisor of it.
 
 - The preset site's plugin shelf lists a plugin once, at its newest published version, with the older versions linked from its page.
