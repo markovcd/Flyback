@@ -654,6 +654,8 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
         latest release for your platform, check its signature and put it in place, with the command line tool and the
         viewer on your <code>PATH</code>. It runs in a terminal on Linux and macOS and in Git Bash on Windows:</p>
 <pre><code>curl -fsSL https://raw.githubusercontent.com/markovcd/Flyback/main/install.sh | bash</code></pre>
+        <p>On macOS a zip downloaded in a browser will not open: the app is not notarized, so it is "damaged". Install it with the script above, or run
+        <code>xattr -cr Flyback.app &amp;&amp; codesign --force --deep --sign - Flyback.app</code> on the unpacked app.</p>
         <p>Run it again to update. <code>bash -s -- --uninstall</code> in place of <code>bash</code> removes Flyback and
         everything the script added.</p>
         <p>After that it keeps itself up to date: a new release is downloaded in the background and installed the

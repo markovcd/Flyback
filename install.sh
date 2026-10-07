@@ -223,6 +223,13 @@ for plugin in "$payload/$plugins"/*/; do
 done
 cp -R "$payload/." "$dest/"
 
+# Apple silicon starts nothing unsigned, and the bundle is built on Linux, which cannot sign.
+if [ "$os" = osx ]; then
+  xattr -cr "$dest" 2>/dev/null || true
+  chmod +x "$programs/Flyback" "$programs/flyback-cli" "$programs/flyback-viewer"
+  codesign --force --deep --sign - "$dest" >/dev/null 2>&1 || die "could not sign $dest; run: codesign --force --deep --sign - \"$dest\""
+fi
+
 on_path() { case ":$PATH:" in *":$1:"*) return 0 ;; esac; return 1; }
 
 case "$os" in
