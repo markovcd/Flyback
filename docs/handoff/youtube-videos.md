@@ -3,7 +3,7 @@
 Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an idea when one comes up, move it to Made when it is made, and onto `site/tutorials.html` when it is posted. It is on TODO.md; it stays as long as the channel wants videos.
 
 - **Kind:** Backlog
-- **Status:** Open: five made, four posted, the rest proposed
+- **Status:** Open: five made and posted, the rest proposed
 
 ## How one is made
 
@@ -26,7 +26,7 @@ Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an ide
 | Your first patch | `npkO3aYA_CA` | 1:27 | Empty, Space and sine, a wire into color, `in` following the clock, Coordinates for stripes, freq to four, Rings with no wires, Time into offset, Ctrl+S. Every screen a `flyback-cli shot`. `~/.explainroo/videos/first-patch`. |
 | Make a beat you can see | `SxKHeOr8l0g` | 1:54 | Tempo, a Stroke into a Drum, a Euclid into a Hiss, a Note Sequencer through a Saw, an ADSR and a Filter, the levels, Rings lit by the Stroke, a panel knob on the cutoff. Ends as the Beat you can see preset, bit for bit. Each scene plays its own step's sound, ducked under the voice by `~/.explainroo/work/beat/mix.py`. Replaced `tutorials/beat.html`. |
 | One knob, two echoes | `s8Ys324Lv9I` | 2:12 | A Tempo stepping a Note Sequencer into a Triangle, an ADSR and an Expression for the pluck, an Echo on the tempo (taps, feedback), a Circle's outline lit by a Stroke with the hue on the tune, a Trails for the tunnel, a Repeats knob linked to feedback and persist, then turned to 0.1 and 0.95. Ends as the Two echoes preset, bit for bit. Every step is cut from the preset's own `.fbk` by `~/.explainroo/work/echoes/place.py`, so no module moves between screens. From the tunnel on, the picture and `mix.py`'s sound run on one clock (`clock.py`), so the rings flash on the notes. Replaced `tutorials/echoes.html`. |
-| Seeing a sound | not posted | 1:45 | One Sine on a Scope (two cycles in 18 ms), the same Sine on an Analyzer (one peak past 100 Hz), a second Sine at 165 Hz on a Beam, the 3:2 knot and its loops, then 165.2 Hz so the knot turns, back to the same shape every 2.5 s. Ends as the Lissajous preset, the picture within one step of 255 (the preset's persistence is 29.999 ms). `~/.explainroo/videos/seeing`. |
+| Seeing a sound | `6aPxkERSXdc` | 1:45 | One Sine on a Scope (two cycles in 18 ms), the same Sine on an Analyzer (one peak past 100 Hz), a second Sine at 165 Hz on a Beam, the 3:2 knot and its loops, then 165.2 Hz so the knot turns, back to the same shape every 2.5 s. Ends as the Lissajous preset, the picture within one step of 255 (the preset's persistence is 29.999 ms). `~/.explainroo/videos/seeing`. |
 
 ## Proposed
 
