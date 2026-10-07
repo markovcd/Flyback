@@ -11,4 +11,7 @@ public sealed record DefStatement(
     Expr? Result,
     IReadOnlyList<Expr>? Results,
     int Line,
-    int Column) : Statement(Line, Column);
+    int Column) : Statement(Line, Column)
+{
+    public override string Naming => "def " + Name;
+}

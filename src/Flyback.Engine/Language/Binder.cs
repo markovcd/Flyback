@@ -185,49 +185,12 @@ public sealed class Binder
         // Named before entering, because the name is drawn from the segment this
         // statement sits in — a statement with nothing to be called by takes the
         // next number from its parent, not from itself.
-        var outer = identity.Enter(Naming(statement));
+        var outer = identity.Enter(statement.Naming ?? identity.Anonymous());
 
         Ran(statement, scope);
 
         identity.Leave(outer);
     }
-
-    /// <summary>
-    /// What a statement is called, for the purposes of naming what it places. A
-    /// <c>let</c> has a name and a terminated pipeline has a socket; what is left
-    /// takes a number, which is the one case where inserting a line above moves
-    /// something below it.
-    /// </summary>
-    private string Naming(Statement statement) => statement switch
-    {
-        LetStatement let => "let " + let.Name,
-        LetTupleStatement tuple => "let " + string.Join(',', tuple.Names),
-        KnobStatement knob => Aimed(knob.Target),
-        BackWireStatement back => Aimed(back.Target) + " <-",
-        GroupStatement group => "group " + group.Name,
-        DefStatement def => "def " + def.Name,
-        OffStatement off => "off " + off.Target.Name,
-        PanelStatement panel => "panel " + panel.Name,
-        RequiresStatement => "requires",
-        KeyboardStatement => "keyboard",
-        LengthStatement => "length",
-        DescriptionStatement => "description",
-        AuthorStatement => "author",
-        TagsStatement => "tags",
-        PipelineStatement pipeline => Ending(pipeline.Value) ?? identity.Anonymous(),
-        _ => identity.Anonymous(),
-    };
-
-    private static string Aimed(NameExpr target) =>
-        target.Port is null ? target.Name : target.Name + "." + target.Port;
-
-    /// <summary>
-    /// The socket a pipeline ends at, which is what a statement with no name of
-    /// its own is known by — <c>out.color</c> and <c>out.left</c> stay two
-    /// different statements however the lines around them are shuffled.
-    /// </summary>
-    private static string? Ending(Expr expr) =>
-        expr is PipeExpr { Stage: NameExpr socket } ? Aimed(socket) : null;
 
     private void Ran(Statement statement, Scope scope)
     {

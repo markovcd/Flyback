@@ -7,4 +7,7 @@ namespace Flyback.Engine.Language.Ast.Statements;
 /// that cannot be written as a pipeline because it runs backwards.
 /// </summary>
 public sealed record BackWireStatement(NameExpr Target, Expr Value, int Line, int Column)
-    : Statement(Line, Column);
+    : Statement(Line, Column)
+{
+    public override string Naming => Target.Written + " <-";
+}

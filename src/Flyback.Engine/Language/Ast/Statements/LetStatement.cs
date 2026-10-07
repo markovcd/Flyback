@@ -6,4 +6,7 @@
 /// named.
 /// </summary>
 public sealed record LetStatement(string Name, Expr Value, int Line, int Column)
-    : Statement(Line, Column);
+    : Statement(Line, Column)
+{
+    public override string Naming => "let " + Name;
+}

@@ -5,4 +5,7 @@ public sealed record LetTupleStatement(
     IReadOnlyList<string> Names,
     Expr Value,
     int Line,
-    int Column) : Statement(Line, Column);
+    int Column) : Statement(Line, Column)
+{
+    public override string Naming => "let " + string.Join(',', Names);
+}

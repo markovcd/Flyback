@@ -1,4 +1,7 @@
 ﻿namespace Flyback.Engine.Language.Ast.Statements;
 
 /// <summary><c>tags "..." "..."</c>: words to find the patch by, one string each.</summary>
-public sealed record TagsStatement(IReadOnlyList<string> Tags, int Line, int Column) : Statement(Line, Column);
+public sealed record TagsStatement(IReadOnlyList<string> Tags, int Line, int Column) : Statement(Line, Column)
+{
+    public override string Naming => "tags";
+}

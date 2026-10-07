@@ -4,4 +4,7 @@ namespace Flyback.Engine.Language.Ast.Statements;
 
 /// <summary><c>name.port = value</c>, which turns a knob.</summary>
 public sealed record KnobStatement(NameExpr Target, Expr Value, int Line, int Column)
-    : Statement(Line, Column);
+    : Statement(Line, Column)
+{
+    public override string Naming => Target.Written;
+}

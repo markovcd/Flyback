@@ -8,4 +8,7 @@
 /// <param name="Scale">The block as it was written, and null for a piano.</param>
 /// <param name="BlockLine">Where the block's '[' is, for a complaint about what is inside it.</param>
 /// <param name="BlockColumn">Where the block's '[' is, for a complaint about what is inside it.</param>
-public sealed record KeyboardStatement(string? Scale, int Line, int Column, int BlockLine = 0, int BlockColumn = 0) : Statement(Line, Column);
+public sealed record KeyboardStatement(string? Scale, int Line, int Column, int BlockLine = 0, int BlockColumn = 0) : Statement(Line, Column)
+{
+    public override string Naming => "keyboard";
+}
