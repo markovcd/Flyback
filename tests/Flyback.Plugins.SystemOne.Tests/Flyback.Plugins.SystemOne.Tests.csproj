@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <!-- A direct reference: what is checked is the request and the refusals, not how the assembly loads. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.SystemOne\Flyback.Plugins.SystemOne.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+</Project>

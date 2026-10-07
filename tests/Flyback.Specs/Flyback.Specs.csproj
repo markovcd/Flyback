@@ -58,6 +58,8 @@
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Gemini\Flyback.Plugins.Gemini.csproj" FolderName="Gemini" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.ClaudeCode\Flyback.Plugins.ClaudeCode.csproj" FolderName="ClaudeCode" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Codex\Flyback.Plugins.Codex.csproj" FolderName="Codex" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.SystemOne\Flyback.Plugins.SystemOne.csproj" FolderName="SystemOne" />
+    <PluginProject Include="..\Flyback.Plugins.FakeDecider\Flyback.Plugins.FakeDecider.csproj" FolderName="FakeDecider" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.WinIO\Flyback.Plugins.WinIO.csproj" FolderName="WinIO" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.MacIO\Flyback.Plugins.MacIO.csproj" FolderName="MacIO" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.LinuxIO\Flyback.Plugins.LinuxIO.csproj" FolderName="LinuxIO" />

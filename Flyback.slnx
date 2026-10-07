@@ -54,6 +54,7 @@
     <Project Path="src/plugins/Flyback.Plugins.ClaudeCode/Flyback.Plugins.ClaudeCode.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Codex/Flyback.Plugins.Codex.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Picture/Flyback.Plugins.Picture.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.SystemOne/Flyback.Plugins.SystemOne.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Voice/Flyback.Plugins.Voice.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.WinIO/Flyback.Plugins.WinIO.csproj" />
   </Folder>
@@ -68,11 +69,13 @@
     <Project Path="tests/Flyback.Specs/Flyback.Specs.csproj" />
     <Project Path="tests/Flyback.Core.Tests/Flyback.Core.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.FakeAssistant/Flyback.Plugins.FakeAssistant.csproj" />
+    <Project Path="tests/Flyback.Plugins.FakeDecider/Flyback.Plugins.FakeDecider.csproj" />
     <Project Path="tests/Flyback.Plugins.Gemini.Tests/Flyback.Plugins.Gemini.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.OpenAi.Tests/Flyback.Plugins.OpenAi.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.ClaudeCode.Tests/Flyback.Plugins.ClaudeCode.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.Codex.Tests/Flyback.Plugins.Codex.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.Programs.Tests/Flyback.Plugins.Programs.Tests.csproj" />
+    <Project Path="tests/Flyback.Plugins.SystemOne.Tests/Flyback.Plugins.SystemOne.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.Sample/Flyback.Plugins.Sample.csproj" />
     <Project Path="tests/Flyback.Plugins.Tests/Flyback.Plugins.Tests.csproj" />
     <Project Path="tests/Flyback.Site.Tests/Flyback.Site.Tests.csproj" />

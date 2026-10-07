@@ -2,6 +2,7 @@ using Flyback.Core.Graph;
 using Flyback.Plugins;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Decide;
 using Flyback.Plugins.Midi;
 using Flyback.Plugins.Secrets;
 
@@ -44,4 +45,6 @@ internal sealed class ModuleCollector : IPluginRegistry
     public void AddMidiInput(IMidiInput input) { }
 
     public void AddAudioInput(IAudioInput input) { }
+
+    public void AddDecisionModel(IDecisionModel model) { }
 }

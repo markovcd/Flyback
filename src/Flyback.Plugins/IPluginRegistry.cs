@@ -1,6 +1,7 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Decide;
 using Flyback.Plugins.Midi;
 using Flyback.Plugins.Secrets;
 
@@ -57,4 +58,11 @@ public interface IPluginRegistry
     /// device and must not enumerate one.
     /// </summary>
     void AddAudioInput(IAudioInput input);
+
+    /// <summary>
+    /// Offers something that answers typed questions with probabilities. Registering it
+    /// must not load a model, must not open a connection and must not need a credential
+    /// or a file to be present: the host asks for one only when a feature has a question.
+    /// </summary>
+    void AddDecisionModel(IDecisionModel model);
 }

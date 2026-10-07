@@ -35,6 +35,7 @@
 
     <!-- A real plugin that sets no tags and embeds no preview. -->
     <ProjectReference Include="..\Flyback.Plugins.FakeAssistant\Flyback.Plugins.FakeAssistant.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.FakeDecider\Flyback.Plugins.FakeDecider.csproj" />
   </ItemGroup>
 
   <ItemGroup>

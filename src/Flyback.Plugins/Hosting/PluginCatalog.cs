@@ -1,6 +1,7 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Decide;
 using Flyback.Plugins.Midi;
 using Flyback.Plugins.Secrets;
 
@@ -35,7 +36,8 @@ internal sealed class PluginCatalog
         IReadOnlyList<ISecretStore>? secretStores = null,
         IReadOnlyList<IMidiInput>? midiInputs = null,
         IReadOnlyDictionary<object, PluginInfo>? providers = null,
-        IReadOnlyList<IAudioInput>? audioInputs = null)
+        IReadOnlyList<IAudioInput>? audioInputs = null,
+        IReadOnlyList<IDecisionModel>? decisionModels = null)
     {
         // Copied under reference equality: two backends are the same one only if
         // they are the same object, whatever their ids or their Equals say.
@@ -52,6 +54,7 @@ internal sealed class PluginCatalog
         SecretStores = secretStores ?? [];
         MidiInputs = midiInputs ?? [];
         AudioInputs = audioInputs ?? [];
+        DecisionModels = decisionModels ?? [];
     }
 
     private readonly Dictionary<object, PluginInfo> providers;
@@ -72,6 +75,22 @@ internal sealed class PluginCatalog
     /// <summary>Every way installed of hearing a microphone or a line.</summary>
     public IReadOnlyList<IAudioInput> AudioInputs { get; }
 
+    /// <summary>Everything installed that answers typed questions with probabilities.</summary>
+    public IReadOnlyList<IDecisionModel> DecisionModels { get; }
+
+    /// <summary>
+    /// The decision model to offer: highest priority, ties broken on id. Null when none is
+    /// installed. Not filtered by whether it can answer, for the reason <see cref="PreferredAssistant"/> is not.
+    /// </summary>
+    public IDecisionModel? PreferredDecisionModel => DecisionModels
+        .OrderByDescending(m => m.Priority)
+        .ThenBy(m => m.Id, StringComparer.Ordinal)
+        .FirstOrDefault();
+
+    /// <summary>The decision model a setting names, or null when it is no longer installed.</summary>
+    public IDecisionModel? DecisionModel(string id) =>
+        DecisionModels.FirstOrDefault(m => string.Equals(m.Id, id, StringComparison.Ordinal));
+
     /// <summary>
     /// The engine's modules with every plugin's folded in. Install it before
     /// anything opens a patch — until then the program only knows the built-ins,
@@ -90,7 +109,7 @@ internal sealed class PluginCatalog
     public IReadOnlyList<PluginProblem> Problems { get; }
 
     /// <summary>
-    /// The plugin that registered a backend, an assistant or a secret store, or
+    /// The plugin that registered a backend, an assistant, a secret store or a decision model, or
     /// null for anything this catalog did not see registered.
     /// </summary>
     /// <remarks>

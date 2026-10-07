@@ -44,3 +44,233 @@ Flyback.Plugins.Assist.AssistantSchema.AssistantSchema(string! DefaultModel, Sys
 Flyback.Plugins.Assist.AssistantSchema.Deconstruct(out string! DefaultModel, out System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.AssistantModel!>! SuggestedModels, out string! EnvironmentVariable, out string! CredentialHelp, out string? DefaultBaseUrl, out bool BaseUrlEditable, out bool HearingAsked) -> void
 Flyback.Plugins.Assist.AssistantSchema.HearingAsked.get -> bool
 Flyback.Plugins.Assist.AssistantSchema.HearingAsked.init -> void
+~override Flyback.Plugins.Decide.ChoiceOption.Equals(object obj) -> bool
+~override Flyback.Plugins.Decide.ChoiceOption.ToString() -> string
+abstract Flyback.Plugins.Decide.Answer.<Clone>$() -> Flyback.Plugins.Decide.Answer!
+abstract Flyback.Plugins.Decide.Question.<Clone>$() -> Flyback.Plugins.Decide.Question!
+const Flyback.Plugins.Decide.DecisionRequest.LongestState = 50000 -> int
+const Flyback.Plugins.Decide.DecisionRequest.MostQuestions = 64 -> int
+Flyback.Plugins.Decide.Answer
+Flyback.Plugins.Decide.Answer.Answer() -> void
+Flyback.Plugins.Decide.Answer.Answer(Flyback.Plugins.Decide.Answer! original) -> void
+Flyback.Plugins.Decide.Answer.Chosen
+Flyback.Plugins.Decide.Answer.Chosen.Chosen(string! Option, System.Collections.Generic.IReadOnlyDictionary<string!, double>! Probabilities, double Confidence) -> void
+Flyback.Plugins.Decide.Answer.Chosen.Confidence.get -> double
+Flyback.Plugins.Decide.Answer.Chosen.Confidence.init -> void
+Flyback.Plugins.Decide.Answer.Chosen.Deconstruct(out string! Option, out System.Collections.Generic.IReadOnlyDictionary<string!, double>! Probabilities, out double Confidence) -> void
+Flyback.Plugins.Decide.Answer.Chosen.Equals(Flyback.Plugins.Decide.Answer.Chosen? other) -> bool
+Flyback.Plugins.Decide.Answer.Chosen.Option.get -> string!
+Flyback.Plugins.Decide.Answer.Chosen.Option.init -> void
+Flyback.Plugins.Decide.Answer.Chosen.Probabilities.get -> System.Collections.Generic.IReadOnlyDictionary<string!, double>!
+Flyback.Plugins.Decide.Answer.Chosen.Probabilities.init -> void
+Flyback.Plugins.Decide.Answer.Scored
+Flyback.Plugins.Decide.Answer.Scored.Confidence.get -> double
+Flyback.Plugins.Decide.Answer.Scored.Confidence.init -> void
+Flyback.Plugins.Decide.Answer.Scored.Deconstruct(out double Score, out System.Collections.Generic.IReadOnlyList<string!>! Levels, out System.Collections.Generic.IReadOnlyList<double>! Probabilities, out double Confidence) -> void
+Flyback.Plugins.Decide.Answer.Scored.Equals(Flyback.Plugins.Decide.Answer.Scored? other) -> bool
+Flyback.Plugins.Decide.Answer.Scored.Levels.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Flyback.Plugins.Decide.Answer.Scored.Levels.init -> void
+Flyback.Plugins.Decide.Answer.Scored.Probabilities.get -> System.Collections.Generic.IReadOnlyList<double>!
+Flyback.Plugins.Decide.Answer.Scored.Probabilities.init -> void
+Flyback.Plugins.Decide.Answer.Scored.Scored(double Score, System.Collections.Generic.IReadOnlyList<string!>! Levels, System.Collections.Generic.IReadOnlyList<double>! Probabilities, double Confidence) -> void
+Flyback.Plugins.Decide.Answer.Scored.Score.get -> double
+Flyback.Plugins.Decide.Answer.Scored.Score.init -> void
+Flyback.Plugins.Decide.Answer.YesNo
+Flyback.Plugins.Decide.Answer.YesNo.Deconstruct(out double Probability) -> void
+Flyback.Plugins.Decide.Answer.YesNo.Equals(Flyback.Plugins.Decide.Answer.YesNo? other) -> bool
+Flyback.Plugins.Decide.Answer.YesNo.Probability.get -> double
+Flyback.Plugins.Decide.Answer.YesNo.Probability.init -> void
+Flyback.Plugins.Decide.Answer.YesNo.YesNo(double Probability) -> void
+Flyback.Plugins.Decide.ChoiceOption
+Flyback.Plugins.Decide.ChoiceOption.ChoiceOption() -> void
+Flyback.Plugins.Decide.ChoiceOption.ChoiceOption(string! Label, string! Description) -> void
+Flyback.Plugins.Decide.ChoiceOption.Deconstruct(out string! Label, out string! Description) -> void
+Flyback.Plugins.Decide.ChoiceOption.Description.get -> string!
+Flyback.Plugins.Decide.ChoiceOption.Description.init -> void
+Flyback.Plugins.Decide.ChoiceOption.Equals(Flyback.Plugins.Decide.ChoiceOption other) -> bool
+Flyback.Plugins.Decide.ChoiceOption.Label.get -> string!
+Flyback.Plugins.Decide.ChoiceOption.Label.init -> void
+Flyback.Plugins.Decide.Decision
+Flyback.Plugins.Decide.Decision.<Clone>$() -> Flyback.Plugins.Decide.Decision!
+Flyback.Plugins.Decide.Decision.Answers.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Flyback.Plugins.Decide.Answer!>!
+Flyback.Plugins.Decide.Decision.Answers.init -> void
+Flyback.Plugins.Decide.DecisionConfig
+Flyback.Plugins.Decide.DecisionConfig.<Clone>$() -> Flyback.Plugins.Decide.DecisionConfig!
+Flyback.Plugins.Decide.DecisionConfig.DecisionConfig(Flyback.Plugins.Assist.IAssistantTransport! Transport, Flyback.Plugins.Settings.SettingValues! Values, string? Folder) -> void
+Flyback.Plugins.Decide.DecisionConfig.Deconstruct(out Flyback.Plugins.Assist.IAssistantTransport! Transport, out Flyback.Plugins.Settings.SettingValues! Values, out string? Folder) -> void
+Flyback.Plugins.Decide.DecisionConfig.Equals(Flyback.Plugins.Decide.DecisionConfig? other) -> bool
+Flyback.Plugins.Decide.DecisionConfig.Folder.get -> string?
+Flyback.Plugins.Decide.DecisionConfig.Folder.init -> void
+Flyback.Plugins.Decide.DecisionConfig.Transport.get -> Flyback.Plugins.Assist.IAssistantTransport!
+Flyback.Plugins.Decide.DecisionConfig.Transport.init -> void
+Flyback.Plugins.Decide.DecisionConfig.Values.get -> Flyback.Plugins.Settings.SettingValues!
+Flyback.Plugins.Decide.DecisionConfig.Values.init -> void
+Flyback.Plugins.Decide.Decision.Decision(string! Model, System.Collections.Generic.IReadOnlyDictionary<string!, Flyback.Plugins.Decide.Answer!>! Answers, Flyback.Plugins.Decide.DecisionUsage! Usage) -> void
+Flyback.Plugins.Decide.Decision.Deconstruct(out string! Model, out System.Collections.Generic.IReadOnlyDictionary<string!, Flyback.Plugins.Decide.Answer!>! Answers, out Flyback.Plugins.Decide.DecisionUsage! Usage) -> void
+Flyback.Plugins.Decide.Decision.Equals(Flyback.Plugins.Decide.Decision? other) -> bool
+Flyback.Plugins.Decide.Decision.Model.get -> string!
+Flyback.Plugins.Decide.Decision.Model.init -> void
+Flyback.Plugins.Decide.DecisionRequest
+Flyback.Plugins.Decide.DecisionRequest.<Clone>$() -> Flyback.Plugins.Decide.DecisionRequest!
+Flyback.Plugins.Decide.DecisionRequest.DecisionRequest(string! State, System.Collections.Generic.IReadOnlyDictionary<string!, Flyback.Plugins.Decide.Question!>! Questions) -> void
+Flyback.Plugins.Decide.DecisionRequest.Deconstruct(out string! State, out System.Collections.Generic.IReadOnlyDictionary<string!, Flyback.Plugins.Decide.Question!>! Questions) -> void
+Flyback.Plugins.Decide.DecisionRequest.Equals(Flyback.Plugins.Decide.DecisionRequest? other) -> bool
+Flyback.Plugins.Decide.DecisionRequest.Problem() -> string?
+Flyback.Plugins.Decide.DecisionRequest.Questions.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Flyback.Plugins.Decide.Question!>!
+Flyback.Plugins.Decide.DecisionRequest.Questions.init -> void
+Flyback.Plugins.Decide.DecisionRequest.State.get -> string!
+Flyback.Plugins.Decide.DecisionRequest.State.init -> void
+Flyback.Plugins.Decide.DecisionUsage
+Flyback.Plugins.Decide.DecisionUsage.<Clone>$() -> Flyback.Plugins.Decide.DecisionUsage!
+Flyback.Plugins.Decide.DecisionUsage.DecisionUsage(int InputTokens, int OutputTokens) -> void
+Flyback.Plugins.Decide.DecisionUsage.Deconstruct(out int InputTokens, out int OutputTokens) -> void
+Flyback.Plugins.Decide.DecisionUsage.Equals(Flyback.Plugins.Decide.DecisionUsage? other) -> bool
+Flyback.Plugins.Decide.Decision.Usage.get -> Flyback.Plugins.Decide.DecisionUsage!
+Flyback.Plugins.Decide.Decision.Usage.init -> void
+Flyback.Plugins.Decide.DecisionUsage.InputTokens.get -> int
+Flyback.Plugins.Decide.DecisionUsage.InputTokens.init -> void
+Flyback.Plugins.Decide.DecisionUsage.OutputTokens.get -> int
+Flyback.Plugins.Decide.DecisionUsage.OutputTokens.init -> void
+Flyback.Plugins.Decide.IDecisionModel
+Flyback.Plugins.Decide.IDecisionModel.Credential.get -> Flyback.Plugins.Assist.AssistantCredential?
+Flyback.Plugins.Decide.IDecisionModel.DecideAsync(Flyback.Plugins.Decide.DecisionRequest! request, Flyback.Plugins.Decide.DecisionConfig! config, System.Threading.CancellationToken cancel) -> System.Threading.Tasks.Task<Flyback.Plugins.Decide.Decision!>!
+Flyback.Plugins.Decide.IDecisionModel.Endpoint(Flyback.Plugins.Settings.SettingValues! values) -> System.Uri?
+Flyback.Plugins.Decide.IDecisionModel.Form(Flyback.Plugins.Settings.SettingValues! values) -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Settings.SettingField!>!
+Flyback.Plugins.Decide.IDecisionModel.Id.get -> string!
+Flyback.Plugins.Decide.IDecisionModel.Name.get -> string!
+Flyback.Plugins.Decide.IDecisionModel.Priority.get -> int
+Flyback.Plugins.Decide.IDecisionModel.Unavailable(Flyback.Plugins.Decide.DecisionConfig! config) -> string?
+Flyback.Plugins.Decide.IPreparedModel
+Flyback.Plugins.Decide.IPreparedModel.Needs.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Decide.ModelFile!>!
+Flyback.Plugins.Decide.IPreparedModel.Prepared(string! folder) -> bool
+Flyback.Plugins.Decide.ModelFile
+Flyback.Plugins.Decide.ModelFile.<Clone>$() -> Flyback.Plugins.Decide.ModelFile!
+Flyback.Plugins.Decide.ModelFile.Address.get -> System.Uri!
+Flyback.Plugins.Decide.ModelFile.Address.init -> void
+Flyback.Plugins.Decide.ModelFile.Deconstruct(out System.Uri! Address, out string! Name, out string! Sha256, out long Size) -> void
+Flyback.Plugins.Decide.ModelFile.Equals(Flyback.Plugins.Decide.ModelFile? other) -> bool
+Flyback.Plugins.Decide.ModelFile.ModelFile(System.Uri! Address, string! Name, string! Sha256, long Size) -> void
+Flyback.Plugins.Decide.ModelFile.Name.get -> string!
+Flyback.Plugins.Decide.ModelFile.Name.init -> void
+Flyback.Plugins.Decide.ModelFile.Sha256.get -> string!
+Flyback.Plugins.Decide.ModelFile.Sha256.init -> void
+Flyback.Plugins.Decide.ModelFile.Size.get -> long
+Flyback.Plugins.Decide.ModelFile.Size.init -> void
+Flyback.Plugins.Decide.Question
+Flyback.Plugins.Decide.Question.Choice
+Flyback.Plugins.Decide.Question.Choice.Choice(string! Instructions, System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Decide.ChoiceOption>! Options) -> void
+Flyback.Plugins.Decide.Question.Choice.Deconstruct(out string! Instructions, out System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Decide.ChoiceOption>! Options) -> void
+Flyback.Plugins.Decide.Question.Choice.Equals(Flyback.Plugins.Decide.Question.Choice? other) -> bool
+Flyback.Plugins.Decide.Question.Choice.Options.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Decide.ChoiceOption>!
+Flyback.Plugins.Decide.Question.Choice.Options.init -> void
+Flyback.Plugins.Decide.Question.Deconstruct(out string! Instructions) -> void
+Flyback.Plugins.Decide.Question.Instructions.get -> string!
+Flyback.Plugins.Decide.Question.Instructions.init -> void
+Flyback.Plugins.Decide.Question.Question(Flyback.Plugins.Decide.Question! original) -> void
+Flyback.Plugins.Decide.Question.Question(string! Instructions) -> void
+Flyback.Plugins.Decide.Question.Score
+Flyback.Plugins.Decide.Question.Score.Deconstruct(out string! Instructions, out System.Collections.Generic.IReadOnlyList<string!>! Levels) -> void
+Flyback.Plugins.Decide.Question.Score.Equals(Flyback.Plugins.Decide.Question.Score? other) -> bool
+Flyback.Plugins.Decide.Question.Score.Levels.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Flyback.Plugins.Decide.Question.Score.Levels.init -> void
+Flyback.Plugins.Decide.Question.Score.Score(string! Instructions, System.Collections.Generic.IReadOnlyList<string!>! Levels) -> void
+Flyback.Plugins.Decide.Question.YesNo
+Flyback.Plugins.Decide.Question.YesNo.Deconstruct(out string! Instructions) -> void
+Flyback.Plugins.Decide.Question.YesNo.Equals(Flyback.Plugins.Decide.Question.YesNo? other) -> bool
+Flyback.Plugins.Decide.Question.YesNo.YesNo(string! Instructions) -> void
+Flyback.Plugins.Decide.SystemOneWire
+Flyback.Plugins.IPluginRegistry.AddDecisionModel(Flyback.Plugins.Decide.IDecisionModel! model) -> void
+override Flyback.Plugins.Decide.Answer.Chosen.<Clone>$() -> Flyback.Plugins.Decide.Answer.Chosen!
+override Flyback.Plugins.Decide.Answer.Chosen.Equals(object? obj) -> bool
+override Flyback.Plugins.Decide.Answer.Chosen.GetHashCode() -> int
+override Flyback.Plugins.Decide.Answer.Chosen.ToString() -> string!
+override Flyback.Plugins.Decide.Answer.Equals(object? obj) -> bool
+override Flyback.Plugins.Decide.Answer.GetHashCode() -> int
+override Flyback.Plugins.Decide.Answer.Scored.<Clone>$() -> Flyback.Plugins.Decide.Answer.Scored!
+override Flyback.Plugins.Decide.Answer.Scored.Equals(object? obj) -> bool
+override Flyback.Plugins.Decide.Answer.Scored.GetHashCode() -> int
+override Flyback.Plugins.Decide.Answer.Scored.ToString() -> string!
+override Flyback.Plugins.Decide.Answer.ToString() -> string!
+override Flyback.Plugins.Decide.Answer.YesNo.<Clone>$() -> Flyback.Plugins.Decide.Answer.YesNo!
+override Flyback.Plugins.Decide.Answer.YesNo.Equals(object? obj) -> bool
+override Flyback.Plugins.Decide.Answer.YesNo.GetHashCode() -> int
+override Flyback.Plugins.Decide.Answer.YesNo.ToString() -> string!
+override Flyback.Plugins.Decide.ChoiceOption.GetHashCode() -> int
+override Flyback.Plugins.Decide.DecisionConfig.Equals(object? obj) -> bool
+override Flyback.Plugins.Decide.DecisionConfig.GetHashCode() -> int
+override Flyback.Plugins.Decide.DecisionConfig.ToString() -> string!
+override Flyback.Plugins.Decide.Decision.Equals(object? obj) -> bool
+override Flyback.Plugins.Decide.Decision.GetHashCode() -> int
+override Flyback.Plugins.Decide.DecisionRequest.Equals(object? obj) -> bool
+override Flyback.Plugins.Decide.DecisionRequest.GetHashCode() -> int
+override Flyback.Plugins.Decide.DecisionRequest.ToString() -> string!
+override Flyback.Plugins.Decide.Decision.ToString() -> string!
+override Flyback.Plugins.Decide.DecisionUsage.Equals(object? obj) -> bool
+override Flyback.Plugins.Decide.DecisionUsage.GetHashCode() -> int
+override Flyback.Plugins.Decide.DecisionUsage.ToString() -> string!
+override Flyback.Plugins.Decide.ModelFile.Equals(object? obj) -> bool
+override Flyback.Plugins.Decide.ModelFile.GetHashCode() -> int
+override Flyback.Plugins.Decide.ModelFile.ToString() -> string!
+override Flyback.Plugins.Decide.Question.Choice.<Clone>$() -> Flyback.Plugins.Decide.Question.Choice!
+override Flyback.Plugins.Decide.Question.Choice.Equals(object? obj) -> bool
+override Flyback.Plugins.Decide.Question.Choice.GetHashCode() -> int
+override Flyback.Plugins.Decide.Question.Choice.ToString() -> string!
+override Flyback.Plugins.Decide.Question.Equals(object? obj) -> bool
+override Flyback.Plugins.Decide.Question.GetHashCode() -> int
+override Flyback.Plugins.Decide.Question.Score.<Clone>$() -> Flyback.Plugins.Decide.Question.Score!
+override Flyback.Plugins.Decide.Question.Score.Equals(object? obj) -> bool
+override Flyback.Plugins.Decide.Question.Score.GetHashCode() -> int
+override Flyback.Plugins.Decide.Question.Score.ToString() -> string!
+override Flyback.Plugins.Decide.Question.ToString() -> string!
+override Flyback.Plugins.Decide.Question.YesNo.<Clone>$() -> Flyback.Plugins.Decide.Question.YesNo!
+override Flyback.Plugins.Decide.Question.YesNo.Equals(object? obj) -> bool
+override Flyback.Plugins.Decide.Question.YesNo.GetHashCode() -> int
+override Flyback.Plugins.Decide.Question.YesNo.ToString() -> string!
+override sealed Flyback.Plugins.Decide.Answer.Chosen.Equals(Flyback.Plugins.Decide.Answer? other) -> bool
+override sealed Flyback.Plugins.Decide.Answer.Scored.Equals(Flyback.Plugins.Decide.Answer? other) -> bool
+override sealed Flyback.Plugins.Decide.Answer.YesNo.Equals(Flyback.Plugins.Decide.Answer? other) -> bool
+override sealed Flyback.Plugins.Decide.Question.Choice.Equals(Flyback.Plugins.Decide.Question? other) -> bool
+override sealed Flyback.Plugins.Decide.Question.Score.Equals(Flyback.Plugins.Decide.Question? other) -> bool
+override sealed Flyback.Plugins.Decide.Question.YesNo.Equals(Flyback.Plugins.Decide.Question? other) -> bool
+static Flyback.Plugins.Decide.Answer.Chosen.operator ==(Flyback.Plugins.Decide.Answer.Chosen? left, Flyback.Plugins.Decide.Answer.Chosen? right) -> bool
+static Flyback.Plugins.Decide.Answer.Chosen.operator !=(Flyback.Plugins.Decide.Answer.Chosen? left, Flyback.Plugins.Decide.Answer.Chosen? right) -> bool
+static Flyback.Plugins.Decide.Answer.operator ==(Flyback.Plugins.Decide.Answer? left, Flyback.Plugins.Decide.Answer? right) -> bool
+static Flyback.Plugins.Decide.Answer.operator !=(Flyback.Plugins.Decide.Answer? left, Flyback.Plugins.Decide.Answer? right) -> bool
+static Flyback.Plugins.Decide.Answer.Scored.operator ==(Flyback.Plugins.Decide.Answer.Scored? left, Flyback.Plugins.Decide.Answer.Scored? right) -> bool
+static Flyback.Plugins.Decide.Answer.Scored.operator !=(Flyback.Plugins.Decide.Answer.Scored? left, Flyback.Plugins.Decide.Answer.Scored? right) -> bool
+static Flyback.Plugins.Decide.Answer.YesNo.operator ==(Flyback.Plugins.Decide.Answer.YesNo? left, Flyback.Plugins.Decide.Answer.YesNo? right) -> bool
+static Flyback.Plugins.Decide.Answer.YesNo.operator !=(Flyback.Plugins.Decide.Answer.YesNo? left, Flyback.Plugins.Decide.Answer.YesNo? right) -> bool
+static Flyback.Plugins.Decide.ChoiceOption.operator ==(Flyback.Plugins.Decide.ChoiceOption left, Flyback.Plugins.Decide.ChoiceOption right) -> bool
+static Flyback.Plugins.Decide.ChoiceOption.operator !=(Flyback.Plugins.Decide.ChoiceOption left, Flyback.Plugins.Decide.ChoiceOption right) -> bool
+static Flyback.Plugins.Decide.DecisionConfig.operator ==(Flyback.Plugins.Decide.DecisionConfig? left, Flyback.Plugins.Decide.DecisionConfig? right) -> bool
+static Flyback.Plugins.Decide.DecisionConfig.operator !=(Flyback.Plugins.Decide.DecisionConfig? left, Flyback.Plugins.Decide.DecisionConfig? right) -> bool
+static Flyback.Plugins.Decide.DecisionConfig.Unset.get -> Flyback.Plugins.Decide.DecisionConfig!
+static Flyback.Plugins.Decide.Decision.operator ==(Flyback.Plugins.Decide.Decision? left, Flyback.Plugins.Decide.Decision? right) -> bool
+static Flyback.Plugins.Decide.Decision.operator !=(Flyback.Plugins.Decide.Decision? left, Flyback.Plugins.Decide.Decision? right) -> bool
+static Flyback.Plugins.Decide.DecisionRequest.One(string! state, string! id, Flyback.Plugins.Decide.Question! question) -> Flyback.Plugins.Decide.DecisionRequest!
+static Flyback.Plugins.Decide.DecisionRequest.operator ==(Flyback.Plugins.Decide.DecisionRequest? left, Flyback.Plugins.Decide.DecisionRequest? right) -> bool
+static Flyback.Plugins.Decide.DecisionRequest.operator !=(Flyback.Plugins.Decide.DecisionRequest? left, Flyback.Plugins.Decide.DecisionRequest? right) -> bool
+static Flyback.Plugins.Decide.DecisionUsage.None.get -> Flyback.Plugins.Decide.DecisionUsage!
+static Flyback.Plugins.Decide.DecisionUsage.operator ==(Flyback.Plugins.Decide.DecisionUsage? left, Flyback.Plugins.Decide.DecisionUsage? right) -> bool
+static Flyback.Plugins.Decide.DecisionUsage.operator !=(Flyback.Plugins.Decide.DecisionUsage? left, Flyback.Plugins.Decide.DecisionUsage? right) -> bool
+static Flyback.Plugins.Decide.ModelFile.operator ==(Flyback.Plugins.Decide.ModelFile? left, Flyback.Plugins.Decide.ModelFile? right) -> bool
+static Flyback.Plugins.Decide.ModelFile.operator !=(Flyback.Plugins.Decide.ModelFile? left, Flyback.Plugins.Decide.ModelFile? right) -> bool
+static Flyback.Plugins.Decide.Question.Choice.operator ==(Flyback.Plugins.Decide.Question.Choice? left, Flyback.Plugins.Decide.Question.Choice? right) -> bool
+static Flyback.Plugins.Decide.Question.Choice.operator !=(Flyback.Plugins.Decide.Question.Choice? left, Flyback.Plugins.Decide.Question.Choice? right) -> bool
+static Flyback.Plugins.Decide.Question.operator ==(Flyback.Plugins.Decide.Question? left, Flyback.Plugins.Decide.Question? right) -> bool
+static Flyback.Plugins.Decide.Question.operator !=(Flyback.Plugins.Decide.Question? left, Flyback.Plugins.Decide.Question? right) -> bool
+static Flyback.Plugins.Decide.Question.Score.operator ==(Flyback.Plugins.Decide.Question.Score? left, Flyback.Plugins.Decide.Question.Score? right) -> bool
+static Flyback.Plugins.Decide.Question.Score.operator !=(Flyback.Plugins.Decide.Question.Score? left, Flyback.Plugins.Decide.Question.Score? right) -> bool
+static Flyback.Plugins.Decide.Question.YesNo.operator ==(Flyback.Plugins.Decide.Question.YesNo? left, Flyback.Plugins.Decide.Question.YesNo? right) -> bool
+static Flyback.Plugins.Decide.Question.YesNo.operator !=(Flyback.Plugins.Decide.Question.YesNo? left, Flyback.Plugins.Decide.Question.YesNo? right) -> bool
+static Flyback.Plugins.Decide.SystemOneWire.Answer(Flyback.Plugins.Decide.Decision! decision) -> string!
+static Flyback.Plugins.Decide.SystemOneWire.Questions(System.Collections.Generic.IReadOnlyDictionary<string!, Flyback.Plugins.Decide.Question!>! questions) -> System.Text.Json.Nodes.JsonObject!
+static Flyback.Plugins.Decide.SystemOneWire.ReadDecision(string! json, out string? problem) -> Flyback.Plugins.Decide.Decision?
+static Flyback.Plugins.Decide.SystemOneWire.ReadQuestions(string! json, out string? problem) -> System.Collections.Generic.IReadOnlyDictionary<string!, Flyback.Plugins.Decide.Question!>?
+static Flyback.Plugins.Decide.SystemOneWire.Request(Flyback.Plugins.Decide.DecisionRequest! request, string? model) -> string!
+virtual Flyback.Plugins.Decide.Answer.EqualityContract.get -> System.Type!
+virtual Flyback.Plugins.Decide.Answer.Equals(Flyback.Plugins.Decide.Answer? other) -> bool
+virtual Flyback.Plugins.Decide.Answer.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual Flyback.Plugins.Decide.Question.EqualityContract.get -> System.Type!
+virtual Flyback.Plugins.Decide.Question.Equals(Flyback.Plugins.Decide.Question? other) -> bool
+virtual Flyback.Plugins.Decide.Question.PrintMembers(System.Text.StringBuilder! builder) -> bool

@@ -41,9 +41,10 @@ public class ContractSurfaceTests
         ["Flyback.Core.Graph.Extras.MidiLineExtra"] = "A plugin's preset configures a built-in module through its extra, as the presets in the box do through SampleExtra.",
         ["Flyback.Core.Graph.Extras.PictureExtra"] = "A plugin's preset configures a built-in module through its extra, as the presets in the box do through SampleExtra.",
         ["Flyback.Plugins.Midi.MidiAction"] = "MidiMessage.Action's type, which a MIDI input plugin builds a message with.",
+        ["Flyback.Plugins.Decide.IPreparedModel"] = "The only way a decision model that runs here gets its files: the host downloads them, so the plugin never reaches the network (ADR-0186).",
+        ["Flyback.Plugins.Decide.ModelFile"] = "What IPreparedModel.Needs lists.",
         ["Flyback.Plugins.Assist.Listener"] = "AssistantSenses.Hearing's type, named by an assistant that reports its senses without AssistantSchema.",
         ["Flyback.Plugins.Settings.SettingField+Switch"] = "A field kind a plugin's settings form is built from; the forms in the box are AssistantSchema's.",
-        ["Flyback.Plugins.Settings.SettingField+Text"] = "A field kind a plugin's settings form is built from; the forms in the box are AssistantSchema's.",
     };
 
     private static readonly Assembly[] Contract = [typeof(NodeDef).Assembly, typeof(IFlybackPlugin).Assembly];

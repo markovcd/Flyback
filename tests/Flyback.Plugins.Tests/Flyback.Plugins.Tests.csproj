@@ -40,6 +40,8 @@
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Codex\Flyback.Plugins.Codex.csproj" FolderName="Codex" />
     <PluginProject Include="..\Flyback.Plugins.Sample\Flyback.Plugins.Sample.csproj" FolderName="Sample" />
     <PluginProject Include="..\Flyback.Plugins.FakeAssistant\Flyback.Plugins.FakeAssistant.csproj" FolderName="FakeAssistant" />
+    <PluginProject Include="..\Flyback.Plugins.FakeDecider\Flyback.Plugins.FakeDecider.csproj" FolderName="FakeDecider" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.SystemOne\Flyback.Plugins.SystemOne.csproj" FolderName="SystemOne" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" FolderName="Picture" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" FolderName="Voice" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" FolderName="Effects" />
@@ -52,8 +54,8 @@
 
   <!-- The plugins' sources, for the contract-surface test: a constant a plugin names leaves no trace in its IL. -->
   <ItemGroup>
-    <None Include="..\..\src\plugins\**\*.cs;..\Flyback.Plugins.Sample\**\*.cs;..\Flyback.Plugins.FakeAssistant\**\*.cs"
-          Exclude="..\..\src\plugins\**\obj\**;..\..\src\plugins\**\bin\**;..\Flyback.Plugins.Sample\obj\**;..\Flyback.Plugins.Sample\bin\**;..\Flyback.Plugins.FakeAssistant\obj\**;..\Flyback.Plugins.FakeAssistant\bin\**"
+    <None Include="..\..\src\plugins\**\*.cs;..\Flyback.Plugins.Sample\**\*.cs;..\Flyback.Plugins.FakeAssistant\**\*.cs;..\Flyback.Plugins.FakeDecider\**\*.cs"
+          Exclude="..\..\src\plugins\**\obj\**;..\..\src\plugins\**\bin\**;..\Flyback.Plugins.Sample\obj\**;..\Flyback.Plugins.Sample\bin\**;..\Flyback.Plugins.FakeAssistant\obj\**;..\Flyback.Plugins.FakeAssistant\bin\**;..\Flyback.Plugins.FakeDecider\obj\**;..\Flyback.Plugins.FakeDecider\bin\**"
           LinkBase="PluginSources" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
