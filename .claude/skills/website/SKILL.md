@@ -9,6 +9,8 @@ The website in `site/` (index.html, tutorials.html and the tutorials under it; s
 
 After a user-visible change, grep `site/*.html` for the affected names and fix the prose.
 
+`tutorials.html` is the channel's tutorial videos embedded from YouTube and nothing else; a video goes on it once it is posted, as one more `figure.clip` (the backlog is `docs/handoff/youtube-videos.md`).
+
 The Worker serves all of `site/`: the website and the preset site's own pages (`admin.html`, `preset.html`, `plugin.html`, `shared-plugins.html`, `submit.html`, `submit-plugin.html`) sit together, and a page that needs the API calls it relatively. Link between pages relatively (`presets.html`, not an address). `worker/build-assets.sh` builds what the Worker serves and `worker/dev.sh` serves it. `presets.html` is the shelf: it lists the shipped presets from `stills/index.json` and the shared ones from the API. Its script and styles (`assets/presets.js`, `presets.css`, `ratings.js`) live in `site/assets/`, and so do those of the other preset pages. GitHub Pages holds only the redirect in `deploy/pages/`; a page's canonical and `og:` URLs name `flybackmodular.app`.
 
 - The tutorials' `.fbks` snippets and `data-patch` diagrams must still build. Check them with `flyback-cli check` and by opening them in the app, since the app loads plugins (`hsv` is ambiguous there and needs `color.hsv`) and the CLI does not.

@@ -36,28 +36,6 @@ public class PatchShotTests : EditorTest
         // gallery hands it over, its arithmetic folded into Expressions.
         Shoot(folder, "plasma", Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn));
 
-        // tutorials.html, one per step of the patch the tutorials build.
-        Shoot(folder, "rings", Built(
-            """
-            rings(freq: 4) |> out.color
-            out.volume = 0.5
-            """));
-
-        Shoot(folder, "rings-moving", Built(
-            """
-            rings(freq: 4, offset: t)
-              |> autoremap()
-              |> color.hsv(value: _, hue: t * 0.1, saturation: 0.85)
-              |> out.color
-            out.volume = 0.5
-            """));
-
-        Shoot(folder, "tone", Built(
-            """
-            sine(freq: 110) |> out.left
-            out.volume = 0.5
-            """));
-
         // tutorials/syntakt.html: the box as the module list adds it, and a
         // sequencer kept to its clock.
         // With an Output beside the columns rather than where the editor would
