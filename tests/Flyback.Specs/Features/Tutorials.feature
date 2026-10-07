@@ -9,5 +9,4 @@ Feature: A tutorial ends with the preset it builds
 
     Examples:
       | page                  | preset           |
-      | tutorials/beat.html   | Beat you can see |
       | tutorials/echoes.html | Two echoes       |

@@ -3,7 +3,7 @@
 Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an idea when one comes up, move it to Made when it is made, and onto `site/tutorials.html` when it is posted. It is on TODO.md; it stays as long as the channel wants videos.
 
 - **Kind:** Backlog
-- **Status:** Open: three made, two posted, the rest proposed
+- **Status:** Open: three made and posted, the rest proposed
 
 ## How one is made
 
@@ -23,13 +23,13 @@ Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an ide
 |---|---|---|---|
 | What is Flyback? | `FhKpYZxMlec` | 2:03 | Modules, sockets, wires, the Output, one Sine driving both, normalled inputs, per pixel and per sample, live rebuilds, F2, the assistant, the presets, 7 s of Whole band. Sources lost with the scratchpad; the MP4 is on the channel. |
 | Your first patch | `npkO3aYA_CA` | 1:27 | Empty, Space and sine, a wire into color, `in` following the clock, Coordinates for stripes, freq to four, Rings with no wires, Time into offset, Ctrl+S. Every screen a `flyback-cli shot`. `~/.explainroo/videos/first-patch`. |
-| Make a beat you can see | not posted | 1:54 | Tempo, a Stroke into a Drum, a Euclid into a Hiss, a Note Sequencer through a Saw, an ADSR and a Filter, the levels, Rings lit by the Stroke, a panel knob on the cutoff. Ends as the Beat you can see preset, bit for bit. Each scene plays its own step's sound, ducked under the voice by `~/.explainroo/work/beat/mix.py`. Replaces `tutorials/beat.html` once posted. |
+| Make a beat you can see | `SxKHeOr8l0g` | 1:54 | Tempo, a Stroke into a Drum, a Euclid into a Hiss, a Note Sequencer through a Saw, an ADSR and a Filter, the levels, Rings lit by the Stroke, a panel knob on the cutoff. Ends as the Beat you can see preset, bit for bit. Each scene plays its own step's sound, ducked under the voice by `~/.explainroo/work/beat/mix.py`. Replaced `tutorials/beat.html`. |
 
 ## Proposed
 
 Roughly in the order worth making. Each is 60 to 120 seconds unless it says otherwise.
 
-Three of them replace the written tutorials still under `site/tutorials/`. When one is posted, its page goes, with every link to it, and its row in `tests/Flyback.Specs/Features/Tutorials.feature` (beat and echoes) or its `PatchShotTests` lines (syntakt) go in the same commit.
+Two of them replace the written tutorials still under `site/tutorials/`. When one is posted, its page goes, with every link to it, and its row in `tests/Flyback.Specs/Features/Tutorials.feature` (echoes) or its `PatchShotTests` lines (syntakt) go in the same commit.
 
 - **Your first sound.** A Sine at 220 into `left`, `right` following it, and `volume`. The Scope beside it so the ear and the eye agree.
 - **One knob, two echoes.** Replaces `tutorials/echoes.html`. A tune through an echo that keeps time, a ring on every note carried down a tunnel, and one knob that sets how long both last; it ends as the Two echoes preset.

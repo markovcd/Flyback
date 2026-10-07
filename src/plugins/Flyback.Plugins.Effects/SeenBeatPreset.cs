@@ -4,13 +4,12 @@ using Flyback.Core.Graph.Extras;
 namespace Flyback.Plugins.Effects;
 
 /// <summary>
-/// The patch the beat tutorial builds: a kick, a hat and a bass line on one Tempo, and
-/// rings the kick lights up.
+/// The patch the "Make a beat you can see" video builds: a kick, a hat and a bass line on
+/// one Tempo, and rings the kick lights up.
 /// </summary>
 /// <remarks>
-/// The tutorial's text, module for module, so the preset and the page are one instrument
-/// and a reader can open the finished patch to compare with theirs. Every sum is the
-/// Expression the text's arithmetic builds.
+/// The video's patch, module for module, so a viewer can open the finished one to compare
+/// with theirs. Every sum is the Expression the text language's arithmetic builds.
 /// </remarks>
 internal sealed class SeenBeatPreset(ModuleCatalog modules) : PresetBench(modules)
 {
