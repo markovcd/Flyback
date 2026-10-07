@@ -1,5 +1,4 @@
 using System.Text.Json.Nodes;
-using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Flyback.Engine.Graph;
@@ -37,14 +36,7 @@ public sealed class Binder
     private readonly Carrying carrying;
     private readonly PatchLines lines;
 
-    /// <summary>Each group the text opens and the modules its blocks placed, a name's blocks gathered into one.</summary>
-    private readonly List<(string? Name, List<Guid> Members)> boxes = [];
-
-    /// <summary>The boxes a block of which had a mistake in it, and so no say about its size.</summary>
-    private readonly HashSet<int> troubled = [];
-
-    /// <summary>Where each group block begins, and which of <see cref="boxes"/> it is.</summary>
-    private readonly List<(Site Where, int Box)> opened = [];
+    private readonly Boxes boxes;
 
     /// <summary>Plugins a <c>requires</c> line named that this build does not have.</summary>
     private readonly List<string> missing = [];
@@ -62,6 +54,7 @@ public sealed class Binder
         identity = wiring.Identity;
         carrying = new Carrying(modules, wiring, this.issues);
         lines = new PatchLines(patch, this.issues);
+        boxes = new Boxes(patch, this.issues, sourceSites);
 
         moduleNames = new ModuleNames(modules);
     }
@@ -106,35 +99,7 @@ public sealed class Binder
 
         foreach (var statement in statements) Run(statement, scope);
 
-        // Once every block has been read, since a group may be opened more than
-        // once and its first block may hold fewer modules than a box can be.
-        // Named from the text, so the same text builds the same boxes as it builds
-        // the same modules.
-        for (var i = 0; i < boxes.Count; i++)
-        {
-            var (name, members) = boxes[i];
-
-            if (patch.Group(members) is not { } made)
-            {
-                if (troubled.Contains(i)) continue;
-
-                var (line, column) = opened.First(open => open.Box == i).Where;
-
-                // A warning, since the modules are built all the same and only the box is missing.
-                issues.Warn(IssueCode.GroupTooSmall, line, column,
-                    $"a group is drawn round {NodeGroup.Fewest} modules or more, and this one has {members.Count}, "
-                    + "so it is left out. Put a lone module outside any group, or in the group it belongs to.");
-                continue;
-            }
-
-            var group = made.Clone(NodeIdentity.FromName(name is null ? $"group #{i}" : "group " + name));
-
-            group.Rename(name);
-            patch.Groups![patch.Groups.IndexOf(made)] = group;
-
-            foreach (var (where, box) in opened)
-                if (box == i) sourceSites.Open(where, group.Id);
-        }
+        boxes.Draw();
 
         // A call to a Maths module the Expression stands for, and the sums and
         // calls around it, arrive as the Expressions a preset's do (ADR-0109).
@@ -569,66 +534,7 @@ public sealed class Binder
             return;
         }
 
-        string? label = null;
-        string? device = null;
-        int? controller = null;
-        var channel = 0;
-        var held = false;
-
-        foreach (var setting in statement.Settings)
-        {
-            switch (setting.Name, setting.Value)
-            {
-                case (null, NameExpr { Name: "held", Port: null }):
-                    held = true;
-                    break;
-
-                case ("label", TextExpr text):
-                    label = text.Value;
-                    break;
-
-                case ("device", TextExpr text):
-                    device = text.Value;
-                    break;
-
-                case ("cc", NumberExpr { Value: >= 0 and <= 127 } number) when number.Value % 1 == 0:
-                    controller = (int)number.Value;
-                    break;
-
-                case ("channel", NumberExpr { Value: >= 1 and <= 16 } number) when number.Value % 1 == 0:
-                    channel = (int)number.Value;
-                    break;
-
-                default:
-                    issues.Complain(IssueCode.UnknownSetting, setting.Line, setting.Column,
-                        "a panel knob takes 'label: \"…\"', 'cc: 0 to 127', 'channel: 1 to 16', 'device: \"…\"' and 'held'.");
-                    return;
-            }
-        }
-
-        if (controller is null && (device is not null || channel != 0))
-        {
-            issues.Complain(IssueCode.UnknownSetting, line, column,
-                "'device' and 'channel' say which controller 'cc' is, so they come with one.");
-            return;
-        }
-
-        if (controller is not null && device is null)
-        {
-            issues.Complain(IssueCode.UnknownSetting, line, column,
-                "a controller is known by its device: add 'device: \"…\"', as the instrument's profile names it.");
-            return;
-        }
-
-        var control = new PatchControl
-        {
-            Id = NodeIdentity.PanelId(statement.Name),
-            Name = label ?? statement.Name,
-            Word = label is null || label == statement.Name ? null : statement.Name,
-            Value = (float)resting.Amount,
-            Midi = controller is { } cc ? new MidiBinding(device!, channel, cc) : null,
-            Held = held,
-        };
+        if (PanelDeclaration.Read(statement, resting, issues) is not { } control) return;
 
         (patch.Controls ??= []).Add(control);
         scope.Set(statement.Name, new Dial(control, statement.Name), line);
@@ -721,23 +627,9 @@ public sealed class Binder
         // they are in no box however early a block reads them.
         var made = patch.Nodes
             .Where(n => !before.Contains(n.Id) && !wiring.IsShared(n.Id))
-            .Select(n => n.Id)
-            .ToList();
+            .Select(n => n.Id);
 
-        // A name opened again is the same group, which is how a printing says one
-        // whose modules do not come out next to each other.
-        var index = statement.Name is null ? -1 : boxes.FindIndex(box => box.Name == statement.Name);
-
-        if (index < 0)
-        {
-            index = boxes.Count;
-            boxes.Add((statement.Name, []));
-        }
-
-        boxes[index].Members.AddRange(made);
-
-        if (issues.Count > said) troubled.Add(index);
-        opened.Add((new Site(statement.Line, statement.Column), index));
+        boxes.Block(statement.Name, new Site(statement.Line, statement.Column), made, troubled: issues.Count > said);
 
         // A group is a box on the canvas and nothing more, so the names it made
         // go on being visible after it — which is what lets one group wire into
