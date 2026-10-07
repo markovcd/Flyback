@@ -8,4 +8,6 @@ public sealed record LetTupleStatement(
     int Column) : Statement(Line, Column)
 {
     public override string Naming => "let " + string.Join(',', Names);
+
+    public override IEnumerable<string> Binds => Names;
 }

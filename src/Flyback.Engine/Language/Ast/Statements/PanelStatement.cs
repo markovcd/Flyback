@@ -9,4 +9,6 @@ public sealed record PanelStatement(string Name, Expr Value, IReadOnlyList<Argum
     : Statement(Line, Column)
 {
     public override string Naming => "panel " + Name;
+
+    public override IEnumerable<string> Binds => [Name];
 }

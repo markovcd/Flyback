@@ -84,18 +84,10 @@ public sealed class Binder
         // once rather than once for every module it would have given.
         foreach (var requires in statements.OfType<RequiresStatement>()) Require(requires);
 
+        // Each line for itself rather than its group's, so a name read above
+        // its binding is pointed at the line that binds it.
         foreach (var statement in statements.SelectMany(s => s is GroupStatement group ? group.Body : [s]))
-        {
-            IEnumerable<string> names = statement switch
-            {
-                LetStatement let => [let.Name],
-                LetTupleStatement tuple => tuple.Names,
-                PanelStatement panel => [panel.Name],
-                _ => [],
-            };
-
-            foreach (var name in names) boundOn.TryAdd(name, statement.Line);
-        }
+            foreach (var name in statement.Binds) boundOn.TryAdd(name, statement.Line);
 
         foreach (var statement in statements) Run(statement, scope);
 
@@ -564,7 +556,7 @@ public sealed class Binder
                 case GroupStatement nested:
                     issues.Complain(IssueCode.GroupInGroup, nested.Line, nested.Column,
                         "a group cannot hold another group. Close this one first.");
-                    Unmade(Declared(nested.Body), scope, nested.Line);
+                    Unmade(nested.Binds, scope, nested.Line);
                     break;
 
                 case PanelStatement panel:
@@ -597,19 +589,9 @@ public sealed class Binder
         // A group is a box on the canvas and nothing more, so the names it made
         // go on being visible after it — which is what lets one group wire into
         // the next, as the largest preset does throughout.
-        foreach (var name in Declared(statement.Body.Where(child => child is not GroupStatement)))
+        foreach (var name in statement.Body.Where(child => child is not GroupStatement).SelectMany(child => child.Binds))
             if (inner.Entry(name) is { } item) scope.Set(name, item.Value, item.Line);
     }
-
-    /// <summary>The names the statements bind with <c>let</c>, in groups within them too.</summary>
-    private static IEnumerable<string> Declared(IEnumerable<Statement> statements) =>
-        statements.SelectMany(statement => statement switch
-        {
-            LetStatement let => [let.Name],
-            LetTupleStatement tuple => tuple.Names,
-            GroupStatement group => Declared(group.Body),
-            _ => [],
-        });
 
     // --- expressions ---------------------------------------------------------
 

@@ -9,4 +9,7 @@ public sealed record GroupStatement(
     int Column) : Statement(Line, Column)
 {
     public override string Naming => "group " + Name;
+
+    /// <summary>What its body binds: a group is a box on the canvas, and its names stay in sight after it.</summary>
+    public override IEnumerable<string> Binds => Body.SelectMany(statement => statement.Binds);
 }

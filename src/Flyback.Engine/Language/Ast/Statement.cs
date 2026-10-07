@@ -10,4 +10,7 @@ public abstract record Statement(int Line, int Column)
     /// one case where inserting a line above moves something below it.
     /// </summary>
     public abstract string? Naming { get; }
+
+    /// <summary>The names this line binds, for the lines after it to read.</summary>
+    public virtual IEnumerable<string> Binds => [];
 }

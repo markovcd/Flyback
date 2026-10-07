@@ -9,4 +9,6 @@ public sealed record LetStatement(string Name, Expr Value, int Line, int Column)
     : Statement(Line, Column)
 {
     public override string Naming => "let " + Name;
+
+    public override IEnumerable<string> Binds => [Name];
 }
