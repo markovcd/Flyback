@@ -918,7 +918,7 @@ internal sealed class AssistantPanel : UserControl
 
         // No padding of its own: it is one section of the settings window, which
         // pads the whole of it.
-        var fields = new StackPanel { Spacing = 8, Width = 280 };
+        var fields = new StackPanel { Spacing = 8, Width = SettingsSession.SectionWidth };
 
         keySection.Children.Add(InspectorRows.Field("API key", keyBox));
         keySection.Children.Add(keyNote);

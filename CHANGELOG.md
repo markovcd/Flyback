@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The settings window is wide enough that no option is cut short, Save is drawn in the accent color, and the knob grid's Columns and Rows sit indented under the switch they depend on.
+
 - The assistant's column is redrawn as a conversation: a header with the model and whether it is working, a context bar that opens onto what the conversation cost, your messages in bubbles with long ones cut short behind Show all, and proposals and failures in cards of their own.
 
 - Expand beside the assistant's Send writes a short message out in full, in the box, to edit before sending: over a patch, as a change to it that says what makes the patch itself, what changes, what stays and how to tell it worked; over an empty canvas, as a new patch's brief.

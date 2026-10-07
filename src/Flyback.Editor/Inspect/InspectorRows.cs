@@ -75,11 +75,13 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
     internal static Grid KnobRow(bool reading) => Row(reading ? "*,60,84" : "*,84");
 
     /// <summary>A labeled row in the settings window, on the gutter its declared rows use too.</summary>
-    internal static Control Field(string name, Control control)
+    /// <param name="indent">How far the name is set in, for a row that only means something under the one above it.</param>
+    internal static Control Field(string name, Control control, double indent = 0)
     {
         var row = Row("*", SettingsGutter);
 
-        var label = Caption(name, SettingsGutter);
+        var label = Caption(name, SettingsGutter - indent);
+        label.Margin = new Thickness(indent, 0, 0, 0);
 
         Grid.SetColumn(label, 0);
         Grid.SetColumn(control, 1);

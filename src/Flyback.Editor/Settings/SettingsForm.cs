@@ -31,7 +31,7 @@ public sealed class SettingsForm : UserControl
     /// beside their controls — the same column the settings window's own rows
     /// use, so a declared row lines up with the host's rows under it.
     /// </summary>
-    public const double Gutter = 96;
+    public const double Gutter = 128;
 
     private readonly StackPanel rows = new() { Spacing = 10 };
     private readonly Dictionary<string, Row> built = new(StringComparer.Ordinal);
@@ -178,14 +178,8 @@ public sealed class SettingsForm : UserControl
     {
         FontSize = Text.Small,
         Foreground = Text.Muted,
-        Width = 260,
         TextWrapping = TextWrapping.Wrap,
         IsVisible = false,
-
-        // Left rather than stretched, which every fixed-width thing here has to
-        // say: a row is as wide as the caption above it, and a narrower child
-        // in it is centered otherwise — which reads as a stray indent.
-        HorizontalAlignment = HorizontalAlignment.Left,
     };
 
     /// <summary>
@@ -287,8 +281,7 @@ public sealed class SettingsForm : UserControl
             box = new TextBox
             {
                 FontSize = Text.Body,
-                Width = 260,
-                HorizontalAlignment = HorizontalAlignment.Left,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
                 Name = field.Key,
                 PlaceholderText = field.Placeholder,
             };
@@ -329,8 +322,7 @@ public sealed class SettingsForm : UserControl
             box = new ComboBox
             {
                 FontSize = Text.Body,
-                Width = 260,
-                HorizontalAlignment = HorizontalAlignment.Left,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
                 Name = field.Key,
                 IsEditable = editable,
             };

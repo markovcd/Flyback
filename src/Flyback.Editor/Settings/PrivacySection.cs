@@ -9,7 +9,7 @@ internal sealed class PrivacySection(UpdatesSection updates, UsageSection usage)
 {
     public string Name => "Privacy";
 
-    public Control View { get; } = new StackPanel { Spacing = 24, Width = 280, Children = { updates.View, usage.View } };
+    public Control View { get; } = new StackPanel { Spacing = 24, Width = SettingsSession.SectionWidth, Children = { updates.View, usage.View } };
 
     public void Show()
     {

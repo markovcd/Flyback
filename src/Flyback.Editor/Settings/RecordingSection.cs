@@ -39,7 +39,7 @@ internal sealed class RecordingSection : ISettingsSection
 
     public Control View => rows;
 
-    private readonly StackPanel rows = new() { Spacing = 8, Width = 280 };
+    private readonly StackPanel rows = new() { Spacing = 8, Width = SettingsSession.SectionWidth };
 
     /// <summary>
     /// How long a take is counted in for — the length ADR-0090 fixed at three

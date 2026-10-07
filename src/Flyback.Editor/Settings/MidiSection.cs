@@ -26,7 +26,7 @@ internal sealed class MidiSection : ISettingsSection
 
     public Control View => rows;
 
-    private readonly StackPanel rows = new() { Spacing = 8, Width = 280 };
+    private readonly StackPanel rows = new() { Spacing = 8, Width = SettingsSession.SectionWidth };
 
     /// <summary>How a knob meets a controller that disagrees with it.</summary>
     private readonly ComboBox takeover = new Picker
@@ -114,8 +114,8 @@ internal sealed class MidiSection : ISettingsSection
         Follow();
 
         rows.Children.Add(knobGridOn);
-        rows.Children.Add(InspectorRows.Field("Columns", knobColumns));
-        rows.Children.Add(InspectorRows.Field("Rows", knobRows));
+        rows.Children.Add(InspectorRows.Field("Columns", knobColumns, indent: 20));
+        rows.Children.Add(InspectorRows.Field("Rows", knobRows, indent: 20));
 
         var known = string.Join(", ", knobs.Instruments.Profiles.Select(profile => profile.Name));
         var instrumentsNote = new TextBlock

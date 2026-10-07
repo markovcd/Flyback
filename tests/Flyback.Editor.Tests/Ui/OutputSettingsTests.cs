@@ -6,7 +6,9 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Capture;
@@ -329,6 +331,84 @@ public class OutputSettingsTests : EditorTest
         All<ControlsPanel>(window).Single().KnobGrid.ShouldNotBeNull().ToString().ShouldBe("3x2");
         All<StageKnobs>(window).Single().KnobGrid.ShouldNotBeNull().ToString().ShouldBe("3x2");
         OutputSettings.Load(settingsPath).KnobGrid.ToString().ShouldBe("3x2");
+    }
+
+    [AvaloniaFact]
+    public void Save_is_drawn_apart_from_cancel()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window);
+
+        IBrush? Fill(string label) => All<Avalonia.Controls.Presenters.ContentPresenter>(All<Button>(dialog).Single(b => b.Content as string == label)).First().Background;
+
+        Fill("Save").ShouldNotBe(Fill("Cancel"));
+    }
+
+    [AvaloniaFact]
+    public void Columns_and_rows_sit_indented_under_the_knob_grid_switch()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window, MidiTab);
+
+        var grid = All<CheckBox>(dialog).Single(c => c.Name == "knobGrid");
+
+        foreach (var side in All<NumericUpDown>(dialog).Where(c => c.Name is "knobColumns" or "knobRows"))
+        {
+            var label = side.FindAncestorOfType<Grid>()!.Children.OfType<TextBlock>().Single();
+
+            label.TranslatePoint(default, grid)!.Value.X.ShouldBeGreaterThan(8, $"{label.Text} is not indented under the switch");
+        }
+    }
+
+    /// <summary>
+    /// No caption, value or option in any tab is cut short. Every option of a list is
+    /// measured, not only the one showing.
+    /// </summary>
+    [AvaloniaFact]
+    public void Nothing_in_the_settings_window_is_clipped()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window);
+        var clipped = new List<string>();
+
+        foreach (var tab in Tabs(dialog).Items.OfType<TabItem>().ToList())
+        {
+            var name = ((TextBlock)tab.Header!).Text;
+
+            ShowSettingsTab(dialog, name!);
+            Settle(window);
+
+            var page = (Visual)tab.Content!;
+
+            foreach (var text in All<TextBlock>(page).Where(t => t.IsEffectivelyVisible && t.TextWrapping == Avalonia.Media.TextWrapping.NoWrap))
+            {
+                if (string.IsNullOrEmpty(text.Text) || text.FindAncestorOfType<ComboBox>() is not null) continue;
+
+                if (Natural(text.FontFamily, text.FontSize, text.FontWeight, text.Text) > text.Bounds.Width + 0.5) clipped.Add($"{name}: \"{text.Text}\"");
+            }
+
+            foreach (var list in All<ComboBox>(page).Where(c => c.IsEffectivelyVisible))
+            {
+                var room = All<ContentControl>(list).Single(c => c.Name == "ContentPresenter").Bounds.Width;
+
+                foreach (var item in list.Items)
+                {
+                    var said = item is SettingOption option ? option.Name : item?.ToString() ?? "";
+
+                    if (Natural(list.FontFamily, list.FontSize, list.FontWeight, said) > room + 0.5) clipped.Add($"{name}: {list.Name} option \"{said}\"");
+                }
+            }
+        }
+
+        clipped.ShouldBeEmpty();
+
+        static double Natural(Avalonia.Media.FontFamily family, double size, Avalonia.Media.FontWeight weight, string said)
+        {
+            var probe = new TextBlock { Text = said, FontFamily = family, FontSize = size, FontWeight = weight };
+            probe.Measure(Avalonia.Size.Infinity);
+
+            return probe.DesiredSize.Width;
+        }
     }
 
     [AvaloniaFact]

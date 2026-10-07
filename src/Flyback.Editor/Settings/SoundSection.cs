@@ -32,7 +32,7 @@ internal sealed class SoundSection : ISettingsSection
 
     public Control View => rows;
 
-    private readonly StackPanel rows = new() { Spacing = 8, Width = 280 };
+    private readonly StackPanel rows = new() { Spacing = 8, Width = SettingsSession.SectionWidth };
 
     private readonly ComboBox latency = new Picker
     {
@@ -44,7 +44,7 @@ internal sealed class SoundSection : ISettingsSection
     private readonly CheckBox stepDown = new()
     {
         Name = "stepDown",
-        Content = "Lower it when the sound drops out",
+        Content = "Lower oversampling when the sound drops out",
     };
 
     /// <summary>How many times the output rate the sound is evaluated at, one row a factor of <see cref="AudioRenderer.Oversamples"/>.</summary>

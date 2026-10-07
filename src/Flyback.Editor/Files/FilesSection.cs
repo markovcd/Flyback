@@ -133,7 +133,7 @@ internal sealed class FilesSection : ISettingsSection
 
     public string Name => "Files";
 
-    internal StackPanel View { get; } = new() { Spacing = 10, Width = 280 };
+    internal StackPanel View { get; } = new() { Spacing = 10, Width = SettingsSession.SectionWidth };
 
     Control ISettingsSection.View => View;
 

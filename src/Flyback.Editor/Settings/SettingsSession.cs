@@ -51,12 +51,15 @@ internal sealed class SettingsSession(
         foreach (var section in sections) section.Show();
     }
     
+    /// <summary>How wide every section is: room for the widest option any list offers, beside the gutter.</summary>
+    internal const double SectionWidth = 360;
+
     /// <summary>
     /// The tabs' size, list and section together: wide enough for the list beside
-    /// a 280-pixel section with room for its scroll bar, and tall enough for every
-    /// tab in one column and an assistant's usual form without a scroll bar.
+    /// a section with room for its scroll bar, and tall enough for every tab in one
+    /// column and an assistant's usual form without a scroll bar.
     /// </summary>
-    private const double Width = 480;
+    private const double Width = SectionWidth + 200;
 
     /// <inheritdoc cref="Width"/>
     private const double Height = 460;
@@ -86,7 +89,7 @@ internal sealed class SettingsSession(
 
         foreach (var section in sections) tabs.Items.Add(Tab(section));
 
-        var save = new Button { Content = "Save", Width = 84 };
+        var save = new Button { Content = "Save", Width = 84, Classes = { "accent" } };
 
         // Cancel answers exactly what the cross and Escape answer, so all three
         // take the one way out rather than each undoing things itself.

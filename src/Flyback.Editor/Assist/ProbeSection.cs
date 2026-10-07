@@ -52,9 +52,7 @@ internal sealed class ProbeSection : StackPanel
             + "three requests for the one model.",
         FontSize = Text.Small,
         Foreground = Amber,
-        Width = 260,
         TextWrapping = TextWrapping.Wrap,
-        HorizontalAlignment = HorizontalAlignment.Left,
     };
 
     /// <summary>
@@ -66,10 +64,8 @@ internal sealed class ProbeSection : StackPanel
         Name = "probeNote",
         FontSize = Text.Small,
         Foreground = Text.Muted,
-        Width = 260,
         TextWrapping = TextWrapping.Wrap,
         IsVisible = false,
-        HorizontalAlignment = HorizontalAlignment.Left,
     };
 
     /// <summary>The probe going on, if one is. Its presence is what "running" means.</summary>

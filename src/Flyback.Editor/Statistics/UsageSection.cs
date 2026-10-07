@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Flyback.Editor.Settings;
 using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Statistics;
@@ -79,7 +80,7 @@ internal sealed class UsageSection
         Show();
     }
 
-    internal StackPanel View { get; } = new() { Spacing = 10, Width = 280 };
+    internal StackPanel View { get; } = new() { Spacing = 10, Width = SettingsSession.SectionWidth };
 
     /// <summary>Puts what was last saved back on the controls.</summary>
     internal void Show() => sendUsageStatistics.IsChecked = saved.SendUsageStatistics;

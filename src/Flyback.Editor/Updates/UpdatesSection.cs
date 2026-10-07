@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Editor.Controls;
+using Flyback.Editor.Settings;
 using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Updates;
@@ -64,7 +65,7 @@ internal sealed class UpdatesSection
         Show();
     }
 
-    internal StackPanel View { get; } = new() { Spacing = 10, Width = 280 };
+    internal StackPanel View { get; } = new() { Spacing = 10, Width = SettingsSession.SectionWidth };
 
     /// <summary>Puts what was last saved back on the controls.</summary>
     internal void Show() => checkForUpdates.IsChecked = saved.CheckForUpdates;

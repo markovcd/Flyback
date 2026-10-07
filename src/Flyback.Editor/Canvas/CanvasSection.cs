@@ -132,14 +132,14 @@ internal sealed class CanvasSection : ISettingsSection
             "How finely Measure looks at the picture: Small is a 32 by 18 grid, Medium 64 by 36, "
             + "Large 128 by 72. Larger shows more detail; it only takes longer.");
 
-        View.Children.Add(InspectorRows.Field("Measure picture", measurePicture));
+        View.Children.Add(InspectorRows.Field("Measure grid", measurePicture));
 
         Show();
     }
 
     public string Name => "Canvas";
 
-    internal StackPanel View { get; } = new() { Spacing = 10, Width = 280 };
+    internal StackPanel View { get; } = new() { Spacing = 10, Width = SettingsSession.SectionWidth };
 
     Control ISettingsSection.View => View;
 

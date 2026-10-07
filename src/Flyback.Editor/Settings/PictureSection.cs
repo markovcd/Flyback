@@ -52,7 +52,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
 
     public Control View => rows;
 
-    private readonly StackPanel rows = new() { Spacing = 8, Width = 280 };
+    private readonly StackPanel rows = new() { Spacing = 8, Width = SettingsSession.SectionWidth };
 
     /// <summary>What size the picture is drawn at. A take grays it out while it runs.</summary>
     private readonly ComboBox resolution = new Picker
@@ -92,7 +92,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
     private readonly ComboBox transportEdge = new Picker
     {
         Name = "transportEdge",
-        ItemsSource = new[] { "Transport on top, knobs below", "Knobs on top, transport below" },
+        ItemsSource = new[] { "Top, knobs below", "Bottom, knobs on top" },
         SelectedIndex = 0,
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
