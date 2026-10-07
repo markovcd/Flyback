@@ -10,9 +10,10 @@ namespace Flyback.Plugins.Assist;
 internal static partial class Unheard
 {
     /// <summary>What the person is told, before the model says anything.</summary>
-    public const string Told =
-        "This assistant cannot hear the sound or measure its loudness in this conversation. "
-        + "'Let it listen to the sound' in its settings turns that on.";
+    /// <param name="earOffered">Whether the provider's settings have a switch that would let it hear.</param>
+    public static string Told(bool earOffered) =>
+        "This assistant cannot hear the sound or measure its loudness in this conversation."
+        + (earOffered ? " 'Let it listen to the sound' in its settings turns that on." : string.Empty);
 
     /// <summary>What goes ahead of the message, for the model.</summary>
     public const string Note =

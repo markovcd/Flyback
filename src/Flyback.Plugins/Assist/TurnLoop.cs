@@ -121,7 +121,7 @@ public static class TurnLoop
 
         if (!workbench.Hears && Unheard.Asked(instruction))
         {
-            yield return new PatchEvent.Did(Unheard.Told);
+            yield return new PatchEvent.Did(Unheard.Told(workbench.EarOffered));
             instruction = Unheard.Note + Environment.NewLine + Environment.NewLine + instruction;
         }
 

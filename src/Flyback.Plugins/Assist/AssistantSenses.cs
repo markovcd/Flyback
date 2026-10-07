@@ -11,4 +11,5 @@ namespace Flyback.Plugins.Assist;
 /// </remarks>
 /// <param name="Vision">Whether the model may be shown a rendered frame.</param>
 /// <param name="Hearing">Who listens, and <see cref="Listener.None"/> for nobody.</param>
-public readonly record struct AssistantSenses(bool Vision = true, Listener Hearing = Listener.None);
+/// <param name="EarOffered">Whether the provider's settings have a switch that would let it hear, where nobody listens.</param>
+public readonly record struct AssistantSenses(bool Vision = true, Listener Hearing = Listener.None, bool EarOffered = false);

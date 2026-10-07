@@ -123,6 +123,9 @@ public sealed partial class PatchWorkbench
     /// <summary>Whether the model is offered <c>listen</c>, which is the only way it hears or measures the sound.</summary>
     internal bool Hears => Tools.Any(tool => tool.Name == "listen");
 
+    /// <summary>Whether the provider's settings offer a switch that would let it hear, where it does not.</summary>
+    internal bool EarOffered { get; set; }
+
     /// <summary>Whether the model has put a patch forward as its answer.</summary>
     public bool HasProposal => proposal is not null;
 

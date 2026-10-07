@@ -1,1 +1,7 @@
 #nullable enable
+*REMOVED*Flyback.Plugins.Assist.AssistantSenses.AssistantSenses(bool Vision = true, Flyback.Plugins.Assist.Listener Hearing = Flyback.Plugins.Assist.Listener.None) -> void
+*REMOVED*Flyback.Plugins.Assist.AssistantSenses.Deconstruct(out bool Vision, out Flyback.Plugins.Assist.Listener Hearing) -> void
+Flyback.Plugins.Assist.AssistantSenses.AssistantSenses(bool Vision = true, Flyback.Plugins.Assist.Listener Hearing = Flyback.Plugins.Assist.Listener.None, bool EarOffered = false) -> void
+Flyback.Plugins.Assist.AssistantSenses.Deconstruct(out bool Vision, out Flyback.Plugins.Assist.Listener Hearing, out bool EarOffered) -> void
+Flyback.Plugins.Assist.AssistantSenses.EarOffered.get -> bool
+Flyback.Plugins.Assist.AssistantSenses.EarOffered.init -> void

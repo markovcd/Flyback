@@ -70,6 +70,30 @@ public class AssistantRunTests
         saved.Transcript.ShouldHaveSingleItem().Text.ShouldBe("refused: [key] is not valid");
     }
 
+    // --- hearing ----------------------------------------------------------------
+
+    [Fact]
+    public void A_provider_with_no_model_that_hears_offers_no_ear()
+    {
+        using var run = new AssistantRun(new ScriptedAssistant(), Keyed, NodeCatalog.BuiltIn, new Patch());
+
+        run.Workbench.EarOffered.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void A_provider_with_a_model_that_hears_offers_an_ear_while_listening_is_off()
+    {
+        var eared = new ScriptedAssistant
+        {
+            Schema = new("scripted", [new AssistantModel("scripted"), new AssistantModel("ear", Hearing: true)], "NONE", "none needed"),
+        };
+
+        using var run = new AssistantRun(eared, Keyed, NodeCatalog.BuiltIn, new Patch());
+
+        run.Workbench.Hears.ShouldBeFalse();
+        run.Workbench.EarOffered.ShouldBeTrue();
+    }
+
     // --- the happy path -----------------------------------------------------
 
     [Fact]
@@ -956,7 +980,7 @@ public class AssistantRunTests
 
         public int Priority => 0;
 
-        public AssistantSchema Schema { get; } =
+        public AssistantSchema Schema { get; init; } =
             new("scripted", [new AssistantModel("scripted")], "NONE", "none needed");
 
         public AssistantCredential Credential => Schema.Credential;

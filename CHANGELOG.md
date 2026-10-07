@@ -4,6 +4,8 @@
 
 - `install.sh --no-links` writes only the copy, leaving the command links, menu entry, shortcut and PATH as they were.
 
+- Asked to listen, an assistant that has no model able to hear, such as Claude Code or Codex, says it cannot hear without pointing at a setting it does not have.
+
 ## 0.8.0 — 2026-10-07
 
 154 commits since 0.7.1.

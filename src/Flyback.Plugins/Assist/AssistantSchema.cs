@@ -271,7 +271,8 @@ public sealed record AssistantSchema(
             chosen.Vision,
             !chosen.Hearing ? Listener.None
             : Known(chosen.Model)?.Hearing == true ? Listener.Itself
-            : Listener.Another);
+            : Listener.Another,
+            EarOffered: !chosen.Hearing && Ears.Any());
     }
 
     /// <summary>

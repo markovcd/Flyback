@@ -189,6 +189,34 @@ public class TurnLoopTests
         conversation.Log.ShouldContain(line => line.StartsWith("add: ") && line.Contains("cannot hear") && line.EndsWith(asked));
     }
 
+    /// <summary>
+    /// A provider with no model that takes a sound has no switch to turn on, so the
+    /// turn names none: only that it cannot hear.
+    /// </summary>
+    [Fact]
+    public async Task Asked_to_listen_where_no_ear_is_on_offer_the_turn_names_no_setting()
+    {
+        var conversation = new Scripted(new ModelReply("done", []));
+
+        var events = await Turn(Bench(), conversation, instruction: "listen to it and bring it to -16 LUFS");
+
+        var said = events[0].ShouldBeOfType<PatchEvent.Did>().Summary;
+        said.ShouldContain("cannot hear");
+        said.ShouldNotContain("Let it listen to the sound");
+    }
+
+    [Fact]
+    public async Task Asked_to_listen_where_an_ear_is_on_offer_the_turn_names_the_setting()
+    {
+        var conversation = new Scripted(new ModelReply("done", []));
+        var bench = Bench();
+        bench.EarOffered = true;
+
+        var events = await Turn(bench, conversation, instruction: "listen to it and bring it to -16 LUFS");
+
+        events[0].ShouldBeOfType<PatchEvent.Did>().Summary.ShouldContain("'Let it listen to the sound' in its settings turns that on.");
+    }
+
     [Fact]
     public async Task Asked_to_listen_with_an_ear_the_turn_says_nothing_about_it()
     {

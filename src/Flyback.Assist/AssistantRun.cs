@@ -112,6 +112,8 @@ internal sealed class AssistantRun : IDisposable
         Workbench = restored ?? new PatchWorkbench(
             modules, startingPoint, senses.Vision, senses.Hearing, limits, samples, pictures, prose, presets);
 
+        Workbench.EarOffered = senses.EarOffered;
+
         if (restored is null)
         {
             session = assistant.Start(Workbench, config);
