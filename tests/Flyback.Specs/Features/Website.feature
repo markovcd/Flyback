@@ -19,3 +19,8 @@ Feature: The Worker serves the whole website
   Scenario: A shared preset a browser cannot play is offered to download
     When someone opens the preset site's presets page
     Then the presets page offers it to download rather than to play or edit in the browser
+
+  Scenario: The tutorials page plays its videos from one list
+    When someone opens the tutorials page
+    Then every video in its list has a name of its own to link to, a title and a line on what it shows
+    And its player starts on the first video in the list

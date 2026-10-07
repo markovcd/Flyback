@@ -23,10 +23,34 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750&display=swap">
 <link rel="stylesheet" href="assets/site.css">
 <style>
-  .videos { display: grid; gap: 40px; margin: 8px 0 72px; max-width: 960px; }
-  .videos figure { margin: 0; }
-  .videos figcaption { margin-top: 12px; color: var(--muted); }
-  .videos figcaption strong { margin-right: 6px; }
+  .watch { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; margin: 8px 0 72px; }
+  @media (min-width: 960px) { .watch { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; } }
+
+  .now { margin-top: 18px; }
+  .now .count { color: var(--muted); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  .now h2 { margin: 4px 0 8px; font-size: 24px; }
+  .now p { margin: 0; color: var(--label); max-width: 46rem; }
+  .steps { display: flex; gap: 10px; margin-top: 18px; }
+  .steps button {
+    font: inherit; font-size: 14px; font-weight: 600; color: var(--bright); cursor: pointer;
+    background: var(--node); border: 1px solid var(--separator); border-radius: var(--radius); padding: 8px 14px;
+  }
+  .steps button:hover:not(:disabled) { background: var(--node-selected); }
+  .steps button:disabled { color: var(--normalled); cursor: default; }
+
+  .playlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  @media (min-width: 960px) { .playlist { max-height: calc(100vh - 140px); overflow-y: auto; position: sticky; top: 84px; } }
+  .playlist a {
+    display: grid; grid-template-columns: 26px 128px minmax(0, 1fr); gap: 12px; align-items: center;
+    padding: 8px; border-radius: var(--radius); border: 1px solid transparent; color: var(--label); text-decoration: none;
+  }
+  .playlist a:hover { background: var(--panel); color: var(--bright); }
+  .playlist a[aria-current="true"] { background: var(--node); border-color: var(--separator); color: var(--bright); }
+  .playlist .num { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; }
+  .playlist a[aria-current="true"] .num { color: var(--attention); }
+  .playlist img { display: block; width: 128px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 4px; background: var(--edge); }
+  .playlist strong { display: block; font-size: 14.5px; line-height: 1.35; color: inherit; font-weight: 600; }
+  .playlist small { color: var(--muted); font-size: 12.5px; }
 </style>
 </head>
 <body>
@@ -56,20 +80,37 @@
     <a href="https://www.youtube.com/@FlybackModular">Flyback channel on YouTube</a>.</p>
   </header>
 
-  <div class="videos">
-    <figure class="clip">
-      <iframe src="https://www.youtube-nocookie.com/embed/FhKpYZxMlec" title="What is Flyback?" loading="lazy"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-      <figcaption><strong>What is Flyback?</strong> Modules, sockets and wires, the Output, and one patch making both the picture and the sound. Two minutes.</figcaption>
-    </figure>
-    <figure class="clip">
-      <iframe src="https://www.youtube-nocookie.com/embed/npkO3aYA_CA" title="Your first patch" loading="lazy"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-      <figcaption><strong>Your first patch</strong> From an empty canvas to rings that move: a Sine wired into the Output, stripes from Coordinates, a knob, Rings and Time. A minute and a half.</figcaption>
-    </figure>
+  <div class="watch">
+    <div>
+      <figure class="clip player" style="margin: 0">
+        <iframe src="https://www.youtube-nocookie.com/embed/FhKpYZxMlec" title="What is Flyback?"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      </figure>
+      <div class="now" aria-live="polite">
+        <span class="count">1 of 2</span>
+        <h2>What is Flyback?</h2>
+        <p>Modules, sockets and wires, the Output, and one patch making both the picture and the sound.</p>
+      </div>
+      <div class="steps">
+        <button type="button" data-step="-1" disabled>← Previous</button>
+        <button type="button" data-step="1">Next →</button>
+      </div>
+    </div>
+
+    <!-- One entry per video, in watching order. The link is the video on YouTube, for a browser without the script. -->
+    <ol class="playlist" aria-label="Tutorials">
+      <li><a href="https://www.youtube.com/watch?v=FhKpYZxMlec" data-video="FhKpYZxMlec" data-slug="what-is-flyback" aria-current="true"
+             data-blurb="Modules, sockets and wires, the Output, and one patch making both the picture and the sound.">
+        <span class="num">1</span><img src="https://i.ytimg.com/vi/FhKpYZxMlec/mqdefault.jpg" alt="" loading="lazy">
+        <span><strong>What is Flyback?</strong><small>2:03</small></span></a></li>
+      <li><a href="https://www.youtube.com/watch?v=npkO3aYA_CA" data-video="npkO3aYA_CA" data-slug="your-first-patch"
+             data-blurb="From an empty canvas to rings that move: a Sine wired into the Output, stripes from Coordinates, a knob, Rings and Time.">
+        <span class="num">2</span><img src="https://i.ytimg.com/vi/npkO3aYA_CA/mqdefault.jpg" alt="" loading="lazy">
+        <span><strong>Your first patch</strong><small>1:27</small></span></a></li>
+    </ol>
   </div>
+</div>
 </div>
 
 </div>
@@ -98,5 +139,6 @@
 </footer>
 
 <script src="assets/site.js"></script>
+<script src="assets/tutorials.js"></script>
 </body>
 </html>

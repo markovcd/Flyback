@@ -153,6 +153,36 @@ public sealed partial class WebsiteSteps
         missing.ShouldBeEmpty(string.Join(Environment.NewLine, missing));
     }
 
+    [When("someone opens the tutorials page")]
+    public void WhenTheTutorialsPageIsOpened() => page = SiteFiles.Read("/tutorials.html");
+
+    [Then("every video in its list has a name of its own to link to, a title and a line on what it shows")]
+    public void ThenEveryVideoIsNamed()
+    {
+        var entries = Tutorial().Matches(page);
+        entries.Count.ShouldBeGreaterThan(0);
+        entries.Select(e => e.Groups["slug"].Value).ShouldBeUnique();
+        entries.Select(e => e.Groups["video"].Value).ShouldBeUnique();
+        foreach (Match entry in entries)
+        {
+            entry.Groups["href"].Value.ShouldBe("https://www.youtube.com/watch?v=" + entry.Groups["video"].Value);
+            entry.Groups["blurb"].Value.ShouldNotBeNullOrWhiteSpace();
+            entry.Groups["title"].Value.ShouldNotBeNullOrWhiteSpace();
+        }
+    }
+
+    [Then("its player starts on the first video in the list")]
+    public void ThenThePlayerStartsOnTheFirst()
+    {
+        var first = Tutorial().Match(page).Groups["video"].Value;
+        page.ShouldContain($"""<iframe src="https://www.youtube-nocookie.com/embed/{first}" """);
+        page.ShouldContain("""<script src="assets/tutorials.js"></script>""");
+    }
+
+    /// <summary>One entry of the tutorials page's playlist.</summary>
+    [GeneratedRegex("""<a href="(?<href>[^"]+)" data-video="(?<video>[\w-]{11})" data-slug="(?<slug>[a-z0-9-]+)"[^>]*\s+data-blurb="(?<blurb>[^"]*)">[\s\S]*?<strong>(?<title>[^<]+)</strong>""")]
+    private static partial Regex Tutorial();
+
     /// <summary>A link within the site: not another host, an anchor, mail or inline data.</summary>
     [GeneratedRegex("""(?:href|src)="(?<to>(?![a-z]+:|#|//)[^"]+)""")]
     private static partial Regex Link();

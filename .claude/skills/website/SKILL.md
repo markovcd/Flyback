@@ -9,7 +9,7 @@ The website in `site/` (index.html, tutorials.html and the tutorials under it; s
 
 After a user-visible change, grep `site/*.html` for the affected names and fix the prose.
 
-`tutorials.html` is the channel's tutorial videos embedded from YouTube and nothing else; a video goes on it once it is posted, as one more `figure.clip` (the backlog is `docs/handoff/youtube-videos.md`).
+`tutorials.html` is the channel's tutorial videos embedded from YouTube and nothing else; one player and a playlist beside it. A video goes on it once it is posted, as one more `<li>` in `.playlist` (its YouTube id, a `data-slug` that becomes its `#` link, a title, a length and a `data-blurb`); `assets/tutorials.js` does the rest, and a scenario in `Website.feature` checks the entries. The backlog is `docs/handoff/youtube-videos.md`.
 
 The Worker serves all of `site/`: the website and the preset site's own pages (`admin.html`, `preset.html`, `plugin.html`, `shared-plugins.html`, `submit.html`, `submit-plugin.html`) sit together, and a page that needs the API calls it relatively. Link between pages relatively (`presets.html`, not an address). `worker/build-assets.sh` builds what the Worker serves and `worker/dev.sh` serves it. `presets.html` is the shelf: it lists the shipped presets from `stills/index.json` and the shared ones from the API. Its script and styles (`assets/presets.js`, `presets.css`, `ratings.js`) live in `site/assets/`, and so do those of the other preset pages. GitHub Pages holds only the redirect in `deploy/pages/`; a page's canonical and `og:` URLs name `flybackmodular.app`.
 
