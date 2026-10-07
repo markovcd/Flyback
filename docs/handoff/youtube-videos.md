@@ -40,6 +40,8 @@ One of them replaces the written tutorial still under `site/tutorials/`. When it
 
 - **Play it from an Elektron Syntakt.** Replaces `tutorials/syntakt.html`. The box's MIDI and USB settings, the whole Syntakt added in one pick, a MIDI track sequencing a Flyback voice, a Flyback sequencer kept to its clock, a picture lit by its tracks, and its knobs on the panel. Needs the real box filmed or captured; the editor half can be `flyback-cli shot`.
 - **Play it.** The computer keyboard as an instrument, a MIDI controller, chords down a polyphonic wire, knobs learned to a controller, the die. Played and No Sense Dub.
+- **Draw with shapes.** A shape is a distance: a Circle, a Box, a Polygon or a Star into a Fill, filled or outlined; two into a Combine, joined, cut or melted by its smoothness; moved by a Translate and a Rotate, and the melt pulsing on a beat. Needs a small new preset, judged first: Four forms is a showcase spread over groups.
+- **Remix a preset.** Find one in the gallery, read it with F2, change a few knobs, save it as your own and share it on the preset site.
 - **Inside the Whole band.** A hundred and sixty-two modules in fourteen boxes: the clock, the song, seven instruments, the room, the desk and three boxes for the picture, opened one at a time while it plays. Could run three minutes.
 - **Record and render.** Ctrl + R for a live take with the knobs in it, then `flyback-cli render` to PNG, MP4 and WAV with no window, `--loudness`, the viewer, `check` and `pack`.
 - **Write a plugin.** A module in C# from a folder, the contract, signing, the preset site. Longer, and for a narrower audience.
