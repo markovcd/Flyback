@@ -243,7 +243,8 @@ internal sealed class ToolTable(
                 """),
 
             Does(Vocabulary.SetSample, edits.SetSample,
-                "Points a Sample module at a sound file, or a MIDI File module at a .mid file. The path is neither a knob nor a wire, "
+                "Points a Sample module at a sound file, a MIDI File module at a .mid file, or a Path "
+                + "module at an .svg, .obj or .png drawing. The path is neither a knob nor a wire, "
                 + "so this is the only way to set one — and it is the one thing in a patch that "
                 + "refers to something outside it, so the file has to exist where you say it "
                 + "does. A WAV (mono or stereo, 8 to 32 bit or float) or an MP3, no other format. The "
@@ -255,7 +256,7 @@ internal sealed class ToolTable(
                 {
                   "properties": {
                     "handle": { "type": "string" },
-                    "path": { "type": "string", "description": "Where the WAV, MP3 or MIDI file is, absolute or beside the patch." }
+                    "path": { "type": "string", "description": "Where the WAV, MP3, MIDI, SVG, OBJ or PNG file is, absolute or beside the patch." }
                   },
                   "required": ["handle", "path"]
                 }

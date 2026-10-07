@@ -3,7 +3,7 @@ using Flyback.Core.Compile;
 namespace Flyback.Engine.Render;
 
 /// <summary>
-/// The sound and MIDI files a patch names, read once and kept.
+/// The sound, MIDI and drawing files a patch names, read once and kept.
 /// </summary>
 /// <remarks>
 /// A cache rather than a loader, which is the point of its existing: every edit
@@ -14,12 +14,15 @@ namespace Flyback.Engine.Render;
 /// chance. Not thread-safe, and it need not be: it is read on the thread that
 /// compiles, and what comes out of it is immutable.
 /// </remarks>
-public sealed class SampleLibrary : ISampleLibrary
+public sealed class SampleLibrary : ISampleLibrary, IShapeLibrary
 {
     private readonly Dictionary<string, (LoadedSample? Clip, SoundFault Fault)> known =
         new(StringComparer.OrdinalIgnoreCase);
 
     private readonly Dictionary<string, (LoadedMidi? Song, MidiFault Fault)> knownMidi =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    private readonly Dictionary<string, (LoadedShape? Shape, ShapeFault Fault)> knownShapes =
         new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
@@ -93,6 +96,10 @@ public sealed class SampleLibrary : ISampleLibrary
         _ => "it could not be read.",
     };
 
+    LoadedShape? IShapeLibrary.FindShape(string path) => LookShape(path).Shape;
+
+    string IShapeLibrary.ExplainShape(string path) => ShapeReader.Explain(LookShape(path).Fault);
+
     public string Explain(string path) => Look(path).Fault switch
     {
         SoundFault.Missing => "there is no file there.",
@@ -116,6 +123,7 @@ public sealed class SampleLibrary : ISampleLibrary
         {
             known.Remove(path);
             knownMidi.Remove(path);
+            knownShapes.Remove(path);
         }
     }
 
@@ -123,6 +131,7 @@ public sealed class SampleLibrary : ISampleLibrary
     {
         known.Clear();
         knownMidi.Clear();
+        knownShapes.Clear();
     }
 
     /// <summary>How many files this is holding, which only a test asks, to see a cache work.</summary>
@@ -150,5 +159,17 @@ public sealed class SampleLibrary : ISampleLibrary
 
         var song = MidiFileReader.Read(full, out var fault);
         return knownMidi[path] = (song, fault);
+    }
+
+    private (LoadedShape? Shape, ShapeFault Fault) LookShape(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return (null, ShapeFault.Missing);
+
+        if (knownShapes.TryGetValue(path, out var already)) return already;
+
+        if (PatchPaths.Resolve(path, Beside, Library) is not { } full) return knownShapes[path] = (null, ShapeFault.Elsewhere);
+
+        var shape = ShapeReader.Read(full, out var fault);
+        return knownShapes[path] = (shape, fault);
     }
 }

@@ -516,6 +516,7 @@ internal sealed class Inspector
         SampleExtra => files.Sample(node),
         PictureExtra => files.Picture(node),
         MidiFileExtra => files.MidiFile(node),
+        ShapeExtra => files.Shape(node),
 
         // Anything else is a plugin's own kind, which ships no control and is
         // drawn from what it declares instead — see ADR-0055. A kind that

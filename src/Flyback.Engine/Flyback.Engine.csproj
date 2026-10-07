@@ -24,6 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Graph\Wireframe\*.obj" LogicalName="Wireframe/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="Graph\Presets.WholeBand.cs">
       <DependentUpon>Presets.cs</DependentUpon>
     </Compile>

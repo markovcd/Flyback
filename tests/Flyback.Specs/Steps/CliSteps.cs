@@ -128,6 +128,35 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
         Green(0.9, 0).ShouldBeLessThan(0.02);
     }
 
+    [Then("the still is lit round a square half as wide as the picture is tall, dark inside and out")]
+    public void ThenSquare()
+    {
+        var still = Shot();
+
+        // The brightest green a few pixels either side of each side's middle and corner.
+        double Green(double x, double y)
+        {
+            Span<double> rgb = stackalloc double[3];
+            var most = 0d;
+
+            for (var step = -4; step <= 4; step++)
+            {
+                var along = 1d + step * 0.01d;
+                still.At(x * along, y * along, rgb);
+                most = Math.Max(most, rgb[1]);
+            }
+
+            return most;
+        }
+
+        new[] { Green(0.5, 0), Green(0, 0.5), Green(-0.5, 0), Green(0, -0.5), Green(0.5, 0.5), Green(-0.5, -0.5) }
+            .ShouldAllBe(lit => lit > 0.3);
+
+        Green(0.05, 0).ShouldBeLessThan(0.02);
+        Green(0.25, 0.25).ShouldBeLessThan(0.02);
+        Green(0.9, 0).ShouldBeLessThan(0.02);
+    }
+
     /// <summary>
     /// A loop is a trace that goes out to an edge and back, so a line just inside
     /// that edge crosses it twice for every loop.
@@ -453,6 +482,9 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
 
     [Then("the command says the patch has problems")]
     public void ThenProblems() => code.ShouldBe(Exit.Problems, said);
+
+    [Then("it names {string}")]
+    public void ThenNames(string name) => said.ShouldContain(name);
 
     [Then("it points at line {int}")]
     public void ThenPointsAt(int line) => said.ShouldContain($":{line}:");

@@ -143,6 +143,8 @@ internal static class ModuleGlyphs
         [NodeCatalog.PictureTypeId] =
             "M3,5 L21,5 L21,19 L3,19 Z M3,16 L9,10 L13.5,14.5 L16.5,11.5 L21,16 "
             + "M14.9,9.4 A1.8,1.8 0 1 1 18.5,9.4 A1.8,1.8 0 1 1 14.9,9.4",
+        [NodeCatalog.PathTypeId] =
+            "M12,3 L14.6,9.4 L21.5,9.6 L16.2,14 L18,20.8 L12,17 L6,20.8 L7.8,14 L2.5,9.6 L9.4,9.4 Z",
         [NodeCatalog.ValueTypeId] = "M4,12 A8,8 0 1 1 20,12 A8,8 0 1 1 4,12 M12,12 L12,5",
 
         // A tempo swung like a metronome, and a level held flat until the next

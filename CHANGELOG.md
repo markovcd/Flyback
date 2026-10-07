@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A Path module plays an SVG, an OBJ model or a PNG's outlines as sound that draws it on a Beam, and the Wireframe preset spins a cube with it.
+
 - A Wandering tune preset plays a melody nobody wrote, a wandering value snapped to a pentatonic with each note its own length, and draws it as a scrolling score.
 
 - A Visualizer preset draws whatever the Line In hears as a turning kaleidoscope the kick flashes, without playing it back, so a monitor of the speakers can be its input.

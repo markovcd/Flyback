@@ -1,6 +1,7 @@
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
+using Flyback.Engine.Render;
 using Shouldly;
 
 namespace Flyback.Core.Tests.Graph;
@@ -99,12 +100,16 @@ public class PresetRulesTests
     [MemberData(nameof(Every))]
     public void Every_preset_compiles(string name)
     {
-        var patch = Preset(name).Build(NodeCatalog.BuiltIn);
+        var preset = Preset(name);
+        var patch = preset.Build(NodeCatalog.BuiltIn);
+
+        // Against the files it carries, as it is opened.
+        var carried = preset.Files is { } files ? new BundleFiles(files()) : null;
 
         foreach (var result in new[]
                  {
-                     patch.CompileForVideo(NodeCatalog.BuiltIn),
-                     patch.CompileForAudio(NodeCatalog.BuiltIn),
+                     patch.CompileForVideo(NodeCatalog.BuiltIn, samples: carried, pictures: carried),
+                     patch.CompileForAudio(NodeCatalog.BuiltIn, samples: carried, pictures: carried),
                  })
         {
             result.HasErrors.ShouldBeFalse(

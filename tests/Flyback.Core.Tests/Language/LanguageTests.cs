@@ -200,6 +200,25 @@ public class LanguageTests
         """);
 
     [Fact]
+    public void Wireframe() => Alike("Wireframe", """
+        let model  = path("cube.obj", freq: 55, amp: 0.9)
+        let turn   = t * 0.7
+        let c      = cos(turn)
+        let s      = sin(turn)
+        let across = model.x * c + model.z * s
+        let deep   = model.z * c - model.x * s
+        let toward = model.y * 0.39 + deep * 0.92
+        let left   = across * 2 / (3 - toward)
+        let right  = (model.y * 0.92 - deep * 0.39) * 2 / (3 - toward)
+
+        left |> out.left
+        right |> out.right
+        beam(x: left, y: right, persistence: 30ms) |> out.color
+
+        out.volume = 0.4
+        """);
+
+    [Fact]
     public void Sequence() => Same("Sequence", """
         let steps = notes(rate: 3, gate_length: 0.66) [ A3 C4 D4 E4 G4 E4 D4 C4 ]
 

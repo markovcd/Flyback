@@ -18,6 +18,7 @@ internal sealed class Carrying(ModuleCatalog modules, Wiring wiring, Issues issu
         if (def.Extra<SampleExtra>() is not null) SampleExtra.Set(instance, path);
         else if (def.Extra<PictureExtra>() is not null) PictureExtra.Set(instance, path);
         else if (def.Extra<MidiFileExtra>() is not null) MidiFileExtra.Set(instance, path);
+        else if (def.Extra<ShapeExtra>() is not null) ShapeExtra.Set(instance, path);
         else issues.Complain(IssueCode.NoFile, line, column, $"'{def.Name}' names no file.");
     }
 

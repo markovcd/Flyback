@@ -74,6 +74,21 @@ internal sealed class FileRows(IFilePickers pickers, Document document, PatchFil
             files.SoundFolder.Forget(named);
         });
 
+    /// <summary>The same row for a Path's drawing — see <see cref="ShapeExtra"/>.</summary>
+    public Control Shape(NodeInstance node) => Row(
+        node,
+        "drawing",
+        ShapeExtra.Of(node),
+        "Choose a drawing",
+        ShapeFileType,
+        picked =>
+        {
+            var named = PatchPaths.Named(picked, files.SoundFolder.Library);
+
+            ShapeExtra.Set(node, named);
+            files.SoundFolder.Forget(named);
+        });
+
     /// <summary>
     /// A file this instance carries: what it is called, what it currently is, and a
     /// button that goes and finds another. One row for both kinds, which differ in
@@ -161,6 +176,13 @@ internal sealed class FileRows(IFilePickers pickers, Document document, PatchFil
     {
         Patterns = ["*.mid", "*.midi"],
         MimeTypes = ["audio/midi", "audio/x-midi"],
+    };
+
+    /// <summary>And what the drawing picker offers.</summary>
+    private static FilePickerFileType ShapeFileType => new("SVG, OBJ or PNG drawings")
+    {
+        Patterns = [.. ShapeReader.Extensions.Select(extension => "*" + extension)],
+        MimeTypes = ["image/svg+xml", "model/obj", "image/png"],
     };
 
     /// <summary>And what the picture picker offers, for the same reason.</summary>
