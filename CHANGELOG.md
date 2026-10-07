@@ -2,11 +2,9 @@
 
 ## Unreleased
 
-- `flyback-cli shot --assistant` draws the assistant's column open, at the end of the conversation the patch carries.
-
 ## 0.8.0 — 2026-10-07
 
-142 commits since 0.7.1.
+154 commits since 0.7.1.
 
 ### Modules
 
@@ -50,6 +48,7 @@
 - `flyback-cli render` of a still plays the sound up to it, and `--input <file>` gives a render a sound file for a Line In to hear.
 - `flyback-cli render --mute <group>` switches a named group off for the run, and `--solo <group>` plays it alone with what feeds it and carries it to the Output.
 - `flyback-cli info --by-group` lists the picture and sound ops each group adds, with `--json` for a script.
+- `flyback-cli shot --assistant` draws the assistant's column open, at the end of the conversation the patch carries.
 - `flyback-cli ask --expand` prints a short message written out in full, as Expand does in the editor, and builds and saves nothing.
 - `flyback-cli ask` refuses a flag it does not have rather than sending it to the assistant as the message.
 
