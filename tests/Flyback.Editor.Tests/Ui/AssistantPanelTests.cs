@@ -96,7 +96,6 @@ public sealed class AssistantPanelTests : EditorTest
             editor,
             conversation ?? new AssistantConversation(() => patch),
             new AssistantRunFactory(catalog, editor, repository),
-            credentials,
             repository,
             new AssistantSettingsPage(chosen, catalog, credentials, repository, editor, setup),
             setup,
@@ -140,7 +139,6 @@ public sealed class AssistantPanelTests : EditorTest
             editor,
             new AssistantConversation(patch),
             new AssistantRunFactory(catalog, editor, repository),
-            credentials,
             repository,
             new AssistantSettingsPage(chosen, catalog, credentials, repository, editor, Kept),
             Kept);

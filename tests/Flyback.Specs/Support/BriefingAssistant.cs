@@ -32,7 +32,7 @@ internal sealed class BriefingAssistant : IPatchAssistant, IPatchSession
 
     public AssistantCredential Credential => schema.Credential;
 
-    public Uri? Endpoint(SettingValues values) => new("https://assistant.test/");
+    public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 
     public IReadOnlyList<SettingField> Form(SettingValues values) => schema.Form(values);
 

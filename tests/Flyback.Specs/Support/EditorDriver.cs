@@ -313,7 +313,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
             .ToList());
 
     /// <summary>How many rows the toolbar's shown buttons stand in.</summary>
-    public int ToolbarRows => ReadWindow(open =>
+    public int ToolbarRows => ReadWindow(_ =>
     {
         var bar = Service<Toolbar>().View;
 
@@ -987,7 +987,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
             // the canvas or, where that is put away, onto whatever the window keeps it on.
             open.Activate();
 
-            if (!canvas.Focus()) (open.FocusManager?.GetFocusedElement() as InputElement)?.Focus();
+            if (!canvas.Focus()) (open.FocusManager.GetFocusedElement() as InputElement)?.Focus();
 
             open.KeyPressQwerty(key, modifiers);
             open.KeyReleaseQwerty(key, modifiers);

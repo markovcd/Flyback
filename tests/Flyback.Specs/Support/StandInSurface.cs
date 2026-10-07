@@ -10,7 +10,7 @@ public sealed class StandInSurface(bool processorStandsIn) : Border, IGpuPreview
 {
     public event Action<string>? Failed;
 
-    public string? Api => processorStandsIn ? "OpenGL" : "WebGL";
+    public string Api => processorStandsIn ? "OpenGL" : "WebGL";
 
     public bool ProcessorStandsIn => processorStandsIn;
 

@@ -416,7 +416,7 @@ public static class Lexer
     public static double? Note(string word)
     {
         // Pitch.Name names notes out to ±1000, which is octave -85 at the bottom.
-        const int MaxOctave = 1_000 / (int)Pitch.Semitones + 2;
+        const int maxOctave = 1_000 / (int)Pitch.Semitones + 2;
 
         if (word.Length < 2) return null;
         if (word[0] is < 'A' or > 'G') return null;
@@ -446,7 +446,7 @@ public static class Lexer
 
             // Past this Pitch.Name writes the number rather than a name, and the
             // digits would soon overflow.
-            if (octave > MaxOctave) return null;
+            if (octave > maxOctave) return null;
         }
 
         if (negative) octave = -octave;

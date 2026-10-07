@@ -80,11 +80,11 @@ public class CliTests
     [Fact]
     public void The_model_that_answered_is_read_from_the_result()
     {
-        const string Output = """
+        const string output = """
             {"type":"result","is_error":false,"result":"Done.","usage":{},"modelUsage":{"claude-haiku-4-5-20251001":{"outputTokens":3},"claude-opus-5-5":{"outputTokens":120}}}
             """;
 
-        ClaudeCli.Answer(Output, string.Empty, 0).Model.ShouldBe("claude-opus-5-5");
+        ClaudeCli.Answer(output, string.Empty, 0).Model.ShouldBe("claude-opus-5-5");
         ClaudeCli.Answer("""{"type":"result","is_error":false,"result":"Done."}""", string.Empty, 0).Model.ShouldBeNull();
     }
 

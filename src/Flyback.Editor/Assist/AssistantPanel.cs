@@ -69,8 +69,6 @@ internal sealed class AssistantPanel : UserControl
     /// </summary>
     private readonly string? logFolder;
 
-    private readonly Credentials credentials;
-
     private readonly TextBox instruction = new()
     {
         AcceptsReturn = true,
@@ -276,7 +274,6 @@ internal sealed class AssistantPanel : UserControl
         IAssistantEditor editor,
         AssistantConversation conversation,
         AssistantRunFactory runs,
-        Credentials credentials,
         AssistantSettingRepository settingsRepository,
         AssistantSettingsPage settings,
         EditorFolders? folders = null,
@@ -289,7 +286,6 @@ internal sealed class AssistantPanel : UserControl
         this.editor = editor;
         this.conversation = conversation;
         this.runs = runs;
-        this.credentials = credentials;
         this.usage = usage;
         logFolder = folders?.ConversationLogFolder;
         session = new AssistantSession(transcript, logFolder);
@@ -705,7 +701,7 @@ internal sealed class AssistantPanel : UserControl
         off.Setters.Add(new Setter(ContentPresenter.ForegroundProperty, new ImmutableSolidColorBrush(Colors.Inactive)));
         Styles.Add(off);
 
-        foreach (var (state, ground, ink) in new (string?, Color, Color)[]
+        foreach (var (state, ground, ink) in new[]
                  {
                      (null, Colors.Label, Colors.Window),
                      (":pointerover", Colors.BeamCore, Colors.Window),

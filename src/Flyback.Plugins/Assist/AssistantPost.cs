@@ -7,16 +7,16 @@ namespace Flyback.Plugins.Assist;
 public static class AssistantPost
 {
     /// <summary>How many times one request may be sent before it is given up on.</summary>
-    public const int MaxAttempts = 5;
+    private const int MaxAttempts = 5;
 
     /// <summary>
     /// The longest a refusal is waited out: a minute, so a tokens-per-minute limit
     /// is ridden out. One that resets beyond it is a quota, and no amount of
     /// waiting is the answer to a quota.
     /// </summary>
-    public static readonly TimeSpan LongestWait = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan LongestWait = TimeSpan.FromSeconds(60);
 
-    private static readonly AsyncLocal<Action<TimeSpan, int>?> waiting = new();
+    private static readonly AsyncLocal<Action<TimeSpan, int>?> WaitingAsyncLocal = new();
 
     /// <summary>
     /// Told each wait as it starts, with the status that asked for it, by whatever
@@ -25,8 +25,8 @@ public static class AssistantPost
     /// <remarks>Flows with the request rather than through the contract, so a provider passes nothing on.</remarks>
     internal static Action<TimeSpan, int>? Waiting
     {
-        get => waiting.Value;
-        set => waiting.Value = value;
+        get => WaitingAsyncLocal.Value;
+        set => WaitingAsyncLocal.Value = value;
     }
 
     /// <summary>Tells <see cref="Waiting"/> that a wait of <paramref name="wait"/> is starting.</summary>

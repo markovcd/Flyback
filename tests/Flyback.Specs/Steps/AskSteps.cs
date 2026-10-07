@@ -219,7 +219,7 @@ public sealed class AskSteps : IDisposable
 
         public AssistantCredential Credential => new("FLYBACK_REMEMBERING_KEY", "No key is needed.");
 
-        public Uri? Endpoint(SettingValues values) => new("https://assistant.test/");
+        public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 
@@ -229,7 +229,7 @@ public sealed class AskSteps : IDisposable
 
         public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => new Session(this, workbench, []);
 
-        public IPatchSession? Resume(PatchWorkbench workbench, AssistantConfig config, string saved)
+        public IPatchSession Resume(PatchWorkbench workbench, AssistantConfig config, string saved)
         {
             var history = JsonSerializer.Deserialize<List<string>>(saved) ?? [];
 

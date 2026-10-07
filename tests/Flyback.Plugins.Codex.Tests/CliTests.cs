@@ -107,7 +107,7 @@ public class CliTests
     [Fact]
     public void The_last_message_is_the_answer_and_its_usage_is_the_cost()
     {
-        const string Output = """
+        const string output = """
             {"type":"thread.started","thread_id":"t"}
             {"type":"item.completed","item":{"id":"item_0","type":"error","message":"Codex is ignoring 1 unrecognized configuration setting."}}
             {"type":"turn.started"}
@@ -116,7 +116,7 @@ public class CliTests
             {"type":"turn.completed","usage":{"input_tokens":1000,"cached_input_tokens":900,"output_tokens":7}}
             """;
 
-        var answer = CodexCli.Answer(Output, string.Empty, 0);
+        var answer = CodexCli.Answer(output, string.Empty, 0);
 
         answer.Text.ShouldBe("Done.");
         answer.Input.ShouldBe(1000);

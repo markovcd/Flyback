@@ -66,7 +66,7 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
 
     public event Action<string>? Failed;
 
-    public string? Api => "WebGL";
+    public string Api => "WebGL";
 
     public bool ProcessorStandsIn => false;
 

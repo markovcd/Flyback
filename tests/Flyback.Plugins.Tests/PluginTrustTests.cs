@@ -270,7 +270,7 @@ public sealed class PluginTrustTests : IDisposable
 
         public AssistantCredential Credential { get; } = new("TWIN_KEY", "");
 
-        public Uri? Endpoint(SettingValues values) => new("https://twin.test/");
+        public Uri Endpoint(SettingValues values) => new("https://twin.test/");
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 

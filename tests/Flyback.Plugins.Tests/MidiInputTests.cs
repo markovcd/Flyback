@@ -60,7 +60,7 @@ public class MidiInputTests
     [Fact]
     public void The_backend_chosen_here_is_the_one_for_this_operating_system()
     {
-        Shipped().PreferredMidiInput?.Id.ShouldBe(
+        Shipped().PreferredMidiInput.Id.ShouldBe(
             OperatingSystem.IsWindows() ? "winmm"
             : OperatingSystem.IsMacOS() ? "coremidi"
             : OperatingSystem.IsLinux() ? "alsaseq"

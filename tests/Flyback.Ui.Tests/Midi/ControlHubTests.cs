@@ -97,10 +97,9 @@ public class ControlHubTests
         var hub = new ControlHub(midi) { Takeover = Takeover.PickUp };
         var (patch, knob) = Patched(0.5f, new MidiBinding(Device, 0, 21));
         var block = new LiveValues([knob.Key]);
-        var port = (FakePort?)null;
 
         hub.Follow(patch, block);
-        port = backend.Opened.Single();
+        var port = backend.Opened.Single();
 
         port.Send(Cc(21, 10));
         port.Send(Cc(21, 40));

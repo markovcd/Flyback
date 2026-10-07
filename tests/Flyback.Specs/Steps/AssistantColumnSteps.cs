@@ -72,7 +72,6 @@ public sealed class AssistantColumnSteps(HeadlessTurn turn) : IDisposable
                 editor,
                 new AssistantConversation(() => patch),
                 new AssistantRunFactory(catalog, editor, repository),
-                credentials,
                 repository,
                 new AssistantSettingsPage(chosen, catalog, credentials, repository, editor, folders),
                 folders);

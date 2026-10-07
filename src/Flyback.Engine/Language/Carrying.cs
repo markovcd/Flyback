@@ -38,7 +38,7 @@ internal sealed class Carrying(ModuleCatalog modules, Wiring wiring, Issues issu
 
             // '<a b>' was unrolled into a longer list, so the list has to be
             // read more slowly for the pattern to take the time it did.
-            if (read.RateDivisor > 1) Slower(node, def, read.RateDivisor, line, column);
+            if (read.RateDivisor > 1) Slower(node, def, read.RateDivisor);
 
             return;
         }
@@ -59,7 +59,7 @@ internal sealed class Carrying(ModuleCatalog modules, Wiring wiring, Issues issu
     }
 
     /// <summary>Divides a sequencer's rate, by the knob where there is one and by a Multiply where there is not.</summary>
-    private void Slower(NodeInstance node, NodeDef def, int by, int line, int column)
+    private void Slower(NodeInstance node, NodeDef def, int by)
     {
         var rate = SocketNames.Find(def.Inputs, "rate");
         if (rate < 0) return;

@@ -33,7 +33,6 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
     private readonly PreviewHost preview;
     private readonly NodeEditor editor;
     private readonly Document document;
-    private readonly Usage usage;
 
     private readonly List<TransportOverlay> overlays = [];
 
@@ -43,7 +42,6 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
         this.preview = preview;
         this.editor = editor;
         this.document = document;
-        this.usage = usage;
 
         Track = new SeekTrack
         {

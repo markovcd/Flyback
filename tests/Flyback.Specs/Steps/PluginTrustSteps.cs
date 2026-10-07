@@ -196,7 +196,7 @@ public sealed class PluginTrustSteps : IDisposable
 
         public AssistantCredential Credential { get; } = new("FLYBACK_SPECS_TWIN_KEY", "");
 
-        public Uri? Endpoint(SettingValues values) => new(origin + "/v1");
+        public Uri Endpoint(SettingValues values) => new(origin + "/v1");
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 
