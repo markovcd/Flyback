@@ -1,9 +1,13 @@
+using System.CommandLine;
+using Flyback.Cli.Common;
+using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
+using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
-using Flyback.Cli.Common;
+using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
 
@@ -25,6 +29,118 @@ namespace Flyback.Cli.Commands;
 /// </remarks>
 internal static class PrintCommand
 {
+    /// <summary>
+    /// Prints a patch as text. No <c>--json</c>: what it writes is the patch rather
+    /// than a report about one, so there is nothing for a <c>--json</c> to be an
+    /// alternative to.
+    /// </summary>
+    public static Command Build(PluginRegistry plugins)
+    {
+        var patch = new Argument<FileInfo?>("patch")
+        {
+            Description = "The patch to read: a document, a bundle, or one written as text. "
+                + $"The extension decides which — .{PatchIO.FileExtension}, "
+                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}.",
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+
+        var preset = new Option<string>("--preset")
+        {
+            Description = "A shipped preset, by name, in place of a file.",
+        };
+
+        var presets = new Option<bool>("--presets")
+        {
+            Description = "List what --preset would accept, and stop.",
+        };
+
+        var output = new Option<FileInfo>("--out", "-o")
+        {
+            Description = $"Where to write it, .{PatchLanguage.FileExtension} by convention. "
+                + "Left out, it goes to standard output.",
+        };
+
+        var check = new Option<bool>("--check")
+        {
+            Description = "Write nothing, and say whether the printing builds back to the same program.",
+        };
+
+        var command = new Command("print", "Write a patch out as text, in the language.")
+        {
+            patch, preset, presets, output, check,
+        };
+
+        command.SetAction(result =>
+        {
+            var checking = result.GetValue(check);
+            var into = result.GetValue(output);
+            var error = result.InvocationConfiguration.Error;
+
+            // Said rather than ignored, because the two asked for together are
+            // somebody expecting a file at the end of it.
+            if (checking && into is not null)
+            {
+                result.InvocationConfiguration.Error.WriteLine(
+                    $"{GlobalConstants.ApplicationName}: --check writes nothing, so there is nothing for --out to take.");
+
+                return Exit.Failed;
+            }
+
+            plugins.Ready();
+
+            if (result.GetValue(presets))
+            {
+                ShippedPresets.List(plugins.Catalog, result.InvocationConfiguration.Output);
+
+                return Exit.Ok;
+            }
+
+            var file = result.GetValue(patch);
+            var named = result.GetValue(preset);
+
+            if ((file is null) == (named is null))
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to print: a patch, or --preset and its name.");
+
+                return Exit.Failed;
+            }
+
+            if (file is null)
+            {
+                if (ShippedPresets.Open(plugins.Catalog, named!, error) is not { } shipped) return Exit.Failed;
+
+                return PrintCommand.Run(
+                    shipped.Opened.Patch,
+                    null,
+                    into,
+                    checking,
+                    result.InvocationConfiguration.Output,
+                    error,
+                    shipped.Opened.Samples,
+                    shipped.Opened.Pictures,
+                    name: shipped.Name);
+            }
+
+            // Opened rather than read, so that --check compiles a bundle against
+            // the files it carries: a program that loaded a table is a different
+            // program from one that could not find it, and comparing the second
+            // against itself would prove nothing about the first.
+            return Patches.Open(file, result.InvocationConfiguration.Error) is not { } opened
+                ? Exit.Failed
+                : PrintCommand.Run(
+                    opened.Patch,
+                    file,
+                    into,
+                    checking,
+                    result.InvocationConfiguration.Output,
+                    result.InvocationConfiguration.Error,
+                    opened.Samples,
+                    opened.Pictures);
+        });
+
+        return command;
+    }
+
     /// <param name="file">The file the patch was read from, or null for a preset.</param>
     /// <param name="name">What to call the patch, where it is not a file's.</param>
     public static int Run(

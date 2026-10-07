@@ -1,9 +1,11 @@
+using System.CommandLine;
 using System.Text.Json;
-using Flyback.Cli.Models;
 using Flyback.Cli.Common;
+using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
+using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
 
@@ -19,6 +21,77 @@ namespace Flyback.Cli.Commands;
 /// </remarks>
 internal static class ProbeCommand
 {
+    /// <summary>
+    /// A command about an assistant rather than about a patch, which is why it
+    /// needs the plugin catalog rather than the engine: what it asks and what
+    /// it writes both belong to a plugin.
+    /// </summary>
+    public static Command Build(PluginRegistry plugins, Option<bool> json)
+    {
+        var provider = new Option<string>("--provider")
+        {
+            Description = "Which assistant to ask, by id, or `all` for every one with a key. "
+                + "Defaults to whichever the settings are on.",
+        };
+
+        var model = new Option<string[]>("--model")
+        {
+            Description = "Ask about these models by name, whether or not the endpoint lists them.",
+            AllowMultipleArgumentsPerToken = true,
+        };
+
+        var all = new Option<bool>("--all")
+        {
+            Description = "Ask about everything listed, not only what could build a patch.",
+        };
+
+        var bounds = new Option<bool>("--bounds")
+        {
+            Description = "Also measure what each model will think for. Slow, and billed as thinking.",
+        };
+
+        var dry = new Option<bool>("--dry-run")
+        {
+            Description = "Print what was found and leave the settings as they are.",
+        };
+
+        var keys = new Option<bool>("--keys")
+        {
+            Description = "Say where each provider's key would come from, and ask nothing of anybody.",
+        };
+
+        var yes = new Option<bool>("--yes", "-y")
+        {
+            Description = "Start without the question. A probe is billed traffic, so it is asked for "
+                + "first unless this says not to.",
+        };
+
+        var command = new Command(
+            "probe",
+            "Ask an assistant's endpoint which models it has and what each one accepts.")
+        {
+            provider, model, all, bounds, dry, keys, yes, json,
+        };
+
+        command.SetAction((result, cancellation) => ProbeCommand.Run(
+            plugins.Catalog,
+            new ProbeOptions(
+                result.GetValue(provider),
+                result.GetValue(model) ?? [],
+                result.GetValue(all),
+                result.GetValue(bounds),
+                result.GetValue(dry),
+                result.GetValue(json),
+                result.GetValue(keys),
+                result.GetValue(yes)),
+            result.InvocationConfiguration.Output,
+            result.InvocationConfiguration.Error,
+            cancellation,
+            asking: Console.IsInputRedirected ? null : Console.In));
+
+        return command;
+    }
+
     /// <param name="settingsPath">
     /// Somewhere other than the usual place, for the tests. A command that both
     /// reads and writes the real file is one no test can call safely.

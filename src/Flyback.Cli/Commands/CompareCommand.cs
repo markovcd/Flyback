@@ -1,14 +1,16 @@
+using System.CommandLine;
 using System.Globalization;
 using System.Text.Json;
+using Flyback.Cli.Common;
+using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
-using Flyback.Cli.Models;
-using Flyback.Cli.Common;
 using CompareOptions = Flyback.Cli.Models.CompareOptions;
+using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
 
@@ -24,6 +26,59 @@ namespace Flyback.Cli.Commands;
 /// </remarks>
 internal static class CompareCommand
 {
+    /// <summary>Plays two patches side by side and says whether they are the same instrument.</summary>
+    public static Command Build(PluginRegistry plugins, Option<bool> json)
+    {
+        var was = new Argument<FileInfo>("was") { Description = "The patch as it was." };
+        var now = new Argument<FileInfo>("now") { Description = "The patch as it is now." };
+
+        var seconds = new Option<double>("--seconds")
+        {
+            Description = "How long to play both.",
+            DefaultValueFactory = _ => 10d,
+        };
+
+        var size = new Option<(int Width, int Height)>("--size")
+        {
+            Description = "The frame both are drawn at, as WIDTHxHEIGHT.",
+            DefaultValueFactory = _ => (320, 180),
+            CustomParser = SizeArgument.Parse,
+        };
+
+        var command = new Command(
+            "compare",
+            "Play two patches side by side and say whether they are the same instrument, bit for bit.")
+        {
+            was, now, seconds, size, json,
+        };
+
+        command.SetAction((result, cancellation) =>
+        {
+            plugins.Ready();
+
+            var error = result.InvocationConfiguration.Error;
+            var first = result.GetRequiredValue(was);
+            var second = result.GetRequiredValue(now);
+
+            if (Patches.Open(first, error) is not { } before || Patches.Open(second, error) is not { } after)
+                return Task.FromResult(Exit.Failed);
+
+            var (width, height) = result.GetValue(size);
+
+            return Task.FromResult(CompareCommand.Run(
+                before,
+                first.Name,
+                after,
+                second.Name,
+                new CompareOptions(result.GetValue(seconds), width, height, Json: result.GetValue(json)),
+                result.InvocationConfiguration.Output,
+                error,
+                cancellation));
+        });
+
+        return command;
+    }
+
     public static int Run(
         Opened was,
         string wasName,

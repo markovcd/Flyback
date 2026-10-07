@@ -1,12 +1,17 @@
+using System.CommandLine;
+using System.CommandLine.Completions;
 using System.Globalization;
-using Flyback.Cli.Models;
 using Flyback.Cli.Common;
+using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
+using Flyback.Engine.Graph;
+using Flyback.Engine.Language;
 using Flyback.Engine.Render;
 using Flyback.Gpu;
+using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
 
@@ -24,6 +29,251 @@ namespace Flyback.Cli.Commands;
 /// </remarks>
 internal static class RenderCommand
 {
+    public static Command Build(PluginRegistry plugins, ExportDefaults defaults)
+    {
+        var patch = new Argument<FileInfo?>("patch")
+        {
+            Description = "The patch to read: a document, a bundle, or one written as text. "
+                + $"The extension decides which — .{PatchIO.FileExtension}, "
+                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}. Left out, give --preset instead.",
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+
+        var preset = new Option<string>("--preset")
+        {
+            Description = "A shipped preset, by name, in place of a file.",
+        };
+
+        var presets = new Option<bool>("--presets")
+        {
+            Description = "List what --preset would accept, and stop.",
+        };
+
+        var output = new Option<FileInfo>("--out", "-o")
+        {
+            Description = "Where to write it. The extension picks the format: .png for a still, "
+                + string.Join(", ", ClipFormats.All.Select(f => f.Extension).Distinct())
+                + " for the rest.",
+        };
+
+        var size = new Option<(int Width, int Height)>("--size")
+        {
+            Description = "Frame size, as WIDTHxHEIGHT.",
+            DefaultValueFactory = _ => (defaults.Width, defaults.Height),
+            CustomParser = SizeArgument.Parse,
+        };
+
+        var at = new Option<double>("--at")
+        {
+            Description = "Which second of the patch a still is of.",
+        };
+
+        var seconds = new Option<double>("--seconds")
+        {
+            Description = "How long a clip runs. A patch is endless, so only you can say.",
+            DefaultValueFactory = _ => 10d,
+        };
+
+        var from = new Option<double>("--from")
+        {
+            Description = "Which second a clip or a sound starts at. The patch is played up to it unrecorded, "
+                + "so feedback and sequencers are in the state they would be in; --seconds counts from there.",
+        };
+
+        var fps = new Option<double>("--fps")
+        {
+            Description = "Frames a second, for a clip.",
+            DefaultValueFactory = _ => defaults.Fps,
+        };
+
+        var quality = new Option<int>("--quality")
+        {
+            Description = "How good the picture is, 1 to 100 — a JPEG quality in an AVI, "
+                + "and a rate factor everywhere else.",
+            DefaultValueFactory = _ => defaults.Quality,
+        };
+
+        var format = new Option<string>("--format")
+        {
+            Description = "Write this format rather than the one the extension names: "
+                + string.Join(", ", ClipFormats.All.Select(f => f.Id)) + ".",
+        };
+
+        format.CompletionSources.Add(_ => ClipFormats.All.Select(f => new CompletionItem(f.Id, f.Label)));
+
+        var ffmpeg = new Option<string>("--ffmpeg")
+        {
+            Description = $"The ffmpeg to encode with. Left out, the one the editor's settings name, or else "
+                + $"the first on PATH; only {ClipFormats.MotionJpegAvi.Id} and {ClipFormats.Wav.Id} need none at all.",
+        };
+
+        var settings = new Option<string>("--settings")
+        {
+            HelpName = "path",
+            Description = "Read the defaults from another settings.json than the editor's.",
+        };
+
+        var loudness = new Option<bool>("--loudness")
+        {
+            Description = "Say how loud the sound came out: integrated loudness in LUFS and true peak "
+                + "in dBTP, measured as ITU-R BS.1770 does.",
+        };
+
+        var interpreted = new Option<bool>("--interpreted")
+        {
+            Description = "Keep the patch on the interpreter rather than compiling it. Same bytes, slower.",
+        };
+
+        var gpu = new Option<bool>("--gpu")
+        {
+            Description = "Draw the picture on the GPU, and fail where there is none rather than use the processor.",
+        };
+
+        var processor = new Option<bool>("--processor")
+        {
+            Description = "Draw the picture on the processor: slower, and the interpreter's bytes exactly. "
+                + "Left out, the GPU draws it where there is one.",
+        };
+
+        var oversample = new Option<int>("--oversample")
+        {
+            Description = "Evaluate the sound at this many times the output rate before filtering it down: "
+                + string.Join(", ", AudioRenderer.Oversamples) + ". Left out, the editor's Settings → Sound.",
+            DefaultValueFactory = _ => defaults.Oversample,
+        };
+
+        oversample.AcceptOnlyFromAmong([.. AudioRenderer.Oversamples.Select(factor => factor.ToString(System.Globalization.CultureInfo.InvariantCulture))]);
+
+        var input = new Option<FileInfo?>("--input")
+        {
+            HelpName = "file",
+            Description = "A sound file for a Line In to hear, from its start, in place of the microphone a render has none of. "
+                + "Left out, a Line In is silent.",
+        };
+
+        var mute = new Option<string[]>("--mute")
+        {
+            HelpName = "group",
+            Description = "Switch a group's modules off for the run, by its name (ADR-0117); give it again for more.",
+            Arity = ArgumentArity.ZeroOrMore,
+            AllowMultipleArgumentsPerToken = false,
+        };
+
+        var solo = new Option<string[]>("--solo")
+        {
+            HelpName = "group",
+            Description = "Hear a group alone: everything is switched off except what feeds it and what carries it to the Output, "
+                + "so it keeps its own echo and room. Give it again for more.",
+            Arity = ArgumentArity.ZeroOrMore,
+            AllowMultipleArgumentsPerToken = false,
+        };
+
+        var command = new Command(
+            "render",
+            "Write a patch to a picture, a sound, or a clip of both. The size, rate, quality, format "
+            + "and ffmpeg left out are the editor's: its preview size and Settings → Recording.")
+        {
+            patch, preset, presets, output, size, at, seconds, from, fps, quality, format, ffmpeg, loudness, interpreted, gpu,
+            processor, settings, oversample, input, mute, solo,
+        };
+
+        command.SetAction((result, cancellation) =>
+        {
+            var error = result.InvocationConfiguration.Error;
+
+            plugins.Ready();
+
+            if (result.GetValue(presets))
+            {
+                ShippedPresets.List(plugins.Catalog, result.InvocationConfiguration.Output);
+
+                return Task.FromResult(Exit.Ok);
+            }
+
+            var file = result.GetValue(patch);
+            var named = result.GetValue(preset);
+
+            if ((file is null) == (named is null))
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to render: a patch, or --preset and its name.");
+
+                return Task.FromResult(Exit.Failed);
+            }
+
+            if (result.GetValue(gpu) && result.GetValue(processor))
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: --gpu and --processor ask for two different things; say one.");
+
+                return Task.FromResult(Exit.Failed);
+            }
+
+            if (result.GetValue(output) is null)
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: --out says where to write it.");
+
+                return Task.FromResult(Exit.Failed);
+            }
+
+            // A file named relatively is measured from wherever the patch is, so
+            // a patch and the sounds and pictures beside it travel together — and
+            // a bundle carries them, so one of those needs nothing beside it at
+            // all. A preset carries its own files the same way a bundle does.
+            Opened opened;
+
+            if (file is not null)
+            {
+                if (Patches.Open(file, error) is not { } fromFile) return Task.FromResult(Exit.Failed);
+
+                opened = fromFile;
+            }
+            else
+            {
+                if (ShippedPresets.Open(plugins.Catalog, named!, error) is not { } shipped) return Task.FromResult(Exit.Failed);
+
+                opened = shipped.Opened;
+            }
+
+            var (loaded, samples, pictures) = opened;
+
+            if (!GroupSwitches.Apply(loaded, result.GetValue(mute) ?? [], result.GetValue(solo) ?? [], error))
+                return Task.FromResult(Exit.Failed);
+
+            var (width, height) = result.GetValue(size);
+            var into = result.GetRequiredValue(output);
+
+            var options = new RenderOptions(
+                into,
+                width,
+                height,
+                result.GetValue(at),
+                result.GetValue(seconds),
+                result.GetValue(fps),
+                result.GetValue(quality),
+                result.GetValue(format) ?? defaults.FormatFor(into.Name),
+                result.GetValue(ffmpeg) ?? defaults.Ffmpeg,
+                result.GetValue(loudness),
+                result.GetValue(interpreted),
+                result.GetValue(gpu) ? PictureBackend.Gpu
+                : result.GetValue(processor) ? PictureBackend.Processor
+                : PictureBackend.Any,
+                result.GetValue(oversample),
+                result.GetValue(input),
+                result.GetValue(from));
+
+            return Task.FromResult(
+                RenderCommand.Run(
+                    loaded,
+                    options,
+                    result.InvocationConfiguration.Error,
+                    ConsoleProgress.For(),
+                    samples,
+                    pictures,
+                    cancellation: cancellation));
+        });
+
+        return command;
+    }
+
     public static int Run(
         Patch patch,
         RenderOptions options,

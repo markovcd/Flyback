@@ -1,9 +1,10 @@
+using System.CommandLine;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text.Json;
-using Flyback.Cli.Models;
 using Flyback.Cli.Common;
+using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Plugins.Hosting;
 
@@ -29,6 +30,44 @@ namespace Flyback.Cli.Commands;
 /// </remarks>
 internal static class PackPluginCommand
 {
+    /// <summary>Makes a plugin package, the file the editor installs a plugin from.</summary>
+    public static Command Build()
+    {
+        var source = new Argument<FileSystemInfo>("source")
+        {
+            Description = "The plugin's project, published here for each runtime it names, "
+                + "or the folder the SDK already built it into, such as bin/Release/net10.0.",
+        };
+
+        var output = new Option<FileInfo>("--out", "-o")
+        {
+            Description = $"Where to write the package. {PluginPackage.Extension} by convention.",
+            Required = true,
+        };
+
+        var key = new Option<FileInfo>("--key", "-k")
+        {
+            Description = "The private key to sign it with, as plugin-key writes it. "
+                + "An update installs only when signed with the key that signed what it replaces.",
+        };
+
+        var command = new Command(
+            "pack-plugin",
+            "Build a plugin and pack it into one signed file the editor installs from.")
+        {
+            source, output, key,
+        };
+
+        command.SetAction(result => PackPluginCommand.Run(
+            result.GetRequiredValue(source),
+            result.GetRequiredValue(output),
+            result.InvocationConfiguration.Output,
+            result.InvocationConfiguration.Error,
+            key: result.GetValue(key)));
+
+        return command;
+    }
+
     private const string PublishFolder = "publish";
 
     /// <param name="source">A project file, a folder holding one, or a folder the SDK built a plugin into.</param>

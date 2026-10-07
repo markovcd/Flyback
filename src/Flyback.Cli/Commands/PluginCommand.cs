@@ -1,13 +1,83 @@
+using System.CommandLine;
 using System.Text.Json;
 using Flyback.Cli.Common;
+using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Plugins.Hosting;
+using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
 
 /// <summary>Which plugin folders load, and saying yes or no to one (<see cref="PluginTrust"/>).</summary>
 internal static class PluginCommand
 {
+    /// <summary>Which plugin folders load, and saying yes or no to one.</summary>
+    public static Command Build(PluginRegistry plugins, Option<bool> json)
+    {
+        var folder = new Argument<string>("folder")
+        {
+            Description = $"The plugin's folder: a path, or a name under {PluginHost.DirectoryName}/ beside this program.",
+        };
+
+        var secrets = new Option<bool>("--secrets")
+        {
+            Description = "Let it register a secret store, which holds every assistant key typed from then on.",
+        };
+
+        var allow = new Command("allow", "Load a plugin folder from the next start, as its files stand now.") { folder, secrets };
+
+        allow.SetAction(result => PluginCommand.Allow(
+            PluginCommand.Resolve(result.GetRequiredValue(folder), plugins.Directory),
+            result.GetValue(secrets),
+            plugins.Trust().Allowances,
+            result.InvocationConfiguration.Output,
+            result.InvocationConfiguration.Error));
+
+        var denied = new Argument<string>("folder")
+        {
+            Description = $"The plugin's folder: a path, or a name under {PluginHost.DirectoryName}/ beside this program.",
+        };
+
+        var deny = new Command("deny", "Stop loading a plugin folder that was allowed.") { denied };
+
+        deny.SetAction(result => PluginCommand.Deny(
+            PluginCommand.Resolve(result.GetRequiredValue(denied), plugins.Directory),
+            plugins.Trust().Allowances,
+            result.InvocationConfiguration.Output,
+            result.InvocationConfiguration.Error));
+
+        var list = new Command("list", "Say which plugin folders load, and why the others do not.") { json };
+
+        list.SetAction(result => PluginCommand.List(
+            plugins.Directory,
+            plugins.Trust(),
+            result.GetValue(json),
+            result.InvocationConfiguration.Output));
+
+        var package = new Argument<FileInfo>("package")
+        {
+            Description = $"The {PluginPackage.Extension} to read.",
+        };
+
+        var describe = new Command(
+            "describe",
+            "Say what a plugin package is and what its code names, as the install dialog reads it, running none of it.")
+        {
+            package, json,
+        };
+
+        describe.SetAction(result => PluginDescribeCommand.Run(
+            result.GetRequiredValue(package),
+            result.GetValue(json),
+            result.InvocationConfiguration.Output,
+            result.InvocationConfiguration.Error));
+
+        return new Command("plugin", "Which plugin folders load, and what a plugin package holds.")
+        {
+            allow, deny, list, describe,
+        };
+    }
+
     /// <summary>
     /// A folder given by path, or by name under <paramref name="directory"/> where no
     /// folder of that path exists here.

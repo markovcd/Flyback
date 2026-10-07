@@ -1,8 +1,13 @@
+using System.CommandLine;
 using System.Text.Json;
 using Flyback.Cli.Common;
+using Flyback.Cli.Models;
+using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
 using Flyback.Engine.Measure;
+using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
 
@@ -12,6 +17,96 @@ namespace Flyback.Cli.Commands;
 /// </summary>
 internal static class MeasureCommand
 {
+    /// <summary>Runs a patch offline and says what every output carried.</summary>
+    public static Command Build(PluginRegistry plugins, Option<bool> json)
+    {
+        var patch = new Argument<string>("patch")
+        {
+            Description = "The patch to measure: a document, a bundle, or one written as text. "
+                + "Left out with --preset, whose outputs then follow at once.",
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+
+        var outputs = new Argument<string[]>("outputs")
+        {
+            Description = "Which outputs: a module for all of its outputs, or module.output for one. "
+                + "Two modules with one title are numbered in patch order: 'Oscillator 2'. Left out, every output.",
+            Arity = ArgumentArity.ZeroOrMore,
+        };
+
+        var preset = new Option<string>("--preset")
+        {
+            Description = "A shipped preset, by name, in place of a file.",
+        };
+
+        var seconds = new Option<double>("--seconds")
+        {
+            Description = "How long to run the patch.",
+            DefaultValueFactory = _ => MeasureOptions.DefaultSeconds,
+        };
+
+        var from = new Option<double>("--from")
+        {
+            Description = "Where on the patch's clock to start, in seconds. Memory starts empty there.",
+        };
+
+        var command = new Command(
+            "measure",
+            "Run a patch offline and say what every output carries, to the speakers and to the screen: "
+            + "its value, or its range and how fast it changes.")
+        {
+            patch, outputs, preset, seconds, from, json,
+        };
+
+        command.SetAction((result, cancellation) =>
+        {
+            plugins.Ready();
+
+            var output = result.InvocationConfiguration.Output;
+            var error = result.InvocationConfiguration.Error;
+            var first = result.GetValue(patch);
+            var named = result.GetValue(outputs) ?? [];
+            var shipped = result.GetValue(preset);
+
+            Opened? opened;
+
+            if (shipped is not null)
+            {
+                // The first word was an output, there being no file to name.
+                if (first is not null) named = [first, .. named];
+
+                opened = ShippedPresets.Open(plugins.Catalog, shipped, error)?.Opened;
+            }
+            else if (first is not null)
+            {
+                opened = Patches.Open(new FileInfo(first), error);
+            }
+            else
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to measure: a patch, or --preset and its name.");
+
+                return Task.FromResult(Exit.Failed);
+            }
+
+            if (opened is not { } found) return Task.FromResult(Exit.Failed);
+
+            return Task.FromResult(MeasureCommand.Run(
+                found.Patch,
+                named,
+                new MeasureOptions(result.GetValue(seconds), result.GetValue(from)),
+                result.GetValue(json),
+                NodeCatalog.Current,
+                output,
+                error,
+                found.Samples,
+                found.Pictures,
+                result.GetValue(json) ? null : ConsoleProgress.For("measuring"),
+                cancellation));
+        });
+
+        return command;
+    }
+
     /// <param name="patch"></param>
     /// <param name="named">
     /// Which outputs: a module's handle for all of its outputs, or a handle, a dot and an

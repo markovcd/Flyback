@@ -1,5 +1,7 @@
+using System.CommandLine;
 using System.Security.Cryptography;
 using Flyback.Cli.Common;
+using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Plugins.Hosting;
 
@@ -8,6 +10,30 @@ namespace Flyback.Cli.Commands;
 /// <summary>Makes the key a plugin's packages are signed with (ADR-0132).</summary>
 internal static class PluginKeyCommand
 {
+    /// <summary>Makes the key a plugin's packages are signed with.</summary>
+    public static Command Build()
+    {
+        var output = new Option<FileInfo>("--out", "-o")
+        {
+            Description = "Where to write the private key. Keep it, and keep it to yourself.",
+            Required = true,
+        };
+
+        var command = new Command(
+            "plugin-key",
+            "Make the key that signs a plugin's packages, and that every update must be signed with.")
+        {
+            output,
+        };
+
+        command.SetAction(result => PluginKeyCommand.Run(
+            result.GetRequiredValue(output),
+            result.InvocationConfiguration.Output,
+            result.InvocationConfiguration.Error));
+
+        return command;
+    }
+
     public static int Run(FileInfo output, TextWriter writer, TextWriter error)
     {
         var pem = PackageSigner.NewKey();

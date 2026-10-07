@@ -1,5 +1,4 @@
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.Globalization;
 using Flyback.Cli.Common;
 using Flyback.Core;
@@ -51,7 +50,7 @@ internal static class ShotCommand
         {
             Description = "The window's size, as WIDTHxHEIGHT.",
             DefaultValueFactory = _ => (1440, 900),
-            CustomParser = Size,
+            CustomParser = SizeArgument.Parse,
         };
 
         var select = new Option<string>("--select")
@@ -138,15 +137,5 @@ internal static class ShotCommand
         });
 
         return command;
-    }
-
-    private static (int Width, int Height) Size(ArgumentResult result)
-    {
-        var text = result.Tokens[0].Value;
-
-        if (FrameSize.Of(text) is { } size) return size;
-
-        result.AddError(FrameSize.Refuse(text));
-        return (0, 0);
     }
 }

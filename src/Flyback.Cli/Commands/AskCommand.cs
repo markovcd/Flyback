@@ -1,15 +1,16 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
+using Flyback.Assist;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
-using Flyback.Assist;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
+using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
 
@@ -23,6 +24,146 @@ namespace Flyback.Cli.Commands;
 /// </remarks>
 internal static class AskCommand
 {
+    /// <summary>Asks the assistant the editor is set to about a patch, and writes its answer back.</summary>
+    public static Command Build(PluginRegistry plugins, Option<bool> json)
+    {
+        var patch = new Argument<FileInfo?>("patch")
+        {
+            Description = "The patch to talk about, written back with each answer: "
+                + $"{AskedPatch.Formats}. One that does not exist yet starts empty.",
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+
+        var message = new Argument<string[]>("message")
+        {
+            Description = "What to ask. Left out, it is read from standard input, "
+                + "or asked for line by line at a terminal. One that starts with a dash goes after --.",
+            Arity = ArgumentArity.ZeroOrMore,
+        };
+
+        var preset = new Option<string>("--preset")
+        {
+            Description = "Start from a shipped preset, by name, in place of a file. Needs --out.",
+        };
+
+        var output = new Option<FileInfo>("--out", "-o")
+        {
+            Description = $"Write the answers here rather than over the patch: {AskedPatch.Formats}.",
+        };
+
+        var provider = new Option<string>("--provider")
+        {
+            Description = "Which assistant, by id. Defaults to whichever the settings are on.",
+        };
+
+        var model = new Option<string>("--model")
+        {
+            Description = $"The model, for this run only. Short for --set {AssistantSchema.ModelKey}=NAME.",
+        };
+
+        var set = new Option<string[]>("--set")
+        {
+            Description = "A provider setting for this run only, as key=value. Repeatable.",
+            AllowMultipleArgumentsPerToken = false,
+        };
+
+        var fresh = new Option<bool>("--fresh")
+        {
+            Description = "Start a new conversation rather than carry on the one saved with the patch.",
+        };
+
+        var seen = new Option<DirectoryInfo>("--seen")
+        {
+            Description = "Write each picture it looks at and sound it hears into this folder.",
+        };
+
+        var briefing = new Option<bool>("--briefing")
+        {
+            Description = "Print the briefing the assistant is handed when a conversation starts.",
+        };
+
+        var context = new Option<int?>("--context")
+        {
+            Description = $"How many tokens a request may send before the conversation stops, {AssistantSettings.LeastContext} to "
+                + $"{AssistantSettings.MostContext}. Defaults to the editor's Settings → Assistant.",
+        };
+
+        var expand = new Option<bool>("--expand")
+        {
+            Description = "Print the message written out in full, as the editor's Expand does, over the patch as a change "
+                + "to it, or over an empty one as a new patch's brief. Builds and writes nothing.",
+        };
+
+        var command = new Command(
+            "ask",
+            "Ask the assistant to change a patch, the way the editor's assistant column does, and write "
+            + "the patch back with the conversation, so the next ask, or the editor, carries it on.")
+        {
+            patch, message, preset, output, provider, model, set, fresh, seen, briefing, context, expand, json,
+        };
+
+        command.Validators.Add(result =>
+        {
+            if (result.GetValue(context) is { } limit and (< AssistantSettings.LeastContext or > AssistantSettings.MostContext))
+                result.AddError($"--context is {AssistantSettings.LeastContext} to {AssistantSettings.MostContext}.");
+        });
+
+        command.SetAction((result, cancellation) =>
+        {
+            var error = result.InvocationConfiguration.Error;
+
+            if (AskCommand.Stray(result, [.. result.GetResult(patch)?.Tokens ?? [], .. result.GetResult(message)?.Tokens ?? []]) is { } stray)
+            {
+                error.WriteLine(AskedPatch.Complaint(
+                    $"ask has no {stray}; `ask --help` lists what it takes. A message that starts with a dash goes after --."));
+
+                return Task.FromResult(Exit.Failed);
+            }
+
+            plugins.Ready();
+
+            var file = result.GetValue(patch);
+            var named = result.GetValue(preset);
+            var words = result.GetValue(message) ?? [];
+
+            // With --preset there is no patch, so the first word of the message
+            // landed where the patch would have.
+            if (named is not null && file is not null)
+            {
+                words = [result.GetResult(patch)!.Tokens[0].Value, .. words];
+                file = null;
+            }
+
+            if (AskCommand.Open(plugins.Catalog, file, named, result.GetValue(output), error, writing: !result.GetValue(expand)) is not { } about)
+                return Task.FromResult(Exit.Failed);
+
+            var settings = (result.GetValue(set) ?? []).ToList();
+
+            if (result.GetValue(model) is { } chosen) settings.Add($"{AssistantSchema.ModelKey}={chosen}");
+
+            return AskCommand.Run(
+                plugins.Catalog,
+                about,
+                new AskOptions(
+                    words.Length == 0 ? null : string.Join(' ', words),
+                    result.GetValue(provider),
+                    settings,
+                    result.GetValue(fresh),
+                    result.GetValue(json),
+                    result.GetValue(seen),
+                    result.GetValue(briefing),
+                    result.GetValue(context),
+                    result.GetValue(expand)),
+                result.InvocationConfiguration.Output,
+                error,
+                Console.In,
+                Console.IsInputRedirected ? null : Console.In,
+                cancellation);
+        });
+
+        return command;
+    }
+
     /// <param name="settingsPath">Somewhere other than the usual assistant settings, for the tests.</param>
     /// <param name="store">Where conversations about loose files are kept, for the tests.</param>
     /// <param name="logFolder">Where a logged conversation is written, for the tests.</param>

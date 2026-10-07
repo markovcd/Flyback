@@ -1,11 +1,14 @@
+using System.CommandLine;
 using System.Text.Json;
+using Flyback.Cli.Common;
+using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
+using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
-using Flyback.Cli.Common;
-using Flyback.Cli.Models;
+using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
 
@@ -20,6 +23,106 @@ namespace Flyback.Cli.Commands;
 /// </remarks>
 internal static class CheckCommand
 {
+    public static Command Build(PluginRegistry plugins, Option<bool> json)
+    {
+        var patch = new Argument<FileInfo?>("patch")
+        {
+            Description = "The patch to read: a document, a bundle, or one written as text. "
+                + $"The extension decides which — .{PatchIO.FileExtension}, "
+                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}. Left out, give --preset instead.",
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+
+        var preset = new Option<string>("--preset")
+        {
+            Description = "A shipped preset, by name, in place of a file.",
+        };
+
+        var presets = new Option<bool>("--presets")
+        {
+            Description = "List what --preset would accept, and stop.",
+        };
+
+        var strict = new Option<bool>("--strict")
+        {
+            Description = "Fail on warnings as well as on errors.",
+        };
+
+        var command = new Command("check", "Compile a patch and report what is wrong with it.")
+        {
+            patch, preset, presets, json, strict,
+        };
+
+        command.SetAction(result =>
+        {
+            var error = result.InvocationConfiguration.Error;
+
+            plugins.Ready();
+
+            if (result.GetValue(presets))
+            {
+                ShippedPresets.List(plugins.Catalog, result.InvocationConfiguration.Output, result.GetValue(json));
+
+                return Exit.Ok;
+            }
+
+            var file = result.GetValue(patch);
+            var named = result.GetValue(preset);
+
+            if ((file is null) == (named is null))
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to check: a patch, or --preset and its name.");
+
+                return Exit.Failed;
+            }
+
+            if (file is null)
+            {
+                return ShippedPresets.Open(plugins.Catalog, named!, error) is not { } shipped
+                    ? Exit.Failed
+                    : CheckCommand.Run(
+                        shipped.Opened.Patch,
+                        shipped.Name,
+                        result.GetValue(json),
+                        result.InvocationConfiguration.Output,
+                        error,
+                        shipped.Opened.Samples,
+                        shipped.Opened.Pictures,
+                        result.GetValue(strict));
+            }
+
+            var read = Patches.Sourced(file) && file.Exists ? PatchLanguage.Build(File.ReadAllText(file.FullName)) : null;
+
+            // Text that does not read is a patch with something wrong with it, not
+            // a file that could not be looked at, so it answers the way a compile
+            // error does.
+            if (read is { Ok: false } unread)
+            {
+                return CheckCommand.Unread(
+                    unread.Issues,
+                    file.Name,
+                    result.GetValue(json),
+                    result.InvocationConfiguration.Output,
+                    result.InvocationConfiguration.Error);
+            }
+
+            return Patches.Open(file, result.InvocationConfiguration.Error) is not { } opened
+                ? Exit.Failed
+                : CheckCommand.Run(
+                    opened.Patch,
+                    file.Name,
+                    result.GetValue(json),
+                    result.InvocationConfiguration.Output,
+                    result.InvocationConfiguration.Error,
+                    opened.Samples,
+                    opened.Pictures,
+                    result.GetValue(strict),
+                    read?.Issues);
+        });
+
+        return command;
+    }
+
     public static int Run(
         Patch patch,
         string name,

@@ -1,11 +1,15 @@
+using System.CommandLine;
 using System.Globalization;
 using System.Text.Json;
-using Flyback.Cli.Models;
 using Flyback.Cli.Common;
+using Flyback.Cli.Models;
+using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
+using Flyback.Engine.Language;
+using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
 
@@ -20,6 +24,84 @@ namespace Flyback.Cli.Commands;
 /// </remarks>
 internal static class InfoCommand
 {
+    public static Command Build(PluginRegistry plugins, Option<bool> json)
+    {
+        var patch = new Argument<FileInfo?>("patch")
+        {
+            Description = "The patch to read: a document, a bundle, or one written as text. "
+                + $"The extension decides which — .{PatchIO.FileExtension}, "
+                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}. Left out, give --preset instead.",
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+
+        var preset = new Option<string>("--preset")
+        {
+            Description = "A shipped preset, by name, in place of a file.",
+        };
+
+        var presets = new Option<bool>("--presets")
+        {
+            Description = "List what --preset would accept, and stop.",
+        };
+
+        var byGroup = new Option<bool>("--by-group")
+        {
+            Description = "Also list what each group adds to the picture's and the sound's ops, so what makes a patch heavy is one command.",
+        };
+
+        var command = new Command("info", "Say what a patch is made of and what each half of it costs.")
+        {
+            patch, preset, presets, byGroup, json,
+        };
+
+        command.SetAction(result =>
+        {
+            var output = result.InvocationConfiguration.Output;
+            var error = result.InvocationConfiguration.Error;
+
+            plugins.Ready();
+
+            if (result.GetValue(presets))
+            {
+                ShippedPresets.List(plugins.Catalog, output, result.GetValue(json));
+
+                return Exit.Ok;
+            }
+
+            var file = result.GetValue(patch);
+            var named = result.GetValue(preset);
+
+            if ((file is null) == (named is null))
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to describe: a patch, or --preset and its name.");
+
+                return Exit.Failed;
+            }
+
+            Opened? opened;
+            string name;
+
+            if (file is not null)
+            {
+                opened = Patches.Open(file, error);
+                name = file.Name;
+            }
+            else
+            {
+                var shipped = ShippedPresets.Open(plugins.Catalog, named!, error);
+
+                opened = shipped?.Opened;
+                name = shipped?.Name ?? named!;
+            }
+
+            return opened is not { } found
+                ? Exit.Failed
+                : InfoCommand.Run(found.Patch, name, result.GetValue(json), output, error, found.Samples, found.Pictures, result.GetValue(byGroup));
+        });
+
+        return command;
+    }
+
     public static int Run(
         Patch patch,
         string name,

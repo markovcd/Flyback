@@ -1,7 +1,9 @@
+using System.CommandLine;
 using System.Text.Json;
-using Flyback.Cli.Models;
 using Flyback.Cli.Common;
+using Flyback.Cli.Models;
 using Flyback.Core.Graph;
+using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
 
@@ -16,6 +18,35 @@ namespace Flyback.Cli.Commands;
 /// </remarks>
 internal static class ModulesCommand
 {
+    /// <summary>Lists the installed catalog, which is what a plugin adds to, or describes one module in it.</summary>
+    public static Command Build(PluginRegistry plugins, Option<bool> json)
+    {
+        var module = new Argument<string?>("module")
+        {
+            Description = "One module to describe, by type id or name: its sockets, defaults, ranges and what it does.",
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+
+        var command = new Command("modules", "Say what modules this build has, or everything about one of them.")
+        {
+            module, json,
+        };
+
+        command.SetAction(result =>
+        {
+            plugins.Ready();
+
+            var output = result.InvocationConfiguration.Output;
+
+            return result.GetValue(module) is { } wanted
+                ? ModulesCommand.Describe(
+                    NodeCatalog.Current, wanted, result.GetValue(json), output, result.InvocationConfiguration.Error)
+                : ModulesCommand.Run(NodeCatalog.Current, result.GetValue(json), output);
+        });
+
+        return command;
+    }
+
     public static int Run(ModuleCatalog catalog, bool json, TextWriter output)
     {
         var modules = catalog.All.Select(def => Listed(catalog, def)).ToArray();

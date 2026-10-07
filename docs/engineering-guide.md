@@ -1066,9 +1066,10 @@ start with the provider id. Add a `PluginProject` item to `Flyback.Editor.Deskto
 to `Flyback.Plugins.Tests.csproj`. Update `docs/plugin-guide.md` if the contract
 moved.
 
-**Add a CLI flag or command.** Declare it in `Program.cs`, run it in the command's
-own file, test it in-process through the two writers. Update the README's CLI
-section and the site in the same commit.
+**Add a CLI flag or command.** Declare it in the command's own file under
+`Commands/`, in its `Build`, and run it there; `Program.Run` lists the commands
+and nothing else. Test it in-process through the two writers. Update the
+README's CLI section and the site in the same commit.
 
 **Add a setting.** A plugin's own settings are declared as `SettingField`s
 ([0085](adr/0085-a-sound-backend-declares-its-own-settings.md)) and drawn by the

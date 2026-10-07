@@ -1,9 +1,13 @@
+using System.CommandLine;
 using System.Text.Json;
 using Flyback.Cli.Common;
+using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
+using Flyback.Engine.Language;
 using Flyback.Engine.Render;
+using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
 
@@ -22,6 +26,92 @@ namespace Flyback.Cli.Commands;
 /// </remarks>
 internal static class PackCommand
 {
+    /// <summary>
+    /// Packs a patch and its files into a bundle. It writes a file rather than only
+    /// answering for one, so it takes an output path as well as the <c>--json</c> the
+    /// reports below take.
+    /// </summary>
+    public static Command Build(PluginRegistry plugins, Option<bool> json)
+    {
+        var patch = new Argument<FileInfo?>("patch")
+        {
+            Description = "The patch to read: a document, a bundle, or one written as text. "
+                + $"The extension decides which — .{PatchIO.FileExtension}, "
+                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}. Left out, give --preset instead.",
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+
+        var preset = new Option<string>("--preset")
+        {
+            Description = "A shipped preset, by name, in place of a file. The bundle carries the files it ships with.",
+        };
+
+        var presets = new Option<bool>("--presets")
+        {
+            Description = "List what --preset would accept, and stop.",
+        };
+
+        var output = new Option<FileInfo>("--out", "-o")
+        {
+            Description = $"Where to write the bundle. {PatchBundle.Extension} by convention.",
+        };
+
+        var command = new Command(
+            "pack",
+            "Put a patch and every file it names into one bundle.")
+        {
+            patch, preset, presets, output, json,
+        };
+
+        command.SetAction(result =>
+        {
+            var error = result.InvocationConfiguration.Error;
+            var writer = result.InvocationConfiguration.Output;
+
+            plugins.Ready();
+
+            if (result.GetValue(presets))
+            {
+                ShippedPresets.List(plugins.Catalog, writer, result.GetValue(json));
+
+                return Exit.Ok;
+            }
+
+            var file = result.GetValue(patch);
+            var named = result.GetValue(preset);
+
+            if ((file is null) == (named is null))
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to pack: a patch, or --preset and its name.");
+
+                return Exit.Failed;
+            }
+
+            if (result.GetValue(output) is not { } into)
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: --out says where to write the bundle.");
+
+                return Exit.Failed;
+            }
+
+            if (file is not null) return PackCommand.Run(file, into, error, writer, result.GetValue(json));
+
+            if (ShippedPresets.Open(plugins.Catalog, named!, error) is not { } shipped) return Exit.Failed;
+
+            var carried = (shipped.Opened.Samples as BundleFiles)?.Bytes;
+
+            return PackCommand.Run(
+                shipped.Opened.Patch,
+                path => carried?.GetValueOrDefault(path),
+                into,
+                error,
+                writer,
+                result.GetValue(json));
+        });
+
+        return command;
+    }
+
     public static int Run(
         FileInfo file,
         FileInfo output,
