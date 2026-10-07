@@ -283,7 +283,8 @@ public sealed class FfmpegClipWriter : IClipWriter
 
     private InvalidOperationException Failed(string what)
     {
-        var said = trouble.ToString().Trim();
+        string said;
+        lock (trouble) said = trouble.ToString().Trim();
 
         return new InvalidOperationException(said.Length > 0 ? $"{what}: {said}" : what);
     }
