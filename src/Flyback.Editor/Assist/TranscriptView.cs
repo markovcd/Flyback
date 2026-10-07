@@ -154,10 +154,10 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
                 Card(text, Colors.Attention, Glyphs.Warning(10, Amber), "Failed", null);
                 break;
 
+            // A lookup is a step it took; the briefing comes before any turn.
             case Voice.Briefing or Voice.Handbook:
-                Add(text, Text.Muted, Text.Small);
+                var block = Add(text, Text.Muted, Text.Small, work: voice == Voice.Handbook, gist: false);
 
-                var block = saidPanel.Children[^1];
                 block.IsVisible = !hidden.Contains(voice);
                 hideable[voice].Add(block);
                 break;
@@ -231,16 +231,18 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
         count == 1 ? $"1 {noun}" : $"{count} {noun}s";
 
     /// <summary>Puts a block into the run of working, or at the top level, where it ends the run.</summary>
-    private void Place(Control block, bool work, string? text = null)
+    private Control Place(Control block, bool work, string? text = null)
     {
         if (work)
         {
             Working().Add(block, text: text);
-            return;
+            return block;
         }
 
         Closed();
         saidPanel.Children.Add(block);
+
+        return block;
     }
 
     private StepsGroup Working()
@@ -260,7 +262,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
         working = null;
     }
 
-    private void Add(string text, IBrush color, double size, bool fold = true, bool work = false, bool gist = true)
+    private Control Add(string text, IBrush color, double size, bool fold = true, bool work = false, bool gist = true)
     {
         // Anything else in the transcript ends the paragraph the assistant was
         // in the middle of. Without this, prose lands on the end of whatever
@@ -268,13 +270,9 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
         // person's own message, run together with the reply to it.
         saying = null;
 
-        if (fold && Rows(text) > FoldsOver)
-        {
-            Fold(text, color, size, work, gist);
-            return;
-        }
+        if (fold && Rows(text) > FoldsOver) return Fold(text, color, size, work, gist);
 
-        Place(new SelectableTextBlock
+        return Place(new SelectableTextBlock
         {
             Text = text,
             TextWrapping = TextWrapping.Wrap,
@@ -342,7 +340,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
     /// text between one thing the assistant said and the next. Folded, the
     /// transcript is the conversation again, and the working is a click away.
     /// </remarks>
-    private void Fold(string text, IBrush color, double size, bool work, bool gist)
+    private Control Fold(string text, IBrush color, double size, bool work, bool gist)
     {
         var body = new SelectableTextBlock
         {
@@ -379,7 +377,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
         block.Children.Add(header);
         block.Children.Add(body);
 
-        Place(block, work, gist ? text : null);
+        return Place(block, work, gist ? text : null);
     }
 
     /// <summary>

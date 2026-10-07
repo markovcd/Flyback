@@ -5,6 +5,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.Interactivity;
+using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Notices;
@@ -709,6 +710,23 @@ public sealed class AssistantPanelTests : EditorTest
         Settle(window);
 
         return window;
+    }
+
+    /// <summary>A lookup is one of the steps it took, so it stays in their run rather than splitting it in two.</summary>
+    [AvaloniaFact]
+    public void Handbook_text_stays_in_the_run_of_steps_it_came_in()
+    {
+        var transcript = new TranscriptView();
+
+        transcript.Put(Voice.Note, "switched glow off.");
+        transcript.Put(Voice.Handbook, "feedback.trails | Trails | Feedback");
+        transcript.Put(Voice.Aside, "45073 in (43039 cached), 1187 out.");
+
+        var runs = transcript.GetLogicalDescendants().OfType<StepsGroup>().ToList();
+
+        runs.Count.ShouldBe(1);
+        runs[0].GetLogicalDescendants().OfType<SelectableTextBlock>()
+            .ShouldContain(block => block.Text == "feedback.trails | Trails | Feedback");
     }
 
     private static SelectableTextBlock Handbook(Window window) =>
