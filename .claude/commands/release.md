@@ -146,10 +146,13 @@ not have been.
 in the repository tests it. Run it, both sides of the release.
 
 **Before**, against the release that already exists — this proves the script
-works without needing the new one to be published:
+works without needing the new one to be published. `--no-links` writes only the
+copy, with no command links, menu entry, Start menu shortcut or PATH change;
+without it a scratch `FLYBACK_DIR` still replaces the user's own links and entry,
+and `--uninstall` then removes them:
 
 ```bash
-FLYBACK_VERSION=0.4.0 FLYBACK_DIR="$SCRATCH/flyback-install" bash install.sh
+FLYBACK_VERSION=0.4.0 FLYBACK_DIR="$SCRATCH/flyback-install" bash install.sh --no-links
 FLYBACK_DIR="$SCRATCH/flyback-install" bash install.sh --uninstall
 ```
 
@@ -158,10 +161,8 @@ the script, the unzip and the removal, for real. Git Bash reports `MINGW*` and
 takes the `win` branch. `bash -n install.sh` costs nothing, and `shellcheck` if
 it is on the machine.
 
-With `FLYBACK_DIR` set the script writes the copy and nothing else: no command
-links, menu entry, Start menu shortcut or PATH change, so these runs leave a
-real install as it was. They do not exercise those, so on Linux and macOS run
-the default install once under a throwaway home, which keeps `~/.local` yours:
+The links and entry are left untried by that, so on Linux and macOS run the
+default install once under a throwaway home, which keeps `~/.local` yours:
 
 ```bash
 HOME="$SCRATCH/home" bash install.sh

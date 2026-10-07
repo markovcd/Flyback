@@ -5,9 +5,9 @@
 #   curl -fsSL https://raw.githubusercontent.com/markovcd/Flyback/main/install.sh | bash -s -- --uninstall
 #
 # FLYBACK_VERSION=0.4.0 installs that release instead. FLYBACK_DIR is where the copy
-# goes: a folder on Linux and Windows, the .app on macOS. With it set, only the copy is
-# written: no links, menu entry, shortcut or PATH change, so a trial leaves a real install
-# as it was. --uninstall removes the copy and everything this script put beside it.
+# goes: a folder on Linux and Windows, the .app on macOS. --no-links writes only the copy,
+# with no command links, menu entry, shortcut or PATH change, so a trial leaves a real
+# install as it was. --uninstall removes the copy and everything this script put beside it.
 
 set -euo pipefail
 
@@ -24,14 +24,17 @@ die() { say "flyback: $*"; exit 1; }
 need() { command -v "$1" >/dev/null 2>&1 || die "this needs $1, which is not installed"; }
 
 uninstall=false
+links=true
 
 for argument in "$@"; do
   case "$argument" in
     --uninstall) uninstall=true ;;
+    --no-links) links=false ;;
     -h | --help)
-      say "usage: install.sh [--uninstall]"
+      say "usage: install.sh [--uninstall] [--no-links]"
       say "  FLYBACK_VERSION  the release to install, rather than the latest"
-      say "  FLYBACK_DIR      where the copy goes (the .app on macOS), and nothing else is touched"
+      say "  FLYBACK_DIR      where the copy goes (the .app on macOS)"
+      say "  --no-links       write only the copy: no command links, menu entry, shortcut or PATH change"
       exit 0
       ;;
     *) die "unknown option $argument" ;;
@@ -271,10 +274,10 @@ EOF
   esac
 }
 
-if [ -n "${FLYBACK_DIR:-}" ]; then
-  say "FLYBACK_DIR is set, so no command link, menu entry, shortcut or PATH entry was written."
-else
+if $links; then
   put_beside
+else
+  say "--no-links: no command link, menu entry, shortcut or PATH entry was written."
 fi
 
 say "Flyback $version is installed in $dest."
