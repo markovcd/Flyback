@@ -920,7 +920,8 @@ internal static partial class Presets
     /// <summary>
     /// Two sines, one to each speaker, drawn against each other by a Beam. A
     /// fifth is three cycles against two, which is the knot; the right one is a
-    /// fifth of a hertz sharp, so the knot turns once every five seconds.
+    /// fifth of a hertz sharp, so the knot turns, back to the same shape every
+    /// two and a half seconds.
     /// </summary>
     public static Patch Lissajous(ModuleCatalog modules)
     {
