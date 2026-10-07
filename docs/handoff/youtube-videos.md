@@ -3,7 +3,7 @@
 Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an idea when one comes up, move it to Made when it is made, and onto `site/tutorials.html` when it is posted. It is on TODO.md; it stays as long as the channel wants videos.
 
 - **Kind:** Backlog
-- **Status:** Open: five made and posted, the rest proposed
+- **Status:** Open: six made, five posted, the rest proposed
 
 ## How one is made
 
@@ -27,6 +27,7 @@ Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an ide
 | Make a beat you can see | `SxKHeOr8l0g` | 1:54 | Tempo, a Stroke into a Drum, a Euclid into a Hiss, a Note Sequencer through a Saw, an ADSR and a Filter, the levels, Rings lit by the Stroke, a panel knob on the cutoff. Ends as the Beat you can see preset, bit for bit. Each scene plays its own step's sound, ducked under the voice by `~/.explainroo/work/beat/mix.py`. Replaced `tutorials/beat.html`. |
 | One knob, two echoes | `s8Ys324Lv9I` | 2:12 | A Tempo stepping a Note Sequencer into a Triangle, an ADSR and an Expression for the pluck, an Echo on the tempo (taps, feedback), a Circle's outline lit by a Stroke with the hue on the tune, a Trails for the tunnel, a Repeats knob linked to feedback and persist, then turned to 0.1 and 0.95. Ends as the Two echoes preset, bit for bit. Every step is cut from the preset's own `.fbk` by `~/.explainroo/work/echoes/place.py`, so no module moves between screens. From the tunnel on, the picture and `mix.py`'s sound run on one clock (`clock.py`), so the rings flash on the notes. Replaced `tutorials/echoes.html`. |
 | Seeing a sound | `6aPxkERSXdc` | 1:45 | One Sine on a Scope (two cycles in 18 ms), the same Sine on an Analyzer (one peak past 100 Hz), a second Sine at 165 Hz on a Beam, the 3:2 knot and its loops, then 165.2 Hz so the knot turns, back to the same shape every 2.5 s. Ends as the Lissajous preset, the picture within one step of 255 (the preset's persistence is 29.999 ms). `~/.explainroo/videos/seeing`. |
+| The patch as text | not posted | 1:56 | The Drone preset on the canvas, F2, the text line by line (a `let`, pipes and `_`, `t`, a name read twice), `freq` from 0.15 to 0.6 and Ctrl+Enter, a text that does not read leaving the patch playing, `.fbks` as plain text in a diff. Ends on the Drone preset and points at Plasma on the home page. One clock for the whole video, switching to the edited patch at Ctrl+Enter. `~/.explainroo/videos/text`. |
 
 ## Proposed
 
@@ -38,7 +39,6 @@ One of them replaces the written tutorial still under `site/tutorials/`. When it
 - **Play it from an Elektron Syntakt.** Replaces `tutorials/syntakt.html`. The box's MIDI and USB settings, the whole Syntakt added in one pick, a MIDI track sequencing a Flyback voice, a Flyback sequencer kept to its clock, a picture lit by its tracks, and its knobs on the panel. Needs the real box filmed or captured; the editor half can be `flyback-cli shot`.
 - **Feedback for the eyes and the ears.** A loop is a delay: a comb or an echo in the sound, a trail or a tunnel in the picture. Feedback tunnel and Echo chamber side by side.
 - **Hearing a picture.** Probe and Scan: a field read along a path at audio rate, so the picture is the waveform. Ring scan and Shape scan.
-- **The patch as text.** F2, the language line by line on Plasma, editing a number and pressing Ctrl + Enter, `.fbks` files in git.
 - **Ask the assistant.** One real conversation, recorded: a short ask, Expand, the patch it wires, the frames it looks at, a change asked for after, Ctrl + Z. Which models it works with and how to set one up. Needs a real run, never a staged one.
 - **Play it.** The computer keyboard as an instrument, a MIDI controller, chords down a polyphonic wire, knobs learned to a controller, the die. Played and No Sense Dub.
 - **Inside the Whole band.** A hundred and sixty-two modules in fourteen boxes: the clock, the song, seven instruments, the room, the desk and three boxes for the picture, opened one at a time while it plays. Could run three minutes.
