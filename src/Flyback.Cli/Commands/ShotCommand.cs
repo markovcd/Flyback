@@ -74,6 +74,11 @@ internal static class ShotCommand
             Description = "Measure the outputs from --at, the selected module's or every module's, and pin them before the picture is taken.",
         };
 
+        var assistant = new Option<bool>("--assistant")
+        {
+            Description = "Open the assistant's column, showing the conversation the patch carries.",
+        };
+
         var editor = new Option<FileInfo>("--editor")
         {
             Description = "The editor program to draw with, in place of the one beside this program. A dev build keeps it in src/Flyback.Editor.Desktop/bin.",
@@ -81,7 +86,7 @@ internal static class ShotCommand
 
         var command = new Command("shot", "Draw the editor's window with a patch open, at a chosen second, into a PNG.")
         {
-            patch, preset, output, at, size, select, canvas, crop, measure, editor,
+            patch, preset, output, at, size, select, canvas, crop, measure, assistant, editor,
         };
 
         command.SetAction(result =>
@@ -121,6 +126,7 @@ internal static class ShotCommand
             if (result.GetValue(canvas)) arguments.Add("--canvas");
             if (result.GetValue(crop)) arguments.Add("--crop");
             if (result.GetValue(measure)) arguments.Add("--measure");
+            if (result.GetValue(assistant)) arguments.Add("--assistant");
 
             arguments.AddRange(file is not null ? [file.FullName] : ["--preset", named!]);
 

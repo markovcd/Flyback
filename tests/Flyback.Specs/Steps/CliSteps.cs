@@ -362,6 +362,24 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     [When("flyback-cli shoots {string} at {int} second(s), cropped to the modules")]
     public void WhenShotCropped(string name, int seconds) => Shoot(name, seconds, "--crop");
 
+    [When("flyback-cli shoots {string} at {int} second(s), with the assistant's column open")]
+    public void WhenShotWithAssistant(string name, int seconds) => Shoot(name, seconds, "--assistant");
+
+    [Then("the shot has the assistant's column at its left")]
+    public void ThenAssistantColumn() => AssistantBadge(Shot()).ShouldBeTrue();
+
+    [Then("the shot has no assistant's column")]
+    public void ThenNoAssistantColumn() => AssistantBadge(Shot()).ShouldBeFalse();
+
+    /// <summary>Whether the column's teal badge sits at its top left, beside the word Assistant.</summary>
+    private static bool AssistantBadge(LoadedImage shot)
+    {
+        var at = (73 * shot.Width + 26) * 3;
+        var (r, g, b) = (shot.Pixels[at], shot.Pixels[at + 1], shot.Pixels[at + 2]);
+
+        return g - r > 0.3f && b - r > 0.3f;
+    }
+
     [When("flyback-cli shoots {string} with the editor {string}")]
     public void WhenShotWithEditor(string name, string editor) =>
         Run(["shot", Path(name), "-o", Path(ShotName), "--editor", Path(editor)]);

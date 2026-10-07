@@ -4,6 +4,8 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Flyback.Engine.Graph;
 using Flyback.Ui.Audio;
+using Avalonia.VisualTree;
+using Flyback.Editor.Assist;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
 using Flyback.Ui.Controls;
@@ -70,7 +72,10 @@ internal static class Shot
 
         var sound = new ShotSound();
 
-        var provider = EditorServices.Provider(new EditorSetup { Plugins = plugins }, services =>
+        // The assistant's column names the provider and model this machine's settings choose.
+        var folders = request.Assistant ? new EditorFolders { SettingsPath = EditorFolders.ThisMachine().SettingsPath } : new EditorFolders();
+
+        var provider = EditorServices.Provider(new EditorSetup { Plugins = plugins, Folders = folders }, services =>
         {
             services.AddSingleton<IAudioEngine>(sound);
             services.AddSingleton(new AudioSetup(new SilentAudioDevice(), plugins.PreferredAudioOutput));
@@ -93,6 +98,7 @@ internal static class Shot
             if (request.Patch is { } path && !await OpenAsync(provider, path, error)) return Failed;
 
             if (request.Canvas) await provider.GetRequiredService<Reactions>().RaiseAsync(new CodeAsked(false));
+            if (request.Assistant) await OpenAssistant(provider, window);
 
             var playback = provider.GetRequiredService<Playback>();
             await Until(() => !playback.Starting, "the patch to compile", window);
@@ -131,6 +137,18 @@ internal static class Shot
         {
             window.CloseWithoutAsking();
         }
+    }
+
+    /// <summary>
+    /// Opens the assistant's column and shows the end of its conversation, as the window does: the
+    /// conversation scrolls itself there line by line, but before the column has a size.
+    /// </summary>
+    private static async Task OpenAssistant(ServiceProvider provider, MainWindow window)
+    {
+        await provider.GetRequiredService<Reactions>().RaiseAsync(new AssistantAsked(true));
+        Settle(window);
+
+        foreach (var transcript in window.GetVisualDescendants().OfType<TranscriptView>()) transcript.ScrollToEnd();
     }
 
     /// <summary>Opens <paramref name="path"/> as a launch does, and says why where it would not open.</summary>

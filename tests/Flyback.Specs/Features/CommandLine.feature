@@ -89,6 +89,16 @@ Feature: The command line says whether a patch works, and whether two are the sa
     When flyback-cli shoots "tone.fbks" with the editor "nowhere/Flyback"
     Then the command says the editor is not there
 
+  Scenario: A shot can open the assistant's column beside the canvas
+    Given the text saved as "tone.fbks":
+      """
+      sine(freq: 110) |> out.left
+      """
+    When flyback-cli shoots "tone.fbks" at 1 second
+    Then the shot has no assistant's column
+    When flyback-cli shoots "tone.fbks" at 1 second, with the assistant's column open
+    Then the shot has the assistant's column at its left
+
   Scenario: A cropped shot is the canvas around the modules, for a text patch too
     Given the text saved as "tone.fbks":
       """

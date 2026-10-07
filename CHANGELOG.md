@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `flyback-cli shot --assistant` draws the assistant's column open, at the end of the conversation the patch carries.
+
 ## 0.8.0 — 2026-10-07
 
 142 commits since 0.7.1.
