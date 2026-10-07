@@ -11,50 +11,41 @@
 - A Beam module draws two signals against each other as an X-Y oscilloscope does, so oscilloscope music wired left to `x` and right to `y` shows as it was made to be seen.
 - A MIDI File module plays a `.mid` file on the patch's clock, a voice and a channel of it at a time, so it sounds the same in an export as on the speakers.
 - A Line In module plays what the microphone hears, on Linux and in the web editor and viewer.
-- A MIDI In plays chords down one chain: give it several `voices` and every module its wires reach plays once per voice, until a Merge or the Output adds them up. Voice numbers the voices and Spread fans one wire out into several.
+- A MIDI In plays chords down one chain: give it several `voices` and every module its wires reach plays once per voice.
 
 ### Presets
 
 - A Lissajous preset: two sines a fifth apart, one to each speaker, drawn against each other on a Beam.
-- The preset gallery narrows by heading, by sound or picture and by topic from a column on its left, and a click chooses a card and shows it larger on the right, where Use this preset, Enter or a double-click opens it.
-- With an assistant set up, the preset gallery has a card to type an idea in: Expand has the assistant write it out as a detailed brief, and Start opens an empty patch and sends the brief, writing the idea out first when Expand was not pressed. Settings → Assistant can name another model to write ideas out.
+- The preset gallery narrows by heading, by sound or picture and by topic, and a click shows a card larger.
+- With an assistant set up, the preset gallery has a card to type an idea in: Expand writes it out as a detailed brief, and Start opens an empty patch and sends it.
 - The preset gallery's pictures are sharper, without the smudge around their edges.
 - A preset opened from the gallery stops counting as the open preset once the patch is edited.
 
 ### Assistant
 
 - The assistant can run on the Claude Code or the Codex you are signed in to, with no API key.
-- The assistant's column is redrawn as a conversation: a header with the model and whether it is working, a context bar that opens onto what the conversation cost, your messages in bubbles with long ones cut short behind Show all, and proposals and failures in cards of their own.
-- Expand beside the assistant's Send writes a short message out in full, in the box, to edit before sending: over a patch, as a change to it that says what makes the patch itself, what changes, what stays and how to tell it worked; over an empty canvas, as a new patch's brief.
-- What the assistant did between two things it said folds into one line with a count, so the conversation can be read as its words alone; the run it is in the middle of stays open.
-- Closing the window, or opening another patch, while the assistant is mid-turn asks first, and says the turn is lost: saving the patch does not keep it.
-- The assistant's footer and `flyback-cli ask` name the model that answered, as the provider resolved it: `opus` shows as `claude-opus-5-5`.
-- The assistant's Effort setting is grayed out where it is not sent, on the OpenAI-compatible assistant and on a Gemini model nobody has probed, and Claude Code and Codex are sent it at Medium too.
-- A conversation with the assistant ends when it has grown past a context limit in tokens, set under Settings → Assistant or with `flyback-cli ask --context`, rather than after a number of turns, and the column's footer shows how close it is.
-- The assistant's column shows what the conversation has cost in tokens, under the box, and keeps the count when the conversation is saved with the patch.
-- The assistant reads a sound's spectrum when it listens: octave bands, brightness and the pitches in it.
-- The assistant can set how long a patch plays for.
-- The assistant can look at, listen to and measure a patch from any point on its timeline, not only its first eight seconds.
-- The Claude Code assistant now hits the prompt cache between requests, and its token count, like Codex's, includes cached input.
+- The assistant's column is redrawn as a conversation, with Expand beside Send to write a short message out in full, and it ends at a context limit in tokens, set under Settings → Assistant.
+- The assistant reads a sound's spectrum, looks, listens and measures from any point on the timeline, and can set how long a patch plays for.
+- The Claude Code assistant hits the prompt cache between requests.
 
 ### Editor
 
-- Settings → Canvas → Drag empty canvas to pan moves the view with the left button, for a mouse or trackpad with no middle button; the right button then draws the selection band, and a right click still adds a module. The web editor has it too, with Compact modules, on a small panel off a gear on its toolbar, kept by the browser.
-- The settings window is wide enough that no option is cut short, Save is drawn in the accent color, and the knob grid's Columns and Rows sit indented under the switch they depend on.
-- Fingers on the canvas no longer lose a wire to the socket beside the one meant, edit the patch when two land together to pan, jump a held socket's value on the first move, or stop a pinch when one finger lifts.
+- Settings → Canvas → Drag empty canvas to pan moves the view with the left button, for a mouse with no middle button; the web editor has it too.
+- The settings window is wide enough that no option is cut short.
+- Fingers on the canvas no longer lose a wire to the socket beside the one meant, or edit the patch when two land together to pan.
 - A note held while the patch is edited no longer pops: dragging a slider mid-chord keeps it sounding.
 - On Linux, Flyback shows its icon in the applications menu after install.sh, and in the entry it writes when it opens your files.
 
 ### Viewer
 
 - The web viewer hides the Loop button for a patch with no length.
-- `flyback-viewer --trace <file>` and `flyback --trace <file>` write every stall over 100 ms into the file: the UI thread held up, a recompile, a plugin install or a bundle save, a picture's frame, the sound callback, and the step it was in.
+- `flyback-viewer --trace <file>` and `flyback --trace <file>` write every stall over 100 ms into the file, with the step it was in.
 - `flyback-viewer --report` prints, when the run ends, the frames a second it held, the slowest frame, what the sound cost, and what drew the picture.
 
 ### Command line
 
-- `flyback-cli render --from <seconds>` starts a clip or a sound at that second: the patch is played up to it unrecorded, so feedback and sequencers are in the state they would be in, and `--seconds` counts from there.
-- `flyback-cli render` of a still plays the sound up to it, so a Beam, Scope or Meter has something to show, and `--input <file>` gives a render a sound file for a Line In to hear.
+- `flyback-cli render --from <seconds>` starts a clip or a sound at that second, the patch played up to it unrecorded.
+- `flyback-cli render` of a still plays the sound up to it, and `--input <file>` gives a render a sound file for a Line In to hear.
 - `flyback-cli render --mute <group>` switches a named group off for the run, and `--solo <group>` plays it alone with what feeds it and carries it to the Output.
 - `flyback-cli info --by-group` lists the picture and sound ops each group adds, with `--json` for a script.
 - `flyback-cli ask --expand` prints a short message written out in full, as Expand does in the editor, and builds and saves nothing.
@@ -62,7 +53,7 @@
 
 ### Site
 
-- The website and the preset site are at flybackmodular.app, and the old GitHub Pages address sends you there. Editors up to 0.7.1 can no longer reach shared presets, shared plugins or letters until they update.
+- The website and the preset site are at flybackmodular.app. Editors up to 0.7.1 can no longer reach shared presets, plugins or letters until they update.
 - The preset site's plugin shelf lists a plugin once, at its newest published version, with the older versions linked from its page.
 - `install.sh` makes the macOS app startable: it clears the download quarantine and signs the bundle for this Mac.
 
