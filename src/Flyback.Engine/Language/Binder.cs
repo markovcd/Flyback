@@ -34,6 +34,8 @@ public sealed class Binder
     private readonly HashSet<string> expanding = new(StringComparer.Ordinal);
 
     private readonly SourceSites sourceSites = new();
+    private readonly Carrying carrying;
+    private readonly PatchLines lines;
 
     /// <summary>Each group the text opens and the modules its blocks placed, a name's blocks gathered into one.</summary>
     private readonly List<(string? Name, List<Guid> Members)> boxes = [];
@@ -58,6 +60,8 @@ public sealed class Binder
         wiring = new Wiring(modules, this.issues, sourceSites);
         patch = wiring.Patch;
         identity = wiring.Identity;
+        carrying = new Carrying(modules, wiring, this.issues);
+        lines = new PatchLines(patch, this.issues);
 
         moduleNames = new ModuleNames(modules);
     }
@@ -331,23 +335,23 @@ public sealed class Binder
                 break;
 
             case KeyboardStatement keyboard:
-                Lay(keyboard);
+                lines.Lay(keyboard);
                 break;
 
             case LengthStatement length:
-                Last(length);
+                lines.Last(length);
                 break;
 
             case DescriptionStatement description:
-                Describe(description);
+                lines.Describe(description);
                 break;
 
             case AuthorStatement author:
-                Credit(author);
+                lines.Credit(author);
                 break;
 
             case TagsStatement tags:
-                Tag(tags);
+                lines.Tag(tags);
                 break;
 
             case OffStatement off:
@@ -1176,8 +1180,8 @@ public sealed class Binder
                 }
         }
 
-        foreach (var (path, line, column) in paths) File(node, def, path, line, column);
-        if (expr.Block is { } block) Carry(node, def, block, expr.Line, expr.Column, (expr.BlockLine, expr.BlockColumn));
+        foreach (var (path, line, column) in paths) carrying.File(node, def, path, line, column);
+        if (expr.Block is { } block) carrying.Block(node, def, block, expr.Line, expr.Column, (expr.BlockLine, expr.BlockColumn));
 
         return node;
     }
@@ -1229,178 +1233,6 @@ public sealed class Binder
         RangeExpr range => Pipes(range.Low) || Pipes(range.High),
         _ => false,
     };
-
-    // --- what a module carries -----------------------------------------------
-
-    private void File(Value placed, NodeDef def, string path, int line, int column)
-    {
-        if (placed is not Placed node || patch.Find(node.Id) is not { } instance) return;
-
-        if (def.Extra<SampleExtra>() is not null) SampleExtra.Set(instance, path);
-        else if (def.Extra<PictureExtra>() is not null) PictureExtra.Set(instance, path);
-        else if (def.Extra<MidiFileExtra>() is not null) MidiFileExtra.Set(instance, path);
-        else issues.Complain(IssueCode.NoFile, line, column, $"'{def.Name}' names no file.");
-    }
-
-    /// <summary>
-    /// The notes, the scale or the parts a block spells, and the one adjustment
-    /// alternation asks for.
-    /// </summary>
-    /// <param name="opened">Where the block's '[' is, which what is wrong inside it is counted from.</param>
-    private void Carry(Value placed, NodeDef def, string block, int line, int column, (int Line, int Column) opened)
-    {
-        if (placed is not Placed value || patch.Find(value.Id) is not { } node) return;
-
-        if (def.Extra<StepsExtra>() is { } steps)
-        {
-            var read = StepNotation.Read(block, steps.Spec.Display == PortDisplay.Note, opened.Line, opened.Column, issues.List);
-
-            StepsExtra.Set(node, read.Steps);
-
-            // '<a b>' was unrolled into a longer list, so the list has to be
-            // read more slowly for the pattern to take the time it did.
-            if (read.RateDivisor > 1) Slower(node, def, read.RateDivisor, line, column);
-
-            return;
-        }
-
-        if (def.Extra<ScaleExtra>() is not null)
-        {
-            ScaleExtra.Set(node, StepNotation.Classes(block, opened.Line, opened.Column, issues.List));
-            return;
-        }
-
-        if (def.Extra<ArrangementExtra>() is not null)
-        {
-            ArrangementExtra.Set(node, ArrangementNotation.Read(block, opened.Line, opened.Column, issues.List));
-            return;
-        }
-
-        issues.Complain(IssueCode.NoBlock, line, column, $"'{def.Name}' carries nothing a block could say.");
-    }
-
-    /// <summary>Divides a sequencer's rate, by the knob where there is one and by a Multiply where there is not.</summary>
-    private void Slower(NodeInstance node, NodeDef def, int by, int line, int column)
-    {
-        var rate = SocketNames.Find(def.Inputs, "rate");
-        if (rate < 0) return;
-
-        if (patch.IncomingTo(node.Id, rate) is not { } wire)
-        {
-            node.InputValues[rate] /= by;
-            return;
-        }
-
-        if (Module("math.mul", line, column) is not { } mul) return;
-
-        var scale = NodeInstance.Create(mul, 0d, 0d, identity.Next());
-        patch.Nodes.Add(scale);
-
-        scale.InputValues[1] = 1f / by;
-
-        patch.Connect(wire.SourceNode, wire.SourcePort, scale.Id, 0);
-        patch.Connect(scale.Id, 0, node.Id, rate);
-    }
-
-    /// <summary>Whether a <c>keyboard</c> line has been read already, so a second is said rather than obeyed.</summary>
-    private bool laid;
-
-    /// <summary>Lays the computer keyboard out, once — there is one keyboard.</summary>
-    private void Lay(KeyboardStatement statement)
-    {
-        if (laid)
-        {
-            issues.Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
-                "the keyboard is already laid out further up. A patch has one keyboard, so it says so once.");
-            return;
-        }
-
-        laid = true;
-        patch.Keyboard = statement.Scale is { } block ? Scale(block, statement.BlockLine, statement.BlockColumn) : null;
-    }
-
-    /// <summary>
-    /// The notes of a scale from its tonic, <c>[ D E F G A B C ]</c>, which have to
-    /// be one of the scales an Auto Chord builds in.
-    /// </summary>
-    private KeyboardScale? Scale(string block, int line, int column)
-    {
-        var said = issues.Count;
-        var notes = StepNotation.Classes(block, line, column, issues.List);
-
-        // A word that is not a note has been said already, and the scale it spoils is not worth saying too.
-        if (issues.Count > said) return null;
-
-        if (notes.Count == 0)
-        {
-            issues.Complain(IssueCode.UnknownScale, line, column,
-                "the keyboard's scale has no notes. Spell one from its tonic, as in 'keyboard scale [ D E F G A B C ]'.");
-            return null;
-        }
-
-        var tonic = notes[0];
-        var classes = Pitch.Scale(notes.Select(note => (note - tonic + Pitch.Classes) % Pitch.Classes));
-
-        if (Chords.Scales.FirstOrDefault(scale => scale.Classes.SequenceEqual(classes)) is { } mode)
-            return new KeyboardScale(tonic, mode.Id);
-
-        issues.Complain(IssueCode.UnknownScale, line, column,
-            $"{string.Join(" ", notes.Select(Pitch.ClassName))} is not a scale from {Pitch.ClassName(tonic)}. "
-            + "The keyboard plays the seven-note scales an Auto Chord builds in, from the first note.");
-        return null;
-    }
-
-    /// <summary>Says how long the patch plays for, once.</summary>
-    private void Last(LengthStatement statement)
-    {
-        if (patch.Length is not null)
-        {
-            issues.Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
-                "the patch's length is already said further up. It has one length, so it says so once.");
-            return;
-        }
-
-        patch.Length = statement.Seconds;
-    }
-
-    /// <summary>Says what the patch is for, once.</summary>
-    private void Describe(DescriptionStatement statement)
-    {
-        if (patch.Description is not null)
-        {
-            issues.Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
-                "the patch is already described further up. It has one description, so it says so once.");
-            return;
-        }
-
-        patch.Describe(statement.Text);
-    }
-
-    /// <summary>Says who made the patch, once.</summary>
-    private void Credit(AuthorStatement statement)
-    {
-        if (patch.Author is not null)
-        {
-            issues.Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
-                "the patch is already credited further up. It has one author line, so it says so once.");
-            return;
-        }
-
-        patch.Credit(statement.Text);
-    }
-
-    /// <summary>Tags the patch, once.</summary>
-    private void Tag(TagsStatement statement)
-    {
-        if (patch.Tags is not null)
-        {
-            issues.Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
-                "the patch is already tagged further up. It has one tags line, so it says so once.");
-            return;
-        }
-
-        patch.Tag(statement.Tags);
-    }
 
     /// <summary>
     /// The field a name means, where the module declares one. A plugin's fields
