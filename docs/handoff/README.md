@@ -7,6 +7,7 @@ Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or 
 | [decision-model.md](decision-model.md) | A decision model behind the plugin boundary | Plan | Open |
 | [formulas-into-modules.md](formulas-into-modules.md) | What the presets still write as formulas, and which modules would replace it | Audit | Open |
 | [sync-to-async.md](sync-to-async.md) | Blocking work on the UI thread, and what to do about each | Audit | Open |
+| [assistant-says-what-it-can-do.md](assistant-says-what-it-can-do.md) | The assistant answers what it can do, and offers plugin authoring when a .NET SDK is present | Plan | Open |
 | [assistant-request-cost.md](assistant-request-cost.md) | The assistant spends requests and tokens it does not need | Issue | Open: four of eight fixed |
 | [grab-the-output.md](grab-the-output.md) | Grab the picture or the sound and the knobs move: derivatives through the patch | Plan | Open, parked; spiked |
 | [android-editor.md](android-editor.md) | An Android editor: a third shell beside the desktop and the page | Plan | Open, parked |
