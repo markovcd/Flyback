@@ -32,26 +32,7 @@ public sealed class Binder
     private readonly Dictionary<string, DefStatement> defs = new(StringComparer.Ordinal);
     private readonly HashSet<string> expanding = new(StringComparer.Ordinal);
 
-    /// <summary>Every place the text names a module, in the order it names them.</summary>
-    private readonly List<(Site Where, Guid Node)> mentions = [];
-
-    /// <summary>The call that placed each module, which is where a knob is added.</summary>
-    private readonly Dictionary<Guid, Site> calls = [];
-
-    /// <summary>
-    /// Where the file writes each named value it sets — a socket's knob, or one
-    /// of a plugin's declared fields.
-    /// </summary>
-    private readonly Dictionary<(Guid Node, string Name), Site?> written = [];
-
-    /// <summary>How often each number the file writes is read through a name.</summary>
-    private readonly Dictionary<Site, int> readThrough = [];
-
-    /// <summary>Modules a statement is about, rather than mentions inside one.</summary>
-    private readonly HashSet<Guid> bound = [];
-
-    /// <summary>What the text calls each module it has a word for.</summary>
-    private readonly Dictionary<Guid, string> named = [];
+    private readonly SourceSites sourceSites = new();
 
     /// <summary>The line that wired each socket the text wires.</summary>
     private readonly Dictionary<(Guid Node, int Port), int> wired = [];
@@ -64,9 +45,6 @@ public sealed class Binder
 
     /// <summary>Where each group block begins, and which of <see cref="boxes"/> it is.</summary>
     private readonly List<(Site Where, int Box)> opened = [];
-
-    /// <summary>Where each group block begins, and the group it built.</summary>
-    private readonly List<(Site Where, Guid Group)> blocks = [];
 
     /// <summary>Plugins a <c>requires</c> line named that this build does not have.</summary>
     private readonly List<string> missing = [];
@@ -113,15 +91,7 @@ public sealed class Binder
     /// name a module and a knob that has to be written back. Only the binder can
     /// say this: a patch carries nothing about the file it came from.
     /// </summary>
-    public SourceMap Map(string source) => new(source, mentions, calls, Writable(), named, bound, blocks);
-
-    /// <summary>
-    /// <see cref="written"/>, less the numbers read through a name more than once:
-    /// rewriting one of those would turn every knob and sum that reads it.
-    /// </summary>
-    private Dictionary<(Guid Node, string Name), Site?> Writable() => written.ToDictionary(
-        pair => pair.Key,
-        pair => pair.Value is { } site && readThrough.GetValueOrDefault(site) > 1 ? null : pair.Value);
+    public SourceMap Map(string source) => sourceSites.Map(source);
 
     /// <summary>The patch these statements describe, laid out and ready to compile.</summary>
     public Patch Build(IReadOnlyList<Statement> statements)
@@ -133,7 +103,7 @@ public sealed class Binder
 
         // The one module nothing places, so the one whose knobs can only ever be
         // written as a statement of their own.
-        named[patch.Output.Id] = "out";
+        sourceSites.Name(patch.Output.Id, "out");
 
         var scope = new Scope(null);
 
@@ -184,41 +154,20 @@ public sealed class Binder
             patch.Groups![patch.Groups.IndexOf(made)] = group;
 
             foreach (var (where, box) in opened)
-                if (box == i) blocks.Add((where, group.Id));
+                if (box == i) sourceSites.Open(where, group.Id);
         }
 
         // A call to a Maths module the Expression stands for, and the sums and
         // calls around it, arrive as the Expressions a preset's do (ADR-0109).
         var into = new Dictionary<Guid, Guid>();
         ExpressionFusion.Fuse(patch, modules, into);
-        Folded(into);
+        sourceSites.Folded(into);
 
         // Positions are not in the language, so they are worked out afterwards
         // by the same layout the editor uses on a pasted fragment (ADR-0044).
         PatchLayout.Arrange(patch, modules);
 
         return patch;
-    }
-
-    /// <summary>
-    /// What the text says about modules the folding took away or remade: a word
-    /// that named one names the Expression it went into, and a knob or a call
-    /// written for one points nowhere, since its brackets take no formula.
-    /// </summary>
-    private void Folded(Dictionary<Guid, Guid> into)
-    {
-        if (into.Count == 0) return;
-
-        for (var i = 0; i < mentions.Count; i++)
-            if (into.TryGetValue(mentions[i].Node, out var root))
-                mentions[i] = (mentions[i].Where, root);
-
-        foreach (var id in into.Keys) calls.Remove(id);
-
-        foreach (var key in written.Keys.Where(key => into.ContainsKey(key.Node)).ToList()) written.Remove(key);
-
-        foreach (var (id, root) in into)
-            if (bound.Remove(id)) bound.Add(root);
     }
 
     // --- what a name is worth ------------------------------------------------
@@ -420,7 +369,7 @@ public sealed class Binder
                     scope.Set(let.Name, value, let.Line);
                     Owns(value);
 
-                    if (value is Placed placed) named.TryAdd(placed.Id, let.Name);
+                    if (value is Placed placed) sourceSites.Name(placed.Id, let.Name);
                 }
                 else
                 {
@@ -515,14 +464,14 @@ public sealed class Binder
     /// </remarks>
     private void Owns(Value? value)
     {
-        if (value is Placed placed) bound.Add(placed.Id);
-        else if (value is Socket socket) bound.Add(socket.Id);
+        if (value is Placed placed) sourceSites.Own(placed.Id);
+        else if (value is Socket socket) sourceSites.Own(socket.Id);
     }
 
     /// <summary>Notes that <paramref name="expr"/> is a word naming a module, or counts a number read through a name.</summary>
     private void Mention(Expr expr, Value value)
     {
-        if (value is Figure { Where: { } where }) readThrough[where] = readThrough.GetValueOrDefault(where) + 1;
+        if (value is Figure { Where: { } where }) sourceSites.ReadThrough(where);
 
         var id = value switch
         {
@@ -531,7 +480,7 @@ public sealed class Binder
             _ => Guid.Empty,
         };
 
-        if (id != Guid.Empty) mentions.Add((new Site(expr.Line, expr.Column), id));
+        if (id != Guid.Empty) sourceSites.Mention(new Site(expr.Line, expr.Column), id);
     }
 
     private void Destructure(LetTupleStatement statement, Scope scope)
@@ -631,7 +580,7 @@ public sealed class Binder
             return;
         }
 
-        mentions.Add((new Site(target.Line, target.Column), node.Id));
+        sourceSites.Mention(new Site(target.Line, target.Column), node.Id);
         node.Off = true;
     }
 
@@ -750,7 +699,7 @@ public sealed class Binder
         scope.Set(statement.Name, new Dial(control, statement.Name), line);
 
         // So a knob turned on the panel can be written back where it rests.
-        written[(control.Id, PatchPrinter.PanelKnob)] = resting.Where;
+        sourceSites.Write(control.Id, PatchPrinter.PanelKnob, resting.Where);
     }
 
     /// <summary>A panel knob called with the range a socket reads it over: <c>cutoff(200..4000, knee: 20)</c>.</summary>
@@ -881,7 +830,7 @@ public sealed class Binder
         if (value is not Placed { Id: var id } || patch.Find(id) is not { } node) return;
 
         node.SetState(FormulaExtra.StateKey, new JsonObject { [FormulaExtra.FormulaField] = formula });
-        mentions.Add((new Site(line, column), id));
+        sourceSites.Mention(new Site(line, column), id);
     }
 
     private Value? Refuse(string code, int line, int column, string message)
@@ -1142,8 +1091,8 @@ public sealed class Binder
             // line are four modules to point at.
             var site = new Site(expr.Line, expr.Column);
 
-            calls[made.Id] = site;
-            mentions.Add((site, made.Id));
+            sourceSites.Call(made.Id, site);
+            sourceSites.Mention(site, made.Id);
 
             if (patch.Find(made.Id) is { } instance)
                 foreach (var (owner, field, setting, where) in fields)
@@ -1153,7 +1102,7 @@ public sealed class Binder
                     // By the key rather than by whichever of key and label the
                     // file happened to use, since a label is free to be reworded
                     // and a caller asking for the field will have the key.
-                    written[(made.Id, field.Key)] = where;
+                    sourceSites.Write(made.Id, field.Key, where);
                 }
         }
 
@@ -1303,7 +1252,7 @@ public sealed class Binder
     /// <summary>A socket as the text would say it: the module's name, a dot and the socket.</summary>
     private string SocketName(Guid node, int port) =>
         patch.Find(node) is { } instance && modules.Get(instance.TypeId) is { } def
-            ? (named.GetValueOrDefault(node) ?? def.Name) + "." + def.Inputs[port].Name.Replace(' ', '_')
+            ? (sourceSites.NameOf(node) ?? def.Name) + "." + def.Inputs[port].Name.Replace(' ', '_')
             : "this socket";
 
     /// <summary>
@@ -1324,7 +1273,7 @@ public sealed class Binder
         // Only once a knob has actually been set, so that a refused number is
         // not offered as a place to write another one into. By the socket's own
         // spelling, because that is what a caller asking for it will have.
-        written[(node.Id, spec.Name.Replace(' ', '_'))] = figure.Where;
+        sourceSites.Write(node.Id, spec.Name.Replace(' ', '_'), figure.Where);
     }
 
     /// <summary>
@@ -1944,7 +1893,7 @@ public sealed class Binder
         {
             // 'out.left' is the Output named, and the Output is a module with a
             // panel of its own — so the words are somewhere to click as well.
-            mentions.Add((new Site(target.Line, target.Column), node.Id));
+            sourceSites.Mention(new Site(target.Line, target.Column), node.Id);
 
             return (node, def, port);
         }
