@@ -47,7 +47,8 @@ from Microsoft, since a distribution's packaged SDK takes no workloads.
 
 ## Consequences
 
-- The IL path runs under Mono's JIT on the x86_64 emulator; on ARM64, and how fast, is
-  measured on a device before it ships.
+- The IL path runs under Mono's JIT on ARM64 too, but a Pixel 9 Pro renders Mycelium at
+  only 1.2× real time with no oversampling, about an eleventh of a desktop's speed, so the
+  heavier presets will not keep up on a phone.
 - Line In and MIDI on Android are still to write.
 - A phone needs a layout of its own; a tablet takes the desktop's once the touch bugs land.

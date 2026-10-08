@@ -17,8 +17,11 @@ from the code, except where the order says done.
 `src/Flyback.Editor.Android` boots to the canvas on an emulator, draws the picture on GLES
 at 49 fps, and plays the sound through `Flyback.Plugins.AndroidIO`'s `AudioTrack`. The sound's
 IL runs under Mono's JIT: Sidebands renders at 18× real time and Whole band at 1.4 to 1.9×
-without oversampling, both in a Release build on the x86_64 emulator. ARM64 on a real device
-is unmeasured. The toolchain is user-local: a Microsoft .NET SDK in `~/.dotnet`
+without oversampling, both in a Release build on the x86_64 emulator. On a Pixel 9 Pro (Tensor G4, ARM64,
+Android API 37), a Release build renders Mycelium's sound at 1.2× real time with no
+oversampling; `flyback-cli render` of the same on an i5-14600KF runs at about 13×, so the
+phone is about eleven times slower and Mycelium only just keeps up. A heavy preset will not
+play on a phone without the engine getting faster there (the `performance` skill's leads). The toolchain is user-local: a Microsoft .NET SDK in `~/.dotnet`
 (Ubuntu's packaged SDK takes no workloads) with the android workload, a JDK in
 `~/Android/jdk`, the SDK in `~/Android/Sdk` and an AVD named `flyback` (Pixel Tablet,
 API 36, x86_64). Build and install with `DOTNET_ROOT=~/.dotnet`, `JAVA_HOME` and
@@ -70,7 +73,7 @@ download from the preset site, and anything after a rotation.
 5. **The IL path.** The sound's desktop speed is IL generated at run time (ADR-0076). It runs
    under Mono's JIT. A Debug build runs Mono's interpreter by default, where
    `RuntimeFeature.IsDynamicCodeCompiled` is false and no IL is built, so the project sets
-   `UseInterpreter=false`. ARM64 speed on a real phone is unchecked.
+   `UseInterpreter=false`. On a Pixel 9 Pro it is about eleven times slower than a desktop.
 6. **Trimming.** Release builds trim, and the patch reader deserializes by reflection: take
    the page's `TrimMode=partial`.
 7. **Touch, the bulk.** ADR-0165 makes a finger a mouse button, but
@@ -92,8 +95,7 @@ download from the preset site, and anything after a rotation.
 
 1. ~~A spike: the app boots to the node canvas on an emulator.~~ Done.
 2. ~~The picture on GLES.~~ Done: the desktop's `GpuPreviewSurface` draws as it is.
-3. ~~Sound through `AudioTrack`, and the IL check.~~ Done on the emulator; ARM64 speed on a
-   device is still to measure.
+3. ~~Sound through `AudioTrack`, and the IL check.~~ Done, and measured on a Pixel 9 Pro.
 4. ~~The touch bugs, then a tablet layout.~~ Done: the touch bugs a tablet meets are fixed, the
    desktop's layout holds in both orientations with the picture's row capped to its shape, and
    the splitters reach a fingertip either side. Three touch bugs remain, two of them the page's.
