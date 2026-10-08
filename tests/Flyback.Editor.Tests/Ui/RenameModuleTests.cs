@@ -134,8 +134,8 @@ public class RenameModuleTests : EditorTest
     }
 
     /// <summary>
-    /// The caret is where the text is: at the right edge of an empty box, and
-    /// after the last letter of a typed one, since the name is set flush right.
+    /// The caret is where the text is: at the left edge of an empty box, and
+    /// after the last letter of a typed one, since the name is set flush left.
     /// </summary>
     /// <remarks>
     /// Read from the points the presenter draws the caret between, which is the
@@ -143,20 +143,21 @@ public class RenameModuleTests : EditorTest
     /// itself again and comes back right.
     /// </remarks>
     [AvaloniaFact]
-    public void The_caret_stands_at_the_right_edge_with_the_name()
+    public void The_caret_stands_at_the_left_edge_with_the_name()
     {
         var window = Open(out _);
 
         DoubleClickTitle(window);
         var box = Box(window).ShouldNotBeNull("the title should have become a box");
 
-        Caret(box).ShouldBeGreaterThan(box.Bounds.Width - 2, "an empty box's caret stands at its right edge");
+        Caret(box).ShouldBeLessThan(2, "an empty box's caret stands at its left edge");
 
         Type(window, "Wobble");
         box.CaretIndex = box.Text!.Length;
         Settle(window);
 
-        Caret(box).ShouldBeGreaterThan(box.Bounds.Width - 2, "the caret follows the last letter");
+        Caret(box).ShouldBeGreaterThan(20, "the caret follows the last letter");
+        Caret(box).ShouldBeLessThan(box.Bounds.Width - 20, "a short name stops well short of the right edge");
     }
 
     /// <summary>Where the presenter draws the caret, across the box.</summary>

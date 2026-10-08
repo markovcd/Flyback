@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Flyback.Core.Graph;
 using Flyback.Editor.Inspect;
@@ -28,6 +29,13 @@ public class InspectorFoldTests : EditorTest
         return window;
     }
 
+    /// <summary>Works the window with a finger, as a phone does, under which the plate folds.</summary>
+    private void Fingered(MainWindow window)
+    {
+        Service<LastPress>(window).OnlyFingers();
+        Settle(window);
+    }
+
     /// <summary>Holds the inspector to <paramref name="height"/>, as a phone held sideways does.</summary>
     private static void Short(MainWindow window, double height)
     {
@@ -45,6 +53,7 @@ public class InspectorFoldTests : EditorTest
     public void A_short_inspector_pins_the_header_and_shows_the_rows_under_it()
     {
         var window = Selecting(out _);
+        Fingered(window);
 
         Short(window, 120);
 
@@ -64,6 +73,7 @@ public class InspectorFoldTests : EditorTest
     public void A_tall_inspector_shows_the_plate_whole_until_its_name_has_scrolled_past()
     {
         var window = Selecting(out _);
+        Fingered(window);
 
         // Tall enough for the plate, short enough to scroll.
         Short(window, 260);
@@ -82,6 +92,7 @@ public class InspectorFoldTests : EditorTest
     public void A_short_inspector_leaves_the_description_to_the_menu()
     {
         var window = Selecting(out _);
+        Fingered(window);
 
         Short(window, 120);
 
@@ -95,6 +106,7 @@ public class InspectorFoldTests : EditorTest
     public void The_menus_tiles_press_the_plates_own_buttons()
     {
         var window = Selecting(out var sine);
+        Fingered(window);
 
         Short(window, 120);
 
@@ -113,9 +125,93 @@ public class InspectorFoldTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void Under_a_mouse_on_a_wide_panel_the_buttons_stand_on_the_band_beside_the_name()
+    {
+        var window = Selecting(out _);
+        window.Width = 1440;
+        window.Height = 900;
+        Settle(window);
+
+        var plate = (ModulePlate)PlateHost(window).Content!;
+
+        plate.Layout.ShouldBe(PlateLayout.Wide);
+        PlateHost(window).Parent.ShouldBeOfType<Decorator>("a wide plate is pinned above the rows");
+
+        var name = All<TextBlock>(window).Single(t => t.Name == "moduleName");
+        var off = Named(window, "switch-modules");
+
+        off.TranslatePoint(default, name)!.Value.Y.ShouldBeLessThan(name.Bounds.Height, "on the band, not under it");
+        off.TranslatePoint(default, name)!.Value.X.ShouldBeGreaterThan(name.Bounds.Width / 2, "to the right of the name");
+        name.TextAlignment.ShouldBe(Avalonia.Media.TextAlignment.Left);
+    }
+
+    [AvaloniaFact]
+    public void Under_a_mouse_on_a_narrow_panel_the_buttons_stand_under_the_name()
+    {
+        var window = Selecting(out _);
+        window.Width = 1100;
+        Settle(window);
+
+        var plate = (ModulePlate)PlateHost(window).Content!;
+        plate.Layout.ShouldBe(PlateLayout.Narrow);
+
+        var name = All<TextBlock>(window).Single(t => t.Name == "moduleName");
+        Named(window, "switch-modules").TranslatePoint(default, name)!.Value.Y.ShouldBeGreaterThan(name.Bounds.Height);
+    }
+
+    [AvaloniaFact]
+    public void Under_a_finger_the_plate_has_a_strip_of_worded_buttons()
+    {
+        var window = Selecting(out var sine);
+
+        Service<LastPress>(window).Finger();
+        Settle(window);
+
+        var plate = (ModulePlate)PlateHost(window).Content!;
+        plate.Layout.ShouldBe(PlateLayout.Touch);
+
+        var strip = All<Avalonia.Controls.Primitives.UniformGrid>(window).Single(g => g.Name == "plate-strip");
+        All<Button>(strip).Select(b => b.Name).ShouldBe(["strip-switch-modules", "strip-duplicate-modules", "strip-delete-modules", "strip-more"]);
+        All<TextBlock>(strip).Select(t => t.Text).ShouldBe(["Bypass", "Duplicate", "Delete", "More"]);
+
+        Press(Named(strip, "strip-delete-modules"));
+        Settle(window);
+
+        Editor(window).History.Patch.Find(sine.Id).ShouldBeNull();
+    }
+
+    [AvaloniaFact]
+    public void A_phones_keys_leave_it_a_finger()
+    {
+        var window = Selecting(out _);
+        var lastPress = Service<LastPress>(window);
+
+        lastPress.OnlyFingers();
+        window.KeyPressQwerty(Avalonia.Input.PhysicalKey.A, Avalonia.Input.RawInputModifiers.None);
+        Settle(window);
+
+        lastPress.ByFinger.ShouldBeTrue();
+        ((ModulePlate)PlateHost(window).Content!).Layout.ShouldBe(PlateLayout.Touch);
+    }
+
+    [AvaloniaFact]
+    public void Under_a_mouse_a_narrow_short_inspector_folds_as_well()
+    {
+        var window = Selecting(out _);
+        window.Width = 1100;
+        Settle(window);
+
+        Short(window, 120);
+
+        Header(window).IsVisible.ShouldBeTrue();
+        PlateHost(window).IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
     public void The_headers_switch_switches_the_module_off()
     {
         var window = Selecting(out var sine);
+        Fingered(window);
 
         Short(window, 120);
         Press(Named(Header(window), "header-switch-modules"));

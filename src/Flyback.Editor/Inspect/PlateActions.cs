@@ -1,4 +1,6 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Layout;
 using Avalonia.Interactivity;
 using Flyback.Ui.Controls;
 
@@ -38,6 +40,34 @@ internal static class PlateActions
     /// <summary>The plate's button called <paramref name="name"/>, if it has one.</summary>
     public static Button? Find(ModulePlate plate, params string[] names) =>
         Rows(plate).SelectMany(row => row).FirstOrDefault(b => names.Contains(b.Name));
+
+    /// <summary>A glyph with its word under it, which is how a finger is shown an action.</summary>
+    public static Button Worded(string name, Control glyph, string label, string? tip, double height)
+    {
+        var button = new Button
+        {
+            Name = name,
+            Height = height,
+            Padding = new Thickness(0),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Content = new StackPanel
+            {
+                Spacing = 4,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Children =
+                {
+                    new ContentControl { Content = glyph, HorizontalAlignment = HorizontalAlignment.Center },
+                    new TextBlock { Text = label, FontSize = Text.Small, HorizontalAlignment = HorizontalAlignment.Center },
+                },
+            },
+        };
+
+        if (tip is not null) ToolTip.SetTip(button, tip);
+
+        return button;
+    }
 
     /// <summary>Presses the plate's own button, folded away or not.</summary>
     public static void Press(Button button)

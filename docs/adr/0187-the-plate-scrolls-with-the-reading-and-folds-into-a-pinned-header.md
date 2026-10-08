@@ -30,11 +30,21 @@ than build actions of their own: a tile presses the button it stands for, so wha
 what pressing it does are decided once, where
 [0111](0111-the-panels-actions-are-a-row-of-glyphs.md) put them.
 
+**How the plate is laid out follows the hand, not the device.** Under a finger it is the name
+band and a strip of four worded buttons, 52 dp tall: on/off, duplicate (open or close, for a box),
+delete and More, which opens the menu. Under a mouse, where the band has room for the name
+beside them, the buttons stand on the band in one row and the plate, about 60 px, is pinned
+above the reading and never folds; where it has not, they stand in rows under the name. A phone
+is a finger throughout, its keys the on-screen keyboard's (`LastPress.OnlyFingers`).
+
+**The name reads from the left**, so the buttons can stand to its right on the band; the
+right-hand edge [0122](0122-the-panel-wears-the-block-it-is-about.md) gave it is superseded too.
+
 **The wash still paints the band**: as deep as the plate's name band less what has scrolled, or as
 deep as the header while it shows, so the header has no paint of its own.
 
 ## Consequences
 
-- A tall panel looks as it did until it is scrolled; the desktop's shots are unchanged.
+- `flyback-theme.webp` and `plasma-inspector.webp` were retaken for the shorter plate.
 - The menu's tiles and the header's buttons are found by `menu-` and `header-` and the plate
   button's name.

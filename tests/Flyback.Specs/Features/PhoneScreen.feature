@@ -34,7 +34,7 @@ Feature: The editor fits a window as narrow as a phone held upright
     When a finger taps the sine
     And the side button is pressed in
     Then the canvas has no width
-    And the module panel's "delete-modules" button is on the screen
+    And the module panel's "strip-delete-modules" button is on the screen
     When the side button is let out
     Then the canvas has the window's width
 
@@ -60,6 +60,6 @@ Feature: The editor fits a window as narrow as a phone held upright
     And the patch is open in the editor
     When a finger taps the sine
     And the side button is pressed in
-    And the module panel's "delete-modules" button is pressed
+    And the module panel's "strip-delete-modules" button is pressed
     And the preset "Plasma" is picked
     Then the question offers "Discard changes, Cancel", each on the screen

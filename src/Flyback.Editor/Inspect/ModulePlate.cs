@@ -1,5 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.Styling;
@@ -86,7 +88,17 @@ internal sealed class ModulePlate : Decorator
     /// The header band's contents: the name, and under it what kind of thing this
     /// is. Both on the band, because the band is what says which block this is.
     /// </summary>
-    private readonly StackPanel name = new() { Margin = new Thickness(Inset, 6, Inset, 7) };
+    private readonly StackPanel name = new() { VerticalAlignment = VerticalAlignment.Center };
+
+    /// <summary>The band: the mark, the name, and on a wide panel under a mouse the buttons too.</summary>
+    private readonly Grid band = new()
+    {
+        ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"),
+        ColumnSpacing = 10,
+        Margin = new Thickness(Inset, 6, Inset, 7),
+    };
+
+    private readonly ContentControl mark = new() { VerticalAlignment = VerticalAlignment.Center };
 
     private readonly StackPanel rest = new()
     {
@@ -94,12 +106,122 @@ internal sealed class ModulePlate : Decorator
         Margin = new Thickness(Inset, 6, Inset, 10),
     };
 
+    /// <summary>A finger's strip of worded buttons in place of the rows of glyphs.</summary>
+    private readonly UniformGrid strip = new()
+    {
+        Name = "plate-strip",
+        Columns = 4,
+        ColumnSpacing = 6,
+        Margin = new Thickness(10, 0, 10, 8),
+        IsVisible = false,
+    };
+
     private ModulePlate((IBrush Ink, IBrush Quiet) inks)
     {
         Ink = inks.Ink;
         Quiet = inks.Quiet;
 
-        Child = new StackPanel { Children = { name, rest } };
+        Grid.SetColumn(mark, 0);
+        Grid.SetColumn(name, 1);
+        band.Children.Add(mark);
+        band.Children.Add(name);
+
+        Child = new StackPanel { Children = { band, strip, rest } };
+    }
+
+    /// <summary>How the plate is laid out at the moment, once <see cref="Lay"/> has been asked.</summary>
+    public PlateLayout? Layout { get; private set; }
+
+    /// <summary>Puts a box where the name is, as a double-click on it does. Null where the block cannot be renamed.</summary>
+    public Action? BeginRename { get; set; }
+
+    /// <summary>
+    /// Lays the plate out for how it is being worked: the rows beside the name under a mouse on
+    /// a wide panel, under it on a narrow one, and a strip of worded buttons under a finger.
+    /// </summary>
+    /// <param name="openMenu">Opens the menu with everything in it, from a finger's More.</param>
+    public void Lay(PlateLayout layout, Action<Control> openMenu)
+    {
+        if (Layout == layout) return;
+
+        Layout = layout;
+
+        if (Face is { Glyph: { } glyph, MarkInk: { } ink })
+            mark.Content = new Avalonia.Controls.Shapes.Path
+            {
+                Data = glyph,
+                Stroke = ink,
+                StrokeThickness = 2.2,
+                StrokeLineCap = PenLineCap.Round,
+                Stretch = Stretch.Uniform,
+                Width = layout == PlateLayout.Wide ? 26 : 24,
+                Height = layout == PlateLayout.Wide ? 26 : 24,
+            };
+
+        (rest.Parent as Panel)?.Children.Remove(rest);
+
+        foreach (var row in rest.Children.OfType<StackPanel>()) row.HorizontalAlignment = HorizontalAlignment.Left;
+
+        switch (layout)
+        {
+            case PlateLayout.Wide:
+                // One row of glyphs on the band, beside the name, in groups.
+                rest.IsVisible = true;
+                rest.Orientation = Orientation.Horizontal;
+                rest.Spacing = 10;
+                rest.Margin = new Thickness(0);
+                rest.VerticalAlignment = VerticalAlignment.Center;
+                foreach (var row in rest.Children.OfType<StackPanel>()) row.Margin = new Thickness(0);
+                Grid.SetColumn(rest, 2);
+                band.Children.Add(rest);
+                strip.IsVisible = false;
+                break;
+
+            case PlateLayout.Narrow:
+                rest.IsVisible = true;
+                rest.Orientation = Orientation.Vertical;
+                rest.Spacing = 4;
+                rest.Margin = new Thickness(Inset, 6, Inset, 10);
+                rest.VerticalAlignment = VerticalAlignment.Top;
+                foreach (var row in rest.Children.OfType<StackPanel>()) row.Margin = new Thickness(0, 0, 0, 6);
+                ((StackPanel)Child!).Children.Add(rest);
+                strip.IsVisible = false;
+                break;
+
+            case PlateLayout.Touch:
+                // Kept in the tree, hidden: the strip and the menu press these.
+                rest.IsVisible = false;
+                ((StackPanel)Child!).Children.Add(rest);
+                Strip(openMenu);
+                break;
+        }
+    }
+
+    /// <summary>The strip a finger gets: switching, the second most wanted, deleting, and More.</summary>
+    private void Strip(Action<Control> openMenu)
+    {
+        strip.Children.Clear();
+
+        foreach (var names in new[]
+                 {
+                     new[] { "switch-modules", "switch-group" },
+                     ["duplicate-modules", "open-group", "close-group"],
+                     ["delete-modules", "delete-group"],
+                 })
+        {
+            if (PlateActions.Find(this, names) is not { } mirrored || PlateActions.Of(mirrored.Name) is not { } said) continue;
+
+            var button = PlateActions.Worded("strip-" + mirrored.Name, said.Glyph(), said.Label, ToolTip.GetTip(mirrored) as string, 52);
+            button.IsEnabled = mirrored.IsEnabled;
+            button.Click += (_, _) => PlateActions.Press(mirrored);
+            strip.Children.Add(button);
+        }
+
+        var more = PlateActions.Worded("strip-more", Glyphs.Dots(), "More", "Everything else that can be done to it", 52);
+        more.Click += (_, _) => openMenu(more);
+        strip.Children.Add(more);
+
+        strip.IsVisible = true;
     }
 
     /// <summary>
@@ -116,7 +238,7 @@ internal sealed class ModulePlate : Decorator
     /// it. The wash draws that band and reads this — the panel sets the name at the
     /// size it wants, and nothing else has a number that has to agree.
     /// </summary>
-    public double Band => name.Bounds.Bottom + name.Margin.Bottom;
+    public double Band => band.Bounds.Bottom + band.Margin.Bottom;
 
     /// <summary>What the plate says about its block, for what stands in for it on a short panel.</summary>
     public PlateFace? Face { get; set; }

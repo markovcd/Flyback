@@ -52,10 +52,17 @@ internal sealed class GroupInspector(
             Text = group.Name is null ? "Group" : $"Group · {group.Counted}",
             FontSize = Text.Small,
             Foreground = plate.Quiet,
-            TextAlignment = TextAlignment.Right,
+            TextAlignment = TextAlignment.Left,
         });
 
         surface.PlateHost.Content = plate;
+
+        if (!editor.History.Locked)
+            plate.BeginRename = () =>
+            {
+                if (plate.Named.Children.OfType<TextBlock>().FirstOrDefault(t => t.Name == "groupName") is { } title)
+                    Rename(group, plate.Ink, title);
+            };
 
         // Under the name, above the description, where a module's own row sits.
         var above = plate.Under.Children.Count;
@@ -300,11 +307,12 @@ internal sealed class GroupInspector(
     {
         var title = new TextBlock
         {
+            Name = "groupName",
             Text = group.Title(),
             FontSize = Text.Title,
             FontWeight = FontWeight.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis,
-            TextAlignment = TextAlignment.Right,
+            TextAlignment = TextAlignment.Left,
             Foreground = ink,
             Background = Brushes.Transparent,
 
@@ -322,19 +330,22 @@ internal sealed class GroupInspector(
         title.DoubleTapped += (_, e) =>
         {
             e.Handled = true;
-
-            NameBox.Open(
-                title,
-                ink,
-                group.Name,
-                group.Counted,
-                NodeGroup.NameLimit,
-                typed => group.Rename(typed),
-                () => group.Name,
-                () => Title(group, ink),
-                () => editor.History.Record());
+            Rename(group, ink, title);
         };
 
         return title;
     }
+
+    /// <summary>Puts a box where the box's name is.</summary>
+    private void Rename(NodeGroup group, IBrush ink, Control title) =>
+        NameBox.Open(
+            title,
+            ink,
+            group.Name,
+            group.Counted,
+            NodeGroup.NameLimit,
+            typed => group.Rename(typed),
+            () => group.Name,
+            () => Title(group, ink),
+            () => editor.History.Record());
 }

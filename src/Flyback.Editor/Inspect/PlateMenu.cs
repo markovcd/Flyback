@@ -117,7 +117,7 @@ internal sealed class PlateMenu
     private static Button Tile(Button mirrored, Action close)
     {
         var said = PlateActions.Of(mirrored.Name)!.Value;
-        var tile = Shaped("menu-" + mirrored.Name, said.Glyph(), said.Label, ToolTip.GetTip(mirrored) as string);
+        var tile = PlateActions.Worded("menu-" + mirrored.Name, said.Glyph(), said.Label, ToolTip.GetTip(mirrored) as string, TileHeight);
 
         tile.IsEnabled = mirrored.IsEnabled;
         tile.Click += (_, _) =>
@@ -131,40 +131,13 @@ internal sealed class PlateMenu
 
     private Button RenameTile(Action close)
     {
-        var tile = Shaped("menu-rename", Glyphs.Pencil(), "Rename", "Give it a name of its own");
+        var tile = PlateActions.Worded("menu-rename", Glyphs.Pencil(), "Rename", "Give it a name of its own", TileHeight);
 
         tile.Click += (_, _) =>
         {
             close();
             rename();
         };
-
-        return tile;
-    }
-
-    private static Button Shaped(string name, Control glyph, string label, string? tip)
-    {
-        var tile = new Button
-        {
-            Name = name,
-            Height = TileHeight,
-            Padding = new Thickness(0),
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            Content = new StackPanel
-            {
-                Spacing = 5,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Children =
-                {
-                    new ContentControl { Content = glyph, HorizontalAlignment = HorizontalAlignment.Center },
-                    new TextBlock { Text = label, FontSize = Text.Small, HorizontalAlignment = HorizontalAlignment.Center },
-                },
-            },
-        };
-
-        if (tip is not null) ToolTip.SetTip(tile, tip);
 
         return tile;
     }

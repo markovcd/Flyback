@@ -1,6 +1,6 @@
 # ADR-0122: The panel wears the block it is about
 
-**Status:** Superseded in part · 2026-09-20 · *user-directed* · the pinned plate superseded by [0187](0187-the-plate-scrolls-with-the-reading-and-folds-into-a-pinned-header.md), where the plate scrolls with the reading and a header pins in for it
+**Status:** Superseded in part · 2026-09-20 · *user-directed* · the pinned plate and the right-hand name superseded by [0187](0187-the-plate-scrolls-with-the-reading-and-folds-into-a-pinned-header.md), where the plate scrolls with the reading, a header pins in for it, and the name reads from the left
 
 ## Context
 

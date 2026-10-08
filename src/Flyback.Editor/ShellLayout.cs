@@ -413,14 +413,17 @@ internal sealed class ShellLayout(
         // or where there is no room for it at all.
         var rows = new StackPanel { Children = { plateHost, inspector.Panel } };
         var scroller = new ScrollViewer { Content = rows, Background = Brushes.Transparent };
-        var reading = new Panel { Children = { scroller, inspector.Header } };
+        var pinned = new Decorator();
+        var scrolling = new Panel { Children = { scroller, inspector.Header } };
+        DockPanel.SetDock(pinned, Dock.Top);
+        var reading = new DockPanel { Children = { pinned, scrolling } };
 
         var inspectorBorder = inspectorBox = new Border
         {
             Background = new SolidColorBrush(Colors.Panel),
             Child = new Panel { Children = { wash, reading } },
         };
-        _ = new InspectorFold(reading, scroller, rows, plateHost, inspector.Header, wash, inspector.Panel);
+        _ = new InspectorFold(reading, scroller, rows, pinned, plateHost, inspector.Header, wash, inspector.Panel, lastPress);
         Grid.SetColumn(inspectorBorder, column);
         Grid.SetRow(inspectorBorder, 2);
 

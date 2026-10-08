@@ -28,9 +28,9 @@ internal static class ActionRows
         Spacing = 6,
         Margin = new Thickness(0, 2, 0, 6),
 
-        // The right, where the name and the category are: everything the plate
+        // The left, where the name and the category are: everything the plate
         // carries is read down the one edge.
-        HorizontalAlignment = HorizontalAlignment.Right,
+        HorizontalAlignment = HorizontalAlignment.Left,
     };
 
     /// <summary>

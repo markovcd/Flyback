@@ -53,6 +53,9 @@ public sealed class DeviceApp : Avalonia.Application
             services.AddSingleton<IClose, DeviceClose>();
         });
 
+        // Every press on a device is a finger's, its keys the on-screen keyboard's.
+        provider.GetRequiredService<LastPress>().OnlyFingers();
+
         var view = provider.View();
         var opened = false;
 

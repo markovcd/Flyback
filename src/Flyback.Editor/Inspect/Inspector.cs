@@ -241,7 +241,7 @@ internal sealed class Inspector
             Text = def.Category,
             FontSize = Text.Small,
             Foreground = plate.Quiet,
-            TextAlignment = TextAlignment.Right,
+            TextAlignment = TextAlignment.Left,
         });
 
         PlateHost.Content = plate;
@@ -261,6 +261,13 @@ internal sealed class Inspector
             editor.History.Locked
                 ? null
                 : new PlateName(() => node.Name, def.Name, NodeInstance.NameLimit, typed => node.Rename(def, typed), () => editor.History.Record()));
+
+        if (!editor.History.Locked)
+            plate.BeginRename = () =>
+            {
+                if (plate.Named.Children.OfType<TextBlock>().FirstOrDefault(t => t.Name == "moduleName") is { } title)
+                    BeginRename(node, def, plate.Ink, title);
+            };
 
         if (!string.IsNullOrEmpty(def.Description))
             Panel.Children.Add(new TextBlock
@@ -398,7 +405,7 @@ internal sealed class Inspector
             FontSize = Text.Title,
             FontWeight = FontWeight.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis,
-            TextAlignment = TextAlignment.Right,
+            TextAlignment = TextAlignment.Left,
             Foreground = ink,
             Background = Brushes.Transparent,
 

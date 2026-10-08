@@ -67,7 +67,7 @@ internal static class NameBox
             MaxLength = limit,
             FontSize = prose ? Text.Body : Text.Title,
             FontWeight = prose ? FontWeight.Normal : FontWeight.SemiBold,
-            TextAlignment = prose ? TextAlignment.Left : TextAlignment.Right,
+            TextAlignment = TextAlignment.Left,
             TextWrapping = prose ? TextWrapping.Wrap : TextWrapping.NoWrap,
             Foreground = ink,
             CaretBrush = ink,
