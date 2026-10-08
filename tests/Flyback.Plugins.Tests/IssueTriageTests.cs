@@ -14,17 +14,17 @@ public class IssueTriageTests
         new(new Decisions([model], new DecisionSettings(), new Credentials(null), new ModelStore(null)));
 
     [Fact]
-    public async Task Each_complaint_is_one_score_about_the_patch()
+    public async Task Each_complaint_is_the_text_one_yes_no_is_asked_about()
     {
         var model = new Blaming("volume");
 
-        var likely = await Triage(model).Likelihoods(["the Output's volume is 0", "a Sine is not wired"], "A patch of 2 modules", TestContext.Current.CancellationToken);
+        var likely = await Triage(model).Likelihoods(["the Output's volume is 0", "a Sine is not wired"], TestContext.Current.CancellationToken);
 
         likely.ShouldBe([1.0, 0.0]);
 
-        var asked = model.Asked.ShouldHaveSingleItem();
-        asked.State.ShouldBe("A patch of 2 modules");
-        asked.Questions.Values.ShouldAllBe(q => q is Question.Score);
+        model.Asked.Select(r => r.State).Order().ShouldBe(["a Sine is not wired", "the Output's volume is 0"]);
+        foreach (var request in model.Asked)
+            request.Questions.Values.Single().ShouldBeOfType<Question.YesNo>().Instructions.ShouldBe(IssueTriage.Question);
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public class IssueTriageTests
     {
         var model = new Blaming("volume");
 
-        (await Triage(model).Likelihoods(["only this"], "p", TestContext.Current.CancellationToken)).ShouldBeNull();
+        (await Triage(model).Likelihoods(["only this"], TestContext.Current.CancellationToken)).ShouldBeNull();
         model.Asked.ShouldBeEmpty();
     }
 
@@ -51,7 +51,7 @@ public class IssueTriageTests
         IssueTriage.Summary(patch, NodeCatalog.BuiltIn).ShouldBe("A patch of 1 module and 0 wires: Sine.");
     }
 
-    /// <summary>Scores a complaint top that mentions one word, and bottom otherwise.</summary>
+    /// <summary>Says yes to a complaint that mentions one word, and no to any other.</summary>
     internal sealed class Blaming(string word) : IDecisionModel
     {
         public List<DecisionRequest> Asked { get; } = [];
@@ -74,10 +74,7 @@ public class IssueTriageTests
 
             return Task.FromResult(new Decision("blaming", request.Questions.ToDictionary(q => q.Key, q =>
             {
-                var score = (Question.Score)q.Value;
-                var top = score.Instructions.Contains(word, StringComparison.OrdinalIgnoreCase) ? score.Levels.Count - 1 : 0;
-
-                return (Answer)new Answer.Scored(top, score.Levels, [.. score.Levels.Select((_, i) => i == top ? 1.0 : 0)], 1);
+                return (Answer)new Answer.YesNo(request.State.Contains(word, StringComparison.OrdinalIgnoreCase) ? 1 : 0);
             }), DecisionUsage.None));
         }
     }

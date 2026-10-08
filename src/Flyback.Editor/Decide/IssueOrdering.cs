@@ -29,8 +29,6 @@ internal sealed class IssueOrdering(Decisions decisions, ReportLine report)
         var stop = new CancellationTokenSource();
         asking = stop;
 
-        var summary = IssueTriage.Summary(patch, NodeCatalog.Current);
-
         Pending = Asked();
 
         async Task Asked()
@@ -39,7 +37,7 @@ internal sealed class IssueOrdering(Decisions decisions, ReportLine report)
             {
                 await Task.Delay(Pause, stop.Token);
 
-                var likely = await new IssueTriage(decisions).Likelihoods(issues, summary, stop.Token);
+                var likely = await new IssueTriage(decisions).Likelihoods(issues, stop.Token);
 
                 if (stop.IsCancellationRequested || likely is null) return;
 

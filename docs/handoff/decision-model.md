@@ -130,8 +130,23 @@ to answer, and did, changing nothing; "add a touch of reverb to the pad" was rea
 question at 0.51, under the bar, built a Reverb on the pad's channel, and its proposal was not
 doubted. The reading costs one request of about 0.3 s a turn.
 
-**Not measured:** the complaints' order (`IssueTriage`). It has no set with a right answer yet;
-one needs patches broken two ways where one way is plainly why it is silent or dark.
+**The complaints' order**, on sixteen text patches each broken two or three ways, one of them
+plainly why it is silent or dark (a Sample, an Image or a MIDI File with no file, a MIDI In on an
+instrument that is not here, a Receive with no Send) beside harmless warnings (a wire swinging
+past a socket's range, an Auto remap on plain numbers, a Clock In on an absent instrument):
+
+| Shape | Cause first, of 16 | Every cause before every harmless complaint |
+|---|---|---|
+| One score question per complaint, the patch summary as the state (what shipped first) | 0 | 0 |
+| One yes-no per complaint, the summary as the state | 5 | 4 |
+| One choice among the complaints | 6 on English, 8 on typed-decisions | the same |
+| One request per complaint, the complaint as the state, the question fixed (what ships) | **16** | **16** |
+
+The first shape was backwards, not merely weak: "swings past the range" scored above "plays
+silence" every time. With the complaint as the text the question is about, the causes score 0.3
+to 0.95 and the harmless ones 0.05 to 0.2, on both checkpoints. The set tests whether the model
+reads what a complaint says, which is the whole of what it can know; a complaint about a module
+nowhere near the Output would score the same.
 
 ### Next
 
@@ -146,8 +161,13 @@ laya-serve started with `LAYA_PRELOAD=1`, the first module search answered in 5.
 the same as the steady 6 s, and a yes-no in 0.3 s. The misses seen earlier were not the
 server's warm-up; nothing in Flyback needs to ask ahead.
 
-Left: **Jev, an alternative to Laya**, comes later as a model of its own. The name is kept for it
-and names nothing else.
+Left:
+
+- **Jev, an alternative to Laya**, comes later as a model of its own. The name is kept for it
+  and names nothing else.
+- **A complaint off the Output's path.** The triage reads only the complaint, so a Sample with no
+  file that feeds nothing still scores as why the patch is silent. Saying in the state whether the
+  module reaches the Output, and a set with such cases, would tell whether the model can use it.
 
 Measure anything new against the server with `scripts/decide-bench.py` before it lands.
 

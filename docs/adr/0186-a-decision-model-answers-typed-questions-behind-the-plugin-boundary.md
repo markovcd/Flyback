@@ -50,8 +50,11 @@ in a name or the words is found without any model and listed first. The turn rea
 on the sum of its two question readings, a module's and the patch's, since the model tells
 them apart badly and the action is the same; the doubt is asked about the assistant's
 summary alone, because a line naming the patch's modules beside it pulls every answer
-toward no. Each is scored by `scripts/decide-bench.py` against a fixed set, with a held-out
-set apart, before it changes; the numbers are in `docs/handoff/decision-model.md`.
+toward no. The complaints' order asks one yes-no per complaint with the complaint itself as the
+text, since the same question asked about the patch with the complaint in it rated every
+harmless warning above every cause. Each is scored by `scripts/decide-bench.py` against a fixed
+set, with a held-out set apart, before it changes; the numbers are in
+`docs/handoff/decision-model.md`.
 
 `PluginContractVersion` stays at 1.0.0: nothing has shipped at it, and `/release`
 works the version out from the surface.

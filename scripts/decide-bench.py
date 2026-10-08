@@ -4,6 +4,7 @@
 #   decide-bench.py find  FLYBACK_CLI           the module search, through `modules --find`
 #   decide-bench.py route ENDPOINT [CHECKPOINT] the turn reading's intent question
 #   decide-bench.py does  ENDPOINT [CHECKPOINT] the turn reading's doubt question
+#   decide-bench.py triage FLYBACK_CLI          the complaints' order, through `check --triage`
 #
 # `find` asks whatever model the settings choose; run it under XDG_CONFIG_HOME pointing at a
 # folder whose Flyback/settings.json names the model, to leave the real settings alone. Its
@@ -11,11 +12,14 @@
 # words in hand, and twenty-four written afterwards, scored apart. `route` and `does` post
 # TurnReading's questions straight to ENDPOINT (e.g. http://localhost:8000), naming CHECKPOINT
 # (english, typed-decisions) for a laya-serve, and score them by TurnReading's own rules.
-# Standard library only.
+# `triage` writes sixteen text patches, each broken two or three ways with one way plainly why
+# it is silent or dark, and checks that the first complaint is about that one. Standard library only.
 
 import json
+import os
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.request
 
@@ -170,6 +174,41 @@ DOES = [
 ]
 DOUBTED = 0.4
 
+# The lines the triage's patches are made of: a sound and a picture that work, three harmless
+# warnings, and six complaints that each mean silence or black.
+PICTURE = "hsv(hue: sine(freq: 0.1), saturation: 0.8, value: 0.9) |> out.color\n"
+SOUND = "sine(freq: 220) |> out.left\n"
+# Harmless complaints, each a line that adds a warning and changes nothing the ear or eye would miss.
+OVERFLOW = "sine(freq: saw(freq: 0.2)) * 0 |> out.right\n"      # a Saw swinging past Sine's 'freq'
+REMAP = "let lfo = sine(freq: 0.2) * 3 |> autoremap(in_low: 0, in_high: 1, out_low: 100, out_high: 1000)\nsine(freq: lfo) * 0 |> out.right\n"
+BOTH = "let o = sine(freq: saw(freq: 0.2))\nlet lfo = sine(freq: 0.2) * 3 |> autoremap(in_low: 0, in_high: 1, out_low: 100, out_high: 1000)\n(sine(freq: lfo) + o) * 0 |> out.right\n"
+CLOCK = "let c = midi.clock(device: \"Syntakt\")\nhsv(hue: c.beats * 0.1, saturation: 0.8, value: 0.9) |> out.color\n"
+SAMPLE = "let s = sample()\ns |> out.left\n"
+MIDIFILE = "let m = midi.file()\nsine(freq: m.pitch) * m.gate |> out.left\n"
+MIDIIN = "let m = midi.in(device: \"Launchkey 49\")\nsine(freq: m.pitch) * m.gate |> out.left\n"
+IMAGE = "picture() |> out.color\n"
+RECEIVE = "receive(bus: 2) |> out.left\n"
+
+# (name, text, the modules any of which is why; the first complaint should be about one of them)
+TRIAGE = [
+    ("sample-overflow", SAMPLE + PICTURE + OVERFLOW, ["Sample"]),
+    ("sample-remap", SAMPLE + PICTURE + REMAP, ["Sample"]),
+    ("image-remap", IMAGE + SOUND + REMAP, ["Image"]),
+    ("image-overflow", IMAGE + SOUND + OVERFLOW, ["Image"]),
+    ("midifile-overflow", MIDIFILE + PICTURE + OVERFLOW, ["MIDI File"]),
+    ("midifile-remap", MIDIFILE + PICTURE + REMAP, ["MIDI File"]),
+    ("midiin-remap", MIDIIN + PICTURE + REMAP, ["MIDI In"]),
+    ("midiin-overflow", MIDIIN + PICTURE + OVERFLOW, ["MIDI In"]),
+    ("sample-clock", SAMPLE + CLOCK, ["Sample"]),
+    ("image-overflow-remap", IMAGE + SOUND + BOTH, ["Image"]),
+    ("midiin-clock", MIDIIN + CLOCK, ["MIDI In"]),
+    ("sample-image-overflow", SAMPLE + IMAGE + OVERFLOW, ["Sample", "Image"]),
+    ("receive-overflow", RECEIVE + PICTURE + OVERFLOW, ["Receive", "Output"]),
+    ("midifile-overflow-remap", MIDIFILE + PICTURE + BOTH, ["MIDI File"]),
+    ("image-midiin-overflow", IMAGE + MIDIIN + OVERFLOW, ["Image", "MIDI In"]),
+    ("sample-clock-remap", SAMPLE + CLOCK + REMAP, ["Sample"]),
+]
+
 
 def ask(endpoint, checkpoint, state, questions):
     body = {"state": state, "questions": questions}
@@ -239,10 +278,41 @@ def does(endpoint, checkpoint):
     print(f"doubt right: {right}/{len(DOES)}; good work doubted: {doubted_good}/{good}")
 
 
+def triage(cli):
+    first = ordered = 0
+    slowest = 0.0
+    with tempfile.TemporaryDirectory() as folder:
+        for name, text, causes in TRIAGE:
+            path = os.path.join(folder, name + ".fbks")
+            with open(path, "w") as patch:
+                patch.write(text)
+            start = time.time()
+            run = subprocess.run([cli, "check", path, "--triage", "--json"], capture_output=True, text=True)
+            slowest = max(slowest, time.time() - start)
+            try:
+                issues = json.loads(run.stdout)["issues"]
+            except json.JSONDecodeError:
+                print(f"  ! {name}: {run.stderr.strip() or 'no answer'}")
+                continue
+            if run.stderr.strip():
+                print(f"  ! {name}: {run.stderr.strip()[:120]}")
+            modules = [i.get("module") or "?" for i in issues]
+            hit = bool(modules) and modules[0] in causes
+            causal = [i for i, m in enumerate(modules) if m in causes]
+            harmless = [i for i, m in enumerate(modules) if m not in causes]
+            well = bool(causal) and (not harmless or max(causal) < min(harmless))
+            first += hit
+            ordered += well
+            print(f"{'✓' if hit else '✗'}{'✓' if well else '✗'} {name:26} {[(m, i.get('likely')) for m, i in zip(modules, issues)]}")
+    print(f"cause first {first}/{len(TRIAGE)}, every cause before every harmless complaint {ordered}/{len(TRIAGE)}, slowest {slowest:.1f}s")
+
+
 if __name__ == "__main__":
     if len(sys.argv) >= 3 and sys.argv[1] == "find":
         find(sys.argv[2])
+    elif len(sys.argv) >= 3 and sys.argv[1] == "triage":
+        triage(sys.argv[2])
     elif len(sys.argv) >= 3 and sys.argv[1] in ("route", "does"):
         (route if sys.argv[1] == "route" else does)(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else None)
     else:
-        sys.exit("usage: decide-bench.py find FLYBACK_CLI | route ENDPOINT [CHECKPOINT] | does ENDPOINT [CHECKPOINT]")
+        sys.exit("usage: decide-bench.py find FLYBACK_CLI | triage FLYBACK_CLI | route ENDPOINT [CHECKPOINT] | does ENDPOINT [CHECKPOINT]")

@@ -142,7 +142,7 @@ internal static class CheckCommand
                 new Credentials(plugins.Catalog.PreferredSecretStore),
                 new ModelStore(ModelStore.DefaultRoot));
 
-            var likely = Rank(decisions, patch, complaints);
+            var likely = Rank(decisions, complaints);
 
             if (likely is null) error.WriteLine($"Not put in order: {decisions.Problem}");
 
@@ -150,9 +150,9 @@ internal static class CheckCommand
         };
 
     /// <summary>Each complaint's likelihood, or null where there is nothing to order or nothing answered.</summary>
-    internal static IReadOnlyList<double>? Rank(Decisions decisions, Patch patch, IReadOnlyList<Complaint> complaints) =>
+    internal static IReadOnlyList<double>? Rank(Decisions decisions, IReadOnlyList<Complaint> complaints) =>
         new IssueTriage(decisions)
-            .Likelihoods([.. complaints.Select(c => c.Module is null ? c.Message : $"{c.Module}: {c.Message}")], IssueTriage.Summary(patch, NodeCatalog.Current), CancellationToken.None)
+            .Likelihoods([.. complaints.Select(c => c.Module is null ? c.Message : $"{c.Module}: {c.Message}")], CancellationToken.None)
             .GetAwaiter()
             .GetResult();
 

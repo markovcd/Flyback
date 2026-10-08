@@ -161,7 +161,7 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
         var decisions = new Decisions(catalog.ShouldNotBeNull(), DecisionSettings.Load(SettingsPath), new Credentials(null), new ModelStore(null));
         var output = new StringWriter();
 
-        code = CheckCommand.Run(patch, "patch.fbk", true, output, TextWriter.Null, rank: c => CheckCommand.Rank(decisions, patch, c));
+        code = CheckCommand.Run(patch, "patch.fbk", true, output, TextWriter.Null, rank: c => CheckCommand.Rank(decisions, c));
         said = output.ToString();
     }
 
@@ -257,7 +257,7 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
         }
     }
 
-    /// <summary>Scores a complaint that names one module as surely why, and every other as not.</summary>
+    /// <summary>Says yes to a complaint that names one module, and no to any other.</summary>
     private sealed class Blaming(string module) : IDecisionModel
     {
         public string Id => "blaming";
@@ -275,10 +275,7 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
         public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel) =>
             Task.FromResult(new Decision("blaming", request.Questions.ToDictionary(q => q.Key, q =>
             {
-                var score = (Question.Score)q.Value;
-                var top = score.Instructions.Contains(module, StringComparison.Ordinal) ? score.Levels.Count - 1 : 0;
-
-                return (Answer)new Answer.Scored(top, score.Levels, [.. score.Levels.Select((_, i) => i == top ? 1.0 : 0)], 1);
+                return (Answer)new Answer.YesNo(request.State.Contains(module, StringComparison.Ordinal) ? 1 : 0);
             }), DecisionUsage.None));
     }
 }
