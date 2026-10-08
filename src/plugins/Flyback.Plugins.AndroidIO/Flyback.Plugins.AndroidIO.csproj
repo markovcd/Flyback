@@ -12,7 +12,7 @@
     <!-- What the plugins window shows. -->
     <Product>Android sound</Product>
     <Authors>Flyback</Authors>
-    <Description>Sound through AudioTrack.</Description>
+    <Description>Sound out through AudioTrack and in through AudioRecord.</Description>
 
     <!-- As the Android editor: the packages the workload adds are versioned with it. -->
     <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>

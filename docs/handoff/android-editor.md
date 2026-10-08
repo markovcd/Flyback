@@ -4,7 +4,7 @@ Planned on 2026-10-06, on `main` at `7a65ff53`. It is on TODO.md; take it off th
 delete this file, in the commit that lands the last step.
 
 - **Kind:** Plan
-- **Status:** In progress. Steps 1 to 4 and the phone layout are done (ADR-0184); Line In and MIDI are left.
+- **Status:** In progress. Steps 1 to 4, the phone layout and Line In are done (ADR-0184); MIDI is left.
 
 ## What is wanted
 
@@ -83,7 +83,7 @@ runtime costs rather than the phone. The engine's own leads are in the `performa
    a `.fbkp` is off. The CLI-wrapping assistant plugins (Claude Code, Codex) cannot run;
    OpenAi and Gemini could, once a keystore plugin holds the key (ADR-0158).
 4. **Sound.** `Flyback.Plugins.AndroidIO`, linked in, registers an `AudioTrack` output,
-   written from a thread of its own as ALSA's is. Line In (`AudioRecord`, `RECORD_AUDIO`) and MIDI
+   written from a thread of its own as ALSA's is, and an `AudioRecord` input. Line In (`AudioRecord`, `RECORD_AUDIO`) and MIDI
    (`android.media.midi`) follow as later plugins against `IAudioInput` and the MIDI
    interface.
 5. **The IL path.** The sound's desktop speed is IL generated at run time (ADR-0076). It runs
@@ -120,6 +120,9 @@ runtime costs rather than the phone. The engine's own leads are in the `performa
    under the toolbar's Side button. A patch opened on a phone was framed at the canvas's first,
    passing size and left small in a corner; a view nothing has moved is now framed again on
    every resize. Checked on a Pixel 9 Pro emulator (`flyback-phone`), upright and sideways.
-   Line In and MIDI are next.
+   Line In is done: `Flyback.Plugins.AndroidIO` records through `AudioRecord`, unprocessed
+   where the device allows, stereo where the microphone has it, after a transparent
+   `MicrophoneActivity` has put Android's question; a refusal leaves the Line In silent and
+   says so. Checked on a Pixel 9 Pro with the Visualizer preset. MIDI is next.
 
 The ADR is ADR-0184.

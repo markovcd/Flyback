@@ -308,7 +308,7 @@ The gallery shows the build's stills from `/stills/` where the site has them (AD
 
 ## Android editor
 
-`src/Flyback.Editor.Android` is the editor as an Android app, with the module plugins linked in and its files in the app's private folder (ADR-0184). It is not finished: the touch bugs are still open. It needs the android workload on a .NET SDK from Microsoft, a JDK and the Android SDK, so `Flyback.slnx` lists it without building it, the gate never needs them, and it is built by path:
+`src/Flyback.Editor.Android` is the editor as an Android app, with the module plugins linked in and its files in the app's private folder (ADR-0184). It plays and listens through the device's own speaker and microphone; MIDI is not there yet. It needs the android workload on a .NET SDK from Microsoft, a JDK and the Android SDK, so `Flyback.slnx` lists it without building it, the gate never needs them, and it is built by path:
 
 ```bash
 dotnet build src/Flyback.Editor.Android -t:Run

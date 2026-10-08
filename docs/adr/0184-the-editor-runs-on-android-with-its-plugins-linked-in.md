@@ -31,8 +31,9 @@ used, a `.fbkp` does not install, and the plugins that wrap a CLI do not ship.
 canvas surface (0162) is not needed.
 
 **The sound is a linked plugin.** `Flyback.Plugins.AndroidIO` registers an `AudioTrack`
-output, written from a thread of its own, the way LinuxIO is the desktop's. Line In and MIDI
-join it there.
+output, written from a thread of its own, the way LinuxIO is the desktop's, and an `AudioRecord`
+input, which asks for the microphone through an activity of its own the first time a Line In
+listens. MIDI joins them there.
 
 **It runs on Mono's JIT in every build.** Debug's default interpreter reports no dynamic
 code, so the sound's IL (0076) would never be built; `UseInterpreter=false` keeps it.
@@ -50,5 +51,5 @@ from Microsoft, since a distribution's packaged SDK takes no workloads.
 - The IL path runs under Mono's JIT on ARM64 too, but a Pixel 9 Pro renders Mycelium at
   only 1.2× real time with no oversampling, about an eleventh of a desktop's speed, so the
   heavier presets will not keep up on a phone.
-- Line In and MIDI on Android are still to write.
+- MIDI on Android is still to write.
 - A phone needs a layout of its own; a tablet takes the desktop's once the touch bugs land.
