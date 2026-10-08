@@ -44,6 +44,9 @@ internal sealed class InspectorHeader : Border
         Child = line;
     }
 
+    /// <summary>What renames the block, in place under a mouse and in a dialog under a finger.</summary>
+    public Renamer? Renamer { get; set; }
+
     /// <summary>Whether the picture has stepped aside, which the header's own button asks for.</summary>
     public PictureAside? Aside { get; set; }
 
@@ -111,9 +114,10 @@ internal sealed class InspectorHeader : Border
     }
 
     /// <summary>The mark, the name and what kind of thing it is. The menu is ⋯'s; a double-tap on the name renames.</summary>
-    private StackPanel Title(PlateFace face, ModulePlate plate)
+    private DockPanel Title(PlateFace face, ModulePlate plate)
     {
-        var row = new StackPanel { Name = "header-title", Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
+        // Docked rather than stacked, so what kind of thing it is gets the width that is left and trims to it.
+        var row = new DockPanel { Name = "header-title", HorizontalSpacing = 8, VerticalAlignment = VerticalAlignment.Center };
 
         if (face.Glyph is { } glyph && face.MarkInk is { } ink)
             row.Children.Add(new Avalonia.Controls.Shapes.Path
@@ -126,9 +130,12 @@ internal sealed class InspectorHeader : Border
                 Width = 22,
                 Height = 22,
                 VerticalAlignment = VerticalAlignment.Center,
+                [DockPanel.DockProperty] = Dock.Left,
             });
 
-        row.Children.Add(Named(face, plate));
+        var named = Named(face, plate);
+        DockPanel.SetDock(named, Dock.Left);
+        row.Children.Add(named);
 
         row.Children.Add(new TextBlock
         {
@@ -180,14 +187,17 @@ internal sealed class InspectorHeader : Border
     {
         if (shown is not { Face.Naming: { } naming } plate) return;
 
-        if (line.Children.OfType<StackPanel>().FirstOrDefault(p => p.Name == "header-title") is not { } row
+        if (line.Children.OfType<DockPanel>().FirstOrDefault(p => p.Name == "header-title") is not { } row
             || row.Children.OfType<Panel>().FirstOrDefault() is not { } named
             || named.Children.OfType<TextBlock>().FirstOrDefault() is not { } name)
             return;
 
-        NameBox.Open(
+        if (Renamer is null || shown.Face is not { } face) return;
+
+        Renamer.Open(
             name,
             plate.Ink,
+            $"{face.Title} · {face.Kind}",
             naming.Held(),
             naming.Fallback,
             naming.Limit,

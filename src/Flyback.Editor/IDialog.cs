@@ -56,10 +56,15 @@ internal interface IDialog
     /// Lets the frame grow past the usual width, and gives the content its height to
     /// scroll its own columns in rather than scrolling it whole.
     /// </param>
+    /// <param name="top">
+    /// Stands the frame at the top of the window rather than its middle, clear of an
+    /// on-screen keyboard rising from the bottom.
+    /// </param>
     Task<TResult> Show<TResult>(
         string title, 
         Func<Action<TResult>, Control> content,
         Control? header = null,
         bool fill = false,
-        bool wide = false);
+        bool wide = false,
+        bool top = false);
 }

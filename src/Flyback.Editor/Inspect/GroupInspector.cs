@@ -338,9 +338,10 @@ internal sealed class GroupInspector(
 
     /// <summary>Puts a box where the box's name is.</summary>
     private void Rename(NodeGroup group, IBrush ink, Control title) =>
-        NameBox.Open(
+        surface.Renamer.Open(
             title,
             ink,
+            $"{group.Title()} · Group",
             group.Name,
             group.Counted,
             NodeGroup.NameLimit,

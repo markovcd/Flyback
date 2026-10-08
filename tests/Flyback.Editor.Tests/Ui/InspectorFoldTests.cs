@@ -247,8 +247,12 @@ public class InspectorFoldTests : EditorTest
         PictureBox(window).IsVisible.ShouldBeTrue();
     }
 
+    /// <summary>The dialog's own control called <paramref name="name"/>, from the layer it is shown on.</summary>
+    private static T InDialog<T>(MainWindow window, string name) where T : Control =>
+        All<T>(Avalonia.Controls.Primitives.OverlayLayer.GetOverlayLayer(window)!).Single(c => c.Name == name);
+
     [AvaloniaFact]
-    public void A_double_tap_on_the_headers_name_renames_as_on_the_plates()
+    public void Under_a_finger_a_double_tap_on_the_name_asks_in_a_dialog_at_the_top()
     {
         var window = Selecting(out var sine);
         Fingered(window);
@@ -258,12 +262,34 @@ public class InspectorFoldTests : EditorTest
         name.RaiseEvent(new Avalonia.Input.TappedEventArgs(Avalonia.Input.InputElement.DoubleTappedEvent, null!));
         Settle(window);
 
-        var box = All<TextBox>(Header(window)).ShouldHaveSingleItem();
+        All<TextBox>(Header(window)).ShouldBeEmpty("a finger is asked in the dialog, clear of its keyboard");
+
+        var box = InDialog<TextBox>(window, "rename-box");
+        box.TranslatePoint(default, window)!.Value.Y.ShouldBeLessThan(window.Bounds.Height / 2, "the dialog stands at the top");
+        All<TextBlock>(Avalonia.Controls.Primitives.OverlayLayer.GetOverlayLayer(window)!).ShouldContain(t => t.Text == "Sine · Oscillators");
+
         box.Text = "Lead";
-        window.KeyPressQwerty(Avalonia.Input.PhysicalKey.Enter, Avalonia.Input.RawInputModifiers.None);
+        Press(InDialog<Button>(window, "rename-keep"));
         Settle(window);
 
         Editor(window).History.Patch.Find(sine.Id)!.Name.ShouldBe("Lead");
+        All<TextBlock>(Header(window)).Single(t => t.Name == "header-name").Text.ShouldBe("Lead");
+    }
+
+    [AvaloniaFact]
+    public void Cancelling_the_rename_dialog_leaves_the_name()
+    {
+        var window = Selecting(out var sine);
+        Fingered(window);
+
+        ((ModulePlate)PlateHost(window).Content!).BeginRename!();
+        Settle(window);
+
+        InDialog<TextBox>(window, "rename-box").Text = "Lead";
+        Press(InDialog<Button>(window, "rename-cancel"));
+        Settle(window);
+
+        Editor(window).History.Patch.Find(sine.Id)!.Name.ShouldBeNull();
     }
 
     [AvaloniaFact]

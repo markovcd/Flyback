@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Flyback.Editor.Controls;
 
 namespace Flyback.Editor.Inspect;
 
@@ -41,8 +42,14 @@ internal sealed class InspectorSurface
     /// <summary>The plate folded to one pinned line, shown where the plate is not.</summary>
     public InspectorHeader Header { get; } = new();
 
-    public InspectorSurface(Document document)
+    /// <summary>Renames the block shown, in place under a mouse and in a dialog under a finger.</summary>
+    public Renamer Renamer { get; }
+
+    public InspectorSurface(Document document, IDialog dialog, LastPress lastPress)
     {
+        Renamer = new Renamer(dialog, lastPress);
+        Header.Renamer = Renamer;
+
         // A drag on a slider is one edit, written into the text once the hand is off it.
         Panel.AddHandler(InputElement.PointerReleasedEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble, handledEventsToo: true);
         Panel.AddHandler(InputElement.LostFocusEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble);

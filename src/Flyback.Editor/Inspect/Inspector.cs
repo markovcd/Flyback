@@ -41,6 +41,8 @@ internal sealed class Inspector
     /// <summary>The panel a group gets instead of a module's.</summary>
     private readonly GroupInspector groups;
 
+    private readonly Renamer renamer;
+
     /// <summary>The shortcut groups left unfolded, kept across rebuilds so a selection does not shut them.</summary>
     private readonly HashSet<string> openShortcuts = ["Getting started"];
 
@@ -77,6 +79,7 @@ internal sealed class Inspector
         Wash = surface.Wash;
         PlateHost = surface.PlateHost;
         Header = surface.Header;
+        renamer = surface.Renamer;
 
         socketRows.Settled += (_, _) => inspectorShape = InspectorShape.Of(editor);
     }
@@ -451,9 +454,10 @@ internal sealed class Inspector
     /// <c>LostFocus</c>.
     /// </remarks>
     private void BeginRename(NodeInstance node, NodeDef def, IBrush ink, Control title) =>
-        NameBox.Open(
+        renamer.Open(
             title,
             ink,
+            $"{CanvasPainter.Heading(node, def)} · {def.Category}",
             node.Name,
             def.Name,
             NodeInstance.NameLimit,

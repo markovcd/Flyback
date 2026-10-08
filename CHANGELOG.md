@@ -27,7 +27,7 @@
 ### Fixes
 
 - A module's settings can be reached on a short inspector, as on a phone held sideways: its name and buttons fold into a pinned header with on/off, delete and a menu of every action with its name, and the plate scrolls away with the rows.
-- The inspector's plate fits the hand: under a finger, worded Bypass, Duplicate, Delete and More buttons under the name; under a mouse on a wide panel, its buttons in one row beside the name, which now reads from the left. Expand, on the folded header and on a finger's strip, hides the picture so the inspector has the whole side column.
+- The inspector's plate fits the hand: under a finger, worded Bypass, Duplicate, Delete and More buttons under the name; under a mouse on a wide panel, its buttons in one row beside the name, which now reads from the left. Expand, on the folded header and on a finger's strip, hides the picture so the inspector has the whole side column. Renaming under a finger asks in a dialog at the top of the window, clear of the on-screen keyboard, saying what is being renamed.
 - A finger that wobbles while tapping an Arrangement's grid switches the cell, and a scroll that starts on a sequencer's notes no longer adds one or leaves a row out of place.
 - A finger swiping up or down over the inspector scrolls it instead of moving the slider, level or grid cell it started on, and sliding sideways turns them; a knob turns under a finger moved up or right, and a socket's tooltip comes down when the finger lifts.
 - The code view a finger opens waits for its text to be tapped before bringing up the on-screen keyboard.

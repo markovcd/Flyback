@@ -46,7 +46,7 @@ internal sealed class ModalOverlay : Border
 
     private ScrollViewer? scroller;
 
-    public ModalOverlay(string title, Func<Action<object?>, Control> content, Control? header = null, bool fill = false, bool wide = false)
+    public ModalOverlay(string title, Func<Action<object?>, Control> content, Control? header = null, bool fill = false, bool wide = false, bool top = false)
     {
         widest = wide ? Wide : Usual;
 
@@ -62,7 +62,7 @@ internal sealed class ModalOverlay : Border
         // when the sheet was clicked would be one a missed button press could
         // dismiss, and the two dialogs that are read rather than answered are
         // exactly the ones somebody clicks around in while reading.
-        Child = Frame(title, content(Answer), header, fill, wide);
+        Child = Frame(title, content(Answer), header, fill, wide, top);
     }
 
     /// <summary>Completes when the dialog has been answered or dismissed.</summary>
@@ -170,7 +170,7 @@ internal sealed class ModalOverlay : Border
     private static double Needs(Control part)
         => Math.Max(part.MinWidth, double.IsNaN(part.Width) ? 0 : part.Width) + part.Margin.Left + part.Margin.Right;
 
-    private Control Frame(string title, Control content, Control? header, bool fill, bool wide)
+    private Control Frame(string title, Control content, Control? header, bool fill, bool wide, bool top)
     {
         var heading = new TextBlock
         {
@@ -253,9 +253,10 @@ internal sealed class ModalOverlay : Border
                 Color = Colors.DialogShadow,
             }),
 
-            // Centered and no bigger than it has to be, unless asked to hold its size.
+            // Centered and no bigger than it has to be, unless asked to hold its size or to keep
+            // to the top, out of an on-screen keyboard's way.
             HorizontalAlignment = fill ? HorizontalAlignment.Stretch : HorizontalAlignment.Center,
-            VerticalAlignment = fill ? VerticalAlignment.Stretch : VerticalAlignment.Center,
+            VerticalAlignment = fill ? VerticalAlignment.Stretch : top ? VerticalAlignment.Top : VerticalAlignment.Center,
             Margin = new Thickness(Inset),
             MaxWidth = widest,
 
