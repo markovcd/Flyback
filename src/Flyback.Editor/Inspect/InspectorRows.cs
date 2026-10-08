@@ -386,6 +386,8 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
             TickFrequency = 1,
         };
 
+        FingerSwipe.LeaveTrack(slider);
+
         var numeric = new NumericUpDown
         {
             Value = Boxed.Of(value),

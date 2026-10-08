@@ -216,6 +216,36 @@ public class EditorTest : UiTest
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>
+    /// A finger on <paramref name="target"/>: down at <paramref name="from"/>, through each point
+    /// of <paramref name="path"/>, and lifted at the last, all in the window's coordinates. Raised
+    /// on the control, since headless Avalonia has no touch input.
+    /// </summary>
+    protected static void FingerAlong(Control target, Window window, Point from, params Point[] path)
+    {
+        var finger = new Pointer(Pointer.GetNextFreeId(), PointerType.Touch, true);
+        var down = new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed);
+        var moving = new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.Other);
+        var up = new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonReleased);
+        ulong time = 1_000;
+
+        target.RaiseEvent(new PointerPressedEventArgs(target, finger, window, from, time, down, KeyModifiers.None));
+
+        foreach (var at in path)
+            target.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, target, finger, window, at, time += 16, moving, KeyModifiers.None));
+
+        var last = path.Length > 0 ? path[^1] : from;
+        target.RaiseEvent(new PointerReleasedEventArgs(target, finger, window, last, time + 16, up, KeyModifiers.None, MouseButton.Left));
+        Settle(window);
+    }
+
+    /// <summary>The middle of <paramref name="control"/>, in <paramref name="window"/>'s coordinates.</summary>
+    protected static Point MiddleOf(Visual control, Window window) =>
+        control.TranslatePoint(new Point(control.Bounds.Width / 2, control.Bounds.Height / 2), window)!.Value;
+
+    /// <summary>Ten steps of a straight line from <paramref name="from"/> by <paramref name="by"/>.</summary>
+    protected static Point[] Steps(Point from, Vector by) => [.. Enumerable.Range(1, 10).Select(i => from + by * i / 10)];
+
     /// <summary>Every knob's slider in the window, which the toolbar's seek bar and Volume are not.</summary>
     protected static IEnumerable<Slider> Knobs(Visual root) => All<Slider>(root).Where(slider => slider.Name is not ("seek" or "volume"));
 

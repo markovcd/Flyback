@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
+using Flyback.Ui.Controls;
 using Flyback.Editor.Notices;
 
 namespace Flyback.Editor.Canvas;
@@ -21,7 +22,7 @@ internal sealed class Fingers
     public static readonly TimeSpan HoldTime = TimeSpan.FromMilliseconds(450);
 
     /// <summary>How far a finger travels, in screen pixels, before it is moving rather than resting.</summary>
-    public const double Slop = 10;
+    public const double Slop = FingerSwipe.Slop;
 
     /// <summary>How far from a socket, in screen pixels, a fingertip still lands on it.</summary>
     public const double Reach = 16;
@@ -224,7 +225,7 @@ internal sealed class Fingers
                 break;
         }
 
-        if (down.Count == 0) Reset();
+        if (down.Count == 0) Reset(on);
     }
 
     /// <summary>A finger was taken away from the canvas without lifting: whatever it was doing ends where it is.</summary>
@@ -245,7 +246,7 @@ internal sealed class Fingers
         if (phase is Phase.Left or Phase.Right) gestures.CaptureLost(on);
 
         phase = down.Count == 0 ? Phase.None : Phase.Spent;
-        if (down.Count == 0) Reset();
+        if (down.Count == 0) Reset(on);
     }
 
     /// <summary>The first finger has rested long enough to be the right button.</summary>
@@ -273,12 +274,14 @@ internal sealed class Fingers
         gestures.Released(on, pointer, at, MouseButton.Left, KeyModifiers.None);
     }
 
-    private void Reset()
+    /// <summary>The last finger is off the canvas, and nothing is under one any more.</summary>
+    private void Reset(Control on)
     {
         phase = Phase.None;
         first = null;
         panning = false;
         holdTimer.Stop();
+        gestures.Lifted(on);
     }
 
     /// <summary>Zooms by how far the two fingers spread since last time, about the point between them.</summary>

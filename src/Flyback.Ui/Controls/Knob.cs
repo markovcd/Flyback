@@ -7,7 +7,7 @@ using Avalonia.Media.Immutable;
 namespace Flyback.Ui.Controls;
 
 /// <summary>
-/// A rotary knob from 0 to 1, turned by dragging up and down. Shift turns it finely,
+/// A rotary knob from 0 to 1, turned by dragging up and down, or a finger sideways. Shift turns it finely,
 /// the wheel steps it, and a double-click puts it back to the middle. The pointer is held still and
 /// hidden while it turns, so the edge of the screen never stops a turn.
 /// </summary>
@@ -39,6 +39,9 @@ internal class Knob : Control
     private Point? grabbed;
     private Point last;
     private IPointerAnchor? anchor;
+
+    /// <summary>A finger's press, until it says whether it turns the knob or scrolls the panel.</summary>
+    private FingerSwipe? swipe;
 
     static Knob()
     {
@@ -111,8 +114,9 @@ internal class Knob : Control
         e.Pointer.Capture(this);
         e.Handled = true;
 
-        // A finger is not a cursor, and cannot be held where it was put down.
-        anchor = e.Pointer.Type == PointerType.Touch ? null : Anchors.Take(this);
+        // A finger is not a cursor, and cannot be held where it was put down; it turns sideways.
+        swipe = e.Pointer.Type == PointerType.Touch ? new FingerSwipe(last) : null;
+        anchor = swipe is null ? Anchors.Take(this) : null;
         if (anchor is not null) Cursor = Hidden;
     }
 
@@ -126,6 +130,27 @@ internal class Knob : Control
 
         // The warp's own echo, which would otherwise warp again.
         if (anchor is not null && at == home) return;
+
+        if (swipe is { } finger)
+        {
+            switch (finger.Read(at))
+            {
+                case null:
+                    return;
+
+                case false:
+                    // Up or down is the panel's scroll.
+                    grabbed = null;
+                    swipe = null;
+                    e.Pointer.Capture(null);
+                    return;
+            }
+
+            e.PreventGestureRecognition();
+            Turn(Value + (at.X - last.X) / Travel);
+            last = at;
+            return;
+        }
 
         var fine = (e.KeyModifiers & KeyModifiers.Shift) != 0 ? 5d : 1d;
 
@@ -149,6 +174,7 @@ internal class Knob : Control
         if (grabbed is null) return;
 
         grabbed = null;
+        swipe = null;
         LetGo();
         e.Pointer.Capture(null);
         Released?.Invoke();
@@ -161,6 +187,7 @@ internal class Knob : Control
         if (grabbed is null) return;
 
         grabbed = null;
+        swipe = null;
         LetGo();
         Released?.Invoke();
     }

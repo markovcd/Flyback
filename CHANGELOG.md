@@ -27,6 +27,7 @@
 ### Fixes
 
 - A finger that wobbles while tapping an Arrangement's grid switches the cell, and a scroll that starts on a sequencer's notes no longer adds one or leaves a row out of place.
+- A finger swiping up or down over the inspector or the panel of knobs scrolls it instead of moving the slider, knob, level or grid cell it started on; sliding sideways turns them, and a socket's tooltip comes down when the finger lifts.
 - A MIDI file with thousands of tempo changes opens at once instead of freezing the editor, and of two changes at one moment the later one holds.
 - A Beam fed a signal too large for a number draws instead of failing every frame.
 - `flyback-cli render` refuses a `--seconds`, `--from`, `--at` or `--fps` it cannot use instead of overflowing or running for ever.

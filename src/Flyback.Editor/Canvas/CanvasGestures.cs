@@ -537,6 +537,9 @@ internal sealed class CanvasGestures
         }
     }
 
+    /// <summary>A lifted finger hovers over nothing, so what it brought up comes down.</summary>
+    public void Lifted(Control canvas) => tips.Down(canvas);
+
     public void Released(Control canvas, PointerReleasedEventArgs e) =>
         Released(canvas, e.Pointer, e.GetPosition(canvas), e.InitialPressMouseButton, e.KeyModifiers);
 

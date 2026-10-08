@@ -169,6 +169,26 @@ public class FingersTests : EditorTest
         asked.ShouldBe(editor.View.ToGraph(at));
     }
 
+    [AvaloniaFact]
+    public void A_socket_tip_a_held_finger_brought_up_comes_down_when_it_lifts()
+    {
+        var (editor, window) = Editing(Pair(out _, out var sine));
+        var finger = Finger();
+        var output = On(editor, NodeGeometry.OutputPort(sine, 0));
+
+        editor.Fingers.Down(editor, finger, On(editor, Body(sine)), 1_000);
+        editor.Fingers.Held();
+        editor.Fingers.Move(editor, finger, output);
+        Settle(window);
+
+        ToolTip.GetIsOpen(editor).ShouldBeTrue("sliding onto the socket should say what it is");
+
+        editor.Fingers.Up(editor, finger, output, 2_000);
+        Settle(window);
+
+        ToolTip.GetIsOpen(editor).ShouldBeFalse();
+    }
+
     /// <summary>Zooms the view to one screen pixel a patch unit, so a test can measure a fingertip's reach in the patch.</summary>
     private static void Unzoomed(NodeEditor editor) =>
         editor.View.ZoomAt(default, Math.Log(1 / editor.View.Zoom) / Math.Log(1.12));

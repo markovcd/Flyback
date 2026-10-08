@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
+using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Inspect;
@@ -22,6 +23,9 @@ internal sealed class LevelBar : Control
     private readonly IBrush fill;
 
     private double level;
+
+    /// <summary>A finger's press, until it says whether it sets the level or scrolls the panel.</summary>
+    private FingerSwipe? swipe;
 
     public LevelBar(IBrush fill)
     {
@@ -71,19 +75,50 @@ internal sealed class LevelBar : Control
     {
         base.OnPointerPressed(e);
         e.Pointer.Capture(this);
-        Track_(e.GetPosition(this).X);
+
+        // A finger sets the level by a tap or a sideways slide; up or down scrolls the list.
+        if (e.Pointer.Type == PointerType.Touch) swipe = new FingerSwipe(e.GetPosition(this));
+        else Track_(e.GetPosition(this).X);
     }
 
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
-        if (Equals(e.Pointer.Captured, this)) Track_(e.GetPosition(this).X);
+        if (!Equals(e.Pointer.Captured, this)) return;
+
+        if (swipe is { } finger)
+        {
+            switch (finger.Read(e.GetPosition(this)))
+            {
+                case null:
+                    return;
+
+                case false:
+                    swipe = null;
+                    e.Pointer.Capture(null);
+                    return;
+            }
+
+            e.PreventGestureRecognition();
+        }
+
+        Track_(e.GetPosition(this).X);
     }
 
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
+
+        if (swipe is { } finger && finger.Tapped(e.GetPosition(this))) Track_(e.GetPosition(this).X);
+
+        swipe = null;
         e.Pointer.Capture(null);
+    }
+
+    protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
+    {
+        base.OnPointerCaptureLost(e);
+        swipe = null;
     }
 
     private void Track_(double x)
@@ -93,4 +128,4 @@ internal sealed class LevelBar : Control
         Value = x / Bounds.Width;
         ValueChanged?.Invoke(level);
     }
-}
+}

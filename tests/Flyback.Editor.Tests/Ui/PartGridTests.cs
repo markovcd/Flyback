@@ -243,6 +243,40 @@ public class PartGridTests : EditorTest
         ArrangementExtra.Of(node)[0].Select(l => l.Value).ShouldBe([0f, 0.5f]);
     }
 
+    [AvaloniaFact]
+    public void A_finger_swiping_up_over_a_cell_leaves_its_level_to_the_scroll()
+    {
+        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var node = NodeInstance.Create(def, 0, 0);
+        var changes = new List<string?>();
+
+        ArrangementExtra.Set(node, [[new PartLevel(0.5f), new PartLevel(0.5f)]]);
+        var window = Show(new PartGrid(node, def, changes.Add).View);
+        var cell = CellAt(window, 0);
+        var middle = MiddleOf(cell, window);
+
+        FingerAlong(cell, window, middle, Steps(middle, new Vector(2, -60)));
+
+        ArrangementExtra.Of(node)[0].Select(l => l.Value).ShouldBe([0.5f, 0.5f]);
+        changes.ShouldBeEmpty();
+    }
+
+    [AvaloniaFact]
+    public void A_finger_sliding_right_along_a_cell_turns_its_level_up()
+    {
+        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var node = NodeInstance.Create(def, 0, 0);
+
+        ArrangementExtra.Set(node, [[new PartLevel(0.5f), new PartLevel(0.5f)]]);
+        var window = Show(new PartGrid(node, def, _ => { }).View);
+        var cell = CellAt(window, 0);
+        var middle = MiddleOf(cell, window);
+
+        FingerAlong(cell, window, middle, Steps(middle, new Vector(40, 2)));
+
+        ArrangementExtra.Of(node)[0][0].Value.ShouldBeGreaterThan(0.5f);
+    }
+
     private static void Drag(Window window, int index, double by)
     {
         var cell = All<Border>(window).Where(b => Equals(b.Tag, PartGrid.CellTag)).ElementAt(index);
@@ -264,20 +298,16 @@ public class PartGridTests : EditorTest
         window.MouseUp(middle, MouseButton.Left, RawInputModifiers.None);
     }
 
+    private static Border CellAt(Window window, int index) =>
+        All<Border>(window).Where(b => Equals(b.Tag, PartGrid.CellTag)).ElementAt(index);
+
     /// <summary>The <paramref name="index"/>th cell tapped by a finger that drifts <paramref name="wobble"/> pixels up before it lifts.</summary>
     private static void TapCell(Window window, int index, double wobble)
     {
-        var cell = All<Border>(window).Where(b => Equals(b.Tag, PartGrid.CellTag)).ElementAt(index);
-        var finger = new Pointer(Pointer.GetNextFreeId(), PointerType.Touch, true);
-        var down = new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed);
-        var moving = new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.Other);
-        var up = new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonReleased);
-        var middle = cell.TranslatePoint(new Point(cell.Bounds.Width / 2, cell.Bounds.Height / 2), window)!.Value;
-        var drifted = middle - new Point(0, wobble);
+        var cell = CellAt(window, index);
+        var middle = MiddleOf(cell, window);
 
-        cell.RaiseEvent(new PointerPressedEventArgs(cell, finger, window, middle, 1_000, down, KeyModifiers.None));
-        cell.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, cell, finger, window, drifted, 1_030, moving, KeyModifiers.None));
-        cell.RaiseEvent(new PointerReleasedEventArgs(cell, finger, window, drifted, 1_060, up, KeyModifiers.None, MouseButton.Left));
+        FingerAlong(cell, window, middle, middle - new Point(0, wobble));
     }
 
     private static void Click(Window window, string label) =>

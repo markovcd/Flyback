@@ -209,6 +209,31 @@ public class StepListTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void A_finger_swiping_up_over_a_volume_leaves_it_to_the_scroll()
+    {
+        var window = Showing(out var node);
+        var before = StepsExtra.Of(node).ToList();
+        var bar = Rows(window)[0].Children.OfType<LevelBar>().Single();
+        var from = bar.TranslatePoint(new Point(bar.Bounds.Width * 0.9, bar.Bounds.Height / 2), window)!.Value;
+
+        FingerAlong(bar, window, from, Steps(from, new Vector(-3, -60)));
+
+        StepsExtra.Of(node).ShouldBe(before);
+    }
+
+    [AvaloniaFact]
+    public void A_finger_tapping_along_a_volume_sets_that_level()
+    {
+        var window = Showing(out var node);
+        var bar = Rows(window)[0].Children.OfType<LevelBar>().Single();
+        var at = bar.TranslatePoint(new Point(bar.Bounds.Width * 0.25, bar.Bounds.Height / 2), window)!.Value;
+
+        FingerAlong(bar, window, at);
+
+        bar.Value.ShouldBe(0.25, 0.02);
+    }
+
+    [AvaloniaFact]
     public void A_reorder_whose_pointer_is_taken_puts_its_row_back()
     {
         var window = Showing(out var node);

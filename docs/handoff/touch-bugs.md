@@ -10,7 +10,7 @@ delete this file, in the commit that lands the last item.
 A touch screen is a Windows tablet as much as a phone in the web editor, and most of
 these hold for both; the two marked **page only** are the browser's.
 
-Items 1, 2, 3, 5, 7, 10, 11, 12, 13, 14, 17, 18, 19 and 20 are fixed and gone from here; the rest keep the numbers
+Every item but 4, 6, 8 and 9 is fixed and gone from here; those keep the numbers
 they were first listed under. Whether the last press was a finger is `LastPress.ByFinger`,
 which the module list and the preset gallery read to leave their text box to be tapped;
 item 8 wants the same.
@@ -56,28 +56,7 @@ itself off `#out`, so a box in the lower half is typed into blind:
 
 Repro: tap a text box low on the screen.
 
-## Canvas
-
-### 15. A tooltip stays after the finger lifts (suspected)
-
-`CanvasGestures.cs:495-499` reaches `tips.Over` and `marks.Hover` from a touch in
-the Right phase; the tip comes down only on `PointerExited` (`NodeEditor.cs:170-175`),
-which may not come for a lifted finger.
-
-Repro: hold a module until it mutes, slide onto an output socket, lift.
-
-## Inspector and panels
-
-### 16. Scrolling the inspector changes values (suspected in part)
-
-The inspector scrolls (`ShellLayout.cs:296`) over a `Slider` per knob row
-(`InspectorRows.cs:352`); Avalonia's Slider moves to the press on any left press, a
-finger included. `Knob.cs:95-116` (no slop), `LevelBar.cs:69-72` and
-`PartGrid.cs:194-239` turn from the first pixel and call no
-`e.PreventGestureRecognition()`. Each jump is an undo step. Which of the scroll and
-the control wins past the recognizer's start distance is the suspected part.
-
-Repro: select an oscillator and swipe up starting on a slider or knob.
+## Elsewhere
 
 ### Minor
 

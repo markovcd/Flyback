@@ -6,7 +6,6 @@ using Avalonia.Media;
 using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
-using Flyback.Editor.Canvas;
 using Flyback.Engine.Language;
 using Colors = Flyback.Ui.Controls.Colors;
 
@@ -28,7 +27,7 @@ internal sealed class PartGrid
     /// <summary>How far a drag goes for a part's whole range, as a knob's does; Shift makes it five times finer.</summary>
     private const double Travel = 160;
 
-    /// <summary>How far a mouse moves before a press is a drag rather than a click; a finger has <see cref="Fingers.Slop"/>.</summary>
+    /// <summary>How far a mouse moves before a press is a drag rather than a click; a finger has <see cref="FingerSwipe.Slop"/>.</summary>
     private const double Slop = 3;
 
     /// <summary>How far a drag holds at nought on its way through, so nought is easy to land on.</summary>
@@ -216,7 +215,7 @@ internal sealed class PartGrid
     private void Describe(Border cell, int part, int section) =>
         ToolTip.SetTip(cell,
             $"part {part + 1}, section {section + 1}: {ArrangementNotation.Row([parts[part][section]])}. "
-            + "Click to switch it off or on, double-click to make it glide, drag up or down to turn it.");
+            + "Click to switch it off or on, double-click to make it glide, drag up or down, or a finger sideways, to turn it.");
 
     private void Grab(Border cell, int part, int section, PointerPressedEventArgs e)
     {
@@ -234,11 +233,12 @@ internal sealed class PartGrid
         var levels = parts[part];
         var high = Math.Max(1f, levels.Max(level => Math.Abs(level.Value)));
 
+        var at = e.GetPosition(cell);
         var finger = e.Pointer.Type == PointerType.Touch;
 
-        drag = new Held(cell, part, section, e.GetPosition(cell), levels[section].Value, -high, high, finger ? null : Anchors.Take(cell))
+        drag = new Held(cell, part, section, at, levels[section].Value, -high, high, finger ? null : Anchors.Take(cell))
         {
-            Slop = finger ? Fingers.Slop : Slop,
+            Swipe = finger ? new FingerSwipe(at) : null,
         };
         e.Pointer.Capture(cell);
         e.Handled = true;
@@ -253,11 +253,35 @@ internal sealed class PartGrid
         // The warp's own echo, which would otherwise count as a move.
         if (held.Anchor is not null && at == held.Home) return;
 
-        held.Rise += held.Last.Y - at.Y;
-        held.Last = held.Anchor?.Return() == true ? held.Home : at;
+        if (held.Swipe is { } finger)
+        {
+            switch (finger.Read(at))
+            {
+                case null:
+                    return;
+
+                case false:
+                    // Up or down is the panel's scroll, and the cell is left as it was.
+                    drag = null;
+                    held.Release();
+                    e.Pointer.Capture(null);
+                    return;
+            }
+
+            e.PreventGestureRecognition();
+
+            // A finger turns a level sideways, right for up.
+            held.Rise = at.X - finger.From.X;
+        }
+        else
+        {
+            held.Rise += held.Last.Y - at.Y;
+            held.Last = held.Anchor?.Return() == true ? held.Home : at;
+
+            if (!held.Moved && Math.Abs(held.Rise) < Slop) return;
+        }
 
         var rise = held.Rise;
-        if (!held.Moved && Math.Abs(rise) < held.Slop) return;
 
         var fine = (e.KeyModifiers & KeyModifiers.Shift) != 0 ? 5d : 1d;
         var perPixel = held.High / (Travel * fine);
@@ -446,8 +470,8 @@ internal sealed class PartGrid
         public float High { get; }
         public IPointerAnchor? Anchor { get; }
 
-        /// <summary>How far this press moves before it is a drag.</summary>
-        public double Slop { get; init; }
+        /// <summary>A finger's press, until it says whether it turns the level or scrolls the panel.</summary>
+        public FingerSwipe? Swipe { get; init; }
 
         public Point Last { get; set; }
         public double Rise { get; set; }
