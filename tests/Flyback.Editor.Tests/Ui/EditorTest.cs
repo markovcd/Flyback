@@ -28,6 +28,9 @@ using Xunit.v3;
 // Enough pool threads that the tests waiting on the UI thread cannot use them all up.
 [assembly: AssemblyFixture(typeof(PoolHeadroom))]
 
+// The session owns the UI thread before a plain test can touch the dispatcher from a pool thread.
+[assembly: AssemblyFixture(typeof(SessionFirst))]
+
 namespace Flyback.Editor.Tests.Ui;
 
 /// <summary>A <see cref="UiTest"/> that can open the editor: its canvas, its window and its container.</summary>
