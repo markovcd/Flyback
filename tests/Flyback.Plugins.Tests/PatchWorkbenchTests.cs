@@ -338,6 +338,14 @@ public class PatchWorkbenchTests
     }
 
     [Fact]
+    public async Task A_module_is_found_by_a_word_it_is_known_by()
+    {
+        var found = await Call(Bench(), "find_modules", """{"query":"portamento"}""");
+
+        found.Text.ShouldContain(NodeCatalog.SlewTypeId);
+    }
+
+    [Fact]
     public async Task A_module_is_found_by_what_one_of_its_sockets_is_for()
     {
         var found = await Call(Bench(), "find_modules", """{"query":"meant to be swept"}""");

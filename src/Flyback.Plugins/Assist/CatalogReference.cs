@@ -60,6 +60,7 @@ internal sealed class CatalogReference(ModuleCatalog modules, IReadOnlyList<Patc
             .Where(d => d.TypeId.Contains(query, StringComparison.OrdinalIgnoreCase)
                 || d.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
                 || d.Category.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || d.Words.Contains(query, StringComparison.OrdinalIgnoreCase)
                 || d.Description.Contains(query, StringComparison.OrdinalIgnoreCase)
                 || d.Inputs.Any(p => p.Help.Contains(query, StringComparison.OrdinalIgnoreCase))
                 || d.Outputs.Any(p => p.Help.Contains(query, StringComparison.OrdinalIgnoreCase)))
