@@ -9,17 +9,16 @@ using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Notices;
-using Flyback.Editor.Statistics;
 using Flyback.Assist;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
 using Flyback.Plugins.Assist;
-using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
 namespace Flyback.Editor.Tests.Ui;
@@ -84,32 +83,38 @@ public sealed class AssistantPanelTests : EditorTest
         string? logs = null,
         AssistantConversation? conversation = null)
     {
-        var catalog = plugins ?? PluginCatalog.Empty;
-        var setup = Kept with { ConversationLogFolder = logs };
-        var repository = new AssistantSettingRepository(setup, saved ?? new AssistantSettings());
         var patch = Presets.Plasma(NodeCatalog.BuiltIn);
-        var editor = new Holding(() => patch, report);
-        var chosen = new ChosenAssistant(repository, catalog);
-        var credentials = new Credentials(catalog.PreferredSecretStore);
 
-        var panel = new AssistantPanel(
-            chosen,
-            catalog,
-            editor,
+        var panel = Panel(
+            plugins ?? PluginCatalog.Empty,
+            Kept with { ConversationLogFolder = logs },
+            new Holding(() => patch, report),
             conversation ?? new AssistantConversation(() => patch),
-            new AssistantRunFactory(catalog, editor, repository),
-            repository,
-            new AssistantSettingsPage(chosen, catalog, credentials, repository, editor, setup),
-            setup,
-            Usage.Off,
-            reactions,
-            Decisions.None);
+            saved ?? new AssistantSettings());
 
         var window = Show(panel, 760);
         Settle(window);
 
         return window;
     }
+
+    /// <summary>
+    /// The panel from the editor's container, over <paramref name="editor"/> rather
+    /// than a canvas, raising its notices on <see cref="reactions"/> alone.
+    /// </summary>
+    private AssistantPanel Panel(
+        PluginCatalog plugins,
+        EditorFolders folders,
+        IAssistantEditor editor,
+        AssistantConversation conversation,
+        AssistantSettings saved) =>
+        Resolve<AssistantPanel>(new EditorSetup { Plugins = plugins, Folders = folders }, services =>
+        {
+            services.AddSingleton(editor);
+            services.AddSingleton(conversation);
+            services.AddSingleton(reactions);
+            services.AddSingleton(new AssistantSettingRepository(folders, saved));
+        });
 
     /// <summary>
     /// A catalog holding one provider, which is the only way to see the half
@@ -130,25 +135,7 @@ public sealed class AssistantPanelTests : EditorTest
     /// <summary>A panel over whatever patch the canvas holds, for an undo that hands back another object.</summary>
     private (Window Window, AssistantPanel Panel) Over(Func<Patch> patch)
     {
-        var settings = new AssistantSettings();
-        var catalog = PluginCatalog.Empty;
-        var repository = new AssistantSettingRepository(Kept, settings);
-        var editor = new Holding(patch);
-        var chosen = new ChosenAssistant(repository, catalog);
-        var credentials = new Credentials(catalog.PreferredSecretStore);
-
-        var panel = new AssistantPanel(
-            chosen,
-            catalog,
-            editor,
-            new AssistantConversation(patch),
-            new AssistantRunFactory(catalog, editor, repository),
-            repository,
-            new AssistantSettingsPage(chosen, catalog, credentials, repository, editor, Kept),
-            Kept,
-            Usage.Off,
-            new Reactions(),
-            Decisions.None);
+        var panel = Panel(PluginCatalog.Empty, Kept, new Holding(patch), new AssistantConversation(patch), new AssistantSettings());
         var window = Show(panel, 760);
 
         Settle(window);

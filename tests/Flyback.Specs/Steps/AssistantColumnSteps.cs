@@ -7,12 +7,10 @@ using Flyback.Core.Graph;
 using Flyback.Editor;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Notices;
-using Flyback.Editor.Statistics;
 using Flyback.Plugins.Assist;
-using Flyback.Plugins.Decide;
-using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
 using Flyback.Specs.Support;
+using Microsoft.Extensions.DependencyInjection;
 using Reqnroll;
 using Shouldly;
 
@@ -25,6 +23,9 @@ public sealed class AssistantColumnSteps(HeadlessTurn turn) : IDisposable
     private readonly string settings = Path.Combine(Path.GetTempPath(), "flyback-column-" + Guid.NewGuid().ToString("N"), "settings.json");
 
     private Control? shown;
+
+    /// <summary>The editor's container the opened panel came from, disposed with the scenario.</summary>
+    private ServiceProvider? container;
     private string? saved;
 
     private Control Shown => shown.ShouldNotBeNull();
@@ -62,25 +63,17 @@ public sealed class AssistantColumnSteps(HeadlessTurn turn) : IDisposable
         Headless.Run(() =>
         {
             var patch = new Patch();
-            var catalog = PluginCatalog.Empty;
             var folders = new EditorFolders { SettingsPath = settings };
-            var repository = new AssistantSettingRepository(folders, new AssistantSettings());
-            var editor = new Holding(patch);
-            var chosen = new ChosenAssistant(repository, catalog);
-            var credentials = new Credentials(catalog.PreferredSecretStore);
 
-            var panel = new AssistantPanel(
-                chosen,
-                catalog,
-                editor,
-                new AssistantConversation(() => patch),
-                new AssistantRunFactory(catalog, editor, repository),
-                repository,
-                new AssistantSettingsPage(chosen, catalog, credentials, repository, editor, folders),
-                folders,
-                Usage.Off,
-                new Reactions(),
-                Decisions.None);
+            container = EditorServices.Provider(new EditorSetup { Folders = folders }, services =>
+            {
+                services.AddSingleton<IAssistantEditor>(new Holding(patch));
+                services.AddSingleton(new AssistantConversation(() => patch));
+                services.AddSingleton(new Reactions());
+                services.AddSingleton(new AssistantSettingRepository(folders, new AssistantSettings()));
+            });
+
+            var panel = container.GetRequiredService<AssistantPanel>();
 
             panel.Open(saved);
             shown = panel;
@@ -119,6 +112,9 @@ public sealed class AssistantColumnSteps(HeadlessTurn turn) : IDisposable
         if (shown is not null) turn.Leave(this);
 
         shown = null;
+
+        // The container holds the panel's services, which belong to the UI thread.
+        if (container is { } held) Headless.Run(held.Dispose);
 
         var folder = Path.GetDirectoryName(settings);
 
