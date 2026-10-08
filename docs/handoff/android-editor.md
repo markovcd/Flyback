@@ -16,12 +16,9 @@ from the code, except where the order says done.
 
 `src/Flyback.Editor.Android` boots to the canvas on an emulator, draws the picture on GLES
 at 49 fps, and plays the sound through `Flyback.Plugins.AndroidIO`'s `AudioTrack`. The sound's
-IL runs under Mono's JIT: Sidebands renders at 18× real time and Whole band at 1.4 to 1.9×
-without oversampling, both in a Release build on the x86_64 emulator. On a Pixel 9 Pro (Tensor G4, ARM64,
-Android API 37), a Release build renders Mycelium's sound at 1.2× real time with no
-oversampling; `flyback-cli render` of the same on an i5-14600KF runs at about 13×, so the
-phone is about eleven times slower and Mycelium only just keeps up. A heavy preset will not
-play on a phone without the engine getting faster there (the `performance` skill's leads). The toolchain is user-local: a Microsoft .NET SDK in `~/.dotnet`
+IL runs under Mono's JIT (see the speed below).
+
+The toolchain is user-local: a Microsoft .NET SDK in `~/.dotnet`
 (Ubuntu's packaged SDK takes no workloads) with the android workload, a JDK in
 `~/Android/jdk`, the SDK in `~/Android/Sdk` and an AVD named `flyback` (Pixel Tablet,
 API 36, x86_64). Build and install with `DOTNET_ROOT=~/.dotnet`, `JAVA_HOME` and
@@ -41,6 +38,25 @@ only while IL plays.
 
 Not yet checked on a device: the dialogs (`WindowDialog`), the file pickers, the gallery's
 download from the preset site, and anything after a rotation.
+
+### Speed on a phone
+
+| Where | What | Speed |
+|---|---|---|
+| x86_64 emulator, Release | Sidebands, 2× oversampling | 18× real time |
+| x86_64 emulator, Release | Whole band, no oversampling | 1.4 to 1.9× |
+| Pixel 9 Pro (Tensor G4, ARM64, API 37), Release | Mycelium, no oversampling | 1.2× |
+| i5-14600KF, Release `flyback-cli render` | Mycelium, no oversampling | about 13× |
+
+The phone is about eleven times slower than a desktop, so Mycelium only just keeps up there
+and the heavier presets will not. **The user accepted this speed for now (2026-10-08):** it
+does not block the phone layout, Line In or MIDI.
+
+The lead when it is taken up: .NET Android runs Mono's JIT, which generates weaker code than
+the desktop's RyuJIT. .NET 10 is believed to carry an experimental CoreCLR runtime for Android
+(`<UseMonoRuntime>false</UseMonoRuntime>`); unchecked whether it exists in this SDK or runs the
+editor. Build with it, measure Mycelium on the phone again, and the difference is what the
+runtime costs rather than the phone. The engine's own leads are in the `performance` skill.
 
 ## What already carries over
 
