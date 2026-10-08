@@ -3,12 +3,13 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Decide;
 
 /// <summary>
-/// Finds the modules a phrase describes, by meaning rather than by spelling: one choice of
-/// category, then the modules of the likeliest two, ten to a question with a way to say none.
+/// Finds the modules a phrase describes, by meaning rather than by spelling: every module
+/// asked about by name, ten to a question with a way to say none, in one request.
 /// </summary>
 /// <remarks>
-/// The category's confidence is not gated on, only its order: a choice of fifteen is past
-/// where the model's confidence is calibrated. A module is kept only where it beat "none of these".
+/// Names alone, because a model reading descriptions settles on the first options it was
+/// shown; and no category first, because a choice of a dozen or more is past where its
+/// answer means anything. A module is kept only where it beat "none of these".
 /// </remarks>
 internal sealed class ModuleFinder(Decisions decisions)
 {
@@ -17,8 +18,6 @@ internal sealed class ModuleFinder(Decisions decisions)
     public const int MostFound = 8;
 
     private const string None = "none";
-
-    private const int LongestDescription = 160;
 
     /// <summary>Whether a phrase is worth asking about: nothing it spells matches, or it is more than a name.</summary>
     public static bool Wanted(string phrase, int spelled) =>
@@ -29,39 +28,20 @@ internal sealed class ModuleFinder(Decisions decisions)
     {
         phrase = phrase.Trim();
 
-        var categories = candidates.GroupBy(d => d.Category, StringComparer.Ordinal).ToList();
+        if (phrase.Length == 0 || candidates.Count == 0) return [];
 
-        if (phrase.Length == 0 || categories.Count == 0) return [];
-
-        IEnumerable<string> likeliest = categories.Select(c => c.Key);
-
-        if (categories.Count > 2)
-        {
-            var kinds = new Question.Choice(
-                "Which kind of module does this describe?",
-                [.. categories.Select(c => new ChoiceOption(c.Key, "Such as " + string.Join(", ", c.Take(6).Select(d => d.Name))))]);
-
-            if (await decisions.Ask(DecisionRequest.One(phrase, "kind", kinds), cancel).ConfigureAwait(false) is not { } decision
-                || decision.Answers.GetValueOrDefault("kind") is not Answer.Chosen kind)
-                return [];
-
-            likeliest = kind.Probabilities.OrderByDescending(p => p.Value).Take(2).Select(p => p.Key);
-        }
-
-        var wanted = likeliest.ToHashSet(StringComparer.Ordinal);
-        var pool = candidates.Where(d => wanted.Contains(d.Category)).ToList();
-        var chunks = pool.Chunk(PerQuestion).Take(DecisionRequest.MostQuestions).ToList();
-
+        var asked = candidates.Take(PerQuestion * DecisionRequest.MostQuestions).ToList();
         var questions = new Dictionary<string, Question>(StringComparer.Ordinal);
+        var chunks = asked.Chunk(PerQuestion).ToList();
 
         for (var i = 0; i < chunks.Count; i++)
             questions[$"modules{i}"] = new Question.Choice(
                 "Which module does this describe?",
-                [.. chunks[i].Select(d => new ChoiceOption(d.TypeId, Described(d))), new ChoiceOption(None, "None of these")]);
+                [.. chunks[i].Select(d => new ChoiceOption(d.TypeId, d.Name)), new ChoiceOption(None, "None of these")]);
 
         if (await decisions.Ask(new DecisionRequest(phrase, questions), cancel).ConfigureAwait(false) is not { } ranked) return [];
 
-        var byId = pool.ToDictionary(d => d.TypeId, StringComparer.Ordinal);
+        var byId = asked.ToDictionary(d => d.TypeId, StringComparer.Ordinal);
         var found = new List<FoundModule>();
 
         foreach (var answer in ranked.Answers.Values.OfType<Answer.Chosen>())
@@ -74,12 +54,5 @@ internal sealed class ModuleFinder(Decisions decisions)
         }
 
         return [.. found.OrderByDescending(f => f.Probability).ThenBy(f => f.Module.Name, StringComparer.Ordinal).Take(MostFound)];
-    }
-
-    private static string Described(NodeDef def)
-    {
-        var said = def.Description.Length > LongestDescription ? def.Description[..LongestDescription] + "…" : def.Description;
-
-        return said.Length == 0 ? def.Name : $"{def.Name}: {said}";
     }
 }

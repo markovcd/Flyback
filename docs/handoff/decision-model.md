@@ -62,8 +62,8 @@ one Python step, on the maintainer's machine only, and the README's build sectio
   512, `head_max_len` 192, 48 tokens per option, the budget rule at `common.py:102-107`,
   left truncation for list states.
 - `Calibration`: a temperature per `temperature_by_options` bucket, clamped to 0.5–5.0,
-  and confidence from entropy. A choice of 11 or more options is uncalibrated, which is
-  why `ModuleFinder` orders categories and does not gate on them.
+  and confidence from entropy. The English checkpoint ships an invalid temperature for a
+  choice of 11 or more options, so those confidences are uncalibrated.
 - `LayaSession`: the ORT `InferenceSession`, collation and softmax.
 - Packages: `Microsoft.ML.OnnxRuntime` 1.30 and `Microsoft.ML.Tokenizers` 2.0, pinned in
   `Directory.Packages.props`, lock files regenerated with `dotnet restore Flyback.slnx

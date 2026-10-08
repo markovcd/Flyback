@@ -20,7 +20,7 @@ public class ModuleFinderTests
     [Fact]
     public async Task A_phrase_finds_the_module_it_describes_first()
     {
-        var model = new RankingDecider(("Geometry", 0.7), ("space.kaleidoscope", 0.8), ("none", 0.1));
+        var model = new RankingDecider(("space.kaleidoscope", 0.8), ("none", 0.6));
 
         var found = await Finder(model).Find("a mirror maze of shards", Candidates, TestContext.Current.CancellationToken);
 
@@ -28,17 +28,18 @@ public class ModuleFinderTests
     }
 
     [Fact]
-    public async Task It_asks_the_category_once_and_the_modules_ten_to_a_question()
+    public async Task It_asks_about_every_module_by_name_ten_to_a_question_in_one_request()
     {
-        var model = new RankingDecider(("Geometry", 0.7));
+        var model = new RankingDecider();
 
         await Finder(model).Find("a mirror maze of shards", Candidates, TestContext.Current.CancellationToken);
 
-        model.Asked.Count.ShouldBe(2);
-        model.Asked[0].Questions.ShouldHaveSingleItem().Value.ShouldBeOfType<Question.Choice>()
-            .Options.Select(o => o.Label).ShouldBe(Candidates.Select(d => d.Category).Distinct(), ignoreOrder: true);
+        var questions = model.Asked.ShouldHaveSingleItem().Questions.Values.Cast<Question.Choice>().ToList();
 
-        foreach (var question in model.Asked[1].Questions.Values.Cast<Question.Choice>())
+        questions.SelectMany(q => q.Options).Where(o => o.Label != "none").Select(o => o.Label).ShouldBe(Candidates.Select(d => d.TypeId));
+        questions.SelectMany(q => q.Options).Where(o => o.Label != "none").Select(o => o.Description).ShouldBe(Candidates.Select(d => d.Name));
+
+        foreach (var question in questions)
         {
             question.Options.Count.ShouldBeLessThanOrEqualTo(ModuleFinder.PerQuestion + 1);
             question.Options[^1].Label.ShouldBe("none");
@@ -48,7 +49,7 @@ public class ModuleFinderTests
     [Fact]
     public async Task A_module_that_loses_to_none_of_these_is_not_found()
     {
-        var model = new RankingDecider(("Geometry", 0.7), ("none", 0.9));
+        var model = new RankingDecider(("none", 0.9));
 
         (await Finder(model).Find("a mirror maze of shards", Candidates, TestContext.Current.CancellationToken)).ShouldBeEmpty();
     }
@@ -56,7 +57,7 @@ public class ModuleFinderTests
     [Fact]
     public async Task Without_a_model_nothing_is_found_and_nothing_asked()
     {
-        var model = new RankingDecider(("Geometry", 0.7));
+        var model = new RankingDecider();
 
         (await Finder(model, DecisionSettings.Off).Find("a mirror maze", Candidates, TestContext.Current.CancellationToken)).ShouldBeEmpty();
         model.Asked.ShouldBeEmpty();
