@@ -7,7 +7,7 @@ using Avalonia.Media.Immutable;
 namespace Flyback.Ui.Controls;
 
 /// <summary>
-/// A rotary knob from 0 to 1, turned by dragging up and down, or a finger sideways. Shift turns it finely,
+/// A rotary knob from 0 to 1, turned by dragging up and down, or a finger up or right. Shift turns it finely,
 /// the wheel steps it, and a double-click puts it back to the middle. The pointer is held still and
 /// hidden while it turns, so the edge of the screen never stops a turn.
 /// </summary>
@@ -40,7 +40,7 @@ internal class Knob : Control
     private Point last;
     private IPointerAnchor? anchor;
 
-    /// <summary>A finger's press, until it says whether it turns the knob or scrolls the panel.</summary>
+    /// <summary>A finger's press, which turns the knob once it has moved past the slop.</summary>
     private FingerSwipe? swipe;
 
     static Knob()
@@ -114,7 +114,7 @@ internal class Knob : Control
         e.Pointer.Capture(this);
         e.Handled = true;
 
-        // A finger is not a cursor, and cannot be held where it was put down; it turns sideways.
+        // A finger is not a cursor, and cannot be held where it was put down.
         swipe = e.Pointer.Type == PointerType.Touch ? new FingerSwipe(last) : null;
         anchor = swipe is null ? Anchors.Take(this) : null;
         if (anchor is not null) Cursor = Hidden;
@@ -133,21 +133,13 @@ internal class Knob : Control
 
         if (swipe is { } finger)
         {
-            switch (finger.Read(at))
-            {
-                case null:
-                    return;
-
-                case false:
-                    // Up or down is the panel's scroll.
-                    grabbed = null;
-                    swipe = null;
-                    e.Pointer.Capture(null);
-                    return;
-            }
-
+            // A knob holds its finger: the panel scrolls from around the knobs, never from one.
             e.PreventGestureRecognition();
-            Turn(Value + (at.X - last.X) / Travel);
+
+            if (finger.Read(at) is null) return;
+
+            // Up or right turns it up, as a drag up does the mouse.
+            Turn(Value + (at.X - last.X + last.Y - at.Y) / Travel);
             last = at;
             return;
         }

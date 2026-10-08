@@ -11,19 +11,31 @@ using Shouldly;
 namespace Flyback.Editor.Tests.Ui;
 
 /// <summary>
-/// A finger on a control in a scrolling panel: up or down is the panel's scroll, sideways
-/// turns the control.
+/// A finger on a control in a scrolling panel: up or down over a slider, a level or a cell is
+/// the panel's scroll and sideways turns it; a knob holds its finger and turns either way.
 /// </summary>
 public class FingerSwipeTests : EditorTest
 {
     [AvaloniaFact]
-    public void A_finger_swiping_up_over_a_knob_leaves_it_where_it_was()
+    public void A_finger_swiping_up_over_a_knob_turns_it_up()
     {
         var knob = new Knob { Value = 0.5, Width = 44, Height = 44 };
         var window = Show(knob);
         var middle = MiddleOf(knob, window);
 
         FingerAlong(knob, window, middle, Steps(middle, new Vector(3, -60)));
+
+        knob.Value.ShouldBeGreaterThan(0.5);
+    }
+
+    [AvaloniaFact]
+    public void A_finger_resting_on_a_knob_leaves_it_where_it_was()
+    {
+        var knob = new Knob { Value = 0.5, Width = 44, Height = 44 };
+        var window = Show(knob);
+        var middle = MiddleOf(knob, window);
+
+        FingerAlong(knob, window, middle, middle + new Vector(4, -5));
 
         knob.Value.ShouldBe(0.5);
     }
