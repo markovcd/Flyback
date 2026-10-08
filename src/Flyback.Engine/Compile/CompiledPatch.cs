@@ -42,13 +42,13 @@ public sealed class CompiledPatch
         OutputBase = outputBase;
         OutputWidth = outputWidth;
         DelayLengths =
-            [.. ops.Where(o => o.Code is OpCode.Delay or OpCode.Allpass).Select(o => o.K)];
+            [.. ops.Where(o => OpShape.Owns(o.Code) == OpMemory.Line).Select(o => o.K)];
         TraceCount = ops
             .Where(o => o.Code is OpCode.Tap)
             .Select(o => (int)o.K + 1)
             .DefaultIfEmpty(0)
             .Max();
-        PhaseCount = ops.Count(o => o.Code is OpCode.Phase);
+        PhaseCount = ops.Count(o => OpShape.Owns(o.Code) == OpMemory.Cell);
         UnitCount = ops
             .Where(o => o.Code is OpCode.UnitRead or OpCode.UnitWrite or OpCode.ClockWrite)
             .Select(o => (int)o.K + 1)
@@ -613,11 +613,9 @@ public sealed class CompiledPatch
         for (var i = 0; i < ops.Length; i++)
         {
             var op = ops[i];
-            var inputs = OpShape.Inputs(op.Code);
 
-            if (inputs > 0 && !Holds(op.A, 1)) throw Malformed(i, op, op.A, 1);
-            if (inputs > 1 && !Holds(op.B, 1)) throw Malformed(i, op, op.B, 1);
-            if (inputs > 2 && !Holds(op.C, 1)) throw Malformed(i, op, op.C, 1);
+            foreach (var register in OpShape.Reads(op))
+                if (!Holds(register, 1)) throw Malformed(i, op, register, 1);
 
             var width = OpShape.Outputs(op.Code);
             if (width > 0 && !Holds(op.Out, width)) throw Malformed(i, op, op.Out, width);

@@ -153,9 +153,10 @@ public class IlProgramTests
         ShouldMatch(program, expected, actual, $"{parts}, whole");
     }
 
+    /// <summary>An opcode nothing names never reaches the IL: the program refuses it as it is built.</summary>
     [Fact]
-    public void An_unknown_opcode_is_refused_rather_than_skipped() =>
-        Should.Throw<NotSupportedException>(() => IlProgram.Compile(OneOp((OpCode)200)));
+    public void An_unknown_opcode_is_refused_before_it_reaches_the_il() =>
+        Should.Throw<ArgumentOutOfRangeException>(() => OneOp((OpCode)200));
 
     /// <summary>
     /// A frame drawn by the renderer with the IL attached is the frame it draws

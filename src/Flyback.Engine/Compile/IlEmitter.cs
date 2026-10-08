@@ -102,7 +102,7 @@ internal sealed class IlEmitter
         {
             var op = ops[i];
 
-            foreach (var input in Inputs(op))
+            foreach (var input in OpShape.Reads(op))
             {
                 if (written.Contains(input) || locals.ContainsKey(input)) continue;
 
@@ -123,8 +123,11 @@ internal sealed class IlEmitter
 
         for (var i = 0; i < from; i++)
         {
-            if (ops[i].Code is OpCode.Delay or OpCode.Allpass) line++;
-            else if (ops[i].Code is OpCode.Phase) cell++;
+            switch (OpShape.Owns(ops[i].Code))
+            {
+                case OpMemory.Line: line++; break;
+                case OpMemory.Cell: cell++; break;
+            }
         }
 
         for (var i = from; i < to; i++) One(ops[i], ref line, ref cell);
@@ -132,7 +135,7 @@ internal sealed class IlEmitter
         var readElsewhere = new HashSet<int>();
         for (var i = 0; i < ops.Length; i++)
             if (i < from || i >= to)
-                readElsewhere.UnionWith(Inputs(ops[i]));
+                readElsewhere.UnionWith(OpShape.Reads(ops[i]));
 
         foreach (var register in scalarWrites)
         {
@@ -255,7 +258,7 @@ internal sealed class IlEmitter
                 break;
 
             default:
-                foreach (var input in Inputs(op)) Load(input);
+                foreach (var input in OpShape.Reads(op)) Load(input);
                 Call(op.Code);
                 break;
         }
@@ -304,13 +307,5 @@ internal sealed class IlEmitter
         il.Emit(ReflectionOpCodes.Ldc_I4, register * sizeof(double));
         il.Emit(ReflectionOpCodes.Conv_I);
         il.Emit(ReflectionOpCodes.Add);
-    }
-
-    private static IEnumerable<int> Inputs(Op op)
-    {
-        var count = OpShape.Inputs(op.Code);
-        if (count > 0) yield return op.A;
-        if (count > 1) yield return op.B;
-        if (count > 2) yield return op.C;
     }
 }

@@ -96,7 +96,7 @@ public class TotalityTests
             new(OpCode.Const, 2, k: b),
         };
 
-        var width = Outputs(code);
+        var width = OpShape.Outputs(code);
 
         // K is a slot, a clip or a length depending on the op, and only the
         // arithmetic ops read it as a value.
@@ -114,11 +114,4 @@ public class TotalityTests
 
         return new CompiledPatch([.. ops], registerCount: 8, outputBase: 3, outputWidth: Math.Max(width, 1));
     }
-
-    private static int Outputs(OpCode code) => code switch
-    {
-        OpCode.Tap or OpCode.UnitWrite or OpCode.PlaneWrite or OpCode.ClockWrite => 0,
-        OpCode.HsvToRgb or OpCode.SampleFeedback or OpCode.SamplePicture => 3,
-        _ => 1,
-    };
 }

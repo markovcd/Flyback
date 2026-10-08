@@ -55,7 +55,7 @@ internal static class JsEmitter
         var registers = Math.Max(program.RegisterCount, program.OutputWidth);
         text.Append(CultureInfo.InvariantCulture, $"const R = new Float64Array({registers});\n");
 
-        var delays = ops.Count(o => o.Code is OpCode.Delay or OpCode.Allpass);
+        var delays = ops.Count(o => OpShape.Owns(o.Code) == OpMemory.Line);
         for (var i = 0; i < delays; i++)
             text.Append(CultureInfo.InvariantCulture, $"const L{i} = m.lines[{i}], N{i} = m.lineLengths[{i}];\n");
 
@@ -285,7 +285,7 @@ internal static class JsEmitter
 
         for (var s = 0; s < bounds.Count; s++)
             for (var i = bounds[s].From; i < bounds[s].To; i++)
-                foreach (var register in Reads(ops[i]))
+                foreach (var register in OpShape.Reads(ops[i]))
                 {
                     if (!readBy.TryGetValue(register, out var stretches)) readBy[register] = stretches = [];
                     stretches.Add(s);
@@ -311,7 +311,7 @@ internal static class JsEmitter
             {
                 var op = ops[i];
 
-                foreach (var register in Reads(op))
+                foreach (var register in OpShape.Reads(op))
                 {
                     locals.Add(register);
 
@@ -327,8 +327,8 @@ internal static class JsEmitter
                     written.Add(register);
                 }
 
-                lines[i - from] = op.Code is OpCode.Delay or OpCode.Allpass ? line++ : -1;
-                cells[i - from] = op.Code is OpCode.Phase ? cell++ : -1;
+                lines[i - from] = OpShape.Owns(op.Code) == OpMemory.Line ? line++ : -1;
+                cells[i - from] = OpShape.Owns(op.Code) == OpMemory.Cell ? cell++ : -1;
                 constants[i - from] = op.Code is OpCode.Const ? constant++ : -1;
             }
 
@@ -341,15 +341,6 @@ internal static class JsEmitter
         }
 
         return stretchesOut;
-    }
-
-    private static IEnumerable<int> Reads(Op op)
-    {
-        var inputs = OpShape.Inputs(op.Code);
-
-        if (inputs > 0) yield return op.A;
-        if (inputs > 1) yield return op.B;
-        if (inputs > 2) yield return op.C;
     }
 
     private static IEnumerable<int> Writes(Op op)

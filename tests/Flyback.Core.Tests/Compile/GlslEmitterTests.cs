@@ -102,13 +102,10 @@ public class GlslEmitterTests
         GlslEmitter.Emit(patch, GlslDialect.GlslEs300).PatchFragment.ShouldContain(line);
     }
 
+    /// <summary>An opcode nothing names never reaches the shader: the program refuses it as it is built.</summary>
     [Fact]
-    public void An_unknown_opcode_is_refused_rather_than_skipped()
-    {
-        var patch = OneOp((OpCode)200);
-
-        Should.Throw<NotSupportedException>(() => GlslEmitter.Emit(patch, GlslDialect.GlslEs300));
-    }
+    public void An_unknown_opcode_is_refused_before_it_reaches_the_shader() =>
+        Should.Throw<ArgumentOutOfRangeException>(() => OneOp((OpCode)200));
 
     [Theory]
     [MemberData(nameof(AllDialects))]

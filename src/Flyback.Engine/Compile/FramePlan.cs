@@ -76,11 +76,7 @@ public sealed class FramePlan
                 _ => EvaluationStage.Frame,
             };
 
-            var inputs = OpShape.Inputs(op.Code);
-
-            if (inputs > 0) stage = Later(stage, of[op.A]);
-            if (inputs > 1) stage = Later(stage, of[op.B]);
-            if (inputs > 2) stage = Later(stage, of[op.C]);
+            foreach (var register in OpShape.Reads(op)) stage = Later(stage, of[register]);
 
             for (var w = 0; w < OpShape.Outputs(op.Code); w++)
             {

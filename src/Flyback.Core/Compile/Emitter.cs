@@ -159,11 +159,7 @@ public sealed class Emitter
             kept[at] = true;
             count++;
 
-            var inputs = OpShape.Inputs(op.Code);
-
-            if (inputs > 0) read[op.A] = true;
-            if (inputs > 1) read[op.B] = true;
-            if (inputs > 2) read[op.C] = true;
+            foreach (var register in OpShape.Reads(op)) read[register] = true;
         }
 
         var program = new Op[count];

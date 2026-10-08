@@ -14,28 +14,6 @@ three editor hosts, with no hand-built service outside composition; every public
 by decision (ADR-0035); the binder is one walk (ADR-0183); presets are C# by
 decision (ADR-0138).
 
-## 3. Adding an opcode touches seven files, and the shape table hides a miss (High)
-
-`OpShape.Inputs` ends `_ => 3` and `Outputs` ends `_ => 1`
-(`src/Flyback.Core/Compile/OpShape.cs:63,74`), so an opcode left out of the
-table compiles and is wrong, and no test names `OpShape`. The four
-`Enum.GetValues<OpCode>()` theories do catch a missing backend arm, but
-`tests/Flyback.Core.Tests/Compile/TotalityTests.cs:118-123` restates
-`OpShape.Outputs` and `GlslEmitterTests.cs:34` restates the emitter's no-line
-list, so a new wide or write-nothing op is added in four places by hand. "Delay
-and Allpass take a line, Phase a cell" is counted again in
-`CompiledPatch.cs:507,521,577`, `IlEmitter.cs:126-127` and `JsEmitter.cs:58,330`,
-and the "registers an op reads" loop (`if (inputs > 0) A; if (inputs > 1) B; ...`)
-is written five times: `Core/Compile/Emitter.cs:162`, `Engine/Compile/FramePlan.cs:79`,
-`CompiledPatch.cs:616`, `IlEmitter.cs:309`, `JsEmitter.cs:346`.
-
-This is the shape table, not the lowering switches ADR-0035 keeps apart.
-
-**Fix.** Drop the `_` arms so the compiler demands every case, or add
-`Every_opcode_has_a_shape`; have both tests read `OpShape` rather than their
-own tables; add `OpShape.Owns(code)` returning Line, Cell or None and
-`OpShape.Reads(in Op)` in Core, and replace the seven hand counts with them.
-
 ## 4. `Document` is the editor's god object (Medium)
 
 `src/Flyback.Editor/Document.cs` is 657 code lines with 30 public members
@@ -149,7 +127,7 @@ Toolbar react to `OwnershipChanged` themselves.
 
 ## Order
 
-3 first: an afternoon, and it closes a drift that is already real. 4 and 5 next, since the editor's churn lands in them. 6 before 1.0.0, since the
+4 and 5 first, since the editor's churn lands in them. 6 before 1.0.0, since the
 contract is a promise from then on. The rest as each file is next touched.
 
 Landed: the host code that is not Avalonia has a home, `Flyback.Host`
@@ -157,7 +135,9 @@ Landed: the host code that is not Avalonia has a home, `Flyback.Host`
 settings reader for the CLI, one playback registration and one preset finder.
 The infix bracket rule is `Infix` in Core, which the binder, the printer and the
 fusing all spell a sum through; the three `Strength` tables' negative-number
-arms turned out never to change a spelling, and went with them.
+arms turned out never to change a spelling, and went with them. `OpShape` names
+every opcode, refuses one it does not, and owns the "registers an op reads" loop
+and the line-or-cell question for every pass and backend.
 Still written per shell, and small: the speaker handshake in two JS files, the
 viewer's and the CLI's `--size` and `--oversample` option declarations, and the
 viewer's `--cpu` against the CLI's `--processor`.
