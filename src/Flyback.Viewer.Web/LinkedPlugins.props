@@ -17,6 +17,7 @@
     <WebPlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
     <WebPlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
     <WebPlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />
+    <WebPlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Drawings\Flyback.Plugins.Drawings.csproj" />
   </ItemGroup>
 
 </Project>

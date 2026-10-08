@@ -9,7 +9,7 @@ namespace Flyback.Core.Graph.Extras;
 /// <param name="Called">What a report names one by.</param>
 /// <param name="Unchosen">What a report says while none is chosen.</param>
 /// <param name="Picture">Looked for in the picture folder rather than the sound folder.</param>
-internal sealed record FileKind(
+public sealed record FileKind(
     string Label,
     string Choose,
     string Described,

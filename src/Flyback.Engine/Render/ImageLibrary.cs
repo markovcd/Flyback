@@ -45,7 +45,10 @@ public sealed class ImageLibrary : IImageLibrary
 
     public LoadedImage? Find(string path) => Look(path).Picture;
 
-    public string Explain(string path) => Look(path).Fault switch
+    public string Explain(string path) => Explain(Look(path).Fault);
+
+    /// <summary>What a fault means, said to the person who chose the file.</summary>
+    internal static string Explain(PngFault fault) => fault switch
     {
         PngFault.Missing => "there is no file there.",
         PngFault.NotPng => "it is not a PNG.",

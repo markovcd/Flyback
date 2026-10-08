@@ -1,10 +1,10 @@
 using System.Numerics;
 using System.Text;
-using Flyback.Core.Compile;
 using Flyback.Engine.Render;
 using Shouldly;
+using Xunit;
 
-namespace Flyback.Core.Tests.Rendering;
+namespace Flyback.Plugins.Drawings.Tests;
 
 /// <summary>
 /// An SVG, an OBJ or a PNG read into one closed path at constant speed, for a Path
@@ -16,7 +16,7 @@ public class ShapeReaderTests
 
     private static LoadedShape Read(byte[] bytes, string name)
     {
-        var shape = ShapeReader.Read(bytes, name, out var fault);
+        var shape = Parse(bytes, name, out var fault);
 
         fault.ShouldBe(ShapeFault.None);
         return shape.ShouldNotBeNull();
@@ -26,6 +26,15 @@ public class ShapeReaderTests
     {
         ShapeReader.Read(Encoding.UTF8.GetBytes(text), name, out var fault).ShouldBeNull();
         return fault;
+    }
+
+    /// <summary>A file read as a Path reads it: a PNG decoded by the host, anything else parsed from its bytes.</summary>
+    private static LoadedShape? Parse(byte[] bytes, string name, out ShapeFault fault)
+    {
+        if (!ShapeReader.IsPicture(name)) return ShapeReader.Read(bytes, name, out fault);
+
+        var image = PngReader.Read(new MemoryStream(bytes), out _).ShouldNotBeNull("the test's picture should decode");
+        return ShapeReader.Read(image, out fault);
     }
 
     private static Vector3[] Points(LoadedShape shape) =>
@@ -358,12 +367,10 @@ public class ShapeReaderTests
     }
 
     [Fact]
-    public void A_blank_picture_is_empty_and_bytes_that_are_no_png_are_refused()
+    public void A_blank_picture_is_empty()
     {
-        ShapeReader.Read(Png(10, 10, (_, _) => false), "blank.png", out var blank).ShouldBeNull();
+        Parse(Png(10, 10, (_, _) => false), "blank.png", out var blank).ShouldBeNull();
         blank.ShouldBe(ShapeFault.Empty);
-
-        Fault("not a picture", "x.png").ShouldBe(ShapeFault.NotShape);
     }
 
     // --- the door -------------------------------------------------------------
@@ -391,13 +398,5 @@ public class ShapeReaderTests
         for (var i = 0; i <= ShapeReader.MostPoints; i++) many.Append("v 0 0 0\n");
 
         Fault(many.ToString(), "many.obj").ShouldBe(ShapeFault.TooBig);
-    }
-
-    [Fact]
-    public void A_file_that_is_not_there_is_missing()
-    {
-        ShapeReader.Read(Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".svg"), out var fault).ShouldBeNull();
-
-        fault.ShouldBe(ShapeFault.Missing);
     }
 }

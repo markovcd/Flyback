@@ -90,9 +90,14 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
             """);
 
     [When("flyback-cli draws a still of {string} at {float} second(s)")]
-    public void WhenStill(string name, float seconds)
+    public void WhenStill(string name, float seconds) => Still(Run, name, seconds);
+
+    [When("flyback-cli, with the plugins, draws a still of {string} at {float} second(s)")]
+    public void WhenStillWithPlugins(string name, float seconds) => Still(RunShipped, name, seconds);
+
+    private void Still(Action<string[]> run, string name, float seconds)
     {
-        Run([
+        run([
             "render", Path(name), "-o", Path(ShotName), "--size", "640x360", "--processor",
             "--at", seconds.ToString(System.Globalization.CultureInfo.InvariantCulture),
         ]);
@@ -261,6 +266,9 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
 
     [When("flyback-cli checks {string}")]
     public void WhenChecked(string name) => Run("check", Path(name));
+
+    [When("flyback-cli, with the plugins, checks {string}")]
+    public void WhenCheckedWithPlugins(string name) => RunShipped("check", Path(name));
 
     [When("flyback-cli compares {string} with {string}")]
     public void WhenCompared(string first, string second) => Run("compare", Path(first), Path(second));

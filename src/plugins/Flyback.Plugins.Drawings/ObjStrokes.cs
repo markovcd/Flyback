@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Numerics;
 using System.Text;
 
-namespace Flyback.Engine.Render;
+namespace Flyback.Plugins.Drawings;
 
 /// <summary>
 /// The edges of a Wavefront OBJ model, each drawn once, walked into as few strokes as

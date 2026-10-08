@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <!--
+    A direct reference, unlike the tests that load plugins off disk: the readers
+    are pure, and the modules are checked compiled against the engine.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.Drawings\Flyback.Plugins.Drawings.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Engine\Flyback.Engine.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+</Project>

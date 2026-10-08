@@ -38,7 +38,7 @@ public class VocabularyTests
 
         foreach (var extra in Carried)
             Offered.ShouldContain(
-                Vocabulary.ToolFor(extra.Key),
+                Vocabulary.ToolFor(extra),
                 $"'{extra.Key}' is announced as set by a tool the workbench does not offer");
     }
 
@@ -50,7 +50,7 @@ public class VocabularyTests
     public void The_announcement_says_which_tool_writes_it()
     {
         foreach (var extra in Carried)
-            Vocabulary.Announce(extra).ShouldContain(Vocabulary.ToolFor(extra.Key));
+            Vocabulary.Announce(extra).ShouldContain(Vocabulary.ToolFor(extra));
     }
 
     /// <summary>
@@ -61,7 +61,7 @@ public class VocabularyTests
     [Fact]
     public void A_kind_nobody_wrote_a_tool_for_is_set_with_set_extra()
     {
-        Vocabulary.ToolFor("glide").ShouldBe(Vocabulary.SetExtra);
+        Vocabulary.ToolFor(new Glide()).ShouldBe(Vocabulary.SetExtra);
         Offered.ShouldContain(Vocabulary.SetExtra);
     }
 
@@ -77,7 +77,7 @@ public class VocabularyTests
     [Fact]
     public void A_kind_sent_to_set_extra_is_one_set_extra_can_write()
     {
-        foreach (var extra in Carried.Where(e => Vocabulary.ToolFor(e.Key) == Vocabulary.SetExtra))
+        foreach (var extra in Carried.Where(e => Vocabulary.ToolFor(e) == Vocabulary.SetExtra))
             extra.Fields.ShouldNotBeEmpty(
                 $"'{extra.Key}' has no tool of its own and no fields, so nothing can set it");
     }
@@ -93,5 +93,20 @@ public class VocabularyTests
             extra.Announce()
                 .Contains("set_", StringComparison.Ordinal)
                 .ShouldBeFalse($"'{extra.Key}' names a tool the engine cannot see");
+    }
+
+    /// <summary>A plugin's file is set by path, as the engine's are.</summary>
+    [Fact]
+    public void A_file_a_plugin_reads_is_set_with_set_sample()
+    {
+        var drawing = ShippedPlugins.Loaded.Modules.Require("flyback.drawings.path").Extras.ShouldHaveSingleItem();
+
+        Vocabulary.ToolFor(drawing).ShouldBe(Vocabulary.SetSample);
+    }
+
+    /// <summary>A kind no tool was written for, as a plugin's might be.</summary>
+    private sealed record Glide : NodeExtra
+    {
+        public override string Key => "glide";
     }
 }

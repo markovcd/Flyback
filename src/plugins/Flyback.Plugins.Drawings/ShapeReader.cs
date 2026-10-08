@@ -1,7 +1,7 @@
 using System.Numerics;
 using Flyback.Core.Compile;
 
-namespace Flyback.Engine.Render;
+namespace Flyback.Plugins.Drawings;
 
 /// <summary>
 /// An SVG, an OBJ or a PNG, read into one closed path for a Path to play.
@@ -11,41 +11,25 @@ namespace Flyback.Engine.Render;
 /// bytes, the points and the strokes are capped and a file past them is refused by
 /// name.
 /// </remarks>
-public static class ShapeReader
+internal static class ShapeReader
 {
     /// <summary>The largest file read, in bytes.</summary>
-    public const int MostBytes = 16 * 1024 * 1024;
+    internal const int MostBytes = 16 * 1024 * 1024;
 
     /// <summary>The most points read from a file, before it is spaced evenly.</summary>
-    public const int MostPoints = 1_000_000;
+    internal const int MostPoints = 1_000_000;
 
-    /// <param name="path">The file.</param>
+    /// <summary>Whether a name is a picture's, read from what the host decoded rather than from its bytes.</summary>
+    internal static bool IsPicture(string name) =>
+        string.Equals(Path.GetExtension(name), ".png", StringComparison.OrdinalIgnoreCase);
+
+    /// <param name="image">A picture the host decoded.</param>
     /// <param name="fault">Why nothing came back, or <see cref="ShapeFault.None"/>.</param>
-    internal static LoadedShape? Read(string path, out ShapeFault fault)
+    internal static LoadedShape? Read(LoadedImage image, out ShapeFault fault)
     {
-        try
-        {
-            var info = new FileInfo(path);
+        var strokes = PngStrokes.Read(image, ShapeLayout.MostStrokes, out fault);
 
-            if (!info.Exists)
-            {
-                fault = ShapeFault.Missing;
-                return null;
-            }
-
-            if (info.Length > MostBytes)
-            {
-                fault = ShapeFault.TooBig;
-                return null;
-            }
-
-            return Read(File.ReadAllBytes(path), path, out fault);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            fault = ShapeFault.Missing;
-            return null;
-        }
+        return strokes is null ? null : ShapeLayout.Of(strokes, flat: true, out fault);
     }
 
     /// <param name="bytes">The file's bytes.</param>
@@ -73,16 +57,6 @@ public static class ShapeReader
                 flat = false;
                 break;
 
-            case ".png":
-                if (PngReader.Read(new MemoryStream(bytes), out _) is not { } image)
-                {
-                    fault = ShapeFault.NotShape;
-                    return null;
-                }
-
-                strokes = PngStrokes.Read(image, ShapeLayout.MostStrokes, out fault);
-                break;
-
             default:
                 fault = ShapeFault.Unsupported;
                 return null;
@@ -94,10 +68,8 @@ public static class ShapeReader
     /// <summary>What a fault means, said to the person who chose the file.</summary>
     internal static string Explain(ShapeFault fault) => fault switch
     {
-        ShapeFault.Missing => "there is no file there.",
         ShapeFault.Unsupported => "a Path reads an .svg, an .obj or a .png.",
         ShapeFault.NotShape => "it is not the kind of file its name says.",
-        ShapeFault.Elsewhere => "it is on another machine. Copy it beside the patch.",
         ShapeFault.Empty => "nothing in it draws.",
         ShapeFault.TooBig => $"it is too big: more than {MostBytes / 1024 / 1024} MB, "
             + $"{MostPoints:N0} points or {ShapeLayout.MostStrokes:N0} strokes.",

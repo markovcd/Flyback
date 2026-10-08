@@ -1,4 +1,6 @@
-namespace Flyback.Core.Compile;
+using Flyback.Core.Compile;
+
+namespace Flyback.Plugins.Drawings;
 
 /// <summary>
 /// A drawing as one closed path at constant speed: three tables, x, y and z, read

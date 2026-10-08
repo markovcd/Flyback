@@ -10,6 +10,7 @@
     <PluginProject Include="..\src\plugins\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" />
     <PluginProject Include="..\src\plugins\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" FolderName="Fractals" />
     <PluginProject Include="..\src\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" />
+    <PluginProject Include="..\src\plugins\Flyback.Plugins.Drawings\Flyback.Plugins.Drawings.csproj" FolderName="Drawings" />
   </ItemGroup>
 
   <!-- Writes each as "project|FolderName", a line apiece. -->

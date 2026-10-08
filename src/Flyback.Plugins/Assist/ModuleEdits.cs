@@ -320,7 +320,7 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
         {
             return ToolOutcome.Refused(
                 $"'{key}' on {bench.Handle(node)} is not set this way — use "
-                + $"{Vocabulary.ToolFor(key)}.");
+                + $"{Vocabulary.ToolFor(extra)}.");
         }
 
         if (!Text(arguments, "field", out var name))

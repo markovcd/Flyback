@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Numerics;
 using System.Xml;
 
-namespace Flyback.Engine.Render;
+namespace Flyback.Plugins.Drawings;
 
 /// <summary>
 /// The strokes an SVG draws: every path, line, polyline, polygon, rectangle, circle

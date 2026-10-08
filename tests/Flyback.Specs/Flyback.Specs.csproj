@@ -54,6 +54,7 @@
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" FolderName="Fractals" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Drawings\Flyback.Plugins.Drawings.csproj" FolderName="Drawings" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" FolderName="OpenAi" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Gemini\Flyback.Plugins.Gemini.csproj" FolderName="Gemini" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.ClaudeCode\Flyback.Plugins.ClaudeCode.csproj" FolderName="ClaudeCode" />

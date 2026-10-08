@@ -416,7 +416,7 @@ binding to be said by, including the `x` and `t` of section 5.
 
 ## 8. What a module carries that is not a knob
 
-A sequencer's notes, a Quantiser's scale, an Arrangement's parts, a Sample's or a MIDI File's file, a Path's drawing
+A sequencer's notes, a Quantiser's scale, an Arrangement's parts, a Sample's or a MIDI File's file
 ([0061](adr/0061-what-a-module-carries-is-kept-in-one-store.md)) go in a
 trailing block:
 
@@ -427,7 +427,6 @@ let song  = arrangement(rate: 1/32) [ 1 1 0 1 | 0 >1 1 0 ]
 let clip  = sample("kick.wav")
 let photo = picture("sunset.png")
 let tune  = midi.file("riff.mid", voice: 2, channel: 1)
-let star  = path("star.svg", freq: 110)
 ```
 
 How the computer keyboard is laid out belongs to the patch rather than to any
@@ -1372,33 +1371,6 @@ out.volume = 0.2
 
 Each sine is one speaker and one axis of the Beam, so what is drawn is the stereo
 being heard. Three cycles across against two up is a fifth's knot.
-
-### Wireframe — [Presets.cs](../src/Flyback.Engine/Graph/Presets.cs)
-
-```
-description "A cube's edges played as one path at a pitch, turned in perspective as it"
-  "plays: a model drawn by its sound."
-
-let model  = path("cube.obj", freq: 55, amp: 0.9)
-let turn   = t * 0.7
-let c      = cos(turn)
-let s      = sin(turn)
-let across = model.x * c + model.z * s
-let deep   = model.z * c - model.x * s
-let toward = model.y * 0.39 + deep * 0.92
-let left   = across * 2 / (3 - toward)
-let right  = (model.y * 0.92 - deep * 0.39) * 2 / (3 - toward)
-
-left |> out.left
-right |> out.right
-beam(x: left, y: right, persistence: 30ms) |> out.color
-
-out.volume = 0.4
-```
-
-The Path goes round the cube's twelve edges fifty-five times a second. The sums turn
-it about the vertical, tip it toward the viewer and divide by depth, so what is
-heard is the cube in perspective, and the Beam draws it.
 
 ### Ring scan — [:294](../src/Flyback.Engine/Graph/Presets.cs)
 

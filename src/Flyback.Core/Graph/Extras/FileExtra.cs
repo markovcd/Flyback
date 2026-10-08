@@ -8,7 +8,7 @@ namespace Flyback.Core.Graph.Extras;
 public abstract record FileExtra : NodeExtra
 {
     /// <summary>How a person picks one, and what is said of it.</summary>
-    internal abstract FileKind Kind { get; }
+    public abstract FileKind Kind { get; }
 
     /// <summary>The path an instance names, and the empty string where it names none.</summary>
     public string PathOf(NodeInstance node) => Read(node.StateOf(Key), string.Empty);

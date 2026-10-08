@@ -24,4 +24,15 @@ public interface ISampleLibrary
 
     /// <summary>Why the last <see cref="FindMidi"/> of this path came back empty, for the complaint.</summary>
     string ExplainMidi(string path) => "nothing here can open a MIDI file.";
+
+    /// <summary>A file's bytes, for an extra that reads a format of its own, or null where there are none.</summary>
+    /// <remarks>Read once and kept: the same array answers until the file is forgotten, so a parse may be cached against it.</remarks>
+    byte[]? FindFile(string path) => null;
+
+    /// <summary>A PNG a path names, for an extra that reads it as data on either program, or null.</summary>
+    /// <remarks>Kept as <see cref="FindFile"/> is.</remarks>
+    LoadedImage? FindPicture(string path) => null;
+
+    /// <summary>Why the last <see cref="FindFile"/> or <see cref="FindPicture"/> of this path came back empty.</summary>
+    string ExplainFile(string path) => "nothing here can open that file.";
 }

@@ -106,13 +106,6 @@ internal static partial class Presets
         new("Lissajous", Lissajous,
             "Two sines a fifth apart, left against right on a Beam: a knot that turns because the fifth is a little sharp.",
             PresetKind.Interplay) { Tags = ["basics", "stereo", "scope"] },
-        new("Wireframe", Wireframe,
-            "A cube's edges played as one path at a pitch, turned in perspective as it plays: a model drawn by its sound.",
-            PresetKind.Interplay)
-        {
-            Files = PresetFiles.Embedded(typeof(Presets).Assembly, "Wireframe"),
-            Tags = ["stereo", "scope", "3d"],
-        },
         new("In key", InKey,
             "One cloud field snapped to a pentatonic: heard as a melody, seen as the terraces it was cut into.",
             PresetKind.Interplay) { Tags = ["melody", "scales", "generative"] },
@@ -941,61 +934,6 @@ internal static partial class Presets
         var screen = b.Add(NodeCatalog.BeamTypeId, (2, -1.5229f), (3, 1.2f));
 
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.2f));
-
-        b.Wire(left, 0, screen, 0)
-         .Wire(right, 0, screen, 1)
-         .Wire(left, 0, output, NodeCatalog.OutputLeftPort)
-         .Wire(right, 0, output, NodeCatalog.OutputRightPort)
-         .Wire(screen, 0, output, NodeCatalog.OutputColorPort);
-
-        return b.Build();
-    }
-
-    /// <summary>
-    /// A model played as oscilloscope music: a Path goes round a cube's edges
-    /// fifty-five times a second, and the sums after it turn the cube about the
-    /// vertical, tip it toward the viewer and divide by depth, so the near edges
-    /// spread wider. What is heard is what the Beam draws.
-    /// </summary>
-    public static Patch Wireframe(ModuleCatalog modules)
-    {
-        var b = new PatchBuilder(modules);
-
-        var clock = b.Add(NodeCatalog.TimeTypeId);
-        var model = b.Add(NodeCatalog.PathTypeId, (1, 55f), (3, 0.9f));
-
-        ShapeExtra.Set(model, "cube.obj");
-
-        NodeInstance Formula(string formula, params (NodeInstance Node, int Port)[] sockets)
-        {
-            var node = b.Add(NodeCatalog.ExpressionTypeId);
-            node.SetState(FormulaExtra.StateKey, new System.Text.Json.Nodes.JsonObject { [FormulaExtra.FormulaField] = formula });
-
-            for (var socket = 0; socket < sockets.Length; socket++)
-                b.Wire(sockets[socket].Node, sockets[socket].Port, node, socket);
-
-            return node;
-        }
-
-        // Turned about the vertical by an angle the clock sweeps.
-        var turn = Formula("a * 0.7", (clock, 0));
-        var cos = b.Add("math.cos");
-        var sin = b.Add("math.sin");
-
-        b.Wire(turn, 0, cos, 0).Wire(turn, 0, sin, 0);
-
-        var across = Formula("a * b + c * d", (model, 0), (cos, 0), (model, 2), (sin, 0));
-        var deep = Formula("a * b - c * d", (model, 2), (cos, 0), (model, 0), (sin, 0));
-
-        // Tipped toward the viewer by 0.4 radians, then divided by how far away it is.
-        var toward = Formula("a * 0.39 + b * 0.92", (model, 1), (deep, 0));
-        var left = Formula("a * 2 / (3 - b)", (across, 0), (toward, 0));
-        var right = Formula("(a * 0.92 - b * 0.39) * 2 / (3 - c)", (model, 1), (deep, 0), (toward, 0));
-
-        // Thirty milliseconds of phosphor: about two trips round the cube.
-        var screen = b.Add(NodeCatalog.BeamTypeId, (2, -1.5229f));
-
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.4f));
 
         b.Wire(left, 0, screen, 0)
          .Wire(right, 0, screen, 1)

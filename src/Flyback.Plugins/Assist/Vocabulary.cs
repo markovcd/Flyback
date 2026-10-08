@@ -26,23 +26,20 @@ internal static class Vocabulary
     public const string SetLength = "set_length";
 
     /// <summary>
-    /// The tool that writes the extra filed under <paramref name="key"/>.
+    /// The tool that writes <paramref name="extra"/>.
     /// </summary>
     /// <remarks>
-    /// Anything not named here is <see cref="SetExtra"/>, which is right by
-    /// construction: the five below are the kinds the engine ships and the only ones
-    /// with a tool of their own, and every other kind is one a plugin declared through
-    /// <see cref="NodeExtra.Fields"/> (ADR-0055).
+    /// A file, whoever's kind it is, is set by path; anything else not named here is
+    /// <see cref="SetExtra"/>, which is right by construction: every other kind is one
+    /// a plugin declared through <see cref="NodeExtra.Fields"/> (ADR-0055).
     /// </remarks>
-    public static string ToolFor(string key) => key switch
+    public static string ToolFor(NodeExtra extra) => extra switch
     {
-        StepsExtra.Name => SetSteps,
-        ScaleExtra.Name => SetScale,
-        ArrangementExtra.Name => SetArrangement,
-        SampleExtra.Name => SetSample,
-        MidiFileExtra.Name => SetSample,
-        ShapeExtra.Name => SetSample,
-        PictureExtra.Name => SetPicture,
+        StepsExtra => SetSteps,
+        ScaleExtra => SetScale,
+        ArrangementExtra => SetArrangement,
+        FileExtra { Kind.Picture: true } => SetPicture,
+        FileExtra => SetSample,
         _ => SetExtra,
     };
 
@@ -51,5 +48,5 @@ internal static class Vocabulary
     /// engine says, and how to write it, which this project says.
     /// </summary>
     public static string Announce(NodeExtra extra) =>
-        $"{extra.Announce()}, set with {ToolFor(extra.Key)}";
+        $"{extra.Announce()}, set with {ToolFor(extra)}";
 }

@@ -16,7 +16,7 @@ Feature: A Path plays a drawing as sound that draws it on a Beam
       square.y |> out.right
       beam(x: square.x, y: square.y) |> out.color
       """
-    When flyback-cli draws a still of "square.fbks" at 1 second
+    When flyback-cli, with the plugins, draws a still of "square.fbks" at 1 second
     Then the still is lit round a square half as wide as the picture is tall, dark inside and out
 
   Scenario: A square face of an OBJ model draws round its edges
@@ -35,7 +35,7 @@ Feature: A Path plays a drawing as sound that draws it on a Beam
       model.y |> out.right
       beam(x: model.x, y: model.y) |> out.color
       """
-    When flyback-cli draws a still of "face.fbks" at 1 second
+    When flyback-cli, with the plugins, draws a still of "face.fbks" at 1 second
     Then the still is lit round a square half as wide as the picture is tall, dark inside and out
 
   Scenario: A drawing that is not there is named
@@ -43,6 +43,6 @@ Feature: A Path plays a drawing as sound that draws it on a Beam
       """
       path("gone.svg") |> out.left
       """
-    When flyback-cli checks "gone.fbks"
+    When flyback-cli, with the plugins, checks "gone.fbks"
     Then the command says the patch has problems
     And it names "gone.svg"

@@ -22,12 +22,11 @@ public sealed class BundleFiles(
     IReadOnlyDictionary<string, byte[]> files,
     SampleLibrary? behindSounds = null,
     IImageLibrary? behindPictures = null)
-    : ISampleLibrary, IImageLibrary, IShapeLibrary
+    : ISampleLibrary, IImageLibrary
 {
     private readonly Dictionary<string, LoadedSample?> clips = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, LoadedImage?> pictures = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, LoadedMidi?> songs = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<string, LoadedShape?> shapes = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>What a bundle read out of a stream holds, ready to be compiled against.</summary>
     public static BundleFiles Of(LoadedBundle bundle) => new(bundle.Files);
@@ -52,18 +51,16 @@ public sealed class BundleFiles(
             ? "the bundle holds it, but it could not be read."
             : behindSounds?.ExplainMidi(path) ?? "the bundle does not hold it.";
 
-    LoadedShape? IShapeLibrary.FindShape(string path)
-    {
-        if (!shapes.TryGetValue(path, out var shape))
-            shapes[path] = shape = files.TryGetValue(path, out var bytes) ? ShapeReader.Read(bytes, path, out _) : null;
+    byte[]? ISampleLibrary.FindFile(string path) =>
+        files.TryGetValue(path, out var bytes) ? bytes : behindSounds?.FindFile(path);
 
-        return shape ?? (behindSounds as IShapeLibrary)?.FindShape(path);
-    }
+    LoadedImage? ISampleLibrary.FindPicture(string path) =>
+        files.ContainsKey(path) ? ((IImageLibrary)this).Find(path) : behindSounds?.FindPicture(path);
 
-    string IShapeLibrary.ExplainShape(string path) =>
+    string ISampleLibrary.ExplainFile(string path) =>
         files.ContainsKey(path)
             ? "the bundle holds it, but it could not be read."
-            : (behindSounds as IShapeLibrary)?.ExplainShape(path) ?? "the bundle does not hold it.";
+            : behindSounds?.ExplainFile(path) ?? "the bundle does not hold it.";
 
     LoadedImage? IImageLibrary.Find(string path) =>
         Cached<LoadedImage, PngFault>(pictures, path, PngReader.Read)

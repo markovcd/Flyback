@@ -184,3 +184,36 @@ virtual Flyback.Core.Graph.Extras.FileExtra.Equals(Flyback.Core.Graph.Extras.Fil
 *REMOVED*override sealed Flyback.Core.Graph.Extras.MidiFileExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
 *REMOVED*override sealed Flyback.Core.Graph.Extras.PictureExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
 *REMOVED*override sealed Flyback.Core.Graph.Extras.SampleExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
+abstract Flyback.Core.Graph.Extras.FileExtra.Kind.get -> Flyback.Core.Graph.Extras.FileKind!
+Flyback.Core.Compile.ISampleLibrary.ExplainFile(string! path) -> string!
+Flyback.Core.Compile.ISampleLibrary.FindFile(string! path) -> byte[]?
+Flyback.Core.Compile.ISampleLibrary.FindPicture(string! path) -> Flyback.Core.Compile.LoadedImage?
+Flyback.Core.Graph.Extras.FileKind
+Flyback.Core.Graph.Extras.FileKind.<Clone>$() -> Flyback.Core.Graph.Extras.FileKind!
+Flyback.Core.Graph.Extras.FileKind.Called.get -> string!
+Flyback.Core.Graph.Extras.FileKind.Called.init -> void
+Flyback.Core.Graph.Extras.FileKind.Choose.get -> string!
+Flyback.Core.Graph.Extras.FileKind.Choose.init -> void
+Flyback.Core.Graph.Extras.FileKind.Deconstruct(out string! Label, out string! Choose, out string! Described, out System.Collections.Generic.IReadOnlyList<string!>! Patterns, out System.Collections.Generic.IReadOnlyList<string!>! MimeTypes, out string! Called, out string! Unchosen, out bool Picture) -> void
+Flyback.Core.Graph.Extras.FileKind.Described.get -> string!
+Flyback.Core.Graph.Extras.FileKind.Described.init -> void
+Flyback.Core.Graph.Extras.FileKind.Equals(Flyback.Core.Graph.Extras.FileKind? other) -> bool
+Flyback.Core.Graph.Extras.FileKind.FileKind(string! Label, string! Choose, string! Described, System.Collections.Generic.IReadOnlyList<string!>! Patterns, System.Collections.Generic.IReadOnlyList<string!>! MimeTypes, string! Called, string! Unchosen, bool Picture = false) -> void
+Flyback.Core.Graph.Extras.FileKind.Label.get -> string!
+Flyback.Core.Graph.Extras.FileKind.Label.init -> void
+Flyback.Core.Graph.Extras.FileKind.MimeTypes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Flyback.Core.Graph.Extras.FileKind.MimeTypes.init -> void
+Flyback.Core.Graph.Extras.FileKind.Patterns.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Flyback.Core.Graph.Extras.FileKind.Patterns.init -> void
+Flyback.Core.Graph.Extras.FileKind.Picture.get -> bool
+Flyback.Core.Graph.Extras.FileKind.Picture.init -> void
+Flyback.Core.Graph.Extras.FileKind.Unchosen.get -> string!
+Flyback.Core.Graph.Extras.FileKind.Unchosen.init -> void
+override Flyback.Core.Graph.Extras.FileKind.Equals(object? obj) -> bool
+override Flyback.Core.Graph.Extras.FileKind.GetHashCode() -> int
+override Flyback.Core.Graph.Extras.FileKind.ToString() -> string!
+override Flyback.Core.Graph.Extras.MidiFileExtra.Kind.get -> Flyback.Core.Graph.Extras.FileKind!
+override Flyback.Core.Graph.Extras.PictureExtra.Kind.get -> Flyback.Core.Graph.Extras.FileKind!
+override Flyback.Core.Graph.Extras.SampleExtra.Kind.get -> Flyback.Core.Graph.Extras.FileKind!
+static Flyback.Core.Graph.Extras.FileKind.operator ==(Flyback.Core.Graph.Extras.FileKind? left, Flyback.Core.Graph.Extras.FileKind? right) -> bool
+static Flyback.Core.Graph.Extras.FileKind.operator !=(Flyback.Core.Graph.Extras.FileKind? left, Flyback.Core.Graph.Extras.FileKind? right) -> bool

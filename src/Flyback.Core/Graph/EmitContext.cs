@@ -142,10 +142,6 @@ public readonly record struct EmitContext(Slot[] Inputs)
     /// </remarks>
     public MidiLine? Midi { get; init; }
 
-    /// <summary>
-    /// The drawing a Path plays, as one closed path, and null where there is none.
-    /// </summary>
-    internal LoadedShape? Shape { get; init; }
 
     /// <summary>
     /// The picture this instance shows, already read, and null where there is

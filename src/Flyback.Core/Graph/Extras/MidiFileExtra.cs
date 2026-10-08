@@ -18,7 +18,7 @@ public sealed record MidiFileExtra : FileExtra
     public override string Key => Name;
 
     /// <inheritdoc/>
-    internal override FileKind Kind => Picker;
+    public override FileKind Kind => Picker;
 
     private static readonly FileKind Picker = new(
         Label: "midi file",

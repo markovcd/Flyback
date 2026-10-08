@@ -71,7 +71,7 @@ meant.
 | **preview** | The live picture in the editor's window. | `PreviewHost`, `IPreviewSurface` | viewer, monitor, canvas |
 | **Scope**, **Analyzer** | The two meters: what the speakers played over time, and its spectrum. | type ids `ScopeTypeId`, `AnalyzerTypeId` | oscilloscope, spectrum view |
 | **Beam** | The X-Y display: what the speakers played on two inputs, drawn against each other as a beam on phosphor. | `BeamTypeId` | oscilloscope, XY scope, vectorscope |
-| **Path**, **drawing** | The module that plays a drawing as sound, and the SVG, OBJ or PNG it plays, read as one closed path. | `PathTypeId`, `ShapeExtra`, `LoadedShape` | vector, model (for an SVG or a PNG) |
+| **Path**, **drawing** | The Drawings plugin's module that plays a drawing as sound, and the SVG, OBJ or PNG it plays, read as one closed path. | `PathModule`, `DrawingExtra`, `LoadedShape` | vector, model (for an SVG or a PNG) |
 | **Measure**, **measurement** | Running the patch offline for a few seconds and saying what each output carried; one output's value or range and rate is a measurement. | `Measurements`, `Measurement` | debug, watch, reading (a knob's display), survey |
 | **Probe**, **Scan** | A module that reads a signal across a domain it substitutes, and a Probe read backwards, which is how a picture is heard. | `ProbeTypeId`, `ScanTypeId` | — |
 | **voice** | One of the notes MIDI plays at once, and the copy of a chain that plays it down a polyphonic wire. | `MidiVoice`; `EmitContext.Voice` | channel, note, lane |

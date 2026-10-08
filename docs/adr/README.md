@@ -63,7 +63,7 @@ context, decision, consequences.
 | [0058](0058-the-picture-is-told-how-loud-the-sound-is.md) | The picture is told how loud the sound is *(user-directed)* |
 | [0073](0073-an-analyzer-is-a-scope-filled-with-a-spectrum.md) | An Analyzer is a Scope filled with a spectrum *(user-directed)* |
 | [0181](0181-a-beam-draws-two-taps-against-each-other-on-phosphor.md) | A Beam draws two taps against each other on phosphor *(user-directed)* |
-| [0185](0185-a-path-plays-a-drawing-as-three-tables-gone-round-once-a-cycle.md) | A Path plays a drawing as three tables gone round once a cycle *(user-directed)* |
+| [0185](0185-a-drawing-is-played-by-a-plugin-as-three-tables-gone-round-once-a-cycle.md) | A drawing is played by a plugin as three tables gone round once a cycle *(user-directed)* |
 | [0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md) | What a module carries is a part, not a subtype *(user-directed)* |
 | [0055](0055-a-plugins-extra-declares-its-editor.md) | A plugin's extra declares its editor *(user-directed; a fourth shape, text, added by [0104](0104-a-formula-is-one-block-and-exactly-the-modules-it-names.md) and given several lines by [0105](0105-text-is-a-shape-baked-into-a-picture.md))* |
 | [0061](0061-what-a-module-carries-is-kept-in-one-store.md) | What a module carries is kept in one store *(user-directed)* |

@@ -1,12 +1,13 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
-using Flyback.Core.Graph.Extras;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Language;
 using Flyback.Engine.Render;
+using Flyback.Plugins.Hosting;
 using Shouldly;
+using Xunit;
 
-namespace Flyback.Core.Tests.Graph;
+namespace Flyback.Plugins.Drawings.Tests;
 
 /// <summary>
 /// The Path module: a drawing played as a path, once round a cycle, x to the left
@@ -19,6 +20,10 @@ public sealed class PathTests : IDisposable
 
     private const int X = 0;
     private const int Y = 1;
+
+    private static readonly ModuleCatalog Modules = PluginHost.LoadTypes(typeof(DrawingsPlugin)).Modules;
+
+    private static readonly DrawingExtra Drawing = new();
 
     private readonly string folder = Directory.CreateTempSubdirectory("flyback-path").FullName;
 
@@ -37,12 +42,12 @@ public sealed class PathTests : IDisposable
     /// <summary>A Path at <paramref name="freq"/> playing <paramref name="file"/>, x to the left speaker and y to the right.</summary>
     private static (Patch Patch, NodeInstance Path) Playing(string file, float freq = 100f)
     {
-        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var b = new PatchBuilder(Modules);
 
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
-        var path = b.Add(NodeCatalog.PathTypeId, (Freq, freq));
+        var path = b.Add(PathModule.TypeId, (Freq, freq));
 
-        ShapeExtra.Set(path, file);
+        Drawing.Point(path, file);
 
         b.Wire(path, X, output, NodeCatalog.OutputLeftPort)
          .Wire(path, Y, output, NodeCatalog.OutputRightPort);
@@ -67,20 +72,20 @@ public sealed class PathTests : IDisposable
     /// <summary>A Path playing <paramref name="file"/> onto a Beam on the Output's screen, played for a quarter second.</summary>
     private CompiledPatch OnABeam(string file, float freq = 100f)
     {
-        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var b = new PatchBuilder(Modules);
 
         var output = b.Add(NodeCatalog.OutputTypeId);
-        var path = b.Add(NodeCatalog.PathTypeId, (Freq, freq), (Amp, 0.5f));
+        var path = b.Add(PathModule.TypeId, (Freq, freq), (Amp, 0.5f));
         var beam = b.Add(NodeCatalog.BeamTypeId, (3, 0.2f));
 
-        ShapeExtra.Set(path, file);
+        Drawing.Point(path, file);
 
         b.Wire(path, X, beam, 0)
          .Wire(path, Y, beam, 1)
          .Wire(beam, 0, output, NodeCatalog.OutputColorPort);
 
-        var heard = b.Patch.CompileForAudio(NodeCatalog.BuiltIn, Library());
-        var drawn = b.Patch.CompileForVideo(NodeCatalog.BuiltIn, samples: Library()).Program;
+        var heard = b.Patch.CompileForAudio(Modules, Library());
+        var drawn = b.Patch.CompileForVideo(Modules, samples: Library()).Program;
 
         heard.Issues.ShouldBeEmpty();
 
@@ -138,14 +143,14 @@ public sealed class PathTests : IDisposable
     [Fact]
     public void The_picture_reads_the_drawing_too_at_the_size_amp_says()
     {
-        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var b = new PatchBuilder(Modules);
         var output = b.Add(NodeCatalog.OutputTypeId);
-        var path = b.Add(NodeCatalog.PathTypeId, (Freq, 1f), (Amp, 0.5f));
+        var path = b.Add(PathModule.TypeId, (Freq, 1f), (Amp, 0.5f));
 
-        ShapeExtra.Set(path, Square());
+        Drawing.Point(path, Square());
         b.Wire(path, X, output, NodeCatalog.OutputColorPort);
 
-        var drawn = b.Patch.CompileForVideo(NodeCatalog.BuiltIn, samples: Library());
+        var drawn = b.Patch.CompileForVideo(Modules, samples: Library());
 
         drawn.Issues.ShouldBeEmpty();
 
@@ -166,7 +171,7 @@ public sealed class PathTests : IDisposable
     {
         var (patch, path) = Playing("gone.svg");
 
-        var compiled = patch.CompileForAudio(NodeCatalog.BuiltIn, Library());
+        var compiled = patch.CompileForAudio(Modules, Library());
         var issue = compiled.Issues.ShouldHaveSingleItem();
 
         issue.NodeId.ShouldBe(path.Id);
@@ -179,7 +184,7 @@ public sealed class PathTests : IDisposable
     [Fact]
     public void A_kind_of_file_it_cannot_read_says_which_it_can()
     {
-        var compiled = Playing(Write("song.mid", "MThd")).Patch.CompileForAudio(NodeCatalog.BuiltIn, Library());
+        var compiled = Playing(Write("song.mid", "MThd")).Patch.CompileForAudio(Modules, Library());
 
         compiled.Issues.ShouldHaveSingleItem().Message.ShouldContain(".svg, an .obj or a .png");
     }
@@ -187,7 +192,7 @@ public sealed class PathTests : IDisposable
     [Fact]
     public void A_module_with_no_drawing_chosen_says_so()
     {
-        var issue = Playing(string.Empty).Patch.CompileForAudio(NodeCatalog.BuiltIn, Library()).Issues.ShouldHaveSingleItem();
+        var issue = Playing(string.Empty).Patch.CompileForAudio(Modules, Library()).Issues.ShouldHaveSingleItem();
 
         issue.Severity.ShouldBe(IssueSeverity.Warning);
         issue.Message.ShouldContain("no drawing chosen");
@@ -196,36 +201,8 @@ public sealed class PathTests : IDisposable
     [Fact]
     public void Without_a_library_nothing_can_open_a_drawing()
     {
-        Playing("square.svg").Patch.CompileForAudio(NodeCatalog.BuiltIn).Issues.ShouldHaveSingleItem()
+        Playing("square.svg").Patch.CompileForAudio(Modules).Issues.ShouldHaveSingleItem()
             .Message.ShouldContain("nothing here can open a drawing");
-    }
-
-    [Fact]
-    public void A_drawing_is_read_once_and_again_once_forgotten()
-    {
-        var library = Library();
-        var shapes = (IShapeLibrary)library;
-        var name = Square();
-
-        var first = shapes.FindShape(name).ShouldNotBeNull();
-
-        shapes.FindShape(name).ShouldBeSameAs(first);
-
-        library.Forget(name);
-        shapes.FindShape(name).ShouldNotBeSameAs(first);
-    }
-
-    [Fact]
-    public void A_bundle_answers_for_the_drawings_it_carries()
-    {
-        IShapeLibrary bundle = new BundleFiles(new Dictionary<string, byte[]>
-        {
-            ["star.svg"] = System.Text.Encoding.UTF8.GetBytes("""<svg><line x1="0" y1="0" x2="1" y2="1"/></svg>"""),
-        });
-
-        bundle.FindShape("star.svg").ShouldNotBeNull();
-        bundle.FindShape("gone.svg").ShouldBeNull();
-        bundle.ExplainShape("gone.svg").ShouldContain("does not hold it");
     }
 
     [Fact]
@@ -233,27 +210,27 @@ public sealed class PathTests : IDisposable
     {
         var (patch, _) = Playing("shapes/star.svg", freq: 55f);
 
-        var source = PatchPrinter.Print(patch, NodeCatalog.BuiltIn);
+        var source = PatchPrinter.Print(patch, Modules);
 
         source.ShouldContain("path(\"shapes/star.svg\"");
 
-        var again = PatchLanguage.Build(source, NodeCatalog.BuiltIn);
+        var again = PatchLanguage.Build(source, Modules);
 
         again.Issues.ShouldBeEmpty(again.Report);
-        ShapeExtra.Of(again.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.PathTypeId)).ShouldBe("shapes/star.svg");
+        Drawing.PathOf(again.Patch.Nodes.Single(n => n.TypeId == PathModule.TypeId)).ShouldBe("shapes/star.svg");
     }
 
     [Fact]
     public void Its_file_is_one_a_bundle_carries_and_a_move_renames()
     {
         var (patch, path) = Playing("star.svg");
-        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.PathTypeId);
-        var extra = def.Extra<ShapeExtra>().ShouldNotBeNull();
+        var def = Modules.Require(PathModule.TypeId);
+        var extra = def.Extra<DrawingExtra>().ShouldNotBeNull();
 
         extra.Files(path).ShouldBe(["star.svg"]);
 
         extra.Rebase(path, name => "moved/" + name);
-        ShapeExtra.Of(path).ShouldBe("moved/star.svg");
+        Drawing.PathOf(path).ShouldBe("moved/star.svg");
         patch.Nodes.ShouldContain(path);
     }
 }

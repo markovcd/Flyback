@@ -1,7 +1,7 @@
 using System.Numerics;
 using Flyback.Core.Compile;
 
-namespace Flyback.Engine.Render;
+namespace Flyback.Plugins.Drawings;
 
 /// <summary>
 /// The outlines of a picture: where its brightness crosses a half, traced by marching

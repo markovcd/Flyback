@@ -29,6 +29,7 @@
     <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
     <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />
     <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
+    <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.Drawings\Flyback.Plugins.Drawings.csproj" />
 
     <!-- The worked example, whose project sets everything a package can say about a plugin. -->
     <ProjectReference Include="..\Flyback.Plugins.Sample\Flyback.Plugins.Sample.csproj" />

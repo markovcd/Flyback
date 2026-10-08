@@ -1,7 +1,7 @@
 using System.Numerics;
 using Flyback.Core.Compile;
 
-namespace Flyback.Engine.Render;
+namespace Flyback.Plugins.Drawings;
 
 /// <summary>
 /// Strokes laid out as one path a beam can go round: fitted to -1 to 1, chained

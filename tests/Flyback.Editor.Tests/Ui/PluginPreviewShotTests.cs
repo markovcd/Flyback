@@ -5,6 +5,7 @@ using Avalonia.Media.Imaging;
 using Flyback.Editor.Canvas;
 using Flyback.Core.Graph;
 using Flyback.Plugins;
+using Flyback.Plugins.Drawings;
 using Flyback.Plugins.Easy;
 using Flyback.Plugins.Effects;
 using Flyback.Plugins.Figures;
@@ -40,6 +41,7 @@ public class PluginPreviewShotTests : EditorTest
         ("figures", new FiguresPlugin(), ["plate", "harmonograph", "overtones"]),
         ("fractals", new FractalsPlugin(), ["mandelbrot", "julia", "orbit"]),
         ("easy", new EasyPlugin(), ["synth", "drummer"]),
+        ("drawings", new DrawingsPlugin(), ["path", "rotate3d", "scale3d", "perspective"]),
     ];
 
     private const double Wide = 2200, Tall = 1100;

@@ -1,9 +1,10 @@
+using System.Runtime.CompilerServices;
 using Flyback.Core.Compile;
 
 namespace Flyback.Engine.Render;
 
 /// <summary>
-/// The sound, MIDI and drawing files a patch names, read once and kept.
+/// The sound files, MIDI files and other files a patch names, read once and kept.
 /// </summary>
 /// <remarks>
 /// A cache rather than a loader, which is the point of its existing: every edit
@@ -14,7 +15,7 @@ namespace Flyback.Engine.Render;
 /// chance. Not thread-safe, and it need not be: it is read on the thread that
 /// compiles, and what comes out of it is immutable.
 /// </remarks>
-public sealed class SampleLibrary : ISampleLibrary, IShapeLibrary
+public sealed class SampleLibrary : ISampleLibrary
 {
     private readonly Dictionary<string, (LoadedSample? Clip, SoundFault Fault)> known =
         new(StringComparer.OrdinalIgnoreCase);
@@ -22,8 +23,16 @@ public sealed class SampleLibrary : ISampleLibrary, IShapeLibrary
     private readonly Dictionary<string, (LoadedMidi? Song, MidiFault Fault)> knownMidi =
         new(StringComparer.OrdinalIgnoreCase);
 
-    private readonly Dictionary<string, (LoadedShape? Shape, ShapeFault Fault)> knownShapes =
+    private readonly Dictionary<string, (byte[]? Bytes, string Why)> knownFiles =
         new(StringComparer.OrdinalIgnoreCase);
+
+    private readonly Dictionary<string, (LoadedImage? Picture, string Why)> knownPictures =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    private readonly Dictionary<string, string> lastWhy = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The largest file <see cref="FindFile"/> reads, in bytes.</summary>
+    public const int MostFileBytes = 16 * 1024 * 1024;
 
     /// <summary>
     /// Where a relative path is measured from — the folder the patch was opened
@@ -96,9 +105,11 @@ public sealed class SampleLibrary : ISampleLibrary, IShapeLibrary
         _ => "it could not be read.",
     };
 
-    LoadedShape? IShapeLibrary.FindShape(string path) => LookShape(path).Shape;
+    public byte[]? FindFile(string path) => Remember(path, LookFile(path)).Bytes;
 
-    string IShapeLibrary.ExplainShape(string path) => ShapeReader.Explain(LookShape(path).Fault);
+    public LoadedImage? FindPicture(string path) => Remember(path, LookPicture(path)).Picture;
+
+    public string ExplainFile(string path) => lastWhy.GetValueOrDefault(path, "it could not be read.");
 
     public string Explain(string path) => Look(path).Fault switch
     {
@@ -123,7 +134,8 @@ public sealed class SampleLibrary : ISampleLibrary, IShapeLibrary
         {
             known.Remove(path);
             knownMidi.Remove(path);
-            knownShapes.Remove(path);
+            knownFiles.Remove(path);
+            knownPictures.Remove(path);
         }
     }
 
@@ -131,7 +143,8 @@ public sealed class SampleLibrary : ISampleLibrary, IShapeLibrary
     {
         known.Clear();
         knownMidi.Clear();
-        knownShapes.Clear();
+        knownFiles.Clear();
+        knownPictures.Clear();
     }
 
     /// <summary>How many files this is holding, which only a test asks, to see a cache work.</summary>
@@ -161,15 +174,49 @@ public sealed class SampleLibrary : ISampleLibrary, IShapeLibrary
         return knownMidi[path] = (song, fault);
     }
 
-    private (LoadedShape? Shape, ShapeFault Fault) LookShape(string path)
+    private T Remember<T>(string path, T looked) where T : struct, ITuple
     {
-        if (string.IsNullOrWhiteSpace(path)) return (null, ShapeFault.Missing);
+        lastWhy[path] = (string)looked[1]!;
+        return looked;
+    }
 
-        if (knownShapes.TryGetValue(path, out var already)) return already;
+    private (byte[]? Bytes, string Why) LookFile(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return (null, "there is no file there.");
 
-        if (PatchPaths.Resolve(path, Beside, Library) is not { } full) return knownShapes[path] = (null, ShapeFault.Elsewhere);
+        if (knownFiles.TryGetValue(path, out var already)) return already;
 
-        var shape = ShapeReader.Read(full, out var fault);
-        return knownShapes[path] = (shape, fault);
+        if (PatchPaths.Resolve(path, Beside, Library) is not { } full)
+            return knownFiles[path] = (null, "it is on another machine. Copy it beside the patch.");
+
+        try
+        {
+            var info = new FileInfo(full);
+
+            if (!info.Exists) return knownFiles[path] = (null, "there is no file there.");
+
+            if (info.Length > MostFileBytes)
+                return knownFiles[path] = (null, $"it is larger than {MostFileBytes / 1024 / 1024} MB.");
+
+            return knownFiles[path] = (File.ReadAllBytes(full), string.Empty);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return knownFiles[path] = (null, "it could not be opened.");
+        }
+    }
+
+    private (LoadedImage? Picture, string Why) LookPicture(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return (null, "there is no file there.");
+
+        if (knownPictures.TryGetValue(path, out var already)) return already;
+
+        if (PatchPaths.Resolve(path, Beside, Library) is not { } full)
+            return knownPictures[path] = (null, "it is on another machine. Copy it beside the patch.");
+
+        var picture = PngReader.Read(full, out var fault);
+
+        return knownPictures[path] = (picture, picture is null ? ImageLibrary.Explain(fault) : string.Empty);
     }
 }

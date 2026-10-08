@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Flyback.Plugins.Drawings</RootNamespace>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+
+    <!-- What the install dialog and the plugins window show. -->
+    <Product>Drawings</Product>
+    <Authors>Flyback</Authors>
+    <Description>An SVG, an OBJ model or a PNG's outlines played as sound that draws it on a Beam, and the modules that turn, move and project a model in 3D.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Flyback.Plugins.Drawings.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="Tags" Value="oscilloscope music; svg; obj; 3d; beam" />
+    <!-- Retaken by PluginPreviewShotTests. -->
+    <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" Condition="Exists('preview.webp')" />
+    <!-- The pictures behind the modules (ADR-0118), read out of the assembly by Art. -->
+    <EmbeddedResource Include="Art\*.svg" LogicalName="art.%(Filename)%(Extension)" />
+    <!-- The models the presets play, named as their patches name them. -->
+    <EmbeddedResource Include="Wireframe\*.obj" LogicalName="Wireframe/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Both are host-owned; shipping either would give its types a second identity. -->
+    <ProjectReference Include="../../Flyback.Plugins/Flyback.Plugins.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime"
+                      GlobalPropertiesToRemove="OutDir" />
+    <ProjectReference Include="../../Flyback.Core/Flyback.Core.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime"
+                      GlobalPropertiesToRemove="OutDir" />
+  </ItemGroup>
+
+</Project>
