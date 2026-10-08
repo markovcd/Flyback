@@ -77,6 +77,12 @@ internal sealed class Viewport
     /// </summary>
     private bool framePending = true;
 
+    /// <summary>
+    /// Whether the view is as the last frame left it. A resize then frames again, since the
+    /// size a patch is first framed at is often not the one it is looked at in.
+    /// </summary>
+    private bool fitted;
+
     public Matrix GraphToScreen => Matrix.CreateScale(Zoom, Zoom) * Matrix.CreateTranslation(Pan.X, Pan.Y);
 
     public Point ToGraph(Point screen) => new((screen.X - Pan.X) / Zoom, (screen.Y - Pan.Y) / Zoom);
@@ -90,12 +96,12 @@ internal sealed class Viewport
     /// <summary>What the view shows, in graph units.</summary>
     public Rect Visible => new(ToGraph(default), ToGraph(new Point(Size.Width, Size.Height)));
 
-    /// <summary>The control has a new size: framed if a frame is waiting, and held on the canvas otherwise.</summary>
+    /// <summary>The control has a new size: framed if a frame is waiting or nothing has moved the view since the last, and held on the canvas otherwise.</summary>
     public void Resize(Size size)
     {
         Size = size;
 
-        if (framePending)
+        if (framePending || fitted)
         {
             FrameAll();
             return;
@@ -119,6 +125,7 @@ internal sealed class Viewport
         }
 
         framePending = false;
+        fitted = true;
 
         if (history.Patch.Nodes.Count == 0)
         {
@@ -161,6 +168,7 @@ internal sealed class Viewport
     {
         var anchor = ToGraph(screen);
 
+        fitted = false;
         Zoom = Math.Clamp(Zoom * Math.Pow(1.12, notches), MinZoom, MaxZoom);
 
         // As far as the edge of the canvas allows, since zooming out in a corner
@@ -172,6 +180,7 @@ internal sealed class Viewport
 
     public void PanBy(Vector by)
     {
+        fitted = false;
         PanTo(Pan + by);
         repaint.Request();
     }

@@ -4,7 +4,7 @@ Planned on 2026-10-06, on `main` at `7a65ff53`. It is on TODO.md; take it off th
 delete this file, in the commit that lands the last step.
 
 - **Kind:** Plan
-- **Status:** In progress. Steps 1 to 4 of the order are done on an emulator (ADR-0184).
+- **Status:** In progress. Steps 1 to 4 and the phone layout are done (ADR-0184); Line In and MIDI are left.
 
 ## What is wanted
 
@@ -115,6 +115,11 @@ runtime costs rather than the phone. The engine's own leads are in the `performa
 4. ~~The touch bugs, then a tablet layout.~~ Done: the touch bugs a tablet meets are fixed, the
    desktop's layout holds in both orientations with the picture's row capped to its shape, and
    the splitters reach a fingertip either side. Three touch bugs remain, two of them the page's.
-5. A phone layout, Line In and MIDI.
+5. A phone layout, Line In and MIDI. The phone keeps the narrow mode every narrow window has
+   (the user's choice, 2026-10-08): the canvas, or the picture and the inspector in its place
+   under the toolbar's Side button. A patch opened on a phone was framed at the canvas's first,
+   passing size and left small in a corner; a view nothing has moved is now framed again on
+   every resize. Checked on a Pixel 9 Pro emulator (`flyback-phone`), upright and sideways.
+   Line In and MIDI are next.
 
 The ADR is ADR-0184.
