@@ -110,8 +110,8 @@ internal sealed class InspectorHeader : Border
         ToolTip.SetTip(button, PictureAsideWords.Tip(aside.Hidden));
     }
 
-    /// <summary>The mark, the name and what kind of thing it is. Only read: the menu is ⋯'s.</summary>
-    private static StackPanel Title(PlateFace face, ModulePlate plate)
+    /// <summary>The mark, the name and what kind of thing it is. The menu is ⋯'s; a double-tap on the name renames.</summary>
+    private StackPanel Title(PlateFace face, ModulePlate plate)
     {
         var row = new StackPanel { Name = "header-title", Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
 
@@ -143,22 +143,37 @@ internal sealed class InspectorHeader : Border
     }
 
     /// <summary>The name, in a panel of its own so renaming can put a box where it stands.</summary>
-    private static Panel Named(PlateFace face, ModulePlate plate) => new StackPanel
+    private Panel Named(PlateFace face, ModulePlate plate) => new StackPanel
     {
         VerticalAlignment = VerticalAlignment.Center,
-        Children =
-        {
-            new TextBlock
-            {
-                Name = "header-name",
-                Text = face.Title,
-                FontSize = Text.Title,
-                FontWeight = FontWeight.SemiBold,
-                Foreground = plate.Ink,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-            },
-        },
+        Children = { NameText(face.Title, plate.Ink, face.Naming is not null) },
     };
+
+    /// <summary>The name, renamed by a double-tap where it can be, as the plate's is.</summary>
+    private TextBlock NameText(string text, IBrush ink, bool renames)
+    {
+        var name = new TextBlock
+        {
+            Name = "header-name",
+            Text = text,
+            FontSize = Text.Title,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = ink,
+            Background = Brushes.Transparent,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+
+        if (!renames) return name;
+
+        name.Cursor = NameBox.Renaming;
+        name.DoubleTapped += (_, e) =>
+        {
+            e.Handled = true;
+            Rename();
+        };
+
+        return name;
+    }
 
     /// <summary>Puts a box where the header's name is, as a double-click does on the plate.</summary>
     private void Rename()
@@ -178,15 +193,7 @@ internal sealed class InspectorHeader : Border
             naming.Limit,
             naming.Rename,
             naming.Held,
-            () => new TextBlock
-            {
-                Name = "header-name",
-                Text = naming.Held() ?? naming.Fallback,
-                FontSize = Text.Title,
-                FontWeight = FontWeight.SemiBold,
-                Foreground = plate.Ink,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-            },
+            () => NameText(naming.Held() ?? naming.Fallback, plate.Ink, renames: true),
             naming.Changed);
     }
 

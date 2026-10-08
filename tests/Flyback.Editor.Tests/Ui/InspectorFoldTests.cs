@@ -248,6 +248,25 @@ public class InspectorFoldTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void A_double_tap_on_the_headers_name_renames_as_on_the_plates()
+    {
+        var window = Selecting(out var sine);
+        Fingered(window);
+        Short(window, 120);
+
+        var name = All<TextBlock>(Header(window)).Single(t => t.Name == "header-name");
+        name.RaiseEvent(new Avalonia.Input.TappedEventArgs(Avalonia.Input.InputElement.DoubleTappedEvent, null!));
+        Settle(window);
+
+        var box = All<TextBox>(Header(window)).ShouldHaveSingleItem();
+        box.Text = "Lead";
+        window.KeyPressQwerty(Avalonia.Input.PhysicalKey.Enter, Avalonia.Input.RawInputModifiers.None);
+        Settle(window);
+
+        Editor(window).History.Patch.Find(sine.Id)!.Name.ShouldBe("Lead");
+    }
+
+    [AvaloniaFact]
     public void The_headers_switch_switches_the_module_off()
     {
         var window = Selecting(out var sine);
