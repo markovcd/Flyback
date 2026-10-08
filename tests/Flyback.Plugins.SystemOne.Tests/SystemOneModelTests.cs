@@ -19,16 +19,18 @@ public class SystemOneModelTests
 
     private readonly SystemOneModel model = new();
 
+    private static readonly SettingValues Served = SettingValues.None.With(SystemOneModel.EndpointKey, "https://decisions.test");
+
     private DecisionConfig Config(Canned canned, string? key = "test-key-not-real", SettingValues? values = null)
     {
-        values ??= SettingValues.None;
+        values ??= Served;
         var origin = KeyedTransport.OriginOf(model.Endpoint(values)!);
 
         return new DecisionConfig(new KeyedTransport(key, origin, model.Credential!, canned), values, null);
     }
 
     [Fact]
-    public async Task It_posts_the_questions_to_the_hosted_endpoint_and_reads_the_answer()
+    public async Task It_posts_the_questions_to_the_endpoint_with_its_key_and_reads_the_answer()
     {
         var canned = new Canned((HttpStatusCode.OK, Answered));
 
@@ -38,7 +40,7 @@ public class SystemOneModelTests
         decision.Usage.InputTokens.ShouldBe(12);
 
         var request = canned.Requests.ShouldHaveSingleItem();
-        request.RequestUri.ShouldBe(new Uri("https://api.typesafe.ai/v1/systemone"));
+        request.RequestUri.ShouldBe(new Uri("https://decisions.test/v1/systemone"));
         request.Headers.Authorization!.ToString().ShouldBe("Bearer test-key-not-real");
 
         var sent = JsonNode.Parse(canned.Bodies[0])!;
@@ -64,9 +66,10 @@ public class SystemOneModelTests
     }
 
     [Fact]
-    public void The_hosted_endpoint_without_a_key_says_where_to_get_one()
+    public void With_no_endpoint_set_it_asks_a_laya_serve_on_this_machine()
     {
-        model.Unavailable(DecisionConfig.Unset).ShouldNotBeNull().ShouldContain("TYPESAFE_API_KEY");
+        model.Endpoint(SettingValues.None).ShouldBe(new Uri("http://localhost:8000/v1/systemone"));
+        model.Unavailable(DecisionConfig.Unset).ShouldBeNull();
     }
 
     [Fact]

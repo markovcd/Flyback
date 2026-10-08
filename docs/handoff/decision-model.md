@@ -39,7 +39,7 @@ checkpoints are in the Hugging Face cache. Serve it on loopback only; its defaul
 LAYA_DEVICE=cpu LAYA_HOST=127.0.0.1 LAYA_PORT=8000 LAYA_MODELS=english,typed-decisions LAYA_PRELOAD=1 ~/laya-venv/bin/laya-serve
 ```
 
-The Decision server plugin reaches it with its endpoint set to `http://localhost:8000` and no key. A request's
+The Decision server plugin reaches it at its default endpoint, `http://localhost:8000`, with no key. A request's
 `model` names the checkpoint (`english`, `multilingual`, `typed-decisions`); any other name, or
 no `model` at all, which is the plugin's default, is routed by the text's language, so English text gets
 `english`. The answers carry fields `SystemOneWire` does not read (`answer_confidence`, `action`,
@@ -54,7 +54,7 @@ written by hand before `decide` could set it (its earlier copy is `settings.json
 Now it is set from the command line, the module search on its own checkpoint:
 
 ```bash
-flyback-cli decide --model systemone --set endpoint=http://localhost:8000 --save
+flyback-cli decide --model systemone --save
 flyback-cli decide --for modules --set model=typed-decisions --save
 ```
 

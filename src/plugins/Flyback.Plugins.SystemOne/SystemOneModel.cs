@@ -7,12 +7,13 @@ using Flyback.Plugins.Settings;
 namespace Flyback.Plugins.SystemOne;
 
 /// <summary>
-/// A decision model behind <c>POST /v1/systemone</c>: TypeSafe's hosted model by default, or
-/// any laya-serve somebody points the endpoint at.
+/// A decision model behind <c>POST /v1/systemone</c> at whatever server somebody gives it,
+/// a laya-serve on this machine unless they say otherwise.
 /// </summary>
 public sealed class SystemOneModel : IDecisionModel
 {
-    public const string HostedEndpoint = "https://api.typesafe.ai";
+    /// <summary>Where laya-serve listens when started with its defaults.</summary>
+    public const string LocalEndpoint = "http://localhost:8000";
 
     public const string EndpointKey = "endpoint", ModelKey = "model";
 
@@ -24,17 +25,12 @@ public sealed class SystemOneModel : IDecisionModel
     public int Priority => 10;
 
     public AssistantCredential? Credential { get; } = new(
-        "TYPESAFE_API_KEY",
-        "Get one at console.typesafe.ai/keys. A laya-serve of your own needs none.");
+        "DECISION_SERVER_KEY",
+        "Only for a server that asks for one; a laya-serve needs none.");
 
     public IReadOnlyList<SettingField> Form(SettingValues values) =>
     [
-        new SettingField.Pick(
-            EndpointKey,
-            "Endpoint",
-            [new SettingOption(HostedEndpoint, "TypeSafe (hosted)")],
-            HostedEndpoint,
-            Editable: true) { Note = "Or the address of a laya-serve, which needs no key." },
+        new SettingField.Text(EndpointKey, "Endpoint", LocalEndpoint, LocalEndpoint) { Note = "The address of a server that speaks POST /v1/systemone; a laya-serve listens here unless told otherwise." },
         new SettingField.Text(ModelKey, "Model", Placeholder: "the endpoint's own") { Note = "Left empty, the endpoint chooses; a laya-serve by the text's language." },
     ];
 
@@ -47,11 +43,7 @@ public sealed class SystemOneModel : IDecisionModel
     {
         ArgumentNullException.ThrowIfNull(config);
 
-        if (Endpoint(config.Values) is null) return $"'{Base(config.Values)}' is not an http or https address.";
-
-        return Hosted(config.Values) && !config.Transport.HasKey
-            ? "No key yet — set TYPESAFE_API_KEY, or put one in Settings."
-            : null;
+        return Endpoint(config.Values) is null ? $"'{Base(config.Values)}' is not an http or https address." : null;
     }
 
     public async Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel)
@@ -78,10 +70,7 @@ public sealed class SystemOneModel : IDecisionModel
             ?? throw new InvalidOperationException($"{endpoint.Host} answered with something that is not a decision. {unreadable}");
     }
 
-    private static string Base(SettingValues values) => values.Text(EndpointKey, HostedEndpoint).Trim();
-
-    private static bool Hosted(SettingValues values) =>
-        string.Equals(Base(values).TrimEnd('/'), HostedEndpoint, StringComparison.OrdinalIgnoreCase);
+    private static string Base(SettingValues values) => values.Text(EndpointKey, LocalEndpoint).Trim();
 
     /// <summary>A refusal as a sentence: what the status means here, then whatever the endpoint said.</summary>
     internal static string Complaint(int status, string body)

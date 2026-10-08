@@ -7,9 +7,9 @@
 ## Context
 
 Every judgment Flyback makes about words is a substring match, a count or the chat
-assistant. TypeSafe's hosted model and Laya (Convai Innovations, open weights) answer
-typed questions about a state in one forward pass, with a probability each, and both
-speak `POST /v1/systemone`. A probability is something a feature can gate on; prose is not.
+assistant. Laya (Convai Innovations, open weights) answers typed questions about a
+state in one forward pass, with a probability each, and its server speaks
+`POST /v1/systemone`. A probability is something a feature can gate on; prose is not.
 
 ## Decision
 
