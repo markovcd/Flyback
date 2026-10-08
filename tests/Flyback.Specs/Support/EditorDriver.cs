@@ -930,17 +930,24 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     /// <summary>Whether the picture has the whole window.</summary>
     public bool PictureFullScreen => ReadWindow(_ => Service<FullScreenPreview>().IsFullScreen);
 
-    /// <summary>Gives the picture the whole window, as a double-click on it does.</summary>
+    /// <summary>Double-clicks the picture, which gives it the whole window.</summary>
+    /// <remarks>
+    /// The tap and the double tap a double-click is recognized as, raised on the picture.
+    /// Headless clicks are stamped when they are injected, so on a busy machine the pause
+    /// the first one toggles can carry the second past the double-click time.
+    /// </remarks>
     public void FullScreen() =>
         DoWindow((open, _) =>
         {
             var preview = open.GetVisualDescendants().OfType<PreviewHost>().Single();
-            var at = preview.TranslatePoint(new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 2), open)!.Value;
+            var at = new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 2);
+            var pointer = new Pointer(Pointer.GetNextFreeId(), PointerType.Mouse, isPrimary: true);
+            var released = new PointerEventArgs(
+                InputElement.PointerReleasedEvent, preview, pointer, preview, at, 0,
+                new PointerPointProperties(), KeyModifiers.None);
 
-            open.MouseDown(at, MouseButton.Left);
-            open.MouseUp(at, MouseButton.Left);
-            open.MouseDown(at, MouseButton.Left);
-            open.MouseUp(at, MouseButton.Left);
+            preview.RaiseEvent(new TappedEventArgs(InputElement.TappedEvent, released));
+            preview.RaiseEvent(new TappedEventArgs(InputElement.DoubleTappedEvent, released));
         });
 
     /// <summary>Taps the picture once, as a click or a finger does.</summary>
