@@ -9,7 +9,7 @@ namespace Flyback.Core.Graph.Extras;
 /// field and share neither the library, the fault, the sentence, nor — the one
 /// that decides it — which program may read one at all.
 /// </remarks>
-public sealed record PictureExtra : NodeExtra
+public sealed record PictureExtra : FileExtra
 {
     /// <inheritdoc cref="StepsExtra.Name"/>
     public const string Name = "picture";
@@ -17,14 +17,24 @@ public sealed record PictureExtra : NodeExtra
     /// <inheritdoc/>
     public override string Key => Name;
 
+    /// <inheritdoc/>
+    internal override FileKind Kind => Picker;
+
+    private static readonly FileKind Picker = new(
+        Label: "picture",
+        Choose: "Choose a picture",
+        Described: "PNG images",
+        Patterns: ["*.png"],
+        MimeTypes: ["image/png"],
+        Called: "Picture",
+        Unchosen: "No picture chosen, so it shows black.",
+        Picture: true);
+
     /// <inheritdoc cref="SampleExtra.Of"/>
     public static string Of(NodeInstance node) => Read(node.StateOf(Name), string.Empty);
 
     /// <summary>Points this instance at a picture.</summary>
     public static void Set(NodeInstance node, string path) => node.SetState(Name, Write(path));
-
-    /// <inheritdoc cref="SampleExtra.Seed"/>
-    public override void Seed(NodeInstance node) => Set(node, string.Empty);
 
     /// <remarks>
     /// Silent on the audio path, and that is the whole of how this module knows
@@ -58,32 +68,6 @@ public sealed record PictureExtra : NodeExtra
             + " somewhere it can be found."));
 
         return ctx;
-    }
-
-    /// <inheritdoc/>
-    public override IEnumerable<string> Files(NodeInstance node)
-    {
-        var path = Of(node);
-
-        return string.IsNullOrWhiteSpace(path) ? [] : [path];
-    }
-
-    /// <inheritdoc/>
-    public override void Rebase(NodeInstance node, Func<string, string> renamed)
-    {
-        var path = Of(node);
-
-        if (!string.IsNullOrWhiteSpace(path)) Set(node, renamed(path));
-    }
-
-    /// <inheritdoc/>
-    public override string Report(NodeInstance node)
-    {
-        var path = Of(node);
-
-        return string.IsNullOrWhiteSpace(path)
-            ? "No picture chosen, so it shows black."
-            : $"Picture: {path}.";
     }
 
     /// <inheritdoc/>

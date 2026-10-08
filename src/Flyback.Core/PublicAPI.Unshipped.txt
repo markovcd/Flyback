@@ -147,3 +147,40 @@
 *REMOVED*static Flyback.Core.Graph.NodeCatalog.Speakers.get -> Flyback.Core.Graph.NodeCatalog.SinkKind
 *REMOVED*~override Flyback.Core.Graph.NodeCatalog.SinkKind.Equals(object obj) -> bool
 *REMOVED*~override Flyback.Core.Graph.NodeCatalog.SinkKind.ToString() -> string
+Flyback.Core.Graph.Extras.FileExtra
+Flyback.Core.Graph.Extras.FileExtra.FileExtra() -> void
+Flyback.Core.Graph.Extras.FileExtra.FileExtra(Flyback.Core.Graph.Extras.FileExtra! original) -> void
+Flyback.Core.Graph.Extras.FileExtra.PathOf(Flyback.Core.Graph.NodeInstance! node) -> string!
+Flyback.Core.Graph.Extras.FileExtra.Point(Flyback.Core.Graph.NodeInstance! node, string! path) -> void
+override abstract Flyback.Core.Graph.Extras.FileExtra.<Clone>$() -> Flyback.Core.Graph.Extras.FileExtra!
+override Flyback.Core.Graph.Extras.FileExtra.EqualityContract.get -> System.Type!
+override Flyback.Core.Graph.Extras.FileExtra.Equals(object? obj) -> bool
+override Flyback.Core.Graph.Extras.FileExtra.Files(Flyback.Core.Graph.NodeInstance! node) -> System.Collections.Generic.IEnumerable<string!>!
+override Flyback.Core.Graph.Extras.FileExtra.GetHashCode() -> int
+override Flyback.Core.Graph.Extras.FileExtra.PrintMembers(System.Text.StringBuilder! builder) -> bool
+override Flyback.Core.Graph.Extras.FileExtra.Rebase(Flyback.Core.Graph.NodeInstance! node, System.Func<string!, string!>! renamed) -> void
+override Flyback.Core.Graph.Extras.FileExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!
+override Flyback.Core.Graph.Extras.FileExtra.Seed(Flyback.Core.Graph.NodeInstance! node) -> void
+override Flyback.Core.Graph.Extras.FileExtra.ToString() -> string!
+override sealed Flyback.Core.Graph.Extras.FileExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
+override sealed Flyback.Core.Graph.Extras.MidiFileExtra.Equals(Flyback.Core.Graph.Extras.FileExtra? other) -> bool
+override sealed Flyback.Core.Graph.Extras.PictureExtra.Equals(Flyback.Core.Graph.Extras.FileExtra? other) -> bool
+override sealed Flyback.Core.Graph.Extras.SampleExtra.Equals(Flyback.Core.Graph.Extras.FileExtra? other) -> bool
+static Flyback.Core.Graph.Extras.FileExtra.operator ==(Flyback.Core.Graph.Extras.FileExtra? left, Flyback.Core.Graph.Extras.FileExtra? right) -> bool
+static Flyback.Core.Graph.Extras.FileExtra.operator !=(Flyback.Core.Graph.Extras.FileExtra? left, Flyback.Core.Graph.Extras.FileExtra? right) -> bool
+virtual Flyback.Core.Graph.Extras.FileExtra.Equals(Flyback.Core.Graph.Extras.FileExtra? other) -> bool
+*REMOVED*override Flyback.Core.Graph.Extras.MidiFileExtra.Files(Flyback.Core.Graph.NodeInstance! node) -> System.Collections.Generic.IEnumerable<string!>!
+*REMOVED*override Flyback.Core.Graph.Extras.MidiFileExtra.Rebase(Flyback.Core.Graph.NodeInstance! node, System.Func<string!, string!>! renamed) -> void
+*REMOVED*override Flyback.Core.Graph.Extras.MidiFileExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.MidiFileExtra.Seed(Flyback.Core.Graph.NodeInstance! node) -> void
+*REMOVED*override Flyback.Core.Graph.Extras.PictureExtra.Files(Flyback.Core.Graph.NodeInstance! node) -> System.Collections.Generic.IEnumerable<string!>!
+*REMOVED*override Flyback.Core.Graph.Extras.PictureExtra.Rebase(Flyback.Core.Graph.NodeInstance! node, System.Func<string!, string!>! renamed) -> void
+*REMOVED*override Flyback.Core.Graph.Extras.PictureExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.PictureExtra.Seed(Flyback.Core.Graph.NodeInstance! node) -> void
+*REMOVED*override Flyback.Core.Graph.Extras.SampleExtra.Files(Flyback.Core.Graph.NodeInstance! node) -> System.Collections.Generic.IEnumerable<string!>!
+*REMOVED*override Flyback.Core.Graph.Extras.SampleExtra.Rebase(Flyback.Core.Graph.NodeInstance! node, System.Func<string!, string!>! renamed) -> void
+*REMOVED*override Flyback.Core.Graph.Extras.SampleExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.SampleExtra.Seed(Flyback.Core.Graph.NodeInstance! node) -> void
+*REMOVED*override sealed Flyback.Core.Graph.Extras.MidiFileExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
+*REMOVED*override sealed Flyback.Core.Graph.Extras.PictureExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
+*REMOVED*override sealed Flyback.Core.Graph.Extras.SampleExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool

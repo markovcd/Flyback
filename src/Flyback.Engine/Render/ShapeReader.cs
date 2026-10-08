@@ -19,9 +19,6 @@ public static class ShapeReader
     /// <summary>The most points read from a file, before it is spaced evenly.</summary>
     public const int MostPoints = 1_000_000;
 
-    /// <summary>The extensions read, for a file picker to offer.</summary>
-    public static IReadOnlyList<string> Extensions { get; } = [".svg", ".obj", ".png"];
-
     /// <param name="path">The file.</param>
     /// <param name="fault">Why nothing came back, or <see cref="ShapeFault.None"/>.</param>
     internal static LoadedShape? Read(string path, out ShapeFault fault)

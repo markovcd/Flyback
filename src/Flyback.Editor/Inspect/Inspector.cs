@@ -513,10 +513,7 @@ internal sealed class Inspector
 
         // The one a node carries that is not a number, so it is a name and a
         // button rather than a control with a range.
-        SampleExtra => files.Sample(node),
-        PictureExtra => files.Picture(node),
-        MidiFileExtra => files.MidiFile(node),
-        ShapeExtra => files.Shape(node),
+        FileExtra file => files.Row(node, file),
 
         // Anything else is a plugin's own kind, which ships no control and is
         // drawn from what it declares instead — see ADR-0055. A kind that

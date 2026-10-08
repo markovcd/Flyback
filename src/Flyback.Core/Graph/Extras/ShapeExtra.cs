@@ -3,7 +3,7 @@ using Flyback.Core.Compile;
 namespace Flyback.Core.Graph.Extras;
 
 /// <summary>The drawing a Path plays: an SVG, an OBJ or a PNG.</summary>
-internal sealed record ShapeExtra : NodeExtra
+internal sealed record ShapeExtra : FileExtra
 {
     /// <inheritdoc cref="StepsExtra.Name"/>
     public const string Name = "shape";
@@ -11,14 +11,23 @@ internal sealed record ShapeExtra : NodeExtra
     /// <inheritdoc/>
     public override string Key => Name;
 
+    /// <inheritdoc/>
+    internal override FileKind Kind => Picker;
+
+    private static readonly FileKind Picker = new(
+        Label: "drawing",
+        Choose: "Choose a drawing",
+        Described: "SVG, OBJ or PNG drawings",
+        Patterns: ["*.svg", "*.obj", "*.png"],
+        MimeTypes: ["image/svg+xml", "model/obj", "image/png"],
+        Called: "Drawing",
+        Unchosen: "No drawing chosen, so it stays at the center.");
+
     /// <inheritdoc cref="SampleExtra.Of"/>
     public static string Of(NodeInstance node) => Read(node.StateOf(Name), string.Empty);
 
     /// <summary>Points this instance at a drawing.</summary>
     public static void Set(NodeInstance node, string path) => node.SetState(Name, Write(path));
-
-    /// <inheritdoc cref="SampleExtra.Seed"/>
-    public override void Seed(NodeInstance node) => Set(node, string.Empty);
 
     /// <inheritdoc cref="SampleExtra.Fold"/>
     public override EmitContext Fold(EmitContext ctx, NodeInstance node, ExtraEnv env)
@@ -47,32 +56,6 @@ internal sealed record ShapeExtra : NodeExtra
             + "somewhere it can be found."));
 
         return ctx;
-    }
-
-    /// <inheritdoc/>
-    public override IEnumerable<string> Files(NodeInstance node)
-    {
-        var path = Of(node);
-
-        return string.IsNullOrWhiteSpace(path) ? [] : [path];
-    }
-
-    /// <inheritdoc/>
-    public override void Rebase(NodeInstance node, Func<string, string> renamed)
-    {
-        var path = Of(node);
-
-        if (!string.IsNullOrWhiteSpace(path)) Set(node, renamed(path));
-    }
-
-    /// <inheritdoc/>
-    public override string Report(NodeInstance node)
-    {
-        var path = Of(node);
-
-        return string.IsNullOrWhiteSpace(path)
-            ? "No drawing chosen, so it stays at the center."
-            : $"Drawing: {path}.";
     }
 
     /// <inheritdoc/>

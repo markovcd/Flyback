@@ -18,8 +18,7 @@ namespace Flyback.Editor.Inspect;
 internal sealed class FileRows(IFilePickers pickers, Document document, PatchFiles files)
 {
     /// <summary>
-    /// The sound file a player reads: what it is called, and a button to pick
-    /// another.
+    /// The file a module reads: what it is called, and a button to pick another.
     /// </summary>
     /// <remarks>
     /// The name alone rather than the whole path, with the full one on the tooltip
@@ -27,88 +26,33 @@ internal sealed class FileRows(IFilePickers pickers, Document document, PatchFil
     /// be. Nothing here says whether it could be read: that is the compiler's to
     /// say, in the status bar, naming the module.
     /// </remarks>
-    public Control Sample(NodeInstance node) => Row(
-        node,
-        "file",
-        SampleExtra.Of(node),
-        "Choose a sound",
-        SoundFileType,
-        picked =>
-        {
-            var named = PatchPaths.Named(picked, files.SoundFolder.Library);
+    public Control Row(NodeInstance node, FileExtra file)
+    {
+        var (library, forget) = file.Kind.Picture
+            ? (files.PictureFolder.Library, (Action<string>)files.PictureFolder.Forget)
+            : (files.SoundFolder.Library, files.SoundFolder.Forget);
 
-            SampleExtra.Set(node, named);
+        return Row(node, file.Kind, file.PathOf(node), picked =>
+        {
+            var named = PatchPaths.Named(picked, library);
+
+            file.Point(node, named);
 
             // Forgotten first, so a file that has been replaced since it was
             // last read is read again rather than answered from the cache.
-            files.SoundFolder.Forget(named);
+            forget(named);
         });
+    }
 
-    /// <summary>The same row for the other kind of file — see <see cref="PictureExtra"/>.</summary>
-    public Control Picture(NodeInstance node) => Row(
-        node,
-        "picture",
-        PictureExtra.Of(node),
-        "Choose a picture",
-        PictureFileType,
-        picked =>
-        {
-            var named = PatchPaths.Named(picked, files.PictureFolder.Library);
-
-            PictureExtra.Set(node, named);
-            files.PictureFolder.Forget(named);
-        });
-
-    /// <summary>The same row for a MIDI file — see <see cref="MidiFileExtra"/>.</summary>
-    public Control MidiFile(NodeInstance node) => Row(
-        node,
-        "midi file",
-        MidiFileExtra.Of(node),
-        "Choose a MIDI file",
-        MidiFileType,
-        picked =>
-        {
-            var named = PatchPaths.Named(picked, files.SoundFolder.Library);
-
-            MidiFileExtra.Set(node, named);
-            files.SoundFolder.Forget(named);
-        });
-
-    /// <summary>The same row for a Path's drawing — see <see cref="ShapeExtra"/>.</summary>
-    public Control Shape(NodeInstance node) => Row(
-        node,
-        "drawing",
-        ShapeExtra.Of(node),
-        "Choose a drawing",
-        ShapeFileType,
-        picked =>
-        {
-            var named = PatchPaths.Named(picked, files.SoundFolder.Library);
-
-            ShapeExtra.Set(node, named);
-            files.SoundFolder.Forget(named);
-        });
-
-    /// <summary>
-    /// A file this instance carries: what it is called, what it currently is, and a
-    /// button that goes and finds another. One row for both kinds, which differ in
-    /// the picker's title, the label, the filter and what to do with what comes
-    /// back.
-    /// </summary>
-    private Control Row(
-        NodeInstance node,
-        string label,
-        string? held,
-        string title,
-        FilePickerFileType kind,
-        Action<string> store)
+    /// <summary>The row itself: the caption, the file's name and the button that picks another.</summary>
+    private Control Row(NodeInstance node, FileKind kind, string? held, Action<string> store)
     {
         var chosen = held ?? string.Empty;
 
         var row = InspectorRows.Row("*,Auto");
         row.Margin = new Thickness(0, 8, 0, 0);
 
-        var caption = InspectorRows.Caption(label);
+        var caption = InspectorRows.Caption(kind.Label);
 
         var name = new TextBlock
         {
@@ -128,9 +72,9 @@ internal sealed class FileRows(IFilePickers pickers, Document document, PatchFil
         {
             var files = await pickers.Open(new FilePickerOpenOptions
             {
-                Title = title,
+                Title = kind.Choose,
                 AllowMultiple = false,
-                FileTypeFilter = [kind],
+                FileTypeFilter = [new FilePickerFileType(kind.Described) { Patterns = kind.Patterns, MimeTypes = kind.MimeTypes }],
             });
 
             if (files.Count == 0 || files[0].TryGetLocalPath() is not { } picked) return;
@@ -163,32 +107,4 @@ internal sealed class FileRows(IFilePickers pickers, Document document, PatchFil
 
         return row;
     }
-
-    /// <summary>What the sound picker offers, which is what the reader can read.</summary>
-    private static FilePickerFileType SoundFileType => new("WAV or MP3 audio")
-    {
-        Patterns = ["*.wav", "*.mp3"],
-        MimeTypes = ["audio/wav", "audio/x-wav", "audio/mpeg"],
-    };
-
-    /// <summary>And what the MIDI picker offers.</summary>
-    private static FilePickerFileType MidiFileType => new("MIDI files")
-    {
-        Patterns = ["*.mid", "*.midi"],
-        MimeTypes = ["audio/midi", "audio/x-midi"],
-    };
-
-    /// <summary>And what the drawing picker offers.</summary>
-    private static FilePickerFileType ShapeFileType => new("SVG, OBJ or PNG drawings")
-    {
-        Patterns = [.. ShapeReader.Extensions.Select(extension => "*" + extension)],
-        MimeTypes = ["image/svg+xml", "model/obj", "image/png"],
-    };
-
-    /// <summary>And what the picture picker offers, for the same reason.</summary>
-    private static FilePickerFileType PictureFileType => new("PNG images")
-    {
-        Patterns = ["*.png"],
-        MimeTypes = ["image/png"],
-    };
 }

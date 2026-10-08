@@ -244,21 +244,16 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
         if (!bench.Node(arguments, "handle", out var node, out var def, out var refusal))
             return ToolOutcome.Refused(refusal);
 
-        var midi = def.Extra<MidiFileExtra>() is not null;
-        var shape = def.Extra<ShapeExtra>() is not null;
-
-        if (def.Extra<SampleExtra>() is null && !midi && !shape)
+        if (def.Extras.OfType<FileExtra>().FirstOrDefault(file => !file.Kind.Picture) is not { } file)
         {
             return ToolOutcome.Refused(
                 $"{bench.Handle(node)} is a {def.Name}, which reads no file. Only the Sample, MIDI File and Path modules do.");
         }
 
         if (!Text(arguments, "path", out var path))
-            return ToolOutcome.Refused($"'path' is required: where the {(midi ? "MIDI" : shape ? "SVG, OBJ or PNG" : "sound")} file is.");
+            return ToolOutcome.Refused($"'path' is required: where the file is ({file.Kind.Described}).");
 
-        if (midi) MidiFileExtra.Set(node, path);
-        else if (shape) ShapeExtra.Set(node, path);
-        else SampleExtra.Set(node, path);
+        file.Point(node, path);
         bench.Edits++;
 
         return ToolOutcome.Fine($"{bench.Handle(node)} now reads {path}. {reports.Issues()}");

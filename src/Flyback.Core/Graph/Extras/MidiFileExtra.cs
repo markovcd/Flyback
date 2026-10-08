@@ -9,7 +9,7 @@ namespace Flyback.Core.Graph.Extras;
 /// <see cref="MidiLineExtra"/> in as well, so the module is handed the one voice it
 /// plays and never the whole file.
 /// </remarks>
-public sealed record MidiFileExtra : NodeExtra
+public sealed record MidiFileExtra : FileExtra
 {
     /// <inheritdoc cref="StepsExtra.Name"/>
     public const string Name = "midifile";
@@ -17,14 +17,23 @@ public sealed record MidiFileExtra : NodeExtra
     /// <inheritdoc/>
     public override string Key => Name;
 
+    /// <inheritdoc/>
+    internal override FileKind Kind => Picker;
+
+    private static readonly FileKind Picker = new(
+        Label: "midi file",
+        Choose: "Choose a MIDI file",
+        Described: "MIDI files",
+        Patterns: ["*.mid", "*.midi"],
+        MimeTypes: ["audio/midi", "audio/x-midi"],
+        Called: "MIDI file",
+        Unchosen: "No MIDI file chosen, so it plays nothing.");
+
     /// <inheritdoc cref="SampleExtra.Of"/>
     public static string Of(NodeInstance node) => Read(node.StateOf(Name), string.Empty);
 
     /// <summary>Points this instance at a MIDI file.</summary>
     public static void Set(NodeInstance node, string path) => node.SetState(Name, Write(path));
-
-    /// <inheritdoc cref="SampleExtra.Seed"/>
-    public override void Seed(NodeInstance node) => Set(node, string.Empty);
 
     /// <inheritdoc cref="SampleExtra.Fold"/>
     public override EmitContext Fold(EmitContext ctx, NodeInstance node, ExtraEnv env)
@@ -65,32 +74,6 @@ public sealed record MidiFileExtra : NodeExtra
         }
 
         return ctx with { Midi = line };
-    }
-
-    /// <inheritdoc/>
-    public override IEnumerable<string> Files(NodeInstance node)
-    {
-        var path = Of(node);
-
-        return string.IsNullOrWhiteSpace(path) ? [] : [path];
-    }
-
-    /// <inheritdoc/>
-    public override void Rebase(NodeInstance node, Func<string, string> renamed)
-    {
-        var path = Of(node);
-
-        if (!string.IsNullOrWhiteSpace(path)) Set(node, renamed(path));
-    }
-
-    /// <inheritdoc/>
-    public override string Report(NodeInstance node)
-    {
-        var path = Of(node);
-
-        return string.IsNullOrWhiteSpace(path)
-            ? "No MIDI file chosen, so it plays nothing."
-            : $"MIDI file: {path}.";
     }
 
     /// <inheritdoc/>

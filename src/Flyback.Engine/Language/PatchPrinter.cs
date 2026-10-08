@@ -191,11 +191,7 @@ public static class PatchPrinter
     /// one has no spelling here.
     /// </remarks>
     public static string? Held(NodeInstance node, NodeDef def) =>
-        def.Extra<SampleExtra>() is not null ? SampleExtra.Of(node)
-            : def.Extra<PictureExtra>() is not null ? PictureExtra.Of(node)
-            : def.Extra<MidiFileExtra>() is not null ? MidiFileExtra.Of(node)
-            : def.Extra<ShapeExtra>() is not null ? ShapeExtra.Of(node)
-            : null;
+        def.Extra<FileExtra>()?.PathOf(node);
 
     /// <summary>
     /// What a plugin's field is written as, or null where this build has no
@@ -1201,11 +1197,7 @@ public static class PatchPrinter
         /// <summary>The path a player or a picture names, or null where it names none.</summary>
         private static string? File(NodeInstance node, NodeDef def)
         {
-            var path = def.Extra<SampleExtra>() is not null ? SampleExtra.Of(node)
-                : def.Extra<PictureExtra>() is not null ? PictureExtra.Of(node)
-                : def.Extra<MidiFileExtra>() is not null ? MidiFileExtra.Of(node)
-                : def.Extra<ShapeExtra>() is not null ? ShapeExtra.Of(node)
-                : string.Empty;
+            var path = Held(node, def);
 
             // A quote would end the string and there is no escape for one, so a
             // path carrying one is left off rather than written unreadably. It

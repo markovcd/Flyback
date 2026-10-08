@@ -35,6 +35,7 @@ public class ContractSurfaceTests
         ["Flyback.Core.Graph.ScaleMode"] = "KeyboardScale.Mode's type.",
         ["Flyback.Core.Graph.StepSpec"] = "The Steps extra's field.",
         ["Flyback.Core.Graph.ExtraField+Toggle"] = "One of the field kinds an extra declares its editor with (ADR-0055); the extras in the box need no switch.",
+        ["Flyback.Core.Graph.Extras.FileExtra"] = "The base of SampleExtra, PictureExtra and MidiFileExtra, which presets name; a public record's base is public.",
         ["Flyback.Core.Graph.Extras.FormulaExtra"] = "A plugin's preset configures a built-in module through its extra, as the presets in the box do through SampleExtra.",
         ["Flyback.Core.Graph.Extras.MidiClockExtra"] = "A plugin's preset configures a built-in module through its extra, as the presets in the box do through SampleExtra.",
         ["Flyback.Core.Graph.Extras.MidiFileExtra"] = "A plugin's preset configures a built-in module through its extra, as the presets in the box do through SampleExtra.",

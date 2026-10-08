@@ -15,10 +15,7 @@ internal sealed class Carrying(ModuleCatalog modules, Wiring wiring, Issues issu
     {
         if (placed is not Placed node || wiring.Patch.Find(node.Id) is not { } instance) return;
 
-        if (def.Extra<SampleExtra>() is not null) SampleExtra.Set(instance, path);
-        else if (def.Extra<PictureExtra>() is not null) PictureExtra.Set(instance, path);
-        else if (def.Extra<MidiFileExtra>() is not null) MidiFileExtra.Set(instance, path);
-        else if (def.Extra<ShapeExtra>() is not null) ShapeExtra.Set(instance, path);
+        if (def.Extra<FileExtra>() is { } file) file.Point(instance, path);
         else issues.Complain(IssueCode.NoFile, line, column, $"'{def.Name}' names no file.");
     }
 

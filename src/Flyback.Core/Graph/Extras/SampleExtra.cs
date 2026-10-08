@@ -3,13 +3,25 @@
 namespace Flyback.Core.Graph.Extras;
 
 /// <summary>The audio file a player reads.</summary>
-public sealed record SampleExtra : NodeExtra
+public sealed record SampleExtra : FileExtra
 {
     /// <inheritdoc cref="StepsExtra.Name"/>
     public const string Name = "file";
 
     /// <inheritdoc/>
     public override string Key => Name;
+
+    /// <inheritdoc/>
+    internal override FileKind Kind => Picker;
+
+    private static readonly FileKind Picker = new(
+        Label: "file",
+        Choose: "Choose a sound",
+        Described: "WAV or MP3 audio",
+        Patterns: ["*.wav", "*.mp3"],
+        MimeTypes: ["audio/wav", "audio/x-wav", "audio/mpeg"],
+        Called: "File",
+        Unchosen: "No file chosen, so it plays silence.");
 
     /// <summary>
     /// The path this instance names, and the empty string where it names none —
@@ -20,12 +32,6 @@ public sealed record SampleExtra : NodeExtra
 
     /// <summary>Points this instance at a file.</summary>
     public static void Set(NodeInstance node, string path) => node.SetState(Name, Write(path));
-
-    /// <remarks>
-    /// Empty rather than nothing, so a module that reads a file always has
-    /// somewhere to put one and the panel always has a row to show.
-    /// </remarks>
-    public override void Seed(NodeInstance node) => Set(node, string.Empty);
 
     /// <remarks>
     /// The one extra that can fail, and the complaints are its own: what a missing
@@ -56,32 +62,6 @@ public sealed record SampleExtra : NodeExtra
             + "somewhere it can be found."));
 
         return ctx;
-    }
-
-    /// <inheritdoc/>
-    public override IEnumerable<string> Files(NodeInstance node)
-    {
-        var path = Of(node);
-
-        return string.IsNullOrWhiteSpace(path) ? [] : [path];
-    }
-
-    /// <inheritdoc/>
-    public override void Rebase(NodeInstance node, Func<string, string> renamed)
-    {
-        var path = Of(node);
-
-        if (!string.IsNullOrWhiteSpace(path)) Set(node, renamed(path));
-    }
-
-    /// <inheritdoc/>
-    public override string Report(NodeInstance node)
-    {
-        var path = Of(node);
-
-        return string.IsNullOrWhiteSpace(path)
-            ? "No file chosen, so it plays silence."
-            : $"File: {path}.";
     }
 
     /// <inheritdoc/>
