@@ -23,6 +23,7 @@
     <ProjectReference Include="..\Flyback.Gpu\Flyback.Gpu.csproj" />
     <ProjectReference Include="..\Flyback.Assist\Flyback.Assist.csproj" />
     <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
+    <ProjectReference Include="..\Flyback.Host\Flyback.Host.csproj" />
   </ItemGroup>
 
   <ItemGroup>

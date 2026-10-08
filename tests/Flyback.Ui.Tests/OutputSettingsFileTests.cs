@@ -39,18 +39,6 @@ public class OutputSettingsFileTests : IDisposable
         settings.Gpu.ShouldBeTrue();
     }
 
-    /// <summary>The names <c>flyback-cli render</c> reads its defaults by, from a file it cannot open through this class.</summary>
-    [Fact]
-    public void The_fields_a_render_reads_are_saved_under_the_names_it_reads()
-    {
-        new OutputSettings { FfmpegPath = "ffmpeg" }.Save(File);
-
-        using var saved = System.Text.Json.JsonDocument.Parse(SettingsFile.Read(File, OutputSettings.Section)!);
-
-        foreach (var name in new[] { "width", "height", "frameRate", "jpegQuality", "videoFormat", "soundFormat", "ffmpegPath", "oversample" })
-            saved.RootElement.TryGetProperty(name, out _).ShouldBeTrue(name);
-    }
-
     [Theory]
     [InlineData(0)]
     [InlineData(3)]
@@ -334,4 +322,27 @@ public class OutputSettingsFileTests : IDisposable
         back.Amount.ShouldBe(1);
         back.GlideSeconds.ShouldBe(0);
     }
+
+    [Theory]
+    [InlineData(-4, 720)]
+    [InlineData(1920, 0)]
+    [InlineData(27000, 27000)]
+    public void A_size_no_frame_can_hold_is_the_default(int width, int height)
+    {
+        Directory.CreateDirectory(folder);
+        SettingsFile.Write(File, OutputSettings.Section, $$"""{ "width": {{width}}, "height": {{height}} }""");
+
+        var settings = OutputSettings.Load(File);
+
+        settings.Width.ShouldBe(OutputSettings.DefaultWidth);
+        settings.Height.ShouldBe(OutputSettings.DefaultHeight);
+    }
+
+    [Theory]
+    [InlineData("take.mp4", "hevc")]
+    [InlineData("take.flac", "flac")]
+    [InlineData("take.webm", null)]
+    [InlineData("take.png", null)]
+    public void The_saved_format_wins_where_the_extension_is_its_own(string name, string? format) =>
+        new OutputSettings { VideoFormat = "hevc", SoundFormat = "flac" }.FormatFor(name).ShouldBe(format);
 }

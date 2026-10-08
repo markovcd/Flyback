@@ -318,15 +318,6 @@ public class ViewerOptionsTests
     }
 
     [Fact]
-    public void A_settings_flag_is_found_before_the_command_exists()
-    {
-        ViewerArguments.SettingsPath(["a.fbk", "--settings", "other.json"]).ShouldBe("other.json");
-        ViewerArguments.SettingsPath(["--settings=other.json"]).ShouldBe("other.json");
-        ViewerArguments.SettingsPath(["a.fbk"]).ShouldBeNull();
-        ViewerArguments.SettingsPath(["--settings"]).ShouldBeNull();
-    }
-
-    [Fact]
     public void A_preset_name_nothing_has_says_so_and_plays_nothing()
     {
         var error = new StringWriter();

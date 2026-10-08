@@ -5,6 +5,7 @@ using Flyback.Cli.Commands;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core;
+using Flyback.Host;
 using Flyback.Plugins.Hosting;
 using PluginRegistry = Flyback.Cli.Plugins;
 
@@ -58,11 +59,11 @@ internal static class Program
 
         var json = new Option<bool>("--json") { Description = "Write the answer as JSON instead of prose." };
 
-        var exports = ExportDefaults.Load(ExportDefaults.PathIn(args) ?? SettingsFile.Path);
+        var settings = OutputSettings.Load(SettingsFlag.PathIn(args) ?? SettingsFile.Path);
 
         var root = new RootCommand($"{GlobalConstants.ApplicationName} — a patchable synthesiser, from the command line.")
         {
-            RenderCommand.Build(plugins, exports),
+            RenderCommand.Build(plugins, settings),
             CheckCommand.Build(plugins, json),
             InfoCommand.Build(plugins, json),
             PrintCommand.Build(plugins),

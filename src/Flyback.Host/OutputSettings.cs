@@ -29,10 +29,10 @@ public sealed class OutputSettings
     /// the size list, so that a list with a row added or taken away still reads a
     /// file written against the old one — a size it no longer offers is the default.
     /// </summary>
-    public int Width { get; set; } = 960;
+    public int Width { get; set; } = DefaultWidth;
 
     /// <inheritdoc cref="Width"/>
-    public int Height { get; set; } = 540;
+    public int Height { get; set; } = DefaultHeight;
 
     /// <summary>Whether the picture is drawn by a shader. Asked for, not promised: a machine with no usable GPU draws on the processor whatever this says.</summary>
     public bool Gpu { get; set; } = true;
@@ -191,6 +191,22 @@ public sealed class OutputSettings
     /// <summary>Whether the panel knobs stand in a fixed grid — the MIDI section.</summary>
     public KnobGrid KnobGrid { get; set; } = new();
 
+    /// <summary>
+    /// The saved picture or sound format whose extension <paramref name="path"/> has,
+    /// or null where it is neither's: <c>.mp4</c> is H.265 to someone who chose H.265,
+    /// in a render as in a take.
+    /// </summary>
+    public string? FormatFor(string path)
+    {
+        var extension = Path.GetExtension(path);
+
+        foreach (var id in new[] { VideoFormat, SoundFormat })
+            if (ClipFormats.ById(id) is { } saved && extension.Equals(saved.Extension, StringComparison.OrdinalIgnoreCase))
+                return saved.Id;
+
+        return null;
+    }
+
     /// <summary>What is set for one backend, and nothing for one nobody has configured.</summary>
     public SettingValues SoundOf(string backend) =>
         Sound.TryGetValue(backend, out var held) ? new SettingValues(held) : SettingValues.None;
@@ -206,6 +222,9 @@ public sealed class OutputSettings
     /// <summary>Takes one sound input backend's answers, leaving every other backend's alone.</summary>
     public void RememberSoundIn(string backend, SettingValues values) =>
         SoundIn[backend] = new Dictionary<string, string>(values.All, StringComparer.Ordinal);
+
+    /// <summary>960 x 540: enough to judge a patch by, cheap enough to keep up.</summary>
+    public const int DefaultWidth = 960, DefaultHeight = 540;
 
     public const int LowestQuality = 1, HighestQuality = 100;
 
@@ -261,6 +280,9 @@ public sealed class OutputSettings
             // Brought into range rather than refused, since the file is one
             // somebody may have edited by hand: a frame rate of nought or a
             // latency of an hour would each break something far from here.
+            if (settings.Width <= 0 || settings.Height <= 0 || (long)settings.Width * settings.Height > SynthRenderer.MostPixels)
+                (settings.Width, settings.Height) = (DefaultWidth, DefaultHeight);
+
             settings.FrameRate = Math.Clamp(settings.FrameRate, SlowestFrameRate, FastestFrameRate);
 
             // Nought is a real choice here — uncapped — rather than the "nobody

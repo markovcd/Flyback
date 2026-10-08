@@ -11,6 +11,7 @@ using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
 using Flyback.Engine.Render;
 using Flyback.Gpu;
+using Flyback.Host;
 using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
@@ -29,7 +30,7 @@ namespace Flyback.Cli.Commands;
 /// </remarks>
 internal static class RenderCommand
 {
-    public static Command Build(PluginRegistry plugins, ExportDefaults defaults)
+    public static Command Build(PluginRegistry plugins, OutputSettings defaults)
     {
         var patch = new Argument<FileInfo?>("patch")
         {
@@ -58,7 +59,7 @@ internal static class RenderCommand
 
         var size = new Option<(int Width, int Height)>("--size")
         {
-            Description = "Frame size, as WIDTHxHEIGHT.",
+            Description = "Frame size, as WIDTHxHEIGHT, or " + string.Join(", ", Resolutions.Names.Keys) + ".",
             DefaultValueFactory = _ => (defaults.Width, defaults.Height),
             CustomParser = SizeArgument.Parse,
         };
@@ -83,14 +84,14 @@ internal static class RenderCommand
         var fps = new Option<double>("--fps")
         {
             Description = "Frames a second, for a clip.",
-            DefaultValueFactory = _ => defaults.Fps,
+            DefaultValueFactory = _ => defaults.FrameRate,
         };
 
         var quality = new Option<int>("--quality")
         {
             Description = "How good the picture is, 1 to 100 — a JPEG quality in an AVI, "
                 + "and a rate factor everywhere else.",
-            DefaultValueFactory = _ => defaults.Quality,
+            DefaultValueFactory = _ => defaults.JpegQuality,
         };
 
         var format = new Option<string>("--format")
@@ -250,7 +251,7 @@ internal static class RenderCommand
                 result.GetValue(fps),
                 result.GetValue(quality),
                 result.GetValue(format) ?? defaults.FormatFor(into.Name),
-                result.GetValue(ffmpeg) ?? defaults.Ffmpeg,
+                result.GetValue(ffmpeg) ?? (defaults.FfmpegPath.Length > 0 ? defaults.FfmpegPath : null),
                 result.GetValue(loudness),
                 result.GetValue(interpreted),
                 result.GetValue(gpu) ? PictureBackend.Gpu

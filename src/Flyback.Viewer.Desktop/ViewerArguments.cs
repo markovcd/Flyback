@@ -328,23 +328,6 @@ internal static class ViewerArguments
         return FrameSize.Of(text) is var (width, height) ? new PixelSize(width, height) : null;
     }
 
-    /// <summary>The <c>--settings</c> a command line names, found before the command exists.</summary>
-    /// <remarks>
-    /// The defaults are read from that file and the command is built from them, so it
-    /// cannot wait for the parse.
-    /// </remarks>
-    public static string? SettingsPath(string[] args)
-    {
-        for (var i = 0; i < args.Length; i++)
-        {
-            if (args[i] == "--settings") return i + 1 < args.Length ? args[i + 1] : null;
-
-            if (args[i].StartsWith("--settings=", StringComparison.Ordinal)) return args[i]["--settings=".Length..];
-        }
-
-        return null;
-    }
-
     private static int Refuse(TextWriter error, string sentence)
     {
         error.WriteLine($"{GlobalConstants.ApplicationName}: {sentence}");

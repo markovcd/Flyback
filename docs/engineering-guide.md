@@ -585,8 +585,9 @@ never to a file.
 
 ### The viewer and the CLI
 
-Both parse with `System.CommandLine` and both load plugins and install the
-catalog before building their command tree. The viewer is `ViewerPlayer` (its
+Both parse with `System.CommandLine`, both load plugins and install the
+catalog before building their command tree, and both read their defaults from
+the `OutputSettings` the editor saves, through `Flyback.Host`. The viewer is `ViewerPlayer` (its
 run, over the editor's `Transport`, with no window type in it) and `ViewerWindow`, composed in a container
 by `ViewerServices` as the editor is by `EditorServices`; `--hidden` runs the
 player with no preview at all. The CLI declares each command's options in
@@ -787,7 +788,7 @@ changed: saved patches name it.
 | `Flyback.Editor.Tests` | Editor, viewer, capture, updates | Headless Avalonia |
 | `Flyback.Viewer.Desktop.Tests` | The viewer's window and options | Headless Avalonia |
 | `Flyback.Editor.Desktop.Tests` | The desktop shell: installer, downloader, update folder, release notes, no static holding a thread-owned object | Headless Avalonia |
-| `Flyback.Ui.Tests` | The shared controls, the audio engine, MIDI | Headless Avalonia for the controls |
+| `Flyback.Ui.Tests` | The shared controls, the audio engine, MIDI, and `Flyback.Host`'s settings and presets | Headless Avalonia for the controls |
 | `Flyback.Cli.Tests` | Commands run in-process | |
 | `Flyback.Site.Tests` | flyback-site's checks, and its commands against a stand-in site | |
 | `Flyback.Plugins.Tests` | The host, every shipped module and preset | Loads real plugins off disk |
