@@ -1,0 +1,214 @@
+# Where the architecture is weakest, and the refactors that would fix it
+
+Written on 2026-10-08, on `main` at `a00af7c`. An audit, not a plan: each item is
+a proposal, and goes to TODO.md only once the user picks it. Delete an item here
+in the commit that lands it, and the file when the last goes.
+
+Code lines are `grep -cvE '^\s*(//|$)'`; comments run a third to two thirds of
+most files here. Everything was confirmed by reading; nothing was run.
+
+What holds and is not raised again: the layers reference one way; Engine takes no
+packages; Core references nothing; the container is used uniformly across the
+three editor hosts, with no hand-built service outside composition; every public
+*type* in Core and Plugins is named by a plugin; the backends are transcriptions
+by decision (ADR-0035); the binder is one walk (ADR-0183); presets are C# by
+decision (ADR-0138).
+
+## 1. There is no home for host code that is not Avalonia (High)
+
+The one structural gap. `Flyback.Ui` was made for "what two shells draw with"
+(ADR-0124) and carries Avalonia, so the CLI, the Site and the web viewer cannot
+reference it, and the Engine cannot hold anything that needs a plugin. Whatever
+a shell needs that is neither drawing nor engine has nowhere to live, so each
+shell writes it again:
+
+| Feature | Copies | Where |
+|---|---|---|
+| Build the playback stack: sound, line in, MIDI hub, control hub, transport | 2 | `Editor/EditorServices.cs:106-127`, `Viewer.Desktop/ViewerServices.cs:56-70` |
+| Open a patch for play: cue, compile for video, load, seed | 2 | `Editor/Playback.cs:292-310`, `Viewer.Desktop/ViewerPlayer.cs:80-98` |
+| Load the plugins and install the catalog | 7 | `Editor.Desktop/Startup.cs:119`, `Viewer.Desktop/Program.cs:56`, `Cli/Plugins.cs:31`, `Editor.Desktop/Shots/Shot.cs:51`, `Editor.Web/PageApp.cs:30`, `Editor.Android/DeviceApp.cs:39`, `Viewer.Web/WebExports.cs:63` |
+| Open a patch from bytes by its extension | 4 | `Engine/Graph/PatchFile.cs:21-53` (paths only), `Viewer.Web/WebExports.cs:108-137`, `Site/Reading/BrowserPlugins.cs:32-50`, `Site/Reading/Submissions.cs:24-82` |
+| Find a shipped preset by name and wrap its files | 4 | `Viewer.Desktop/ViewerSource.cs:36-64`, `Cli/Common/ShippedPresets.cs:29-56`, `Viewer.Web/WebExports.cs:95-112`, `Ui/PresetLibrary.cs:121-141` |
+| Read the `output` settings section | 2 | `Ui/OutputSettings.Load`, `Cli/Models/ExportDefaults.cs:30-61` (hand-read, because Ui carries Avalonia) |
+| The `--settings`, `--size`, `--oversample` flags | 2 | `Viewer.Desktop/ViewerArguments.cs:126-133,323-345`, `Cli/Models/ExportDefaults.cs:79-89`, `Cli/Commands/RenderCommand.cs:132-145` |
+
+It has already cost: the viewer's transport has no `LineIn` (TODO.md), the
+page's open hands over an empty `SampleLibrary` so a MIDI File answers nothing
+(TODO.md), only the Site's open applies `BundleLimit`, the CLI's `--preset`
+cannot see gallery presets while the viewer's can, `--size` takes names in the
+viewer and not the CLI, and the processor flag is `--cpu` in one and
+`--processor` in the other.
+
+**Fix.** A project `Flyback.Host` between `Flyback.Assist` and `Flyback.Ui`:
+no Avalonia, no packages, referenced by Ui, the CLI, the Site and both web
+projects. It holds `PluginHost.Install()` (load, verify, install the catalog,
+return it with its report), `TransportServices.AddTransport(...)` and
+`Transport.Open(Opened, bool video)`, `PatchFile.Open(name, bytes, limit)`
+returning a `PatchOpen`, `PresetOpening.Find(name)` (the Avalonia-free part of
+`PresetLibrary`), `OutputSettings` and `Resolutions`, and one `CommonOptions`
+for the flags the viewer and the CLI share. `Transport`, `AudioEngine`, `LineIn`,
+`MidiHub` and `ControlHub` move with them if they carry no Avalonia; check each.
+This is an ADR: it amends 0124's "what two shells draw with" to "what the
+shells draw with" and "what every host runs". The cheaper half-step, if the
+project is not wanted, is to put the Engine-only pieces (`PatchFile.Open` from
+bytes, `PresetOpening`, `OutputSettings`, `Resolutions`) in Engine now and leave
+the plugin-dependent ones where they are.
+
+## 2. The infix precedence rule is written three times, and has drifted (High)
+
+"Spell a tree as infix with the brackets it needs" lives in three files, each
+with its own private `Term` hierarchy, `Operators` table and `Strength` table:
+
+- `src/Flyback.Core/Graph/Formula.cs:129,158-247` (Literal, Socket, Call)
+- `src/Flyback.Engine/Language/Formulas.cs:99-153` (Operand, Signal, Operation)
+- `src/Flyback.Engine/Graph/ExpressionFusion.cs:41,369-379,539` (Literal, Signal, Knob, Call)
+
+Fusion's `Strength` brackets a negative zero (`:545`); the other two do not.
+ADR-0106 and 0107 say the printer and the binder follow one rule; ADR-0104 only
+places the reader in Core. Nothing declines sharing.
+
+**Fix.** `Formula.Term` (Literal, Socket, Call, Negate) becomes the one tree,
+with `Formula.Write(Term, Func<float,string> number, Func<int,string> socket)`
+in Core. `Formulas.Written` and `ExpressionFusion` build a `Formula.Term` and
+call it. Deletes two `Strength`s, one `Operators` and two writers, about 120
+lines, and the bracket rule has one owner. The binder's walk is untouched.
+
+## 3. Adding an opcode touches seven files, and the shape table hides a miss (High)
+
+`OpShape.Inputs` ends `_ => 3` and `Outputs` ends `_ => 1`
+(`src/Flyback.Core/Compile/OpShape.cs:63,74`), so an opcode left out of the
+table compiles and is wrong, and no test names `OpShape`. The four
+`Enum.GetValues<OpCode>()` theories do catch a missing backend arm, but
+`tests/Flyback.Core.Tests/Compile/TotalityTests.cs:118-123` restates
+`OpShape.Outputs` and `GlslEmitterTests.cs:34` restates the emitter's no-line
+list, so a new wide or write-nothing op is added in four places by hand. "Delay
+and Allpass take a line, Phase a cell" is counted again in
+`CompiledPatch.cs:507,521,577`, `IlEmitter.cs:126-127` and `JsEmitter.cs:58,330`,
+and the "registers an op reads" loop (`if (inputs > 0) A; if (inputs > 1) B; ...`)
+is written five times: `Core/Compile/Emitter.cs:162`, `Engine/Compile/FramePlan.cs:79`,
+`CompiledPatch.cs:616`, `IlEmitter.cs:309`, `JsEmitter.cs:346`.
+
+This is the shape table, not the lowering switches ADR-0035 keeps apart.
+
+**Fix.** Drop the `_` arms so the compiler demands every case, or add
+`Every_opcode_has_a_shape`; have both tests read `OpShape` rather than their
+own tables; add `OpShape.Owns(code)` returning Line, Cell or None and
+`OpShape.Reads(in Op)` in Core, and replace the seven hand counts with them.
+
+## 4. `Document` is the editor's god object (Medium)
+
+`src/Flyback.Editor/Document.cs` is 657 code lines with 30 public members
+reached from 20 files, holding seven concerns: ownership transitions
+(`:1236-1421`), the undo landing (`:794-1032`, ADR-0071), the knob-to-text
+write-back with five pending sets `turned/restated/dialed/given/relaid`
+(`:482-771`), caret-follows-selection with `adrift` flags (`:385-441`), paste of
+JSON into text (`:451-479`), view toggling and printing (`:1044-1137`), and
+evaluation (`:1150-1221`). The `writingBack/stepping/mapped/printed` guards are
+shared by all seven, so every feature touching text or knobs edits this file.
+ADR-0148 gives Document ownership, write-back and the undo landing; it does not
+forbid helpers.
+
+**Fix.** `TextWriteBack` (the five sets and WriteBack/Write/Carry/Rest/Lay/Put/
+PanelEdited), `CaretFollow` (PointAt/Adrift, raising PanelStale) and a static
+`PastedPatch.Written`, each a part in the container. Document keeps ownership,
+the undo landing, Evaluate and ShowCode, about 350 lines.
+
+## 5. `PresetGallery` is six partials around four nested classes (Medium)
+
+`Gallery/PresetGallery.cs` 473, `.Layout.cs` 442 (nested `Layout`), `.Site.cs`
+244 (`SiteRun`), `.Choice.cs` 242 (`Choice`), `.Prompt.cs` 66, `.Card.cs` 43
+(`Card`): 1,510 code lines of one type, beside `PresetSlot.cs` (475) that is
+"everything the gallery it opens does". It is the ADR-0039 shape ("a banner is
+not a boundary") that ADR-0148 replaced for the window, kept alive through the
+one-type-per-file rule's nested-type allowance. The same loophole shows in
+`Canvas/CanvasGestures.cs` (613, "five gestures over one Drag state").
+
+**Fix.** Promote `Layout`, `Choice`, `SiteRun` and `Card` to top-level
+`GalleryLayout`, `GalleryChoice`, `SiteRun`, `PresetCard` in `Gallery/`,
+registered with `AddPart`, and delete the partials. Split `CanvasGestures` per
+gesture (`ModuleDrag`, `WireDrag`, `BoxSelect`, `PanZoom`, `WheelTurn`) over
+the `Drag` record it already names.
+
+## 6. Public members only the host calls, one of them a hole (Medium)
+
+`ContractSurfaceTests` guards types; nothing guards members. Public in Core with
+no plugin naming them: `NodeCatalog.BusOf` (`Buses.cs:24`), `FormulaOf` and
+`FormulaProblem` (`Maths.cs:375,383`), `IsChart` (`Output.cs:34`),
+`LegacyTypeIds` (`Legacy.cs:18`), and `NodeCatalog.Install`, which a plugin
+could call to swap the catalog under the host. In Plugins:
+`PatchWorkbench.Undescribed:107`, `.Edits:142`, `.ToolCalls:145`,
+`ToolOutcome.Fine/Reference`, `AssistantConfig.Unset`; ADR-0102 says the
+workbench's public members are the ones an assistant calls. Housekeeping:
+`Flyback.Plugins.csproj` has `<Compile Update="Assist\PatchWorkbench.Senses.cs">`
+for a file that no longer exists.
+
+**Fix.** `internal` with `*REMOVED*` lines in `PublicAPI.Unshipped.txt`
+(`InternalsVisibleTo` already covers the hosts), and a member-level pass in
+`ContractSurfaceTests` over `PublicAPI.Shipped.txt` against `src/plugins` and
+the two test plugins, so the next host-only member fails the gate.
+
+## 7. A tool's argument names are declared twice (Medium)
+
+`src/Flyback.Plugins/Assist/ToolTable.cs:64-477` declares sixteen tools with a
+JSON schema string each; the bodies re-spell the property names as literals
+(`ModuleEdits.cs:24,41` and 17 more reads through `ToolArguments`). Nothing ties
+a schema's properties to what its body reads, so a rename drifts silently and
+`ToolOutcome.Refused` is the only symptom.
+
+**Fix.** A `ToolField(Name, Kind, Required, Description)` record declared once
+per tool; `PatchTool.Schema` is rendered from it and `ToolArguments` reads
+through it. Cheaper first step: a test asserting every property a body reads is
+in its tool's schema.
+
+## 8. Startup has three homes and a bag of statics (Medium)
+
+Registration is one `AddPart<T>` and the graph is validated, so the container
+holds (ADR-0150). What sprawls is *when* things run: `EditorView.cs:377-382`
+starts every `ISettingsSection` from the constructor while `Reactions.building`
+is true, so a section's `Start` cannot raise a notice, against ADR-0148's "say
+it from Start"; `EditorStart.cs:27-45` runs nine steps from `MainWindow.Start`;
+`EditorOpened.cs:15-22` runs three more from `Window.Opened`. A new startup step
+has three candidate homes. `Editor.Desktop/Startup.cs:20-79` exposes ten static
+settable properties copied field by field into `EditorLaunch` at
+`FlybackApp.cs:58-68`. `EditState.cs:57-80` rebuilds the inspector and sets
+toolbar buttons from a fourth class.
+
+**Fix.** `IStartAt { Phase; Task On(); }` collected by `Parts` with phases
+Built, Shown, Opened; `EditorStart` and `EditorOpened` become ordinary parts;
+`Startup.Load` returns an `EditorLaunch` instead of statics; Inspector and
+Toolbar react to `OwnershipChanged` themselves.
+
+## 9. One feature written twice, smaller (Medium to Low)
+
+- **MIDI learn**: `Knobs/PanelKnobs.cs:388-396` and `Knobs/KnobRandomizer.cs:200-208`, same device list, cancel-and-replace and "no MIDI device" report. A `MidiLearn` part both call. `ControlsPanel.cs` carries five events that exist only to forward `RollCell` to `KnobRandomizer`.
+- **Stage keys**: Escape, F3, F11, Space and Ctrl+P handled in `EditorView.cs:166-178`, `Windows/PictureWindow.cs:64-66` and `Viewer.Desktop/ViewerWindow.cs:131-138`. A `StageKeys` map in Ui all three ask. `TransportControls.cs:44,50` takes `Overlay` and `PictureWindow` as public settable properties; `Register(...)` instead.
+- **The model survey loop**: `OpenAi/OpenAiProbe.cs:49-95` and `Gemini/GeminiSurvey.cs:61-117` are one loop (bare, picture, sound, report). ADR-0161 pulled the turn into the host and left the survey out; `GeminiSession.cs` declines sharing the *session* loop, not this. `Assist/SurveyLoop.cs` over an `IModelProbe`.
+- **The audio writer thread**: the same thread, block, `volatile running`, `Stop` with `Join(2000)` in `LinuxIO/AlsaAudioDevice.cs:50-148`, `AndroidIO/AudioTrackDevice.cs:16-120`, `LinuxIO/AlsaAudioCapture.cs:37-160`, `AndroidIO/AudioRecordCapture.cs:16-97`. `src/plugins/Shared/Audio/BlockWriter.cs` and `BlockReader.cs`, linked by source as `Shared/Programs` is. WASAPI and CoreAudio are callback-driven and stay as they are.
+- **The page end of the speaker in JS**: `Viewer.Web/wwwroot/main.js:149-235` and `Editor.Web/wwwroot/speakers.js:73-120` do the same handshake with `speaker.js` and `sound.js`. One `speakers.js` exporting start/seek/time/status, imported by both pages as `gl.js` is.
+- **CLI and Site**: `Flyback.Cli.csproj:34` links `Site/Admin/SiteAdmin.cs` as source, and the media PUT and `--server` check are still written twice (`Cli/Rendering/MediaUpload.cs:25-30` vs `Site/Commands/PushMediaCommand.cs:95-100`; `RenderPresetsCommand.cs:95-100` vs `SiteAdmin.Client:16`). A `Flyback.Site.Client` library both reference. Check while there: `Flyback.Site.csproj:24-33` lists the web plugins twice, minus Drawings, and `LoadLinked(..., "WebPlugin")` names Drawings; if `Assembly.Load` fails there, a Drawings preset is reported as lacking. Not confirmed by running.
+- **Silent sound stand-ins**: `Editor.Desktop/Shots/ShotSound.cs` and `Editor.Web/PageSound.cs` share the compile-for-live-inputs update and the null audition. An `UnplayedSound` base in Ui.
+- **`PluginHost.cs`** (514 lines) is half a registry: three entry points, id-clash refusal, catalog assembly, and a nested `Registry` with checkpoint and rollback. `Hosting/PluginRegistry.cs` and `Hosting/PluginCatalogBuilder.cs`.
+- **`CompiledPatch`** (406) is the program description, the interpreter, the IL hand-over and the arithmetic library. `Arithmetic` and `Interpreter` beside it; ADR-0076's "IL calls the interpreter's own helpers" survives the move.
+- **Hand-kept registries**: `NodeCatalog.cs:38-60` concatenates 21 group methods by hand across 24 partials, and `Presets.cs:24-120` lists 26 builders; a new group or preset left off compiles and ships nothing. One reflection theory each.
+
+## 10. Tests (Medium to Low)
+
+- **Two headless harnesses for one editor.** `Flyback.Specs` does not reference `Flyback.Ui.Testing`; it carries a third `Application` subclass (`Support/Headless.cs`), its own session, and `Support/EditorDriver.cs` (906 code lines) and `Support/ViewerRun.cs` each re-implement `Settle()` and `Press()`. A fix to how a window settles lands in one harness and not the other. Specs references Ui.Testing and the drivers build on `UiTest`.
+- **`Editor.Tests/Ui/` is a bucket.** 120 of 170 files sit in a folder `src/Flyback.Editor` does not have; the guide says the namespace mirrors the folder. Move only, into the feature folders.
+- **Four files hold a fifth of Editor.Tests.** `AssistantPanelTests.cs` 1,186 code lines, `SourceViewTests.cs` 1,154, `OutputSettingsTests.cs` 943, `NodeEditorTests.cs` 676; `AssistantPanelTests` and `CredentialsTests` each carry a private `FakeStore : ISecretStore`. Split by rule group; one `FakeSecretStore`.
+
+## 11. Drift in the documents, no code change (Low)
+
+- ADR-0017's body says "about 2 700 across seven files"; `Canvas/` is 5,232 code lines in 42 files, `NodeEditor.cs` itself 211. The decision holds; the count in the latest amendment does not.
+- ADR-0148 says `MainWindow` owns layout and keys in one file; ADR-0162 moved them to `EditorView.cs`, and neither cites the other. A dated amendment on 0148 and a README cross-reference.
+- ADR-0035 and the guide's section 4 place `GlslEmitter` in `Core/Compile`; it is `Engine/Compile/GlslEmitter.cs`.
+- `src/Flyback.Editor/IDialog.cs` sits at the project root and declares `namespace Flyback.Editor.Controls`, the one exception to "no exceptions".
+- Eight `src/` files declare two top-level types, all in plugins: `Mastering/Dsp.cs`, `Figures/Strike.cs`, `Gemini/GeminiSurvey.cs`, `MacIO/CoreMidiInput.cs`, `LinuxIO/AlsaMidiInput.cs`, and the three secret-store plugins' `*Plugin.cs`. Split as each is next touched, per the rule.
+- `Flyback.Ui` holds about 640 code lines nothing but the editor names (`Midi/InstrumentLibrary.cs`, `Audio/LineIn.cs`, `Controls/SeekTrack.cs`, `PlayheadLine.cs`, `FrameRateMeter.cs`, `PopupHoles.cs`, `FingerSwipe.cs`, `RandomizeSettings.cs`, `StatusClock.cs`, `MonitorSpot.cs`, `FullScreenOn.cs`, `OversamplingText.cs`, `GraphicsDriver(s).cs`, `GraphicsApi.cs`, `IPresetFolder.cs`, `Capture/IAudioSink.cs`), and `Midi/KeyCodes.cs` and `GraphicsDrivers.cs` are named only by tests. Item 1 decides where these go; until then, move them into the editor's feature folders and amend ADR-0124's list.
+
+## Order
+
+1, 2 and 3 first: 1 is the gap the TODO bugs keep falling into, 2 and 3 are an
+afternoon each and close a drift that is already real. 4 and 5 next, since the
+editor's churn lands in them. 6 before 1.0.0, since the contract is a promise
+from then on. The rest as each file is next touched.

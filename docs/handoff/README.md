@@ -15,6 +15,7 @@ Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or 
 | [touch-bugs.md](touch-bugs.md) | What a finger still cannot do, on the desktop and in the page | Issue | Open: 7 of 20 fixed, the rest not yet checked on a phone |
 | [frame-sequences.md](frame-sequences.md) | A Path that plays a numbered sequence of drawings, a frame at a time, so the animation is the music | Plan | Open |
 | [youtube-videos.md](youtube-videos.md) | Videos for the YouTube channel: how one is made, what was made, what is proposed | Backlog | Open, grows |
+| [architecture-audit.md](architecture-audit.md) | Where the architecture is weakest, and the refactor each point wants | Audit | Open |
 
 Severity, for an issue: **Critical**, act now; **High**, a security or data problem in a release; **Medium**, wrong behavior or real risk; **Low**, friction or latent risk.
 
