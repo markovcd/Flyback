@@ -103,7 +103,7 @@ public sealed class AskSteps : IDisposable
     {
         var error = new StringWriter();
 
-        code = Cli.Program.Run(
+        code = InProcessCli.Run(
             ["ask", Path(patch), .. rest.Split(' ')],
             new PluginRegistry(() => Catalog, folder.FullName, null),
             new InvocationConfiguration { Output = TextWriter.Null, Error = error });

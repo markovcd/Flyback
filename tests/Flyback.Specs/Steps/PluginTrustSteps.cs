@@ -164,7 +164,7 @@ public sealed class PluginTrustSteps : IDisposable
         var output = new StringWriter();
         var error = new StringWriter();
 
-        var code = Flyback.Cli.Program.Run(
+        var code = InProcessCli.Run(
             arguments,
             new PluginRegistry(() => PluginCatalog.Empty, Plugins, null, () => new PluginTrust(true, ShippedList.Beside(Plugins), Allowances)),
             new InvocationConfiguration { Output = output, Error = error });

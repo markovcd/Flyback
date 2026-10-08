@@ -137,7 +137,7 @@ public sealed class ExportSteps(PatchContext context, IUnitTestRuntimeProvider r
             "--settings", Path.Combine(folder.FullName, "none.json"), .. extra,
         ];
 
-        var code = Cli.Program.Run(
+        var code = InProcessCli.Run(
             args,
             new PluginRegistry(() => PluginCatalog.Empty, folder.FullName, null),
             new InvocationConfiguration { Output = TextWriter.Null, Error = error });

@@ -52,7 +52,7 @@ public sealed class HelpSteps
         var output = new StringWriter();
         var error = new StringWriter();
 
-        var code = Cli.Program.Run(
+        var code = InProcessCli.Run(
             ["modules", NodeCatalog.FilterTypeId],
             new PluginRegistry(() => PluginCatalog.Empty, Path.GetTempPath(), null),
             new InvocationConfiguration { Output = output, Error = error });

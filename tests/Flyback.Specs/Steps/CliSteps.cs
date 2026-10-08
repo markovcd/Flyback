@@ -565,7 +565,7 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
         var output = new StringWriter();
         var error = new StringWriter();
 
-        code = Cli.Program.Run(
+        code = InProcessCli.Run(
             arguments,
             new PluginRegistry(catalog, folder.FullName, null),
             new InvocationConfiguration { Output = output, Error = error });

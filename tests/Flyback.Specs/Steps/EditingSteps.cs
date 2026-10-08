@@ -121,7 +121,7 @@ public sealed class EditingSteps(PatchContext context, Session session, EditorDr
         var output = new StringWriter();
         var error = new StringWriter();
 
-        var code = Cli.Program.Run(
+        var code = InProcessCli.Run(
             ["print", "--preset", name],
             new PluginRegistry(() => Plugins.Hosting.PluginCatalog.Empty, "nowhere", null),
             new System.CommandLine.InvocationConfiguration { Output = output, Error = error });
