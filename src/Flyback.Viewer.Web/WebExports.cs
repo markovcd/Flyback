@@ -110,33 +110,12 @@ public static partial class WebExports
     [JSExport]
     public static string? OpenFile(string name, byte[] bytes, int width, int height, string part) => Open(() =>
     {
-        var extension = Path.GetExtension(name);
+        var bundle = PatchFile.Read(name, bytes, Plugins.Modules);
+        if (bundle.Load is { IsComplete: false } lacking) throw Refused(lacking);
 
-        if (string.Equals(extension, PatchBundle.Extension, StringComparison.OrdinalIgnoreCase))
-        {
-            using var stream = new MemoryStream(bytes);
-            var bundle = PatchBundle.Read(stream, Plugins.Modules);
-            if (bundle.Load is { IsComplete: false } lacking) throw Refused(lacking);
+        var files = BundleFiles.Of(bundle);
 
-            var files = BundleFiles.Of(bundle);
-
-            return new Opened(bundle.Patch, files, files);
-        }
-
-        var text = Encoding.UTF8.GetString(bytes);
-
-        if (string.Equals(extension, $".{PatchLanguage.FileExtension}", StringComparison.OrdinalIgnoreCase))
-        {
-            var built = PatchLanguage.Build(text, Plugins.Modules);
-            if (!built.Ok) throw new InvalidDataException(string.Join('\n', built.Issues));
-
-            return new Opened(built.Patch, new SampleLibrary(), new ImageLibrary());
-        }
-
-        var load = PatchIO.Read(text, Plugins.Modules);
-        if (!load.IsComplete) throw Refused(load);
-
-        return new Opened(load.Patch, new SampleLibrary(), new ImageLibrary());
+        return new Opened(bundle.Patch, files, files);
     }, width, height, part);
 
     /// <summary>A patch this page cannot build all of is not played in part, as the editor opens none of it.</summary>

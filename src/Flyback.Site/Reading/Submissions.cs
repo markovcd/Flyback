@@ -27,8 +27,7 @@ internal static class Submissions
 
         var patch = extension switch
         {
-            ".fbk" => Loose(file),
-            PatchBundle.Extension => Bundled(file),
+            ".fbk" or PatchBundle.Extension => Read(fileName, file),
             _ => null,
         };
 
@@ -50,56 +49,35 @@ internal static class Submissions
         var called => called,
     };
 
-    private static Patch? Loose(byte[] file)
-    {
-        string json;
-
-        try
-        {
-            json = new UTF8Encoding(false, true).GetString(file).TrimStart(ByteOrderMark);
-        }
-        catch (DecoderFallbackException)
-        {
-            return null;
-        }
-
-        return Parsed(json);
-    }
-
-    private static Patch? Bundled(byte[] file)
+    /// <summary>A patch only where the bytes are one: a bundle, or a document that is an object with a module in it.</summary>
+    private static Patch? Read(string fileName, byte[] file)
     {
         try
         {
-            using var archive = new MemoryStream(file, writable: false);
-            var bundle = PatchBundle.Read(archive, limit: BundleLimit);
+            if (!PatchFile.Bundled(fileName) && !Shaped(file)) return null;
 
-            return bundle.Patch.Nodes.Count > 0 ? bundle.Patch : null;
+            var patch = PatchFile.Read(fileName, file, limit: BundleLimit).Patch;
+
+            return patch.Nodes.Count > 0 ? patch : null;
         }
-        catch (Exception e) when (e is InvalidDataException or JsonException or IOException)
+        catch (Exception e) when (e is InvalidDataException or JsonException or IOException or DecoderFallbackException)
         {
             return null;
         }
     }
 
-    /// <summary>A patch only where the text is one: an object with a module in it.</summary>
-    private static Patch? Parsed(string json)
+    /// <summary>
+    /// Whether the text is an object with modules in it, asked before the reader
+    /// fills in what any patch is short of: a document of anything else would read
+    /// as an empty patch rather than be refused.
+    /// </summary>
+    private static bool Shaped(byte[] file)
     {
-        try
-        {
-            using (var document = JsonDocument.Parse(json))
-            {
-                if (document.RootElement.ValueKind != JsonValueKind.Object
-                    || !document.RootElement.TryGetProperty(nameof(Patch.Nodes), out var nodes)
-                    || nodes.ValueKind != JsonValueKind.Array
-                    || nodes.GetArrayLength() == 0)
-                    return null;
-            }
+        using var document = JsonDocument.Parse(new UTF8Encoding(false, true).GetString(file).TrimStart(ByteOrderMark));
 
-            return PatchIO.Read(json).Patch;
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
+        return document.RootElement.ValueKind == JsonValueKind.Object
+            && document.RootElement.TryGetProperty(nameof(Patch.Nodes), out var nodes)
+            && nodes.ValueKind == JsonValueKind.Array
+            && nodes.GetArrayLength() > 0;
     }
 }

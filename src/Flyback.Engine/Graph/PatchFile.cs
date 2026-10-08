@@ -1,4 +1,8 @@
+using System.Collections.ObjectModel;
+using System.Text;
+using System.Text.Json;
 using Flyback.Core;
+using Flyback.Core.Graph;
 using Flyback.Engine.Language;
 using Flyback.Engine.Render;
 
@@ -52,13 +56,64 @@ public static class PatchFile
         }
     }
 
+    /// <summary>
+    /// The patch in a file's bytes, told apart by the name's extension as a path is: a
+    /// bundle with the files it carries, a document, or the patch written as text.
+    /// </summary>
+    /// <remarks>
+    /// For a page, a site or a server holding the file and no disk. Throws rather
+    /// than reports, since what is said to whoever sent the bytes is theirs to word:
+    /// <see cref="InvalidDataException"/> for a bundle that is not one, text that
+    /// does not build or a document that is not a patch; <see cref="JsonException"/>
+    /// for a document that is not JSON; <see cref="DecoderFallbackException"/> for
+    /// bytes that are not text. A document from a later version or naming a module
+    /// this build has not got reads without throwing, and its <see cref="LoadedBundle.Load"/> says so.
+    /// </remarks>
+    /// <param name="limit">The most a bundle may unpack to.</param>
+    public static LoadedBundle Read(string fileName, byte[] bytes, ModuleCatalog? against = null, long limit = PatchBundle.UnpackedLimit)
+    {
+        if (Bundled(fileName))
+        {
+            using var archive = new MemoryStream(bytes, writable: false);
+
+            return PatchBundle.Read(archive, against, limit);
+        }
+
+        var text = Strict.GetString(bytes).TrimStart(ByteOrderMark);
+
+        if (Sourced(fileName))
+        {
+            var built = PatchLanguage.Build(text, against);
+            if (!built.Ok) throw new InvalidDataException(string.Join('\n', built.Issues));
+
+            return new LoadedBundle(built.Patch, NoFiles);
+        }
+
+        var load = PatchIO.Read(text, against);
+
+        return new LoadedBundle(load.Patch, NoFiles, Load: load);
+    }
+
     /// <summary>Whether a path names a bundle rather than a patch.</summary>
-    public static bool Bundled(FileInfo file) =>
-        string.Equals(file.Extension, PatchBundle.Extension, StringComparison.OrdinalIgnoreCase);
+    public static bool Bundled(FileInfo file) => Bundled(file.Name);
+
+    /// <inheritdoc cref="Bundled(FileInfo)"/>
+    public static bool Bundled(string fileName) =>
+        string.Equals(Path.GetExtension(fileName), PatchBundle.Extension, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Whether a path names the patch written as text rather than as a document.</summary>
-    public static bool Sourced(FileInfo file) =>
-        string.Equals(file.Extension, $".{PatchLanguage.FileExtension}", StringComparison.OrdinalIgnoreCase);
+    public static bool Sourced(FileInfo file) => Sourced(file.Name);
+
+    /// <inheritdoc cref="Sourced(FileInfo)"/>
+    public static bool Sourced(string fileName) =>
+        string.Equals(Path.GetExtension(fileName), $".{PatchLanguage.FileExtension}", StringComparison.OrdinalIgnoreCase);
+
+    private const char ByteOrderMark = (char)0xFEFF;
+
+    /// <summary>Throws on bytes that are not UTF-8, rather than reading them as question marks.</summary>
+    private static readonly UTF8Encoding Strict = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+
+    private static readonly IReadOnlyDictionary<string, byte[]> NoFiles = ReadOnlyDictionary<string, byte[]>.Empty;
 
     /// <summary>The patch a source file describes, or none with every complaint said.</summary>
     /// <remarks>

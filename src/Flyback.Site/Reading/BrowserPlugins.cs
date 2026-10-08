@@ -16,8 +16,6 @@ namespace Flyback.Site.Reading;
 /// </remarks>
 internal sealed class BrowserPlugins(ModuleCatalog modules)
 {
-    private const char ByteOrderMark = (char)0xFEFF;
-
     private readonly ConcurrentDictionary<string, BrowserLack?> read = new();
 
     /// <summary>The plugins this build of the pages links, as the site's project names them.</summary>
@@ -35,9 +33,7 @@ internal sealed class BrowserPlugins(ModuleCatalog modules)
 
         try
         {
-            load = string.Equals(Path.GetExtension(fileName), PatchBundle.Extension, StringComparison.OrdinalIgnoreCase)
-                ? PatchBundle.Read(new MemoryStream(file, writable: false), modules, Submissions.BundleLimit).Load
-                : PatchIO.Read(new UTF8Encoding(false, true).GetString(file).TrimStart(ByteOrderMark), modules);
+            load = PatchFile.Read(fileName, file, modules, Submissions.BundleLimit).Load;
         }
         catch (Exception e) when (e is InvalidDataException or JsonException or IOException or DecoderFallbackException)
         {
