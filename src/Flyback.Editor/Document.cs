@@ -37,14 +37,16 @@ internal sealed class Document
     private readonly ReportLine report;
     private readonly Usage usage;
     private readonly Reactions reactions;
+    private readonly LastPress lastPress;
 
-    public Document(NodeEditor editor, SourceView source, ReportLine report, Usage usage, Reactions reactions)
+    public Document(NodeEditor editor, SourceView source, ReportLine report, Usage usage, Reactions reactions, LastPress lastPress)
     {
         this.editor = editor;
         this.source = source;
         this.report = report;
         this.usage = usage;
         this.reactions = reactions;
+        this.lastPress = lastPress;
 
         source.IsVisible = false;
 
@@ -1072,7 +1074,8 @@ internal sealed class Document
 
         if (shown)
         {
-            source.Focus();
+            // Under a finger the text waits to be tapped, rather than throwing up the on-screen keyboard.
+            if (!lastPress.ByFinger) source.Focus();
 
             // Where the caret already is, said once. The panel follows the caret
             // as it moves, and a view that had just opened would otherwise show

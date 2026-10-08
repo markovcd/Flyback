@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
@@ -64,6 +65,48 @@ public class TouchButtonsTests : EditorTest
 
         selectAll.IsVisible.ShouldBeTrue();
         paste.IsVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void The_code_view_a_finger_opens_waits_to_be_tapped_before_taking_the_keys()
+    {
+        var window = Open(Trio(out _, out _, out _));
+        var code = CodeLaidOut(window);
+
+        Touch(window);
+        code.IsChecked = true;
+        Settle(window);
+
+        All<SourceView>(window).Single().IsKeyboardFocusWithin.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void The_code_view_a_mouse_opens_takes_the_keys()
+    {
+        var window = Open(Trio(out _, out _, out _));
+        var code = CodeLaidOut(window);
+
+        code.IsChecked = true;
+        Settle(window);
+
+        All<SourceView>(window).Single().IsKeyboardFocusWithin.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// The toolbar's Code, after showing the text once and putting it away: the text cannot take
+    /// the keys before it has ever been laid out. Turned on by its property, as its press does,
+    /// so no pointer of the test's own is pressed.
+    /// </summary>
+    private static ToggleButton CodeLaidOut(Window window)
+    {
+        var code = All<ToggleButton>(window).Single(b => b.Name == "code");
+
+        code.IsChecked = true;
+        Settle(window);
+        code.IsChecked = false;
+        Settle(window);
+
+        return code;
     }
 
     [AvaloniaFact]

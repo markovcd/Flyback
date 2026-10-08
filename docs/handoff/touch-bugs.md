@@ -10,10 +10,8 @@ delete this file, in the commit that lands the last item.
 A touch screen is a Windows tablet as much as a phone in the web editor, and most of
 these hold for both; the two marked **page only** are the browser's.
 
-Every item but 4, 6, 8 and 9 is fixed and gone from here; those keep the numbers
-they were first listed under. Whether the last press was a finger is `LastPress.ByFinger`,
-which the module list and the preset gallery read to leave their text box to be tapped;
-item 8 wants the same.
+Every item but 4, 6 and 9 is fixed and gone from here; those keep the numbers they were
+first listed under.
 
 ## Out of reach
 
@@ -34,15 +32,6 @@ The computer keyboard is a MIDI In's only instrument on the page
 (`EditorView.cs:207`). Wants an on-screen keyboard, not a fix.
 
 ## On-screen keyboard
-
-### 8. The Code button focuses the text view (suspected)
-
-`Document.cs:1072-1074`: `ShowCode(true)` calls `source.Focus()`
-(`SourceView.cs:592`, `text.TextArea.Focus()`); the text is always editable
-(`Document.cs:1444`). Suspected only in whether AvaloniaEdit's TextArea is a
-text-input client the browser backend raises the keyboard for.
-
-Repro: tap `</>`.
 
 ### 9. The keyboard covers the field, and iOS sticks zoomed in (suspected, page only)
 
