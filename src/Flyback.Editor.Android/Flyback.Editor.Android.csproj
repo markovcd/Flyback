@@ -4,7 +4,7 @@
     The editor on an Android tablet or phone (ADR-0184): Flyback.Editor under
     Avalonia.Android, with the module plugins linked in as the page links them.
     Needs the android workload, a JDK and the Android SDK, none of which the gate
-    image carries, so it is built by path and kept out of Flyback.slnx.
+    image carries, so Flyback.slnx lists it without building it and it is built by path.
   -->
   <PropertyGroup>
     <TargetFramework>net10.0-android</TargetFramework>

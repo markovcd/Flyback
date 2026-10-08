@@ -37,6 +37,9 @@
     <Project Path="src/Flyback.Site/Flyback.Site.csproj" />
     <Project Path="src/Flyback.Viewer.Web/Flyback.Viewer.Web.csproj" />
     <Project Path="src/Flyback.Editor.Web/Flyback.Editor.Web.csproj" />
+    <Project Path="src/Flyback.Editor.Android/Flyback.Editor.Android.csproj">
+      <Build Project="false" />
+    </Project>
   </Folder>
   <Folder Name="/src/plugins/">
     <Project Path="src/plugins/Flyback.Plugins.Dpapi/Flyback.Plugins.Dpapi.csproj" />
@@ -57,6 +60,11 @@
     <Project Path="src/plugins/Flyback.Plugins.SystemOne/Flyback.Plugins.SystemOne.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Voice/Flyback.Plugins.Voice.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.WinIO/Flyback.Plugins.WinIO.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/TestOnlyMembers/TestOnlyMembers.csproj">
+      <Build Project="false" />
+    </Project>
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Flyback.Ui.Testing/Flyback.Ui.Testing.csproj" />

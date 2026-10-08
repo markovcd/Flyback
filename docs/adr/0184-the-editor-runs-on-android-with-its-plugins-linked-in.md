@@ -32,8 +32,9 @@ canvas surface (0162) is not needed.
 **It keeps its files in the app's private folder.** Settings, presets, groups, thumbnails
 and recovery live under `FilesDir`, which no other app reads.
 
-**It is built by path, outside the gate.** The project is not in `Flyback.slnx`, so the
-gate neither needs the workload nor builds it. The android workload goes on a .NET SDK
+**It is built by path, outside the gate.** `Flyback.slnx` lists the project with
+`<Build Project="false" />`, so an IDE shows it while the gate neither restores nor builds it
+and needs no workload. The android workload goes on a .NET SDK
 from Microsoft, since a distribution's packaged SDK takes no workloads.
 
 ## Consequences

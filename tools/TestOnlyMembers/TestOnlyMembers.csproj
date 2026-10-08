@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Standalone: not in Flyback.slnx, and its own Directory.* files keep the repo's locked, central package setup out. -->
+  <!-- Standalone: listed in Flyback.slnx but never built with it, and its own Directory.* files keep the repo's locked, central package setup out. -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
