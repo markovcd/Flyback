@@ -99,6 +99,25 @@ public sealed class DecisionsSectionTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void A_key_typed_is_taken_on_save_said_where_it_is_held_and_can_be_forgotten()
+    {
+        var (section, _) = Built(models: [new ScriptedDecider(), new Hosted()]);
+        Named<ComboBox>(section, "decisionModel").SelectedItem = "Hosted";
+        var key = Named<TextBox>(section, "decisionKey");
+
+        key.Text = "test-key-not-real";
+        section.Save();
+
+        key.Text.ShouldBeEmpty("a key taken is not left in the box");
+        Named<TextBlock>(section, "decisionStatus").Text.ShouldBe("Hosted is ready. What is asked is sent to it.");
+        All<TextBlock>(section.View).ShouldContain(t => t.Text != null && t.Text.StartsWith("In force, held for this window only", StringComparison.Ordinal));
+
+        All<Button>(section.View).Single(b => b.Content as string == "Forget key").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        Named<TextBlock>(section, "decisionStatus").Text.ShouldBe("No key yet.");
+    }
+
+    [AvaloniaFact]
     public async Task Trying_it_answers_the_routing_question_about_what_was_typed()
     {
         var scripted = new ScriptedDecider();

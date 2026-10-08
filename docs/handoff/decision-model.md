@@ -93,10 +93,9 @@ messages.
 ### Next
 
 Landed: each ask names its use and the settings may lay a checkpoint over it, the module search
-asks two orders and averages, and `decide --set`, `--for` and `--save` set a model up. Left:
+asks two orders and averages, `decide --set`, `--for` and `--save` set a model up, and the
+Decisions and Assistant pages take a key through one control, `Settings/KeyRows`. Left:
 
-- **The key rows in `Decide/DecisionsSection.cs` and `Assist/AssistantSettingsPage.cs` become
-  one control**: both are a key that `Credentials` holds. Proposed, not yet agreed.
 - **Settings → Decisions shows a use's settings**: today only the command line writes them, and the
   editor keeps them untouched when it saves.
 - **A start that warms the model**: the first asks after laya-serve starts miss the deadline.

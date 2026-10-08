@@ -30,38 +30,8 @@ internal sealed class AssistantSettingsPage
     /// <summary>Something on the page moved that the panel shows: the provider, the form, or the key.</summary>
     public event EventHandler? Changed;
 
-    private readonly TextBox keyBox = new()
-    {
-        PasswordChar = '•',
-        FontSize = Text.Body,
-        HorizontalAlignment = HorizontalAlignment.Stretch,
-    };
-
-    /// <summary>
-    /// What is under the key field, since the field itself cannot say it. A key
-    /// that is set is never read back into the box (ADR-0034), and blank is also
-    /// what "no key" looks like — so without this the one screen somebody opens to
-    /// check cannot answer the question.
-    /// </summary>
-    private readonly TextBlock keyNote = new()
-    {
-        FontSize = Text.Small,
-        Foreground = Text.Muted,
-        TextWrapping = TextWrapping.Wrap,
-
-        // Under the box rather than under its caption, as a declared row's note is.
-        Margin = new Thickness(InspectorRows.SettingsGutter, 0, 0, 0),
-    };
-
-    private readonly Button forget = new() { Content = "Forget key", FontSize = Text.Body };
-    private readonly CheckBox rememberBox = new() { Content = "Keep this key", FontSize = Text.Body };
-
-    /// <summary>
-    /// The key label, box, note, "keep" box and "forget" button, together —
-    /// every row here only means something in relation to a provider, so with
-    /// none picked there is nothing for any of them to say.
-    /// </summary>
-    private readonly StackPanel keySection = new() { Spacing = 8 };
+    /// <summary>The key's rows, hidden while nobody is picked or the one picked needs no key.</summary>
+    private readonly KeyRows key;
 
     /// <summary>The probe button and everything under it.</summary>
     private readonly ProbeSection probeSection;
@@ -156,6 +126,7 @@ internal sealed class AssistantSettingsPage
         this.settingsRepository = settingsRepository;
         this.editor = editor;
         settingsPath = folders?.SettingsPath;
+        key = new KeyRows(credentials);
 
         // The choice is the page's to show from the start, so it is read before the box is.
         chosenAssistant.Load();
@@ -166,7 +137,7 @@ internal sealed class AssistantSettingsPage
         // built the first time somebody opens it, and what is set on the form is
         // what says whether a message can be sent at all, which the panel's footer
         // has to answer from the moment it exists.
-        rememberBox.IsChecked = settingsRepository.Current.RememberKey;
+        key.Keep = settingsRepository.Current.RememberKey;
         logBox.IsChecked = settingsRepository.Current.LogConversations;
         briefingBox.IsChecked = settingsRepository.Current.ShowBriefing;
         lookupsBox.IsChecked = settingsRepository.Current.ShowLookups;
@@ -240,22 +211,15 @@ internal sealed class AssistantSettingsPage
         // pads the whole of it.
         var fields = new StackPanel { Spacing = 8, Width = SettingsSession.SectionWidth };
 
-        keySection.Children.Add(InspectorRows.Field("API key", keyBox));
-        keySection.Children.Add(keyNote);
-        keySection.Children.Add(rememberBox);
-        keySection.Children.Add(forget);
-
         fields.Children.Add(InspectorRows.Field("Provider", providerBox));
 
         // The probe goes on what is on the form, so a key typed and not yet
         // saved is a key it can use — and the button has to notice it arrive.
-        keyBox.PropertyChanged += (_, e) =>
-        {
-            if (e.Property == TextBox.TextProperty) probeSection.ShowState();
-        };
+        key.Typed += (_, _) => probeSection.ShowState();
+        key.Forgotten += (_, _) => Changed?.Invoke(this, EventArgs.Empty);
 
         fields.Children.Add(form);
-        fields.Children.Add(keySection);
+        fields.Children.Add(key.View);
         fields.Children.Add(probeSection);
         ToolTip.SetTip(contextBox, "How many tokens a conversation may grow to before it stops.");
         fields.Children.Add(InspectorRows.Field("Context", contextBox));
@@ -277,17 +241,6 @@ internal sealed class AssistantSettingsPage
             TextWrapping = TextWrapping.Wrap,
         });
 
-        // Forgetting a key does not close the window the way Save does: somebody
-        // who has just taken one out is as likely as not about to put another in.
-        forget.Click += (_, _) =>
-        {
-            if (chosenAssistant.Value is null) return;
-
-            credentials.Forget(chosenAssistant.Value.Id);
-            keyBox.Text = string.Empty;
-            Changed?.Invoke(this, EventArgs.Empty);
-        };
-
         return fields;
 
         static TextBlock Note(string text) => new()
@@ -307,8 +260,8 @@ internal sealed class AssistantSettingsPage
     /// Only the provider needs restoring by hand: picking one sets
     /// <see cref="AssistantSettings.Provider"/> immediately, so the form under it
     /// can change with it. Everything else is not written until
-    /// <see cref="Save"/> runs, or was never kept at all — a key typed into
-    /// <see cref="keyBox"/> only has to be blanked (ADR-0034).
+    /// <see cref="Save"/> runs, or was never kept at all — a key typed in
+    /// only has to be blanked (ADR-0034).
     /// </remarks>
     public void Discard()
     {
@@ -316,8 +269,8 @@ internal sealed class AssistantSettingsPage
 
         chosenAssistant.Load();
 
-        keyBox.Text = string.Empty;
-        rememberBox.IsChecked = settingsRepository.Current.RememberKey;
+        key.Clear();
+        key.Keep = settingsRepository.Current.RememberKey;
         logBox.IsChecked = settingsRepository.Current.LogConversations;
         briefingBox.IsChecked = settingsRepository.Current.ShowBriefing;
         lookupsBox.IsChecked = settingsRepository.Current.ShowLookups;
@@ -357,7 +310,7 @@ internal sealed class AssistantSettingsPage
         // window it was started from.
         probeSection.Stop();
 
-        settingsRepository.Current.RememberKey = rememberBox.IsChecked == true;
+        settingsRepository.Current.RememberKey = key.Keep;
         settingsRepository.Current.LogConversations = logBox.IsChecked == true;
         settingsRepository.Current.ShowBriefing = briefingBox.IsChecked == true;
         settingsRepository.Current.ShowLookups = lookupsBox.IsChecked == true;
@@ -381,41 +334,7 @@ internal sealed class AssistantSettingsPage
             settingsRepository.Current.Provider = chosenAssistant.Value.Id;
             settingsRepository.Current.Remember(chosenAssistant.Value.Id, form.Values);
 
-            var keep = settingsRepository.Current.RememberKey && credentials.CanKeep;
-
-            var origin = KeyedTransport.OriginOf(chosenAssistant.Value, form.Values);
-
-            if (!string.IsNullOrWhiteSpace(keyBox.Text) && origin is null)
-            {
-                // Left in the box: a key is kept for the address it goes to, and there is none yet.
-                editor.Report("Key not taken: the endpoint is not an address yet, and a key is kept for the one it goes to.", null);
-            }
-            else if (KeySafety.Refused(keyBox.Text) is { } refused)
-            {
-                editor.Report($"Key not taken: {refused}", null);
-            }
-            else if (!string.IsNullOrWhiteSpace(keyBox.Text))
-            {
-                credentials.Accept(chosenAssistant.Value.Id, keyBox.Text, origin!, keep);
-
-                // Emptied once it has been taken. Left there it would hold the
-                // secret in a control for the life of the window, and the line
-                // that says where the key actually lives could never appear.
-                keyBox.Text = string.Empty;
-                SayWhereTheKeyWent();
-            }
-            else if (keep && credentials.SourceOf(chosenAssistant.Value.Id, chosenAssistant.Value.Credential.EnvironmentVariable) == CredentialSource.Session)
-            {
-                // Ticking the box after the fact, with nothing typed. The key is
-                // already in hand and the field is empty because this emptied
-                // it, so asking for the secret again would be this program's
-                // fault presented as the person's problem. Session rather than
-                // HasEntered: a key already Kept from an earlier save has
-                // nothing left to do here, and saying so again on every later
-                // Save would announce a change that did not happen.
-                credentials.KeepWhatIsHeld(chosenAssistant.Value.Id);
-                SayWhereTheKeyWent();
-            }
+            if (key.Take(KeyedTransport.OriginOf(chosenAssistant.Value, form.Values)) is { } said) editor.Report(said, null);
         }
 
         try
@@ -450,53 +369,11 @@ internal sealed class AssistantSettingsPage
     public void ShowState()
     {
         probeSection.ShowState();
-        keySection.IsVisible = chosenAssistant.Value is { NeedsKey: true };
 
-        if (chosenAssistant.Value is null)
-        {
-            keyNote.Text = string.Empty;
-            forget.IsEnabled = false;
-            return;
-        }
-
-        var variable = chosenAssistant.Value.Credential.EnvironmentVariable;
-        var source = credentials.SourceOf(chosenAssistant.Value.Id, variable);
-
-        keyBox.PlaceholderText = source switch
-        {
-            CredentialSource.Environment => $"A key is set, from {variable}",
-            CredentialSource.Kept => "A key is set, and kept",
-            CredentialSource.Session => "A key is set, for this window",
-            _ => "Paste a key",
-        };
-
-        var overruled = credentials.HasEntered(chosenAssistant.Value.Id)
-            && !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(variable));
-
-        // What a key entered here is standing on top of, since it is the reason
-        // "Forget key" does something other than leave nothing behind.
-        var falls = overruled ? $" Forget it to go back to {variable}." : string.Empty;
-
-        keyNote.Text = source switch
-        {
-            CredentialSource.Session =>
-                "In force, held for this window only and gone when it closes. It is never shown back "
-                + "here — type a new one to replace it." + falls,
-
-            CredentialSource.Kept =>
-                $"In force, kept by {credentials.Store?.Name}. It is never shown back here — type a new "
-                + "one to replace it." + falls,
-
-            CredentialSource.Environment =>
-                $"In force, from {variable}. {GlobalConstants.ApplicationName} never wrote it and never will. A key entered here "
-                + "takes precedence over it, and forgetting that one comes back to this.",
-
-            _ => chosenAssistant.Value.Credential.Help + " Make one for Flyback alone, with a spending limit.",
-        };
-
-        // Nothing to forget, or nothing this could reach if it tried: an
-        // environment variable is not this application's to remove.
-        forget.IsEnabled = credentials.HasEntered(chosenAssistant.Value.Id);
+        key.Show(
+            chosenAssistant.Value is { NeedsKey: true } assistant ? assistant.Id : null,
+            chosenAssistant.Value?.Credential,
+            " Make one for Flyback alone, with a spending limit.");
     }
 
     /// <summary>
@@ -508,39 +385,10 @@ internal sealed class AssistantSettingsPage
     {
         if (chosenAssistant.Value is not { } assistant) return null;
 
-        var transport = string.IsNullOrWhiteSpace(keyBox.Text)
+        var transport = string.IsNullOrWhiteSpace(key.Entered)
             ? credentials.Transport(assistant, form.Values)
-            : new KeyedTransport(keyBox.Text, KeyedTransport.OriginOf(assistant, form.Values), assistant.Credential);
+            : new KeyedTransport(key.Entered, KeyedTransport.OriginOf(assistant, form.Values), assistant.Credential);
 
         return transport.HasKey ? transport : null;
-    }
-
-    /// <summary>
-    /// Which of the two happened, read back rather than assumed. ADR-0034's own
-    /// warning is that "held for this run" and "saved" look identical until the
-    /// next launch, and a program that appeared to save something and did not is
-    /// worse than one that never offered.
-    /// </summary>
-    private void SayWhereTheKeyWent()
-    {
-        if (chosenAssistant.Value is null) return;
-
-        var source = credentials.SourceOf(chosenAssistant.Value.Id, chosenAssistant.Value.Credential.EnvironmentVariable);
-        var origin = credentials.Transport(chosenAssistant.Value, form.Values).Origin;
-
-        var said = source switch
-        {
-            CredentialSource.Kept => $"Key saved, and kept by {credentials.Store?.Name}.",
-            _ when !credentials.CanKeep =>
-                "Key saved, for this window only — nothing installed can keep one.",
-            _ when settingsRepository.Current.RememberKey =>
-                "Key saved, but it could not be kept — it will last this window only.",
-            _ => "Key saved, for this window only.",
-        };
-
-        if (KeySafety.Cleartext(origin))
-            said += $" It goes to {origin} over plain http, readable on the way: fine for a server that takes any value, not for a real key.";
-
-        editor.Report(said, null);
     }
 }

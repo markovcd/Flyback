@@ -35,15 +35,7 @@ internal sealed class DecisionsSection : ISettingsSection
 
     private readonly SettingsForm form = new() { Beside = true };
 
-    private readonly TextBox keyBox = new() { Name = "decisionKey", PasswordChar = '•', FontSize = Text.Body, HorizontalAlignment = HorizontalAlignment.Stretch };
-
-    private readonly CheckBox keepBox = new() { Name = "keepDecisionKey", Content = "Keep this key", FontSize = Text.Body };
-
-    private readonly Button forget = new() { Content = "Forget key", FontSize = Text.Body };
-
-    private readonly TextBlock keyNote = Note();
-
-    private readonly StackPanel keyRows = new() { Spacing = 8 };
+    private readonly KeyRows key;
 
     private readonly TextBlock status = Note("decisionStatus");
 
@@ -69,6 +61,7 @@ internal sealed class DecisionsSection : ISettingsSection
         this.settings = settings;
         this.clients = clients;
         this.report = report;
+        key = new KeyRows(decisions.Credentials, "decisionKey");
 
         rows.Children.Add(Note(text:
             "A decision model answers small questions about words with a probability: whether a message asks for an edit, "
@@ -76,11 +69,7 @@ internal sealed class DecisionsSection : ISettingsSection
         rows.Children.Add(InspectorRows.Field("Model", modelBox));
         rows.Children.Add(form);
 
-        keyRows.Children.Add(InspectorRows.Field("API key", keyBox));
-        keyRows.Children.Add(keyNote);
-        keyRows.Children.Add(keepBox);
-        keyRows.Children.Add(forget);
-        rows.Children.Add(keyRows);
+        rows.Children.Add(key.View);
 
         rows.Children.Add(status);
         rows.Children.Add(download);
@@ -93,18 +82,13 @@ internal sealed class DecisionsSection : ISettingsSection
         rows.Children.Add(InspectorRows.Field("Try it", trying));
         rows.Children.Add(tried);
 
-        keepBox.IsEnabled = decisions.Credentials.CanKeep;
         ToolTip.SetTip(tryBox, $"Asks the model on the form: {TryQuestion}");
 
         modelBox.SelectionChanged += (_, _) => ShowModel();
         form.Changed += (_, _) => ShowState();
         download.Click += async (_, _) => await Download();
         tryButton.Click += async (_, _) => await Try();
-        forget.Click += (_, _) =>
-        {
-            if (Picked is { } model) decisions.Credentials.Forget(Decisions.Account(model));
-            ShowState();
-        };
+        key.Forgotten += (_, _) => ShowState();
     }
 
     public string Name => "Decisions";
@@ -129,7 +113,7 @@ internal sealed class DecisionsSection : ISettingsSection
         var chosen = decisions.Chosen;
         modelBox.SelectedIndex = shown = chosen is null ? 0 : IndexOf(chosen) + 1;
 
-        keyBox.Text = string.Empty;
+        key.Clear();
         tried.Text = string.Empty;
         ShowModel();
     }
@@ -148,7 +132,7 @@ internal sealed class DecisionsSection : ISettingsSection
         if (model is not null)
         {
             settings.Current.Remember(model.Id, form.Values);
-            TakeKey(model);
+            if (key.Take(Origin(model)) is { } said) report.Say(said);
         }
 
         try
@@ -184,7 +168,7 @@ internal sealed class DecisionsSection : ISettingsSection
     {
         var model = Picked;
 
-        keyRows.IsVisible = model?.Credential is not null;
+        key.Show(model is null ? null : Decisions.Account(model), model?.Credential);
         tryButton.IsEnabled = model is not null && downloading is null;
 
         if (model is null)
@@ -192,22 +176,6 @@ internal sealed class DecisionsSection : ISettingsSection
             status.Text = "Nothing is asked, and nothing is sent anywhere.";
             download.IsVisible = false;
             return;
-        }
-
-        if (model.Credential is { } credential)
-        {
-            var source = decisions.Credentials.SourceOf(Decisions.Account(model), credential.EnvironmentVariable);
-
-            keyBox.PlaceholderText = source switch
-            {
-                CredentialSource.Environment => $"A key is set, from {credential.EnvironmentVariable}",
-                CredentialSource.Kept => "A key is set, and kept",
-                CredentialSource.Session => "A key is set, for this window",
-                _ => "Paste a key",
-            };
-
-            keyNote.Text = source == CredentialSource.None ? credential.Help : "It is never shown back here; type a new one to replace it.";
-            forget.IsEnabled = decisions.Credentials.HasEntered(Decisions.Account(model));
         }
 
         var missing = decisions.Store.Missing(model);
@@ -242,34 +210,26 @@ internal sealed class DecisionsSection : ISettingsSection
     /// <summary>The model as the form stands, with the key in the box ahead of the one in hand.</summary>
     private DecisionConfig Configured(IDecisionModel model)
     {
-        var values = form.Values;
-        var origin = model.Endpoint(values) is { IsAbsoluteUri: true } address ? KeyedTransport.OriginOf(address) : null;
+        var origin = Origin(model);
 
-        var transport = model.Credential is { } credential && !string.IsNullOrWhiteSpace(keyBox.Text)
-            ? new KeyedTransport(keyBox.Text, origin, credential)
+        var transport = model.Credential is { } credential && !string.IsNullOrWhiteSpace(key.Entered)
+            ? new KeyedTransport(key.Entered, origin, credential)
             : decisions.Credentials.Transport(Decisions.Account(model), model.Credential, origin);
 
-        return new DecisionConfig(transport, values, decisions.Store.FolderOf(model));
+        return new DecisionConfig(transport, form.Values, decisions.Store.FolderOf(model));
     }
 
-    private void TakeKey(IDecisionModel model)
+    /// <summary>Where the model on the form sends, or null where it sends nowhere or the endpoint is no address yet.</summary>
+    private string? Origin(IDecisionModel model)
     {
-        if (string.IsNullOrWhiteSpace(keyBox.Text) || model.Credential is null) return;
-
-        var origin = model.Endpoint(form.Values) is { IsAbsoluteUri: true } address ? KeyedTransport.OriginOf(address) : null;
-
-        if (origin is null)
-            report.Say("Key not taken: the endpoint is not an address yet, and a key is kept for the one it goes to.");
-        else if (KeySafety.Refused(keyBox.Text) is { } refused)
-            report.Say($"Key not taken: {refused}");
-        else
+        try
         {
-            var keep = keepBox.IsChecked == true && decisions.Credentials.CanKeep;
-            decisions.Credentials.Accept(Decisions.Account(model), keyBox.Text, origin, keep);
-            report.Say(keep ? $"Key saved, and kept by {decisions.Credentials.Store?.Name}." : "Key saved, for this window only.");
+            return model.Endpoint(form.Values) is { IsAbsoluteUri: true } address ? KeyedTransport.OriginOf(address) : null;
         }
-
-        keyBox.Text = string.Empty;
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>Downloads what the picked model needs; the press is the yes.</summary>
