@@ -9,6 +9,7 @@ using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Render;
 using Flyback.Plugins.Audio;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
 
@@ -592,8 +593,9 @@ public class AudioEngineTests
     public async Task An_audition_is_compiled_like_the_patch()
     {
         using var device = new LoopbackDevice();
-        using var compiler = new IlCompiler();
-        using var engine = new AudioEngine(new AudioSetup(device), compiler);
+        using var services = new ServiceCollection().AddTransport().AddSingleton(new AudioSetup(device)).BuildServiceProvider();
+        var engine = services.GetRequiredService<AudioEngine>();
+        var compiler = services.GetRequiredService<IlCompiler>();
 
         var audition = engine.PrepareAudition(Tone(220f)).ShouldNotBeNull();
         await compiler.Settled();

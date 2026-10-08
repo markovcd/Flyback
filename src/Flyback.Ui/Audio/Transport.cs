@@ -29,7 +29,7 @@ internal sealed class Transport
 
     /// <param name="preview">The picture's surface, or null where there is no picture.</param>
     /// <param name="lineIn">The microphone, or null where there is none to hear.</param>
-    public Transport(IAudioEngine audio, PreviewHost? preview, IlCompiler compiler, MidiHub midi, LineIn? lineIn = null)
+    public Transport(IAudioEngine audio, IlCompiler compiler, MidiHub midi, PreviewHost? preview = null, LineIn? lineIn = null)
     {
         this.audio = audio;
         this.preview = preview;
@@ -46,7 +46,7 @@ internal sealed class Transport
     public bool Muted { get; private set; }
 
     /// <summary>How loud the sound is while not muted.</summary>
-    public float Volume { get; init; } = 1f;
+    public float Volume { get; set; } = 1f;
 
     /// <summary>How many ops the sound's program runs for each sample.</summary>
     public int SoundOps => audio.Ops;

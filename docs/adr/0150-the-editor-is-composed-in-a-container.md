@@ -149,10 +149,16 @@ A service another part reads is registered, not built by the first part that
 needed it and handed on through a property. `ControlHub`, `InstrumentLibrary`,
 `Transport` and `Renamer` were each made inside a part (`PanelKnobs`, `Playback`,
 `InspectorSurface`) and reached by others through it; each is now a singleton of
-the container, and the viewer registers its `Transport` as well. A part's
+the container. A part's
 constructor names no optional dependency with a default it builds itself: a test
 that builds one by hand passes `Usage.Off`, `Decisions.None` or a `Reactions` of
 its own, where a default would have made a second, unheard notice bus.
+
+What the editor and the viewer both play through, the compiler, the sound
+engine, the MIDI hub, the control hub and the `Transport`, is registered once, by
+`TransportServices.AddTransport()` in Flyback.Ui. Each container adds what differs
+between them: the `AudioSetup`, the MIDI input, and a `PreviewHost` and a `LineIn`
+where it has them. A test of the transport takes it from the same registrations.
 
 What stays built inside a part is its own: a control it lays out, an object
 made per take or per request (`LiveRecorder`, `PresetSite`), and a helper no

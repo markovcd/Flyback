@@ -1,7 +1,6 @@
 using Flyback.Engine.Compile;
 using Flyback.Ui.Audio;
 using Flyback.Ui.Controls;
-using Flyback.Ui.Midi;
 using Flyback.Plugins.Audio;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -51,23 +50,13 @@ internal static class ViewerServices
 
         services.AddSingleton(launch.Instruments);
 
-        services.AddSingleton<IlCompiler>();
-
         // A run with no sound plays nothing through a silent device.
         services.AddSingleton(new AudioSetup(launch.Device ?? new SilentAudioDevice()));
-        services.AddSingleton<AudioEngine>();
-
-        services.AddSingleton<MidiHub>();
-        services.AddSingleton<ControlHub>();
 
         // A surface only for a picture there is a window to show, since one in the tree renders on a timer.
         services.AddSingleton(_ => launch.Pictured ? new PreviewHost() : null!);
 
-        services.AddSingleton(sp => new Transport(
-            sp.GetRequiredService<AudioEngine>(),
-            launch.Options.Video ? sp.GetService<PreviewHost>() : null,
-            sp.GetRequiredService<IlCompiler>(),
-            sp.GetRequiredService<MidiHub>()) { Volume = launch.Options.Volume });
+        services.AddTransport();
 
         services.AddSingleton<ViewerPlayer>();
         services.AddSingleton<ViewerWindow>();

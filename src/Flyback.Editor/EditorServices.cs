@@ -93,8 +93,6 @@ internal static class EditorServices
         // A model is hundreds of megabytes, so a download has no deadline but a cancel.
         services.AddHttpClient(DecisionsSection.Client, http => http.Timeout = Timeout.InfiniteTimeSpan);
 
-        services.AddSingleton<IlCompiler>();
-
         services.AddSingleton<IPresetFolder>(setup.Folders);
         services.AddSingleton<PresetLibrary>();
         services.AddPart<OutputSettingRepository>();
@@ -111,7 +109,7 @@ internal static class EditorServices
             sp.GetRequiredService<PluginCatalog>(),
             sp.GetRequiredService<OutputSettingRepository>().Current));
 
-        services.AddSingleton<IAudioEngine, AudioEngine>();
+        services.AddTransport();
 
         // Nothing is opened by this either: the microphone is listened to only while a running sound has a Line In.
         services.AddSingleton(sp => new LineIn(
@@ -119,12 +117,7 @@ internal static class EditorServices
             sp.GetRequiredService<IAudioEngine>(),
             () => sp.GetRequiredService<OutputSettingRepository>().Current));
 
-        // Nothing is opened by this: the backend is asked for a device only once a
-        // compiled program is reading one.
         services.AddSingleton(setup.Plugins.PreferredMidiInput);
-        services.AddSingleton<MidiHub>();
-        services.AddSingleton<ControlHub>();
-        services.AddSingleton<Transport>();
         services.AddSingleton(sp => sp.GetRequiredService<EditorFolders>().InstrumentFolder is { } folder
             ? InstrumentLibrary.Load(folder)
             : InstrumentLibrary.Shipped());

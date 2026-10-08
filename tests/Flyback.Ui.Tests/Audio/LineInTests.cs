@@ -1,12 +1,11 @@
 using Flyback.Core;
 using Flyback.Core.Graph;
-using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
 using Flyback.Ui.Audio;
-using Flyback.Ui.Midi;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
 
@@ -313,9 +312,13 @@ public class LineInTests
     {
         var microphone = new Microphone();
         using var rig = new Rig(microphone);
-        using var compiler = new IlCompiler();
-        using var midi = new MidiHub(Catalog().PreferredMidiInput);
-        var transport = new Transport(rig.Engine, null, compiler, midi, rig.Line);
+        using var services = new ServiceCollection()
+            .AddTransport()
+            .AddSingleton<IAudioEngine>(rig.Engine)
+            .AddSingleton(rig.Line)
+            .AddSingleton(Catalog().PreferredMidiInput)
+            .BuildServiceProvider();
+        var transport = services.GetRequiredService<Transport>();
 
         transport.Load(ThroughLineIn(), null, null, null);
         microphone.Opened.ShouldBe(0);

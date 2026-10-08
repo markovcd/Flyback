@@ -24,6 +24,9 @@
   <ItemGroup>
     <PackageReference Include="Avalonia" />
 
+    <!-- For TransportServices, the part of the editor's and the viewer's containers they share (ADR-0150). -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+
     <!-- For the driver both programs start Windows on; see GraphicsDrivers. Not passed on: the desktop shells get it from Avalonia.Desktop, and the web editor must not ship it. -->
     <PackageReference Include="Avalonia.Win32" PrivateAssets="all" />
   </ItemGroup>

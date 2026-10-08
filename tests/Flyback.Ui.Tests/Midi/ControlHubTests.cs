@@ -1,7 +1,9 @@
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Flyback.Plugins.Midi;
+using Flyback.Ui.Audio;
 using Flyback.Ui.Midi;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
 
@@ -27,14 +29,18 @@ public class ControlHubTests
     private static double Read(LiveValues block, PatchControl knob) =>
         block.At(block.Keys.ToList().IndexOf(knob.Key));
 
+    /// <summary>The transport's services as the editor and the viewer register them, hearing MIDI through <paramref name="backend"/>.</summary>
+    private static ServiceProvider Services(IMidiInput backend) =>
+        new ServiceCollection().AddTransport().AddSingleton(backend).BuildServiceProvider();
+
     private static MidiMessage Cc(int controller, int value, int channel = 1) =>
         new(MidiAction.Control, controller, value / 127f) { Channel = channel };
 
     [Fact]
     public void Following_a_patch_seeds_every_block_with_where_its_knobs_rest()
     {
-        using var midi = new MidiHub(new FakeInput("Test Controller"));
-        var hub = new ControlHub(midi);
+        using var services = Services(new FakeInput("Test Controller"));
+        var hub = services.GetRequiredService<ControlHub>();
         var (patch, knob) = Patched(0.3f);
         var block = new LiveValues([knob.Key]);
 
@@ -47,8 +53,8 @@ public class ControlHubTests
     public void A_bound_device_is_held_open_though_no_program_reads_its_notes()
     {
         var backend = new FakeInput("Test Controller");
-        using var midi = new MidiHub(backend);
-        var hub = new ControlHub(midi);
+        using var services = Services(backend);
+        var hub = services.GetRequiredService<ControlHub>();
         var (patch, _) = Patched(binding: new MidiBinding(Device, 0, 21));
 
         hub.Follow(patch, new LiveValues([]));
@@ -60,8 +66,8 @@ public class ControlHubTests
     public void A_controller_moving_turns_the_knob_it_is_bound_to()
     {
         var backend = new FakeInput("Test Controller");
-        using var midi = new MidiHub(backend);
-        var hub = new ControlHub(midi);
+        using var services = Services(backend);
+        var hub = services.GetRequiredService<ControlHub>();
         var (patch, knob) = Patched(binding: new MidiBinding(Device, 0, 21));
         var block = new LiveValues([knob.Key]);
         var turned = new List<(Guid, float)>();
@@ -78,8 +84,8 @@ public class ControlHubTests
     public void Another_controller_leaves_it_alone()
     {
         var backend = new FakeInput("Test Controller");
-        using var midi = new MidiHub(backend);
-        var hub = new ControlHub(midi);
+        using var services = Services(backend);
+        var hub = services.GetRequiredService<ControlHub>();
         var (patch, knob) = Patched(0.5f, new MidiBinding(Device, 0, 21));
         var block = new LiveValues([knob.Key]);
 
@@ -93,8 +99,9 @@ public class ControlHubTests
     public void Picking_up_ignores_a_controller_until_it_passes_the_knob()
     {
         var backend = new FakeInput("Test Controller");
-        using var midi = new MidiHub(backend);
-        var hub = new ControlHub(midi) { Takeover = Takeover.PickUp };
+        using var services = Services(backend);
+        var hub = services.GetRequiredService<ControlHub>();
+        hub.Takeover = Takeover.PickUp;
         var (patch, knob) = Patched(0.5f, new MidiBinding(Device, 0, 21));
         var block = new LiveValues([knob.Key]);
 
@@ -116,8 +123,8 @@ public class ControlHubTests
     public void Jumping_takes_the_controller_at_once()
     {
         var backend = new FakeInput("Test Controller");
-        using var midi = new MidiHub(backend);
-        var hub = new ControlHub(midi);
+        using var services = Services(backend);
+        var hub = services.GetRequiredService<ControlHub>();
         var (patch, knob) = Patched(0.5f, new MidiBinding(Device, 0, 21));
         var block = new LiveValues([knob.Key]);
 
@@ -130,8 +137,8 @@ public class ControlHubTests
     [Fact]
     public void Turning_a_knob_on_screen_writes_every_block()
     {
-        using var midi = new MidiHub(NoMidiInput.Instance);
-        var hub = new ControlHub(midi);
+        using var services = Services(NoMidiInput.Instance);
+        var hub = services.GetRequiredService<ControlHub>();
         var (patch, knob) = Patched();
         var picture = new LiveValues([knob.Key]);
         var sound = new LiveValues([knob.Key]);
@@ -147,8 +154,8 @@ public class ControlHubTests
     public async Task Learning_takes_the_first_controller_that_really_moves()
     {
         var backend = new FakeInput("Test Controller");
-        using var midi = new MidiHub(backend);
-        var hub = new ControlHub(midi);
+        using var services = Services(backend);
+        var hub = services.GetRequiredService<ControlHub>();
 
         hub.Follow(new Patch(), new LiveValues([]));
 
@@ -175,8 +182,8 @@ public class ControlHubTests
     public async Task Learning_says_which_channel_the_controller_moved_on()
     {
         var backend = new FakeInput("Test Controller");
-        using var midi = new MidiHub(backend);
-        var hub = new ControlHub(midi);
+        using var services = Services(backend);
+        var hub = services.GetRequiredService<ControlHub>();
 
         hub.Follow(new Patch(), new LiveValues([]));
 
@@ -198,8 +205,8 @@ public class ControlHubTests
     public async Task Learning_does_not_take_the_controller_it_is_told_to_leave()
     {
         var backend = new FakeInput("Test Controller");
-        using var midi = new MidiHub(backend);
-        var hub = new ControlHub(midi);
+        using var services = Services(backend);
+        var hub = services.GetRequiredService<ControlHub>();
 
         hub.Follow(new Patch(), new LiveValues([]));
 
@@ -219,8 +226,8 @@ public class ControlHubTests
     [Fact]
     public async Task Learning_given_up_hands_back_nothing()
     {
-        using var midi = new MidiHub(new FakeInput("Test Controller"));
-        var hub = new ControlHub(midi);
+        using var services = Services(new FakeInput("Test Controller"));
+        var hub = services.GetRequiredService<ControlHub>();
         using var cancel = new CancellationTokenSource();
 
         var learning = hub.LearnAsync([Device], cancel.Token);
@@ -246,8 +253,8 @@ public class ControlHubTests
     public async Task A_second_learn_is_not_deafened_by_the_first_one_ending()
     {
         var backend = new FakeInput("Test Controller");
-        using var midi = new MidiHub(backend);
-        var hub = new ControlHub(midi);
+        using var services = Services(backend);
+        var hub = services.GetRequiredService<ControlHub>();
 
         hub.Follow(new Patch(), new LiveValues([]));
 
@@ -275,8 +282,9 @@ public class ControlHubTests
     public void The_trigger_fires_once_a_press_and_not_on_release()
     {
         var backend = new FakeInput("Test Controller");
-        using var midi = new MidiHub(backend);
-        var hub = new ControlHub(midi) { Trigger = new MidiBinding(Device, 0, 64) };
+        using var services = Services(backend);
+        var hub = services.GetRequiredService<ControlHub>();
+        hub.Trigger = new MidiBinding(Device, 0, 64);
         var fired = 0;
         hub.Triggered += () => fired++;
 
@@ -296,8 +304,9 @@ public class ControlHubTests
     public void The_trigger_stays_open_through_a_patch_with_no_bound_knobs()
     {
         var backend = new FakeInput("Test Controller");
-        using var midi = new MidiHub(backend);
-        var hub = new ControlHub(midi) { Trigger = new MidiBinding(Device, 0, 64) };
+        using var services = Services(backend);
+        var hub = services.GetRequiredService<ControlHub>();
+        hub.Trigger = new MidiBinding(Device, 0, 64);
 
         hub.Follow(new Patch(), new LiveValues([]));
 
@@ -311,8 +320,9 @@ public class ControlHubTests
     public void A_pad_as_the_trigger_fires_on_every_strike()
     {
         var backend = new FakeInput("Test Controller");
-        using var midi = new MidiHub(backend);
-        var hub = new ControlHub(midi) { Trigger = new MidiBinding(Device, 0, 36) { Note = true } };
+        using var services = Services(backend);
+        var hub = services.GetRequiredService<ControlHub>();
+        hub.Trigger = new MidiBinding(Device, 0, 36) { Note = true };
         var fired = 0;
         hub.Triggered += () => fired++;
 
@@ -329,8 +339,8 @@ public class ControlHubTests
     public async Task Learning_for_a_button_takes_a_pad_struck()
     {
         var backend = new FakeInput("Test Controller");
-        using var midi = new MidiHub(backend);
-        var hub = new ControlHub(midi);
+        using var services = Services(backend);
+        var hub = services.GetRequiredService<ControlHub>();
 
         var learning = hub.LearnAsync([Device], CancellationToken.None, notes: true);
         backend.Opened.Single().Send(Struck(38, channel: 10));
@@ -342,8 +352,8 @@ public class ControlHubTests
     public void Learning_for_a_knob_passes_over_a_note()
     {
         var backend = new FakeInput("Test Controller");
-        using var midi = new MidiHub(backend);
-        var hub = new ControlHub(midi);
+        using var services = Services(backend);
+        var hub = services.GetRequiredService<ControlHub>();
 
         var learning = hub.LearnAsync([Device], CancellationToken.None);
         backend.Opened.Single().Send(Struck(38));

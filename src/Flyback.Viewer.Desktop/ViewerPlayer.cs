@@ -79,6 +79,7 @@ internal sealed class ViewerPlayer : IDisposable
         new LiveOversample(audio, () => options.StepDown, message => Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {message}")).Start();
 
         this.transport = transport;
+        transport.Volume = options.Volume;
 
         CompiledPatch? picture = null;
 
