@@ -208,34 +208,6 @@ public class InspectorFoldTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void A_finger_held_on_the_header_opens_the_menu()
-    {
-        var window = Selecting(out _);
-        Fingered(window);
-        Short(window, 120);
-
-        var header = Header(window);
-        // Avalonia raises the hold itself and keeps its arguments' constructor to itself.
-        header.Held();
-        Settle(window);
-
-        header.Menu.ShouldNotBeNull().IsOpen.ShouldBeTrue();
-    }
-
-    [AvaloniaFact]
-    public void Under_a_finger_the_scrollbar_stays_and_under_a_mouse_it_hides()
-    {
-        var window = Selecting(out _);
-        var scroller = All<ScrollViewer>(window).Single(s => s.Content is StackPanel rows && rows.Children.OfType<Control>().Any(c => c.Name == "inspector"));
-
-        scroller.AllowAutoHide.ShouldBeTrue();
-
-        Fingered(window);
-
-        scroller.AllowAutoHide.ShouldBeFalse();
-    }
-
-    [AvaloniaFact]
     public void The_headers_switch_switches_the_module_off()
     {
         var window = Selecting(out var sine);

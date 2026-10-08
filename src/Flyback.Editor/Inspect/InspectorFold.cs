@@ -109,9 +109,6 @@ internal sealed class InspectorFold
         var plate = plateHost.Content as ModulePlate;
         var layout = Layout(plate);
 
-        // A finger has no hover to bring a hidden scrollbar up, so under one it stays, saying there is more.
-        scroller.AllowAutoHide = layout != PlateLayout.Touch;
-
         // Under a mouse on a wide panel the plate is one short line and never needs to fold.
         Pin(plate is not null && layout == PlateLayout.Wide);
 
