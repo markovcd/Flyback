@@ -3,7 +3,7 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
 
-namespace Flyback.Ui;
+namespace Flyback.Host;
 
 /// <summary>
 /// The presets somebody saved, as files in a folder of their own, or none where

@@ -30,3 +30,10 @@ enum.
 - A change to the preview or the look is made once and reaches both windows.
 - A type meant for one shell has a place to go wrong: something moved here that
   only the editor needs is carried by the viewer as well.
+
+## Amendment, 2026-10-08
+
+`OutputSettings`, `Resolutions`, `PresetLibrary` and the `Takeover` enum moved on
+to `Flyback.Host`, which holds what every host reads and carries no Avalonia
+([0188](0188-what-every-host-reads-is-a-project-of-its-own.md)). Ui keeps what
+the two windows draw and sound with.

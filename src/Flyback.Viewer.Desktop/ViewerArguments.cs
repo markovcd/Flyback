@@ -8,6 +8,7 @@ using Flyback.Ui.Controls;
 using Flyback.Core;
 using Flyback.Engine.Language;
 using Flyback.Engine.Render;
+using Flyback.Host;
 
 namespace Flyback.Viewer.Desktop;
 
@@ -322,7 +323,7 @@ internal static class ViewerArguments
     /// <summary>A size as it is typed: a short name or a row's label, or WIDTHxHEIGHT.</summary>
     internal static PixelSize? Sized(string text)
     {
-        if (Resolutions.Named(text) is { } named) return named;
+        if (Resolutions.Named(text) is var (named, tall)) return new PixelSize(named, tall);
 
         return FrameSize.Of(text) is var (width, height) ? new PixelSize(width, height) : null;
     }

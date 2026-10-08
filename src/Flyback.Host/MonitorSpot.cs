@@ -1,4 +1,4 @@
-namespace Flyback.Ui;
+namespace Flyback.Host;
 
 /// <summary>A monitor as the platform described it: its name and where it sits in the desktop.</summary>
 public sealed class MonitorSpot

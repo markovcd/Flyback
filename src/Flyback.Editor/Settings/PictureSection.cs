@@ -11,6 +11,7 @@ using Flyback.Editor.Knobs;
 using Flyback.Editor.Notices;
 using Flyback.Engine.Render;
 using Flyback.Ui;
+using Flyback.Host;
 
 namespace Flyback.Editor.Settings;
 
@@ -158,7 +159,12 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
     }
 
     /// <summary>What size <paramref name="settings"/> draws the picture at, or the default for one the list no longer offers.</summary>
-    public static PixelSize SizeOf(OutputSettings settings) => Resolutions.All[SizeRow(settings)].Size;
+    public static PixelSize SizeOf(OutputSettings settings)
+    {
+        var (width, height) = Resolutions.All[SizeRow(settings)].Size;
+
+        return new PixelSize(width, height);
+    }
 
     /// <summary>
     /// Lists the monitors plugged in now, and the chosen one if it is not, and

@@ -2,9 +2,8 @@
 
   <!--
     What the two windows that play a patch draw and sound with: the preview, the
-    sound device, the look and the settings both read. The namespaces stay
-    Flyback.Editor.Desktop, the way Flyback.Engine holds Flyback.Core, so a file that moved
-    here needed no edit to keep working (ADR-0124).
+    sound device and the look (ADR-0124). What every host reads with no window,
+    the settings and the presets, is Flyback.Host's (ADR-0188).
 
     Avalonia itself and nothing that belongs to only one shell: the editor's code
     view and SVG artwork stay with the editor.
@@ -19,6 +18,7 @@
     <ProjectReference Include="..\Flyback.Engine\Flyback.Engine.csproj" />
     <ProjectReference Include="..\Flyback.Gpu\Flyback.Gpu.csproj" />
     <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
+    <ProjectReference Include="..\Flyback.Host\Flyback.Host.csproj" />
   </ItemGroup>
 
   <ItemGroup>

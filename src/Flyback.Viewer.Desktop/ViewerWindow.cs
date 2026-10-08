@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.Ui;
 using Flyback.Ui.Controls;
+using Flyback.Host;
 
 namespace Flyback.Viewer.Desktop;
 

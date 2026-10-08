@@ -9,6 +9,7 @@ using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
 using Flyback.Ui;
 using Colors = Flyback.Ui.Controls.Colors;
+using Flyback.Host;
 
 namespace Flyback.Editor.Knobs;
 

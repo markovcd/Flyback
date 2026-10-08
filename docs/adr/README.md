@@ -216,3 +216,4 @@ context, decision, consequences.
 | [0172](0172-claude-code-is-an-assistant-by-running-the-program-the-person-signed-in.md) | Claude Code is an assistant by running the program the person signed in *(user-directed)* |
 | [0173](0173-codex-is-an-assistant-the-same-way-and-gemini-is-not.md) | Codex is an assistant the same way, and Gemini is not *(user-directed)* |
 | [0186](0186-a-decision-model-answers-typed-questions-behind-the-plugin-boundary.md) | A decision model answers typed questions behind the plugin boundary *(user-directed)* |
+| [0188](0188-what-every-host-reads-is-a-project-of-its-own.md) | What every host reads is a project of its own *(user-directed)* |

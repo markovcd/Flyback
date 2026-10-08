@@ -10,6 +10,7 @@ using Flyback.Editor.Gallery;
 using Flyback.Editor.Inspect;
 using Flyback.Editor.Settings;
 using Flyback.Ui;
+using Flyback.Host;
 
 namespace Flyback.Editor.Files;
 

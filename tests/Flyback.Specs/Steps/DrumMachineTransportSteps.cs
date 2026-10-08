@@ -4,6 +4,7 @@ using Shouldly;
 using Flyback.Ui;
 using Flyback.Plugins.Midi;
 using Flyback.Specs.Support;
+using Flyback.Host;
 
 namespace Flyback.Specs.Steps;
 

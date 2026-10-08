@@ -1,27 +1,25 @@
-using Avalonia;
-
-namespace Flyback.Ui.Controls;
+namespace Flyback.Host;
 
 /// <summary>The sizes a picture is offered at, by the name the settings and the command line share.</summary>
 public static class Resolutions
 {
-    public static readonly (string Label, PixelSize Size)[] All =
+    public static readonly (string Label, (int Width, int Height) Size)[] All =
     [
-        ("320 x 180", new PixelSize(320, 180)),
-        ("480 x 270", new PixelSize(480, 270)),
-        ("640 x 360", new PixelSize(640, 360)),
-        ("960 x 540", new PixelSize(960, 540)),
-        ("1280 x 720", new PixelSize(1280, 720)),
-        ("1920 x 1080", new PixelSize(1920, 1080)),
-        ("2560 x 1440", new PixelSize(2560, 1440)),
-        ("3840 x 2160", new PixelSize(3840, 2160)),
+        ("320 x 180", (320, 180)),
+        ("480 x 270", (480, 270)),
+        ("640 x 360", (640, 360)),
+        ("960 x 540", (960, 540)),
+        ("1280 x 720", (1280, 720)),
+        ("1920 x 1080", (1920, 1080)),
+        ("2560 x 1440", (2560, 1440)),
+        ("3840 x 2160", (3840, 2160)),
 
         // Not 16:9 — the picture and the live sound's aspect both follow
         // whichever of these is picked, ADR-0083.
-        ("1024 x 768", new PixelSize(1024, 768)),   // 4:3
-        ("1080 x 1080", new PixelSize(1080, 1080)), // 1:1, square
-        ("1080 x 1920", new PixelSize(1080, 1920)), // 9:16, portrait
-        ("2560 x 1080", new PixelSize(2560, 1080)), // 21:9, ultrawide
+        ("1024 x 768", (1024, 768)),   // 4:3
+        ("1080 x 1080", (1080, 1080)), // 1:1, square
+        ("1080 x 1920", (1080, 1920)), // 9:16, portrait
+        ("2560 x 1080", (2560, 1080)), // 21:9, ultrawide
     ];
 
     /// <summary>960 x 540: enough to judge a patch by, cheap enough to keep up.</summary>
@@ -46,7 +44,7 @@ public static class Resolutions
     };
 
     /// <summary>The size a short name or a row's own label stands for, or null when it is neither.</summary>
-    public static PixelSize? Named(string text)
+    public static (int Width, int Height)? Named(string text)
     {
         text = text.Trim();
 

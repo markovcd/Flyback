@@ -7,6 +7,7 @@ using Flyback.Editor.Statistics;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
+using Flyback.Host;
 
 namespace Flyback.Editor.Canvas;
 

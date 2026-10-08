@@ -42,6 +42,7 @@
     <InternalsVisibleTo Include="Flyback.Plugins.SystemOne.Tests" />
     <InternalsVisibleTo Include="Flyback.Specs" />
     <InternalsVisibleTo Include="Flyback.Ui" />
+    <InternalsVisibleTo Include="Flyback.Host" />
     <InternalsVisibleTo Include="Flyback" />
     <InternalsVisibleTo Include="Flyback.Editor" />
     <InternalsVisibleTo Include="Flyback.Assist" />

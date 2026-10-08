@@ -7,6 +7,7 @@ using Flyback.Editor.Files;
 using Flyback.Editor.Windows;
 using Flyback.Ui;
 using Shouldly;
+using Flyback.Host;
 
 namespace Flyback.Editor.Tests.Ui;
 

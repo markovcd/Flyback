@@ -8,6 +8,7 @@ using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui.Midi;
 using Flyback.Ui;
+using Flyback.Host;
 
 namespace Flyback.Editor;
 

@@ -10,6 +10,7 @@ using Flyback.Ui.Controls;
 using Flyback.Editor.Windows;
 using Shouldly;
 using Flyback.Ui;
+using Flyback.Host;
 
 namespace Flyback.Editor.Tests.Ui;
 

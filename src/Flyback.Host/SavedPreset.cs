@@ -1,7 +1,7 @@
 ﻿using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 
-namespace Flyback.Ui;
+namespace Flyback.Host;
 
 /// <summary>
 /// One preset somebody saved, as it is listed: a name and the file it is in.

@@ -10,6 +10,7 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Shouldly;
 using Flyback.Ui;
+using Flyback.Host;
 
 namespace Flyback.Editor.Tests.Ui;
 

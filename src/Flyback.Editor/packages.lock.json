@@ -319,6 +319,14 @@
           "Flyback.Engine": "[0.1.0-dev, )"
         }
       },
+      "flyback.host": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Core": "[0.1.0-dev, )",
+          "Flyback.Engine": "[0.1.0-dev, )",
+          "Flyback.Plugins": "[0.1.0-dev, )"
+        }
+      },
       "flyback.plugins": {
         "type": "Project",
         "dependencies": {
@@ -332,6 +340,7 @@
           "Flyback.Core": "[0.1.0-dev, )",
           "Flyback.Engine": "[0.1.0-dev, )",
           "Flyback.Gpu": "[0.1.0-dev, )",
+          "Flyback.Host": "[0.1.0-dev, )",
           "Flyback.Plugins": "[0.1.0-dev, )",
           "Microsoft.Extensions.DependencyInjection": "[10.0.12, )"
         }

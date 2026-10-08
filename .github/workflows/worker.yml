@@ -26,6 +26,7 @@ on:
       - "src/Flyback.Editor.Desktop/**"
       - "src/Flyback.Cli/**"
       - "src/Flyback.Ui/**"
+      - "src/Flyback.Host/**"
       - "src/Flyback.Gpu/**"
       - "src/Flyback.Assist/**"
       - "src/Flyback.Engine/**"

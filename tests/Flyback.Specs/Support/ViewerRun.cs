@@ -9,6 +9,7 @@ using Flyback.Ui;
 using Flyback.Ui.Controls;
 using Flyback.Plugins.Hosting;
 using Flyback.Viewer.Desktop;
+using Flyback.Host;
 
 namespace Flyback.Specs.Support;
 

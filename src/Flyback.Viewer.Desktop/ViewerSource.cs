@@ -3,6 +3,7 @@ using Flyback.Ui;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
+using Flyback.Host;
 
 namespace Flyback.Viewer.Desktop;
 

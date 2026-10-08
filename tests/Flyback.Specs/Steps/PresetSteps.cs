@@ -8,6 +8,7 @@ using Flyback.Engine.Language;
 using Flyback.Plugins.Hosting;
 using Flyback.Specs.Support;
 using Flyback.Ui;
+using Flyback.Host;
 
 namespace Flyback.Specs.Steps;
 

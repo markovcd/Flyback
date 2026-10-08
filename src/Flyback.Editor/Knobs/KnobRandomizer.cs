@@ -8,6 +8,7 @@ using Flyback.Editor.Settings;
 using Flyback.Editor.Statistics;
 using Flyback.Core.Graph;
 using Flyback.Ui;
+using Flyback.Host;
 
 namespace Flyback.Editor.Knobs;
 

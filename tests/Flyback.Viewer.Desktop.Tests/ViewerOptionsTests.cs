@@ -6,6 +6,7 @@ using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
 using Flyback.Ui;
+using Flyback.Host;
 
 namespace Flyback.Viewer.Desktop.Tests;
 

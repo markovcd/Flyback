@@ -3,6 +3,7 @@ using Flyback.Engine.Render;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
+using Flyback.Host;
 
 namespace Flyback.Ui.Tests;
 
@@ -130,9 +131,9 @@ public class OutputSettingsFileTests : IDisposable
     [Fact]
     public void How_a_controller_takes_over_a_knob_comes_back()
     {
-        new OutputSettings { Takeover = Flyback.Ui.Midi.Takeover.PickUp }.Save(File);
+        new OutputSettings { Takeover = Flyback.Host.Takeover.PickUp }.Save(File);
 
-        OutputSettings.Load(File).Takeover.ShouldBe(Flyback.Ui.Midi.Takeover.PickUp);
+        OutputSettings.Load(File).Takeover.ShouldBe(Flyback.Host.Takeover.PickUp);
     }
 
     [Fact]

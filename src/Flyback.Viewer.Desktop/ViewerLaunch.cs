@@ -2,6 +2,7 @@
 using Flyback.Ui.Midi;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Midi;
+using Flyback.Host;
 
 namespace Flyback.Viewer.Desktop;
 

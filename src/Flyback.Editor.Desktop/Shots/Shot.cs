@@ -17,6 +17,7 @@ using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Flyback.Ui;
+using Flyback.Host;
 
 namespace Flyback.Editor.Desktop.Shots;
 

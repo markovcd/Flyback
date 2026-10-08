@@ -5,6 +5,7 @@ using Flyback.Editor.Desktop.Updates;
 using Flyback.Editor.Updates;
 using Flyback.Core;
 using Flyback.Ui;
+using Flyback.Host;
 
 namespace Flyback.Editor.Desktop;
 

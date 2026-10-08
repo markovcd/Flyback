@@ -1,6 +1,7 @@
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Flyback.Plugins.Midi;
+using Flyback.Host;
 
 namespace Flyback.Ui.Midi;
 

@@ -5,6 +5,7 @@ using Flyback.Engine.Graph;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui.Audio;
 using Flyback.Ui;
+using Flyback.Host;
 
 namespace Flyback.Editor.Gallery;
 

@@ -8,6 +8,7 @@ using Flyback.Ui.Audio;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
+using Flyback.Host;
 
 namespace Flyback.Ui.Tests.Audio;
 

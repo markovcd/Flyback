@@ -16,6 +16,7 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Render;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui;
+using Flyback.Host;
 
 namespace Flyback.Editor.Gallery;
 

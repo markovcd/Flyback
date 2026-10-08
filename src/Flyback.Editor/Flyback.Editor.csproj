@@ -15,6 +15,7 @@
     <ProjectReference Include="..\Flyback.Engine\Flyback.Engine.csproj" />
     <ProjectReference Include="..\Flyback.Assist\Flyback.Assist.csproj" />
     <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
+    <ProjectReference Include="..\Flyback.Host\Flyback.Host.csproj" />
     <ProjectReference Include="..\Flyback.Ui\Flyback.Ui.csproj" />
   </ItemGroup>
 

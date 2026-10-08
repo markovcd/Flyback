@@ -33,6 +33,7 @@
     <!-- Whatever names Core's internals is shared with the assemblies Core shares them with. -->
     <InternalsVisibleTo Include="Flyback.Plugins" />
     <InternalsVisibleTo Include="Flyback.Ui" />
+    <InternalsVisibleTo Include="Flyback.Host" />
     <InternalsVisibleTo Include="Flyback.Gpu" />
     <InternalsVisibleTo Include="Flyback" />
     <InternalsVisibleTo Include="Flyback.Editor" />

@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    What every host reads before it has a window, or without one: the output
+    settings, the sizes a picture is offered at, and the presets somebody saved.
+    No Avalonia and no packages, so the CLI, the preset site and the pages can
+    reference it as the two windows do (ADR-0188).
+  -->
+  <PropertyGroup>
+    <RootNamespace>Flyback.Host</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj" />
+    <ProjectReference Include="..\Flyback.Engine\Flyback.Engine.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Flyback" />
+    <InternalsVisibleTo Include="Flyback.Ui" />
+    <InternalsVisibleTo Include="Flyback.Editor" />
+    <InternalsVisibleTo Include="Flyback.Editor.Web" />
+    <InternalsVisibleTo Include="Flyback.Editor.Android" />
+    <InternalsVisibleTo Include="Flyback.Viewer.Web" />
+    <InternalsVisibleTo Include="flyback-viewer" />
+    <InternalsVisibleTo Include="flyback-cli" />
+    <InternalsVisibleTo Include="flyback-site" />
+    <InternalsVisibleTo Include="Flyback.Editor.Tests" />
+    <InternalsVisibleTo Include="Flyback.Ui.Tests" />
+    <InternalsVisibleTo Include="Flyback.Viewer.Desktop.Tests" />
+    <InternalsVisibleTo Include="Flyback.Editor.Desktop.Tests" />
+    <InternalsVisibleTo Include="Flyback.Cli.Tests" />
+    <InternalsVisibleTo Include="Flyback.Site.Tests" />
+    <InternalsVisibleTo Include="Flyback.Specs" />
+  </ItemGroup>
+
+</Project>

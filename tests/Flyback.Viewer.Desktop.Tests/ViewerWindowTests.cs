@@ -16,6 +16,7 @@ using Flyback.Plugins.Audio;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Flyback.Ui;
+using Flyback.Host;
 
 namespace Flyback.Viewer.Desktop.Tests;
 

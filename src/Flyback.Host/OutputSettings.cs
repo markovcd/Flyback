@@ -1,11 +1,10 @@
 using System.Text.Json;
-using Flyback.Ui.Midi;
 using Flyback.Core;
 using Flyback.Engine.Render;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Settings;
 
-namespace Flyback.Ui;
+namespace Flyback.Host;
 
 /// <summary>
 /// What comes out of the program and how: the picture, a recorded take, and the

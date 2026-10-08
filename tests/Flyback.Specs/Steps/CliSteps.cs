@@ -17,6 +17,7 @@ using Flyback.Plugins.Hosting;
 using Flyback.Specs.Support;
 using Flyback.Cli.Common;
 using PluginRegistry = Flyback.Cli.Plugins;
+using Flyback.Host;
 
 namespace Flyback.Specs.Steps;
 
@@ -212,7 +213,7 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     public void GivenNoOversampleSetting() => File.WriteAllText(Path("settings.json"), "{}");
 
     [Given("the editor's settings oversample the sound {int} times")]
-    public void GivenOversampleSetting(int factor) => new Ui.OutputSettings { Oversample = factor }.Save(Path("settings.json"));
+    public void GivenOversampleSetting(int factor) => new OutputSettings { Oversample = factor }.Save(Path("settings.json"));
 
     [When("flyback-cli renders {string} as {string} for {float} seconds")]
     public void WhenRendered(string patch, string into, float seconds) => WhenRenderedWith(patch, into, seconds, "");

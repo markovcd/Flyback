@@ -10,6 +10,7 @@ using Flyback.Ui.Midi;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Engine.Render;
+using Flyback.Host;
 
 namespace Flyback.Viewer.Desktop;
 

@@ -17,6 +17,7 @@ using Flyback.Engine.Render;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui;
+using Flyback.Host;
 
 namespace Flyback.Editor;
 

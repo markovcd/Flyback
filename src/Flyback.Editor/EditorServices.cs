@@ -25,6 +25,7 @@ using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Flyback.Ui;
+using Flyback.Host;
 
 namespace Flyback.Editor;
 

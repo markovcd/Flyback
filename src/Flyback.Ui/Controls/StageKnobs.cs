@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Flyback.Core.Graph;
+using Flyback.Host;
 
 namespace Flyback.Ui.Controls;
 

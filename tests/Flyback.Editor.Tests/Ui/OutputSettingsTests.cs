@@ -28,6 +28,7 @@ using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 using Flyback.Ui;
+using Flyback.Host;
 
 namespace Flyback.Editor.Tests.Ui;
 

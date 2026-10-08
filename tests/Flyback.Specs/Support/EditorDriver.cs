@@ -23,6 +23,7 @@ using Flyback.Editor.Site;
 using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
 using Microsoft.Extensions.DependencyInjection;
+using Flyback.Host;
 
 namespace Flyback.Specs.Support;
 

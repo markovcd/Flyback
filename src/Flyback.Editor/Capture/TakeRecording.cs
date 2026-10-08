@@ -12,6 +12,7 @@ using Flyback.Editor.Statistics;
 using Flyback.Ui.Audio;
 using Flyback.Ui.Controls;
 using Flyback.Ui;
+using Flyback.Host;
 
 namespace Flyback.Editor.Capture;
 
