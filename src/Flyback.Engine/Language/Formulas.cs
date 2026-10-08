@@ -96,7 +96,10 @@ internal static class Formulas
     /// A term as the Expression's formula says it, each signal by the socket it
     /// arrives on, or null and a complaint where a number cannot go in one.
     /// </summary>
-    public static string? Written(Term term, IReadOnlyList<Signal> inputs, Issues issues)
+    public static string? Written(Term term, IReadOnlyList<Signal> inputs, Issues issues) =>
+        Spelled(term, inputs, issues) is { } spelled ? Infix.Write(spelled) : null;
+
+    private static Infix.Part? Spelled(Term term, IReadOnlyList<Signal> inputs, Issues issues)
     {
         switch (term)
         {
@@ -118,44 +121,25 @@ internal static class Formulas
                     return null;
                 }
 
-                return value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+                return new Infix.Number(value);
             }
 
             case Signal signal:
-                return Formula.Sockets[inputs.ToList().FindIndex(input => input.From == signal.From)].ToString();
+                return new Infix.Leaf(Formula.Sockets[inputs.ToList().FindIndex(input => input.From == signal.From)].ToString());
 
             case Operation { Right: null } negate:
-            {
-                if (Written(negate.Left, inputs, issues) is not { } operand) return null;
-
-                return Strength(negate.Left) < Strength(negate) ? $"-({operand})" : $"-{operand}";
-            }
+                return Spelled(negate.Left, inputs, issues) is { } operand ? new Infix.Negation(operand) : null;
 
             case Operation operation:
             {
-                if (Written(operation.Left, inputs, issues) is not { } left) return null;
-                if (Written(operation.Right!, inputs, issues) is not { } right) return null;
+                if (Spelled(operation.Left, inputs, issues) is not { } left) return null;
+                if (Spelled(operation.Right!, inputs, issues) is not { } right) return null;
 
-                var strength = Strength(operation);
-
-                if (Strength(operation.Left) < strength) left = $"({left})";
-                if (Strength(operation.Right!) <= strength) right = $"({right})";
-
-                return $"{left} {operation.Sign} {right}";
+                return new Infix.Operation(operation.Sign, left, right);
             }
 
             default:
                 return null;
         }
     }
-
-    /// <summary>How tightly a term binds, for the brackets a formula needs and no more.</summary>
-    private static int Strength(Term term) => term switch
-    {
-        Operation { Right: null } => 3,
-        Operation { Sign: '+' or '-' } => 1,
-        Operation => 2,
-        Operand { Figure.Amount: < 0 } => 3,
-        _ => 4,
-    };
 }

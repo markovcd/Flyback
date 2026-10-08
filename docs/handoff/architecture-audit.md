@@ -14,25 +14,6 @@ three editor hosts, with no hand-built service outside composition; every public
 by decision (ADR-0035); the binder is one walk (ADR-0183); presets are C# by
 decision (ADR-0138).
 
-## 2. The infix precedence rule is written three times, and has drifted (High)
-
-"Spell a tree as infix with the brackets it needs" lives in three files, each
-with its own private `Term` hierarchy, `Operators` table and `Strength` table:
-
-- `src/Flyback.Core/Graph/Formula.cs:129,158-247` (Literal, Socket, Call)
-- `src/Flyback.Engine/Language/Formulas.cs:99-153` (Operand, Signal, Operation)
-- `src/Flyback.Engine/Graph/ExpressionFusion.cs:41,369-379,539` (Literal, Signal, Knob, Call)
-
-Fusion's `Strength` brackets a negative zero (`:545`); the other two do not.
-ADR-0106 and 0107 say the printer and the binder follow one rule; ADR-0104 only
-places the reader in Core. Nothing declines sharing.
-
-**Fix.** `Formula.Term` (Literal, Socket, Call, Negate) becomes the one tree,
-with `Formula.Write(Term, Func<float,string> number, Func<int,string> socket)`
-in Core. `Formulas.Written` and `ExpressionFusion` build a `Formula.Term` and
-call it. Deletes two `Strength`s, one `Operators` and two writers, about 120
-lines, and the bracket rule has one owner. The binder's walk is untouched.
-
 ## 3. Adding an opcode touches seven files, and the shape table hides a miss (High)
 
 `OpShape.Inputs` ends `_ => 3` and `Outputs` ends `_ => 1`
@@ -168,13 +149,15 @@ Toolbar react to `OwnershipChanged` themselves.
 
 ## Order
 
-2 and 3 first: an afternoon each, and each closes a drift that is already real.
-4 and 5 next, since the editor's churn lands in them. 6 before 1.0.0, since the
+3 first: an afternoon, and it closes a drift that is already real. 4 and 5 next, since the editor's churn lands in them. 6 before 1.0.0, since the
 contract is a promise from then on. The rest as each file is next touched.
 
 Landed: the host code that is not Avalonia has a home, `Flyback.Host`
 (ADR-0188), and with it one plugin bootstrap, one bytes-to-patch reader, one
 settings reader for the CLI, one playback registration and one preset finder.
+The infix bracket rule is `Infix` in Core, which the binder, the printer and the
+fusing all spell a sum through; the three `Strength` tables' negative-number
+arms turned out never to change a spelling, and went with them.
 Still written per shell, and small: the speaker handshake in two JS files, the
 viewer's and the CLI's `--size` and `--oversample` option declarations, and the
 viewer's `--cpu` against the CLI's `--processor`.

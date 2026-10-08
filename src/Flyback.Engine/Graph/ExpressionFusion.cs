@@ -37,16 +37,6 @@ internal static class ExpressionFusion
     /// </summary>
     internal const int Longest = 60;
 
-    /// <summary>The Maths modules the language writes as an operator.</summary>
-    private static readonly Dictionary<string, char> Operators = new()
-    {
-        ["math.add"] = '+',
-        ["math.sub"] = '-',
-        ["math.mul"] = '*',
-        ["math.div"] = '/',
-        ["math.mod"] = '%',
-    };
-
     /// <summary>The operators whose two numbers the formula's reader adds up as it reads.</summary>
     private static readonly HashSet<string> Folding = ["math.add", "math.sub", "math.mul", "math.div"];
 
@@ -67,7 +57,7 @@ internal static class ExpressionFusion
     /// </summary>
     public static string Template(NodeDef retired)
     {
-        if (Operators.TryGetValue(retired.TypeId, out var sign)) return $"a {sign} b";
+        if (Formula.Operators.TryGetValue(retired.TypeId, out var sign)) return $"a {sign} b";
         if (retired.TypeId == "math.neg") return "-a";
 
         var letters = Formula.Sockets[..retired.Inputs.Count].Select(letter => letter.ToString());
@@ -354,40 +344,32 @@ internal static class ExpressionFusion
             }
         }
 
-        string? Written(Term term, Func<Term, string> socket)
+        string? Written(Term term, Func<Term, string> socket) =>
+            Spelled(term, socket) is { } spelled ? Infix.Write(spelled) : null;
+
+        Infix.Part? Spelled(Term term, Func<Term, string> socket)
         {
             switch (term)
             {
                 case Literal literal:
-                    return literal.Value.ToString("R", CultureInfo.InvariantCulture);
+                    return new Infix.Number(literal.Value);
 
                 case Signal or Knob:
-                    return socket(term);
+                    return new Infix.Leaf(socket(term));
 
                 case Call { TypeId: "math.neg", Arguments: [var operand] }:
-                    return Written(operand, socket) is { } inner
-                        ? Strength(operand) < 3 ? $"-({inner})" : $"-{inner}"
-                        : null;
+                    return Spelled(operand, socket) is { } inner ? new Infix.Negation(inner) : null;
 
-                case Call { Arguments: [var left, var right] } call when Operators.TryGetValue(call.TypeId, out var sign):
-                {
-                    if (Written(left, socket) is not { } l || Written(right, socket) is not { } r) return null;
-
-                    var strength = Strength(call);
-
-                    if (Strength(left) < strength) l = $"({l})";
-                    if (Strength(right) <= strength) r = $"({r})";
-
-                    return $"{l} {sign} {r}";
-                }
+                case Call { Arguments: [var left, var right] } call when Formula.Operators.TryGetValue(call.TypeId, out var sign):
+                    return Spelled(left, socket) is { } l && Spelled(right, socket) is { } r ? new Infix.Operation(sign, l, r) : null;
 
                 case Call call:
                 {
-                    var arguments = call.Arguments.Select(argument => Written(argument, socket)).ToList();
+                    var arguments = call.Arguments.Select(argument => Spelled(argument, socket)).ToList();
 
                     return arguments.Any(argument => argument is null)
                         ? null
-                        : $"{names[call.TypeId]}({string.Join(", ", arguments)})";
+                        : new Infix.Call(names[call.TypeId], arguments!);
                 }
 
                 default:
@@ -534,17 +516,6 @@ internal static class ExpressionFusion
             return key;
         }
     }
-
-    /// <summary>How tightly a part holds together as written: a sum least, a value or a call most.</summary>
-    private static int Strength(Term term) => term switch
-    {
-        Call { TypeId: "math.neg" } => 3,
-        Call { TypeId: "math.add" or "math.sub" } => 1,
-        Call call when Operators.ContainsKey(call.TypeId) => 2,
-        Literal { Value: < 0 } => 3,
-        Literal { Value: 0 } literal when float.IsNegative(literal.Value) => 3,
-        _ => 4,
-    };
 
     private abstract record Term;
 

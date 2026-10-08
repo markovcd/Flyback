@@ -126,7 +126,7 @@ internal sealed class Formula
     // --- spelling it as infix -----------------------------------------------------
 
     /// <summary>The Maths modules the text language writes as an operator.</summary>
-    private static readonly Dictionary<string, char> Operators = new()
+    internal static readonly Dictionary<string, char> Operators = new()
     {
         ["math.add"] = '+',
         ["math.sub"] = '-',
@@ -172,7 +172,7 @@ internal sealed class Formula
 
         Count(root);
 
-        return Spell(root, summing: false);
+        return Spell(root, summing: false) is { } spelled ? Graph.Infix.Write(spelled) : null;
 
         void Count(Term term)
         {
@@ -183,23 +183,22 @@ internal sealed class Formula
             foreach (var argument in call.Arguments) Count(argument);
         }
 
-        string? Spell(Term term, bool summing)
+        Graph.Infix.Part? Spell(Term term, bool summing)
         {
             switch (term)
             {
                 case Literal literal:
-                    return number(literal.Value);
+                    return new Graph.Infix.Number(literal.Value, number(literal.Value));
 
                 case Socket read:
                     reads.Add(read.Index);
-                    return socket(read.Index);
+                    return new Graph.Infix.Leaf(socket(read.Index));
 
                 case Call { Module.TypeId: "math.neg", Arguments: [var operand] } when operand is not Literal:
                 {
                     if (!summing) reads.Add(-1);
-                    if (Spell(operand, summing: true) is not { } inner) return null;
 
-                    return Strength(operand) < Strength(term) ? $"-({inner})" : $"-{inner}";
+                    return Spell(operand, summing: true) is { } inner ? new Graph.Infix.Negation(inner) : null;
                 }
 
                 case Call { Arguments: [var left, var right] } call
@@ -210,12 +209,7 @@ internal sealed class Formula
                     if (!summing) reads.Add(-1);
                     if (Spell(right, summing: true) is not { } r) return null;
 
-                    var strength = Strength(call);
-
-                    if (Strength(left) < strength) l = $"({l})";
-                    if (Strength(right) <= strength) r = $"({r})";
-
-                    return $"{l} {sign} {r}";
+                    return new Graph.Infix.Operation(sign, l, r);
                 }
 
                 case Call call when !Operators.ContainsKey(call.Module.TypeId) && function(call.Module) is { } name:
@@ -226,7 +220,7 @@ internal sealed class Formula
 
                     // Every argument, since one left off would read back as the
                     // knob it rests on and be written in the next time round.
-                    var arguments = new List<string>();
+                    var arguments = new List<Graph.Infix.Part>();
 
                     foreach (var argument in call.Arguments.Concat(call.Module.Inputs.Skip(call.Arguments.Count).Select(port => (Term)new Literal(port.Default))))
                     {
@@ -234,7 +228,7 @@ internal sealed class Formula
                         arguments.Add(spelled);
                     }
 
-                    return $"{name}({string.Join(", ", arguments)})";
+                    return new Graph.Infix.Call(name, arguments);
                 }
 
                 default:
@@ -242,16 +236,6 @@ internal sealed class Formula
             }
         }
     }
-
-    /// <summary>How tightly a part holds together as the language reads it: a sum least, a value most.</summary>
-    private static int Strength(Term term) => term switch
-    {
-        Call { Module.TypeId: "math.neg" } => 3,
-        Call { Module.TypeId: "math.add" or "math.sub" } => 1,
-        Call call when Operators.ContainsKey(call.Module.TypeId) => 2,
-        Literal { Value: < 0 } => 3,
-        _ => 4,
-    };
 
     // --- the tree ------------------------------------------------------------------
 
