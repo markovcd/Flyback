@@ -301,7 +301,9 @@ internal sealed class AssistantPanel : UserControl
 
         transcript.Shows(Voice.Briefing, settingsRepository.Current.ShowBriefing);
         transcript.Shows(Voice.Handbook, settingsRepository.Current.ShowLookups);
-        Recount();
+
+        // Read by the canvas as the window is laid out, since nothing may be raised while it is built.
+        Undescribed = Counted();
 
         Refresh();
     }
@@ -768,15 +770,18 @@ internal sealed class AssistantPanel : UserControl
     /// <summary>Works <see cref="Undescribed"/> out again, and says so if it moved.</summary>
     private void Recount()
     {
-        var now = chosenAssistant.Value is null
-            ? new HashSet<string>()
-            : settingsRepository.GetProsePolicy().Undescribed(plugins.Modules);
+        var now = Counted();
 
         if (now.SetEquals(Undescribed)) return;
 
         Undescribed = now;
         reactions.Raise(new UndescribedChanged(Undescribed));
     }
+
+    /// <summary>The modules the chosen assistant's briefing leaves undescribed, or none with no assistant chosen.</summary>
+    private IReadOnlySet<string> Counted() => chosenAssistant.Value is null
+        ? new HashSet<string>()
+        : settingsRepository.GetProsePolicy().Undescribed(plugins.Modules);
 
     /// <summary>
     /// Enter asks; Ctrl+Enter — and Shift+Enter, which every other message box

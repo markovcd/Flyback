@@ -9,6 +9,7 @@ using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Notices;
+using Flyback.Editor.Windows;
 using Flyback.Assist;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
@@ -46,24 +47,6 @@ public sealed class AssistantPanelTests : EditorTest
 
     private EditorFolders Kept => new() { SettingsPath = settingsPath };
 
-    /// <summary>An editor holding one patch, which takes nothing the assistant hands it.</summary>
-    private sealed class Holding(Func<Patch> current, Action<string, string?>? report = null) : IAssistantEditor
-    {
-        public Patch Current => current();
-
-        public void Apply(Patch patch)
-        {
-        }
-
-        public void Report(string message, string? detail) => report?.Invoke(message, detail);
-
-        public ISampleLibrary? Samples => null;
-
-        public IImageLibrary? Pictures => null;
-
-        public IReadOnlyList<PatchPreset>? Presets() => null;
-    }
-
     public override void Dispose()
     {
         base.Dispose();
@@ -73,55 +56,47 @@ public sealed class AssistantPanelTests : EditorTest
         if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
     }
 
-    /// <summary>What the panel built by <see cref="Showing"/> raises, for a test to react to.</summary>
-    private readonly Reactions reactions = new();
-
-    private Window Showing(
+    /// <summary>
+    /// The editor's window on Plasma with the assistant's column open. Only the
+    /// settings it opens on, and a conversation where one is given, are the test's own.
+    /// </summary>
+    private MainWindow Showing(
         PluginCatalog? plugins = null,
         AssistantSettings? saved = null,
-        Action<string, string?>? report = null,
         string? logs = null,
         AssistantConversation? conversation = null)
     {
-        var patch = Presets.Plasma(NodeCatalog.BuiltIn);
+        var folders = Kept with { ConversationLogFolder = logs };
 
-        var panel = Panel(
-            plugins ?? PluginCatalog.Empty,
-            Kept with { ConversationLogFolder = logs },
-            new Holding(() => patch, report),
-            conversation ?? new AssistantConversation(() => patch),
-            saved ?? new AssistantSettings());
+        return Column(Open(
+            Presets.Plasma(NodeCatalog.BuiltIn),
+            new EditorSetup { Plugins = plugins ?? PluginCatalog.Empty, Folders = folders },
+            services =>
+            {
+                services.AddSingleton(new AssistantSettingRepository(folders, saved ?? new AssistantSettings()));
+                if (conversation is not null) services.AddSingleton(conversation);
+            }));
+    }
 
-        var window = Show(panel, 760);
+    /// <summary>Opens the assistant's column in <paramref name="window"/>.</summary>
+    private MainWindow Column(MainWindow window)
+    {
+        Service<Reactions>(window).Raise(new AssistantAsked(true));
         Settle(window);
 
         return window;
     }
 
-    /// <summary>
-    /// The panel from the editor's container, over <paramref name="editor"/> rather
-    /// than a canvas, raising its notices on <see cref="reactions"/> alone.
-    /// </summary>
-    private AssistantPanel Panel(
-        PluginCatalog plugins,
-        EditorFolders folders,
-        IAssistantEditor editor,
-        AssistantConversation conversation,
-        AssistantSettings saved) =>
-        Resolve<AssistantPanel>(new EditorSetup { Plugins = plugins, Folders = folders }, services =>
-        {
-            services.AddSingleton(editor);
-            services.AddSingleton(conversation);
-            services.AddSingleton(reactions);
-            services.AddSingleton(new AssistantSettingRepository(folders, saved));
-        });
+    /// <summary>The assistant's column in <paramref name="window"/>.</summary>
+    private static AssistantPanel PanelOf(Window window) => All<AssistantPanel>(window).Single();
 
     /// <summary>
-    /// A catalog holding one provider, which is the only way to see the half
-    /// of this panel that reacts to what a provider can do.
+    /// A catalog holding one provider and the shipped presets, as every scan
+    /// does, which is the only way to see the half of this panel that reacts to
+    /// what a provider can do.
     /// </summary>
     private static PluginCatalog With(IPatchAssistant assistant) =>
-        new([], [], NodeCatalog.BuiltIn, [], [], [assistant]);
+        new([], [], NodeCatalog.BuiltIn, [.. Presets.All], [], [assistant]);
 
     // --- a conversation saved with the patch ----------------------------------
 
@@ -133,14 +108,14 @@ public sealed class AssistantPanelTests : EditorTest
     private (Window Window, AssistantPanel Panel) Over(Patch patch) => Over(() => patch);
 
     /// <summary>A panel over whatever patch the canvas holds, for an undo that hands back another object.</summary>
+    /// <remarks>The conversation reads <paramref name="patch"/> rather than the canvas, so a test can hand it another object as an undo does.</remarks>
     private (Window Window, AssistantPanel Panel) Over(Func<Patch> patch)
     {
-        var panel = Panel(PluginCatalog.Empty, Kept, new Holding(patch), new AssistantConversation(patch), new AssistantSettings());
-        var window = Show(panel, 760);
+        var window = Column(Open(
+            setup: new EditorSetup { Folders = Kept },
+            replace: services => services.AddSingleton(new AssistantConversation(patch))));
 
-        Settle(window);
-
-        return (window, panel);
+        return (window, PanelOf(window));
     }
 
     private static string Saved(params TranscriptLine[] transcript) => Saved(null, transcript);
@@ -154,16 +129,16 @@ public sealed class AssistantPanelTests : EditorTest
         transcript,
         Tokens: tokens).ToJson();
 
-    private static ContextStrip Spent(Window window) => All<ContextStrip>(window).Single();
+    private static ContextStrip Spent(Window window) => All<ContextStrip>(PanelOf(window)).Single();
 
     private static string Reading(Window window, string name) =>
-        All<TextBlock>(window).Single(block => block.Name == name).Text ?? string.Empty;
+        All<TextBlock>(PanelOf(window)).Single(block => block.Name == name).Text ?? string.Empty;
 
     private static List<string?> Counts(Window window) =>
-        [.. All<TextBlock>(window).Where(block => block.Name == "count").Select(block => block.Text)];
+        [.. All<TextBlock>(PanelOf(window)).Where(block => block.Name == "count").Select(block => block.Text)];
 
     private static List<string?> Shown(Window window) =>
-        [.. All<SelectableTextBlock>(window).Select(block => block.Text)];
+        [.. All<SelectableTextBlock>(PanelOf(window)).Select(block => block.Text)];
 
     [AvaloniaFact]
     public void A_conversation_saved_with_a_patch_is_shown_when_the_patch_opens()
@@ -998,7 +973,7 @@ public sealed class AssistantPanelTests : EditorTest
     public void The_settings_open_on_the_provider_that_is_in_force()
     {
         var host = Settings(Showing(
-            new PluginCatalog([], [], NodeCatalog.BuiltIn, [], [], [new Keyless(), new Both()]),
+            new PluginCatalog([], [], NodeCatalog.BuiltIn, [.. Presets.All], [], [new Keyless(), new Both()]),
             Configured("both")));
 
         // Row 0 is "None", so a real provider sits one row below its own place
@@ -1289,7 +1264,7 @@ public sealed class AssistantPanelTests : EditorTest
     public void Discarding_settings_puts_back_the_provider_that_was_in_force()
     {
         var window = Showing(
-            new PluginCatalog([], [], NodeCatalog.BuiltIn, [], [], [new Deaf(), new Both()]),
+            new PluginCatalog([], [], NodeCatalog.BuiltIn, [.. Presets.All], [], [new Deaf(), new Both()]),
             Configured("deaf"));
         var panel = All<AssistantPanel>(window).Single();
 
@@ -1519,7 +1494,7 @@ public sealed class AssistantPanelTests : EditorTest
         var panel = All<AssistantPanel>(window).Single();
         var changed = 0;
 
-        reactions.Add<UndescribedChanged>(_ => changed++);
+        Service<Reactions>(window).Add<UndescribedChanged>(_ => changed++);
         panel.Undescribed.ShouldNotBeEmpty();
 
         var host = Settings(window);
@@ -1560,11 +1535,13 @@ public sealed class AssistantPanelTests : EditorTest
     public void Saving_again_with_nothing_changed_does_not_repeat_the_key_saved_message()
     {
         var store = new FakeStore();
-        var plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, [], [], [new Deaf()], [store]);
+        var plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, [.. Presets.All], [], [new Deaf()], [store]);
         var messages = new List<string>();
 
-        var window = Showing(plugins, new AssistantSettings(), (message, _) => messages.Add(message));
+        var window = Showing(plugins, new AssistantSettings());
         var panel = All<AssistantPanel>(window).Single();
+
+        Service<ReportLine>(window).Said += (_, message) => messages.Add(message);
 
         var host = Settings(window);
 
@@ -1928,7 +1905,7 @@ public sealed class AssistantPanelTests : EditorTest
     public void The_footer_stops_saying_what_was_wrong_once_it_is_right()
     {
         var window = Showing(
-            new PluginCatalog([], [], NodeCatalog.BuiltIn, [], [], [new Keyless(), new Both()]),
+            new PluginCatalog([], [], NodeCatalog.BuiltIn, [.. Presets.All], [], [new Keyless(), new Both()]),
             new AssistantSettings { Provider = "keyless" });
 
         var footer = All<TextBlock>(window).Single(t => t.Name == "footer");

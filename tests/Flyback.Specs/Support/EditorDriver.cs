@@ -595,6 +595,19 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     public IReadOnlyList<string> TranscriptLines => ReadWindow(open =>
         open.GetVisualDescendants().OfType<TranscriptView>().Single().Lines.Select(line => line.Text).ToList());
 
+    /// <summary>Opens the assistant's column beside the canvas on <paramref name="conversation"/>, for a step to read.</summary>
+    internal AssistantPanel OpenAssistant(string? conversation) => Run(() =>
+    {
+        var open = Window();
+        Service<Reactions>().Raise(new AssistantAsked(true));
+
+        var panel = open.GetVisualDescendants().OfType<AssistantPanel>().Single();
+        panel.Open(conversation);
+        Settle();
+
+        return panel;
+    });
+
     /// <summary>Whether the assistant's column is open beside the canvas.</summary>
     public bool AssistantColumnOpen => ReadWindow(open =>
         open.GetVisualDescendants().OfType<AssistantPanel>().Single().IsVisible);

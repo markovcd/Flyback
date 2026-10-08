@@ -907,7 +907,10 @@ public class BoxLabelTests : EditorTest
 `All<T>(visual)` and `Pick(combo, name)`. Open windows through it. The window and
 the canvas come out of the editor's container, and `replace` registers a test's
 own service in place of one of them: `Site(handler)` for the preset site, or a
-pointer anchor that holds nothing. A test about one service can take it from
+pointer anchor that holds nothing. A part of the window is tested in the window:
+open one and take the part from it with `Service<T>(window)`, replacing only what
+the test itself supplies, rather than building the part and its graph by hand. A
+test about one service of the canvas can take it from
 `new ServiceCollection().AddCanvas()` without a window. Headless gives the whole assembly one UI thread, so a window left open keeps
 its preview, timers and engine on that thread for every test after it; `EditorTest`
 closes what it opened, newest first, and closes a `MainWindow` without asking
