@@ -101,6 +101,18 @@ WORKDIR /src
 # what that would have saved.
 COPY . .
 
+# The public key the app trusts updates from, as base64 DER. Only a build on a
+# developer's machine passes one: release.sh and coverage.sh hand in the local
+# test key's, and on GitHub the committed release-key.pem stands. Kept in the
+# environment, so every stage built on this one knows it is a local build.
+ARG RELEASE_PUBLIC_KEY=""
+ENV RELEASE_PUBLIC_KEY=${RELEASE_PUBLIC_KEY}
+
+RUN if [ -n "${RELEASE_PUBLIC_KEY}" ]; then \
+      printf -- '-----BEGIN PUBLIC KEY-----\n%s\n-----END PUBLIC KEY-----\n' "${RELEASE_PUBLIC_KEY}" \
+        > src/Flyback.Editor/Updates/release-key.pem; \
+    fi
+
 # Shared by every step that touches NuGet, including the per-platform publishes
 # below — those are what actually download something, since each runtime pack is
 # a fresh set of packages. With the cache a second build fetches nothing.
@@ -114,23 +126,12 @@ COPY . .
 #
 # Only this restore is locked. The publishes below restore a runtime pack per
 # platform, which no lock file taken without a runtime identifier describes.
+#
+# It runs in the build's own step: the cache mount is not part of a layer, so a
+# restore cached as a step of its own can outlive the packages it fetched.
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet restore Flyback.slnx --locked-mode
-
-# The public key the app trusts updates from, as base64 DER. Only a build on a
-# developer's machine passes one: release.sh and coverage.sh hand in the local
-# test key's, and on GitHub the committed release-key.pem stands. Kept in the
-# environment, so every stage built on this one knows it is a local build.
-ARG RELEASE_PUBLIC_KEY=""
-ENV RELEASE_PUBLIC_KEY=${RELEASE_PUBLIC_KEY}
-
-RUN if [ -n "${RELEASE_PUBLIC_KEY}" ]; then \
-      printf -- '-----BEGIN PUBLIC KEY-----\n%s\n-----END PUBLIC KEY-----\n' "${RELEASE_PUBLIC_KEY}" \
-        > src/Flyback.Editor/Updates/release-key.pem; \
-    fi
-
-RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet build Flyback.slnx -c ${CONFIGURATION} --no-restore
+    dotnet restore Flyback.slnx --locked-mode \
+    && dotnet build Flyback.slnx -c ${CONFIGURATION} --no-restore
 
 # The gate. Every test in the solution — the engine's, the shell's headless UI
 # ones, the plugins' — and the build stops here if any of them does.
