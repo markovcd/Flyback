@@ -33,15 +33,29 @@ public sealed class TurnReadingTests
     }
 
     [Fact]
-    public async Task A_question_is_said_to_be_read_as_one_and_answered_rather_than_built()
+    public async Task A_question_surely_about_a_module_is_said_to_be_one_and_answered_rather_than_built()
     {
-        using var session = Begun(new Reader("question", 0.8));
+        using var session = Begun(new Reader("module", 0.9));
+
+        await Drain(session, "what does the ADSR do?");
+
+        transcript.Lines.ShouldContain(new TranscriptLine(Voice.You, "what does the ADSR do?"));
+        transcript.Said.ShouldContain(s => s.Kind == "intent" && s.Text == "Read as a question about a module (0.90), so it was asked to answer rather than build.");
+        assistant.Instructions.ShouldHaveSingleItem().ShouldStartWith(TurnReading.Answering);
+    }
+
+    [Theory]
+    [InlineData("module", 0.7)]
+    [InlineData("question", 0.95)]
+    [InlineData("other", 0.99)]
+    public async Task Any_other_reading_sends_the_message_as_typed_and_says_nothing(string intent, double sure)
+    {
+        using var session = Begun(new Reader(intent, sure));
 
         await Drain(session, "why is it so quiet?");
 
-        transcript.Lines.ShouldContain(new TranscriptLine(Voice.You, "why is it so quiet?"));
-        transcript.Said.ShouldContain(s => s.Kind == "intent" && s.Text == "Read as a question about the patch (0.80).");
-        assistant.Instructions.ShouldHaveSingleItem().ShouldStartWith(TurnReading.Answering);
+        assistant.Instructions.ShouldHaveSingleItem().ShouldBe("why is it so quiet?");
+        transcript.Said.ShouldNotContain(s => s.Kind == "intent");
     }
 
     [Fact]
@@ -54,20 +68,6 @@ public sealed class TurnReadingTests
         assistant.Instructions.ShouldHaveSingleItem().ShouldNotContain(TurnReading.Answering);
     }
 
-    [Fact]
-    public async Task A_message_surely_about_something_else_is_held_back_once_and_sent_the_second_time()
-    {
-        using var session = Begun(new Reader("other", 0.95));
-
-        await Drain(session, "what is the capital of France?");
-
-        assistant.Instructions.ShouldBeEmpty();
-        transcript.Lines[^1].Text.ShouldContain("Send it again to send it anyway");
-
-        await Drain(session, "what is the capital of France?");
-
-        assistant.Instructions.ShouldHaveSingleItem();
-    }
 
     [Fact]
     public async Task A_proposal_the_model_doubts_is_said_to_maybe_not_be_what_was_asked()

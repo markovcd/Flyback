@@ -16,7 +16,7 @@
 
 - Typed into the module list, a phrase whose words name no module finds the modules it describes, likeliest first, when a decision model is chosen under Settings → Decisions; `flyback-cli modules --find` lists the same.
 
-- With a decision model chosen, a message to the assistant is read first: a question is answered rather than built from, one surely not about Flyback is held back until it is sent again, and a proposal that may not do what was asked says so beside it.
+- With a decision model chosen, a message to the assistant is read first: one surely asking what a module does is answered rather than built from, and a proposal that may not do what was asked says so beside it.
 
 - With a decision model chosen, a patch's complaints on the status line are said again likeliest first, the one most likely why it is silent or dark leading; `flyback-cli check --triage` orders them the same way.
 

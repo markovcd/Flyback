@@ -22,9 +22,6 @@ internal sealed class AssistantSession(ITranscript transcript, string? logFolder
 
     private readonly TurnReading? reading = decisions is null ? null : new TurnReading(decisions);
 
-    /// <summary>The message last held back as not about Flyback, which is sent if it is sent again.</summary>
-    private string? heldBack;
-
     /// <summary>The conversation going, or null before the first message.</summary>
     public AssistantRun? Run { get; private set; }
 
@@ -113,19 +110,14 @@ internal sealed class AssistantSession(ITranscript transcript, string? logFolder
         if (reading is not null && decisions?.Chosen is not null
             && await reading.Read(message, IssueTriage.Summary(run.Workbench.Snapshot(), NodeCatalog.Current), cancel).ConfigureAwait(true) is { } read)
         {
-            Put(Voice.Aside, "intent", $"Read as {read.Said} ({read.Probability:0.00}).");
+            log.Write("intent", $"Read as {read.Said} ({read.Probability:0.00}).");
 
-            if (read.Elsewhere && heldBack != message)
+            if (read.Asks)
             {
-                heldBack = message;
-                Put(Voice.Note, "note", "That reads as not about Flyback, so it was not sent. Send it again to send it anyway.");
-                yield break;
+                Put(Voice.Aside, "intent", $"Read as {read.Said} ({read.Probability:0.00}), so it was asked to answer rather than build.");
+                sent = TurnReading.Answering + Environment.NewLine + Environment.NewLine + message;
             }
-
-            if (read.Asks) sent = TurnReading.Answering + Environment.NewLine + Environment.NewLine + message;
         }
-
-        heldBack = null;
 
         // On the caller's context, since the transcript may be a control.
         await foreach (var happened in run.Ask(sent, cancel).ConfigureAwait(true))

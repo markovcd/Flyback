@@ -25,10 +25,10 @@ Feature: The assistant can be asked from the command line
     When flyback-cli asks it about "field.fbk" for "a gray field" as JSON
     Then the turn's last line counts its requests and the tokens they took
 
-  Scenario: A question is answered rather than built when a decision model reads it as one
+  Scenario: A question about a module is answered rather than built when a decision model reads it as one
     Given an assistant that builds a gray field when asked
-    And a decision model that reads every message as a question about the patch
-    When flyback-cli asks it about "field.fbk" for "why is it gray?"
+    And a decision model that reads every message as a question about a module
+    When flyback-cli asks it about "field.fbk" for "what does the Value module do?"
     Then the assistant was told to answer rather than build
 
   Scenario: A flag ask does not have is refused rather than sent to the assistant

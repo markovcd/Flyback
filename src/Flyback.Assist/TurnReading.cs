@@ -19,15 +19,15 @@ internal sealed class TurnReading(Decisions decisions)
         new("other", "Not about Flyback, patches, sound or pictures at all"),
     ];
 
-    /// <summary>How sure the model has to be that a message is not about Flyback before it is held back.</summary>
-    public const double Elsewhere = 0.9;
-
     /// <summary>Below this, a proposal is said to maybe not do what was asked.</summary>
     public const double Doubted = 0.5;
 
-    /// <summary>What a turn read as a question is told ahead of the message.</summary>
+    /// <summary>How sure the model has to be that a message asks about a module before the assistant is told so.</summary>
+    public const double Sure = 0.8;
+
+    /// <summary>What a turn read as a question about a module is told ahead of the message.</summary>
     public const string Answering =
-        "[From Flyback, not the person: this reads as a question. Answer it, and change and propose nothing unless the person asks for a change.]";
+        "[From Flyback, not the person: this reads as a question about a module. Answer it, and change and propose nothing unless the person asks for a change.]";
 
     /// <summary>The likeliest reading of <paramref name="message"/>, or null without a model.</summary>
     public async Task<Reading?> Read(string message, string patch, CancellationToken cancel)
@@ -61,11 +61,11 @@ internal sealed class TurnReading(Decisions decisions)
     /// <summary>A message read as one intent, and how likely that reading is.</summary>
     internal sealed record Reading(string Intent, double Probability)
     {
-        /// <summary>Whether the message wants an answer rather than a change.</summary>
-        public bool Asks => Intent is "question" or "module";
-
-        /// <summary>Whether it is surely about something else altogether.</summary>
-        public bool Elsewhere => Intent == "other" && Probability >= TurnReading.Elsewhere;
+        /// <summary>
+        /// Whether the message surely asks what a module does. The only reading acted on: a question
+        /// about the patch and one not about Flyback at all are too often taken for each other.
+        /// </summary>
+        public bool Asks => Intent == "module" && Probability >= Sure;
 
         /// <summary>What the transcript says it was read as.</summary>
         public string Said => Intent switch

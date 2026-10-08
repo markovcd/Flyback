@@ -158,7 +158,7 @@ public sealed class AskSteps : IDisposable
         said.ShouldContain("--help");
     }
 
-    [Given("a decision model that reads every message as a question about the patch")]
+    [Given("a decision model that reads every message as a question about a module")]
     public void GivenAQuestionReader() => reader = new QuestionReader();
 
     [Then("the assistant was told to answer rather than build")]
@@ -295,7 +295,7 @@ public sealed class AskSteps : IDisposable
         }
     }
 
-    /// <summary>Reads every message as a question about the patch, surely.</summary>
+    /// <summary>Reads every message as a question about a module, surely.</summary>
     private sealed class QuestionReader : IDecisionModel
     {
         public string Id => "question-reader";
@@ -313,7 +313,7 @@ public sealed class AskSteps : IDisposable
         public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel) =>
             Task.FromResult(new Decision("reader", request.Questions.ToDictionary(q => q.Key, q => q.Value switch
             {
-                Question.Choice choice => (Answer)new Answer.Chosen("question", choice.Options.ToDictionary(o => o.Label, o => o.Label == "question" ? 0.9 : 0.02), 0.9),
+                Question.Choice choice => (Answer)new Answer.Chosen("module", choice.Options.ToDictionary(o => o.Label, o => o.Label == "module" ? 0.9 : 0.02), 0.9),
                 _ => new Answer.YesNo(1),
             }), DecisionUsage.None));
     }
