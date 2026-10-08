@@ -50,25 +50,13 @@ Each of these ends the run, says which one and why, and changes no file.
   whether CI is unhappy answers no. The gate having no opinion is not the gate
   being happy. Push and wait for it.
 
-- **The Android build has not passed on what it is built from.** `android.yml`
-  is outside the gate (ADR-0184) and starts only when a path the APK is built
-  from changes, so the commit being released may have no run of its own. Find the
-  last commit that touched those paths, and require a green run on it or on a
-  later commit of `main`:
+- **The Android build has not passed on this commit.** `android.yml` is outside
+  the gate (ADR-0184) and runs on every push to `main`. Same rule as the gate: a
+  red run refuses, and so does no run.
 
   ```bash
-  touched=$(git log -1 --format=%H -- .github/workflows/android.yml Directory.Build.props \
-    Directory.Build.targets Directory.Packages.props global.json nuget.config \
-    src/Flyback.Core src/Flyback.Engine src/Flyback.Gpu src/Flyback.Plugins src/Flyback.Assist \
-    src/Flyback.Ui src/Flyback.Editor src/Flyback.Editor.Android \
-    src/Flyback.Viewer.Web/LinkedPlugins.props src/plugins)
-  gh run list --workflow=android.yml --branch main --limit 50 --json headSha,conclusion \
-    --jq '.[] | select(.conclusion=="success") | .headSha' |
-    while read -r sha; do git merge-base --is-ancestor "$touched" "$sha" && echo "green: $sha"; done
+  gh run list --workflow=android.yml --commit "$(git rev-parse HEAD)" --json conclusion,status
   ```
-
-  No line printed refuses, a red run and no run alike. The list is the `paths:`
-  of `android.yml`; change one, change both.
 
 - **A locked restore fails.** The gate restores with `--locked-mode`, so a release
   build dies at restore if `Directory.Packages.props` and the `packages.lock.json`

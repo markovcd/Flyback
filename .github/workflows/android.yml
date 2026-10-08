@@ -10,10 +10,6 @@
 # builds only; an emulator run is slow and flaky, and waits on the app reporting
 # its own state over adb (TODO.md).
 #
-# The paths are what the APK is built from. A change to none of them starts no
-# run, so /release reads that as the commit having nothing to rebuild and looks
-# back for the last run on a commit that did.
-#
 # Every action is pinned to a commit rather than a tag; Dependabot says when a
 # pin should move.
 
@@ -22,41 +18,7 @@ name: Android
 on:
   push:
     branches: [main]
-    paths:
-      - .github/workflows/android.yml
-      - Directory.Build.props
-      - Directory.Build.targets
-      - Directory.Packages.props
-      - global.json
-      - nuget.config
-      - src/Flyback.Core/**
-      - src/Flyback.Engine/**
-      - src/Flyback.Gpu/**
-      - src/Flyback.Plugins/**
-      - src/Flyback.Assist/**
-      - src/Flyback.Ui/**
-      - src/Flyback.Editor/**
-      - src/Flyback.Editor.Android/**
-      - src/Flyback.Viewer.Web/LinkedPlugins.props
-      - src/plugins/**
   pull_request:
-    paths:
-      - .github/workflows/android.yml
-      - Directory.Build.props
-      - Directory.Build.targets
-      - Directory.Packages.props
-      - global.json
-      - nuget.config
-      - src/Flyback.Core/**
-      - src/Flyback.Engine/**
-      - src/Flyback.Gpu/**
-      - src/Flyback.Plugins/**
-      - src/Flyback.Assist/**
-      - src/Flyback.Ui/**
-      - src/Flyback.Editor/**
-      - src/Flyback.Editor.Android/**
-      - src/Flyback.Viewer.Web/LinkedPlugins.props
-      - src/plugins/**
   workflow_dispatch:
 
 permissions:
@@ -69,8 +31,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # A run is the workload install and one Release build; the default of six hours is what a hang costs.
-    timeout-minutes: 45
+    # A run is about two minutes; the default of six hours is what a hang costs.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
