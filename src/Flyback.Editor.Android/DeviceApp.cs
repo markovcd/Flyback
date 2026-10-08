@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using Flyback.Core.Graph;
 using Flyback.Editor.Gallery;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,9 +35,7 @@ public sealed class DeviceApp : Avalonia.Application
     private static EditorView Editor()
     {
         var request = DeviceRequest.Current;
-        var plugins = PluginHost.LoadLinked(typeof(DeviceApp).Assembly);
-
-        NodeCatalog.Install(plugins.Modules);
+        var plugins = PluginHost.LoadLinked(typeof(DeviceApp).Assembly).Install();
 
         var provider = EditorServices.Provider(new EditorSetup
         {

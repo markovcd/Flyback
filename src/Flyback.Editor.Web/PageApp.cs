@@ -7,7 +7,6 @@ using Flyback.Editor.Controls;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Gallery;
 using Flyback.Editor.Settings;
-using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,9 +26,7 @@ internal sealed class PageApp : Application
         if (ApplicationLifetime is not ISingleViewApplicationLifetime page)
             throw new NotSupportedException("The web editor runs in a page.");
 
-        var plugins = PluginHost.LoadLinked(typeof(PageApp).Assembly);
-
-        NodeCatalog.Install(plugins.Modules);
+        var plugins = PluginHost.LoadLinked(typeof(PageApp).Assembly).Install();
 
         var provider = EditorServices.Provider(new EditorSetup { Plugins = plugins, Host = new() { InPage = true, PresetSite = PageSite.Root, Home = PageSite.Home } }, services =>
         {

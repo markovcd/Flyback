@@ -4,7 +4,6 @@ using Avalonia;
 using Flyback.Ui;
 using Flyback.Ui.Audio;
 using Flyback.Core;
-using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
 using Flyback.Host;
 
@@ -54,9 +53,7 @@ internal static class Program
 
         // Before a patch is read: it may name modules only a plugin defines. Loading
         // is a read; nothing here calls what would write a file.
-        var plugins = PluginHost.Load();
-
-        NodeCatalog.Install(plugins.Modules);
+        var plugins = PluginHost.Load().Install();
 
         foreach (var line in PluginReport.Lines(plugins, PluginHost.DefaultDirectory)) Trace.WriteLine(line);
 

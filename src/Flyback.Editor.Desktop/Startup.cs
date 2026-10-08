@@ -3,7 +3,6 @@ using Flyback.Editor.PluginPackages;
 using Flyback.Editor.Desktop.Updates;
 using Flyback.Editor.Updates;
 using Flyback.Core;
-using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 
@@ -116,8 +115,7 @@ internal static class Startup
 
         foreach (var problem in refused) Trace.WriteLine($"plugins: {problem}");
 
-        Plugins = PluginHost.Load();
-        NodeCatalog.Install(Plugins.Modules);
+        Plugins = PluginHost.Load().Install();
 
         // Here rather than when the assistant is first asked, so the file the
         // settings point at is there to open before anybody has used it.

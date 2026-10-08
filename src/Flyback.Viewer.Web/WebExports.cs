@@ -60,14 +60,7 @@ public static partial class WebExports
     /// <summary>Where <see cref="Still"/> leaves a frame.</summary>
     private static readonly Pinned<byte> Frame = new();
 
-    private static PluginCatalog Load()
-    {
-        var catalog = PluginHost.LoadLinked(typeof(WebExports).Assembly);
-
-        NodeCatalog.Install(catalog.Modules);
-
-        return catalog;
-    }
+    private static PluginCatalog Load() => PluginHost.LoadLinked(typeof(WebExports).Assembly).Install();
 
     /// <summary>
     /// The shipped presets as JSON, each with the heading of its run and its description,

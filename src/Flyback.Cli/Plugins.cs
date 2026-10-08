@@ -1,4 +1,3 @@
-using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.Cli;
@@ -28,11 +27,9 @@ internal sealed class Plugins(Func<PluginCatalog> load, string directory, TextWr
 
     private PluginCatalog Scan()
     {
-        var catalog = load();
-
         // Before anything reads a patch: a catalog settled after the fact would
         // have let a file compile against the wrong module.
-        NodeCatalog.Install(catalog.Modules);
+        var catalog = load().Install();
 
         if (report is not null)
             foreach (var line in PluginReport.Lines(catalog, directory)) report.WriteLine(line);

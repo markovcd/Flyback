@@ -49,8 +49,7 @@ internal static class Shot
 
         if (ShotRequest.Parse(args, error) is not { } request) return Failed;
 
-        var plugins = PluginHost.Load();
-        NodeCatalog.Install(plugins.Modules);
+        var plugins = PluginHost.Load().Install();
 
         using var session = HeadlessUnitTestSession.StartNew(typeof(ShotApp), AvaloniaTestIsolationLevel.PerAssembly);
 

@@ -59,6 +59,17 @@ internal sealed class PluginCatalog
 
     private readonly Dictionary<object, PluginInfo> providers;
 
+    /// <summary>
+    /// Puts the modules in the catalog every patch is read against, which every host
+    /// does once before it opens one, and hands this back.
+    /// </summary>
+    public PluginCatalog Install()
+    {
+        NodeCatalog.Install(Modules);
+
+        return this;
+    }
+
     public IReadOnlyList<LoadedPlugin> Plugins { get; }
 
     public IReadOnlyList<IAudioOutput> AudioOutputs { get; }
