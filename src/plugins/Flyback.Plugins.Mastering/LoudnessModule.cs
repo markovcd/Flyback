@@ -70,6 +70,7 @@ internal static class LoudnessModule
         "A running BS.1770 loudness meter for a stereo pair: momentary and short-term "
         + "loudness, and a peak.")
     {
+        Words = "LUFS meter",
         Sinks = ModuleSinks.Audio,
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Measurement))
         {

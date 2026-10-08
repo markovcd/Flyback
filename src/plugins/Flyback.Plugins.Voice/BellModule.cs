@@ -44,6 +44,7 @@ internal static class BellModule
         "A bell, a gong, a chime. Patch an envelope into 'level' (a Stroke, a Decay) and a "
         + "frequency into 'freq'.")
     {
+        Words = "bell, gong, chime",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
         {
             Glyph = "M12,3 C8,3 8,8 6,10 C4,12 3,14 3,16 L21,16 C21,14 20,12 18,10 C16,8 16,3 12,3 Z "

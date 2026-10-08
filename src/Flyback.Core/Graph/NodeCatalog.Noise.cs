@@ -48,7 +48,10 @@ public partial class NodeCatalog
             new PortSpec("drift", PortKind.Scalar, 0f, -1f, 1f) { Help = "Glides between the values 'random' jumps to." },
         ],
         NoiseEmit,
-        "Noise and chance. For a smooth field, use Clouds.");
+        "Noise and chance. For a smooth field, use Clouds.")
+    {
+        Words = "random hiss, static",
+    };
 
     /// <summary>
     /// White and pink over a domain, each -1 to 1, for a module that is noise

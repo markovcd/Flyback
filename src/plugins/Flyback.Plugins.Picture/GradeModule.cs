@@ -56,7 +56,10 @@ internal static class GradeModule
         ],
         [new PortSpec("color", PortKind.Color) { Help = "The picture, graded." }],
         Emit,
-        "Saturation, contrast and gamma, in a grading desk's order; all three at 1 is a wire.");
+        "Saturation, contrast and gamma, in a grading desk's order; all three at 1 is a wire.")
+    {
+        Words = "saturation, contrast, gamma",
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

@@ -44,6 +44,7 @@ internal static class StarModule
         "A star, as a distance, with a point at the top. Exact, so an outline is its stated "
         + "width even at the tips.")
     {
+        Words = "star shape",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {
             Glyph = "M12,2.5 L14.7,9.4 L22,10 L16.4,14.8 L18.2,22 L12,17.9 L5.8,22 L7.6,14.8 "

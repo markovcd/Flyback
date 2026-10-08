@@ -34,7 +34,10 @@ internal static class FadeModule
         "Brings a part in: 'in' is silent while 'level' is under 'from', full over 'to', and "
         + "fades between; 'from' above 'to' fades out instead. Drive every part's 'level' from "
         + "one Sequencer, each with its own 'from' and 'to', for a whole arrangement on one "
-        + "lane. Untyped: it fades a picture as readily as a voice.");
+        + "lane. Untyped: it fades a picture as readily as a voice.")
+    {
+        Words = "fade in a part",
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

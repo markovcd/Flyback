@@ -122,7 +122,10 @@ public partial class NodeCatalog
 
                 return [rate, em.Mul(node[1], rate)];
             },
-            "A tempo, set in BPM and handed on in beats per second.");
+            "A tempo, set in BPM and handed on in beats per second.")
+        {
+            Words = "BPM",
+        };
 
         yield return new NodeDef(
             HoldTypeId, "Sample & Hold", ModuleCategories.Timing,
@@ -135,6 +138,7 @@ public partial class NodeCatalog
             "Captures the value on 'in' when 'trigger' rises, and holds it until the next trigger. "
             + "Useful for locking a changing signal to a note or gate.")
         {
+            Words = "sample and hold",
             Sinks = ModuleSinks.Audio,
         };
 
@@ -156,6 +160,7 @@ public partial class NodeCatalog
             "Flips a coin for each note on 'gate' and sends it, whole from start to end, to one "
             + "output or the other. On the picture it flips a new coin every frame.")
         {
+            Words = "random coin flip per note",
             Sinks = ModuleSinks.Audio,
         };
 
@@ -186,18 +191,19 @@ public partial class NodeCatalog
             + "part, stepping a section at a time. Wire a part into a Desk's level or a drum's "
             + "velocity to bring it in and out.")
         {
+            Words = "sections of a song",
             Extras = [new ArrangementExtra(DefaultParts)],
         };
 
         yield return StepSequencer(
             "seq.notes", "Note Sequencer", DefaultRiff, PortDisplay.Note, (0f, 127f),
             "Step sequence of notes.",
-            "The note, as a pitch source.");
+            "The note, as a pitch source.") with { Words = "step sequencer of notes, melody" };
 
         yield return StepSequencer(
             "seq.values", "Sequencer", DefaultShape, PortDisplay.Number, (0f, 1f),
             "Step sequence of ordinary signals.",
-            "The step's value.");
+            "The step's value.") with { Words = "step sequencer of values" };
     }
 
     

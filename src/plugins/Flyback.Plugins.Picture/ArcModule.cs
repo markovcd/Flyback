@@ -33,6 +33,7 @@ internal static class ArcModule
         "Part of a ring, as a distance, centered on the top and opening both ways, with round "
         + "ends. Exact, so a sweep driven by a signal fills it like a dial.")
     {
+        Words = "arc, ring segment",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {
             Glyph = "M6.3,17.7 A8,8 0 1 1 17.7,17.7",

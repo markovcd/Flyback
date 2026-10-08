@@ -36,6 +36,7 @@ internal static class CrushModule
         Emit,
         "Crunches a signal down to fewer levels and fewer samples.")
     {
+        Words = "bitcrush, lo-fi",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
         {
             Glyph = "M3,18 L3,14 L7,14 L7,8 L11,8 L11,4 L15,4 L15,10 L19,10 L19,16 L21,16",

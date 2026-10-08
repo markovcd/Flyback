@@ -750,9 +750,9 @@ public sealed class ModulePalette : UserControl
         if (ExpressionFusion.Retired(def) && text.Length == 0) return false;
 
         return text.Length == 0
-            || def.Name.Contains(text, StringComparison.OrdinalIgnoreCase)
             || def.Category.Contains(text, StringComparison.OrdinalIgnoreCase)
-            || def.TypeId.Contains(text, StringComparison.OrdinalIgnoreCase);
+            || def.TypeId.Contains(text, StringComparison.OrdinalIgnoreCase)
+            || ModuleFinder.Spelled(def, text);
     }
 
     private static TextBlock Hint(string text) => new()

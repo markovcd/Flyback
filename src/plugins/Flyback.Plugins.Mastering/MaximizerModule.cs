@@ -81,6 +81,7 @@ internal static class MaximizerModule
         "One knob to make a mix louder and denser: three bands compressed, then limited to -1 "
         + "dB.")
     {
+        Words = "louder, denser",
         Extras =
         [
             new SettingsExtra(

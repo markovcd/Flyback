@@ -101,6 +101,7 @@ internal static class DrumModule
         + "Drums at one tempo play together. Set the rhythm to Trigger to play it from a MIDI "
         + "In or a sequencer. It can never leave -1..1.")
     {
+        Words = "drum machine, beat",
         Extras =
         [
             new SettingsExtra(

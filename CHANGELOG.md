@@ -14,9 +14,9 @@
 
 - `install.sh --no-links` writes only the copy, leaving the command links, menu entry, shortcut and PATH as they were.
 
-- Typed into the module list, a phrase whose words name no module finds the modules it describes, likeliest first, when a decision model is chosen under Settings → Decisions; `flyback-cli modules --find` lists the same.
+- Typed into the module list, a word a module is known by finds it (a Slew by portamento, a Reverb by room), and a phrase that names no module finds the modules it describes, likeliest first, when a decision model is chosen under Settings → Decisions; `flyback-cli modules --find` lists the same.
 
-- With a decision model chosen, a message to the assistant is read first: one surely asking what a module does is answered rather than built from, and a proposal that may not do what was asked says so beside it.
+- With a decision model chosen, a message to the assistant is read first: one surely asking a question, about a module or the patch, is answered rather than built from, and a proposal that may not do what was asked says so beside it.
 
 - With a decision model chosen, a patch's complaints on the status line are said again likeliest first, the one most likely why it is silent or dark leading; `flyback-cli check --triage` orders them the same way.
 

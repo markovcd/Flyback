@@ -82,6 +82,7 @@ internal static class SupersawModule
         "Seven detuned saws in one module. Patch 'out' and 'wide' to the two channels for "
         + "stereo, or use 'out' alone.")
     {
+        Words = "detuned saws, supersaw",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
         {
             Glyph = "M3,20 L9,4 M6,20 L12,4 M9,20 L15,4 M12,20 L18,4 M15,20 L21,4",

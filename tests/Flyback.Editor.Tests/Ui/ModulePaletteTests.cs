@@ -225,6 +225,25 @@ public class ModulePaletteTests : EditorTest
         editor.Selection.Focused.ShouldNotBeNull().TypeId.ShouldBe("space.kaleidoscope");
     }
 
+    [AvaloniaFact]
+    public void A_word_a_module_is_known_by_finds_it_as_its_name_would()
+    {
+        var window = Open();
+        var editor = Editor(window);
+
+        RightClick(window, Empty(window));
+
+        var box = All<TextBox>(Palette(window).ShouldNotBeNull()).First();
+
+        box.Text = "portamento";
+        Settle(window);
+
+        PressKey(box, Key.Enter);
+        Settle(window);
+
+        editor.Selection.Focused.ShouldNotBeNull().TypeId.ShouldBe("audio.slew", "a Slew's words say portamento");
+    }
+
     /// <summary>
     /// The arrows walk the modules and nothing else — a list with headings in it
     /// would otherwise step onto one of those and Enter would have nothing to add.

@@ -39,6 +39,7 @@ public partial class NodeCatalog
         "Follows 'in', taking its time: between a Note Sequencer and a Note it is glide, and "
         + "after a gate it smooths the steps. Audio only: a wire on the picture.")
     {
+        Words = "glide, portamento, smoothing",
         Sinks = ModuleSinks.Audio,
     };
 

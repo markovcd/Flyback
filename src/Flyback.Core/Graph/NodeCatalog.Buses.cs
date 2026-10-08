@@ -50,6 +50,7 @@ public partial class NodeCatalog
             "Puts 'in' on a bus, for a Receive on the same bus to play anywhere in the patch "
             + "without a wire across it.")
         {
+            Words = "send to a bus",
             Extras = [BusExtra],
         };
 
@@ -61,6 +62,7 @@ public partial class NodeCatalog
             "Whatever the Send on the same bus is carrying. Any number of Receives may listen to "
             + "one Send.")
         {
+            Words = "receive from a bus",
             Extras = [BusExtra],
         };
     }

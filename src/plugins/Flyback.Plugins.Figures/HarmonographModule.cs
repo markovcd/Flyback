@@ -78,6 +78,7 @@ internal static class HarmonographModule
         "A pen on two pendulums each way, set swinging by 'trigger'. The drawing and the chord "
         + "are the same pendulums, so the chord dies as the drawing does.")
     {
+        Words = "pendulum drawing",
         Skin = Art.Skin("harmonograph"),
     };
 

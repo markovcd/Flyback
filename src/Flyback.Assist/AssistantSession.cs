@@ -135,7 +135,7 @@ internal sealed class AssistantSession(ITranscript transcript, string? logFolder
         }
 
         if (reading is not null && decisions?.Chosen is not null && ReferenceEquals(Run, run) && run.Proposal is { } proposal
-            && await reading.Does(message, run.ProposalSummary, IssueTriage.Summary(proposal, NodeCatalog.Current), cancel).ConfigureAwait(true) is { } does
+            && await reading.Does(message, run.ProposalSummary, cancel).ConfigureAwait(true) is { } does
             && does < TurnReading.Doubted)
         {
             Put(Voice.Aside, "doubt", $"This may not be what was asked for ({does:0.00} that it is). Ctrl+Z puts the patch back.");

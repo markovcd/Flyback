@@ -34,6 +34,7 @@ internal static class BoxModule
         Emit,
         "A rectangle, as a distance, with corners that can be rounded off.")
     {
+        Words = "rectangle, square shape",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {
             Glyph = "M6,4 L18,4 A2,2 0 0 1 20,6 L20,18 A2,2 0 0 1 18,20 L6,20 A2,2 0 0 1 4,18 "

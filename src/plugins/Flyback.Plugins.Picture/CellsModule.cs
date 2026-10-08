@@ -66,6 +66,7 @@ internal static class CellsModule
         + "edges smooth noise cannot make. The dearest module in the catalog: fine on the GPU, "
         + "slow on the processor a command-line render uses.")
     {
+        Words = "cells, cracks, scales",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Patterns))
         {
             Glyph = "M12,2 L20,7 L20,15 L12,20 L4,15 L4,7 Z "

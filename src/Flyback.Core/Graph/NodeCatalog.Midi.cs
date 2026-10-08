@@ -50,6 +50,7 @@ public partial class NodeCatalog
             + "an instrument's channels, or every one at 0; 'voices' above 1 plays that many notes at "
             + "once down polyphonic wires.")
         {
+            Words = "keyboard, MIDI notes",
             Extras = [Played],
             StartsVoices = Played.Voices,
         };
@@ -73,6 +74,7 @@ public partial class NodeCatalog
             + "at once, so several of these on one file play a chord; 'channel' hears one of the file's "
             + "channels. The file path is stored with the patch, so moving or renaming it will break playback.")
         {
+            Words = "play a MIDI file",
             Extras = [new MidiFileExtra(), new MidiLineExtra()],
         };
 
@@ -99,6 +101,7 @@ public partial class NodeCatalog
             EmitClock,
             "The clock of a drum machine or sequencer, followed.")
         {
+            Words = "follow an external clock",
             Extras = [new MidiClockExtra()],
         };
     }

@@ -50,7 +50,10 @@ public partial class NodeCatalog
         "Four frequencies of a chord on a root note: patch each into an oscillator's 'freq'. "
         + "A three-note chord adds its root an octave up; a two-note chord adds both notes an "
         + "octave up. The chords by number: "
-        + string.Join(", ", Chords.All.Select((c, n) => $"{n} {c.Name}")) + ".");
+        + string.Join(", ", Chords.All.Select((c, n) => $"{n} {c.Name}")) + ".")
+    {
+        Words = "chord notes",
+    };
 
     /// <summary>
     /// The seventh chord a scale builds on a root: the root and every other note of
@@ -109,6 +112,7 @@ public partial class NodeCatalog
         + "or both, and the two add up: in C major, D on 'note' or 1 on 'root' gives D minor 7, "
         + "and -1 on 'root' the B half-diminished below.")
     {
+        Words = "chord from a scale",
         Extras =
         [
             new SettingsExtra(

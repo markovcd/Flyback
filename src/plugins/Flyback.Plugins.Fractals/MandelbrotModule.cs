@@ -57,6 +57,7 @@ internal static class MandelbrotModule
         "The Mandelbrot set, the map of every c. The iteration count is set on the node: deeper "
         + "zooms need more, and each costs about a dozen ops.")
     {
+        Words = "fractal zoom",
         Extras = [Escape.Extra],
         Skin = Art.Skin("mandelbrot"),
     };

@@ -44,6 +44,7 @@ internal static class WidthModule
         Emit,
         "Stereo width, by way of mid and side: what the two sides share, and how they differ.")
     {
+        Words = "stereo width, wide or mono",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
         {
             Glyph = "M6,12 A6,4 0 1 1 18,12 A6,4 0 1 1 6,12 "

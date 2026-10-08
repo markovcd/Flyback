@@ -15,6 +15,7 @@ public partial class NodeCatalog
             (em, i) => [em.Triple(OpCode.SampleFeedback, i[0], i[1])],
             "Reads the previous frame. Feed it back through space transforms to make a self-referential loop.")
         {
+            Words = "previous frame",
             Sinks = ModuleSinks.Video,
         };
 
@@ -80,6 +81,7 @@ public partial class NodeCatalog
             "Leaves a trail behind 'in': the last frame, read back through 'zoom', 'angle', 'dx' "
             + "and 'dy' and dimmed by 'persist'. A Warp into 'x' and 'y' bends the trail.")
         {
+            Words = "motion trails, afterimage",
             Sinks = ModuleSinks.Video,
         };
     }
@@ -154,6 +156,7 @@ public partial class NodeCatalog
             "Softens the picture by averaging the last frame at nine places around each pixel. "
             + "Moving things smear. A Warp into 'x' and 'y' drags the blur in a direction.")
         {
+            Words = "soften, smear",
             Sinks = ModuleSinks.Video,
         };
     }

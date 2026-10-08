@@ -72,6 +72,7 @@ internal static class OvertonesModule
         + "overtone's height over 'freq'. The partial count is set on the node, and each partial "
         + "is another copy of whatever feeding 'spectrum' reads the place.")
     {
+        Words = "picture as a tone",
         Extras = [new PartialsExtra()],
         Skin = Art.Skin("overtones"),
     };

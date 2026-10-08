@@ -52,6 +52,7 @@ internal static class DrumModule
         Emit,
         "A kick or a tom: a sine whose pitch drops as its envelope falls.")
     {
+        Words = "kick, tom",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
         {
             Glyph = "M4,6 A8,3 0 1 1 20,6 A8,3 0 1 1 4,6 M4,6 L4,18 A8,3 0 1 0 20,18 L20,6",

@@ -49,6 +49,7 @@ internal static class PathModule
         + "every stroke at the same speed. Wire 'x' to the left speaker and 'y' to the right and a Beam "
         + "draws it. The file path is stored with the patch, so moving or renaming it breaks it.")
     {
+        Words = "play an SVG, OBJ or outline",
         Extras = [new DrawingExtra()],
         Skin = Art.Skin("path"),
     };

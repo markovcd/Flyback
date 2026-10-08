@@ -37,6 +37,7 @@ internal static class FoldModule
         "Folds a signal back where it runs past full scale, adding harmonics. Untyped: it folds "
         + "a color too, and on the screen turns a gradient into bands.")
     {
+        Words = "wavefold, harmonics",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
         {
             Glyph = "M3,6 L21,6 M3,18 L21,18 M4,18 L8,6 L12,18 L16,6 L20,18",

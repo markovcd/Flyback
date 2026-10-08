@@ -61,6 +61,7 @@ internal static class FractalModule
         "Clouds at several sizes at once: cloud, coastline, marble. Both outputs run 0 to 1. "
         + "The octave count is set on the node, and each octave costs a noise lookup.")
     {
+        Words = "clouds, marble, coastline",
         Extras = [new OctaveExtra()],
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Patterns))
         {

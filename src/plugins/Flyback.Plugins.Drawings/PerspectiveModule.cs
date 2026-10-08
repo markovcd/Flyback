@@ -39,6 +39,7 @@ internal static class PerspectiveModule
         "Projects a point in 3D onto the screen, so what is nearer is larger. Put it last, after any "
         + "Rotate 3D, Translate 3D or Scale 3D, and wire its x and y to the speakers and a Beam.")
     {
+        Words = "3D onto the screen",
         Skin = Art.Skin("perspective"),
     };
 

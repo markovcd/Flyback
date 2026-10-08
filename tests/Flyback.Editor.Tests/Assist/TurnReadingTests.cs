@@ -44,10 +44,22 @@ public sealed class TurnReadingTests
         assistant.Instructions.ShouldHaveSingleItem().ShouldStartWith(TurnReading.Answering);
     }
 
+    [Fact]
+    public async Task A_question_surely_about_the_patch_is_answered_rather_than_built_too()
+    {
+        using var session = Begun(new Reader("question", 0.9));
+
+        await Drain(session, "is my ADSR wired right?");
+
+        transcript.Said.ShouldContain(s => s.Kind == "intent" && s.Text == "Read as a question about the patch (0.90), so it was asked to answer rather than build.");
+        assistant.Instructions.ShouldHaveSingleItem().ShouldStartWith(TurnReading.Answering);
+    }
+
     [Theory]
     [InlineData("module", 0.7)]
-    [InlineData("question", 0.95)]
+    [InlineData("question", 0.7)]
     [InlineData("other", 0.99)]
+    [InlineData("edit", 0.6)]
     public async Task Any_other_reading_sends_the_message_as_typed_and_says_nothing(string intent, double sure)
     {
         using var session = Begun(new Reader(intent, sure));

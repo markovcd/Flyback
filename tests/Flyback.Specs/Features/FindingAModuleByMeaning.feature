@@ -14,6 +14,11 @@ Feature: A module is found by what a phrase means
     When flyback-cli finds the modules "a mirror maze of shards" describes
     Then the first module found is the Kaleidoscope
 
+  Scenario: A word a module is known by finds it with no model at all
+    Given decisions are turned off
+    When flyback-cli finds the modules "portamento" describes
+    Then the first module found is the "Slew"
+
   Scenario: Without a decision model nothing is found by meaning
     Given decisions are turned off
     When flyback-cli finds the modules "a mirror maze of shards" describes

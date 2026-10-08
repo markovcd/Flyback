@@ -114,6 +114,7 @@ public partial class NodeCatalog
         "A room. 'out' and 'wide' are the tail smeared two ways: both for stereo, or 'out' "
         + "alone. Audio only: a wire on the picture.")
     {
+        Words = "room, hall, space",
         MergesVoices = true,
     };
 

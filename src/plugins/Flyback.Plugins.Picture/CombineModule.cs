@@ -44,6 +44,7 @@ internal static class CombineModule
         "Two shapes into one, three ways. The outputs are distances, so they chain, fill or "
         + "outline like any shape.")
     {
+        Words = "join two shapes",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {
             Glyph = "M9,7 A6,6 0 1 0 9,19 A6,6 0 1 0 9,7 M15,7 A6,6 0 1 0 15,19 A6,6 0 1 0 15,7",

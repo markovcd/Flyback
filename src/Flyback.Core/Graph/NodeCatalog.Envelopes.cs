@@ -40,6 +40,7 @@ public partial class NodeCatalog
             EmitAdsr,
             "ADSR envelope: a gate in, the note's contour out.")
         {
+            Words = "envelope, attack release",
             Sinks = ModuleSinks.Audio,
         };
     }

@@ -32,6 +32,7 @@ internal static class ScaleModule
         "Grows or shrinks a point in 3D about the center, all at once with 'scale' or along one axis. "
         + "An envelope on 'scale' makes a model pulse.")
     {
+        Words = "grow or shrink in 3D",
         Skin = Art.Skin("scale3d"),
     };
 }

@@ -29,6 +29,7 @@ internal static class LayerModule
         "Lays 'top' over 'base' like an image editor's layer. The mode is set on the node: "
         + "normal, add, screen, multiply, overlay, difference, lighten or darken.")
     {
+        Words = "layer blend modes",
         Extras = [new ModeExtra()],
     };
 

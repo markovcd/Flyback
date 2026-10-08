@@ -30,6 +30,7 @@ internal static class TranslateModule
         "Moves a point in 3D. Before a Perspective, a positive 'dz' brings a model closer and a negative one "
         + "sends it away.")
     {
+        Words = "move in 3D",
         Skin = Art.Skin("translate3d"),
     };
 }

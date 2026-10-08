@@ -45,6 +45,7 @@ internal static class FlangerModule
         "A very short chorus whose copy cancels the original, sweeping a comb of notches "
         + "through the sound. Audio only but for 'lfo': on the picture it is a wire.")
     {
+        Words = "jet sweep, comb",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.TimeEffects))
         {
             Glyph = "M2,12 L4,4 L6,12 L8,4 L10,12 L12,4 L14,12 L16,4 L18,12 L20,4 L22,12",

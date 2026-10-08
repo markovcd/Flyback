@@ -54,6 +54,7 @@ public partial class NodeCatalog
             "A polyphonic wire whose voices are numbered 0, 1, 2 and up. Patched into a pitch, a seed "
             + "or a hue, it makes each voice of a chain a little different.")
         {
+            Words = "polyphonic voice numbers",
             Extras = [VoicesExtra],
             StartsVoices = VoicesOf,
         };
@@ -66,6 +67,7 @@ public partial class NodeCatalog
             "Adds the voices of a polyphonic wire into one ordinary wire. The Output does the same "
             + "by itself, so a Merge is for a chord that goes on through one chain.")
         {
+            Words = "voices into one",
             MergesVoices = true,
         };
 
@@ -84,6 +86,7 @@ public partial class NodeCatalog
             "Turns one wire into a polyphonic one, each voice 'offset' further on: a stack of notes "
             + "from one pitch, or a spread of detuned copies.")
         {
+            Words = "stack of voices, unison",
             Extras = [VoicesExtra],
             StartsVoices = VoicesOf,
         };

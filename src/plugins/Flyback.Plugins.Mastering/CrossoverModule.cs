@@ -49,6 +49,7 @@ internal static class CrossoverModule
         "Splits 'in' into three bands that add back up to it. Into Compressors, a multiband "
         + "compressor.")
     {
+        Words = "split into bands",
         Sinks = ModuleSinks.Audio,
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
         {

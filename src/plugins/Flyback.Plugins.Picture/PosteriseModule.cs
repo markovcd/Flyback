@@ -38,7 +38,10 @@ internal static class PosteriseModule
         Emit,
         "Holds each channel to a few steps, turning a gradient into flat bands. The channels "
         + "step apart, so the result has more than 'levels' colors. Sweep 'levels' from an "
-        + "oscillator to make a picture resolve.");
+        + "oscillator to make a picture resolve.")
+    {
+        Words = "fewer colors, banding",
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

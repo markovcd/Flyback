@@ -67,6 +67,7 @@ internal static class LimiterModule
         "A brickwall limiter: nothing leaves louder than 'ceiling', and the gain is already "
         + "down when a peak arrives.")
     {
+        Words = "ceiling, no clipping",
         Sinks = ModuleSinks.Audio,
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
         {

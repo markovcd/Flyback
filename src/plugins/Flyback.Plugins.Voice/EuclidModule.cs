@@ -53,6 +53,7 @@ internal static class EuclidModule
         "A Euclidean rhythm: 'hits' spread as evenly as possible over 'steps'; 3 in 8 is the "
         + "tresillo. On the picture it runs across its domain like a Sequencer.")
     {
+        Words = "euclidean rhythm, hits in steps",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Timing))
         {
             Glyph = "M3,12 A9,9 0 1 1 21,12 A9,9 0 1 1 3,12 "

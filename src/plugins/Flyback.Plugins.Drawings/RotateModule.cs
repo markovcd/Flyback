@@ -30,6 +30,7 @@ internal static class RotateModule
         "Turns a point in 3D, such as a Path's x, y and z, by yaw, pitch and roll in that order. "
         + "A clock or an oscillator on an angle makes it spin.")
     {
+        Words = "turn in 3D",
         Skin = Art.Skin("rotate3d"),
     };
 

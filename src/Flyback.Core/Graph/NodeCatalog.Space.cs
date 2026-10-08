@@ -21,14 +21,20 @@ public partial class NodeCatalog
                     em.Binary(OpCode.Add, em.Mul(i[0], sin), em.Mul(i[1], cos)),
                 ];
             },
-            "Spins the coordinate system.");
+            "Spins the coordinate system.")
+        {
+            Words = "turn, spin",
+        };
 
         yield return new NodeDef(
             "space.scale", "Scale", ModuleCategories.Geometry,
             [..Position(), Num("scale", 1f, 0f, 16f) with { Help = "Multiplies the coordinate. Larger packs more pattern in." }],
             [..Moved()],
             (em, i) => [em.Mul(i[0], i[2]), em.Mul(i[1], i[2])],
-            "Zooms the coordinate system.");
+            "Zooms the coordinate system.")
+        {
+            Words = "zoom, magnify",
+        };
 
         yield return new NodeDef(
             "space.translate", "Translate", ModuleCategories.Geometry,
@@ -39,7 +45,10 @@ public partial class NodeCatalog
             ],
             [..Moved()],
             (em, i) => [em.Binary(OpCode.Sub, i[0], i[2]), em.Binary(OpCode.Sub, i[1], i[3])],
-            "Slides the coordinate system, moving the pattern by (dx, dy).");
+            "Slides the coordinate system, moving the pattern by (dx, dy).")
+        {
+            Words = "move, slide the picture",
+        };
 
         yield return Transform();
 
@@ -51,7 +60,10 @@ public partial class NodeCatalog
                 Num("angle") with { Help = "In radians, round the center: -pi to pi." },
             ],
             (em, i) => [em.Binary(OpCode.Hypot, i[0], i[1]), em.Binary(OpCode.Atan2, i[1], i[0])],
-            "Cartesian to polar. Patterns built on radius and angle go circular.");
+            "Cartesian to polar. Patterns built on radius and angle go circular.")
+        {
+            Words = "circular coordinates",
+        };
 
         yield return new NodeDef(
             "space.tile", "Tile", ModuleCategories.Geometry,
@@ -64,13 +76,19 @@ public partial class NodeCatalog
                 Slot Cell(Slot v) =>
                     em.Add(em.Mul(em.Unary(OpCode.Fract, em.Add(em.Mul(em.Mul(v, i[2]), 0.5f), 0.5f)), 2f), -1f);
             },
-            "Repeats the coordinate system into a grid of identical cells.");
+            "Repeats the coordinate system into a grid of identical cells.")
+        {
+            Words = "grid of copies",
+        };
 
         yield return new NodeDef(
             "space.mirror", "Mirror", ModuleCategories.Geometry,
             [..Position()], [..Moved()],
             (em, i) => [em.Unary(OpCode.Abs, i[0]), em.Unary(OpCode.Abs, i[1])],
-            "Folds each axis about zero, so one quadrant is reflected into all four.");
+            "Folds each axis about zero, so one quadrant is reflected into all four.")
+        {
+            Words = "reflect, symmetry",
+        };
 
         yield return new NodeDef(
             "space.kaleidoscope", "Kaleidoscope", ModuleCategories.Geometry,
@@ -90,7 +108,10 @@ public partial class NodeCatalog
                     em.Mul(em.Unary(OpCode.Sin, folded), radius),
                 ];
             },
-            "Folds the plane into wedges around the center.");
+            "Folds the plane into wedges around the center.")
+        {
+            Words = "wedges, symmetry",
+        };
 
         yield return new NodeDef(
             "space.warp", "Warp", ModuleCategories.Geometry,
@@ -109,7 +130,10 @@ public partial class NodeCatalog
                     em.Binary(OpCode.Add, i[1], em.Unary(OpCode.Sin, em.Mul(push, Tau))),
                 ];
             },
-            "Displaces coordinates by another signal. This is where patches stop looking geometric.");
+            "Displaces coordinates by another signal. This is where patches stop looking geometric.")
+        {
+            Words = "bend, displace",
+        };
     }
 
 
@@ -176,6 +200,7 @@ public partial class NodeCatalog
         "Zooms, turns and slides the coordinate system: a Scale, a Rotate and a Translate in "
         + "one. Whether it zooms or turns first is set on the node.")
     {
+        Words = "zoom, turn and move",
         Extras =
         [
             new SettingsExtra(

@@ -34,6 +34,7 @@ public partial class NodeCatalog
             EmitString,
             "A plucked string. Audio only: on the picture 'in' passes through.")
         {
+            Words = "plucked string",
             Sinks = ModuleSinks.Audio,
         };
     }

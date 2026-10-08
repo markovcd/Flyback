@@ -47,6 +47,7 @@ internal static class ChorusModule
         "One voice heard as several: a short delay swept slowly under the dry signal. 'out' "
         + "and 'wide' are a stereo pair. Audio only but for 'lfo': on the picture it is a wire.")
     {
+        Words = "thicken, detune, double",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.TimeEffects))
         {
             Glyph = "M2,9 C4,6 6,6 8,9 C10,12 12,12 14,9 C16,6 18,6 20,9 "

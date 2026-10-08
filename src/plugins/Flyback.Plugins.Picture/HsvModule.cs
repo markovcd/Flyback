@@ -45,7 +45,10 @@ internal static class HsvModule
         Emit,
         "A color pulled apart into hue, saturation and value, 0 to 1 each: HSV backwards. "
         + "Rotate a hue by adding to it and rebuilding, key on one by thresholding, or "
-        + "desaturate without changing the color.");
+        + "desaturate without changing the color.")
+    {
+        Words = "color into hue",
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

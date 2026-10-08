@@ -59,6 +59,7 @@ internal static class HissModule
         "A hi-hat, a snare's wires, a clap, a riser: noise through a filter. White or pink, "
         + "and low, band or high, are set on the node. Audio only.")
     {
+        Words = "hi-hat, snare, clap",
         Extras =
         [
             new SettingsExtra(

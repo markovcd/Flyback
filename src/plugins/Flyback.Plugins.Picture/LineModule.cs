@@ -36,6 +36,7 @@ internal static class LineModule
         "A straight stroke from (x1, y1) to (x2, y2), as a distance, with round ends: patch "
         + "it into a Fill.")
     {
+        Words = "stroke, line segment",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {
             Glyph = "M6,18 L18,6 "

@@ -78,14 +78,20 @@ internal static class ModulesCommand
             new Credentials(plugins.PreferredSecretStore),
             new ModelStore(modelsRoot ?? ModelStore.DefaultRoot));
 
-        if (decisions.Unavailable() is { } why)
+        var candidates = catalog.All.Where(d => !NodeCatalog.IsSink(d.TypeId) && !ExpressionFusion.Retired(d)).ToList();
+        var spelled = candidates.Where(d => ModuleFinder.Spelled(d, phrase)).ToList();
+
+        // What the phrase spells is sure and needs no model, so it leads; the model ranks the rest.
+        var why = decisions.Unavailable();
+
+        if (why is not null && spelled.Count == 0)
         {
             error.WriteLine(why);
             return Exit.Failed;
         }
 
-        var candidates = catalog.All.Where(d => !NodeCatalog.IsSink(d.TypeId) && !ExpressionFusion.Retired(d)).ToList();
-        var found = await new ModuleFinder(decisions).Find(phrase, candidates, cancel).ConfigureAwait(false);
+        var meant = why is null ? await new ModuleFinder(decisions).Find(phrase, candidates, cancel).ConfigureAwait(false) : [];
+        var found = spelled.Select(d => new FoundModule(d, 1)).Concat(meant.Where(f => !spelled.Contains(f.Module))).ToList();
 
         if (found.Count == 0 && decisions.Problem is { } problem)
         {
@@ -166,6 +172,7 @@ internal static class ModulesCommand
                     provider = listed.Provider,
                     reaches = Reaches(def.Sinks),
                     description = def.Description,
+                    words = def.Words,
                     piped = piped.Select(port => def.Inputs[port].Name),
                     pipedColor = piped.Length == 0 && Tinted(def) is { } colored ? def.Inputs[colored].Name : null,
                     inputs,
@@ -185,6 +192,8 @@ internal static class ModulesCommand
             output.WriteLine();
             output.WriteLine($"  {def.Description}");
         }
+
+        if (def.Words.Length > 0) output.WriteLine($"  Also: {def.Words}.");
 
         var name = def.Inputs.Select(port => port.Name.Length).DefaultIfEmpty(0).Max();
         var at = def.Inputs.Select(port => At(port).Length).DefaultIfEmpty(0).Max();

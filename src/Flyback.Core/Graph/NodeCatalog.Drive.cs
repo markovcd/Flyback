@@ -37,7 +37,10 @@ public partial class NodeCatalog
         [new PortSpec("out", PortKind.Any) { Help = "What went in, its peaks rounded off." }],
         DriveEmit,
         "Soft saturation: rounds the peaks off rather than folding them back, and doubles as "
-        + "a compressor. Untyped; on the screen it is contrast that never clips.");
+        + "a compressor. Untyped; on the screen it is contrast that never clips.")
+    {
+        Words = "distortion, saturation, overdrive",
+    };
 
     private static Slot[] DriveEmit(Emitter em, EmitContext inputs)
     {

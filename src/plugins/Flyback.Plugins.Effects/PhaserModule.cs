@@ -68,6 +68,7 @@ internal static class PhaserModule
         + "signal, so it sweeps where a flanger whooshes. Audio only but for 'lfo': on the "
         + "picture it is a wire.")
     {
+        Words = "swept notches",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.TimeEffects))
         {
             Glyph = "M2,16 C6,16 6,8 10,8 C14,8 14,16 18,16 C20,16 21,16 22,16 "

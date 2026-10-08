@@ -45,7 +45,10 @@ internal static class PaletteModule
         [new PortSpec("color", PortKind.Color) { Help = "The palette's color at 't'." }],
         Emit,
         "A signal into a color from a palette: where a hue sweep passes through every color, "
-        + "this passes through a handful that go together.");
+        + "this passes through a handful that go together.")
+    {
+        Words = "colors from a palette",
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

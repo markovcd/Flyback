@@ -18,18 +18,18 @@ public partial class NodeCatalog
     private static IEnumerable<NodeDef> Oscillators()
     {
         yield return Oscillator(SineTypeId, "Sine", (em, p) => em.Unary(OpCode.Sin, em.Mul(p, Tau)),
-            "The basic waveform. Smooth bands and blobs.");
+            "The basic waveform. Smooth bands and blobs.") with { Words = "smooth tone, bands, LFO" };
 
         yield return Oscillator(SawTypeId, "Saw", (em, p) => em.Add(em.Mul(em.Unary(OpCode.Fract, p), 2f), -1f),
-            "Ramps up then snaps back. Hard edges, good for stripes.");
+            "Ramps up then snaps back. Hard edges, good for stripes.") with { Words = "buzzy tone, stripes" };
 
         yield return Oscillator(TriangleTypeId, "Triangle",
             (em, p) => em.Add(em.Mul(em.Unary(OpCode.Abs, em.Add(em.Unary(OpCode.Fract, p), -0.5f)), 4f), -1f),
-            "Linear up and down. Softer than saw, sharper than sine.");
+            "Linear up and down. Softer than saw, sharper than sine.") with { Words = "soft tone" };
 
         yield return Oscillator(SquareTypeId, "Square",
             (em, p) => em.Add(em.Mul(em.Binary(OpCode.Step, em.Constant(0.5f), em.Unary(OpCode.Fract, p)), 2f), -1f),
-            "Two values, nothing between. Pure hard-edged bands.");
+            "Two values, nothing between. Pure hard-edged bands.") with { Words = "hollow tone, hard bands" };
 
         yield return new NodeDef(
             PulseTypeId, "Pulse", ModuleCategories.Oscillators,
@@ -44,7 +44,10 @@ public partial class NodeCatalog
                 var wave = em.Add(em.Mul(em.Binary(OpCode.Step, i[3], em.Unary(OpCode.Fract, phase)), 2f), -1f);
                 return [em.Add(em.Mul(wave, i[4]), i[5])];
             },
-            "A square with an adjustable duty cycle.");
+            "A square with an adjustable duty cycle.")
+        {
+            Words = "square with duty cycle",
+        };
     }
     
     /// <summary>

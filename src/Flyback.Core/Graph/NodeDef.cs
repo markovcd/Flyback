@@ -21,6 +21,13 @@ public sealed record NodeDef(
     EmitFn Emit,
     string Description = "")
 {
+    /// <summary>
+    /// What else a person might call it, a few words apart by commas, for finding it by
+    /// meaning: "room, hall, space" on a Reverb. The name is always searched; this is what
+    /// the name leaves out.
+    /// </summary>
+    public string Words { get; init; } = "";
+
     /// <summary>The inputs, with the standard help filled in on each that asks for it.</summary>
     public IReadOnlyList<PortSpec> Inputs { get; init => field = SocketHelp.Filled(value, input: true); } =
         SocketHelp.Filled(Inputs, input: true);

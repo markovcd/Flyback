@@ -64,6 +64,7 @@ internal static class TextModule
         "Lines of text in a pixel font, as the distance to the letters: patch it into a Fill. "
         + "The lines and the font (Pixel, or the blockier one-case Tiny) are set on the node.")
     {
+        Words = "words, letters, type",
         Extras = [new LinesExtra()],
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {

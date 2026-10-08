@@ -19,15 +19,15 @@ internal sealed class TurnReading(Decisions decisions)
         new("other", "Not about Flyback, patches, sound or pictures at all"),
     ];
 
-    /// <summary>Below this, a proposal is said to maybe not do what was asked.</summary>
-    public const double Doubted = 0.5;
+    /// <summary>Below this, a proposal is said to maybe not do what was asked. Low, since doubting good work costs more than missing bad.</summary>
+    public const double Doubted = 0.4;
 
-    /// <summary>How sure the model has to be that a message asks about a module before the assistant is told so.</summary>
+    /// <summary>How sure the model has to be that a message wants an answer before the assistant is told so.</summary>
     public const double Sure = 0.8;
 
-    /// <summary>What a turn read as a question about a module is told ahead of the message.</summary>
+    /// <summary>What a turn read as a question is told ahead of the message.</summary>
     public const string Answering =
-        "[From Flyback, not the person: this reads as a question about a module. Answer it, and change and propose nothing unless the person asks for a change.]";
+        "[From Flyback, not the person: this reads as a question wanting an answer. Answer it, and change and propose nothing unless the person asks for a change.]";
 
     /// <summary>The likeliest reading of <paramref name="message"/>, or null without a model.</summary>
     public async Task<Reading?> Read(string message, string patch, CancellationToken cancel)
@@ -39,16 +39,19 @@ internal sealed class TurnReading(Decisions decisions)
 
         return await decisions.Ask(DecisionUse.Turns, request, cancel).ConfigureAwait(false) is { } decision
                && decision.Answers.GetValueOrDefault("intent") is Answer.Chosen chosen
-            ? new Reading(chosen.Option, chosen.Probabilities.GetValueOrDefault(chosen.Option))
+            ? new Reading(
+                chosen.Option,
+                chosen.Probabilities.GetValueOrDefault(chosen.Option),
+                chosen.Probabilities.GetValueOrDefault("module") + chosen.Probabilities.GetValueOrDefault("question"))
             : null;
     }
 
     /// <summary>How likely <paramref name="proposed"/> does what <paramref name="asked"/> asked, or null without a model.</summary>
-    /// <param name="patch">The proposed patch itself, so the answer is not the assistant's word alone.</param>
-    public async Task<double?> Does(string asked, string proposed, string patch, CancellationToken cancel)
+    /// <remarks>The assistant's word alone: a line naming the patch's modules beside it only pulls the answer toward no.</remarks>
+    public async Task<double?> Does(string asked, string proposed, CancellationToken cancel)
     {
         var request = DecisionRequest.One(
-            $"Asked for: {asked}{Environment.NewLine}The assistant says it made: {proposed}{Environment.NewLine}What it made: {patch}",
+            $"Asked for: {asked}{Environment.NewLine}The assistant says it made: {proposed}",
             "does",
             new Question.YesNo("Does what was made do what was asked for?"));
 
@@ -58,14 +61,15 @@ internal sealed class TurnReading(Decisions decisions)
             : null;
     }
 
-    /// <summary>A message read as one intent, and how likely that reading is.</summary>
-    internal sealed record Reading(string Intent, double Probability)
+    /// <summary>A message read as one intent, how likely that reading is, and how likely it wants an answer at all.</summary>
+    /// <param name="Answer">A question about a module and one about the patch together: the two readings answered rather than built from.</param>
+    internal sealed record Reading(string Intent, double Probability, double Answer)
     {
         /// <summary>
-        /// Whether the message surely asks what a module does. The only reading acted on: a question
-        /// about the patch and one not about Flyback at all are too often taken for each other.
+        /// Whether the message surely wants an answer rather than a change. The one reading acted on,
+        /// as the sum of the two question readings: the model tells them apart badly and need not.
         /// </summary>
-        public bool Asks => Intent == "module" && Probability >= Sure;
+        public bool Asks => Answer >= Sure;
 
         /// <summary>What the transcript says it was read as.</summary>
         public string Said => Intent switch

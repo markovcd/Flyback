@@ -74,7 +74,10 @@ public partial class NodeCatalog
             ],
             [Any("out") with { Help = "The value, never under 'low' or over 'high'." }],
             (em, i) => [em.Ternary(OpCode.Clamp, i[0], i[1], i[2])],
-            "Holds the signal inside a range.");
+            "Holds the signal inside a range.")
+        {
+            Words = "hold inside a range",
+        };
 
         yield return new NodeDef(
             "math.mix", "Mix", ModuleCategories.Maths,
@@ -85,7 +88,10 @@ public partial class NodeCatalog
             ],
             [Any("out") with { Help = Blended }],
             (em, i) => [em.Ternary(OpCode.Mix, i[0], i[1], i[2])],
-            "Blends from 'a' to 'b'.");
+            "Blends from 'a' to 'b'.")
+        {
+            Words = "blend two signals",
+        };
 
         yield return new NodeDef(
             "math.smoothstep", "Smoothstep", ModuleCategories.Maths,
@@ -96,7 +102,10 @@ public partial class NodeCatalog
             ],
             [Any("out") with { Help = "0 to 1, eased at both ends." }],
             (em, i) => [em.Ternary(OpCode.Smoothstep, i[0], i[1], i[2])],
-            "A soft 0-to-1 ramp between the two edges. The anti-aliased threshold.");
+            "A soft 0-to-1 ramp between the two edges. The anti-aliased threshold.")
+        {
+            Words = "soft threshold",
+        };
 
         yield return new NodeDef(
             "math.step", "Threshold", ModuleCategories.Maths,
@@ -123,7 +132,10 @@ public partial class NodeCatalog
                 var t = em.Binary(OpCode.Div, em.Binary(OpCode.Sub, i[0], i[1]), em.Binary(OpCode.Sub, i[2], i[1]));
                 return [em.Ternary(OpCode.Mix, i[3], i[4], t)];
             },
-            "Rescales one range onto another. Bipolar -1..1 into 0..1 is the common one.");
+            "Rescales one range onto another. Bipolar -1..1 into 0..1 is the common one.")
+        {
+            Words = "rescale a range",
+        };
 
         yield return new NodeDef(
             AutoRemapTypeId, "Auto remap", ModuleCategories.Maths,
@@ -138,7 +150,10 @@ public partial class NodeCatalog
             EmitAutoRemap,
             "A Remap that reads its ranges off its wires. Each knob is 0 to 1 of the range at "
             + "its wire's far end, swept the way that socket's own knob sweeps. Where a wire's far "
-            + "end has no range, that pair is plain numbers, as on Remap.");
+            + "end has no range, that pair is plain numbers, as on Remap.")
+        {
+            Words = "rescale from the wires' ranges",
+        };
     }
 
     /// <summary>The type id of the Auto remap module.</summary>
@@ -242,7 +257,10 @@ public partial class NodeCatalog
             },
             "Four signals summed, each through its level. It sums rather than averages, so "
             + "four at full is four times as loud. An unused input adds nothing. Colors mix too: "
-            + "the levels are a four-way blend of pictures.");
+            + "the levels are a four-way blend of pictures.")
+        {
+            Words = "sum four signals with levels",
+        };
     }
 
     /// <summary>
@@ -313,7 +331,10 @@ public partial class NodeCatalog
             },
             "A stereo mixer for the end of a patch: four channels, each a 'left', a 'right' and "
             + "one 'level'. For more channels chain Desks, 'bus' out into the next one's 'bus' in, "
-            + "and the last Desk is the master.");
+            + "and the last Desk is the master.")
+        {
+            Words = "stereo mixer, channels",
+        };
     }
 
     /// <summary>
@@ -339,6 +360,7 @@ public partial class NodeCatalog
         + "; an argument left off is that module's knob at rest. A number to be turned "
         + "belongs on a socket. A formula that does not read gives 0 and says why.")
     {
+        Words = "formula",
         Extras = [new FormulaExtra(functions)],
         AsksForItsInputs = true,
     };

@@ -76,7 +76,10 @@ public partial class NodeCatalog
                 ];
             },
             "Screen position, as x and y, or as 'radius' and 'angle' when a module needs polar "
-            + "coordinates.");
+            + "coordinates.")
+        {
+            Words = "screen position",
+        };
 
         // No rate knob, and that is the decision rather than an omission — see
         // ADR-0048. It was a second, hidden speed control: a Time at 0.2 feeding
@@ -99,7 +102,10 @@ public partial class NodeCatalog
                 return [t, length, em.Binary(OpCode.Div, t, length)];
             },
             "The clock, for motion or time-varying signals, and how far through its length the patch is. "
-            + "Scale t with Multiply when you want a slower rhythm.");
+            + "Scale t with Multiply when you want a slower rhythm.")
+        {
+            Words = "clock",
+        };
 
         yield return new NodeDef(
             SampleTypeId, "Sample", ModuleCategories.Sources,
@@ -113,6 +119,7 @@ public partial class NodeCatalog
             "Plays a WAV or MP3 file; an MP3 is read by ffmpeg. The file path is stored with the patch, so moving or renaming it "
             + "will break playback.")
         {
+            Words = "play a WAV or MP3",
             Extras = [new SampleExtra()],
             Sinks = ModuleSinks.Audio,
         };
@@ -133,6 +140,7 @@ public partial class NodeCatalog
             + "flyback-cli render unless --input gives it a sound file to hear. Wear headphones, "
             + "or the speakers will feed back into it.")
         {
+            Words = "microphone, line input",
             Sinks = ModuleSinks.Audio,
         };
 
@@ -144,6 +152,7 @@ public partial class NodeCatalog
             "Loads an image file, black outside the image. Scale, translate, rotate, and warp "
             + "control how it is mapped.")
         {
+            Words = "load an image file",
             Extras = [new PictureExtra()],
             Sinks = ModuleSinks.Video,
         };
@@ -152,7 +161,10 @@ public partial class NodeCatalog
             ValueTypeId, "Value", ModuleCategories.Sources,
             [Num("value", 0.5f) with { Help = "The number it holds." }], [Num("out") with { Help = "The number, for as many sockets as want it." }],
             (_, i) => [i[0]],
-            "A knob. Handy when several modules should share one number.");
+            "A knob. Handy when several modules should share one number.")
+        {
+            Words = "a knob, a constant",
+        };
     }
 
     /// <summary>

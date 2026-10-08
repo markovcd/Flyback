@@ -38,6 +38,7 @@ public partial class NodeCatalog
         "Turns 'left' and 'right' down while 'key' is loud. A key as loud as 'full' ducks by "
         + "'depth'.")
     {
+        Words = "sidechain, turn down under a kick",
         Sinks = ModuleSinks.Audio,
     };
 

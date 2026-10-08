@@ -60,7 +60,10 @@ public partial class NodeCatalog
         ],
         (em, i) => FilterResponses(em, i[0], i[1], i[2]),
         "A resonant filter, all three responses at once. Audio only: the picture gets 'in' "
-        + "through 'low' and nothing through the other two.");
+        + "through 'low' and nothing through the other two.")
+    {
+        Words = "lowpass, highpass, resonance",
+    };
 
     /// <summary>
     /// Low, band and high of <paramref name="dry"/>, for a module with a filter

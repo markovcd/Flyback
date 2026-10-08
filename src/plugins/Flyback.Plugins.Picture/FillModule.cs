@@ -48,6 +48,7 @@ internal static class FillModule
         + "a color's 'value' or a Mixer. Sizes are in picture units, so it looks the same at "
         + "any resolution.")
     {
+        Words = "shape into ink, outline",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {
             Glyph = "M12,3 C16,9 19,13 19,16.5 A7,7 0 1 1 5,16.5 C5,13 8,9 12,3 Z",

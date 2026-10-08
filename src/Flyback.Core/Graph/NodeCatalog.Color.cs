@@ -24,7 +24,10 @@ public partial class NodeCatalog
             (em, i) => [em.Combine(i[0], i[1], i[2])],
             "Builds a color from three separate signals. It starts white — every channel full — "
             + "so turning one down tints it and patching a signal into one drives that channel "
-            + "against the other two.");
+            + "against the other two.")
+        {
+            Words = "color from red green blue",
+        };
 
         yield return new NodeDef(
             "color.hsv", "HSV", ModuleCategories.Color,
@@ -39,14 +42,20 @@ public partial class NodeCatalog
             ],
             [Col("color") with { Help = "The color, as red, green and blue." }],
             (em, i) => [em.Triple(OpCode.HsvToRgb, i[0], i[1], i[2])],
-            "Builds a color from hue, saturation and value.");
+            "Builds a color from hue, saturation and value.")
+        {
+            Words = "color from hue",
+        };
 
         yield return new NodeDef(
             "color.split", "Split", ModuleCategories.Color,
             [Col("color") with { Help = "The color to pull apart." }],
             [Num("r") with { Help = Red }, Num("g") with { Help = Green }, Num("b") with { Help = Blue }],
             (_, i) => [Slot.Scalar(i[0].Base), Slot.Scalar(i[0].Base + 1), Slot.Scalar(i[0].Base + 2)],
-            "Pulls a color apart into its three channels.");
+            "Pulls a color apart into its three channels.")
+        {
+            Words = "color into channels",
+        };
 
         yield return new NodeDef(
             "color.mix", "Blend", ModuleCategories.Color,
@@ -57,7 +66,10 @@ public partial class NodeCatalog
             ],
             [Col("color") with { Help = Blended }],
             (em, i) => [em.Ternary(OpCode.Mix, i[0], i[1], i[2])],
-            "Crossfades between two colors.");
+            "Crossfades between two colors.")
+        {
+            Words = "blend two colors",
+        };
 
         yield return new NodeDef(
             "color.gain", "Gain", ModuleCategories.Color,
@@ -68,7 +80,10 @@ public partial class NodeCatalog
             ],
             [Col("color") with { Help = Worked }],
             (em, i) => [em.Binary(OpCode.Add, em.Binary(OpCode.Mul, i[0], i[1]), i[2])],
-            "Brightness and contrast, as multiply then add.");
+            "Brightness and contrast, as multiply then add.")
+        {
+            Words = "brightness, contrast",
+        };
 
         yield return Ink();
         yield return Vignette();
@@ -124,6 +139,7 @@ public partial class NodeCatalog
         + "into the next one's 'under'. The mode is set on the node: add lays the color on as "
         + "light, over covers like paint.")
     {
+        Words = "draw in one color",
         Extras =
         [
             new SettingsExtra(
@@ -172,6 +188,7 @@ public partial class NodeCatalog
         },
         "Darkens the corners, from untouched at 'from' to 'dark' at 'to'.")
     {
+        Words = "dark corners, edge shading",
         Sinks = ModuleSinks.Video,
     };
 }

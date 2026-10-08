@@ -61,34 +61,77 @@ flyback-cli decide --for modules --set model=typed-decisions --save
 To try a setting without touching the real file, point `XDG_CONFIG_HOME` at a scratch folder, or
 pass `--set` without `--save` for one `decide` run.
 
-`scripts/decide-bench.py` holds both measurements below: `find <cli>` scores `modules --find`
-on fourteen phrases, and `route <endpoint> [checkpoint]` scores TurnReading's rule on eleven
-messages.
+`scripts/decide-bench.py` holds the sets below: `find <cli>` scores `modules --find`, and
+`route <endpoint> [checkpoint]` and `does <endpoint> [checkpoint]` score TurnReading's two
+questions by its own rules.
 
 ### What was found
 
-| | English | Typed-decisions |
-|---|---|---|
-| Module search, category first (what landed first) | 0/14 first | — |
-| Module search, every module by name, ten to a question (on `main`) | 1/14 first | 6/14 first, 7/14 in the top three, about 3 s |
-| The same in three other orders | — | 3 to 8 of 14 first |
-| Two orders in one request, the margin over "none" averaged | — | 8/14 first, 8–9/14 in the top three, about 5.5 s |
-| Three orders averaged | — | no better, 9.4 s |
-| Catalog order and its reverse, averaged (on `main`, `--for modules` on typed-decisions) | — | 8/14 first, 9/14 in the top three, 6 s, from the first ask on with `LAYA_PRELOAD=1` |
-| Routing: module questions told to answer / others wrongly told (on `main`) | 4/4, 0/7 | 0/4, 0/7 |
+The sets are in `scripts/decide-bench.py`: for the search, the original fourteen phrases,
+twenty-four more written with the modules' words in hand, and twenty-four held out, written
+afterwards and scored apart; for the reading, thirty messages and twenty-eight proposals, eight
+of them as the assistant writes them. Measured on 2026-10-08 against laya-serve 0.4.0 on this
+machine's CPU, the search on typed-decisions and the reading on English.
 
-- A choice of seventeen categories was close to random, and modules described in full drew
-  every answer to the first options shown. Bare names do better.
-- Which nine other modules share a question changes the answer: Echo scored 1.00 in one
-  grouping and under 0.05 in another, which is what averaging two orders evens out.
-- Of the second orders tried with the catalog's, the reverse was kept: each module sits near the
-  front once and near the back once, which evens out the pull toward the first options. On fourteen
-  phrases the orders scored within two of each other; a pair scoring 10/14 was not chosen on that alone.
-- A yes-no per module, on English, scored 4/14 first and 7/14 in the top three at up to 9 s.
-- On English, "why is it so quiet?" reads as not about Flyback (0.83) and "what is the capital
-  of France?" as a module question, which is why only a module question at 0.8 or above is
-  acted on, and nothing is held back. On typed-decisions the module questions read as such at
-  only 0.51–0.76, below that bar.
+**The module search**, as the model alone ranks it (a lab harness posting straight to the
+server; the command line adds the spelled matches below):
+
+| Option shape | First, of 62 | Top three | Held out, first | Held out, top three | A search |
+|---|---|---|---|---|---|
+| Type id as the label, the name as its description (what shipped first) | 23 | 27 | 4 of 24 | 5 | 6.6 s |
+| A sentence of the description beside the name | 2 of 38 | 3 of 38 | — | — | 10.5 s |
+| The name alone as the label | 23 | 27 | 4 | 5 | 2.4 s |
+| The name as the label, the words as its description | 32 | 38 | 7 | 9 | ~4 s |
+| The name and its words as the label | 31 | 45 | 7 | 14 | ~4 s |
+| The same, and the ten that did best asked once more | **41** | **49** | **13** | **15** | ~5 s |
+
+- The model keys on the label. A type id there is noise, a sentence anywhere settles it on
+  the first options shown, and a few words in the label are read where the same words as a
+  description are half ignored.
+- Groups of ten beat five and sixteen; a third or fourth order gained nothing and four
+  orders with words made a request the server refuses as too large (413).
+- What a phrase spells in a name or the words is matched before any model is asked, in the
+  module list and on the command line, and listed first: "a clap" finds Hiss and "portamento"
+  finds Slew with no model at all, and the held-out jargon is mostly of that kind.
+- The twenty-four held-out phrases are the honest number; the twenty-four "more" were
+  written by the same hand as the words, within an hour, and lean on them.
+- Through `flyback-cli modules --find`, spelled matches first and the model's ranking after: 43 of 62
+  first and 53 in the top three; the held-out set 14 and 17 of 24; the original fourteen 10 and 13,
+  from 8 and 8 at the day's start. The slowest search was 6.3 s, most under 5 s.
+
+**The turn reading**, on English (typed-decisions reads a module question as such at only
+0.5 to 0.75 and is not for this use):
+
+| | Caught | Wrongly acted on |
+|---|---|---|
+| Acting on "module" alone at 0.8 (what shipped first), of 12 module questions and 18 others | 12 of 12 | 3 of 18, all of them questions about the patch |
+| Acting on "module" plus "question" at 0.8, of 18 questions wanting an answer and 12 changes | 16 of 18 | 0 of 12 |
+
+The two it misses are "why is it so quiet?" and "why does my patch show nothing?", read as not
+about Flyback. The changes top out at 0.66 and the questions start at 0.91, so 0.8 sits in
+the gap. The bar below 0.7 starts telling edits to answer.
+
+**The doubt**, a yes-no on whether what the assistant says it made does what was asked:
+
+| State | Right, of 28 | Good work doubted |
+|---|---|---|
+| With a line naming the patch's modules (what shipped first), at 0.5 | 17 | 8 of 14 |
+| The assistant's summary alone, at 0.5 | 22 | 3 of 14 |
+| The assistant's summary alone, at 0.4 (what ships) | 23 | 3 of 14 |
+
+The patch line pulled every answer toward no, so the editor doubted most good work. What is
+left wrong needs what the model does not know: that halving a tempo is slower, that a Drum on
+a Euclid of four in four is a kick on every beat, that a Rotate spins. A choice or a score in
+place of the yes-no did no better.
+
+**Through Claude Code**, with the Decision server chosen and `sonnet` at high effort: "what is a
+Slew for?" on the Acid preset was read as a question about a module at 0.94, Claude Code was told
+to answer, and did, changing nothing; "add a touch of reverb to the pad" was read as a module
+question at 0.51, under the bar, built a Reverb on the pad's channel, and its proposal was not
+doubted. The reading costs one request of about 0.3 s a turn.
+
+**Not measured:** the complaints' order (`IssueTriage`). It has no set with a right answer yet;
+one needs patches broken two ways where one way is plainly why it is silent or dark.
 
 ### Next
 

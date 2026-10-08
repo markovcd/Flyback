@@ -166,6 +166,7 @@ internal static class SynthModule
         + "envelope, a filter that follows the note, two LFOs, a sub, noise, glide, drive and pan, "
         + "and can never leave -1..1.")
     {
+        Words = "synth that plays as is",
         Extras =
         [
             new SettingsExtra(

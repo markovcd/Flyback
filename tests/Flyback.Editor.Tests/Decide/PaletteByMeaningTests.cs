@@ -110,9 +110,11 @@ public sealed class PaletteByMeaningTests : EditorTest
 
         private static Answer.Chosen Chosen(Question.Choice choice)
         {
-            var wanted = choice.Options.Any(o => o.Label == "space.kaleidoscope") ? "space.kaleidoscope"
-                : choice.Options.Any(o => o.Label == "Geometry") ? "Geometry"
-                : "none";
+            // A module's label is its name, with its words in brackets after it.
+            var labels = choice.Options.Select(o => o.Label).ToList();
+            var wanted = labels.FirstOrDefault(l => l.StartsWith("Kaleidoscope (", StringComparison.Ordinal))
+                ?? labels.FirstOrDefault(l => l == "Geometry")
+                ?? "none";
 
             return new Answer.Chosen(wanted, choice.Options.ToDictionary(o => o.Label, o => o.Label == wanted ? 0.9 : 0.1 / choice.Options.Count), 0.9);
         }

@@ -95,6 +95,7 @@ internal static class OrbitModule
         + "a pixel of the Julia set whose c is 're' and 'im'. The path is drawn on that module's "
         + "plane at rest, so the two line up.")
     {
+        Words = "fractal orbit tone",
         Extras =
         [
             new SettingsExtra(StateKey,

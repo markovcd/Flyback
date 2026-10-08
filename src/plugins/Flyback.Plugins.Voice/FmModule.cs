@@ -63,6 +63,7 @@ internal static class FmModule
         + "(4→3→2→1), branch (4→3, 3 and 2 → 1), fan (2, 3 and 4 → 1), pair (2→1 beside 4→3) "
         + "or organ (all four heard).")
     {
+        Words = "FM synth, electric piano, brass",
         Extras =
         [
             new SettingsExtra(

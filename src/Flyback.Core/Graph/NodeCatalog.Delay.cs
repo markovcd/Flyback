@@ -33,7 +33,10 @@ public partial class NodeCatalog
         ],
         [new PortSpec("out") { Help = "The sound and its echoes, mixed by 'mix'." }],
         (em, inputs) => [DelayEchoed(em, inputs[0], inputs[1], inputs[2], inputs[3])],
-        "An echo. Audio only: with no picture to remember, it passes straight through.");
+        "An echo. Audio only: with no picture to remember, it passes straight through.")
+    {
+        Words = "echo",
+    };
 
     /// <summary>One Delay's worth of ops, for a module with a Delay inside it — see the Effects plugin's Echo.</summary>
     public static Slot DelayEchoed(Emitter em, Slot dry, Slot time, Slot feedback, Slot mix)

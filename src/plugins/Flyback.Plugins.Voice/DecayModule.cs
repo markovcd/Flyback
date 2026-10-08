@@ -46,6 +46,7 @@ internal static class DecayModule
         "A percussive envelope: up over 'attack', then back to silence over 'decay'. Audio "
         + "only: the picture gets the trigger.")
     {
+        Words = "percussive envelope",
         Sinks = ModuleSinks.Audio,
     };
 

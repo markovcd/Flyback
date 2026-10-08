@@ -33,6 +33,7 @@ internal static class PolygonModule
         "A regular polygon, as a distance, with a corner at the top. Costs the same at any "
         + "count.")
     {
+        Words = "polygon shape",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {
             Glyph = "M12,3 L20.5,9.2 L17.3,19.3 L6.7,19.3 L3.5,9.2 Z",

@@ -65,6 +65,7 @@ internal static class EchoModule
         + "on the node: steps per beat, and whether the taps are in a row (the repeats cross "
         + "over) or side by side. Two seconds at most. Audio only.")
     {
+        Words = "echo in time, delay",
         Extras =
         [
             new SettingsExtra(

@@ -19,7 +19,10 @@ public partial class NodeCatalog
             [Num("out", 0f, 0f, 1f) with { Help = "The field, 0 to 1." }],
             (em, i) => [em.Ternary(OpCode.Noise3, em.Mul(i[0], i[3]), em.Mul(i[1], i[3]), i[2])],
             "A smooth random field, 0 to 1: clouds, terrain, or a melody that wanders. "
-            + "For hiss or grain, use Noise.");
+            + "For hiss or grain, use Noise.")
+        {
+            Words = "smooth noise, terrain",
+        };
 
         yield return new NodeDef(
             "pattern.checker", "Checker", ModuleCategories.Patterns,
@@ -31,7 +34,10 @@ public partial class NodeCatalog
                 var fy = em.Unary(OpCode.Floor, em.Mul(i[1], i[2]));
                 return [em.Mul(em.Unary(OpCode.Fract, em.Mul(em.Add(fx, fy), 0.5f)), 2f)];
             },
-            "A checkerboard, 0 or 1.");
+            "A checkerboard, 0 or 1.")
+        {
+            Words = "checkerboard",
+        };
 
         yield return new NodeDef(
             "pattern.rings", "Rings", ModuleCategories.Patterns,
@@ -46,6 +52,9 @@ public partial class NodeCatalog
                 var radius = em.Binary(OpCode.Hypot, i[0], i[1]);
                 return [em.Unary(OpCode.Sin, em.Mul(em.Add(em.Mul(radius, i[2]), i[3]), Tau))];
             },
-            "Concentric sine rings round the center.");
+            "Concentric sine rings round the center.")
+        {
+            Words = "concentric circles",
+        };
     }
 }

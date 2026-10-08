@@ -42,6 +42,17 @@ different question, and which question is the host's to know, not the plugin's. 
 contract does not move; `decide --for <use> --set key=value --save` writes them, and
 Settings → Decisions shows and sets them a use at a time.
 
+**A question is shaped for a small model, and measured.** The module search asks about
+each module by its name as the option's label and its `NodeDef.Words` as the description,
+never by type id or by a sentence: a label is what the model keys on, and a description
+longer than a few words pulls its answer to the first options shown. What a phrase spells
+in a name or the words is found without any model and listed first. The turn reading acts
+on the sum of its two question readings, a module's and the patch's, since the model tells
+them apart badly and the action is the same; the doubt is asked about the assistant's
+summary alone, because a line naming the patch's modules beside it pulls every answer
+toward no. Each is scored by `scripts/decide-bench.py` against a fixed set, with a held-out
+set apart, before it changes; the numbers are in `docs/handoff/decision-model.md`.
+
 `PluginContractVersion` stays at 1.0.0: nothing has shipped at it, and `/release`
 works the version out from the surface.
 

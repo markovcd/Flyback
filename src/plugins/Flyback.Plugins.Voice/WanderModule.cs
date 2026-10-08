@@ -39,6 +39,7 @@ internal static class WanderModule
         + "should keep changing: a cutoff, a level, a hue. On the picture it is one value at "
         + "every pixel, the one the speakers follow.")
     {
+        Words = "slow random drift, LFO",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
         {
             Glyph = "M2,14 C5,6 6,18 9,10 C11,4 13,16 15,8 C17,3 19,14 22,11",

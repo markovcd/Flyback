@@ -45,6 +45,7 @@ internal static class JuliaModule
         + "gives dust, and the edge between is where the famous ones are. The iteration count on "
         + "the node is the Mandelbrot's.")
     {
+        Words = "fractal",
         Extras = [Escape.Extra],
         Skin = Art.Skin("julia"),
     };

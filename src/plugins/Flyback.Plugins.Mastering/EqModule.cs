@@ -69,6 +69,7 @@ internal static class EqModule
         Emit,
         "Tone shaping for a stereo pair: a low cut, then a low shelf, a bell and a high shelf.")
     {
+        Words = "equalizer, tone",
         Sinks = ModuleSinks.Audio,
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
         {

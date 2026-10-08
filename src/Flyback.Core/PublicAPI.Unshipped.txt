@@ -217,3 +217,5 @@ override Flyback.Core.Graph.Extras.PictureExtra.Kind.get -> Flyback.Core.Graph.E
 override Flyback.Core.Graph.Extras.SampleExtra.Kind.get -> Flyback.Core.Graph.Extras.FileKind!
 static Flyback.Core.Graph.Extras.FileKind.operator ==(Flyback.Core.Graph.Extras.FileKind? left, Flyback.Core.Graph.Extras.FileKind? right) -> bool
 static Flyback.Core.Graph.Extras.FileKind.operator !=(Flyback.Core.Graph.Extras.FileKind? left, Flyback.Core.Graph.Extras.FileKind? right) -> bool
+Flyback.Core.Graph.NodeDef.Words.get -> string!
+Flyback.Core.Graph.NodeDef.Words.init -> void

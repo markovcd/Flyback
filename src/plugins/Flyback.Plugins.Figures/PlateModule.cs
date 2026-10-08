@@ -98,6 +98,7 @@ internal static class PlateModule
         "A struck plate: its ring to the ear, and to the eye the sand figure its modes settle "
         + "into. The mode count is set on the node, and each mode costs a few ops.")
     {
+        Words = "struck plate, sand figure",
         Extras = [new ModesExtra()],
         Skin = Art.Skin("plate"),
     };

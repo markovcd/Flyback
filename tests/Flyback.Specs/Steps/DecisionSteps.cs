@@ -54,14 +54,14 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
     [Given("a decision model that takes {string} to mean a Kaleidoscope")]
     public void GivenKaleidoscopic(string phrase)
     {
-        catalog = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, [], decisionModels: [new Meaning(phrase, "space.kaleidoscope", "Geometry")]);
+        catalog = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, [], decisionModels: [new Meaning(phrase, "Kaleidoscope", "Geometry")]);
         new DecisionSettings().Save(SettingsPath);
     }
 
     [Given("a decision model that takes {string} to mean a Kaleidoscope only when its model is {string}")]
     public void GivenKaleidoscopicWhenSet(string phrase, string model)
     {
-        catalog = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, [], decisionModels: [new Meaning(phrase, "space.kaleidoscope", "Geometry", model)]);
+        catalog = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, [], decisionModels: [new Meaning(phrase, "Kaleidoscope", "Geometry", model)]);
         new DecisionSettings().Save(SettingsPath);
     }
 
@@ -169,6 +169,13 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
     public void ThenFirst(string module) =>
         JsonNode.Parse(said)!["issues"]!.AsArray()[0]!["message"]!.GetValue<string>().ShouldContain(module);
 
+    [Then("the first module found is the {string}")]
+    public void ThenFirstFound(string name)
+    {
+        code.ShouldBe(Exit.Ok, complained);
+        JsonNode.Parse(said)!.AsArray()[0]!["name"]!.GetValue<string>().ShouldBe(name);
+    }
+
     [Then("the first module found is the Kaleidoscope")]
     public void ThenKaleidoscope()
     {
@@ -215,8 +222,8 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
     }
 
     /// <summary>
-    /// Takes one phrase to mean one module of one category, and anything else to mean none of them;
-    /// with <paramref name="needs"/>, only while its model setting is that.
+    /// Takes one phrase to mean one module, by name, of one category, and anything else to mean none
+    /// of them; with <paramref name="needs"/>, only while its model setting is that.
     /// </summary>
     private sealed class Meaning(string phrase, string module, string category, string? needs = null) : IDecisionModel
     {
@@ -237,10 +244,14 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
 
         private Answer Chosen(string state, SettingValues values, Question.Choice choice)
         {
+            // A module's label is its name, with its words in brackets after it.
+            static bool Named(string label, string name) => label == name || label.StartsWith(name + " (", StringComparison.Ordinal);
+
+            var labels = choice.Options.Select(o => o.Label).ToList();
             var wanted = state != phrase || (needs is not null && values.Text("model") != needs) ? "none"
-                : choice.Options.Any(o => o.Label == module) ? module
-                : choice.Options.Any(o => o.Label == category) ? category
-                : "none";
+                : labels.FirstOrDefault(l => Named(l, module))
+                ?? labels.FirstOrDefault(l => Named(l, category))
+                ?? "none";
 
             return new Answer.Chosen(wanted, choice.Options.ToDictionary(o => o.Label, o => o.Label == wanted ? 0.9 : 0.1 / choice.Options.Count), 0.9);
         }

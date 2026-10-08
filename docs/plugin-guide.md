@@ -237,6 +237,10 @@ Say which in the description.
 
 Every module is compiled for both sinks, because a patch is one graph. `Sinks`, an init property on the `NodeDef`, says where it means what it says: `ModuleSinks.Both` (the default), `Audio` for a module that wants a memory and gives the screen something simpler, or `Video` for one that wants a pixel or a past frame. It changes nothing that is emitted; the assistant's handbook and `flyback-cli modules` read it, so set it whenever it is not `Both`.
 
+### What a module is known by
+
+`Words`, an init property on the `NodeDef`, is what else a person might call the module, a few words apart by commas: `"glide, portamento, smoothing"` on a Slew, `"room, hall, space"` on a Reverb. The module list and `flyback-cli modules --find` match a typed word against the name and these words, so a plugin's module is found by what it does and not only by what it is called, and the decision model reads them beside the name when it ranks modules by meaning. Keep them short: a sentence here pulls the model's answer toward whichever module it read first.
+
 ### How a module is drawn
 
 By default a module is drawn as its category, and a category the engine does not know draws gray (ADR-0116). `Skin`, an init property on the `NodeDef`, gives a module a background of its own instead. Only the background changes. The block keeps its shape, its header, where its title sits, its sockets and its description: a canvas of modules that each laid themselves out differently would stop being a patch.

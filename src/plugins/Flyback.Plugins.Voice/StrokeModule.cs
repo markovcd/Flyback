@@ -42,6 +42,7 @@ internal static class StrokeModule
         + "and a 'rate' of 4 is every sixteenth, and 'rate' 0.5 with 'offset' 0.5 is beats two "
         + "and four. The same on the picture as in the speakers.")
     {
+        Words = "drum hit without a trigger",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Timing))
         {
             Glyph = "M3,18 L10,18 L13,4 L16,18 L21,18",

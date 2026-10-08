@@ -86,6 +86,7 @@ public partial class NodeCatalog
             + "hue, a size or a brightness from 'level' or 'peak'. Costs the picture nothing and "
             + "keeps the GPU. Reads nothing where no sound runs, as in an exported still.")
         {
+            Words = "loudness as a number",
             // Tapped but not charted: what it wants from the ring is two numbers
             // rather than a buffer, so no chart is allocated for it and nothing
             // refills one. See NodeDef.ChartsSignal.
@@ -154,7 +155,10 @@ public partial class NodeCatalog
                 Num("note") with { Help = "The semitone it snapped to." },
             ],
             (em, i) => Sounded(em, i[0], i[1], i[2]),
-            "Pitch in note numbers, turned into a frequency.");
+            "Pitch in note numbers, turned into a frequency.")
+        {
+            Words = "pitch from a note number",
+        };
 
         yield return Quantiser();
         yield return Tune();
@@ -329,6 +333,7 @@ public partial class NodeCatalog
         + "All twelve on is the nearest semitone; none on is a wire. Audio only, like every "
         + "hold: the picture snaps continuously.")
     {
+        Words = "quantize to a scale, in key",
         Extras = [new ScaleExtra(Major)],
     };
 
@@ -375,6 +380,7 @@ public partial class NodeCatalog
         },
         "A Quantiser and a Note in one: a note number in, a frequency in the scale out.")
     {
+        Words = "note number to a scale's pitch",
         Extras = [new ScaleExtra(Major)],
     };
 
@@ -536,6 +542,7 @@ public partial class NodeCatalog
             + "than heard, an oscillator does not accumulate phase and a delay passes straight "
             + "through. A Scope shows what the speakers actually played.")
         {
+            Words = "chart a signal",
             Sinks = ModuleSinks.Video,
             MergesVoices = true,
         };
@@ -611,6 +618,7 @@ public partial class NodeCatalog
             + "memory (an oscillator's phase, a delay's tail, a sample, an envelope) but only what "
             + "reaches the Output's 'left' or 'right', and nothing while sound is off.")
         {
+            Words = "waveform display",
             TapsSignal = true,
             ChartsSignal = true,
             Sinks = ModuleSinks.Video,
@@ -705,6 +713,7 @@ public partial class NodeCatalog
             + "the chart. Resolution is about 12 Hz. Like a Scope, it shows only what reaches the "
             + "Output's 'left' or 'right', and nothing while sound is off.")
         {
+            Words = "spectrum display",
             TapsSignal = true,
             ChartsSignal = true,
             ChartsSpectrum = true,
@@ -831,7 +840,10 @@ public partial class NodeCatalog
             + "silent: a circle centered on Rings hears nothing, and moving it off center hears "
             + "everything. At 'radius' 0, 'x' and 'y' are the path: a sawtooth into 'x' times "
             + "Coordinates' 'aspect', with a slow one into 'y', is a raster scan, retrace edge "
-            + "and all.");
+            + "and all.")
+        {
+            Words = "hear the picture",
+        };
     }
     
     /// <summary>An input that carries an earlier one through when left unpatched.</summary>

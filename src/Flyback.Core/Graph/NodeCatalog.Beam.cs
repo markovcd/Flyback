@@ -63,6 +63,7 @@ public partial class NodeCatalog
             + "The beam is bright where it moves slowly and fades behind itself. Like a Scope, it "
             + "shows only what reaches the Output's 'left' or 'right', and nothing while sound is off.")
         {
+            Words = "X-Y oscilloscope",
             TapsSignal = true,
             ChartsSignal = true,
             ChartsBeam = true,

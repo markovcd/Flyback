@@ -21,6 +21,7 @@ internal static class CircleModule
         "A circle, as the distance to its rim. Patch it into a Fill. Exact everywhere, so it "
         + "smooths well in a Combine.")
     {
+        Words = "circle, round shape",
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {
             Glyph = "M4,12 A8,8 0 1 1 20,12 A8,8 0 1 1 4,12 "

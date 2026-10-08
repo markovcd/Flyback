@@ -81,6 +81,7 @@ internal static class CompressorModule
         "Turns loud passages down, so they come nearer the quiet ones. Both sides are turned "
         + "down together.")
     {
+        Words = "squash, compress dynamics",
         Sinks = ModuleSinks.Audio,
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
         {
