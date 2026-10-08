@@ -4,18 +4,24 @@ namespace Flyback.Plugins.Decide;
 
 /// <summary>
 /// Finds the modules a phrase describes, by meaning rather than by spelling: every module
-/// asked about by name, ten to a question with a way to say none, in one request.
+/// asked about by name, ten to a question with a way to say none, in two orders in one request.
 /// </summary>
 /// <remarks>
 /// Names alone, because a model reading descriptions settles on the first options it was
 /// shown; and no category first, because a choice of a dozen or more is past where its
-/// answer means anything. A module is kept only where it beat "none of these".
+/// answer means anything. Each module is asked about in the catalog's order and in reverse,
+/// so it sits near the front once and near the back once, with other neighbors each time,
+/// and its margin over "none of these" is averaged across the two. A module is kept only
+/// where that average is above nothing.
 /// </remarks>
 internal sealed class ModuleFinder(Decisions decisions)
 {
     public const int PerQuestion = 10;
 
     public const int MostFound = 8;
+
+    /// <summary>How many orders each module is asked about in.</summary>
+    public const int Orders = 2;
 
     private const string None = "none";
 
@@ -30,29 +36,40 @@ internal sealed class ModuleFinder(Decisions decisions)
 
         if (phrase.Length == 0 || candidates.Count == 0) return [];
 
-        var asked = candidates.Take(PerQuestion * DecisionRequest.MostQuestions).ToList();
+        var asked = candidates.Take(PerQuestion * (DecisionRequest.MostQuestions / Orders)).ToList();
         var questions = new Dictionary<string, Question>(StringComparer.Ordinal);
-        var chunks = asked.Chunk(PerQuestion).ToList();
+        IEnumerable<NodeDef>[] orders = [asked, Enumerable.Reverse(asked)];
 
-        for (var i = 0; i < chunks.Count; i++)
-            questions[$"modules{i}"] = new Question.Choice(
-                "Which module does this describe?",
-                [.. chunks[i].Select(d => new ChoiceOption(d.TypeId, d.Name)), new ChoiceOption(None, "None of these")]);
+        foreach (var order in orders)
+            foreach (var chunk in order.Chunk(PerQuestion))
+                questions[$"modules{questions.Count}"] = new Question.Choice(
+                    "Which module does this describe?",
+                    [.. chunk.Select(d => new ChoiceOption(d.TypeId, d.Name)), new ChoiceOption(None, "None of these")]);
 
-        if (await decisions.Ask(new DecisionRequest(phrase, questions), cancel).ConfigureAwait(false) is not { } ranked) return [];
+        if (await decisions.Ask(DecisionUse.Modules, new DecisionRequest(phrase, questions), cancel).ConfigureAwait(false) is not { } ranked) return [];
 
         var byId = asked.ToDictionary(d => d.TypeId, StringComparer.Ordinal);
-        var found = new List<FoundModule>();
+        var margins = new Dictionary<string, double>(StringComparer.Ordinal);
+        var probabilities = new Dictionary<string, double>(StringComparer.Ordinal);
 
         foreach (var answer in ranked.Answers.Values.OfType<Answer.Chosen>())
         {
             var none = answer.Probabilities.GetValueOrDefault(None);
 
             foreach (var (id, p) in answer.Probabilities)
-                if (p > none && byId.TryGetValue(id, out var def))
-                    found.Add(new FoundModule(def, p));
+            {
+                if (!byId.ContainsKey(id)) continue;
+
+                margins[id] = margins.GetValueOrDefault(id) + (p - none) / Orders;
+                probabilities[id] = probabilities.GetValueOrDefault(id) + p / Orders;
+            }
         }
 
-        return [.. found.OrderByDescending(f => f.Probability).ThenBy(f => f.Module.Name, StringComparer.Ordinal).Take(MostFound)];
+        return [.. margins
+            .Where(m => m.Value > 0)
+            .OrderByDescending(m => m.Value)
+            .ThenBy(m => byId[m.Key].Name, StringComparer.Ordinal)
+            .Take(MostFound)
+            .Select(m => new FoundModule(byId[m.Key], probabilities[m.Key]))];
     }
 }

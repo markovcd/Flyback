@@ -29,13 +29,43 @@ internal sealed class DecisionSettings
     /// <summary>What each model was last set to, filed under its id.</summary>
     public Dictionary<string, Dictionary<string, string>> Choices { get; set; } = new(StringComparer.Ordinal);
 
+    /// <summary>What a <see cref="DecisionUse"/> lays over a model's settings, filed under the use, then the model.</summary>
+    public Dictionary<string, Dictionary<string, Dictionary<string, string>>> Uses { get; set; } = new(StringComparer.Ordinal);
+
     /// <summary>What is set for one model.</summary>
     public SettingValues Of(string model) =>
         Choices.TryGetValue(model, out var held) ? new SettingValues(held) : SettingValues.None;
 
+    /// <summary>What is set for one model when it is asked for <paramref name="use"/>: its own settings, with the use's laid over them.</summary>
+    public SettingValues Of(string model, string? use)
+    {
+        var values = Of(model);
+
+        foreach (var (key, value) in Over(model, use).All) values = values.With(key, value);
+
+        return values;
+    }
+
+    /// <summary>Only what <paramref name="use"/> lays over the model's settings.</summary>
+    public SettingValues Over(string model, string? use) =>
+        use is not null && Uses.TryGetValue(use, out var models) && models.TryGetValue(model, out var held)
+            ? new SettingValues(held)
+            : SettingValues.None;
+
     /// <summary>Takes one model's answers, leaving every other model's alone.</summary>
     public void Remember(string model, SettingValues values) =>
         Choices[model] = new Dictionary<string, string>(values.All, StringComparer.Ordinal);
+
+    /// <summary>Takes what <paramref name="use"/> lays over one model's settings; nothing laid over removes the use's entry.</summary>
+    public void Remember(string model, string use, SettingValues over)
+    {
+        if (!Uses.TryGetValue(use, out var models)) Uses[use] = models = new(StringComparer.Ordinal);
+
+        if (over.All.Count > 0) models[model] = new Dictionary<string, string>(over.All, StringComparer.Ordinal);
+        else models.Remove(model);
+
+        if (models.Count == 0) Uses.Remove(use);
+    }
 
     /// <summary>Never throws: a settings file is not worth a failure to start.</summary>
     public static DecisionSettings Load(string? path = null)

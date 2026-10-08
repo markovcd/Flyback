@@ -37,7 +37,7 @@ internal sealed class TurnReading(Decisions decisions)
             "intent",
             new Question.Choice("What does the message ask for?", Intents));
 
-        return await decisions.Ask(request, cancel).ConfigureAwait(false) is { } decision
+        return await decisions.Ask(DecisionUse.Turns, request, cancel).ConfigureAwait(false) is { } decision
                && decision.Answers.GetValueOrDefault("intent") is Answer.Chosen chosen
             ? new Reading(chosen.Option, chosen.Probabilities.GetValueOrDefault(chosen.Option))
             : null;
@@ -52,7 +52,7 @@ internal sealed class TurnReading(Decisions decisions)
             "does",
             new Question.YesNo("Does what was made do what was asked for?"));
 
-        return await decisions.Ask(request, cancel).ConfigureAwait(false) is { } decision
+        return await decisions.Ask(DecisionUse.Turns, request, cancel).ConfigureAwait(false) is { } decision
                && decision.Answers.GetValueOrDefault("does") is Answer.YesNo yes
             ? yes.Probability
             : null;

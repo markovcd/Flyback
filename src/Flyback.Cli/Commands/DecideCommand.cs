@@ -6,6 +6,7 @@ using Flyback.Cli.Models;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Settings;
 using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
@@ -34,10 +35,20 @@ internal static class DecideCommand
         var status = new Option<bool>("--status") { Description = "List the decision models and whether each can answer." };
         var prepare = new Option<bool>("--prepare") { Description = "Download what the model needs to answer." };
         var yes = new Option<bool>("--yes", "-y") { Description = "Download without the question." };
+        var use = new Option<string?>("--for")
+        {
+            Description = $"Ask, or --set, as one use does: {string.Join(", ", DecisionUse.All.Select(u => $"{u.Key} ({u.Value})"))}.",
+        };
+        var set = new Option<string[]>("--set")
+        {
+            Description = "A model setting, as key=value, for this run; with --for, for that use only. key= clears it. Repeatable.",
+            AllowMultipleArgumentsPerToken = false,
+        };
+        var save = new Option<bool>("--save") { Description = "Keep --model as the chosen model, and --set in the settings, for the editor and later runs." };
 
         var command = new Command("decide", "Ask a decision model typed questions about some text, and get probabilities back.")
         {
-            state, ask, model, yesNo, choice, option, score, level, status, prepare, yes, json,
+            state, ask, model, yesNo, choice, option, score, level, status, prepare, yes, use, set, save, json,
         };
 
         command.SetAction((result, cancellation) => Run(
@@ -54,7 +65,12 @@ internal static class DecideCommand
                 result.GetValue(status),
                 result.GetValue(prepare),
                 result.GetValue(yes),
-                result.GetValue(json)),
+                result.GetValue(json))
+            {
+                Use = result.GetValue(use),
+                Set = result.GetValue(set) ?? [],
+                Save = result.GetValue(save),
+            },
             Console.In,
             result.InvocationConfiguration.Output,
             result.InvocationConfiguration.Error,
@@ -81,11 +97,18 @@ internal static class DecideCommand
         TextReader? asking = null,
         HttpClient? http = null)
     {
+        var settings = DecisionSettings.Load(settingsPath);
         var decisions = new Decisions(
             plugins,
-            DecisionSettings.Load(settingsPath),
+            settings,
             new Credentials(plugins.PreferredSecretStore),
             new ModelStore(modelsRoot ?? ModelStore.DefaultRoot));
+
+        if (options.Use is { } unknown && !DecisionUse.All.ContainsKey(unknown))
+        {
+            error.WriteLine($"There is no use called '{unknown}'. The uses: {string.Join(", ", DecisionUse.All.Keys)}.");
+            return Exit.Failed;
+        }
 
         if (options.Status) return Status(decisions, options.Json, output);
 
@@ -96,6 +119,33 @@ internal static class DecideCommand
             error.WriteLine(options.Model is { } named ? $"No decision model called '{named}' is installed." : decisions.Unavailable());
             if (decisions.Models.Count > 0) error.WriteLine($"Installed: {string.Join(", ", decisions.Models.Select(m => m.Id))}.");
             return Exit.Failed;
+        }
+
+        if (!Set(settings, model, options, error)) return Exit.Failed;
+
+        if (options.Save)
+        {
+            if (options.Model is null && options.Set.Count == 0)
+            {
+                error.WriteLine("--save keeps what --model and --set say; give one of them.");
+                return Exit.Failed;
+            }
+
+            if (options.Model is not null) settings.Model = model.Id;
+
+            try
+            {
+                settings.Save(settingsPath);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                error.WriteLine($"The settings could not be saved: {ex.Message}");
+                return Exit.Failed;
+            }
+
+            output.WriteLine(Saved(settings, model, options.Use));
+
+            if (!Asks(options)) return Exit.Ok;
         }
 
         if (options.Prepare) return await Prepare(decisions, model, options, output, error, asking, http, cancel).ConfigureAwait(false);
@@ -114,7 +164,7 @@ internal static class DecideCommand
 
         try
         {
-            decision = await decisions.Decide(model, new DecisionRequest(text, questions), cancel).ConfigureAwait(false);
+            decision = await decisions.Decide(model, new DecisionRequest(text, questions), cancel, options.Use).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is InvalidOperationException or HttpRequestException or ArgumentException)
         {
@@ -127,6 +177,59 @@ internal static class DecideCommand
 
         return Exit.Ok;
     }
+
+    /// <summary>
+    /// Lays <see cref="DecideOptions.Set"/> into <paramref name="settings"/>: over the model's own
+    /// settings, or with a use, over what that use lays on them. False having said which pair is not one.
+    /// </summary>
+    private static bool Set(DecisionSettings settings, IDecisionModel model, DecideOptions options, TextWriter error)
+    {
+        if (options.Set.Count == 0) return true;
+
+        var held = new Dictionary<string, string>((options.Use is { } use ? settings.Over(model.Id, use) : settings.Of(model.Id)).All, StringComparer.Ordinal);
+        var keys = model.Form(settings.Of(model.Id, options.Use)).Select(f => f.Key).ToHashSet(StringComparer.Ordinal);
+
+        foreach (var pair in options.Set)
+        {
+            var equals = pair.IndexOf('=', StringComparison.Ordinal);
+            var key = equals > 0 ? pair[..equals].Trim() : "";
+
+            if (key.Length == 0)
+            {
+                error.WriteLine($"--set {pair}: write it as key=value, such as model=typed-decisions.");
+                return false;
+            }
+
+            if (!keys.Contains(key))
+            {
+                error.WriteLine($"--set {pair}: {model.Name} has no setting '{key}'. It has: {(keys.Count == 0 ? "none" : string.Join(", ", keys.Order(StringComparer.Ordinal)))}.");
+                return false;
+            }
+
+            var value = pair[(equals + 1)..].Trim();
+
+            if (value.Length == 0) held.Remove(key);
+            else held[key] = value;
+        }
+
+        if (options.Use is { } asking) settings.Remember(model.Id, asking, new SettingValues(held));
+        else settings.Remember(model.Id, new SettingValues(held));
+
+        return true;
+    }
+
+    /// <summary>What was kept, as a sentence.</summary>
+    private static string Saved(DecisionSettings settings, IDecisionModel model, string? use)
+    {
+        var values = use is null ? settings.Of(model.Id) : settings.Over(model.Id, use);
+        var pairs = values.All.Count == 0 ? "nothing set" : string.Join(", ", values.All.OrderBy(v => v.Key, StringComparer.Ordinal).Select(v => $"{v.Key}={v.Value}"));
+        var chosen = settings.Model == model.Id ? $"{model.Name} is the chosen model" : $"{model.Name} is not the chosen model";
+
+        return use is null ? $"Saved. {chosen}, with {pairs}." : $"Saved. {chosen}; for {use} it has {pairs} over its own settings.";
+    }
+
+    private static bool Asks(DecideOptions options) =>
+        options.Ask is not null || options.YesNo is not null || options.Choice is not null || options.Score is not null || options.Prepare;
 
     /// <summary>The questions the options ask: a file, or one written out on the line.</summary>
     private static Dictionary<string, Question>? Questions(DecideOptions options, TextWriter error)
@@ -211,6 +314,10 @@ internal static class DecideCommand
                 prepared = decisions.Store.Prepared(m),
                 missingBytes = decisions.Store.Missing(m),
                 unavailable = decisions.Unavailable(m),
+                uses = DecisionUse.All.Keys
+                    .Select(u => (use: u, over: decisions.Settings.Over(m.Id, u).All))
+                    .Where(u => u.over.Count > 0)
+                    .ToDictionary(u => u.use, u => u.over, StringComparer.Ordinal),
             })
             .ToList();
 
@@ -223,7 +330,12 @@ internal static class DecideCommand
         if (rows.Count == 0) output.WriteLine("No decision model is installed.");
 
         foreach (var row in rows)
+        {
             output.WriteLine($"{row.id,-12} {row.name,-20} {(row.chosen ? "chosen" : ""),-7} {row.unavailable ?? "ready"}");
+
+            foreach (var (use, over) in row.uses)
+                output.WriteLine($"{"",-12} for {use}: {string.Join(", ", over.OrderBy(v => v.Key, StringComparer.Ordinal).Select(v => $"{v.Key}={v.Value}"))}");
+        }
 
         if (chosen is null && rows.Count > 0) output.WriteLine(decisions.Unavailable());
 

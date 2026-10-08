@@ -35,6 +35,12 @@ feature behaves as it did without one.
 ten-second deadline and never throws, so a feature asks and carries on.
 `flyback-cli decide` is the same door from a terminal and throws its reasons instead.
 
+**A feature asks as its use.** Each ask names a `DecisionUse` (`modules`, `issues`,
+`turns`), and the settings may lay values over the chosen model's for one use, filed
+under the use and then the model: a laya-serve's checkpoints are each better at a
+different question, and which question is the host's to know, not the plugin's. The
+contract does not move; `decide --for <use> --set key=value --save` writes them.
+
 `PluginContractVersion` stays at 1.0.0: nothing has shipped at it, and `/release`
 works the version out from the surface.
 

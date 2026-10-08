@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Flyback.Plugins.Tests;
 
-/// <summary>A phrase finds the modules it means, through a category first, and finds nothing without a model.</summary>
+/// <summary>A phrase finds the modules it means, and finds nothing without a model.</summary>
 public class ModuleFinderTests
 {
     private static IReadOnlyList<NodeDef> Candidates => [.. NodeCatalog.BuiltIn.All.Where(d => !NodeCatalog.IsSink(d.TypeId))];
@@ -28,22 +28,44 @@ public class ModuleFinderTests
     }
 
     [Fact]
-    public async Task It_asks_about_every_module_by_name_ten_to_a_question_in_one_request()
+    public async Task It_asks_about_every_module_by_name_ten_to_a_question_in_order_and_in_reverse_in_one_request()
     {
         var model = new RankingDecider();
 
         await Finder(model).Find("a mirror maze of shards", Candidates, TestContext.Current.CancellationToken);
 
         var questions = model.Asked.ShouldHaveSingleItem().Questions.Values.Cast<Question.Choice>().ToList();
+        var asked = questions.SelectMany(q => q.Options).Where(o => o.Label != "none").ToList();
 
-        questions.SelectMany(q => q.Options).Where(o => o.Label != "none").Select(o => o.Label).ShouldBe(Candidates.Select(d => d.TypeId));
-        questions.SelectMany(q => q.Options).Where(o => o.Label != "none").Select(o => o.Description).ShouldBe(Candidates.Select(d => d.Name));
+        asked.Select(o => o.Label).ShouldBe([.. Candidates.Select(d => d.TypeId), .. Candidates.Reverse().Select(d => d.TypeId)]);
+        asked.Select(o => o.Description).ShouldBe([.. Candidates.Select(d => d.Name), .. Candidates.Reverse().Select(d => d.Name)]);
 
         foreach (var question in questions)
         {
             question.Options.Count.ShouldBeLessThanOrEqualTo(ModuleFinder.PerQuestion + 1);
             question.Options[^1].Label.ShouldBe("none");
         }
+    }
+
+    [Fact]
+    public async Task A_module_s_margin_over_none_is_averaged_across_both_orders()
+    {
+        var first = Candidates[0].TypeId;
+        var model = new RankingDecider
+        {
+            Script = (question, label) => label switch
+            {
+                "none" => 0.3,
+                _ when label == first => question == "modules0" ? 0.5 : 0.0,
+                "space.kaleidoscope" => 0.5,
+                _ => 0.0,
+            },
+        };
+
+        var found = await Finder(model).Find("a mirror maze of shards", Candidates, TestContext.Current.CancellationToken);
+
+        found.Select(f => f.Module.TypeId).ShouldBe(["space.kaleidoscope"], "the first module beat none once and lost to it by more the other time");
+        found[0].Probability.ShouldBe(0.5);
     }
 
     [Fact]

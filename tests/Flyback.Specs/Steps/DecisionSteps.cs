@@ -51,6 +51,36 @@ public sealed class DecisionSteps : IDisposable
         new DecisionSettings().Save(SettingsPath);
     }
 
+    [Given("a decision model that takes {string} to mean a Kaleidoscope only when its model is {string}")]
+    public void GivenKaleidoscopicWhenSet(string phrase, string model)
+    {
+        catalog = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, [], decisionModels: [new Meaning(phrase, "space.kaleidoscope", "Geometry", model)]);
+        new DecisionSettings().Save(SettingsPath);
+    }
+
+    [Given("flyback-cli sets its model to {string} for finding modules alone")]
+    public async Task GivenSetForModules(string model)
+    {
+        var error = new StringWriter();
+
+        code = await DecideCommand.Run(
+            catalog.ShouldNotBeNull(),
+            new DecideOptions(null, null, null, null, null, [], null, [], false, false, false, false)
+            {
+                Use = DecisionUse.Modules,
+                Set = [$"model={model}"],
+                Save = true,
+            },
+            TextReader.Null,
+            TextWriter.Null,
+            error,
+            CancellationToken.None,
+            SettingsPath,
+            Path.Combine(folder.FullName, "models"));
+
+        code.ShouldBe(Exit.Ok, error.ToString());
+    }
+
     [When("flyback-cli finds the modules {string} describes")]
     public async Task WhenFound(string phrase)
     {
@@ -146,8 +176,11 @@ public sealed class DecisionSteps : IDisposable
         complained.ShouldContain("No decision model is in use");
     }
 
-    /// <summary>Takes one phrase to mean one module of one category, and anything else to mean none of them.</summary>
-    private sealed class Meaning(string phrase, string module, string category) : IDecisionModel
+    /// <summary>
+    /// Takes one phrase to mean one module of one category, and anything else to mean none of them;
+    /// with <paramref name="needs"/>, only while its model setting is that.
+    /// </summary>
+    private sealed class Meaning(string phrase, string module, string category, string? needs = null) : IDecisionModel
     {
         public string Id => "meaning";
 
@@ -157,16 +190,16 @@ public sealed class DecisionSteps : IDisposable
 
         public AssistantCredential? Credential => null;
 
-        public IReadOnlyList<SettingField> Form(SettingValues values) => [];
+        public IReadOnlyList<SettingField> Form(SettingValues values) => [new SettingField.Text("model", "Model")];
 
         public string? Unavailable(DecisionConfig config) => null;
 
         public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel) =>
-            Task.FromResult(new Decision("meaning", request.Questions.ToDictionary(q => q.Key, q => Chosen(request.State, (Question.Choice)q.Value)), DecisionUsage.None));
+            Task.FromResult(new Decision("meaning", request.Questions.ToDictionary(q => q.Key, q => Chosen(request.State, config.Values, (Question.Choice)q.Value)), DecisionUsage.None));
 
-        private Answer Chosen(string state, Question.Choice choice)
+        private Answer Chosen(string state, SettingValues values, Question.Choice choice)
         {
-            var wanted = state != phrase ? "none"
+            var wanted = state != phrase || (needs is not null && values.Text("model") != needs) ? "none"
                 : choice.Options.Any(o => o.Label == module) ? module
                 : choice.Options.Any(o => o.Label == category) ? category
                 : "none";

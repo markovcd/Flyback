@@ -23,4 +23,14 @@ internal sealed record DecideOptions(
     bool Status,
     bool Prepare,
     bool Yes,
-    bool Json);
+    bool Json)
+{
+    /// <summary>Which <see cref="Flyback.Plugins.Decide.DecisionUse"/> to ask or set as, or null for the model's own settings.</summary>
+    public string? Use { get; init; }
+
+    /// <summary>Model settings as <c>key=value</c>, laid over what is saved; an empty value clears one.</summary>
+    public IReadOnlyList<string> Set { get; init; } = [];
+
+    /// <summary>Keep <see cref="Model"/> as chosen and <see cref="Set"/> in the settings.</summary>
+    public bool Save { get; init; }
+}

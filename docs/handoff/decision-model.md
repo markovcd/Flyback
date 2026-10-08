@@ -1,7 +1,7 @@
 # A decision model that runs here: the Laya plugin, and what to ask it
 
 Planned on 2026-09-28; the rest of it landed on 2026-10-08 and was measured against a local
-laya-serve the same day, on `main` at `71fb09b2`. It is on TODO.md; take it off there, and
+laya-serve the same day, on `main` at `71fb09b2`, and again once each use could name its checkpoint. It is on TODO.md; take it off there, and
 delete this file, in the commit that lands the Laya plugin.
 
 ## Where it stands
@@ -47,11 +47,19 @@ plugin's default `jev-latest` included, is routed by the text's language, so Eng
 so a choice of eleven or more options is uncalibrated.
 
 The `flyback-cli` on PATH is the installed release; the one with `decide` is a build of `main`
-with `-c "All plugins"`, under `src/Flyback.Cli/bin/All plugins/net10.0/`. The CLI has no way to
-choose or set a model yet, so the `decisions` section of `~/.config/Flyback/settings.json` holds
+with `-c "All plugins"`, under `src/Flyback.Cli/bin/All plugins/net10.0/`. The `decisions` section
+of `~/.config/Flyback/settings.json` holds
 `{"Model":"systemone","Choices":{"systemone":{"endpoint":"http://localhost:8000","model":"jev-latest"}}}`,
-written by hand (its earlier copy is `settings.json.before-decisions`). To try another checkpoint
-without touching it, point `XDG_CONFIG_HOME` at a folder whose `Flyback/settings.json` names it.
+written by hand before `decide` could set it (its earlier copy is `settings.json.before-decisions`).
+Now it is set from the command line, the module search on its own checkpoint:
+
+```bash
+flyback-cli decide --model systemone --set endpoint=http://localhost:8000 --save
+flyback-cli decide --for modules --set model=typed-decisions --save
+```
+
+To try a setting without touching the real file, point `XDG_CONFIG_HOME` at a scratch folder, or
+pass `--set` without `--save` for one `decide` run.
 
 `scripts/decide-bench.py` holds both measurements below: `find <cli>` scores `modules --find`
 on fourteen phrases, and `route <endpoint> [checkpoint]` scores TurnReading's rule on eleven
@@ -66,29 +74,32 @@ messages.
 | The same in three other orders | — | 3 to 8 of 14 first |
 | Two orders in one request, the margin over "none" averaged | — | 8/14 first, 8–9/14 in the top three, about 5.5 s |
 | Three orders averaged | — | no better, 9.4 s |
+| Catalog order and its reverse, averaged (on `main`, `--for modules` on typed-decisions) | — | 8/14 first, 9/14 in the top three, 6 s warm; the first three asks after a start miss the 10 s deadline |
 | Routing: module questions told to answer / others wrongly told (on `main`) | 4/4, 0/7 | 0/4, 0/7 |
 
 - A choice of seventeen categories was close to random, and modules described in full drew
   every answer to the first options shown. Bare names do better.
 - Which nine other modules share a question changes the answer: Echo scored 1.00 in one
   grouping and under 0.05 in another, which is what averaging two orders evens out.
+- Of the second orders tried with the catalog's, the reverse was kept: each module sits near the
+  front once and near the back once, which evens out the pull toward the first options. On fourteen
+  phrases the orders scored within two of each other; a pair scoring 10/14 was not chosen on that alone.
 - A yes-no per module, on English, scored 4/14 first and 7/14 in the top three at up to 9 s.
 - On English, "why is it so quiet?" reads as not about Flyback (0.83) and "what is the capital
   of France?" as a module question, which is why only a module question at 0.8 or above is
   acted on, and nothing is held back. On typed-decisions the module questions read as such at
   only 0.51–0.76, below that bar.
 
-### Next, proposed and not yet agreed
+### Next
 
-1. **Each use names the checkpoint it is best on**: module search on `typed-decisions`, routing on
-   `english`. laya-serve already honors `model` per request, so it is Flyback's side: a hint a
-   feature passes with its request, or a model per use in the `decisions` section.
-2. **ModuleFinder asks two orders in one request** and averages each module's margin over
-   "none", taking it from an unstable 6 to a steady 8 of 14.
-3. **`flyback-cli decide --use <id> --set key=value`**, so a model is chosen and set without
-   editing `settings.json`, as `ask --set` does for an assistant.
-4. **The key rows in `Decide/DecisionsSection.cs` and `Assist/AssistantSettingsPage.cs` become
-   one control**: both are a key that `Credentials` holds.
+Landed: each ask names its use and the settings may lay a checkpoint over it, the module search
+asks two orders and averages, and `decide --set`, `--for` and `--save` set a model up. Left:
+
+- **The key rows in `Decide/DecisionsSection.cs` and `Assist/AssistantSettingsPage.cs` become
+  one control**: both are a key that `Credentials` holds. Proposed, not yet agreed.
+- **Settings → Decisions shows a use's settings**: today only the command line writes them, and the
+  editor keeps them untouched when it saves.
+- **A start that warms the model**: the first asks after laya-serve starts miss the deadline.
 
 Measure each against the server with `scripts/decide-bench.py` before it lands.
 

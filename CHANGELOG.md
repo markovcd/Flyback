@@ -20,7 +20,7 @@
 
 - With a decision model chosen, a patch's complaints on the status line are said again likeliest first, the one most likely why it is silent or dark leading; `flyback-cli check --triage` orders them the same way.
 
-- `flyback-cli decide` asks a decision model typed questions about some text and answers each with a probability, through TypeSafe's Jev or a laya-serve of your own.
+- `flyback-cli decide` asks a decision model typed questions about some text and answers each with a probability, through TypeSafe's Jev or a laya-serve of your own, and with `--set`, `--for` and `--save` sets the model up, for one use at a time where a use does better on another checkpoint.
 
 - Asked to listen, an assistant that has no model able to hear, such as Claude Code or Codex, says it cannot hear without pointing at a setting it does not have.
 

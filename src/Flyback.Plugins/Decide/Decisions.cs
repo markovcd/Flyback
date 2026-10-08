@@ -59,10 +59,10 @@ internal sealed class Decisions(
     /// <summary>The model <paramref name="id"/> names, or null where none is installed by it.</summary>
     public IDecisionModel? Model(string id) => models.FirstOrDefault(m => string.Equals(m.Id, id, StringComparison.Ordinal));
 
-    /// <summary><paramref name="model"/> as it is set, sending over a transport that carries its key.</summary>
-    public DecisionConfig Config(IDecisionModel model)
+    /// <summary><paramref name="model"/> as it is set for <paramref name="use"/>, sending over a transport that carries its key.</summary>
+    public DecisionConfig Config(IDecisionModel model, string? use = null)
     {
-        var values = settings.Of(model.Id);
+        var values = settings.Of(model.Id, use);
         var origin = Quietly(() => model.Endpoint(values)) is { IsAbsoluteUri: true } address ? KeyedTransport.OriginOf(address) : null;
 
         return new DecisionConfig(credentials.Transport(Account(model), model.Credential, origin, network), values, store.FolderOf(model));
@@ -71,15 +71,15 @@ internal sealed class Decisions(
     /// <summary>Why the chosen model cannot answer now, or null when it can.</summary>
     public string? Unavailable() => Chosen is { } model ? Unavailable(model) : NotChosen();
 
-    /// <summary>Why <paramref name="model"/> cannot answer now, or null when it can.</summary>
-    public string? Unavailable(IDecisionModel model)
+    /// <summary>Why <paramref name="model"/> cannot answer <paramref name="use"/>'s questions now, or null when it can.</summary>
+    public string? Unavailable(IDecisionModel model, string? use = null)
     {
         if (!store.Prepared(model))
             return $"{model.Name} is not downloaded yet ({Megabytes(store.Missing(model))}).";
 
         try
         {
-            return model.Unavailable(Config(model));
+            return model.Unavailable(Config(model, use));
         }
         catch (Exception ex)
         {
@@ -91,10 +91,12 @@ internal sealed class Decisions(
     public string? Problem { get; private set; }
 
     /// <summary>
-    /// The chosen model's answer, or null where there is no model, it cannot answer, it failed
-    /// or it missed <see cref="Deadline"/>. Never throws but for <paramref name="cancel"/>.
+    /// The chosen model's answer, set as <paramref name="use"/> sets it, or null where there is no
+    /// model, it cannot answer, it failed or it missed <see cref="Deadline"/>. Never throws but for
+    /// <paramref name="cancel"/>.
     /// </summary>
-    public async Task<Decision?> Ask(DecisionRequest request, CancellationToken cancel)
+    /// <param name="use">Which <see cref="DecisionUse"/> is asking.</param>
+    public async Task<Decision?> Ask(string use, DecisionRequest request, CancellationToken cancel)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -104,7 +106,7 @@ internal sealed class Decisions(
             return null;
         }
 
-        if ((Unavailable(model) ?? request.Problem()) is { } why)
+        if ((Unavailable(model, use) ?? request.Problem()) is { } why)
         {
             Problem = why;
             return null;
@@ -116,7 +118,7 @@ internal sealed class Decisions(
         try
         {
             // Off the caller's thread: a model that runs here may work before its first await.
-            var config = Config(model);
+            var config = Config(model, use);
             var decision = await Task.Run(() => model.DecideAsync(request, config, late.Token), late.Token).ConfigureAwait(false);
             Problem = null;
             return decision;
@@ -142,12 +144,12 @@ internal sealed class Decisions(
     /// command line, where the reason is the output.
     /// </summary>
     /// <exception cref="InvalidOperationException">The model cannot answer, or the request is not one to send.</exception>
-    public async Task<Decision> Decide(IDecisionModel model, DecisionRequest request, CancellationToken cancel)
+    public async Task<Decision> Decide(IDecisionModel model, DecisionRequest request, CancellationToken cancel, string? use = null)
     {
         if (request.Problem() is { } problem) throw new InvalidOperationException(problem);
-        if (Unavailable(model) is { } why) throw new InvalidOperationException(why);
+        if (Unavailable(model, use) is { } why) throw new InvalidOperationException(why);
 
-        return await model.DecideAsync(request, Config(model), cancel).ConfigureAwait(false);
+        return await model.DecideAsync(request, Config(model, use), cancel).ConfigureAwait(false);
     }
 
     private string NotChosen() => settings.Model == DecisionSettings.Off || models.Count == 0

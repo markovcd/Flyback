@@ -27,7 +27,7 @@ internal sealed class IssueTriage(Decisions decisions)
         for (var i = 0; i < asked.Count; i++)
             questions[$"issue{i}"] = new Question.Score($"How likely is this why the patch is silent or shows nothing: {asked[i]}", Levels);
 
-        if (await decisions.Ask(new DecisionRequest(patch, questions), cancel).ConfigureAwait(false) is not { } decision) return null;
+        if (await decisions.Ask(DecisionUse.Issues, new DecisionRequest(patch, questions), cancel).ConfigureAwait(false) is not { } decision) return null;
 
         return [.. issues.Select((_, i) => decision.Answers.GetValueOrDefault($"issue{i}") is Answer.Scored scored
             ? Math.Clamp(scored.Score / (Levels.Count - 1), 0, 1)

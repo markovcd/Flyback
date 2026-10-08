@@ -38,7 +38,7 @@ public class DecisionsTests
         var local = new Model("local");
         var decisions = With(new DecisionSettings { Model = DecisionSettings.Off }, local);
 
-        (await decisions.Ask(Asked, TestContext.Current.CancellationToken)).ShouldBeNull();
+        (await decisions.Ask(DecisionUse.Turns, Asked, TestContext.Current.CancellationToken)).ShouldBeNull();
 
         local.Asked.ShouldBe(0);
         decisions.Problem.ShouldBe("No decision model is in use.");
@@ -49,7 +49,7 @@ public class DecisionsTests
     {
         var decisions = With(new DecisionSettings(), new Model("local") { Throws = new InvalidOperationException("the weights are gone") });
 
-        (await decisions.Ask(Asked, TestContext.Current.CancellationToken)).ShouldBeNull();
+        (await decisions.Ask(DecisionUse.Turns, Asked, TestContext.Current.CancellationToken)).ShouldBeNull();
 
         decisions.Problem.ShouldBe("local: the weights are gone");
     }
@@ -60,7 +60,7 @@ public class DecisionsTests
         var local = new Model("local") { Refuses = "No key yet." };
         var decisions = With(new DecisionSettings(), local);
 
-        (await decisions.Ask(Asked, TestContext.Current.CancellationToken)).ShouldBeNull();
+        (await decisions.Ask(DecisionUse.Turns, Asked, TestContext.Current.CancellationToken)).ShouldBeNull();
 
         local.Asked.ShouldBe(0);
         decisions.Problem.ShouldBe("No key yet.");
@@ -71,8 +71,46 @@ public class DecisionsTests
     {
         var decisions = With(new DecisionSettings(), new Model("local"));
 
-        (await decisions.Ask(Asked, TestContext.Current.CancellationToken))!.Answers["q"].ShouldBe(new Answer.YesNo(0.75));
+        (await decisions.Ask(DecisionUse.Turns, Asked, TestContext.Current.CancellationToken))!.Answers["q"].ShouldBe(new Answer.YesNo(0.75));
         decisions.Problem.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task A_use_asks_with_its_own_settings_laid_over_the_model_s()
+    {
+        var local = new Model("local");
+        var settings = new DecisionSettings();
+        settings.Remember("local", new SettingValues([new("endpoint", "here"), new("model", "plain")]));
+        settings.Remember("local", DecisionUse.Modules, new SettingValues([new("model", "typed")]));
+        var decisions = With(settings, local);
+
+        await decisions.Ask(DecisionUse.Modules, Asked, TestContext.Current.CancellationToken);
+        await decisions.Ask(DecisionUse.Turns, Asked, TestContext.Current.CancellationToken);
+
+        local.Values.Select(v => v.Text("model")).ShouldBe(["typed", "plain"]);
+        local.Values.ShouldAllBe(v => v.Text("endpoint") == "here");
+    }
+
+    [Fact]
+    public void A_use_s_settings_survive_a_save_and_clearing_them_leaves_no_entry()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "flyback-uses-" + Guid.NewGuid().ToString("N") + ".json");
+
+        try
+        {
+            var settings = new DecisionSettings();
+            settings.Remember("local", DecisionUse.Modules, new SettingValues([new("model", "typed")]));
+            settings.Save(path);
+
+            DecisionSettings.Load(path).Of("local", DecisionUse.Modules).Text("model").ShouldBe("typed");
+
+            settings.Remember("local", DecisionUse.Modules, SettingValues.None);
+            settings.Uses.ShouldBeEmpty();
+        }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 
     [Fact]
@@ -91,6 +129,8 @@ public class DecisionsTests
 
         public int Asked { get; private set; }
 
+        public List<SettingValues> Values { get; } = [];
+
         public string Id => id;
 
         public string Name => id;
@@ -108,6 +148,7 @@ public class DecisionsTests
         public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel)
         {
             Asked++;
+            Values.Add(config.Values);
 
             if (Throws is not null) throw Throws;
 

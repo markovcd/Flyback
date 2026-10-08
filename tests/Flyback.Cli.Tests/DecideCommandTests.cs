@@ -16,7 +16,7 @@ using Xunit;
 
 namespace Flyback.Cli.Tests;
 
-/// <summary>Asking a decision model from the command line, listing them, and downloading one, with no network and no real settings.</summary>
+/// <summary>Asking a decision model from the command line, setting and listing them, and downloading one, with no network and no real settings.</summary>
 public sealed class DecideCommandTests : IDisposable
 {
     private readonly string root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "flyback-decide-" + Guid.NewGuid().ToString("N"))).FullName;
@@ -160,6 +160,64 @@ public sealed class DecideCommandTests : IDisposable
         File.Exists(Path.Combine(Models, "downloaded", "weights.bin")).ShouldBeFalse();
     }
 
+    [Fact]
+    public async Task A_setting_saved_for_a_use_is_asked_with_by_that_use_alone()
+    {
+        var echo = new Echo();
+
+        var (code, said, _) = await Decide(new Options { Use = DecisionUse.Modules, Set = ["model=typed"], Save = true }, echo);
+
+        code.ShouldBe(Exit.Ok);
+        said.ShouldContain("for modules it has model=typed");
+        DecisionSettings.Load(SettingsPath).Of("echo", DecisionUse.Modules).Text("model").ShouldBe("typed");
+
+        await Decide(new Options { State = "s", YesNo = "Is it?", Use = DecisionUse.Modules }, echo);
+        await Decide(new Options { State = "s", YesNo = "Is it?" }, echo);
+
+        echo.Values.Select(v => v.Text("model")).ShouldBe(["typed", ""]);
+    }
+
+    [Fact]
+    public async Task A_setting_without_save_is_for_that_run_only()
+    {
+        var echo = new Echo();
+
+        (await Decide(new Options { State = "s", YesNo = "Is it?", Set = ["model=typed"] }, echo)).Code.ShouldBe(Exit.Ok);
+
+        echo.Values.ShouldHaveSingleItem().Text("model").ShouldBe("typed");
+        File.Exists(SettingsPath).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Saving_a_model_chooses_it_and_an_empty_value_clears_a_setting()
+    {
+        await Decide(new Options { Model = "downloaded", Set = ["model=typed"], Save = true }, new Echo(), new Downloaded());
+        await Decide(new Options { Model = "downloaded", Set = ["model="], Save = true }, new Echo(), new Downloaded());
+
+        var saved = DecisionSettings.Load(SettingsPath);
+        saved.Model.ShouldBe("downloaded");
+        saved.Of("downloaded").All.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task A_setting_the_model_does_not_have_is_refused_naming_the_ones_it_has()
+    {
+        var (code, _, complained) = await Decide(new Options { Set = ["temperature=2"], Save = true });
+
+        code.ShouldBe(Exit.Failed);
+        complained.ShouldContain("Echo has no setting 'temperature'. It has: model.");
+        File.Exists(SettingsPath).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task A_use_nobody_has_is_refused_naming_the_ones_there_are()
+    {
+        var (code, _, complained) = await Decide(new Options { State = "s", YesNo = "Is it?", Use = "everything" });
+
+        code.ShouldBe(Exit.Failed);
+        complained.ShouldContain("modules, issues, turns");
+    }
+
     private Task<(int Code, string Said, string Complained)> Decide(Options options, params IDecisionModel[] models) =>
         Decide(options, new Network(), models);
 
@@ -174,7 +232,12 @@ public sealed class DecideCommandTests : IDisposable
 
         var code = await DecideCommand.Run(
             plugins,
-            new DecideOptions(options.State, options.Ask, null, options.YesNo, options.Choice, options.Choices, null, [], options.Status, options.Prepare, options.Yes, options.Json),
+            new DecideOptions(options.State, options.Ask, options.Model, options.YesNo, options.Choice, options.Choices, null, [], options.Status, options.Prepare, options.Yes, options.Json)
+            {
+                Use = options.Use,
+                Set = options.Set,
+                Save = options.Save,
+            },
             new StringReader(options.Input),
             said,
             complained,
@@ -200,6 +263,10 @@ public sealed class DecideCommandTests : IDisposable
         public bool Json { get; init; }
         public string Input { get; init; } = "";
         public string? Answer { get; init; }
+        public string? Model { get; init; }
+        public string? Use { get; init; }
+        public IReadOnlyList<string> Set { get; init; } = [];
+        public bool Save { get; init; }
     }
 
     /// <summary>Says yes at 0.9, and picks a choice's last option.</summary>
@@ -215,13 +282,16 @@ public sealed class DecideCommandTests : IDisposable
 
         public AssistantCredential? Credential => null;
 
-        public IReadOnlyList<SettingField> Form(SettingValues values) => [];
+        public List<SettingValues> Values { get; } = [];
+
+        public IReadOnlyList<SettingField> Form(SettingValues values) => [new SettingField.Text("model", "Model")];
 
         public virtual string? Unavailable(DecisionConfig config) => null;
 
         public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel)
         {
             Asked.Add(request);
+            Values.Add(config.Values);
 
             return Task.FromResult(new Decision("echo-1", request.Questions.ToDictionary(q => q.Key, q => q.Value switch
             {
