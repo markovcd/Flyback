@@ -20,6 +20,8 @@ internal sealed class MidiSection : ISettingsSection
 {
     private readonly OutputSettingRepository settings;
     private readonly PanelKnobs knobs;
+    private readonly ControlHub hub;
+    private readonly InstrumentLibrary instruments;
     private readonly TransportControls transport;
 
     public string Name => "MIDI";
@@ -66,11 +68,19 @@ internal sealed class MidiSection : ISettingsSection
     /// <summary>How many rows the grid has before the next starts below it.</summary>
     private readonly NumericUpDown knobRows = GridSide("knobRows");
 
-    /// <param name="knobs">The panel knobs, whose instruments the section lists.</param>
-    public MidiSection(PluginCatalog plugins, PanelKnobs knobs, OutputSettingRepository settings, TransportControls transport)
+    /// <param name="instruments">The instruments the section lists.</param>
+    public MidiSection(
+        PluginCatalog plugins,
+        PanelKnobs knobs,
+        ControlHub hub,
+        InstrumentLibrary instruments,
+        OutputSettingRepository settings,
+        TransportControls transport)
     {
         this.settings = settings;
         this.knobs = knobs;
+        this.hub = hub;
+        this.instruments = instruments;
         this.transport = transport;
 
         ToolTip.SetTip(takeover,
@@ -117,7 +127,7 @@ internal sealed class MidiSection : ISettingsSection
         rows.Children.Add(InspectorRows.Field("Columns", knobColumns, indent: 20));
         rows.Children.Add(InspectorRows.Field("Rows", knobRows, indent: 20));
 
-        var known = string.Join(", ", knobs.Instruments.Profiles.Select(profile => profile.Name));
+        var known = string.Join(", ", instruments.Profiles.Select(profile => profile.Name));
         var instrumentsNote = new TextBlock
         {
             Text = $"Known by name: {known}. A profile of your own, one .json per instrument, goes in {InstrumentLibrary.UserFolder}.",
@@ -147,7 +157,7 @@ internal sealed class MidiSection : ISettingsSection
 
     private void Apply()
     {
-        knobs.Hub.Takeover = settings.Current.Takeover;
+        hub.Takeover = settings.Current.Takeover;
         transport.FollowsInstruments = settings.Current.FollowTransport;
         knobs.KnobGrid = settings.Current.KnobGrid;
     }

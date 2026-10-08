@@ -142,3 +142,18 @@ The pieces are plain records, not `IOptions<T>`: nothing is bound from
 configuration or reloaded, half of what they hold is launch state rather than
 configuration, and the engine's `IIlCompilerSetup` could not take the package
 (ADR-0019).
+
+## Amendment, 2026-10-08: what two parts share is registered, and nothing defaults
+
+A service another part reads is registered, not built by the first part that
+needed it and handed on through a property. `ControlHub`, `InstrumentLibrary`,
+`Transport` and `Renamer` were each made inside a part (`PanelKnobs`, `Playback`,
+`InspectorSurface`) and reached by others through it; each is now a singleton of
+the container, and the viewer registers its `Transport` as well. A part's
+constructor names no optional dependency with a default it builds itself: a test
+that builds one by hand passes `Usage.Off`, `Decisions.None` or a `Reactions` of
+its own, where a default would have made a second, unheard notice bus.
+
+What stays built inside a part is its own: a control it lays out, an object
+made per take or per request (`LiveRecorder`, `PresetSite`), and a helper no
+other part reads (`CanvasLift`, `AssistantSession`).

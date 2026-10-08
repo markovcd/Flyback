@@ -25,6 +25,7 @@ namespace Flyback.Editor.Inspect;
 internal sealed class GroupInspector(
     NodeEditor editor,
     InspectorSurface surface,
+    Renamer renamer,
     Palette palette,
     SocketRows socketRows,
     MeasuredRows measured)
@@ -338,7 +339,7 @@ internal sealed class GroupInspector(
 
     /// <summary>Puts a box where the box's name is.</summary>
     private void Rename(NodeGroup group, IBrush ink, Control title) =>
-        surface.Renamer.Open(
+        renamer.Open(
             title,
             ink,
             $"{group.Title()} · Group",

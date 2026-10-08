@@ -75,10 +75,10 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
     private KnobGrid? knobGrid;
 
     /// <summary>What turns the program's live values, from the panel and from hardware.</summary>
-    public ControlHub Hub { get; }
+    private readonly ControlHub hub;
 
     /// <summary>The instruments Flyback knows by name, shipped and the user's own.</summary>
-    public InstrumentLibrary Instruments { get; }
+    private readonly InstrumentLibrary instruments;
 
     /// <summary>Whether the picture has the window, where the knobs over it are shown.</summary>
     public bool OverPicture { get; set; }
@@ -86,11 +86,22 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
     private readonly Reactions reactions;
     private readonly Usage usage;
 
-    public PanelKnobs(NodeEditor editor, Document document, ReportLine report, PreviewHost preview, IAudioEngine audio, MidiHub midi, EditorFolders folders, Reactions reactions, Usage usage)
+    public PanelKnobs(
+        NodeEditor editor,
+        Document document,
+        ReportLine report,
+        PreviewHost preview,
+        IAudioEngine audio,
+        MidiHub midi,
+        ControlHub hub,
+        InstrumentLibrary instruments,
+        Reactions reactions,
+        Usage usage)
     {
         this.reactions = reactions;
         this.usage = usage;
-        Instruments = folders.InstrumentFolder is { } folder ? InstrumentLibrary.Load(folder) : InstrumentLibrary.Shipped();
+        this.hub = hub;
+        this.instruments = instruments;
         this.editor = editor;
         this.document = document;
         this.preview = preview;
@@ -98,9 +109,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
         this.midi = midi;
         this.report = report;
 
-        Hub = new ControlHub(midi);
-
-        Hub.Turned += (id, value) =>
+        hub.Turned += (id, value) =>
         {
             preview.Refresh();
 
@@ -116,11 +125,11 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
 
         View.Reading = (id, value) => StageKnobs.Reading(editor.History.Patch, id, value);
 
-        View.Label = binding => Instruments.Label(binding, Source(binding.Device));
-        View.Explain = binding => Instruments.Describe(binding, Source(binding.Device));
+        View.Label = binding => instruments.Label(binding, Source(binding.Device));
+        View.Explain = binding => instruments.Describe(binding, Source(binding.Device));
 
         View.Instruments = () => midi.Sources
-            .Select(source => (source, Profile: Instruments.For(source)))
+            .Select(source => (source, Profile: instruments.For(source)))
             .Where(pair => pair.Profile is not null)
             .Select(pair => new PanelInstrument(pair.source.Id, pair.Profile!))
             .ToList();
@@ -133,7 +142,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
             control.Midi = binding;
             editor.History.Record();
             document.PanelEdited();
-            report.Say($"'{control.Name}' follows {Instruments.Describe(binding, Source(binding.Device))}.");
+            report.Say($"'{control.Name}' follows {instruments.Describe(binding, Source(binding.Device))}.");
         };
 
         View.Describe = id =>
@@ -211,7 +220,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
                 if (following.Count == 1)
                 {
                     knob.Value = swept.Inverse(link.At(knob.Value));
-                    Hub.Set(id, knob.Value);
+                    hub.Set(id, knob.Value);
                 }
             }
 
@@ -264,7 +273,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
         if (editor.History.Patch.Control(id) is not { } control) return;
 
         control.Value = value;
-        Hub.Set(id, value);
+        hub.Set(id, value);
         View.Move(id, value, heard: false);
         foreach (var stage in Stages) stage.Move(id, value);
         editor.InvalidateVisual();
@@ -294,7 +303,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
     /// <summary>A knob follows a controller of the patch that was open, so a new one starts with none.</summary>
     public Task On(DocumentArrived notice)
     {
-        Hub.Forget();
+        hub.Forget();
         return Task.CompletedTask;
     }
 
@@ -303,7 +312,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
     {
         var knobs = editor.History.Patch.Controls ?? [];
 
-        Hub.Follow(editor.History.Patch, preview.Live, audio.Live);
+        hub.Follow(editor.History.Patch, preview.Live, audio.Live);
         View.Show(knobs);
         foreach (var stage in Stages) stage.Show(editor.History.Patch);
         SyncStages();
@@ -361,7 +370,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
         if (!ControlMap.Following(editor.History.Patch, id).Any())
         {
             knob.Value = link.Inverse(resting);
-            Hub.Set(id, knob.Value);
+            hub.Set(id, knob.Value);
         }
 
         ControlMap.Link(node, pick.Port, link);
@@ -416,7 +425,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
                     ? $"Move a knob or fader on your controller for '{knob.Name}'. Esc to stop."
                     : $"Move a knob or fader on your controller for '{knob.Name}' ({i + 1} of {run.Count}). Esc to stop.");
 
-                var moved = await Hub.LearnAsync(devices, cancel.Token, last);
+                var moved = await hub.LearnAsync(devices, cancel.Token, last);
 
                 if (moved is null || editor.History.Patch.Control(knob.Id) is not { } still) return;
 
@@ -429,8 +438,8 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
                 document.PanelEdited();
                 last = moved;
 
-                report.Say(Instruments.For(source ?? default) is not null
-                    ? $"'{still.Name}' follows {Instruments.Describe(binding, source)}."
+                report.Say(instruments.For(source ?? default) is not null
+                    ? $"'{still.Name}' follows {instruments.Describe(binding, source)}."
                     : $"'{still.Name}' follows {binding.Label} on {source?.Name ?? binding.Device}.");
             }
         }
@@ -455,7 +464,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
     /// controller moved to another channel goes on turning the knob.
     /// </summary>
     private MidiBinding Settled(MidiBinding moved, MidiSource? source) =>
-        Instruments.For(source ?? default) is { Tracks.Count: > 0 } ? moved : moved with { Channel = 0 };
+        instruments.For(source ?? default) is { Tracks.Count: > 0 } ? moved : moved with { Channel = 0 };
 
     /// <summary>The instrument with this id as it is plugged in now, or null while it is not.</summary>
     private MidiSource? Source(string id) =>
@@ -467,7 +476,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
     /// <summary>Stops linking and learning, and says whether there was either to stop.</summary>
     public bool StopModes()
     {
-        var stopped = editor.Linking.Control is not null || learning is not null || Hub.Learning;
+        var stopped = editor.Linking.Control is not null || learning is not null || hub.Learning;
 
         learning?.Cancel();
         Link(null);

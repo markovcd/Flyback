@@ -6,7 +6,10 @@ using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Editor;
 using Flyback.Editor.Assist;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Statistics;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
 using Flyback.Specs.Support;
@@ -74,7 +77,10 @@ public sealed class AssistantColumnSteps(HeadlessTurn turn) : IDisposable
                 new AssistantRunFactory(catalog, editor, repository),
                 repository,
                 new AssistantSettingsPage(chosen, catalog, credentials, repository, editor, folders),
-                folders);
+                folders,
+                Usage.Off,
+                new Reactions(),
+                Decisions.None);
 
             panel.Open(saved);
             shown = panel;

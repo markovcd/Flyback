@@ -17,8 +17,8 @@ namespace Flyback.Editor.Inspect;
 /// The inspector's rows for what a plugin's module carries, drawn from the
 /// fields it declares (ADR-0055).
 /// </summary>
-/// <param name="knobs">The instruments a MIDI In can be played from, whose tracks name its channels.</param>
-internal sealed class FieldRows(NodeEditor editor, Document document, MidiHub midi, PanelKnobs knobs, InspectorRows rows)
+/// <param name="instruments">The instruments a MIDI In can be played from, whose tracks name its channels.</param>
+internal sealed class FieldRows(NodeEditor editor, Document document, MidiHub midi, InstrumentLibrary instruments, InspectorRows rows)
 {
     /// <summary>
     /// A plugin's extra, drawn from its <see cref="NodeExtra.Fields"/>.
@@ -147,7 +147,7 @@ internal sealed class FieldRows(NodeEditor editor, Document document, MidiHub mi
         var device = new ExtraState(new MidiExtra().Fields, node.StateOf(MidiExtra.StateKey)).Chosen(MidiExtra.DeviceField);
         var source = midi.Sources.FirstOrDefault(s => s.Id == device);
 
-        if (source.Id is null || knobs.Instruments.For(source) is not { Tracks.Count: > 0 } profile) return null;
+        if (source.Id is null || instruments.For(source) is not { Tracks.Count: > 0 } profile) return null;
 
         return
         [

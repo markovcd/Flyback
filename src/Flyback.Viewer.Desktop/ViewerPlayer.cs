@@ -48,6 +48,7 @@ internal sealed class ViewerPlayer : IDisposable
 
     /// <param name="preview">The picture's surface, or null where there is no picture to draw.</param>
     /// <param name="audio">The sound engine, on the run's device or a silent one where it has none, compiling with <paramref name="compiler"/>.</param>
+    /// <param name="transport">Plays, pauses and rewinds <paramref name="audio"/> and the picture together.</param>
     public ViewerPlayer(
         ViewerLaunch launch,
         PreviewHost? preview,
@@ -55,6 +56,7 @@ internal sealed class ViewerPlayer : IDisposable
         IlCompiler compiler,
         MidiHub midi,
         ControlHub controls,
+        Transport transport,
         WallClock clock)
     {
         var (opened, device, options, takeover) = launch;
@@ -76,7 +78,7 @@ internal sealed class ViewerPlayer : IDisposable
         audio.Oversample = options.Oversample;
         new LiveOversample(audio, () => options.StepDown, message => Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {message}")).Start();
 
-        transport = new Transport(audio, this.preview, compiler, midi) { Volume = options.Volume };
+        this.transport = transport;
 
         CompiledPatch? picture = null;
 

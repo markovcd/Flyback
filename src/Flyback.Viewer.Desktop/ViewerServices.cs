@@ -63,6 +63,12 @@ internal static class ViewerServices
         // A surface only for a picture there is a window to show, since one in the tree renders on a timer.
         services.AddSingleton(_ => launch.Pictured ? new PreviewHost() : null!);
 
+        services.AddSingleton(sp => new Transport(
+            sp.GetRequiredService<AudioEngine>(),
+            launch.Options.Video ? sp.GetService<PreviewHost>() : null,
+            sp.GetRequiredService<IlCompiler>(),
+            sp.GetRequiredService<MidiHub>()) { Volume = launch.Options.Volume });
+
         services.AddSingleton<ViewerPlayer>();
         services.AddSingleton<ViewerWindow>();
 

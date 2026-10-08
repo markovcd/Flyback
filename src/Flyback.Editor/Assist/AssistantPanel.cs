@@ -231,7 +231,7 @@ internal sealed class AssistantPanel : UserControl
     /// Told which provider a message went to, for the run's own count of itself
     /// (ADR-0094), and never what was asked. Null is nobody counting.
     /// </summary>
-    private readonly Usage? usage;
+    private readonly Usage usage;
     private readonly Reactions reactions;
 
     
@@ -267,7 +267,7 @@ internal sealed class AssistantPanel : UserControl
     private DateTime startedAt;
     private int pulse;
 
-    /// <param name="folders">Its <see cref="EditorFolders.SettingsPath"/> is where the settings are kept. Null keeps them in memory only.</param>
+    /// <param name="folders">Its <see cref="EditorFolders.ConversationLogFolder"/> is where conversations are logged; none keeps no log.</param>
     /// <param name="saved">The settings to open on in place of the ones kept, for a test.</param>
     public AssistantPanel(
         ChosenAssistant chosenAssistant,
@@ -277,19 +277,19 @@ internal sealed class AssistantPanel : UserControl
         AssistantRunFactory runs,
         AssistantSettingRepository settingsRepository,
         AssistantSettingsPage settings,
-        EditorFolders? folders = null,
-        Usage? usage = null,
-        Reactions? reactions = null,
-        Decisions? decisions = null)
+        EditorFolders folders,
+        Usage usage,
+        Reactions reactions,
+        Decisions decisions)
     {
-        this.reactions = reactions ?? new Reactions();
+        this.reactions = reactions;
         this.chosenAssistant = chosenAssistant;
         this.plugins = plugins;
         this.editor = editor;
         this.conversation = conversation;
         this.runs = runs;
         this.usage = usage;
-        logFolder = folders?.ConversationLogFolder;
+        logFolder = folders.ConversationLogFolder;
         session = new AssistantSession(transcript, logFolder, decisions);
         this.settingsRepository = settingsRepository;
         conversation.Opened += Opened;
@@ -1063,7 +1063,7 @@ internal sealed class AssistantPanel : UserControl
 
         ShowSpent();
 
-        usage?.Assistant(chosenAssistant.Value.Id);
+        usage.Assistant(chosenAssistant.Value.Id);
 
         instruction.Text = string.Empty;
 

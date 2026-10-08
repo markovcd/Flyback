@@ -123,6 +123,11 @@ internal static class EditorServices
         // compiled program is reading one.
         services.AddSingleton(setup.Plugins.PreferredMidiInput);
         services.AddSingleton<MidiHub>();
+        services.AddSingleton<ControlHub>();
+        services.AddSingleton<Transport>();
+        services.AddSingleton(sp => sp.GetRequiredService<EditorFolders>().InstrumentFolder is { } folder
+            ? InstrumentLibrary.Load(folder)
+            : InstrumentLibrary.Shipped());
 
         services.AddPart<AssistantSettingRepository>();
         services.AddPart<AssistantRunFactory>();
@@ -191,6 +196,7 @@ internal static class EditorServices
         services.AddPart<KnobRandomizer>();
         services.AddPart<Palette>();
         services.AddPart<Inspector>();
+        services.AddSingleton<Renamer>();
         services.AddSingleton<InspectorSurface>();
         services.AddSingleton(sp => new InspectorRows(
             because => sp.GetRequiredService<NodeEditor>().History.Record(because),

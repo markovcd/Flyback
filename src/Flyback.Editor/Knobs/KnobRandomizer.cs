@@ -26,6 +26,7 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
     private const int Remembered = 32;
 
     private readonly PanelKnobs knobs;
+    private readonly ControlHub hub;
     private readonly NodeEditor editor;
     private readonly Document document;
     private readonly OutputSettingRepository settings;
@@ -53,6 +54,7 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
 
     public KnobRandomizer(
         PanelKnobs knobs,
+        ControlHub hub,
         NodeEditor editor,
         Document document,
         OutputSettingRepository settings,
@@ -62,6 +64,7 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
         Usage usage)
     {
         this.knobs = knobs;
+        this.hub = hub;
         this.editor = editor;
         this.document = document;
         this.settings = settings;
@@ -89,10 +92,10 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
         // A hand on a gliding knob takes it.
         knobs.View.Turning += (id, _) => gliding?.Drop(id);
         knobs.Stage.Turning += (id, _) => gliding?.Drop(id);
-        knobs.Hub.Turned += (id, _) => Dispatcher.UIThread.Post(() => gliding?.Drop(id));
+        hub.Turned += (id, _) => Dispatcher.UIThread.Post(() => gliding?.Drop(id));
 
-        knobs.Hub.Trigger = Wanted.Trigger;
-        knobs.Hub.Triggered += () => Dispatcher.UIThread.Post(Roll);
+        hub.Trigger = Wanted.Trigger;
+        hub.Triggered += () => Dispatcher.UIThread.Post(Roll);
         knobs.ModesStopped += () => learning?.Cancel();
 
         Show();
@@ -214,14 +217,14 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
 
         try
         {
-            if (await knobs.Hub.LearnAsync(devices, cancel.Token, notes: true) is not { } pressed) return;
+            if (await hub.LearnAsync(devices, cancel.Token, notes: true) is not { } pressed) return;
 
             // Any channel, so the button goes on randomizing whichever track the controller is on.
             // A pad's note still plays whatever listens to it; the trigger only hears it too.
             var binding = pressed with { Channel = 0 };
 
             Wanted.Trigger = binding;
-            knobs.Hub.Trigger = binding;
+            hub.Trigger = binding;
             Save();
             report.Say($"{Explain(binding)} randomizes the knobs.");
         }
@@ -238,7 +241,7 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
         if (Wanted.Trigger is not { } was) return;
 
         Wanted.Trigger = null;
-        knobs.Hub.Trigger = null;
+        hub.Trigger = null;
         Save();
         Show();
         report.Say($"{Explain(was)} no longer randomizes the knobs.");

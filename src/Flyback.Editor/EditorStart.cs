@@ -17,7 +17,7 @@ internal sealed class EditorStart(
     WorkKeeper keeper,
     WindowLayoutKeeper layout,
     MidiHub midi,
-    PanelKnobs knobs,
+    InstrumentLibrary instruments,
     Usage usage,
     PluginCatalog plugins,
     Playback playback,
@@ -31,7 +31,7 @@ internal sealed class EditorStart(
         keeper.Start();
         layout.Load();
         if (host is Window window) layout.Apply(window);
-        MidiSources.Install(() => [.. midi.Sources.Select(source => source with { Conducts = knobs.Instruments.For(source)?.Conducts == true })]);
+        MidiSources.Install(() => [.. midi.Sources.Select(source => source with { Conducts = instruments.For(source)?.Conducts == true })]);
         usage.Started(plugins.Plugins.Select(plugin => plugin.Info.Id), playback.Sound.Output?.Id, ScreenHeights(host));
         presets.StartOn(outputSettings.Current.DefaultPreset);
 

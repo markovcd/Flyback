@@ -51,7 +51,7 @@ internal sealed class Playback
     private readonly RecordingState recording;
     private readonly Reactions reactions;
     private readonly Usage usage;
-    private readonly IssueOrdering? ordering;
+    private readonly IssueOrdering ordering;
 
     /// <summary>How a page's edits reach <see cref="Recompile"/>, or null on the desktop, where each edit compiles at once.</summary>
     private readonly RecompilePacing? pacing;
@@ -75,20 +75,21 @@ internal sealed class Playback
         IlCompiler compiler,
         MidiHub midi,
         LineIn lineIn,
+        Transport transport,
         AudioSetup sound,
         ChosenAssistant chosenAssistant,
         RecordingState recording,
         Reactions reactions,
         Usage usage,
         EditorHost host,
-        IssueOrdering? ordering = null)
+        IssueOrdering ordering)
     {
         this.ordering = ordering;
         this.editor = editor;
         this.audio = audio;
         this.midi = midi;
         this.lineIn = lineIn;
-        transport = new Transport(audio, preview, compiler, midi, lineIn);
+        this.transport = transport;
         this.report = report;
         this.plugins = plugins;
         this.chosenAssistant = chosenAssistant;
@@ -355,7 +356,7 @@ internal sealed class Playback
         // behind the line gives each its own row.
         var line = said.ToList();
         report.Say(line);
-        ordering?.Order(line[..^issues.Count], issues, editor.History.Patch);
+        ordering.Order(line[..^issues.Count], issues, editor.History.Patch);
 
         SyncAudioToVolume();
 

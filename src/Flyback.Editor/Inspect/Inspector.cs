@@ -57,6 +57,7 @@ internal sealed class Inspector
         Document document,
         EditorHost host,
         InspectorSurface surface,
+        Renamer renamer,
         PatchHeader header,
         MeasuredRows measuredRows,
         SocketRows socketRows,
@@ -79,7 +80,7 @@ internal sealed class Inspector
         Wash = surface.Wash;
         PlateHost = surface.PlateHost;
         Header = surface.Header;
-        renamer = surface.Renamer;
+        this.renamer = renamer;
 
         socketRows.Settled += (_, _) => inspectorShape = InspectorShape.Of(editor);
     }

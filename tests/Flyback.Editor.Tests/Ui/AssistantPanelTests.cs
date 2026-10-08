@@ -9,12 +9,14 @@ using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Notices;
+using Flyback.Editor.Statistics;
 using Flyback.Assist;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
@@ -99,7 +101,9 @@ public sealed class AssistantPanelTests : EditorTest
             repository,
             new AssistantSettingsPage(chosen, catalog, credentials, repository, editor, setup),
             setup,
-            reactions: reactions);
+            Usage.Off,
+            reactions,
+            Decisions.None);
 
         var window = Show(panel, 760);
         Settle(window);
@@ -141,7 +145,10 @@ public sealed class AssistantPanelTests : EditorTest
             new AssistantRunFactory(catalog, editor, repository),
             repository,
             new AssistantSettingsPage(chosen, catalog, credentials, repository, editor, Kept),
-            Kept);
+            Kept,
+            Usage.Off,
+            new Reactions(),
+            Decisions.None);
         var window = Show(panel, 760);
 
         Settle(window);
