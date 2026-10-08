@@ -48,8 +48,6 @@ Flyback.Plugins.Assist.AssistantSchema.HearingAsked.init -> void
 ~override Flyback.Plugins.Decide.ChoiceOption.ToString() -> string
 abstract Flyback.Plugins.Decide.Answer.<Clone>$() -> Flyback.Plugins.Decide.Answer!
 abstract Flyback.Plugins.Decide.Question.<Clone>$() -> Flyback.Plugins.Decide.Question!
-const Flyback.Plugins.Decide.DecisionRequest.LongestState = 50000 -> int
-const Flyback.Plugins.Decide.DecisionRequest.MostQuestions = 64 -> int
 Flyback.Plugins.Decide.Answer
 Flyback.Plugins.Decide.Answer.Answer() -> void
 Flyback.Plugins.Decide.Answer.Answer(Flyback.Plugins.Decide.Answer! original) -> void
@@ -244,10 +242,8 @@ static Flyback.Plugins.Decide.ChoiceOption.operator ==(Flyback.Plugins.Decide.Ch
 static Flyback.Plugins.Decide.ChoiceOption.operator !=(Flyback.Plugins.Decide.ChoiceOption left, Flyback.Plugins.Decide.ChoiceOption right) -> bool
 static Flyback.Plugins.Decide.DecisionConfig.operator ==(Flyback.Plugins.Decide.DecisionConfig? left, Flyback.Plugins.Decide.DecisionConfig? right) -> bool
 static Flyback.Plugins.Decide.DecisionConfig.operator !=(Flyback.Plugins.Decide.DecisionConfig? left, Flyback.Plugins.Decide.DecisionConfig? right) -> bool
-static Flyback.Plugins.Decide.DecisionConfig.Unset.get -> Flyback.Plugins.Decide.DecisionConfig!
 static Flyback.Plugins.Decide.Decision.operator ==(Flyback.Plugins.Decide.Decision? left, Flyback.Plugins.Decide.Decision? right) -> bool
 static Flyback.Plugins.Decide.Decision.operator !=(Flyback.Plugins.Decide.Decision? left, Flyback.Plugins.Decide.Decision? right) -> bool
-static Flyback.Plugins.Decide.DecisionRequest.One(string! state, string! id, Flyback.Plugins.Decide.Question! question) -> Flyback.Plugins.Decide.DecisionRequest!
 static Flyback.Plugins.Decide.DecisionRequest.operator ==(Flyback.Plugins.Decide.DecisionRequest? left, Flyback.Plugins.Decide.DecisionRequest? right) -> bool
 static Flyback.Plugins.Decide.DecisionRequest.operator !=(Flyback.Plugins.Decide.DecisionRequest? left, Flyback.Plugins.Decide.DecisionRequest? right) -> bool
 static Flyback.Plugins.Decide.DecisionUsage.None.get -> Flyback.Plugins.Decide.DecisionUsage!
@@ -263,10 +259,7 @@ static Flyback.Plugins.Decide.Question.Score.operator ==(Flyback.Plugins.Decide.
 static Flyback.Plugins.Decide.Question.Score.operator !=(Flyback.Plugins.Decide.Question.Score? left, Flyback.Plugins.Decide.Question.Score? right) -> bool
 static Flyback.Plugins.Decide.Question.YesNo.operator ==(Flyback.Plugins.Decide.Question.YesNo? left, Flyback.Plugins.Decide.Question.YesNo? right) -> bool
 static Flyback.Plugins.Decide.Question.YesNo.operator !=(Flyback.Plugins.Decide.Question.YesNo? left, Flyback.Plugins.Decide.Question.YesNo? right) -> bool
-static Flyback.Plugins.Decide.SystemOneWire.Answer(Flyback.Plugins.Decide.Decision! decision) -> string!
-static Flyback.Plugins.Decide.SystemOneWire.Questions(System.Collections.Generic.IReadOnlyDictionary<string!, Flyback.Plugins.Decide.Question!>! questions) -> System.Text.Json.Nodes.JsonObject!
 static Flyback.Plugins.Decide.SystemOneWire.ReadDecision(string! json, out string? problem) -> Flyback.Plugins.Decide.Decision?
-static Flyback.Plugins.Decide.SystemOneWire.ReadQuestions(string! json, out string? problem) -> System.Collections.Generic.IReadOnlyDictionary<string!, Flyback.Plugins.Decide.Question!>?
 static Flyback.Plugins.Decide.SystemOneWire.Request(Flyback.Plugins.Decide.DecisionRequest! request, string? model) -> string!
 virtual Flyback.Plugins.Decide.Answer.EqualityContract.get -> System.Type!
 virtual Flyback.Plugins.Decide.Answer.Equals(Flyback.Plugins.Decide.Answer? other) -> bool

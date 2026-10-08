@@ -6,13 +6,13 @@ namespace Flyback.Plugins.Decide;
 public sealed record DecisionRequest(string State, IReadOnlyDictionary<string, Question> Questions)
 {
     /// <summary>The most questions one request may ask.</summary>
-    public const int MostQuestions = 64;
+    internal const int MostQuestions = 64;
 
     /// <summary>The longest a state may be, in characters.</summary>
-    public const int LongestState = 50_000;
+    internal const int LongestState = 50_000;
 
     /// <summary>One question, under the id <paramref name="id"/>.</summary>
-    public static DecisionRequest One(string state, string id, Question question) =>
+    internal static DecisionRequest One(string state, string id, Question question) =>
         new(state, new Dictionary<string, Question>(StringComparer.Ordinal) { [id] = question });
 
     /// <summary>Why no model should be asked this, or null where it may be.</summary>

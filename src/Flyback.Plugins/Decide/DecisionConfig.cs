@@ -10,5 +10,5 @@ namespace Flyback.Plugins.Decide;
 public sealed record DecisionConfig(IAssistantTransport Transport, SettingValues Values, string? Folder)
 {
     /// <summary>Nothing configured.</summary>
-    public static DecisionConfig Unset { get; } = new(KeyedTransport.None, SettingValues.None, null);
+    internal static DecisionConfig Unset { get; } = new(KeyedTransport.None, SettingValues.None, null);
 }

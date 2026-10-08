@@ -34,7 +34,7 @@ public static class SystemOneWire
     }
 
     /// <summary>The questions object of a request, as a request spells it.</summary>
-    public static JsonObject Questions(IReadOnlyDictionary<string, Question> questions)
+    private static JsonObject Questions(IReadOnlyDictionary<string, Question> questions)
     {
         ArgumentNullException.ThrowIfNull(questions);
 
@@ -63,7 +63,7 @@ public static class SystemOneWire
     }
 
     /// <summary>The answer body for <paramref name="decision"/>, as an endpoint sends it.</summary>
-    public static string Answer(Decision decision)
+    internal static string Answer(Decision decision)
     {
         ArgumentNullException.ThrowIfNull(decision);
 
@@ -109,7 +109,7 @@ public static class SystemOneWire
     /// The questions in <paramref name="json"/>: a request's <c>questions</c> object, or that
     /// object alone. Null, with <paramref name="problem"/> saying why, where it is not one.
     /// </summary>
-    public static IReadOnlyDictionary<string, Question>? ReadQuestions(string json, out string? problem)
+    internal static IReadOnlyDictionary<string, Question>? ReadQuestions(string json, out string? problem)
     {
         if (Parse(json, out problem) is not { } root) return null;
 
