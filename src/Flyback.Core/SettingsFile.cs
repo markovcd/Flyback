@@ -22,6 +22,9 @@ internal static class SettingsFile
 
     private static readonly JsonSerializerOptions Indented = new() { WriteIndented = true };
 
+    /// <summary>A key given twice makes the file damaged while parsing, rather than a throw on first read.</summary>
+    private static readonly JsonDocumentOptions Strict = new() { AllowDuplicateProperties = false };
+
     /// <summary>The section named <paramref name="section"/> as JSON text, or null. Never throws.</summary>
     public static string? Read(string path, string section)
     {
@@ -62,7 +65,7 @@ internal static class SettingsFile
     {
         try
         {
-            return JsonNode.Parse(text) as JsonObject;
+            return JsonNode.Parse(text, documentOptions: Strict) as JsonObject;
         }
         catch (JsonException)
         {

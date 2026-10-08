@@ -87,13 +87,18 @@ public sealed class SystemOneModel : IDecisionModel
         return Said(body) is { } said ? $"{meaning} It said: {said}" : meaning;
     }
 
+    /// <summary>A key given twice is refused while parsing rather than thrown on first read.</summary>
+    private static readonly JsonDocumentOptions Strict = new() { AllowDuplicateProperties = false };
+
     /// <summary>The message in a refusal's body, or null where there is none worth showing.</summary>
     private static string? Said(string body)
     {
         try
         {
-            var root = JsonNode.Parse(body);
-            var said = root?["detail"] ?? root?["error"]?["message"] ?? root?["error"] ?? root?["message"];
+            if (JsonNode.Parse(body, documentOptions: Strict) is not JsonObject root) return null;
+
+            var error = root["error"];
+            var said = root["detail"] ?? (error as JsonObject)?["message"] ?? error ?? root["message"];
 
             if (said?.GetValueKind() == JsonValueKind.String) return said.GetValue<string>();
             if (said is not null) return said.ToJsonString();

@@ -249,4 +249,24 @@ public sealed class PresetThumbnailsTests : IDisposable
 
         new ThumbnailStore(folder).Find("abc").ShouldBeNull();
     }
+
+    [Fact]
+    public void A_kept_thumbnail_that_lies_about_its_tags_costs_nothing()
+    {
+        var store = new ThumbnailStore(folder);
+
+        store.Keep("abc", new Thumbnail(null, "words", Tags: []));
+
+        // The tag count and the byte after it end a thumbnail with no tags and no pixels.
+        using (var file = File.OpenWrite(Path.Combine(folder, "abc.thumb")))
+        {
+            file.Seek(-5, SeekOrigin.End);
+            file.Write(BitConverter.GetBytes(int.MaxValue));
+        }
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+
+        store.Find("abc").ShouldBeNull();
+        (GC.GetAllocatedBytesForCurrentThread() - before).ShouldBeLessThan(1 << 20);
+    }
 }

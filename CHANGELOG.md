@@ -68,6 +68,9 @@
 - A Beam fed a signal too large for a number draws instead of failing every frame.
 - `flyback-cli render` refuses a `--seconds`, `--from`, `--at` or `--fps` it cannot use instead of overflowing or running for ever.
 - `flyback-cli compare` refuses a `--seconds` of nothing instead of calling any two patches the same.
+- A number too large to hold, written on a knob, a knob's range or a module's setting in the code view, is refused there instead of stopping the patch from saving.
+- A damaged thumbnail in the gallery's cache is drawn again instead of running out of memory.
+- A `settings.json` or `allowed-plugins.json` with a key written twice reads as damaged: the next save replaces the one, and the other allows nothing instead of stopping Flyback from starting.
 
 ## 0.8.0 — 2026-10-07
 

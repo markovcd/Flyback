@@ -92,6 +92,7 @@ public class SystemOneWireTests
     [InlineData("""{"model":"x"}""", "no answers")]
     [InlineData("""{"answers":{"a":{"type":"noul"}}}""", "'a'")]
     [InlineData("""{"answers":{"a":{"type":"guess","guess":1}}}""", "'a'")]
+    [InlineData("""{"answers":{},"answers":{}}""", "not JSON")]
     public void An_answer_that_is_not_one_says_why_rather_than_throwing(string json, string said)
     {
         SystemOneWire.ReadDecision(json, out var problem).ShouldBeNull();

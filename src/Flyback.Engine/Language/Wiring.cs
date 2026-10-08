@@ -172,6 +172,7 @@ internal sealed class Wiring(ModuleCatalog modules, Issues issues, SourceSites s
         if (dial is { Low: { } low, High: { } high })
         {
             if (!Reads(spec, low, line, column) || !Reads(spec, high, line, column)) return;
+            if (dial.Knee is { } bend && !Holds(spec, bend, line, column)) return;
 
             link = new ControlLink(dial.Control.Id, (float)low.Amount, (float)high.Amount)
             {
@@ -249,13 +250,16 @@ internal sealed class Wiring(ModuleCatalog modules, Issues issues, SourceSites s
             return false;
         }
 
-        if (!double.IsFinite(figure.Amount))
-        {
-            issues.Complain(IssueCode.OutOfRange, line, column, $"'{spec.Name}' cannot hold that.");
-            return false;
-        }
+        return Holds(spec, figure, line, column);
+    }
 
-        return true;
+    /// <summary>Whether a number fits the float a socket keeps, said where it does not.</summary>
+    private bool Holds(PortSpec spec, Figure figure, int line, int column)
+    {
+        if (float.IsFinite((float)figure.Amount)) return true;
+
+        issues.Complain(IssueCode.OutOfRange, line, column, $"'{spec.Name}' cannot hold that.");
+        return false;
     }
 
     /// <summary>A number as it was written, for saying it back in a complaint.</summary>

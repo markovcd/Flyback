@@ -214,6 +214,18 @@ public sealed class PluginTrustTests : IDisposable
         Checked().Judge(folder).Standing.ShouldBe(PluginStanding.NotAllowed);
     }
 
+    [Theory]
+    [InlineData("""{ "adopted": [], "adopted": [], "plugins": [] }""")]
+    [InlineData("""{ "plugins": [ { "folder": "/x", "folder": "/y", "files": {} } ] }""")]
+    [InlineData("""{ "plugins": [ { "folder": "/x", "files": { "a.dll": "1", "a.dll": "2" } } ] }""")]
+    public void A_list_with_a_key_given_twice_is_broken_and_allows_nothing(string json)
+    {
+        File.WriteAllText(Allowances.File, json);
+
+        Allowances.All().ShouldBeEmpty();
+        Should.NotThrow(() => Allowances.Adopt(Plugins));
+    }
+
     private PluginTrust Checked() => new(true, ShippedList.Beside(Plugins), Allowances);
 
     /// <summary>A shipped plugin's folder copied under <paramref name="name"/>, as somebody would by hand.</summary>

@@ -1060,6 +1060,12 @@ public sealed class Binder
     {
         if (Bind(argument.Value, scope) is not { } value) return null;
 
+        if (field is not ExtraField.Toggle && value is Figure { Amount: var amount } && !float.IsFinite((float)amount))
+        {
+            issues.Complain(IssueCode.OutOfRange, argument.Line, argument.Column, $"'{field.Label}' cannot hold that.");
+            return null;
+        }
+
         JsonNode? written = value switch
         {
             // ReSharper disable once CompareOfFloatsByEqualityOperator

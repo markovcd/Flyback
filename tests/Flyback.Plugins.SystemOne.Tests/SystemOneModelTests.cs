@@ -82,6 +82,7 @@ public class SystemOneModelTests
 
     [Theory]
     [InlineData(HttpStatusCode.Unauthorized, """{"detail":"Invalid API key"}""", "The key was refused. It said: Invalid API key")]
+    [InlineData(HttpStatusCode.NotFound, """{"error":"no such model"}""", "The endpoint answered 404. It said: no such model")]
     [InlineData(HttpStatusCode.UnprocessableEntity, """{"detail":[{"msg":"field required"}]}""", "could not read the questions")]
     public async Task A_refusal_is_a_sentence(HttpStatusCode status, string body, string said)
     {

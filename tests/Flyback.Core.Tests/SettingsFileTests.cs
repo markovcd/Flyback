@@ -54,6 +54,18 @@ public sealed class SettingsFileTests : IDisposable
     }
 
     [Fact]
+    public void A_file_with_a_section_given_twice_is_damaged_and_replaced_by_the_next_write()
+    {
+        File.WriteAllText(Path, """{ "output": { "width": 1 }, "canvas": {}, "output": { "width": 2 } }""");
+
+        SettingsFile.Read(Path, "canvas").ShouldBeNull();
+
+        SettingsFile.Write(Path, "canvas", """{ "compactModules": true }""");
+
+        SettingsFile.Read(Path, "canvas").ShouldBe("""{"compactModules":true}""");
+    }
+
+    [Fact]
     public void A_write_leaves_nothing_beside_the_file()
     {
         SettingsFile.Write(Path, "output", "{}");

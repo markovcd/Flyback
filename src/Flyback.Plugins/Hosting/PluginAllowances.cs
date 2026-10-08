@@ -104,11 +104,14 @@ internal sealed class PluginAllowances(string file)
 
     private static string Normal(string folder) => Path.TrimEndingDirectorySeparator(Path.GetFullPath(folder));
 
+    /// <summary>A key given twice makes the list damaged while parsing, rather than a throw on first read.</summary>
+    private static readonly JsonDocumentOptions Strict = new() { AllowDuplicateProperties = false };
+
     private (IReadOnlyList<string> Adopted, IReadOnlyList<PluginAllowance> Plugins) Load()
     {
         try
         {
-            if (File.Length == 0 || !System.IO.File.Exists(File) || JsonNode.Parse(System.IO.File.ReadAllText(File)) is not JsonObject root) return ([], []);
+            if (File.Length == 0 || !System.IO.File.Exists(File) || JsonNode.Parse(System.IO.File.ReadAllText(File), documentOptions: Strict) is not JsonObject root) return ([], []);
 
             var adopted = root["adopted"] is JsonArray folders
                 ? folders.OfType<JsonValue>().Select(f => f.GetValue<string>()).ToList()

@@ -246,11 +246,14 @@ public static class SystemOneWire
         _ => throw new ArgumentException("A question of no kind the wire has.", nameof(question)),
     };
 
+    /// <summary>A key given twice is refused while parsing rather than thrown on first read.</summary>
+    private static readonly JsonDocumentOptions Strict = new() { AllowDuplicateProperties = false };
+
     private static JsonObject? Parse(string json, out string? problem)
     {
         try
         {
-            if (JsonNode.Parse(json) is JsonObject root)
+            if (JsonNode.Parse(json, documentOptions: Strict) is JsonObject root)
             {
                 problem = null;
                 return root;

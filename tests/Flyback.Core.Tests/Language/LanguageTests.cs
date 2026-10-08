@@ -1384,6 +1384,20 @@ public class LanguageTests
     public void A_complaint_says_where_it_is() =>
         Try("\n\nnope() |> out.color").Issues.ShouldHaveSingleItem().Line.ShouldBe(3);
 
+    /// <summary>A socket keeps a float, so a number past the largest one is refused rather than kept as infinity.</summary>
+    [Theory]
+    [InlineData("sine(freq: BIG) |> out.left")]
+    [InlineData("panel speed = 0.5\nsine(freq: speed(100..BIG)) |> out.left")]
+    [InlineData("panel speed = 0.5\nsine(freq: speed(100..800, knee: BIG)) |> out.left")]
+    [InlineData("voice(voices: BIG) |> out.left")]
+    public void A_number_too_large_for_a_float_is_refused_where_it_would_be_kept(string source)
+    {
+        var load = Try(source.Replace("BIG", "1" + new string('0', 40), StringComparison.Ordinal));
+
+        load.Issues.ShouldContain(issue => issue.Code == IssueCode.OutOfRange, load.Report);
+        Should.NotThrow(() => PatchIO.ToJson(load.Patch));
+    }
+
     [Fact]
     public void Nothing_in_a_source_file_can_throw() =>
         Should.NotThrow(() => PatchLanguage.Build("let ( = |> ) [ \" 3..", NodeCatalog.BuiltIn));
