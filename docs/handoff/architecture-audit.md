@@ -14,46 +14,6 @@ three editor hosts, with no hand-built service outside composition; every public
 by decision (ADR-0035); the binder is one walk (ADR-0183); presets are C# by
 decision (ADR-0138).
 
-## 1. There is no home for host code that is not Avalonia (High)
-
-The one structural gap. `Flyback.Ui` was made for "what two shells draw with"
-(ADR-0124) and carries Avalonia, so the CLI, the Site and the web viewer cannot
-reference it, and the Engine cannot hold anything that needs a plugin. Whatever
-a shell needs that is neither drawing nor engine has nowhere to live, so each
-shell writes it again:
-
-| Feature | Copies | Where |
-|---|---|---|
-| Build the playback stack: sound, line in, MIDI hub, control hub, transport | 2 | `Editor/EditorServices.cs:106-127`, `Viewer.Desktop/ViewerServices.cs:56-70` |
-| Open a patch for play: cue, compile for video, load, seed | 2 | `Editor/Playback.cs:292-310`, `Viewer.Desktop/ViewerPlayer.cs:80-98` |
-| Load the plugins and install the catalog | 7 | `Editor.Desktop/Startup.cs:119`, `Viewer.Desktop/Program.cs:56`, `Cli/Plugins.cs:31`, `Editor.Desktop/Shots/Shot.cs:51`, `Editor.Web/PageApp.cs:30`, `Editor.Android/DeviceApp.cs:39`, `Viewer.Web/WebExports.cs:63` |
-| Open a patch from bytes by its extension | 4 | `Engine/Graph/PatchFile.cs:21-53` (paths only), `Viewer.Web/WebExports.cs:108-137`, `Site/Reading/BrowserPlugins.cs:32-50`, `Site/Reading/Submissions.cs:24-82` |
-| Find a shipped preset by name and wrap its files | 4 | `Viewer.Desktop/ViewerSource.cs:36-64`, `Cli/Common/ShippedPresets.cs:29-56`, `Viewer.Web/WebExports.cs:95-112`, `Ui/PresetLibrary.cs:121-141` |
-| Read the `output` settings section | 2 | `Ui/OutputSettings.Load`, `Cli/Models/ExportDefaults.cs:30-61` (hand-read, because Ui carries Avalonia) |
-| The `--settings`, `--size`, `--oversample` flags | 2 | `Viewer.Desktop/ViewerArguments.cs:126-133,323-345`, `Cli/Models/ExportDefaults.cs:79-89`, `Cli/Commands/RenderCommand.cs:132-145` |
-
-It has already cost: the viewer's transport has no `LineIn` (TODO.md), the
-page's open hands over an empty `SampleLibrary` so a MIDI File answers nothing
-(TODO.md), only the Site's open applies `BundleLimit`, the CLI's `--preset`
-cannot see gallery presets while the viewer's can, `--size` takes names in the
-viewer and not the CLI, and the processor flag is `--cpu` in one and
-`--processor` in the other.
-
-**Fix.** A project `Flyback.Host` between `Flyback.Assist` and `Flyback.Ui`:
-no Avalonia, no packages, referenced by Ui, the CLI, the Site and both web
-projects. It holds `PluginHost.Install()` (load, verify, install the catalog,
-return it with its report), `TransportServices.AddTransport(...)` and
-`Transport.Open(Opened, bool video)`, `PatchFile.Open(name, bytes, limit)`
-returning a `PatchOpen`, `PresetOpening.Find(name)` (the Avalonia-free part of
-`PresetLibrary`), `OutputSettings` and `Resolutions`, and one `CommonOptions`
-for the flags the viewer and the CLI share. `Transport`, `AudioEngine`, `LineIn`,
-`MidiHub` and `ControlHub` move with them if they carry no Avalonia; check each.
-This is an ADR: it amends 0124's "what two shells draw with" to "what the
-shells draw with" and "what every host runs". The cheaper half-step, if the
-project is not wanted, is to put the Engine-only pieces (`PatchFile.Open` from
-bytes, `PresetOpening`, `OutputSettings`, `Resolutions`) in Engine now and leave
-the plugin-dependent ones where they are.
-
 ## 2. The infix precedence rule is written three times, and has drifted (High)
 
 "Spell a tree as infix with the brackets it needs" lives in three files, each
@@ -208,7 +168,13 @@ Toolbar react to `OwnershipChanged` themselves.
 
 ## Order
 
-1, 2 and 3 first: 1 is the gap the TODO bugs keep falling into, 2 and 3 are an
-afternoon each and close a drift that is already real. 4 and 5 next, since the
-editor's churn lands in them. 6 before 1.0.0, since the contract is a promise
-from then on. The rest as each file is next touched.
+2 and 3 first: an afternoon each, and each closes a drift that is already real.
+4 and 5 next, since the editor's churn lands in them. 6 before 1.0.0, since the
+contract is a promise from then on. The rest as each file is next touched.
+
+Landed: the host code that is not Avalonia has a home, `Flyback.Host`
+(ADR-0188), and with it one plugin bootstrap, one bytes-to-patch reader, one
+settings reader for the CLI, one playback registration and one preset finder.
+Still written per shell, and small: the speaker handshake in two JS files, the
+viewer's and the CLI's `--size` and `--oversample` option declarations, and the
+viewer's `--cpu` against the CLI's `--processor`.

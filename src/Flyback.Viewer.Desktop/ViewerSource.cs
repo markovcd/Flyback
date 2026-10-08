@@ -40,7 +40,7 @@ internal static class ViewerSource
 
         if (options.Preset is { } name)
         {
-            wanted = ordered.FirstOrDefault(preset => string.Equals(preset.Name, name, StringComparison.OrdinalIgnoreCase));
+            wanted = PresetLibrary.Find(ordered, name);
 
             if (wanted is null)
             {

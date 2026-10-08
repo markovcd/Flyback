@@ -38,6 +38,7 @@
     <ProjectReference Include="..\Flyback.Engine\Flyback.Engine.csproj" />
     <ProjectReference Include="..\Flyback.Gpu\Flyback.Gpu.csproj" />
     <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
+    <ProjectReference Include="..\Flyback.Host\Flyback.Host.csproj" />
   </ItemGroup>
 
   <Import Project="LinkedPlugins.props" />

@@ -32,6 +32,10 @@ public sealed class PresetLibrary
     public static List<PatchPreset> Ordered(IEnumerable<PatchPreset> shipped, PresetLibrary? saved) =>
         [.. PresetOrder.Of(shipped), .. saved?.All.Select(entry => entry.Preset) ?? []];
 
+    /// <summary>The preset called <paramref name="name"/> as a command line spells it, in any case, or null where none is.</summary>
+    public static PatchPreset? Find(IEnumerable<PatchPreset> presets, string name) =>
+        presets.FirstOrDefault(preset => string.Equals(preset.Name, name, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>What opens when nothing is chosen, or what was chosen is not offered.</summary>
     public const string Fallback = "Plasma";
 

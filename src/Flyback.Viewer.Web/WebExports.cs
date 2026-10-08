@@ -9,6 +9,7 @@ using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
 using Flyback.Engine.Render;
 using Flyback.Gpu;
+using Flyback.Host;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.Viewer.Web;
@@ -89,7 +90,7 @@ public static partial class WebExports
     [JSExport]
     public static byte[] Pack(string name)
     {
-        var wanted = Plugins.Presets.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+        var wanted = PresetLibrary.Find(Plugins.Presets, name);
         if (wanted is null) return [];
 
         var built = wanted.Build(Plugins.Modules);

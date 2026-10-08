@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Flyback.Core;
 using Flyback.Engine.Graph;
-using Flyback.Engine.Render;
+using Flyback.Host;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.Cli.Common;
@@ -28,7 +28,7 @@ internal static class ShippedPresets
     /// </summary>
     public static (Opened Opened, string Name)? Open(PluginCatalog catalog, string name, TextWriter error)
     {
-        if (catalog.Presets.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)) is not { } wanted)
+        if (PresetLibrary.Find(catalog.Presets, name) is not { } wanted)
         {
             error.WriteLine($"{GlobalConstants.ApplicationName}: no preset is called '{name}'. The presets are:");
 
@@ -39,13 +39,7 @@ internal static class ShippedPresets
 
         try
         {
-            var built = wanted.Build(catalog.Modules);
-
-            if (wanted.Files is not { } files) return (new Opened(built, new SampleLibrary(), new ImageLibrary()), wanted.Name);
-
-            var within = new BundleFiles(files());
-
-            return (new Opened(built, within, within), wanted.Name);
+            return (PresetLibrary.Open(wanted, saved: null, catalog.Modules), wanted.Name);
         }
         catch (Exception ex)
         {
