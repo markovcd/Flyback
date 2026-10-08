@@ -16,8 +16,6 @@ public sealed class SystemOneModel : IDecisionModel
 
     public const string EndpointKey = "endpoint", ModelKey = "model";
 
-    public const string DefaultModel = "jev-latest";
-
     public string Id => "systemone";
 
     public string Name => "Decision server";
@@ -37,7 +35,7 @@ public sealed class SystemOneModel : IDecisionModel
             [new SettingOption(HostedEndpoint, "TypeSafe (hosted)")],
             HostedEndpoint,
             Editable: true) { Note = "Or the address of a laya-serve, which needs no key." },
-        new SettingField.Text(ModelKey, "Model", DefaultModel, DefaultModel),
+        new SettingField.Text(ModelKey, "Model", Placeholder: "the endpoint's own") { Note = "Left empty, the endpoint chooses; a laya-serve by the text's language." },
     ];
 
     public Uri? Endpoint(SettingValues values) =>
@@ -66,7 +64,7 @@ public sealed class SystemOneModel : IDecisionModel
         var endpoint = Endpoint(config.Values)
             ?? throw new InvalidOperationException($"'{Base(config.Values)}' is not an http or https address.");
 
-        var body = SystemOneWire.Request(request, config.Values.Text(ModelKey, DefaultModel));
+        var body = SystemOneWire.Request(request, config.Values.Text(ModelKey));
 
         var answer = await AssistantPost.Send(
             config.Transport,

@@ -8,14 +8,14 @@ namespace Flyback.Plugins.Tests;
 public class SystemOneWireTests
 {
     private const string Asked = """
-        {"state": "we were billed twice", "model": "jev-latest",
+        {"state": "we were billed twice", "model": "english",
          "questions": {"urgent": {"type": "noul", "instructions": "Does this message express urgency?"},
                        "dept":   {"type": "choice", "instructions": "Which department?", "criteria": {"billing": "Money", "other": "Anything else"}},
                        "level":  {"type": "score", "instructions": "How loud?", "criteria": ["quiet", "medium", "loud"]}}}
         """;
 
     private const string Answered = """
-        {"model": "jev-1.13.0",
+        {"model": "laya-rl-agent",
          "answers": {"urgent": {"type": "noul", "noul": 0.97},
                      "dept":   {"type": "choice", "choice": "billing", "probabilities": {"billing": 0.9, "other": 0.1}, "confidence": 0.8},
                      "level":  {"type": "score", "score": 1.7, "legend": {"0": "quiet", "1": "medium", "2": "loud"}, "probabilities": {"0": 0.1, "1": 0.2, "2": 0.7}, "confidence": 0.6}},
@@ -38,13 +38,13 @@ public class SystemOneWireTests
     public void A_request_written_reads_back_the_same()
     {
         var questions = SystemOneWire.ReadQuestions(Asked, out _)!;
-        var written = SystemOneWire.Request(new DecisionRequest("we were billed twice", questions), "jev-latest");
+        var written = SystemOneWire.Request(new DecisionRequest("we were billed twice", questions), "english");
 
         var again = SystemOneWire.ReadQuestions(written, out var problem).ShouldNotBeNull();
 
         problem.ShouldBeNull();
         written.ShouldContain("\"state\":\"we were billed twice\"");
-        written.ShouldContain("\"model\":\"jev-latest\"");
+        written.ShouldContain("\"model\":\"english\"");
         again.Keys.ShouldBe(questions.Keys);
         again["dept"].ShouldBeOfType<Question.Choice>().Options.ShouldBe(((Question.Choice)questions["dept"]).Options);
     }
@@ -55,7 +55,7 @@ public class SystemOneWireTests
         var decision = SystemOneWire.ReadDecision(Answered, out var problem).ShouldNotBeNull();
         problem.ShouldBeNull();
 
-        decision.Model.ShouldBe("jev-1.13.0");
+        decision.Model.ShouldBe("laya-rl-agent");
         decision.Usage.ShouldBe(new DecisionUsage(392, 0));
         decision.Answers["urgent"].ShouldBe(new Answer.YesNo(0.97));
 

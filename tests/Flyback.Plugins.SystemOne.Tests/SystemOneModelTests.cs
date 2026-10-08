@@ -11,7 +11,7 @@ namespace Flyback.Plugins.SystemOne.Tests;
 public class SystemOneModelTests
 {
     private const string Answered = """
-        {"model": "jev-1.13.0", "answers": {"money": {"type": "noul", "noul": 0.97}}, "usage": {"input_tokens": 12, "output_tokens": 0}}
+        {"model": "hosted-1.13.0", "answers": {"money": {"type": "noul", "noul": 0.97}}, "usage": {"input_tokens": 12, "output_tokens": 0}}
         """;
 
     private static readonly DecisionRequest Asked =
@@ -42,7 +42,7 @@ public class SystemOneModelTests
         request.Headers.Authorization!.ToString().ShouldBe("Bearer test-key-not-real");
 
         var sent = JsonNode.Parse(canned.Bodies[0])!;
-        sent["model"]!.GetValue<string>().ShouldBe("jev-latest");
+        sent["model"].ShouldBeNull("with no model set, the endpoint chooses");
         sent["questions"]!["money"]!["type"]!.GetValue<string>().ShouldBe("noul");
     }
 
@@ -50,7 +50,7 @@ public class SystemOneModelTests
     public async Task A_laya_serve_of_your_own_is_asked_without_a_key()
     {
         var canned = new Canned((HttpStatusCode.OK, Answered));
-        var values = SettingValues.None.With(SystemOneModel.EndpointKey, "http://localhost:8000/");
+        var values = SettingValues.None.With(SystemOneModel.EndpointKey, "http://localhost:8000/").With(SystemOneModel.ModelKey, "english");
 
         var config = Config(canned, key: null, values);
 
@@ -60,6 +60,7 @@ public class SystemOneModelTests
 
         canned.Requests.ShouldHaveSingleItem().RequestUri.ShouldBe(new Uri("http://localhost:8000/v1/systemone"));
         canned.Requests[0].Headers.Authorization.ShouldBeNull();
+        JsonNode.Parse(canned.Bodies[0])!["model"]!.GetValue<string>().ShouldBe("english");
     }
 
     [Fact]

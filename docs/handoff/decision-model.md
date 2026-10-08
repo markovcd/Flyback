@@ -40,8 +40,8 @@ LAYA_DEVICE=cpu LAYA_HOST=127.0.0.1 LAYA_PORT=8000 LAYA_MODELS=english,typed-dec
 ```
 
 The Decision server plugin reaches it with its endpoint set to `http://localhost:8000` and no key. A request's
-`model` names the checkpoint (`english`, `multilingual`, `typed-decisions`); anything else, the
-plugin's default `jev-latest` included, is routed by the text's language, so English text gets
+`model` names the checkpoint (`english`, `multilingual`, `typed-decisions`); any other name, or
+no `model` at all, which is the plugin's default, is routed by the text's language, so English text gets
 `english`. The answers carry fields `SystemOneWire` does not read (`answer_confidence`, `action`,
 `routing`). At startup the English checkpoint warns that its `choice:11+` temperature is invalid,
 so a choice of eleven or more options is uncalibrated.
@@ -49,7 +49,7 @@ so a choice of eleven or more options is uncalibrated.
 The `flyback-cli` on PATH is the installed release; the one with `decide` is a build of `main`
 with `-c "All plugins"`, under `src/Flyback.Cli/bin/All plugins/net10.0/`. The `decisions` section
 of `~/.config/Flyback/settings.json` holds
-`{"Model":"systemone","Choices":{"systemone":{"endpoint":"http://localhost:8000","model":"jev-latest"}}}`,
+`{"Model":"systemone","Choices":{"systemone":{"endpoint":"http://localhost:8000"}}}`,
 written by hand before `decide` could set it (its earlier copy is `settings.json.before-decisions`).
 Now it is set from the command line, the module search on its own checkpoint:
 
@@ -100,6 +100,8 @@ asks two orders and averages, and `decide --set`, `--for` and `--save` set a mod
 - **Settings → Decisions shows a use's settings**: today only the command line writes them, and the
   editor keeps them untouched when it saves.
 - **A start that warms the model**: the first asks after laya-serve starts miss the deadline.
+- **Jev, an alternative to Laya**, comes later as a model of its own. The name is kept for it and
+  names nothing else.
 
 Measure each against the server with `scripts/decide-bench.py` before it lands.
 
