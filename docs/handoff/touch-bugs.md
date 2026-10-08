@@ -10,7 +10,7 @@ delete this file, in the commit that lands the last item.
 A touch screen is a Windows tablet as much as a phone in the web editor, and most of
 these hold for both; the two marked **page only** are the browser's.
 
-Items 1, 2, 3, 5, 7, 10, 11, 12, 13, 14, 19 and 20 are fixed and gone from here; the rest keep the numbers
+Items 1, 2, 3, 5, 7, 10, 11, 12, 13, 14, 17, 18, 19 and 20 are fixed and gone from here; the rest keep the numbers
 they were first listed under. Whether the last press was a finger is `LastPress.ByFinger`,
 which the module list and the preset gallery read to leave their text box to be tapped;
 item 8 wants the same.
@@ -78,24 +78,6 @@ finger included. `Knob.cs:95-116` (no slop), `LevelBar.cs:69-72` and
 the control wins past the recognizer's start distance is the suspected part.
 
 Repro: select an oscillator and swipe up starting on a slider or knob.
-
-### 17. The step list inserts on a scroll (confirmed)
-
-`Inspect/StepList.cs:208-245`: the 6 px strip between rows (`InsertHeight`, line 30)
-inserts on `PointerPressed`, and is shown only on hover. The reorder handle
-(421-461) has no `PointerCaptureLost`, so a scroll that steals it leaves the row
-shifted at 0.8 opacity with `dragging` set.
-
-Repro: select a sequencer and scroll starting between two rows.
-
-### 18. A tapped grid cell rarely toggles (confirmed)
-
-`PartGrid.cs:31` has `Slop = 3` px for every pointer (Fingers uses 10); past it
-`held.Moved` is set (254-270) even when the value clamps unchanged, and `LetGo`
-(300-301) refills instead of toggling. A jittered first tap never counts toward the
-double-tap glide.
-
-Repro: tap a lit cell in an Arrangement's grid a few times.
 
 ### Minor
 

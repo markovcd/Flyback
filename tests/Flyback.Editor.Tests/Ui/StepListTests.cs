@@ -191,6 +191,52 @@ public class StepListTests : EditorTest
         StepsExtra.Of(node).Count.ShouldBe(before + 1);
     }
 
+    [AvaloniaFact]
+    public void A_scroll_that_starts_on_an_insert_strip_adds_no_note()
+    {
+        var window = Showing(out var node);
+        var before = StepsExtra.Of(node).ToList();
+        var strip = Strips(window)[1];
+        var finger = new Pointer(Pointer.GetNextFreeId(), PointerType.Touch, true);
+        var start = Center(strip, window);
+
+        strip.RaiseEvent(new PointerPressedEventArgs(strip, finger, window, start, 1_000, Down, KeyModifiers.None));
+        strip.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, strip, finger, window, start + new Vector(0, -40), 1_050, Moving, KeyModifiers.None));
+        strip.RaiseEvent(new PointerReleasedEventArgs(strip, finger, window, start + new Vector(0, -80), 1_100, Up, KeyModifiers.None, MouseButton.Left));
+        Settle(window);
+
+        StepsExtra.Of(node).ShouldBe(before);
+    }
+
+    [AvaloniaFact]
+    public void A_reorder_whose_pointer_is_taken_puts_its_row_back()
+    {
+        var window = Showing(out var node);
+        var before = StepsExtra.Of(node).ToList();
+        var row = Rows(window)[2];
+        var handle = row.Children.OfType<Control>().Single(c => c.Name == "grip");
+        var finger = new Pointer(Pointer.GetNextFreeId(), PointerType.Touch, true);
+        var start = Center(handle, window);
+
+        handle.RaiseEvent(new PointerPressedEventArgs(handle, finger, window, start, 1_000, Down, KeyModifiers.None));
+        handle.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, handle, finger, window, start + new Vector(0, 2 * RowPitch), 1_050, Moving, KeyModifiers.None));
+
+        // As a scroll viewer does once it decides the gesture is a scroll.
+        finger.Capture(window);
+        Settle(window);
+
+        row.RenderTransform.ShouldBeNull();
+        row.Opacity.ShouldBe(1);
+        StepsExtra.Of(node).ShouldBe(before);
+
+        DragBy(window, 0, RowPitch);
+        StepsExtra.Of(node)[1].ShouldBe(before[0], "the next drag should work as if the lost one never happened");
+    }
+
+    private static readonly PointerPointProperties Down = new(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed);
+    private static readonly PointerPointProperties Moving = new(RawInputModifiers.LeftMouseButton, PointerUpdateKind.Other);
+    private static readonly PointerPointProperties Up = new(RawInputModifiers.None, PointerUpdateKind.LeftButtonReleased);
+
     /// <summary>The rows of the list, told apart from the grids inside control templates.</summary>
     private static Grid[] Rows(Window window) =>
         [.. All<Grid>(window).Where(g => ReferenceEquals(g.Tag, StepList.RowTag))];

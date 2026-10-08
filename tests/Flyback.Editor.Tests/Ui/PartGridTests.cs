@@ -229,6 +229,20 @@ public class PartGridTests : EditorTest
         anchor.Disposed.ShouldBeTrue();
     }
 
+    [AvaloniaFact]
+    public void A_finger_that_wobbles_while_tapping_a_cell_still_switches_it()
+    {
+        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var node = NodeInstance.Create(def, 0, 0);
+
+        ArrangementExtra.Set(node, [[new PartLevel(0.8f), new PartLevel(0.5f)]]);
+        var window = Show(new PartGrid(node, def, _ => { }).View);
+
+        TapCell(window, 0, wobble: 6);
+
+        ArrangementExtra.Of(node)[0].Select(l => l.Value).ShouldBe([0f, 0.5f]);
+    }
+
     private static void Drag(Window window, int index, double by)
     {
         var cell = All<Border>(window).Where(b => Equals(b.Tag, PartGrid.CellTag)).ElementAt(index);
@@ -248,6 +262,22 @@ public class PartGridTests : EditorTest
 
         window.MouseDown(middle, MouseButton.Left, RawInputModifiers.None);
         window.MouseUp(middle, MouseButton.Left, RawInputModifiers.None);
+    }
+
+    /// <summary>The <paramref name="index"/>th cell tapped by a finger that drifts <paramref name="wobble"/> pixels up before it lifts.</summary>
+    private static void TapCell(Window window, int index, double wobble)
+    {
+        var cell = All<Border>(window).Where(b => Equals(b.Tag, PartGrid.CellTag)).ElementAt(index);
+        var finger = new Pointer(Pointer.GetNextFreeId(), PointerType.Touch, true);
+        var down = new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed);
+        var moving = new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.Other);
+        var up = new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonReleased);
+        var middle = cell.TranslatePoint(new Point(cell.Bounds.Width / 2, cell.Bounds.Height / 2), window)!.Value;
+        var drifted = middle - new Point(0, wobble);
+
+        cell.RaiseEvent(new PointerPressedEventArgs(cell, finger, window, middle, 1_000, down, KeyModifiers.None));
+        cell.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, cell, finger, window, drifted, 1_030, moving, KeyModifiers.None));
+        cell.RaiseEvent(new PointerReleasedEventArgs(cell, finger, window, drifted, 1_060, up, KeyModifiers.None, MouseButton.Left));
     }
 
     private static void Click(Window window, string label) =>

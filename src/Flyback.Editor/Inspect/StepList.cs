@@ -31,6 +31,9 @@ internal sealed class StepList
     private const double InsertHeight = 6;
     private const double InsertHeightHovered = 16;
 
+    /// <summary>How far a mouse moves on an insert strip before the press is no longer a click; a finger has <see cref="Fingers.Slop"/>.</summary>
+    private const double TapSlop = 4;
+
     /// <summary>The height of an insert strip, so a test can pick one out of the tree.</summary>
     internal const double InsertHeightForTests = InsertHeight;
     private const double ControlHeight = 23;
@@ -234,8 +237,27 @@ internal sealed class StepList
             strip.Height = InsertHeight;
         };
 
-        strip.PointerPressed += (_, _) =>
+        // A tap, not a press, so a scroll that starts on the strip adds nothing.
+        Point? pressed = null;
+
+        strip.PointerPressed += (_, e) =>
         {
+            pressed = e.GetPosition(strip);
+            e.Pointer.Capture(strip);
+        };
+
+        strip.PointerCaptureLost += (_, _) => pressed = null;
+
+        strip.PointerReleased += (_, e) =>
+        {
+            if (pressed is not { } from) return;
+
+            pressed = null;
+            e.Pointer.Capture(null);
+
+            var slop = e.Pointer.Type == PointerType.Touch ? Fingers.Slop : TapSlop;
+            if (Point.Distance(from, e.GetPosition(strip)) > slop) return;
+
             // Copied from the note it follows, so adding to a tune extends it
             // rather than dropping a stranger into the middle of it.
             var like = notes.Count == 0 ? new Step(Middle) : notes[Math.Max(at - 1, 0)];
@@ -442,14 +464,21 @@ internal sealed class StepList
                 index + (int)Math.Round(moved / (RowHeight + InsertHeight)), 0, notes.Count - 1);
         };
 
+        // A scroll that takes the pointer mid-drag leaves the list as it was.
+        handle.PointerCaptureLost += (_, _) =>
+        {
+            if (dragging != row) return;
+
+            dragging = null;
+            Settle(row);
+        };
+
         handle.PointerReleased += (_, e) =>
         {
             if (dragging != row) return;
 
             dragging = null;
-            row.RenderTransform = null;
-            row.ZIndex = 0;
-            row.Opacity = 1;
+            Settle(row);
             e.Pointer.Capture(null);
 
             if (dragTo == dragFrom) return;
@@ -460,6 +489,14 @@ internal sealed class StepList
 
             Rebuild();
         };
+    }
+
+    /// <summary>Puts a dragged row back where the layout has it.</summary>
+    private static void Settle(Control row)
+    {
+        row.RenderTransform = null;
+        row.ZIndex = 0;
+        row.Opacity = 1;
     }
 
     // --- small helpers -----------------------------------------------------------
@@ -477,4 +514,4 @@ internal sealed class StepList
         Foreground = Text.Muted,
         VerticalAlignment = VerticalAlignment.Bottom,
     };
-}
+}

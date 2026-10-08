@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
+using Flyback.Editor.Canvas;
 using Flyback.Engine.Language;
 using Colors = Flyback.Ui.Controls.Colors;
 
@@ -27,7 +28,7 @@ internal sealed class PartGrid
     /// <summary>How far a drag goes for a part's whole range, as a knob's does; Shift makes it five times finer.</summary>
     private const double Travel = 160;
 
-    /// <summary>How far the pointer moves before a press is a drag rather than a click.</summary>
+    /// <summary>How far a mouse moves before a press is a drag rather than a click; a finger has <see cref="Fingers.Slop"/>.</summary>
     private const double Slop = 3;
 
     /// <summary>How far a drag holds at nought on its way through, so nought is easy to land on.</summary>
@@ -233,7 +234,12 @@ internal sealed class PartGrid
         var levels = parts[part];
         var high = Math.Max(1f, levels.Max(level => Math.Abs(level.Value)));
 
-        drag = new Held(cell, part, section, e.GetPosition(cell), levels[section].Value, -high, high, e.Pointer.Type == PointerType.Touch ? null : Anchors.Take(cell));
+        var finger = e.Pointer.Type == PointerType.Touch;
+
+        drag = new Held(cell, part, section, e.GetPosition(cell), levels[section].Value, -high, high, finger ? null : Anchors.Take(cell))
+        {
+            Slop = finger ? Fingers.Slop : Slop,
+        };
         e.Pointer.Capture(cell);
         e.Handled = true;
     }
@@ -251,7 +257,7 @@ internal sealed class PartGrid
         held.Last = held.Anchor?.Return() == true ? held.Home : at;
 
         var rise = held.Rise;
-        if (!held.Moved && Math.Abs(rise) < Slop) return;
+        if (!held.Moved && Math.Abs(rise) < held.Slop) return;
 
         var fine = (e.KeyModifiers & KeyModifiers.Shift) != 0 ? 5d : 1d;
         var perPixel = held.High / (Travel * fine);
@@ -439,6 +445,9 @@ internal sealed class PartGrid
         public float Low { get; }
         public float High { get; }
         public IPointerAnchor? Anchor { get; }
+
+        /// <summary>How far this press moves before it is a drag.</summary>
+        public double Slop { get; init; }
 
         public Point Last { get; set; }
         public double Rise { get; set; }
