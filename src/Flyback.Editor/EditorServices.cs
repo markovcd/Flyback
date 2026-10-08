@@ -150,6 +150,7 @@ internal static class EditorServices
         services.AddCanvas();
         services.AddPart<SourceView>();
         services.AddPart<PreviewHost>();
+        services.AddSingleton<PictureAside>();
 
         services.AddPart<Document>();
         services.AddSingleton<IDialog, WindowDialog>();

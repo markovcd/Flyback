@@ -171,8 +171,8 @@ public class InspectorFoldTests : EditorTest
         plate.Layout.ShouldBe(PlateLayout.Touch);
 
         var strip = All<Avalonia.Controls.Primitives.UniformGrid>(window).Single(g => g.Name == "plate-strip");
-        All<Button>(strip).Select(b => b.Name).ShouldBe(["strip-switch-modules", "strip-duplicate-modules", "strip-delete-modules", "strip-more"]);
-        All<TextBlock>(strip).Select(t => t.Text).ShouldBe(["Bypass", "Duplicate", "Delete", "More"]);
+        All<Button>(strip).Select(b => b.Name).ShouldBe(["strip-switch-modules", "strip-duplicate-modules", "strip-delete-modules", "strip-picture", "strip-more"]);
+        All<TextBlock>(strip).Select(t => t.Text).ShouldBe(["Bypass", "Duplicate", "Delete", "Expand", "More"]);
 
         Press(Named(strip, "strip-delete-modules"));
         Settle(window);
@@ -205,6 +205,46 @@ public class InspectorFoldTests : EditorTest
 
         Header(window).IsVisible.ShouldBeTrue();
         PlateHost(window).IsVisible.ShouldBeFalse();
+    }
+
+    private static Control PictureBox(MainWindow window) => (Control)All<Flyback.Ui.Controls.PreviewHost>(window).Single().Parent!;
+
+    [AvaloniaFact]
+    public void Expand_gives_the_inspector_the_whole_side_and_presses_back()
+    {
+        var window = Selecting(out _);
+        Fingered(window);
+
+        var before = All<Grid>(window).Single(g => g.Name == "columns").RowDefinitions[2].ActualHeight;
+
+        Press(Named(window, "strip-picture"));
+        Settle(window);
+
+        PictureBox(window).IsVisible.ShouldBeFalse();
+        All<Grid>(window).Single(g => g.Name == "columns").RowDefinitions[2].ActualHeight.ShouldBeGreaterThan(before + 100);
+        All<TextBlock>(Named(window, "strip-picture")).Single().Text.ShouldBe("Picture");
+
+        Press(Named(window, "strip-picture"));
+        Settle(window);
+
+        PictureBox(window).IsVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void The_picture_comes_back_once_nothing_is_selected()
+    {
+        var window = Selecting(out _);
+        Fingered(window);
+
+        Press(Named(window, "strip-picture"));
+        Settle(window);
+        PictureBox(window).IsVisible.ShouldBeFalse();
+
+        Editor(window).Selection.Take([]);
+        Editor(window).Selection.Announce();
+        Settle(window);
+
+        PictureBox(window).IsVisible.ShouldBeTrue();
     }
 
     [AvaloniaFact]

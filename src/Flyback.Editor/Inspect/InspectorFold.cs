@@ -41,11 +41,12 @@ internal sealed class InspectorFold
     private readonly Panel panel;
     private readonly Decorator pinned;
     private readonly LastPress lastPress;
+    private readonly PictureAside aside;
 
     /// <param name="reading">What holds the scroller and the header, and so how big the inspector is.</param>
     /// <param name="rows">What scrolls: the plate, then the panel.</param>
     /// <param name="pinned">Where the plate stands above the scroller when it is pinned there.</param>
-    public InspectorFold(Control reading, ScrollViewer scroller, StackPanel rows, Decorator pinned, ContentControl plateHost, InspectorHeader header, ModuleWash wash, Panel panel, LastPress lastPress)
+    public InspectorFold(Control reading, ScrollViewer scroller, StackPanel rows, Decorator pinned, ContentControl plateHost, InspectorHeader header, ModuleWash wash, Panel panel, LastPress lastPress, PictureAside aside)
     {
         this.reading = reading;
         this.scroller = scroller;
@@ -56,6 +57,10 @@ internal sealed class InspectorFold
         this.wash = wash;
         this.panel = panel;
         this.lastPress = lastPress;
+        this.aside = aside;
+
+        header.Aside = aside;
+        aside.Changed += Ask;
 
         lastPress.Changed += Ask;
 
@@ -109,6 +114,8 @@ internal sealed class InspectorFold
         var plate = plateHost.Content as ModulePlate;
         var layout = Layout(plate);
 
+        aside.Holding(plate is not null);
+
         // Under a mouse on a wide panel the plate is one short line and never needs to fold.
         Pin(plate is not null && layout == PlateLayout.Wide);
 
@@ -131,6 +138,9 @@ internal sealed class InspectorFold
 
         // Folded after the panel has finished building, so its face and its buttons are on it.
         if (!ReferenceEquals(header.Plate, plate) || plate.Layout != layout) Lay(plate);
+
+        header.ShowAside();
+        plate.ShowAside(aside);
 
         var band = plate.Band;
         var tall = plateHost.Bounds.Height;
@@ -155,7 +165,7 @@ internal sealed class InspectorFold
     private void Lay(ModulePlate? plate)
     {
         header.Show(plate);
-        plate?.Lay(Layout(plate), from => new PlateMenu(plate, plate.BeginRename ?? (() => { })).Open(from));
+        plate?.Lay(Layout(plate), aside, from => new PlateMenu(plate, plate.BeginRename ?? (() => { })).Open(from));
     }
 
     /// <summary>Stands the plate above the scroller, or puts it back at the head of what scrolls.</summary>

@@ -52,22 +52,25 @@ internal static class PlateActions
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center,
-            Content = new StackPanel
-            {
-                Spacing = 4,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Children =
-                {
-                    new ContentControl { Content = glyph, HorizontalAlignment = HorizontalAlignment.Center },
-                    new TextBlock { Text = label, FontSize = Text.Small, HorizontalAlignment = HorizontalAlignment.Center },
-                },
-            },
+            Content = Words(glyph, label),
         };
 
         if (tip is not null) ToolTip.SetTip(button, tip);
 
         return button;
     }
+
+    /// <summary>What a worded button shows: the glyph, and the word under it.</summary>
+    public static Control Words(Control glyph, string label) => new StackPanel
+    {
+        Spacing = 4,
+        HorizontalAlignment = HorizontalAlignment.Center,
+        Children =
+        {
+            new ContentControl { Content = glyph, HorizontalAlignment = HorizontalAlignment.Center },
+            new TextBlock { Text = label, FontSize = Text.Small, HorizontalAlignment = HorizontalAlignment.Center },
+        },
+    };
 
     /// <summary>Presses the plate's own button, folded away or not.</summary>
     public static void Press(Button button)

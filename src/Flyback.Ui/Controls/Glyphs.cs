@@ -85,6 +85,12 @@ internal static class Glyphs
     /// <summary>A window with its right-hand column marked off: the column beside the canvas.</summary>
     public static Control Side() => Stroked("M2,3 L14,3 L14,13 L2,13 Z M10,3 L10,13");
 
+    /// <summary>Two corners pulled apart: the panel taking the room.</summary>
+    public static Control Spread() => Stroked("M9.5,2.5 L13.5,2.5 L13.5,6.5 M13.5,2.5 L9,7 M6.5,13.5 L2.5,13.5 L2.5,9.5 M2.5,13.5 L7,9");
+
+    /// <summary>Two corners pushed together: the panel giving the room back.</summary>
+    public static Control Gather() => Stroked("M13.5,6.5 L9.5,6.5 L9.5,2.5 M9.5,6.5 L14,2 M2.5,9.5 L6.5,9.5 L6.5,13.5 M6.5,9.5 L2,14");
+
     /// <summary>A window with a row marked off along its foot, and the playhead on it: the transport row.</summary>
     public static Control Transport() => Stroked("M2,3 L14,3 L14,13 L2,13 Z M2,9.5 L14,9.5 M7,9.5 L7,13");
 

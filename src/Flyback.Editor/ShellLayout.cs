@@ -38,7 +38,8 @@ internal sealed class ShellLayout(
     Usage usage,
     WindowLayoutKeeper layoutKeeper,
     EditorHost host,
-    LastPress lastPress)
+    LastPress lastPress,
+    PictureAside aside)
     : IReactTo<PatchCompiled>,
         IReactTo<GestureFinished>,
         IReactTo<KnobsWanted>,
@@ -316,6 +317,9 @@ internal sealed class ShellLayout(
 
     public void ShowPreview(bool shown)
     {
+        // Stepped aside for the inspector, unless swapped into the wide column, out of its way already.
+        var showing = shown && !(aside.Hidden && toolbar.Swap.IsChecked != true);
+
         previewHideWaiting = !shown && toolbar.Swap.IsChecked == true && editor.Gestures.Gesturing;
         if (previewHideWaiting) return;
 
@@ -323,11 +327,11 @@ internal sealed class ShellLayout(
         ToolTip.SetTip(toolbar.Swap, !shown ? Toolbar.NoPictureToSwapTip : narrow ? Toolbar.NarrowSwapTip : Toolbar.SwapTip);
         if (fullScreen.IsFullScreen || previewBox is null || previewRow is null || previewSplitter is null) return;
         if (!shown) toolbar.Swap.IsChecked = false;
-        if (!shown && previewBox.IsVisible) previewShare = previewRow.Height;
-        previewBox.IsVisible = shown;
-        previewSplitter.IsVisible = shown;
-        previewRow.MinHeight = shown ? 140d : 0d;
-        previewRow.Height = shown ? previewShare : new GridLength(0);
+        if (!showing && previewBox.IsVisible) previewShare = previewRow.Height;
+        previewBox.IsVisible = showing;
+        previewSplitter.IsVisible = showing;
+        previewRow.MinHeight = showing ? 140d : 0d;
+        previewRow.Height = showing ? previewShare : new GridLength(0);
     }
 
     /// <summary>
@@ -423,7 +427,8 @@ internal sealed class ShellLayout(
             Background = new SolidColorBrush(Colors.Panel),
             Child = new Panel { Children = { wash, reading } },
         };
-        _ = new InspectorFold(reading, scroller, rows, pinned, plateHost, inspector.Header, wash, inspector.Panel, lastPress);
+        _ = new InspectorFold(reading, scroller, rows, pinned, plateHost, inspector.Header, wash, inspector.Panel, lastPress, aside);
+        aside.Changed += () => ShowPreview(playback.HasPicture);
         Grid.SetColumn(inspectorBorder, column);
         Grid.SetRow(inspectorBorder, 2);
 

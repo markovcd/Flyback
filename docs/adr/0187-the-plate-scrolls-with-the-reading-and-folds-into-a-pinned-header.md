@@ -40,6 +40,11 @@ is a finger throughout, its keys the on-screen keyboard's (`LastPress.OnlyFinger
 **The name reads from the left**, so the buttons can stand to its right on the band; the
 right-hand edge [0122](0122-the-panel-wears-the-block-it-is-about.md) gave it is superseded too.
 
+**The picture steps aside on request.** Expand, on the header and on a finger's strip, hides the
+picture's row so the inspector has the whole side column, and pressing it again brings the
+picture back. It holds only while a block is selected (`PictureAside`), so the picture returns
+with nothing selected and is never left out of reach.
+
 **The wash still paints the band**: as deep as the plate's name band less what has scrolled, or as
 deep as the header while it shows, so the header has no paint of its own.
 

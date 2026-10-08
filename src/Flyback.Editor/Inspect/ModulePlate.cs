@@ -110,7 +110,7 @@ internal sealed class ModulePlate : Decorator
     private readonly UniformGrid strip = new()
     {
         Name = "plate-strip",
-        Columns = 4,
+        Columns = 5,
         ColumnSpacing = 6,
         Margin = new Thickness(10, 0, 10, 8),
         IsVisible = false,
@@ -140,7 +140,7 @@ internal sealed class ModulePlate : Decorator
     /// a wide panel, under it on a narrow one, and a strip of worded buttons under a finger.
     /// </summary>
     /// <param name="openMenu">Opens the menu with everything in it, from a finger's More.</param>
-    public void Lay(PlateLayout layout, Action<Control> openMenu)
+    public void Lay(PlateLayout layout, PictureAside aside, Action<Control> openMenu)
     {
         if (Layout == layout) return;
 
@@ -192,13 +192,24 @@ internal sealed class ModulePlate : Decorator
                 // Kept in the tree, hidden: the strip and the menu press these.
                 rest.IsVisible = false;
                 ((StackPanel)Child!).Children.Add(rest);
-                Strip(openMenu);
+                Strip(aside, openMenu);
                 break;
         }
     }
 
-    /// <summary>The strip a finger gets: switching, the second most wanted, deleting, and More.</summary>
-    private void Strip(Action<Control> openMenu)
+    /// <summary>Turns the strip's picture button to what pressing it would do now.</summary>
+    public void ShowAside(PictureAside aside)
+    {
+        if (strip.Children.OfType<Button>().FirstOrDefault(b => b.Name == "strip-picture") is not { } button) return;
+
+        var hidden = aside.Hidden;
+
+        button.Content = PlateActions.Words(hidden ? Glyphs.Gather() : Glyphs.Spread(), PictureAsideWords.Label(hidden));
+        ToolTip.SetTip(button, PictureAsideWords.Tip(hidden));
+    }
+
+    /// <summary>The strip a finger gets: switching, the second most wanted, deleting, the picture, and More.</summary>
+    private void Strip(PictureAside aside, Action<Control> openMenu)
     {
         strip.Children.Clear();
 
@@ -216,6 +227,10 @@ internal sealed class ModulePlate : Decorator
             button.Click += (_, _) => PlateActions.Press(mirrored);
             strip.Children.Add(button);
         }
+
+        var picture = PlateActions.Worded("strip-picture", Glyphs.Spread(), PictureAsideWords.Label(false), PictureAsideWords.Tip(false), 52);
+        picture.Click += (_, _) => aside.Toggle();
+        strip.Children.Add(picture);
 
         var more = PlateActions.Worded("strip-more", Glyphs.Dots(), "More", "Everything else that can be done to it", 52);
         more.Click += (_, _) => openMenu(more);

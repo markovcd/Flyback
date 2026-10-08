@@ -25,7 +25,7 @@ internal sealed class InspectorHeader : Border
 
     private readonly Grid line = new()
     {
-        ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto"),
+        ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto,Auto"),
         ColumnSpacing = 2,
         Margin = new Thickness(10, 0, 2, 0),
     };
@@ -43,6 +43,9 @@ internal sealed class InspectorHeader : Border
         IsVisible = false;
         Child = line;
     }
+
+    /// <summary>Whether the picture has stepped aside, which the header's own button asks for.</summary>
+    public PictureAside? Aside { get; set; }
 
     /// <summary>The plate this header stands for, or null while it stands for none.</summary>
     public ModulePlate? Plate => shown;
@@ -82,10 +85,29 @@ internal sealed class InspectorHeader : Border
             line.Children.Add(button);
         }
 
+        if (Aside is { } aside)
+        {
+            var spread = Square("header-picture", Glyphs.Spread(), "");
+            spread.Click += (_, _) => aside.Toggle();
+            Grid.SetColumn(spread, 3);
+            line.Children.Add(spread);
+        }
+
         var more = Square("header-more", Glyphs.Dots(), "Everything that can be done to it");
         more.Click += (_, _) => menu.Open(more);
-        Grid.SetColumn(more, 3);
+        Grid.SetColumn(more, 4);
         line.Children.Add(more);
+
+        ShowAside();
+    }
+
+    /// <summary>Turns the picture button to what pressing it would do now.</summary>
+    public void ShowAside()
+    {
+        if (Aside is not { } aside || line.Children.OfType<Button>().FirstOrDefault(b => b.Name == "header-picture") is not { } button) return;
+
+        button.Content = aside.Hidden ? Glyphs.Gather() : Glyphs.Spread();
+        ToolTip.SetTip(button, PictureAsideWords.Tip(aside.Hidden));
     }
 
     /// <summary>The mark, the name and what kind of thing it is, which open the menu when pressed.</summary>
