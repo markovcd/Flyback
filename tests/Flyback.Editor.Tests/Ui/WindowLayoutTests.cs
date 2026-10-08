@@ -156,6 +156,28 @@ public sealed class WindowLayoutTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void The_side_splitter_is_taken_hold_of_a_fingertip_beside_its_gap()
+    {
+        var window = Open();
+        var grid = All<Grid>(window).Single(g => g.Name == "columns");
+        var splitter = All<GridSplitter>(grid).Single(s => s.Name == "side-splitter");
+        var middle = splitter.TranslatePoint(new Point(splitter.Bounds.Width / 2, 40), window)!.Value;
+        var wide = grid.ColumnDefinitions[2].ActualWidth;
+
+        grid.ColumnDefinitions[3].ActualWidth.ShouldBe(5);
+
+        // Six pixels into the canvas, past the gap's own edge.
+        var from = middle - new Point(2.5 + 6, 0);
+
+        window.MouseDown(from, MouseButton.Left);
+        window.MouseMove(from - new Point(150, 0));
+        window.MouseUp(from - new Point(150, 0), MouseButton.Left);
+        Settle(window);
+
+        grid.ColumnDefinitions[2].ActualWidth.ShouldBe(wide - 150, 2);
+    }
+
+    [AvaloniaFact]
     public void A_column_dragged_to_a_width_comes_back_at_it()
     {
         var window = Open();

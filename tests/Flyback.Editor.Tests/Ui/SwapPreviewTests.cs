@@ -48,6 +48,35 @@ public class SwapPreviewTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void A_tall_window_gives_the_picture_only_the_height_its_shape_fills()
+    {
+        var window = Open();
+
+        window.Width = 900;
+        window.Height = 1400;
+        Settle(window);
+
+        var preview = Preview(window);
+        var fills = preview.Bounds.Width * preview.Resolution.Height / preview.Resolution.Width;
+
+        preview.Bounds.Height.ShouldBe(fills, 1.0);
+    }
+
+    [AvaloniaFact]
+    public void A_tall_window_shown_full_screen_gives_the_picture_all_of_it()
+    {
+        var window = Open();
+
+        window.Width = 900;
+        window.Height = 1400;
+        Settle(window);
+        Service<FullScreenPreview>(window).Show(true);
+        Settle(window);
+
+        Preview(window).Bounds.Height.ShouldBeGreaterThan(1000);
+    }
+
+    [AvaloniaFact]
     public void Swapping_puts_the_picture_where_the_canvas_was_and_back()
     {
         var window = Open();

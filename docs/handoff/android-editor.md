@@ -4,7 +4,7 @@ Planned on 2026-10-06, on `main` at `7a65ff53`. It is on TODO.md; take it off th
 delete this file, in the commit that lands the last step.
 
 - **Kind:** Plan
-- **Status:** In progress. Steps 1 to 3 of the order are done on an emulator (ADR-0184).
+- **Status:** In progress. Steps 1 to 4 of the order are done on an emulator (ADR-0184).
 
 ## What is wanted
 
@@ -94,7 +94,9 @@ download from the preset site, and anything after a rotation.
 2. ~~The picture on GLES.~~ Done: the desktop's `GpuPreviewSurface` draws as it is.
 3. ~~Sound through `AudioTrack`, and the IL check.~~ Done on the emulator; ARM64 speed on a
    device is still to measure.
-4. The touch bugs, then a tablet layout.
+4. ~~The touch bugs, then a tablet layout.~~ Done: the touch bugs a tablet meets are fixed, the
+   desktop's layout holds in both orientations with the picture's row capped to its shape, and
+   the splitters reach a fingertip either side. Three touch bugs remain, two of them the page's.
 5. A phone layout, Line In and MIDI.
 
 The ADR is ADR-0184.

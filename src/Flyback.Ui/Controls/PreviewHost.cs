@@ -100,8 +100,17 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     public PixelSize Resolution
     {
         get => active.Resolution;
-        set => active.Resolution = value;
+        set
+        {
+            if (active.Resolution == value) return;
+
+            active.Resolution = value;
+            ResolutionChanged?.Invoke();
+        }
     }
+
+    /// <summary>Raised when the picture is drawn at another size, and so perhaps another shape.</summary>
+    public event Action? ResolutionChanged;
 
     public CompiledPatch Program
     {

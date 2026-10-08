@@ -77,14 +77,38 @@ internal sealed class ShellLayout(
     private ColumnDefinition? assistantColumn;
     private GridSplitter? assistantSplitter;
     private GridLength assistantShare = new(WindowLayout.DefaultAssistantWidth, GridUnitType.Pixel);
-    private readonly GridSplitter controlsSplitter = new()
-    {
-        Name = "controls-splitter",
-        Background = Brushes.Transparent,
-        Height = 5,
-        IsVisible = false,
-    };
+    private readonly GridSplitter controlsSplitter = Splitter(across: false, "controls-splitter");
     private GridLength controlsShare = new(WindowLayout.DefaultControlsHeight);
+
+    /// <summary>The gap a splitter keeps between the panels it divides.</summary>
+    internal const double SplitterGap = 5;
+
+    /// <summary>How far past its gap, either side, a splitter can be taken hold of: a fingertip's worth.</summary>
+    internal const double SplitterReach = 8;
+
+    /// <summary>
+    /// A splitter that keeps a <see cref="SplitterGap"/> between its panels but reaches
+    /// <see cref="SplitterReach"/> over each, on top of them, so a finger finds it.
+    /// </summary>
+    /// <param name="across">Whether it drags left and right, between two columns.</param>
+    private static GridSplitter Splitter(bool across, string name)
+    {
+        var splitter = new GridSplitter { Name = name, Background = Brushes.Transparent, ZIndex = 1 };
+        var held = SplitterGap + 2 * SplitterReach;
+
+        if (across)
+        {
+            splitter.Width = held;
+            splitter.Margin = new Thickness(-SplitterReach, 0);
+        }
+        else
+        {
+            splitter.Height = held;
+            splitter.Margin = new Thickness(0, -SplitterReach);
+        }
+
+        return splitter;
+    }
 
     public bool PreviewHideWaiting => previewHideWaiting;
     public bool IsBuilt => columns is not null;
@@ -170,7 +194,7 @@ internal sealed class ShellLayout(
 
         fullScreen.Columns = columns;
         assistantColumn = columns.ColumnDefinitions[0];
-        assistantSplitter = new GridSplitter { Background = Brushes.Transparent, Width = 5 };
+        assistantSplitter = Splitter(across: true, "assistant-splitter");
 
         patchPane = new Grid
         {
@@ -185,6 +209,7 @@ internal sealed class ShellLayout(
         Grid.SetRow(editor, 0);
         Grid.SetRow(source, 0);
         Grid.SetRow(controlsSplitter, 1);
+        controlsSplitter.IsVisible = false;
         Grid.SetRow(knobs.View, 2);
         patchPane.Children.Add(editor);
         patchPane.Children.Add(source);
@@ -196,7 +221,7 @@ internal sealed class ShellLayout(
                      (assistant, 0),
                      (assistantSplitter, 1),
                      (patchPane, WideColumn),
-                     (sideSplitter = new GridSplitter { Width = 5, Background = Brushes.Transparent }, 3),
+                     (sideSplitter = Splitter(across: true, "side-splitter"), 3),
                  })
         {
             Grid.SetColumn(child, column);
@@ -305,6 +330,28 @@ internal sealed class ShellLayout(
         previewRow.Height = shown ? previewShare : new GridLength(0);
     }
 
+    /// <summary>
+    /// Holds the picture's row to the height its picture fills at the row's width, so a tall,
+    /// narrow side column gives the room to the inspector rather than to black above and below.
+    /// </summary>
+    private void FitPreviewRow()
+    {
+        if (previewRow is null || previewBox is not { } box || !ReferenceEquals(box.Parent, columns)) return;
+
+        // Full screen hands the row the whole window, letterbox and all.
+        if (fullScreen.IsFullScreen)
+        {
+            previewRow.MaxHeight = double.PositiveInfinity;
+            return;
+        }
+
+        var size = preview.Resolution;
+        if (size.Width <= 0 || size.Height <= 0 || box.Bounds.Width <= 0) return;
+
+        var fits = box.Bounds.Width * size.Height / size.Width;
+        if (Math.Abs(previewRow.MaxHeight - fits) > 0.5) previewRow.MaxHeight = fits;
+    }
+
     public void SwapPreview(bool swapped)
     {
         if (columns is null || previewBox is null || patchPane is null || inspectorBox is null || previewSplitter is null) return;
@@ -352,8 +399,10 @@ internal sealed class ShellLayout(
         Grid.SetColumn(previewBox, column);
         Grid.SetRow(previewBox, 0);
         previewRow = grid.RowDefinitions[0];
+        previewBox.SizeChanged += (_, _) => FitPreviewRow();
+        preview.ResolutionChanged += FitPreviewRow;
 
-        var splitter = previewSplitter = new GridSplitter { Background = Brushes.Transparent, Height = 5 };
+        var splitter = previewSplitter = Splitter(across: false, "preview-splitter");
         Grid.SetColumn(splitter, column);
         Grid.SetRow(splitter, 1);
 
