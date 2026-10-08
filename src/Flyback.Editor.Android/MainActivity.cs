@@ -1,5 +1,6 @@
 using Android.App;
 using Android.Content.PM;
+using Android.OS;
 using Avalonia.Android;
 
 namespace Flyback.Editor.Android;
@@ -10,4 +11,11 @@ namespace Flyback.Editor.Android;
     Theme = "@style/Flyback.Theme",
     MainLauncher = true,
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize)]
-public sealed class MainActivity : AvaloniaMainActivity;
+public sealed class MainActivity : AvaloniaMainActivity
+{
+    protected override void OnCreate(Bundle? savedInstanceState)
+    {
+        DeviceRequest.Take(Intent);
+        base.OnCreate(savedInstanceState);
+    }
+}

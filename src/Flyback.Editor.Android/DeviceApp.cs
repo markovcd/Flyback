@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Flyback.Core.Graph;
+using Flyback.Editor.Gallery;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,6 +21,21 @@ public sealed class DeviceApp : Avalonia.Application
         if (ApplicationLifetime is not ISingleViewApplicationLifetime device)
             throw new NotSupportedException("The Android editor runs in an activity.");
 
+        // The activity reads its intent after the application starts, so the editor waits for the activity.
+        var host = new Decorator();
+        host.AttachedToVisualTree += (_, _) =>
+        {
+            if (host.Child is null) host.Child = Editor();
+        };
+
+        device.MainView = host;
+
+        base.OnFrameworkInitializationCompleted();
+    }
+
+    private static EditorView Editor()
+    {
+        var request = DeviceRequest.Current;
         var plugins = PluginHost.LoadLinked(typeof(DeviceApp).Assembly);
 
         NodeCatalog.Install(plugins.Modules);
@@ -29,6 +45,7 @@ public sealed class DeviceApp : Avalonia.Application
             Plugins = plugins,
             Folders = DeviceFolders.Private(),
             Host = new() { PresetSite = Site.PresetSite.Built },
+            Launch = new() { Interpreted = request.Interpreted },
         }, services =>
         {
             services.AddSingleton<ITitle, DeviceTitle>();
@@ -39,8 +56,7 @@ public sealed class DeviceApp : Avalonia.Application
         var view = provider.View();
         var opened = false;
 
-        // The activity is a top level only once the view is in it.
-        view.AttachedToVisualTree += async (_, e) =>
+        view.AttachedToVisualTree += async (_, _) =>
         {
             if (opened || TopLevel.GetTopLevel(view) is not { } top) return;
 
@@ -49,10 +65,11 @@ public sealed class DeviceApp : Avalonia.Application
             view.Start();
 
             await provider.GetRequiredService<EditorOpened>().RunAsync();
+
+            if (request.Preset is { } preset)
+                provider.GetRequiredService<PresetSlot>().StartOn(preset);
         };
 
-        device.MainView = view;
-
-        base.OnFrameworkInitializationCompleted();
+        return view;
     }
 }

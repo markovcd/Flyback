@@ -19,6 +19,9 @@
     <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
 
+    <!-- Mono's JIT in Debug too: on its interpreter the sound's IL is never built (ADR-0076). -->
+    <UseInterpreter>false</UseInterpreter>
+
     <!-- As the page: the patch reader deserializes by reflection, so Flyback is not trimmed. -->
     <TrimMode>partial</TrimMode>
     <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
@@ -36,11 +39,12 @@
     <ProjectReference Include="..\Flyback.Editor\Flyback.Editor.csproj" />
   </ItemGroup>
 
-  <!-- The page's plugins: the ones that make modules. -->
+  <!-- The module plugins the page links, and the one that plays the sound. -->
   <Import Project="..\Flyback.Viewer.Web\LinkedPlugins.props" />
 
   <ItemGroup>
     <ProjectReference Include="@(WebPlugin)" LinkedPlugin="true" />
+    <ProjectReference Include="..\plugins\Flyback.Plugins.AndroidIO\Flyback.Plugins.AndroidIO.csproj" LinkedPlugin="true" />
   </ItemGroup>
 
 </Project>

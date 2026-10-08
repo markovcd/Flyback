@@ -42,6 +42,9 @@
     </Project>
   </Folder>
   <Folder Name="/src/plugins/">
+    <Project Path="src/plugins/Flyback.Plugins.AndroidIO/Flyback.Plugins.AndroidIO.csproj">
+      <Build Project="false" />
+    </Project>
     <Project Path="src/plugins/Flyback.Plugins.Dpapi/Flyback.Plugins.Dpapi.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Easy/Flyback.Plugins.Easy.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Effects/Flyback.Plugins.Effects.csproj" />

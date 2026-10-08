@@ -15,7 +15,8 @@ the Android SDK) is not in the gate image.
 A spike on an Android 16 tablet emulator (x86_64, software GL) answered the open question:
 the editor boots to the canvas on a shipped preset, and `GpuPreviewSurface` gets an
 OpenGL ES context from Avalonia and draws the picture at 49 frames a second, with no
-surface of Android's own.
+surface of Android's own. In a Release build the sound's IL runs on Mono's JIT, Sidebands
+rendering at 18× real time.
 
 ## Decision
 
@@ -29,6 +30,13 @@ used, a `.fbkp` does not install, and the plugins that wrap a CLI do not ship.
 **The picture is the desktop's.** `GpuPreviewSurface` runs on GLES as it is; the page's
 canvas surface (0162) is not needed.
 
+**The sound is a linked plugin.** `Flyback.Plugins.AndroidIO` registers an `AudioTrack`
+output, written from a thread of its own, the way LinuxIO is the desktop's. Line In and MIDI
+join it there.
+
+**It runs on Mono's JIT in every build.** Debug's default interpreter reports no dynamic
+code, so the sound's IL (0076) would never be built; `UseInterpreter=false` keeps it.
+
 **It keeps its files in the app's private folder.** Settings, presets, groups, thumbnails
 and recovery live under `FilesDir`, which no other app reads.
 
@@ -39,8 +47,7 @@ from Microsoft, since a distribution's packaged SDK takes no workloads.
 
 ## Consequences
 
-- Sound, Line In and MIDI on Android are linked-in backends still to write; until then the
-  editor is silent.
-- Whether the IL path runs under Mono's JIT on ARM64, and how fast, is measured on a device
-  before sound ships.
+- The IL path runs under Mono's JIT on the x86_64 emulator; on ARM64, and how fast, is
+  measured on a device before it ships.
+- Line In and MIDI on Android are still to write.
 - A phone needs a layout of its own; a tablet takes the desktop's once the touch bugs land.

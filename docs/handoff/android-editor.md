@@ -4,7 +4,7 @@ Planned on 2026-10-06, on `main` at `7a65ff53`. It is on TODO.md; take it off th
 delete this file, in the commit that lands the last step.
 
 - **Kind:** Plan
-- **Status:** In progress. Steps 1 and 2 of the order are done (ADR-0184).
+- **Status:** In progress. Steps 1 to 3 of the order are done on an emulator (ADR-0184).
 
 ## What is wanted
 
@@ -14,15 +14,27 @@ from the code, except where the order says done.
 
 ## Where it stands
 
-`src/Flyback.Editor.Android` boots to the canvas on an emulator and plays the picture on
-GLES at 49 fps, silent. The toolchain is user-local: a Microsoft .NET SDK in `~/.dotnet`
+`src/Flyback.Editor.Android` boots to the canvas on an emulator, draws the picture on GLES
+at 49 fps, and plays the sound through `Flyback.Plugins.AndroidIO`'s `AudioTrack`. The sound's
+IL runs under Mono's JIT: Sidebands renders at 18× real time and Whole band at 1.4 to 1.9×
+without oversampling, both in a Release build on the x86_64 emulator. ARM64 on a real device
+is unmeasured. The toolchain is user-local: a Microsoft .NET SDK in `~/.dotnet`
 (Ubuntu's packaged SDK takes no workloads) with the android workload, a JDK in
 `~/Android/jdk`, the SDK in `~/Android/Sdk` and an AVD named `flyback` (Pixel Tablet,
 API 36, x86_64). Build and install with `DOTNET_ROOT=~/.dotnet`, `JAVA_HOME` and
 `ANDROID_HOME` set:
-`dotnet build src/Flyback.Editor.Android -t:Install -p:RuntimeIdentifier=android-x64`.
-The emulator boots headless with `-no-window -gpu swiftshader_indirect`; it hangs and dies
-while a full test run has the machine loaded.
+`dotnet build src/Flyback.Editor.Android -t:Install`. Never pass `-p:RuntimeIdentifier`: it
+flows into every referenced project and rewrites their lock files. The build installs for
+the attached device's ABI.
+
+The emulator boots headless with `-no-window -gpu swiftshader_indirect -audio none`. With
+host audio its PulseAudio driver fails to start and QEMU segfaults a few minutes into
+playback; it also hangs and dies while a full test run has the machine loaded.
+
+A launch opens a preset and picks the interpreter from the intent:
+`adb shell am start -n app.flybackmodular.editor/crc64ce5bee3bb3e85030.MainActivity --es preset Sidebands --ez interpreted true`.
+The status bar's "sound renders at" is the only read-out of the sound's speed, and it shows
+only while IL plays.
 
 Not yet checked on a device: the dialogs (`WindowDialog`), the file pickers, the gallery's
 download from the preset site, and anything after a rotation.
@@ -51,13 +63,14 @@ download from the preset site, and anything after a rotation.
    APK; link the module plugins in with `PluginHost.LoadLinked`, as the page does. Installing
    a `.fbkp` is off. The CLI-wrapping assistant plugins (Claude Code, Codex) cannot run;
    OpenAi and Gemini could, once a keystore plugin holds the key (ADR-0158).
-4. **Sound.** The new code. An `AudioSetup` over `AudioTrack` or AAudio, linked in like the
-   page's `PageSpeakers`. Line In (`AudioRecord`, `RECORD_AUDIO`) and MIDI
+4. **Sound.** `Flyback.Plugins.AndroidIO`, linked in, registers an `AudioTrack` output,
+   written from a thread of its own as ALSA's is. Line In (`AudioRecord`, `RECORD_AUDIO`) and MIDI
    (`android.media.midi`) follow as later plugins against `IAudioInput` and the MIDI
    interface.
-5. **The IL path.** The sound's desktop speed is IL generated at run time (ADR-0076). .NET on
-   Android runs Mono with its JIT, so it should work, but it is unchecked, as is ARM64 speed
-   on a real phone. Without it the interpreter plays, five times slower per op (ADR-0160).
+5. **The IL path.** The sound's desktop speed is IL generated at run time (ADR-0076). It runs
+   under Mono's JIT. A Debug build runs Mono's interpreter by default, where
+   `RuntimeFeature.IsDynamicCodeCompiled` is false and no IL is built, so the project sets
+   `UseInterpreter=false`. ARM64 speed on a real phone is unchecked.
 6. **Trimming.** Release builds trim, and the patch reader deserializes by reflection: take
    the page's `TrimMode=partial`.
 7. **Touch, the bulk.** ADR-0165 makes a finger a mouse button, but
@@ -79,7 +92,8 @@ download from the preset site, and anything after a rotation.
 
 1. ~~A spike: the app boots to the node canvas on an emulator.~~ Done.
 2. ~~The picture on GLES.~~ Done: the desktop's `GpuPreviewSurface` draws as it is.
-3. Sound through `AudioTrack`, and the IL check on a device.
+3. ~~Sound through `AudioTrack`, and the IL check.~~ Done on the emulator; ARM64 speed on a
+   device is still to measure.
 4. The touch bugs, then a tablet layout.
 5. A phone layout, Line In and MIDI.
 
