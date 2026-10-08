@@ -160,7 +160,7 @@ A single plugin may call several. The Voice plugin adds eleven modules and four 
 
 ### Decision models
 
-An `IDecisionModel` answers a `DecisionRequest`: a state, which is text, and up to 64 questions about it, each a `Question.Choice` of labeled options, a `Question.Score` on an ordered scale or a `Question.YesNo`. Each comes back as an `Answer` with its probabilities, so a feature can act only when the model is sure. `SystemOneWire` reads and writes the `POST /v1/systemone` format, and the shipped Jev plugin is the whole of an HTTP one. A model that runs here and needs files also implements `IPreparedModel`: it names each file with its address, size and SHA-256, and the host asks before downloading them into the folder it passes as `DecisionConfig.Folder`, refusing any file that hashes otherwise. The plugin itself never downloads anything.
+An `IDecisionModel` answers a `DecisionRequest`: a state, which is text, and up to 64 questions about it, each a `Question.Choice` of labeled options, a `Question.Score` on an ordered scale or a `Question.YesNo`. Each comes back as an `Answer` with its probabilities, so a feature can act only when the model is sure. `SystemOneWire` reads and writes the `POST /v1/systemone` format, and the shipped Decision server plugin is the whole of an HTTP one. A model that runs here and needs files also implements `IPreparedModel`: it names each file with its address, size and SHA-256, and the host asks before downloading them into the folder it passes as `DecisionConfig.Folder`, refusing any file that hashes otherwise. The plugin itself never downloads anything.
 
 ## 5. Authoring a module
 

@@ -6,8 +6,8 @@ public sealed class SystemOnePlugin : IFlybackPlugin
 {
     public PluginInfo Info { get; } = new(
         "flyback.systemone",
-        "Jev",
-        "Answers the editor's questions through an endpoint that speaks the System One format: TypeSafe's Jev, or a laya-serve.");
+        "Decision server",
+        "Answers the editor's questions through an endpoint that speaks the System One format: TypeSafe's hosted model, or a laya-serve.");
 
     public void Register(IPluginRegistry registry) => registry.AddDecisionModel(new SystemOneModel());
 }

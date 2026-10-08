@@ -7,7 +7,7 @@
 ## Context
 
 Every judgment Flyback makes about words is a substring match, a count or the chat
-assistant. Jev (TypeSafe, hosted) and Laya (Convai Innovations, open weights) answer
+assistant. TypeSafe's hosted model and Laya (Convai Innovations, open weights) answer
 typed questions about a state in one forward pass, with a probability each, and both
 speak `POST /v1/systemone`. A probability is something a feature can gate on; prose is not.
 
@@ -46,6 +46,6 @@ works the version out from the surface.
 
 ## Consequences
 
-- The Jev plugin is in the box and asks nothing until chosen.
+- The Decision server plugin is in the box and asks nothing until chosen.
 - The Laya plugin, ONNX in-process, is to follow once its export is published.
 - A feature that asks has to work as well with no answer as without the feature.

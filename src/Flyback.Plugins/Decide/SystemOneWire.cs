@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 namespace Flyback.Plugins.Decide;
 
 /// <summary>
-/// The <c>POST /v1/systemone</c> format Jev and Laya both speak: a request of a state and
+/// The <c>POST /v1/systemone</c> format TypeSafe's hosted model and Laya both speak: a request of a state and
 /// its questions, and an answer of one probability-bearing answer per question.
 /// </summary>
 /// <remarks>The wire calls a yes-no question <c>noul</c>. Readers never throw; they say what was wrong.</remarks>

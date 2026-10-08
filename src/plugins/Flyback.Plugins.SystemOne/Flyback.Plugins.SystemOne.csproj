@@ -5,9 +5,9 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
 
     <!-- What the install dialog and the plugins window show. -->
-    <Product>Jev</Product>
+    <Product>Decision server</Product>
     <Authors>Flyback</Authors>
-    <Description>Answers the editor's questions through an endpoint that speaks the System One format: TypeSafe's Jev, or a laya-serve.</Description>
+    <Description>Answers the editor's questions through an endpoint that speaks the System One format: TypeSafe's hosted model, or a laya-serve.</Description>
   </PropertyGroup>
 
   <ItemGroup>

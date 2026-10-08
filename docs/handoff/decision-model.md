@@ -10,13 +10,13 @@ Landed ([ADR-0186](../adr/0186-a-decision-model-answers-typed-questions-behind-t
 the contract in `src/Flyback.Plugins/Decide` (`IDecisionModel`, `IPreparedModel`,
 `ModelFile`, the questions and answers, `SystemOneWire`), `Decisions` as the one door,
 `ModelStore` downloading pinned files, `DecisionSettings` in the `decisions` section of
-`settings.json`, the Jev plugin (`src/plugins/Flyback.Plugins.SystemOne`), `flyback-cli
+`settings.json`, the Decision server plugin (`src/plugins/Flyback.Plugins.SystemOne`), `flyback-cli
 decide`, Settings → Decisions, and the uses: the module list by meaning (`ModuleFinder`,
 `modules --find`), complaints in order (`IssueTriage`, `check --triage`, the status line)
 and the assistant's messages read before sending (`TurnReading`).
 
 Until somebody chooses, questions go to the likeliest installed model that sends nothing
-anywhere. Today none is installed, so nothing is asked until Jev is chosen. Laya is the
+anywhere. Today none is installed, so nothing is asked until the Decision server is chosen. Laya is the
 model that makes the default do something.
 
 Left out of the landed work on purpose:
@@ -39,7 +39,7 @@ checkpoints are in the Hugging Face cache. Serve it on loopback only; its defaul
 LAYA_DEVICE=cpu LAYA_HOST=127.0.0.1 LAYA_PORT=8000 LAYA_MODELS=english,typed-decisions LAYA_PRELOAD=1 ~/laya-venv/bin/laya-serve
 ```
 
-The Jev plugin reaches it with its endpoint set to `http://localhost:8000` and no key. A request's
+The Decision server plugin reaches it with its endpoint set to `http://localhost:8000` and no key. A request's
 `model` names the checkpoint (`english`, `multilingual`, `typed-decisions`); anything else, the
 plugin's default `jev-latest` included, is routed by the text's language, so English text gets
 `english`. The answers carry fields `SystemOneWire` does not read (`answer_confidence`, `action`,
@@ -125,7 +125,7 @@ one Python step, on the maintainer's machine only, and the README's build sectio
 ### The plugin: `src/plugins/Flyback.Plugins.Laya`
 
 - `LayaPlugin`, and `LayaModel : IDecisionModel, IPreparedModel`: `Credential` and
-  `Endpoint` null, `Priority` above Jev's 10, `Unavailable` only `File.Exists`, and the
+  `Endpoint` null, `Priority` above the Decision server's 10, `Unavailable` only `File.Exists`, and the
   ONNX session built on the first `DecideAsync`, never at `Register`.
 - `LayaFiles`: the three files with their pinned revision, sizes and SHA-256s.
 - `LayaTokenizer`: `Microsoft.ML.Tokenizers` 2.0, `BpeTokenizer.Create(BpeOptions)` with
@@ -163,7 +163,7 @@ Python's answers behind `Assert.SkipWhen(!File.Exists(model), "no Laya model on 
 machine")`. `Plugins.Tests`: it loads, `Unavailable` says "not downloaded" with no model
 on disk and no session built. By hand once the export is up: `flyback-cli decide
 --prepare`, then `flyback-cli decide "we were billed twice" --yes-no "Is this about
-money?" --json`, and the same through a `laya-serve` on the Jev plugin, to compare.
+money?" --json`, and the same through a `laya-serve` on the Decision server plugin, to compare.
 
 ### Docs, in the same commit
 

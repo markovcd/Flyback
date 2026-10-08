@@ -7,7 +7,7 @@ using Flyback.Plugins.Settings;
 namespace Flyback.Plugins.SystemOne;
 
 /// <summary>
-/// A decision model behind <c>POST /v1/systemone</c>: TypeSafe's hosted Jev by default, or
+/// A decision model behind <c>POST /v1/systemone</c>: TypeSafe's hosted model by default, or
 /// any laya-serve somebody points the endpoint at.
 /// </summary>
 public sealed class SystemOneModel : IDecisionModel
@@ -20,7 +20,7 @@ public sealed class SystemOneModel : IDecisionModel
 
     public string Id => "systemone";
 
-    public string Name => "Jev";
+    public string Name => "Decision server";
 
     /// <summary>Below a model that runs here, which answers without sending anything anywhere.</summary>
     public int Priority => 10;

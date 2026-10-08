@@ -456,7 +456,7 @@ folder out from under it.
 | Picture, Voice, Effects, Mastering | Modules and presets | none |
 | ClaudeCode | Patch assistant over the installed `claude` program, so a subscription pays and no key exists | none: a process with JSON lines in and out |
 | Codex | The same over the installed `codex` program and a ChatGPT sign-in ([0173](adr/0173-codex-is-an-assistant-the-same-way-and-gemini-is-not.md)) | none: a process with text in and JSON lines out |
-| SystemOne | A decision model over HTTP: TypeSafe's Jev, or a laya-serve ([0186](adr/0186-a-decision-model-answers-typed-questions-behind-the-plugin-boundary.md)) | none: hand-written JSON over HTTP |
+| SystemOne | A decision model over HTTP, the Decision server: TypeSafe's hosted model, or a laya-serve ([0186](adr/0186-a-decision-model-answers-typed-questions-behind-the-plugin-boundary.md)) | none: hand-written JSON over HTTP |
 | OpenAi, Gemini | Patch assistants ([0033](adr/0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md), [0066](adr/0066-a-second-wire-format-so-one-model-can-hear.md)) | none: hand-written JSON over HTTP |
 
 ClaudeCode and Codex share `src/plugins/Shared/Programs`, the `<calls>` protocol, the session, the process
