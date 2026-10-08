@@ -22,8 +22,9 @@ the name band has scrolled past, and from the start on an inspector under 200 dp
 plate is not shown at all and the description moves into the menu. `InspectorFold` decides.
 
 **The ⋯ menu holds every action as a glyph with a word under it**, in Module and Selection
-groups, with Rename among them, since a finger cannot find a double-click. Tapping the name opens
-it too.
+groups, with Rename among them, since a finger cannot find a double-click. Tapping the name, or holding
+a finger on the header, opens it too. Under a finger the inspector's scrollbar stays up, since
+nothing hovers to bring a hidden one back.
 
 **The header and the menu mirror the plate's own buttons** by name (`PlateActions`) rather
 than build actions of their own: a tile presses the button it stands for, so what is offered and

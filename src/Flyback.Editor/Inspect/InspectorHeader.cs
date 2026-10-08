@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Ui.Controls;
@@ -42,7 +43,22 @@ internal sealed class InspectorHeader : Border
         BoxShadow = new BoxShadows(new BoxShadow { OffsetY = 1, Color = Color.FromArgb(0x73, 0, 0, 0) });
         IsVisible = false;
         Child = line;
+
+        // A finger held on the header asks for the menu, as tapping the name does.
+        AddHandler(HoldingEvent, (_, e) =>
+        {
+            if (e.HoldingState != HoldingState.Started) return;
+
+            e.Handled = true;
+            Held();
+        }, handledEventsToo: true);
     }
+
+    /// <summary>A finger has been held on the header: the menu opens.</summary>
+    internal void Held() => menu?.Open(this);
+
+    /// <summary>The menu the header opens, or null while it stands for nothing.</summary>
+    internal PlateMenu? Menu => menu;
 
     /// <summary>The plate this header stands for, or null while it stands for none.</summary>
     public ModulePlate? Plate => shown;

@@ -31,12 +31,21 @@ internal sealed class PlateMenu
         this.rename = rename;
     }
 
+    /// <summary>Whether the menu is showing.</summary>
+    public bool IsOpen { get; private set; }
+
     /// <summary>Opens the menu over <paramref name="from"/>, above it where there is room.</summary>
     public void Open(Control from)
     {
+        // A held finger opens it, and lifting is then a tap on the name as well.
+        if (IsOpen) return;
+
+        IsOpen = true;
+
         var flyout = new Flyout { Placement = PlacementMode.TopEdgeAlignedLeft };
 
         flyout.Content = Content(close: flyout.Hide);
+        flyout.Closed += (_, _) => IsOpen = false;
         flyout.ShowAt(from);
     }
 
