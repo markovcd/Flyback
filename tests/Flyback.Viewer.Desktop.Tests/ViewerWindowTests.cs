@@ -111,12 +111,60 @@ public class ViewerWindowTests : UiTest
             .Patch;
     }
 
+    /// <summary>A sound input the run listens through, and the microphone it opens: one object, so the test can see it listening.</summary>
+    private sealed class Microphone : IAudioInput, IAudioCapture
+    {
+        public string Id => "fake";
+
+        public string Name => "Fake";
+
+        public int Priority => 0;
+
+        public bool IsSupported => true;
+
+        public int SampleRate => GlobalConstants.SampleRate;
+
+        public int Channels => 2;
+
+        public bool IsRunning { get; private set; }
+
+        public IAudioCapture Create(AudioFormat format, Flyback.Plugins.Settings.SettingValues settings) => this;
+
+        public void Start(AudioCaptureCallback deliver) => IsRunning = true;
+
+        public void Stop() => IsRunning = false;
+
+        public void Dispose() => Stop();
+    }
+
+    private static Patch ThroughLineIn()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var line = builder.Add(NodeCatalog.LineInTypeId, 0, 0);
+        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+
+        return builder.Wire(line, 0, speaker, NodeCatalog.OutputLeftPort).Patch;
+    }
+
+    [AvaloniaFact]
+    public void A_line_in_listens_through_the_runs_sound_input()
+    {
+        var microphone = new Microphone();
+        var window = Open(Files(ThroughLineIn()), Options(), new Loopback(), microphone);
+
+        window.Player.Sounding.ShouldBeTrue();
+        window.Player.Audio.IsRunning.ShouldBeTrue();
+        window.Player.Audio.Live.Reads(LineInSignal.Left).ShouldBeTrue();
+        microphone.IsRunning.ShouldBeTrue();
+    }
+
     /// <summary>Software drawing, since headless has no graphics card.</summary>
     private static ViewerOptions Options() => new() { Gpu = false, Size = new PixelSize(320, 180) };
 
-    private ViewerWindow Open(Opened opened, ViewerOptions options, IAudioDevice? device = null)
+    private ViewerWindow Open(Opened opened, ViewerOptions options, IAudioDevice? device = null, IAudioInput? input = null)
     {
-        var window = Owned(ViewerServices.Window(new ViewerLaunch(opened, device, options)));
+        var window = Owned(ViewerServices.Window(new ViewerLaunch(opened, device, options) { Input = input }));
 
         window.Show();
         Settle(window);

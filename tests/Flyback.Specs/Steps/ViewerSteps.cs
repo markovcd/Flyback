@@ -13,6 +13,12 @@ public sealed class ViewerSteps(ViewerRun viewer)
     [When("the viewer plays it")]
     public void WhenPlayed() => viewer.Play();
 
+    [When("the viewer plays it with a sound input plugged in")]
+    public void WhenPlayedWithAnInput() => viewer.PlayWithAnInput();
+
+    [Then("the viewer is listening to the sound input")]
+    public void ThenListening() => viewer.Input.ShouldNotBeNull().IsRunning.ShouldBeTrue();
+
     [When("the viewer plays it with {string}")]
     public void WhenPlayedWith(string flags) => viewer.Play(flags.Split(' '));
 

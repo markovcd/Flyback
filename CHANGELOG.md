@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A Line In in `flyback-viewer` hears the sound input, as it does in the editor.
+
 - `flyback-cli render --size` takes the names the viewer takes, `720p`, `1080p` or `square`, beside WIDTHxHEIGHT.
 
 - A Drawings plugin on the preset site plays an SVG, an OBJ model or a PNG's outlines as sound that draws it on a Beam, with Rotate 3D, Translate 3D, Scale 3D and Perspective to turn and project a model, and a Wireframe preset that spins a cube.

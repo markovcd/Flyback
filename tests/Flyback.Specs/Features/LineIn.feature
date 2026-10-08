@@ -30,6 +30,11 @@ Feature: A Line In plays what the microphone hears
     When flyback-cli renders the preset "Visualizer" as "heard.wav" for 1 seconds, --input voice.wav
     Then "heard.wav" is silent
 
+  Scenario: A Line In in the viewer listens to the sound input
+    Given a Line In is patched into the speakers
+    When the viewer plays it with a sound input plugged in
+    Then the viewer is listening to the sound input
+
   Scenario: A Line In in the web viewer plays what the page's microphone hears
     Given a Line In is patched into the speakers
     And the web viewer's microphone hears a 440 Hz tone

@@ -49,6 +49,7 @@ internal static class ViewerServices
         services.AddSingleton<WallClock>();
 
         services.AddSingleton(launch.Instruments);
+        services.AddSingleton(launch.Plugins);
 
         // A run with no sound plays nothing through a silent device.
         services.AddSingleton(new AudioSetup(launch.Device ?? new SilentAudioDevice()));
@@ -57,6 +58,13 @@ internal static class ViewerServices
         services.AddSingleton(_ => launch.Pictured ? new PreviewHost() : null!);
 
         services.AddTransport();
+
+        // Nothing is opened by this either: the microphone is listened to only while a running sound has a Line In.
+        services.AddSingleton(sp => new LineIn(
+            launch.Plugins,
+            sp.GetRequiredService<IAudioEngine>(),
+            () => launch.Settings,
+            launch.Input));
 
         services.AddSingleton<ViewerPlayer>();
         services.AddSingleton<ViewerWindow>();

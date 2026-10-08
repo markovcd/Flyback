@@ -105,6 +105,8 @@ internal static class Program
             settings.Takeover)
         {
             Instruments = plugins.PreferredMidiInput,
+            Plugins = plugins,
+            Settings = settings,
         };
 
         try

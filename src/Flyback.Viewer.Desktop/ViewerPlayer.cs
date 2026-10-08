@@ -58,6 +58,7 @@ internal sealed class ViewerPlayer : IDisposable
         MidiHub midi,
         ControlHub controls,
         Transport transport,
+        LineIn lineIn,
         WallClock clock)
     {
         var (opened, device, options, takeover) = launch;
@@ -78,6 +79,7 @@ internal sealed class ViewerPlayer : IDisposable
         audio.Aspect = SynthRenderer.AspectOf(options.Size.Width, options.Size.Height);
         audio.Oversample = options.Oversample;
         new LiveOversample(audio, () => options.StepDown, message => Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {message}")).Start();
+        lineIn.Trouble += message => Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {message}");
 
         this.transport = transport;
         transport.Volume = options.Volume;

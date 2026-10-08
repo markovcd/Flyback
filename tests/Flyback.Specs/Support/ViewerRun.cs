@@ -7,6 +7,7 @@ using Avalonia.VisualTree;
 using Flyback.Engine.Graph;
 using Flyback.Ui;
 using Flyback.Ui.Controls;
+using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 using Flyback.Viewer.Desktop;
 using Flyback.Host;
@@ -24,8 +25,23 @@ public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDispos
 
     private ViewerWindow? window;
 
-    /// <summary>Plays the patch as <c>flyback-viewer patch.fbk</c> with <paramref name="arguments"/> after it.</summary>
-    public void Play(params string[] arguments)
+    /// <summary>The sound input plugged in for the run, or null where none was.</summary>
+    public FakeSoundInput? Input { get; private set; }
+
+    /// <summary>
+    /// Plays the patch with a sound input plugged in, for a Line In to listen through,
+    /// on a device that runs without a sound card: a Line In is heard only while the sound plays.
+    /// </summary>
+    public void PlayWithAnInput(params string[] arguments)
+    {
+        Input = new FakeSoundInput();
+        Play(new SilentAudioDevice(), arguments);
+    }
+
+    /// <summary>Plays the patch as <c>flyback-viewer patch.fbk</c> with <paramref name="arguments"/> after it, with no sound device.</summary>
+    public void Play(params string[] arguments) => Play(null, arguments);
+
+    private void Play(IAudioDevice? device, params string[] arguments)
     {
         var path = Path.Combine(folder.FullName, "patch.fbk");
         File.WriteAllText(path, PatchIO.ToJson(context.Patch));
@@ -35,7 +51,7 @@ public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDispos
         ViewerOptions? settled = null;
 
         ViewerArguments.Build(settings, options => { settled = options; return 0; }, error)
-            .Parse([path, "--cpu", "--no-audio", .. arguments])
+            .Parse([path, "--cpu", .. device is null ? ["--no-audio"] : Array.Empty<string>(), .. arguments])
             .Invoke();
 
         var options = settled ?? throw new InvalidOperationException($"flyback-viewer refused: {error}");
@@ -45,7 +61,7 @@ public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDispos
 
         Run(() =>
         {
-            window = ViewerServices.Window(new ViewerLaunch(opened, null, options));
+            window = ViewerServices.Window(new ViewerLaunch(opened, device, options) { Input = Input });
             window.Show();
             Settle();
         });
@@ -113,6 +129,8 @@ public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDispos
 
     public void Dispose()
     {
+        Input?.Dispose();
+
         try
         {
             if (window is { } open)
