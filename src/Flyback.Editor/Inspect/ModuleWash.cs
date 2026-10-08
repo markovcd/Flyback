@@ -58,8 +58,8 @@ internal sealed class ModuleWash : Control
     private bool moving, ticking;
 
     /// <summary>
-    /// How far down the panel the plate reaches, so the mark starts under it rather
-    /// than behind the name.
+    /// How far down the panel the plate reaches, less what has scrolled, so the mark starts
+    /// under it rather than behind the name.
     /// </summary>
     public double Below
     {
@@ -74,9 +74,9 @@ internal sealed class ModuleWash : Control
     }
 
     /// <summary>
-    /// How deep the band behind the name runs — <see cref="ModulePlate.Band"/>. The
-    /// band is drawn here rather than there so that it fades with everything else
-    /// instead of ending on its own line.
+    /// How deep the band behind the name runs — <see cref="ModulePlate.Band"/> less what has
+    /// scrolled, or the header's depth while it shows. The band is drawn here rather than there
+    /// so that it fades with everything else instead of ending on its own line.
     /// </summary>
     public double BandHeight
     {

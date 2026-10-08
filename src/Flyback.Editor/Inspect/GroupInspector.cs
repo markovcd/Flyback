@@ -29,6 +29,11 @@ internal sealed class GroupInspector(
     SocketRows socketRows,
     MeasuredRows measured)
 {
+    /// <summary>What a box is, said at the head of its panel.</summary>
+    private const string BoxDescription =
+        "Several modules drawn as one. Nothing about the patch changes — the modules "
+        + "are where they were and so are the wires between them.";
+
     public void Build(NodeGroup group)
     {
         const double socketGutter = 140;
@@ -55,10 +60,20 @@ internal sealed class GroupInspector(
         // Under the name, above the description, where a module's own row sits.
         var above = plate.Under.Children.Count;
 
+        plate.Face = new PlateFace(
+            group.Title(),
+            group.Name is null ? "Group" : $"Group · {group.Counted}",
+            ModuleGlyphs.Group,
+            new SolidColorBrush(Colors.Label),
+            BoxDescription,
+            editor.History.Locked
+                ? null
+                : new PlateName(() => group.Name, group.Counted, NodeGroup.NameLimit, typed => group.Rename(typed), () => editor.History.Record()));
+
         surface.Panel.Children.Add(new TextBlock
         {
-            Text = "Several modules drawn as one. Nothing about the patch changes — the modules "
-                 + "are where they were and so are the wires between them.",
+            Name = InspectorFold.DescriptionName,
+            Text = BoxDescription,
             TextWrapping = TextWrapping.Wrap,
             Foreground = Text.Muted,
             FontSize = Text.Body,

@@ -406,24 +406,21 @@ internal sealed class ShellLayout(
         Grid.SetColumn(splitter, column);
         Grid.SetRow(splitter, 1);
 
-        var reading = new DockPanel();
         var plateHost = inspector.PlateHost;
         var wash = inspector.Wash;
-        DockPanel.SetDock(plateHost, Dock.Top);
-        reading.Children.Add(plateHost);
-        reading.Children.Add(new ScrollViewer { Content = inspector.Panel, Background = Brushes.Transparent });
+
+        // The plate scrolls with the rows it heads, and the header pins in once it has gone
+        // or where there is no room for it at all.
+        var rows = new StackPanel { Children = { plateHost, inspector.Panel } };
+        var scroller = new ScrollViewer { Content = rows, Background = Brushes.Transparent };
+        var reading = new Panel { Children = { scroller, inspector.Header } };
 
         var inspectorBorder = inspectorBox = new Border
         {
             Background = new SolidColorBrush(Colors.Panel),
             Child = new Panel { Children = { wash, reading } },
         };
-        plateHost.PropertyChanged += (_, e) =>
-        {
-            if (e.Property != Visual.BoundsProperty) return;
-            wash.Below = plateHost.Bounds.Height;
-            wash.BandHeight = (plateHost.Content as ModulePlate)?.Band ?? 0;
-        };
+        _ = new InspectorFold(reading, scroller, rows, plateHost, inspector.Header, wash, inspector.Panel);
         Grid.SetColumn(inspectorBorder, column);
         Grid.SetRow(inspectorBorder, 2);
 

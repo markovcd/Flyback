@@ -19,9 +19,9 @@ namespace Flyback.Editor.Inspect;
 /// one surface fading out once, where a band drawn here would end on a line of its
 /// own. What this holds is the layout and the inks that go with that surface.
 /// <para>
-/// Pinned above the scroller rather than the first thing in it. What a block is
-/// and the buttons that act on it are wanted at every scroll position; the reading
-/// is what moves.
+/// The first thing in the scroller, so the reading can always be reached; once it has
+/// scrolled away, or where there is no room for it, <see cref="InspectorHeader"/> stands
+/// in for it (ADR-0187).
 /// </para>
 /// <para>
 /// Given the unselected colors although what it shows is always selected. The head
@@ -117,6 +117,9 @@ internal sealed class ModulePlate : Decorator
     /// size it wants, and nothing else has a number that has to agree.
     /// </summary>
     public double Band => name.Bounds.Bottom + name.Margin.Bottom;
+
+    /// <summary>What the plate says about its block, for what stands in for it on a short panel.</summary>
+    public PlateFace? Face { get; set; }
 
     /// <summary>What the name is written in.</summary>
     public IBrush Ink { get; }

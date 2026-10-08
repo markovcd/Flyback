@@ -6,8 +6,8 @@ using Avalonia.Interactivity;
 namespace Flyback.Editor.Inspect;
 
 /// <summary>
-/// The three controls the inspector draws on: the wash behind the column, the
-/// plate docked above it, and the rows, which scroll.
+/// The controls the inspector draws on: the wash behind the column, the plate heading the
+/// rows, the rows, and the header that stands in for the plate once it has scrolled away.
 /// </summary>
 internal sealed class InspectorSurface
 {
@@ -35,11 +35,11 @@ internal sealed class InspectorSurface
     /// </summary>
     public ModuleWash Wash { get; } = new();
 
-    /// <summary>
-    /// Where the plate stands: above the scroller rather than in it, so the name and
-    /// the buttons are there at every scroll position.
-    /// </summary>
+    /// <summary>Where the plate stands: at the head of the rows, scrolling with them.</summary>
     public ContentControl PlateHost { get; } = new() { Name = "plate-host" };
+
+    /// <summary>The plate folded to one pinned line, shown where the plate is not.</summary>
+    public InspectorHeader Header { get; } = new();
 
     public InspectorSurface(Document document)
     {

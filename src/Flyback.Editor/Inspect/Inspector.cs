@@ -76,6 +76,7 @@ internal sealed class Inspector
         Panel = surface.Panel;
         Wash = surface.Wash;
         PlateHost = surface.PlateHost;
+        Header = surface.Header;
 
         socketRows.Settled += (_, _) => inspectorShape = InspectorShape.Of(editor);
     }
@@ -144,8 +145,11 @@ internal sealed class Inspector
     /// <summary>The block's face, behind the whole column.</summary>
     public ModuleWash Wash { get; }
 
-    /// <summary>The plate, docked above the rows.</summary>
+    /// <summary>The plate, heading the rows.</summary>
     public ContentControl PlateHost { get; }
+
+    /// <summary>The plate folded to one pinned line.</summary>
+    public InspectorHeader Header { get; }
 
     /// <summary>
     /// What the panel's rows are, as against what is in them: which module is being
@@ -248,9 +252,20 @@ internal sealed class Inspector
         // be grouped.
         var above = plate.Under.Children.Count;
 
+        plate.Face = new PlateFace(
+            CanvasPainter.Heading(node, def),
+            def.Category,
+            ModuleGlyphs.For(def),
+            new SolidColorBrush(Colors.Palette(def).Accent),
+            def.Description,
+            editor.History.Locked
+                ? null
+                : new PlateName(() => node.Name, def.Name, NodeInstance.NameLimit, typed => node.Rename(def, typed), () => editor.History.Record()));
+
         if (!string.IsNullOrEmpty(def.Description))
             Panel.Children.Add(new TextBlock
             {
+                Name = InspectorFold.DescriptionName,
                 Text = def.Description,
                 TextWrapping = TextWrapping.Wrap,
                 Foreground = ModulePlate.BodyQuiet(def),
