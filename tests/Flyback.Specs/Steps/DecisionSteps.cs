@@ -8,15 +8,22 @@ using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
+using Flyback.Specs.Support;
 using Reqnroll;
 using Shouldly;
 
 namespace Flyback.Specs.Steps;
 
-/// <summary><c>flyback-cli decide</c> over the decision models laid out under <c>plugins\</c>, with settings of the scenario's own.</summary>
+/// <summary>
+/// <c>flyback-cli decide</c> over the decision models laid out under <c>plugins\</c>, and the
+/// editor's Decisions settings, with settings of the scenario's own.
+/// </summary>
 [Binding]
-public sealed class DecisionSteps : IDisposable
+public sealed class DecisionSteps(EditorDriver editor) : IDisposable
 {
+    /// <summary>The For picker's wording for <see cref="DecisionUse.Modules"/>, and for the model's own settings.</summary>
+    private const string ForModules = "Finding a module by meaning", ForEveryUse = "Every use";
+
     private readonly DirectoryInfo folder = Directory.CreateTempSubdirectory("flyback-decide-specs");
 
     private PluginCatalog? catalog;
@@ -79,6 +86,37 @@ public sealed class DecisionSteps : IDisposable
             Path.Combine(folder.FullName, "models"));
 
         code.ShouldBe(Exit.Ok, error.ToString());
+    }
+
+    [When("the settings window sets the model to {string} for finding modules alone")]
+    public void WhenTheWindowSetsForModules(string model)
+    {
+        OpenDecisions();
+        editor.PickDecisionUse(ForModules);
+        editor.TypeSetting("model", model);
+        editor.Answer("Save");
+    }
+
+    [Then("the settings window shows the model as {string} for finding modules, and nothing set for every use")]
+    public void ThenTheWindowShows(string model)
+    {
+        OpenDecisions();
+        editor.PickDecisionUse(ForModules);
+        editor.SettingText("model").ShouldBe(model);
+        editor.PickDecisionUse(ForEveryUse);
+        editor.SettingText("model").ShouldBeEmpty();
+    }
+
+    /// <summary>Opens the editor on the scenario's models and settings, then its settings window on the Decisions tab.</summary>
+    private void OpenDecisions()
+    {
+        editor.Setup = editor.Setup with
+        {
+            Folders = editor.Setup.Folders with { SettingsPath = SettingsPath },
+            Plugins = catalog.ShouldNotBeNull(),
+        };
+
+        editor.OpenSettings("Decisions");
     }
 
     [When("flyback-cli finds the modules {string} describes")]

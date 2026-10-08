@@ -693,6 +693,17 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
             tabs.SelectedItem = tabs.Items.OfType<TabItem>().Single(item => (item.Header as TextBlock)?.Text == tab);
         });
 
+    /// <summary>Points the Decisions tab's For picker at the use so worded, on the settings window that is up.</summary>
+    public void PickDecisionUse(string wording) =>
+        DoWindow((open, _) => Named<ComboBox>(open, "decisionUse").SelectedItem = wording);
+
+    /// <summary>Types into the box so named on the settings window that is up.</summary>
+    public void TypeSetting(string name, string value) =>
+        DoWindow((open, _) => Named<TextBox>(open, name).Text = value);
+
+    /// <summary>What the box so named on the settings window that is up holds.</summary>
+    public string SettingText(string name) => ReadWindow(open => Named<TextBox>(open, name).Text ?? string.Empty);
+
     /// <summary>The labels of the switches the page's gear offers, opening its panel.</summary>
     public IReadOnlyList<string> PageSettings => ReadWindow(open =>
     {

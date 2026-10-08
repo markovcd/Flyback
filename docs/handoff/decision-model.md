@@ -74,7 +74,7 @@ messages.
 | The same in three other orders | — | 3 to 8 of 14 first |
 | Two orders in one request, the margin over "none" averaged | — | 8/14 first, 8–9/14 in the top three, about 5.5 s |
 | Three orders averaged | — | no better, 9.4 s |
-| Catalog order and its reverse, averaged (on `main`, `--for modules` on typed-decisions) | — | 8/14 first, 9/14 in the top three, 6 s warm; the first three asks after a start miss the 10 s deadline |
+| Catalog order and its reverse, averaged (on `main`, `--for modules` on typed-decisions) | — | 8/14 first, 9/14 in the top three, 6 s, from the first ask on with `LAYA_PRELOAD=1` |
 | Routing: module questions told to answer / others wrongly told (on `main`) | 4/4, 0/7 | 0/4, 0/7 |
 
 - A choice of seventeen categories was close to random, and modules described in full drew
@@ -93,16 +93,20 @@ messages.
 ### Next
 
 Landed: each ask names its use and the settings may lay a checkpoint over it, the module search
-asks two orders and averages, `decide --set`, `--for` and `--save` set a model up, and the
-Decisions and Assistant pages take a key through one control, `Settings/KeyRows`. Left:
+asks two orders and averages, `decide --set`, `--for` and `--save` set a model up, the
+Decisions and Assistant pages take a key through one control, `Settings/KeyRows`, and
+Settings → Decisions shows and keeps a use's settings through its **For** picker, with what each
+use lays over listed under the form.
 
-- **Settings → Decisions shows a use's settings**: today only the command line writes them, and the
-  editor keeps them untouched when it saves.
-- **A start that warms the model**: the first asks after laya-serve starts miss the deadline.
-- **Jev, an alternative to Laya**, comes later as a model of its own. The name is kept for it and
-  names nothing else.
+Ruled out: **a start that warms the model.** Measured twice on 2026-10-08 from a cold
+laya-serve started with `LAYA_PRELOAD=1`, the first module search answered in 5.7 s and 6.1 s,
+the same as the steady 6 s, and a yes-no in 0.3 s. The misses seen earlier were not the
+server's warm-up; nothing in Flyback needs to ask ahead.
 
-Measure each against the server with `scripts/decide-bench.py` before it lands.
+Left: **Jev, an alternative to Laya**, comes later as a model of its own. The name is kept for it
+and names nothing else.
+
+Measure anything new against the server with `scripts/decide-bench.py` before it lands.
 
 ## What is left: Laya, in the box
 

@@ -37,11 +37,14 @@ internal sealed class DecisionSettings
         Choices.TryGetValue(model, out var held) ? new SettingValues(held) : SettingValues.None;
 
     /// <summary>What is set for one model when it is asked for <paramref name="use"/>: its own settings, with the use's laid over them.</summary>
-    public SettingValues Of(string model, string? use)
-    {
-        var values = Of(model);
+    public SettingValues Of(string model, string? use) => Laid(Of(model), Over(model, use));
 
-        foreach (var (key, value) in Over(model, use).All) values = values.With(key, value);
+    /// <summary><paramref name="under"/> with every pair of <paramref name="over"/> laid on it.</summary>
+    public static SettingValues Laid(SettingValues under, SettingValues over)
+    {
+        var values = under;
+
+        foreach (var (key, value) in over.All) values = values.With(key, value);
 
         return values;
     }

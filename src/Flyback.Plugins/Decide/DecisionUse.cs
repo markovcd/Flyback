@@ -20,6 +20,6 @@ internal static class DecisionUse
     {
         [Modules] = "finding a module by meaning",
         [Issues] = "putting complaints in order",
-        [Turns] = "reading a message to the assistant",
+        [Turns] = "reading an assistant turn",
     };
 }

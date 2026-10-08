@@ -7,6 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.Core.Graph;
 using Flyback.Editor.Decide;
+using Flyback.Editor.Settings;
 using Flyback.Editor.Tests.Ui;
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Assist;
@@ -44,6 +45,9 @@ public sealed class DecisionsSectionTests : EditorTest
 
         var section = container.GetRequiredService<DecisionsSection>();
         section.Opening();
+
+        // In a window, so the form's rows under its content are built and found.
+        Show(section.View, SettingsSession.SectionWidth);
 
         return (section, container.GetRequiredService<Decisions>());
     }
@@ -153,6 +157,77 @@ public sealed class DecisionsSectionTests : EditorTest
         Named<TextBlock>(section, "decisionStatus").Text.ShouldBe("Downloaded is ready, and sends nothing anywhere.");
     }
 
+    [AvaloniaFact]
+    public void A_setting_kept_for_one_use_is_shown_when_that_use_is_picked_and_listed_under_the_form()
+    {
+        var settings = new DecisionSettings();
+        settings.Remember("settable", DecisionUse.Modules, new SettingValues([new("model", "typed")]));
+        settings.Save(SettingsPath);
+
+        var (section, _) = Built(models: new Settable());
+
+        Named<TextBox>(section, "model").Text.ShouldBeEmpty("the model's own settings come first");
+        Named<TextBlock>(section, "decisionUses").Text.ShouldBe("For finding a module by meaning: model=typed.");
+
+        section.ShowUse("Finding a module by meaning");
+
+        Named<TextBox>(section, "model").Text.ShouldBe("typed");
+    }
+
+    [AvaloniaFact]
+    public void A_setting_typed_for_one_use_is_kept_for_that_use_alone()
+    {
+        var (section, decisions) = Built(models: new Settable());
+
+        section.ShowUse("Finding a module by meaning");
+        Named<TextBox>(section, "model").Text = "typed";
+
+        Named<TextBlock>(section, "decisionUses").Text.ShouldBe("For finding a module by meaning: model=typed.");
+
+        section.ShowUse("Every use");
+        Named<TextBox>(section, "model").Text.ShouldBeEmpty("a use's setting is laid over the model's own, not written into them");
+
+        section.Save();
+
+        var saved = DecisionSettings.Load(SettingsPath);
+        saved.Of("settable", DecisionUse.Modules).Text("model").ShouldBe("typed");
+        saved.Of("settable").Text("model").ShouldBeEmpty();
+        decisions.Settings.Of("settable", DecisionUse.Turns).Text("model").ShouldBeEmpty();
+    }
+
+    [AvaloniaFact]
+    public void A_use_set_back_to_the_model_s_own_value_lays_nothing_over_it()
+    {
+        var settings = new DecisionSettings();
+        settings.Remember("settable", new SettingValues([new("model", "plain")]));
+        settings.Remember("settable", DecisionUse.Modules, new SettingValues([new("model", "typed")]));
+        settings.Save(SettingsPath);
+
+        var (section, _) = Built(models: new Settable());
+
+        section.ShowUse("Finding a module by meaning");
+        Named<TextBox>(section, "model").Text = "plain";
+        section.Save();
+
+        Named<TextBlock>(section, "decisionUses").IsVisible.ShouldBeFalse();
+        DecisionSettings.Load(SettingsPath).Uses.ShouldBeEmpty();
+    }
+
+    [AvaloniaFact]
+    public void Closing_without_saving_drops_what_was_typed_for_a_use()
+    {
+        var (section, _) = Built(models: new Settable());
+
+        section.ShowUse("Finding a module by meaning");
+        Named<TextBox>(section, "model").Text = "typed";
+
+        section.Show();
+
+        Named<TextBlock>(section, "decisionUses").IsVisible.ShouldBeFalse();
+        section.ShowUse("Finding a module by meaning");
+        Named<TextBox>(section, "model").Text.ShouldBeEmpty();
+    }
+
     private static async Task Until(Func<bool> done)
     {
         for (var i = 0; i < 200 && !done(); i++)
@@ -179,6 +254,24 @@ public sealed class DecisionsSectionTests : EditorTest
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 
         public string? Unavailable(DecisionConfig config) => config.Transport.HasKey ? null : "No key yet.";
+
+        public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel) => throw new NotSupportedException();
+    }
+
+    /// <summary>Runs here, and has one setting, a model name, to lay a use's own over.</summary>
+    private sealed class Settable : IDecisionModel
+    {
+        public string Id => "settable";
+
+        public string Name => "Settable";
+
+        public int Priority => 0;
+
+        public AssistantCredential? Credential => null;
+
+        public IReadOnlyList<SettingField> Form(SettingValues values) => [new SettingField.Text("model", "Model")];
+
+        public string? Unavailable(DecisionConfig config) => null;
 
         public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel) => throw new NotSupportedException();
     }

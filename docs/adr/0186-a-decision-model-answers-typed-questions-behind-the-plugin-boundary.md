@@ -39,7 +39,8 @@ ten-second deadline and never throws, so a feature asks and carries on.
 `turns`), and the settings may lay values over the chosen model's for one use, filed
 under the use and then the model: a laya-serve's checkpoints are each better at a
 different question, and which question is the host's to know, not the plugin's. The
-contract does not move; `decide --for <use> --set key=value --save` writes them.
+contract does not move; `decide --for <use> --set key=value --save` writes them, and
+Settings → Decisions shows and sets them a use at a time.
 
 `PluginContractVersion` stays at 1.0.0: nothing has shipped at it, and `/release`
 works the version out from the surface.
