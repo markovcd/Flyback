@@ -1,7 +1,8 @@
-# A decision model that runs here: the Laya plugin
+# A decision model that runs here: the Laya plugin, and what to ask it
 
-Planned on 2026-09-28; the rest of it landed on 2026-10-08, on `main` at `503a690a`. It is on
-TODO.md; take it off there, and delete this file, in the commit that lands the Laya plugin.
+Planned on 2026-09-28; the rest of it landed on 2026-10-08 and was measured against a local
+laya-serve the same day, on `main` at `71fb09b2`. It is on TODO.md; take it off there, and
+delete this file, in the commit that lands the Laya plugin.
 
 ## Where it stands
 
@@ -26,6 +27,71 @@ Left out of the landed work on purpose:
 - Senses off for a turn read as a question: the workbench decides senses per conversation,
   not per turn.
 
+## Measured against a local laya-serve
+
+### Running one
+
+On this Linux machine, Laya 0.4.0 is in `~/laya-venv` (Python 3.14, `torch` 2.14.1+cpu installed
+first from `https://download.pytorch.org/whl/cpu`, then `pip install "laya[serve]"`), and both
+checkpoints are in the Hugging Face cache. Serve it on loopback only; its default is 0.0.0.0:
+
+```bash
+LAYA_DEVICE=cpu LAYA_HOST=127.0.0.1 LAYA_PORT=8000 LAYA_MODELS=english,typed-decisions LAYA_PRELOAD=1 ~/laya-venv/bin/laya-serve
+```
+
+The Jev plugin reaches it with its endpoint set to `http://localhost:8000` and no key. A request's
+`model` names the checkpoint (`english`, `multilingual`, `typed-decisions`); anything else, the
+plugin's default `jev-latest` included, is routed by the text's language, so English text gets
+`english`. The answers carry fields `SystemOneWire` does not read (`answer_confidence`, `action`,
+`routing`). At startup the English checkpoint warns that its `choice:11+` temperature is invalid,
+so a choice of eleven or more options is uncalibrated.
+
+The `flyback-cli` on PATH is the installed release; the one with `decide` is a build of `main`
+with `-c "All plugins"`, under `src/Flyback.Cli/bin/All plugins/net10.0/`. The CLI has no way to
+choose or set a model yet, so the `decisions` section of `~/.config/Flyback/settings.json` holds
+`{"Model":"systemone","Choices":{"systemone":{"endpoint":"http://localhost:8000","model":"jev-latest"}}}`,
+written by hand (its earlier copy is `settings.json.before-decisions`). To try another checkpoint
+without touching it, point `XDG_CONFIG_HOME` at a folder whose `Flyback/settings.json` names it.
+
+`scripts/decide-bench.py` holds both measurements below: `find <cli>` scores `modules --find`
+on fourteen phrases, and `route <endpoint> [checkpoint]` scores TurnReading's rule on eleven
+messages.
+
+### What was found
+
+| | English | Typed-decisions |
+|---|---|---|
+| Module search, category first (what landed first) | 0/14 first | — |
+| Module search, every module by name, ten to a question (on `main`) | 1/14 first | 6/14 first, 7/14 in the top three, about 3 s |
+| The same in three other orders | — | 3 to 8 of 14 first |
+| Two orders in one request, the margin over "none" averaged | — | 8/14 first, 8–9/14 in the top three, about 5.5 s |
+| Three orders averaged | — | no better, 9.4 s |
+| Routing: module questions told to answer / others wrongly told (on `main`) | 4/4, 0/7 | 0/4, 0/7 |
+
+- A choice of seventeen categories was close to random, and modules described in full drew
+  every answer to the first options shown. Bare names do better.
+- Which nine other modules share a question changes the answer: Echo scored 1.00 in one
+  grouping and under 0.05 in another, which is what averaging two orders evens out.
+- A yes-no per module, on English, scored 4/14 first and 7/14 in the top three at up to 9 s.
+- On English, "why is it so quiet?" reads as not about Flyback (0.83) and "what is the capital
+  of France?" as a module question, which is why only a module question at 0.8 or above is
+  acted on, and nothing is held back. On typed-decisions the module questions read as such at
+  only 0.51–0.76, below that bar.
+
+### Next, proposed and not yet agreed
+
+1. **Each use names the checkpoint it is best on**: module search on `typed-decisions`, routing on
+   `english`. laya-serve already honors `model` per request, so it is Flyback's side: a hint a
+   feature passes with its request, or a model per use in the `decisions` section.
+2. **ModuleFinder asks two orders in one request** and averages each module's margin over
+   "none", taking it from an unstable 6 to a steady 8 of 14.
+3. **`flyback-cli decide --use <id> --set key=value`**, so a model is chosen and set without
+   editing `settings.json`, as `ask --set` does for an assistant.
+4. **The key rows in `Decide/DecisionsSection.cs` and `Assist/AssistantSettingsPage.cs` become
+   one control**: both are a key that `Credentials` holds.
+
+Measure each against the server with `scripts/decide-bench.py` before it lands.
+
 ## What is left: Laya, in the box
 
 Laya (Convai Innovations, Apache-2.0) answers in one forward pass, 200–460 ms on a CPU. The
@@ -34,7 +100,7 @@ a yes, from a Hugging Face repo the maintainer owns.
 
 ### Once, by the maintainer: the export
 
-`scripts/laya/export-onnx.ps1` runs a venv with laya 0.3.20, torch CPU and the English
+`scripts/laya/export-onnx.ps1` runs a venv with laya (0.3.20 there; 0.4.0 is what `~/laya-venv` here has, and the port follows whichever the export used), torch CPU and the English
 checkpoint (on the Windows development machine under `laya-test/`, ignored) through
 Laya's `scripts/export_onnx.py --quantize`: opset 18; inputs `input_ids`,
 `attention_mask`, `marker_pos`, `marker_mask`, `qtype`; outputs `logits`,

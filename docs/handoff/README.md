@@ -4,7 +4,7 @@ Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or 
 
 | File | What | Kind | Status |
 |---|---|---|---|
-| [decision-model.md](decision-model.md) | Laya, a decision model that runs here, to finish the decision model | Plan | Open: all but Laya landed |
+| [decision-model.md](decision-model.md) | Laya, and what to ask a decision model, measured against a local laya-serve | Plan | Open: all but Laya landed; next steps proposed |
 | [formulas-into-modules.md](formulas-into-modules.md) | What the presets still write as formulas, and which modules would replace it | Audit | Open |
 | [sync-to-async.md](sync-to-async.md) | Blocking work on the UI thread, and what to do about each | Audit | Open |
 | [assistant-says-what-it-can-do.md](assistant-says-what-it-can-do.md) | The assistant answers what it can do, and offers plugin authoring when a .NET SDK is present | Plan | Open |
