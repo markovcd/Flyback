@@ -110,10 +110,10 @@ internal sealed class InspectorHeader : Border
         ToolTip.SetTip(button, PictureAsideWords.Tip(aside.Hidden));
     }
 
-    /// <summary>The mark, the name and what kind of thing it is, which open the menu when pressed.</summary>
-    private Button Title(PlateFace face, ModulePlate plate)
+    /// <summary>The mark, the name and what kind of thing it is. Only read: the menu is ⋯'s.</summary>
+    private static StackPanel Title(PlateFace face, ModulePlate plate)
     {
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
+        var row = new StackPanel { Name = "header-title", Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
 
         if (face.Glyph is { } glyph && face.MarkInk is { } ink)
             row.Children.Add(new Avalonia.Controls.Shapes.Path
@@ -139,23 +139,7 @@ internal sealed class InspectorHeader : Border
             TextTrimming = TextTrimming.CharacterEllipsis,
         });
 
-        var title = new Button
-        {
-            Name = "header-title",
-            Content = row,
-            Height = ButtonSize,
-            Padding = new Thickness(0),
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Left,
-            VerticalContentAlignment = VerticalAlignment.Center,
-        };
-
-        ToolTip.SetTip(title, "What it is, and everything that can be done to it");
-        title.Click += (_, _) => menu?.Open(title);
-
-        return title;
+        return row;
     }
 
     /// <summary>The name, in a panel of its own so renaming can put a box where it stands.</summary>
@@ -181,7 +165,7 @@ internal sealed class InspectorHeader : Border
     {
         if (shown is not { Face.Naming: { } naming } plate) return;
 
-        if (line.Children.OfType<Button>().FirstOrDefault(b => b.Name == "header-title") is not { Content: StackPanel row }
+        if (line.Children.OfType<StackPanel>().FirstOrDefault(p => p.Name == "header-title") is not { } row
             || row.Children.OfType<Panel>().FirstOrDefault() is not { } named
             || named.Children.OfType<TextBlock>().FirstOrDefault() is not { } name)
             return;

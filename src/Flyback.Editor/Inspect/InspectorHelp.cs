@@ -77,7 +77,7 @@ internal static class InspectorHelp
         new("Getting started",
         [
             Row("Add a module", "Hold a finger on bare canvas, or tap + on the toolbar, to add a module there. Tap the box at the top of the list to narrow it by name."),
-            Row("Edit a module", "Tap it to edit its values here; Duplicate, Group and Delete are beside its name, and a double-tap on the name calls it something else."),
+            Row("Edit a module", "Tap it to edit its values here; Bypass, Duplicate and Delete are under its name, and More has the rest, renaming it among them."),
             Row("Side button", "In a narrow window, on the toolbar, it shows this panel in the canvas's place, and the canvas again."),
             .. inPage ? [] : new[]
             {
