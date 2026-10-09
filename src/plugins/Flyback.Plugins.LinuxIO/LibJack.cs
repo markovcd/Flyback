@@ -34,9 +34,16 @@ internal static unsafe partial class LibJack
     [LibraryImport(Library, EntryPoint = "jack_activate")]
     public static partial int Activate(IntPtr client);
 
-    /// <summary>Returns only once the process callback is no longer running.</summary>
+    /// <summary>
+    /// Cancels the process thread asynchronously and joins it, which kills the runtime if the
+    /// thread is in managed code at the time. <see cref="JackAudioDevice"/> ends the thread first.
+    /// </summary>
     [LibraryImport(Library, EntryPoint = "jack_deactivate")]
     public static partial int Deactivate(IntPtr client);
+
+    /// <summary>The process thread, or zero before the client has been activated.</summary>
+    [LibraryImport(Library, EntryPoint = "jack_client_thread_id")]
+    public static partial nuint ProcessThread(IntPtr client);
 
     [LibraryImport(Library, EntryPoint = "jack_get_sample_rate")]
     public static partial uint SampleRate(IntPtr client);

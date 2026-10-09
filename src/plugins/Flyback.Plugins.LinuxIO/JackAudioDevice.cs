@@ -113,8 +113,9 @@ public sealed unsafe class JackAudioDevice : IAudioDevice
     }
 
     /// <summary>
-    /// Deactivating returns only once the process callback has finished, so nothing below runs
-    /// under it.
+    /// jack2 deactivates by cancelling the process thread wherever it is, and a thread cancelled
+    /// inside the runtime takes the process with it. So the thread is ended first, by its own
+    /// callback, and deactivating finds nothing to cancel.
     /// </summary>
     private void Teardown()
     {
@@ -122,6 +123,7 @@ public sealed unsafe class JackAudioDevice : IAudioDevice
 
         if (client != IntPtr.Zero)
         {
+            EndProcessThread();
             _ = LibJack.Deactivate(client);
             _ = LibJack.Close(client);
             client = IntPtr.Zero;
@@ -133,7 +135,21 @@ public sealed unsafe class JackAudioDevice : IAudioDevice
         if (self.IsAllocated) self.Free();
     }
 
-    /// <summary>Runs one cycle on JACK's thread: renders blocks into the two port buffers.</summary>
+    /// <summary>
+    /// Waits for the process thread to leave once <see cref="running"/> is cleared. A server that
+    /// stopped cycling never calls it again; it then waits in libjack, where cancelling it is safe.
+    /// </summary>
+    private void EndProcessThread()
+    {
+        var thread = LibJack.ProcessThread(client);
+
+        if (thread != 0) _ = LibPthread.Join(thread, TimeSpan.FromSeconds(5));
+    }
+
+    /// <summary>
+    /// Runs one cycle on JACK's thread: renders blocks into the two port buffers. Once stopped it
+    /// plays silence and answers non-zero, which has libjack deactivate the client and end the thread.
+    /// </summary>
     private int Cycle(uint frames)
     {
         var outLeft = LibJack.PortBuffer(left, frames);
@@ -142,7 +158,7 @@ public sealed unsafe class JackAudioDevice : IAudioDevice
 
         try
         {
-            if (fill is { } deliver)
+            if (running && fill is { } deliver)
             {
                 var capacity = block.Length / 2;
 
@@ -174,7 +190,7 @@ public sealed unsafe class JackAudioDevice : IAudioDevice
             outRight[i] = 0f;
         }
 
-        return 0;
+        return running ? 0 : 1;
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]

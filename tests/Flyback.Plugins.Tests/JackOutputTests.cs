@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Settings;
 using Shouldly;
@@ -93,6 +94,50 @@ public class JackOutputTests(JackServerFixture server) : IClassFixture<JackServe
 
             device.Stop();
         }
+    });
+
+    /// <summary>
+    /// Stopping while the callback is busy and collections are under way. A process thread that
+    /// libjack cancels inside the runtime aborts the process or freezes it whole.
+    /// </summary>
+    [Fact(Timeout = Cap)]
+    public Task Stopping_mid_callback_while_collecting_leaves_the_process_running() => Bounded(() =>
+    {
+        Assert.SkipUnless(server.Available, server.Why);
+
+        using var done = new CancellationTokenSource();
+        var churn = Task.Factory.StartNew(() =>
+        {
+            var kept = new List<byte[]>();
+
+            while (!done.IsCancellationRequested)
+            {
+                kept.Add(new byte[32_000]);
+                if (kept.Count > 1000) kept.Clear();
+            }
+        }, done.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+
+        for (var round = 0; round < 20; round++)
+        {
+            using var device = server.Output.Create(AudioFormat.Default, Unconnected);
+            using var inside = new ManualResetEventSlim();
+
+            device.Start(buffer =>
+            {
+                buffer.Clear();
+                inside.Set();
+
+                var busy = Stopwatch.StartNew();
+                while (busy.ElapsedMilliseconds < 20) { }
+            });
+
+            inside.Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken).ShouldBeTrue();
+
+            device.Stop();
+        }
+
+        done.Cancel();
+        churn.Wait(TestContext.Current.CancellationToken);
     });
 
     /// <summary>
