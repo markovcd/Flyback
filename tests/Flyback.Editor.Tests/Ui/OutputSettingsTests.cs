@@ -643,6 +643,73 @@ public class OutputSettingsTests : EditorTest
         All<SettingsForm>(dialog).Select(form => form.Name).ShouldNotContain("inputForm");
     }
 
+    /// <summary>
+    /// Where two backends can play, the tab asks which, shows the picked one's own
+    /// questions under it, and keeps the pick and its answers for the next launch.
+    /// </summary>
+    [AvaloniaFact]
+    public void Where_two_backends_can_play_the_sound_tab_asks_which()
+    {
+        var plugins = new PluginCatalog([], [new Backend("wasapi", "WASAPI", 100), new Backend("asio", "ASIO", 50)], NodeCatalog.BuiltIn, [.. Presets.All], []);
+        var window = Open(settingsPath, plugins);
+        var dialog = OpenSettings(window, SoundTab);
+        var through = Named<ComboBox>(dialog, "soundOutput");
+
+        through.ItemsSource.ShouldBe(new[] { "WASAPI", "ASIO" });
+        through.SelectedIndex.ShouldBe(0);
+        Named<TextBlock>(dialog, "soundNote").Text.ShouldBe("Played by WASAPI.");
+
+        through.SelectedIndex = 1;
+        Settle(window);
+
+        Named<TextBlock>(dialog, "soundNote").Text.ShouldBe("Played by ASIO.");
+        var device = All<ComboBox>(Named<SettingsForm>(dialog, "soundForm")).Single();
+        device.SelectedIndex = 1;
+
+        CloseSettings(window, dialog, save: true);
+
+        var kept = OutputSettings.Load(settingsPath);
+        kept.SoundOutput.ShouldBe("asio");
+        kept.SoundOf("asio").Text("device", "").ShouldBe("asio-second");
+        kept.SoundOf("wasapi").All.ShouldBeEmpty();
+
+        Named<ComboBox>(OpenSettings(Open(settingsPath, plugins), SoundTab), "soundOutput").SelectedIndex.ShouldBe(1);
+    }
+
+    /// <summary>Saving without touching the pick names no backend, so one that starts to outrank it later still wins.</summary>
+    [AvaloniaFact]
+    public void Saving_without_picking_leaves_the_backend_to_the_ranking()
+    {
+        var plugins = new PluginCatalog([], [new Backend("wasapi", "WASAPI", 100), new Backend("asio", "ASIO", 50)], NodeCatalog.BuiltIn, [.. Presets.All], []);
+        var window = Open(settingsPath, plugins);
+        var dialog = OpenSettings(window, SoundTab);
+
+        Latency(dialog).SelectedIndex = 0;
+        CloseSettings(window, dialog, save: true);
+
+        OutputSettings.Load(settingsPath).SoundOutput.ShouldBeEmpty();
+    }
+
+    [AvaloniaFact]
+    public void Where_one_backend_can_play_the_sound_tab_does_not_ask_which()
+    {
+        var plugins = new PluginCatalog([], [new Backend("wasapi", "WASAPI", 100), new Backend("asio", "ASIO", 50, Supported: false)], NodeCatalog.BuiltIn, [.. Presets.All], []);
+        var dialog = OpenSettings(Open(settingsPath, plugins), SoundTab);
+
+        All<ComboBox>(dialog).Select(c => c.Name).ShouldNotContain("soundOutput");
+        Named<TextBlock>(dialog, "soundNote").Text.ShouldBe("Played by WASAPI.");
+    }
+
+    private sealed record Backend(string Id, string Name, int Priority, bool Supported = true) : IAudioOutput
+    {
+        public bool IsSupported => Supported;
+
+        public IReadOnlyList<SettingField> Form(SettingValues values) =>
+            [new SettingField.Pick("device", "Device", [new SettingOption($"{Id}-first", "First"), new SettingOption($"{Id}-second", "Second")], $"{Id}-first")];
+
+        public IAudioDevice Create(AudioFormat format, SettingValues settings) => new SilentAudioDevice(format.SampleRate);
+    }
+
     private sealed class TwoMicrophones : IAudioInput
     {
         public string Id => "two";

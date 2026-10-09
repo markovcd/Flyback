@@ -140,11 +140,21 @@ internal sealed class PluginCatalog
     /// The backend to use here: supported, highest priority, ties broken on id
     /// so the choice is the same on every run. Null when nothing can play.
     /// </summary>
-    public IAudioOutput? PreferredAudioOutput => AudioOutputs
+    public IAudioOutput? PreferredAudioOutput => PlayableAudioOutputs is [var first, ..] ? first : null;
+
+    /// <summary>Every backend that can play here, the preferred one first.</summary>
+    public IReadOnlyList<IAudioOutput> PlayableAudioOutputs => AudioOutputs
         .Where(o => Supported(o))
         .OrderByDescending(o => o.Priority)
         .ThenBy(o => o.Id, StringComparer.Ordinal)
-        .FirstOrDefault();
+        .ToList();
+
+    /// <summary>
+    /// The backend a setting names while it can play here, and otherwise the preferred one.
+    /// Empty names none.
+    /// </summary>
+    public IAudioOutput? AudioOutput(string chosen) =>
+        PlayableAudioOutputs.FirstOrDefault(o => string.Equals(o.Id, chosen, StringComparison.Ordinal)) ?? PreferredAudioOutput;
 
     /// <summary>
     /// The way of hearing a microphone to use here: supported, highest priority, ties broken

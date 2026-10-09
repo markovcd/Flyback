@@ -73,6 +73,27 @@ public class AudioOutputSelectionTests
         catalog.PreferredAudioOutput!.Id.ShouldBe("portable");
     }
 
+    [Fact]
+    public void A_backend_picked_by_id_plays_over_the_one_that_ranks_higher()
+    {
+        var catalog = CatalogOf(new FakeOutput("wasapi", Priority: 100), new FakeOutput("asio", Priority: 50));
+
+        catalog.AudioOutput("asio")!.Id.ShouldBe("asio");
+        catalog.AudioOutput("")!.Id.ShouldBe("wasapi");
+        catalog.PlayableAudioOutputs.Select(o => o.Id).ShouldBe(["wasapi", "asio"]);
+    }
+
+    /// <summary>A driver uninstalled, or a server not started today, plays what would have played without the pick.</summary>
+    [Fact]
+    public void A_picked_backend_that_cannot_play_here_gives_way_to_the_preferred_one()
+    {
+        var catalog = CatalogOf(new FakeOutput("wasapi", Priority: 100), new FakeOutput("asio", Supported: false));
+
+        catalog.AudioOutput("asio")!.Id.ShouldBe("wasapi");
+        catalog.AudioOutput("gone")!.Id.ShouldBe("wasapi");
+        catalog.PlayableAudioOutputs.Select(o => o.Id).ShouldBe(["wasapi"]);
+    }
+
     private sealed record FakeOutput(string Id, int Priority = 0, bool Supported = true) : IAudioOutput
     {
         public string Name => Id;

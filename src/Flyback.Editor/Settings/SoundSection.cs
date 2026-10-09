@@ -4,6 +4,7 @@ using Avalonia.Media;
 using Flyback.Engine.Render;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Inspect;
+using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui.Audio;
 using Flyback.Ui.Controls;
@@ -13,8 +14,8 @@ using Flyback.Host;
 namespace Flyback.Editor.Settings;
 
 /// <summary>
-/// The Sound section of the settings window: whatever the sound backend declares,
-/// then how far behind the patch the speakers may run.
+/// The Sound section of the settings window: which backend plays where more than one can,
+/// whatever it declares, then how far behind the patch the speakers may run.
 /// </summary>
 internal sealed class SoundSection : ISettingsSection
 {
@@ -34,6 +35,22 @@ internal sealed class SoundSection : ISettingsSection
     public Control View => rows;
 
     private readonly StackPanel rows = new() { Spacing = 8, Width = SettingsSession.SectionWidth };
+
+    /// <summary>Which backend plays, offered only where more than one can.</summary>
+    private readonly ComboBox through = new Picker
+    {
+        Name = "soundOutput",
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
+    /// <summary>Every backend that can play here, in the order <see cref="through"/> lists them.</summary>
+    private readonly IReadOnlyList<IAudioOutput> playable;
+
+    /// <summary>The backend the saved settings play through, which a Save leaves named as it was unless another is picked.</summary>
+    private IAudioOutput? saved;
+
+    /// <summary>The backend whose form is showing.</summary>
+    private IAudioOutput? shown;
 
     private readonly ComboBox latency = new Picker
     {
@@ -101,9 +118,18 @@ internal sealed class SoundSection : ISettingsSection
             + "raise it if the sound crackles. Flyback asks this of every backend, "
             + "whichever plugin is playing.");
 
-        soundNote.Text = plugins.PreferredAudioOutput is { } output
-            ? SettingRows.Attributed($"Played by {output.Name}", plugins.Provider(output))
-            : "No sound plugin is installed, so nothing plays. See About for where plugins are looked for.";
+        playable = plugins.PlayableAudioOutputs;
+        through.ItemsSource = playable.Select(output => output.Name).ToList();
+        through.SelectionChanged += (_, _) =>
+        {
+            if (through.SelectedIndex >= 0 && playable[through.SelectedIndex] != shown) Present(playable[through.SelectedIndex], settings.Current);
+        };
+
+        soundNote.Text = "No sound plugin is installed, so nothing plays. See About for where plugins are looked for.";
+
+        ToolTip.SetTip(through,
+            "Which of the installed ways of playing sound Flyback plays through. "
+            + "One that cannot play at launch is passed over for the next.");
 
         // The note first, so the rows under it are read as the backend's answers
         // rather than Flyback's; then the form, because which device plays is the
@@ -111,7 +137,9 @@ internal sealed class SoundSection : ISettingsSection
         // backend will ask (ADR-0085).
         rows.Children.Add(soundNote);
 
-        if (plugins.PreferredAudioOutput is not null) rows.Children.Add(soundForm);
+        if (playable.Count > 1) rows.Children.Add(InspectorRows.Field("Play through", through));
+
+        if (playable.Count > 0) rows.Children.Add(soundForm);
 
         rows.Children.Add(InspectorRows.Field("Latency", latency));
 
@@ -168,11 +196,24 @@ internal sealed class SoundSection : ISettingsSection
         oversample.SelectedIndex = Math.Max(0, AudioRenderer.Oversamples.ToList().IndexOf(current.Oversample));
         stepDown.IsChecked = current.StepDownOnDropouts;
 
-        if (plugins.PreferredAudioOutput is { } output)
-            soundForm.Show(output.Form, current.SoundOf(output.Id));
+        saved = plugins.AudioOutput(current.SoundOutput);
+
+        if (saved is not null)
+        {
+            Present(saved, current);
+            through.SelectedIndex = playable.ToList().IndexOf(saved);
+        }
 
         if (plugins.PreferredAudioInput is { } input)
             inputForm.Show(input.Form, current.SoundInOf(input.Id));
+    }
+
+    /// <summary>Shows what <paramref name="output"/> asks, answered as <paramref name="current"/> holds.</summary>
+    private void Present(IAudioOutput output, OutputSettings current)
+    {
+        shown = output;
+        soundNote.Text = SettingRows.Attributed($"Played by {output.Name}", plugins.Provider(output));
+        soundForm.Show(output.Form, current.SoundOf(output.Id));
     }
 
     /// <summary>Writes what the controls hold into <paramref name="into"/>.</summary>
@@ -183,7 +224,8 @@ internal sealed class SoundSection : ISettingsSection
         into.Oversample = AudioRenderer.Oversamples[Math.Max(oversample.SelectedIndex, 0)];
         into.StepDownOnDropouts = stepDown.IsChecked == true;
 
-        if (plugins.PreferredAudioOutput is { } output) into.RememberSound(output.Id, soundForm.Values);
+        if (shown is not null) into.RememberSound(shown.Id, soundForm.Values);
+        if (shown != saved) into.SoundOutput = shown!.Id;
         if (plugins.PreferredAudioInput is { } input) into.RememberSoundIn(input.Id, inputForm.Values);
     }
 
@@ -195,7 +237,9 @@ internal sealed class SoundSection : ISettingsSection
     /// </summary>
     private bool SoundChanged(OutputSettings before, OutputSettings after)
     {
-        if (plugins.PreferredAudioOutput is not { } output) return false;
+        if (plugins.AudioOutput(after.SoundOutput) is not { } output) return false;
+
+        if (output != plugins.AudioOutput(before.SoundOutput)) return true;
 
         var now = after.SoundOf(output.Id);
 

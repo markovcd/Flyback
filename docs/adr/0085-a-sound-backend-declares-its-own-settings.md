@@ -119,3 +119,8 @@ The contract is host-owned and versioned with the App, so there is no binary to
 keep compatible.
 
 **The plugin guide's backend example gains the second parameter.**
+
+## Amendment, 2026-10-09: the backend is picked too
+
+Where more than one backend can play, the Sound tab asks which, and shows the picked one's
+form; see [0191](0191-the-sound-tab-picks-the-backend-where-more-than-one-can-play.md).

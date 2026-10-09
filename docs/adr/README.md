@@ -151,6 +151,7 @@ context, decision, consequences.
 | [0027](0027-delay-lines-give-the-audio-path-a-memory.md) | Delay lines give the audio path a memory *(user-directed)* |
 | [0029](0029-linux-sound-through-alsa.md) | Linux sound through ALSA, on a thread of our own |
 | [0190](0190-linux-sound-goes-through-jackd-when-one-is-running.md) | Linux sound goes through jackd when one is running |
+| [0191](0191-the-sound-tab-picks-the-backend-where-more-than-one-can-play.md) | The Sound tab picks the backend where more than one can play |
 | [0030](0030-oscillators-accumulate-their-phase.md) | Oscillators accumulate their phase on the audio path |
 | [0036](0036-export-video-as-motion-jpeg-in-an-avi.md) | Export video as Motion JPEG in an AVI *(user-directed; demoted to the fallback by [0089](0089-ffmpeg-encodes-what-it-can-and-the-avi-is-the-fallback.md))* |
 | [0089](0089-ffmpeg-encodes-what-it-can-and-the-avi-is-the-fallback.md) | ffmpeg encodes what it can, and the AVI is the fallback *(user-directed)* |
@@ -205,7 +206,7 @@ context, decision, consequences.
 | [0047](0047-the-agent-may-listen-where-the-model-can.md) | The agent gets an ear, which is a second model *(user-directed)* |
 | [0066](0066-a-second-wire-format-so-one-model-can-hear.md) | A second wire format, so one model can hear what it built *(user-directed)* |
 | [0069](0069-an-assistant-declares-its-own-settings.md) | An assistant declares its own settings *(user-directed; its field vocabulary shared with every plugin by [0085](0085-a-sound-backend-declares-its-own-settings.md))* |
-| [0085](0085-a-sound-backend-declares-its-own-settings.md) | A sound backend declares its own settings *(user-directed)* |
+| [0085](0085-a-sound-backend-declares-its-own-settings.md) | A sound backend declares its own settings *(user-directed; the backend itself picked by [0191](0191-the-sound-tab-picks-the-backend-where-more-than-one-can-play.md))* |
 | [0072](0072-a-conversation-is-saved-with-the-patch-it-is-about.md) | A conversation is saved with the patch it is about *(user-directed)* |
 | [0098](0098-the-briefing-has-a-budget-and-a-list-that-outranks-it.md) | The briefing has a budget, and a list that outranks it *(user-directed; its default raised to 100,000 by [0101](0101-a-one-knob-maximizer-is-a-module-of-its-own.md))* |
 | [0113](0113-the-workbench-does-not-limit-how-large-a-patch-is.md) | The workbench does not limit how large a patch is *(user-directed)* |

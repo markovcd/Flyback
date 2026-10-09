@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Where more than one way of playing sound is installed, the Sound tab asks which one plays.
+
 - Over the editor's full-screen picture, Space pauses and F11 gives the window back, as in the viewer.
 
 - Probing a chat-completions endpoint says when a rate limit left a model's senses unsure, as probing Gemini does.

@@ -139,6 +139,12 @@ public sealed class OutputSettings
     public string Library { get; set; } = string.Empty;
 
     /// <summary>
+    /// The id of the sound backend picked to play — the Sound section — or empty for the
+    /// one that ranks highest. One that cannot play this launch is passed over, not forgotten.
+    /// </summary>
+    public string SoundOutput { get; set; } = string.Empty;
+
+    /// <summary>
     /// What each sound backend's own form was last set to, filed under the backend's
     /// id — the rest of the Sound section, which the backend declares (ADR-0085).
     /// </summary>
@@ -313,6 +319,7 @@ public sealed class OutputSettings
             settings.DefaultPreset ??= string.Empty;
 
             // A "sound": null typed by hand is nothing chosen, not a fault.
+            settings.SoundOutput ??= string.Empty;
             settings.Sound ??= new(StringComparer.Ordinal);
             settings.SoundIn ??= new(StringComparer.Ordinal);
 

@@ -576,7 +576,7 @@ public sealed class JackOutput : IAudioOutput
 }
 ```
 
-`IsSupported` must answer without opening anything and without throwing; that is what lets a plugin for another operating system stay loadable everywhere. Higher `Priority` wins; ties break on `Id`.
+`IsSupported` must answer without opening anything and without throwing; that is what lets a plugin for another operating system stay loadable everywhere. Higher `Priority` wins; ties break on `Id`. Where more than one backend can play, the Sound tab also lets a person pick, so rank by what most people on the platform want, not by what is most capable.
 
 `Form` is how a backend gets settings without the application knowing what they are. It declares fields in the same vocabulary an assistant uses (`Text`, `Pick` and `Switch`), and the settings window draws them on the Sound tab, keeps the answers in `settings.json` under your backend's id, and hands them to `Create` at launch and again on every Save that changes them, so the new device plays at once. Open nothing until `Start`, which is what lets Save swap devices in place. Leave `Form` out and the tab shows only latency. The shipped backends use it for the output device, and for where JACK connects.
 

@@ -9,13 +9,13 @@ namespace Flyback.Ui.Audio;
 internal static class Sound
 {
     /// <summary>
-    /// Opens the best backend the plugins offered. A machine with no sound
-    /// plugin, or one whose device refuses to open, gets silence and a disabled
-    /// button — never a program that will not start.
+    /// Opens the backend the settings picked, or else the best one the plugins offered.
+    /// A machine with no sound plugin, or one whose device refuses to open, gets
+    /// silence and a disabled button — never a program that will not start.
     /// </summary>
     public static AudioSetup Open(PluginCatalog plugins, OutputSettings settings)
     {
-        if (plugins.PreferredAudioOutput is not { } output)
+        if (plugins.AudioOutput(settings.SoundOutput) is not { } output)
             return new AudioSetup(new SilentAudioDevice());
 
         try
