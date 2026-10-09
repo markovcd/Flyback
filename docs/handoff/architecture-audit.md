@@ -16,7 +16,6 @@ decision (ADR-0138).
 
 ## 9. One feature written twice, smaller (Medium to Low)
 
-- **MIDI learn**: `Knobs/PanelKnobs.cs:388-396` and `Knobs/KnobRandomizer.cs:200-208`, same device list, cancel-and-replace and "no MIDI device" report. A `MidiLearn` part both call. `ControlsPanel.cs` carries five events that exist only to forward `RollCell` to `KnobRandomizer`.
 - **Stage keys**: Escape, F3, F11, Space and Ctrl+P handled in `EditorView.cs:166-178`, `Windows/PictureWindow.cs:64-66` and `Viewer.Desktop/ViewerWindow.cs:131-138`. A `StageKeys` map in Ui all three ask. `TransportControls.cs:44,50` takes `Overlay` and `PictureWindow` as public settable properties; `Register(...)` instead.
 - **The model survey loop**: `OpenAi/OpenAiProbe.cs:49-95` and `Gemini/GeminiSurvey.cs:61-117` are one loop (bare, picture, sound, report). ADR-0161 pulled the turn into the host and left the survey out; `GeminiSession.cs` declines sharing the *session* loop, not this. `Assist/SurveyLoop.cs` over an `IModelProbe`.
 - **The audio writer thread**: the same thread, block, `volatile running`, `Stop` with `Join(2000)` in `LinuxIO/AlsaAudioDevice.cs:50-148`, `AndroidIO/AudioTrackDevice.cs:16-120`, `LinuxIO/AlsaAudioCapture.cs:37-160`, `AndroidIO/AudioRecordCapture.cs:16-97`. `src/plugins/Shared/Audio/BlockWriter.cs` and `BlockReader.cs`, linked by source as `Shared/Programs` is. WASAPI and CoreAudio are callback-driven and stay as they are.
