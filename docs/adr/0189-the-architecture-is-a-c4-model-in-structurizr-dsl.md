@@ -35,9 +35,12 @@ Declined:
 
 ## Consequences
 
-- The model holds the system context (C1) and the containers (C2), the latter in
-  three views: desktop, web and Android, and the preset site. Components are added
-  to the same model as they are drawn.
+- The model holds the system context (C1), the containers (C2) in three views
+  (desktop, web and Android, and the preset site), and the editor's components (C3).
+- The editor's components are its projects, and `ComponentDiagramTests` fails when
+  they or the arrows between them disagree with the project references, so C3
+  cannot drift from the code. The other programs get no C3: they stand on the same
+  projects. Nothing is drawn at class level.
 - A view that shows both internal systems lists its elements and excludes the
   relationships its containers imply between them; drawn, they crowd it.
 - Structurizr's current tooling exports no DOT, so the layout is PlantUML's.

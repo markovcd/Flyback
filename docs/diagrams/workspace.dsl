@@ -9,7 +9,19 @@ workspace "Flyback" "A patchable synthesizer: one module graph makes a picture a
 
         group "Flyback" {
             flyback = softwareSystem "Flyback" "The editor, the viewer and flyback-cli, on the desktop, in a browser and on Android." {
-                editor = container "Editor" "Edits, plays and records patches, with the assistant beside them, and installs plugins and updates." ".NET 10, Avalonia"
+                editor = container "Editor" "Edits, plays and records patches, with the assistant beside them, and installs plugins and updates." ".NET 10, Avalonia" {
+                    // A component named for a project is that project; ComponentDiagramTests holds its arrows to the project files.
+                    desktop = component "Flyback.Editor.Desktop" "The program: startup, installing an update, and the plugins it ships." ".NET project"
+                    editorLib = component "Flyback.Editor" "The window, the canvas, the inspector, the assistant column and recording, with no platform in it." ".NET project"
+                    ui = component "Flyback.Ui" "What the editor and the viewer draw with: the preview, the sound device, MIDI and colors." ".NET project"
+                    assist = component "Flyback.Assist" "The host's side of a conversation with an assistant." ".NET project"
+                    host = component "Flyback.Host" "What every host reads: the output settings, the sizes, the saved presets." ".NET project"
+                    pluginHost = component "Flyback.Plugins" "The plugin contract, and the host that loads plugins off disk." ".NET project" "Contract"
+                    gpu = component "Flyback.Gpu" "The GPU renderer, its OpenGL binding and a headless context." ".NET project"
+                    engine = component "Flyback.Engine" "The compiler, the four backends, the renderers, the text language and file I/O." ".NET project"
+                    core = component "Flyback.Core" "The patch model, the module catalog, the opcodes and the Emitter." ".NET project" "Contract"
+                    shippedPlugins = component "Shipped plugins" "Sound and MIDI, secret stores, assistants, the decision model and modules, each in plugins/<Name>/." ".NET projects"
+                }
                 viewer = container "flyback-viewer" "Plays a patch and writes nothing, in a window or hidden." ".NET 10, Avalonia"
                 cli = container "flyback-cli" "Renders, checks and prints patches, packs plugins, and asks the assistant and the decision model." ".NET 10 console"
                 webEditor = container "Web editor" "The editor in a page, with no assistant and no plugins window; opens and saves nothing." "WebAssembly, Avalonia"
@@ -107,6 +119,36 @@ workspace "Flyback" "A patchable synthesizer: one module graph makes a picture a
         androidEditor -> devices "Plays sound to, and hears sound input from"
         androidEditor -> dataFolder "Reads and writes"
 
+        // The editor's components
+        desktop -> editorLib "Runs"
+        editorLib -> assist "Holds conversations through"
+        editorLib -> ui "Draws and plays with"
+        ui -> gpu "Draws the picture with"
+        ui -> host "Reads settings and presets through"
+        assist -> pluginHost "Asks assistants through"
+        host -> pluginHost "Uses"
+        gpu -> engine "Compiles shaders with"
+        pluginHost -> engine "Compiles patches with, out of a plugin's reach"
+        engine -> core "Compiles"
+        pluginHost -> shippedPlugins "Loads, each in its own load context"
+        shippedPlugins -> pluginHost "Compiled against"
+        shippedPlugins -> core "Compiled against"
+
+        desktop -> github "Downloads releases from" "HTTPS"
+        editorLib -> github "Checks for releases on" "HTTPS"
+        editorLib -> worker "Fetches and shares presets and plugins, sends letters to" "HTTPS"
+        editorLib -> aptabase "Sends anonymous usage counts to" "HTTPS"
+        editorLib -> dataFolder "Keeps settings, layout and recovery in"
+        editorLib -> pluginsFolder "Installs plugin packages into"
+        assist -> dataFolder "Keeps conversations in"
+        host -> dataFolder "Keeps saved presets in"
+        pluginHost -> pluginsFolder "Loads plugins from"
+        engine -> ffmpeg "Encodes takes and decodes MP3 samples with" "Local process"
+        shippedPlugins -> providers "Asks the assistant through" "HTTPS, local process"
+        shippedPlugins -> decisionModel "Asks typed questions of" "HTTP"
+        shippedPlugins -> secretStore "Keeps API keys in"
+        shippedPlugins -> devices "Plays sound to, and hears sound input and MIDI from"
+
         // The preset site's containers
         person -> worker "Browses and shares presets on" "HTTPS"
         pluginAuthor -> worker "Submits plugin packages to" "HTTPS"
@@ -144,6 +186,12 @@ workspace "Flyback" "A patchable synthesizer: one module graph makes a picture a
             autolayout tb
         }
 
+        component editor "Editor" "C3: the projects the editor is built from, and the plugin contract between them and the plugins." {
+            include *
+            exclude "github -> presetSite" "presetSite -> github"
+            autolayout tb
+        }
+
         container presetSite "Site" "C2: what the preset site runs on, and how a submission is checked." {
             include *
             exclude "flyback -> github" "person -> flyback" "pluginAuthor -> flyback"
@@ -163,6 +211,13 @@ workspace "Flyback" "A patchable synthesizer: one module graph makes a picture a
             }
             element "Container" {
                 background #438dd5
+            }
+            element "Component" {
+                background #85bbf0
+                color #000000
+            }
+            element "Contract" {
+                background #f5a623
             }
             element "Store" {
                 shape cylinder
