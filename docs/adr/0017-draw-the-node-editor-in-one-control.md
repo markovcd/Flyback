@@ -120,3 +120,10 @@ still come from `NodeGeometry` alone. The services are built together in a
 container ([0150](0150-the-editor-is-composed-in-a-container.md)), and a caller
 reaches the one it needs (`editor.History`, `editor.Selection`, `editor.Edits`)
 rather than a member of the control.
+
+## Amendment, 2026-10-09: a gesture is a class
+
+`CanvasGestures` keeps the one `Drag` state and the pan, which can put any other
+gesture on hold, and hands the pointer to a service per gesture: `ModuleDrag`
+(carrying the selection and regrouping it), `WireDrag` (drawing and lifting wires)
+and `RubberBand`. Each owns the fields only it reads.

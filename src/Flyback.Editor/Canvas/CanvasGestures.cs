@@ -2,17 +2,16 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using Avalonia.Media.Immutable;
 using Flyback.Editor.Notices;
 using Flyback.Core.Graph;
-using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Canvas;
 
 /// <summary>
-/// The hand on the canvas: what a press, a drag, a release and a wheel turn do. Five
-/// gestures over one <see cref="Drag"/> state, whose fields are only read while their
-/// own gesture is the one under way.
+/// The hand on the canvas: what a press, a drag, a release and a wheel turn do. One
+/// <see cref="Drag"/> state says which gesture is under way, and hands the pointer to
+/// <see cref="ModuleDrag"/>, <see cref="WireDrag"/> or <see cref="RubberBand"/>; a pan
+/// stays here, since it can put any of them on hold.
 /// </summary>
 /// <remarks>
 /// Each handler takes the canvas it is for, which is what the pointer is captured to
@@ -39,17 +38,6 @@ internal sealed class CanvasGestures
     /// </summary>
     private static readonly Cursor PanCursor = new(StandardCursorType.Hand);
 
-    /// <summary>
-    /// The rubber band. Dashed, because it is a gesture in progress rather than anything
-    /// in the patch, and drawn over the canvas so it keeps its size at any zoom.
-    /// </summary>
-    private static readonly IPen MarqueePen = new ImmutablePen(
-        new ImmutableSolidColorBrush(Colors.Attention),
-        1,
-        new ImmutableDashStyle([4, 3], 0));
-
-    private static readonly IBrush MarqueeFill = new ImmutableSolidColorBrush(Colors.Attention, 0.08);
-
     /// <summary>How far, in screen pixels, a press may wander and still be a click.</summary>
     private const double ClickSlop = 4;
 
@@ -64,14 +52,11 @@ internal sealed class CanvasGestures
     private readonly CanvasTips tips;
     private readonly Repaint repaint;
     private readonly NodeGeometry geometry;
+    private readonly ModuleDrag module;
+    private readonly WireDrag wire;
+    private readonly RubberBand band;
 
     private Drag drag;
-
-    /// <summary>
-    /// Where on the canvas a module drag took hold, in the patch's own coordinates, so a
-    /// module stays in the hand through a pan and a zoom mid-drag.
-    /// </summary>
-    private Point dragOrigin;
 
     /// <summary>
     /// What the middle button put on hold to pan, and where the pan started.
@@ -80,71 +65,8 @@ internal sealed class CanvasGestures
     private Drag panSuspended = Drag.None;
     private Point panOrigin;
 
-    /// <summary>
-    /// Where each module of the selection was when the drag began, so a drag ending
-    /// where it started can be told from one that moved.
-    /// </summary>
-    private readonly Dictionary<Guid, Point> dragOrigins = [];
-
-    /// <summary>
-    /// A module pressed while already part of a larger selection, which cannot be
-    /// resolved until the button comes up: pressing must not narrow the selection, or a
-    /// set could never be dragged by one of its members; releasing without a drag must.
-    /// </summary>
-    private Guid? pendingNarrow;
-
-    /// <summary>The two corners of the rubber band, in graph space, so it stays over the same modules at any zoom.</summary>
-    private Point marqueeFrom;
-    private Point marqueeTo;
-
-    /// <summary>
-    /// What the rubber band adds to: what was selected when it began with the modifier
-    /// held, and nothing otherwise. Held apart, so sweeping back off a module takes it
-    /// out again.
-    /// </summary>
-    private readonly HashSet<Guid> marqueeBase = [];
-
-    /// <summary>What was selected when the rubber band began, which backing out of one puts back.</summary>
-    private readonly HashSet<Guid> marqueeWas = [];
-
-    /// <summary>The button drawing the rubber band.</summary>
-    private MouseButton marqueeButton;
-
     /// <summary>Where a press that is still a click went down, in screen space; null once it has moved off.</summary>
     private Point? stillAt;
-
-    private Guid wireNode;
-    private int wirePort;
-    private bool wireFromOutput;
-
-    /// <summary>
-    /// Which re-patch this is. Unplugging an input and plugging it in elsewhere is two
-    /// edits and one gesture, so both carry this and fold into one step.
-    /// </summary>
-    private int wireGesture;
-
-    private Point wireEnd;
-
-    /// <summary>The wire this re-patch picked up and where in the patch's list it was, or null for a new wire.</summary>
-    private (Connection Wire, int At)? lifted;
-
-    /// <summary>
-    /// The wire the last press lifted off an output, so pressing the same socket again
-    /// straight after putting it back takes the next wire along.
-    /// </summary>
-    private Connection? liftedOffOutput;
-
-    /// <summary>
-    /// The carried modules Shift would move between groups on release: every one not
-    /// riding along with the whole of its own group, and not already where it would go.
-    /// </summary>
-    private readonly HashSet<Guid> regrouping = [];
-
-    /// <summary>
-    /// Where each group a carry reaches into stood when it began, so the carry is back
-    /// in its own group whenever it is back over that ground.
-    /// </summary>
-    private readonly Dictionary<NodeGroup, Rect> startRings = [];
 
     private readonly Reactions reactions;
 
@@ -160,6 +82,9 @@ internal sealed class CanvasGestures
         CanvasTips tips,
         Repaint repaint,
         NodeGeometry geometry,
+        ModuleDrag module,
+        WireDrag wire,
+        RubberBand band,
         Reactions reactions)
     {
         this.history = history;
@@ -174,8 +99,12 @@ internal sealed class CanvasGestures
         this.marks = marks;
         this.tips = tips;
         this.repaint = repaint;
+        this.module = module;
+        this.wire = wire;
+        this.band = band;
 
         history.Replaced += (_, _) => End();
+        wire.Dropped += (_, drop) => WireDropped?.Invoke(this, drop);
     }
 
     /// <summary>
@@ -199,17 +128,14 @@ internal sealed class CanvasGestures
     /// <summary>Whether the selection is being carried, so its wires are drawn over everything else.</summary>
     public bool Carrying => drag == Drag.Node;
 
-    /// <summary>Whether letting go now moves modules between groups.</summary>
-    public bool Regrouping => regrouping.Count > 0;
+    /// <inheritdoc cref="ModuleDrag.Regrouping"/>
+    public bool Regrouping => module.Regrouping;
 
-    /// <summary>
-    /// With Shift held, the group the carried modules belong to if let go now, their own
-    /// included; null over bare canvas and without Shift.
-    /// </summary>
-    public NodeGroup? Landing { get; private set; }
+    /// <inheritdoc cref="ModuleDrag.Landing"/>
+    public NodeGroup? Landing => module.Landing;
 
-    /// <summary>The modules letting go now moves, which their old group's ring is drawn without.</summary>
-    public IReadOnlySet<Guid> Regrouped => regrouping;
+    /// <inheritdoc cref="ModuleDrag.Regrouped"/>
+    public IReadOnlySet<Guid> Regrouped => module.Regrouped;
 
     /// <summary>
     /// Whether a key may change the patch: not on a locked canvas, and not while the
@@ -225,22 +151,10 @@ internal sealed class CanvasGestures
     /// Where the wire being dragged is anchored, null when none is. Through the scene's
     /// anchors like every other wire, since the port may be behind a box.
     /// </summary>
-    public Point? PendingWireFrom
-    {
-        get
-        {
-            if (drag != Drag.Wire) return null;
-            if (history.Patch.Find(wireNode) is not { } node) return null;
-            if (NodeCatalog.Get(node.TypeId) is not { } def) return null;
-
-            var scene = selection.Scene;
-
-            return wireFromOutput ? scene.OutputAnchor(node, wirePort) : scene.InputAnchor(node, def, wirePort);
-        }
-    }
+    public Point? PendingWireFrom => drag == Drag.Wire ? wire.Anchor : null;
 
     /// <summary>Whether the wire being drawn plugs into an output rather than an input; null when none is being drawn.</summary>
-    public bool? PendingWireTakesOutput => PendingWireFrom is null ? null : !wireFromOutput;
+    public bool? PendingWireTakesOutput => PendingWireFrom is null ? null : !wire.FromOutput;
 
     /// <summary>
     /// Whether a mouse drags empty canvas with the left button to pan, and with the right
@@ -248,8 +162,6 @@ internal sealed class CanvasGestures
     /// middle button pans and the left draws the band.
     /// </summary>
     public bool DragToPan { get; set; }
-
-    private string WireGesture => $"wire {wireGesture}";
 
     /// <summary>Opens the palette where the pointer last was, or in the middle of the view.</summary>
     public void RequestMenu() => MenuRequested?.Invoke(this, LastPointer ?? view.Middle);
@@ -293,7 +205,7 @@ internal sealed class CanvasGestures
         }
 
         // After the pan, which leaves the grip of a carry it puts on hold where it was.
-        dragOrigin = graph;
+        module.Grip(graph);
 
         // Over a module Ctrl adds to the selection; over an output it lifts a wire off.
         var ctrl = (modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
@@ -342,9 +254,7 @@ internal sealed class CanvasGestures
 
         if (button != MouseButton.Left) return false;
 
-        // Only the very next press walks on from the wire lifted last.
-        var liftedLast = liftedOffOutput;
-        liftedOffOutput = null;
+        var liftedLast = wire.Pressed();
 
         // A press outside the box being looked into puts it back, and goes on to be
         // whatever press it was. A socket keeps it, so a wire can be drawn in.
@@ -363,15 +273,18 @@ internal sealed class CanvasGestures
         // the module under it.
         if (!history.Locked && scene.HitPort(graph, out var portNode, out var portIndex, out var isOutput))
         {
-            StartWire(portNode, portIndex, isOutput, lifting: ctrl, liftedLast, graph);
+            // Before a wire is lifted off, so whatever hears of that change already sees a
+            // gesture under way.
+            drag = Drag.Wire;
+            wire.Start(portNode, portIndex, isOutput, lifting: ctrl, liftedLast, graph);
             pointer?.Capture(canvas);
             repaint.Request();
             return false;
         }
 
-        if (marks.At(graph) is var (wire, at))
+        if (marks.At(graph) is var (marked, at))
         {
-            marks.Splice(wire, at);
+            marks.Splice(marked, at);
             return true;
         }
 
@@ -383,8 +296,9 @@ internal sealed class CanvasGestures
             if ((modifiers & KeyModifiers.Shift) != 0 && selection.Group is { } whole && whole.Members.Contains(node.Id))
                 selection.Select(node.Id);
 
-            PressNode(node, ctrl);
-            if (!history.Locked) Aim(graph, modifiers);
+            module.PressNode(node, ctrl);
+            drag = Drag.Node;
+            if (!history.Locked) module.Aim(graph, modifiers);
 
             pointer?.Capture(canvas);
             repaint.Request();
@@ -428,7 +342,7 @@ internal sealed class CanvasGestures
         // Left on empty canvas draws a rubber band. A band that sweeps nothing selects
         // nothing, which is what a click on empty canvas does.
         StartMarquee(graph, ctrl, MouseButton.Left);
-        Sweep();
+        band.Sweep();
 
         pointer?.Capture(canvas);
         repaint.Request();
@@ -437,16 +351,15 @@ internal sealed class CanvasGestures
 
     private void StartMarquee(Point graph, bool adding, MouseButton button)
     {
-        marqueeFrom = marqueeTo = graph;
-        marqueeButton = button;
-
-        marqueeBase.Clear();
-        if (adding) marqueeBase.UnionWith(selection.Ids);
-
-        marqueeWas.Clear();
-        marqueeWas.UnionWith(selection.Ids);
-
+        band.Start(graph, adding, button);
         drag = Drag.Marquee;
+    }
+
+    /// <summary>A press on a box, or on the strip above an open group, which carries what is inside.</summary>
+    private void PressGroup(NodeGroup group, bool adding)
+    {
+        module.PressGroup(group, adding);
+        drag = Drag.Node;
     }
 
     public void Moved(Control canvas, PointerEventArgs e) =>
@@ -499,30 +412,19 @@ internal sealed class CanvasGestures
 
             // A locked canvas still carries a module under the pointer, since nothing
             // here is written back into the text; it just cannot regroup, which is.
-            case Drag.Node when dragOrigins.Count > 0:
-                var delta = selection.Scene.Held(graph - dragOrigin, dragOrigins);
-
-                foreach (var moving in selection.Nodes)
-                {
-                    if (!dragOrigins.TryGetValue(moving.Id, out var from)) continue;
-
-                    moving.X = from.X + delta.X;
-                    moving.Y = from.Y + delta.Y;
-                }
-
-                if (!history.Locked) Aim(graph, modifiers);
+            case Drag.Node when module.Holding:
+                module.Carry(graph, modifiers);
                 repaint.Request();
                 return;
 
             // A right-click must not take the selection away on its way to the list.
             case Drag.Marquee when stillAt is null:
-                marqueeTo = graph;
-                Sweep();
+                band.Stretch(graph);
                 repaint.Request();
                 return;
 
             case Drag.Wire:
-                wireEnd = graph;
+                wire.Stretch(graph);
                 repaint.Request();
                 return;
 
@@ -554,10 +456,10 @@ internal sealed class CanvasGestures
 
             held.Release();
 
-            if (drag == Drag.Marquee && marqueeButton == MouseButton.Right)
+            if (drag == Drag.Marquee && band.Button == MouseButton.Right)
             {
                 var click = stillAt is not null;
-                var at = marqueeFrom;
+                var at = band.From;
 
                 End();
                 canvas.Cursor = CursorOver(graph);
@@ -598,22 +500,14 @@ internal sealed class CanvasGestures
         // The button that began the gesture came up while a pan held it: a module stays
         // where it was carried to, and a wire is dropped, since its end was let go of
         // over a view that was moving.
-        if (drag == Drag.Pan && panSuspended == Drag.Node) RecordMove();
+        if (drag == Drag.Pan && panSuspended == Drag.Node) module.RecordMove();
 
         // A left pan that never moved was a click on empty canvas, which selects nothing.
         var ctrl = (modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
         if (drag == Drag.Pan && panSuspended == Drag.None && stillAt is not null && !ctrl) selection.Select(null);
 
-        if (drag == Drag.Wire) CompleteWire(graph);
-
-        // A move is a step and nothing the program can hear. A press on one module of a
-        // group that turned out not to be a drag was a click, which picks it out.
-        // Shift decides at the release as well, so letting go of it first changes nothing.
-        if (drag == Drag.Node && !history.Locked && Displaced) Aim(graph, modifiers);
-        else regrouping.Clear();
-
-        if (drag == Drag.Node && regrouping.Count > 0) edits.Regroup([.. regrouping], Landing);
-        else if (drag == Drag.Node && !RecordMove() && pendingNarrow is { } one) selection.Select(one);
+        if (drag == Drag.Wire) wire.Complete(graph);
+        if (drag == Drag.Node) module.Drop(graph, modifiers);
 
         End();
 
@@ -636,7 +530,7 @@ internal sealed class CanvasGestures
 
         if (drag == Drag.None) return;
 
-        if (drag == Drag.Node || panSuspended == Drag.Node) RecordMove();
+        if (drag == Drag.Node || panSuspended == Drag.Node) module.RecordMove();
 
         End();
         canvas.Cursor = ArrowCursor;
@@ -669,29 +563,16 @@ internal sealed class CanvasGestures
 
         switch (aborting)
         {
-            // Back into its place in the list, under the name the lifting was recorded
-            // under, so the history sees the patch it began with and drops the step.
-            case Drag.Wire when lifted is { } was:
-                lifted = null;
-                history.Patch.Connections.Insert(Math.Min(was.At, history.Patch.Connections.Count), was.Wire);
-                history.Record(WireGesture);
+            case Drag.Wire:
+                wire.Abort();
                 break;
 
             case Drag.Node:
-                foreach (var moving in selection.Nodes)
-                {
-                    if (!dragOrigins.TryGetValue(moving.Id, out var from)) continue;
-
-                    moving.X = from.X;
-                    moving.Y = from.Y;
-                }
-
+                module.Abort();
                 break;
 
             case Drag.Marquee:
-                selection.Replace(marqueeWas);
-                selection.Refocus();
-                selection.Announce();
+                band.Abort();
                 break;
         }
 
@@ -720,13 +601,8 @@ internal sealed class CanvasGestures
         panSuspended = Drag.None;
         stillAt = null;
 
-        pendingNarrow = null;
-        dragOrigins.Clear();
-        marqueeBase.Clear();
-        marqueeWas.Clear();
-        regrouping.Clear();
-        startRings.Clear();
-        Landing = null;
+        module.Clear();
+        band.Clear();
 
         if (ended) reactions.Raise(new GestureFinished());
     }
@@ -734,40 +610,13 @@ internal sealed class CanvasGestures
     /// <summary>The rubber band, over the canvas rather than in it, so its hairline and dashes hold at any zoom.</summary>
     public void DrawMarquee(DrawingContext context)
     {
-        if (drag != Drag.Marquee) return;
-
-        var band = CanvasScene.Band(
-            view.GraphToScreen.Transform(marqueeFrom),
-            view.GraphToScreen.Transform(marqueeTo));
-
-        // A band with no width or height is a click that has not moved yet.
-        if (band.Width < 1 || band.Height < 1) return;
-
-        context.DrawRectangle(MarqueeFill, MarqueePen, band);
+        if (drag == Drag.Marquee) band.Draw(context);
     }
 
     /// <summary>The wire being drawn, from its anchor to the pointer, routed as it will be once dropped.</summary>
     public void DrawPendingWire(DrawingContext context)
     {
-        if (PendingWireFrom is not { } anchor) return;
-
-        var pen = new Pen(new SolidColorBrush(Colors.Attention, 0.9), 2.2, DashStyle.Dash);
-
-        // Handed over in whichever order makes the curve leave an output and arrive at an input.
-        var (from, to) = wireFromOutput ? (anchor, wireEnd) : (wireEnd, anchor);
-
-        if (from.X <= to.X)
-        {
-            WirePath.Draw(context, from, to, pen);
-            return;
-        }
-
-        // The pointer is a module of no size.
-        var holding = history.Patch.Find(wireNode) is { } node && NodeCatalog.Get(node.TypeId) is { } def
-            ? selection.Scene.RouteBounds(node, def)
-            : new Rect(anchor, anchor);
-
-        WirePath.DrawReturn(context, from, to, WirePath.ReturnRun(holding, new Rect(wireEnd, wireEnd)), pen);
+        if (PendingWireFrom is { } anchor) wire.Draw(context, anchor);
     }
 
     /// <summary>Shift went down or came up: a carry mid-way shows at once what letting go would do.</summary>
@@ -775,38 +624,8 @@ internal sealed class CanvasGestures
     {
         if (drag != Drag.Node || history.Locked || LastPointer is not { } over) return;
 
-        Aim(over, modifiers);
+        module.Aim(over, modifiers);
         repaint.Request();
-    }
-
-    /// <summary>
-    /// Works out, with Shift held, which group the carried modules would land in if let
-    /// go over <paramref name="graph"/>: the one whose ring or box is under the pointer,
-    /// or none.
-    /// </summary>
-    private void Aim(Point graph, KeyModifiers modifiers)
-    {
-        regrouping.Clear();
-        Landing = null;
-
-        if ((modifiers & KeyModifiers.Shift) == 0) return;
-
-        var patch = history.Patch;
-        var carried = dragOrigins.Keys.ToHashSet();
-
-        // A whole group rides along as itself, since groups do not nest, and so does the Output.
-        var loose = carried
-            .Where(id => patch.GroupOf(id) is not { } own || !own.Members.All(carried.Contains))
-            .Where(id => patch.Find(id) is { } node && !NodeCatalog.IsSink(node.TypeId))
-            .ToArray();
-
-        if (loose.Length == 0) return;
-
-        Landing = selection.Scene.DropTarget(graph, carried, startRings);
-
-        foreach (var id in loose)
-            if (patch.GroupOf(id) != Landing)
-                regrouping.Add(id);
     }
 
     /// <summary>Stops a turn of a socket, and puts the cursor back to what the pointer is over.</summary>
@@ -819,209 +638,6 @@ internal sealed class CanvasGestures
 
         return true;
     }
-
-    /// <summary>Selects what the rubber band is over, together with whatever it was told to keep.</summary>
-    private void Sweep()
-    {
-        var wanted = new HashSet<Guid>(marqueeBase);
-
-        wanted.UnionWith(selection.Scene.Swept(CanvasScene.Band(marqueeFrom, marqueeTo)));
-
-        // Only when it changed: this runs on every move, and the inspector is rebuilt
-        // whenever a selection is announced.
-        if (wanted.Count == selection.Count && wanted.All(selection.Contains)) return;
-
-        selection.Replace(wanted);
-        selection.FocusTop();
-        selection.Announce();
-    }
-
-    /// <summary>What a press on a module does to the selection, and the start of a drag of what that leaves selected.</summary>
-    private void PressNode(NodeInstance node, bool adding)
-    {
-        pendingNarrow = null;
-
-        if (adding) selection.Toggle(node.Id);
-        else if (!selection.Contains(node.Id)) selection.Select(node.Id);
-        else
-        {
-            pendingNarrow = node.Id;
-
-            // The panel follows the pointer even when the set does not.
-            selection.FocusOn(node.Id);
-        }
-
-        StartCarrying();
-    }
-
-    /// <summary>A press on a box, or on the strip above an open group: what is inside is what gets selected.</summary>
-    private void PressGroup(NodeGroup group, bool adding)
-    {
-        pendingNarrow = null;
-
-        if (adding) selection.Take([.. selection.Ids, .. group.Members], group.Members[^1]);
-        else selection.Take(group.Members);
-
-        selection.Announce();
-
-        StartCarrying();
-    }
-
-    /// <summary>Brings the selection to the front together and notes where each module started.</summary>
-    private void StartCarrying()
-    {
-        // Nodes paint in list order, so a group being dragged does not pass under
-        // members of itself.
-        foreach (var moving in selection.Nodes)
-        {
-            history.Patch.Nodes.Remove(moving);
-            history.Patch.Nodes.Add(moving);
-        }
-
-        drag = Drag.Node;
-
-        dragOrigins.Clear();
-        foreach (var moving in selection.Nodes)
-            dragOrigins[moving.Id] = new Point(moving.X, moving.Y);
-
-        startRings.Clear();
-
-        var scene = selection.Scene;
-
-        foreach (var group in selection.Groups)
-            if (scene.OpenGroup(group) is var (outline, handle))
-                startRings[group] = outline.Union(handle);
-    }
-
-    /// <summary>
-    /// Grabbing a connected socket picks the existing wire up by the end that was not
-    /// grabbed, so re-patching works the way it does on a real rig.
-    /// </summary>
-    /// <param name="lifting">
-    /// Whether Ctrl was held, which only matters on an output: dragging from one already
-    /// means "start another wire", so taking one that is there asks for the modifier.
-    /// </param>
-    /// <param name="liftedLast">The wire the press before this lifted off an output, if it did.</param>
-    private void StartWire(Guid nodeId, int portIndex, bool isOutput, bool lifting, Connection? liftedLast, Point graph)
-    {
-        var patch = history.Patch;
-
-        wireGesture++;
-        lifted = null;
-
-        // Before a wire is lifted off, so whatever hears of that change already sees a
-        // gesture under way.
-        drag = Drag.Wire;
-        wireEnd = graph;
-
-        if (!isOutput && patch.IncomingTo(nodeId, portIndex) is { } existing)
-        {
-            lifted = (existing, patch.Connections.IndexOf(existing));
-            patch.Disconnect(nodeId, portIndex);
-            wireNode = existing.SourceNode;
-            wirePort = existing.SourcePort;
-            wireFromOutput = true;
-            history.Record(WireGesture);
-        }
-        else if (isOutput && lifting && NextOutgoing(nodeId, portIndex, liftedLast) is { } taken)
-        {
-            // The mirror of the case above: the wire comes off the socket grabbed and
-            // stays in the one at its far end, so what changes is where the signal
-            // comes from while what it feeds stays put.
-            lifted = (taken, patch.Connections.IndexOf(taken));
-            liftedOffOutput = taken;
-            patch.Disconnect(taken.TargetNode, taken.TargetPort);
-            wireNode = taken.TargetNode;
-            wirePort = taken.TargetPort;
-            wireFromOutput = false;
-            history.Record(WireGesture);
-        }
-        else
-        {
-            wireNode = nodeId;
-            wirePort = portIndex;
-            wireFromOutput = isOutput;
-        }
-    }
-
-    /// <summary>
-    /// The wire a Ctrl-press on an output takes: the one after <paramref name="liftedLast"/>
-    /// when that was put back on this socket, and the first otherwise.
-    /// </summary>
-    private Connection? NextOutgoing(Guid nodeId, int portIndex, Connection? liftedLast)
-    {
-        var leaving = history.Patch.Connections
-            .Where(c => c.SourceNode == nodeId && c.SourcePort == portIndex)
-            .ToList();
-
-        if (leaving.Count == 0) return null;
-
-        var at = liftedLast is { } last ? leaving.IndexOf(last) : -1;
-
-        return leaving[(at + 1) % leaving.Count];
-    }
-
-    private void CompleteWire(Point graph)
-    {
-        var patch = history.Patch;
-        var scene = selection.Scene;
-
-        if (!scene.HitPort(graph, out var node, out var port, out var isOutput))
-        {
-            // Dropped on a module's body it is a miss; on bare canvas it asks for
-            // something to plug into.
-            if (scene.HitNode(graph) is null) OfferSomethingToPlugInto(graph);
-
-            return;
-        }
-
-        // A wire only means something between opposite kinds of socket.
-        if (isOutput == wireFromOutput) return;
-
-        var (sourceNode, sourcePort, targetNode, targetPort) = wireFromOutput
-            ? (wireNode, wirePort, node, port)
-            : (node, port, wireNode, wirePort);
-
-        // A wire that closes a loop is drawn like any other and carries the previous
-        // evaluation (ADR-0075), so there is nothing to put on it.
-        patch.Connect(sourceNode, sourcePort, targetNode, targetPort);
-
-        // Put straight back where it was lifted from, into its old place in the list,
-        // so the history sees the patch the gesture began with and drops the step.
-        if (lifted is { } was
-            && was.Wire == new Connection(sourceNode, sourcePort, targetNode, targetPort)
-            && patch.Connections.Remove(was.Wire))
-        {
-            patch.Connections.Insert(Math.Min(was.At, patch.Connections.Count), was.Wire);
-        }
-
-        history.Record(WireGesture);
-    }
-
-    /// <summary>A wire let go over bare canvas, handed to whoever can offer something to plug it into.</summary>
-    private void OfferSomethingToPlugInto(Point graph)
-    {
-        if (history.Patch.Find(wireNode) is not { } holding) return;
-        if (NodeCatalog.Get(holding.TypeId) is not { } def) return;
-
-        var sockets = wireFromOutput ? def.Outputs : def.Inputs;
-        if (wirePort < 0 || wirePort >= sockets.Count) return;
-
-        WireDropped?.Invoke(this, new WireDrop(graph, wireNode, wirePort, wireFromOutput, sockets[wirePort].Kind));
-    }
-
-    /// <summary>
-    /// Puts a drag that moved something into the history, and says whether it did. On a
-    /// locked canvas the move stands but is not a step: a position the text does not
-    /// carry is gone the moment it evaluates again.
-    /// </summary>
-    private bool RecordMove() => Displaced && (history.Locked || history.RecordMove());
-
-    /// <summary>Whether the carry has taken anything away from where it started.</summary>
-    private bool Displaced => selection.Nodes.Any(node =>
-        dragOrigins.TryGetValue(node.Id, out var from)
-        // ReSharper disable once CompareOfFloatsByEqualityOperator
-        && (node.X != from.X || node.Y != from.Y));
 
     /// <summary>
     /// What the pointer should look like over <paramref name="graph"/>. A box and the

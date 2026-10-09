@@ -32,22 +32,6 @@ PanelEdited), `CaretFollow` (PointAt/Adrift, raising PanelStale) and a static
 `PastedPatch.Written`, each a part in the container. Document keeps ownership,
 the undo landing, Evaluate and ShowCode, about 350 lines.
 
-## 5. `PresetGallery` is six partials around four nested classes (Medium)
-
-`Gallery/PresetGallery.cs` 473, `.Layout.cs` 442 (nested `Layout`), `.Site.cs`
-244 (`SiteRun`), `.Choice.cs` 242 (`Choice`), `.Prompt.cs` 66, `.Card.cs` 43
-(`Card`): 1,510 code lines of one type, beside `PresetSlot.cs` (475) that is
-"everything the gallery it opens does". It is the ADR-0039 shape ("a banner is
-not a boundary") that ADR-0148 replaced for the window, kept alive through the
-one-type-per-file rule's nested-type allowance. The same loophole shows in
-`Canvas/CanvasGestures.cs` (613, "five gestures over one Drag state").
-
-**Fix.** Promote `Layout`, `Choice`, `SiteRun` and `Card` to top-level
-`GalleryLayout`, `GalleryChoice`, `SiteRun`, `PresetCard` in `Gallery/`,
-registered with `AddPart`, and delete the partials. Split `CanvasGestures` per
-gesture (`ModuleDrag`, `WireDrag`, `BoxSelect`, `PanZoom`, `WheelTurn`) over
-the `Drag` record it already names.
-
 ## 6. Public members only the host calls, one of them a hole (Medium)
 
 `ContractSurfaceTests` guards types; nothing guards members. Public in Core with
@@ -127,7 +111,7 @@ Toolbar react to `OwnershipChanged` themselves.
 
 ## Order
 
-4 and 5 first, since the editor's churn lands in them. 6 before 1.0.0, since the
+4 first, since the editor's churn lands in it. 6 before 1.0.0, since the
 contract is a promise from then on. The rest as each file is next touched.
 
 Landed: the host code that is not Avalonia has a home, `Flyback.Host`
@@ -137,7 +121,9 @@ The infix bracket rule is `Infix` in Core, which the binder, the printer and the
 fusing all spell a sum through; the three `Strength` tables' negative-number
 arms turned out never to change a spelling, and went with them. `OpShape` names
 every opcode, refuses one it does not, and owns the "registers an op reads" loop
-and the line-or-cell question for every pass and backend.
+and the line-or-cell question for every pass and backend. The preset gallery's
+parts are top-level types rather than partials of `PresetGallery`, and the canvas's
+gestures are `ModuleDrag`, `WireDrag` and `RubberBand` under `CanvasGestures`.
 Still written per shell, and small: the speaker handshake in two JS files, the
 viewer's and the CLI's `--size` and `--oversample` option declarations, and the
 viewer's `--cpu` against the CLI's `--processor`.

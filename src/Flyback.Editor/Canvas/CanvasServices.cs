@@ -40,6 +40,9 @@ internal static class CanvasServices
         services.AddSingleton<HeldModules>();
         services.AddSingleton<SocketDial>();
         services.AddSingleton<CanvasTips>();
+        services.AddSingleton<ModuleDrag>();
+        services.AddSingleton<WireDrag>();
+        services.AddSingleton<RubberBand>();
         services.AddSingleton<CanvasGestures>();
         services.AddSingleton<Fingers>();
         services.AddSingleton<CanvasPainter>();
