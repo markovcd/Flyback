@@ -24,7 +24,6 @@ decision (ADR-0138).
 - **CLI and Site**: `Flyback.Cli.csproj:34` links `Site/Admin/SiteAdmin.cs` as source, and the media PUT and `--server` check are still written twice (`Cli/Rendering/MediaUpload.cs:25-30` vs `Site/Commands/PushMediaCommand.cs:95-100`; `RenderPresetsCommand.cs:95-100` vs `SiteAdmin.Client:16`). A `Flyback.Site.Client` library both reference. Check while there: `Flyback.Site.csproj:24-33` lists the web plugins twice, minus Drawings, and `LoadLinked(..., "WebPlugin")` names Drawings; if `Assembly.Load` fails there, a Drawings preset is reported as lacking. Not confirmed by running.
 - **Silent sound stand-ins**: `Editor.Desktop/Shots/ShotSound.cs` and `Editor.Web/PageSound.cs` share the compile-for-live-inputs update and the null audition. An `UnplayedSound` base in Ui.
 - **`CompiledPatch`** (406) is the program description, the interpreter, the IL hand-over and the arithmetic library. `Arithmetic` and `Interpreter` beside it; ADR-0076's "IL calls the interpreter's own helpers" survives the move.
-- **Hand-kept registries**: `NodeCatalog.cs:38-60` concatenates 21 group methods by hand across 24 partials, and `Presets.cs:24-120` lists 26 builders; a new group or preset left off compiles and ships nothing. One reflection theory each.
 
 ## 10. Tests (Medium to Low)
 

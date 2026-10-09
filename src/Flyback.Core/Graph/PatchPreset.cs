@@ -29,12 +29,15 @@ public sealed record PatchPreset(
     {
         get => modules =>
         {
-            var patch = field(modules);
+            var patch = Builder(modules);
 
             if (patch.Description is null) patch.Describe(Description);
             if (patch.Tags is null) patch.Tag(Tags);
             return patch;
         };
-        init;
-    } = Build;
+        init => Builder = value;
+    }
+
+    /// <summary>The method <see cref="Build"/> calls, before it carries the description and tags.</summary>
+    internal Func<ModuleCatalog, Patch> Builder { get; private init; } = Build;
 }

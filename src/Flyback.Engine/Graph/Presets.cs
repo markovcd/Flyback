@@ -27,7 +27,8 @@ internal static partial class Presets
         },
     };
 
-    private static IReadOnlyList<PatchPreset> Shipped =>
+    /// <summary>The presets as written, before <see cref="Fused"/>.</summary>
+    internal static IReadOnlyList<PatchPreset> Shipped =>
     [
         // --- nothing yet -------------------------------------------------------
 
