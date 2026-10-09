@@ -106,6 +106,12 @@ public sealed class TransportSteps(EditorDriver editor) : IDisposable
     [When("F3 is pressed")]
     public void WhenF3() => editor.Press(PhysicalKey.F3);
 
+    [When("Space is pressed over the picture")]
+    public void WhenSpace() => editor.Press(PhysicalKey.Space);
+
+    [When("F11 is pressed over the picture")]
+    public void WhenF11() => editor.Press(PhysicalKey.F11);
+
     [Then("the editor's picture says how many frames a second it draws")]
     public void ThenTheEditorSays() => editor.Stats.ShouldNotBeNull("nothing is showing").ShouldContain("fps");
 

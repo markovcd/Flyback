@@ -126,19 +126,26 @@ internal sealed class ViewerWindow : Window
 
         KeyDown += (_, e) =>
         {
-            var command = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
-            var bare = !command && (e.KeyModifiers & KeyModifiers.Alt) == 0;
+            switch (StageKeys.Read(e.Key, e.KeyModifiers))
+            {
+                case StageKey.Leave when WindowState == WindowState.FullScreen:
+                case StageKey.FullScreen when preview is not null:
+                    ToggleFullScreen();
+                    break;
 
-            if (e.Key == Key.Escape && WindowState == WindowState.FullScreen) ToggleFullScreen();
+                case StageKey.Stats when Stats is not null:
+                    Stats.Toggle();
+                    break;
 
-            else if (bare && e.Key == Key.F11 && preview is not null) ToggleFullScreen();
+                case StageKey.Pause:
+                    TogglePause();
+                    break;
 
-            else if (bare && e.Key == Key.F3 && Stats is not null) Stats.Toggle();
-
-            // Space, which no layout plays, and the editor's Ctrl+P.
-            else if ((bare && e.Key == Key.Space) || (command && e.Key == Key.P)) TogglePause();
-
-            else if (!bare || !player.KeyDown(e.Key)) return;
+                default:
+                    var bare = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta | KeyModifiers.Alt)) == 0;
+                    if (!bare || !player.KeyDown(e.Key)) return;
+                    break;
+            }
 
             e.Handled = true;
         };

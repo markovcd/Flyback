@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Over the editor's full-screen picture, Space pauses and F11 gives the window back, as in the viewer.
+
 - Probing a chat-completions endpoint says when a rate limit left a model's senses unsure, as probing Gemini does.
 
 - On Android, the web editor's sound stops other playback, as the web viewer's does.

@@ -41,13 +41,32 @@ internal sealed class TransportControls : IReactTo<TakeMarked>, IReactTo<Transpo
     private bool statsShown;
 
     /// <summary>The dots and toolbar over a full-screen preview, or null before the layout is built.</summary>
-    public TransportOverlay? Overlay { get; set; }
+    public TransportOverlay? Overlay { get; private set; }
 
     /// <summary>The line saying how the picture is drawn, over the preview's cell while it has the window.</summary>
-    public StatsOverlay? Stats { get; set; }
+    public StatsOverlay? Stats { get; private set; }
 
     /// <summary>The window holding the preview on another monitor, while it is there.</summary>
-    public PictureWindow? PictureWindow { get; set; }
+    public PictureWindow? PictureWindow { get; private set; }
+
+    /// <summary>The transport and stats line over the window's own preview, once the layout has built them.</summary>
+    public void Register(TransportOverlay overlay, StatsOverlay stats)
+    {
+        Overlay = overlay;
+        Stats = stats;
+    }
+
+    /// <summary>The window the preview has gone to on another monitor.</summary>
+    public void Register(PictureWindow window) => PictureWindow = window;
+
+    /// <summary>Forgets <paramref name="window"/>, and says whether it was the one held.</summary>
+    public bool Release(PictureWindow window)
+    {
+        if (PictureWindow != window) return false;
+
+        PictureWindow = null;
+        return true;
+    }
 
     /// <summary>Every transport over a picture: the window's own, and the other monitor's while it has one.</summary>
     public IEnumerable<TransportOverlay> Overlays =>

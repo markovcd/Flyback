@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Flyback.Ui.Audio;
@@ -59,12 +58,23 @@ internal sealed class PictureWindow : Window
 
         KeyDown += (_, e) =>
         {
-            var command = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
+            switch (StageKeys.Read(e.Key, e.KeyModifiers))
+            {
+                case StageKey.Pause:
+                    PauseRequested?.Invoke(this, EventArgs.Empty);
+                    break;
 
-            if (command && e.Key == Key.P) PauseRequested?.Invoke(this, EventArgs.Empty);
-            else if (e.Key == Key.F3 && e.KeyModifiers == KeyModifiers.None) StatsRequested?.Invoke(this, EventArgs.Empty);
-            else if (e.Key == Key.Escape) Close();
-            else return;
+                case StageKey.Stats:
+                    StatsRequested?.Invoke(this, EventArgs.Empty);
+                    break;
+
+                case StageKey.Leave or StageKey.FullScreen:
+                    Close();
+                    break;
+
+                default:
+                    return;
+            }
 
             e.Handled = true;
         };

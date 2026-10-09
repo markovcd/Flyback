@@ -432,15 +432,16 @@ internal sealed class ShellLayout(
         Grid.SetColumn(inspectorBorder, column);
         Grid.SetRow(inspectorBorder, 2);
 
-        var overlay = transport.Overlay = new TransportOverlay { IsVisible = false };
+        var overlay = new TransportOverlay { IsVisible = false };
         overlay.PauseClicked += transport.TogglePause;
         overlay.MuteClicked += playback.ToggleMute;
         overlay.RewindClicked += playback.RewindPressed;
-        transport.Stats = new StatsOverlay(preview, audio, () => playback.HasSound);
+        var stats = new StatsOverlay(preview, audio, () => playback.HasSound);
+        transport.Register(overlay, stats);
         row.Seek.Drive(overlay);
         TransportOverlay.Lay(settings.Current.Transport, overlay, knobs.Stage);
         grid.Children.Add(previewBox);
-        grid.Children.Add(transport.Stats);
+        grid.Children.Add(stats);
         grid.Children.Add(knobs.Stage);
         grid.Children.Add(overlay);
         grid.Children.Add(splitter);

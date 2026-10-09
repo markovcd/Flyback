@@ -136,7 +136,8 @@ internal sealed class FullScreenPreview(
 
         preview.Renew();
 
-        var window = transport.PictureWindow = new PictureWindow(screen, preview, audio, () => playback.HasSound);
+        var window = new PictureWindow(screen, preview, audio, () => playback.HasSound);
+        transport.Register(window);
 
         knobs.Away = window.Knobs;
         window.Knobs.Show(editor.History.Patch);
@@ -162,9 +163,8 @@ internal sealed class FullScreenPreview(
 
     private void BringPictureBack(PictureWindow window)
     {
-        if (transport.PictureWindow != window || PreviewBox is not { } previewBox) return;
+        if (PreviewBox is not { } previewBox || !transport.Release(window)) return;
 
-        transport.PictureWindow = null;
         knobs.Away = null;
         row.Seek.Drop(window.Transport);
 

@@ -12,6 +12,7 @@ using Flyback.Editor.Knobs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Windows;
+using Flyback.Ui.Controls;
 using Flyback.Ui.Midi;
 using Colors = Flyback.Ui.Controls.Colors;
 
@@ -149,18 +150,10 @@ internal sealed class EditorView : Border
         if (e.Handled || dialog.IsShowing) return;
 
         // Before the modifier check, because Escape carries none. Only while the
-        // picture is full screen: everywhere else Escape belongs to the module
-        // filter, which handles its own before this is ever reached.
-        if (e.Key == Key.Escape && fullScreen.IsAway)
+        // picture is away: everywhere else Escape belongs to the module filter,
+        // which handles its own before this is ever reached.
+        if (Stage(StageKeys.Read(e.Key, e.KeyModifiers)))
         {
-            fullScreen.Leave();
-            e.Handled = true;
-            return;
-        }
-
-        if (e is { Key: Key.F3, KeyModifiers: KeyModifiers.None } && fullScreen.IsAway)
-        {
-            transport.ToggleStats(fullScreen.IsFullScreen);
             e.Handled = true;
             return;
         }
@@ -268,6 +261,32 @@ internal sealed class EditorView : Border
                 if (!inPage) reactions.Raise(new SaveAsked());
                 e.Handled = true;
                 break;
+        }
+    }
+
+    /// <summary>Does what a stage key asks of the picture while it is away, and says whether it did.</summary>
+    /// <remarks>
+    /// Space pauses only while the picture has the whole window: with it on another
+    /// monitor the editor is showing, and Space adds a module there.
+    /// </remarks>
+    private bool Stage(StageKey key)
+    {
+        switch (key)
+        {
+            case StageKey.Leave or StageKey.FullScreen when fullScreen.IsAway:
+                fullScreen.Leave();
+                return true;
+
+            case StageKey.Stats when fullScreen.IsAway:
+                transport.ToggleStats(fullScreen.IsFullScreen);
+                return true;
+
+            case StageKey.Pause when fullScreen.IsFullScreen:
+                reactions.Raise(new PauseAsked());
+                return true;
+
+            default:
+                return false;
         }
     }
 
