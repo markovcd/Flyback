@@ -104,7 +104,7 @@ public sealed class ConversationStoreTests : IDisposable
     [Fact]
     public void The_same_file_named_in_another_case_is_found_where_case_does_not_matter()
     {
-        if (!OperatingSystem.IsWindows()) return;
+        Assert.SkipUnless(OperatingSystem.IsWindows(), "case matters to file names here");
 
         var store = new ConversationStore(folder);
 

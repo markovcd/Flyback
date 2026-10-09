@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Xunit;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Tests.Ui;
@@ -44,7 +45,8 @@ public class PluginArtShotTests : EditorTest
     [AvaloniaFact]
     public void Draw_the_other_plugins_previews()
     {
-        if (Where is not { } folder) return;
+        var folder = Where;
+        Assert.SkipWhen(folder is null, "a tool for the site's pictures, run with SHOT_DIR naming a folder to draw into");
 
         Directory.CreateDirectory(folder);
 

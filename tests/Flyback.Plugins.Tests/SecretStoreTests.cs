@@ -20,6 +20,9 @@ public class SecretStoreTests
 
     private const string Absent = "flyback-test-account-that-does-not-exist";
 
+    /// <summary>Apart from <see cref="Account"/>, so the two tests that keep a key never meet in the keyring.</summary>
+    private const string Forgotten = "flyback-test-account-forgotten";
+
     /// <summary>The stores that ship in the box, one per operating system.</summary>
     public static TheoryData<string> PlatformStores => ["dpapi", "keychain", "secret-service"];
 
@@ -132,10 +135,10 @@ public class SecretStoreTests
 
         var store = Here;
 
-        store.Keep(Account, "sk-briefly");
-        store.Forget(Account);
+        store.Keep(Forgotten, "sk-briefly");
+        store.Forget(Forgotten);
 
-        store.Recall(Account).ShouldBeNull();
+        store.Recall(Forgotten).ShouldBeNull();
     }
 
     [Fact]

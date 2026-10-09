@@ -2,15 +2,16 @@ using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
 using Flyback.Plugins.Testing;
+using Flyback.Specs.Support;
 using Reqnroll;
+using Reqnroll.UnitTestProvider;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.Specs.Steps;
 
 /// <summary>The JACK output against a server this scenario starts, or one already running.</summary>
 [Binding]
-public sealed class JackSteps : IDisposable
+public sealed class JackSteps(IUnitTestRuntimeProvider runtime) : IDisposable
 {
     private static readonly PluginCatalog Installed = PluginHost.Load(PluginHost.DefaultDirectory, PluginTrust.Shipped(PluginHost.DefaultDirectory));
 
@@ -23,7 +24,7 @@ public sealed class JackSteps : IDisposable
     {
         daemon = new JackDaemon(Installed.AudioOutputs.Single(o => o.Id == "jack"));
 
-        Assert.SkipUnless(daemon.Available, daemon.Why);
+        Needs.Tool(runtime, daemon.Available, daemon.Why);
     }
 
     [Then("the sound plays through JACK")]

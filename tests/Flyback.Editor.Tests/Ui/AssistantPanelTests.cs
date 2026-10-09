@@ -21,6 +21,7 @@ using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using Xunit;
 
 namespace Flyback.Editor.Tests.Ui;
 
@@ -183,7 +184,8 @@ public sealed class AssistantPanelTests : EditorTest
     [AvaloniaFact]
     public void Draw_a_conversation()
     {
-        if (Environment.GetEnvironmentVariable("SHOT_DIR") is not { } folder) return;
+        var folder = Environment.GetEnvironmentVariable("SHOT_DIR");
+        Assert.SkipWhen(folder is null, "a tool for the site's pictures, run with SHOT_DIR naming a folder to draw into");
 
         var (window, panel) = Over(new Patch());
 

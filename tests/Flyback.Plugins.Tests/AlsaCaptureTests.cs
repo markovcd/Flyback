@@ -68,8 +68,9 @@ public class AlsaCaptureTests
                 heard.Set();
             });
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException ex) when (ex.Message.StartsWith("could not open", StringComparison.Ordinal))
         {
+            // Only no card to open: one that opens and then will not configure is a failure.
             Assert.Skip($"no input could be opened here: {ex.Message}");
         }
 

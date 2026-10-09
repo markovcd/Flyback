@@ -47,4 +47,9 @@
     <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit.v3" />
   </ItemGroup>
+  <!-- Reading a take back through ffmpeg, as the clip writer's own tests do. -->
+  <ItemGroup>
+    <Compile Include="..\Flyback.Core.Tests\Rendering\Decoded.cs" Link="Capture\Decoded.cs" />
+  </ItemGroup>
+
 </Project>

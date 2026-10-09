@@ -13,6 +13,7 @@ using Flyback.Plugins.Fractals;
 using Flyback.Plugins.Mastering;
 using Flyback.Plugins.Picture;
 using Flyback.Plugins.Voice;
+using Xunit;
 
 namespace Flyback.Editor.Tests.Ui;
 
@@ -52,7 +53,8 @@ public class PluginPreviewShotTests : EditorTest
     [AvaloniaFact]
     public void Draw_the_module_plugins_previews()
     {
-        if (Where is not { } folder) return;
+        var folder = Where;
+        Assert.SkipWhen(folder is null, "a tool for the site's pictures, run with SHOT_DIR naming a folder to draw into");
 
         Directory.CreateDirectory(folder);
 

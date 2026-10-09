@@ -38,7 +38,7 @@ public sealed class SoundFileSteps(PatchContext context, IUnitTestRuntimeProvide
     /// <summary>A 440 Hz tone at half level, encoded as a take's MP3 is.</summary>
     private string Mp3(double seconds)
     {
-        if (Encoder is null) runtime.TestIgnore("no ffmpeg on this machine");
+        Needs.Tool(runtime, Encoder is not null, "no ffmpeg on this machine");
 
         Directory.CreateDirectory(folder);
 

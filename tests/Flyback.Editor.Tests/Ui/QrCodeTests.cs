@@ -121,7 +121,8 @@ public class QrCodeTests : EditorTest
     [AvaloniaFact]
     public void Draw_the_donation_code()
     {
-        if (Environment.GetEnvironmentVariable("SHOT_DIR") is not { } folder) return;
+        var folder = Environment.GetEnvironmentVariable("SHOT_DIR");
+        Assert.SkipWhen(folder is null, "a tool for the site's pictures, run with SHOT_DIR naming a folder to draw into");
 
         Directory.CreateDirectory(folder);
         File.WriteAllText(Path.Combine(folder, "donate-qr.svg"), Svg(QrCode.Modules(About.BitcoinAddress)));

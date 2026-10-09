@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <!--
+    A direct reference, unlike the tests that load plugins off disk: what is checked
+    here is what the outputs offer against a stand-in for the machine, which needs no Linux.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.LinuxIO\Flyback.Plugins.LinuxIO.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Plugins\Flyback.Plugins.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+</Project>

@@ -1,4 +1,6 @@
 using System.CommandLine;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
 using System.Text.Json;
@@ -503,6 +505,10 @@ public class CommandTests
     /// A format ffmpeg writes, asked for on a machine with no ffmpeg. Said before
     /// anything is rendered, and said with what to do about it — ADR-0089.
     /// </summary>
+    /// <remarks>
+    /// The program itself, run with an empty <c>PATH</c>: a missing <c>--ffmpeg</c> falls
+    /// back to <c>PATH</c> by design, and this process's own is not for one test to change.
+    /// </remarks>
     [Fact]
     public void A_format_needing_ffmpeg_says_so_when_there_is_none()
     {
@@ -510,21 +516,43 @@ public class CommandTests
 
         var file = directory.File("out.mp4");
 
-        var (code, _, error) = Run((_, e) => RenderCommand.Run(
-            Preset("Plasma"),
-            new RenderOptions(file, 64, 36, Seconds: 0.2d, Ffmpeg: Missing),
-            e));
+        var (code, error) = Cli("render", "--preset", "Plasma", "--out", file.FullName, "--size", "64x36", "--seconds", "0.2", "--ffmpeg", Missing);
 
-        // Only where this machine has no ffmpeg of its own to fall back on, since
-        // a path that is not there falls back to PATH by design.
-        if (Ffmpeg.OnPath() is not null) return;
-
-        code.ShouldBe(Exit.Failed);
+        code.ShouldBe(Exit.Failed, error);
         error.ShouldContain("ffmpeg");
         error.ShouldContain("--ffmpeg");
 
         file.Refresh();
         file.Exists.ShouldBeFalse();
+    }
+
+    /// <summary>Runs flyback-cli with nothing on <c>PATH</c>, and answers how it ended and what it said on stderr.</summary>
+    private static (int Code, string Error) Cli(params string[] arguments)
+    {
+        var program = Path.Combine(AppContext.BaseDirectory, OperatingSystem.IsWindows() ? "flyback-cli.exe" : "flyback-cli");
+
+        var start = new ProcessStartInfo(program, arguments)
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            Environment =
+            {
+                ["PATH"] = "",
+                ["DOTNET_ROOT"] = Path.GetFullPath(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "..", "..", "..")),
+            },
+        };
+
+        using var process = Process.Start(start)!;
+        var said = process.StandardError.ReadToEndAsync();
+        _ = process.StandardOutput.ReadToEndAsync();
+
+        if (!process.WaitForExit(TimeSpan.FromMinutes(1)))
+        {
+            process.Kill(entireProcessTree: true);
+            throw new TimeoutException($"flyback-cli ran past a minute and was ended: {said.Result}");
+        }
+
+        return (process.ExitCode, said.Result);
     }
 
     /// <summary>A path no ffmpeg is at, which is what pointing --ffmpeg at nothing looks like.</summary>

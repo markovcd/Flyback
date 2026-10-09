@@ -10,11 +10,10 @@ namespace Flyback.Core.Tests.Rendering;
 /// formats and nothing else.
 /// </summary>
 /// <remarks>
-/// Nothing here decodes what came back — there is no decoder in this repository,
-/// and ffmpeg's own correctness is not this suite's to prove. What is checked is
-/// what this program is responsible for: that a file appears, that it is the
-/// container asked for, that it holds as many frames as were fed in, and that
-/// neither of the temporary files the sound pass needs is left behind.
+/// What came back is decoded by ffmpeg itself (<see cref="Decoded"/>). What is checked
+/// is what this program is responsible for: that a file appears, that it is the
+/// container asked for, that it holds as many pictures and as much sound as were fed
+/// in, and that neither of the temporary files the sound pass needs is left behind.
 /// </remarks>
 public class FfmpegClipWriterTests : IDisposable
 {
@@ -22,6 +21,9 @@ public class FfmpegClipWriterTests : IDisposable
     private const int Height = 48;
     private const double Rate = 10d;
     private const int Channels = 2;
+
+    /// <summary>How much longer a decoded sound may be than what was written: AAC pads its last packet out to 1,024 frames.</summary>
+    private const double Padding = 1024d / GlobalConstants.SampleRate;
 
     /// <summary>What is on this machine, asked once.</summary>
     private static readonly string? Encoder = Ffmpeg.Resolve(null);
@@ -59,6 +61,10 @@ public class FfmpegClipWriterTests : IDisposable
 
         return pixels;
     }
+
+    /// <summary>How many seconds of sound <paramref name="path"/> decodes to.</summary>
+    private static double Heard(string path) =>
+        Decoded.Sound(Encoder!, path, GlobalConstants.SampleRate) / (double)GlobalConstants.SampleRate;
 
     private static float[] Samples(int frames)
     {
@@ -155,7 +161,8 @@ public class FfmpegClipWriterTests : IDisposable
         var format = ClipFormats.ById(id)!;
         var path = Write(format, $"both{format.Extension}");
 
-        new FileInfo(path).Length.ShouldBeGreaterThan(0);
+        Decoded.Pictures(Encoder!, path).ShouldBe(5);
+        Heard(path).ShouldBe(5 / Rate, Padding);
     }
 
     /// <summary>
@@ -181,7 +188,7 @@ public class FfmpegClipWriterTests : IDisposable
 
         var path = Write(ClipFormats.H264Mp4, "silent.mp4", sound: false);
 
-        new FileInfo(path).Length.ShouldBeGreaterThan(0);
+        Decoded.Pictures(Encoder!, path).ShouldBe(5);
         Directory.GetFiles(folder).ShouldBe([path]);
     }
 
@@ -196,7 +203,7 @@ public class FfmpegClipWriterTests : IDisposable
         var format = ClipFormats.ById(id)!;
         var path = Write(format, $"sound{format.Extension}", frames: 20);
 
-        new FileInfo(path).Length.ShouldBeGreaterThan(0);
+        Heard(path).ShouldBe(20 / Rate, Padding);
     }
 
     /// <summary>
@@ -220,7 +227,7 @@ public class FfmpegClipWriterTests : IDisposable
             clip.FrameCount.ShouldBe(10);
         }
 
-        new FileInfo(path).Length.ShouldBeGreaterThan(0);
+        Decoded.Pictures(Encoder!, path).ShouldBe(10);
     }
 
     /// <summary>
@@ -245,7 +252,7 @@ public class FfmpegClipWriterTests : IDisposable
             for (var frame = 0; frame < 4; frame++) clip.WriteFrame(pixels, stride);
         }
 
-        new FileInfo(path).Length.ShouldBeGreaterThan(0);
+        Decoded.Pictures(Encoder!, path).ShouldBe(4);
     }
 
     /// <summary>
@@ -267,7 +274,7 @@ public class FfmpegClipWriterTests : IDisposable
             for (var frame = 0; frame < 4; frame++) clip.WriteFrame(new byte[stride * 49], stride);
         }
 
-        new FileInfo(path).Length.ShouldBeGreaterThan(0);
+        Decoded.Pictures(Encoder!, path).ShouldBe(4);
     }
 
     /// <summary>

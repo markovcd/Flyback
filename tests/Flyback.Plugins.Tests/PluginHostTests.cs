@@ -163,7 +163,7 @@ public class PluginHostTests
     [Fact]
     public void A_device_that_has_gone_stays_chosen_and_says_so()
     {
-        if (!OperatingSystem.IsWindows()) return;
+        Assert.SkipUnless(OperatingSystem.IsWindows(), "WASAPI is Windows'");
 
         var output = Shipped().AudioOutputs.Single(o => o.Id == "wasapi");
         var gone = SettingValues.None.With("device", "{0.0.0.00000000}.{not-plugged-in}");

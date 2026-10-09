@@ -25,14 +25,6 @@ public class JackOutputTests(JackServerFixture server) : IClassFixture<JackServe
     }
 
     [Fact]
-    public void Where_it_cannot_run_it_asks_nothing()
-    {
-        Assert.SkipWhen(server.Available, "a JACK server is running here");
-
-        server.Output.Form(SettingValues.None).ShouldBeEmpty();
-    }
-
-    [Fact]
     public void Its_form_asks_where_the_ports_connect_and_starts_on_the_system_playback()
     {
         Assert.SkipUnless(server.Available, server.Why);

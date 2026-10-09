@@ -5,6 +5,7 @@ using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Flyback.Engine.Render;
 using Shouldly;
+using Xunit;
 
 namespace Flyback.Editor.Tests.Ui;
 
@@ -50,9 +51,7 @@ public class PreviewBackendTests : EditorTest
         var host = new PreviewHost();
         var (plain, playing) = Programs();
 
-        // Only meaningful where the shader was on offer in the first place; a
-        // headless run may have refused it outright.
-        if (!host.GpuAvailable) return;
+        Assert.SkipUnless(host.GpuAvailable, "no shader on offer here to stay on");
 
         host.Program = plain;
         host.Program = playing;

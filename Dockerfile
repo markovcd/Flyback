@@ -84,11 +84,15 @@ COPY --from=worker /tested /tmp/worker-tested
 # Node runs the sound the web viewer plays, so the tests can hold it to the
 # desktop's. Without it they skip themselves.
 #
+# gnome-keyring, secret-tool and a session bus are the keyring the Linux secret
+# store keeps a key in. Without them its round trip skips itself.
+#
 # The wasm-tools workload links Skia into the web editor the preset site builds
 # beside itself (ADR-0162), and its Emscripten runs on Python.
 RUN apt-get update \
  && apt-get install --yes --no-install-recommends libfontconfig1 libx11-6 ffmpeg \
       libegl1 libegl-mesa0 libgl1-mesa-dri libopengl0 nodejs python3 jackd2 \
+      gnome-keyring libsecret-tools dbus \
  && rm -rf /var/lib/apt/lists/* \
  && dotnet workload install wasm-tools
 
@@ -151,14 +155,20 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 # No test host takes ten minutes, so one that has finished nothing for ten has
 # hung: the hang dump names the tests it was in and ends it, well inside the
 # workflow's timeout, which would cancel the run without saying where.
+#
+# The run is inside a session bus with a keyring unlocked, which only a password
+# that is not empty does. FLYBACK_GATE turns a spec's skip for a missing tool into
+# a failure, since this image has every one.
 FROM built AS tested
 ARG CONFIGURATION
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
     mkdir -p /test-results; \
-    dotnet test --solution Flyback.slnx -c ${CONFIGURATION} --no-build \
-      --hangdump --hangdump-timeout 10m --hangdump-type Mini \
-      --report-xunit-junit --results-directory /test-results; \
+    FLYBACK_GATE=1 dbus-run-session -- sh -c ' \
+      printf gate | gnome-keyring-daemon --unlock --components=secrets > /dev/null; \
+      exec dotnet test --solution Flyback.slnx -c "$CONFIGURATION" --no-build \
+        --hangdump --hangdump-timeout 10m --hangdump-type Mini \
+        --report-xunit-junit --results-directory /test-results'; \
     echo $? > /test-results/exit-code
 
 # The reports and the exit code, which gate.sh asks for with --output to write

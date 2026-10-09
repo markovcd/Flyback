@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <AssemblyMetadata Include="Tags" Value="sound; midi; linux" />
+    <InternalsVisibleTo Include="Flyback.Plugins.LinuxIO.Tests" />
     <!-- Retaken by PluginArtShotTests. -->
     <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" />
   </ItemGroup>

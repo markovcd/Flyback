@@ -802,6 +802,7 @@ changed: saved patches name it.
 | `Flyback.Plugins.Tests` | The host, every shipped module and preset | Loads real plugins off disk |
 | `Flyback.Plugins.OpenAi.Tests`, `.Gemini.Tests`, `.ClaudeCode.Tests`, `.Codex.Tests`, `.Programs.Tests`, `.SystemOne.Tests` | Wire translation and sessions | Reference the plugin directly: translation is pure |
 | `Flyback.Plugins.WinIO.Tests` | The ASIO output, against `FakeAsioDriver`, a driver's vtable in memory | References the plugin directly; runs anywhere |
+| `Flyback.Plugins.LinuxIO.Tests` | What the JACK output offers, against a stand-in for the server | References the plugin directly; runs anywhere |
 | `Flyback.Ui.Testing` | The headless harness: `UiTest`, the Avalonia xunit adapter | Not a test project |
 | `Flyback.Plugins.Testing` | What sound-backend tests share: `JackDaemon`, a JACK server to play into | Not a test project |
 | `Flyback.Core.Benchmarks` | BenchmarkDotNet | Not a test project |
@@ -1033,10 +1034,13 @@ Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
 Assert.SkipUnless(OperatingSystem.IsWindows(), "the Windows backend only opens on Windows.");
 ```
 
-Never a custom attribute, and never a silent pass. The exception is the shot
-tests (`PatchShotTests`, `SkinShotTests`), which write the website's pictures when
-`SHOT_DIR` is set and return early when it is not, so an ordinary run neither
-writes files nor fails.
+Never a custom attribute, and never a silent pass: an early `return` is a pass
+that checked nothing. The shot tests (`PatchShotTests`, `SkinShotTests` and the
+rest) write the website's pictures when `SHOT_DIR` is set and skip when it is not.
+
+A scenario that needs a tool calls `Needs.Tool`: it skips where the tool is
+missing, and fails when `FLYBACK_GATE` is set. The gate's run sets it, since its
+image has every tool and a skip there is a regression.
 
 ### Speed
 

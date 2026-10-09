@@ -17,6 +17,16 @@ public sealed class JackAudioOutput : IAudioOutput
     /// <summary>Leave the ports unconnected, for a patchbay to route.</summary>
     public const string Unconnected = "none";
 
+    private readonly Func<bool> running;
+
+    public JackAudioOutput()
+        : this(() => OperatingSystem.IsLinux() && LibJack.IsInstalled && JackServer.IsRunning)
+    {
+    }
+
+    /// <summary>An output that asks <paramref name="running"/> whether a server answers.</summary>
+    internal JackAudioOutput(Func<bool> running) => this.running = running;
+
     public string Id => "jack";
 
     public string Name => "JACK";
@@ -24,7 +34,7 @@ public sealed class JackAudioOutput : IAudioOutput
     /// <summary>Above ALSA's 100: somebody who started a server wants to be heard through it.</summary>
     public int Priority => 150;
 
-    public bool IsSupported => OperatingSystem.IsLinux() && LibJack.IsInstalled && JackServer.IsRunning;
+    public bool IsSupported => running();
 
     public IReadOnlyList<SettingField> Form(SettingValues values)
     {

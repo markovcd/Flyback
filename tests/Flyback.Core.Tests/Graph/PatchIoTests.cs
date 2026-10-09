@@ -248,32 +248,30 @@ public class PatchIoTests
             .InputValues.ShouldBe([0.25f, 1f]);
     }
 
-    /// <summary>A file with a null where a list, an item or a name belongs is refused, or opens as a patch that works.</summary>
+    /// <summary>A file with a null where a list or one of its items belongs is refused, saying so.</summary>
     [Theory]
     [InlineData("""{"Nodes":[null]}""")]
     [InlineData("""{"Nodes":null}""")]
+    [InlineData("""{"Nodes":[{"TypeId":null,"Id":"00000000-0000-0000-0000-000000000001"}]}""")]
     [InlineData("""{"Connections":[null]}""")]
     [InlineData("""{"Connections":null}""")]
     [InlineData("""{"Groups":[null]}""")]
     [InlineData("""{"Controls":[null]}""")]
-    [InlineData("""{"Tags":[null]}""")]
     [InlineData("""{"Requires":[null]}""")]
-    [InlineData("""{"Nodes":[{"TypeId":"output","InputValues":null}]}""")]
-    [InlineData("""{"Nodes":[{"TypeId":"output","Id":"00000000-0000-0000-0000-000000000001"}],"Groups":[{"Name":"g","Members":null}]}""")]
-    [InlineData("""{"Nodes":[{"TypeId":"output","Id":"00000000-0000-0000-0000-000000000001"}],"Groups":[{"Name":null,"Members":[]}]}""")]
-    [InlineData("""{"Nodes":[{"TypeId":"output","Id":"00000000-0000-0000-0000-000000000001","Name":null,"State":{"a":null}}]}""")]
-    public void A_file_with_a_null_hole_is_refused_or_opens_as_a_working_patch(string json)
-    {
-        Patch patch;
+    [InlineData("""{"Nodes":[{"TypeId":"output","Id":"00000000-0000-0000-0000-000000000001"}],"Groups":[{"Id":"00000000-0000-0000-0000-000000000002","Name":"g","Members":null}]}""")]
+    public void A_file_with_a_null_hole_in_a_list_is_refused_saying_so(string json) =>
+        Should.Throw<JsonException>(() => PatchIO.Read(json, NodeCatalog.BuiltIn))
+            .Message.ShouldContain("a null where");
 
-        try
-        {
-            patch = PatchIO.Read(json, NodeCatalog.BuiltIn).Patch;
-        }
-        catch (JsonException)
-        {
-            return;
-        }
+    /// <summary>A file with a null where a name or a value belongs opens as a patch that works.</summary>
+    [Theory]
+    [InlineData("""{"Tags":[null]}""")]
+    [InlineData("""{"Nodes":[{"TypeId":"output","Id":"00000000-0000-0000-0000-000000000001","InputValues":null}]}""")]
+    [InlineData("""{"Nodes":[{"TypeId":"output","Id":"00000000-0000-0000-0000-000000000001"}],"Groups":[{"Id":"00000000-0000-0000-0000-000000000002","Name":null,"Members":[]}]}""")]
+    [InlineData("""{"Nodes":[{"TypeId":"output","Id":"00000000-0000-0000-0000-000000000001","Name":null,"State":{"a":null}}]}""")]
+    public void A_file_with_a_null_hole_in_a_value_opens_as_a_working_patch(string json)
+    {
+        var patch = PatchIO.Read(json, NodeCatalog.BuiltIn).Patch;
 
         Should.NotThrow(() => patch.CompileForVideo(NodeCatalog.BuiltIn));
         Should.NotThrow(() => patch.CompileForAudio(NodeCatalog.BuiltIn));

@@ -7,6 +7,7 @@ using Flyback.Ui.Midi;
 using Flyback.Core.Graph;
 using Flyback.Engine.Language;
 using Flyback.Editor.Canvas;
+using Xunit;
 
 namespace Flyback.Editor.Tests.Ui;
 
@@ -28,7 +29,8 @@ public class PatchShotTests : EditorTest
     [AvaloniaFact]
     public void Draw_the_patches_the_site_shows()
     {
-        if (Where is not { } folder) return;
+        var folder = Where;
+        Assert.SkipWhen(folder is null, "a tool for the site's pictures, run with SHOT_DIR naming a folder to draw into");
 
         Directory.CreateDirectory(folder);
 

@@ -75,7 +75,7 @@ public sealed class ExportSteps(PatchContext context, IUnitTestRuntimeProvider r
     public void WhenExportedOnBoth(string name)
     {
         using (var probe = HeadlessRenderer.Open(out var why))
-            if (probe is null) runtime.TestIgnore($"no GPU on this machine. {why}");
+            Needs.Tool(runtime, probe is not null, $"no GPU on this machine. {why}");
 
         Export(name, "gpu", Seconds, "--gpu");
         Export(name, "processor", Seconds, "--processor");

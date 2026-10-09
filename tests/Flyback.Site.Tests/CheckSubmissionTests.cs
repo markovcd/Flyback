@@ -181,6 +181,13 @@ public sealed class CheckSubmissionTests : IDisposable
     public void A_package_that_would_unpack_outside_its_folder_is_refused() =>
         Plugin(Files.Signed(("win/Flyback.Plugins.Picture.dll", Files.PictureAssembly), ("../evil.dll", [1]))).Accepted.ShouldBeFalse();
 
+    /// <summary>The reader asked to check keys, as a Release build always is, so a Debug run holds the rule too.</summary>
+    [Fact]
+    public void An_unsigned_package_is_refused_where_keys_are_checked() =>
+        Should.Throw<InvalidDataException>(() => PluginSubmissions.Read(
+                "upload.fbkp", Files.Zip(("win/Flyback.Plugins.Picture.dll", Files.PictureAssembly)), checkKeys: true))
+            .Message.ShouldContain("not signed");
+
     [Fact]
     public void An_unsigned_package_is_refused()
     {

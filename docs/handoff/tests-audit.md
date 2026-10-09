@@ -33,47 +33,6 @@ Plugins.Tests for thirty minutes: the gate image had no keyring then, so these
 tests skipped, and no commit names that hang's cause. Fix: none yet;
 `secret-tool` cannot say whether the keyring is locked without prompting.
 
-## 5. Tests that pass having checked nothing (Medium)
-
-- Ten `if (...) return;` guards pass green with no assertion run and no skip
-  shown. `Cli.Tests/CommandTests.cs:520` (render with a missing `--ffmpeg`
-  fails saying so) returns whenever ffmpeg is on `PATH`, and the gate image has
-  it, so the test has never asserted on CI. `Editor.Tests/Assist/ConversationStoreTests.cs:107`
-  and `Plugins.Tests/PluginHostTests.cs:164` return off Windows;
-  `Editor.Tests/Ui/PreviewBackendTests.cs:55` without a GPU;
-  `Ui/AboutTests.cs:137` without an address. Six `SHOT_DIR` tests are tools
-  that count as passing tests when the variable is unset (`Ui/PatchShotTests.cs:31`,
-  `SkinShotTests.cs:113`, `PluginPreviewShotTests.cs:55`, `PluginArtShotTests.cs:47`,
-  `QrCodeTests.cs:124`, `AssistantPanelTests.cs:186`).
-- `Plugins.Tests/JackOutputTests.cs:30` `SkipWhen(server.Available)`: a test
-  that runs only where the feature is absent, so on CI and every box with JACK
-  it never runs.
-- The secret-service round trip runs on no automated machine:
-  `SecretStoreTests.cs:103-144` skip when `Here is null`, and the gate image
-  has no keyring daemon.
-- `PackageSigner.Checked` is false in every Debug build
-  (`src/Flyback.Plugins/Hosting/PackageSigner.cs:20-32`), so a local
-  `dotnet test` exercises the unsigned path only where a test passes
-  `checkKeys: true`; `Site.Tests/CheckSubmissionTests.cs:187` skips in Debug.
-- Written files asserted by `Length > 0`: `FfmpegClipWriterTests.cs:158,184,199`,
-  `LiveRecorderTests.cs:122,149,348`. A one-byte file passes.
-- `Specs` skips are silent in CI: five `TestIgnore`/`SkipUnless` sites
-  (`ExportSteps.cs:78` GPU, `WebViewerSteps.cs:447` Node, `SoundFileSteps.cs:41`
-  and `CliSteps.cs:373` ffmpeg, `JackSteps.cs:26`), and the gate image has all
-  four tools, so a skip there means a tool regressed, and it reports as skipped.
-- `Core.Tests/Graph/PatchIoTests.cs:273-276` `catch (JsonException) { return; }`
-  lets "refused or opens" pass on a parser crash; `security.md` says parsers of
-  untrusted text report, never throw.
-- `Plugins.Tests/AlsaCaptureTests.cs:71-73` turns any
-  `InvalidOperationException` into a skip, not only "no card".
-
-Fix: `Assert.SkipUnless` for every guard, so the skipped count is honest;
-`CommandTests:520` runs with an empty `PATH`; `JackOutputTests:30` tests `Form`
-against a stand-in probe; a keyring daemon (`gnome-keyring`,
-`dbus-run-session`) in the gate image; read the written files back through
-`SoundReader` as line 220 already does; `TestIgnore` throws when `gate.sh` sets
-a variable saying it is the gate.
-
 ## 6. The specs do not hold the rule they state (Medium)
 
 The rule is that every feature a user patches, plays or does has a scenario,
@@ -295,8 +254,7 @@ Plugins.Tests.
 ## Order
 
 Items 1, 2 and 3 are each one commit and go first: they are the ones that let a
-real bug through or blame the wrong commit for it. Item 5's guards are an
-afternoon. Item 6's "every feature has a scenario" theories
+real bug through or blame the wrong commit for it. Item 6's "every feature has a scenario" theories
 land once, and the modules they list are then scenario work over time. Item 8
 lands in the four commits it names, each as its files are next touched. The
 rest as each file is next touched.

@@ -4,6 +4,7 @@ using System.Text;
 using Avalonia;
 using Flyback.Editor.Capture;
 using Flyback.Core;
+using Flyback.Core.Tests.Rendering;
 using Flyback.Engine.Render;
 using Shouldly;
 using Xunit;
@@ -108,6 +109,7 @@ public class LiveRecorderTests : IDisposable
         Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
 
         var file = path + ClipFormats.H264Mp4.Extension;
+        long frames;
 
         using (var recorder = new LiveRecorder(Through(ClipFormats.H264Mp4)))
         {
@@ -116,10 +118,12 @@ public class LiveRecorderTests : IDisposable
             recorder.Stop();
 
             recorder.Status.Stopped.ShouldBeNull();
-            recorder.Status.Frames.ShouldBeGreaterThanOrEqualTo(8);
+            frames = recorder.Status.Frames;
+            frames.ShouldBeGreaterThanOrEqualTo(8);
         }
 
-        new FileInfo(file).Length.ShouldBeGreaterThan(0);
+        ((long)Decoded.Pictures(Encoder!, file)).ShouldBe(frames);
+        Decoded.Sound(Encoder!, file, SampleRate).ShouldBeGreaterThan(0);
 
         // Both halves of the sound pass are gone: on a long take each is as big
         // as everything recorded.
@@ -135,18 +139,18 @@ public class LiveRecorderTests : IDisposable
 
         using (var recorder = new LiveRecorder(Through(ClipFormats.Mp3)))
         {
-            Drive(recorder, untilFrames: 0, picture: false);
-
-            // Nothing counts frames in a sound-only take, so it is driven by the
-            // clock instead: long enough for the ring to have been drained.
-            Thread.Sleep(250);
+            // A second of sound, a quarter at a time.
+            for (var quarter = 0; quarter < 4; quarter++) recorder.WriteAudio(new float[SampleRate * Channels / 4]);
 
             recorder.Stop();
 
             recorder.Status.Stopped.ShouldBeNull();
         }
 
-        new FileInfo(path + ClipFormats.Mp3.Extension).Length.ShouldBeGreaterThan(0);
+        var heard = SoundReader.Read(path + ClipFormats.Mp3.Extension, Encoder, out var fault);
+
+        fault.ShouldBe(SoundFault.None);
+        heard.ShouldNotBeNull().Samples.Length.ShouldBe(heard.SampleRate, "a second written is a second heard");
     }
 
     /// <summary>
@@ -345,6 +349,6 @@ public class LiveRecorderTests : IDisposable
         recorder.Dispose();
         recorder.Dispose();
 
-        File.ReadAllBytes(path + ".avi").Length.ShouldBeGreaterThan(0);
+        Chunks(File.ReadAllBytes(path + ".avi"), "00dc").ShouldBeGreaterThanOrEqualTo(2);
     }
 }

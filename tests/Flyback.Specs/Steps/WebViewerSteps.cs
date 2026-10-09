@@ -447,7 +447,7 @@ public sealed class WebViewerSteps(Session session, PatchContext context, IUnitT
     private (int Exit, string Printed, string Said) Run(params string[] arguments)
     {
         var node = Node();
-        if (node is null) runtime.TestIgnore("no Node on this machine to run the web viewer with.");
+        Needs.Tool(runtime, node is not null, "no Node on this machine to run the web viewer with");
 
         var build = typeof(WebViewerSteps).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
             .Single(a => a.Key == "WebViewer").Value!;

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- On Linux, forgetting a key that was never kept no longer reports an error.
+
+- A patch file with no knob values for a module opens with the module's defaults instead of crashing.
+
 - On Windows, Flyback plays through an ASIO driver when you pick ASIO on the Sound tab, on the driver's first two outputs at its own block size.
 
 - Where more than one way of playing sound is installed, the Sound tab asks which one plays.

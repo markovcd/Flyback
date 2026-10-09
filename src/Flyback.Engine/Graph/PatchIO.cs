@@ -143,15 +143,20 @@ public static class PatchIO
         return patch;
     }
 
-    /// <summary>A patch whose lists hold no null where a file said <c>null</c>, or a <see cref="JsonException"/>.</summary>
+    /// <summary>
+    /// A patch with no null where a file said <c>null</c>: a <see cref="JsonException"/> for a
+    /// list, an item or a module's type, and no stored knobs for a module's knob values.
+    /// </summary>
     private static Patch Whole(Patch patch)
     {
         if (patch.Nodes is null || patch.Connections is null
-            || patch.Nodes.Contains(null!) || patch.Connections.Contains(null!)
+            || patch.Nodes.Any(n => n?.TypeId is null) || patch.Connections.Contains(null!)
             || patch.Groups?.Any(g => g is null || g.Members is null || g.Exposed is null) == true
             || patch.Controls?.Contains(null!) == true
             || patch.Requires?.Contains(null!) == true)
             throw new JsonException("The file has a null where a module, a wire, a group or a knob belongs.");
+
+        foreach (var node in patch.Nodes) node.InputValues ??= [];
 
         return patch;
     }

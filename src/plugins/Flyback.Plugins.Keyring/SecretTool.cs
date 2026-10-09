@@ -146,14 +146,14 @@ internal static class SecretTool
 
     /// <summary>
     /// Removes the item. Nothing there to remove is not an error — the contract
-    /// says so, <c>clear</c> agrees, and the panel offers Forget whether or not
-    /// anything was ever kept.
+    /// says so, and the panel offers Forget whether or not anything was ever kept.
     /// </summary>
     public static void Forget(string account)
     {
         var outcome = Run(["clear", ServiceAttribute, Service, AccountAttribute, account]);
 
-        if (outcome.Status == 0) return;
+        // Nothing kept under that name exits non-zero and says nothing, as lookup does.
+        if (outcome.Status == 0 || string.IsNullOrWhiteSpace(outcome.Errors)) return;
 
         throw new InvalidOperationException($"the keyring would not let the key go: {outcome.Complaint}.");
     }

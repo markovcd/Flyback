@@ -11,6 +11,7 @@ using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Engine.Language;
 using Shouldly;
+using Xunit;
 
 namespace Flyback.Editor.Tests.Ui;
 
@@ -134,7 +135,7 @@ public class AboutTests : EditorTest
     [AvaloniaFact]
     public void The_address_is_also_a_code_that_says_it_can_be_copied()
     {
-        if (About.BitcoinAddress.Length == 0) return;
+        Assert.SkipWhen(About.BitcoinAddress.Length == 0, "this build carries no donation address");
 
         var window = Showing();
         var code = All<QrCode>(window).ShouldHaveSingleItem();
