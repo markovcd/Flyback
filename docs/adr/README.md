@@ -150,6 +150,7 @@ context, decision, consequences.
 | [0178](0178-a-line-in-hears-the-microphone-while-the-sound-plays.md) | A Line In hears the microphone while the sound plays *(user-directed)* |
 | [0027](0027-delay-lines-give-the-audio-path-a-memory.md) | Delay lines give the audio path a memory *(user-directed)* |
 | [0029](0029-linux-sound-through-alsa.md) | Linux sound through ALSA, on a thread of our own |
+| [0190](0190-linux-sound-goes-through-jackd-when-one-is-running.md) | Linux sound goes through jackd when one is running |
 | [0030](0030-oscillators-accumulate-their-phase.md) | Oscillators accumulate their phase on the audio path |
 | [0036](0036-export-video-as-motion-jpeg-in-an-avi.md) | Export video as Motion JPEG in an AVI *(user-directed; demoted to the fallback by [0089](0089-ffmpeg-encodes-what-it-can-and-the-avi-is-the-fallback.md))* |
 | [0089](0089-ffmpeg-encodes-what-it-can-and-the-avi-is-the-fallback.md) | ffmpeg encodes what it can, and the AVI is the fallback *(user-directed)* |

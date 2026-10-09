@@ -100,6 +100,7 @@ public sealed class Usage
         "win.io",
         "alsa",
         "coreaudio",
+        "jack",
         "wasapi",
         "codex",
         "gemini",

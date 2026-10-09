@@ -4,8 +4,8 @@ using Flyback.Plugins.Midi;
 namespace Flyback.Plugins.LinuxIO;
 
 /// <summary>
-/// Entry point of the Linux input and output plugin: sound out and in through the ALSA PCM
-/// device, notes in through the ALSA sequencer.
+/// Entry point of the Linux input and output plugin: sound out through a JACK server or the
+/// ALSA PCM device, sound in through the PCM device, notes in through the ALSA sequencer.
 /// </summary>
 /// <remarks>
 /// The two travel together because they are the same library —
@@ -19,10 +19,10 @@ public sealed class LinuxIOPlugin : IFlybackPlugin
     public PluginInfo Info { get; } = new(
         "linux.io",
         "Linux sound and MIDI",
-        "Sound and MIDI through libasound, which is what PipeWire and PulseAudio answer to as well.");
+        "Sound and MIDI through libasound, which is what PipeWire and PulseAudio answer to as well, and sound through a JACK server.");
 
     /// <summary>
-    /// Three registrations, in the order the shell asks about them. None opens
+    /// Four registrations, in the order the shell asks about them. None opens
     /// anything: what is registered is the offer, and the backend decides for
     /// itself whether it can run — see <see cref="IAudioOutput.IsSupported"/>,
     /// <see cref="IAudioInput.IsSupported"/> and <see cref="IMidiInput.IsSupported"/>.
@@ -30,6 +30,7 @@ public sealed class LinuxIOPlugin : IFlybackPlugin
     public void Register(IPluginRegistry registry)
     {
         registry.AddAudioOutput(new AlsaAudioOutput());
+        registry.AddAudioOutput(new JackAudioOutput());
         registry.AddAudioInput(new AlsaAudioInput());
         registry.AddMidiInput(new AlsaMidiInput());
     }

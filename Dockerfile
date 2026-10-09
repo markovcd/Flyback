@@ -77,6 +77,9 @@ COPY --from=worker /tested /tmp/worker-tested
 # picture the way flyback-cli render does on a real card (ADR-0157). Without
 # them those tests skip themselves.
 #
+# jackd runs the dummy-driver server the JACK output's tests play into. Without it they
+# skip themselves.
+#
 # Node runs the sound the web viewer plays, so the tests can hold it to the
 # desktop's. Without it they skip themselves.
 #
@@ -84,7 +87,7 @@ COPY --from=worker /tested /tmp/worker-tested
 # beside itself (ADR-0162), and its Emscripten runs on Python.
 RUN apt-get update \
  && apt-get install --yes --no-install-recommends libfontconfig1 libx11-6 ffmpeg \
-      libegl1 libegl-mesa0 libgl1-mesa-dri libopengl0 nodejs python3 \
+      libegl1 libegl-mesa0 libgl1-mesa-dri libopengl0 nodejs python3 jackd2 \
  && rm -rf /var/lib/apt/lists/* \
  && dotnet workload install wasm-tools
 

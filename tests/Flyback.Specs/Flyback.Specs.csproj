@@ -69,6 +69,11 @@
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Keyring\Flyback.Plugins.Keyring.csproj" FolderName="Keyring" />
   </ItemGroup>
 
+  <!-- The JACK server the plugin's own tests start, so the scenario starts it the same way. -->
+  <ItemGroup>
+    <Compile Include="..\Flyback.Plugins.Tests\JackDaemon.cs" Link="Support\JackDaemon.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Avalonia.Headless" />
     <PackageReference Include="Avalonia.Skia" />

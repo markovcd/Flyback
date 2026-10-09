@@ -34,6 +34,7 @@ public class PluginHostTests
     public static TheoryData<string, string> BackendPlugins => new()
     {
         { "alsa", "linux.io" },
+        { "jack", "linux.io" },
         { "coreaudio", "mac.io" },
         { "wasapi", "win.io" },
         { "alsaseq", "linux.io" },
@@ -114,12 +115,12 @@ public class PluginHostTests
         var chosen = Shipped().PreferredAudioOutput?.Id;
 
         // On Linux, either answer is correct and which one is a property of the
-        // machine: ALSA where libasound is installed, and otherwise nothing —
-        // which is what leaves the Audio button disabled rather than opening a
-        // device that cannot exist.
+        // machine: JACK where a server is running, ALSA where libasound is
+        // installed, and otherwise nothing — which is what leaves the Audio button
+        // disabled rather than opening a device that cannot exist.
         if (OperatingSystem.IsLinux())
         {
-            (chosen is null or "alsa").ShouldBeTrue($"chose '{chosen}'");
+            (chosen is null or "alsa" or "jack").ShouldBeTrue($"chose '{chosen}'");
             return;
         }
 
