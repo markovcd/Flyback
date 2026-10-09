@@ -26,6 +26,7 @@
     <ProjectReference Include="..\..\src\Flyback.Viewer.Desktop\Flyback.Viewer.Desktop.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Cli\Flyback.Cli.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Site\Flyback.Site.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Testing\Flyback.Plugins.Testing.csproj" />
   </ItemGroup>
 
   <!--
@@ -67,11 +68,6 @@
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Dpapi\Flyback.Plugins.Dpapi.csproj" FolderName="Dpapi" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Keychain\Flyback.Plugins.Keychain.csproj" FolderName="Keychain" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Keyring\Flyback.Plugins.Keyring.csproj" FolderName="Keyring" />
-  </ItemGroup>
-
-  <!-- The JACK server the plugin's own tests start, so the scenario starts it the same way. -->
-  <ItemGroup>
-    <Compile Include="..\Flyback.Plugins.Tests\JackDaemon.cs" Link="Support\JackDaemon.cs" />
   </ItemGroup>
 
   <ItemGroup>

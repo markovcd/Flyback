@@ -1,7 +1,7 @@
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
-using Flyback.Plugins.Tests;
+using Flyback.Plugins.Testing;
 using Reqnroll;
 using Shouldly;
 using Xunit;

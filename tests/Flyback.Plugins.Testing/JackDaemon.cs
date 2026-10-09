@@ -2,12 +2,12 @@ using System.ComponentModel;
 using System.Diagnostics;
 using Flyback.Plugins.Audio;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Testing;
 
 /// <summary>
 /// A JACK server for the tests that need one: the one already running, or else a
 /// <c>jackd</c> with the dummy driver started here and stopped with this object. A machine
-/// with neither has <see cref="Available"/> false. Compiled into both test projects.
+/// with neither has <see cref="Available"/> false. Shared by the plugin tests and the specs.
 /// </summary>
 public sealed class JackDaemon : IDisposable
 {

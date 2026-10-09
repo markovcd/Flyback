@@ -91,6 +91,7 @@
     <Project Path="tests/Flyback.Plugins.Programs.Tests/Flyback.Plugins.Programs.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.SystemOne.Tests/Flyback.Plugins.SystemOne.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.Sample/Flyback.Plugins.Sample.csproj" />
+    <Project Path="tests/Flyback.Plugins.Testing/Flyback.Plugins.Testing.csproj" />
     <Project Path="tests/Flyback.Plugins.Tests/Flyback.Plugins.Tests.csproj" />
     <Project Path="tests/Flyback.Site.Tests/Flyback.Site.Tests.csproj" />
   </Folder>

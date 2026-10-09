@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Flyback.Plugins\Flyback.Plugins.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Testing\Flyback.Plugins.Testing.csproj" />
 
     <!--
       The contract keeps the engine to itself, so a test that compiles what a

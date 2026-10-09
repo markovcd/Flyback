@@ -233,6 +233,12 @@
           "Flyback.Core": "[0.1.0-dev, )"
         }
       },
+      "flyback.plugins.testing": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Plugins": "[0.1.0-dev, )"
+        }
+      },
       "xunit.v3.extensibility.core": {
         "type": "CentralTransitive",
         "requested": "[4.0.1, )",

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <!-- What the tests of a sound backend share. No test lives here. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Flyback.Plugins\Flyback.Plugins.csproj" />
+  </ItemGroup>
+
+</Project>
