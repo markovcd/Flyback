@@ -24,41 +24,14 @@ tested with hostile input (zip-slip, size caps, a changed plugin, an unsigned
 package, a list changed after signing, `--seconds` at infinity); every flake
 found this week was fixed in the harness the same day, in the open.
 
-## 4. Waits with no cap, and assertions on the wall clock (Medium)
+## 4. A locked keyring fails the secret-store tests (Low)
 
-- `Viewer.Desktop.Tests/ViewerWindowTests.cs:89,173` `Player.Compiled().Wait()`
-  with no timeout, on a compiler thread that runs below normal priority;
-  `Specs/Support/Headless.cs:41` `HeadlessTurn.Gate.Wait()` with no cap, so a
-  scenario that dies without `Leave` (`AssistantColumnSteps.cs:84` leaves only
-  `if (shown is not null)`) deadlocks every later window scenario;
-  `Core.Tests/Compile/NodeJs.cs:41` and `Specs/Steps/WebViewerSteps.cs:463`
-  `WaitForExit()` on node with no timeout. Each ends only in the gate's
-  ten-minute hang dump.
-- `Plugins.Testing/JackDaemon.cs:119-131`: after sixty seconds on the lock the
-  `IOException` propagates, so a sibling assembly holding it longer fails every
-  JACK test from the fixture constructor instead of skipping with a `Why`.
-- `Plugins.Tests/SecretStoreTests.cs:109-138` writes to the machine's real
-  keyring; on a desktop with a locked keyring the first `Keep` can block on an
-  unlock prompt. Build 599 hung in Plugins.Tests for thirty minutes and no
-  commit names the cause.
-- `Core.Tests/Graph/BeamTests.cs:200-203` asserts a noise draw is under five
-  times a circle draw, best of three stopwatch runs: a ratio of two timings on
-  a shared box. `Ui.Tests/StallTraceTests.cs:33` asserts a 5 ms sleep stays
-  under a 100 ms stall threshold on a pool thread.
-- `Editor.Tests/Ui/SitePresetTests.cs:235-288`: six plain `[Fact]`/`[Theory]`
-  in an `EditorTest` class, which the guide and `UiTest.cs:17-22` say disposes
-  from a pool thread and shows up as some other test failing later.
-- Worst-case wait if everything hangs: about forty minutes in Editor.Tests
-  (61 `Pump` calls at 30 s, `PresetListTests.cs:62` at 60 s four times), ten in
-  Viewer.Desktop.Tests. Always paid: `PaletteByMeaningTests.cs:86`
-  `Task.Delay(ModulePalette.Pause * 2)` with no comment, and 305 ms of sleeps
-  in `StallTraceTests`.
-
-Fix: `.Wait(TimeSpan, TestContext.Current.CancellationToken)` on the two
-player waits, `Gate.Wait(TimeSpan)` that throws naming the holder,
-`WaitForExit(ms)` then `Kill`, `TakeLock` expiry as a skip; `BeamTests` asserts
-the operation count the drawer reports and `StallTraceTests` injects its
-timestamps as its line 46 already does; `[AvaloniaFact]` on the six.
+`Plugins.Tests/SecretStoreTests.cs` writes to the machine's real keyring. On a
+desktop with a locked keyring the first `Keep` waits on the unlock prompt for
+`SecretTool`'s 30 s and then fails. It is not what hung build 599 in
+Plugins.Tests for thirty minutes: the gate image had no keyring then, so these
+tests skipped, and no commit names that hang's cause. Fix: none yet;
+`secret-tool` cannot say whether the keyring is locked without prompting.
 
 ## 5. Tests that pass having checked nothing (Medium)
 
@@ -322,8 +295,8 @@ Plugins.Tests.
 ## Order
 
 Items 1, 2 and 3 are each one commit and go first: they are the ones that let a
-real bug through or blame the wrong commit for it. Item 5's guards and item 4's
-caps are an afternoon each. Item 6's "every feature has a scenario" theories
+real bug through or blame the wrong commit for it. Item 5's guards are an
+afternoon. Item 6's "every feature has a scenario" theories
 land once, and the modules they list are then scenario work over time. Item 8
 lands in the four commits it names, each as its files are next touched. The
 rest as each file is next touched.

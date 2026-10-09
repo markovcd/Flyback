@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Shouldly;
 using Xunit;
 
@@ -7,6 +8,10 @@ namespace Flyback.Ui.Tests;
 public class StallTraceTests : IDisposable
 {
     private readonly string path = Path.Combine(Path.GetTempPath(), $"flyback-trace-{Guid.NewGuid():N}.txt");
+
+    /// <summary>A step that began <paramref name="ago"/> milliseconds before now.</summary>
+    private static StallStep Begun(string name, int ago) =>
+        new(name, Stopwatch.GetTimestamp() - Stopwatch.Frequency * ago / 1000);
 
     private string Written()
     {
@@ -20,7 +25,7 @@ public class StallTraceTests : IDisposable
     {
         StallTrace.Open(path);
 
-        using (StallTrace.Step("Slow.Step")) Thread.Sleep(150);
+        Begun("Slow.Step", ago: 150).Dispose();
 
         Written().ShouldContain("Slow.Step");
     }
@@ -30,7 +35,7 @@ public class StallTraceTests : IDisposable
     {
         StallTrace.Open(path);
 
-        using (StallTrace.Step("Quick.Step")) Thread.Sleep(5);
+        Begun("Quick.Step", ago: 5).Dispose();
 
         var text = Written();
 
@@ -43,7 +48,7 @@ public class StallTraceTests : IDisposable
     {
         StallTrace.Open(path);
 
-        StallTrace.UiStalled(TimeSpan.FromMilliseconds(300), System.Diagnostics.Stopwatch.GetTimestamp());
+        StallTrace.UiStalled(TimeSpan.FromMilliseconds(300), Stopwatch.GetTimestamp());
 
         Written().ShouldContain("UI thread (in no named step)");
     }
@@ -56,7 +61,7 @@ public class StallTraceTests : IDisposable
         StallTrace.On.ShouldBeFalse();
         Should.NotThrow(() =>
         {
-            using (StallTrace.Step("Nobody.Hears")) Thread.Sleep(150);
+            Begun("Nobody.Hears", ago: 150).Dispose();
         });
     }
 

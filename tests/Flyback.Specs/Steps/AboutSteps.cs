@@ -27,17 +27,22 @@ public sealed class AboutSteps(HeadlessTurn turn)
     [AfterScenario]
     public void Close()
     {
-        if (window is not { } open) return;
-
-        window = null;
-
-        Headless.Run(() =>
+        try
         {
-            open.Close();
-            Dispatcher.UIThread.RunJobs();
-        });
+            if (window is not { } open) return;
 
-        turn.Leave(this);
+            window = null;
+
+            Headless.Run(() =>
+            {
+                open.Close();
+                Dispatcher.UIThread.RunJobs();
+            });
+        }
+        finally
+        {
+            turn.Leave(this);
+        }
     }
 
     [Given("the About window is open")]

@@ -14,6 +14,13 @@ internal readonly struct StallStep : IDisposable
         started = StallTrace.On ? Stopwatch.GetTimestamp() : 0;
     }
 
+    /// <summary>A step that began at <paramref name="started"/> on the <see cref="Stopwatch"/> clock.</summary>
+    public StallStep(string name, long started)
+    {
+        this.name = name;
+        this.started = StallTrace.On ? started : 0;
+    }
+
     /// <summary>Writes the step down if it ran past <see cref="StallTrace.Threshold"/>.</summary>
     public void Dispose()
     {

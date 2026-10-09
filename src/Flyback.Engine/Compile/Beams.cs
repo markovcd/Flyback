@@ -68,13 +68,14 @@ public static class Beams
     /// figure the beam keeps retracing; a beam held still for the whole window is
     /// the brightest it gets.
     /// </remarks>
-    public static void Draw(DelayState memory, int across, int up, float[] into, float persistence)
+    /// <returns>How many spots the trace was drawn with, which is most of what it cost.</returns>
+    public static int Draw(DelayState memory, int across, int up, float[] into, float persistence)
     {
         ArgumentNullException.ThrowIfNull(memory);
         ArgumentNullException.ThrowIfNull(into);
 
         Array.Clear(into);
-        if (into.Length < GlowStart + GlowSize * GlowSize) return;
+        if (into.Length < GlowStart + GlowSize * GlowSize) return 0;
 
         var rate = (double)memory.SampleRate;
         var lasts = Math.Max(persistence, 1e-4f) * rate;
@@ -88,7 +89,7 @@ public static class Beams
             memory.ReadTrace(across, xs.AsSpan(0, span));
             memory.ReadTrace(up, ys.AsSpan(0, span));
 
-            Trace(xs, ys, span, Math.Exp(-1d / lasts), into);
+            return Trace(xs, ys, span, Math.Exp(-1d / lasts), into);
         }
         finally
         {
@@ -97,7 +98,7 @@ public static class Beams
         }
     }
 
-    private static void Trace(float[] xs, float[] ys, int span, double fade, float[] into)
+    private static int Trace(float[] xs, float[] ys, int span, double fade, float[] into)
     {
         var trace = into.AsSpan(0, GlowStart);
 
@@ -126,6 +127,8 @@ public static class Beams
         spot.Flush(trace);
 
         Halo(trace, into.AsSpan(GlowStart, GlowSize * GlowSize));
+
+        return spot.Drawn;
     }
 
     // From the picture's -1 to 1 to the trace's texels, centered on texel centers.
@@ -157,6 +160,9 @@ public static class Beams
     {
         private float x, y, weight, sumX, sumY;
 
+        /// <summary>How many spots have been drawn.</summary>
+        public int Drawn { get; private set; }
+
         public void Add(Span<float> into, float px, float py, float share)
         {
             if (weight > 0f && (MathF.Abs(px - x) > Spacing || MathF.Abs(py - y) > Spacing)) Flush(into);
@@ -174,7 +180,11 @@ public static class Beams
 
         public void Flush(Span<float> into)
         {
-            if (weight > 0f) Splat(into, sumX / weight, sumY / weight, weight);
+            if (weight > 0f)
+            {
+                Splat(into, sumX / weight, sumY / weight, weight);
+                Drawn++;
+            }
 
             weight = sumX = sumY = 0f;
         }

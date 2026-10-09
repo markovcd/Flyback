@@ -15,6 +15,7 @@ using Flyback.Engine.Render;
 using Flyback.Plugins.Audio;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using Xunit;
 using Flyback.Ui;
 using Flyback.Host;
 
@@ -26,6 +27,9 @@ namespace Flyback.Viewer.Desktop.Tests;
 /// </summary>
 public class ViewerWindowTests : UiTest
 {
+    /// <summary>How long a patch may take to compile; these take well under a second.</summary>
+    private static readonly TimeSpan CompileCap = TimeSpan.FromMinutes(1);
+
     /// <summary>A sound card the test drives: a buffer is made when the test asks for one.</summary>
     private sealed class Loopback : IAudioDevice
     {
@@ -86,7 +90,7 @@ public class ViewerWindowTests : UiTest
             services => services.AddSingleton<TimeProvider>(new Moved(seconds)));
 
         run.Player.Begin();
-        run.Player.Compiled().Wait();
+        Compiled(run.Player);
 
         return run;
     }
@@ -170,10 +174,14 @@ public class ViewerWindowTests : UiTest
         Settle(window);
 
         // An opened patch is silent until it is compiled, and these tests are about what it does after.
-        window.Player.Compiled().Wait();
+        Compiled(window.Player);
 
         return window;
     }
+
+    private static void Compiled(ViewerPlayer player) =>
+        player.Compiled().Wait(CompileCap, TestContext.Current.CancellationToken)
+            .ShouldBeTrue($"the patch had not compiled after {CompileCap.TotalSeconds:0} s");
 
     private static float Loudest(float[] buffer) => buffer.Max(MathF.Abs);
 

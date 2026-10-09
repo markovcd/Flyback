@@ -29,6 +29,9 @@ public sealed class WebViewerSteps(Session session, PatchContext context, IUnitT
     /// <summary>The size the viewer opens a patch at, which a Scan hears as its aspect.</summary>
     private const int Width = 960, Height = 540;
 
+    /// <summary>How long one run of the build may take; a run takes seconds.</summary>
+    private static readonly TimeSpan Cap = TimeSpan.FromMinutes(2);
+
     private readonly DirectoryInfo folder = Directory.CreateTempSubdirectory("flyback-web-");
     private float[] heard = [];
     private int oversample = AudioRenderer.DefaultOversample;
@@ -458,10 +461,16 @@ public sealed class WebViewerSteps(Session session, PatchContext context, IUnitT
 
         using var process = Process.Start(start)!;
         var said = process.StandardError.ReadToEndAsync();
-        var printed = process.StandardOutput.ReadToEnd();
-        process.WaitForExit();
+        var printed = process.StandardOutput.ReadToEndAsync();
 
-        return (process.ExitCode, printed, said.Result);
+        if (!process.WaitForExit(Cap))
+        {
+            process.Kill(entireProcessTree: true);
+            process.WaitForExit();
+            throw new TimeoutException($"hear.mjs ran past {Cap.TotalSeconds:0} s and was ended: {said.Result}");
+        }
+
+        return (process.ExitCode, printed.Result, said.Result);
     }
 
     /// <summary>Node on the path, or the one the WebAssembly workload brings with it.</summary>

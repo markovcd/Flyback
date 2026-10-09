@@ -31,6 +31,7 @@ public sealed partial class JackDaemon : IDisposable
 
     private readonly IAudioOutput jack;
     private readonly FileStream? held;
+    private readonly bool lockedOut;
     private readonly Process? started;
     private readonly string? before;
     private readonly List<string> said = [];
@@ -42,6 +43,12 @@ public sealed partial class JackDaemon : IDisposable
         if (!OperatingSystem.IsLinux() || jack.IsSupported) return;
 
         held = TakeLock();
+
+        if (held is null)
+        {
+            lockedOut = true;
+            return;
+        }
 
         before = Environment.GetEnvironmentVariable(ServerVariable);
         Environment.SetEnvironmentVariable(ServerVariable, ServerName);
@@ -85,6 +92,7 @@ public sealed partial class JackDaemon : IDisposable
         get
         {
             if (Available) return string.Empty;
+            if (lockedOut) return $"another test assembly held {LockPath} past {LockLimit.TotalSeconds:0} s";
             if (started is null) return "no JACK server here";
 
             lock (said)
@@ -114,7 +122,8 @@ public sealed partial class JackDaemon : IDisposable
         }
     }
 
-    private static FileStream TakeLock()
+    /// <summary>The lock, or null once <see cref="LockLimit"/> has passed with another holding it.</summary>
+    private static FileStream? TakeLock()
     {
         var waited = Stopwatch.StartNew();
 
@@ -124,8 +133,10 @@ public sealed partial class JackDaemon : IDisposable
             {
                 return new FileStream(LockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             }
-            catch (IOException) when (waited.Elapsed < LockLimit)
+            catch (IOException)
             {
+                if (waited.Elapsed >= LockLimit) return null;
+
                 Thread.Sleep(100);
             }
         }

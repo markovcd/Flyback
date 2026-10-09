@@ -81,9 +81,8 @@ public sealed class AssistantColumnSteps(HeadlessTurn turn, EditorDriver editor)
 
     public void Dispose()
     {
-        if (shown is not null) turn.Leave(this);
-
         shown = null;
+        turn.Leave(this);
     }
 
     private void Message(bool open, string offer) =>

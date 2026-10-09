@@ -83,6 +83,8 @@ public sealed class PaletteByMeaningTests : EditorTest
         var palette = Palette(window);
 
         Type(window, palette, "a mirror maze of shards");
+
+        // Past the pause, when a decision model would have been asked.
         await Task.Delay(ModulePalette.Pause * 2);
         Dispatcher.UIThread.RunJobs();
 

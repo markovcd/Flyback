@@ -46,8 +46,6 @@ public sealed class AssistantWorkingSteps(HeadlessTurn turn) : IDisposable
 
     public void Dispose()
     {
-        if (transcript is null) return;
-
         transcript = null;
         turn.Leave(this);
     }

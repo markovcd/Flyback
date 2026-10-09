@@ -195,17 +195,13 @@ public class BeamTests
         var noise = Drawer(Drawing(("audio.noise", []), ("audio.noise", [(2, 1f)]), (Persistence, -1f)).Patch);
         var circle = Drawer(Circle((Persistence, -1f)).Patch);
 
-        // Each timed against the other in the same moment, so a busy machine slows
-        // both alike; the best of three sheds a pause in either.
-        var took = Enumerable.Range(0, 3).Select(_ => (Noise: noise.Time(), Circle: circle.Time())).ToArray();
-
-        // A noise drawn whole costs about a hundred circles.
-        took.Min(t => t.Noise).ShouldBeLessThan(took.Min(t => t.Circle) * 5);
+        // A noise drawn whole takes about a hundred circles' spots.
+        noise.Spots.ShouldBeLessThan(circle.Spots * 5);
         Lit(noise.Drawn, 0, 0).ShouldBeGreaterThan(0d);
     }
 
-    /// <summary>A second of <paramref name="patch"/> played, and a way to time drawing its screen from it.</summary>
-    private static (CompiledPatch Drawn, Func<double> Time) Drawer(Patch patch)
+    /// <summary>A second of <paramref name="patch"/> played and its screen drawn, with how many spots the beam took.</summary>
+    private static (CompiledPatch Drawn, int Spots) Drawer(Patch patch)
     {
         var heard = patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
         var drawn = patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
@@ -214,12 +210,10 @@ public class BeamTests
         var memory = renderer.DelayMemoryFor(heard);
         renderer.Render(heard, new float[renderer.SampleRate * 2], memory);
 
-        return (drawn, () =>
-        {
-            var took = System.Diagnostics.Stopwatch.StartNew();
-            Traces.Refresh(drawn, heard, memory);
-            return took.Elapsed.TotalMilliseconds;
-        }
-        );
+        var chart = drawn.Taps.Single();
+        var across = heard.Taps.ToList().FindIndex(tap => tap.Port == Across);
+        var up = heard.Taps.ToList().FindIndex(tap => tap.Port == Up);
+
+        return (drawn, Beams.Draw(memory.ShouldNotBeNull(), across, up, chart.Trace.Samples, chart.Window));
     }
 }
