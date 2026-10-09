@@ -1,7 +1,7 @@
 # The gate, on every change: restore, compile, and every test in the solution.
 #
 # The same image the release is built from, stopped at the tests — `--target
-# gate` is the Dockerfile's first stage, so what runs here is what runs before a
+# gate` stops before the publishes, so what runs here is what runs before a
 # release and nothing that only a release needs. It also carries the libraries
 # the headless UI tests want and the ffmpeg the recording tests look for, which
 # a workflow that installed a bare SDK would have to list a second time.
@@ -53,6 +53,8 @@ jobs:
       # the cache all the way through and runs no tests. That is the right
       # answer for such a commit, but it is the reason a green check here is
       # about the context, not about the run.
+      #
+      # gate.sh writes the run's summary: the test counts and each failing test.
       - name: Build and test
         if: runner.os != 'Windows'
         run: bash scripts/gate.sh

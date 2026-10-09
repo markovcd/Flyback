@@ -46,9 +46,10 @@ RUN npm ci --no-audit --no-fund
 COPY worker/ ./
 RUN npx tsc --noEmit && npx vitest run && touch /tested
 
-# Everything a change has to get past. An argument declared above the first FROM
-# is one default for both stages, and a stage asks for one by repeating it bare.
-FROM ${SDK} AS gate
+# Everything a change has to get past, up to the tests. An argument declared above
+# the first FROM is one default for every stage, and a stage asks for one by
+# repeating it bare.
+FROM ${SDK} AS built
 ARG CONFIGURATION
 
 # The Worker's tests are part of the gate: nothing past here is built if they fail.
@@ -138,25 +139,42 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
     && dotnet format whitespace Flyback.slnx --verify-no-changes --no-restore \
     && dotnet format style Flyback.slnx --diagnostics IDE0161 --severity warn --verify-no-changes --no-restore
 
-# The gate. Every test in the solution — the engine's, the shell's headless UI
-# ones, the plugins' — and the build stops here if any of them does.
+# Every test in the solution — the engine's, the shell's headless UI ones, the
+# plugins' — with a JUnit report per project and the run's exit code kept beside
+# them. The run itself never fails the build, so the reports can be taken out of
+# a failing one; the gate below is what fails. A failing run is therefore cached
+# like a passing one, and building the same context again reports the same failure.
 #
 # --solution rather than a bare path: global.json runs `dotnet test` on
-# Microsoft.Testing.Platform, which names what it is given. It prints each
-# failing test to the console, so there is nothing to fish out of a log.
+# Microsoft.Testing.Platform, which names what it is given.
 #
 # No test host takes ten minutes, so one that has finished nothing for ten has
 # hung: the hang dump names the tests it was in and ends it, well inside the
 # workflow's timeout, which would cancel the run without saying where.
+FROM built AS tested
+ARG CONFIGURATION
+
 RUN --mount=type=cache,target=/root/.nuget/packages \
+    mkdir -p /test-results; \
     dotnet test --solution Flyback.slnx -c ${CONFIGURATION} --no-build \
-      --hangdump --hangdump-timeout 10m --hangdump-type Mini
+      --hangdump --hangdump-timeout 10m --hangdump-type Mini \
+      --report-xunit-junit --results-directory /test-results; \
+    echo $? > /test-results/exit-code
+
+# The reports and the exit code, which gate.sh asks for with --output to write
+# the run's summary.
+FROM scratch AS test-results
+COPY --from=tested /test-results/ /
+
+# The gate: the build stops here if any test failed.
+FROM tested AS gate
+RUN exit "$(cat /test-results/exit-code)"
 
 # The same tests again, measured. A second run rather than a flag on the one
 # above, because measuring roughly doubles what the tests take, which is not a
 # price the gate should pay for a number nothing is allowed to fail on.
 #
-# Its own stage, so nothing above waits for it: the gate is the first stage and
+# Its own stage, so nothing above waits for it: the gate stops at the tests and
 # the publishes build on the gate, not on this.
 #
 # One project at a time, each into a folder named after it, since a report is
