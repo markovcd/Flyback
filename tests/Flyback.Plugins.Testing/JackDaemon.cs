@@ -14,6 +14,10 @@ namespace Flyback.Plugins.Testing;
 /// A server takes about 38 MB of <c>/dev/shm</c> whatever its port table, and a container's
 /// is 64 MB, so a second one dies of SIGBUS on its first client. The test assemblies run side
 /// by side, so each holds <see cref="LockPath"/> while its server runs.
+/// <para>
+/// Every test server has the one name <see cref="ServerName"/>: jackd frees a dead server's
+/// slot only for a new server of the same name, and has eight slots.
+/// </para>
 /// </remarks>
 public sealed partial class JackDaemon : IDisposable
 {
@@ -22,12 +26,14 @@ public sealed partial class JackDaemon : IDisposable
     private static readonly string LockPath = Path.Combine(Path.GetTempPath(), "flyback-jackd.lock");
 
     private const string ServerVariable = "JACK_DEFAULT_SERVER";
+    private const string ServerName = "flyback-test";
     private const int SigTerm = 15;
 
     private readonly IAudioOutput jack;
     private readonly FileStream? held;
     private readonly Process? started;
     private readonly string? before;
+    private readonly List<string> said = [];
 
     public JackDaemon(IAudioOutput jack)
     {
@@ -37,19 +43,16 @@ public sealed partial class JackDaemon : IDisposable
 
         held = TakeLock();
 
-        // Named for this process, since each assembly stops only its own.
-        var name = $"flyback-test-{Environment.ProcessId}";
-
         before = Environment.GetEnvironmentVariable(ServerVariable);
-        Environment.SetEnvironmentVariable(ServerVariable, name);
+        Environment.SetEnvironmentVariable(ServerVariable, ServerName);
 
         try
         {
-            started = Process.Start(new ProcessStartInfo("jackd", $"-n {name} --no-realtime --port-max 32 -d dummy -r 48000 -p 256")
+            started = Process.Start(new ProcessStartInfo("jackd", $"-n {ServerName} --no-realtime --port-max 32 -d dummy -r 48000 -p 256")
             {
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-            });
+            })!;
         }
         catch (Win32Exception)
         {
@@ -58,6 +61,16 @@ public sealed partial class JackDaemon : IDisposable
             return;
         }
 
+        // Both pipes are drained, so a talkative server never blocks on a full one.
+        started.OutputDataReceived += (_, _) => { };
+        started.ErrorDataReceived += (_, line) =>
+        {
+            if (!string.IsNullOrWhiteSpace(line.Data) && !line.Data.Contains("buffer overruns", StringComparison.Ordinal))
+                lock (said) said.Add(line.Data.Trim());
+        };
+        started.BeginOutputReadLine();
+        started.BeginErrorReadLine();
+
         var waited = Stopwatch.StartNew();
 
         while (!jack.IsSupported && waited.Elapsed < StartupLimit && started is { HasExited: false })
@@ -65,6 +78,19 @@ public sealed partial class JackDaemon : IDisposable
     }
 
     public bool Available => jack.IsSupported;
+
+    /// <summary>Why there is no server, in jackd's words where it started and gave up.</summary>
+    public string Why
+    {
+        get
+        {
+            if (Available) return string.Empty;
+            if (started is null) return "no JACK server here";
+
+            lock (said)
+                return said.Count == 0 ? "jackd started and never answered" : $"jackd: {string.Join("; ", said)}";
+        }
+    }
 
     /// <summary>
     /// SIGTERM lets jackd free its shared memory; SIGKILL leaves it in <c>/dev/shm</c> until the

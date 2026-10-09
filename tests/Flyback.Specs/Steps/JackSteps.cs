@@ -23,7 +23,7 @@ public sealed class JackSteps : IDisposable
     {
         daemon = new JackDaemon(Installed.AudioOutputs.Single(o => o.Id == "jack"));
 
-        Assert.SkipUnless(daemon.Available, "no JACK server here");
+        Assert.SkipUnless(daemon.Available, daemon.Why);
     }
 
     [Then("the sound plays through JACK")]

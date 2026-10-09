@@ -14,5 +14,7 @@ public sealed class JackServerFixture : IDisposable
 
     public bool Available => daemon.Available;
 
+    public string Why => daemon.Why;
+
     public void Dispose() => daemon.Dispose();
 }

@@ -35,7 +35,7 @@ public class JackOutputTests(JackServerFixture server) : IClassFixture<JackServe
     [Fact]
     public void Its_form_asks_where_the_ports_connect_and_starts_on_the_system_playback()
     {
-        Assert.SkipUnless(server.Available, "no JACK server here");
+        Assert.SkipUnless(server.Available, server.Why);
 
         var pick = server.Output.Form(SettingValues.None).ShouldHaveSingleItem().ShouldBeOfType<SettingField.Pick>();
 
@@ -51,7 +51,7 @@ public class JackOutputTests(JackServerFixture server) : IClassFixture<JackServe
     [Fact]
     public void The_server_drives_the_callback_until_stopped()
     {
-        Assert.SkipUnless(server.Available, "no JACK server here");
+        Assert.SkipUnless(server.Available, server.Why);
 
         using var device = server.Output.Create(AudioFormat.Default, Unconnected);
         using var heard = new ManualResetEventSlim();
@@ -80,7 +80,7 @@ public class JackOutputTests(JackServerFixture server) : IClassFixture<JackServe
     [Fact]
     public void A_stopped_device_starts_again()
     {
-        Assert.SkipUnless(server.Available, "no JACK server here");
+        Assert.SkipUnless(server.Available, server.Why);
 
         using var device = server.Output.Create(AudioFormat.Default, Unconnected);
 
