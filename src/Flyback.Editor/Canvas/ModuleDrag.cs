@@ -42,7 +42,7 @@ internal sealed class ModuleDrag(CanvasHistory history, CanvasSelection selectio
     private readonly Dictionary<NodeGroup, Rect> startRings = [];
 
     /// <summary>Whether anything is in the hand.</summary>
-    public bool Holding => origins.Count > 0;
+    public bool Carrying => origins.Count > 0;
 
     /// <summary>Whether letting go now moves modules between groups.</summary>
     public bool Regrouping => regrouping.Count > 0;
@@ -60,7 +60,7 @@ internal sealed class ModuleDrag(CanvasHistory history, CanvasSelection selectio
     public void Grip(Point graph) => grip = graph;
 
     /// <summary>What a press on a module does to the selection, and the start of a drag of what that leaves selected.</summary>
-    public void PressNode(NodeInstance node, bool adding)
+    public void PressModule(NodeInstance node, bool adding)
     {
         pendingNarrow = null;
 
@@ -157,6 +157,7 @@ internal sealed class ModuleDrag(CanvasHistory history, CanvasSelection selectio
         }
     }
 
+    /// <summary>Lets go of everything, as a gesture ends however it ends.</summary>
     public void Clear()
     {
         pendingNarrow = null;

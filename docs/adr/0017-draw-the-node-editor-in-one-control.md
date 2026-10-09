@@ -1,6 +1,6 @@
 # ADR-0017: Draw the node editor in one custom control
 
-**Status:** Accepted · 2026-08-11 · amended 2026-09-09, where the one control becomes one class across a file per region; amended 2026-09-21, where what reads only the patch leaves the control; amended 2026-09-24, where the regions become services and the control one file
+**Status:** Accepted · 2026-08-11 · amended 2026-09-09, where the one control becomes one class across a file per region; amended 2026-09-21, where what reads only the patch leaves the control; amended 2026-09-24, where the regions become services and the control one file; amended 2026-10-09, where each gesture becomes a class
 
 ## Context
 

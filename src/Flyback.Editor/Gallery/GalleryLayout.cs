@@ -88,7 +88,7 @@ internal sealed class GalleryLayout
             CornerRadius = new CornerRadius(10),
             FontSize = Text.Emphasis,
             FontWeight = FontWeight.SemiBold,
-            Background = new SolidColorBrush(PresetGallery.Accent),
+            Background = new SolidColorBrush(GalleryChoice.Accent),
             Foreground = new SolidColorBrush(Colors.Edge),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Center,
@@ -106,7 +106,7 @@ internal sealed class GalleryLayout
             Padding = new Thickness(10, 4),
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
-            Foreground = new SolidColorBrush(PresetGallery.Accent),
+            Foreground = new SolidColorBrush(GalleryChoice.Accent),
         };
 
         clear.Click += (_, _) => choice.Clear();
@@ -538,8 +538,8 @@ internal sealed class GalleryLayout
         }
         else
         {
-            button.Background = pressed ? new SolidColorBrush(PresetGallery.Accent) : Brushes.Transparent;
-            button.BorderBrush = new SolidColorBrush(pressed ? PresetGallery.Accent : Colors.Separator);
+            button.Background = pressed ? new SolidColorBrush(GalleryChoice.Accent) : Brushes.Transparent;
+            button.BorderBrush = new SolidColorBrush(pressed ? GalleryChoice.Accent : Colors.Separator);
             button.Foreground = new SolidColorBrush(pressed ? Colors.Edge : Colors.Label);
         }
 

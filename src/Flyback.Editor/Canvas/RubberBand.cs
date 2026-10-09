@@ -10,7 +10,7 @@ namespace Flyback.Editor.Canvas;
 internal sealed class RubberBand(CanvasSelection selection, Viewport view)
 {
     /// <summary>
-    /// The rubber band. Dashed, because it is a gesture in progress rather than anything
+    /// The band's edge. Dashed, because it is a gesture in progress rather than anything
     /// in the patch, and drawn over the canvas so it keeps its size at any zoom.
     /// </summary>
     private static readonly IPen Edge = new ImmutablePen(
@@ -40,6 +40,7 @@ internal sealed class RubberBand(CanvasSelection selection, Viewport view)
     /// <summary>The button drawing the rubber band.</summary>
     public MouseButton Button { get; private set; }
 
+    /// <summary>Begins a band at <paramref name="graph"/>, adding to the selection where <paramref name="adding"/>, for whichever button pressed.</summary>
     public void Start(Point graph, bool adding, MouseButton button)
     {
         from = to = graph;
@@ -83,6 +84,7 @@ internal sealed class RubberBand(CanvasSelection selection, Viewport view)
         selection.Announce();
     }
 
+    /// <summary>Forgets what the band began from, as the gesture ends.</summary>
     public void Clear()
     {
         kept.Clear();

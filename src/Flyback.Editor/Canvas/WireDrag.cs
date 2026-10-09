@@ -8,17 +8,17 @@ namespace Flyback.Editor.Canvas;
 /// <summary>A wire drawn out of a socket, or lifted off one and carried to another.</summary>
 internal sealed class WireDrag(CanvasHistory history, CanvasSelection selection)
 {
-    private Guid wireNode;
-    private int wirePort;
-    private bool wireFromOutput;
+    private Guid heldNode;
+    private int heldPort;
+    private bool fromOutput;
 
     /// <summary>
     /// Which re-patch this is. Unplugging an input and plugging it in elsewhere is two
     /// edits and one gesture, so both carry this and fold into one step.
     /// </summary>
-    private int wireGesture;
+    private int gesture;
 
-    private Point wireEnd;
+    private Point end;
 
     /// <summary>The wire this re-patch picked up and where in the patch's list it was, or null for a new wire.</summary>
     private (Connection Wire, int At)? lifted;
@@ -33,7 +33,7 @@ internal sealed class WireDrag(CanvasHistory history, CanvasSelection selection)
     public event EventHandler<WireDrop>? Dropped;
 
     /// <summary>Whether the wire is held by its output end, and so plugs into an input.</summary>
-    public bool FromOutput => wireFromOutput;
+    public bool FromOutput => fromOutput;
 
     /// <summary>
     /// Where the wire is anchored. Through the scene's anchors like every other wire,
@@ -43,16 +43,16 @@ internal sealed class WireDrag(CanvasHistory history, CanvasSelection selection)
     {
         get
         {
-            if (history.Patch.Find(wireNode) is not { } node) return null;
+            if (history.Patch.Find(heldNode) is not { } node) return null;
             if (NodeCatalog.Get(node.TypeId) is not { } def) return null;
 
             var scene = selection.Scene;
 
-            return wireFromOutput ? scene.OutputAnchor(node, wirePort) : scene.InputAnchor(node, def, wirePort);
+            return fromOutput ? scene.OutputAnchor(node, heldPort) : scene.InputAnchor(node, def, heldPort);
         }
     }
 
-    private string WireGesture => $"wire {wireGesture}";
+    private string GestureName => $"wire {gesture}";
 
     /// <summary>
     /// A left press went down: the wire lifted off an output by the press before, which
@@ -78,18 +78,18 @@ internal sealed class WireDrag(CanvasHistory history, CanvasSelection selection)
     {
         var patch = history.Patch;
 
-        wireGesture++;
+        gesture++;
         lifted = null;
-        wireEnd = graph;
+        end = graph;
 
         if (!isOutput && patch.IncomingTo(nodeId, portIndex) is { } existing)
         {
             lifted = (existing, patch.Connections.IndexOf(existing));
             patch.Disconnect(nodeId, portIndex);
-            wireNode = existing.SourceNode;
-            wirePort = existing.SourcePort;
-            wireFromOutput = true;
-            history.Record(WireGesture);
+            heldNode = existing.SourceNode;
+            heldPort = existing.SourcePort;
+            fromOutput = true;
+            history.Record(GestureName);
         }
         else if (isOutput && lifting && NextOutgoing(nodeId, portIndex, liftedLast) is { } taken)
         {
@@ -99,21 +99,21 @@ internal sealed class WireDrag(CanvasHistory history, CanvasSelection selection)
             lifted = (taken, patch.Connections.IndexOf(taken));
             liftedOffOutput = taken;
             patch.Disconnect(taken.TargetNode, taken.TargetPort);
-            wireNode = taken.TargetNode;
-            wirePort = taken.TargetPort;
-            wireFromOutput = false;
-            history.Record(WireGesture);
+            heldNode = taken.TargetNode;
+            heldPort = taken.TargetPort;
+            fromOutput = false;
+            history.Record(GestureName);
         }
         else
         {
-            wireNode = nodeId;
-            wirePort = portIndex;
-            wireFromOutput = isOutput;
+            heldNode = nodeId;
+            heldPort = portIndex;
+            fromOutput = isOutput;
         }
     }
 
     /// <summary>Moves the loose end to <paramref name="graph"/>.</summary>
-    public void Stretch(Point graph) => wireEnd = graph;
+    public void Stretch(Point graph) => end = graph;
 
     /// <summary>
     /// The wire a Ctrl-press on an output takes: the one after <paramref name="liftedLast"/>
@@ -132,6 +132,7 @@ internal sealed class WireDrag(CanvasHistory history, CanvasSelection selection)
         return leaving[(at + 1) % leaving.Count];
     }
 
+    /// <summary>Lets go at <paramref name="graph"/>: plugged in over a socket of the other kind, offered something to plug into over bare canvas, dropped otherwise.</summary>
     public void Complete(Point graph)
     {
         var patch = history.Patch;
@@ -147,11 +148,11 @@ internal sealed class WireDrag(CanvasHistory history, CanvasSelection selection)
         }
 
         // A wire only means something between opposite kinds of socket.
-        if (isOutput == wireFromOutput) return;
+        if (isOutput == fromOutput) return;
 
-        var (sourceNode, sourcePort, targetNode, targetPort) = wireFromOutput
-            ? (wireNode, wirePort, node, port)
-            : (node, port, wireNode, wirePort);
+        var (sourceNode, sourcePort, targetNode, targetPort) = fromOutput
+            ? (heldNode, heldPort, node, port)
+            : (node, port, heldNode, heldPort);
 
         // A wire that closes a loop is drawn like any other and carries the previous
         // evaluation (ADR-0075), so there is nothing to put on it.
@@ -166,7 +167,7 @@ internal sealed class WireDrag(CanvasHistory history, CanvasSelection selection)
             patch.Connections.Insert(Math.Min(was.At, patch.Connections.Count), was.Wire);
         }
 
-        history.Record(WireGesture);
+        history.Record(GestureName);
     }
 
     /// <summary>
@@ -179,19 +180,19 @@ internal sealed class WireDrag(CanvasHistory history, CanvasSelection selection)
 
         lifted = null;
         history.Patch.Connections.Insert(Math.Min(was.At, history.Patch.Connections.Count), was.Wire);
-        history.Record(WireGesture);
+        history.Record(GestureName);
     }
 
     /// <summary>A wire let go over bare canvas, handed to whoever can offer something to plug it into.</summary>
     private void OfferSomethingToPlugInto(Point graph)
     {
-        if (history.Patch.Find(wireNode) is not { } holding) return;
+        if (history.Patch.Find(heldNode) is not { } holding) return;
         if (NodeCatalog.Get(holding.TypeId) is not { } def) return;
 
-        var sockets = wireFromOutput ? def.Outputs : def.Inputs;
-        if (wirePort < 0 || wirePort >= sockets.Count) return;
+        var sockets = fromOutput ? def.Outputs : def.Inputs;
+        if (heldPort < 0 || heldPort >= sockets.Count) return;
 
-        Dropped?.Invoke(this, new WireDrop(graph, wireNode, wirePort, wireFromOutput, sockets[wirePort].Kind));
+        Dropped?.Invoke(this, new WireDrop(graph, heldNode, heldPort, fromOutput, sockets[heldPort].Kind));
     }
 
     /// <summary>The wire being drawn, from its anchor to the pointer, routed as it will be once dropped.</summary>
@@ -200,7 +201,7 @@ internal sealed class WireDrag(CanvasHistory history, CanvasSelection selection)
         var pen = new Pen(new SolidColorBrush(Colors.Attention, 0.9), 2.2, DashStyle.Dash);
 
         // Handed over in whichever order makes the curve leave an output and arrive at an input.
-        var (from, to) = wireFromOutput ? (anchor, wireEnd) : (wireEnd, anchor);
+        var (from, to) = fromOutput ? (anchor, end) : (end, anchor);
 
         if (from.X <= to.X)
         {
@@ -209,10 +210,10 @@ internal sealed class WireDrag(CanvasHistory history, CanvasSelection selection)
         }
 
         // The pointer is a module of no size.
-        var holding = history.Patch.Find(wireNode) is { } node && NodeCatalog.Get(node.TypeId) is { } def
+        var holding = history.Patch.Find(heldNode) is { } node && NodeCatalog.Get(node.TypeId) is { } def
             ? selection.Scene.RouteBounds(node, def)
             : new Rect(anchor, anchor);
 
-        WirePath.DrawReturn(context, from, to, WirePath.ReturnRun(holding, new Rect(wireEnd, wireEnd)), pen);
+        WirePath.DrawReturn(context, from, to, WirePath.ReturnRun(holding, new Rect(end, end)), pen);
     }
 }

@@ -60,7 +60,7 @@ internal static class PromptCard
         begin.CornerRadius = new CornerRadius(8);
         begin.Padding = new Thickness(18, 5);
         begin.FontWeight = FontWeight.SemiBold;
-        begin.Background = new SolidColorBrush(PresetGallery.Accent);
+        begin.Background = new SolidColorBrush(GalleryChoice.Accent);
         begin.Foreground = new SolidColorBrush(Colors.Edge);
 
         return new Border

@@ -173,8 +173,8 @@ internal sealed class SiteRun : IDisposable
     {
         var picture = new Border
         {
-            Width = PresetGallery.TileWidth,
-            Height = PresetGallery.PictureHeight,
+            Width = PresetCard.TileWidth,
+            Height = PresetCard.PictureHeight,
             Background = new SolidColorBrush(Colors.Canvas),
             ClipToBounds = true,
             CornerRadius = new CornerRadius(3),
@@ -217,7 +217,7 @@ internal sealed class SiteRun : IDisposable
         {
             Name = "site-tile",
             Tag = preset,
-            Width = PresetGallery.TileWidth + 16,
+            Width = PresetCard.TileWidth + 16,
             VerticalAlignment = VerticalAlignment.Stretch,
             Padding = new Thickness(8),
             HorizontalContentAlignment = HorizontalAlignment.Stretch,

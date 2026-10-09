@@ -51,7 +51,6 @@ internal sealed class CanvasGestures
     private readonly RemapMarks marks;
     private readonly CanvasTips tips;
     private readonly Repaint repaint;
-    private readonly NodeGeometry geometry;
     private readonly ModuleDrag module;
     private readonly WireDrag wire;
     private readonly RubberBand band;
@@ -81,14 +80,12 @@ internal sealed class CanvasGestures
         RemapMarks marks,
         CanvasTips tips,
         Repaint repaint,
-        NodeGeometry geometry,
         ModuleDrag module,
         WireDrag wire,
         RubberBand band,
         Reactions reactions)
     {
         this.history = history;
-        this.geometry = geometry;
         this.reactions = reactions;
         this.selection = selection;
         this.view = view;
@@ -296,7 +293,7 @@ internal sealed class CanvasGestures
             if ((modifiers & KeyModifiers.Shift) != 0 && selection.Group is { } whole && whole.Members.Contains(node.Id))
                 selection.Select(node.Id);
 
-            module.PressNode(node, ctrl);
+            module.PressModule(node, ctrl);
             drag = Drag.Node;
             if (!history.Locked) module.Aim(graph, modifiers);
 
@@ -412,7 +409,7 @@ internal sealed class CanvasGestures
 
             // A locked canvas still carries a module under the pointer, since nothing
             // here is written back into the text; it just cannot regroup, which is.
-            case Drag.Node when module.Holding:
+            case Drag.Node when module.Carrying:
                 module.Carry(graph, modifiers);
                 repaint.Request();
                 return;

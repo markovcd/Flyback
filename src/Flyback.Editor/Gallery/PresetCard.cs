@@ -16,6 +16,10 @@ internal sealed class PresetCard(
     Panel badges,
     string section)
 {
+    public const double TileWidth = 176;
+
+    public const double PictureHeight = TileWidth * PresetThumbnails.Height / PresetThumbnails.Width;
+
     /// <summary>The dot of a preset that is heard.</summary>
     public static Color Heard => Colors.Pattern;
 

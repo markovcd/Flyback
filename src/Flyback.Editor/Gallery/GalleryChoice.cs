@@ -21,6 +21,9 @@ namespace Flyback.Editor.Gallery;
 /// </remarks>
 internal sealed class GalleryChoice
 {
+    /// <summary>The color of what is chosen and of the button that opens it.</summary>
+    public static Color Accent => Colors.Feedback;
+
     private readonly List<(string Section, Control Heading, TextBlock Count, Panel Tiles)> runs = [];
 
     private readonly Dictionary<Button, PresetCard> cards = [];
@@ -374,7 +377,7 @@ internal sealed class GalleryChoice
 
     private static void Paint(PresetCard card, bool chosen)
     {
-        card.Button.BorderBrush = chosen ? new SolidColorBrush(PresetGallery.Accent) : Brushes.Transparent;
+        card.Button.BorderBrush = chosen ? new SolidColorBrush(GalleryChoice.Accent) : Brushes.Transparent;
         card.Button.Background = chosen ? new SolidColorBrush(Colors.Node) : Brushes.Transparent;
     }
 }

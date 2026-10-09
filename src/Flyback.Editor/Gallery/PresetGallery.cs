@@ -28,12 +28,6 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
     /// <summary>The style class of a tile whose preset is being asked about deleting.</summary>
     public const string Asking = "asking";
 
-    public const double TileWidth = 176;
-    public const double PictureHeight = TileWidth * PresetThumbnails.Height / PresetThumbnails.Width;
-
-    /// <summary>The color of what is chosen and of the button that opens it.</summary>
-    public static Color Accent => Colors.Feedback;
-
     /// <summary>
     /// What a <see cref="PresetKind"/> is called where it heads its own run of
     /// presets, shouted like the module palette's section headings, being the same
@@ -244,8 +238,8 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
         var card = new Border
         {
             Name = "keep-card",
-            Width = TileWidth + 16,
-            MinHeight = PictureHeight + 16,
+            Width = PresetCard.TileWidth + 16,
+            MinHeight = PresetCard.PictureHeight + 16,
             CornerRadius = new CornerRadius(12),
             BorderBrush = new SolidColorBrush(Colors.Separator),
             BorderThickness = new Thickness(1),
@@ -480,8 +474,8 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
         var picture = new Border
         {
             Name = "thumbnail",
-            Width = TileWidth,
-            Height = PictureHeight,
+            Width = PresetCard.TileWidth,
+            Height = PresetCard.PictureHeight,
             Background = new SolidColorBrush(Colors.Canvas),
             ClipToBounds = true,
             CornerRadius = new CornerRadius(7),
@@ -492,7 +486,7 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
         {
             Name = "tile",
             Tag = preset,
-            Width = TileWidth + 16,
+            Width = PresetCard.TileWidth + 16,
             VerticalAlignment = VerticalAlignment.Stretch,
             Padding = new Thickness(8, 8, 8, 10),
             CornerRadius = new CornerRadius(12),
