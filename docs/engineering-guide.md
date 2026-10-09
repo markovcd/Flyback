@@ -635,8 +635,8 @@ builds on `gate`, so per-platform artifacts cannot exist without every test
 having passed. `gate` builds on `tested`, which runs the tests and keeps a JUnit
 report per project and the run's exit code without failing; `gate.sh` takes them
 out into `test-results/`, writes `summary.md` there with each failing test's
-message and stack, and on GitHub makes it the run's summary, before `gate` fails
-on that exit code. `measured` builds on `gate` too and runs the tests again under
+message and stack, and on GitHub makes it the run's summary, then exits with
+that exit code, which is all `gate` adds to `tested`. `measured` builds on `gate` too and runs the tests again under
 coverage, weekly rather than per change, one project at a time; nothing else
 reads it. `coverage.sh` builds it and writes the table, the specs' figure apart
 from the sum of the rest, for the Coverage workflow and locally alike, as

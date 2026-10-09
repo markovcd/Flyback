@@ -6,7 +6,8 @@
 #
 # The tests' JUnit reports land in test-results/, with summary.md beside them: the
 # counts, and each failing test with its message and stack. On GitHub it is also
-# the run's summary.
+# the run's summary. The script fails exactly when the gate stage would, on the
+# same run.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -88,4 +89,6 @@ if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
   cat test-results/summary.md >> "$GITHUB_STEP_SUMMARY"
 fi
 
-docker buildx build "${builder[@]}" "${cache[@]}" --target gate .
+# The gate stage is this exit code. Building it again can miss the layer cache and
+# test a second time, failing on a run the summary never saw.
+exit "$(cat test-results/exit-code)"
