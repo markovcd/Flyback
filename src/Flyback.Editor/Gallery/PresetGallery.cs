@@ -23,13 +23,16 @@ namespace Flyback.Editor.Gallery;
 /// Enter or the column's button opens it. What it answers with is the preset, and
 /// the caller decides what picking it means.
 /// </remarks>
-internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog dialog, LastPress lastPress, EditorHost host)
+internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog, LastPress lastPress, EditorHost host)
 {
     /// <summary>The style class of a tile whose preset is being asked about deleting.</summary>
-    private const string Asking = "asking";
+    public const string Asking = "asking";
 
-    private const double TileWidth = 176;
-    private const double PictureHeight = TileWidth * PresetThumbnails.Height / PresetThumbnails.Width;
+    public const double TileWidth = 176;
+    public const double PictureHeight = TileWidth * PresetThumbnails.Height / PresetThumbnails.Width;
+
+    /// <summary>The color of what is chosen and of the button that opens it.</summary>
+    public static Color Accent => Colors.Feedback;
 
     /// <summary>
     /// What a <see cref="PresetKind"/> is called where it heads its own run of
@@ -40,6 +43,9 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
 
     /// <summary>What heads the presets somebody saved, last of all.</summary>
     public const string YoursHeading = "YOUR PRESETS";
+
+    /// <summary>What heads the presets the preset site offers, after everything on this machine.</summary>
+    public const string SiteHeading = "ON THE PRESET SITE";
 
     /// <summary>
     /// The gallery of <paramref name="ordered"/>, which must already be grouped by
@@ -76,7 +82,7 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
         bool prompting = false,
         string use = "Use this preset")
     {
-        var choice = new Choice { Elsewhere = site is not null, Typing = !lastPress.ByFinger };
+        var choice = new GalleryChoice { Elsewhere = site is not null, Typing = !lastPress.ByFinger };
 
         return new GalleryParts(choice.Box, BuildTiles);
 
@@ -110,7 +116,7 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
 
             var main = new StackPanel { Margin = new Thickness(20, 16, 20, 24), Spacing = 16 };
 
-            if (prompting) main.Children.Add(PromptCard(open));
+            if (prompting) main.Children.Add(PromptCard.Of(open));
 
             main.Children.Add(choice.Hint);
             main.Children.Add(gallery);
@@ -123,7 +129,7 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
                 choice.AddElsewhere(SiteHeading, shared);
             }
 
-            var layout = new Layout(choice, main, showing, use);
+            var layout = new GalleryLayout(choice, main, showing, use);
 
             layout.View.DetachedFromVisualTree += (_, _) => closing.Cancel();
 
@@ -186,7 +192,7 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
         YourPresets yours,
         PresetThumbnails thumbnails,
         Action<PointedTile?>? pointedAt,
-        Choice choice,
+        GalleryChoice choice,
         CancellationToken closing)
     {
         if (yours.PickOnly && yours.All().Count == 0) return;
@@ -382,7 +388,7 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
     /// Gives a saved preset's tile a way to be deleted: a right-click, and then a
     /// question in the place its description was, because the file goes for good.
     /// </summary>
-    private static void Removable(Card card, PatchPreset preset, Action remove)
+    private static void Removable(PresetCard card, PatchPreset preset, Action remove)
     {
         var tile = card.Button;
         var words = (Panel)card.Description.Parent!;
@@ -416,12 +422,12 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
         };
     }
 
-    private static Card Tile(
+    private static PresetCard Tile(
         PatchPreset preset,
         string section,
         PresetThumbnails thumbnails,
         Action<PointedTile?>? pointedAt,
-        Choice choice,
+        GalleryChoice choice,
         CancellationToken closing)
     {
         var image = new Image { Stretch = Stretch.UniformToFill };
@@ -515,7 +521,7 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
             },
         };
 
-        var card = new Card(preset, tile, image, words, speaker, description, badges, section);
+        var card = new PresetCard(preset, tile, image, words, speaker, description, badges, section);
 
         tile.PointerEntered += (_, _) => pointedAt?.Invoke(new PointedTile(preset, image));
         tile.PointerExited += (_, _) => pointedAt?.Invoke(null);
@@ -543,7 +549,7 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
     /// Puts what the patch says of itself on its card, and makes the card findable
     /// by it. Awaited from the UI thread, so what follows the wait is on it too.
     /// </summary>
-    private static async Task Say(Card card, Task<Thumbnail> saying, Choice choice)
+    private static async Task Say(PresetCard card, Task<Thumbnail> saying, GalleryChoice choice)
     {
         var thumbnail = await saying;
 
@@ -559,7 +565,7 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
     }
 
     /// <summary>A pill each for the halves of the Output a preset works with.</summary>
-    private static void Badges(Panel into, (bool Picture, bool Sound)? reaches)
+    public static void Badges(Panel into, (bool Picture, bool Sound)? reaches)
     {
         into.Children.Clear();
 
@@ -568,8 +574,8 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
         // A patch with nothing wired yet is an Output waiting for both.
         var neither = !wired.Picture && !wired.Sound;
 
-        if (wired.Sound || neither) into.Children.Add(Badge("Sound", Card.Heard));
-        if (wired.Picture || neither) into.Children.Add(Badge("Picture", Card.Seen));
+        if (wired.Sound || neither) into.Children.Add(Badge("Sound", PresetCard.Heard));
+        if (wired.Picture || neither) into.Children.Add(Badge("Picture", PresetCard.Seen));
     }
 
     private static Border Badge(string label, Color dot) => new()
@@ -600,7 +606,7 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
     /// Puts the thumbnail on its card when it is drawn. Awaited from the UI thread,
     /// so what follows the wait is on it too.
     /// </summary>
-    private static async Task Fill(Card card, Func<Task<Thumbnail>> drawing, Choice choice, CancellationToken closing)
+    private static async Task Fill(PresetCard card, Func<Task<Thumbnail>> drawing, GalleryChoice choice, CancellationToken closing)
     {
         Thumbnail thumbnail;
 

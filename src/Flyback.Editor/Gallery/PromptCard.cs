@@ -9,12 +9,12 @@ using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Gallery;
 
-internal sealed partial class PresetGallery
+/// <summary>
+/// A card to type an idea in and start a new patch from.
+/// </summary>
+internal static class PromptCard
 {
-    /// <summary>
-    /// A card to type an idea in and start a new patch from.
-    /// </summary>
-    private static Border PromptCard(Action<IPreset?> open)
+    public static Border Of(Action<IPreset?> open)
     {
         var words = new TextBox
         {
@@ -60,7 +60,7 @@ internal sealed partial class PresetGallery
         begin.CornerRadius = new CornerRadius(8);
         begin.Padding = new Thickness(18, 5);
         begin.FontWeight = FontWeight.SemiBold;
-        begin.Background = new SolidColorBrush(Accent);
+        begin.Background = new SolidColorBrush(PresetGallery.Accent);
         begin.Foreground = new SolidColorBrush(Colors.Edge);
 
         return new Border
