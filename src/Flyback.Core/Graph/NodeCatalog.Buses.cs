@@ -5,9 +5,9 @@ namespace Flyback.Core.Graph;
 public partial class NodeCatalog
 {
     /// <summary>The type id of the Send module.</summary>
-    public const string SendTypeId = "bus.send";
+    internal const string SendTypeId = "bus.send";
     /// <summary>The type id of the Receive module.</summary>
-    public const string ReceiveTypeId = "bus.receive";
+    internal const string ReceiveTypeId = "bus.receive";
 
     /// <summary>What a Send and a Receive file their bus under.</summary>
     private const string BusKey = "bus";
@@ -21,7 +21,7 @@ public partial class NodeCatalog
         new(BusKey, [new ExtraField.Text(BusField, "bus", FirstBus) { Help = "The bus's name: a Send and a Receive with the same one are joined." }]);
 
     /// <summary>The bus a Send or a Receive is on, trimmed; null for any other module.</summary>
-    public static string? BusOf(NodeInstance node) =>
+    internal static string? BusOf(NodeInstance node) =>
         node.TypeId is SendTypeId or ReceiveTypeId
             ? ((ExtraField.Text)BusExtra.Fields[0]).Value(node.StateOf(BusKey)?[BusField]).Trim()
             : null;

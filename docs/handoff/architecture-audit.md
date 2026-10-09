@@ -14,24 +14,6 @@ three editor hosts, with no hand-built service outside composition; every public
 by decision (ADR-0035); the binder is one walk (ADR-0183); presets are C# by
 decision (ADR-0138).
 
-## 6. Public members only the host calls, one of them a hole (Medium)
-
-`ContractSurfaceTests` guards types; nothing guards members. Public in Core with
-no plugin naming them: `NodeCatalog.BusOf` (`Buses.cs:24`), `FormulaOf` and
-`FormulaProblem` (`Maths.cs:375,383`), `IsChart` (`Output.cs:34`),
-`LegacyTypeIds` (`Legacy.cs:18`), and `NodeCatalog.Install`, which a plugin
-could call to swap the catalog under the host. In Plugins:
-`PatchWorkbench.Undescribed:107`, `.Edits:142`, `.ToolCalls:145`,
-`ToolOutcome.Fine/Reference`, `AssistantConfig.Unset`; ADR-0102 says the
-workbench's public members are the ones an assistant calls. Housekeeping:
-`Flyback.Plugins.csproj` has `<Compile Update="Assist\PatchWorkbench.Senses.cs">`
-for a file that no longer exists.
-
-**Fix.** `internal` with `*REMOVED*` lines in `PublicAPI.Unshipped.txt`
-(`InternalsVisibleTo` already covers the hosts), and a member-level pass in
-`ContractSurfaceTests` over `PublicAPI.Shipped.txt` against `src/plugins` and
-the two test plugins, so the next host-only member fails the gate.
-
 ## 7. A tool's argument names are declared twice (Medium)
 
 `src/Flyback.Plugins/Assist/ToolTable.cs:64-477` declares sixteen tools with a
@@ -93,8 +75,7 @@ Toolbar react to `OwnershipChanged` themselves.
 
 ## Order
 
-6 before 1.0.0, since the contract is a promise from then on. The rest as each
-file is next touched.
+Each as its file is next touched.
 
 Landed: the host code that is not Avalonia has a home, `Flyback.Host`
 (ADR-0188), and with it one plugin bootstrap, one bytes-to-patch reader, one
@@ -109,6 +90,8 @@ gestures are `ModuleDrag`, `WireDrag` and `RubberBand` under `CanvasGestures`.
 `Document` keeps ownership, the undo landing and applying; the write-back
 is `TextWriteBack`, the caret's selection `CaretFollow`, and a pasted patch
 file `PastedPatch`.
+`ContractSurfaceTests` checks members as well as types, and what only the host
+called is internal.
 Still written per shell, and small: the speaker handshake in two JS files, the
 viewer's and the CLI's `--size` and `--oversample` option declarations, and the
 viewer's `--cpu` against the CLI's `--processor`.

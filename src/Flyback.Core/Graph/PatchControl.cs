@@ -15,7 +15,7 @@ namespace Flyback.Core.Graph;
 public sealed class PatchControl
 {
     /// <inheritdoc cref="NodeInstance.NameLimit"/>
-    public const int NameLimit = NodeInstance.NameLimit;
+    internal const int NameLimit = NodeInstance.NameLimit;
 
     /// <summary>Names this knob within its patch.</summary>
     public required Guid Id { get; init; }
@@ -49,13 +49,13 @@ public sealed class PatchControl
     public bool Held { get; set; }
 
     /// <summary>What a program reading this knob calls it in <c>CompiledPatch.LiveInputs</c>.</summary>
-    public static string KeyOf(Guid control) => $"control/{control:N}";
+    internal static string KeyOf(Guid control) => $"control/{control:N}";
 
     /// <inheritdoc cref="KeyOf(Guid)"/>
     public string Key => KeyOf(Id);
 
     /// <summary>A copy of this knob, with the same id.</summary>
-    public PatchControl Clone() => new() { Id = Id, Name = Name, Value = Value, Midi = Midi, Word = Word, Held = Held };
+    internal PatchControl Clone() => new() { Id = Id, Name = Name, Value = Value, Midi = Midi, Word = Word, Held = Held };
 
     private static string Named(string? name)
     {

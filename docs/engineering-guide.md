@@ -438,8 +438,9 @@ minor. Both projects give the host and its tests `InternalsVisibleTo`, so a memb
 only the host reads is `internal`: `public` is reserved for what a plugin may
 name, and the fix for the analyzer's complaint is `internal` unless a plugin
 needs the member, in which case the new line is a decision named in the commit.
-`ContractSurfaceTests` in `Flyback.Plugins.Tests` fails on a public type no plugin
-built here names, unless it is promised there with a reason (`plugin-contract.md`).
+`ContractSurfaceTests` in `Flyback.Plugins.Tests` fails on a public type or member
+no plugin built here names, unless it is promised there with a reason
+(`plugin-contract.md`).
 
 **Building.** Plugins are not project references. A host project lists
 `PluginProject` items and `Directory.Build.targets` builds each one straight into

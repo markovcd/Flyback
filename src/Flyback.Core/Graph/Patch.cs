@@ -54,7 +54,7 @@ public sealed class Patch
     public KeyboardScale? Keyboard { get; set; }
 
     /// <summary>How long a patch that does not say plays for, in seconds.</summary>
-    public const double DefaultLength = 180;
+    internal const double DefaultLength = 180;
 
     private double? length;
 
@@ -72,7 +72,7 @@ public sealed class Patch
     internal double Lasts => length ?? DefaultLength;
 
     /// <summary>The longest a description may be, in characters.</summary>
-    public const int DescriptionLimit = 400;
+    internal const int DescriptionLimit = 400;
 
     /// <summary>
     /// What the patch is for, in a line of prose, and null where nobody has said.
@@ -91,10 +91,10 @@ public sealed class Patch
     public void Describe(string? to) => Description = Tidied(to);
 
     /// <summary>What <see cref="Describe"/> would keep of <paramref name="text"/>.</summary>
-    public static string? Tidied(string? text) => Tidied(text, DescriptionLimit);
+    internal static string? Tidied(string? text) => Tidied(text, DescriptionLimit);
 
     /// <summary>The longest an author may be, in characters.</summary>
-    public const int AuthorLimit = 80;
+    internal const int AuthorLimit = 80;
 
     /// <summary>
     /// Who made the patch, and null where nobody has said. Set through
@@ -103,16 +103,16 @@ public sealed class Patch
     public string? Author { get; set; }
 
     /// <summary>Says who made the patch, or takes the credit away with a blank.</summary>
-    public void Credit(string? to) => Author = TidiedAuthor(to);
+    internal void Credit(string? to) => Author = TidiedAuthor(to);
 
     /// <summary>What <see cref="Credit"/> would keep of <paramref name="author"/>.</summary>
-    public static string? TidiedAuthor(string? author) => Tidied(author, AuthorLimit);
+    internal static string? TidiedAuthor(string? author) => Tidied(author, AuthorLimit);
 
     /// <summary>The longest a tag may be, in characters.</summary>
-    public const int TagLimit = 24;
+    internal const int TagLimit = 24;
 
     /// <summary>The most tags a patch carries.</summary>
-    public const int TagCount = 8;
+    internal const int TagCount = 8;
 
     /// <summary>
     /// Words to find the patch by, and null where it has none. Set through
@@ -121,7 +121,7 @@ public sealed class Patch
     public List<string>? Tags { get; set; }
 
     /// <summary>Tags the patch with <paramref name="to"/>, or takes its tags away with none.</summary>
-    public void Tag(IEnumerable<string>? to) => Tags = TidiedTags(to);
+    internal void Tag(IEnumerable<string>? to) => Tags = TidiedTags(to);
 
     /// <summary>
     /// What <see cref="Tag"/> would keep of <paramref name="tags"/>: each one
@@ -129,7 +129,7 @@ public sealed class Patch
     /// spaces, cut to <see cref="TagLimit"/>, and the first <see cref="TagCount"/>
     /// different ones. Null where none is left.
     /// </summary>
-    public static List<string>? TidiedTags(IEnumerable<string>? tags)
+    internal static List<string>? TidiedTags(IEnumerable<string>? tags)
     {
         if (tags is null) return null;
 
@@ -184,10 +184,10 @@ public sealed class Patch
     }
 
     /// <summary>The module with <paramref name="id"/>, or null where there is none.</summary>
-    public NodeInstance? Find(Guid id) => Nodes.FirstOrDefault(n => n.Id == id);
+    internal NodeInstance? Find(Guid id) => Nodes.FirstOrDefault(n => n.Id == id);
 
     /// <summary>The knob called <paramref name="id"/>, or null where the panel has none.</summary>
-    public PatchControl? Control(Guid id) => Controls?.FirstOrDefault(c => c.Id == id);
+    internal PatchControl? Control(Guid id) => Controls?.FirstOrDefault(c => c.Id == id);
 
     /// <summary>Puts a new knob at the end of the panel, and hands it back.</summary>
     public PatchControl AddControl(string? name = null, float value = 0.5f)
@@ -203,7 +203,7 @@ public sealed class Patch
     /// that holds once it has been taken out of its old place.
     /// </summary>
     /// <returns>Whether it moved.</returns>
-    public bool MoveControl(Guid id, int index)
+    internal bool MoveControl(Guid id, int index)
     {
         if (Control(id) is not { } control) return false;
 
@@ -218,7 +218,7 @@ public sealed class Patch
     }
 
     /// <summary>Puts two knobs in each other's places on the panel.</summary>
-    public bool SwapControls(Guid first, Guid second)
+    internal bool SwapControls(Guid first, Guid second)
     {
         if (first == second || Control(first) is not { } a || Control(second) is not { } b) return false;
 
@@ -234,7 +234,7 @@ public sealed class Patch
     /// Takes a knob off the panel, leaving every socket that followed it where the
     /// knob had put it.
     /// </summary>
-    public bool RemoveControl(Guid id)
+    internal bool RemoveControl(Guid id)
     {
         if (Control(id) is not { } control) return false;
 
@@ -407,7 +407,7 @@ public sealed class Patch
     }
 
     /// <summary>Stops drawing a group, without touching anything inside it.</summary>
-    public bool Ungroup(Guid groupId)
+    internal bool Ungroup(Guid groupId)
     {
         if (Groups is null) return false;
 
@@ -564,7 +564,7 @@ public sealed class Patch
     }
 
     /// <summary>The first module of a type, or null where the patch has none.</summary>
-    public NodeInstance? FirstOf(string typeId) => Nodes.FirstOrDefault(n => n.TypeId == typeId);
+    internal NodeInstance? FirstOf(string typeId) => Nodes.FirstOrDefault(n => n.TypeId == typeId);
 
     /// <summary>
     /// The Output. Every patch has exactly one — <see cref="EnsureOutput"/> puts
@@ -573,7 +573,7 @@ public sealed class Patch
     /// in <see cref="Nodes"/>.
     /// </summary>
     [JsonIgnore]
-    public NodeInstance Output =>
+    internal NodeInstance Output =>
         FirstOf(NodeCatalog.OutputTypeId)
         ?? throw new InvalidOperationException("This patch has no Output. Call EnsureOutput after building it by hand.");
 
@@ -587,7 +587,7 @@ public sealed class Patch
     /// renders nothing, and raises no complaint, because the patch compiled.
     /// </remarks>
     [SuppressMessage("Performance", "CA1822", Justification = "Plugin contract: asked of a patch.")]
-    public bool CanAdd(string typeId) => !NodeCatalog.IsSink(typeId);
+    internal bool CanAdd(string typeId) => !NodeCatalog.IsSink(typeId);
 
     /// <summary>
     /// Puts the Output in place if it is not already there, and hands it back.
@@ -598,7 +598,7 @@ public sealed class Patch
     /// </summary>
     /// <param name="id">What to call one that has to be made — see <see cref="NodeInstance.Create"/>.</param>
     /// <param name="modules"></param>
-    public NodeInstance EnsureOutput(ModuleCatalog? modules = null, Guid? id = null)
+    internal NodeInstance EnsureOutput(ModuleCatalog? modules = null, Guid? id = null)
     {
         if (FirstOf(NodeCatalog.OutputTypeId) is { } existing) return existing;
 
@@ -617,7 +617,7 @@ public sealed class Patch
     private const double OutputY = 320;
 
     /// <summary>The wire feeding an input, if any. An input takes at most one.</summary>
-    public Connection? IncomingTo(Guid node, int port) =>
+    internal Connection? IncomingTo(Guid node, int port) =>
         Connections.FirstOrDefault(c => c.TargetNode == node && c.TargetPort == port);
 
     /// <summary>
@@ -625,7 +625,7 @@ public sealed class Patch
     /// Not quite the mirror of <see cref="IncomingTo"/>: an input takes at most
     /// one wire, an output fans out.
     /// </summary>
-    public Connection? SoleOutgoingFrom(Guid node, int port)
+    internal Connection? SoleOutgoingFrom(Guid node, int port)
     {
         Connection? only = null;
 
@@ -649,7 +649,7 @@ public sealed class Patch
     /// silence. This is the question before that: whether writing a file of
     /// either would be writing anything at all.
     /// </remarks>
-    public (bool Picture, bool Sound) Reaches()
+    internal (bool Picture, bool Sound) Reaches()
     {
         if (FirstOf(NodeCatalog.OutputTypeId) is not { } sink) return (false, false);
 
@@ -669,7 +669,7 @@ public sealed class Patch
     /// (ADR-0075). It was refused while a cycle was an error, which is what it
     /// was the shortest example of.
     /// </remarks>
-    public void Connect(Guid sourceNode, int sourcePort, Guid targetNode, int targetPort)
+    internal void Connect(Guid sourceNode, int sourcePort, Guid targetNode, int targetPort)
     {
         // Already there. Taken off and put on the end it would be the same patch
         // in a different order, which a snapshot cannot tell from an edit.
@@ -707,7 +707,7 @@ public sealed class Patch
     /// Removes the wire into socket <paramref name="targetPort"/> of module <paramref
     /// name="targetNode"/>, if there is one.
     /// </summary>
-    public void Disconnect(Guid targetNode, int targetPort) =>
+    internal void Disconnect(Guid targetNode, int targetPort) =>
         Connections.RemoveAll(c => c.TargetNode == targetNode && c.TargetPort == targetPort);
 
     /// <summary>
@@ -715,7 +715,7 @@ public sealed class Patch
     /// refused: a patch cannot be without it.
     /// </summary>
     /// <returns>Whether anything was removed.</returns>
-    public bool Remove(Guid nodeId)
+    internal bool Remove(Guid nodeId)
     {
         if (Find(nodeId) is { } node && NodeCatalog.IsSink(node.TypeId)) return false;
 

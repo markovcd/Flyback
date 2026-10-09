@@ -5,8 +5,11 @@ namespace Flyback.Core.Graph.Extras;
 /// <summary>The audio file a player reads.</summary>
 public sealed record SampleExtra : FileExtra
 {
+    /// <summary>The catalog's own; a plugin reaches it through its key.</summary>
+    internal SampleExtra() { }
+
     /// <inheritdoc cref="StepsExtra.Name"/>
-    public const string Name = "file";
+    internal const string Name = "file";
 
     /// <inheritdoc/>
     public override string Key => Name;
@@ -28,7 +31,7 @@ public sealed record SampleExtra : FileExtra
     /// which is also what a module that reads no file answers, since asking a
     /// Sine for its sample is a question about the wrong module.
     /// </summary>
-    public static string Of(NodeInstance node) => Read(node.StateOf(Name), string.Empty);
+    internal static string Of(NodeInstance node) => Read(node.StateOf(Name), string.Empty);
 
     /// <summary>Points this instance at a file.</summary>
     public static void Set(NodeInstance node, string path) => node.SetState(Name, Write(path));

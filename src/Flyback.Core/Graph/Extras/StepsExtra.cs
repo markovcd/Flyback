@@ -8,13 +8,13 @@ public sealed record StepsExtra(StepSpec Spec) : NodeExtra
     /// well as the <see cref="Key"/> override, so <see cref="Of"/> and
     /// <see cref="Set"/> can be asked of a node with no definition to hand.
     /// </summary>
-    public const string Name = "notes";
+    internal const string Name = "notes";
 
     /// <inheritdoc/>
     public override string Key => Name;
 
     /// <summary>The tune this instance plays, and none where it carries no notes.</summary>
-    public static List<Step> Of(NodeInstance node) => Read<List<Step>>(node.StateOf(Name), []);
+    internal static List<Step> Of(NodeInstance node) => Read<List<Step>>(node.StateOf(Name), []);
 
     /// <summary>Replaces the tune outright — a list is edited whole or not at all.</summary>
     public static void Set(NodeInstance node, IEnumerable<Step> notes) =>

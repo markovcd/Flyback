@@ -157,7 +157,7 @@ public partial class NodeCatalog
     }
 
     /// <summary>The type id of the Auto remap module.</summary>
-    public const string AutoRemapTypeId = "math.autoremap";
+    internal const string AutoRemapTypeId = "math.autoremap";
 
     /// <summary>
     /// Remap's arithmetic in travel rather than in value: the input is first read as
@@ -232,7 +232,7 @@ public partial class NodeCatalog
     /// level is a socket like any other, which is what makes a fader something an
     /// oscillator can sweep.
     /// </remarks>
-    public const string MixerTypeId = "math.mixer";
+    internal const string MixerTypeId = "math.mixer";
 
     private static NodeDef Mixer()
     {
@@ -372,7 +372,7 @@ public partial class NodeCatalog
     public const string ExpressionTypeId = "math.expression";
 
     /// <summary>An Expression's formula as typed, and null for any other module.</summary>
-    public static string? FormulaOf(NodeInstance node) =>
+    internal static string? FormulaOf(NodeInstance node) =>
         node.TypeId == ExpressionTypeId ? FormulaExtra.Of(node) : null;
 
     /// <summary>
@@ -380,7 +380,7 @@ public partial class NodeCatalog
     /// nothing does. The reading the module compiles with, so the panel can say
     /// what the compiler is about to.
     /// </summary>
-    public static string? FormulaProblem(string formula)
+    internal static string? FormulaProblem(string formula)
     {
         if (Get(ExpressionTypeId)?.Extra<FormulaExtra>() is not { } extra) return null;
 

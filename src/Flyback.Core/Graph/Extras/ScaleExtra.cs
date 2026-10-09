@@ -4,7 +4,7 @@
 public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
 {
     /// <inheritdoc cref="StepsExtra.Name"/>
-    public const string Name = "scale";
+    internal const string Name = "scale";
 
     /// <inheritdoc/>
     public override string Key => Name;
@@ -14,7 +14,7 @@ public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
     /// <see cref="Fold"/> is where a scale is held to being one, because the
     /// keyboard has to show what was actually switched on.
     /// </summary>
-    public static List<int> Of(NodeInstance node) => Read<List<int>>(node.StateOf(Name), []);
+    internal static List<int> Of(NodeInstance node) => Read<List<int>>(node.StateOf(Name), []);
 
     /// <summary>
     /// Replaces the scale outright, for the reason a tune is replaced outright:

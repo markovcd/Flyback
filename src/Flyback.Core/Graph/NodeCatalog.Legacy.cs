@@ -15,7 +15,7 @@ public partial class NodeCatalog
     /// further and rewrites a loaded node's <see cref="NodeInstance.TypeId"/> to the
     /// new id outright, which is what makes saving write the new one. See ADR-0128.
     /// </remarks>
-    public static IReadOnlyDictionary<string, string> LegacyTypeIds { get; } =
+    internal static IReadOnlyDictionary<string, string> LegacyTypeIds { get; } =
         new Dictionary<string, string>
         {
             ["flyback.voice.filter"] = FilterTypeId,

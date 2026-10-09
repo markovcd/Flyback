@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The plugin contract no longer offers what only Flyback itself calls, such as `NodeCatalog.Install` and `PatchWorkbench.Edits`.
+
 - A Line In in `flyback-viewer` hears the sound input, as it does in the editor.
 
 - `flyback-cli render --size` takes the names the viewer takes, `720p`, `1080p` or `square`, beside WIDTHxHEIGHT.

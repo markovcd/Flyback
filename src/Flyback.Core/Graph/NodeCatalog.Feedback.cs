@@ -5,7 +5,7 @@ namespace Flyback.Core.Graph;
 public partial class NodeCatalog
 {
     /// <summary>The type id of the Feedback module.</summary>
-    public const string FeedbackTypeId = "feedback";
+    internal const string FeedbackTypeId = "feedback";
 
     private static IEnumerable<NodeDef> Feedback()
     {

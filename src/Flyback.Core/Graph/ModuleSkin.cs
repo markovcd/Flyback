@@ -34,7 +34,7 @@ public abstract record ModuleSkin
     /// for is a pale, saturated or busy background, where white is unreadable
     /// and nothing the shell knows about the color can save it.
     /// </remarks>
-    public bool ContrastText { get; init; }
+    internal bool ContrastText { get; init; }
 
     /// <summary>
     /// Drawn the way every built-in module is, from colors and a mark of the
@@ -51,7 +51,7 @@ public abstract record ModuleSkin
         /// What the wash falls to at the floor, or null to fall to the accent the
         /// way a built-in module does.
         /// </summary>
-        public Swatch? Floor { get; init; }
+        internal Swatch? Floor { get; init; }
 
         /// <summary>
         /// The mark across the body as SVG path data on a twenty-four unit box,

@@ -11,5 +11,5 @@ namespace Flyback.Core.Graph;
 public readonly record struct PartLevel(float Value, bool Glides = false)
 {
     /// <summary>The same level with a value the emit can use.</summary>
-    public PartLevel Sane() => this with { Value = float.IsFinite(Value) ? Value : 0f };
+    internal PartLevel Sane() => this with { Value = float.IsFinite(Value) ? Value : 0f };
 }

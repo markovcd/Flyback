@@ -14,15 +14,18 @@ namespace Flyback.Core.Graph.Extras;
 /// </remarks>
 public sealed record MidiExtra : NodeExtra
 {
+    /// <summary>The catalog's own; a plugin reaches it through its key.</summary>
+    internal MidiExtra() { }
+
     /// <summary>What this is filed under, in a saved patch and on a context.</summary>
     public const string StateKey = "midi";
 
     /// <summary>The fields selecting the instrument, its channel and the polyphonic voice.</summary>
-    public const string DeviceField = "device";
+    internal const string DeviceField = "device";
     /// <summary>The field choosing the polyphonic voice.</summary>
     public const string IndexField = "index";
     /// <summary>The field choosing the MIDI channel.</summary>
-    public const string ChannelField = "channel";
+    internal const string ChannelField = "channel";
     /// <summary>The field choosing how many voices it plays down one polyphonic wire.</summary>
     internal const string VoicesField = "voices";
 

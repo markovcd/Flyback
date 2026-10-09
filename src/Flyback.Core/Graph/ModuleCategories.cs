@@ -17,7 +17,7 @@ namespace Flyback.Core.Graph;
 public static class ModuleCategories
 {
     /// <summary>Where a signal comes from before anything is done to it.</summary>
-    public const string Sources = "Sources";
+    internal const string Sources = "Sources";
 
     /// <summary>The fixed-shape waveforms, the one stacked oscillator, noise, and the plucked string.</summary>
     public const string Oscillators = "Oscillators";
@@ -29,19 +29,19 @@ public static class ModuleCategories
     public const string Forms = "Forms";
 
     /// <summary>What bends the plane a field is read across.</summary>
-    public const string Geometry = "Geometry";
+    internal const string Geometry = "Geometry";
 
     /// <summary>Building a color, taking one apart, and correcting one.</summary>
     public const string Color = "Color";
 
     /// <summary>Arithmetic: a function of its inputs and nothing else.</summary>
-    public const string Maths = "Maths";
+    internal const string Maths = "Maths";
 
     /// <summary>
     /// The modules that know a pitch is not an ordinary number — hertz, note
     /// numbers, and snapping to a scale.
     /// </summary>
-    public const string Pitch = "Pitch";
+    internal const string Pitch = "Pitch";
 
     /// <summary>
     /// What decides when something happens: tempo, the sequencers and the Euclidean
@@ -59,7 +59,7 @@ public static class ModuleCategories
     public const string TimeEffects = "Time effects";
 
     /// <summary>Reading back what has already been evaluated.</summary>
-    public const string Feedback = "Feedback";
+    internal const string Feedback = "Feedback";
 
     /// <summary>
     /// What looks at a signal rather than making one: the three charts, the meter
@@ -68,17 +68,17 @@ public static class ModuleCategories
     public const string Measurement = "Measurement";
 
     /// <summary>Getting signals where they are going: the mixers, and the bus that needs no wire.</summary>
-    public const string Routing = "Routing";
+    internal const string Routing = "Routing";
 
     /// <summary>The sink, which is one module and always exactly one.</summary>
-    public const string Output = "Output";
+    internal const string Output = "Output";
 
     /// <summary>
     /// Every category the engine names, in the order the palette shows them:
     /// roughly the order a patch is built in. The sink is last because it is where
     /// the patch ends, and because it is the one section nobody goes looking in.
     /// </summary>
-    public static IReadOnlyList<string> All { get; } =
+    internal static IReadOnlyList<string> All { get; } =
     [
         Sources,
         Oscillators,
@@ -102,7 +102,7 @@ public static class ModuleCategories
     /// is — so a plugin's own section appears at the bottom rather than wherever
     /// the load order happened to put it.
     /// </summary>
-    public static int Order(string category) =>
+    internal static int Order(string category) =>
         Ranks.TryGetValue(category, out var rank) ? rank : All.Count;
 
     /// <summary>Built once, because the palette asks this per module per keystroke.</summary>

@@ -10,7 +10,7 @@ public readonly record struct Slot(int Base, int Width)
     public static Slot Scalar(int register) => new(register, 1);
 
     /// <summary>A color held in three registers from <paramref name="firstRegister"/>: red, green, blue.</summary>
-    public static Slot Color(int firstRegister) => new(firstRegister, 3);
+    internal static Slot Color(int firstRegister) => new(firstRegister, 3);
 
     /// <summary>
     /// Register holding component <paramref name="i"/>, broadcasting a scalar

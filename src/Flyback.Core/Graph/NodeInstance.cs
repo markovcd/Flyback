@@ -11,7 +11,7 @@ public sealed class NodeInstance
     /// The longest a module may be renamed to, so that a name pasted from
     /// somewhere else cannot make a patch file enormous or a header undrawable.
     /// </summary>
-    public const int NameLimit = 26;
+    internal const int NameLimit = 26;
 
     /// <summary>
     /// How far from the origin a module may sit to either side, in graph units.
@@ -19,14 +19,14 @@ public sealed class NodeInstance
     /// lost in: framing clamps its zoom, so a module flung further cannot be got
     /// back. Held on the coordinate, so it is true however the module was placed.
     /// </summary>
-    public const double Across = 7_500d;
+    internal const double Across = 7_500d;
 
     /// <summary>
     /// The same going down: ten thousand. Smaller than <see cref="Across"/>
     /// because a signal chain runs left to right, so patches grow across faster
     /// than they grow down.
     /// </summary>
-    public const double Down = 5_000d;
+    internal const double Down = 5_000d;
 
     /// <summary>Names this module within its patch, which is what a <see cref="Connection"/> refers to.</summary>
     public required Guid Id { get; init; }
@@ -124,7 +124,7 @@ public sealed class NodeInstance
     /// way anything should ask, so a renamed module reads the same on the canvas,
     /// in the panel and in a compiler complaint.
     /// </summary>
-    public string Title(NodeDef def) => Name ?? def.Name;
+    internal string Title(NodeDef def) => Name ?? def.Name;
 
     /// <summary>
     /// Renames this module, or puts it back to its definition's name.
@@ -135,7 +135,7 @@ public sealed class NodeInstance
     /// storing that would leave a file claiming a name that changes under it the
     /// day the module is renamed in the catalog.
     /// </param>
-    public void Rename(NodeDef def, string? to)
+    internal void Rename(NodeDef def, string? to)
     {
         var trimmed = to?.Trim();
 
@@ -157,7 +157,7 @@ public sealed class NodeInstance
     /// <param name="id">The copy's identity, or null to keep this one's.</param>
     /// <param name="dx">How far to move it across.</param>
     /// <param name="dy">How far to move it down.</param>
-    public NodeInstance Clone(Guid? id = null, double dx = 0d, double dy = 0d) => new()
+    internal NodeInstance Clone(Guid? id = null, double dx = 0d, double dy = 0d) => new()
     {
         Id = id ?? Id,
         TypeId = TypeId,
@@ -185,7 +185,7 @@ public sealed class NodeInstance
     /// <param name="def"></param>
     /// <param name="x"></param>
     /// <param name="y"></param>
-    public static NodeInstance Create(NodeDef def, double x, double y, Guid? id = null)
+    internal static NodeInstance Create(NodeDef def, double x, double y, Guid? id = null)
     {
         var node = new NodeInstance
         {

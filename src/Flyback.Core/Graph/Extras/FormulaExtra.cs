@@ -19,7 +19,7 @@ public sealed record FormulaExtra(IReadOnlyDictionary<string, NodeDef> Functions
     public const string FormulaField = "formula";
 
     /// <summary>What a fresh one carries: the Multiply and Add a formula most often replaces.</summary>
-    public const string Fresh = "a * b + c";
+    internal const string Fresh = "a * b + c";
 
     /// <inheritdoc/>
     public override string Key => StateKey;
@@ -42,7 +42,7 @@ public sealed record FormulaExtra(IReadOnlyDictionary<string, NodeDef> Functions
     }
 
     /// <summary>The formula an instance carries, as typed.</summary>
-    public static string Of(NodeInstance node) =>
+    internal static string Of(NodeInstance node) =>
         ((ExtraField.Text)FieldOf).Value(node.StateOf(StateKey)?[FormulaField]);
 
     /// <inheritdoc/>

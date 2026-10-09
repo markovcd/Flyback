@@ -68,7 +68,7 @@ public abstract record ExtraField(string Key, string Label)
         public override string Format(JsonNode? stored) => Spec.Format(Value(stored));
 
         /// <summary>This field's value as the number it is, always inside the range.</summary>
-        public float Value(JsonNode? stored)
+        internal float Value(JsonNode? stored)
         {
             var value = Stated(stored) ?? Spec.Default;
 
@@ -134,7 +134,7 @@ public abstract record ExtraField(string Key, string Label)
         /// was opened on a machine where the thing was unplugged. See
         /// <see cref="SampleExtra"/>, which reports rather than forgets.
         /// </remarks>
-        public string Value(JsonNode? stored) =>
+        internal string Value(JsonNode? stored) =>
             stored?.GetValueKind() == JsonValueKind.String
             && stored.AsValue().TryGetValue<string>(out var chosen)
             && !string.IsNullOrWhiteSpace(chosen)
@@ -146,7 +146,7 @@ public abstract record ExtraField(string Key, string Label)
         /// the list answers to it — so a device that has gone reads as its own
         /// name rather than as a blank.
         /// </summary>
-        public string Name(string id)
+        internal string Name(string id)
         {
             foreach (var option in Options)
                 if (option.Id == id)
@@ -180,7 +180,7 @@ public abstract record ExtraField(string Key, string Label)
         bool Multiline = false) : ExtraField(Key, Label)
     {
         /// <summary>The most a value may hold, in characters.</summary>
-        public const int Limit = 4096;
+        internal const int Limit = 4096;
 
         /// <inheritdoc/>
         public override JsonNode Sane(JsonNode? stored) => JsonValue.Create(Value(stored));
@@ -193,7 +193,7 @@ public abstract record ExtraField(string Key, string Label)
             Multiline ? Value(stored).Replace("\n", "\\n") : Value(stored);
 
         /// <summary>What was typed, or the fallback where nothing was.</summary>
-        public string Value(JsonNode? stored)
+        internal string Value(JsonNode? stored)
         {
             var typed = stored?.GetValueKind() == JsonValueKind.String
                 && stored.AsValue().TryGetValue<string>(out var held)

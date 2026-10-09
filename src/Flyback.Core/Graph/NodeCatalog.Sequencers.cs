@@ -11,13 +11,13 @@ public partial class NodeCatalog
     /// a budget on op count, which grows with the notes and is paid per pixel on
     /// the video path. See ADR-0038.
     /// </summary>
-    public const int MaxSteps = 32;
+    internal const int MaxSteps = 32;
 
     /// <summary>As many parts as an Arrangement holds: one output each.</summary>
     public const int MaxParts = 8;
 
     /// <summary>As many sections as an Arrangement holds, on the same budget as a sequence's notes.</summary>
-    public const int MaxSections = MaxSteps;
+    internal const int MaxSections = MaxSteps;
 
     /// <summary>The type id of the Arrangement module.</summary>
     public const string ArrangementTypeId = "seq.arrangement";
@@ -78,7 +78,7 @@ public partial class NodeCatalog
     public const string HoldTypeId = "seq.hold";
 
     /// <summary>A gate that passes each note or sends it to 'else', on a weighted coin.</summary>
-    public const string ChanceTypeId = "seq.chance";
+    internal const string ChanceTypeId = "seq.chance";
 
     /// <summary>Seconds in a minute, which is the whole of what a tempo knob converts.</summary>
     private const float Minute = 60f;

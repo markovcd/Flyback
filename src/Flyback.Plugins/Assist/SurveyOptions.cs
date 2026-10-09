@@ -31,5 +31,5 @@ public sealed record SurveyOptions(
     /// which costs money rather than answers, so the ordinary shape resolves it
     /// in one shared place.
     /// </remarks>
-    public bool Chosen { get; init; }
+    internal bool Chosen { get; init; }
 }

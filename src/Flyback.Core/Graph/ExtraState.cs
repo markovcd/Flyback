@@ -18,7 +18,7 @@ public sealed class ExtraState(IReadOnlyList<ExtraField> fields, JsonNode? store
     /// What a toggle field holds, or its default where nothing sensible does.
     /// Shipped plugin contract, the counterpart of <see cref="Number"/>; no built-in module declares a toggle, so only tests call it.
     /// </summary>
-    public bool Toggle(string key) =>
+    internal bool Toggle(string key) =>
         Field(key) is ExtraField.Toggle field && field.Value(stored?[key]);
 
     /// <summary>

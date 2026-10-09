@@ -7,13 +7,13 @@ public partial class NodeCatalog
     /// <summary>The type id of the Sine module.</summary>
     public const string SineTypeId = "osc.sine";
     /// <summary>The type id of the Saw module.</summary>
-    public const string SawTypeId = "osc.saw";
+    internal const string SawTypeId = "osc.saw";
     /// <summary>The type id of the Triangle module.</summary>
     public const string TriangleTypeId = "osc.triangle";
     /// <summary>The type id of the Square module.</summary>
-    public const string SquareTypeId = "osc.square";
+    internal const string SquareTypeId = "osc.square";
     /// <summary>The type id of the Pulse module.</summary>
-    public const string PulseTypeId = "osc.pulse";
+    internal const string PulseTypeId = "osc.pulse";
 
     private static IEnumerable<NodeDef> Oscillators()
     {

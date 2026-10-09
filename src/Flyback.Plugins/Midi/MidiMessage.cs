@@ -20,5 +20,5 @@ public readonly record struct MidiMessage(MidiAction Action, int Note, float Vel
     /// the transport belong to the whole cable. A voice ignores it; a knob bound
     /// to a controller may not.
     /// </summary>
-    public int Channel { get; init; }
+    internal int Channel { get; init; }
 }

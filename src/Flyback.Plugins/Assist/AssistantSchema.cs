@@ -35,22 +35,22 @@ public sealed record AssistantSchema(
     /// form reads its own values back by the same names, and stable because they
     /// are in the settings file of everybody who has configured one.
     /// </summary>
-    public const string ModelKey = "model";
+    internal const string ModelKey = "model";
 
     /// <summary>The setting holding the provider's base URL.</summary>
-    public const string EndpointKey = "endpoint";
+    internal const string EndpointKey = "endpoint";
 
     /// <summary>The setting for whether the assistant is shown the picture.</summary>
-    public const string VisionKey = "vision";
+    internal const string VisionKey = "vision";
 
     /// <summary>The setting for whether the assistant is given the sound.</summary>
-    public const string HearingKey = "hearing";
+    internal const string HearingKey = "hearing";
 
     /// <summary>The setting naming the model that describes the sound for one that cannot hear it.</summary>
-    public const string EarKey = "ear";
+    internal const string EarKey = "ear";
 
     /// <summary>The setting holding an <see cref="AssistantEffort"/>.</summary>
-    public const string EffortKey = "effort";
+    internal const string EffortKey = "effort";
 
     /// <summary>The setting naming the model that writes a typed idea out as a brief, blank for <see cref="ModelKey"/>'s.</summary>
     internal const string IdeasModelKey = "ideas";
@@ -78,7 +78,7 @@ public sealed record AssistantSchema(
     /// them — what the form offers as an ear, and empty for a provider that has
     /// none.
     /// </summary>
-    public IEnumerable<AssistantModel> Ears => SuggestedModels.Where(m => m.Hearing);
+    internal IEnumerable<AssistantModel> Ears => SuggestedModels.Where(m => m.Hearing);
 
     /// <summary>
     /// This schema as a survey of the endpoint leaves it, or unchanged where nobody

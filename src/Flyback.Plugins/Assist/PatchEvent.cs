@@ -54,7 +54,7 @@ public abstract record PatchEvent
     public sealed record Cost(int Input, int CacheRead, int Output) : PatchEvent
     {
         /// <summary>The model that answered, as the provider named it, or null where it did not.</summary>
-        public string? Model { get; init; }
+        internal string? Model { get; init; }
     }
 
     /// <summary>

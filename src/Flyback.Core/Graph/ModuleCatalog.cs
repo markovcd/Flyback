@@ -31,10 +31,10 @@ public sealed class ModuleCatalog
         new(modules, [provider], modules.ToDictionary(m => m.TypeId, _ => provider));
 
     /// <summary>Every module in the catalog.</summary>
-    public IReadOnlyList<NodeDef> All { get; }
+    internal IReadOnlyList<NodeDef> All { get; }
 
     /// <summary>Who supplied the modules: the engine and each plugin.</summary>
-    public IReadOnlyList<ModuleProvider> Providers { get; }
+    internal IReadOnlyList<ModuleProvider> Providers { get; }
 
     /// <summary>
     /// Which sections this catalog has, in the order they should be shown.
@@ -45,7 +45,7 @@ public sealed class ModuleCatalog
     /// <see cref="ModuleCategories.Order"/>. A category the engine does not name sorts
     /// last, with ties broken by the name.
     /// </remarks>
-    public IEnumerable<string> Categories => All
+    internal IEnumerable<string> Categories => All
         .Select(d => d.Category)
         .Distinct()
         .OrderBy(ModuleCategories.Order)
@@ -65,11 +65,11 @@ public sealed class ModuleCatalog
     /// The module with <paramref name="typeId"/>; throws <see cref="KeyNotFoundException"/>
     /// where there is none.
     /// </summary>
-    public NodeDef Require(string typeId) =>
+    internal NodeDef Require(string typeId) =>
         Get(typeId) ?? throw new KeyNotFoundException($"Unknown node type '{typeId}'.");
 
     /// <summary>Which provider defines a module, or null if nothing here does.</summary>
-    public ModuleProvider? ProviderOf(string typeId) => owners.GetValueOrDefault(typeId);
+    internal ModuleProvider? ProviderOf(string typeId) => owners.GetValueOrDefault(typeId);
 
     /// <summary>
     /// What is driving a socket nothing is patched into, named as it should be written
@@ -81,7 +81,7 @@ public sealed class ModuleCatalog
     /// running one, because a socket normalled to a plugin's module is on its knob
     /// wherever that plugin is not loaded.
     /// </remarks>
-    public string? Normalled(PortSpec spec)
+    internal string? Normalled(PortSpec spec)
     {
         if (spec.NormalledTo is not { } bus || Get(bus.TypeId) is not { } def) return null;
         if (bus.Port < 0 || bus.Port >= def.Outputs.Count) return null;

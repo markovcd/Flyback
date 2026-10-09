@@ -23,7 +23,7 @@ namespace Flyback.Core.Compile;
 public sealed record LoadedImage(float[] Pixels, int Width, int Height)
 {
     /// <summary>How wide it is against how tall, which is the shape it is drawn at.</summary>
-    public float Aspect => Height <= 0 ? 1f : (float)Width / Height;
+    internal float Aspect => Height <= 0 ? 1f : (float)Width / Height;
 
     /// <summary>
     /// The color at a place, where the picture spans -1 to 1 downward and its own
@@ -42,7 +42,7 @@ public sealed record LoadedImage(float[] Pixels, int Width, int Height)
     /// more than either being right alone.
     /// </para>
     /// </remarks>
-    public void At(double x, double y, Span<double> rgb)
+    internal void At(double x, double y, Span<double> rgb)
     {
         rgb[0] = rgb[1] = rgb[2] = 0d;
 

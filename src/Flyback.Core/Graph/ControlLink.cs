@@ -19,7 +19,7 @@ public readonly record struct ControlLink(Guid Control, float Min, float Max)
     /// A link over <paramref name="socket"/>'s own range, widened to take in
     /// <paramref name="resting"/>, and swept as its slider is.
     /// </summary>
-    public static ControlLink For(Guid control, PortSpec socket, float resting) =>
+    internal static ControlLink For(Guid control, PortSpec socket, float resting) =>
         new(control, Math.Min(socket.Min, resting), Math.Max(socket.Max, resting)) { Knee = socket.Knee };
 
     /// <summary>
@@ -28,7 +28,7 @@ public readonly record struct ControlLink(Guid Control, float Min, float Max)
     /// socket has none, one fitted to the range: its bottom where that is above
     /// nought, so the whole sweep is decades, and otherwise three decades of it.
     /// </summary>
-    public ControlLink Swept(bool inDecades, PortSpec socket)
+    internal ControlLink Swept(bool inDecades, PortSpec socket)
     {
         if (!inDecades) return this with { Knee = 0f };
         if (socket.Knee > 0f) return this with { Knee = socket.Knee };
@@ -43,7 +43,7 @@ public readonly record struct ControlLink(Guid Control, float Min, float Max)
     public float At(float value) => Taper.At(value, Min, Max, Knee);
 
     /// <summary>Where the knob has to sit for the socket to read <paramref name="reading"/>, held to 0..1.</summary>
-    public float Inverse(float reading) =>
+    internal float Inverse(float reading) =>
         // ReSharper disable once CompareOfFloatsByEqualityOperator
         Max == Min ? 0f : (float)Taper.Travel(reading, Min, Max, Knee);
 }

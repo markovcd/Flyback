@@ -6,13 +6,13 @@ namespace Flyback.Core.Graph.Extras;
 public sealed record ArrangementExtra(IReadOnlyList<IReadOnlyList<PartLevel>> Default) : NodeExtra
 {
     /// <inheritdoc cref="StepsExtra.Name"/>
-    public const string Name = "arrangement";
+    internal const string Name = "arrangement";
 
     /// <inheritdoc/>
     public override string Key => Name;
 
     /// <summary>The parts as stored, one list of sections each, and none where it carries nothing.</summary>
-    public static List<List<PartLevel>> Of(NodeInstance node) =>
+    internal static List<List<PartLevel>> Of(NodeInstance node) =>
         Read<List<List<PartLevel>>>(node.StateOf(Name), []);
 
     /// <summary>Replaces every part outright, for the reason a tune is replaced outright.</summary>
@@ -27,7 +27,7 @@ public sealed record ArrangementExtra(IReadOnlyList<IReadOnlyList<PartLevel>> De
     /// <see cref="NodeCatalog.MaxSections"/> sections, every one as long as the
     /// longest, a short part held at nought to the end.
     /// </summary>
-    public static List<List<PartLevel>> Tidy(IEnumerable<IEnumerable<PartLevel>> parts)
+    internal static List<List<PartLevel>> Tidy(IEnumerable<IEnumerable<PartLevel>> parts)
     {
         var kept = parts
             .Take(NodeCatalog.MaxParts)

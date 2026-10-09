@@ -21,7 +21,7 @@ public static class MidiPorts
     /// a device that happens to be called "Keyboard" would otherwise take its
     /// place and swallow the one instrument that is always there.
     /// </remarks>
-    public const string Prefix = "midi:";
+    internal const string Prefix = "midi:";
 
     /// <summary>
     /// Ids for a backend's devices, in the order it enumerated them.

@@ -9,7 +9,7 @@ namespace Flyback.Core.Graph;
 public sealed record KeyboardScale(int Tonic, string Scale)
 {
     /// <summary>What a fresh scale layout starts on: C major, what a fresh Auto Chord starts on.</summary>
-    public static KeyboardScale Major { get; } = new(0, Chords.Scales[0].Id);
+    internal static KeyboardScale Major { get; } = new(0, Chords.Scales[0].Id);
 
     /// <summary>The scale itself, and the major scale for an id nothing answers to.</summary>
     public ScaleMode Mode => Chords.Scale(Scale);

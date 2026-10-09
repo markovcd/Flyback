@@ -15,18 +15,18 @@ namespace Flyback.Core.Graph;
 public static class ControlMap
 {
     /// <summary>What the links are filed under in <see cref="NodeInstance.State"/>.</summary>
-    public const string StateKey = "controls";
+    internal const string StateKey = "controls";
 
     private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web);
 
     /// <summary>The knob <paramref name="port"/> follows, or null where it rests on its own.</summary>
-    public static ControlLink? Of(NodeInstance node, int port) =>
+    internal static ControlLink? Of(NodeInstance node, int port) =>
         node.StateOf(StateKey)?[port.ToString(CultureInfo.InvariantCulture)] is { } held
             ? Read(held)
             : null;
 
     /// <summary>Every linked socket on <paramref name="node"/>, by port.</summary>
-    public static IEnumerable<(int Port, ControlLink Link)> All(NodeInstance node)
+    internal static IEnumerable<(int Port, ControlLink Link)> All(NodeInstance node)
     {
         if (node.StateOf(StateKey) is not JsonObject links) yield break;
 
@@ -47,7 +47,7 @@ public static class ControlMap
     }
 
     /// <summary>Lets <paramref name="port"/> go back to its own knob.</summary>
-    public static bool Unlink(NodeInstance node, int port)
+    internal static bool Unlink(NodeInstance node, int port)
     {
         if (node.StateOf(StateKey) is not JsonObject links) return false;
 
@@ -58,7 +58,7 @@ public static class ControlMap
     }
 
     /// <summary>Every socket in <paramref name="patch"/> following <paramref name="control"/>.</summary>
-    public static IEnumerable<(NodeInstance Node, int Port, ControlLink Link)> Following(Patch patch, Guid control) =>
+    internal static IEnumerable<(NodeInstance Node, int Port, ControlLink Link)> Following(Patch patch, Guid control) =>
         from node in patch.Nodes
         from linked in All(node)
         where linked.Link.Control == control

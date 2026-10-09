@@ -267,3 +267,44 @@ virtual Flyback.Plugins.Decide.Answer.PrintMembers(System.Text.StringBuilder! bu
 virtual Flyback.Plugins.Decide.Question.EqualityContract.get -> System.Type!
 virtual Flyback.Plugins.Decide.Question.Equals(Flyback.Plugins.Decide.Question? other) -> bool
 virtual Flyback.Plugins.Decide.Question.PrintMembers(System.Text.StringBuilder! builder) -> bool
+*REMOVED*Flyback.Plugins.Assist.AssistantSchema.Ears.get -> System.Collections.Generic.IEnumerable<Flyback.Plugins.Assist.AssistantModel!>!
+*REMOVED*Flyback.Plugins.Assist.ModelReport.Suggestion.get -> Flyback.Plugins.Assist.AssistantModel!
+*REMOVED*Flyback.Plugins.Assist.PatchEvent.Cost.Model.get -> string?
+*REMOVED*Flyback.Plugins.Assist.PatchEvent.Cost.Model.init -> void
+*REMOVED*Flyback.Plugins.Assist.PatchWorkbench.Edits.get -> int
+*REMOVED*Flyback.Plugins.Assist.PatchWorkbench.Reopen() -> void
+*REMOVED*Flyback.Plugins.Assist.PatchWorkbench.ToolCalls.get -> int
+*REMOVED*Flyback.Plugins.Assist.PatchWorkbench.Undescribed.get -> System.Collections.Generic.IReadOnlySet<string!>!
+*REMOVED*Flyback.Plugins.Assist.SurveyOptions.Chosen.get -> bool
+*REMOVED*Flyback.Plugins.Assist.SurveyOptions.Chosen.init -> void
+*REMOVED*Flyback.Plugins.Assist.ToolOutcome.Reference.get -> bool
+*REMOVED*Flyback.Plugins.Assist.ToolOutcome.Reference.init -> void
+*REMOVED*Flyback.Plugins.Midi.MidiMessage.Channel.get -> int
+*REMOVED*Flyback.Plugins.Midi.MidiMessage.Channel.init -> void
+*REMOVED*Flyback.Plugins.Settings.SettingField.Because.get -> string?
+*REMOVED*Flyback.Plugins.Settings.SettingField.Because.init -> void
+*REMOVED*Flyback.Plugins.Settings.SettingField.Enabled.get -> bool
+*REMOVED*Flyback.Plugins.Settings.SettingField.Enabled.init -> void
+*REMOVED*Flyback.Plugins.Settings.SettingField.Pick.Name(string! id) -> string!
+*REMOVED*Flyback.Plugins.Settings.SettingValues.All.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+*REMOVED*Flyback.Plugins.Settings.SettingValues.Flag(string! key, bool fallback = false) -> bool
+*REMOVED*Flyback.Plugins.Settings.SettingValues.SettingValues(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, string!>>? from = null) -> void
+*REMOVED*Flyback.Plugins.Settings.SettingValues.With(string! key, string! value) -> Flyback.Plugins.Settings.SettingValues!
+*REMOVED*Flyback.Plugins.Settings.SettingValues.Word<TWord>(string! key, TWord fallback) -> TWord
+*REMOVED*const Flyback.Plugins.Assist.AssistantSchema.EarKey = "ear" -> string!
+*REMOVED*const Flyback.Plugins.Assist.AssistantSchema.EffortKey = "effort" -> string!
+*REMOVED*const Flyback.Plugins.Assist.AssistantSchema.EndpointKey = "endpoint" -> string!
+*REMOVED*const Flyback.Plugins.Assist.AssistantSchema.HearingKey = "hearing" -> string!
+*REMOVED*const Flyback.Plugins.Assist.AssistantSchema.ModelKey = "model" -> string!
+*REMOVED*const Flyback.Plugins.Assist.AssistantSchema.VisionKey = "vision" -> string!
+*REMOVED*const Flyback.Plugins.Midi.MidiPorts.Prefix = "midi:" -> string!
+*REMOVED*static Flyback.Plugins.Assist.AssistantConfig.Unset.get -> Flyback.Plugins.Assist.AssistantConfig!
+*REMOVED*static Flyback.Plugins.Assist.AssistantPost.Retryable(int status) -> bool
+*REMOVED*static Flyback.Plugins.Assist.Survey.Write(System.Collections.Generic.IEnumerable<Flyback.Plugins.Assist.ModelReport!>! found) -> string!
+*REMOVED*static Flyback.Plugins.Assist.ToolOutcome.Fine(string! text) -> Flyback.Plugins.Assist.ToolOutcome!
+*REMOVED*static Flyback.Plugins.Assist.ToolOutcome.Looked(byte[]! png, string! caption) -> Flyback.Plugins.Assist.ToolOutcome!
+*REMOVED*static Flyback.Plugins.Assist.ToolOutcome.Played(byte[]! wav, string! caption) -> Flyback.Plugins.Assist.ToolOutcome!
+*REMOVED*static Flyback.Plugins.Assist.ToolOutcome.Read(string! text) -> Flyback.Plugins.Assist.ToolOutcome!
+*REMOVED*static Flyback.Plugins.Assist.ToolOutcome.Refused(string! text) -> Flyback.Plugins.Assist.ToolOutcome!
+*REMOVED*static Flyback.Plugins.Audio.AudioFormat.Default.get -> Flyback.Plugins.Audio.AudioFormat
+*REMOVED*static Flyback.Plugins.Settings.SettingValues.None.get -> Flyback.Plugins.Settings.SettingValues!

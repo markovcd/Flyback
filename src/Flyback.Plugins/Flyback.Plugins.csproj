@@ -71,12 +71,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Assist\PatchWorkbench.Senses.cs">
-      <DependentUpon>PatchWorkbench.cs</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
     <!--
       Holds the public surface to PublicAPI.Shipped.txt and PublicAPI.Unshipped.txt
       beside this file, which is what a plugin is compiled against written down.

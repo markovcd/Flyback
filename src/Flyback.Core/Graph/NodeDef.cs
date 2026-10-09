@@ -74,7 +74,7 @@ public sealed record NodeDef(
     /// to fall silent rather than pass a ramp down the patch.
     /// </para>
     /// </remarks>
-    public int Through(int output)
+    internal int Through(int output)
     {
         if (Inputs.Count == 0) return -1;
 
@@ -107,7 +107,7 @@ public sealed record NodeDef(
     /// the whole of its use is a side effect — see <see cref="OpCode.Tap"/>.
     /// Declared rather than assumed, so a plugin can want it too.
     /// </remarks>
-    public bool TapsSignal { get; init; }
+    internal bool TapsSignal { get; init; }
 
     /// <summary>
     /// Whether the screen reads that stretch of the past back as a picture of
@@ -120,7 +120,7 @@ public sealed record NodeDef(
     /// A measurement wants a number filled
     /// in from outside, and costs the picture nothing. Both still tap.
     /// </remarks>
-    public bool ChartsSignal { get; init; }
+    internal bool ChartsSignal { get; init; }
 
     /// <summary>
     /// Whether what the chart holds is the frequency content of that stretch
@@ -134,7 +134,7 @@ public sealed record NodeDef(
     /// on a log axis and holds linear amplitude — see
     /// <c>Compile.Spectra</c>.
     /// </remarks>
-    public bool ChartsSpectrum { get; init; }
+    internal bool ChartsSpectrum { get; init; }
 
     /// <summary>
     /// Whether the chart draws its first two inputs against each other, across and
@@ -152,7 +152,7 @@ public sealed record NodeDef(
     /// How many of the first inputs <see cref="TapsSignal"/> makes roots of the
     /// speakers' program, each a ring of its own.
     /// </summary>
-    public int TappedInputs { get; init; } = 1;
+    internal int TappedInputs { get; init; } = 1;
 
     /// <summary>
     /// Which sink this module means something at. An init property defaulting to

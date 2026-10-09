@@ -6,6 +6,9 @@ namespace Flyback.Core.Compile;
 /// </summary>
 public sealed class Emitter
 {
+    /// <summary>Made by the compiler; a module is handed one to emit into.</summary>
+    internal Emitter() { }
+
     private readonly List<Op> ops = [];
     private readonly Dictionary<float, Slot> constants = [];
     private readonly Dictionary<OpCode, Slot> loads = [];
@@ -59,7 +62,7 @@ public sealed class Emitter
     /// modules during this one's emit, so a field only ever assigned would
     /// attribute the inner module's oscillators to the outer one.
     /// </remarks>
-    public Guid Owner { get; set; }
+    internal Guid Owner { get; set; }
 
     /// <summary>Who owns what, as this program has it so far.</summary>
     internal StateOwners Owners => new(
@@ -499,7 +502,7 @@ public sealed class Emitter
     /// evaluation is one moment, and a key that was down for half of it was not
     /// down twice.
     /// </remarks>
-    public Slot Live(string key)
+    internal Slot Live(string key)
     {
         var index = liveInputs.IndexOf(key);
 
@@ -627,7 +630,7 @@ public sealed class Emitter
         Add(new Op(OpCode.ClockWrite, -1, value.Component(0), k: slot));
 
     /// <summary>An op that writes three consecutive registers at once.</summary>
-    public Slot Triple(OpCode code, Slot a, Slot b, Slot c = default)
+    internal Slot Triple(OpCode code, Slot a, Slot b, Slot c = default)
     {
         var first = Allocate(3);
         Add(new Op(code, first, a.Component(0), b.Component(0), c.Width == 0 ? -1 : c.Component(0)));

@@ -19,23 +19,23 @@ namespace Flyback.Plugins.Assist;
 public sealed record ToolOutcome(bool Ok, string Text, byte[]? Png = null, byte[]? Wav = null)
 {
     /// <summary>Handbook text looked up from the catalog or a preset, rather than anything done to the patch.</summary>
-    public bool Reference { get; init; }
+    internal bool Reference { get; init; }
 
     /// <summary>A tool call that did what was asked, answering with <paramref name="text"/>.</summary>
-    public static ToolOutcome Fine(string text) => new(true, text);
+    internal static ToolOutcome Fine(string text) => new(true, text);
 
     /// <summary>Handbook text it asked for — see <c>describe_module</c>.</summary>
-    public static ToolOutcome Read(string text) => new(true, text) { Reference = true };
+    internal static ToolOutcome Read(string text) => new(true, text) { Reference = true };
 
     /// <summary>
     /// A tool call that did nothing, with <paramref name="text"/> saying why, for the model to
     /// read and try again.
     /// </summary>
-    public static ToolOutcome Refused(string text) => new(false, text);
+    internal static ToolOutcome Refused(string text) => new(false, text);
 
     /// <summary>A picture and the words that go with it — see <c>render</c>.</summary>
-    public static ToolOutcome Looked(byte[] png, string caption) => new(true, caption, png);
+    internal static ToolOutcome Looked(byte[] png, string caption) => new(true, caption, png);
 
     /// <summary>A sound and the words that go with it — see <c>listen</c>.</summary>
-    public static ToolOutcome Played(byte[] wav, string caption) => new(true, caption, null, wav);
+    internal static ToolOutcome Played(byte[] wav, string caption) => new(true, caption, null, wav);
 }

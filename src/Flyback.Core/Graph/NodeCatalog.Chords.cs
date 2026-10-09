@@ -6,16 +6,16 @@ namespace Flyback.Core.Graph;
 public partial class NodeCatalog
 {
     /// <summary>The type id of the Chord module.</summary>
-    public const string ChordTypeId = "audio.chord";
+    internal const string ChordTypeId = "audio.chord";
 
     /// <summary>The type id of the Auto Chord module.</summary>
-    public const string AutoChordTypeId = "audio.autochord";
+    internal const string AutoChordTypeId = "audio.autochord";
 
     /// <summary>What an Auto Chord's scale is filed under.</summary>
-    public const string AutoChordStateKey = "autochord";
+    internal const string AutoChordStateKey = "autochord";
 
     /// <summary>The field of an Auto Chord's settings that holds its scale.</summary>
-    public const string AutoChordScaleField = "scale";
+    internal const string AutoChordScaleField = "scale";
 
     /// <summary>The four frequencies both chord modules give.</summary>
     private static PortSpec[] ChordOutputs() =>

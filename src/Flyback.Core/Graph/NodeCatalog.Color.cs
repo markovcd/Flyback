@@ -96,13 +96,13 @@ public partial class NodeCatalog
     private const string Changed = "The picture it works on.", Worked = "The picture, worked on.";
 
     /// <summary>What an Ink module's settings are filed under.</summary>
-    public const string InkStateKey = "ink";
+    internal const string InkStateKey = "ink";
 
     /// <summary>The one setting an Ink module has: how its color meets what is under it.</summary>
-    public const string InkModeKey = "mode";
+    internal const string InkModeKey = "mode";
 
     /// <summary>The mode that is not the default: the color covers what is under it.</summary>
-    public const string InkOver = "over";
+    internal const string InkOver = "over";
 
     private const string InkAdd = "add";
 

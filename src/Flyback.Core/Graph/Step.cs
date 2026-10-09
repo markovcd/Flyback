@@ -12,10 +12,10 @@
 public readonly record struct Step(float Value, float Length = 1f, float Volume = 1f)
 {
     /// <summary>The shortest a note may be, so that a length is always something to divide by.</summary>
-    public const float ShortestLength = 0.01f;
+    internal const float ShortestLength = 0.01f;
 
     /// <summary>The same note with every field held to what the sequencer can play.</summary>
-    public Step Sane() => new(
+    internal Step Sane() => new(
         float.IsFinite(Value) ? Value : 0f,
         float.IsFinite(Length) ? MathF.Max(Length, ShortestLength) : 1f,
         float.IsFinite(Volume) ? Math.Clamp(Volume, 0f, 1f) : 1f);

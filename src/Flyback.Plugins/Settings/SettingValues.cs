@@ -16,19 +16,19 @@ public sealed class SettingValues : IEquatable<SettingValues>
     private readonly Dictionary<string, string> held;
 
     /// <summary>Holds a copy of <paramref name="from"/>, or nothing where there is none.</summary>
-    public SettingValues(IEnumerable<KeyValuePair<string, string>>? from = null) =>
+    internal SettingValues(IEnumerable<KeyValuePair<string, string>>? from = null) =>
         held = from is null
             ? new Dictionary<string, string>(StringComparer.Ordinal)
             : new Dictionary<string, string>(from, StringComparer.Ordinal);
 
     /// <summary>Nothing set, which is what a plugin nobody has configured starts on.</summary>
-    public static SettingValues None { get; } = new();
+    internal static SettingValues None { get; } = new();
 
     /// <summary>Everything set, for whoever has to write it down.</summary>
-    public IReadOnlyDictionary<string, string> All => held;
+    internal IReadOnlyDictionary<string, string> All => held;
 
     /// <summary>This one set to <paramref name="value"/>, leaving the rest alone.</summary>
-    public SettingValues With(string key, string value)
+    internal SettingValues With(string key, string value)
     {
         var next = new Dictionary<string, string>(held, StringComparer.Ordinal) { [key] = value };
 
@@ -43,11 +43,11 @@ public sealed class SettingValues : IEquatable<SettingValues>
     /// A stored value read back as a switch, or <paramref name="fallback"/> where it is missing
     /// or not one.
     /// </summary>
-    public bool Flag(string key, bool fallback = false) =>
+    internal bool Flag(string key, bool fallback = false) =>
         SettingField.Switch.Read(held.GetValueOrDefault(key), fallback);
 
     /// <summary>A stored value read back as one of an enum's names, however it was cased.</summary>
-    public TWord Word<TWord>(string key, TWord fallback)
+    internal TWord Word<TWord>(string key, TWord fallback)
         where TWord : struct, Enum =>
         Enum.TryParse<TWord>(held.GetValueOrDefault(key), ignoreCase: true, out var word) ? word : fallback;
 

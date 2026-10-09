@@ -57,7 +57,7 @@ public abstract record NodeExtra
     public virtual string Help => string.Empty;
 
     /// <summary>What this kind carries and what each is for: a field at a time, or the kind itself where it declares none.</summary>
-    public IEnumerable<(string Name, string Help)> Explained() =>
+    internal IEnumerable<(string Name, string Help)> Explained() =>
         Fields.Count > 0 ? Fields.Select(field => (field.Key, field.Help)) : [(Key, Help)];
 
     /// <summary>What a freshly placed instance carries.</summary>

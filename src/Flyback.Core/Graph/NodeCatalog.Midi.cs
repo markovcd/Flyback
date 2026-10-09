@@ -17,10 +17,10 @@ public partial class NodeCatalog
     /// compiler and the assistant all have to ask whether a given node is it — see
     /// <see cref="MidiFileExtra"/>.
     /// </summary>
-    public const string MidiFileTypeId = "midi.file";
+    internal const string MidiFileTypeId = "midi.file";
 
     /// <summary>The module that keeps a patch to an instrument's clock.</summary>
-    public const string ClockTypeId = "midi.clock";
+    internal const string ClockTypeId = "midi.clock";
 
     /// <summary>
     /// How long a Clock In takes to smooth out a tick that landed early or late:

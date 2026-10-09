@@ -16,13 +16,13 @@ namespace Flyback.Core.Graph;
 public static partial class NodeCatalog
 {
     /// <summary>The provider every module in this file belongs to. Reserved.</summary>
-    public static ModuleProvider BuiltInProvider { get; } = new("flyback", GlobalConstants.ApplicationName);
+    internal static ModuleProvider BuiltInProvider { get; } = new("flyback", GlobalConstants.ApplicationName);
     
     /// <summary>RGB, so the screen reads three registers.</summary>
-    public const int VideoChannels = 3;
+    internal const int VideoChannels = 3;
 
     /// <summary>Stereo, so the speakers read two registers where the screen reads three.</summary>
-    public const int AudioChannels = 2;
+    internal const int AudioChannels = 2;
 
     /// <summary>
     /// One of the two programs a patch yields. Both root at the same Output and
@@ -57,10 +57,10 @@ public static partial class NodeCatalog
     private const float Tau = 6.283185307179586f;
 
     /// <summary>Just the modules that ship in the engine, with nothing added.</summary>
-    public static ModuleCatalog BuiltIn { get; }
+    internal static ModuleCatalog BuiltIn { get; }
 
     /// <summary>The catalog the running program uses.</summary>
-    public static ModuleCatalog Current { get; private set; }
+    internal static ModuleCatalog Current { get; private set; }
 
     /// <summary>
     /// Puts a composed catalog in place. Called once during startup, after
@@ -68,22 +68,22 @@ public static partial class NodeCatalog
     /// or vanishing later would leave already-compiled programs describing a
     /// catalog that no longer matches.
     /// </summary>
-    public static void Install(ModuleCatalog catalog) => Current = catalog;
+    internal static void Install(ModuleCatalog catalog) => Current = catalog;
 
     /// <summary>The categories the current catalog's modules are filed under.</summary>
-    public static IEnumerable<string> Categories => Current.Categories;
+    internal static IEnumerable<string> Categories => Current.Categories;
 
     /// <summary>The module with <paramref name="typeId"/> in the current catalog, or null where there is none.</summary>
-    public static NodeDef? Get(string typeId) => Current.Get(typeId);
+    internal static NodeDef? Get(string typeId) => Current.Get(typeId);
 
     /// <summary>
     /// The module with <paramref name="typeId"/> in the current catalog; throws <see
     /// cref="KeyNotFoundException"/> where there is none.
     /// </summary>
-    public static NodeDef Require(string typeId) => Current.Require(typeId);
+    internal static NodeDef Require(string typeId) => Current.Require(typeId);
 
     /// <inheritdoc cref="ModuleCatalog.Normalled"/>
-    public static string? Normalled(PortSpec spec) => Current.Normalled(spec);
+    internal static string? Normalled(PortSpec spec) => Current.Normalled(spec);
 
     // --- port shorthands -----------------------------------------------------
 

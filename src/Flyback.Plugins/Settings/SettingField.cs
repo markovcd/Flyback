@@ -31,10 +31,10 @@ public abstract record SettingField(string Key, string Label)
     /// setting that has stopped meaning anything is left out of the form instead,
     /// since a disabled control asks somebody to work out why it is there.
     /// </remarks>
-    public bool Enabled { get; init; } = true;
+    internal bool Enabled { get; init; } = true;
 
     /// <summary>Why it cannot be changed, shown on hover. Ignored while <see cref="Enabled"/>.</summary>
-    public string? Because { get; init; }
+    internal string? Because { get; init; }
 
     /// <summary>
     /// The stored value held to what this field can mean, and the field's own
@@ -95,7 +95,7 @@ public abstract record SettingField(string Key, string Label)
         /// What to call <paramref name="id"/>, and the id itself where nothing in
         /// the list answers to it.
         /// </summary>
-        public string Name(string id)
+        internal string Name(string id)
         {
             foreach (var option in Options)
                 if (option.Id == id)

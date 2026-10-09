@@ -6,7 +6,7 @@ namespace Flyback.Core.Compile;
 public sealed record LoadedSample(float[] Samples, int SampleRate)
 {
     /// <summary>How long it plays for, which is the one thing a patch has to know about it.</summary>
-    public float Seconds => SampleRate <= 0 ? 0f : Samples.Length / (float)SampleRate;
+    internal float Seconds => SampleRate <= 0 ? 0f : Samples.Length / (float)SampleRate;
 
     /// <summary>
     /// The value at a moment, in seconds from the start, with silence either side of
@@ -18,7 +18,7 @@ public sealed record LoadedSample(float[] Samples, int SampleRate)
     /// rather than a clamp or a wrap — a clip that held its last sample would be a
     /// click followed by DC, and looping is something a patch says with a wire.
     /// </remarks>
-    public double At(double seconds)
+    internal double At(double seconds)
     {
         if (!double.IsFinite(seconds) || Samples.Length == 0) return 0d;
 

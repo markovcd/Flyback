@@ -26,7 +26,7 @@ public partial class NodeCatalog
     /// The sound input. Named here because the shell opens a capture device only while a
     /// running patch holds one, and asks the compiled program rather than the patch.
     /// </summary>
-    public const string LineInTypeId = "audio.in";
+    internal const string LineInTypeId = "audio.in";
 
     /// <summary>
     /// The picture module. Named here for the reason the sample player is: it is
@@ -34,10 +34,10 @@ public partial class NodeCatalog
     /// compiler and the assistant all have to ask whether a given node is it —
     /// see <see cref="PictureExtra"/>.
     /// </summary>
-    public const string PictureTypeId = "picture";
+    internal const string PictureTypeId = "picture";
 
     /// <summary>The knob module. Named here for the reason every other own mark is.</summary>
-    public const string ValueTypeId = "value";
+    internal const string ValueTypeId = "value";
 
     /// <summary>The output socket of the position source that carries x.</summary>
     public const int CoordXPort = 0;

@@ -15,5 +15,5 @@ namespace Flyback.Plugins.Assist;
 public sealed record AssistantConfig(IAssistantTransport Transport, SettingValues Values)
 {
     /// <summary>Nothing configured, which is what a provider is asked about before anybody has.</summary>
-    public static AssistantConfig Unset { get; } = new(KeyedTransport.None, SettingValues.None);
+    internal static AssistantConfig Unset { get; } = new(KeyedTransport.None, SettingValues.None);
 }

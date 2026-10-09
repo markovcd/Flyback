@@ -41,7 +41,7 @@ public static class AssistantPost
     /// a model is overloaded, which is a queue rather than a fault. Everything else
     /// in 4xx will still be wrong in a second.
     /// </remarks>
-    public static bool Retryable(int status) =>
+    internal static bool Retryable(int status) =>
         status is 408 or 429 or 500 or 502 or 503 or 504 or 529;
 
     /// <summary>Sends <paramref name="body"/> as JSON over <paramref name="transport"/>, and gives back what came back.</summary>

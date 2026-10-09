@@ -45,7 +45,7 @@ public readonly record struct EmitContext(Slot[] Inputs)
     public Slot Resolve(int port) => Resolver is null ? Inputs[port] : Resolver(port);
 
     /// <summary>How the compiler resolves a deferred input, supplied by it.</summary>
-    public Func<int, Slot>? Resolver { get; init; }
+    internal Func<int, Slot>? Resolver { get; init; }
 
     // --- what the compiler knows and the module cannot ---------------------------
 
@@ -62,7 +62,7 @@ public readonly record struct EmitContext(Slot[] Inputs)
     /// where a module is lowered without an instance behind it, which is the
     /// hidden one a normalled socket reads.
     /// </remarks>
-    public Guid Node { get; init; }
+    internal Guid Node { get; init; }
 
     /// <summary>
     /// The buffer this instance charts — the stretch of the past something
@@ -79,7 +79,7 @@ public readonly record struct EmitContext(Slot[] Inputs)
     /// speakers' program is the ordinary case: there a Scope contributes a
     /// <see cref="OpCode.Tap"/> the compiler emits without entering the module.
     /// </remarks>
-    public LoadedSample? Trace { get; init; }
+    internal LoadedSample? Trace { get; init; }
 
     /// <summary>An Auto remap's ranges, read off its wires by the compiler, and null for every other module.</summary>
     internal RemapSpans? Spans { get; init; }
@@ -94,7 +94,7 @@ public readonly record struct EmitContext(Slot[] Inputs)
     /// than slots: a sequencer folds its lengths into running sums at compile
     /// time, which a register could not do.
     /// </summary>
-    public IReadOnlyList<Step> Steps
+    internal IReadOnlyList<Step> Steps
     {
         get => field ?? [];
         init;
@@ -111,7 +111,7 @@ public readonly record struct EmitContext(Slot[] Inputs)
     /// what they compute. Empty rather than null, so an emit function may read it
     /// without asking.
     /// </remarks>
-    public IReadOnlyList<int> Scale
+    internal IReadOnlyList<int> Scale
     {
         get => field ?? [];
         init;
@@ -129,7 +129,7 @@ public readonly record struct EmitContext(Slot[] Inputs)
     /// through <see cref="ISampleLibrary"/>, and the complaint about a missing
     /// one has already been made.
     /// </remarks>
-    public LoadedSample? Sample { get; init; }
+    internal LoadedSample? Sample { get; init; }
 
     /// <summary>
     /// The one voice of a MIDI file this instance plays, already built, and null
@@ -140,7 +140,7 @@ public readonly record struct EmitContext(Slot[] Inputs)
     /// programs play a file, since a voice is four tables and tables are read by
     /// either.
     /// </remarks>
-    public MidiLine? Midi { get; init; }
+    internal MidiLine? Midi { get; init; }
 
 
     /// <summary>
@@ -153,13 +153,13 @@ public readonly record struct EmitContext(Slot[] Inputs)
     /// no picture library. So a module needs no way to ask which sink it is being
     /// lowered for: the answer is whether it was given anything.
     /// </remarks>
-    public LoadedImage? Picture { get; init; }
+    internal LoadedImage? Picture { get; init; }
 
     /// <summary>
     /// An Arrangement's parts, tidied to the same number of sections each, and
     /// empty for every other module.
     /// </summary>
-    public IReadOnlyList<IReadOnlyList<PartLevel>> Parts
+    internal IReadOnlyList<IReadOnlyList<PartLevel>> Parts
     {
         get => field ?? [];
         init;
@@ -176,7 +176,7 @@ public readonly record struct EmitContext(Slot[] Inputs)
     /// plugin's emit function, already parsed, so an emit function never sees the
     /// JSON. Read it with <see cref="Extra{T}"/> rather than by hand.
     /// </remarks>
-    public IReadOnlyDictionary<string, object> Extras
+    internal IReadOnlyDictionary<string, object> Extras
     {
         get => field ?? EmptyExtras;
         init;

@@ -15,23 +15,23 @@ public partial class NodeCatalog
     /// The chart module. Named here because the shell roots the picture at one
     /// when it is selected — see <c>Compile.PatchCompiler</c>.
     /// </summary>
-    public const string ProbeTypeId = "probe";
+    internal const string ProbeTypeId = "probe";
 
     /// <summary>
     /// The chart of what was played. Named here because the shell roots the
     /// picture at one when it is selected; the compiler finds the extra audio
     /// roots through <see cref="NodeDef.TapsSignal"/> rather than by name.
     /// </summary>
-    public const string ScopeTypeId = "scope";
+    internal const string ScopeTypeId = "scope";
 
     /// <summary>
     /// The chart of what frequencies were played. Named here because the shell
     /// roots the picture at one when it is selected, as it does a Scope.
     /// </summary>
-    public const string AnalyzerTypeId = "analyzer";
+    internal const string AnalyzerTypeId = "analyzer";
 
     /// <summary>Whether a module is one the shell will show in place of the picture.</summary>
-    public static bool IsChart(string typeId) => typeId is ProbeTypeId or ScopeTypeId or AnalyzerTypeId or BeamTypeId;
+    internal static bool IsChart(string typeId) => typeId is ProbeTypeId or ScopeTypeId or AnalyzerTypeId or BeamTypeId;
 
     /// <summary>
     /// The level meter. Named here because what it reads is filled in from
@@ -113,7 +113,7 @@ public partial class NodeCatalog
     /// and out of the delete key — see <see cref="Patch.CanAdd"/> and
     /// <see cref="Patch.Remove"/>.
     /// </summary>
-    public static bool IsSink(string typeId) => typeId == OutputTypeId;
+    internal static bool IsSink(string typeId) => typeId == OutputTypeId;
     
     private static IEnumerable<NodeDef> Output()
     {

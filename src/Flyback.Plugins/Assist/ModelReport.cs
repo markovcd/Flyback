@@ -33,5 +33,5 @@ public sealed record ModelReport(string Id)
     /// thing twice in a place somebody has to read by hand.
     /// </remarks>
     [JsonIgnore]
-    public AssistantModel Suggestion => new(Id, Vision, Hearing);
+    internal AssistantModel Suggestion => new(Id, Vision, Hearing);
 }

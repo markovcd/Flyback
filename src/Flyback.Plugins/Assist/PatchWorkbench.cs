@@ -104,7 +104,7 @@ public sealed class PatchWorkbench
     public string Briefing { get; }
 
     /// <summary>The type ids whose descriptions <see cref="Briefing"/> leaves out.</summary>
-    public IReadOnlySet<string> Undescribed { get; }
+    internal IReadOnlySet<string> Undescribed { get; }
 
     /// <summary>The tools the model is offered.</summary>
     public IReadOnlyList<PatchTool> Tools { get; }
@@ -128,7 +128,7 @@ public sealed class PatchWorkbench
     /// this as a turn begins; one that did not would hand the same patch over again
     /// as this turn's answer.
     /// </remarks>
-    public void Reopen()
+    internal void Reopen()
     {
         bench.Proposal = null;
         bench.Edits = 0;
@@ -139,10 +139,10 @@ public sealed class PatchWorkbench
     public string ProposalSummary => bench.Proposal ?? string.Empty;
 
     /// <summary>How many edits this turn has made.</summary>
-    public int Edits => bench.Edits;
+    internal int Edits => bench.Edits;
 
     /// <summary>How many tools this turn has called, against <see cref="WorkbenchLimits.MaxToolCalls"/>.</summary>
-    public int ToolCalls { get; private set; }
+    internal int ToolCalls { get; private set; }
 
     /// <summary>
     /// The working patch, laid out and deep-copied by writing it out and reading

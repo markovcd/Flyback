@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Flyback.Core.Graph;
 using Shouldly;
@@ -73,6 +74,35 @@ public class ContractSurfaceTests
         Promised.Keys.Where(name => !exported.Contains(name)).ShouldBeEmpty("These are no longer public.");
     }
 
+    [Fact]
+    public void A_member_promise_is_kept_only_while_no_plugin_here_names_the_member()
+    {
+        var named = MembersNamedByPlugins();
+        var exported = Contract.SelectMany(a => a.GetExportedTypes()).Select(t => t.FullName!).ToHashSet();
+
+        PromisedMembers.Keys.Where(named.Contains).ShouldBeEmpty("A plugin names these now, so they leave PromisedMembers.");
+        SavedData.Keys.Where(name => !exported.Contains(name)).ShouldBeEmpty("These are no longer public.");
+    }
+
+    [Fact]
+    public void Every_public_member_is_named_by_a_plugin_or_promised_with_a_reason()
+    {
+        var named = MembersNamedByPlugins();
+
+        var unaccounted = Contract
+            .SelectMany(a => a.GetExportedTypes())
+            .Where(t => !Promised.ContainsKey(t.FullName!) && !t.IsInterface && !t.IsEnum && !t.IsSubclassOf(typeof(Delegate)))
+            .SelectMany(Answerable)
+            .Where(member => !named.Contains(member) && !PromisedMembers.ContainsKey(member))
+            .Distinct()
+            .Order()
+            .ToList();
+
+        unaccounted.ShouldBeEmpty(
+            "No plugin built here names these. Make each internal, or add it to PromisedMembers with the reason a plugin elsewhere needs it:\n  "
+            + string.Join("\n  ", unaccounted));
+    }
+
     /// <summary>
     /// Every contract type the plugins built beside this test name, as reflection
     /// names it, nested types as <c>Outer+Inner</c>: what their IL references, and
@@ -134,6 +164,153 @@ public class ContractSurfaceTests
         }
 
         return names;
+    }
+
+    /// <summary>
+    /// Public members of a named type that no plugin in the box names, kept for
+    /// plugins elsewhere, as <c>Type.Member</c>. Each reason has to hold on its own.
+    /// </summary>
+    private static readonly IReadOnlyDictionary<string, string> PromisedMembers = new Dictionary<string, string>
+    {
+    };
+
+    /// <summary>
+    /// Types a serializer writes, whose public properties, and the constructor it
+    /// builds them with, are the saved shape however few plugins read them.
+    /// </summary>
+    private static readonly IReadOnlyDictionary<string, string> SavedData = new Dictionary<string, string>
+    {
+        ["Flyback.Core.Graph.Patch"] = "The patch file.",
+        ["Flyback.Core.Graph.NodeInstance"] = "Patch.Nodes, saved in the patch file.",
+        ["Flyback.Core.Graph.PatchControl"] = "Patch.Controls, saved in the patch file.",
+        ["Flyback.Core.Graph.KeyboardScale"] = "Patch.Keyboard, saved in the patch file.",
+        ["Flyback.Core.Graph.ControlLink"] = "Saved in a module's state by ControlMap.",
+        ["Flyback.Plugins.Assist.ModelReport"] = "What Survey keeps in the settings file.",
+    };
+
+    /// <summary>
+    /// The members of <paramref name="type"/> a plugin reaches only by naming them,
+    /// as <c>Type.Member</c>: not what a plugin implements or overrides, not what a
+    /// record writes for itself or a positional record's shape, and not what a
+    /// serializer writes of a <see cref="SavedData"/> type.
+    /// </summary>
+    private static IEnumerable<string> Answerable(Type type)
+    {
+        const BindingFlags declared = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
+
+        var implementing = type.GetInterfaces().SelectMany(i => type.GetInterfaceMap(i).TargetMethods).ToHashSet();
+        var shape = RecordShape(type);
+        var saved = SavedData.ContainsKey(type.FullName!);
+
+        bool Sealed(MethodInfo? method) =>
+            method is null
+            || !method.IsAbstract && (!method.IsVirtual || method.IsFinal) && method.GetBaseDefinition() == method && !implementing.Contains(method);
+
+        bool Written(PropertyInfo property) =>
+            saved && property.GetMethod is { IsStatic: false }
+            && property.GetCustomAttribute<JsonIgnoreAttribute>()?.Condition is not JsonIgnoreCondition.Always;
+
+        bool Own(MemberInfo member) => !RecordWrites.Contains(member.Name) && member switch
+        {
+            ConstructorInfo constructor => !Positional(constructor, shape) && !(saved && constructor.GetParameters().Length == 0),
+            MethodInfo method => (!method.IsSpecialName || method.Name.StartsWith("op_", StringComparison.Ordinal)) && Sealed(method),
+            PropertyInfo property => !shape.Contains(property.Name) && !Written(property) && property.GetAccessors().All(Sealed),
+            EventInfo e => Sealed(e.AddMethod),
+            FieldInfo => true,
+            _ => false,
+        };
+
+        return type.GetMembers(declared).Where(Own).Select(member => Key(type, member is ConstructorInfo ? ".ctor" : member.Name));
+    }
+
+    /// <summary>
+    /// The parameters of a positional record's primary constructor, which with the
+    /// properties they declare are the record itself rather than members added to
+    /// it; empty for anything else.
+    /// </summary>
+    private static HashSet<string> RecordShape(Type type)
+    {
+        var deconstruct = type.GetMethod("Deconstruct", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+        if (deconstruct is null || type.GetMethod("PrintMembers", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly) is null)
+            return [];
+
+        return [.. deconstruct.GetParameters().Select(p => p.Name!)];
+    }
+
+    private static bool Positional(ConstructorInfo constructor, HashSet<string> shape) =>
+        shape.Count > 0 && constructor.GetParameters().Select(p => p.Name!).ToHashSet().SetEquals(shape);
+
+    private static readonly HashSet<string> RecordWrites =
+        ["<Clone>$", "Deconstruct", "Equals", "GetHashCode", "ToString", "PrintMembers", "EqualityContract", "op_Equality", "op_Inequality"];
+
+    private static string Key(Type type, string member) => type.FullName + "." + member;
+
+    /// <summary>
+    /// Every contract member the plugins built beside this test name, as
+    /// <c>Type.Member</c>: what their IL references, an accessor counting as its
+    /// property, what their sources reach as <c>Type.Member</c>, since a constant
+    /// leaves no reference, and the properties a named constructor sets.
+    /// </summary>
+    private static HashSet<string> MembersNamedByPlugins()
+    {
+        var names = new HashSet<string>();
+        var folder = Path.Combine(AppContext.BaseDirectory, "plugins");
+
+        foreach (var dll in Directory.EnumerateFiles(folder, "Flyback.Plugins.*.dll", SearchOption.AllDirectories))
+        {
+            using var stream = File.OpenRead(dll);
+            using var pe = new PEReader(stream);
+            var metadata = pe.GetMetadataReader();
+
+            foreach (var handle in metadata.MemberReferences)
+            {
+                var reference = metadata.GetMemberReference(handle);
+                if (ContractTypeName(metadata, reference.Parent) is not { } owner) continue;
+
+                var name = metadata.GetString(reference.Name);
+                names.Add(owner + "." + name);
+                if (Accessor.Match(name) is { Success: true } accessor) names.Add(owner + "." + accessor.Groups[1].Value);
+            }
+        }
+
+        var exported = Contract.SelectMany(a => a.GetExportedTypes()).ToList();
+        var code = string.Join('\n', Directory
+            .EnumerateFiles(Path.Combine(AppContext.BaseDirectory, "PluginSources"), "*.cs", SearchOption.AllDirectories)
+            .Select(file => Comments.Replace(File.ReadAllText(file), string.Empty)));
+
+        foreach (Match access in StaticAccess.Matches(code))
+        foreach (var type in exported.Where(t => t.Name == access.Groups[1].Value))
+            names.Add(Key(type, access.Groups[2].Value));
+
+        foreach (var type in exported.Where(t => names.Contains(Key(t, ".ctor"))))
+        foreach (var parameter in type.GetConstructors().SelectMany(c => c.GetParameters()))
+        foreach (var property in type.GetProperties().Where(p => string.Equals(p.Name, parameter.Name, StringComparison.OrdinalIgnoreCase)))
+            names.Add(Key(type, property.Name));
+
+        return names;
+    }
+
+    private static readonly Regex Accessor = new(@"^(?:get_|set_|add_|remove_)(.+)$", RegexOptions.Compiled);
+
+    private static readonly Regex StaticAccess = new(@"\b([A-Z][A-Za-z0-9_]*)(?=\.([A-Za-z_][A-Za-z0-9_]*))", RegexOptions.Compiled);
+
+    /// <summary>The contract type a member reference hangs off, as reflection names it, or null for anything else.</summary>
+    private static string? ContractTypeName(MetadataReader metadata, EntityHandle parent)
+    {
+        switch (parent.Kind)
+        {
+            case HandleKind.TypeReference:
+                return ContractTypeName(metadata, metadata.GetTypeReference((TypeReferenceHandle)parent));
+
+            case HandleKind.TypeSpecification:
+                var blob = metadata.GetBlobReader(metadata.GetTypeSpecification((TypeSpecificationHandle)parent).Signature);
+                if (blob.ReadSignatureTypeCode() != SignatureTypeCode.GenericTypeInstance) return null;
+                blob.ReadSignatureTypeCode();
+                return ContractTypeName(metadata, blob.ReadTypeHandle());
+
+            default:
+                return null;
+        }
     }
 
     private static readonly Regex Comments = new(@"//[^\r\n]*", RegexOptions.Compiled);

@@ -47,21 +47,21 @@ public readonly record struct PortSpec(
     bool PatchOnly = false)
 {
     /// <summary>How many registers the socket's value takes: 3 for a color, 1 otherwise.</summary>
-    public int Width => Kind == PortKind.Color ? 3 : 1;
+    internal int Width => Kind == PortKind.Color ? 3 : 1;
 
     /// <summary>
     /// Whether <see cref="Min"/> and <see cref="Max"/> say what the socket takes or
     /// gives, rather than being the −4..4 a slider gets when nothing was declared.
     /// </summary>
     // ReSharper disable CompareOfFloatsByEqualityOperator
-    public bool Ranged => Kind != PortKind.Color && (Min != -4f || Max != 4f);
+    internal bool Ranged => Kind != PortKind.Color && (Min != -4f || Max != 4f);
     // ReSharper restore CompareOfFloatsByEqualityOperator
 
     /// <summary>
     /// Whether the socket has nothing worth a knob: declared <see cref="PatchOnly"/>,
     /// or a color, which is <see cref="PatchOnly"/> for free — see its doc for why.
     /// </summary>
-    public bool NeedsAWire => PatchOnly || Kind == PortKind.Color;
+    internal bool NeedsAWire => PatchOnly || Kind == PortKind.Color;
 
     /// <summary>
     /// The value as it should be shown for this socket. One place, because the
@@ -69,7 +69,7 @@ public readonly record struct PortSpec(
     /// matches how the module reads the number:
     /// <see cref="PortDisplay.Note"/> rounds because Note rounds.
     /// </summary>
-    public string Format(float value) => Display switch
+    internal string Format(float value) => Display switch
     {
         PortDisplay.Note => Pitch.Name(value),
         PortDisplay.Duration => Time(value),
@@ -101,7 +101,7 @@ public readonly record struct PortSpec(
     }
 
     /// <summary>Whether the editor should let this value rest only on whole numbers.</summary>
-    public bool Stepped => Display is PortDisplay.Note or PortDisplay.Integer or PortDisplay.Chord;
+    internal bool Stepped => Display is PortDisplay.Note or PortDisplay.Integer or PortDisplay.Chord;
 
     /// <summary>
     /// What this socket is for, in words that stand on their own: the inspector
@@ -149,8 +149,8 @@ public readonly record struct PortSpec(
     public bool Standard { get; init; }
 
     /// <summary>How far along a control spanning <paramref name="min"/> to <paramref name="max"/> <paramref name="value"/> sits, 0 to 1.</summary>
-    public double Travel(float value, float min, float max) => Taper.Travel(value, min, max, Knee);
+    internal double Travel(float value, float min, float max) => Taper.Travel(value, min, max, Knee);
 
     /// <summary>The value <paramref name="travel"/> of the way along a control spanning <paramref name="min"/> to <paramref name="max"/>.</summary>
-    public float At(double travel, float min, float max) => Taper.At(travel, min, max, Knee);
+    internal float At(double travel, float min, float max) => Taper.At(travel, min, max, Knee);
 }
