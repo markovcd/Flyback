@@ -14,12 +14,12 @@ Feature: A patch may be wired back into itself
 
   Scenario: At the speakers a loop remembers the sample before
     Given the loop is heard at the speakers
-    Then each sample builds on the last: 0.25, 0.375, 0.4375, 0.46875
+    Then each sample is what the loop made of the sample before
 
   Scenario: On the screen a loop remembers the frame before
     Given the loop is shown on the screen
-    Then each frame builds on the last: 0.25, 0.375, 0.4375
+    Then each frame is what the loop made of the frame before
 
   Scenario: Rewinding makes a loop forget
     Given the loop is shown on the screen
-    Then after 5 frames and a rewind the next frame is back at 0.25
+    Then after a rewind the loop starts over as if it had never run

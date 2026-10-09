@@ -41,6 +41,9 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
 
     private string? packed;
 
+    /// <summary>The patch an oversampled render is compared against.</summary>
+    private string? oversampled;
+
     private int code;
     private string said = string.Empty;
     private PackageSigner? signer;
@@ -89,6 +92,69 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
             right |> out.right
             beam(x: left, y: right) |> out.color
             """);
+
+    /// <summary>A saw at half scale, high enough that its harmonics fold back below the output rate differently at each factor.</summary>
+    [Given("a saw bright enough to fold back, saved as {string}")]
+    public void GivenSawSaved(string name)
+    {
+        oversampled = name;
+        File.WriteAllText(Path(name), """
+            saw(freq: 3321.7) * 0.5 |> out.left
+            out.volume = 1
+            """);
+    }
+
+    [Given("a {float} Hz tone that comes in at {float} seconds, saved as {string}")]
+    public void GivenLateToneSaved(float hertz, float seconds, string name) =>
+        File.WriteAllText(Path(name), $"""
+            let gate = step(edge: {Number(seconds)}, in: time().t)
+            sine(freq: {Number(hertz)}) * gate |> out.left
+            out.volume = 1
+            """);
+
+    [Given("rings on the screen beside a {float} Hz sine called {string} that nothing is wired to, saved as {string}")]
+    public void GivenLooseSineSaved(float hertz, string called, string name) =>
+        File.WriteAllText(Path(name), $"""
+            let {called} = sine(freq: {Number(hertz)})
+            rings() |> out.color
+            """);
+
+    [Given("a {float} Hz sine saved as {string}")]
+    public void GivenSineSaved(float hertz, string name) =>
+        File.WriteAllText(Path(name), $"sine(freq: {Number(hertz)}) |> out.left");
+
+    [Given("a patch that plays for {word}, saved as {string}")]
+    public void GivenLengthSaved(string length, string name) =>
+        File.WriteAllText(Path(name), $"length {length}\nsine(freq: 220) |> out.left");
+
+    [Given("a patch that sets no length, saved as {string}")]
+    public void GivenNoLengthSaved(string name) => GivenSineSaved(220, name);
+
+    /// <summary>Black until a tenth of a second before, then up to white by <paramref name="seconds"/>.</summary>
+    [Given("a picture that turns from black to white at {float} seconds, saved as {string}")]
+    public void GivenDawnSaved(float seconds, string name) =>
+        File.WriteAllText(Path(name), $"t |> smoothstep({Number(seconds - 0.1f)}, {Number(seconds)}) |> out.color");
+
+    /// <summary>
+    /// The shape played as oscilloscope music at 100 Hz onto a Beam. A drawing is fitted to the
+    /// square and a model to the unit sphere, so a model's square face is a half-diagonal smaller.
+    /// </summary>
+    [Given("{string} traced onto a Beam at half its size, saved as {string}")]
+    public void GivenTracedSaved(string shape, string name)
+    {
+        var amp = shape.EndsWith(".obj", StringComparison.OrdinalIgnoreCase) ? 0.7071f : 0.5f;
+
+        File.WriteAllText(Path(name), $"""
+            let shape = path("{shape}", freq: 100, amp: {Number(amp)})
+            shape.x |> out.left
+            shape.y |> out.right
+            beam(x: shape.x, y: shape.y) |> out.color
+            """);
+    }
+
+    [Given("a patch that traces {string}, saved as {string}")]
+    public void GivenTraceSaved(string shape, string name) =>
+        File.WriteAllText(Path(name), $"path(\"{shape}\") |> out.left");
 
     [When("flyback-cli draws a still of {string} at {float} second(s)")]
     public void WhenStill(string name, float seconds) => Still(Run, name, seconds);
@@ -249,7 +315,7 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     public void ThenWorkedOutAt(string written, int factor)
     {
         var heard = WavReader.Read(Path(written), out var fault).ShouldNotBeNull(fault.ToString()).Samples;
-        var program = PatchLanguage.Build(File.ReadAllText(Path("saw.fbks")), NodeCatalog.BuiltIn).Patch.CompileForAudio().Program;
+        var program = PatchLanguage.Build(File.ReadAllText(Path(oversampled.ShouldNotBeNull())), NodeCatalog.BuiltIn).Patch.CompileForAudio().Program;
 
         float Furthest(int at)
         {
@@ -540,6 +606,8 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
 
     /// <summary>A flag's value that names a file saved by an earlier step is that file; anything else is itself.</summary>
     private string Beside(string argument) => File.Exists(Path(argument)) ? Path(argument) : argument;
+
+    private static string Number(float value) => value.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     private string Path(string name) => System.IO.Path.Combine(folder.FullName, name);
 

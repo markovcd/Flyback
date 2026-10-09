@@ -4,12 +4,7 @@ Feature: A render starts at the second it is asked to
   first three.
 
   Scenario: A sound from a second in is of that second
-    Given the text saved as "late.fbks":
-      """
-      let gate = step(edge: 2, in: time().t)
-      sine(freq: 440) * gate |> out.left
-      out.volume = 1
-      """
+    Given a 440 Hz tone that comes in at 2 seconds, saved as "late.fbks"
     When flyback-cli renders "late.fbks" as "early.wav" for 1 seconds
     And flyback-cli renders "late.fbks" as "late.wav" for 1 seconds, --from 2
     Then "early.wav" is silent

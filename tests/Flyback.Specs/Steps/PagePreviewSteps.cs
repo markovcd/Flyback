@@ -20,16 +20,17 @@ public sealed class PagePreviewSteps
     [Given("a preview on the desktop")]
     public void GivenOnTheDesktop() => Build(processorStandsIn: true);
 
-    [When("it is handed a picture charted by a Scope")]
+    [When("it is handed a picture with a Scope's chart in it")]
     public void WhenCharted() => Headless.Run(() => host!.Program = Charted());
 
-    [When("its WebGL fails")]
+    [When("the page's graphics fail")]
     public void WhenItFails() => Headless.Run(() => surface!.Fail("This browser has no WebGL 2."));
 
     [When("the processor is chosen to draw the picture")]
     public void WhenProcessorChosen() => Headless.Run(() => host!.Use(PreviewBackend.Cpu));
 
-    [Then("the preview stays on the GPU")]
+    [Then("the graphics card draws the picture")]
+    [Then("the processor does not take the picture over")]
     public void ThenOnTheGpu() => Headless.Run(() =>
     {
         host!.Backend.ShouldBe(PreviewBackend.Gpu);

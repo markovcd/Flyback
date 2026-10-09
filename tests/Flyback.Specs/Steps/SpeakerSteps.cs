@@ -167,6 +167,21 @@ public sealed class SpeakerSteps(PatchContext context)
             context.SampleAt(i).ShouldBe(expected[i], Tolerance, $"sample {i}");
     }
 
+    [Then("each sample is what the loop made of the sample before")]
+    public void ThenEachSampleLoops()
+    {
+        for (var i = 0; i < 4; i++)
+            context.SampleAt(i).ShouldBe(PatchSteps.LoopMakes(i), Tolerance, $"sample {i}");
+    }
+
+    [Then("that sample is half what the loop had settled at, plus what it adds now")]
+    public void ThenThatSampleBuilds() =>
+        context.Heard[^1].ShouldBe(context.Heard[^2] * 0.5 + context.StoredInput("nudge", "b"), Tolerance);
+
+    /// <summary>The patch plays its length as thousandths of a second.</summary>
+    [Then("the sound says the patch plays for {float} seconds")]
+    public void ThenTheSoundSaysTheLength(float seconds) => context.SampleAt(0).ShouldBe(seconds / 1000, Tolerance);
+
     [Then("that sample is about {float}")]
     public void ThenThatSample(float expected) => context.Heard[^1].ShouldBe(expected, Tolerance);
 

@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.Text.Json.Nodes;
 using Reqnroll;
 using Shouldly;
 using Flyback.Cli.Common;
@@ -25,6 +26,7 @@ public sealed class PluginTrustSteps : IDisposable
     private PluginCatalog catalog = PluginCatalog.Empty;
     private int shipped;
     private readonly List<string?> carried = [];
+    private JsonArray? listed;
 
     private string Plugins => Path.Combine(root, PluginHost.DirectoryName);
 
@@ -45,10 +47,29 @@ public sealed class PluginTrustSteps : IDisposable
     public void WhenDebugLoads() => catalog = PluginHost.Load(Plugins, PluginTrust.Unchecked);
 
     [When("flyback-cli allows the copied plugin")]
-    public void WhenAllowed() => Cli("plugin", "allow", Folder);
+    public void WhenAllowed() => _ = Cli("plugin", "allow", Folder);
 
     [When("flyback-cli allows the copied plugin to keep keys")]
-    public void WhenAllowedKeys() => Cli("plugin", "allow", Folder, "--secrets");
+    public void WhenAllowedKeys() => _ = Cli("plugin", "allow", Folder, "--secrets");
+
+    [When("flyback-cli denies the copied plugin")]
+    public void WhenDenied() => _ = Cli("plugin", "deny", Folder);
+
+    [When("flyback-cli lists the plugin folders")]
+    public void WhenListed() => listed = JsonNode.Parse(Cli("plugin", "list", "--json"))!["folders"]!.AsArray();
+
+    [Then("the copied plugin is listed as not loading, not yet allowed")]
+    public void ThenListedRefused()
+    {
+        var row = Listed();
+        ((bool)row["loads"]!).ShouldBeFalse();
+        ((string)row["reason"]!).ShouldStartWith("not yet allowed");
+    }
+
+    [Then("the copied plugin is listed as loading")]
+    public void ThenListedLoading() => ((bool)Listed()["loads"]!).ShouldBeTrue();
+
+    private JsonNode Listed() => listed.ShouldNotBeNull().Single(row => (string)row!["name"]! == Copied)!;
 
     /// <summary>Not the assembly: the one a scenario has run is open until the process ends.</summary>
     [When("a file in the copied plugin changes")]
@@ -159,7 +180,8 @@ public sealed class PluginTrustSteps : IDisposable
         }
     }
 
-    private void Cli(params string[] arguments)
+    /// <summary>Runs flyback-cli on the scenario's plugins folder and list, and answers what it wrote.</summary>
+    private string Cli(params string[] arguments)
     {
         var output = new StringWriter();
         var error = new StringWriter();
@@ -170,6 +192,8 @@ public sealed class PluginTrustSteps : IDisposable
             new InvocationConfiguration { Output = output, Error = error });
 
         code.ShouldBe(Exit.Ok, error.ToString());
+
+        return output.ToString();
     }
 
     public sealed class FirstTwin : IFlybackPlugin

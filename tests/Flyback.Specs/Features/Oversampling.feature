@@ -4,11 +4,7 @@ Feature: The sound's oversampling is a render setting
   editor's settings as they take the rest, and --oversample overrides it for one run.
 
   Scenario Outline: A render oversamples as the settings say, unless told otherwise
-    Given the text saved as "saw.fbks":
-      """
-      saw(freq: 3321.7) * 0.5 |> out.left
-      out.volume = 1
-      """
+    Given a saw bright enough to fold back, saved as "saw.fbks"
     And the editor's settings oversample the sound <set>
     When flyback-cli renders "saw.fbks" as "saw.wav" for 0.25 seconds<flags>
     Then "saw.wav" is the patch's sound worked out at <factor> times the output rate

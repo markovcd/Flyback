@@ -13,12 +13,10 @@ Feature: Editing a patch while it plays does not restart it
     And it plays on for 0.1 seconds
     Then the sound never clicks
 
-  # Settled at a half, the loop's next sample is half of that plus the new 0.3.
-  # Forgotten, it would be 0.3 alone.
   Scenario: Turning a knob inside a loop keeps what the loop had built up
     Given a loop that halves what it made last and adds a quarter
     And the loop is heard at the speakers
     When the loop has played until it settles
-    And what it adds is turned to 0.3
+    And what it adds is turned up
     And it plays one more sample
-    Then that sample is about 0.55
+    Then that sample is half what the loop had settled at, plus what it adds now

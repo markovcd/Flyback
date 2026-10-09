@@ -535,9 +535,6 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     public bool GalleryOffersPrompt => ReadWindow(open =>
         open.GetVisualDescendants().OfType<Control>().Any(c => c.Name == "prompt-card"));
 
-    /// <summary>What the gallery's prompt card holds.</summary>
-    public string PromptText => ReadWindow(open => Named<TextBox>(open, "prompt-text").Text ?? string.Empty);
-
     /// <summary>Types an idea into the gallery's prompt card.</summary>
     public void TypePrompt(string idea) =>
         DoWindow((open, _) => Named<TextBox>(open, "prompt-text").Text = idea);

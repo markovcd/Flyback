@@ -57,11 +57,31 @@ internal static class Program
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
+        var root = Commands(plugins, OutputSettings.Load(SettingsFlag.PathIn(args) ?? SettingsFile.Path));
+
+        // What dotnet-suggest asks for completions with, and the only reason the
+        // shell can finish a command this program has.
+        var suggest = new SuggestDirective();
+
+        root.Add(suggest);
+
+        var parsed = root.Parse(args);
+        var code = parsed.Invoke(configuration);
+
+        // Invoked either way, because that is what prints the complaint and the
+        // help beneath it. But an argument nobody could parse is the shell being
+        // held wrong rather than a patch being wrong, and the two should not
+        // come back as the same number. Half-typed input is neither: it is what
+        // a completion is asked about.
+        return parsed.Errors.Count > 0 && parsed.GetResult(suggest) is null ? Exit.Failed : code;
+    }
+
+    /// <summary>Every command, its defaults read from <paramref name="settings"/>.</summary>
+    internal static RootCommand Commands(PluginRegistry plugins, OutputSettings settings)
+    {
         var json = new Option<bool>("--json") { Description = "Write the answer as JSON instead of prose." };
 
-        var settings = OutputSettings.Load(SettingsFlag.PathIn(args) ?? SettingsFile.Path);
-
-        var root = new RootCommand($"{GlobalConstants.ApplicationName} — a patchable synthesiser, from the command line.")
+        return new RootCommand($"{GlobalConstants.ApplicationName} — a patchable synthesiser, from the command line.")
         {
             RenderCommand.Build(plugins, settings),
             CheckCommand.Build(plugins, json),
@@ -83,21 +103,5 @@ internal static class Program
             RenderPresetsCommand.Build(plugins),
             StillsCommand.Build(plugins),
         };
-
-        // What dotnet-suggest asks for completions with, and the only reason the
-        // shell can finish a command this program has.
-        var suggest = new SuggestDirective();
-
-        root.Add(suggest);
-
-        var parsed = root.Parse(args);
-        var code = parsed.Invoke(configuration);
-
-        // Invoked either way, because that is what prints the complaint and the
-        // help beneath it. But an argument nobody could parse is the shell being
-        // held wrong rather than a patch being wrong, and the two should not
-        // come back as the same number. Half-typed input is neither: it is what
-        // a completion is asked about.
-        return parsed.Errors.Count > 0 && parsed.GetResult(suggest) is null ? Exit.Failed : code;
     }
 }

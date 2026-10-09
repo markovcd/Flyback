@@ -1,6 +1,10 @@
 Feature: The command line says whether a patch works, and whether two are the same
   Somebody with no window, a script or an agent, asks flyback-cli about a patch
   file. The exit code is the answer, and what is wrong is said by its line.
+  flyback-cli check compiles it, flyback-cli info says what it is,
+  flyback-cli measure what its outputs carry and flyback-cli compare whether two
+  are the same instrument; flyback-cli print, flyback-cli pack and
+  flyback-cli save write it out, and flyback-cli shot draws the editor around it.
 
   Scenario: A patch that works passes the check
     Given a 220 Hz sine is playing
@@ -19,11 +23,7 @@ Feature: The command line says whether a patch works, and whether two are the sa
     And it points at line 2
 
   Scenario: Measuring a patch says what an output nothing is wired to carries
-    Given the text saved as "lfo.fbks":
-      """
-      let lfo = sine(freq: 2)
-      rings() |> out.color
-      """
+    Given rings on the screen beside a 2 Hz sine called "lfo" that nothing is wired to, saved as "lfo.fbks"
     When flyback-cli measures "lfo.fbks"
     Then the command succeeds
     And it says "lfo.out" swings from -1 to 1, 2 times a second
@@ -34,20 +34,13 @@ Feature: The command line says whether a patch works, and whether two are the sa
     And it says what the picture costs
 
   Scenario: Describing a patch says how long it plays
-    Given the text saved as "piece.fbks":
-      """
-      length 1:30.50
-      sine(freq: 220) |> out.left
-      """
+    Given a patch that plays for 1:30.50, saved as "piece.fbks"
     When flyback-cli describes "piece.fbks"
     Then the command succeeds
     And it says the patch plays for 1:30.50
 
   Scenario: Describing a patch that sets no length says so
-    Given the text saved as "drone.fbks":
-      """
-      sine(freq: 220) |> out.left
-      """
+    Given a patch that sets no length, saved as "drone.fbks"
     When flyback-cli describes "drone.fbks"
     Then the command succeeds
     And it says the patch sets no length
@@ -71,10 +64,7 @@ Feature: The command line says whether a patch works, and whether two are the sa
     Then the command fails, listing the presets there are
 
   Scenario: A shot is the editor's window, with the picture at the second asked for
-    Given the text saved as "dawn.fbks":
-      """
-      t |> smoothstep(1.9, 2) |> out.color
-      """
+    Given a picture that turns from black to white at 2 seconds, saved as "dawn.fbks"
     When flyback-cli shoots "dawn.fbks" at 1 second
     Then the command succeeds
     And the shot is 1440 by 900 with a black picture in it
@@ -82,28 +72,19 @@ Feature: The command line says whether a patch works, and whether two are the sa
     Then the shot has a white picture in it
 
   Scenario: A shot told to use an editor that is not there says so
-    Given the text saved as "tone.fbks":
-      """
-      sine(freq: 110) |> out.left
-      """
+    Given a 110 Hz sine saved as "tone.fbks"
     When flyback-cli shoots "tone.fbks" with the editor "nowhere/Flyback"
     Then the command says the editor is not there
 
   Scenario: A shot can open the assistant's column beside the canvas
-    Given the text saved as "tone.fbks":
-      """
-      sine(freq: 110) |> out.left
-      """
+    Given a 110 Hz sine saved as "tone.fbks"
     When flyback-cli shoots "tone.fbks" at 1 second
     Then the shot has no assistant's column
     When flyback-cli shoots "tone.fbks" at 1 second, with the assistant's column open
     Then the shot has the assistant's column at its left
 
   Scenario: A cropped shot is the canvas around the modules, for a text patch too
-    Given the text saved as "tone.fbks":
-      """
-      sine(freq: 110) |> out.left
-      """
+    Given a 110 Hz sine saved as "tone.fbks"
     When flyback-cli shoots "tone.fbks" at 1 second, cropped to the modules
     Then the command succeeds
     And the shot is two modules side by side, smaller than the window

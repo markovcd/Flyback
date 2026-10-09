@@ -17,12 +17,9 @@ Feature: A Line In plays what the microphone hears
 
   Scenario: A render of a Line In hears the sound file it is given
     Given a 440 Hz tone saved as "voice.wav"
-    And the text saved as "listen.fbks":
-      """
-      audio.in() |> out.left
-      out.volume = 1
-      """
-    When flyback-cli renders "listen.fbks" as "heard.wav" for 1 seconds, --input voice.wav
+    And a Line In is patched into the speakers
+    And the patch is saved as "listen.fbk"
+    When flyback-cli renders "listen.fbk" as "heard.wav" for 1 seconds, --input voice.wav
     Then "heard.wav" plays a 440 Hz tone
 
   Scenario: The Visualizer listens to the Line In without playing it, so a monitor cannot feed back
@@ -48,10 +45,7 @@ Feature: A Line In plays what the microphone hears
     Then the web viewer says it reads no Line In
 
   Scenario: A render of a Line In without a sound file is silent
-    Given the text saved as "listen.fbks":
-      """
-      audio.in() |> out.left
-      out.volume = 1
-      """
-    When flyback-cli renders "listen.fbks" as "heard.wav" for 1 seconds
+    Given a Line In is patched into the speakers
+    And the patch is saved as "listen.fbk"
+    When flyback-cli renders "listen.fbk" as "heard.wav" for 1 seconds
     Then "heard.wav" is silent

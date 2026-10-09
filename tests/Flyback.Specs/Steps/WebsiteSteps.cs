@@ -1,16 +1,26 @@
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using Flyback.Core.Graph;
+using Flyback.Engine.Render;
 using Flyback.Specs.Support;
 using Reqnroll;
+using Reqnroll.UnitTestProvider;
 using Shouldly;
 
 namespace Flyback.Specs.Steps;
 
 /// <summary>The website's files, as the Worker serves them from the repository's <c>site/</c> and the viewer's own pages.</summary>
 [Binding]
-public sealed partial class WebsiteSteps
+public sealed partial class WebsiteSteps(IUnitTestRuntimeProvider runtime)
 {
     private string page = string.Empty;
     private readonly List<string> missing = [];
+
+    /// <summary>The presets shared on the site, as its API answers them.</summary>
+    private readonly List<JsonObject> shared = [];
+
+    /// <summary>What the presets page's script built, by element id.</summary>
+    private JsonObject built = [];
 
     [When("someone opens the preset site")]
     public void WhenTheSiteIsOpened() => page = SiteFiles.Read("/");
@@ -54,43 +64,118 @@ public sealed partial class WebsiteSteps
     [Then("none of them is missing")]
     public void ThenNoneIsMissing() => missing.ShouldBeEmpty(string.Join(Environment.NewLine, missing));
 
+    [Given("someone has shared a preset")]
+    public void GivenShared() => shared.Add(Shared("Drift", lacks: null));
+
+    [Given("someone has shared a preset that needs a plugin a browser lacks")]
+    public void GivenSharedLacking() =>
+        shared.Add(Shared("Murmur", new JsonObject { ["plugins"] = new JsonArray(), ["modules"] = 1, ["said"] = "Needs the Flock plugin" }));
+
     [When("someone opens the preset site's presets page")]
-    public void WhenThePresetsPageIsOpened() => page = SiteFiles.Read("/presets.html");
+    public void WhenThePresetsPageIsOpened()
+    {
+        page = SiteFiles.Read("/presets.html");
+        built = PresetsPage.Open(runtime, "shelf", "", Answers());
+    }
+
+    [When("someone opens the shared preset's page")]
+    public void WhenThePresetsOwnPageIsOpened()
+    {
+        var preset = shared.ShouldHaveSingleItem();
+        var answers = Answers();
+        answers[$"api/v1/presets/{preset["id"]}"] = preset.DeepClone();
+
+        built = PresetsPage.Open(runtime, "preset", $"?id={preset["id"]}", answers);
+    }
 
     [Then("they can submit a preset there")]
     public void ThenAPresetCanBeSubmitted() => page.ShouldContain("href=\"submit.html\"");
 
-    /// <summary>The shipped presets come from the build's stills, which GitHub Pages has too, and the shared ones from the API.</summary>
-    [Then("it lists the presets Flyback ships with, marked as built in, beside the shared ones")]
+    [Then("it lists the presets Flyback ships with, marked as built in, beside the shared one")]
     public void ThenShippedPresetsAreListed()
     {
-        page.ShouldContain("id=\"shipped\"");
-        page.ShouldContain("id=\"shared\"");
+        var cards = PresetsPage.OfClass(built["shipped"], "card").ToList();
 
-        var script = SiteFiles.Read("/assets/presets.js");
-        script.ShouldContain("\"stills/index.json\"");
-        script.ShouldContain("\"Built in\"");
-        script.ShouldContain("api + \"presets?\"");
+        cards.Select(Named).ShouldBe(Shipped().Select(p => p.Name), ignoreOrder: true);
+        cards.ShouldAllBe(card => PresetsPage.Text(PresetsPage.OfClass(card, "badge").Single()) == "Built in");
+
+        PresetsPage.OfClass(built["shelf"], "card").Select(Named).ShouldBe(shared.Select(p => (string)p["name"]!));
+        ((bool)built["shared"]!["hidden"]!).ShouldBeFalse();
     }
 
     [Then("it lists the built-in showcases first, then sound and picture, then one idea")]
-    public static void ThenShippedPresetsAreListedShowcaseFirst()
+    public void ThenShippedPresetsAreListedShowcaseFirst() =>
+        PresetsPage.All(built["shipped"]).Where(e => (string?)e["tag"] == "h2").Select(h => (string)h["text"]!)
+            .ShouldBe([.. new[] { PresetKind.Showcase, PresetKind.Interplay, PresetKind.Idea }.Select(k => "BUILT IN · " + PresetKinds.Heading(k))]);
+
+    [Then("its card offers it to download, not to play or edit in the browser")]
+    public void ThenTheCardOnlyDownloads()
     {
-        var script = SiteFiles.Read("/assets/presets.js");
-        script.ShouldContain("found.reverse();");
+        var card = PresetsPage.OfClass(built["shelf"], "card").ShouldHaveSingleItem();
+
+        PresetsPage.OfClass(card, "button").Select(PresetsPage.Text).ShouldBe(["Download"]);
+        PresetsPage.Text(PresetsPage.OfClass(card, "lacks").Single()).ShouldBe("Needs the Flock plugin");
     }
 
-    /// <summary>The card's and the preset page's Play and Edit give way to a line saying why.</summary>
-    [Then("the presets page offers it to download rather than to play or edit in the browser")]
-    public static void ThenOnlyADownload()
+    [Then("it offers it to download, not to play or edit in the browser, and says why")]
+    public void ThenThePageOnlyDownloads()
     {
-        var script = SiteFiles.Read("/assets/presets.js");
+        var actions = PresetsPage.OfClass(built["preset"], "actions").ShouldHaveSingleItem();
 
-        script.ShouldContain("var lacks = preset.lacks;");
-        script.ShouldMatch("""if \(!lacks\) \{\s*buttons\.appendChild\([^\n]*inEditor\(preset\)[^\n]*\n\s*buttons\.appendChild\([^\n]*inBrowser\(preset""");
-        script.ShouldMatch("""if \(!lacks\) \{\s*actions\.appendChild\([^\n]*inBrowser\(preset\)[^\n]*\n\s*actions\.appendChild\([^\n]*inEditor\(preset\)""");
-        script.ShouldContain("download it to open it in Flyback.");
+        PresetsPage.OfClass(actions, "button").Select(PresetsPage.Text).ShouldBe(["Download", "All presets"]);
+        PresetsPage.Text(PresetsPage.OfClass(built["preset"], "lacks").Single())
+            .ShouldBe("Needs the Flock plugin, which Flyback in a browser does not have: download it to open it in Flyback.");
     }
+
+    /// <summary>The shipped presets the presets page offers: every one but the blank canvas.</summary>
+    private static IEnumerable<PatchPreset> Shipped() =>
+        ShippedPlugins.Loaded.Presets.Where(p => p.Kind != PresetKind.Blank);
+
+    /// <summary>What the site answers: the stills' index as <c>flyback-cli stills</c> writes it, the shared presets, no admin and no tags.</summary>
+    private JsonObject Answers()
+    {
+        var index = new StillIndex(
+            StillIndex.ThisBuild,
+            [.. ShippedPlugins.Loaded.Presets.Select(p => new StillEntry(p.Name, p.Kind, StillKind.Picture, null, p.Description))]);
+
+        return new JsonObject
+        {
+            ["api/v1/admin"] = new JsonObject { ["enabled"] = false, ["signedIn"] = false },
+            ["stills/index.json"] = JsonNode.Parse(index.Write()),
+            ["api/v1/presets"] = new JsonObject
+            {
+                ["items"] = new JsonArray([.. shared.Select(p => p.DeepClone())]),
+                ["total"] = shared.Count,
+                ["pageSize"] = 24,
+            },
+            ["api/v1/tags"] = new JsonArray(),
+        };
+    }
+
+    /// <summary>A checked, published preset as the site's API answers it.</summary>
+    private static JsonObject Shared(string name, JsonObject? lacks) => new()
+    {
+        ["id"] = name.ToLowerInvariant(),
+        ["name"] = name,
+        ["author"] = "Ada",
+        ["description"] = null,
+        ["tags"] = new JsonArray(),
+        ["fileName"] = name.ToLowerInvariant() + ".fbk",
+        ["size"] = 2048,
+        ["submitted"] = "2026-10-01T12:00:00Z",
+        ["downloads"] = 3,
+        ["published"] = true,
+        ["file"] = $"/api/v1/presets/{name.ToLowerInvariant()}/file",
+        ["media"] = new JsonObject { ["state"] = "done" },
+        ["rating"] = new JsonObject { ["average"] = 0, ["count"] = 0 },
+        ["lacks"] = lacks,
+        ["status"] = "checked",
+        ["reason"] = null,
+    };
+
+    /// <summary>The name a card's header links.</summary>
+    private static string Named(JsonObject card) =>
+        PresetsPage.Text(PresetsPage.All(card).First(e => (string?)e["tag"] == "header")["children"]![0]);
 
     [When("someone opens the web viewer on the preset site")]
     public void WhenTheViewerIsOpened() => page = SiteFiles.Read("/viewer/");
@@ -101,44 +186,6 @@ public sealed partial class WebsiteSteps
         page.ShouldNotContain("id=\"gallery\"");
         page.ShouldNotContain("id=\"presets\"");
         page.ShouldContain("<a id=\"back\" class=\"back\">");
-
-        var script = SiteFiles.Read("/viewer/main.js");
-        script.ShouldContain("params.get('back') ?? 'presets.html'");
-    }
-
-    /// <summary>A screen wake lock, asked for and let go as playing and full screen come and go.</summary>
-    [Then("it keeps the screen on while its picture has the whole screen and plays")]
-    public static void ThenTheScreenStaysOn()
-    {
-        var script = SiteFiles.Read("/viewer/main.js");
-
-        script.ShouldContain("const wanted = playing() && document.fullscreenElement != null && !document.hidden;");
-        script.ShouldContain("navigator.wakeLock.request('screen')");
-        script.ShouldContain("document.addEventListener('fullscreenchange', keepAwake);");
-        script.ShouldMatch("""speakers\.start\([^)]*\);(?:[^\n]*\n){1,6}\s*keepAwake\(\);""");
-        script.ShouldMatch("""speakers\.stop\([^)]*\);(?:[^\n]*\n){1,6}\s*keepAwake\(\);""");
-    }
-
-    /// <summary>1080p among the sizes, and an Off that stops drawing without touching the sound.</summary>
-    [Then("it offers 1920 x 1080 and a picture turned off, which draws nothing and leaves the sound playing")]
-    public static void ThenOffersFullHdAndOff()
-    {
-        var script = SiteFiles.Read("/viewer/main.js");
-
-        script.ShouldContain("[1920, 1080]");
-        script.ShouldContain("ui.size.add(new Option('Picture off', OFF));");
-        script.ShouldContain("if (noPicture !== null || !pictureOn) return;");
-        script.ShouldContain("ui.size.value === OFF ? setPicture(false)");
-    }
-
-    /// <summary>The orientation locked to landscape once full screen is granted, which a browser allows only then.</summary>
-    [Then("it asks for landscape once its picture has the whole screen")]
-    public static void ThenTurnsSideways()
-    {
-        var script = SiteFiles.Read("/viewer/main.js");
-
-        script.ShouldContain("requestFullscreen?.().then(turnSideways");
-        script.ShouldContain("screen.orientation?.lock?.('landscape')");
     }
 
     /// <summary>The page's own script and style, each there.</summary>

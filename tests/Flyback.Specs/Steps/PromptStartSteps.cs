@@ -81,9 +81,6 @@ public sealed class PromptStartSteps(EditorDriver editor, PatchContext context) 
     [Then("the gallery has no card to start from a prompt")]
     public void ThenNoCard() => editor.GalleryOffersPrompt.ShouldBeFalse();
 
-    [Then("the prompt card holds the assistant's detailed brief")]
-    public void ThenTheBriefIsThere() => editor.PromptText.ShouldBe(BriefingAssistant.Brief);
-
     [Then("the canvas holds only the Output")]
     public void ThenOnlyTheOutput() =>
         context.Patch.Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(NodeCatalog.OutputTypeId);

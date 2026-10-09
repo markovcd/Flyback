@@ -109,6 +109,11 @@ Scenario: Phase is adopted across a recompile
 to do. Written as wiring, it only restates the code, and nobody can tell from it
 whether the behavior is the right one.
 
+Two theories hold the rule: `ModuleScenarioTests` (Plugins.Tests) fails on a
+module no feature names, and `CommandScenarioTests` (Cli.Tests) on a command no
+feature names as `flyback-cli <command>`. Their `Unwritten` lists only shrink:
+a module or a command that gets its scenario leaves the list in that commit.
+
 **How to apply:** name the feature file and the scenarios after what the user
 gets. Add the phrase to `PatchSteps` if it builds or edits a patch, to `EditingSteps`
 if it saves, opens, undoes or pastes one, or to `ScreenSteps`, `SpeakerSteps` or

@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
@@ -9,7 +8,6 @@ using Reqnroll.UnitTestProvider;
 using Shouldly;
 using Flyback.Ui;
 using Flyback.Core;
-using Flyback.Core.Tests.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Render;
 using Flyback.Plugins.Hosting;
@@ -447,31 +445,10 @@ public sealed class WebViewerSteps(Session session, PatchContext context, IUnitT
     /// <summary>Runs the web viewer's build under Node, and answers how it ended and what it printed and said.</summary>
     private (int Exit, string Printed, string Said) Run(params string[] arguments)
     {
-        var node = NodeJs.Path;
-        Needs.Tool(runtime, node is not null, "no Node on this machine to run the web viewer with");
-
         var build = typeof(WebViewerSteps).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
             .Single(a => a.Key == "WebViewer").Value!;
 
-        var start = new ProcessStartInfo(node!, [Path.Combine(build, "hear.mjs"), .. arguments])
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            WorkingDirectory = build,
-        };
-
-        using var process = Process.Start(start)!;
-        var said = process.StandardError.ReadToEndAsync();
-        var printed = process.StandardOutput.ReadToEndAsync();
-
-        if (!process.WaitForExit(Cap))
-        {
-            process.Kill(entireProcessTree: true);
-            process.WaitForExit();
-            throw new TimeoutException($"hear.mjs ran past {Cap.TotalSeconds:0} s and was ended: {said.Result}");
-        }
-
-        return (process.ExitCode, printed.Result, said.Result);
+        return NodeScript.Run(runtime, "hear.mjs", Path.Combine(build, "hear.mjs"), arguments, build, Cap);
     }
 
     public void Dispose() => folder.Delete(recursive: true);

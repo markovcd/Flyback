@@ -76,6 +76,11 @@
     <None Include="..\..\worker\defaults\**" LinkBase="Defaults" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- The specs' features, which every module a user patches is named by. -->
+  <ItemGroup>
+    <None Include="..\Flyback.Specs\Features\*.feature" LinkBase="Features" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit.v3" />

@@ -45,10 +45,11 @@ internal static class DecideCommand
             AllowMultipleArgumentsPerToken = false,
         };
         var save = new Option<bool>("--save") { Description = "Keep --model as the chosen model, and --set in the settings, for the editor and later runs." };
+        var settings = DecisionSettingsOption.Create();
 
         var command = new Command("decide", "Ask a decision model typed questions about some text, and get probabilities back.")
         {
-            state, ask, model, yesNo, choice, option, score, level, status, prepare, yes, use, set, save, json,
+            state, ask, model, yesNo, choice, option, score, level, status, prepare, yes, use, set, save, settings, json,
         };
 
         command.SetAction((result, cancellation) => Run(
@@ -75,6 +76,7 @@ internal static class DecideCommand
             result.InvocationConfiguration.Output,
             result.InvocationConfiguration.Error,
             cancellation,
+            settingsPath: result.GetValue(settings),
             asking: Console.IsInputRedirected ? null : Console.In));
 
         return command;

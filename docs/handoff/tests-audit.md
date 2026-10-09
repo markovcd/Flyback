@@ -33,56 +33,6 @@ Plugins.Tests for thirty minutes: the gate image had no keyring then, so these
 tests skipped, and no commit names that hang's cause. Fix: none yet;
 `secret-tool` cannot say whether the keyring is locked without prompting.
 
-## 6. The specs do not hold the rule they state (Medium)
-
-The rule is that every feature a user patches, plays or does has a scenario,
-and nothing checks it:
-
-- 64 of about 102 catalog modules are named by no feature: 29 in Core (HSV, RGB,
-  Blend, Ink, Vignette, Blur, Transform, Translate, Warp, Threshold, Tile,
-  Checker, Note Sequencer, the arithmetic ones), all four Effects, all three
-  Figures, six of seven Mastering, twelve of sixteen Picture, six of twelve
-  Voice. Seven CLI commands (`probe`, `viewer`, `pack-plugin`, `plugin deny`,
-  `plugin list`, `plugin key`, `plugin describe`). The Privacy settings section,
-  and the fields `followTransport`, `fullScreenOn`, `jpegQuality`, `latency`,
-  `previewFrameRate`, `rewindBeforeTake`, `takeover`, `updates`. Of the 43
-  shortcuts in `Inspect/InspectorHelp.cs`, Ctrl+F, Ctrl+Click, Ctrl+A, Ctrl+E,
-  Ctrl+L, wheel zoom, Esc on a drag and Ctrl+O. Thirty plugin presets are
-  covered only by the "every shipped preset" scenarios.
-- The website scenarios assert on JavaScript source text:
-  `Steps/WebsiteSteps.cs:84-150` `script.ShouldContain("navigator.wakeLock.request('screen')")`,
-  `ShouldMatch("""if \(!lacks\) \{\s*buttons\.appendChild...""")`. The scenario
-  reads as a requirement; the test passes when those characters are in that
-  order. This is the test that broke in item 2 when `main.js` was rewritten
-  with the behavior intact.
-- The web editor has no browser and no Node: `Steps/PageSteps.cs:11-29` runs the
-  desktop editor headless with a dictionary for the browser store, so the 23
-  page scenarios never touch `wwwroot` or a JS engine. The web viewer, by
-  contrast, runs the real wasm build under `node hear.mjs`
-  (`WebViewerSteps.cs:443-460`).
-- About twelve features carry a scenario written as mechanics: a text-language
-  docstring used as wiring (`PatchLength.feature:27,37` `t.progress |> out.left`,
-  `Oversampling.feature:7`, `RenderingFromASecond.feature:6`,
-  `LineIn.feature:18,49`, `CommandLine.feature:21`), sample arithmetic
-  (`Cycles.feature:16` "0.25, 0.375, 0.4375, 0.46875", `Continuity.feature:21`),
-  backend words (`WebEditorPreview.feature`, `RendererNames.feature:13-16` raw
-  GL strings), and `RecompilePacing.feature`, an engine-pacing change the tests
-  skill says gets no scenario, with its C# twin in `RecompilePacingTests`.
-- `Steps/DecisionSteps.cs:73,164,192` call `DecideCommand.Run` and
-  `CheckCommand.Run` directly, so "flyback-cli decides" never sees the parser or
-  `--json`; every other CLI step goes through `InProcessCli.Run`.
-- Two steps no feature uses: `PromptStartSteps.cs:84` and `VolumeSteps.cs:22`
-  (the toolbar's Volume clicked all the way up: a requirement nobody stated).
-
-Fix: theories in Plugins.Tests over `Modules.All`, `Presets.All` and the CLI's
-command tree, each asserting the name appears in some feature, with a named
-exception list, so the next module without a scenario fails the gate. The
-website steps run the page scripts under Node with a DOM stub, as `hear.mjs`
-does, or move to Site.Tests as the text checks they are. The page gets a
-`hear.mjs`-style entry for `PageScript` and `PageSound`. Each docstring becomes
-a phrase and the number moves into the step; `RecompilePacing.feature` goes.
-`DecisionSteps` route through `InProcessCli.Run`.
-
 ## 7. Saved data and the threat model, where the test is missing (Medium)
 
 - No committed fixture of a patch layout: `PatchIO.FormatVersion = 1`,
@@ -195,7 +145,12 @@ Plugins.Tests.
   have no JavaScript tests; the only vitest is `worker/`. `hear.mjs` reaches
   the viewer's sound and nothing else. A vitest file for the pure parts of
   `session.js` and `tap.js`, run by the gate as the Worker's are, and one
-  `hear.mjs` scenario that feeds a line-in buffer.
+  `hear.mjs` scenario that feeds a line-in buffer. Each shell's `main.js` runs
+  only in a browser: the editor's starts Avalonia.Browser, which needs a DOM, so
+  the page scenarios drive the desktop editor headless and `window.flyback` is
+  reached by nothing, and the viewer's wake lock, sizes and landscape are text
+  checks (`Site.Tests/ViewerScriptTests`). A headless Chromium in the gate image
+  would reach both.
 - Android: `Flyback.Editor.Android` and `Flyback.Plugins.AndroidIO` are
   `Build="false"` in the solution, referenced by no test, and `android.yml`
   builds an APK and tests nothing. The declaration theories
@@ -254,7 +209,6 @@ Plugins.Tests.
 ## Order
 
 Items 1, 2 and 3 are each one commit and go first: they are the ones that let a
-real bug through or blame the wrong commit for it. Item 6's "every feature has a scenario" theories
-land once, and the modules they list are then scenario work over time. Item 8
-lands in the four commits it names, each as its files are next touched. The
-rest as each file is next touched.
+real bug through or blame the wrong commit for it. Item 8 lands in the four
+commits it names, each as its files are next touched. The rest as each file is
+next touched.

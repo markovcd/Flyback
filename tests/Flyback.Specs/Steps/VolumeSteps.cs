@@ -19,9 +19,6 @@ public sealed class VolumeSteps(PatchContext context, EditorDriver editor)
     [When("the toolbar's Volume is clicked all the way down")]
     public void WhenAllTheWayDown() => editor.ClickVolume(0);
 
-    [When("the toolbar's Volume is clicked all the way up")]
-    public void WhenAllTheWayUp() => editor.ClickVolume(1);
-
     [Then("the Output's Volume is {float}")]
     public void ThenTheVolumeIs(float expected) => context.StoredInput("screen", "volume").ShouldBe(expected, 0.001f);
 

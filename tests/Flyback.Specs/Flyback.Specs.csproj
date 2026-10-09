@@ -88,6 +88,11 @@
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Keyring\Flyback.Plugins.Keyring.csproj" FolderName="Keyring" />
   </ItemGroup>
 
+  <!-- The scripts the page scenarios run under Node. -->
+  <ItemGroup>
+    <None Include="Support\*.mjs" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Avalonia.Headless" />
     <PackageReference Include="Avalonia.Skia" />

@@ -55,9 +55,11 @@ internal static class CheckCommand
             Description = "Put the complaints likeliest to be why the patch is silent or dark first, as the decision model the settings choose judges.",
         };
 
+        var settings = DecisionSettingsOption.Create();
+
         var command = new Command("check", "Compile a patch and report what is wrong with it.")
         {
-            patch, preset, presets, json, strict, triage,
+            patch, preset, presets, json, strict, triage, settings,
         };
 
         command.SetAction(result =>
@@ -96,7 +98,7 @@ internal static class CheckCommand
                         shipped.Opened.Samples,
                         shipped.Opened.Pictures,
                         result.GetValue(strict),
-                        rank: result.GetValue(triage) ? Ranked(plugins, shipped.Opened.Patch, error) : null);
+                        rank: result.GetValue(triage) ? Ranked(plugins, shipped.Opened.Patch, error, result.GetValue(settings)) : null);
             }
 
             var read = Patches.Sourced(file) && file.Exists ? PatchLanguage.Build(File.ReadAllText(file.FullName)) : null;
@@ -126,19 +128,19 @@ internal static class CheckCommand
                     opened.Pictures,
                     result.GetValue(strict),
                     read?.Issues,
-                    result.GetValue(triage) ? Ranked(plugins, opened.Patch, result.InvocationConfiguration.Error) : null);
+                    result.GetValue(triage) ? Ranked(plugins, opened.Patch, result.InvocationConfiguration.Error, result.GetValue(settings)) : null);
         });
 
         return command;
     }
 
     /// <summary>What the decision model the settings choose makes of a patch's complaints, as <c>--triage</c> asks.</summary>
-    private static Func<IReadOnlyList<Complaint>, IReadOnlyList<double>?> Ranked(PluginRegistry plugins, Patch patch, TextWriter error) =>
+    private static Func<IReadOnlyList<Complaint>, IReadOnlyList<double>?> Ranked(PluginRegistry plugins, Patch patch, TextWriter error, string? settingsPath) =>
         complaints =>
         {
             var decisions = new Decisions(
                 plugins.Catalog,
-                DecisionSettings.Load(),
+                DecisionSettings.Load(settingsPath),
                 new Credentials(plugins.Catalog.PreferredSecretStore),
                 new ModelStore(ModelStore.DefaultRoot));
 

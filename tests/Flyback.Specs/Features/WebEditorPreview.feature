@@ -1,25 +1,25 @@
-Feature: The preview draws every picture on the GPU
-  The shader reads a Scope's or an Analyzer's chart and a Sample's clip as textures,
-  so no picture is handed to the processor for what it reads. In a page the processor
-  never stands in at all: it is too slow there, so a WebGL that fails is said where
-  the picture was.
+Feature: A picture in a page is drawn by the graphics card or not at all
+  A Scope's or an Analyzer's chart and a Sample's clip are read on the graphics
+  card, so a patch with one draws there like any other. In a page the processor
+  never draws the picture: it is too slow there, so a page whose graphics fail
+  says so where the picture was.
 
-  Scenario Outline: A picture charted by a Scope stays on the GPU
+  Scenario Outline: A picture with a Scope's chart in it is drawn by the graphics card
     Given a preview <where>
-    When it is handed a picture charted by a Scope
-    Then the preview stays on the GPU
+    When it is handed a picture with a Scope's chart in it
+    Then the graphics card draws the picture
 
     Examples:
       | where          |
       | in a page      |
       | on the desktop |
 
-  Scenario: A page's WebGL failing leaves the picture out rather than handing it to the processor
+  Scenario: A page whose graphics fail leaves the picture out rather than drawing it slowly
     Given a preview in a page
-    When its WebGL fails
-    Then the preview stays on the GPU
+    When the page's graphics fail
+    Then the processor does not take the picture over
 
   Scenario: The processor cannot be chosen in a page
     Given a preview in a page
     When the processor is chosen to draw the picture
-    Then the preview stays on the GPU
+    Then the processor does not take the picture over

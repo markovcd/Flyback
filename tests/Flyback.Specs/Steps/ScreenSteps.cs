@@ -36,6 +36,20 @@ public sealed class ScreenSteps(PatchContext context)
             ShouldShow(context.Render(i + 1).Center, expected[i], expected[i], expected[i], $"frame {i + 1}");
     }
 
+    [Then("each frame is what the loop made of the frame before")]
+    public void ThenEachFrameLoops()
+    {
+        for (var i = 0; i < 3; i++)
+            ShouldShow(context.Render(i + 1).Center, PatchSteps.LoopMakes(i), PatchSteps.LoopMakes(i), PatchSteps.LoopMakes(i), $"frame {i + 1}");
+    }
+
+    [Then("after a rewind the loop starts over as if it had never run")]
+    public void ThenTheLoopStartsOver()
+    {
+        var first = PatchSteps.LoopMakes(0);
+        ShouldShow(context.RenderAfterRewind(5, 1).Center, first, first, first, "after rewind");
+    }
+
     [Then("after {int} frames and a rewind the next frame is back at {float}")]
     public void ThenRewound(int frames, float level) =>
         ShouldShow(context.RenderAfterRewind(frames, 1).Center, level, level, level, "after rewind");

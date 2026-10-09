@@ -36,9 +36,11 @@ internal static class ModulesCommand
             Description = "List the modules a phrase describes, likeliest first, as the decision model the settings choose ranks them.",
         };
 
+        var settings = DecisionSettingsOption.Create();
+
         var command = new Command("modules", "Say what modules this build has, or everything about one of them.")
         {
-            module, find, json,
+            module, find, settings, json,
         };
 
         command.SetAction(async (result, cancel) =>
@@ -48,7 +50,7 @@ internal static class ModulesCommand
             var output = result.InvocationConfiguration.Output;
 
             if (result.GetValue(find) is { } phrase)
-                return await FindAsync(plugins.Catalog, NodeCatalog.Current, phrase, result.GetValue(json), output, result.InvocationConfiguration.Error, cancel);
+                return await FindAsync(plugins.Catalog, NodeCatalog.Current, phrase, result.GetValue(json), output, result.InvocationConfiguration.Error, cancel, result.GetValue(settings));
 
             return result.GetValue(module) is { } wanted
                 ? Describe(

@@ -19,6 +19,11 @@
     <ProjectReference Include="..\Flyback.Plugins.Sample\Flyback.Plugins.Sample.csproj" />
   </ItemGroup>
 
+  <!-- The specs' features, which every command is named by. -->
+  <ItemGroup>
+    <None Include="..\Flyback.Specs\Features\*.feature" LinkBase="Features" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit.v3" />

@@ -1,5 +1,5 @@
+using System.CommandLine;
 using System.Text.Json.Nodes;
-using Flyback.Cli.Commands;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Assist;
@@ -11,6 +11,7 @@ using Flyback.Plugins.Hosting;
 using Flyback.Specs.Support;
 using Reqnroll;
 using Shouldly;
+using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Specs.Steps;
 
@@ -66,26 +67,11 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
     }
 
     [Given("flyback-cli sets its model to {string} for finding modules alone")]
-    public async Task GivenSetForModules(string model)
+    public void GivenSetForModules(string model)
     {
-        var error = new StringWriter();
+        Cli("decide", "--for", DecisionUse.Modules, "--set", $"model={model}", "--save");
 
-        code = await DecideCommand.Run(
-            catalog.ShouldNotBeNull(),
-            new DecideOptions(null, null, null, null, null, [], null, [], false, false, false, false)
-            {
-                Use = DecisionUse.Modules,
-                Set = [$"model={model}"],
-                Save = true,
-            },
-            TextReader.Null,
-            TextWriter.Null,
-            error,
-            CancellationToken.None,
-            SettingsPath,
-            Path.Combine(folder.FullName, "models"));
-
-        code.ShouldBe(Exit.Ok, error.ToString());
+        code.ShouldBe(Exit.Ok, complained);
     }
 
     [When("the settings window sets the model to {string} for finding modules alone")]
@@ -120,25 +106,7 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
     }
 
     [When("flyback-cli finds the modules {string} describes")]
-    public async Task WhenFound(string phrase)
-    {
-        var output = new StringWriter();
-        var error = new StringWriter();
-
-        code = await ModulesCommand.FindAsync(
-            catalog.ShouldNotBeNull(),
-            NodeCatalog.BuiltIn,
-            phrase,
-            json: true,
-            output,
-            error,
-            CancellationToken.None,
-            SettingsPath,
-            Path.Combine(folder.FullName, "models"));
-
-        said = output.ToString();
-        complained = error.ToString();
-    }
+    public void WhenFound(string phrase) => Cli("modules", "--find", phrase, "--json");
 
     [Given("a decision model that blames the module {string}")]
     public void GivenBlaming(string module)
@@ -158,11 +126,10 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
             patch.Connect(patch.Nodes[^1].Id, 0, patch.Output.Id, port);
         }
 
-        var decisions = new Decisions(catalog.ShouldNotBeNull(), DecisionSettings.Load(SettingsPath), new Credentials(null), new ModelStore(null));
-        var output = new StringWriter();
+        var file = Path.Combine(folder.FullName, "patch.fbk");
+        File.WriteAllText(file, PatchIO.ToJson(patch));
 
-        code = CheckCommand.Run(patch, "patch.fbk", true, output, TextWriter.Null, rank: c => CheckCommand.Rank(decisions, c));
-        said = output.ToString();
+        Cli("check", file, "--triage", "--json");
     }
 
     [Then("the first complaint is about {string}")]
@@ -184,20 +151,18 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
     }
 
     [When("flyback-cli decides whether {string} is about money, as JSON")]
-    public async Task WhenDecided(string state)
+    public void WhenDecided(string state) => Cli("decide", state, "--yes-no", "Is this about money?", "--json");
+
+    /// <summary>Runs flyback-cli on the scenario's models and settings, keeping what it said and complained.</summary>
+    private void Cli(params string[] args)
     {
         var output = new StringWriter();
         var error = new StringWriter();
 
-        code = await DecideCommand.Run(
-            catalog.ShouldNotBeNull(),
-            new DecideOptions(state, null, null, "Is this about money?", null, [], null, [], false, false, false, Json: true),
-            TextReader.Null,
-            output,
-            error,
-            CancellationToken.None,
-            SettingsPath,
-            Path.Combine(folder.FullName, "models"));
+        code = InProcessCli.Run(
+            [.. args, "--settings", SettingsPath],
+            new PluginRegistry(() => catalog.ShouldNotBeNull(), folder.FullName, null),
+            new InvocationConfiguration { Output = output, Error = error });
 
         said = output.ToString();
         complained = error.ToString();

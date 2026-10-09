@@ -1,7 +1,8 @@
 Feature: A plugin runs only once somebody said yes, and never holds a key
   A folder dropped into plugins/ is a stranger's code until somebody allows it,
-  by installing its package or from the command line, and only while its files
-  are as they were then. An assistant a plugin offers is handed a way to send,
+  by installing its package or with flyback-cli plugin allow, and only while its
+  files are as they were then. flyback-cli plugin deny takes that back, and
+  flyback-cli plugin list says which folders load and why the others do not. An assistant a plugin offers is handed a way to send,
   never the key it sends with.
 
   Scenario: A plugin folder copied in by hand does not run until it is allowed
@@ -24,6 +25,21 @@ Feature: A plugin runs only once somebody said yes, and never holds a key
     And Flyback loads its plugins
     Then the copied plugin does not run
     And it is listed as changed since it was allowed
+
+  Scenario: A plugin allowed from the command line can be denied again
+    Given a plugin folder copied in by hand
+    When flyback-cli allows the copied plugin
+    And flyback-cli denies the copied plugin
+    And Flyback loads its plugins
+    Then the copied plugin does not run
+
+  Scenario: The command line says which plugin folders load, and why the others do not
+    Given a plugin folder copied in by hand
+    When flyback-cli lists the plugin folders
+    Then the copied plugin is listed as not loading, not yet allowed
+    When flyback-cli allows the copied plugin
+    And flyback-cli lists the plugin folders
+    Then the copied plugin is listed as loading
 
   Scenario: Every plugin Flyback ships runs with nothing allowed
     When Flyback loads the plugins it was built with, allowing nothing

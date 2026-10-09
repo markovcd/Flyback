@@ -1,7 +1,8 @@
 Feature: A plugin package says what it is before anybody runs it
   Whoever decides about a package, a person publishing it on the preset site or a
-  script reviewing it, asks flyback-cli what it holds. The answer is what the
-  install dialog would show, and a package the editor would refuse is refused.
+  script reviewing it, asks flyback-cli plugin describe what it holds. The answer
+  is what the install dialog would show, and a package the editor would refuse is
+  refused.
 
   Scenario: A package says what it adds and who signed it
     Given a plugin package signed by its author

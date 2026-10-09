@@ -201,6 +201,9 @@ public sealed class PatchSteps(PatchContext context)
 
     // --- a loop ---------------------------------------------------------------
 
+    /// <summary>What the loop makes the <paramref name="n"/>th time round, counting from nought, from nothing before it.</summary>
+    internal static float LoopMakes(int n) => n < 0 ? 0f : LoopMakes(n - 1) * 0.5f + 0.25f;
+
     [Given("a loop that halves what it made last and adds a quarter")]
     public void GivenALoop()
     {
@@ -226,8 +229,15 @@ public sealed class PatchSteps(PatchContext context)
     [When("the loop has played until it settles")]
     public void WhenTheLoopSettles() => context.Play(Settle);
 
-    [When("what it adds is turned to {float}")]
-    public void WhenWhatItAddsIsTurned(float value) => context.SetInput("nudge", "b", value);
+    [When("what it adds is turned up")]
+    public void WhenWhatItAddsIsTurned() => context.SetInput("nudge", "b", 0.3f);
+
+    [Given("a patch {float} seconds long that plays how far through its length it is")]
+    public void GivenProgress(float seconds) => Written($"length {Number(seconds)}\nt.progress |> out.left");
+
+    /// <summary>Its length in seconds, as thousandths so it fits the speakers.</summary>
+    [Given("a patch that sets no length and plays how long it is")]
+    public void GivenLengthPlayed() => Written("t.length / 1000 |> out.left");
 
     // --- a tone ---------------------------------------------------------------
 
