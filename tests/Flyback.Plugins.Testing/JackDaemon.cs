@@ -13,8 +13,11 @@ public sealed class JackDaemon : IDisposable
 {
     private static readonly TimeSpan StartupLimit = TimeSpan.FromSeconds(10);
 
+    private const string ServerVariable = "JACK_DEFAULT_SERVER";
+
     private readonly IAudioOutput jack;
     private readonly Process? started;
+    private readonly string? before;
 
     public JackDaemon(IAudioOutput jack)
     {
@@ -22,10 +25,16 @@ public sealed class JackDaemon : IDisposable
 
         if (!OperatingSystem.IsLinux() || jack.IsSupported) return;
 
+        // Named for this process, since the test assemblies run side by side and each stops its own.
+        var name = $"flyback-test-{Environment.ProcessId}";
+
+        before = Environment.GetEnvironmentVariable(ServerVariable);
+        Environment.SetEnvironmentVariable(ServerVariable, name);
+
         // A small port table keeps the server's shared memory inside a container's /dev/shm.
         try
         {
-            started = Process.Start(new ProcessStartInfo("jackd", "--no-realtime --port-max 32 -d dummy -r 48000 -p 256")
+            started = Process.Start(new ProcessStartInfo("jackd", $"-n {name} --no-realtime --port-max 32 -d dummy -r 48000 -p 256")
             {
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -33,6 +42,7 @@ public sealed class JackDaemon : IDisposable
         }
         catch (Win32Exception)
         {
+            Environment.SetEnvironmentVariable(ServerVariable, before);
             return;
         }
 
@@ -57,6 +67,7 @@ public sealed class JackDaemon : IDisposable
         finally
         {
             started.Dispose();
+            Environment.SetEnvironmentVariable(ServerVariable, before);
         }
     }
 }
