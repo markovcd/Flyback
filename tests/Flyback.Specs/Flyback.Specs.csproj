@@ -42,6 +42,11 @@
     <Compile Include="..\Flyback.Plugins.WinIO.Tests\FakeAsioDriver.cs" Link="Support\FakeAsioDriver.cs" />
   </ItemGroup>
 
+  <!-- The web viewer's build runs under the Node the JavaScript backend's tests find. -->
+  <ItemGroup>
+    <Compile Include="..\Flyback.Core.Tests\Compile\NodeJs.cs" Link="Support\NodeJs.cs" />
+  </ItemGroup>
+
   <!--
     Built first and never loaded: the web viewer runs in a browser, or under Node,
     which is where its scenarios run it from the folder named here. Built in All plugins,

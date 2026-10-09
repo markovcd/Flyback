@@ -9,6 +9,7 @@ using Reqnroll.UnitTestProvider;
 using Shouldly;
 using Flyback.Ui;
 using Flyback.Core;
+using Flyback.Core.Tests.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Render;
 using Flyback.Plugins.Hosting;
@@ -446,7 +447,7 @@ public sealed class WebViewerSteps(Session session, PatchContext context, IUnitT
     /// <summary>Runs the web viewer's build under Node, and answers how it ended and what it printed and said.</summary>
     private (int Exit, string Printed, string Said) Run(params string[] arguments)
     {
-        var node = Node();
+        var node = NodeJs.Path;
         Needs.Tool(runtime, node is not null, "no Node on this machine to run the web viewer with");
 
         var build = typeof(WebViewerSteps).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
@@ -471,23 +472,6 @@ public sealed class WebViewerSteps(Session session, PatchContext context, IUnitT
         }
 
         return (process.ExitCode, printed.Result, said.Result);
-    }
-
-    /// <summary>Node on the path, or the one the WebAssembly workload brings with it.</summary>
-    private static string? Node()
-    {
-        var name = OperatingSystem.IsWindows() ? "node.exe" : "node";
-
-        foreach (var directory in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator))
-            if (directory.Length > 0 && File.Exists(Path.Combine(directory, name)))
-                return Path.Combine(directory, name);
-
-        var packs = Path.GetFullPath(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "..", "..", "..", "packs"));
-        if (!Directory.Exists(packs)) return null;
-
-        return Directory.EnumerateDirectories(packs, "Microsoft.NET.Runtime.Emscripten.*.Node.*")
-            .SelectMany(pack => Directory.EnumerateFiles(pack, name, SearchOption.AllDirectories))
-            .FirstOrDefault();
     }
 
     public void Dispose() => folder.Delete(recursive: true);

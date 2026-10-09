@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace Flyback.Core.Tests.Compile;
 
-/// <summary>Node, for running what <c>JsEmitter</c> writes: the one on the path, or the one the WebAssembly workload brings.</summary>
+/// <summary>Node, for running what <c>JsEmitter</c> writes and the web viewer's build: the one on the path, or the one the WebAssembly workload brings.</summary>
 internal static class NodeJs
 {
     /// <summary>How long one run may take; a run takes seconds.</summary>
