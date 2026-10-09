@@ -1,10 +1,4 @@
 using System.Reflection;
-using Flyback.Core.Graph;
-using Flyback.Plugins.Assist;
-using Flyback.Plugins.Audio;
-using Flyback.Plugins.Decide;
-using Flyback.Plugins.Midi;
-using Flyback.Plugins.Secrets;
 
 namespace Flyback.Plugins.Hosting;
 
@@ -33,13 +27,11 @@ internal static class PluginHost
     {
         if (!Directory.Exists(directory)) return PluginCatalog.Empty;
 
-        var plugins = new List<LoadedPlugin>();
-        var problems = new List<PluginProblem>();
-        var registry = new Registry(problems);
+        var catalog = new PluginCatalogBuilder();
 
-        foreach (var folder in Folders(directory)) LoadFolder(folder, plugins, registry, problems, trust);
+        foreach (var folder in Folders(directory)) LoadFolder(folder, catalog, trust);
 
-        return Catalog(plugins, registry, problems);
+        return catalog.Build();
     }
 
     /// <summary>
@@ -66,12 +58,11 @@ internal static class PluginHost
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     private static (IReadOnlyList<PluginProblem> Problems, int Loaded) Tried(string folder, List<PluginLoadContext> contexts)
     {
-        var plugins = new List<LoadedPlugin>();
-        var problems = new List<PluginProblem>();
+        var catalog = new PluginCatalogBuilder();
 
-        LoadFolder(folder, plugins, new Registry(problems), problems, PluginTrust.Unchecked, contexts);
+        LoadFolder(folder, catalog, PluginTrust.Unchecked, contexts);
 
-        return (problems, plugins.Count);
+        return (catalog.Problems, catalog.Loaded);
     }
 
     /// <summary>
@@ -82,9 +73,7 @@ internal static class PluginHost
     /// </summary>
     internal static PluginCatalog LoadLinked(Assembly host, string key = "Plugin")
     {
-        var plugins = new List<LoadedPlugin>();
-        var problems = new List<PluginProblem>();
-        var registry = new Registry(problems);
+        var catalog = new PluginCatalogBuilder();
 
         var names = host.GetCustomAttributes<AssemblyMetadataAttribute>()
             .Where(a => a.Key == key && a.Value is not null)
@@ -101,82 +90,24 @@ internal static class PluginHost
             }
             catch (Exception ex)
             {
-                problems.Add(new PluginProblem(name, ex.Message));
+                catalog.Problem(new PluginProblem(name, ex.Message));
                 continue;
             }
 
-            foreach (var type in PluginTypes(assembly, problems))
-                Instantiate(type, assembly.Location, plugins, registry, problems);
+            foreach (var type in PluginTypes(assembly, catalog)) catalog.Add(type, assembly.Location);
         }
 
-        return Catalog(plugins, registry, problems);
+        return catalog.Build();
     }
 
     /// <summary>Loads plugin types already in this process, for the tests.</summary>
     internal static PluginCatalog LoadTypes(params Type[] types)
     {
-        var plugins = new List<LoadedPlugin>();
-        var problems = new List<PluginProblem>();
-        var registry = new Registry(problems);
+        var catalog = new PluginCatalogBuilder();
 
-        foreach (var type in types) Instantiate(type, type.Assembly.Location, plugins, registry, problems);
+        foreach (var type in types) catalog.Add(type, type.Assembly.Location);
 
-        return Catalog(plugins, registry, problems);
-    }
-
-    private static PluginCatalog Catalog(List<LoadedPlugin> plugins, Registry registry, List<PluginProblem> problems)
-    {
-        var providers = registry.Providers;
-
-        return new(
-            plugins,
-            Unclashed(registry.AudioOutputs, o => o.Id, "audio output", providers, plugins, problems),
-            registry.Modules,
-            registry.Presets,
-            problems,
-            Unclashed(registry.Assistants, a => a.Id, "assistant", providers, plugins, problems),
-            Unclashed(registry.SecretStores, s => s.Id, "secret store", providers, plugins, problems),
-            Unclashed(registry.MidiInputs, i => i.Id, "MIDI input", providers, plugins, problems),
-            providers,
-            Unclashed(registry.AudioInputs, i => i.Id, "audio input", providers, plugins, problems),
-            Unclashed(registry.DecisionModels, m => m.Id, "decision model", providers, plugins, problems));
-    }
-
-    /// <summary>
-    /// Everything offered under an id nobody else offered. An id offered twice is refused
-    /// to both, so a folder that loads first cannot stand in for a plugin it shares an id with.
-    /// </summary>
-    private static List<T> Unclashed<T>(
-        IReadOnlyList<T> offered,
-        Func<T, string> id,
-        string what,
-        IReadOnlyDictionary<object, PluginInfo> providers,
-        List<LoadedPlugin> plugins,
-        List<PluginProblem> problems) where T : notnull
-    {
-        var kept = new List<T>();
-
-        foreach (var group in offered.GroupBy(id, StringComparer.Ordinal))
-        {
-            if (group.Count() == 1)
-            {
-                kept.Add(group.First());
-                continue;
-            }
-
-            var by = group.Select(o => providers.GetValueOrDefault(o) ?? new PluginInfo("", "")).ToList();
-
-            foreach (var source in by)
-            {
-                var others = by.Where(o => !ReferenceEquals(o, source)).Select(o => o.Name).Distinct().ToList();
-                var also = others.Count == 0 ? "more than once by the same plugin" : $"by {string.Join(" and ", others)} as well";
-                var folder = plugins.FirstOrDefault(p => ReferenceEquals(p.Info, source))?.AssemblyPath is { } path ? Path.GetDirectoryName(path) : null;
-
-                problems.Add(new PluginProblem(source.Id, $"{what} '{group.Key}' is registered {also}, so neither is used.") { Folder = folder });
-            }
-        }
-
-        return kept;
+        return catalog.Build();
     }
 
     /// <summary>
@@ -192,39 +123,34 @@ internal static class PluginHost
 
     private static void LoadFolder(
         string folder,
-        List<LoadedPlugin> plugins,
-        Registry registry,
-        List<PluginProblem> problems,
+        PluginCatalogBuilder catalog,
         PluginTrust trust,
         List<PluginLoadContext>? collectible = null)
     {
         var entries = EntryAssemblies(folder);
         if (entries.Count == 0) return;
 
-        var before = problems.Count;
+        var before = catalog.Problems.Count;
         var verdict = trust.Judge(folder);
 
         if (verdict.Loads)
         {
-            registry.Secrets = verdict.Secrets;
-            LoadEntries(entries, plugins, registry, problems, collectible);
+            catalog.Secrets = verdict.Secrets;
+            LoadEntries(entries, catalog, collectible);
         }
         else
         {
-            problems.Add(new PluginProblem(Path.GetFileName(folder), verdict.Reason!));
+            catalog.Problem(new PluginProblem(Path.GetFileName(folder), verdict.Reason!));
         }
 
-        for (var i = before; i < problems.Count; i++) problems[i] = problems[i] with { Folder = folder };
+        catalog.Blame(before, folder);
     }
 
     private static void LoadEntries(
         List<string> entries,
-        List<LoadedPlugin> plugins,
-        Registry registry,
-        List<PluginProblem> problems,
+        PluginCatalogBuilder catalog,
         List<PluginLoadContext>? collectible)
     {
-
         // One context for the whole folder: its dependencies are shared by
         // everything in it, and isolation is wanted *between* plugins.
         var context = new PluginLoadContext(entries[0], collectible is not null);
@@ -232,19 +158,18 @@ internal static class PluginHost
 
         foreach (var entry in entries)
         {
-            var assembly = TryLoad(context, entry, problems);
+            var assembly = TryLoad(context, entry, catalog);
             if (assembly is null) continue;
 
             // Before a type of it is looked at: loading has bound nothing yet, so
             // a plugin refused here has run none of its code and named none of ours.
             if (ContractVersion.Refusal(assembly) is { } refusal)
             {
-                problems.Add(new PluginProblem(Path.GetFileName(entry), refusal));
+                catalog.Problem(new PluginProblem(Path.GetFileName(entry), refusal));
                 continue;
             }
 
-            foreach (var type in PluginTypes(assembly, problems))
-                Instantiate(type, entry, plugins, registry, problems);
+            foreach (var type in PluginTypes(assembly, catalog)) catalog.Add(type, entry);
         }
     }
 
@@ -269,7 +194,7 @@ internal static class PluginHost
         return declared.Count > 0 ? declared : dlls;
     }
 
-    private static Assembly? TryLoad(PluginLoadContext context, string path, List<PluginProblem> problems)
+    private static Assembly? TryLoad(PluginLoadContext context, string path, PluginCatalogBuilder catalog)
     {
         try
         {
@@ -283,12 +208,12 @@ internal static class PluginHost
         }
         catch (Exception ex)
         {
-            problems.Add(new PluginProblem(Path.GetFileName(path), ex.Message));
+            catalog.Problem(new PluginProblem(Path.GetFileName(path), ex.Message));
             return null;
         }
     }
 
-    private static IEnumerable<Type> PluginTypes(Assembly assembly, List<PluginProblem> problems)
+    private static IEnumerable<Type> PluginTypes(Assembly assembly, PluginCatalogBuilder catalog)
     {
         Type[] types;
 
@@ -298,7 +223,7 @@ internal static class PluginHost
         }
         catch (Exception ex)
         {
-            problems.Add(new PluginProblem(assembly.GetName().Name ?? "plugin", ex.Message));
+            catalog.Problem(new PluginProblem(assembly.GetName().Name ?? "plugin", ex.Message));
             return [];
         }
 
@@ -306,209 +231,5 @@ internal static class PluginHost
             t is { IsAbstract: false, IsInterface: false }
             && typeof(IFlybackPlugin).IsAssignableFrom(t)
             && t.GetConstructor(Type.EmptyTypes) is not null);
-    }
-
-    private static void Instantiate(
-        Type type,
-        string path,
-        List<LoadedPlugin> plugins,
-        Registry registry,
-        List<PluginProblem> problems)
-    {
-        Registry.Checkpoint? mark = null;
-
-        try
-        {
-            var plugin = (IFlybackPlugin)Activator.CreateInstance(type)!;
-            var info = plugin.Info;
-
-            if (plugins.Any(p => p.Info.Id == info.Id))
-            {
-                problems.Add(new PluginProblem(
-                    Path.GetFileName(path),
-                    $"ignored — a plugin with id '{info.Id}' is already loaded."));
-                return;
-            }
-
-            registry.Source = info;
-            var checkpoint = registry.Mark();
-            mark = checkpoint;
-            plugin.Register(registry);
-
-            // Its code has run by now, but nothing it registered is kept unless it was declared.
-            if (ModuleDeclarations.Mismatch(ModuleDeclarations.Of(type.Assembly), registry.OfferedSince(checkpoint)) is { } mismatch)
-            {
-                registry.Restore(checkpoint);
-                problems.Add(new PluginProblem(Path.GetFileName(path), mismatch));
-                return;
-            }
-
-            plugins.Add(new LoadedPlugin(info, path));
-        }
-        catch (Exception ex)
-        {
-            // A plugin that did not finish registering is not loaded, so nothing it registered is kept.
-            if (mark is { } undo) registry.Restore(undo);
-
-            problems.Add(new PluginProblem(type.Name, ex.Message));
-        }
-    }
-
-    /// <summary>
-    /// Collects what plugins offer, clashes and all: <see cref="Unclashed"/> refuses an id
-    /// offered twice once every plugin has had its turn.
-    /// </summary>
-    private sealed class Registry(List<PluginProblem> problems) : IPluginRegistry
-    {
-        private readonly List<IAudioOutput> audioOutputs = [];
-        private readonly List<IPatchAssistant> assistants = [];
-        private readonly List<ISecretStore> secretStores = [];
-        private readonly List<IMidiInput> midiInputs = [];
-        private readonly List<IAudioInput> audioInputs = [];
-        private readonly List<IDecisionModel> decisionModels = [];
-
-        /// <summary>Who registered each thing kept above, keyed by the thing itself.</summary>
-        private readonly Dictionary<object, PluginInfo> providers = new(ReferenceEqualityComparer.Instance);
-
-        /// <summary>Whoever is registering right now, for blaming in messages.</summary>
-        public PluginInfo Source { get; set; } = new("", "");
-
-        /// <summary>Whether whoever is registering right now may register a secret store.</summary>
-        public bool Secrets { get; set; } = true;
-
-        public IReadOnlyDictionary<object, PluginInfo> Providers => providers;
-
-        public IReadOnlyList<IAudioOutput> AudioOutputs => audioOutputs;
-
-        public IReadOnlyList<IPatchAssistant> Assistants => assistants;
-
-        public IReadOnlyList<ISecretStore> SecretStores => secretStores;
-
-        public IReadOnlyList<IMidiInput> MidiInputs => midiInputs;
-
-        public IReadOnlyList<IAudioInput> AudioInputs => audioInputs;
-
-        public IReadOnlyList<IDecisionModel> DecisionModels => decisionModels;
-
-        /// <summary>Every module offered, accepted or not, in order.</summary>
-        private readonly List<NodeDef> offered = [];
-
-        /// <summary>How far everything had got, to undo a plugin's registration back to.</summary>
-        public readonly record struct Checkpoint(
-            ModuleCatalog Modules, int Offered, int Presets, int AudioOutputs, int Assistants, int SecretStores, int MidiInputs, int AudioInputs, int DecisionModels, int Problems);
-
-        public Checkpoint Mark() => new(
-            Modules, offered.Count, presets.Count, audioOutputs.Count, assistants.Count, secretStores.Count, midiInputs.Count, audioInputs.Count, decisionModels.Count, problems.Count);
-
-        public IEnumerable<NodeDef> OfferedSince(Checkpoint mark) => offered.Skip(mark.Offered);
-
-        /// <summary>Forgets everything registered since <paramref name="mark"/>, and the problems it caused.</summary>
-        public void Restore(Checkpoint mark)
-        {
-            Modules = mark.Modules;
-            offered.RemoveRange(mark.Offered, offered.Count - mark.Offered);
-            presets.RemoveRange(mark.Presets, presets.Count - mark.Presets);
-            Trim(audioOutputs, mark.AudioOutputs);
-            Trim(assistants, mark.Assistants);
-            Trim(secretStores, mark.SecretStores);
-            Trim(midiInputs, mark.MidiInputs);
-            Trim(audioInputs, mark.AudioInputs);
-            Trim(decisionModels, mark.DecisionModels);
-            problems.RemoveRange(mark.Problems, problems.Count - mark.Problems);
-        }
-
-        private void Trim<T>(List<T> list, int count) where T : notnull
-        {
-            foreach (var removed in list.Skip(count)) providers.Remove(removed);
-
-            list.RemoveRange(count, list.Count - count);
-        }
-
-        /// <summary>
-        /// Built up as plugins register, starting from the engine's own modules.
-        /// The catalog itself decides what it will accept; refusals become
-        /// problems here so a plugin author sees them next to everything else
-        /// that went wrong.
-        /// </summary>
-        public ModuleCatalog Modules { get; private set; } = NodeCatalog.BuiltIn;
-
-        /// <summary>Starts as the engine's own presets; plugins append to it.</summary>
-        private readonly List<PatchPreset> presets = [.. Engine.Graph.Presets.All];
-
-        public IReadOnlyList<PatchPreset> Presets => presets;
-
-        public void AddPresets(IReadOnlyList<PatchPreset> offered)
-        {
-            foreach (var preset in offered)
-            {
-                if (presets.Any(p => p.Name == preset.Name))
-                {
-                    problems.Add(new PluginProblem(
-                        Source.Id,
-                        $"preset '{preset.Name}' is already offered and was ignored."));
-                    continue;
-                }
-
-                // A plugin's preset arrives with its Maths chains folded into
-                // Expressions, the same as the engine's.
-                presets.Add(Engine.Graph.Presets.Fused(preset));
-            }
-        }
-
-        public void AddModules(ModuleProvider provider, IReadOnlyList<NodeDef> modules)
-        {
-            offered.AddRange(modules);
-
-            var added = Modules.With(provider, modules);
-
-            Modules = added.Catalog;
-
-            foreach (var rejection in added.Rejected)
-                problems.Add(new PluginProblem(Source.Id, rejection));
-        }
-
-        public void AddAudioOutput(IAudioOutput output)
-        {
-            audioOutputs.Add(output);
-            providers[output] = Source;
-        }
-
-        public void AddPatchAssistant(IPatchAssistant assistant)
-        {
-            assistants.Add(assistant);
-            providers[assistant] = Source;
-        }
-
-        public void AddSecretStore(ISecretStore store)
-        {
-            if (!Secrets)
-            {
-                problems.Add(new PluginProblem(
-                    Source.Id,
-                    $"secret store '{store.Id}' is refused: only a plugin Flyback ships, or one allowed with `flyback-cli plugin allow --secrets`, may keep keys."));
-                return;
-            }
-
-            secretStores.Add(store);
-            providers[store] = Source;
-        }
-
-        public void AddMidiInput(IMidiInput input)
-        {
-            midiInputs.Add(input);
-            providers[input] = Source;
-        }
-
-        public void AddAudioInput(IAudioInput input)
-        {
-            audioInputs.Add(input);
-            providers[input] = Source;
-        }
-
-        public void AddDecisionModel(IDecisionModel model)
-        {
-            decisionModels.Add(model);
-            providers[model] = Source;
-        }
     }
 }
