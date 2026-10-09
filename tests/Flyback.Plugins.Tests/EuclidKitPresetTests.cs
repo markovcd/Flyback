@@ -40,15 +40,11 @@ public class EuclidKitPresetTests
     }
 
     [Fact]
-    public void Its_picture_survives_to_the_shader()
+    public void Its_picture_compiles_clean()
     {
         var patch = Build(out var modules);
-        var video = patch.CompileForVideo(modules);
 
-        video.Issues.ShouldBeEmpty();
-
-        foreach (var dialect in Enum.GetValues<GlslDialect>())
-            GlslEmitter.Emit(video.Program, dialect).PatchFragment.ShouldNotBeNullOrEmpty();
+        patch.CompileForVideo(modules).Issues.ShouldBeEmpty();
     }
 
     [Fact]

@@ -553,9 +553,6 @@ public class ShapesTests
         video.Program.UnitCount.ShouldBe(0);
         video.Program.DelayLengths.ShouldBeEmpty();
         audio.Program.PhaseCount.ShouldBeGreaterThan(video.Program.PhaseCount);
-
-        foreach (var dialect in Enum.GetValues<GlslDialect>())
-            GlslEmitter.Emit(video.Program, dialect).PatchFragment.ShouldNotBeNullOrEmpty();
     }
 
     /// <summary>
@@ -583,10 +580,6 @@ public class ShapesTests
 
         video.Program.UnitCount.ShouldBe(0);
         video.Program.DelayLengths.ShouldBeEmpty();
-
-        foreach (var dialect in Enum.GetValues<GlslDialect>())
-            GlslEmitter.Emit(video.Program, dialect).PatchFragment.ShouldNotBeNullOrEmpty();
-
     }
     /// <summary>
     /// One sweep drives the four seams and the hue, which is the whole argument

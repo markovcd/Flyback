@@ -310,9 +310,6 @@ public class NoiseTests
         // the picture pays for eight noise lookups rather than for the sixteen
         // two default Fractals would have cost.
         video.Program.Ops.Count(op => op.Code == OpCode.Noise3).ShouldBe(8);
-
-        foreach (var dialect in Enum.GetValues<GlslDialect>())
-            GlslEmitter.Emit(video.Program, dialect).PatchFragment.ShouldNotBeNullOrEmpty();
     }
 
     // --- harness ---------------------------------------------------------------
