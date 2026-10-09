@@ -144,8 +144,13 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 # --solution rather than a bare path: global.json runs `dotnet test` on
 # Microsoft.Testing.Platform, which names what it is given. It prints each
 # failing test to the console, so there is nothing to fish out of a log.
+#
+# No test host takes ten minutes, so one that has finished nothing for ten has
+# hung: the hang dump names the tests it was in and ends it, well inside the
+# workflow's timeout, which would cancel the run without saying where.
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet test --solution Flyback.slnx -c ${CONFIGURATION} --no-build
+    dotnet test --solution Flyback.slnx -c ${CONFIGURATION} --no-build \
+      --hangdump --hangdump-timeout 10m --hangdump-type Mini
 
 # The same tests again, measured. A second run rather than a flag on the one
 # above, because measuring roughly doubles what the tests take, which is not a
