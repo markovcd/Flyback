@@ -10,10 +10,10 @@ Patches, bundles, settings, the preset site's databases, the plugin contract and
 
 **How to apply:**
 
-- **A patch file's layout is versioned.** Raise `PatchIO.FormatVersion` only when an older reader would get the file wrong: a field renamed, a number counting from somewhere else, a list meaning something new. Adding a module is not a raise. Every raise owes a step in `PatchIO.Upgrade`, each step standing alone, and a fixture of the old layout that a test opens.
+- **A patch file's layout is versioned.** Raise `PatchIO.FormatVersion` only when an older reader would get the file wrong: a field renamed, a number counting from somewhere else, a list meaning something new. Adding a module is not a raise. Every raise owes a step in `PatchIO.Upgrade`, each step standing alone, and the new layout's files beside the old ones in `tests/Flyback.Core.Tests/Graph/layouts/`, which `SavedLayoutTests` opens.
 - **A file from a newer version is refused whole**, with a message, rather than half-read and saved back in the older layout.
 - **Persisted names are forever.** A type id and an opcode's number are never renamed, renumbered or reused once shipped: saved patches and compiled plugins name them. Add a new one instead.
-- **Socket order never changes.** Sockets are saved by position, so reordering a module's sockets rewires every saved patch that uses it. A new socket goes at the end.
+- **Socket order never changes.** Sockets are saved by position, so reordering a module's sockets rewires every saved patch that uses it. A new socket goes at the end, and `tests/Flyback.Plugins.Tests/sockets.txt` is rewritten with it.
 - **What is missing is reported, not fatal.** A patch that names a module or a plugin this run does not have opens through `PatchLoad` with what is missing listed.
 - **Settings load tolerant.** A `*.json` settings file that is missing, empty, damaged or from another version loads as defaults for what it cannot read, and never stops the program starting.
 - **Contracts only grow.** The public surface of `Flyback.Core` and `Flyback.Plugins` moves only with `PublicAPI.Unshipped.txt` and the contract version (ADR-0102). The arguments `--apply-update` takes are only ever added to (ADR-0088). A break is a decision the user makes, recorded in an ADR.

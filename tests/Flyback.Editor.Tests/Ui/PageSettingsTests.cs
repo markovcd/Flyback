@@ -9,6 +9,7 @@ using Flyback.Editor.Settings;
 using Flyback.Editor.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using Xunit;
 
 namespace Flyback.Editor.Tests.Ui;
 
@@ -108,9 +109,30 @@ public sealed class PageSettingsTests : EditorTest
     [AvaloniaFact]
     public void A_browser_that_kept_nothing_opens_with_the_defaults()
     {
-        browser.Kept["canvas"] = "{ not json";
+        var window = Open();
 
-        Editor(Open()).Gestures.DragToPan.ShouldBeFalse();
+        Editor(window).Gestures.DragToPan.ShouldBeFalse();
+        Editor(window).Geometry.Compact.ShouldBeFalse();
+    }
+
+    [AvaloniaTheory]
+    [InlineData("{ not json")]
+    [InlineData("[]")]
+    [InlineData("null")]
+    [InlineData("""{"DragToPan":"yes","CompactModules":7}""")]
+    public void A_browser_that_kept_garbage_opens_with_the_defaults_and_is_written_over(string kept)
+    {
+        browser.Kept[Canvas.CanvasSettings.Section] = kept;
+
+        var window = Open();
+
+        Editor(window).Gestures.DragToPan.ShouldBeFalse();
+        Editor(window).Geometry.Compact.ShouldBeFalse();
+
+        PressGear(window);
+        Box(window, "pageDragToPan").IsChecked = true;
+
+        CanvasSettingsOf(browser).DragToPan.ShouldBeTrue();
     }
 
     private static Canvas.CanvasSettings CanvasSettingsOf(Browser browser) =>

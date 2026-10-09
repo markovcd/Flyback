@@ -25,4 +25,8 @@
     <PackageReference Include="xunit.v3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Graph\layouts\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

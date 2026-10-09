@@ -148,9 +148,18 @@ internal sealed class GeminiSession : IModelConversation
     {
         var endpoint = new Uri($"{address}/models/{Uri.EscapeDataString(model)}:generateContent");
 
-        return JsonNode.Parse(await AssistantPost
+        var answer = await AssistantPost
             .Send(transport, endpoint, body, response => Wire.RetryAfter(response.Headers, response.Body), Wire.Complaint, cancel)
-            .ConfigureAwait(false));
+            .ConfigureAwait(false);
+
+        try
+        {
+            return JsonNode.Parse(answer);
+        }
+        catch (JsonException)
+        {
+            throw new HttpRequestException($"{endpoint.Host} answered with something that is not JSON.");
+        }
     }
 
     /// <summary>The turns so far, without the pictures and clips — see <see cref="Wire.Kept"/>.</summary>

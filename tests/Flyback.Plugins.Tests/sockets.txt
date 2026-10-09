@@ -1,0 +1,152 @@
+analyzer | in, window, range, scale | out
+audio.autochord | tonic, root, note | hz1, hz2, hz3, hz4
+audio.chord | note, chord | hz1, hz2, hz3, hz4
+audio.delay | in, time, feedback, mix | out
+audio.drive | in, drive | out
+audio.duck | left, right, key, depth, full, attack, release | left, right, gain
+audio.filter | in, cutoff, resonance | low, band, high
+audio.in | gain | left, right
+audio.noise | in, rate, seed, amp, bias | white, pink, random, drift
+audio.note | note, octave, cents | hz, note
+audio.quantiser | in, hold | note
+audio.reverb | in, size, decay, mix | out, wide
+audio.sample | in, level, trigger | out, length
+audio.slew | in, rise, fall | out
+audio.tune | in, transpose, hold | hz, note
+beam | x, y, persistence, intensity, glow, hue | color
+bus.receive |  | out
+bus.send | in | out
+color.gain | color, gain, bias | color
+color.hsv | hue, saturation, value | color
+color.ink | under, mask, r, g, b | color
+color.mix | a, b, t | color
+color.rgb | r, g, b | color
+color.split | color | r, g, b
+color.vignette | color, x, y, from, to, dark | color, shade
+coord |  | x, y, radius, angle, aspect
+env.adsr | gate, attack, decay, sustain, release | out
+feedback | x, y | color
+feedback.blur | in, x, y, radius, amount | color, soft
+feedback.trails | in, x, y, zoom, angle, dx, dy, persist | color, tail
+flyback.drawings.path | in, freq, phase, amp | x, y, z
+flyback.drawings.perspective | x, y, z, distance | x, y, depth
+flyback.drawings.rotate3d | x, y, z, yaw, pitch, roll | x, y, z
+flyback.drawings.scale3d | x, y, z, scale, sx, sy, sz | x, y, z
+flyback.drawings.translate3d | x, y, z, dx, dy, dz | x, y, z
+flyback.easy.drummer | in, bpm, swing, trigger, velocity, tune, decay, tone, drive, pan | left, right, env
+flyback.easy.synth | in, pitch, gate, velocity, octave, glide, sub, noise, attack, decay, sustain, release, bright, resonance, sweep, lfo1 rate, lfo1 depth, lfo2 rate, lfo2 depth, drive, pan | left, right, env, lfo
+flyback.effects.chorus | in, rate, depth, mix | out, wide, lfo
+flyback.effects.echo | in, tempo, left, right, feedback, mix | left, right
+flyback.effects.flanger | in, rate, depth, feedback, mix | out, lfo
+flyback.effects.phaser | in, rate, depth, feedback, mix | out, lfo
+flyback.figures.harmonograph | trigger, velocity, speed, pitch, ratio, twist, damping, persist, size, x, y | left, right, figure
+flyback.figures.overtones | spectrum, in, freq, row, tilt, amp, x, y | out, bars, wave
+flyback.figures.plate | trigger, velocity, freq, aspect, decay, brightness, strike x, strike y, x, y | out, figure, motion
+flyback.fractals.julia | x, y, re, im, zoom, shift | color, escape, inside
+flyback.fractals.mandelbrot | x, y, re, im, zoom, shift | color, escape, inside
+flyback.fractals.orbit | x, y, re, im, rate, in, start re, start im | left, right, color, trace
+flyback.mastering.compressor | left, right, key, threshold, ratio, attack, release, knee, makeup | left, right, gain
+flyback.mastering.crossover | in, low, high | low, mid, high
+flyback.mastering.eq | left, right, low cut, low freq, low gain, mid freq, mid gain, mid q, high freq, high gain | left, right
+flyback.mastering.limiter | left, right, ceiling, release, lookahead | left, right, gain
+flyback.mastering.loudness | left, right | momentary, short, peak
+flyback.mastering.maximizer | left, right, amount | left, right
+flyback.mastering.width | left, right, width, mono below | left, right, mid, side
+flyback.picture.arc | x, y, radius, sweep, width | distance
+flyback.picture.box | x, y, width, height, corner | distance
+flyback.picture.cells | x, y, z, scale, jitter | distance, edge, cell
+flyback.picture.circle | x, y, radius | distance
+flyback.picture.combine | a, b, smoothness | union, intersection, difference
+flyback.picture.fill | distance, softness, width | fill, outline
+flyback.picture.fractal | x, y, z, scale, roughness | smooth, folded
+flyback.picture.grade | color, saturation, contrast, gamma | color
+flyback.picture.hsv | color | hue, saturation, value
+flyback.picture.layer | base, top, amount | color
+flyback.picture.line | x, y, x1, y1, x2, y2, width | distance, along
+flyback.picture.palette | t, cycles, spread, brightness, contrast | color
+flyback.picture.polygon | x, y, radius, sides | distance
+flyback.picture.posterise | color, levels | color
+flyback.picture.star | x, y, radius, points, sharpness | distance
+flyback.picture.text | x, y, size, line, reveal | distance
+flyback.sample.halve | in | out
+flyback.sample.ripple | x, y, freq, offset | out
+flyback.voice.bell | in, freq, level, ratio, index | out
+flyback.voice.crush | in, bits, rate | out
+flyback.voice.decay | trigger, attack, decay, curve | out
+flyback.voice.drum | in, level, pitch, sweep, bend, drive | out
+flyback.voice.euclid | in, rate, steps, hits, rotate, gate length, curve | gate, hit, index, stroke
+flyback.voice.fade | in, level, from, to | out, gate
+flyback.voice.fm | in, freq, level, tone, ratio2, ratio3, ratio4, index2, index3, index4 | out
+flyback.voice.fold | in, drive, bias | out
+flyback.voice.hiss | in, level, cutoff, resonance, gain, seed | out
+flyback.voice.osc | in, freq, detune, mix, phase, amp, bias | out, wide
+flyback.voice.stroke | in, rate, offset, curve | out, phase
+flyback.voice.wander | in, rate, seed, low, high | out
+math.abs | in | out
+math.add | a, b | out
+math.atan2 | a, b | out
+math.autoremap | in, in low, in high, out low, out high | out
+math.clamp | in, low, high | out
+math.cos | in | out
+math.desk | left 1, right 1, level 1, left 2, right 2, level 2, left 3, right 3, level 3, left 4, right 4, level 4, bus left, bus right, trim | left, right, bus left, bus right
+math.div | a, b | out
+math.exp | in | out
+math.expression | a, b, c, d | out
+math.floor | in | out
+math.fract | in | out
+math.hypot | a, b | out
+math.log | in | out
+math.max | a, b | out
+math.min | a, b | out
+math.mix | a, b, t | out
+math.mixer | in 1, level 1, in 2, level 2, in 3, level 3, in 4, level 4 | out
+math.mod | a, b | out
+math.mul | a, b | out
+math.neg | in | out
+math.pow | a, b | out
+math.remap | in, in low, in high, out low, out high | out
+math.sign | in | out
+math.sin | in | out
+math.smoothstep | edge0, edge1, in | out
+math.sqrt | in | out
+math.step | edge, in | out
+math.sub | a, b | out
+math.tan | in | out
+meter | in, window, scale | level, peak
+midi.clock | in, nudge | beats, bpm, running, reset
+midi.file | in | pitch, gate, velocity, trigger, length
+midi.in |  | pitch, gate, velocity, trigger
+osc.pulse | in, freq, phase, width, amp, bias | out
+osc.saw | in, freq, phase, amp, bias | out
+osc.sine | in, freq, phase, amp, bias | out
+osc.square | in, freq, phase, amp, bias | out
+osc.string | in, trigger, freq, decay, brightness | out
+osc.triangle | in, freq, phase, amp, bias | out
+output | color, left, right, volume | 
+pattern.checker | x, y, size | out
+pattern.clouds | x, y, z, scale | out
+pattern.rings | x, y, freq, offset | out
+picture | x, y | color
+poly.merge | in | out
+poly.spread | in, offset | out
+poly.voice |  | index, count
+probe | in, window, scale | out
+scan | in, clock, rate, radius, x, y, scale | out, view
+scope | in, window, scale | out
+seq.arrangement | in, rate, fade | part 1, part 2, part 3, part 4, part 5, part 6, part 7, part 8, progress, section
+seq.chance | gate, chance, seed | gate, else
+seq.hold | in, trigger | out
+seq.notes | in, rate, gate length, shape | out, gate, index
+seq.tempo | bpm, in | out, beats
+seq.values | in, rate, gate length, shape | out, gate, index
+space.kaleidoscope | x, y, segments | x, y
+space.mirror | x, y | x, y
+space.polar | x, y | radius, angle
+space.rotate | x, y, angle | x, y
+space.scale | x, y, scale | x, y
+space.tile | x, y, tiles | x, y
+space.transform | x, y, zoom, angle, dx, dy | x, y
+space.translate | x, y, dx, dy | x, y
+space.warp | x, y, by, amount | x, y
+time |  | t, length, progress
+value | value | out

@@ -33,36 +33,6 @@ Plugins.Tests for thirty minutes: the gate image had no keyring then, so these
 tests skipped, and no commit names that hang's cause. Fix: none yet;
 `secret-tool` cannot say whether the keyring is locked without prompting.
 
-## 7. Saved data and the threat model, where the test is missing (Medium)
-
-- No committed fixture of a patch layout: `PatchIO.FormatVersion = 1`,
-  `Upgrade` has no step, and `find tests -name '*.fbk*'` finds nothing.
-  Allowed before 1.0.0, but the first raise has nowhere to put its fixture.
-  `tests/Flyback.Core.Tests/Graph/layouts/v1.fbk` and `.fbkb`, and a theory
-  over that folder, `Every_layout_ever_written_still_opens`.
-- Socket order is pinned by nothing. The snapshots pin compiled output for 26
-  engine presets; no test lists every module's sockets by position. One
-  committed text file of `PluginHost.Load().Modules.All` as
-  `typeId | inputs… | outputs…`, compared with Shouldly in Plugins.Tests, so an
-  insertion anywhere but the end changes a verified file.
-- `set_sample` and `set_picture` (`src/Flyback.Plugins/Assist/ModuleEdits.cs:253-284`)
-  store any string; `PatchWorkbenchTests` passes only `drums.wav` and `moon.png`.
-  The check is downstream (`PatchPathsTests`), and nothing shows the two meet:
-  a workbench test with `\\host\share\x.wav`, `../../x.wav`, `/etc/passwd`.
-- `KeyedTransport.cs:14` sets `AllowAutoRedirect = false`; `grep -ri redirect tests`
-  is empty. A `Canned` 302 to another origin, one request made.
-- `PatchIO.cs:34` reads with the default `MaxDepth`; the length caps are tested
-  (`A_chunk_that_lies_about_its_length_costs_nothing`,
-  `A_bundle_that_unpacks_past_its_limit_is_refused`) and depth is not.
-- A 200 whose body is HTML or truncated, in the OpenAi and Gemini
-  `SessionTests`: refusals, rate limits and non-JSON tool parameters are
-  covered, this is not.
-- `pipeline.md`'s rules for workflows (every action SHA-pinned, `permissions:`,
-  `timeout-minutes` on every job) are read by no test. A fact over
-  `.github/workflows/*.yml`.
-- `PageSettings` has only the kept-nothing case; a garbage store opening as the
-  defaults.
-
 ## 8. The harness and the doubles are written many times (Medium to Low)
 
 The architecture audit's item 10 is half landed: `Flyback.Ui.Testing` exists
@@ -201,8 +171,8 @@ Plugins.Tests.
 - The tests skill says "about 6900 tests in Flyback.Editor.Tests"; the last run
   here counted 7,622. The guide's project table lacks `Flyback.Plugins.Drawings.Tests`
   and `Flyback.Plugins.FakeDecider`.
-- The gate runs no tests on a commit that changes only docs or a workflow (the
-  layer cache, as `ci.yml:51-55` says), so a green check on such a commit is
+- The gate runs no tests on a commit that changes nothing in the build context
+  (the layer cache, as `ci.yml` says), so a green check on such a commit is
   the cache's, not a run's; the four docs-only reds in item 2 ran only because
   the red layer before them was never cached.
 

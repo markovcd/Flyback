@@ -1,5 +1,8 @@
+using System.Collections.Concurrent;
 using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
+using System.Text;
 using Flyback.Plugins.Assist;
 using Shouldly;
 using Xunit;
@@ -107,6 +110,29 @@ public sealed class KeyedTransportTests
         }
     }
 
+    /// <summary>
+    /// The real network, not a stand-in for it: following a redirect is the handler's to
+    /// do, and a header of the provider's naming survives one to another host.
+    /// </summary>
+    [Fact]
+    public async Task A_redirect_to_another_origin_is_handed_back_rather_than_followed()
+    {
+        using var cancel = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        cancel.CancelAfter(TimeSpan.FromSeconds(30));
+
+        using var elsewhere = new Loopback(_ => "HTTP/1.1 200 OK\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+        using var provider = new Loopback(_ => $"HTTP/1.1 302 Found\r\nLocation: {elsewhere.Address}stolen\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+
+        var credential = new AssistantCredential("KEY", "") { Header = "x-goog-api-key", Scheme = null };
+        var transport = new KeyedTransport("g-secret", KeyedTransport.OriginOf(provider.Address), credential);
+
+        var answer = await transport.Send(new Uri(provider.Address, "v1/models"), null, cancel.Token);
+
+        answer.Status.ShouldBe(302);
+        provider.Requests.ShouldHaveSingleItem().ShouldContain("x-goog-api-key: g-secret");
+        elsewhere.Requests.ShouldBeEmpty();
+    }
+
     [Fact]
     public async Task An_admin_key_is_never_sent()
     {
@@ -197,6 +223,61 @@ public sealed class KeyedTransportTests
 
     private static Type Unwrapped(Type type) =>
         type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Task<>) ? type.GetGenericArguments()[0] : type;
+
+    /// <summary>A server on a loopback port of its own, answering each request with what <paramref name="answer"/> writes.</summary>
+    private sealed class Loopback : IDisposable
+    {
+        private readonly TcpListener listener = new(IPAddress.Loopback, 0);
+        private readonly ConcurrentQueue<string> requests = new();
+
+        public Loopback(Func<string, string> answer)
+        {
+            listener.Start();
+            Address = new Uri($"http://127.0.0.1:{((IPEndPoint)listener.LocalEndpoint).Port}/");
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    while (true)
+                    {
+                        using var client = await listener.AcceptTcpClientAsync();
+                        var stream = client.GetStream();
+                        var head = await Head(stream);
+
+                        requests.Enqueue(head);
+                        await stream.WriteAsync(Encoding.ASCII.GetBytes(answer(head)));
+                    }
+                }
+                catch (Exception ex) when (ex is SocketException or ObjectDisposedException or IOException)
+                {
+                    // Stopped.
+                }
+            });
+        }
+
+        public Uri Address { get; }
+
+        public IReadOnlyList<string> Requests => [.. requests];
+
+        public void Dispose() => listener.Stop();
+
+        private static async Task<string> Head(NetworkStream stream)
+        {
+            var read = new StringBuilder();
+            var buffer = new byte[1024];
+
+            while (!read.ToString().Contains("\r\n\r\n", StringComparison.Ordinal))
+            {
+                var count = await stream.ReadAsync(buffer);
+                if (count == 0) break;
+
+                read.Append(Encoding.ASCII.GetString(buffer, 0, count));
+            }
+
+            return read.ToString();
+        }
+    }
 
     /// <summary>The network, as far as the key is concerned: what each request carried in the one header.</summary>
     private sealed class Recorder(string header = "Authorization") : HttpMessageHandler

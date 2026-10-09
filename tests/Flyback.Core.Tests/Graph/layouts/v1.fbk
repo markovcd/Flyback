@@ -1,0 +1,176 @@
+{
+  "Version": 1,
+  "Nodes": [
+    {
+      "Id": "bc692076-a607-b5e1-df12-3a5ae7bd91c1",
+      "TypeId": "output",
+      "X": 206,
+      "Y": -79.33333333333333,
+      "InputValues": [
+        0,
+        0,
+        0,
+        0.5
+      ]
+    },
+    {
+      "Id": "1c4b5285-5a05-e28e-90af-32f04e8405de",
+      "TypeId": "osc.sine",
+      "X": -98,
+      "Y": -104,
+      "Name": "hum",
+      "InputValues": [
+        0,
+        110.20668,
+        0,
+        1,
+        0
+      ],
+      "State": {
+        "controls": {
+          "1": {
+            "control": "66011ddc-8988-681f-45a8-78aeab915bfd",
+            "min": 110,
+            "max": 440,
+            "knee": 0.02
+          }
+        }
+      }
+    },
+    {
+      "Id": "a29a6299-bed0-575d-51c4-88e20237dfea",
+      "TypeId": "audio.sample",
+      "X": -98,
+      "Y": 90,
+      "Name": "clip",
+      "InputValues": [
+        0,
+        1,
+        0
+      ],
+      "State": {
+        "file": "beat.wav"
+      }
+    },
+    {
+      "Id": "0b6b8673-dde8-f601-4803-102175796e44",
+      "TypeId": "picture",
+      "X": -98,
+      "Y": 10,
+      "Name": "photo",
+      "InputValues": [
+        0,
+        0
+      ],
+      "State": {
+        "picture": "moon.png"
+      }
+    },
+    {
+      "Id": "2dd57e9c-bb66-73bd-ec63-33d40dcef3c2",
+      "TypeId": "value",
+      "X": -402,
+      "Y": -67,
+      "Name": "spare",
+      "Off": true,
+      "InputValues": [
+        0.5
+      ]
+    }
+  ],
+  "Connections": [
+    {
+      "SourceNode": "1c4b5285-5a05-e28e-90af-32f04e8405de",
+      "SourcePort": 0,
+      "TargetNode": "bc692076-a607-b5e1-df12-3a5ae7bd91c1",
+      "TargetPort": 1
+    },
+    {
+      "SourceNode": "a29a6299-bed0-575d-51c4-88e20237dfea",
+      "SourcePort": 0,
+      "TargetNode": "bc692076-a607-b5e1-df12-3a5ae7bd91c1",
+      "TargetPort": 2
+    },
+    {
+      "SourceNode": "0b6b8673-dde8-f601-4803-102175796e44",
+      "SourcePort": 0,
+      "TargetNode": "bc692076-a607-b5e1-df12-3a5ae7bd91c1",
+      "TargetPort": 0
+    }
+  ],
+  "Groups": [
+    {
+      "Id": "d1fbfa1a-5560-05f6-9784-13cd5f884d3e",
+      "Name": "Sound",
+      "Members": [
+        "1c4b5285-5a05-e28e-90af-32f04e8405de",
+        "a29a6299-bed0-575d-51c4-88e20237dfea"
+      ],
+      "Collapsed": true,
+      "Exposed": [
+        {
+          "Node": "1c4b5285-5a05-e28e-90af-32f04e8405de",
+          "Port": 0,
+          "IsOutput": true
+        },
+        {
+          "Node": "a29a6299-bed0-575d-51c4-88e20237dfea",
+          "Port": 0,
+          "IsOutput": true
+        }
+      ],
+      "Counted": "2 modules"
+    }
+  ],
+  "Controls": [
+    {
+      "Id": "66011ddc-8988-681f-45a8-78aeab915bfd",
+      "Name": "Pitch",
+      "Value": 0.25,
+      "Midi": {
+        "Device": "Keys",
+        "Channel": 1,
+        "Controller": 74,
+        "Label": "CC74\u00B71",
+        "What": "CC74"
+      },
+      "Word": "pitch",
+      "Key": "control/66011ddc8988681f45a878aeab915bfd"
+    }
+  ],
+  "Keyboard": {
+    "Tonic": 2,
+    "Scale": "dorian",
+    "Mode": {
+      "Id": "dorian",
+      "Name": "Dorian",
+      "Classes": [
+        0,
+        2,
+        3,
+        5,
+        7,
+        9,
+        10
+      ]
+    },
+    "TonicClass": 2,
+    "Row": [
+      2,
+      4,
+      5,
+      7,
+      9,
+      11,
+      12
+    ],
+    "Name": "D Dorian"
+  },
+  "Length": 12.5,
+  "Description": "Every field a patch file holds, as layout 1 wrote it.",
+  "Author": "Flyback tests",
+  "Tags": [
+    "layout",
+    "fixture"
+  ]
+}

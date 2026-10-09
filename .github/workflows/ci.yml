@@ -50,11 +50,10 @@ jobs:
       # The SDK image, the apt packages and the restore are the same on almost
       # every run, so the layer cache turns them into a lookup (ADR-0120).
       #
-      # It also means a commit that changes nothing in the build context — a
-      # workflow or a document, both of which .dockerignore leaves out — hits
-      # the cache all the way through and runs no tests. That is the right
-      # answer for such a commit, but it is the reason a green check here is
-      # about the context, not about the run.
+      # It also means a commit that changes nothing in the build context hits
+      # the cache all the way through and runs no tests. The workflows are in
+      # the context, since a test reads them. A green check here is about the
+      # context, not about the run.
       #
       # gate.sh writes the run's summary: the test counts and each failing test.
       - name: Build and test

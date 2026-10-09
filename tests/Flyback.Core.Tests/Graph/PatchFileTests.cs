@@ -59,6 +59,14 @@ public class PatchFileTests
         Should.Throw<JsonException>(() => PatchFile.Read("notes.fbk", Encoding.UTF8.GetBytes("not json at all")));
 
     [Fact]
+    public void A_document_nested_past_the_readers_depth_throws_rather_than_recursing()
+    {
+        var nested = $"{{\"Nodes\": [{{\"TypeId\": \"coord\", \"State\": {new string('[', 100_000)}{new string(']', 100_000)}}}], \"Connections\": []}}";
+
+        Should.Throw<JsonException>(() => PatchFile.Read("notes.fbk", Encoding.UTF8.GetBytes(nested)));
+    }
+
+    [Fact]
     public void Bytes_that_are_not_text_throw() =>
         Should.Throw<DecoderFallbackException>(() => PatchFile.Read("notes.fbk", [0xFF, 0xFE, 0x00, 0xC3]));
 

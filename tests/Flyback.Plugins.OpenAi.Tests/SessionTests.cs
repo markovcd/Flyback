@@ -267,6 +267,20 @@ public class SessionTests
         canned.Sent.Count.ShouldBe(1);
     }
 
+    /// <summary>A proxy's error page, or a reply cut off on the way, arrives as a 200 all the same.</summary>
+    [Theory]
+    [InlineData("<html><body><h1>502 Bad Gateway</h1></body></html>")]
+    [InlineData("{\"choices\":[{\"message\":{\"content\":\"hal")]
+    [InlineData("")]
+    public async Task A_success_that_is_not_json_costs_the_turn_and_says_so(string body)
+    {
+        var canned = new Canned(Refusing(HttpStatusCode.OK, body));
+
+        var events = await Drive(canned);
+
+        events.OfType<PatchEvent.Failed>().ShouldHaveSingleItem().Message.ShouldBe("nowhere.invalid answered with something that is not JSON.");
+    }
+
     // --- being told to wait -------------------------------------------------
 
     /// <summary>

@@ -3,6 +3,7 @@ using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
+using Flyback.Engine.Render;
 using Flyback.Plugins.Assist;
 using Shouldly;
 using Xunit;
@@ -1181,6 +1182,45 @@ public class PatchWorkbenchTests
 
         set.Text.ShouldContain("gone.wav");
         set.Text.ShouldContain("Issues:");
+    }
+
+    /// <summary>
+    /// A path is stored as the assistant gave it; the check is where every patch's files
+    /// are read, so a share is never followed and a file that is not a sound or a picture
+    /// never leaves in a bundle.
+    /// </summary>
+    [Theory]
+    [InlineData("set_sample", NodeCatalog.SampleTypeId, @"\\host\share\x.wav")]
+    [InlineData("set_sample", NodeCatalog.SampleTypeId, "../../x.wav")]
+    [InlineData("set_sample", NodeCatalog.SampleTypeId, "/etc/passwd")]
+    [InlineData("set_picture", NodeCatalog.PictureTypeId, @"\\host\share\x.png")]
+    [InlineData("set_picture", NodeCatalog.PictureTypeId, "../../x.png")]
+    [InlineData("set_picture", NodeCatalog.PictureTypeId, "/etc/passwd")]
+    public async Task A_hostile_path_is_checked_where_every_patchs_files_are(string tool, string typeId, string path)
+    {
+        var root = Directory.CreateTempSubdirectory("flyback-hostile").FullName;
+
+        try
+        {
+            var beside = Directory.CreateDirectory(Path.Combine(root, "a", "b")).FullName;
+            File.WriteAllText(Path.Combine(root, Path.GetFileName(path)), "-----BEGIN OPENSSH PRIVATE KEY-----");
+
+            var bench = Bench();
+            await Call(bench, "add_module", JsonSerializer.Serialize(new { type_id = typeId, handle = "file1" }));
+
+            var set = await Call(bench, tool, JsonSerializer.Serialize(new { handle = "file1", path }));
+            set.Ok.ShouldBeTrue(set.Text);
+
+            using var bundle = new MemoryStream();
+            var report = PatchBundle.Write(bundle, bench.Snapshot(), named => PatchPaths.Carriable(named, beside), NodeCatalog.BuiltIn);
+
+            report.Carried.ShouldBeEmpty();
+            report.Missing.ShouldBe([path]);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
     }
 
     [Fact]

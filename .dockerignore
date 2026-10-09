@@ -16,7 +16,6 @@ worker/public/
 worker/large/
 
 .git/
-.github/
 .idea/
 .vs/
 .vscode/

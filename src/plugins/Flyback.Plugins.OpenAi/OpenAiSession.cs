@@ -151,10 +151,21 @@ internal sealed class OpenAiSession : IModelConversation
         return Wire.Parse(await Post(body.ToJsonString(), cancel).ConfigureAwait(false)).Text;
     }
 
-    private async Task<JsonNode?> Post(string body, CancellationToken cancel) =>
-        JsonNode.Parse(await AssistantPost
+    private async Task<JsonNode?> Post(string body, CancellationToken cancel)
+    {
+        var answer = await AssistantPost
             .Send(transport, endpoint, body, Wire.Wait, Wire.Complaint, cancel)
-            .ConfigureAwait(false));
+            .ConfigureAwait(false);
+
+        try
+        {
+            return JsonNode.Parse(answer);
+        }
+        catch (JsonException)
+        {
+            throw new HttpRequestException($"{endpoint.Host} answered with something that is not JSON.");
+        }
+    }
 
     public void Dispose()
     {

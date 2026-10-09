@@ -371,6 +371,20 @@ public class SessionTests
             .Message.ShouldContain("Unknown name");
     }
 
+    /// <summary>A proxy's error page, or a reply cut off on the way, arrives as a 200 all the same.</summary>
+    [Theory]
+    [InlineData("<html><body><h1>502 Bad Gateway</h1></body></html>")]
+    [InlineData("{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"hal")]
+    [InlineData("")]
+    public async Task A_success_that_is_not_json_costs_the_turn_and_says_so(string body)
+    {
+        using var session = Session(new Canned(new Answer(body)));
+
+        var events = await Drain(session, "hello");
+
+        events.OfType<PatchEvent.Failed>().ShouldHaveSingleItem().Message.ShouldBe("nowhere.invalid answered with something that is not JSON.");
+    }
+
     // --- putting it away ----------------------------------------------------
 
     /// <summary>

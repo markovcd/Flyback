@@ -81,6 +81,11 @@
     <None Include="..\Flyback.Specs\Features\*.feature" LinkBase="Features" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- Every module's sockets by position, which saved patches wire by. -->
+  <ItemGroup>
+    <None Include="sockets.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit.v3" />
