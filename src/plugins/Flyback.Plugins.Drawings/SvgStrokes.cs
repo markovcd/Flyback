@@ -328,7 +328,7 @@ internal static class SvgStrokes
                 first = false;
             }
 
-            next:
+        next:
             previous = kind;
         }
 

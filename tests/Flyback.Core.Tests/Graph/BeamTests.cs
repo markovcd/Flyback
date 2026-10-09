@@ -219,6 +219,7 @@ public class BeamTests
             var took = System.Diagnostics.Stopwatch.StartNew();
             Traces.Refresh(drawn, heard, memory);
             return took.Elapsed.TotalMilliseconds;
-        });
+        }
+        );
     }
 }

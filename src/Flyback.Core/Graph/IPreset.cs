@@ -3,6 +3,6 @@
 internal interface IPreset
 {
     string Name { get; }
-    
+
     string Description { get; }
 }

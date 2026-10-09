@@ -11,7 +11,7 @@ public partial class NodeCatalog
     {
         yield return new NodeDef(
             FeedbackTypeId, "Feedback", ModuleCategories.Feedback,
-            [..Position()], [Col("color") with { Help = "The previous frame, read where 'x' and 'y' say." }],
+            [.. Position()], [Col("color") with { Help = "The previous frame, read where 'x' and 'y' say." }],
             (em, i) => [em.Triple(OpCode.SampleFeedback, i[0], i[1])],
             "Reads the previous frame. Feed it back through space transforms to make a self-referential loop.")
         {

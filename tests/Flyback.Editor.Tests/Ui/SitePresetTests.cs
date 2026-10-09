@@ -285,7 +285,7 @@ public sealed class SiteAnswerTests
         PresetSite.One(document.RootElement, FakePresetSite.Root).ShouldNotBeNull().PageLacks.ShouldBe(said);
     }
 
-        [Fact]
+    [Fact]
     public void A_rating_of_another_shape_is_no_rating()
     {
         using var document = JsonDocument.Parse("""{"rating":{"count":"3","average":4}}""");

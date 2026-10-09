@@ -36,17 +36,17 @@ public class EveryModuleTests
             var delays = Memory(program);
 
             foreach (var t in (double[])[0d, 0.5d, 61.125d])
-            foreach (var y in (double[])[-1d, 0d, 0.75d])
-            foreach (var x in (double[])[-1.5d, 0d, 1.5d])
-            {
-                Should.NotThrow(
-                    () => program.Evaluate(x, y, t, registers, default, delays, aspect: 16d / 9d),
-                    $"{typeId} at ({x}, {y}, {t})");
+                foreach (var y in (double[])[-1d, 0d, 0.75d])
+                    foreach (var x in (double[])[-1.5d, 0d, 1.5d])
+                    {
+                        Should.NotThrow(
+                            () => program.Evaluate(x, y, t, registers, default, delays, aspect: 16d / 9d),
+                            $"{typeId} at ({x}, {y}, {t})");
 
-                for (var i = 0; i < program.OutputWidth; i++)
-                    double.IsNaN(registers[program.OutputBase + i])
-                        .ShouldBeFalse($"{typeId} put NaN on output {i} at ({x}, {y}, {t})");
-            }
+                        for (var i = 0; i < program.OutputWidth; i++)
+                            double.IsNaN(registers[program.OutputBase + i])
+                                .ShouldBeFalse($"{typeId} put NaN on output {i} at ({x}, {y}, {t})");
+                    }
         }
     }
 

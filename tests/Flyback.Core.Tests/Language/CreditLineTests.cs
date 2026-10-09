@@ -228,7 +228,8 @@ public class CreditLineTests
             var patch = new Patch();
             patch.Tag(["mine"]);
             return patch;
-        }) { Tags = ["the-presets"] };
+        })
+        { Tags = ["the-presets"] };
 
         preset.Build(NodeCatalog.BuiltIn).Tags.ShouldBe(["mine"]);
     }

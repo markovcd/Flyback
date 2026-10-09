@@ -203,7 +203,7 @@ internal sealed class MainWindow : Window
 
         base.OnClosed(e);
     }
-    
+
     private void RememberLayout()
     {
         if (!shell.IsBuilt) return;

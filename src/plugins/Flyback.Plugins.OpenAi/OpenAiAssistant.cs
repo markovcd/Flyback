@@ -105,7 +105,7 @@ public sealed class OpenAiAssistant : IPatchAssistant, IModelSurvey
             Schema.Surveyed(config.Values).Read(config.Values),
             Schema.DefaultBaseUrl!,
             config.Transport);
-    
+
     public async Task<IReadOnlyList<ModelReport>> Survey(
         AssistantConfig config,
         SurveyOptions options,

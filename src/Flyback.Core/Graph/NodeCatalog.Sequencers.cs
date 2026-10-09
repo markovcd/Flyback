@@ -35,15 +35,15 @@ public partial class NodeCatalog
     /// a level that jumps in one sample clicks, for the reason a gate's edge does.
     /// </summary>
     private const float ShortestFade = 0.001f;
-    
+
     /// <summary>A minor pentatonic, so a Note Sequencer plays a tune the moment it is dropped.</summary>
     private static readonly Step[] DefaultRiff =
         [.. new[] { 57f, 60f, 62f, 64f, 67f, 64f, 62f, 60f }.Select(n => new Step(n))];
-    
+
     /// <summary>Up and back down — a shape, rather than the ramp 'index' already hands out.</summary>
     private static readonly Step[] DefaultShape =
         [.. new[] { 0f, 0.25f, 0.5f, 0.75f, 1f, 0.75f, 0.5f, 0.25f }.Select(v => new Step(v))];
-    
+
     /// <summary>
     /// The shortest the gate's edges may be made, as a fraction of a step. A
     /// knob turned to nothing would otherwise put the click back, and a gate
@@ -198,15 +198,17 @@ public partial class NodeCatalog
         yield return StepSequencer(
             "seq.notes", "Note Sequencer", DefaultRiff, PortDisplay.Note, (0f, 127f),
             "Step sequence of notes.",
-            "The note, as a pitch source.") with { Words = "step sequencer of notes, melody" };
+            "The note, as a pitch source.") with
+        { Words = "step sequencer of notes, melody" };
 
         yield return StepSequencer(
             "seq.values", "Sequencer", DefaultShape, PortDisplay.Number, (0f, 1f),
             "Step sequence of ordinary signals.",
-            "The step's value.") with { Words = "step sequencer of values" };
+            "The step's value.") with
+        { Words = "step sequencer of values" };
     }
 
-    
+
     /// <summary>
     /// Builds one of the two step sequencers. They differ only in what a step's
     /// knob means — a note number or an ordinary signal — because nothing below
@@ -246,10 +248,10 @@ public partial class NodeCatalog
         ],
         EmitSequence,
         description)
-    {
-        Extras = [new StepsExtra(new StepSpec(notes, display, range))],
-    };
-    
+        {
+            Extras = [new StepsExtra(new StepSpec(notes, display, range))],
+        };
+
     /// <summary>
     /// The coin is flipped on every evaluation the gate is shut and kept while it is
     /// open, so a note is decided before its first sample and never changes its

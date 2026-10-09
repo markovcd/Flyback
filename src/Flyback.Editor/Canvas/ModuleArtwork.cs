@@ -154,7 +154,7 @@ internal sealed class ModuleArtwork
     private static ModuleArtwork? Vector(ReadOnlyMemory<byte> bytes)
     {
         var source = SvgSource.LoadFromStream(new MemoryStream(bytes.ToArray()));
-        
+
         var image = new SvgImage { Source = source };
 
         if (image.Size.Width <= 0 || image.Size.Height <= 0) return null;
@@ -322,16 +322,16 @@ internal sealed class ModuleArtwork
             // Every few pixels across and down: a band of a 512-wide frame is
             // thousands of reads for a number that moves by nothing.
             for (var y = from; y < to && y < bitmap.Height; y += Every)
-            for (var x = 0; x < bitmap.Width; x += Every)
-            {
-                var pixel = bitmap.GetPixel(x, y);
-                var over = pixel.Alpha / 255d;
+                for (var x = 0; x < bitmap.Width; x += Every)
+                {
+                    var pixel = bitmap.GetPixel(x, y);
+                    var over = pixel.Alpha / 255d;
 
-                red += pixel.Red * over + ground.R * (1 - over);
-                green += pixel.Green * over + ground.G * (1 - over);
-                blue += pixel.Blue * over + ground.B * (1 - over);
-                counted++;
-            }
+                    red += pixel.Red * over + ground.R * (1 - over);
+                    green += pixel.Green * over + ground.G * (1 - over);
+                    blue += pixel.Blue * over + ground.B * (1 - over);
+                    counted++;
+                }
 
             bands[band] = counted == 0
                 ? ground

@@ -262,7 +262,7 @@ internal sealed class UnsavedWork(
         bool offerSave = true) => dialog.Show<Unsaved>(about, a => DialogContent(question, a, discard, offerSave));
 
     private static Control DialogContent(
-        string question, 
+        string question,
         Action<Unsaved> answer,
         string discard,
         bool offerSave)
@@ -296,9 +296,9 @@ internal sealed class UnsavedWork(
                 buttons,
             },
         };
-        
+
         return asking;
-        
+
         Button Answering(string text, Unsaved with, bool wide = false)
         {
             var button = new Button { Content = text, MinWidth = wide ? 120 : 96 };

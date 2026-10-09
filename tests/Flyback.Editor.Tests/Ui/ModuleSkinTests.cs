@@ -47,9 +47,9 @@ public class ModuleSkinTests
         var data = new TheoryData<byte, byte, byte>();
 
         for (var red = 0; red < 256; red += 15)
-        for (var green = 0; green < 256; green += 15)
-        for (var blue = 0; blue < 256; blue += 15)
-            data.Add((byte)red, (byte)green, (byte)blue);
+            for (var green = 0; green < 256; green += 15)
+                for (var blue = 0; blue < 256; blue += 15)
+                    data.Add((byte)red, (byte)green, (byte)blue);
 
         return data;
     }

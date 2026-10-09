@@ -19,7 +19,7 @@ namespace Flyback.Engine.Render;
 public sealed class AudioRenderer
 {
     private const int DefaultSampleRate = GlobalConstants.SampleRate;
-    
+
     private const int Taps = 64;
     private const float DcBlockerPole = 0.9993f;
 

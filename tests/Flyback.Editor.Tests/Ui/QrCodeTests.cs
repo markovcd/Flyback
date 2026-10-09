@@ -74,13 +74,13 @@ public class QrCodeTests : EditorTest
         var modules = new bool[29, 29];
 
         for (var row = 0; row < 29; row++)
-        for (var column = 0; column < 29; column++)
-        {
-            var x = (int)(((quiet + column) * module + module / 2) * scale);
-            var y = (int)(((quiet + row) * module + module / 2) * scale);
+            for (var column = 0; column < 29; column++)
+            {
+                var x = (int)(((quiet + column) * module + module / 2) * scale);
+                var y = (int)(((quiet + row) * module + module / 2) * scale);
 
-            modules[row, column] = drawn[x, y];
-        }
+                modules[row, column] = drawn[x, y];
+            }
 
         Decode(modules).ShouldBe(About.BitcoinAddress);
     }
@@ -100,12 +100,12 @@ public class QrCodeTests : EditorTest
         var blue = locked.Format == PixelFormat.Bgra8888 ? 0 : 2;
 
         for (var y = 0; y < locked.Size.Height; y++)
-        for (var x = 0; x < locked.Size.Width; x++)
-        {
-            var at = y * locked.RowBytes + x * 4;
+            for (var x = 0; x < locked.Size.Width; x++)
+            {
+                var at = y * locked.RowBytes + x * 4;
 
-            dark[x, y] = (bytes[at + blue] + bytes[at + 1] + bytes[at + 2 - blue]) / 3 < 128;
-        }
+                dark[x, y] = (bytes[at + blue] + bytes[at + 1] + bytes[at + 2 - blue]) / 3 < 128;
+            }
 
         return dark;
     }
@@ -156,9 +156,9 @@ public class QrCodeTests : EditorTest
         }
 
         for (var row = 0; row < size; row++)
-        for (var column = 0; column < size; column++)
-            if (modules[row, column] && !QrCode.InFinder(size, row, column))
-                svg.Append(Block(ink, row, column, 1, 0.25));
+            for (var column = 0; column < size; column++)
+                if (modules[row, column] && !QrCode.InFinder(size, row, column))
+                    svg.Append(Block(ink, row, column, 1, 0.25));
 
         return svg.Append("</svg>").ToString();
     }
@@ -243,13 +243,13 @@ public class QrCodeTests : EditorTest
 
         foreach (var (row, column) in finders)
             for (var y = -1; y <= 7; y++)
-            for (var x = -1; x <= 7; x++)
-            {
-                var (r, c) = (row + y, column + x);
+                for (var x = -1; x <= 7; x++)
+                {
+                    var (r, c) = (row + y, column + x);
 
-                if (r >= 0 && r < size && c >= 0 && c < size)
-                    reserved[r, c] = true;
-            }
+                    if (r >= 0 && r < size && c >= 0 && c < size)
+                        reserved[r, c] = true;
+                }
 
         for (var i = 8; i < size - 8; i++)
             reserved[6, i] = reserved[i, 6] = true;
@@ -259,8 +259,8 @@ public class QrCodeTests : EditorTest
             var center = size - 7;
 
             for (var y = -2; y <= 2; y++)
-            for (var x = -2; x <= 2; x++)
-                reserved[center + y, center + x] = true;
+                for (var x = -2; x <= 2; x++)
+                    reserved[center + y, center + x] = true;
         }
 
         for (var i = 0; i < 9; i++)

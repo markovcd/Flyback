@@ -516,14 +516,14 @@ public class PatchBundleTests
         var bgra = new byte[stride * height];
 
         for (var y = 0; y < height; y++)
-        for (var x = 0; x < width; x++)
-        {
-            var at = y * stride + x * 4;
+            for (var x = 0; x < width; x++)
+            {
+                var at = y * stride + x * 4;
 
-            bgra[at + 0] = x < width / 2 ? (byte)0 : (byte)255;   // blue on the right
-            bgra[at + 2] = x < width / 2 ? (byte)255 : (byte)0;   // red on the left
-            bgra[at + 3] = 255;
-        }
+                bgra[at + 0] = x < width / 2 ? (byte)0 : (byte)255;   // blue on the right
+                bgra[at + 2] = x < width / 2 ? (byte)255 : (byte)0;   // red on the left
+                bgra[at + 3] = 255;
+            }
 
         var file = new MemoryStream();
         PngWriter.WriteBgra(file, bgra, width, height, stride);

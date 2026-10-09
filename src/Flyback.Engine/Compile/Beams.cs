@@ -241,16 +241,16 @@ public static class Beams
         const float share = 1f / (Shrink * Shrink);
 
         for (var row = 0; row < GlowSize; row++)
-        for (var column = 0; column < GlowSize; column++)
-        {
-            var sum = 0f;
+            for (var column = 0; column < GlowSize; column++)
+            {
+                var sum = 0f;
 
-            for (var y = 0; y < Shrink; y++)
-            for (var x = 0; x < Shrink; x++)
-                sum += trace[(row * Shrink + y) * Size + column * Shrink + x];
+                for (var y = 0; y < Shrink; y++)
+                    for (var x = 0; x < Shrink; x++)
+                        sum += trace[(row * Shrink + y) * Size + column * Shrink + x];
 
-            glow[row * GlowSize + column] = sum * share;
-        }
+                glow[row * GlowSize + column] = sum * share;
+            }
 
         var scratch = ArrayPool<float>.Shared.Rent(glow.Length);
 
@@ -276,20 +276,20 @@ public static class Beams
     private static void Blur(ReadOnlySpan<float> from, Span<float> into, int step, int stride)
     {
         for (var line = 0; line < GlowSize; line++)
-        for (var i = 0; i < GlowSize; i++)
-        {
-            var sum = 0f;
-
-            for (var k = -2; k <= 2; k++)
+            for (var i = 0; i < GlowSize; i++)
             {
-                var j = i + k;
-                if (j < 0 || j >= GlowSize) continue;
+                var sum = 0f;
 
-                sum += from[line * stride + j * step] * Binomial[k + 2];
+                for (var k = -2; k <= 2; k++)
+                {
+                    var j = i + k;
+                    if (j < 0 || j >= GlowSize) continue;
+
+                    sum += from[line * stride + j * step] * Binomial[k + 2];
+                }
+
+                into[line * stride + i * step] = sum;
             }
-
-            into[line * stride + i * step] = sum;
-        }
     }
 
     private static ReadOnlySpan<float> Binomial => [1f / 16, 4f / 16, 6f / 16, 4f / 16, 1f / 16];

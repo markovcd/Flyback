@@ -26,7 +26,7 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "pattern.checker", "Checker", ModuleCategories.Patterns,
-            [..Position(), Num("size", 4f, 0f, 32f) with { Help = "Squares to each unit of 'x' and 'y'." }],
+            [.. Position(), Num("size", 4f, 0f, 32f) with { Help = "Squares to each unit of 'x' and 'y'." }],
             [Num("out", 0f, 0f, 1f) with { Help = "1 on one color of square, 0 on the other." }],
             (em, i) =>
             {

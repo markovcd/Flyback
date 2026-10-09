@@ -225,15 +225,15 @@ public class ShippedPresetTests
             .ToArray();
 
         for (var a = 0; a < drawn.Length; a++)
-        for (var b = a + 1; b < drawn.Length; b++)
-        {
-            var (one, two) = (drawn[a], drawn[b]);
+            for (var b = a + 1; b < drawn.Length; b++)
+            {
+                var (one, two) = (drawn[a], drawn[b]);
 
-            var apart = one.X + size.Width <= two.X || two.X + size.Width <= one.X
-                || one.Y + one.Height <= two.Y || two.Y + two.Height <= one.Y;
+                var apart = one.X + size.Width <= two.X || two.X + size.Width <= one.X
+                    || one.Y + one.Height <= two.Y || two.Y + two.Height <= one.Y;
 
-            apart.ShouldBeTrue($"'{name}' draws {one.TypeId} on top of {two.TypeId}");
-        }
+                apart.ShouldBeTrue($"'{name}' draws {one.TypeId} on top of {two.TypeId}");
+            }
     }
 
     /// <summary>

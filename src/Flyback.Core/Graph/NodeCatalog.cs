@@ -17,7 +17,7 @@ public static partial class NodeCatalog
 {
     /// <summary>The provider every module in this file belongs to. Reserved.</summary>
     internal static ModuleProvider BuiltInProvider { get; } = new("flyback", GlobalConstants.ApplicationName);
-    
+
     /// <summary>RGB, so the screen reads three registers.</summary>
     internal const int VideoChannels = 3;
 
@@ -136,7 +136,7 @@ public static partial class NodeCatalog
 
     private static PortSpec Any(string name, float value = 0f, float min = -4f, float max = 4f) =>
         new(name, PortKind.Any, value, min, max);
-    
+
     static NodeCatalog()
     {
         var modules = Output()

@@ -66,11 +66,11 @@ public class TimbreTests
     public void A_fold_never_leaves_full_scale_however_hard_it_is_driven()
     {
         foreach (var drive in new[] { 0f, 1f, 8f, 400f })
-        foreach (var sample in Through(FoldType, Ramp(-30f, 30f, 4_000), 0, (1, drive), (2, 0.3f)))
-        {
-            float.IsFinite(sample).ShouldBeTrue();
-            MathF.Abs(sample).ShouldBeLessThanOrEqualTo(1.000001f);
-        }
+            foreach (var sample in Through(FoldType, Ramp(-30f, 30f, 4_000), 0, (1, drive), (2, 0.3f)))
+            {
+                float.IsFinite(sample).ShouldBeTrue();
+                MathF.Abs(sample).ShouldBeLessThanOrEqualTo(1.000001f);
+            }
     }
 
     [Fact]

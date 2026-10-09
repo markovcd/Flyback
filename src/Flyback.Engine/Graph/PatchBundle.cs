@@ -96,23 +96,23 @@ public static class PatchBundle
         using var zip = new ZipArchive(archive, ZipArchiveMode.Create, leaveOpen: true);
 
         foreach (var (node, extra) in Carriers(packed, catalog))
-        foreach (var path in extra.Files(node))
-        {
-            if (string.IsNullOrWhiteSpace(path) || renamed.ContainsKey(path)) continue;
-
-            if (open(path) is not { } bytes)
+            foreach (var path in extra.Files(node))
             {
-                missing.Add(path);
-                continue;
+                if (string.IsNullOrWhiteSpace(path) || renamed.ContainsKey(path)) continue;
+
+                if (open(path) is not { } bytes)
+                {
+                    missing.Add(path);
+                    continue;
+                }
+
+                var entry = FilesFolder + Unique(path, taken);
+
+                using (var writing = zip.CreateEntry(entry).Open()) writing.Write(bytes);
+
+                renamed[path] = entry;
+                carried.Add(path);
             }
-
-            var entry = FilesFolder + Unique(path, taken);
-
-            using (var writing = zip.CreateEntry(entry).Open()) writing.Write(bytes);
-
-            renamed[path] = entry;
-            carried.Add(path);
-        }
 
         // Told after every name has been decided, so that two nodes naming one
         // file are pointed at one copy of it.
@@ -220,9 +220,9 @@ public static class PatchBundle
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var (node, extra) in Carriers(patch, against ?? NodeCatalog.Current))
-        foreach (var path in extra.Files(node))
-            if (!string.IsNullOrWhiteSpace(path) && seen.Add(path))
-                named.Add(path);
+            foreach (var path in extra.Files(node))
+                if (!string.IsNullOrWhiteSpace(path) && seen.Add(path))
+                    named.Add(path);
 
         return named;
     }

@@ -184,16 +184,16 @@ internal static class PlateModule
         var shaking = em.Constant(0f);
 
         for (var m = 1; m <= each; m++)
-        for (var n = 1; n <= each; n++)
-        {
-            var mode = RingModes + ((m - 1) * each + n - 1) * 2;
+            for (var n = 1; n <= each; n++)
+            {
+                var mode = RingModes + ((m - 1) * each + n - 1) * 2;
 
-            var motion = em.Mul(ring[mode], em.Mul(hereX[m], hereY[n]));
-            swing = em.Add(swing, em.Mul(motion, motion));
+                var motion = em.Mul(ring[mode], em.Mul(hereX[m], hereY[n]));
+                swing = em.Add(swing, em.Mul(motion, motion));
 
-            var shake = em.Mul(motion, ring[mode + 1]);
-            shaking = em.Add(shaking, em.Mul(shake, shake));
-        }
+                var shake = em.Mul(motion, ring[mode + 1]);
+                shaking = em.Add(shaking, em.Mul(shake, shake));
+            }
 
         // The level rides on every envelope and on the weight alike, so the divisions
         // take it out and it is put back once. A plate struck on an edge wakes nothing,
@@ -266,36 +266,36 @@ internal static class PlateModule
         var modes = new (Slot Envelope, Slot Shake)[each * each];
 
         for (var m = 1; m <= each; m++)
-        for (var n = 1; n <= each; n++)
-        {
-            // How far up the ladder this mode is, nought for the lowest.
-            var order = m * m + n * n - 2;
-
-            var amplitude = em.Mul(struckX[m], struckY[n]);
-
-            if (order > 0)
+            for (var n = 1; n <= each; n++)
             {
-                // Dull plates give the high modes less, and let them go sooner.
-                amplitude = em.Binary(OpCode.Div, amplitude, em.Add(em.Mul(dull, order), 1f));
+                // How far up the ladder this mode is, nought for the lowest.
+                var order = m * m + n * n - 2;
+
+                var amplitude = em.Mul(struckX[m], struckY[n]);
+
+                if (order > 0)
+                {
+                    // Dull plates give the high modes less, and let them go sooner.
+                    amplitude = em.Binary(OpCode.Div, amplitude, em.Add(em.Mul(dull, order), 1f));
+                }
+
+                var rate = em.Binary(OpCode.Div, em.Add(em.Mul(quicker, order), 1f), fall);
+                var envelope = em.Mul(amplitude, em.Unary(OpCode.Exp, em.Mul(age, rate)));
+
+                // Where this mode sits on the ladder, the lowest at one.
+                var rung = em.Add(em.Mul(squeeze, n * n), m * m);
+                var pitch = em.Mul(spin, rung);
+                sound = em.Add(sound, em.Mul(envelope, em.Unary(OpCode.Cos, em.Mul(pitch, age))));
+
+                // How hard this mode shakes the plate for its swing: its frequency squared
+                // against the lowest mode's, so a high mode counts for far more than its
+                // size while it lasts.
+                var above = em.Binary(OpCode.Div, rung, both);
+
+                modes[(m - 1) * each + n - 1] = (envelope, em.Mul(above, above));
+
+                weight = em.Add(weight, em.Unary(OpCode.Abs, amplitude));
             }
-
-            var rate = em.Binary(OpCode.Div, em.Add(em.Mul(quicker, order), 1f), fall);
-            var envelope = em.Mul(amplitude, em.Unary(OpCode.Exp, em.Mul(age, rate)));
-
-            // Where this mode sits on the ladder, the lowest at one.
-            var rung = em.Add(em.Mul(squeeze, n * n), m * m);
-            var pitch = em.Mul(spin, rung);
-            sound = em.Add(sound, em.Mul(envelope, em.Unary(OpCode.Cos, em.Mul(pitch, age))));
-
-            // How hard this mode shakes the plate for its swing: its frequency squared
-            // against the lowest mode's, so a high mode counts for far more than its
-            // size while it lasts.
-            var above = em.Binary(OpCode.Div, rung, both);
-
-            modes[(m - 1) * each + n - 1] = (envelope, em.Mul(above, above));
-
-            weight = em.Add(weight, em.Unary(OpCode.Abs, amplitude));
-        }
 
         Slot[] ring = [em.Mul(level, em.Binary(OpCode.Div, sound, weight)), level, weight];
 

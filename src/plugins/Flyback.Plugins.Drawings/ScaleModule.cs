@@ -22,7 +22,7 @@ internal static class ScaleModule
             new PortSpec("sy", PortKind.Scalar, 1f, -4f, 4f) { Help = "Up alone. Negative mirrors it." },
             new PortSpec("sz", PortKind.Scalar, 1f, -4f, 4f) { Help = "Depth alone. Negative mirrors it." },
         ],
-        [..Space3d.Point("Across, scaled.", "Up, scaled.", "Toward the viewer, scaled.")],
+        [.. Space3d.Point("Across, scaled.", "Up, scaled.", "Toward the viewer, scaled.")],
         (em, node) =>
         [
             em.Mul(node[Space3d.XPort], em.Mul(node[ScalePort], node[SxPort])),

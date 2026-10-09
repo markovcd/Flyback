@@ -330,20 +330,20 @@ public sealed class JpegWriter
         Span<double> intermediate = stackalloc double[64];
 
         for (var y = 0; y < 8; y++)
-        for (var u = 0; u < 8; u++)
-        {
-            var sum = 0d;
-            for (var x = 0; x < 8; x++) sum += Basis[u * 8 + x] * samples[y * 8 + x];
-            intermediate[y * 8 + u] = sum;
-        }
+            for (var u = 0; u < 8; u++)
+            {
+                var sum = 0d;
+                for (var x = 0; x < 8; x++) sum += Basis[u * 8 + x] * samples[y * 8 + x];
+                intermediate[y * 8 + u] = sum;
+            }
 
         for (var u = 0; u < 8; u++)
-        for (var v = 0; v < 8; v++)
-        {
-            var sum = 0d;
-            for (var y = 0; y < 8; y++) sum += Basis[v * 8 + y] * intermediate[y * 8 + u];
-            frequencies[v * 8 + u] = sum;
-        }
+            for (var v = 0; v < 8; v++)
+            {
+                var sum = 0d;
+                for (var y = 0; y < 8; y++) sum += Basis[v * 8 + y] * intermediate[y * 8 + u];
+                frequencies[v * 8 + u] = sum;
+            }
     }
 
     /// <summary>How many bits the magnitude of a coefficient needs. Zero needs none.</summary>

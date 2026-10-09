@@ -27,7 +27,7 @@ public sealed class FlybackApp : Application
         {
             throw new NotSupportedException("Flyback app is not initialized.");
         }
-        
+
         if (StallTrace.On)
         {
             var watch = new StallWatch();
@@ -89,7 +89,7 @@ public sealed class FlybackApp : Application
                     PassToViewer(path, desktop, window);
                     return;
                 }
-                
+
                 await provider.GetRequiredService<PatchOpening>().OpenActivatedFileAsync(file);
             };
         }

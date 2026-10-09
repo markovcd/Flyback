@@ -221,7 +221,7 @@ public partial class NodeCatalog
         [Any("a") with { Help = a }, Any("b", defaultB) with { Help = b }],
         [Any("out") with { Help = result }],
         (em, i) => [em.Binary(code, i[0], i[1])], description);
-    
+
     /// <summary>
     /// Four inputs, a level on each, summed into one — the desk, rather than four
     /// Multiplies wired into a chain of Adds.

@@ -25,13 +25,13 @@ internal interface IDialog
     /// already stops — a file dropped from outside is the one there is.
     /// </summary>
     bool IsShowing { get; }
-    
-    Task Show(string title, Func<Action, Control> content, Control? header = null, bool fill = false) 
+
+    Task Show(string title, Func<Action, Control> content, Control? header = null, bool fill = false)
         => Show<object?>(title, c => content(() => c(null)), header, fill);
-    
-    Task Show(string title, Control content, Control? header = null, bool fill = false) 
+
+    Task Show(string title, Control content, Control? header = null, bool fill = false)
         => Show<object?>(title, _ => content, header, fill);
-    
+
     /// <summary>
     /// Puts <paramref name="content"/> over the window and waits for it to be
     /// answered — by <see cref="Close{TResult}"/>, or by the two ways out the
@@ -61,7 +61,7 @@ internal interface IDialog
     /// on-screen keyboard rising from the bottom.
     /// </param>
     Task<TResult> Show<TResult>(
-        string title, 
+        string title,
         Func<Action<TResult>, Control> content,
         Control? header = null,
         bool fill = false,

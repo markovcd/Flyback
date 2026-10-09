@@ -35,20 +35,20 @@ public class TotalityTests
         var failures = new List<string>();
 
         foreach (var a in Hostile)
-        foreach (var b in Hostile)
-        {
-            var program = Single(code, a, b);
-            var registers = program.AllocateRegisters();
+            foreach (var b in Hostile)
+            {
+                var program = Single(code, a, b);
+                var registers = program.AllocateRegisters();
 
-            try
-            {
-                program.Evaluate(0.25d, -0.5d, 3d, registers, default);
+                try
+                {
+                    program.Evaluate(0.25d, -0.5d, 3d, registers, default);
+                }
+                catch (Exception e)
+                {
+                    failures.Add($"{code}({a}, {b}) threw {e.GetType().Name}: {e.Message}");
+                }
             }
-            catch (Exception e)
-            {
-                failures.Add($"{code}({a}, {b}) threw {e.GetType().Name}: {e.Message}");
-            }
-        }
 
         failures.ShouldBeEmpty(string.Join(Environment.NewLine, failures.Take(5)));
     }
@@ -60,24 +60,24 @@ public class TotalityTests
         var failures = new List<string>();
 
         foreach (var a in Hostile)
-        foreach (var b in Hostile)
-        {
-            var program = Single(code, a, b);
-            var il = IlProgram.Compile(program, IlParts.Whole);
+            foreach (var b in Hostile)
+            {
+                var program = Single(code, a, b);
+                var il = IlProgram.Compile(program, IlParts.Whole);
 
-            var expected = program.AllocateRegisters();
-            var actual = program.AllocateRegisters();
+                var expected = program.AllocateRegisters();
+                var actual = program.AllocateRegisters();
 
-            program.Evaluate(0.25d, -0.5d, 3d, expected, default);
-            il.Evaluate(0.25d, -0.5d, 3d, actual, default);
+                program.Evaluate(0.25d, -0.5d, 3d, expected, default);
+                il.Evaluate(0.25d, -0.5d, 3d, actual, default);
 
-            for (var i = 0; i < program.OutputWidth; i++)
-                if (BitConverter.DoubleToInt64Bits(expected[program.OutputBase + i])
-                    != BitConverter.DoubleToInt64Bits(actual[program.OutputBase + i]))
-                    failures.Add(
-                        $"{code}({a}, {b})[{i}]: interpreter {expected[program.OutputBase + i]}, "
-                        + $"il {actual[program.OutputBase + i]}");
-        }
+                for (var i = 0; i < program.OutputWidth; i++)
+                    if (BitConverter.DoubleToInt64Bits(expected[program.OutputBase + i])
+                        != BitConverter.DoubleToInt64Bits(actual[program.OutputBase + i]))
+                        failures.Add(
+                            $"{code}({a}, {b})[{i}]: interpreter {expected[program.OutputBase + i]}, "
+                            + $"il {actual[program.OutputBase + i]}");
+            }
 
         failures.ShouldBeEmpty(string.Join(Environment.NewLine, failures.Take(5)));
     }

@@ -8,11 +8,11 @@ internal sealed class WindowDialog(WindowHolder holder) : IDialog
 {
     public bool IsShowing => OverlayLayer.GetOverlayLayer(holder.Instance)?
         .Children.OfType<ModalOverlay>().Any() == true;
-    
+
     public async Task<TResult> Show<TResult>(
-            string title, 
-            Func<Action<TResult>, Control> content, 
-            Control? header = null, 
+            string title,
+            Func<Action<TResult>, Control> content,
+            Control? header = null,
             bool fill = false,
             bool wide = false,
             bool top = false)

@@ -276,16 +276,16 @@ public class ModulationTests
     public void A_phaser_stays_bounded_at_any_feedback_it_offers()
     {
         foreach (var feedback in new[] { 0f, 0.5f, 0.9f, 4f, -4f })
-        foreach (var depth in new[] { 0f, 1f })
-        {
-            var output = Through(PhaserType, Noise(20_000), 0, (Depth, depth), (3, feedback), (4, 1f));
-
-            foreach (var sample in output)
+            foreach (var depth in new[] { 0f, 1f })
             {
-                float.IsFinite(sample).ShouldBeTrue();
-                MathF.Abs(sample).ShouldBeLessThan(16f);
+                var output = Through(PhaserType, Noise(20_000), 0, (Depth, depth), (3, feedback), (4, 1f));
+
+                foreach (var sample in output)
+                {
+                    float.IsFinite(sample).ShouldBeTrue();
+                    MathF.Abs(sample).ShouldBeLessThan(16f);
+                }
             }
-        }
     }
 
     /// <summary>

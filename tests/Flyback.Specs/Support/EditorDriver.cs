@@ -217,12 +217,12 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
         var sum = 0;
 
         for (var y = (int)from.Y; y < (int)to.Y; y++)
-        for (var x = (int)from.X; x < (int)to.X; x++)
-        {
-            var at = y * locked.RowBytes + x * 4;
+            for (var x = (int)from.X; x < (int)to.X; x++)
+            {
+                var at = y * locked.RowBytes + x * 4;
 
-            sum += bytes[at] + bytes[at + 1] + bytes[at + 2];
-        }
+                sum += bytes[at] + bytes[at + 1] + bytes[at + 2];
+            }
 
         return sum;
     }

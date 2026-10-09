@@ -1,6 +1,6 @@
 
 
-﻿namespace Flyback.Editor.Files;
+namespace Flyback.Editor.Files;
 
 /// <summary>
 /// macOS reads which program opens a file from the bundle's Info.plist, which

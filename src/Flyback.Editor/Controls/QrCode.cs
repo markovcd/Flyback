@@ -197,9 +197,9 @@ public sealed class QrCode : Control
         }
 
         foreach (var row in AlignmentCenters[version - 1])
-        foreach (var column in AlignmentCenters[version - 1])
-            if (!reserved[row, column])
-                Alignment(modules, reserved, row, column);
+            foreach (var column in AlignmentCenters[version - 1])
+                if (!reserved[row, column])
+                    Alignment(modules, reserved, row, column);
 
         Reserve(reserved, size);
         Place(modules, reserved, size, codewords, mask);
@@ -215,28 +215,28 @@ public sealed class QrCode : Control
     private static void Finder(bool[,] modules, bool[,] reserved, int size, int row, int column)
     {
         for (var y = -1; y <= 7; y++)
-        for (var x = -1; x <= 7; x++)
-        {
-            var (r, c) = (row + y, column + x);
+            for (var x = -1; x <= 7; x++)
+            {
+                var (r, c) = (row + y, column + x);
 
-            if (r < 0 || r >= size || c < 0 || c >= size) continue;
+                if (r < 0 || r >= size || c < 0 || c >= size) continue;
 
-            var inside = y is >= 0 and <= 6 && x is >= 0 and <= 6;
+                var inside = y is >= 0 and <= 6 && x is >= 0 and <= 6;
 
-            modules[r, c] = inside && Math.Max(Math.Abs(3 - y), Math.Abs(3 - x)) != 2;
-            reserved[r, c] = true;
-        }
+                modules[r, c] = inside && Math.Max(Math.Abs(3 - y), Math.Abs(3 - x)) != 2;
+                reserved[r, c] = true;
+            }
     }
 
     /// <summary>An alignment pattern, centered where the timing patterns' grid says.</summary>
     private static void Alignment(bool[,] modules, bool[,] reserved, int row, int column)
     {
         for (var y = -2; y <= 2; y++)
-        for (var x = -2; x <= 2; x++)
-        {
-            modules[row + y, column + x] = Math.Max(Math.Abs(y), Math.Abs(x)) != 1;
-            reserved[row + y, column + x] = true;
-        }
+            for (var x = -2; x <= 2; x++)
+            {
+                modules[row + y, column + x] = Math.Max(Math.Abs(y), Math.Abs(x)) != 1;
+                reserved[row + y, column + x] = true;
+            }
     }
 
     /// <summary>Keeps the format bits' places, and the dark module, clear of data.</summary>
@@ -344,11 +344,11 @@ public sealed class QrCode : Control
 
         // Every two-by-two block of one color.
         for (var row = 0; row < size - 1; row++)
-        for (var column = 0; column < size - 1; column++)
-            if (modules[row, column] == modules[row, column + 1]
-                && modules[row, column] == modules[row + 1, column]
-                && modules[row, column] == modules[row + 1, column + 1])
-                penalty += 3;
+            for (var column = 0; column < size - 1; column++)
+                if (modules[row, column] == modules[row, column + 1]
+                    && modules[row, column] == modules[row + 1, column]
+                    && modules[row, column] == modules[row + 1, column + 1])
+                    penalty += 3;
 
         foreach (var module in modules)
             if (module)
@@ -452,9 +452,9 @@ public sealed class QrCode : Control
         }
 
         for (var row = 0; row < count; row++)
-        for (var column = 0; column < count; column++)
-            if (modules[row, column] && !InFinder(count, row, column))
-                Block(ink, At(row, column, 1), 0.25);
+            for (var column = 0; column < count; column++)
+                if (modules[row, column] && !InFinder(count, row, column))
+                    Block(ink, At(row, column, 1), 0.25);
     }
 
     /// <summary>Whether a module belongs to one of the finders, which are drawn whole.</summary>

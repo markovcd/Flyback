@@ -9,8 +9,8 @@ public partial class NodeCatalog
     {
         yield return new NodeDef(
             "space.rotate", "Rotate", ModuleCategories.Geometry,
-            [..Position(), Num("angle", 0f, -Tau, Tau) with { Help = "In radians. An oscillator here makes it turn." }],
-            [..Moved()],
+            [.. Position(), Num("angle", 0f, -Tau, Tau) with { Help = "In radians. An oscillator here makes it turn." }],
+            [.. Moved()],
             (em, i) =>
             {
                 var cos = em.Unary(OpCode.Cos, i[2]);
@@ -28,8 +28,8 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "space.scale", "Scale", ModuleCategories.Geometry,
-            [..Position(), Num("scale", 1f, 0f, 16f) with { Help = "Multiplies the coordinate. Larger packs more pattern in." }],
-            [..Moved()],
+            [.. Position(), Num("scale", 1f, 0f, 16f) with { Help = "Multiplies the coordinate. Larger packs more pattern in." }],
+            [.. Moved()],
             (em, i) => [em.Mul(i[0], i[2]), em.Mul(i[1], i[2])],
             "Zooms the coordinate system.")
         {
@@ -43,7 +43,7 @@ public partial class NodeCatalog
                 Num("dx", 0f, -2f, 2f) with { Help = "How far the pattern moves along x." },
                 Num("dy", 0f, -2f, 2f) with { Help = "How far the pattern moves along y." },
             ],
-            [..Moved()],
+            [.. Moved()],
             (em, i) => [em.Binary(OpCode.Sub, i[0], i[2]), em.Binary(OpCode.Sub, i[1], i[3])],
             "Slides the coordinate system, moving the pattern by (dx, dy).")
         {
@@ -54,7 +54,7 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "space.polar", "To polar", ModuleCategories.Geometry,
-            [..Position()],
+            [.. Position()],
             [
                 Num("radius") with { Standard = true },
                 Num("angle") with { Help = "In radians, round the center: -pi to pi." },
@@ -67,7 +67,7 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "space.tile", "Tile", ModuleCategories.Geometry,
-            [..Position(), Num("tiles", 3f, 1f, 16f) with { Help = "How many cells fit across -1 to 1." }],
+            [.. Position(), Num("tiles", 3f, 1f, 16f) with { Help = "How many cells fit across -1 to 1." }],
             [Num("x") with { Help = TileCellHelp }, Num("y") with { Help = TileCellHelp }],
             (em, i) =>
             {
@@ -83,7 +83,7 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "space.mirror", "Mirror", ModuleCategories.Geometry,
-            [..Position()], [..Moved()],
+            [.. Position()], [.. Moved()],
             (em, i) => [em.Unary(OpCode.Abs, i[0]), em.Unary(OpCode.Abs, i[1])],
             "Folds each axis about zero, so one quadrant is reflected into all four.")
         {
@@ -92,8 +92,8 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "space.kaleidoscope", "Kaleidoscope", ModuleCategories.Geometry,
-            [..Position(), Num("segments", 6f, 1f, 24f) with { Help = "How many wedges make the full circle." }],
-            [..Moved()],
+            [.. Position(), Num("segments", 6f, 1f, 24f) with { Help = "How many wedges make the full circle." }],
+            [.. Moved()],
             (em, i) =>
             {
                 var radius = em.Binary(OpCode.Hypot, i[0], i[1]);
@@ -120,7 +120,7 @@ public partial class NodeCatalog
                 Num("by") with { Help = "The signal that pushes: added to 'x', and through a sine to 'y'." },
                 Num("amount", 0.5f, 0f, 2f) with { Help = "Multiplies 'by' before it pushes." },
             ],
-            [..Moved()],
+            [.. Moved()],
             (em, i) =>
             {
                 var push = em.Mul(i[2], i[3]);
@@ -176,7 +176,7 @@ public partial class NodeCatalog
             Num("dx", 0f, -2f, 2f) with { Help = TransformSlideHelp },
             Num("dy", 0f, -2f, 2f) with { Help = TransformSlideHelp },
         ],
-        [..Moved()],
+        [.. Moved()],
         (em, i) =>
         {
             var turnFirst = i.Extra<ExtraState>(TransformStateKey)?.Chosen(TransformOrderKey) == TurnThenZoom;

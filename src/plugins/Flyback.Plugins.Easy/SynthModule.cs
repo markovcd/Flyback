@@ -214,7 +214,8 @@ internal static class SynthModule
             new ChoiceOption(Lfo.Ramp, "Ramp"),
             new ChoiceOption(Lfo.Random, "Random"),
         ],
-        fallback) { Help = "How the LFO moves: smoothly, in steps, or to a new random place each cycle." };
+        fallback)
+    { Help = "How the LFO moves: smoothly, in steps, or to a new random place each cycle." };
 
     private static ExtraField.Choice Target(string key, string label, string fallback) => new(
         key,
@@ -225,7 +226,8 @@ internal static class SynthModule
             new ChoiceOption(Volume, "Volume (tremolo)"),
             new ChoiceOption(Pan, "Pan (auto-pan)"),
         ],
-        fallback) { Help = "What the LFO wobbles." };
+        fallback)
+    { Help = "What the LFO wobbles." };
 
     /// <summary>A node with the given settings chosen, and every other at its fallback.</summary>
     public static NodeInstance Configure(NodeInstance node, params (string Key, string Value)[] chosen)
