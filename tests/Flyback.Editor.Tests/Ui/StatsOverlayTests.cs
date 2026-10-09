@@ -32,17 +32,7 @@ public class StatsOverlayTests : EditorTest
     }
 
     /// <summary>The editor's picture given the whole window, as a double-click on it does.</summary>
-    private static void FullScreen(MainWindow window)
-    {
-        var preview = All<PreviewHost>(window).Single();
-        var at = preview.TranslatePoint(new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 2), window)!.Value;
-
-        window.MouseDown(at, MouseButton.Left);
-        window.MouseUp(at, MouseButton.Left);
-        window.MouseDown(at, MouseButton.Left);
-        window.MouseUp(at, MouseButton.Left);
-        Settle(window);
-    }
+    private static void FullScreen(MainWindow window) => DoubleClickPicture(window);
 
     private static StatsOverlay Stats(Avalonia.Controls.Window window) => All<StatsOverlay>(window).Single();
 

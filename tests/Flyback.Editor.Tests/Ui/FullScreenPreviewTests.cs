@@ -47,17 +47,7 @@ public class FullScreenPreviewTests : EditorTest
             ?? throw new InvalidOperationException("the preview is not in this window");
     }
 
-    private static void DoubleClick(MainWindow window)
-    {
-        var at = Middle(window);
-
-        window.MouseDown(at, MouseButton.Left);
-        window.MouseUp(at, MouseButton.Left);
-        window.MouseDown(at, MouseButton.Left);
-        window.MouseUp(at, MouseButton.Left);
-
-        Settle(window);
-    }
+    private static void DoubleClick(MainWindow window) => DoubleClickPicture(window);
 
     private static void PressEscape(MainWindow window)
     {

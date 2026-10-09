@@ -36,18 +36,7 @@ public sealed class FullScreenTransportTests : EditorTest
 
     private static PreviewHost Preview(MainWindow window) => All<PreviewHost>(window).Single();
 
-    private static void FullScreen(MainWindow window)
-    {
-        var preview = Preview(window);
-        var at = preview.TranslatePoint(new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 2), window)!.Value;
-
-        window.MouseDown(at, MouseButton.Left);
-        window.MouseUp(at, MouseButton.Left);
-        window.MouseDown(at, MouseButton.Left);
-        window.MouseUp(at, MouseButton.Left);
-
-        Settle(window);
-    }
+    private static void FullScreen(MainWindow window) => DoubleClickPicture(window);
 
     /// <summary>The middle of the dots, in the window.</summary>
     private static Point Dots(MainWindow window, TuckedAway overlay)

@@ -7,6 +7,7 @@ using Flyback.Editor.Canvas;
 using Flyback.Editor.Site;
 using Flyback.Editor.Tests.Ui;
 using Flyback.Editor.Windows;
+using Flyback.Ui.Controls;
 using Flyback.Ui.Testing;
 using Flyback.Ui.Testing.Headless;
 using Microsoft.Extensions.DependencyInjection;
@@ -175,6 +176,26 @@ public class EditorTest : UiTest
             window.MouseUp(at, MouseButton.Left, modifiers);
         }
 
+        Settle(window);
+    }
+
+    /// <summary>Double-clicks the editor's picture, which gives it the whole window or gives it back.</summary>
+    /// <remarks>
+    /// The tap and the double tap a double-click is recognized as, raised on the picture.
+    /// Headless clicks are stamped when they are injected, so under a full run's load the
+    /// second can land past the double-click time and be read as a second single click.
+    /// </remarks>
+    internal static void DoubleClickPicture(Window window)
+    {
+        var preview = All<PreviewHost>(window).Single();
+        var at = new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 2);
+        var pointer = new Pointer(Pointer.GetNextFreeId(), PointerType.Mouse, isPrimary: true);
+        var released = new PointerEventArgs(
+            InputElement.PointerReleasedEvent, preview, pointer, preview, at, 0,
+            new PointerPointProperties(), KeyModifiers.None);
+
+        preview.RaiseEvent(new TappedEventArgs(InputElement.TappedEvent, released));
+        preview.RaiseEvent(new TappedEventArgs(InputElement.DoubleTappedEvent, released));
         Settle(window);
     }
 
