@@ -16,7 +16,7 @@
 - **One builder, a capped cache.** A self-hosted machine builds on the single `flyback` buildx builder that `scripts/builder.sh` creates, its layer cache held under 15 GB by `scripts/buildkitd.toml`, so a cancelled job leaves nothing behind and disk use is bounded. The builder's container is held to 12 GB of memory (`FLYBACK_BUILDER_MEMORY`), so a heavy build dies inside it instead of freezing the host. GitHub's own runners use a fresh builder and GitHub's cache.
 - **Superseded runs are cancelled.** `concurrency` with `cancel-in-progress` on anything a push triggers, except the gate on `main`: every push there runs to its verdict, in a group of its own commit, so a break is named on the commit that made it (ADR-0120). Never on Pages or a release, which must finish what they started.
 - **Every job sets `timeout-minutes`**, a few times its usual length. The default is six hours of a hang.
-- **Deploys filter on paths.** `worker.yml` lists what the Worker, its pages and the plugins it starts with are built from; a new reference or site plugin is added there in the same commit.
+- **Deploys filter on paths.** `worker.yml` lists what the Worker, its pages and the plugins it starts with are built from; a new reference or site plugin is added there in the same commit. A deploy waits for Build to pass on its commit, so a red `main` never ships.
 - **Every workflow opens with a comment** saying what it does, what triggers it, and why anything surprising in it is there.
 
 ## A release is one script

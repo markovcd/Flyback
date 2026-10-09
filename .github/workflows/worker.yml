@@ -2,7 +2,8 @@
 # editor, puts the framework files too large to be assets in R2, then gives the site
 # the presets and plugins it starts with and says again what the web pages lack for
 # every preset (deploy/cloudflare/README.md). Runs on a
-# push to main that touches what the site is built from, and by hand.
+# push to main that touches what the site is built from, once the Build workflow
+# has passed on that commit, and by hand.
 #
 # Off until the repository variable WORKER_ENVIRONMENT names the wrangler environment
 # to deploy, so nothing reaches Cloudflare before it is set up. The plugins the site
@@ -46,14 +47,43 @@ on:
 permissions:
   contents: read
 
-# A deploy finishes what it started, as Pages does.
-concurrency:
-  group: worker
-  cancel-in-progress: false
-
 jobs:
+  # A red main is never deployed. This is a job of its own so that waiting on
+  # Build holds nothing: the deploys below queue one pending, and a burst of
+  # pushes ships the newest that passed.
+  gate:
+    if: github.event_name == 'push' && vars.WORKER_ENVIRONMENT != ''
+    runs-on: ubuntu-latest
+    # Build waits for a self-hosted runner, so this waits too.
+    timeout-minutes: 120
+    permissions:
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Wait for Build to pass on this commit
+        run: |
+          deadline=$((SECONDS + 110 * 60))
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            run="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --commit "$GITHUB_SHA" --event push \
+              --json status,conclusion --jq '.[0] | "\(.status) \(.conclusion)"')"
+            case "$run" in
+              "completed success") exit 0 ;;
+              "completed "*) echo "Build on $GITHUB_SHA finished: ${run#completed }." >&2; exit 1 ;;
+            esac
+            sleep 30
+          done
+          echo "Build on $GITHUB_SHA gave no verdict in 110 minutes." >&2
+          exit 1
+
   deploy:
-    if: vars.WORKER_ENVIRONMENT != ''
+    needs: gate
+    # By hand there is no gate to wait for; a push deploys only if it passed.
+    if: ${{ !cancelled() && vars.WORKER_ENVIRONMENT != '' && (needs.gate.result == 'success' || needs.gate.result == 'skipped') }}
+    # A deploy finishes what it started, as Pages does.
+    concurrency:
+      group: worker
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     # The ahead-of-time viewer and editor are most of a run of about twenty minutes.
     timeout-minutes: 90
