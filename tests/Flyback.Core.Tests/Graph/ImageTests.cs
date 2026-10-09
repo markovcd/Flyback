@@ -329,19 +329,19 @@ public class ImageTests
         var aspect = (double)width / height;
 
         for (var y = 0; y < height; y += 7)
-        for (var x = 0; x < width; x += 7)
-        {
-            var at = ((x + 0.5d) / width * 2d - 1d) * aspect;
-            var down = 1d - (y + 0.5d) / height * 2d;
+            for (var x = 0; x < width; x += 7)
+            {
+                var at = ((x + 0.5d) / width * 2d - 1d) * aspect;
+                var down = 1d - (y + 0.5d) / height * 2d;
 
-            shown.Evaluate(at, down, 0d, registers, default, aspect: aspect);
+                shown.Evaluate(at, down, 0d, registers, default, aspect: aspect);
 
-            var wrote = y * stride + x * 4;
+                var wrote = y * stride + x * 4;
 
-            registers[shown.OutputBase].ShouldBe(pixels[wrote + 2] / 255d, 1e-6, $"red at {x},{y}");
-            registers[shown.OutputBase + 1].ShouldBe(pixels[wrote + 1] / 255d, 1e-6, $"green at {x},{y}");
-            registers[shown.OutputBase + 2].ShouldBe(pixels[wrote + 0] / 255d, 1e-6, $"blue at {x},{y}");
-        }
+                registers[shown.OutputBase].ShouldBe(pixels[wrote + 2] / 255d, 1e-6, $"red at {x},{y}");
+                registers[shown.OutputBase + 1].ShouldBe(pixels[wrote + 1] / 255d, 1e-6, $"green at {x},{y}");
+                registers[shown.OutputBase + 2].ShouldBe(pixels[wrote + 0] / 255d, 1e-6, $"blue at {x},{y}");
+            }
     }
 
     // --- harness ---------------------------------------------------------------

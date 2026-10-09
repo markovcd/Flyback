@@ -10,7 +10,7 @@ public partial class NodeCatalog
     /// than two modules, and every patch has exactly one — see ADR-0037.
     /// </summary>
     public const string OutputTypeId = "output";
-    
+
     /// <summary>
     /// The chart module. Named here because the shell roots the picture at one
     /// when it is selected — see <c>Compile.PatchCompiler</c>.
@@ -107,14 +107,14 @@ public partial class NodeCatalog
     /// whether a node is it — see <see cref="ScaleExtra"/>.
     /// </summary>
     public const string QuantiserTypeId = "audio.quantiser";
-    
+
     /// <summary>
     /// Whether a module is the sink, which is what keeps it out of the palette
     /// and out of the delete key — see <see cref="Patch.CanAdd"/> and
     /// <see cref="Patch.Remove"/>.
     /// </summary>
     internal static bool IsSink(string typeId) => typeId == OutputTypeId;
-    
+
     private static IEnumerable<NodeDef> Output()
     {
         yield return new NodeDef(
@@ -482,7 +482,7 @@ public partial class NodeCatalog
 
         return next;
     }
-    
+
     /// <summary>
     /// One socket and a picture of what arrives at it: the value over time,
     /// drawn as a chart rather than used as one.
@@ -845,11 +845,11 @@ public partial class NodeCatalog
             Words = "hear the picture",
         };
     }
-    
+
     /// <summary>An input that carries an earlier one through when left unpatched.</summary>
     private static PortSpec Normalled(string name, int from, float min = -4f, float max = 4f) =>
         new(name, PortKind.Scalar, 0f, min, max, from);
-    
+
     /// <summary>
     /// An input the module reads over a domain of its own rather than over the
     /// pixel's — see <see cref="PortSpec.Swept"/>. Untyped, so a color may be
@@ -857,11 +857,11 @@ public partial class NodeCatalog
     /// </summary>
     private static PortSpec Swept(string name) =>
         new(name, PortKind.Any, Swept: true);
-    
+
     /// <summary>A note number, which the editor writes out by name rather than as a number.</summary>
     private static PortSpec Pitched(string name, float value) =>
         new(name, PortKind.Scalar, value, 0f, 127f, -1, PortDisplay.Note);
- 
+
     /// <summary>
     /// A length of time, held in decades of seconds and written out as the time
     /// it is — see <see cref="PortDisplay.Duration"/>. A hundred microseconds to

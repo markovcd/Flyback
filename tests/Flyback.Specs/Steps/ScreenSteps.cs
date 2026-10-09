@@ -48,12 +48,12 @@ public sealed class ScreenSteps(PatchContext context)
         var (lowest, highest, steepest) = (1f, 0f, 0f);
 
         for (var y = 0; y < frame.Height; y++)
-        for (var x = 0; x < frame.Width; x++)
-        {
-            var here = frame.At(x, y).R;
-            (lowest, highest) = (Math.Min(lowest, here), Math.Max(highest, here));
-            if (x > 0) steepest = Math.Max(steepest, Math.Abs(here - frame.At(x - 1, y).R));
-        }
+            for (var x = 0; x < frame.Width; x++)
+            {
+                var here = frame.At(x, y).R;
+                (lowest, highest) = (Math.Min(lowest, here), Math.Max(highest, here));
+                if (x > 0) steepest = Math.Max(steepest, Math.Abs(here - frame.At(x - 1, y).R));
+            }
 
         (highest - lowest).ShouldBeGreaterThan(0.3f, "the picture is flat");
         steepest.ShouldBeLessThan((highest - lowest) / 3, "neighboring pixels jump");
@@ -113,17 +113,17 @@ public sealed class ScreenSteps(PatchContext context)
         var offset = (scale - 1) / 2;
 
         for (var y = 0; y < coarseHeight; y++)
-        for (var x = 0; x < coarseWidth; x++)
-        {
-            var here = coarse.At(x, y);
-            var there = fine.At(x * scale + offset, y * scale + offset);
-            var where = $"at ({x}, {y}) of {coarseWidth}x{coarseHeight}";
+            for (var x = 0; x < coarseWidth; x++)
+            {
+                var here = coarse.At(x, y);
+                var there = fine.At(x * scale + offset, y * scale + offset);
+                var where = $"at ({x}, {y}) of {coarseWidth}x{coarseHeight}";
 
-            // One byte of slack, for a value on a byte boundary rounding both ways.
-            here.R.ShouldBe(there.R, 1f / 255f, $"red {where}");
-            here.G.ShouldBe(there.G, 1f / 255f, $"green {where}");
-            here.B.ShouldBe(there.B, 1f / 255f, $"blue {where}");
-        }
+                // One byte of slack, for a value on a byte boundary rounding both ways.
+                here.R.ShouldBe(there.R, 1f / 255f, $"red {where}");
+                here.G.ShouldBe(there.G, 1f / 255f, $"green {where}");
+                here.B.ShouldBe(there.B, 1f / 255f, $"blue {where}");
+            }
     }
 
     private static void ShouldShow((float R, float G, float B) pixel, float r, float g, float b, string where)

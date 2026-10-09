@@ -75,14 +75,14 @@ public class PresetSiteDefaultsTests
             ControlMap.Following(patch, control.Id).ShouldNotBeEmpty($"nothing follows '{control.Name}' in {name}");
 
         foreach (var node in patch.Nodes)
-        foreach (var (port, link) in ControlMap.All(node))
-        {
-            var spec = modules.Require(node.TypeId).Inputs[port];
-            patch.Control(link.Control).ShouldNotBeNull($"{name} links a knob it does not have");
+            foreach (var (port, link) in ControlMap.All(node))
+            {
+                var spec = modules.Require(node.TypeId).Inputs[port];
+                patch.Control(link.Control).ShouldNotBeNull($"{name} links a knob it does not have");
 
-            foreach (var end in new[] { link.Min, link.Max })
-                end.ShouldBeInRange(spec.Min, spec.Max, $"{name}: {node.TypeId} '{spec.Name}'");
-        }
+                foreach (var end in new[] { link.Min, link.Max })
+                    end.ShouldBeInRange(spec.Min, spec.Max, $"{name}: {node.TypeId} '{spec.Name}'");
+            }
     }
 
     /// <summary>

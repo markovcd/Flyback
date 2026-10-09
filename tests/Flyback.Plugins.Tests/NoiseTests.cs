@@ -397,9 +397,9 @@ public class NoiseTests
     private static IEnumerable<(float X, float Y)> Grid(int across = 7)
     {
         for (var i = 0; i < across; i++)
-        for (var j = 0; j < across; j++)
-            yield return (
-                -1.3f + 2.6f * (i + 0.31f) / across,
-                -0.9f + 1.8f * (j + 0.17f) / across);
+            for (var j = 0; j < across; j++)
+                yield return (
+                    -1.3f + 2.6f * (i + 0.31f) / across,
+                    -0.9f + 1.8f * (j + 0.17f) / across);
     }
 }

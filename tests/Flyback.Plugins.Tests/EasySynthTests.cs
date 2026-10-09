@@ -35,8 +35,8 @@ public class EasySynthTests
         {
             var data = new TheoryData<string, string>();
             foreach (var wave in Waves)
-            foreach (var filter in Filters)
-                data.Add(wave, filter);
+                foreach (var filter in Filters)
+                    data.Add(wave, filter);
 
             return data;
         }

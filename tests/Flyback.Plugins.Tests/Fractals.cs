@@ -94,8 +94,8 @@ internal static class Fractals
     public static IEnumerable<(float X, float Y)> Grid()
     {
         for (var i = 0; i < 9; i++)
-        for (var j = 0; j < 9; j++)
-            yield return (-1.7f + i * 0.41f, -0.95f + j * 0.23f);
+            for (var j = 0; j < 9; j++)
+                yield return (-1.7f + i * 0.41f, -0.95f + j * 0.23f);
     }
 
     /// <summary>The shader's complaint, which it has no other way to make.</summary>

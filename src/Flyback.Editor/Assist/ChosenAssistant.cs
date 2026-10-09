@@ -13,10 +13,10 @@ internal sealed class ChosenAssistant
         this.settings = settings;
         this.plugins = plugins;
     }
-    
+
     /// <summary>The assistant Ask sends to, or null where none is chosen.</summary>
     public IPatchAssistant? Value { get; private set; }
-    
+
     /// <summary>
     /// The provider a saved id names, or none — never a different one picked on
     /// its behalf. A provider that no longer loads is not the same as a provider
@@ -27,7 +27,7 @@ internal sealed class ChosenAssistant
     public void Load() => Value = settings.Current.Provider.Length > 0
         ? plugins.Assistant(settings.Current.Provider)
         : null;
-    
+
     /// <summary>
     /// row 0 means no assistant
     /// </summary>

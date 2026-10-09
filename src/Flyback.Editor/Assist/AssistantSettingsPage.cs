@@ -199,7 +199,7 @@ internal sealed class AssistantSettingsPage
             if (row < 0 || row > plugins.Assistants.Count) return;
 
             chosenAssistant.Choose(row);
-            
+
             // What the last provider was set to is kept rather than carried
             // over. A setting means whatever the provider that declared it says
             // it means, and the two need not agree about anything but the name.
@@ -251,7 +251,7 @@ internal sealed class AssistantSettingsPage
             TextWrapping = TextWrapping.Wrap,
         };
     }
-    
+
     /// <summary>
     /// Puts back whatever was in force when the settings were opened, for a window
     /// closed some way other than Save.
@@ -298,7 +298,7 @@ internal sealed class AssistantSettingsPage
                 .First();
 
         form.Show(
-            chosenAssistant.Value is null ? null : chosenAssistant.Value.Form, 
+            chosenAssistant.Value is null ? null : chosenAssistant.Value.Form,
             settingsRepository.Current.Of(chosenAssistant.Value?.Id ?? string.Empty));
     }
 
@@ -328,7 +328,7 @@ internal sealed class AssistantSettingsPage
 
         settingsRepository.Current.Provider = chosenAssistant.Value?.Id ?? string.Empty;
 
-        
+
         if (chosenAssistant.Value is not null)
         {
             settingsRepository.Current.Provider = chosenAssistant.Value.Id;

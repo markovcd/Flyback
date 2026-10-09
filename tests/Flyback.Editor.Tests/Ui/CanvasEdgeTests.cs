@@ -81,14 +81,14 @@ public class CanvasEdgeTests : EditorTest
         var bgra = locked.Format == PixelFormat.Bgra8888;
 
         for (var y = 0; y < locked.Size.Height; y++)
-        for (var x = 0; x < locked.Size.Width; x++)
-        {
-            var at = y * locked.RowBytes + x * 4;
+            for (var x = 0; x < locked.Size.Width; x++)
+            {
+                var at = y * locked.RowBytes + x * 4;
 
-            pixels[x, y] = bgra
-                ? Color.FromRgb(bytes[at + 2], bytes[at + 1], bytes[at + 0])
-                : Color.FromRgb(bytes[at + 0], bytes[at + 1], bytes[at + 2]);
-        }
+                pixels[x, y] = bgra
+                    ? Color.FromRgb(bytes[at + 2], bytes[at + 1], bytes[at + 0])
+                    : Color.FromRgb(bytes[at + 0], bytes[at + 1], bytes[at + 2]);
+            }
 
         return pixels;
     }

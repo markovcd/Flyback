@@ -87,15 +87,15 @@ public class PatchLayoutTests
         var drawn = Drawing(patch);
 
         for (var a = 0; a < drawn.Count; a++)
-        for (var b = a + 1; b < drawn.Count; b++)
-        {
-            var (one, two) = (drawn[a], drawn[b]);
+            for (var b = a + 1; b < drawn.Count; b++)
+            {
+                var (one, two) = (drawn[a], drawn[b]);
 
-            var apart = one.Right <= two.Left || two.Right <= one.Left
-                || one.Bottom <= two.Top || two.Bottom <= one.Top;
+                var apart = one.Right <= two.Left || two.Right <= one.Left
+                    || one.Bottom <= two.Top || two.Bottom <= one.Top;
 
-            apart.ShouldBeTrue($"{one.What} and {two.What} overlap");
-        }
+                apart.ShouldBeTrue($"{one.What} and {two.What} overlap");
+            }
     }
 
     /// <summary>

@@ -33,7 +33,7 @@ public sealed class BundleFiles(
 
     /// <summary>What the archive holds, as it holds it.</summary>
     public IReadOnlyDictionary<string, byte[]> Bytes => files;
-    
+
     LoadedSample? ISampleLibrary.Find(string path) =>
         Cached<LoadedSample, SoundFault>(clips, path, Sound)
         ?? behindSounds?.Find(path);

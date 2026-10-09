@@ -647,12 +647,14 @@ is signed at all.
 
 ## 11. Code style
 
-There is no formatter configuration. The style is what the code already does, and
-new code should be indistinguishable from the file it lands in.
+Whitespace is `.editorconfig`, and the gate fails a change that leaves a file
+`dotnet format whitespace Flyback.slnx` would touch; run that command to fix it.
+Everything else is what the code already does, and new code should be
+indistinguishable from the file it lands in.
 
 ### Language
 
-- File-scoped namespaces, in every file.
+- File-scoped namespaces, in every file; the gate fails a block-scoped one.
 - `sealed` on a class by default. Static classes for things with no instance.
 - Records for data, `readonly record struct` for small values
   (`Slot`, `PortNormal`, `AudioFormat`, `MidiMessage`). Primary constructors where

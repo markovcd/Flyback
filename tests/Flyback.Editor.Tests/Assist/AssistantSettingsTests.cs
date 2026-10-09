@@ -229,11 +229,11 @@ public sealed class AssistantSettingsTests : IDisposable
             .ToArray();
 
         foreach (var name in strings)
-        foreach (var word in suspicious)
-        {
-            name.Contains(word, StringComparison.OrdinalIgnoreCase).ShouldBeFalse(
-                $"'{name}' looks like somewhere a credential would end up, and this file is written in plain text.");
-        }
+            foreach (var word in suspicious)
+            {
+                name.Contains(word, StringComparison.OrdinalIgnoreCase).ShouldBeFalse(
+                    $"'{name}' looks like somewhere a credential would end up, and this file is written in plain text.");
+            }
     }
 
     [Fact]

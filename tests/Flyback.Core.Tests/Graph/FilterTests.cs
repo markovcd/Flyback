@@ -138,16 +138,16 @@ public class FilterTests
     public void A_filter_stays_bounded_wherever_the_cutoff_is_swept()
     {
         foreach (var cutoff in new[] { 0f, 20f, 5_000f, 100_000f, 1e9f, -400f })
-        foreach (var resonance in new[] { 0f, 1f, 4f, -1f })
-        {
-            var output = Through(Noise(2_000), 0, (1, cutoff), (2, resonance));
-
-            foreach (var sample in output)
+            foreach (var resonance in new[] { 0f, 1f, 4f, -1f })
             {
-                float.IsFinite(sample).ShouldBeTrue();
-                MathF.Abs(sample).ShouldBeLessThan(8f);
+                var output = Through(Noise(2_000), 0, (1, cutoff), (2, resonance));
+
+                foreach (var sample in output)
+                {
+                    float.IsFinite(sample).ShouldBeTrue();
+                    MathF.Abs(sample).ShouldBeLessThan(8f);
+                }
             }
-        }
     }
 
     /// <summary>

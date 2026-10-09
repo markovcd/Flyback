@@ -99,7 +99,8 @@ internal static class FormulaLayout
             FlowDirection.LeftToRight,
             Typeface.Default,
             FormulaSize,
-            brush) { MaxTextWidth = width };
+            brush)
+        { MaxTextWidth = width };
 
         if (lines > 0)
         {

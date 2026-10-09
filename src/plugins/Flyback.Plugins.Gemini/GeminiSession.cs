@@ -135,7 +135,7 @@ internal sealed class GeminiSession : IModelConversation
     internal static string? Caption(int pictures, int sounds) => (pictures, sounds) switch
     {
         (0, 0) => null,
-        (> 0, 0) => "[From Flyback, not the person: the frames you rendered.]",
+        ( > 0, 0) => "[From Flyback, not the person: the frames you rendered.]",
         (0, > 0) => "[From Flyback, not the person: the clip you listened to.]",
         _ => "[From Flyback, not the person: the frames you rendered and the clip you listened to.]",
     };

@@ -451,8 +451,8 @@ public class NodeEditorTests : EditorTest
         var changed = 0;
 
         for (var y = (int)from.Y; y < (int)to.Y; y++)
-        for (var x = (int)from.X; x < (int)to.X; x++)
-            if (!Near(after[x, y], before[x, y], 6)) changed++;
+            for (var x = (int)from.X; x < (int)to.X; x++)
+                if (!Near(after[x, y], before[x, y], 6)) changed++;
 
         changed.ShouldBeGreaterThan(0);
     }
@@ -467,8 +467,8 @@ public class NodeEditorTests : EditorTest
         var sum = 0;
 
         for (var y = (int)from.Y; y < (int)to.Y; y++)
-        for (var x = (int)from.X; x < (int)to.X; x++)
-            sum += pixels[x, y].R + pixels[x, y].G + pixels[x, y].B;
+            for (var x = (int)from.X; x < (int)to.X; x++)
+                sum += pixels[x, y].R + pixels[x, y].G + pixels[x, y].B;
 
         return sum;
     }
@@ -493,9 +493,9 @@ public class NodeEditorTests : EditorTest
         var count = 0;
 
         for (var y = (int)Math.Ceiling(topLeft.Y); y < (int)bottomRight.Y; y++)
-        for (var x = (int)Math.Ceiling(topLeft.X); x < (int)bottomRight.X; x++)
-            if (Within(pixels, x, y) && Near(pixels[x, y], Colors.ScalarPort, 2))
-                count++;
+            for (var x = (int)Math.Ceiling(topLeft.X); x < (int)bottomRight.X; x++)
+                if (Within(pixels, x, y) && Near(pixels[x, y], Colors.ScalarPort, 2))
+                    count++;
 
         return count;
     }
@@ -556,14 +556,14 @@ public class NodeEditorTests : EditorTest
         var bgra = locked.Format == PixelFormat.Bgra8888;
 
         for (var y = 0; y < locked.Size.Height; y++)
-        for (var x = 0; x < locked.Size.Width; x++)
-        {
-            var at = y * locked.RowBytes + x * 4;
+            for (var x = 0; x < locked.Size.Width; x++)
+            {
+                var at = y * locked.RowBytes + x * 4;
 
-            pixels[x, y] = bgra
-                ? Color.FromRgb(bytes[at + 2], bytes[at + 1], bytes[at + 0])
-                : Color.FromRgb(bytes[at + 0], bytes[at + 1], bytes[at + 2]);
-        }
+                pixels[x, y] = bgra
+                    ? Color.FromRgb(bytes[at + 2], bytes[at + 1], bytes[at + 0])
+                    : Color.FromRgb(bytes[at + 0], bytes[at + 1], bytes[at + 2]);
+            }
 
         return pixels;
     }

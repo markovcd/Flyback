@@ -242,8 +242,8 @@ public class ShapesTests
         var shape = Shape(StarType, (2, 0.5f), (3, 5f), (4, 0.7f));
 
         foreach (var radius in new[] { 0.2f, 0.35f, 0.7f, 1.1f })
-        foreach (var (x, y) in Ring(radius, 37))
-            Slope(shape, x, y).ShouldBeLessThanOrEqualTo(1.001d);
+            foreach (var (x, y) in Ring(radius, 37))
+                Slope(shape, x, y).ShouldBeLessThanOrEqualTo(1.001d);
     }
 
     /// <summary>
@@ -324,13 +324,13 @@ public class ShapesTests
 
         // Clear of the three creases: the axis, and the rays to the two ends.
         foreach (var radius in new[] { 0.2f, 0.7f, 1.1f })
-        foreach (var (x, y) in Ring(radius, 37))
-        {
-            var bearing = MathF.Abs(MathF.Atan2(x, y));
-            if (bearing < 0.05f || MathF.Abs(bearing - 0.6f * MathF.PI) < 0.05f) continue;
+            foreach (var (x, y) in Ring(radius, 37))
+            {
+                var bearing = MathF.Abs(MathF.Atan2(x, y));
+                if (bearing < 0.05f || MathF.Abs(bearing - 0.6f * MathF.PI) < 0.05f) continue;
 
-            Slope(arc, x, y).ShouldBe(1d, 0.02);
-        }
+                Slope(arc, x, y).ShouldBe(1d, 0.02);
+            }
     }
 
     // --- the fill --------------------------------------------------------------
@@ -423,18 +423,18 @@ public class ShapesTests
         const float seam = 0.2f;
 
         for (var a = -0.5f; a <= 0.5f; a += 0.05f)
-        for (var b = -0.5f; b <= 0.5f; b += 0.05f)
-        {
-            var combined = Combined(a, b, seam);
+            for (var b = -0.5f; b <= 0.5f; b += 0.05f)
+            {
+                var combined = Combined(a, b, seam);
 
-            combined[0].ShouldBeLessThanOrEqualTo(MathF.Min(a, b) + 1e-6f);
-            combined[0].ShouldBeGreaterThanOrEqualTo(MathF.Min(a, b) - seam * 0.25f - 1e-6f);
+                combined[0].ShouldBeLessThanOrEqualTo(MathF.Min(a, b) + 1e-6f);
+                combined[0].ShouldBeGreaterThanOrEqualTo(MathF.Min(a, b) - seam * 0.25f - 1e-6f);
 
-            // And the other way about for the intersection, which is the same
-            // blend read backwards.
-            combined[1].ShouldBeGreaterThanOrEqualTo(MathF.Max(a, b) - 1e-6f);
-            combined[1].ShouldBeLessThanOrEqualTo(MathF.Max(a, b) + seam * 0.25f + 1e-6f);
-        }
+                // And the other way about for the intersection, which is the same
+                // blend read backwards.
+                combined[1].ShouldBeGreaterThanOrEqualTo(MathF.Max(a, b) - 1e-6f);
+                combined[1].ShouldBeLessThanOrEqualTo(MathF.Max(a, b) + seam * 0.25f + 1e-6f);
+            }
     }
 
     [Fact]

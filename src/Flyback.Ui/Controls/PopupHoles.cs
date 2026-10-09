@@ -22,14 +22,14 @@ public static class PopupHoles
         var holes = new List<Rect>();
 
         foreach (var layer in layers.GetVisualChildren())
-        foreach (var popup in layer.GetVisualChildren().OfType<OverlayPopupHost>())
-        {
-            if (!popup.IsVisible || popup.TransformToVisual(target) is not { } toTarget) continue;
+            foreach (var popup in layer.GetVisualChildren().OfType<OverlayPopupHost>())
+            {
+                if (!popup.IsVisible || popup.TransformToVisual(target) is not { } toTarget) continue;
 
-            var hole = new Rect(popup.Bounds.Size).TransformToAABB(toTarget).Intersect(bounds);
+                var hole = new Rect(popup.Bounds.Size).TransformToAABB(toTarget).Intersect(bounds);
 
-            if (hole.Width > 0 && hole.Height > 0) holes.Add(hole);
-        }
+                if (hole.Width > 0 && hole.Height > 0) holes.Add(hole);
+            }
 
         return holes;
     }

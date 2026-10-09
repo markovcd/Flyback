@@ -25,7 +25,7 @@ internal static class RotateModule
             Angle("pitch", "About the horizontal, in radians: tips the top toward the viewer."),
             Angle("roll", "In the plane of the screen, in radians: turns it like a wheel."),
         ],
-        [..Space3d.Point("Across, turned.", "Up, turned.", "Toward the viewer, turned.")],
+        [.. Space3d.Point("Across, turned.", "Up, turned.", "Toward the viewer, turned.")],
         Emit,
         "Turns a point in 3D, such as a Path's x, y and z, by yaw, pitch and roll in that order. "
         + "A clock or an oscillator on an angle makes it spin.")

@@ -11,11 +11,11 @@ using System.Collections.Concurrent;
 MSBuildLocator.RegisterDefaults();
 await Run(args.Length > 0 ? args[0] : "Flyback.slnx", args.Length > 1 ? args[1] : "test-only-members.tsv");
 
-static bool IsTest(string path) => path.Replace((char)92,(char)47).Contains("/tests/");
+static bool IsTest(string path) => path.Replace((char)92, (char)47).Contains("/tests/");
 
 static async Task Run(string sln, string outFile)
 {
-    using var ws = MSBuildWorkspace.Create(new Dictionary<string,string>{{"Configuration","Debug"}});
+    using var ws = MSBuildWorkspace.Create(new Dictionary<string, string> { { "Configuration", "Debug" } });
     ws.WorkspaceFailed += (_, e) => { if (e.Diagnostic.Kind == WorkspaceDiagnosticKind.Failure) Console.Error.WriteLine(e.Diagnostic.Message); };
     var solution = await ws.OpenSolutionAsync(sln);
     Console.Error.WriteLine($"projects: {solution.Projects.Count()}");
@@ -29,13 +29,13 @@ static async Task Run(string sln, string outFile)
         var comp = await project.GetCompilationAsync();
         if (comp == null) { Console.Error.WriteLine("no comp " + project.Name); continue; }
         bool test = IsTest(project.FilePath ?? "");
-        Console.Error.WriteLine($"{(test?"T":"S")} {project.Name} ({project.DefaultNamespace})");
+        Console.Error.WriteLine($"{(test ? "T" : "S")} {project.Name} ({project.DefaultNamespace})");
         foreach (var tree in comp.SyntaxTrees)
         {
             var sm = comp.GetSemanticModel(tree);
             var root = await tree.GetRootAsync();
             var file = tree.FilePath;
-            if (file.Replace((char)92,(char)47).Contains("/obj/")) continue;
+            if (file.Replace((char)92, (char)47).Contains("/obj/")) continue;
             foreach (var node in root.DescendantNodes())
             {
                 ISymbol sym = null;

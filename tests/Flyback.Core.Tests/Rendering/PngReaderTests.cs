@@ -37,15 +37,15 @@ public class PngReaderTests
         var bgra = new byte[stride * height];
 
         for (var y = 0; y < height; y++)
-        for (var x = 0; x < width; x++)
-        {
-            var at = y * stride + x * 4;
+            for (var x = 0; x < width; x++)
+            {
+                var at = y * stride + x * 4;
 
-            bgra[at + 0] = (byte)(x * 11 % 256);   // blue
-            bgra[at + 1] = (byte)(y * 29 % 256);   // green
-            bgra[at + 2] = (byte)((x + y) * 7 % 256);
-            bgra[at + 3] = 255;
-        }
+                bgra[at + 0] = (byte)(x * 11 % 256);   // blue
+                bgra[at + 1] = (byte)(y * 29 % 256);   // green
+                bgra[at + 2] = (byte)((x + y) * 7 % 256);
+                bgra[at + 3] = 255;
+            }
 
         var file = new MemoryStream();
         PngWriter.WriteBgra(file, bgra, width, height, stride);
@@ -58,15 +58,15 @@ public class PngReaderTests
         read.Height.ShouldBe(height);
 
         for (var y = 0; y < height; y++)
-        for (var x = 0; x < width; x++)
-        {
-            var wrote = y * stride + x * 4;
-            var got = (y * width + x) * 3;
+            for (var x = 0; x < width; x++)
+            {
+                var wrote = y * stride + x * 4;
+                var got = (y * width + x) * 3;
 
-            read.Pixels[got + 0].ShouldBe(bgra[wrote + 2] / 255f, 1e-6f);
-            read.Pixels[got + 1].ShouldBe(bgra[wrote + 1] / 255f, 1e-6f);
-            read.Pixels[got + 2].ShouldBe(bgra[wrote + 0] / 255f, 1e-6f);
-        }
+                read.Pixels[got + 0].ShouldBe(bgra[wrote + 2] / 255f, 1e-6f);
+                read.Pixels[got + 1].ShouldBe(bgra[wrote + 1] / 255f, 1e-6f);
+                read.Pixels[got + 2].ShouldBe(bgra[wrote + 0] / 255f, 1e-6f);
+            }
     }
 
     // --- what it can read ------------------------------------------------------
@@ -161,14 +161,14 @@ public class PngReaderTests
         // predict and no two rows are alike.
         var wanted = new byte[size * size * 3];
         for (var y = 0; y < size; y++)
-        for (var x = 0; x < size; x++)
-        {
-            var at = (y * size + x) * 3;
+            for (var x = 0; x < size; x++)
+            {
+                var at = (y * size + x) * 3;
 
-            wanted[at] = (byte)(x * 40);
-            wanted[at + 1] = (byte)(y * 40);
-            wanted[at + 2] = (byte)((x + y) * 20);
-        }
+                wanted[at] = (byte)(x * 40);
+                wanted[at + 1] = (byte)(y * 40);
+                wanted[at + 2] = (byte)((x + y) * 20);
+            }
 
         var picture = Read(Filtered(wanted, size, filter)).ShouldNotBeNull();
 
@@ -326,17 +326,17 @@ public class PngReaderTests
             raw.Add(0); // filter: none
 
             for (var x = 0; x < width; x++)
-            for (var channel = 0; channel < channels; channel++)
-            {
-                // The first pixel is a red, or a mid gray where there is no
-                // color to be red in; everything else is whatever is left.
-                var value = samples is { } given
-                    ? given[(x + y * width) * channels % given.Length + channel % given.Length]
-                    : Sample(color, x, y, channel);
+                for (var channel = 0; channel < channels; channel++)
+                {
+                    // The first pixel is a red, or a mid gray where there is no
+                    // color to be red in; everything else is whatever is left.
+                    var value = samples is { } given
+                        ? given[(x + y * width) * channels % given.Length + channel % given.Length]
+                        : Sample(color, x, y, channel);
 
-                if (bytes == 2) raw.Add(value);
-                raw.Add(value);
-            }
+                    if (bytes == 2) raw.Add(value);
+                    raw.Add(value);
+                }
         }
 
         return Assemble(width, height, depth, color, interlace, [.. raw], palette, alphas);

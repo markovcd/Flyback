@@ -20,7 +20,7 @@ internal static class TranslateModule
             new PortSpec("dy", PortKind.Scalar, 0f, -2f, 2f) { Help = "How far it moves up." },
             new PortSpec("dz", PortKind.Scalar, 0f, -2f, 2f) { Help = "How far it moves toward the viewer." },
         ],
-        [..Space3d.Point("Across, moved.", "Up, moved.", "Toward the viewer, moved.")],
+        [.. Space3d.Point("Across, moved.", "Up, moved.", "Toward the viewer, moved.")],
         (em, node) =>
         [
             em.Add(node[Space3d.XPort], node[DxPort]),

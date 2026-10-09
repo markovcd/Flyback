@@ -51,7 +51,7 @@ internal sealed class SettingsSession(
 
         foreach (var section in sections) section.Show();
     }
-    
+
     /// <summary>How wide every section is: room for the widest option any list offers, beside the gutter.</summary>
     internal const double SectionWidth = 360;
 

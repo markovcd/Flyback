@@ -210,23 +210,23 @@ public class ExpressionInspectorTests : EditorTest
         var count = 0;
 
         for (var y = (int)at.Y; y < Math.Min(at.Y + box.Bounds.Height, locked.Size.Height); y++)
-        for (var x = (int)at.X; x < Math.Min(at.X + box.Bounds.Width, locked.Size.Width); x++)
-        {
-            var i = (y * locked.RowBytes) + (x * 4);
-
-            var pixel = bgra
-                ? Color.FromRgb(bytes[i + 2], bytes[i + 1], bytes[i])
-                : Color.FromRgb(bytes[i], bytes[i + 1], bytes[i + 2]);
-
-            // That color and not merely a warm one: text is drawn a subpixel at
-            // a time, so white letters have fringes redder than this test is.
-            if (Math.Abs(pixel.R - Colors.Sink.R) <= 8
-                && Math.Abs(pixel.G - Colors.Sink.G) <= 8
-                && Math.Abs(pixel.B - Colors.Sink.B) <= 8)
+            for (var x = (int)at.X; x < Math.Min(at.X + box.Bounds.Width, locked.Size.Width); x++)
             {
-                count++;
+                var i = (y * locked.RowBytes) + (x * 4);
+
+                var pixel = bgra
+                    ? Color.FromRgb(bytes[i + 2], bytes[i + 1], bytes[i])
+                    : Color.FromRgb(bytes[i], bytes[i + 1], bytes[i + 2]);
+
+                // That color and not merely a warm one: text is drawn a subpixel at
+                // a time, so white letters have fringes redder than this test is.
+                if (Math.Abs(pixel.R - Colors.Sink.R) <= 8
+                    && Math.Abs(pixel.G - Colors.Sink.G) <= 8
+                    && Math.Abs(pixel.B - Colors.Sink.B) <= 8)
+                {
+                    count++;
+                }
             }
-        }
 
         return count;
     }

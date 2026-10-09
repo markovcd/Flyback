@@ -90,11 +90,11 @@ public sealed class PresetSteps(Session session)
     public void ThenNothingOnDisk()
     {
         foreach (var preset in session.Presets)
-        foreach (var path in PatchBundle.Files(preset.Build(modules), modules))
-        {
-            File.Exists(path).ShouldBeFalse($"{path} is in the working folder");
-            File.Exists(Path.Combine(AppContext.BaseDirectory, path)).ShouldBeFalse($"{path} is beside the program");
-        }
+            foreach (var path in PatchBundle.Files(preset.Build(modules), modules))
+            {
+                File.Exists(path).ShouldBeFalse($"{path} is in the working folder");
+                File.Exists(Path.Combine(AppContext.BaseDirectory, path)).ShouldBeFalse($"{path} is beside the program");
+            }
     }
 
     [Then("it plays for {float} seconds before it comes round")]

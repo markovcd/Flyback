@@ -118,8 +118,8 @@ public abstract class UiTest : IDisposable
         yield return root;
 
         foreach (var child in root.GetVisualChildren())
-        foreach (var node in Tree(child))
-            yield return node;
+            foreach (var node in Tree(child))
+                yield return node;
     }
 
     protected static IEnumerable<T> All<T>(Visual root) where T : Visual => Tree(root).OfType<T>();

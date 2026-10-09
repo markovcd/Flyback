@@ -169,12 +169,12 @@ public class ModuleStateShotTests : EditorTest
         var brightest = 0;
 
         for (var y = y0; y <= y1; y++)
-        for (var x = x0; x <= x1; x++)
-        {
-            var color = Pixel(locked, x, y);
+            for (var x = x0; x <= x1; x++)
+            {
+                var color = Pixel(locked, x, y);
 
-            brightest = Math.Max(brightest, color.R + color.G + color.B);
-        }
+                brightest = Math.Max(brightest, color.R + color.G + color.B);
+            }
 
         return brightest;
     }

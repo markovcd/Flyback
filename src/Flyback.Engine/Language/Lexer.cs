@@ -424,7 +424,13 @@ public static class Lexer
         // C is 0, and the gaps are where the black keys are.
         var natural = word[0] switch
         {
-            'C' => 0, 'D' => 2, 'E' => 4, 'F' => 5, 'G' => 7, 'A' => 9, _ => 11,
+            'C' => 0,
+            'D' => 2,
+            'E' => 4,
+            'F' => 5,
+            'G' => 7,
+            'A' => 9,
+            _ => 11,
         };
 
         var at = 1;

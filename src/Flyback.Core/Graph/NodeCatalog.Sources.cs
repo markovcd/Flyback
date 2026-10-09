@@ -146,7 +146,7 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             PictureTypeId, "Image", ModuleCategories.Sources,
-            [..Position()],
+            [.. Position()],
             [Col("color") with { Help = "The image's color where 'x' and 'y' read it." }],
             EmitPicture,
             "Loads an image file, black outside the image. Scale, translate, rotate, and warp "

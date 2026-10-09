@@ -99,44 +99,44 @@ internal static class CellsModule
         var chosen = zero;
 
         for (var down = -1; down <= 1; down++)
-        for (var across = -1; across <= 1; across++)
-        {
-            var atX = em.Add(squareX, across);
-            var atY = em.Add(squareY, down);
+            for (var across = -1; across <= 1; across++)
+            {
+                var atX = em.Add(squareX, across);
+                var atY = em.Add(squareY, down);
 
-            // Two lookups, sampled far enough apart that the two coordinates of
-            // one point are unrelated — one lookup with the second coordinate
-            // derived from it would put every point on a curve, and drifting z
-            // would walk them along it.
-            var alongX = em.Mul(atX, Apart);
-            var alongY = em.Mul(atY, Across);
+                // Two lookups, sampled far enough apart that the two coordinates of
+                // one point are unrelated — one lookup with the second coordinate
+                // derived from it would put every point on a curve, and drifting z
+                // would walk them along it.
+                var alongX = em.Mul(atX, Apart);
+                var alongY = em.Mul(atY, Across);
 
-            var pointX = em.Ternary(OpCode.Noise3, alongX, alongY, node[2]);
-            var pointY = em.Ternary(
-                OpCode.Noise3, em.Add(alongX, 41.9f), em.Add(alongY, 7.3f), node[2]);
+                var pointX = em.Ternary(OpCode.Noise3, alongX, alongY, node[2]);
+                var pointY = em.Ternary(
+                    OpCode.Noise3, em.Add(alongX, 41.9f), em.Add(alongY, 7.3f), node[2]);
 
-            // Held about the middle of the square rather than about nought, so
-            // that jitter turns the scatter down to a plain grid instead of
-            // dragging every point into one corner.
-            var awayX = em.Sub(
-                em.Add(em.Ternary(OpCode.Mix, half, pointX, jitter), across), withinX);
+                // Held about the middle of the square rather than about nought, so
+                // that jitter turns the scatter down to a plain grid instead of
+                // dragging every point into one corner.
+                var awayX = em.Sub(
+                    em.Add(em.Ternary(OpCode.Mix, half, pointX, jitter), across), withinX);
 
-            var awayY = em.Sub(
-                em.Add(em.Ternary(OpCode.Mix, half, pointY, jitter), down), withinY);
+                var awayY = em.Sub(
+                    em.Add(em.Ternary(OpCode.Mix, half, pointY, jitter), down), withinY);
 
-            var far = em.Binary(OpCode.Hypot, awayX, awayY);
+                var far = em.Binary(OpCode.Hypot, awayX, awayY);
 
-            // Which square is winning, taken before the winner is updated. Step
-            // answers 1 where the candidate is no nearer, so one minus it is the
-            // swap — and mixing on that is how a program with no branches picks.
-            var closer = em.Sub(one, em.Binary(OpCode.Step, nearest, far));
-            chosen = em.Ternary(OpCode.Mix, chosen, pointX, closer);
+                // Which square is winning, taken before the winner is updated. Step
+                // answers 1 where the candidate is no nearer, so one minus it is the
+                // swap — and mixing on that is how a program with no branches picks.
+                var closer = em.Sub(one, em.Binary(OpCode.Step, nearest, far));
+                chosen = em.Ternary(OpCode.Mix, chosen, pointX, closer);
 
-            // The runner-up is the nearer of what it was and whichever of the two
-            // this comparison did not keep.
-            second = em.Binary(OpCode.Min, second, em.Binary(OpCode.Max, nearest, far));
-            nearest = em.Binary(OpCode.Min, nearest, far);
-        }
+                // The runner-up is the nearer of what it was and whichever of the two
+                // this comparison did not keep.
+                second = em.Binary(OpCode.Min, second, em.Binary(OpCode.Max, nearest, far));
+                nearest = em.Binary(OpCode.Min, nearest, far);
+            }
 
         return [nearest, em.Sub(second, nearest), chosen];
     }

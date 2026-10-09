@@ -279,13 +279,13 @@ public class ContractSurfaceTests
             .Select(file => Comments.Replace(File.ReadAllText(file), string.Empty)));
 
         foreach (Match access in StaticAccess.Matches(code))
-        foreach (var type in exported.Where(t => t.Name == access.Groups[1].Value))
-            names.Add(Key(type, access.Groups[2].Value));
+            foreach (var type in exported.Where(t => t.Name == access.Groups[1].Value))
+                names.Add(Key(type, access.Groups[2].Value));
 
         foreach (var type in exported.Where(t => names.Contains(Key(t, ".ctor"))))
-        foreach (var parameter in type.GetConstructors().SelectMany(c => c.GetParameters()))
-        foreach (var property in type.GetProperties().Where(p => string.Equals(p.Name, parameter.Name, StringComparison.OrdinalIgnoreCase)))
-            names.Add(Key(type, property.Name));
+            foreach (var parameter in type.GetConstructors().SelectMany(c => c.GetParameters()))
+                foreach (var property in type.GetProperties().Where(p => string.Equals(p.Name, parameter.Name, StringComparison.OrdinalIgnoreCase)))
+                    names.Add(Key(type, property.Name));
 
         return names;
     }

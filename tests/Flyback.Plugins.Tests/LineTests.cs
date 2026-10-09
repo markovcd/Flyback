@@ -98,8 +98,8 @@ public class LineTests
     public void It_survives_to_the_shader()
     {
         foreach (var port in new[] { Distance, Along })
-        foreach (var dialect in Enum.GetValues<GlslDialect>())
-            GlslEmitter.Emit(Compiled(port, Level), dialect).PatchFragment.ShouldNotBeNullOrEmpty();
+            foreach (var dialect in Enum.GetValues<GlslDialect>())
+                GlslEmitter.Emit(Compiled(port, Level), dialect).PatchFragment.ShouldNotBeNullOrEmpty();
     }
 
     // --- harness -----------------------------------------------------------------

@@ -234,7 +234,7 @@ internal sealed class AssistantPanel : UserControl
     private readonly Usage usage;
     private readonly Reactions reactions;
 
-    
+
 
     /// <summary>
     /// Whether a turn is in flight, as this panel knows it.
@@ -307,7 +307,7 @@ internal sealed class AssistantPanel : UserControl
 
         Refresh();
     }
-    
+
     // --- the conversation and the patch it is about ---------------------------
 
     /// <summary>
@@ -388,7 +388,7 @@ internal sealed class AssistantPanel : UserControl
     /// that could not honestly go on.
     /// </remarks>
     public string? ConversationToSave() => conversation.ConversationToSave();
-    
+
     /// <summary>
     /// Whether there is a turn in the conversation that saving the patch would keep
     /// and closing it would lose.

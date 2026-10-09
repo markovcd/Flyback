@@ -126,5 +126,6 @@ internal sealed class NodeGeometry
         ColumnGap: 108,
         RowGap: 40,
         GroupPadding,
-        GroupHandleHeight) { SharedRows = Compact };
+        GroupHandleHeight)
+    { SharedRows = Compact };
 }

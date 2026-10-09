@@ -169,8 +169,8 @@ public class EditingInvariants
         }
 
         foreach (var group in patch.Groups ?? [])
-        foreach (var member in group.Members)
-            ids.ShouldContain(member, $"{what}: a group holds a module that is gone");
+            foreach (var member in group.Members)
+                ids.ShouldContain(member, $"{what}: a group holds a module that is gone");
 
         patch.Connections
             .GroupBy(c => (c.TargetNode, c.TargetPort))

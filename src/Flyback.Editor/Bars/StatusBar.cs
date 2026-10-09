@@ -199,7 +199,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
             LetterView.Title,
             a => LetterView.View(
                 a,
-                about, 
+                about,
                 (mood, message, contact, cancel) => SiteLetters.SendAsync(http, root, mood, message, contact, about, cancel)));
 
         if (said is not null) report.Say(said);

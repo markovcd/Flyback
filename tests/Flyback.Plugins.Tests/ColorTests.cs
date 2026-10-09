@@ -134,19 +134,19 @@ public class ColorTests
         var round = RoundTrip();
 
         for (var h = 0f; h < 1f; h += 1f / 12f)
-        for (var s = 0.2f; s <= 1f; s += 0.4f)
-        for (var v = 0.3f; v <= 1f; v += 0.35f)
-        {
-            var (hue, saturation, value) = round(h, s, v);
+            for (var s = 0.2f; s <= 1f; s += 0.4f)
+                for (var v = 0.3f; v <= 1f; v += 0.35f)
+                {
+                    var (hue, saturation, value) = round(h, s, v);
 
-            // The hue of a color is a circle, so a hue that came back at the
-            // other end of it is the same answer.
-            var apart = MathF.Abs(hue - h);
+                    // The hue of a color is a circle, so a hue that came back at the
+                    // other end of it is the same answer.
+                    var apart = MathF.Abs(hue - h);
 
-            MathF.Min(apart, 1f - apart).ShouldBeLessThan(1e-4f);
-            saturation.ShouldBe(s, 1e-4f);
-            value.ShouldBe(v, 1e-4f);
-        }
+                    MathF.Min(apart, 1f - apart).ShouldBeLessThan(1e-4f);
+                    saturation.ShouldBe(s, 1e-4f);
+                    value.ShouldBe(v, 1e-4f);
+                }
     }
 
     [Theory]
@@ -263,8 +263,8 @@ public class ColorTests
         var flat = Through(Posterise, (1, 2f));
 
         foreach (var (r, g, b) in Swatches())
-        foreach (var channel in Channels(flat(r, g, b)))
-            channel.ShouldBeOneOf(0f, 1f);
+            foreach (var channel in Channels(flat(r, g, b)))
+                channel.ShouldBeOneOf(0f, 1f);
     }
 
     /// <summary>

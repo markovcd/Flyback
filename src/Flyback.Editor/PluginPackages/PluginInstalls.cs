@@ -169,9 +169,9 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
 
         var awaiting = Awaiting(installer, described?.Assembly);
 
-        
+
         var answer = await dialog.Show<PluginAnswer>(
-            PluginInstallView.Title(change), 
+            PluginInstallView.Title(change),
             a => PluginInstallView.View(package, platform, refusal, replacing, change, a, offerRestart: canRestart && awaiting == 0, removable, awaiting));
 
         if (answer == PluginAnswer.Cancel) return null;
@@ -222,10 +222,10 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
             site,
             () =>
             {
-                var assisting = Assisting(); 
+                var assisting = Assisting();
                 return Task.Run(() => InstalledPlugins(assisting, troubles));
-            }, 
-            (plugin, downloaded) => InstallFromSiteAsync(site!, plugin, downloaded), 
+            },
+            (plugin, downloaded) => InstallFromSiteAsync(site!, plugin, downloaded),
             plugin => ShowInstalledAsync(site, plugin), wanted, run);
 
         // Read before the window goes up, so the rows do not arrive above whatever is showing.
@@ -325,21 +325,21 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
             .OfType<ModuleProvider>()
             .Distinct()
             .Select(p => $"{p.Name} ({p.Id})");
-        
+
         var result = await dialog.Show<PluginAnswer>(
-            plugin.Plugin.Name, 
+            plugin.Plugin.Name,
             a => PluginInstallView.Installed(
-                plugin.Plugin, 
-                described, 
-                fromPackage, 
-                folder, 
-                plugin.State, 
-                a, 
+                plugin.Plugin,
+                described,
+                fromPackage,
+                folder,
+                plugin.State,
+                a,
                 Named(newer),
-                removal, 
+                removal,
                 string.Join(", ", ids),
                 string.Join(", ", providers)));
-        
+
         return result switch
         {
             // No site row here to stop saying Downloading…, so nothing to tell.

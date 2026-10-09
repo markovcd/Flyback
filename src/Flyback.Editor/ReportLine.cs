@@ -120,7 +120,7 @@ internal sealed class ReportLine : UserControl
 
         flyout.Content = BuildPopup();
         flyout.FlyoutPresenterClasses.Add(PresenterClass);
-        
+
         Said += (_, message) => Trace.WriteLine($"{DateTime.Now:HH:mm:ss}  {message}");
 
     }

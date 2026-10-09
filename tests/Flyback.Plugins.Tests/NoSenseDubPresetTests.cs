@@ -73,8 +73,8 @@ public class NoSenseDubPresetTests
             ControlMap.Following(patch, control.Id).ShouldNotBeEmpty($"nothing follows '{control.Name}'");
 
         foreach (var node in patch.Nodes)
-        foreach (var (_, link) in ControlMap.All(node))
-            patch.Control(link.Control).ShouldNotBeNull();
+            foreach (var (_, link) in ControlMap.All(node))
+                patch.Control(link.Control).ShouldNotBeNull();
     }
 
     /// <summary>
@@ -87,13 +87,13 @@ public class NoSenseDubPresetTests
         var patch = Patch();
 
         foreach (var node in patch.Nodes)
-        foreach (var (port, link) in ControlMap.All(node))
-        {
-            var spec = Loaded.Modules.Require(node.TypeId).Inputs[port];
+            foreach (var (port, link) in ControlMap.All(node))
+            {
+                var spec = Loaded.Modules.Require(node.TypeId).Inputs[port];
 
-            foreach (var end in new[] { link.Min, link.Max })
-                end.ShouldBeInRange(spec.Min, spec.Max, $"{node.TypeId} '{spec.Name}'");
-        }
+                foreach (var end in new[] { link.Min, link.Max })
+                    end.ShouldBeInRange(spec.Min, spec.Max, $"{node.TypeId} '{spec.Name}'");
+            }
     }
 
     /// <summary>A linked socket rests where its knob does, so baking the knobs in changes nothing.</summary>
@@ -103,8 +103,8 @@ public class NoSenseDubPresetTests
         var patch = Patch();
 
         foreach (var node in patch.Nodes)
-        foreach (var (port, link) in ControlMap.All(node))
-            node.InputValues[port].ShouldBe(link.At(patch.Control(link.Control)!.Value), 1e-6f);
+            foreach (var (port, link) in ControlMap.All(node))
+                node.InputValues[port].ShouldBe(link.At(patch.Control(link.Control)!.Value), 1e-6f);
     }
 
     [Fact]

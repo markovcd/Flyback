@@ -189,7 +189,8 @@ public class NoiseTests
         {
             program.Evaluate(0f, 0f, t, registers, default);
             return (float)registers[program.OutputBase];
-        });
+        }
+        );
     }
 
     private static Func<double, float> Picture(int port)

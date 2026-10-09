@@ -297,7 +297,7 @@ internal sealed class Playback
         else opening = null;
 
         var start = opening;
-        
+
         var result = probe is null
             ? editor.History.Patch.CompileForVideo(samples: samples, pictures: images, played: true)
             : editor.History.Patch.CompileForProbe(probe.Id, samples: samples, pictures: images, played: true);

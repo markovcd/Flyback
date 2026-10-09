@@ -215,13 +215,13 @@ public class AssistantPluginTests
         string[] suspicious = ["key", "secret", "token", "password", "credential"];
 
         foreach (var assistant in Loaded.Assistants)
-        foreach (var field in assistant.Form(SettingValues.None))
-        foreach (var word in suspicious)
-        {
-            field.Key.Contains(word, StringComparison.OrdinalIgnoreCase).ShouldBeFalse(
-                $"{assistant.Id} declares '{field.Key}', which looks like somewhere a credential "
-                + "would end up — and these answers are written out in plain text.");
-        }
+            foreach (var field in assistant.Form(SettingValues.None))
+                foreach (var word in suspicious)
+                {
+                    field.Key.Contains(word, StringComparison.OrdinalIgnoreCase).ShouldBeFalse(
+                        $"{assistant.Id} declares '{field.Key}', which looks like somewhere a credential "
+                        + "would end up — and these answers are written out in plain text.");
+                }
     }
 
     [Fact]
