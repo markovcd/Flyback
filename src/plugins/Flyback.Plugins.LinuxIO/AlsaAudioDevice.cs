@@ -1,4 +1,3 @@
-using Flyback.Core;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Settings;
 
@@ -12,8 +11,8 @@ namespace Flyback.Plugins.LinuxIO;
 /// ALSA has no callback: <c>snd_pcm_writei</c> blocks until the card has room, so this
 /// device owns a thread and that thread is the audio thread. The contract above is
 /// unchanged, since <see cref="AudioCallback"/> says nothing about who calls it. Every
-/// call on the handle is made from that one thread, which is what alsa-lib asks for,
-/// so stopping waits for the writer to finish.
+/// call on the handle after it is opened is made from that one thread, which is what
+/// alsa-lib asks for, so the writer closes it too.
 /// </remarks>
 /// <param name="format">What to play.</param>
 /// <param name="device">
@@ -42,20 +41,9 @@ public sealed class AlsaAudioDevice(AudioFormat format, string? device = null) :
         }
     }
 
-    /// <summary>
-    /// Long enough that a device merely being slow is not mistaken for a device
-    /// that has stopped answering: a write returns within one period, and a
-    /// period is a few milliseconds.
-    /// </summary>
-    private const int WriterExitMilliseconds = 2000;
-
     private readonly int channels = Math.Max(1, format.Channels);
 
-    private IntPtr pcm;
-    private Thread? writer;
-    private float[] block = [];
-    private AudioCallback? fill;
-    private volatile bool running;
+    private BlockWriter? writer;
 
     /// <summary>
     /// What we asked for. libasound resamples in software when the card cannot
@@ -66,11 +54,11 @@ public sealed class AlsaAudioDevice(AudioFormat format, string? device = null) :
     /// <summary>The latency it asks libasound for.</summary>
     public TimeSpan Latency => TimeSpan.FromMilliseconds(format.LatencyMilliseconds);
 
-    public bool IsRunning => running;
+    public bool IsRunning => writer?.IsRunning ?? false;
 
     public void Start(AudioCallback fill)
     {
-        if (pcm != IntPtr.Zero) return;
+        if (writer is not null) return;
 
         // A chosen device that will not open — unplugged, or taken exclusively by
         // another program — plays the default instead, because sound through the
@@ -106,77 +94,34 @@ public sealed class AlsaAudioDevice(AudioFormat format, string? device = null) :
             throw;
         }
 
-        pcm = opened;
-        this.fill = fill;
-
         // Allocated here, on the caller's thread, so the writer never does. A
         // quarter of the latency is what libasound chose for its own period.
-        block = new float[Math.Clamp(SampleRate * format.LatencyMilliseconds / 4000, 64, 4096) * channels];
+        var block = new float[Math.Clamp(SampleRate * format.LatencyMilliseconds / 4000, 64, 4096) * channels];
 
-        running = true;
-        writer = new Thread(Write) { IsBackground = true, Name = $"{GlobalConstants.ApplicationName} audio" };
-        writer.Start();
+        writer = BlockWriter.Start(
+            block,
+            fill,
+            (filled, wanted) => WriteBlock(opened, filled, wanted),
+            () =>
+            {
+                _ = LibAsound.Drop(opened);
+                _ = LibAsound.Close(opened);
+            });
     }
 
     public void Stop()
     {
-        running = false;
-
-        if (writer is { } thread && !thread.Join(WriterExitMilliseconds))
-        {
-            // A device that has stopped returning. Leaking the handle is the
-            // lesser fault: closing it under a thread that is still writing to
-            // it would take the program with it.
-            writer = null;
-            pcm = IntPtr.Zero;
-            fill = null;
-            return;
-        }
-
+        writer?.Stop();
         writer = null;
-
-        if (pcm != IntPtr.Zero)
-        {
-            _ = LibAsound.Drop(pcm);
-            _ = LibAsound.Close(pcm);
-            pcm = IntPtr.Zero;
-        }
-
-        fill = null;
     }
 
     public void Dispose() => Stop();
 
     /// <summary>
-    /// The audio thread. Renders a block and writes it, for as long as it is
-    /// wanted — and gives up rather than spinning if the device stops taking
-    /// samples, since a silent program is better than a hot core.
-    /// </summary>
-    private void Write()
-    {
-        try
-        {
-            while (running && fill is { } deliver)
-            {
-                deliver(block);
-
-                if (!WriteBlock()) break;
-            }
-        }
-        catch
-        {
-            // Nothing on this thread can report anything, and an exception
-            // leaving it would end the process rather than the sound.
-        }
-
-        running = false;
-    }
-
-    /// <summary>
     /// Writes one whole block, in as many goes as it takes. False means the
-    /// stream is gone and the loop should end.
+    /// stream is gone and the writer should end.
     /// </summary>
-    private unsafe bool WriteBlock()
+    private unsafe bool WriteBlock(IntPtr pcm, float[] block, Func<bool> wanted)
     {
         fixed (float* start = block)
         {
@@ -185,7 +130,7 @@ public sealed class AlsaAudioDevice(AudioFormat format, string? device = null) :
 
             while (remaining > 0)
             {
-                if (!running) return false;
+                if (!wanted()) return false;
 
                 var written = LibAsound.WriteInterleaved(pcm, cursor, remaining);
 

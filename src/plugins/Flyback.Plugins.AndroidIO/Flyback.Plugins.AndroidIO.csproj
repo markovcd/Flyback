@@ -34,4 +34,9 @@
                       GlobalPropertiesToRemove="OutDir" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The thread every blocking device writes or reads on, compiled into each plugin that has one. -->
+    <Compile Include="..\Shared\Audio\*.cs" LinkBase="Audio" />
+  </ItemGroup>
+
 </Project>

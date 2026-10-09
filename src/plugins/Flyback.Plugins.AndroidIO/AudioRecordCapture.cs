@@ -1,5 +1,4 @@
 using Android.Media;
-using Flyback.Core;
 using Flyback.Plugins.Audio;
 using AudioFormat = Flyback.Plugins.Audio.AudioFormat;
 
@@ -13,84 +12,58 @@ namespace Flyback.Plugins.AndroidIO;
 /// </remarks>
 public sealed class AudioRecordCapture(AudioFormat format) : IAudioCapture
 {
-    private const int ReaderExitMilliseconds = 2000;
-
-    private AudioRecord? record;
-    private Thread? reader;
-    private AudioCaptureCallback? deliver;
-    private volatile bool running;
+    private BlockReader? reader;
 
     public int SampleRate { get; } = format.SampleRate;
 
     public int Channels { get; private set; } = 2;
 
-    public bool IsRunning => running;
+    public bool IsRunning => reader?.IsRunning ?? false;
 
     public void Start(AudioCaptureCallback deliver)
     {
         if (reader is not null) return;
 
-        this.deliver = deliver;
-        running = true;
-        reader = new Thread(Listen) { IsBackground = true, Name = $"{GlobalConstants.ApplicationName} input" };
-        reader.Start();
+        reader = BlockReader.Start(deliver, Listen);
     }
 
     public void Stop()
     {
-        running = false;
-
-        if (reader is { } thread && !thread.Join(ReaderExitMilliseconds))
-        {
-            // Releasing the record under a thread still reading from it would take the program with it.
-            reader = null;
-            record = null;
-            deliver = null;
-            return;
-        }
-
+        reader?.Stop();
         reader = null;
-        deliver = null;
     }
 
     public void Dispose() => Stop();
 
-    private void Listen()
+    /// <summary>Waits for the microphone to be allowed, then opens it; null where it was refused or will not open.</summary>
+    private BlockSource? Listen(Func<bool> wanted)
     {
+        if (!Microphone.Ask().GetAwaiter().GetResult() || !wanted()) return null;
+
+        var opened = Open(ChannelIn.Stereo) ?? Open(ChannelIn.Mono);
+        if (opened is null) return null;
+
         try
         {
-            if (!Microphone.Ask().GetAwaiter().GetResult() || !running) return;
-
-            using var opened = Open(ChannelIn.Stereo) ?? Open(ChannelIn.Mono);
-            if (opened is null) return;
-
-            record = opened;
             Channels = opened.ChannelCount;
-
-            var block = new float[Math.Clamp(SampleRate * format.LatencyMilliseconds / 4000, 64, 4096) * Channels];
-
             opened.StartRecording();
-
-            while (running && deliver is { } hand)
-            {
-                var read = opened.Read(block, 0, block.Length, 0);
-                if (read < 0) break;
-
-                hand(block.AsSpan(0, read));
-            }
-
-            opened.Stop();
-            opened.Release();
         }
         catch
         {
-            // An exception leaving this thread would end the process rather than the listening.
+            opened.Release();
+            opened.Dispose();
+            throw;
         }
-        finally
-        {
-            record = null;
-            running = false;
-        }
+
+        return new BlockSource(
+            new float[Math.Clamp(SampleRate * format.LatencyMilliseconds / 4000, 64, 4096) * Channels],
+            block => opened.Read(block, 0, block.Length, 0),
+            () =>
+            {
+                opened.Stop();
+                opened.Release();
+                opened.Dispose();
+            });
     }
 
     /// <summary>An initialized record, unprocessed where the device allows it, or null where this layout will not open.</summary>

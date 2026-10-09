@@ -54,6 +54,11 @@
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Drawings\Flyback.Plugins.Drawings.csproj" FolderName="Drawings" />
   </ItemGroup>
 
+  <!-- The blocking devices' thread, compiled in here as it is into each plugin that has one. -->
+  <ItemGroup>
+    <Compile Include="..\..\src\plugins\Shared\Audio\*.cs" LinkBase="SharedAudio" />
+  </ItemGroup>
+
   <!-- The plugins' sources, for the contract-surface test: a constant a plugin names leaves no trace in its IL. -->
   <ItemGroup>
     <None Include="..\..\src\plugins\**\*.cs;..\Flyback.Plugins.Sample\**\*.cs;..\Flyback.Plugins.FakeAssistant\**\*.cs;..\Flyback.Plugins.FakeDecider\**\*.cs"
