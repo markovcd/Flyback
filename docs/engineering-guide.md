@@ -654,7 +654,7 @@ indistinguishable from the file it lands in.
 
 ### Language
 
-- File-scoped namespaces, in every file.
+- File-scoped namespaces, in every file; the gate fails a block-scoped one.
 - `sealed` on a class by default. Static classes for things with no instance.
 - Records for data, `readonly record struct` for small values
   (`Slot`, `PortNormal`, `AudioFormat`, `MidiMessage`). Primary constructors where

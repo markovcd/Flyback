@@ -132,7 +132,8 @@ RUN if [ -n "${RELEASE_PUBLIC_KEY}" ]; then \
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet restore Flyback.slnx --locked-mode \
     && dotnet build Flyback.slnx -c ${CONFIGURATION} --no-restore \
-    && dotnet format whitespace Flyback.slnx --verify-no-changes --no-restore
+    && dotnet format whitespace Flyback.slnx --verify-no-changes --no-restore \
+    && dotnet format style Flyback.slnx --diagnostics IDE0161 --severity warn --verify-no-changes --no-restore
 
 # The gate. Every test in the solution — the engine's, the shell's headless UI
 # ones, the plugins' — and the build stops here if any of them does.

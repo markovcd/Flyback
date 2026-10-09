@@ -7,6 +7,8 @@ trim_trailing_whitespace = true
 insert_final_newline = true
 # A case block's braces sit at the case's own indent.
 csharp_indent_case_contents_when_block = false
+# Every namespace is file-scoped.
+csharp_style_namespace_declarations = file_scoped:warning
 
 # A builder returning Control, or a parser rule returning Statement, is the abstraction on purpose, and none of it is hot.
 dotnet_diagnostic.CA1859.severity = none
