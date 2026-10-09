@@ -49,7 +49,7 @@ internal sealed class Reactions(IServiceProvider? provider = null) : IDisposable
     }
 
     /// <summary>Runs every reactor to <paramref name="notice"/> in turn, waiting for each before the next.</summary>
-    public async Task RaiseAsync<T>(T notice) where T : notnull
+    public async Task RaiseAsync<T>(T notice) where T : INotice
     {
         if (disposed) return;
 
@@ -70,7 +70,7 @@ internal sealed class Reactions(IServiceProvider? provider = null) : IDisposable
     /// when this returns; a fault after that is thrown on the UI thread, as an unhandled
     /// one out of an event handler is.
     /// </summary>
-    public void Raise<T>(T notice) where T : notnull
+    public void Raise<T>(T notice) where T : INotice
     {
         var run = RaiseAsync(notice);
 
@@ -89,7 +89,7 @@ internal sealed class Reactions(IServiceProvider? provider = null) : IDisposable
     /// A reactor that does not live for the window, such as a test's or a window opened
     /// later, until what this returns is disposed.
     /// </summary>
-    public IDisposable Add<T>(IReactTo<T> reactor) where T : notnull
+    public IDisposable Add<T>(IReactTo<T> reactor) where T : INotice
     {
         lock (gate) added.Add((typeof(T), reactor));
 
@@ -104,10 +104,10 @@ internal sealed class Reactions(IServiceProvider? provider = null) : IDisposable
     }
 
     /// <inheritdoc cref="Add{T}(IReactTo{T})"/>
-    public IDisposable Add<T>(Func<T, Task> on, int priority = 0) where T : notnull => Add(new Reaction<T>(on, priority));
+    public IDisposable Add<T>(Func<T, Task> on, int priority = 0) where T : INotice => Add(new Reaction<T>(on, priority));
 
     /// <inheritdoc cref="Add{T}(IReactTo{T})"/>
-    public IDisposable Add<T>(Action<T> on, int priority = 0) where T : notnull => Add<T>(
+    public IDisposable Add<T>(Action<T> on, int priority = 0) where T : INotice => Add<T>(
         notice =>
         {
             on(notice);
@@ -123,10 +123,10 @@ internal sealed class Reactions(IServiceProvider? provider = null) : IDisposable
         lock (gate) added.Clear();
     }
 
-    private IReactTo<T>[] Reactors<T>() where T : notnull =>
+    private IReactTo<T>[] Reactors<T>() where T : INotice =>
         (IReactTo<T>[])ordered.GetOrAdd(typeof(T), _ => Sorted<T>());
 
-    private IReactTo<T>[] Sorted<T>() where T : notnull
+    private IReactTo<T>[] Sorted<T>() where T : INotice
     {
         IEnumerable<IReactTo<T>> registered = provider?.GetServices<IReactTo<T>>() ?? [];
         List<IReactTo<T>> late;
@@ -136,7 +136,7 @@ internal sealed class Reactions(IServiceProvider? provider = null) : IDisposable
         return registered.Concat(late).OrderBy(reactor => reactor.Priority).ToArray();
     }
 
-    private sealed class Reaction<T>(Func<T, Task> on, int priority) : IReactTo<T> where T : notnull
+    private sealed class Reaction<T>(Func<T, Task> on, int priority) : IReactTo<T> where T : INotice
     {
         public int Priority => priority;
 

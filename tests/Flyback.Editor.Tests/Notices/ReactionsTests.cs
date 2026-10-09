@@ -14,7 +14,7 @@ namespace Flyback.Editor.Tests.Notices;
 /// </summary>
 public class ReactionsTests : EditorTest
 {
-    private sealed record Ping;
+    private sealed record Ping : INotice;
 
     private sealed class Counted(List<string> log, string name, int priority) : IReactTo<Ping>
     {

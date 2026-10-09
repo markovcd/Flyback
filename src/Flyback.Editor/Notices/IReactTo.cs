@@ -11,7 +11,7 @@ namespace Flyback.Editor.Notices;
 /// that finishes at once returns a completed task; one that waits is awaited before
 /// the next reactor runs.
 /// </remarks>
-internal interface IReactTo<in T> : IReactTo where T : notnull
+internal interface IReactTo<in T> : IReactTo where T : INotice
 {
     /// <summary>
     /// Where this runs among the notice's reactors: lowest first. Ties run in the order

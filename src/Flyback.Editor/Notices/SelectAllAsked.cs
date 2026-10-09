@@ -1,4 +1,4 @@
 namespace Flyback.Editor.Notices;
 
 /// <summary>Selecting every module on the canvas was asked for.</summary>
-internal sealed record SelectAllAsked;
+internal sealed record SelectAllAsked : INotice;
