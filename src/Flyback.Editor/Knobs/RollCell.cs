@@ -27,34 +27,28 @@ internal sealed class RollCell
     private readonly MenuItem forget = new();
     private readonly Func<MidiBinding, string> explain;
 
-    public RollCell(
-        Action roll,
-        Action goBack,
-        Action<bool> learnOrForget,
-        Action<double, double> tuned,
-        Action tuneEnded,
-        Func<MidiBinding, string> explain)
+    public RollCell(Func<MidiBinding, string> explain)
     {
         this.explain = explain;
 
         var dice = ToolbarButtons.Drawn("roll-knobs", Glyphs.Dice(),
             "Randomize every knob that is not held (Ctrl+Shift+K). Right-click to learn a controller button or pad for it.");
-        dice.Click += (_, _) => roll();
+        dice.Click += (_, _) => RollRequested?.Invoke();
 
         back = ToolbarButtons.Drawn("unroll-knobs", Glyphs.Undo(), "Back to where the knobs were before the last randomize.");
-        back.Click += (_, _) => goBack();
+        back.Click += (_, _) => BackRequested?.Invoke();
 
-        learn.Click += (_, _) => learnOrForget(true);
-        forget.Click += (_, _) => learnOrForget(false);
+        learn.Click += (_, _) => LearnRequested?.Invoke(true);
+        forget.Click += (_, _) => LearnRequested?.Invoke(false);
         dice.ContextMenu = new ContextMenu { Items = { learn, forget } };
 
         ToolTip.SetTip(amount, "How far a randomize moves each knob from where it is. All the way round is anywhere.");
         ToolTip.SetTip(glide, "How long the knobs take to get there. All the way down jumps.");
 
-        amount.Turned += _ => Tuned();
-        glide.Turned += _ => Tuned();
-        amount.Released += tuneEnded;
-        glide.Released += tuneEnded;
+        amount.Turned += _ => Tune();
+        glide.Turned += _ => Tune();
+        amount.Released += () => TuneEnded?.Invoke();
+        glide.Released += () => TuneEnded?.Invoke();
 
         Root = new StackPanel
         {
@@ -70,12 +64,27 @@ internal sealed class RollCell
             },
         };
 
-        void Tuned()
+        void Tune()
         {
             Read();
-            tuned(amount.Value, Seconds(glide.Value));
+            Tuned?.Invoke(amount.Value, Seconds(glide.Value));
         }
     }
+
+    /// <summary>The knobs not held were asked to go somewhere new.</summary>
+    public event Action? RollRequested;
+
+    /// <summary>The knobs were asked back to where they were before the last randomize.</summary>
+    public event Action? BackRequested;
+
+    /// <summary>A controller button was asked to be learned for randomizing, or with false, forgotten.</summary>
+    public event Action<bool>? LearnRequested;
+
+    /// <summary>How far a randomize reaches and how long it glides were turned: the amount, then seconds.</summary>
+    public event Action<double, double>? Tuned;
+
+    /// <summary>The hand came off the amount or the glide.</summary>
+    public event Action? TuneEnded;
 
     public Control Root { get; }
 

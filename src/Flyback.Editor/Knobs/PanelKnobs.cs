@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Avalonia.Threading;
 using Flyback.Ui.Audio;
 using Flyback.Editor.Canvas;
@@ -20,7 +19,6 @@ namespace Flyback.Editor.Knobs;
 /// The knob panel is shown and hidden by the window, which owns the row it stands
 /// in; this asks for it with <see cref="Wanted"/> when a knob needs to be seen.
 /// </remarks>
-[SuppressMessage("Design", "CA1001", Justification = "learning only borrows the source LearnAsync disposes.")]
 internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArrived>
 {
     private readonly NodeEditor editor;
@@ -37,7 +35,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
 
     private bool heardPosted;
 
-    private CancellationTokenSource? learning;
+    private readonly MidiLearn learning;
 
     /// <summary>How many knobs the panel last showed, so a patch arriving with some opens it.</summary>
     private int knobsShown;
@@ -108,6 +106,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
         this.preview = preview;
         this.audio = audio;
         this.midi = midi;
+        learning = new MidiLearn(midi, report);
         this.report = report;
 
         hub.Turned += (id, value) =>
@@ -139,7 +138,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
         {
             if (editor.History.Patch.Control(id) is not { } control) return;
 
-            learning?.Cancel();
+            learning.Cancel();
             control.Midi = binding;
             editor.History.Record();
             writeBack.PanelEdited();
@@ -257,7 +256,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
         View.RemoveRequested += id =>
         {
             if (editor.Linking.Control == id) Link(null);
-            if (View.Learning == id) learning?.Cancel();
+            if (View.Learning == id) learning.Cancel();
 
             if (!editor.History.Patch.RemoveControl(id)) return;
 
@@ -390,24 +389,12 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
     {
         if (editor.History.Patch.Control(id) is null) return;
 
-        learning?.Cancel();
-
-        var devices = midi.Sources.Select(s => s.Id).Where(s => s != MidiSources.Keyboard).ToList();
-
-        if (devices.Count == 0)
-        {
-            report.Say("No MIDI device is plugged in, so there is no controller to learn.");
-            return;
-        }
+        if (learning.Start("No MIDI device is plugged in, so there is no controller to learn.") is not { } cancel) return;
 
         var knobs = editor.History.Patch.Controls ?? [];
         var from = knobs.FindIndex(knob => knob.Id == id);
         var run = onward ? knobs.Skip(from).Select(knob => knob.Id).ToList() : [id];
 
-        // Only once there is something to wait for: the field is cleared by the
-        // finally below, and a source left in it after this method has disposed it
-        // throws the next time Escape cancels it.
-        using var cancel = learning = new CancellationTokenSource();
         var showing = id;
 
         reactions.Raise(new KnobsWanted());
@@ -426,7 +413,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
                     ? $"Move a knob or fader on your controller for '{knob.Name}'. Esc to stop."
                     : $"Move a knob or fader on your controller for '{knob.Name}' ({i + 1} of {run.Count}). Esc to stop.");
 
-                var moved = await hub.LearnAsync(devices, cancel.Token, last);
+                var moved = await hub.LearnAsync(cancel.Devices, cancel.Token, last);
 
                 if (moved is null || editor.History.Patch.Control(knob.Id) is not { } still) return;
 
@@ -449,12 +436,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
             // Only where this is still the learn under way. One that gave way to
             // another ends after the other has begun, and the other may be for
             // this same knob — whose "move a controller" it would be wiping.
-            if (learning == cancel)
-            {
-                learning = null;
-
-                if (View.Learning == showing) View.Learning = null;
-            }
+            if (cancel.End() && View.Learning == showing) View.Learning = null;
         }
     }
 
@@ -477,9 +459,9 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
     /// <summary>Stops linking and learning, and says whether there was either to stop.</summary>
     public bool StopModes()
     {
-        var stopped = editor.Linking.Control is not null || learning is not null || hub.Learning;
+        var stopped = editor.Linking.Control is not null || learning.Active || hub.Learning;
 
-        learning?.Cancel();
+        learning.Cancel();
         Link(null);
         ModesStopped?.Invoke();
 

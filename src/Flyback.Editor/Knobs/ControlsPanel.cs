@@ -64,29 +64,11 @@ internal sealed class ControlsPanel : Border
             Padding = new Thickness(8, 6),
         };
 
-        roll = new RollCell(
-            () => RollRequested?.Invoke(),
-            () => BackRequested?.Invoke(),
-            learn => RollLearnRequested?.Invoke(learn),
-            (amount, glide) => RollTuned?.Invoke(amount, glide),
-            () => RollTuneEnded?.Invoke(),
-            binding => ExplainOf(binding));
+        roll = new RollCell(ExplainOf);
     }
 
-    /// <summary>The knobs not held were asked to go somewhere new.</summary>
-    public event Action? RollRequested;
-
-    /// <summary>The knobs were asked back to where they were before the last randomize.</summary>
-    public event Action? BackRequested;
-
-    /// <summary>A controller button was asked to be learned for randomizing, or with false, forgotten.</summary>
-    public event Action<bool>? RollLearnRequested;
-
-    /// <summary>How far a randomize reaches and how long it glides were turned: the amount, then seconds.</summary>
-    public event Action<double, double>? RollTuned;
-
-    /// <summary>The hand came off the amount or the glide.</summary>
-    public event Action? RollTuneEnded;
+    /// <summary>The randomize cell at the end of the panel.</summary>
+    public RollCell Roll => roll;
 
     /// <summary>A knob was asked to sit out randomizing, or to take part again.</summary>
     public event Action<Guid, bool>? HoldRequested;

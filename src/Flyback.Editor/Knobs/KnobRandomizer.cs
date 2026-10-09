@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using Avalonia.Threading;
 using Flyback.Editor.Canvas;
 using Flyback.Ui.Midi;
@@ -20,7 +19,6 @@ namespace Flyback.Editor.Knobs;
 /// A randomize turns the knobs the way a hand does, so like a hand it is not an
 /// undo step (ADR-0086); <see cref="Back"/> is its own way back.
 /// </remarks>
-[SuppressMessage("Design", "CA1001", Justification = "learning only borrows the source LearnAsync disposes.")]
 internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
 {
     /// <summary>How many randomizes back <see cref="Back"/> reaches.</summary>
@@ -32,7 +30,6 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
     private readonly TextWriteBack writeBack;
     private readonly OutputSettingRepository settings;
     private readonly EditorFolders folders;
-    private readonly MidiHub midi;
     private readonly ReportLine report;
     private readonly Usage usage;
 
@@ -51,7 +48,7 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
 
     /// <summary>Which glide a scheduled step belongs to, so a step left over from one that ended does nothing.</summary>
     private int glide;
-    private CancellationTokenSource? learning;
+    private readonly MidiLearn learning;
 
     public KnobRandomizer(
         PanelKnobs knobs,
@@ -70,25 +67,25 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
         this.writeBack = writeBack;
         this.settings = settings;
         this.folders = folders;
-        this.midi = midi;
+        learning = new MidiLearn(midi, report);
         this.report = report;
         this.usage = usage;
 
-        knobs.View.RollRequested += Roll;
-        knobs.View.BackRequested += Back;
-        knobs.View.RollLearnRequested += learn =>
+        knobs.View.Roll.RollRequested += Roll;
+        knobs.View.Roll.BackRequested += Back;
+        knobs.View.Roll.LearnRequested += learn =>
         {
             if (learn) _ = LearnAsync();
             else Forget();
         };
 
-        knobs.View.RollTuned += (amount, glide) =>
+        knobs.View.Roll.Tuned += (amount, glide) =>
         {
             Wanted.Amount = amount;
             Wanted.GlideSeconds = glide;
         };
 
-        knobs.View.RollTuneEnded += Save;
+        knobs.View.Roll.TuneEnded += Save;
 
         // A hand on a gliding knob takes it.
         knobs.View.Turning += (id, _) => gliding?.Drop(id);
@@ -97,7 +94,7 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
 
         hub.Trigger = Wanted.Trigger;
         hub.Triggered += () => Dispatcher.UIThread.Post(Roll);
-        knobs.ModesStopped += () => learning?.Cancel();
+        knobs.ModesStopped += () => learning.Cancel();
 
         Show();
     }
@@ -201,24 +198,14 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
 
     private async Task LearnAsync()
     {
-        var devices = midi.Sources.Select(source => source.Id).Where(id => id != MidiSources.Keyboard).ToList();
-
-        if (devices.Count == 0)
-        {
-            report.Say("No MIDI device is plugged in, so there is no button to learn.");
-            return;
-        }
-
-        learning?.Cancel();
-
-        using var cancel = learning = new CancellationTokenSource();
+        if (learning.Start("No MIDI device is plugged in, so there is no button to learn.") is not { } cancel) return;
 
         Show();
         report.Say("Press a button or a pad on your controller to randomize the knobs with. Esc to stop.");
 
         try
         {
-            if (await hub.LearnAsync(devices, cancel.Token, notes: true) is not { } pressed) return;
+            if (await hub.LearnAsync(cancel.Devices, cancel.Token, notes: true) is not { } pressed) return;
 
             // Any channel, so the button goes on randomizing whichever track the controller is on.
             // A pad's note still plays whatever listens to it; the trigger only hears it too.
@@ -231,8 +218,7 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
         }
         finally
         {
-            if (learning == cancel) learning = null;
-
+            cancel.End();
             Show();
         }
     }
@@ -251,7 +237,7 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
     private string Explain(MidiBinding binding) => knobs.View.Explain?.Invoke(binding) ?? binding.Label;
 
     private void Show() =>
-        knobs.View.ShowRoll(Wanted.Amount, Wanted.GlideSeconds, Wanted.Trigger, before.Count > 0, learning is not null);
+        knobs.View.ShowRoll(Wanted.Amount, Wanted.GlideSeconds, Wanted.Trigger, before.Count > 0, learning.Active);
 
     private void Save() => settings.Save();
 }
