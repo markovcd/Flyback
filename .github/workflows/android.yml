@@ -5,6 +5,9 @@
 # image and would grow it for every push. So this is the only place the project
 # is compiled in CI, and /release refuses a commit it has not passed on.
 #
+# A push to main waits for Build to pass on its commit first, so a red main is
+# not built.
+#
 # It runs on GitHub's machines for every ref, `main` included: the self-hosted
 # runner builds in Docker, and a workload install would leave state on it. It
 # builds only; an emulator run is slow and flaky, and waits on the app reporting
@@ -24,12 +27,22 @@ on:
 permissions:
   contents: read
 
+# On main every push runs to its verdict, in a group of its own commit, as Build
+# does: /release looks for this run on the exact commit.
 concurrency:
-  group: android-${{ github.ref }}
-  cancel-in-progress: true
+  group: android-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
+  gate:
+    if: github.event_name == 'push'
+    permissions:
+      actions: read
+    uses: ./.github/workflows/wait-for-build.yml
+
   build:
+    needs: gate
+    if: ${{ !cancelled() && (needs.gate.result == 'success' || needs.gate.result == 'skipped') }}
     runs-on: ubuntu-latest
     # A run is about two minutes; the default of six hours is what a hang costs.
     timeout-minutes: 10
