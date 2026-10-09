@@ -37,6 +37,7 @@ public class PluginHostTests
         { "jack", "linux.io" },
         { "coreaudio", "mac.io" },
         { "wasapi", "win.io" },
+        { "asio", "win.io" },
         { "alsaseq", "linux.io" },
         { "coremidi", "mac.io" },
         { "winmm", "win.io" },
@@ -97,6 +98,7 @@ public class PluginHostTests
         var outputs = Shipped().AudioOutputs;
 
         outputs.Single(o => o.Id == "wasapi").IsSupported.ShouldBe(OperatingSystem.IsWindows());
+        if (!OperatingSystem.IsWindows()) outputs.Single(o => o.Id == "asio").IsSupported.ShouldBeFalse();
         outputs.Single(o => o.Id == "coreaudio").IsSupported.ShouldBe(OperatingSystem.IsMacOS());
 
         if (!OperatingSystem.IsLinux())

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+    <!-- The fake ASIO driver is a vtable of function pointers, as a real one is. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <!--
+    A direct reference, unlike the tests that load plugins off disk: what is checked
+    here is how a driver is called, against a fake one, which needs no Windows.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.WinIO\Flyback.Plugins.WinIO.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Plugins\Flyback.Plugins.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+</Project>

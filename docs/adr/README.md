@@ -152,6 +152,7 @@ context, decision, consequences.
 | [0029](0029-linux-sound-through-alsa.md) | Linux sound through ALSA, on a thread of our own |
 | [0190](0190-linux-sound-goes-through-jackd-when-one-is-running.md) | Linux sound goes through jackd when one is running |
 | [0191](0191-the-sound-tab-picks-the-backend-where-more-than-one-can-play.md) | The Sound tab picks the backend where more than one can play |
+| [0192](0192-windows-sound-plays-through-asio-when-it-is-picked.md) | Windows sound plays through ASIO when it is picked *(user-directed)* |
 | [0030](0030-oscillators-accumulate-their-phase.md) | Oscillators accumulate their phase on the audio path |
 | [0036](0036-export-video-as-motion-jpeg-in-an-avi.md) | Export video as Motion JPEG in an AVI *(user-directed; demoted to the fallback by [0089](0089-ffmpeg-encodes-what-it-can-and-the-avi-is-the-fallback.md))* |
 | [0089](0089-ffmpeg-encodes-what-it-can-and-the-avi-is-the-fallback.md) | ffmpeg encodes what it can, and the AVI is the fallback *(user-directed)* |

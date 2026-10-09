@@ -99,6 +99,7 @@ public sealed class Usage
         "mac.io",
         "win.io",
         "alsa",
+        "asio",
         "coreaudio",
         "jack",
         "wasapi",

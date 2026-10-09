@@ -30,6 +30,19 @@
   </ItemGroup>
 
   <!--
+    The ASIO output against the fake driver its own tests play into, since no machine the
+    specs run on has a real one. A vtable in memory needs unsafe code.
+  -->
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.WinIO\Flyback.Plugins.WinIO.csproj" />
+    <Compile Include="..\Flyback.Plugins.WinIO.Tests\FakeAsioDriver.cs" Link="Support\FakeAsioDriver.cs" />
+  </ItemGroup>
+
+  <!--
     Built first and never loaded: the web viewer runs in a browser, or under Node,
     which is where its scenarios run it from the folder named here. Built in All plugins,
     as the specs install the site's plugins too and play their presets in it.

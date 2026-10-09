@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- On Windows, Flyback plays through an ASIO driver when you pick ASIO on the Sound tab, on the driver's first two outputs at its own block size.
+
 - Where more than one way of playing sound is installed, the Sound tab asks which one plays.
 
 - Over the editor's full-screen picture, Space pauses and F11 gives the window back, as in the viewer.

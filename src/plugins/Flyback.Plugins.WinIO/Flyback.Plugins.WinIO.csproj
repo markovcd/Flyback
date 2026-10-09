@@ -13,18 +13,19 @@
     <!-- What the install dialog and the plugins window show. -->
     <Product>Windows sound and MIDI</Product>
     <Authors>Flyback</Authors>
-    <Description>Sound out through WASAPI, and a patch played from a MIDI keyboard through the multimedia library Windows already has.</Description>
+    <Description>Sound out through WASAPI or an ASIO driver, and a patch played from a MIDI keyboard through the multimedia library Windows already has.</Description>
 
     <!--
       The MIDI driver callback is a function pointer and a device name is a fixed
-      buffer. Sound needs none of it — NAudio does the marshalling — but a
-      property is set for the whole assembly, and both halves are in this one.
+      buffer, and an ASIO driver is called through its vtable.
     -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
-    <AssemblyMetadata Include="Tags" Value="sound; midi; windows" />
+    <AssemblyMetadata Include="Tags" Value="sound; midi; windows; asio" />
+    <InternalsVisibleTo Include="Flyback.Plugins.WinIO.Tests" />
+    <InternalsVisibleTo Include="Flyback.Specs" />
     <!-- Retaken by PluginArtShotTests. -->
     <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" />
   </ItemGroup>

@@ -441,7 +441,7 @@ folder out from under it.
 
 | Plugin | Adds | Third-party |
 |---|---|---|
-| WinIO, MacIO, LinuxIO | Sound and MIDI per platform ([0063](adr/0063-one-plugin-per-platform-for-sound-and-midi.md)) | `NAudio.Wasapi` in WinIO; the others are hand-written P/Invoke |
+| WinIO, MacIO, LinuxIO | Sound and MIDI per platform ([0063](adr/0063-one-plugin-per-platform-for-sound-and-midi.md)) | `NAudio.Wasapi` for WASAPI in WinIO; ASIO and the others are hand-written P/Invoke |
 | Dpapi, Keychain, Keyring | Where an API key is kept ([0034](adr/0034-settings-in-a-file-the-key-in-the-operating-system.md)) | `ProtectedData` in Dpapi |
 | Picture, Voice, Effects, Mastering | Modules and presets | none |
 | ClaudeCode | Patch assistant over the installed `claude` program, so a subscription pays and no key exists | none: a process with JSON lines in and out |
@@ -791,6 +791,7 @@ changed: saved patches name it.
 | `Flyback.Site.Tests` | flyback-site's checks, and its commands against a stand-in site | |
 | `Flyback.Plugins.Tests` | The host, every shipped module and preset | Loads real plugins off disk |
 | `Flyback.Plugins.OpenAi.Tests`, `.Gemini.Tests`, `.ClaudeCode.Tests`, `.Codex.Tests`, `.Programs.Tests`, `.SystemOne.Tests` | Wire translation and sessions | Reference the plugin directly: translation is pure |
+| `Flyback.Plugins.WinIO.Tests` | The ASIO output, against `FakeAsioDriver`, a driver's vtable in memory | References the plugin directly; runs anywhere |
 | `Flyback.Ui.Testing` | The headless harness: `UiTest`, the Avalonia xunit adapter | Not a test project |
 | `Flyback.Plugins.Testing` | What sound-backend tests share: `JackDaemon`, a JACK server to play into | Not a test project |
 | `Flyback.Core.Benchmarks` | BenchmarkDotNet | Not a test project |
