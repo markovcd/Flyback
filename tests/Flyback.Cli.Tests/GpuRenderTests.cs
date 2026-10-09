@@ -24,9 +24,7 @@ public class GpuRenderTests
     private const int Width = 160;
     private const int Height = 90;
 
-    /// <summary>Plain, two kinds of feedback, a picture, a Meter's reading, the widest spread and the largest shader.</summary>
-    public static TheoryData<string> Drawn() =>
-        ["Plasma", "Feedback tunnel", "Trails", "Picture in", "Heard", "Kaleidoscope", "Whole band"];
+    public static TheoryData<string> Drawn() => [.. Presets.All.Select(p => p.Name)];
 
     [Theory]
     [MemberData(nameof(Drawn))]

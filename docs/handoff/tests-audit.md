@@ -24,32 +24,6 @@ tested with hostile input (zip-slip, size caps, a changed plugin, an unsigned
 package, a list changed after signing, `--seconds` at infinity); every flake
 found this week was fixed in the harness the same day, in the open.
 
-## 1. The plugin presets never meet a compiled backend (High)
-
-The IL, JS and GPU agreement tests, the GLSL snapshots and the frame snapshots
-all run over `Presets.All` (`Compile/IlProgramTests.cs:26`,
-`Compile/JsProgramTests.cs:31`, `Compile/GlslEmitterTests.cs:20`,
-`Rendering/PresetSnapshotTests.cs:26`, `Cli.Tests/GpuRenderTests.cs:28`), which
-is the engine's 26 presets. The 38 plugin presets (`MyceliumPreset.cs` 815 code
-lines, `OverworldPreset.cs` 480, `BronzePreset.cs` 381, `WarehousePreset.cs`
-377, `NoSenseDubPreset.cs` 362, and the rest) are compiled for the interpreter
-only: `ShippedPresetTests.Every_preset_builds_and_compiles` and
-`EveryModuleTests` stop at `CompileForAudio`. What touches plugin code on a
-compiled backend is one `IlCompiler` in `EuclidKitPresetTests`, eleven
-`GlslEmitter.Emit(...).PatchFragment.ShouldNotBeNullOrEmpty()` calls that prove
-text was emitted, and the web viewer's three-row outline, skipped without Node.
-`GpuRenderTests.Drawn` is a hand list of seven names. The IL test's own remark
-says what this misses: a delay line, accumulator or cell numbered differently
-shows up only on a shape that has one, and the plugin presets are the larger
-shapes. The editor plays through IL, the GPU draws GLSL and the page plays JS,
-so the presets a user hears are the ones the parity tests skip.
-
-Fix: in Flyback.Plugins.Tests, theories over `ShippedPlugins.Loaded.Presets`:
-IL equals the interpreter bit for bit over a second of sound and a grid of the
-picture (the `IlProgramTests.ShouldMatch` shape), `GlslEmitter.Emit` succeeds in
-both dialects, and the same for `JsProgram` where Node is present. `Drawn` runs
-over all of `Presets.All`, or says in a comment why seven.
-
 ## 4. Waits with no cap, and assertions on the wall clock (Medium)
 
 - `Viewer.Desktop.Tests/ViewerWindowTests.cs:89,173` `Player.Compiled().Wait()`

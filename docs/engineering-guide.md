@@ -252,6 +252,12 @@ all theories over `Enum.GetValues<OpCode>()`:
 - `JsProgramTests`: the emitted script, run under Node, plays every preset's sound
   and every op as the interpreter does; skipped where there is no Node.
 
+The plugins' presets are the larger shapes, and `Flyback.Plugins.Tests` holds them
+to the same: `PluginPresetIlTests`, `PluginPresetGlslTests` and
+`PluginPresetScriptTests` run `IlParity` and `ScriptRun`, which it compiles in from
+`Flyback.Core.Tests/Compile`. `Cli.Tests/GpuRenderTests` draws every engine preset
+on the GPU against the processor.
+
 A new opcode fails all of these until it exists everywhere.
 
 ---

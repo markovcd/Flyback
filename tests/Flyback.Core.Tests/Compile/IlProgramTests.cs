@@ -19,7 +19,7 @@ namespace Flyback.Core.Tests.Compile;
 /// </remarks>
 public class IlProgramTests
 {
-    private const double Aspect = 16d / 9d;
+    private const double Aspect = IlParity.Aspect;
 
     public static TheoryData<OpCode> AllOpCodes => [.. Enum.GetValues<OpCode>()];
 
@@ -32,41 +32,8 @@ public class IlProgramTests
     /// </summary>
     [Theory]
     [MemberData(nameof(AllPresets))]
-    public void The_picture_is_the_interpreters_to_the_bit(string name)
-    {
-        var program = Build(name).CompileForVideo().Program;
-        var il = IlProgram.Compile(program);
-
-        var feedback = Stripes(48, 27);
-        var expected = program.AllocateRegisters();
-        var actual = program.AllocateRegisters();
-
-        foreach (var t in (double[])[0d, 0.5d, 37.25d, 3600.125d])
-        {
-            for (var i = 0; i < 9; i++)
-            {
-                var y = 1d - 2d * (i + 0.5d) / 9d;
-
-                program.EvaluateStage(EvaluationStage.Frame, 0d, y, t, expected, feedback, Aspect);
-                program.EvaluateStage(EvaluationStage.Row, 0d, y, t, expected, feedback, Aspect);
-                il.EvaluateStage(EvaluationStage.Frame, 0d, y, t, actual, feedback, Aspect);
-                il.EvaluateStage(EvaluationStage.Row, 0d, y, t, actual, feedback, Aspect);
-
-                for (var j = 0; j < 17; j++)
-                {
-                    var x = (2d * (j + 0.5d) / 17d - 1d) * Aspect;
-
-                    program.EvaluateStage(EvaluationStage.Pixel, x, y, t, expected, feedback, Aspect);
-                    il.EvaluateStage(EvaluationStage.Pixel, x, y, t, actual, feedback, Aspect);
-                    ShouldMatch(program, expected, actual, $"{name} staged at ({x}, {y}, {t})");
-
-                    program.Evaluate(x, y, t, expected, feedback, aspect: Aspect);
-                    il.Evaluate(x, y, t, actual, feedback, aspect: Aspect);
-                    ShouldMatch(program, expected, actual, $"{name} whole at ({x}, {y}, {t})");
-                }
-            }
-        }
-    }
+    public void The_picture_is_the_interpreters_to_the_bit(string name) =>
+        IlParity.Picture(Build(name).CompileForVideo().Program, name);
 
     /// <summary>
     /// Every preset's sound, each side keeping memory of its own, stepped
@@ -75,28 +42,8 @@ public class IlProgramTests
     /// </summary>
     [Theory]
     [MemberData(nameof(AllPresets))]
-    public void The_sound_is_the_interpreters_to_the_bit(string name)
-    {
-        var program = Build(name).CompileForAudio().Program;
-        var il = IlProgram.Compile(program);
-
-        var renderer = new AudioRenderer();
-        var expectedMemory = renderer.DelayMemoryFor(program);
-        var actualMemory = renderer.DelayMemoryFor(program);
-
-        var expected = program.AllocateRegisters();
-        var actual = program.AllocateRegisters();
-        var step = 1d / (renderer.SampleRate * renderer.Oversample);
-
-        for (var i = 0; i < 12_000; i++)
-        {
-            var t = i * step;
-
-            program.Evaluate(0d, 0d, t, expected, default, expectedMemory);
-            il.Evaluate(0d, 0d, t, actual, default, actualMemory);
-            ShouldMatch(program, expected, actual, $"{name} at sample {i}");
-        }
-    }
+    public void The_sound_is_the_interpreters_to_the_bit(string name) =>
+        IlParity.Sound(Build(name).CompileForAudio().Program, 12_000, name);
 
     /// <summary>
     /// Fails the day an opcode is added and the IL backend is not told about it —
@@ -112,12 +59,12 @@ public class IlProgramTests
         var expected = program.AllocateRegisters();
         var actual = program.AllocateRegisters();
 
-        program.Evaluate(0.3d, -0.2d, 1.25d, expected, Stripes(8, 8));
-        il.Evaluate(0.3d, -0.2d, 1.25d, actual, Stripes(8, 8));
+        program.Evaluate(0.3d, -0.2d, 1.25d, expected, IlParity.Stripes(8, 8));
+        il.Evaluate(0.3d, -0.2d, 1.25d, actual, IlParity.Stripes(8, 8));
 
         // The outputs only: the operands are locals of the emitted method, and the
         // IL writes back to the bank only what something outside it reads.
-        ShouldMatch(program, expected, actual, code.ToString());
+        IlParity.ShouldMatch(program, expected, actual, code.ToString());
     }
 
     /// <summary>
@@ -135,7 +82,7 @@ public class IlProgramTests
 
         il.Methods.Parts.ShouldBe(parts);
 
-        var feedback = Stripes(16, 9);
+        var feedback = IlParity.Stripes(16, 9);
         var expected = program.AllocateRegisters();
         var actual = program.AllocateRegisters();
 
@@ -145,12 +92,12 @@ public class IlProgramTests
             il.EvaluateStage(stage, 0.4d, -0.3d, 2.5d, actual, feedback, Aspect);
         }
 
-        ShouldMatch(program, expected, actual, $"{parts}, staged");
+        IlParity.ShouldMatch(program, expected, actual, $"{parts}, staged");
 
         program.Evaluate(0.4d, -0.3d, 2.5d, expected, feedback, aspect: Aspect);
         il.Evaluate(0.4d, -0.3d, 2.5d, actual, feedback, aspect: Aspect);
 
-        ShouldMatch(program, expected, actual, $"{parts}, whole");
+        IlParity.ShouldMatch(program, expected, actual, $"{parts}, whole");
     }
 
     /// <summary>An opcode nothing names never reaches the IL: the program refuses it as it is built.</summary>
@@ -238,7 +185,7 @@ public class IlProgramTests
         {
             program.Evaluate(0d, 0d, i / 192_000d, expected, default, expectedMemory);
             il.Evaluate(0d, 0d, i / 192_000d, actual, default, actualMemory);
-            ShouldMatch(program, expected, actual, $"sample {i}");
+            IlParity.ShouldMatch(program, expected, actual, $"sample {i}");
         }
     }
 
@@ -253,24 +200,6 @@ public class IlProgramTests
 
     private static Patch Build(string name) =>
         Presets.All.Single(p => p.Name == name).Build(NodeCatalog.Current);
-
-    private static FeedbackFrame Stripes(int width, int height)
-    {
-        var pixels = new float[width * height * 3];
-        for (var i = 0; i < pixels.Length; i++) pixels[i] = i * 37 % 101 / 100f;
-
-        return new FeedbackFrame(pixels, width, height);
-    }
-
-    private static void ShouldMatch(CompiledPatch program, double[] expected, double[] actual, string where)
-    {
-        for (var c = 0; c < program.OutputWidth; c++)
-        {
-            var at = program.OutputBase + c;
-            BitConverter.DoubleToInt64Bits(actual[at])
-                .ShouldBe(BitConverter.DoubleToInt64Bits(expected[at]), $"{where}, output {c}: {actual[at]:R} against {expected[at]:R}");
-        }
-    }
 
     /// <summary>Three operands and the op under test writing r3, as the GLSL tests build it.</summary>
     private static CompiledPatch OneOp(OpCode code) =>

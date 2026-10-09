@@ -59,6 +59,11 @@
     <Compile Include="..\..\src\plugins\Shared\Audio\*.cs" LinkBase="SharedAudio" />
   </ItemGroup>
 
+  <!-- Core.Tests' backend comparisons, for holding the plugins' presets to what the engine's are held to. -->
+  <ItemGroup>
+    <Compile Include="..\Flyback.Core.Tests\Compile\IlParity.cs;..\Flyback.Core.Tests\Compile\ScriptRun.cs;..\Flyback.Core.Tests\Compile\ScriptHeap.cs;..\Flyback.Core.Tests\Compile\NodeJs.cs" LinkBase="Parity" />
+  </ItemGroup>
+
   <!-- The plugins' sources, for the contract-surface test: a constant a plugin names leaves no trace in its IL. -->
   <ItemGroup>
     <None Include="..\..\src\plugins\**\*.cs;..\Flyback.Plugins.Sample\**\*.cs;..\Flyback.Plugins.FakeAssistant\**\*.cs;..\Flyback.Plugins.FakeDecider\**\*.cs"
