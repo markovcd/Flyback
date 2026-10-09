@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- On Linux, a JACK server that has stopped answering no longer freezes Flyback when it looks for one.
+
 - On Linux, forgetting a key that was never kept no longer reports an error.
 
 - A patch file with no knob values for a module opens with the module's defaults instead of crashing.

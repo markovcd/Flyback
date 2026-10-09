@@ -11,6 +11,9 @@ namespace Flyback.Plugins.Tests;
 /// </summary>
 public class JackOutputTests(JackServerFixture server) : IClassFixture<JackServerFixture>
 {
+    /// <summary>How long a test against the server may take; each takes about a second.</summary>
+    private const int Cap = 60_000;
+
     private static readonly SettingValues Unconnected = SettingValues.None.With("connect", "none");
 
     [Fact]
@@ -40,8 +43,8 @@ public class JackOutputTests(JackServerFixture server) : IClassFixture<JackServe
     /// The only check that the server really calls us: blocks arrive, at the server's own
     /// rate and period, and stopping lets the client go.
     /// </summary>
-    [Fact]
-    public void The_server_drives_the_callback_until_stopped()
+    [Fact(Timeout = Cap)]
+    public Task The_server_drives_the_callback_until_stopped() => Bounded(() =>
     {
         Assert.SkipUnless(server.Available, server.Why);
 
@@ -67,10 +70,10 @@ public class JackOutputTests(JackServerFixture server) : IClassFixture<JackServe
         device.Stop();
 
         device.IsRunning.ShouldBeFalse();
-    }
+    });
 
-    [Fact]
-    public void A_stopped_device_starts_again()
+    [Fact(Timeout = Cap)]
+    public Task A_stopped_device_starts_again() => Bounded(() =>
     {
         Assert.SkipUnless(server.Available, server.Why);
 
@@ -90,5 +93,12 @@ public class JackOutputTests(JackServerFixture server) : IClassFixture<JackServe
 
             device.Stop();
         }
-    }
+    });
+
+    /// <summary>
+    /// Runs a test that calls into libjack off the test's thread, so a call that never
+    /// returns fails the test by name at <see cref="Cap"/> rather than hanging the run.
+    /// </summary>
+    private static Task Bounded(Action test) =>
+        Task.Factory.StartNew(test, TestContext.Current.CancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 }

@@ -49,11 +49,16 @@ internal static class JackServer
         }
     }
 
-    private static bool Answers(string path)
+    /// <summary>Whether a server listens at <paramref name="path"/> and takes a client, answered without waiting.</summary>
+    /// <remarks>
+    /// Non-blocking: a server too wedged to accept fills its backlog, and a blocking connect
+    /// to it then waits forever, on the UI thread when the settings ask.
+    /// </remarks>
+    internal static bool Answers(string path)
     {
         try
         {
-            using var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+            using var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified) { Blocking = false };
 
             socket.Connect(new UnixDomainSocketEndPoint(path));
             return true;
