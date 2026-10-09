@@ -112,11 +112,11 @@ public sealed partial class WebsiteSteps
     {
         var script = SiteFiles.Read("/viewer/main.js");
 
-        script.ShouldContain("const wanted = playing && document.fullscreenElement != null && !document.hidden;");
+        script.ShouldContain("const wanted = playing() && document.fullscreenElement != null && !document.hidden;");
         script.ShouldContain("navigator.wakeLock.request('screen')");
         script.ShouldContain("document.addEventListener('fullscreenchange', keepAwake);");
-        script.ShouldMatch("""playing = true;(?:[^\n]*\n){1,6}\s*keepAwake\(\);""");
-        script.ShouldMatch("""playing = false;(?:[^\n]*\n){1,6}\s*keepAwake\(\);""");
+        script.ShouldMatch("""speakers\.start\([^)]*\);(?:[^\n]*\n){1,6}\s*keepAwake\(\);""");
+        script.ShouldMatch("""speakers\.stop\([^)]*\);(?:[^\n]*\n){1,6}\s*keepAwake\(\);""");
     }
 
     /// <summary>1080p among the sizes, and an Off that stops drawing without touching the sound.</summary>
