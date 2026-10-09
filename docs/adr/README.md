@@ -29,6 +29,7 @@ context, decision, consequences.
 | [0183](0183-the-binder-is-one-walk-and-what-it-asks-for-is-handed-nothing-back.md) | The binder is one walk, and what it asks for is handed nothing back *(user-directed)* |
 | [0187](0187-the-plate-scrolls-with-the-reading-and-folds-into-a-pinned-header.md) | The plate scrolls with the reading and folds into a pinned header *(user-directed; supersedes [0122](0122-the-panel-wears-the-block-it-is-about.md)'s pinned plate and right-hand name)* |
 | [0184](0184-the-editor-runs-on-android-with-its-plugins-linked-in.md) | The editor runs on Android, with its plugins linked in *(user-directed)* |
+| [0189](0189-the-architecture-is-a-c4-model-in-structurizr-dsl.md) | The architecture is a C4 model in Structurizr DSL *(user-directed)* |
 
 ### The engine
 

@@ -31,7 +31,8 @@ Where an ADR and the code disagree, that is a finding worth raising.
 One module graph makes a picture and a sound. A patch is compiled to a flat
 program for a register machine, once for the screen and once for the speakers,
 and everything else in the repository either builds that graph, runs that
-program, or shows the result.
+program, or shows the result. Who uses it and what it talks to is the C4 model in
+[`diagrams/`](diagrams/README.md).
 
 ```text
 Flyback.Core           the patch model, the module catalog, the opcodes, the Emitter
