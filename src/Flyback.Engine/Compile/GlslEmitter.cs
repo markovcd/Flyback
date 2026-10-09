@@ -363,7 +363,7 @@ public static class GlslEmitter
 
     /// <summary>
     /// The bound a value takes on its way into a plane, which is
-    /// <c>CompiledPatch.Bounded</c> and <c>DelayState.WritePlane</c> written a
+    /// <c>Arithmetic.Bounded</c> and <c>DelayState.WritePlane</c> written a
     /// third time. A cycle drawn as wires has no gain of its own, so a loop above
     /// unity is easy to draw and this is where it stops.
     /// </summary>
@@ -374,7 +374,7 @@ public static class GlslEmitter
         """;
 
     /// <summary>
-    /// The previous frame, read the way CompiledPatch.Sample reads it. The scales
+    /// The previous frame, read the way Arithmetic.Sample reads it. The scales
     /// carry the whole mapping — patch coordinates to texel centers, and the y
     /// flip between a picture indexed downwards and a texture stored upwards — so
     /// the shader needs no width or height of its own.

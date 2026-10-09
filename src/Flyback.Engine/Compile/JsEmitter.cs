@@ -349,7 +349,7 @@ internal static class JsEmitter
     }
 
     /// <summary>
-    /// The interpreter's helpers, <see cref="DelayState"/>'s and <see cref="Noise"/>'s,
+    /// <see cref="Arithmetic"/>'s helpers, <see cref="DelayState"/>'s and <see cref="Noise"/>'s,
     /// written again, with the layout's constants. Each keeps the original's order of
     /// operations, which is what keeps its doubles the same.
     /// </summary>

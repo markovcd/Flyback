@@ -22,7 +22,6 @@ decision (ADR-0138).
 - **The page end of the speaker in JS**: `Viewer.Web/wwwroot/main.js:149-235` and `Editor.Web/wwwroot/speakers.js:73-120` do the same handshake with `speaker.js` and `sound.js`. One `speakers.js` exporting start/seek/time/status, imported by both pages as `gl.js` is.
 - **CLI and Site**: `Flyback.Cli.csproj:34` links `Site/Admin/SiteAdmin.cs` as source, and the media PUT and `--server` check are still written twice (`Cli/Rendering/MediaUpload.cs:25-30` vs `Site/Commands/PushMediaCommand.cs:95-100`; `RenderPresetsCommand.cs:95-100` vs `SiteAdmin.Client:16`). A `Flyback.Site.Client` library both reference. Check while there: `Flyback.Site.csproj:24-33` lists the web plugins twice, minus Drawings, and `LoadLinked(..., "WebPlugin")` names Drawings; if `Assembly.Load` fails there, a Drawings preset is reported as lacking. Not confirmed by running.
 - **Silent sound stand-ins**: `Editor.Desktop/Shots/ShotSound.cs` and `Editor.Web/PageSound.cs` share the compile-for-live-inputs update and the null audition. An `UnplayedSound` base in Ui.
-- **`CompiledPatch`** (406) is the program description, the interpreter, the IL hand-over and the arithmetic library. `Arithmetic` and `Interpreter` beside it; ADR-0076's "IL calls the interpreter's own helpers" survives the move.
 
 ## 10. Tests (Medium to Low)
 

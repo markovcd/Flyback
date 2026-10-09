@@ -207,21 +207,21 @@ and both work by pushing a substitute domain onto the emitter before resolving a
 
 | Backend | Where | Runs |
 |---|---|---|
-| Interpreter | `CompiledPatch.Evaluate` | Everything, always. **It is the specification.** |
+| Interpreter | `Interpreter`, entered through `CompiledPatch.Evaluate` | Everything, always. **It is the specification.** |
 | IL | `IlEmitter`, `IlOps`, `IlProgram`, `IlCompiler` | The CPU picture and the sound, once built, and every offline render ([0076](adr/0076-the-processor-runs-a-program-as-il-once-it-is-built.md)) |
 | GLSL | `GlslEmitter` | The live preview and live recording ([0035](adr/0035-a-glsl-backend-for-the-video-path.md)) |
 | JavaScript | `JsEmitter`, `JsLayout` | The web viewer's sound ([0160](adr/0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md)) |
 
 **The interpreter** is one `switch` over the flat op array. Register access has no
 bounds check; `Vouch` checks the whole program once in the constructor instead.
-Arithmetic is guarded rather than allowed to produce NaN
+The math, in `Arithmetic`, is guarded rather than allowed to produce NaN
 ([0013](adr/0013-guard-arithmetic-instead-of-propagating-nan.md)): divide by zero
 is 0, the root of a negative is 0, `Guard` turns a non-finite value into 0.
 
 **The IL backend** is built on a background thread at below-normal priority and
 attached to the program through a `Volatile` field that renderers read once per
 frame or buffer. Each op is one inlined method in `IlOps` that calls the
-interpreter's own helpers, so a guard exists once. A stretch longer than 256 ops
+interpreter's own helpers in `Arithmetic`, so a guard exists once. A stretch longer than 256 ops
 is several methods called in order, because past a few thousand locals the JIT
 stops optimizing a method and every op becomes a call. Every build is run against the
 interpreter before it is trusted, bit for bit, and refused if it differs.
@@ -1068,7 +1068,7 @@ the changelog.
 **Add an opcode.** Last resort; first try composing existing ops, then a stateful
 cell ([0041](adr/0041-a-plugin-can-hold-state-without-a-new-opcode.md)). It
 touches `OpCode.cs` (next number, never a reused one), `OpShape.cs`,
-`CompiledPatch.Run`, `IlOps` and `IlEmitter`, `GlslEmitter` (or the named list of
+`Interpreter.Run`, `IlOps` and `IlEmitter`, `GlslEmitter` (or the named list of
 ops that write nothing), and the `Emitter` if it needs a helper. `TotalityTests`,
 `IlProgramTests` and `GlslEmitterTests` fail until all of them agree, and the GLSL
 snapshots change. It moves the plugin contract's minor.
