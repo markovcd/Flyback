@@ -242,7 +242,7 @@ internal static class Shot
         for (var frame = 0; ; frame++)
         {
             var drawn = preview.Frames;
-            sound.Time = Math.Min(from + frame * Step, at);
+            sound.SeekTo(Math.Min(from + frame * Step, at));
 
             await Until(() => preview.Frames > drawn, $"the picture at {sound.Time:0.00} s", window);
 

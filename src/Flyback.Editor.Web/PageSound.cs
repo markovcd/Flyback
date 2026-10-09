@@ -2,12 +2,9 @@ using System.Runtime.InteropServices.JavaScript;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Ui.Audio;
-using Flyback.Ui.Capture;
-using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Render;
-using Flyback.Plugins.Audio;
 
 namespace Flyback.Editor.Web;
 
@@ -20,11 +17,10 @@ namespace Flyback.Editor.Web;
 /// the knobs and the keys write into is this side's, and what changes in it is handed
 /// over once a frame. Nothing is recorded and no preset is auditioned in a page.
 /// </remarks>
-internal sealed partial class PageSound : IAudioEngine
+internal sealed partial class PageSound : UnplayedSound
 {
     private float aspect = 1f;
     private float gain = 1f;
-    private int ops;
 
     /// <summary>What the worker was last told each value in <see cref="Live"/> is; NaN for never.</summary>
     private float[] told = [];
@@ -37,17 +33,9 @@ internal sealed partial class PageSound : IAudioEngine
     private (Guid Node, float Window, ChartKind Chart)[] charted = [];
     private int watching;
 
-    public bool IsRunning { get; private set; }
+    public override double Time => JsTime();
 
-    public int Ops => ops;
-
-    public int SampleRate => GlobalConstants.SampleRate;
-
-    public IAudioSink? Capture { get; set; }
-
-    public double Time => JsTime();
-
-    public float Aspect
+    public override float Aspect
     {
         get => aspect;
         set
@@ -60,7 +48,7 @@ internal sealed partial class PageSound : IAudioEngine
         }
     }
 
-    public float Gain
+    public override float Gain
     {
         get => gain;
         set
@@ -70,10 +58,8 @@ internal sealed partial class PageSound : IAudioEngine
         }
     }
 
-    public LiveValues Live { get; private set; } = LiveValues.None;
-
     /// <summary>What the worker plays at, which it also lowers itself when the sound keeps falling behind.</summary>
-    public int Oversample
+    public override int Oversample
     {
         get => JsOversampleNow() is > 0 and var factor ? factor : AudioRenderer.DefaultOversample;
         set
@@ -82,39 +68,25 @@ internal sealed partial class PageSound : IAudioEngine
         }
     }
 
-    /// <summary>The worker times its own sound and lowers it itself.</summary>
-    public SoundTiming Timing => default;
+    public override double Speed => IsRunning ? JsSpeed() : 0;
 
-    public double Speed => IsRunning ? JsSpeed() : 0;
-
-    public bool IsAuditioning => false;
-
-    public void Start()
+    public override void Start()
     {
-        IsRunning = true;
+        base.Start();
         Tell();
         JsStart(SampleRate);
     }
 
-    public void Stop()
+    public override void Stop()
     {
-        IsRunning = false;
+        base.Stop();
         JsStop();
     }
 
-    public bool Use(IAudioDevice next) => false;
+    public override void SeekTo(double seconds) => JsSeek(double.IsFinite(seconds) ? Math.Max(0, seconds) : 0);
 
-    public void Rewind() => SeekTo(0);
-
-    public void SeekTo(double seconds) => JsSeek(double.IsFinite(seconds) ? Math.Max(0, seconds) : 0);
-
-    public void Update(Patch patch, ISampleLibrary? samples = null, Cue? start = null, CompiledPatch? sound = null, Action<LiveValues>? seed = null)
+    protected override void Updated(Patch patch, ISampleLibrary? samples)
     {
-        var program = sound ?? patch.CompileForAudio(samples: samples, played: true).Program;
-
-        ops = program.Ops.Length;
-        Live = new LiveValues(program.LiveInputs);
-        seed?.Invoke(Live);
         told = new float[Live.Count];
         Array.Fill(told, float.NaN);
 
@@ -130,7 +102,7 @@ internal sealed partial class PageSound : IAudioEngine
         JsEdit(PatchIO.ToJson(patch), aspect);
     }
 
-    public void Listen(CompiledPatch drawn, LiveValues watching)
+    public override void Listen(CompiledPatch drawn, LiveValues watching)
     {
         Tell();
         Watch(watching, drawn.Taps);
@@ -150,18 +122,6 @@ internal sealed partial class PageSound : IAudioEngine
             at += buffer.Length;
         }
     }
-
-    public void Deafen(LiveValues watching)
-    {
-        foreach (var key in watching.Keys)
-            if (MeterSignals.Is(key)) watching.Set(key, 0f);
-    }
-
-    public AudioEngine.Audition? PrepareAudition(Patch patch, ISampleLibrary? samples = null) => null;
-
-    public void StartAudition(AudioEngine.Audition audition) { }
-
-    public void EndAudition() { }
 
     /// <summary>Hands the worker every value in <see cref="Live"/> that has changed since it was last told.</summary>
     private void Tell()
