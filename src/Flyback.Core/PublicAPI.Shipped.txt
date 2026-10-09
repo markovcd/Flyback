@@ -21,16 +21,12 @@ Flyback.Core.Compile.Emitter.Coerce(Flyback.Core.Compile.Slot value, int width) 
 Flyback.Core.Compile.Emitter.Combine(Flyback.Core.Compile.Slot r, Flyback.Core.Compile.Slot g, Flyback.Core.Compile.Slot b) -> Flyback.Core.Compile.Slot
 Flyback.Core.Compile.Emitter.Constant(float value) -> Flyback.Core.Compile.Slot
 Flyback.Core.Compile.Emitter.DelayLine(Flyback.Core.Compile.OpCode code, Flyback.Core.Compile.Slot input, Flyback.Core.Compile.Slot gain, Flyback.Core.Compile.Slot time, float maximum) -> Flyback.Core.Compile.Slot
-Flyback.Core.Compile.Emitter.Emitter() -> void
 Flyback.Core.Compile.Emitter.HasMemory() -> Flyback.Core.Compile.Slot
 Flyback.Core.Compile.Emitter.Interval() -> Flyback.Core.Compile.Slot
-Flyback.Core.Compile.Emitter.Live(string! key) -> Flyback.Core.Compile.Slot
 Flyback.Core.Compile.Emitter.Load(Flyback.Core.Compile.OpCode code) -> Flyback.Core.Compile.Slot
 Flyback.Core.Compile.Emitter.Mul(Flyback.Core.Compile.Slot a, Flyback.Core.Compile.Slot b) -> Flyback.Core.Compile.Slot
 Flyback.Core.Compile.Emitter.Mul(Flyback.Core.Compile.Slot a, float b) -> Flyback.Core.Compile.Slot
 Flyback.Core.Compile.Emitter.Once(string! key, Flyback.Core.Compile.Slot[]! inputs, System.Func<Flyback.Core.Compile.Slot[]!>! lower) -> Flyback.Core.Compile.Slot[]!
-Flyback.Core.Compile.Emitter.Owner.get -> System.Guid
-Flyback.Core.Compile.Emitter.Owner.set -> void
 Flyback.Core.Compile.Emitter.Phase(Flyback.Core.Compile.Slot input, Flyback.Core.Compile.Slot frequency, Flyback.Core.Compile.Slot offset) -> Flyback.Core.Compile.Slot
 Flyback.Core.Compile.Emitter.Picture(Flyback.Core.Compile.Slot x, Flyback.Core.Compile.Slot y, Flyback.Core.Compile.LoadedImage! image) -> Flyback.Core.Compile.Slot
 Flyback.Core.Compile.Emitter.PlaneRead(int slot) -> Flyback.Core.Compile.Slot
@@ -40,7 +36,6 @@ Flyback.Core.Compile.Emitter.PushDomain(Flyback.Core.Compile.Slot x, Flyback.Cor
 Flyback.Core.Compile.Emitter.Sub(Flyback.Core.Compile.Slot a, Flyback.Core.Compile.Slot b) -> Flyback.Core.Compile.Slot
 Flyback.Core.Compile.Emitter.Table(Flyback.Core.Compile.Slot position, Flyback.Core.Compile.LoadedSample! clip) -> Flyback.Core.Compile.Slot
 Flyback.Core.Compile.Emitter.Ternary(Flyback.Core.Compile.OpCode code, Flyback.Core.Compile.Slot a, Flyback.Core.Compile.Slot b, Flyback.Core.Compile.Slot c) -> Flyback.Core.Compile.Slot
-Flyback.Core.Compile.Emitter.Triple(Flyback.Core.Compile.OpCode code, Flyback.Core.Compile.Slot a, Flyback.Core.Compile.Slot b, Flyback.Core.Compile.Slot c = default(Flyback.Core.Compile.Slot)) -> Flyback.Core.Compile.Slot
 Flyback.Core.Compile.Emitter.Unary(Flyback.Core.Compile.OpCode code, Flyback.Core.Compile.Slot a) -> Flyback.Core.Compile.Slot
 Flyback.Core.Compile.Emitter.UnitRead(int slot) -> Flyback.Core.Compile.Slot
 Flyback.Core.Compile.Emitter.UnitWrite(int slot, Flyback.Core.Compile.Slot value) -> void
@@ -49,16 +44,17 @@ Flyback.Core.Compile.IImageLibrary.Explain(string! path) -> string!
 Flyback.Core.Compile.IImageLibrary.Find(string! path) -> Flyback.Core.Compile.LoadedImage?
 Flyback.Core.Compile.ISampleLibrary
 Flyback.Core.Compile.ISampleLibrary.Explain(string! path) -> string!
+Flyback.Core.Compile.ISampleLibrary.ExplainFile(string! path) -> string!
 Flyback.Core.Compile.ISampleLibrary.ExplainMidi(string! path) -> string!
 Flyback.Core.Compile.ISampleLibrary.Find(string! path) -> Flyback.Core.Compile.LoadedSample?
+Flyback.Core.Compile.ISampleLibrary.FindFile(string! path) -> byte[]?
 Flyback.Core.Compile.ISampleLibrary.FindMidi(string! path) -> Flyback.Core.Compile.LoadedMidi?
+Flyback.Core.Compile.ISampleLibrary.FindPicture(string! path) -> Flyback.Core.Compile.LoadedImage?
 Flyback.Core.Compile.IssueSeverity
 Flyback.Core.Compile.IssueSeverity.Error = 0 -> Flyback.Core.Compile.IssueSeverity
 Flyback.Core.Compile.IssueSeverity.Warning = 1 -> Flyback.Core.Compile.IssueSeverity
 Flyback.Core.Compile.LoadedImage
 Flyback.Core.Compile.LoadedImage.<Clone>$() -> Flyback.Core.Compile.LoadedImage!
-Flyback.Core.Compile.LoadedImage.Aspect.get -> float
-Flyback.Core.Compile.LoadedImage.At(double x, double y, System.Span<double> rgb) -> void
 Flyback.Core.Compile.LoadedImage.Deconstruct(out float[]! Pixels, out int Width, out int Height) -> void
 Flyback.Core.Compile.LoadedImage.Equals(Flyback.Core.Compile.LoadedImage? other) -> bool
 Flyback.Core.Compile.LoadedImage.Height.get -> int
@@ -75,7 +71,6 @@ Flyback.Core.Compile.LoadedMidi.Notes.get -> System.Collections.Generic.IReadOnl
 Flyback.Core.Compile.LoadedMidi.Seconds.get -> float
 Flyback.Core.Compile.LoadedSample
 Flyback.Core.Compile.LoadedSample.<Clone>$() -> Flyback.Core.Compile.LoadedSample!
-Flyback.Core.Compile.LoadedSample.At(double seconds) -> double
 Flyback.Core.Compile.LoadedSample.Deconstruct(out float[]! Samples, out int SampleRate) -> void
 Flyback.Core.Compile.LoadedSample.Equals(Flyback.Core.Compile.LoadedSample? other) -> bool
 Flyback.Core.Compile.LoadedSample.LoadedSample(float[]! Samples, int SampleRate) -> void
@@ -83,8 +78,6 @@ Flyback.Core.Compile.LoadedSample.SampleRate.get -> int
 Flyback.Core.Compile.LoadedSample.SampleRate.init -> void
 Flyback.Core.Compile.LoadedSample.Samples.get -> float[]!
 Flyback.Core.Compile.LoadedSample.Samples.init -> void
-Flyback.Core.Compile.LoadedSample.Seconds.get -> float
-Flyback.Core.Compile.MeterSignals
 Flyback.Core.Compile.MidiLine
 Flyback.Core.Compile.MidiLine.Gate.get -> Flyback.Core.Compile.LoadedSample!
 Flyback.Core.Compile.MidiLine.Notes.get -> int
@@ -165,9 +158,7 @@ Flyback.Core.Compile.Slot.Slot() -> void
 Flyback.Core.Compile.Slot.Slot(int Base, int Width) -> void
 Flyback.Core.Compile.Slot.Width.get -> int
 Flyback.Core.Compile.Slot.Width.init -> void
-Flyback.Core.Compile.SpectrumAxis
 Flyback.Core.GlobalConstants
-Flyback.Core.Graph.AutoRemap
 Flyback.Core.Graph.ChoiceOption
 Flyback.Core.Graph.ChoiceOption.ChoiceOption() -> void
 Flyback.Core.Graph.ChoiceOption.ChoiceOption(string! Id, string! Name) -> void
@@ -177,16 +168,6 @@ Flyback.Core.Graph.ChoiceOption.Id.get -> string!
 Flyback.Core.Graph.ChoiceOption.Id.init -> void
 Flyback.Core.Graph.ChoiceOption.Name.get -> string!
 Flyback.Core.Graph.ChoiceOption.Name.init -> void
-Flyback.Core.Graph.ChordShape
-Flyback.Core.Graph.ChordShape.<Clone>$() -> Flyback.Core.Graph.ChordShape!
-Flyback.Core.Graph.ChordShape.ChordShape(string! Name, int[]! Intervals) -> void
-Flyback.Core.Graph.ChordShape.Deconstruct(out string! Name, out int[]! Intervals) -> void
-Flyback.Core.Graph.ChordShape.Equals(Flyback.Core.Graph.ChordShape? other) -> bool
-Flyback.Core.Graph.ChordShape.Intervals.get -> int[]!
-Flyback.Core.Graph.ChordShape.Intervals.init -> void
-Flyback.Core.Graph.ChordShape.Name.get -> string!
-Flyback.Core.Graph.ChordShape.Name.init -> void
-Flyback.Core.Graph.Chords
 Flyback.Core.Graph.Connection
 Flyback.Core.Graph.Connection.<Clone>$() -> Flyback.Core.Graph.Connection!
 Flyback.Core.Graph.Connection.Connection(System.Guid SourceNode, int SourcePort, System.Guid TargetNode, int TargetPort) -> void
@@ -208,45 +189,22 @@ Flyback.Core.Graph.ControlLink.ControlLink() -> void
 Flyback.Core.Graph.ControlLink.ControlLink(System.Guid Control, float Min, float Max) -> void
 Flyback.Core.Graph.ControlLink.Deconstruct(out System.Guid Control, out float Min, out float Max) -> void
 Flyback.Core.Graph.ControlLink.Equals(Flyback.Core.Graph.ControlLink other) -> bool
-Flyback.Core.Graph.ControlLink.Inverse(float reading) -> float
 Flyback.Core.Graph.ControlLink.Knee.get -> float
 Flyback.Core.Graph.ControlLink.Knee.init -> void
 Flyback.Core.Graph.ControlLink.Max.get -> float
 Flyback.Core.Graph.ControlLink.Max.init -> void
 Flyback.Core.Graph.ControlLink.Min.get -> float
 Flyback.Core.Graph.ControlLink.Min.init -> void
-Flyback.Core.Graph.ControlLink.Swept(bool inDecades, Flyback.Core.Graph.PortSpec socket) -> Flyback.Core.Graph.ControlLink
 Flyback.Core.Graph.ControlMap
-Flyback.Core.Graph.Cycles
 Flyback.Core.Graph.EmitContext
 Flyback.Core.Graph.EmitContext.Deconstruct(out Flyback.Core.Compile.Slot[]! Inputs) -> void
 Flyback.Core.Graph.EmitContext.EmitContext() -> void
 Flyback.Core.Graph.EmitContext.EmitContext(Flyback.Core.Compile.Slot[]! Inputs) -> void
 Flyback.Core.Graph.EmitContext.Equals(Flyback.Core.Graph.EmitContext other) -> bool
 Flyback.Core.Graph.EmitContext.Extra<T>(string! key) -> T?
-Flyback.Core.Graph.EmitContext.Extras.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object!>!
-Flyback.Core.Graph.EmitContext.Extras.init -> void
 Flyback.Core.Graph.EmitContext.Inputs.get -> Flyback.Core.Compile.Slot[]!
 Flyback.Core.Graph.EmitContext.Inputs.init -> void
-Flyback.Core.Graph.EmitContext.Midi.get -> Flyback.Core.Compile.MidiLine?
-Flyback.Core.Graph.EmitContext.Midi.init -> void
-Flyback.Core.Graph.EmitContext.Node.get -> System.Guid
-Flyback.Core.Graph.EmitContext.Node.init -> void
-Flyback.Core.Graph.EmitContext.Parts.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PartLevel>!>!
-Flyback.Core.Graph.EmitContext.Parts.init -> void
-Flyback.Core.Graph.EmitContext.Picture.get -> Flyback.Core.Compile.LoadedImage?
-Flyback.Core.Graph.EmitContext.Picture.init -> void
 Flyback.Core.Graph.EmitContext.Resolve(int port) -> Flyback.Core.Compile.Slot
-Flyback.Core.Graph.EmitContext.Resolver.get -> System.Func<int, Flyback.Core.Compile.Slot>?
-Flyback.Core.Graph.EmitContext.Resolver.init -> void
-Flyback.Core.Graph.EmitContext.Sample.get -> Flyback.Core.Compile.LoadedSample?
-Flyback.Core.Graph.EmitContext.Sample.init -> void
-Flyback.Core.Graph.EmitContext.Scale.get -> System.Collections.Generic.IReadOnlyList<int>!
-Flyback.Core.Graph.EmitContext.Scale.init -> void
-Flyback.Core.Graph.EmitContext.Steps.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.Step>!
-Flyback.Core.Graph.EmitContext.Steps.init -> void
-Flyback.Core.Graph.EmitContext.Trace.get -> Flyback.Core.Compile.LoadedSample?
-Flyback.Core.Graph.EmitContext.Trace.init -> void
 Flyback.Core.Graph.EmitContext.With(string! key, object! value) -> Flyback.Core.Graph.EmitContext
 Flyback.Core.Graph.EmitContext.this[int port].get -> Flyback.Core.Compile.Slot
 Flyback.Core.Graph.EmitFn
@@ -270,10 +228,8 @@ Flyback.Core.Graph.ExtraField.Choice.Deconstruct(out string! Key, out string! La
 Flyback.Core.Graph.ExtraField.Choice.Equals(Flyback.Core.Graph.ExtraField.Choice? other) -> bool
 Flyback.Core.Graph.ExtraField.Choice.Fallback.get -> string!
 Flyback.Core.Graph.ExtraField.Choice.Fallback.init -> void
-Flyback.Core.Graph.ExtraField.Choice.Name(string! id) -> string!
 Flyback.Core.Graph.ExtraField.Choice.Options.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.ChoiceOption>!
 Flyback.Core.Graph.ExtraField.Choice.Options.init -> void
-Flyback.Core.Graph.ExtraField.Choice.Value(System.Text.Json.Nodes.JsonNode? stored) -> string!
 Flyback.Core.Graph.ExtraField.Deconstruct(out string! Key, out string! Label) -> void
 Flyback.Core.Graph.ExtraField.ExtraField(Flyback.Core.Graph.ExtraField! original) -> void
 Flyback.Core.Graph.ExtraField.ExtraField(string! Key, string! Label) -> void
@@ -289,7 +245,6 @@ Flyback.Core.Graph.ExtraField.Number.Equals(Flyback.Core.Graph.ExtraField.Number
 Flyback.Core.Graph.ExtraField.Number.Number(string! Key, string! Label, Flyback.Core.Graph.PortSpec Spec) -> void
 Flyback.Core.Graph.ExtraField.Number.Spec.get -> Flyback.Core.Graph.PortSpec
 Flyback.Core.Graph.ExtraField.Number.Spec.init -> void
-Flyback.Core.Graph.ExtraField.Number.Value(System.Text.Json.Nodes.JsonNode? stored) -> float
 Flyback.Core.Graph.ExtraField.Text
 Flyback.Core.Graph.ExtraField.Text.Deconstruct(out string! Key, out string! Label, out string! Fallback, out bool Multiline) -> void
 Flyback.Core.Graph.ExtraField.Text.Equals(Flyback.Core.Graph.ExtraField.Text? other) -> bool
@@ -298,7 +253,6 @@ Flyback.Core.Graph.ExtraField.Text.Fallback.init -> void
 Flyback.Core.Graph.ExtraField.Text.Multiline.get -> bool
 Flyback.Core.Graph.ExtraField.Text.Multiline.init -> void
 Flyback.Core.Graph.ExtraField.Text.Text(string! Key, string! Label, string! Fallback = "", bool Multiline = false) -> void
-Flyback.Core.Graph.ExtraField.Text.Value(System.Text.Json.Nodes.JsonNode? stored) -> string!
 Flyback.Core.Graph.ExtraField.Toggle
 Flyback.Core.Graph.ExtraField.Toggle.Deconstruct(out string! Key, out string! Label, out bool On) -> void
 Flyback.Core.Graph.ExtraField.Toggle.Equals(Flyback.Core.Graph.ExtraField.Toggle? other) -> bool
@@ -311,13 +265,38 @@ Flyback.Core.Graph.ExtraState.Chosen(string! key) -> string!
 Flyback.Core.Graph.ExtraState.ExtraState(System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.ExtraField!>! fields, System.Text.Json.Nodes.JsonNode? stored) -> void
 Flyback.Core.Graph.ExtraState.Number(string! key) -> float
 Flyback.Core.Graph.ExtraState.Text(string! key) -> string!
-Flyback.Core.Graph.ExtraState.Toggle(string! key) -> bool
 Flyback.Core.Graph.Extras.ArrangementExtra
 Flyback.Core.Graph.Extras.ArrangementExtra.ArrangementExtra(System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PartLevel>!>! Default) -> void
 Flyback.Core.Graph.Extras.ArrangementExtra.Deconstruct(out System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PartLevel>!>! Default) -> void
 Flyback.Core.Graph.Extras.ArrangementExtra.Default.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PartLevel>!>!
 Flyback.Core.Graph.Extras.ArrangementExtra.Default.init -> void
 Flyback.Core.Graph.Extras.ArrangementExtra.Equals(Flyback.Core.Graph.Extras.ArrangementExtra? other) -> bool
+Flyback.Core.Graph.Extras.FileExtra
+Flyback.Core.Graph.Extras.FileExtra.FileExtra() -> void
+Flyback.Core.Graph.Extras.FileExtra.FileExtra(Flyback.Core.Graph.Extras.FileExtra! original) -> void
+Flyback.Core.Graph.Extras.FileExtra.PathOf(Flyback.Core.Graph.NodeInstance! node) -> string!
+Flyback.Core.Graph.Extras.FileExtra.Point(Flyback.Core.Graph.NodeInstance! node, string! path) -> void
+Flyback.Core.Graph.Extras.FileKind
+Flyback.Core.Graph.Extras.FileKind.<Clone>$() -> Flyback.Core.Graph.Extras.FileKind!
+Flyback.Core.Graph.Extras.FileKind.Called.get -> string!
+Flyback.Core.Graph.Extras.FileKind.Called.init -> void
+Flyback.Core.Graph.Extras.FileKind.Choose.get -> string!
+Flyback.Core.Graph.Extras.FileKind.Choose.init -> void
+Flyback.Core.Graph.Extras.FileKind.Deconstruct(out string! Label, out string! Choose, out string! Described, out System.Collections.Generic.IReadOnlyList<string!>! Patterns, out System.Collections.Generic.IReadOnlyList<string!>! MimeTypes, out string! Called, out string! Unchosen, out bool Picture) -> void
+Flyback.Core.Graph.Extras.FileKind.Described.get -> string!
+Flyback.Core.Graph.Extras.FileKind.Described.init -> void
+Flyback.Core.Graph.Extras.FileKind.Equals(Flyback.Core.Graph.Extras.FileKind? other) -> bool
+Flyback.Core.Graph.Extras.FileKind.FileKind(string! Label, string! Choose, string! Described, System.Collections.Generic.IReadOnlyList<string!>! Patterns, System.Collections.Generic.IReadOnlyList<string!>! MimeTypes, string! Called, string! Unchosen, bool Picture = false) -> void
+Flyback.Core.Graph.Extras.FileKind.Label.get -> string!
+Flyback.Core.Graph.Extras.FileKind.Label.init -> void
+Flyback.Core.Graph.Extras.FileKind.MimeTypes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Flyback.Core.Graph.Extras.FileKind.MimeTypes.init -> void
+Flyback.Core.Graph.Extras.FileKind.Patterns.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Flyback.Core.Graph.Extras.FileKind.Patterns.init -> void
+Flyback.Core.Graph.Extras.FileKind.Picture.get -> bool
+Flyback.Core.Graph.Extras.FileKind.Picture.init -> void
+Flyback.Core.Graph.Extras.FileKind.Unchosen.get -> string!
+Flyback.Core.Graph.Extras.FileKind.Unchosen.init -> void
 Flyback.Core.Graph.Extras.FormulaExtra
 Flyback.Core.Graph.Extras.FormulaExtra.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, Flyback.Core.Graph.NodeDef!>! Functions) -> void
 Flyback.Core.Graph.Extras.FormulaExtra.Equals(Flyback.Core.Graph.Extras.FormulaExtra? other) -> bool
@@ -329,7 +308,6 @@ Flyback.Core.Graph.Extras.MidiClockExtra.Equals(Flyback.Core.Graph.Extras.MidiCl
 Flyback.Core.Graph.Extras.MidiClockExtra.MidiClockExtra() -> void
 Flyback.Core.Graph.Extras.MidiExtra
 Flyback.Core.Graph.Extras.MidiExtra.Equals(Flyback.Core.Graph.Extras.MidiExtra? other) -> bool
-Flyback.Core.Graph.Extras.MidiExtra.MidiExtra() -> void
 Flyback.Core.Graph.Extras.MidiFileExtra
 Flyback.Core.Graph.Extras.MidiFileExtra.Equals(Flyback.Core.Graph.Extras.MidiFileExtra? other) -> bool
 Flyback.Core.Graph.Extras.MidiFileExtra.MidiFileExtra() -> void
@@ -341,7 +319,6 @@ Flyback.Core.Graph.Extras.PictureExtra.Equals(Flyback.Core.Graph.Extras.PictureE
 Flyback.Core.Graph.Extras.PictureExtra.PictureExtra() -> void
 Flyback.Core.Graph.Extras.SampleExtra
 Flyback.Core.Graph.Extras.SampleExtra.Equals(Flyback.Core.Graph.Extras.SampleExtra? other) -> bool
-Flyback.Core.Graph.Extras.SampleExtra.SampleExtra() -> void
 Flyback.Core.Graph.Extras.ScaleExtra
 Flyback.Core.Graph.Extras.ScaleExtra.Deconstruct(out System.Collections.Generic.IReadOnlyList<int>! Default) -> void
 Flyback.Core.Graph.Extras.ScaleExtra.Default.get -> System.Collections.Generic.IReadOnlyList<int>!
@@ -377,18 +354,6 @@ Flyback.Core.Graph.GroupSocket.Node.get -> System.Guid
 Flyback.Core.Graph.GroupSocket.Node.init -> void
 Flyback.Core.Graph.GroupSocket.Port.get -> int
 Flyback.Core.Graph.GroupSocket.Port.init -> void
-Flyback.Core.Graph.GroupSockets
-Flyback.Core.Graph.GroupSockets.Deconstruct(out System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.GroupSocket>! Inputs, out System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.GroupSocket>! Outputs) -> void
-Flyback.Core.Graph.GroupSockets.Equals(Flyback.Core.Graph.GroupSockets other) -> bool
-Flyback.Core.Graph.GroupSockets.GroupSockets() -> void
-Flyback.Core.Graph.GroupSockets.GroupSockets(System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.GroupSocket>! Inputs, System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.GroupSocket>! Outputs) -> void
-Flyback.Core.Graph.GroupSockets.IndexOfInput(Flyback.Core.Graph.GroupSocket socket) -> int
-Flyback.Core.Graph.GroupSockets.IndexOfOutput(Flyback.Core.Graph.GroupSocket socket) -> int
-Flyback.Core.Graph.GroupSockets.Inputs.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.GroupSocket>!
-Flyback.Core.Graph.GroupSockets.Inputs.init -> void
-Flyback.Core.Graph.GroupSockets.Outputs.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.GroupSocket>!
-Flyback.Core.Graph.GroupSockets.Outputs.init -> void
-Flyback.Core.Graph.GroupSockets.Rows.get -> int
 Flyback.Core.Graph.KeyboardScale
 Flyback.Core.Graph.KeyboardScale.<Clone>$() -> Flyback.Core.Graph.KeyboardScale!
 Flyback.Core.Graph.KeyboardScale.Deconstruct(out int Tonic, out string! Scale) -> void
@@ -402,7 +367,6 @@ Flyback.Core.Graph.KeyboardScale.Scale.init -> void
 Flyback.Core.Graph.KeyboardScale.Tonic.get -> int
 Flyback.Core.Graph.KeyboardScale.Tonic.init -> void
 Flyback.Core.Graph.KeyboardScale.TonicClass.get -> int
-Flyback.Core.Graph.LineInSignal
 Flyback.Core.Graph.MidiBinding
 Flyback.Core.Graph.MidiBinding.<Clone>$() -> Flyback.Core.Graph.MidiBinding!
 Flyback.Core.Graph.MidiBinding.Channel.get -> int
@@ -416,28 +380,13 @@ Flyback.Core.Graph.MidiBinding.Equals(Flyback.Core.Graph.MidiBinding? other) -> 
 Flyback.Core.Graph.MidiBinding.Hears(string! device, int channel, int controller) -> bool
 Flyback.Core.Graph.MidiBinding.Label.get -> string!
 Flyback.Core.Graph.MidiBinding.MidiBinding(string! Device, int Channel, int Controller) -> void
-Flyback.Core.Graph.MidiSignal
-Flyback.Core.Graph.MidiSource
-Flyback.Core.Graph.MidiSource.Conducts.get -> bool
-Flyback.Core.Graph.MidiSource.Conducts.init -> void
-Flyback.Core.Graph.MidiSource.Deconstruct(out string! Id, out string! Name) -> void
-Flyback.Core.Graph.MidiSource.Equals(Flyback.Core.Graph.MidiSource other) -> bool
-Flyback.Core.Graph.MidiSource.Id.get -> string!
-Flyback.Core.Graph.MidiSource.Id.init -> void
-Flyback.Core.Graph.MidiSource.MidiSource() -> void
-Flyback.Core.Graph.MidiSource.MidiSource(string! Id, string! Name) -> void
-Flyback.Core.Graph.MidiSource.Name.get -> string!
-Flyback.Core.Graph.MidiSource.Name.init -> void
-Flyback.Core.Graph.MidiSources
+Flyback.Core.Graph.MidiBinding.Note.get -> bool
+Flyback.Core.Graph.MidiBinding.Note.init -> void
+Flyback.Core.Graph.MidiBinding.Strikes(string! device, int channel, int note) -> bool
+Flyback.Core.Graph.MidiBinding.What.get -> string!
 Flyback.Core.Graph.ModuleCatalog
-Flyback.Core.Graph.ModuleCatalog.All.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.NodeDef!>!
-Flyback.Core.Graph.ModuleCatalog.Categories.get -> System.Collections.Generic.IEnumerable<string!>!
 Flyback.Core.Graph.ModuleCatalog.Get(string! typeId) -> Flyback.Core.Graph.NodeDef?
 Flyback.Core.Graph.ModuleCatalog.HasProvider(string! providerId) -> bool
-Flyback.Core.Graph.ModuleCatalog.Normalled(Flyback.Core.Graph.PortSpec spec) -> string?
-Flyback.Core.Graph.ModuleCatalog.ProviderOf(string! typeId) -> Flyback.Core.Graph.ModuleProvider?
-Flyback.Core.Graph.ModuleCatalog.Providers.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.ModuleProvider!>!
-Flyback.Core.Graph.ModuleCatalog.Require(string! typeId) -> Flyback.Core.Graph.NodeDef!
 Flyback.Core.Graph.ModuleCategories
 Flyback.Core.Graph.ModuleProvider
 Flyback.Core.Graph.ModuleProvider.<Clone>$() -> Flyback.Core.Graph.ModuleProvider!
@@ -461,8 +410,6 @@ Flyback.Core.Graph.ModuleSkin.Artwork.Deconstruct(out System.ReadOnlyMemory<byte
 Flyback.Core.Graph.ModuleSkin.Artwork.Equals(Flyback.Core.Graph.ModuleSkin.Artwork? other) -> bool
 Flyback.Core.Graph.ModuleSkin.Artwork.Panel.get -> System.ReadOnlyMemory<byte>?
 Flyback.Core.Graph.ModuleSkin.Artwork.Panel.init -> void
-Flyback.Core.Graph.ModuleSkin.ContrastText.get -> bool
-Flyback.Core.Graph.ModuleSkin.ContrastText.init -> void
 Flyback.Core.Graph.ModuleSkin.Grain
 Flyback.Core.Graph.ModuleSkin.Grain.Cut.get -> Flyback.Core.Graph.GrainCut
 Flyback.Core.Graph.ModuleSkin.Grain.Cut.init -> void
@@ -474,36 +421,15 @@ Flyback.Core.Graph.ModuleSkin.Palette
 Flyback.Core.Graph.ModuleSkin.Palette.Accent.get -> Flyback.Core.Graph.Swatch
 Flyback.Core.Graph.ModuleSkin.Palette.Accent.init -> void
 Flyback.Core.Graph.ModuleSkin.Palette.Deconstruct(out Flyback.Core.Graph.Swatch Accent) -> void
-Flyback.Core.Graph.ModuleSkin.Palette.Floor.get -> Flyback.Core.Graph.Swatch?
-Flyback.Core.Graph.ModuleSkin.Palette.Floor.init -> void
 Flyback.Core.Graph.ModuleSkin.Palette.Glyph.get -> string?
 Flyback.Core.Graph.ModuleSkin.Palette.Glyph.init -> void
 Flyback.Core.Graph.ModuleSkin.Palette.Palette(Flyback.Core.Graph.ModuleSkin.Palette! original) -> void
 Flyback.Core.Graph.ModuleSkin.Palette.Palette(Flyback.Core.Graph.Swatch Accent) -> void
 Flyback.Core.Graph.NodeCatalog
-Flyback.Core.Graph.NodeCatalog.SinkKind
-Flyback.Core.Graph.NodeCatalog.SinkKind.Deconstruct(out string! Name, out System.Range Inputs, out System.Range Results, out int Width) -> void
-Flyback.Core.Graph.NodeCatalog.SinkKind.Equals(Flyback.Core.Graph.NodeCatalog.SinkKind other) -> bool
-Flyback.Core.Graph.NodeCatalog.SinkKind.Inputs.get -> System.Range
-Flyback.Core.Graph.NodeCatalog.SinkKind.Inputs.init -> void
-Flyback.Core.Graph.NodeCatalog.SinkKind.Name.get -> string!
-Flyback.Core.Graph.NodeCatalog.SinkKind.Name.init -> void
-Flyback.Core.Graph.NodeCatalog.SinkKind.Results.get -> System.Range
-Flyback.Core.Graph.NodeCatalog.SinkKind.Results.init -> void
-Flyback.Core.Graph.NodeCatalog.SinkKind.SinkKind() -> void
-Flyback.Core.Graph.NodeCatalog.SinkKind.SinkKind(string! Name, System.Range Inputs, System.Range Results, int Width) -> void
-Flyback.Core.Graph.NodeCatalog.SinkKind.Width.get -> int
-Flyback.Core.Graph.NodeCatalog.SinkKind.Width.init -> void
 Flyback.Core.Graph.NodeDef
 Flyback.Core.Graph.NodeDef.<Clone>$() -> Flyback.Core.Graph.NodeDef!
 Flyback.Core.Graph.NodeDef.Category.get -> string!
 Flyback.Core.Graph.NodeDef.Category.init -> void
-Flyback.Core.Graph.NodeDef.ChartsBeam.get -> bool
-Flyback.Core.Graph.NodeDef.ChartsBeam.init -> void
-Flyback.Core.Graph.NodeDef.ChartsSignal.get -> bool
-Flyback.Core.Graph.NodeDef.ChartsSignal.init -> void
-Flyback.Core.Graph.NodeDef.ChartsSpectrum.get -> bool
-Flyback.Core.Graph.NodeDef.ChartsSpectrum.init -> void
 Flyback.Core.Graph.NodeDef.Deconstruct(out string! TypeId, out string! Name, out string! Category, out System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PortSpec>! Inputs, out System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PortSpec>! Outputs, out Flyback.Core.Graph.EmitFn! Emit, out string! Description) -> void
 Flyback.Core.Graph.NodeDef.Description.get -> string!
 Flyback.Core.Graph.NodeDef.Description.init -> void
@@ -524,15 +450,11 @@ Flyback.Core.Graph.NodeDef.Sinks.get -> Flyback.Core.Graph.ModuleSinks
 Flyback.Core.Graph.NodeDef.Sinks.init -> void
 Flyback.Core.Graph.NodeDef.Skin.get -> Flyback.Core.Graph.ModuleSkin?
 Flyback.Core.Graph.NodeDef.Skin.init -> void
-Flyback.Core.Graph.NodeDef.TappedInputs.get -> int
-Flyback.Core.Graph.NodeDef.TappedInputs.init -> void
-Flyback.Core.Graph.NodeDef.TapsSignal.get -> bool
-Flyback.Core.Graph.NodeDef.TapsSignal.init -> void
-Flyback.Core.Graph.NodeDef.Through(int output) -> int
 Flyback.Core.Graph.NodeDef.TypeId.get -> string!
 Flyback.Core.Graph.NodeDef.TypeId.init -> void
+Flyback.Core.Graph.NodeDef.Words.get -> string!
+Flyback.Core.Graph.NodeDef.Words.init -> void
 Flyback.Core.Graph.NodeExtra
-Flyback.Core.Graph.NodeExtra.Explained() -> System.Collections.Generic.IEnumerable<(string! Name, string! Help)>!
 Flyback.Core.Graph.NodeExtra.NodeExtra() -> void
 Flyback.Core.Graph.NodeExtra.NodeExtra(Flyback.Core.Graph.NodeExtra! original) -> void
 Flyback.Core.Graph.NodeExtra.Stored(System.Text.Json.Nodes.JsonNode? from) -> System.Text.Json.Nodes.JsonObject!
@@ -555,7 +477,6 @@ Flyback.Core.Graph.NodeGroup.NodeGroup() -> void
 Flyback.Core.Graph.NodeGroup.Rename(string? to) -> void
 Flyback.Core.Graph.NodeGroup.Title() -> string!
 Flyback.Core.Graph.NodeInstance
-Flyback.Core.Graph.NodeInstance.Clone(System.Guid? id = null, double dx = 0, double dy = 0) -> Flyback.Core.Graph.NodeInstance!
 Flyback.Core.Graph.NodeInstance.Id.get -> System.Guid
 Flyback.Core.Graph.NodeInstance.Id.init -> void
 Flyback.Core.Graph.NodeInstance.InputValues.get -> float[]!
@@ -565,12 +486,10 @@ Flyback.Core.Graph.NodeInstance.Name.set -> void
 Flyback.Core.Graph.NodeInstance.NodeInstance() -> void
 Flyback.Core.Graph.NodeInstance.Off.get -> bool
 Flyback.Core.Graph.NodeInstance.Off.set -> void
-Flyback.Core.Graph.NodeInstance.Rename(Flyback.Core.Graph.NodeDef! def, string? to) -> void
 Flyback.Core.Graph.NodeInstance.SetState(string! key, System.Text.Json.Nodes.JsonNode? value) -> void
 Flyback.Core.Graph.NodeInstance.State.get -> System.Collections.Generic.Dictionary<string!, System.Text.Json.Nodes.JsonNode!>?
 Flyback.Core.Graph.NodeInstance.State.set -> void
 Flyback.Core.Graph.NodeInstance.StateOf(string! key) -> System.Text.Json.Nodes.JsonNode?
-Flyback.Core.Graph.NodeInstance.Title(Flyback.Core.Graph.NodeDef! def) -> string!
 Flyback.Core.Graph.NodeInstance.TypeId.get -> string!
 Flyback.Core.Graph.NodeInstance.TypeId.init -> void
 Flyback.Core.Graph.NodeInstance.X.get -> double
@@ -584,58 +503,34 @@ Flyback.Core.Graph.PartLevel.Glides.get -> bool
 Flyback.Core.Graph.PartLevel.Glides.init -> void
 Flyback.Core.Graph.PartLevel.PartLevel() -> void
 Flyback.Core.Graph.PartLevel.PartLevel(float Value, bool Glides = false) -> void
-Flyback.Core.Graph.PartLevel.Sane() -> Flyback.Core.Graph.PartLevel
 Flyback.Core.Graph.PartLevel.Value.get -> float
 Flyback.Core.Graph.PartLevel.Value.init -> void
 Flyback.Core.Graph.Patch
 Flyback.Core.Graph.Patch.AddControl(string? name = null, float value = 0.5) -> Flyback.Core.Graph.PatchControl!
 Flyback.Core.Graph.Patch.Author.get -> string?
 Flyback.Core.Graph.Patch.Author.set -> void
-Flyback.Core.Graph.Patch.CanAdd(string! typeId) -> bool
-Flyback.Core.Graph.Patch.CollapsedGroupOf(System.Guid nodeId) -> Flyback.Core.Graph.NodeGroup?
-Flyback.Core.Graph.Patch.Connect(System.Guid sourceNode, int sourcePort, System.Guid targetNode, int targetPort) -> void
 Flyback.Core.Graph.Patch.Connections.get -> System.Collections.Generic.List<Flyback.Core.Graph.Connection!>!
 Flyback.Core.Graph.Patch.Connections.set -> void
-Flyback.Core.Graph.Patch.Control(System.Guid id) -> Flyback.Core.Graph.PatchControl?
 Flyback.Core.Graph.Patch.Controls.get -> System.Collections.Generic.List<Flyback.Core.Graph.PatchControl!>?
 Flyback.Core.Graph.Patch.Controls.set -> void
-Flyback.Core.Graph.Patch.Credit(string? to) -> void
 Flyback.Core.Graph.Patch.Describe(string? to) -> void
 Flyback.Core.Graph.Patch.Description.get -> string?
 Flyback.Core.Graph.Patch.Description.set -> void
-Flyback.Core.Graph.Patch.Disconnect(System.Guid targetNode, int targetPort) -> void
-Flyback.Core.Graph.Patch.EnsureOutput(Flyback.Core.Graph.ModuleCatalog? modules = null, System.Guid? id = null) -> Flyback.Core.Graph.NodeInstance!
-Flyback.Core.Graph.Patch.Exposable(Flyback.Core.Graph.NodeGroup! group, Flyback.Core.Graph.GroupSocket socket) -> bool
-Flyback.Core.Graph.Patch.Find(System.Guid id) -> Flyback.Core.Graph.NodeInstance?
-Flyback.Core.Graph.Patch.FirstOf(string! typeId) -> Flyback.Core.Graph.NodeInstance?
-Flyback.Core.Graph.Patch.Group(System.Collections.Generic.IEnumerable<System.Guid>! members) -> Flyback.Core.Graph.NodeGroup?
-Flyback.Core.Graph.Patch.GroupOf(System.Guid nodeId) -> Flyback.Core.Graph.NodeGroup?
 Flyback.Core.Graph.Patch.Groups.get -> System.Collections.Generic.List<Flyback.Core.Graph.NodeGroup!>?
 Flyback.Core.Graph.Patch.Groups.set -> void
-Flyback.Core.Graph.Patch.IncomingTo(System.Guid node, int port) -> Flyback.Core.Graph.Connection?
 Flyback.Core.Graph.Patch.Keyboard.get -> Flyback.Core.Graph.KeyboardScale?
 Flyback.Core.Graph.Patch.Keyboard.set -> void
 Flyback.Core.Graph.Patch.Length.get -> double?
 Flyback.Core.Graph.Patch.Length.set -> void
-Flyback.Core.Graph.Patch.MoveControl(System.Guid id, int index) -> bool
 Flyback.Core.Graph.Patch.Nodes.get -> System.Collections.Generic.List<Flyback.Core.Graph.NodeInstance!>!
 Flyback.Core.Graph.Patch.Nodes.set -> void
-Flyback.Core.Graph.Patch.Output.get -> Flyback.Core.Graph.NodeInstance!
 Flyback.Core.Graph.Patch.Patch() -> void
-Flyback.Core.Graph.Patch.Reaches() -> (bool Picture, bool Sound)
-Flyback.Core.Graph.Patch.Remove(System.Guid nodeId) -> bool
-Flyback.Core.Graph.Patch.RemoveControl(System.Guid id) -> bool
 Flyback.Core.Graph.Patch.Requires.get -> System.Collections.Generic.List<Flyback.Core.Graph.ModuleProvider!>?
 Flyback.Core.Graph.Patch.Requires.set -> void
-Flyback.Core.Graph.Patch.SocketsOf(Flyback.Core.Graph.NodeGroup! group) -> Flyback.Core.Graph.GroupSockets
-Flyback.Core.Graph.Patch.SoleOutgoingFrom(System.Guid node, int port) -> Flyback.Core.Graph.Connection?
-Flyback.Core.Graph.Patch.Tag(System.Collections.Generic.IEnumerable<string!>? to) -> void
 Flyback.Core.Graph.Patch.Tags.get -> System.Collections.Generic.List<string!>?
 Flyback.Core.Graph.Patch.Tags.set -> void
-Flyback.Core.Graph.Patch.Ungroup(System.Guid groupId) -> bool
 Flyback.Core.Graph.Patch.Version.get -> int?
 Flyback.Core.Graph.Patch.Version.set -> void
-Flyback.Core.Graph.Patch.Wired(Flyback.Core.Graph.NodeGroup! group, Flyback.Core.Graph.GroupSocket socket) -> bool
 Flyback.Core.Graph.PatchBuilder
 Flyback.Core.Graph.PatchBuilder.Add(string! typeId, double x, double y, params (int Port, float Value)[]! knobs) -> Flyback.Core.Graph.NodeInstance!
 Flyback.Core.Graph.PatchBuilder.Add(string! typeId, params (int Port, float Value)[]! knobs) -> Flyback.Core.Graph.NodeInstance!
@@ -645,7 +540,8 @@ Flyback.Core.Graph.PatchBuilder.Patch.get -> Flyback.Core.Graph.Patch!
 Flyback.Core.Graph.PatchBuilder.PatchBuilder(Flyback.Core.Graph.ModuleCatalog? modules = null) -> void
 Flyback.Core.Graph.PatchBuilder.Wire(Flyback.Core.Graph.NodeInstance! source, int sourcePort, Flyback.Core.Graph.NodeInstance! target, int targetPort) -> Flyback.Core.Graph.PatchBuilder!
 Flyback.Core.Graph.PatchControl
-Flyback.Core.Graph.PatchControl.Clone() -> Flyback.Core.Graph.PatchControl!
+Flyback.Core.Graph.PatchControl.Held.get -> bool
+Flyback.Core.Graph.PatchControl.Held.set -> void
 Flyback.Core.Graph.PatchControl.Id.get -> System.Guid
 Flyback.Core.Graph.PatchControl.Id.init -> void
 Flyback.Core.Graph.PatchControl.Key.get -> string!
@@ -675,7 +571,6 @@ Flyback.Core.Graph.PatchPreset.Name.init -> void
 Flyback.Core.Graph.PatchPreset.PatchPreset(string! Name, System.Func<Flyback.Core.Graph.ModuleCatalog!, Flyback.Core.Graph.Patch!>! Build, string! Description = "", Flyback.Core.Graph.PresetKind Kind = Flyback.Core.Graph.PresetKind.Idea) -> void
 Flyback.Core.Graph.PatchPreset.Tags.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Flyback.Core.Graph.PatchPreset.Tags.init -> void
-Flyback.Core.Graph.Pitch
 Flyback.Core.Graph.PortDisplay
 Flyback.Core.Graph.PortDisplay.Chord = 4 -> Flyback.Core.Graph.PortDisplay
 Flyback.Core.Graph.PortDisplay.Duration = 2 -> Flyback.Core.Graph.PortDisplay
@@ -696,7 +591,6 @@ Flyback.Core.Graph.PortNormal.PortNormal(string! TypeId, int Port = 0) -> void
 Flyback.Core.Graph.PortNormal.TypeId.get -> string!
 Flyback.Core.Graph.PortNormal.TypeId.init -> void
 Flyback.Core.Graph.PortSpec
-Flyback.Core.Graph.PortSpec.At(double travel, float min, float max) -> float
 Flyback.Core.Graph.PortSpec.Deconstruct(out string! Name, out Flyback.Core.Graph.PortKind Kind, out float Default, out float Min, out float Max, out int NormalledFrom, out Flyback.Core.Graph.PortDisplay Display, out Flyback.Core.Graph.PortNormal? NormalledTo, out bool Domain, out bool Swept, out bool PatchOnly) -> void
 Flyback.Core.Graph.PortSpec.Default.get -> float
 Flyback.Core.Graph.PortSpec.Default.init -> void
@@ -705,7 +599,6 @@ Flyback.Core.Graph.PortSpec.Display.init -> void
 Flyback.Core.Graph.PortSpec.Domain.get -> bool
 Flyback.Core.Graph.PortSpec.Domain.init -> void
 Flyback.Core.Graph.PortSpec.Equals(Flyback.Core.Graph.PortSpec other) -> bool
-Flyback.Core.Graph.PortSpec.Format(float value) -> string!
 Flyback.Core.Graph.PortSpec.Help.get -> string!
 Flyback.Core.Graph.PortSpec.Help.init -> void
 Flyback.Core.Graph.PortSpec.Kind.get -> Flyback.Core.Graph.PortKind
@@ -720,7 +613,6 @@ Flyback.Core.Graph.PortSpec.Min.get -> float
 Flyback.Core.Graph.PortSpec.Min.init -> void
 Flyback.Core.Graph.PortSpec.Name.get -> string!
 Flyback.Core.Graph.PortSpec.Name.init -> void
-Flyback.Core.Graph.PortSpec.NeedsAWire.get -> bool
 Flyback.Core.Graph.PortSpec.NormalledFrom.get -> int
 Flyback.Core.Graph.PortSpec.NormalledFrom.init -> void
 Flyback.Core.Graph.PortSpec.NormalledTo.get -> Flyback.Core.Graph.PortNormal?
@@ -729,21 +621,16 @@ Flyback.Core.Graph.PortSpec.PatchOnly.get -> bool
 Flyback.Core.Graph.PortSpec.PatchOnly.init -> void
 Flyback.Core.Graph.PortSpec.PortSpec() -> void
 Flyback.Core.Graph.PortSpec.PortSpec(string! Name, Flyback.Core.Graph.PortKind Kind = Flyback.Core.Graph.PortKind.Scalar, float Default = 0, float Min = -4, float Max = 4, int NormalledFrom = -1, Flyback.Core.Graph.PortDisplay Display = Flyback.Core.Graph.PortDisplay.Number, Flyback.Core.Graph.PortNormal? NormalledTo = null, bool Domain = false, bool Swept = false, bool PatchOnly = false) -> void
-Flyback.Core.Graph.PortSpec.Ranged.get -> bool
 Flyback.Core.Graph.PortSpec.Standard.get -> bool
 Flyback.Core.Graph.PortSpec.Standard.init -> void
-Flyback.Core.Graph.PortSpec.Stepped.get -> bool
 Flyback.Core.Graph.PortSpec.Swept.get -> bool
 Flyback.Core.Graph.PortSpec.Swept.init -> void
-Flyback.Core.Graph.PortSpec.Travel(float value, float min, float max) -> double
-Flyback.Core.Graph.PortSpec.Width.get -> int
 Flyback.Core.Graph.PresetFiles
 Flyback.Core.Graph.PresetKind
 Flyback.Core.Graph.PresetKind.Blank = 0 -> Flyback.Core.Graph.PresetKind
 Flyback.Core.Graph.PresetKind.Idea = 1 -> Flyback.Core.Graph.PresetKind
 Flyback.Core.Graph.PresetKind.Interplay = 2 -> Flyback.Core.Graph.PresetKind
 Flyback.Core.Graph.PresetKind.Showcase = 3 -> Flyback.Core.Graph.PresetKind
-Flyback.Core.Graph.PresetKinds
 Flyback.Core.Graph.ScaleMode
 Flyback.Core.Graph.ScaleMode.<Clone>$() -> Flyback.Core.Graph.ScaleMode!
 Flyback.Core.Graph.ScaleMode.Classes.get -> int[]!
@@ -755,13 +642,11 @@ Flyback.Core.Graph.ScaleMode.Id.init -> void
 Flyback.Core.Graph.ScaleMode.Name.get -> string!
 Flyback.Core.Graph.ScaleMode.Name.init -> void
 Flyback.Core.Graph.ScaleMode.ScaleMode(string! Id, string! Name, int[]! Classes) -> void
-Flyback.Core.Graph.SocketHelp
 Flyback.Core.Graph.Step
 Flyback.Core.Graph.Step.Deconstruct(out float Value, out float Length, out float Volume) -> void
 Flyback.Core.Graph.Step.Equals(Flyback.Core.Graph.Step other) -> bool
 Flyback.Core.Graph.Step.Length.get -> float
 Flyback.Core.Graph.Step.Length.init -> void
-Flyback.Core.Graph.Step.Sane() -> Flyback.Core.Graph.Step
 Flyback.Core.Graph.Step.Step() -> void
 Flyback.Core.Graph.Step.Step(float Value, float Length = 1, float Volume = 1) -> void
 Flyback.Core.Graph.Step.Value.get -> float
@@ -791,87 +676,34 @@ Flyback.Core.Graph.Swatch.Red.get -> byte
 Flyback.Core.Graph.Swatch.Red.init -> void
 Flyback.Core.Graph.Swatch.Swatch() -> void
 Flyback.Core.Graph.Swatch.Swatch(byte Red, byte Green, byte Blue) -> void
-Flyback.Core.Graph.TextLimit
 abstract Flyback.Core.Graph.ExtraField.<Clone>$() -> Flyback.Core.Graph.ExtraField!
 abstract Flyback.Core.Graph.ExtraField.Format(System.Text.Json.Nodes.JsonNode? stored) -> string!
 abstract Flyback.Core.Graph.ExtraField.Sane(System.Text.Json.Nodes.JsonNode? stored) -> System.Text.Json.Nodes.JsonNode!
+abstract Flyback.Core.Graph.Extras.FileExtra.Kind.get -> Flyback.Core.Graph.Extras.FileKind!
 abstract Flyback.Core.Graph.ModuleSkin.<Clone>$() -> Flyback.Core.Graph.ModuleSkin!
 abstract Flyback.Core.Graph.NodeExtra.<Clone>$() -> Flyback.Core.Graph.NodeExtra!
 abstract Flyback.Core.Graph.NodeExtra.Key.get -> string!
-const Flyback.Core.Compile.MeterSignals.Level = "level" -> string!
-const Flyback.Core.Compile.MeterSignals.Peak = "peak" -> string!
-const Flyback.Core.Compile.MidiLine.Rate = 1000 -> int
-const Flyback.Core.Compile.MidiLine.Voices = 8 -> int
-const Flyback.Core.Compile.SpectrumAxis.Highest = 20000 -> double
-const Flyback.Core.Compile.SpectrumAxis.Lowest = 20 -> double
 const Flyback.Core.GlobalConstants.ApplicationName = "Flyback" -> string!
-const Flyback.Core.GlobalConstants.SampleRate = 48000 -> int
-const Flyback.Core.Graph.AutoRemap.In = 0 -> int
-const Flyback.Core.Graph.AutoRemap.InHigh = 2 -> int
-const Flyback.Core.Graph.AutoRemap.InLow = 1 -> int
-const Flyback.Core.Graph.AutoRemap.OutHigh = 4 -> int
-const Flyback.Core.Graph.AutoRemap.OutLow = 3 -> int
-const Flyback.Core.Graph.Chords.Major = 4 -> int
-const Flyback.Core.Graph.Chords.Notes = 4 -> int
-const Flyback.Core.Graph.ControlMap.StateKey = "controls" -> string!
-const Flyback.Core.Graph.ExtraField.Text.Limit = 4096 -> int
-const Flyback.Core.Graph.Extras.ArrangementExtra.Name = "arrangement" -> string!
 const Flyback.Core.Graph.Extras.FormulaExtra.FormulaField = "formula" -> string!
-const Flyback.Core.Graph.Extras.FormulaExtra.Fresh = "a * b + c" -> string!
 const Flyback.Core.Graph.Extras.FormulaExtra.StateKey = "expression" -> string!
 const Flyback.Core.Graph.Extras.MidiClockExtra.DeviceField = "device" -> string!
 const Flyback.Core.Graph.Extras.MidiClockExtra.StateKey = "midi" -> string!
-const Flyback.Core.Graph.Extras.MidiExtra.ChannelField = "channel" -> string!
-const Flyback.Core.Graph.Extras.MidiExtra.DeviceField = "device" -> string!
 const Flyback.Core.Graph.Extras.MidiExtra.IndexField = "index" -> string!
 const Flyback.Core.Graph.Extras.MidiExtra.StateKey = "midi" -> string!
 const Flyback.Core.Graph.Extras.MidiFileExtra.Name = "midifile" -> string!
-const Flyback.Core.Graph.Extras.MidiLineExtra.ChannelField = "channel" -> string!
 const Flyback.Core.Graph.Extras.MidiLineExtra.Name = "midi" -> string!
 const Flyback.Core.Graph.Extras.PictureExtra.Name = "picture" -> string!
-const Flyback.Core.Graph.Extras.SampleExtra.Name = "file" -> string!
-const Flyback.Core.Graph.Extras.ScaleExtra.Name = "scale" -> string!
-const Flyback.Core.Graph.Extras.StepsExtra.Name = "notes" -> string!
-const Flyback.Core.Graph.LineInSignal.Left = "line-in/left" -> string!
-const Flyback.Core.Graph.LineInSignal.Right = "line-in/right" -> string!
-const Flyback.Core.Graph.MidiSignal.Beat = "beat" -> string!
-const Flyback.Core.Graph.MidiSignal.Bpm = "bpm" -> string!
-const Flyback.Core.Graph.MidiSignal.Gate = "gate" -> string!
-const Flyback.Core.Graph.MidiSignal.Pitch = "pitch" -> string!
-const Flyback.Core.Graph.MidiSignal.Rate = "rate" -> string!
-const Flyback.Core.Graph.MidiSignal.Running = "running" -> string!
-const Flyback.Core.Graph.MidiSignal.Starts = "starts" -> string!
-const Flyback.Core.Graph.MidiSignal.Strikes = "strikes" -> string!
-const Flyback.Core.Graph.MidiSignal.TicksPerBeat = 24 -> int
-const Flyback.Core.Graph.MidiSignal.Velocity = "velocity" -> string!
-const Flyback.Core.Graph.MidiSources.Keyboard = "keyboard" -> string!
 const Flyback.Core.Graph.ModuleCategories.Color = "Color" -> string!
-const Flyback.Core.Graph.ModuleCategories.Feedback = "Feedback" -> string!
 const Flyback.Core.Graph.ModuleCategories.Forms = "Forms" -> string!
-const Flyback.Core.Graph.ModuleCategories.Geometry = "Geometry" -> string!
-const Flyback.Core.Graph.ModuleCategories.Maths = "Maths" -> string!
 const Flyback.Core.Graph.ModuleCategories.Measurement = "Measurement" -> string!
 const Flyback.Core.Graph.ModuleCategories.Oscillators = "Oscillators" -> string!
-const Flyback.Core.Graph.ModuleCategories.Output = "Output" -> string!
 const Flyback.Core.Graph.ModuleCategories.Patterns = "Patterns" -> string!
-const Flyback.Core.Graph.ModuleCategories.Pitch = "Pitch" -> string!
-const Flyback.Core.Graph.ModuleCategories.Routing = "Routing" -> string!
 const Flyback.Core.Graph.ModuleCategories.Shaping = "Shaping" -> string!
-const Flyback.Core.Graph.ModuleCategories.Sources = "Sources" -> string!
 const Flyback.Core.Graph.ModuleCategories.TimeEffects = "Time effects" -> string!
 const Flyback.Core.Graph.ModuleCategories.Timing = "Timing" -> string!
 const Flyback.Core.Graph.NodeCatalog.AdsrTypeId = "env.adsr" -> string!
-const Flyback.Core.Graph.NodeCatalog.AnalyzerTypeId = "analyzer" -> string!
 const Flyback.Core.Graph.NodeCatalog.ArrangementTypeId = "seq.arrangement" -> string!
-const Flyback.Core.Graph.NodeCatalog.AudioChannels = 2 -> int
-const Flyback.Core.Graph.NodeCatalog.AutoChordScaleField = "scale" -> string!
-const Flyback.Core.Graph.NodeCatalog.AutoChordStateKey = "autochord" -> string!
-const Flyback.Core.Graph.NodeCatalog.AutoChordTypeId = "audio.autochord" -> string!
-const Flyback.Core.Graph.NodeCatalog.AutoRemapTypeId = "math.autoremap" -> string!
 const Flyback.Core.Graph.NodeCatalog.BeamTypeId = "beam" -> string!
-const Flyback.Core.Graph.NodeCatalog.ChanceTypeId = "seq.chance" -> string!
-const Flyback.Core.Graph.NodeCatalog.ChordTypeId = "audio.chord" -> string!
-const Flyback.Core.Graph.NodeCatalog.ClockTypeId = "midi.clock" -> string!
 const Flyback.Core.Graph.NodeCatalog.CloudsTypeId = "pattern.clouds" -> string!
 const Flyback.Core.Graph.NodeCatalog.CoordAspectPort = 4 -> int
 const Flyback.Core.Graph.NodeCatalog.CoordTypeId = "coord" -> string!
@@ -882,40 +714,23 @@ const Flyback.Core.Graph.NodeCatalog.DeskTypeId = "math.desk" -> string!
 const Flyback.Core.Graph.NodeCatalog.DriveTypeId = "audio.drive" -> string!
 const Flyback.Core.Graph.NodeCatalog.DuckTypeId = "audio.duck" -> string!
 const Flyback.Core.Graph.NodeCatalog.ExpressionTypeId = "math.expression" -> string!
-const Flyback.Core.Graph.NodeCatalog.FeedbackTypeId = "feedback" -> string!
 const Flyback.Core.Graph.NodeCatalog.FilterTypeId = "audio.filter" -> string!
 const Flyback.Core.Graph.NodeCatalog.HoldTypeId = "seq.hold" -> string!
-const Flyback.Core.Graph.NodeCatalog.InkModeKey = "mode" -> string!
-const Flyback.Core.Graph.NodeCatalog.InkOver = "over" -> string!
-const Flyback.Core.Graph.NodeCatalog.InkStateKey = "ink" -> string!
-const Flyback.Core.Graph.NodeCatalog.LineInTypeId = "audio.in" -> string!
 const Flyback.Core.Graph.NodeCatalog.MaxParts = 8 -> int
-const Flyback.Core.Graph.NodeCatalog.MaxSections = 32 -> int
-const Flyback.Core.Graph.NodeCatalog.MaxSteps = 32 -> int
 const Flyback.Core.Graph.NodeCatalog.MeterTypeId = "meter" -> string!
-const Flyback.Core.Graph.NodeCatalog.MidiFileTypeId = "midi.file" -> string!
 const Flyback.Core.Graph.NodeCatalog.MidiTypeId = "midi.in" -> string!
-const Flyback.Core.Graph.NodeCatalog.MixerTypeId = "math.mixer" -> string!
 const Flyback.Core.Graph.NodeCatalog.NoiseTypeId = "audio.noise" -> string!
 const Flyback.Core.Graph.NodeCatalog.OutputColorPort = 0 -> int
 const Flyback.Core.Graph.NodeCatalog.OutputLeftPort = 1 -> int
 const Flyback.Core.Graph.NodeCatalog.OutputRightPort = 2 -> int
 const Flyback.Core.Graph.NodeCatalog.OutputTypeId = "output" -> string!
 const Flyback.Core.Graph.NodeCatalog.OutputVolumePort = 3 -> int
-const Flyback.Core.Graph.NodeCatalog.PictureTypeId = "picture" -> string!
-const Flyback.Core.Graph.NodeCatalog.ProbeTypeId = "probe" -> string!
-const Flyback.Core.Graph.NodeCatalog.PulseTypeId = "osc.pulse" -> string!
 const Flyback.Core.Graph.NodeCatalog.QuantiserTypeId = "audio.quantiser" -> string!
-const Flyback.Core.Graph.NodeCatalog.ReceiveTypeId = "bus.receive" -> string!
 const Flyback.Core.Graph.NodeCatalog.ReverbTypeId = "audio.reverb" -> string!
 const Flyback.Core.Graph.NodeCatalog.SampleTypeId = "audio.sample" -> string!
-const Flyback.Core.Graph.NodeCatalog.SawTypeId = "osc.saw" -> string!
 const Flyback.Core.Graph.NodeCatalog.ScanTypeId = "scan" -> string!
-const Flyback.Core.Graph.NodeCatalog.ScopeTypeId = "scope" -> string!
-const Flyback.Core.Graph.NodeCatalog.SendTypeId = "bus.send" -> string!
 const Flyback.Core.Graph.NodeCatalog.SineTypeId = "osc.sine" -> string!
 const Flyback.Core.Graph.NodeCatalog.SlewTypeId = "audio.slew" -> string!
-const Flyback.Core.Graph.NodeCatalog.SquareTypeId = "osc.square" -> string!
 const Flyback.Core.Graph.NodeCatalog.StringTypeId = "osc.string" -> string!
 const Flyback.Core.Graph.NodeCatalog.TempoTypeId = "seq.tempo" -> string!
 const Flyback.Core.Graph.NodeCatalog.TimeTypeId = "time" -> string!
@@ -923,24 +738,8 @@ const Flyback.Core.Graph.NodeCatalog.TransformOrderKey = "order" -> string!
 const Flyback.Core.Graph.NodeCatalog.TransformStateKey = "transform" -> string!
 const Flyback.Core.Graph.NodeCatalog.TriangleTypeId = "osc.triangle" -> string!
 const Flyback.Core.Graph.NodeCatalog.TurnThenZoom = "turn" -> string!
-const Flyback.Core.Graph.NodeCatalog.ValueTypeId = "value" -> string!
-const Flyback.Core.Graph.NodeCatalog.VideoChannels = 3 -> int
 const Flyback.Core.Graph.NodeGroup.Fewest = 2 -> int
 const Flyback.Core.Graph.NodeGroup.NameLimit = 26 -> int
-const Flyback.Core.Graph.NodeInstance.Across = 7500 -> double
-const Flyback.Core.Graph.NodeInstance.Down = 5000 -> double
-const Flyback.Core.Graph.NodeInstance.NameLimit = 26 -> int
-const Flyback.Core.Graph.Patch.AuthorLimit = 80 -> int
-const Flyback.Core.Graph.Patch.DefaultLength = 180 -> double
-const Flyback.Core.Graph.Patch.DescriptionLimit = 400 -> int
-const Flyback.Core.Graph.Patch.TagCount = 8 -> int
-const Flyback.Core.Graph.Patch.TagLimit = 24 -> int
-const Flyback.Core.Graph.PatchControl.NameLimit = 26 -> int
-const Flyback.Core.Graph.Pitch.Classes = 12 -> int
-const Flyback.Core.Graph.Pitch.ConcertNote = 69 -> float
-const Flyback.Core.Graph.Pitch.ConcertPitch = 440 -> float
-const Flyback.Core.Graph.Pitch.Semitones = 12 -> float
-const Flyback.Core.Graph.Step.ShortestLength = 0.01 -> float
 override Flyback.Core.Compile.CompileIssue.Equals(object? obj) -> bool
 override Flyback.Core.Compile.CompileIssue.GetHashCode() -> int
 override Flyback.Core.Compile.CompileIssue.ToString() -> string!
@@ -953,9 +752,6 @@ override Flyback.Core.Compile.LoadedSample.ToString() -> string!
 override Flyback.Core.Compile.MidiNote.GetHashCode() -> int
 override Flyback.Core.Compile.Slot.GetHashCode() -> int
 override Flyback.Core.Graph.ChoiceOption.GetHashCode() -> int
-override Flyback.Core.Graph.ChordShape.Equals(object? obj) -> bool
-override Flyback.Core.Graph.ChordShape.GetHashCode() -> int
-override Flyback.Core.Graph.ChordShape.ToString() -> string!
 override Flyback.Core.Graph.Connection.Equals(object? obj) -> bool
 override Flyback.Core.Graph.Connection.GetHashCode() -> int
 override Flyback.Core.Graph.Connection.ToString() -> string!
@@ -999,6 +795,18 @@ override Flyback.Core.Graph.Extras.ArrangementExtra.Key.get -> string!
 override Flyback.Core.Graph.Extras.ArrangementExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!
 override Flyback.Core.Graph.Extras.ArrangementExtra.Seed(Flyback.Core.Graph.NodeInstance! node) -> void
 override Flyback.Core.Graph.Extras.ArrangementExtra.ToString() -> string!
+override Flyback.Core.Graph.Extras.FileExtra.EqualityContract.get -> System.Type!
+override Flyback.Core.Graph.Extras.FileExtra.Equals(object? obj) -> bool
+override Flyback.Core.Graph.Extras.FileExtra.Files(Flyback.Core.Graph.NodeInstance! node) -> System.Collections.Generic.IEnumerable<string!>!
+override Flyback.Core.Graph.Extras.FileExtra.GetHashCode() -> int
+override Flyback.Core.Graph.Extras.FileExtra.PrintMembers(System.Text.StringBuilder! builder) -> bool
+override Flyback.Core.Graph.Extras.FileExtra.Rebase(Flyback.Core.Graph.NodeInstance! node, System.Func<string!, string!>! renamed) -> void
+override Flyback.Core.Graph.Extras.FileExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!
+override Flyback.Core.Graph.Extras.FileExtra.Seed(Flyback.Core.Graph.NodeInstance! node) -> void
+override Flyback.Core.Graph.Extras.FileExtra.ToString() -> string!
+override Flyback.Core.Graph.Extras.FileKind.Equals(object? obj) -> bool
+override Flyback.Core.Graph.Extras.FileKind.GetHashCode() -> int
+override Flyback.Core.Graph.Extras.FileKind.ToString() -> string!
 override Flyback.Core.Graph.Extras.FormulaExtra.<Clone>$() -> Flyback.Core.Graph.Extras.FormulaExtra!
 override Flyback.Core.Graph.Extras.FormulaExtra.Announce() -> string!
 override Flyback.Core.Graph.Extras.FormulaExtra.Equals(object? obj) -> bool
@@ -1026,14 +834,11 @@ override Flyback.Core.Graph.Extras.MidiExtra.ToString() -> string!
 override Flyback.Core.Graph.Extras.MidiFileExtra.<Clone>$() -> Flyback.Core.Graph.Extras.MidiFileExtra!
 override Flyback.Core.Graph.Extras.MidiFileExtra.Announce() -> string!
 override Flyback.Core.Graph.Extras.MidiFileExtra.Equals(object? obj) -> bool
-override Flyback.Core.Graph.Extras.MidiFileExtra.Files(Flyback.Core.Graph.NodeInstance! node) -> System.Collections.Generic.IEnumerable<string!>!
 override Flyback.Core.Graph.Extras.MidiFileExtra.Fold(Flyback.Core.Graph.EmitContext ctx, Flyback.Core.Graph.NodeInstance! node, Flyback.Core.Graph.ExtraEnv env) -> Flyback.Core.Graph.EmitContext
 override Flyback.Core.Graph.Extras.MidiFileExtra.GetHashCode() -> int
 override Flyback.Core.Graph.Extras.MidiFileExtra.Help.get -> string!
 override Flyback.Core.Graph.Extras.MidiFileExtra.Key.get -> string!
-override Flyback.Core.Graph.Extras.MidiFileExtra.Rebase(Flyback.Core.Graph.NodeInstance! node, System.Func<string!, string!>! renamed) -> void
-override Flyback.Core.Graph.Extras.MidiFileExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!
-override Flyback.Core.Graph.Extras.MidiFileExtra.Seed(Flyback.Core.Graph.NodeInstance! node) -> void
+override Flyback.Core.Graph.Extras.MidiFileExtra.Kind.get -> Flyback.Core.Graph.Extras.FileKind!
 override Flyback.Core.Graph.Extras.MidiFileExtra.ToString() -> string!
 override Flyback.Core.Graph.Extras.MidiLineExtra.<Clone>$() -> Flyback.Core.Graph.Extras.MidiLineExtra!
 override Flyback.Core.Graph.Extras.MidiLineExtra.Announce() -> string!
@@ -1045,26 +850,20 @@ override Flyback.Core.Graph.Extras.MidiLineExtra.ToString() -> string!
 override Flyback.Core.Graph.Extras.PictureExtra.<Clone>$() -> Flyback.Core.Graph.Extras.PictureExtra!
 override Flyback.Core.Graph.Extras.PictureExtra.Announce() -> string!
 override Flyback.Core.Graph.Extras.PictureExtra.Equals(object? obj) -> bool
-override Flyback.Core.Graph.Extras.PictureExtra.Files(Flyback.Core.Graph.NodeInstance! node) -> System.Collections.Generic.IEnumerable<string!>!
 override Flyback.Core.Graph.Extras.PictureExtra.Fold(Flyback.Core.Graph.EmitContext ctx, Flyback.Core.Graph.NodeInstance! node, Flyback.Core.Graph.ExtraEnv env) -> Flyback.Core.Graph.EmitContext
 override Flyback.Core.Graph.Extras.PictureExtra.GetHashCode() -> int
 override Flyback.Core.Graph.Extras.PictureExtra.Help.get -> string!
 override Flyback.Core.Graph.Extras.PictureExtra.Key.get -> string!
-override Flyback.Core.Graph.Extras.PictureExtra.Rebase(Flyback.Core.Graph.NodeInstance! node, System.Func<string!, string!>! renamed) -> void
-override Flyback.Core.Graph.Extras.PictureExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!
-override Flyback.Core.Graph.Extras.PictureExtra.Seed(Flyback.Core.Graph.NodeInstance! node) -> void
+override Flyback.Core.Graph.Extras.PictureExtra.Kind.get -> Flyback.Core.Graph.Extras.FileKind!
 override Flyback.Core.Graph.Extras.PictureExtra.ToString() -> string!
 override Flyback.Core.Graph.Extras.SampleExtra.<Clone>$() -> Flyback.Core.Graph.Extras.SampleExtra!
 override Flyback.Core.Graph.Extras.SampleExtra.Announce() -> string!
 override Flyback.Core.Graph.Extras.SampleExtra.Equals(object? obj) -> bool
-override Flyback.Core.Graph.Extras.SampleExtra.Files(Flyback.Core.Graph.NodeInstance! node) -> System.Collections.Generic.IEnumerable<string!>!
 override Flyback.Core.Graph.Extras.SampleExtra.Fold(Flyback.Core.Graph.EmitContext ctx, Flyback.Core.Graph.NodeInstance! node, Flyback.Core.Graph.ExtraEnv env) -> Flyback.Core.Graph.EmitContext
 override Flyback.Core.Graph.Extras.SampleExtra.GetHashCode() -> int
 override Flyback.Core.Graph.Extras.SampleExtra.Help.get -> string!
 override Flyback.Core.Graph.Extras.SampleExtra.Key.get -> string!
-override Flyback.Core.Graph.Extras.SampleExtra.Rebase(Flyback.Core.Graph.NodeInstance! node, System.Func<string!, string!>! renamed) -> void
-override Flyback.Core.Graph.Extras.SampleExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!
-override Flyback.Core.Graph.Extras.SampleExtra.Seed(Flyback.Core.Graph.NodeInstance! node) -> void
+override Flyback.Core.Graph.Extras.SampleExtra.Kind.get -> Flyback.Core.Graph.Extras.FileKind!
 override Flyback.Core.Graph.Extras.SampleExtra.ToString() -> string!
 override Flyback.Core.Graph.Extras.ScaleExtra.<Clone>$() -> Flyback.Core.Graph.Extras.ScaleExtra!
 override Flyback.Core.Graph.Extras.ScaleExtra.Announce() -> string!
@@ -1093,14 +892,12 @@ override Flyback.Core.Graph.Extras.StepsExtra.Report(Flyback.Core.Graph.NodeInst
 override Flyback.Core.Graph.Extras.StepsExtra.Seed(Flyback.Core.Graph.NodeInstance! node) -> void
 override Flyback.Core.Graph.Extras.StepsExtra.ToString() -> string!
 override Flyback.Core.Graph.GroupSocket.GetHashCode() -> int
-override Flyback.Core.Graph.GroupSockets.GetHashCode() -> int
 override Flyback.Core.Graph.KeyboardScale.Equals(object? obj) -> bool
 override Flyback.Core.Graph.KeyboardScale.GetHashCode() -> int
 override Flyback.Core.Graph.KeyboardScale.ToString() -> string!
 override Flyback.Core.Graph.MidiBinding.Equals(object? obj) -> bool
 override Flyback.Core.Graph.MidiBinding.GetHashCode() -> int
 override Flyback.Core.Graph.MidiBinding.ToString() -> string!
-override Flyback.Core.Graph.MidiSource.GetHashCode() -> int
 override Flyback.Core.Graph.ModuleProvider.Equals(object? obj) -> bool
 override Flyback.Core.Graph.ModuleProvider.GetHashCode() -> int
 override Flyback.Core.Graph.ModuleProvider.ToString() -> string!
@@ -1121,7 +918,6 @@ override Flyback.Core.Graph.ModuleSkin.Palette.GetHashCode() -> int
 override Flyback.Core.Graph.ModuleSkin.Palette.PrintMembers(System.Text.StringBuilder! builder) -> bool
 override Flyback.Core.Graph.ModuleSkin.Palette.ToString() -> string!
 override Flyback.Core.Graph.ModuleSkin.ToString() -> string!
-override Flyback.Core.Graph.NodeCatalog.SinkKind.GetHashCode() -> int
 override Flyback.Core.Graph.NodeDef.Equals(object? obj) -> bool
 override Flyback.Core.Graph.NodeDef.GetHashCode() -> int
 override Flyback.Core.Graph.NodeDef.ToString() -> string!
@@ -1142,18 +938,20 @@ override Flyback.Core.Graph.StepSpec.Equals(object? obj) -> bool
 override Flyback.Core.Graph.StepSpec.GetHashCode() -> int
 override Flyback.Core.Graph.StepSpec.ToString() -> string!
 override Flyback.Core.Graph.Swatch.GetHashCode() -> int
+override abstract Flyback.Core.Graph.Extras.FileExtra.<Clone>$() -> Flyback.Core.Graph.Extras.FileExtra!
 override sealed Flyback.Core.Graph.ExtraField.Choice.Equals(Flyback.Core.Graph.ExtraField? other) -> bool
 override sealed Flyback.Core.Graph.ExtraField.Number.Equals(Flyback.Core.Graph.ExtraField? other) -> bool
 override sealed Flyback.Core.Graph.ExtraField.Text.Equals(Flyback.Core.Graph.ExtraField? other) -> bool
 override sealed Flyback.Core.Graph.ExtraField.Toggle.Equals(Flyback.Core.Graph.ExtraField? other) -> bool
 override sealed Flyback.Core.Graph.Extras.ArrangementExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
+override sealed Flyback.Core.Graph.Extras.FileExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
 override sealed Flyback.Core.Graph.Extras.FormulaExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
 override sealed Flyback.Core.Graph.Extras.MidiClockExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
 override sealed Flyback.Core.Graph.Extras.MidiExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
-override sealed Flyback.Core.Graph.Extras.MidiFileExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
+override sealed Flyback.Core.Graph.Extras.MidiFileExtra.Equals(Flyback.Core.Graph.Extras.FileExtra? other) -> bool
 override sealed Flyback.Core.Graph.Extras.MidiLineExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
-override sealed Flyback.Core.Graph.Extras.PictureExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
-override sealed Flyback.Core.Graph.Extras.SampleExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
+override sealed Flyback.Core.Graph.Extras.PictureExtra.Equals(Flyback.Core.Graph.Extras.FileExtra? other) -> bool
+override sealed Flyback.Core.Graph.Extras.SampleExtra.Equals(Flyback.Core.Graph.Extras.FileExtra? other) -> bool
 override sealed Flyback.Core.Graph.Extras.ScaleExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
 override sealed Flyback.Core.Graph.Extras.SettingsExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
 override sealed Flyback.Core.Graph.Extras.StepsExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
@@ -1166,40 +964,19 @@ static Flyback.Core.Compile.LoadedImage.operator !=(Flyback.Core.Compile.LoadedI
 static Flyback.Core.Compile.LoadedImage.operator ==(Flyback.Core.Compile.LoadedImage? left, Flyback.Core.Compile.LoadedImage? right) -> bool
 static Flyback.Core.Compile.LoadedSample.operator !=(Flyback.Core.Compile.LoadedSample? left, Flyback.Core.Compile.LoadedSample? right) -> bool
 static Flyback.Core.Compile.LoadedSample.operator ==(Flyback.Core.Compile.LoadedSample? left, Flyback.Core.Compile.LoadedSample? right) -> bool
-static Flyback.Core.Compile.MeterSignals.Key(System.Guid node, string! signal) -> string!
 static Flyback.Core.Compile.MidiNote.operator !=(Flyback.Core.Compile.MidiNote left, Flyback.Core.Compile.MidiNote right) -> bool
 static Flyback.Core.Compile.MidiNote.operator ==(Flyback.Core.Compile.MidiNote left, Flyback.Core.Compile.MidiNote right) -> bool
-static Flyback.Core.Compile.Slot.Color(int firstRegister) -> Flyback.Core.Compile.Slot
 static Flyback.Core.Compile.Slot.Scalar(int register) -> Flyback.Core.Compile.Slot
 static Flyback.Core.Compile.Slot.operator !=(Flyback.Core.Compile.Slot left, Flyback.Core.Compile.Slot right) -> bool
 static Flyback.Core.Compile.Slot.operator ==(Flyback.Core.Compile.Slot left, Flyback.Core.Compile.Slot right) -> bool
-static Flyback.Core.Compile.SpectrumAxis.FrequencyAt(int point, int points) -> double
 static Flyback.Core.GlobalConstants.DataFolder.get -> string!
 static Flyback.Core.Graph.ChoiceOption.operator !=(Flyback.Core.Graph.ChoiceOption left, Flyback.Core.Graph.ChoiceOption right) -> bool
 static Flyback.Core.Graph.ChoiceOption.operator ==(Flyback.Core.Graph.ChoiceOption left, Flyback.Core.Graph.ChoiceOption right) -> bool
-static Flyback.Core.Graph.ChordShape.operator !=(Flyback.Core.Graph.ChordShape? left, Flyback.Core.Graph.ChordShape? right) -> bool
-static Flyback.Core.Graph.ChordShape.operator ==(Flyback.Core.Graph.ChordShape? left, Flyback.Core.Graph.ChordShape? right) -> bool
-static Flyback.Core.Graph.Chords.All.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.ChordShape!>!
-static Flyback.Core.Graph.Chords.Diatonic(Flyback.Core.Graph.ScaleMode! scale, int degree) -> int[]!
-static Flyback.Core.Graph.Chords.Index(float value) -> int
-static Flyback.Core.Graph.Chords.Label(float value) -> string!
-static Flyback.Core.Graph.Chords.Scale(string! id) -> Flyback.Core.Graph.ScaleMode!
-static Flyback.Core.Graph.Chords.Scales.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.ScaleMode!>!
-static Flyback.Core.Graph.Chords.Steps(Flyback.Core.Graph.ScaleMode! scale, int semitones) -> int
-static Flyback.Core.Graph.Chords.Voiced(int index) -> int[]!
 static Flyback.Core.Graph.Connection.operator !=(Flyback.Core.Graph.Connection? left, Flyback.Core.Graph.Connection? right) -> bool
 static Flyback.Core.Graph.Connection.operator ==(Flyback.Core.Graph.Connection? left, Flyback.Core.Graph.Connection? right) -> bool
-static Flyback.Core.Graph.ControlLink.For(System.Guid control, Flyback.Core.Graph.PortSpec socket, float resting) -> Flyback.Core.Graph.ControlLink
 static Flyback.Core.Graph.ControlLink.operator !=(Flyback.Core.Graph.ControlLink left, Flyback.Core.Graph.ControlLink right) -> bool
 static Flyback.Core.Graph.ControlLink.operator ==(Flyback.Core.Graph.ControlLink left, Flyback.Core.Graph.ControlLink right) -> bool
-static Flyback.Core.Graph.ControlMap.All(Flyback.Core.Graph.NodeInstance! node) -> System.Collections.Generic.IEnumerable<(int Port, Flyback.Core.Graph.ControlLink Link)>!
-static Flyback.Core.Graph.ControlMap.Following(Flyback.Core.Graph.Patch! patch, System.Guid control) -> System.Collections.Generic.IEnumerable<(Flyback.Core.Graph.NodeInstance! Node, int Port, Flyback.Core.Graph.ControlLink Link)>!
 static Flyback.Core.Graph.ControlMap.Link(Flyback.Core.Graph.NodeInstance! node, int port, Flyback.Core.Graph.ControlLink link) -> void
-static Flyback.Core.Graph.ControlMap.Of(Flyback.Core.Graph.NodeInstance! node, int port) -> Flyback.Core.Graph.ControlLink?
-static Flyback.Core.Graph.ControlMap.Unlink(Flyback.Core.Graph.NodeInstance! node, int port) -> bool
-static Flyback.Core.Graph.Cycles.Backwards(Flyback.Core.Graph.Patch! patch) -> System.Collections.Generic.IReadOnlySet<Flyback.Core.Graph.Connection!>!
-static Flyback.Core.Graph.Cycles.BackwardsThroughBuses(Flyback.Core.Graph.Patch! patch) -> System.Collections.Generic.IReadOnlySet<Flyback.Core.Graph.Connection!>!
-static Flyback.Core.Graph.Cycles.Owner(Flyback.Core.Graph.Connection! wire) -> System.Guid
 static Flyback.Core.Graph.EmitContext.operator !=(Flyback.Core.Graph.EmitContext left, Flyback.Core.Graph.EmitContext right) -> bool
 static Flyback.Core.Graph.EmitContext.operator ==(Flyback.Core.Graph.EmitContext left, Flyback.Core.Graph.EmitContext right) -> bool
 static Flyback.Core.Graph.ExtraEnv.operator !=(Flyback.Core.Graph.ExtraEnv left, Flyback.Core.Graph.ExtraEnv right) -> bool
@@ -1214,12 +991,13 @@ static Flyback.Core.Graph.ExtraField.Toggle.operator !=(Flyback.Core.Graph.Extra
 static Flyback.Core.Graph.ExtraField.Toggle.operator ==(Flyback.Core.Graph.ExtraField.Toggle? left, Flyback.Core.Graph.ExtraField.Toggle? right) -> bool
 static Flyback.Core.Graph.ExtraField.operator !=(Flyback.Core.Graph.ExtraField? left, Flyback.Core.Graph.ExtraField? right) -> bool
 static Flyback.Core.Graph.ExtraField.operator ==(Flyback.Core.Graph.ExtraField? left, Flyback.Core.Graph.ExtraField? right) -> bool
-static Flyback.Core.Graph.Extras.ArrangementExtra.Of(Flyback.Core.Graph.NodeInstance! node) -> System.Collections.Generic.List<System.Collections.Generic.List<Flyback.Core.Graph.PartLevel>!>!
 static Flyback.Core.Graph.Extras.ArrangementExtra.Set(Flyback.Core.Graph.NodeInstance! node, System.Collections.Generic.IEnumerable<System.Collections.Generic.IEnumerable<Flyback.Core.Graph.PartLevel>!>! parts) -> void
-static Flyback.Core.Graph.Extras.ArrangementExtra.Tidy(System.Collections.Generic.IEnumerable<System.Collections.Generic.IEnumerable<Flyback.Core.Graph.PartLevel>!>! parts) -> System.Collections.Generic.List<System.Collections.Generic.List<Flyback.Core.Graph.PartLevel>!>!
 static Flyback.Core.Graph.Extras.ArrangementExtra.operator !=(Flyback.Core.Graph.Extras.ArrangementExtra? left, Flyback.Core.Graph.Extras.ArrangementExtra? right) -> bool
 static Flyback.Core.Graph.Extras.ArrangementExtra.operator ==(Flyback.Core.Graph.Extras.ArrangementExtra? left, Flyback.Core.Graph.Extras.ArrangementExtra? right) -> bool
-static Flyback.Core.Graph.Extras.FormulaExtra.Of(Flyback.Core.Graph.NodeInstance! node) -> string!
+static Flyback.Core.Graph.Extras.FileExtra.operator !=(Flyback.Core.Graph.Extras.FileExtra? left, Flyback.Core.Graph.Extras.FileExtra? right) -> bool
+static Flyback.Core.Graph.Extras.FileExtra.operator ==(Flyback.Core.Graph.Extras.FileExtra? left, Flyback.Core.Graph.Extras.FileExtra? right) -> bool
+static Flyback.Core.Graph.Extras.FileKind.operator !=(Flyback.Core.Graph.Extras.FileKind? left, Flyback.Core.Graph.Extras.FileKind? right) -> bool
+static Flyback.Core.Graph.Extras.FileKind.operator ==(Flyback.Core.Graph.Extras.FileKind? left, Flyback.Core.Graph.Extras.FileKind? right) -> bool
 static Flyback.Core.Graph.Extras.FormulaExtra.operator !=(Flyback.Core.Graph.Extras.FormulaExtra? left, Flyback.Core.Graph.Extras.FormulaExtra? right) -> bool
 static Flyback.Core.Graph.Extras.FormulaExtra.operator ==(Flyback.Core.Graph.Extras.FormulaExtra? left, Flyback.Core.Graph.Extras.FormulaExtra? right) -> bool
 static Flyback.Core.Graph.Extras.MidiClockExtra.operator !=(Flyback.Core.Graph.Extras.MidiClockExtra? left, Flyback.Core.Graph.Extras.MidiClockExtra? right) -> bool
@@ -1230,48 +1008,29 @@ static Flyback.Core.Graph.Extras.MidiFileExtra.Of(Flyback.Core.Graph.NodeInstanc
 static Flyback.Core.Graph.Extras.MidiFileExtra.Set(Flyback.Core.Graph.NodeInstance! node, string! path) -> void
 static Flyback.Core.Graph.Extras.MidiFileExtra.operator !=(Flyback.Core.Graph.Extras.MidiFileExtra? left, Flyback.Core.Graph.Extras.MidiFileExtra? right) -> bool
 static Flyback.Core.Graph.Extras.MidiFileExtra.operator ==(Flyback.Core.Graph.Extras.MidiFileExtra? left, Flyback.Core.Graph.Extras.MidiFileExtra? right) -> bool
-static Flyback.Core.Graph.Extras.MidiLineExtra.Channel(Flyback.Core.Graph.NodeInstance! node) -> int
-static Flyback.Core.Graph.Extras.MidiLineExtra.Voice(Flyback.Core.Graph.NodeInstance! node) -> int
 static Flyback.Core.Graph.Extras.MidiLineExtra.operator !=(Flyback.Core.Graph.Extras.MidiLineExtra? left, Flyback.Core.Graph.Extras.MidiLineExtra? right) -> bool
 static Flyback.Core.Graph.Extras.MidiLineExtra.operator ==(Flyback.Core.Graph.Extras.MidiLineExtra? left, Flyback.Core.Graph.Extras.MidiLineExtra? right) -> bool
 static Flyback.Core.Graph.Extras.PictureExtra.Of(Flyback.Core.Graph.NodeInstance! node) -> string!
 static Flyback.Core.Graph.Extras.PictureExtra.Set(Flyback.Core.Graph.NodeInstance! node, string! path) -> void
 static Flyback.Core.Graph.Extras.PictureExtra.operator !=(Flyback.Core.Graph.Extras.PictureExtra? left, Flyback.Core.Graph.Extras.PictureExtra? right) -> bool
 static Flyback.Core.Graph.Extras.PictureExtra.operator ==(Flyback.Core.Graph.Extras.PictureExtra? left, Flyback.Core.Graph.Extras.PictureExtra? right) -> bool
-static Flyback.Core.Graph.Extras.SampleExtra.Of(Flyback.Core.Graph.NodeInstance! node) -> string!
 static Flyback.Core.Graph.Extras.SampleExtra.Set(Flyback.Core.Graph.NodeInstance! node, string! path) -> void
 static Flyback.Core.Graph.Extras.SampleExtra.operator !=(Flyback.Core.Graph.Extras.SampleExtra? left, Flyback.Core.Graph.Extras.SampleExtra? right) -> bool
 static Flyback.Core.Graph.Extras.SampleExtra.operator ==(Flyback.Core.Graph.Extras.SampleExtra? left, Flyback.Core.Graph.Extras.SampleExtra? right) -> bool
-static Flyback.Core.Graph.Extras.ScaleExtra.Of(Flyback.Core.Graph.NodeInstance! node) -> System.Collections.Generic.List<int>!
 static Flyback.Core.Graph.Extras.ScaleExtra.Set(Flyback.Core.Graph.NodeInstance! node, System.Collections.Generic.IEnumerable<int>! classes) -> void
 static Flyback.Core.Graph.Extras.ScaleExtra.operator !=(Flyback.Core.Graph.Extras.ScaleExtra? left, Flyback.Core.Graph.Extras.ScaleExtra? right) -> bool
 static Flyback.Core.Graph.Extras.ScaleExtra.operator ==(Flyback.Core.Graph.Extras.ScaleExtra? left, Flyback.Core.Graph.Extras.ScaleExtra? right) -> bool
 static Flyback.Core.Graph.Extras.SettingsExtra.operator !=(Flyback.Core.Graph.Extras.SettingsExtra? left, Flyback.Core.Graph.Extras.SettingsExtra? right) -> bool
 static Flyback.Core.Graph.Extras.SettingsExtra.operator ==(Flyback.Core.Graph.Extras.SettingsExtra? left, Flyback.Core.Graph.Extras.SettingsExtra? right) -> bool
-static Flyback.Core.Graph.Extras.StepsExtra.Of(Flyback.Core.Graph.NodeInstance! node) -> System.Collections.Generic.List<Flyback.Core.Graph.Step>!
 static Flyback.Core.Graph.Extras.StepsExtra.Set(Flyback.Core.Graph.NodeInstance! node, System.Collections.Generic.IEnumerable<Flyback.Core.Graph.Step>! notes) -> void
 static Flyback.Core.Graph.Extras.StepsExtra.operator !=(Flyback.Core.Graph.Extras.StepsExtra? left, Flyback.Core.Graph.Extras.StepsExtra? right) -> bool
 static Flyback.Core.Graph.Extras.StepsExtra.operator ==(Flyback.Core.Graph.Extras.StepsExtra? left, Flyback.Core.Graph.Extras.StepsExtra? right) -> bool
 static Flyback.Core.Graph.GroupSocket.operator !=(Flyback.Core.Graph.GroupSocket left, Flyback.Core.Graph.GroupSocket right) -> bool
 static Flyback.Core.Graph.GroupSocket.operator ==(Flyback.Core.Graph.GroupSocket left, Flyback.Core.Graph.GroupSocket right) -> bool
-static Flyback.Core.Graph.GroupSockets.operator !=(Flyback.Core.Graph.GroupSockets left, Flyback.Core.Graph.GroupSockets right) -> bool
-static Flyback.Core.Graph.GroupSockets.operator ==(Flyback.Core.Graph.GroupSockets left, Flyback.Core.Graph.GroupSockets right) -> bool
-static Flyback.Core.Graph.KeyboardScale.Major.get -> Flyback.Core.Graph.KeyboardScale!
 static Flyback.Core.Graph.KeyboardScale.operator !=(Flyback.Core.Graph.KeyboardScale? left, Flyback.Core.Graph.KeyboardScale? right) -> bool
 static Flyback.Core.Graph.KeyboardScale.operator ==(Flyback.Core.Graph.KeyboardScale? left, Flyback.Core.Graph.KeyboardScale? right) -> bool
 static Flyback.Core.Graph.MidiBinding.operator !=(Flyback.Core.Graph.MidiBinding? left, Flyback.Core.Graph.MidiBinding? right) -> bool
 static Flyback.Core.Graph.MidiBinding.operator ==(Flyback.Core.Graph.MidiBinding? left, Flyback.Core.Graph.MidiBinding? right) -> bool
-static Flyback.Core.Graph.MidiSignal.AutoKey(string! source, System.Guid node, string! signal) -> string!
-static Flyback.Core.Graph.MidiSignal.Channeled(string! source, int channel) -> string!
-static Flyback.Core.Graph.MidiSignal.ClockKey(string! source, string! signal) -> string!
-static Flyback.Core.Graph.MidiSignal.Key(string! source, int index, string! signal) -> string!
-static Flyback.Core.Graph.MidiSignal.Key(string! source, string! signal) -> string!
-static Flyback.Core.Graph.MidiSignal.SourceOf(string! key) -> string!
-static Flyback.Core.Graph.MidiSource.operator !=(Flyback.Core.Graph.MidiSource left, Flyback.Core.Graph.MidiSource right) -> bool
-static Flyback.Core.Graph.MidiSource.operator ==(Flyback.Core.Graph.MidiSource left, Flyback.Core.Graph.MidiSource right) -> bool
-static Flyback.Core.Graph.MidiSources.All.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.MidiSource>!
-static Flyback.Core.Graph.ModuleCategories.All.get -> System.Collections.Generic.IReadOnlyList<string!>!
-static Flyback.Core.Graph.ModuleCategories.Order(string! category) -> int
 static Flyback.Core.Graph.ModuleProvider.operator !=(Flyback.Core.Graph.ModuleProvider? left, Flyback.Core.Graph.ModuleProvider? right) -> bool
 static Flyback.Core.Graph.ModuleProvider.operator ==(Flyback.Core.Graph.ModuleProvider? left, Flyback.Core.Graph.ModuleProvider? right) -> bool
 static Flyback.Core.Graph.ModuleSkin.Artwork.operator !=(Flyback.Core.Graph.ModuleSkin.Artwork? left, Flyback.Core.Graph.ModuleSkin.Artwork? right) -> bool
@@ -1283,68 +1042,38 @@ static Flyback.Core.Graph.ModuleSkin.Palette.operator ==(Flyback.Core.Graph.Modu
 static Flyback.Core.Graph.ModuleSkin.operator !=(Flyback.Core.Graph.ModuleSkin? left, Flyback.Core.Graph.ModuleSkin? right) -> bool
 static Flyback.Core.Graph.ModuleSkin.operator ==(Flyback.Core.Graph.ModuleSkin? left, Flyback.Core.Graph.ModuleSkin? right) -> bool
 static Flyback.Core.Graph.NodeCatalog.Across.get -> Flyback.Core.Graph.PortNormal
-static Flyback.Core.Graph.NodeCatalog.BuiltIn.get -> Flyback.Core.Graph.ModuleCatalog!
-static Flyback.Core.Graph.NodeCatalog.BuiltInProvider.get -> Flyback.Core.Graph.ModuleProvider!
-static Flyback.Core.Graph.NodeCatalog.BusOf(Flyback.Core.Graph.NodeInstance! node) -> string?
-static Flyback.Core.Graph.NodeCatalog.Categories.get -> System.Collections.Generic.IEnumerable<string!>!
 static Flyback.Core.Graph.NodeCatalog.Clock.get -> Flyback.Core.Graph.PortNormal
-static Flyback.Core.Graph.NodeCatalog.Current.get -> Flyback.Core.Graph.ModuleCatalog!
 static Flyback.Core.Graph.NodeCatalog.DelayEchoed(Flyback.Core.Compile.Emitter! em, Flyback.Core.Compile.Slot dry, Flyback.Core.Compile.Slot time, Flyback.Core.Compile.Slot feedback, Flyback.Core.Compile.Slot mix) -> Flyback.Core.Compile.Slot
 static Flyback.Core.Graph.NodeCatalog.Down.get -> Flyback.Core.Graph.PortNormal
 static Flyback.Core.Graph.NodeCatalog.FilterResponses(Flyback.Core.Compile.Emitter! em, Flyback.Core.Compile.Slot dry, Flyback.Core.Compile.Slot cutoff, Flyback.Core.Compile.Slot resonance) -> Flyback.Core.Compile.Slot[]!
-static Flyback.Core.Graph.NodeCatalog.FormulaOf(Flyback.Core.Graph.NodeInstance! node) -> string?
-static Flyback.Core.Graph.NodeCatalog.FormulaProblem(string! formula) -> string?
 static Flyback.Core.Graph.NodeCatalog.Freq.get -> Flyback.Core.Graph.PortSpec
-static Flyback.Core.Graph.NodeCatalog.Get(string! typeId) -> Flyback.Core.Graph.NodeDef?
-static Flyback.Core.Graph.NodeCatalog.Install(Flyback.Core.Graph.ModuleCatalog! catalog) -> void
-static Flyback.Core.Graph.NodeCatalog.IsChart(string! typeId) -> bool
-static Flyback.Core.Graph.NodeCatalog.IsSink(string! typeId) -> bool
-static Flyback.Core.Graph.NodeCatalog.LegacyTypeIds.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
-static Flyback.Core.Graph.NodeCatalog.Normalled(Flyback.Core.Graph.PortSpec spec) -> string?
-static Flyback.Core.Graph.NodeCatalog.Require(string! typeId) -> Flyback.Core.Graph.NodeDef!
-static Flyback.Core.Graph.NodeCatalog.Screen.get -> Flyback.Core.Graph.NodeCatalog.SinkKind
-static Flyback.Core.Graph.NodeCatalog.SinkKind.operator !=(Flyback.Core.Graph.NodeCatalog.SinkKind left, Flyback.Core.Graph.NodeCatalog.SinkKind right) -> bool
-static Flyback.Core.Graph.NodeCatalog.SinkKind.operator ==(Flyback.Core.Graph.NodeCatalog.SinkKind left, Flyback.Core.Graph.NodeCatalog.SinkKind right) -> bool
-static Flyback.Core.Graph.NodeCatalog.Speakers.get -> Flyback.Core.Graph.NodeCatalog.SinkKind
 static Flyback.Core.Graph.NodeCatalog.WhiteAndPink(Flyback.Core.Compile.Emitter! em, Flyback.Core.Compile.Slot domain, Flyback.Core.Compile.Slot seed) -> (Flyback.Core.Compile.Slot White, Flyback.Core.Compile.Slot Pink)
 static Flyback.Core.Graph.NodeDef.operator !=(Flyback.Core.Graph.NodeDef? left, Flyback.Core.Graph.NodeDef? right) -> bool
 static Flyback.Core.Graph.NodeDef.operator ==(Flyback.Core.Graph.NodeDef? left, Flyback.Core.Graph.NodeDef? right) -> bool
 static Flyback.Core.Graph.NodeExtra.operator !=(Flyback.Core.Graph.NodeExtra? left, Flyback.Core.Graph.NodeExtra? right) -> bool
 static Flyback.Core.Graph.NodeExtra.operator ==(Flyback.Core.Graph.NodeExtra? left, Flyback.Core.Graph.NodeExtra? right) -> bool
-static Flyback.Core.Graph.NodeInstance.Create(Flyback.Core.Graph.NodeDef! def, double x, double y, System.Guid? id = null) -> Flyback.Core.Graph.NodeInstance!
 static Flyback.Core.Graph.PartLevel.operator !=(Flyback.Core.Graph.PartLevel left, Flyback.Core.Graph.PartLevel right) -> bool
 static Flyback.Core.Graph.PartLevel.operator ==(Flyback.Core.Graph.PartLevel left, Flyback.Core.Graph.PartLevel right) -> bool
-static Flyback.Core.Graph.Patch.Tidied(string? text) -> string?
-static Flyback.Core.Graph.Patch.TidiedAuthor(string? author) -> string?
-static Flyback.Core.Graph.Patch.TidiedTags(System.Collections.Generic.IEnumerable<string!>? tags) -> System.Collections.Generic.List<string!>?
-static Flyback.Core.Graph.PatchControl.KeyOf(System.Guid control) -> string!
 static Flyback.Core.Graph.PatchPreset.operator !=(Flyback.Core.Graph.PatchPreset? left, Flyback.Core.Graph.PatchPreset? right) -> bool
 static Flyback.Core.Graph.PatchPreset.operator ==(Flyback.Core.Graph.PatchPreset? left, Flyback.Core.Graph.PatchPreset? right) -> bool
-static Flyback.Core.Graph.Pitch.ClassName(int pitchClass) -> string!
-static Flyback.Core.Graph.Pitch.Name(float note) -> string!
-static Flyback.Core.Graph.Pitch.Nearest(float note) -> float
-static Flyback.Core.Graph.Pitch.Scale(System.Collections.Generic.IEnumerable<int>? classes) -> System.Collections.Generic.List<int>!
 static Flyback.Core.Graph.PortNormal.operator !=(Flyback.Core.Graph.PortNormal left, Flyback.Core.Graph.PortNormal right) -> bool
 static Flyback.Core.Graph.PortNormal.operator ==(Flyback.Core.Graph.PortNormal left, Flyback.Core.Graph.PortNormal right) -> bool
 static Flyback.Core.Graph.PortSpec.operator !=(Flyback.Core.Graph.PortSpec left, Flyback.Core.Graph.PortSpec right) -> bool
 static Flyback.Core.Graph.PortSpec.operator ==(Flyback.Core.Graph.PortSpec left, Flyback.Core.Graph.PortSpec right) -> bool
 static Flyback.Core.Graph.PresetFiles.Embedded(System.Reflection.Assembly! assembly, string! folder) -> System.Func<System.Collections.Generic.IReadOnlyDictionary<string!, byte[]!>!>!
-static Flyback.Core.Graph.PresetKinds.Heading(Flyback.Core.Graph.PresetKind kind) -> string!
 static Flyback.Core.Graph.ScaleMode.operator !=(Flyback.Core.Graph.ScaleMode? left, Flyback.Core.Graph.ScaleMode? right) -> bool
 static Flyback.Core.Graph.ScaleMode.operator ==(Flyback.Core.Graph.ScaleMode? left, Flyback.Core.Graph.ScaleMode? right) -> bool
-static Flyback.Core.Graph.SocketHelp.Inputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
-static Flyback.Core.Graph.SocketHelp.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
 static Flyback.Core.Graph.Step.operator !=(Flyback.Core.Graph.Step left, Flyback.Core.Graph.Step right) -> bool
 static Flyback.Core.Graph.Step.operator ==(Flyback.Core.Graph.Step left, Flyback.Core.Graph.Step right) -> bool
 static Flyback.Core.Graph.StepSpec.operator !=(Flyback.Core.Graph.StepSpec? left, Flyback.Core.Graph.StepSpec? right) -> bool
 static Flyback.Core.Graph.StepSpec.operator ==(Flyback.Core.Graph.StepSpec? left, Flyback.Core.Graph.StepSpec? right) -> bool
 static Flyback.Core.Graph.Swatch.operator !=(Flyback.Core.Graph.Swatch left, Flyback.Core.Graph.Swatch right) -> bool
 static Flyback.Core.Graph.Swatch.operator ==(Flyback.Core.Graph.Swatch left, Flyback.Core.Graph.Swatch right) -> bool
-static Flyback.Core.Graph.TextLimit.Clip(string! text, int limit) -> string!
 virtual Flyback.Core.Graph.EmitFn.Invoke(Flyback.Core.Compile.Emitter! emitter, Flyback.Core.Graph.EmitContext node) -> Flyback.Core.Compile.Slot[]!
 virtual Flyback.Core.Graph.ExtraField.EqualityContract.get -> System.Type!
 virtual Flyback.Core.Graph.ExtraField.Equals(Flyback.Core.Graph.ExtraField? other) -> bool
 virtual Flyback.Core.Graph.ExtraField.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual Flyback.Core.Graph.Extras.FileExtra.Equals(Flyback.Core.Graph.Extras.FileExtra? other) -> bool
 virtual Flyback.Core.Graph.ModuleSkin.EqualityContract.get -> System.Type!
 virtual Flyback.Core.Graph.ModuleSkin.Equals(Flyback.Core.Graph.ModuleSkin? other) -> bool
 virtual Flyback.Core.Graph.ModuleSkin.Palette.Equals(Flyback.Core.Graph.ModuleSkin.Palette? other) -> bool
@@ -1374,12 +1103,6 @@ virtual Flyback.Core.Graph.NodeExtra.Seed(Flyback.Core.Graph.NodeInstance! node)
 ~override Flyback.Core.Graph.ExtraEnv.ToString() -> string
 ~override Flyback.Core.Graph.GroupSocket.Equals(object obj) -> bool
 ~override Flyback.Core.Graph.GroupSocket.ToString() -> string
-~override Flyback.Core.Graph.GroupSockets.Equals(object obj) -> bool
-~override Flyback.Core.Graph.GroupSockets.ToString() -> string
-~override Flyback.Core.Graph.MidiSource.Equals(object obj) -> bool
-~override Flyback.Core.Graph.MidiSource.ToString() -> string
-~override Flyback.Core.Graph.NodeCatalog.SinkKind.Equals(object obj) -> bool
-~override Flyback.Core.Graph.NodeCatalog.SinkKind.ToString() -> string
 ~override Flyback.Core.Graph.PartLevel.Equals(object obj) -> bool
 ~override Flyback.Core.Graph.PartLevel.ToString() -> string
 ~override Flyback.Core.Graph.PortNormal.Equals(object obj) -> bool
@@ -1390,10 +1113,3 @@ virtual Flyback.Core.Graph.NodeExtra.Seed(Flyback.Core.Graph.NodeInstance! node)
 ~override Flyback.Core.Graph.Step.ToString() -> string
 ~override Flyback.Core.Graph.Swatch.Equals(object obj) -> bool
 ~override Flyback.Core.Graph.Swatch.ToString() -> string
-Flyback.Core.Graph.PatchControl.Held.get -> bool
-Flyback.Core.Graph.PatchControl.Held.set -> void
-Flyback.Core.Graph.MidiBinding.Note.get -> bool
-Flyback.Core.Graph.MidiBinding.Note.init -> void
-Flyback.Core.Graph.MidiBinding.Strikes(string! device, int channel, int note) -> bool
-Flyback.Core.Graph.MidiBinding.What.get -> string!
-Flyback.Core.Graph.Patch.SwapControls(System.Guid first, System.Guid second) -> bool

@@ -109,13 +109,10 @@ their `AssemblyVersion` from that one property, so they cannot disagree — chec
 instead that neither csproj has grown a number of its own.
 
 **Whatever HEAD says is noise.** An agent may have raised it in passing. Take the
-value at the last tag and work out the new one from the surface itself. The one
-exception: after v0.4.0 the contract was reset to 1.0.0 with its whole surface
-shipped, so a release whose last tag is v0.4.0 starts from 1.0.0, not from what
-that tag says.
+value at the last tag and work out the new one from the surface itself.
 
 ```bash
-git show v0.4.0:Directory.Build.props | grep PluginContractVersion
+git show $(git describe --tags --abbrev=0):Directory.Build.props | grep PluginContractVersion
 grep -c . src/Flyback.Core/PublicAPI.Unshipped.txt src/Flyback.Plugins/PublicAPI.Unshipped.txt
 grep -F "*REMOVED*" src/Flyback.Core/PublicAPI.Unshipped.txt src/Flyback.Plugins/PublicAPI.Unshipped.txt
 ```
