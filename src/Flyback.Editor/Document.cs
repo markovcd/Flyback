@@ -327,12 +327,6 @@ internal sealed class Document
     }
 
     /// <summary>
-    /// Raised when the text comes to mean something else: a document arriving in
-    /// place of another, or an undo handing the patch between the views.
-    /// </summary>
-    public event EventHandler? Forgot;
-
-    /// <summary>
     /// Whether the three gestures every editor has — take it back, put it back,
     /// tidy it up — are the text's rather than the canvas's.
     /// </summary>
@@ -960,7 +954,7 @@ internal sealed class Document
         unstacked = 0;
         sinceHandover = null;
 
-        Forgot?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new TextForgotten());
     }
 
     /// <summary>Marks the text as written, so closing stops asking about it.</summary>

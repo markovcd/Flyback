@@ -2,7 +2,7 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
 
-namespace Flyback.Editor;
+namespace Flyback.Editor.Controls;
 
 /// <summary>A patch file pasted into the text, written as the text its modules and groups would be.</summary>
 internal static class PastedPatch

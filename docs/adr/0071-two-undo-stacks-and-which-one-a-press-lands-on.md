@@ -128,6 +128,12 @@ mechanism exists to avoid.
 
 ## Amendments
 
+**2026-10-09 — the write-back is a part of its own.** The five rules stand; what
+moved is where they are kept. The write-back is `TextWriteBack`
+([0148](0148-the-window-is-its-hubs-and-the-regions-around-them.md)), the
+`writingBack` guard is `CaretFollow.Held`, and `stepping` is read as
+`Document.Stepping`. The undo landing stays in `Document`.
+
 **2026-09-18 — a knob turned on the canvas leaves typing in a hidden printing
 its steps, and a gesture that comes home leaves none.** Writing a knob back into
 a printing empties the text's stack, because what was written is nobody's edit.

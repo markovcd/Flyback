@@ -17,7 +17,7 @@ namespace Flyback.Editor;
 /// rebuilt — the patch already has the value — since building here would replace
 /// the patch under the control being dragged.
 /// </remarks>
-internal sealed class TextWriteBack : IReactTo<InputTurned>, IReactTo<InputLetGo>
+internal sealed class TextWriteBack : IReactTo<InputTurned>, IReactTo<InputLetGo>, IReactTo<TextForgotten>
 {
     private readonly Document document;
     private readonly CaretFollow caret;
@@ -32,8 +32,6 @@ internal sealed class TextWriteBack : IReactTo<InputTurned>, IReactTo<InputLetGo
         this.editor = editor;
         this.source = source;
         this.report = report;
-
-        document.Forgot += (_, _) => Forget();
     }
 
     public Task On(InputTurned notice)
@@ -48,6 +46,12 @@ internal sealed class TextWriteBack : IReactTo<InputTurned>, IReactTo<InputLetGo
     public Task On(InputLetGo notice)
     {
         HandCameOff();
+        return Task.CompletedTask;
+    }
+
+    public Task On(TextForgotten notice)
+    {
+        Forget();
         return Task.CompletedTask;
     }
 

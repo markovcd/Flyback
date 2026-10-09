@@ -14,7 +14,6 @@ three editor hosts, with no hand-built service outside composition; every public
 by decision (ADR-0035); the binder is one walk (ADR-0183); presets are C# by
 decision (ADR-0138).
 
-
 ## 6. Public members only the host calls, one of them a hole (Medium)
 
 `ContractSurfaceTests` guards types; nothing guards members. Public in Core with

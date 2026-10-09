@@ -113,5 +113,5 @@ inspector at what the caret stands on and says whether the text has moved on
 from it (`IsAdrift`), and `TextWriteBack` holds it still while it writes.
 `PastedPatch` writes a pasted patch file as text. `Document` takes
 `CaretFollow` and `TextWriteBack` takes `Document`, so nothing closes a cycle;
-`Document.Forgot` tells the write-back to drop what it was waiting to write when
-the text comes to mean something else.
+a `TextForgotten` notice tells the write-back to drop what it was waiting to
+write when the text comes to mean something else.
