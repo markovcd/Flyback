@@ -3,6 +3,8 @@
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <OutputType>Library</OutputType>
+    <!-- JackDaemon stops jackd with SIGTERM through libc's kill. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <!-- What the tests of a sound backend share. No test lives here. -->
