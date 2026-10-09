@@ -182,7 +182,8 @@ RUN exit "$(cat /test-results/exit-code)"
 # reports the specs apart from the rest.
 #
 # No test takes a minute, so a test host that finishes none for fifteen has hung:
-# the hang dump prints the tests it was in the middle of and ends it.
+# the hang dump prints the tests it was in the middle of and ends it. A bare
+# `exit` keeps the failing project's code for coverage.sh to report.
 FROM gate AS measured
 ARG CONFIGURATION
 
@@ -192,7 +193,7 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
         --results-directory "TestResults/$(basename "$project" .csproj)" \
         --coverage --coverage-settings coverage.runsettings --coverage-output-format cobertura \
         --hangdump --hangdump-timeout 15m --hangdump-type Mini \
-      || exit 1; \
+      || exit; \
     done
 
 # The reports and nothing else, so the Coverage workflow can ask for them with

@@ -21,11 +21,13 @@ on:
 permissions:
   contents: read
 
-# A push on top of a push leaves the older run testing a commit nobody is
-# waiting on.
+# A pull request's newer push leaves its older run testing a commit nobody is
+# waiting on, so that run is cancelled. Every push to main runs to its verdict:
+# cancelled, a break lands unseen and the next commit wears it. Its group is the
+# commit, since a group keeps one pending run and drops the rest.
 concurrency:
-  group: build-${{ github.ref }}
-  cancel-in-progress: true
+  group: build-${{ github.event_name == 'push' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'push' }}
 
 jobs:
   # A run on main goes to a self-hosted runner, Windows or Linux, whichever is

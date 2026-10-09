@@ -50,31 +50,6 @@ picture (the `IlProgramTests.ShouldMatch` shape), `GlslEmitter.Emit` succeeds in
 both dialects, and the same for `JsProgram` where Node is present. `Drawn` runs
 over all of `Presets.All`, or says in a comment why seven.
 
-## 2. A break is first seen on the commit after it (High)
-
-Of the last 100 Build runs on `main` (Oct 7 to 9), 58 passed, 29 were
-cancelled by the next push and 13 failed. The 13: two real incidents (RS0017 on
-`AssistantPost`, and the wake-lock spec after `main.js` was rewritten), seen
-across six runs because the commit that broke it never ran on its own
-(`0dd0480` merged it in, `cd5bf4f` was cancelled); five flakes (the JACK test
-server four times, the in-process CLI catalog race, a headless double-click);
-two infrastructure (a restore cached from an interrupted run, a runner
-shutdown). Four red runs sat on docs-only commits, each inheriting the red
-before it. `cancel-in-progress` on `main` is what hides the breaking commit:
-the break lands with no verdict and the next commit wears it.
-
-The weekly measurement is also red and nobody is told: the Coverage workflow's
-last two runs (Oct 5 scheduled, Oct 7 by hand) died in the measured stage with
-exit 137 while running Plugins.Tests, so the last coverage figure is from Oct 1,
-and the artifact is the only output, with no summary in the run and no notice.
-
-Fix: `cancel-in-progress: false` for pushes to `main` in `ci.yml` (a queued
-run is three minutes; a break with no verdict costs an hour of the next
-session), kept for pull requests. For coverage, a failure of the scheduled run
-opens an issue or posts the summary table to the run, and the measured stage's
-memory is bounded as the gate's builder is (`FLYBACK_BUILDER_MEMORY`), since the
-kill is the runner's.
-
 ## 3. Tests mutate the process in assemblies that run tests in parallel (Medium)
 
 Four UI assemblies pin `ParallelMode.Collections`

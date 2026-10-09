@@ -83,3 +83,10 @@ project, so the gate resolves what the repository recorded rather than whatever
 the feed offers that morning. Only that restore is locked; the per-platform
 publishes pull a runtime pack no lock file taken without a runtime identifier
 describes.
+
+**2026-10-09 — every push to `main` gets its own verdict.** Cancelling the older
+run on `main` let a break land with no verdict, and the next commit wore its
+red: of 100 runs, 29 were cancelled, and two real breaks were first seen on the
+commit after them. A push to `main` now runs to the end in a group of its own
+commit; a pull request's older run is still cancelled. The weekly Coverage run
+says in one line why it failed, and a scheduled failure opens an issue.

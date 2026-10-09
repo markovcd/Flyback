@@ -8,6 +8,9 @@
 # coverage.sh, which runs the same locally. There is no
 # threshold and nothing here fails on the figure; it is for noticing that
 # something stopped being covered.
+#
+# A scheduled run that fails opens an issue, or comments on the one still open,
+# since nobody watches a Monday run.
 
 name: Coverage
 
@@ -28,6 +31,8 @@ jobs:
   # A run on main goes to a self-hosted runner and waits for one; any other
   # ref stays on GitHub's (see ci.yml for why).
   measure:
+    outputs:
+      why: ${{ steps.linux.outputs.why || steps.windows.outputs.why }}
     runs-on: ${{ github.ref == 'refs/heads/main' && fromJSON('["self-hosted","X64"]') || 'ubuntu-latest' }}
     # A run is about ten minutes; the default of six hours is what a hang costs.
     timeout-minutes: 30
@@ -40,12 +45,14 @@ jobs:
       # Measures into coverage/ and writes the table into the run summary.
       # coverage.sh is the whole of it, and runs the same on a developer's machine.
       - name: Measure
+        id: linux
         if: runner.os != 'Windows'
         run: bash scripts/coverage.sh
 
       # A bare `bash` on the Windows runner is WSL's, which cannot read the
       # runner's script paths; Git's is the one wanted.
       - name: Measure (Windows)
+        id: windows
         if: runner.os == 'Windows'
         run: '& "C:/Program Files/Git/bin/bash.exe" scripts/coverage.sh'
 
@@ -54,3 +61,29 @@ jobs:
           name: coverage
           path: coverage
           retention-days: 30
+
+  # On GitHub's runner, and the only job that may write issues.
+  tell:
+    needs: measure
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open or comment on the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          WHY: "${{ needs.measure.outputs.why || 'The run ended without saying why: the runner stopped or the job timed out.' }}"
+        run: |
+          title="The weekly coverage run failed"
+          body="$(printf '%s\n\nCommit %s, run %s.' "$WHY" "$GITHUB_SHA" "$RUN")"
+          open="$(gh issue list --state open --search "in:title \"$title\"" --json number,title \
+            --jq "map(select(.title == \"$title\"))[0].number // empty")"
+          if [ -n "$open" ]; then
+            gh issue comment "$open" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body"
+          fi

@@ -8,7 +8,7 @@
 #   ./scripts/coverage.sh
 #
 # Nothing fails on the figure. The Dockerfile's measured stage says why it is not
-# part of the gate.
+# part of the gate. A run that cannot measure says why in one line and fails.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -26,7 +26,39 @@ if [ "${GITHUB_ACTIONS:-}" != true ]; then
 fi
 
 rm -rf coverage
-"${build[@]}" .
+log="$(mktemp)"
+trap 'rm -f "$log"' EXIT
+
+set +e
+"${build[@]}" . 2>&1 | tee "$log"
+status=${PIPESTATUS[0]}
+set -e
+
+# A failed measurement says why in one line: the run's summary, and the `why`
+# output the Coverage workflow puts in the issue it opens.
+if [ "$status" -ne 0 ]; then
+  project="$(grep -o 'Running tests from /src/tests/[^/]*' "$log" | tail -n 1 | sed 's|.*/||' || true)"
+  code="$(grep -o 'did not complete successfully: exit code: [0-9]*' "$log" | tail -n 1 | sed 's|.* ||' || true)"
+  code="${code:-$status}"
+
+  if grep -q 'ERROR: .*test-results/exit-code' "$log"; then
+    why="The gate fails on $(git rev-parse --short HEAD), and the measurement builds on it; the Build workflow's run names the failing tests."
+  elif [ -n "$project" ]; then
+    why="The measurement stopped in $project with exit code $code."
+    [ "$code" = 137 ] && why="$why 137 is a kill, most often for memory."
+  else
+    why="The build stopped before any test was measured, with exit code $code."
+  fi
+
+  echo "$why" >&2
+  if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+    printf '### Coverage was not measured\n\n%s\n' "$why" >> "$GITHUB_STEP_SUMMARY"
+  fi
+  if [ -n "${GITHUB_OUTPUT:-}" ]; then
+    echo "why=$why" >> "$GITHUB_OUTPUT"
+  fi
+  exit "$status"
+fi
 
 python=python3
 "$python" -c '' 2>/dev/null || python=python
