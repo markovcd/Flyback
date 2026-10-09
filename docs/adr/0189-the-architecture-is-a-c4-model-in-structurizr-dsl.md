@@ -35,6 +35,9 @@ Declined:
 
 ## Consequences
 
-- C1, the system context, is the first view. Containers and components are added
+- The model holds the system context (C1) and the containers (C2), the latter in
+  three views: desktop, web and Android, and the preset site. Components are added
   to the same model as they are drawn.
+- A view that shows both internal systems lists its elements and excludes the
+  relationships its containers imply between them; drawn, they crowd it.
 - Structurizr's current tooling exports no DOT, so the layout is PlantUML's.
