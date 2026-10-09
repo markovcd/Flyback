@@ -16,8 +16,11 @@ Bash)
   grep -Eq '(^|[;&|[:space:]])git[[:space:]]+commit[^;&|]*[[:space:]](-a|-[a-zA-Z]*a[a-zA-Z]*|--all)([[:space:]]|$)' <<<"$cmd" &&
     ! grep -Eq -- '--amend' <<<"$cmd" &&
     deny "git commit -a is blocked (git-workflow.md): stage explicit paths."
-  grep -Eq '(^|[;&|[:space:]])git[[:space:]]+stash([[:space:]]|$)' <<<"$cmd" &&
-    deny "git stash is unsafe in a tree other sessions commit into (git-workflow.md)."
+  # A linked worktree is this session's alone; the main checkout is shared.
+  if grep -Eq '(^|[;&|[:space:]])git[[:space:]]+stash([[:space:]]+(push|pop|apply|drop|save|clear|branch)|[[:space:]]*($|[;&|]))' <<<"$cmd" &&
+    [[ "$(git rev-parse --git-dir 2>/dev/null)" != */worktrees/* ]]; then
+    deny "git stash is unsafe in a tree other sessions commit into (git-workflow.md); use a worktree."
+  fi
   # pipeline.md: a release is release.sh, never a dispatch from here.
   grep -Eq 'release\.yml|gh[[:space:]]+workflow[[:space:]]+run' <<<"$cmd" &&
     deny "Release dispatch waits for the user's go (pipeline.md)."
