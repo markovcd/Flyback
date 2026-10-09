@@ -21,8 +21,8 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
 {
     public ToolOutcome AddModule(JsonElement arguments)
     {
-        if (!Text(arguments, "type_id", out var typeId))
-            return ToolOutcome.Refused("'type_id' is required and must be a string.");
+        if (!ToolFields.TypeId.Text(arguments, out var typeId))
+            return ToolOutcome.Refused($"{ToolFields.TypeId.Quoted} is required and must be a string.");
 
         if (bench.Modules.Get(typeId) is not { } def)
             return ToolOutcome.Refused($"there is no module with type id '{typeId}'. {catalog.Nearest(typeId)}");
@@ -38,7 +38,7 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
 
         string handle;
 
-        if (Text(arguments, "handle", out var wanted))
+        if (ToolFields.NewHandle.Text(arguments, out var wanted))
         {
             if (bench.ByHandle.ContainsKey(wanted))
                 return ToolOutcome.Refused($"'{wanted}' is already the handle of another module.");
@@ -68,7 +68,7 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
         // nothing behind for a retry to trip over.
         List<(int Port, float Value)> settings = [];
 
-        if (arguments.TryGetProperty("knobs", out var knobs) && Knobs(handle, def, knobs, settings) is { } refused)
+        if (ToolFields.PlacedKnobs.Find(arguments, out var knobs) && Knobs(handle, def, knobs, settings) is { } refused)
             return ToolOutcome.Refused($"{refused} So {handle} was not added; add it again without that knob.");
 
         bench.Place(node, handle);
@@ -86,11 +86,11 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
 
     public ToolOutcome SetKnobs(JsonElement arguments)
     {
-        if (!bench.Node(arguments, "handle", out var node, out var def, out var refusal))
+        if (!bench.Node(arguments, ToolFields.Handle, out var node, out var def, out var refusal))
             return ToolOutcome.Refused(refusal);
 
-        if (!arguments.TryGetProperty("knobs", out var knobs))
-            return ToolOutcome.Refused("'knobs' is required: a list of {port, value}.");
+        if (!ToolFields.Knobs.Find(arguments, out var knobs))
+            return ToolOutcome.Refused($"{ToolFields.Knobs.Quoted} is required: a list of {{port, value}}.");
 
         List<(int Port, float Value)> settings = [];
 
@@ -109,15 +109,15 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
     /// </summary>
     public ToolOutcome SetSteps(JsonElement arguments)
     {
-        if (!bench.Node(arguments, "handle", out var node, out var def, out var refusal))
+        if (!bench.Node(arguments, ToolFields.Handle, out var node, out var def, out var refusal))
             return ToolOutcome.Refused(refusal);
 
         if (def.Extra<StepsExtra>() is not { } carries)
             return ToolOutcome.Refused(
                 $"{bench.Handle(node)} is a {def.Name}, which has no notes. Only the sequencers do.");
 
-        if (!arguments.TryGetProperty("notes", out var given) || given.ValueKind != JsonValueKind.Array)
-            return ToolOutcome.Refused("'notes' is required: a list of {value, length, volume}.");
+        if (!ToolFields.Steps.List(arguments, out var given))
+            return ToolOutcome.Refused($"{ToolFields.Steps.Quoted} is required: a list of {{value, length, volume}}.");
 
         if (given.GetArrayLength() > NodeCatalog.MaxSteps)
             return ToolOutcome.Refused(
@@ -131,15 +131,15 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
             if (note.ValueKind != JsonValueKind.Object)
                 return ToolOutcome.Refused("every note has to be an object of {value, length, volume}.");
 
-            if (!Real(note, "value", out var value))
-                return ToolOutcome.Refused("every note needs a 'value'.");
+            if (!ToolFields.StepValue.Real(note, out var value))
+                return ToolOutcome.Refused($"every note needs a {ToolFields.StepValue.Quoted}.");
 
             // Both optional, because the ordinary note is one step long and
             // fully open, and saying so on every note of a tune is noise.
             notes.Add(new Step(
                 value,
-                Real(note, "length", out var length) ? length : 1f,
-                Real(note, "volume", out var volume) ? volume : 1f).Sane());
+                ToolFields.StepLength.Real(note, out var length) ? length : 1f,
+                ToolFields.StepVolume.Real(note, out var volume) ? volume : 1f).Sane());
         }
 
         StepsExtra.Set(node, notes);
@@ -154,14 +154,14 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
     /// </summary>
     public ToolOutcome SetArrangement(JsonElement arguments)
     {
-        if (!bench.Node(arguments, "handle", out var node, out var def, out var refusal))
+        if (!bench.Node(arguments, ToolFields.Handle, out var node, out var def, out var refusal))
             return ToolOutcome.Refused(refusal);
 
         if (def.Extra<ArrangementExtra>() is not { } carries)
             return ToolOutcome.Refused($"{bench.Handle(node)} is a {def.Name}, which has no parts. Only an Arrangement does.");
 
-        if (!arguments.TryGetProperty("parts", out var given) || given.ValueKind != JsonValueKind.Array)
-            return ToolOutcome.Refused("'parts' is required: a list of strings, one a part, like \"0 1 >1 0.5\".");
+        if (!ToolFields.Parts.List(arguments, out var given))
+            return ToolOutcome.Refused($"{ToolFields.Parts.Quoted} is required: a list of strings, one a part, like \"0 1 >1 0.5\".");
 
         if (given.GetArrayLength() > NodeCatalog.MaxParts)
             return ToolOutcome.Refused(
@@ -196,16 +196,16 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
     /// </summary>
     public ToolOutcome SetScale(JsonElement arguments)
     {
-        if (!bench.Node(arguments, "handle", out var node, out var def, out var refusal))
+        if (!bench.Node(arguments, ToolFields.Handle, out var node, out var def, out var refusal))
             return ToolOutcome.Refused(refusal);
 
         if (def.Extra<ScaleExtra>() is not { } carries)
             return ToolOutcome.Refused(
                 $"{bench.Handle(node)} is a {def.Name}, which has no scale. Only the Quantiser has one.");
 
-        if (!arguments.TryGetProperty("notes", out var given) || given.ValueKind != JsonValueKind.Array)
+        if (!ToolFields.ScaleNotes.List(arguments, out var given))
             return ToolOutcome.Refused(
-                "'notes' is required: a list of pitch classes, 0 to 11, where 0 is C and 9 is A. "
+                $"{ToolFields.ScaleNotes.Quoted} is required: a list of pitch classes, 0 to 11, where 0 is C and 9 is A. "
                 + "Send the whole scale — this replaces what was there.");
 
         var classes = new List<int>();
@@ -241,7 +241,7 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
     /// </remarks>
     public ToolOutcome SetSample(JsonElement arguments)
     {
-        if (!bench.Node(arguments, "handle", out var node, out var def, out var refusal))
+        if (!bench.Node(arguments, ToolFields.Handle, out var node, out var def, out var refusal))
             return ToolOutcome.Refused(refusal);
 
         if (def.Extras.OfType<FileExtra>().FirstOrDefault(file => !file.Kind.Picture) is not { } file)
@@ -250,8 +250,8 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
                 $"{bench.Handle(node)} is a {def.Name}, which reads no file. Only the Sample, MIDI File and Path modules do.");
         }
 
-        if (!Text(arguments, "path", out var path))
-            return ToolOutcome.Refused($"'path' is required: where the file is ({file.Kind.Described}).");
+        if (!ToolFields.SamplePath.Text(arguments, out var path))
+            return ToolOutcome.Refused($"{ToolFields.SamplePath.Quoted} is required: where the file is ({file.Kind.Described}).");
 
         file.Point(node, path);
         bench.Edits++;
@@ -267,7 +267,7 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
     /// </summary>
     public ToolOutcome SetPicture(JsonElement arguments)
     {
-        if (!bench.Node(arguments, "handle", out var node, out var def, out var refusal))
+        if (!bench.Node(arguments, ToolFields.Handle, out var node, out var def, out var refusal))
             return ToolOutcome.Refused(refusal);
 
         if (def.Extra<PictureExtra>() is null)
@@ -276,8 +276,8 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
                 $"{bench.Handle(node)} is a {def.Name}, which shows no picture. Only the Image module does.");
         }
 
-        if (!Text(arguments, "path", out var path))
-            return ToolOutcome.Refused("'path' is required: where the PNG file is.");
+        if (!ToolFields.PicturePath.Text(arguments, out var path))
+            return ToolOutcome.Refused($"{ToolFields.PicturePath.Quoted} is required: where the PNG file is.");
 
         PictureExtra.Set(node, path);
         bench.Edits++;
@@ -297,11 +297,11 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
     /// </remarks>
     public ToolOutcome SetExtra(JsonElement arguments)
     {
-        if (!bench.Node(arguments, "handle", out var node, out var def, out var refusal))
+        if (!bench.Node(arguments, ToolFields.Handle, out var node, out var def, out var refusal))
             return ToolOutcome.Refused(refusal);
 
-        if (!Text(arguments, "extra", out var key))
-            return ToolOutcome.Refused("'extra' is required: which of the module's extras to set.");
+        if (!ToolFields.Extra.Text(arguments, out var key))
+            return ToolOutcome.Refused($"{ToolFields.Extra.Quoted} is required: which of the module's extras to set.");
 
         if (def.Extras.FirstOrDefault(e => e.Key == key) is not { } extra)
         {
@@ -323,8 +323,8 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
                 + $"{Vocabulary.ToolFor(extra)}.");
         }
 
-        if (!Text(arguments, "field", out var name))
-            return ToolOutcome.Refused("'field' is required: which of the extra's values to set.");
+        if (!ToolFields.Field.Text(arguments, out var name))
+            return ToolOutcome.Refused($"{ToolFields.Field.Quoted} is required: which of the extra's values to set.");
 
         if (extra.Fields.FirstOrDefault(f => f.Key == name) is not { } field)
         {
@@ -333,8 +333,8 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
                 + $"{string.Join(", ", extra.Fields.Select(f => f.Key))}.");
         }
 
-        if (!arguments.TryGetProperty("value", out var given))
-            return ToolOutcome.Refused("'value' is required.");
+        if (!ToolFields.FieldValue.Find(arguments, out var given))
+            return ToolOutcome.Refused($"{ToolFields.FieldValue.Quoted} is required.");
 
         // Checked against the shape the field declared rather than taken on
         // trust, so that a model sending a string where a number belongs is told
@@ -412,17 +412,17 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
     /// <summary>Reads a knob list into <paramref name="settings"/>, or says why it could not. Null means every entry reads.</summary>
     private string? Knobs(string handle, NodeDef def, JsonElement knobs, List<(int Port, float Value)> settings)
     {
-        if (knobs.ValueKind != JsonValueKind.Array) return "'knobs' must be a list of {port, value}.";
+        if (knobs.ValueKind != JsonValueKind.Array) return $"{ToolFields.Knobs.Quoted} must be a list of {{port, value}}.";
 
         foreach (var knob in knobs.EnumerateArray())
         {
-            if (knob.ValueKind != JsonValueKind.Object) return "every entry in 'knobs' must be {port, value}.";
+            if (knob.ValueKind != JsonValueKind.Object) return $"every entry in {ToolFields.Knobs.Quoted} must be {{port, value}}.";
 
-            if (!Text(knob, "port", out var portName))
-                return "every entry in 'knobs' needs a 'port' naming an input.";
+            if (!ToolFields.KnobPort.Text(knob, out var portName))
+                return $"every entry in {ToolFields.Knobs.Quoted} needs a {ToolFields.KnobPort.Quoted} naming an input.";
 
-            if (!knob.TryGetProperty("value", out var value) || value.ValueKind != JsonValueKind.Number)
-                return $"'{portName}' needs a numeric 'value'.";
+            if (!ToolFields.KnobValue.Number(knob, out var number))
+                return $"'{portName}' needs a numeric {ToolFields.KnobValue.Quoted}.";
 
             if (!Port(def.Inputs, portName, out var port))
                 return $"{handle} has no input called '{portName}'. Its inputs are: {CatalogReference.List(def.Inputs)}.";
@@ -440,7 +440,7 @@ internal sealed class ModuleEdits(WorkingPatch bench, PatchReports reports, Cata
                     + "Value module if what you want there really is a constant.";
             }
 
-            if (value.GetDouble() is var number && !float.IsFinite((float)number))
+            if (!float.IsFinite((float)number))
                 return $"{handle}'s '{portName}' needs a 'value' a float can hold, and {number} is not one.";
 
             settings.Add((port, (float)number));

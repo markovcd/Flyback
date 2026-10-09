@@ -9,8 +9,8 @@ internal sealed class PatchProposals(WorkingPatch bench, PatchSenses senses, Wor
 {
     public async Task<ToolOutcome> ProposeAsync(JsonElement arguments, CancellationToken cancel)
     {
-        if (!Text(arguments, "summary", out var summary))
-            return ToolOutcome.Refused("'summary' is required: one line saying what this patch does.");
+        if (!ToolFields.Summary.Text(arguments, out var summary))
+            return ToolOutcome.Refused($"{ToolFields.Summary.Quoted} is required: one line saying what this patch does.");
 
         // Both programs, because either may be the one that was built for. A
         // patch offered for its sound still has to have compiled its sound, and
@@ -43,7 +43,7 @@ internal sealed class PatchProposals(WorkingPatch bench, PatchSenses senses, Wor
         // A sound that is wired was meant to be heard, and a model with no ear
         // cannot find out that it is silent any other way.
         var (picture, sound) = bench.Patch.Reaches();
-        var startsSilent = arguments.TryGetProperty("starts_silent", out var flag) && flag.ValueKind == JsonValueKind.True;
+        var startsSilent = ToolFields.StartsSilent.Flag(arguments, fallback: false);
 
         if (sound && !startsSilent && await senses.SilentAsync(audio, cancel).ConfigureAwait(false))
         {
@@ -51,7 +51,7 @@ internal sealed class PatchProposals(WorkingPatch bench, PatchSenses senses, Wor
                 $"the sound is silence for its first {Number(limits.LatestTime)}s: nothing above -66 dBFS "
                 + "comes out of 'left' or 'right' but the thump of a constant settling, if that. " + PatchSenses.SilenceCauses
                 + (picture ? "" : " Nothing reaches 'color' either, so this patch draws nothing as well.")
-                + " If it is meant to start silent and come in later, propose again with 'starts_silent' true.");
+                + $" If it is meant to start silent and come in later, propose again with {ToolFields.StartsSilent.Quoted} true.");
         }
 
         bench.Proposal = summary;

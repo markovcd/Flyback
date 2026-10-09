@@ -121,7 +121,7 @@ internal sealed class WorkingPatch(ModuleCatalog modules, ISampleLibrary? sample
 
     public bool Node(
         JsonElement arguments,
-        string field,
+        ToolField field,
         out NodeInstance node,
         out NodeDef def,
         out string refusal)
@@ -129,9 +129,9 @@ internal sealed class WorkingPatch(ModuleCatalog modules, ISampleLibrary? sample
         node = null!;
         def = null!;
 
-        if (!Text(arguments, field, out var handle))
+        if (!field.Text(arguments, out var handle))
         {
-            refusal = $"'{field}' is required and must be a module's handle.";
+            refusal = $"{field.Quoted} is required and must be a module's handle.";
             return false;
         }
 

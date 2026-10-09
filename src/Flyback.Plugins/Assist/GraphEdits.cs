@@ -9,10 +9,10 @@ internal sealed class GraphEdits(WorkingPatch bench, PatchReports reports)
 {
     public ToolOutcome Connect(JsonElement arguments)
     {
-        if (!bench.Node(arguments, "from", out var source, out var sourceDef, out var refusal))
+        if (!bench.Node(arguments, ToolFields.WireFrom, out var source, out var sourceDef, out var refusal))
             return ToolOutcome.Refused(refusal);
 
-        if (!bench.Node(arguments, "to", out var target, out var targetDef, out refusal))
+        if (!bench.Node(arguments, ToolFields.WireTo, out var target, out var targetDef, out refusal))
             return ToolOutcome.Refused(refusal);
 
         if (source.Id == target.Id)
@@ -22,7 +22,7 @@ internal sealed class GraphEdits(WorkingPatch bench, PatchReports reports)
 
         int fromPort;
 
-        if (Text(arguments, "from_port", out var fromName))
+        if (ToolFields.WireFromPort.Text(arguments, out var fromName))
         {
             if (!Port(sourceDef.Outputs, fromName, out fromPort))
                 return ToolOutcome.Refused(
@@ -35,12 +35,12 @@ internal sealed class GraphEdits(WorkingPatch bench, PatchReports reports)
         else
         {
             return ToolOutcome.Refused(
-                $"{bench.Handle(source)} has more than one output, so 'from_port' is needed. "
+                $"{bench.Handle(source)} has more than one output, so {ToolFields.WireFromPort.Quoted} is needed. "
                 + $"Its outputs are: {CatalogReference.List(sourceDef.Outputs)}.");
         }
 
-        if (!Text(arguments, "to_port", out var toName))
-            return ToolOutcome.Refused("'to_port' is required and must be a string.");
+        if (!ToolFields.WireToPort.Text(arguments, out var toName))
+            return ToolOutcome.Refused($"{ToolFields.WireToPort.Quoted} is required and must be a string.");
 
         if (!Port(targetDef.Inputs, toName, out var toPort))
             return ToolOutcome.Refused(
@@ -60,11 +60,11 @@ internal sealed class GraphEdits(WorkingPatch bench, PatchReports reports)
 
     public ToolOutcome Disconnect(JsonElement arguments)
     {
-        if (!bench.Node(arguments, "handle", out var node, out var def, out var refusal))
+        if (!bench.Node(arguments, ToolFields.Handle, out var node, out var def, out var refusal))
             return ToolOutcome.Refused(refusal);
 
-        if (!Text(arguments, "port", out var portName))
-            return ToolOutcome.Refused("'port' is required and must be a string.");
+        if (!ToolFields.InputPort.Text(arguments, out var portName))
+            return ToolOutcome.Refused($"{ToolFields.InputPort.Quoted} is required and must be a string.");
 
         if (!Port(def.Inputs, portName, out var port))
             return ToolOutcome.Refused(
@@ -93,7 +93,7 @@ internal sealed class GraphEdits(WorkingPatch bench, PatchReports reports)
     /// </summary>
     public ToolOutcome SwitchModule(JsonElement arguments)
     {
-        if (!bench.Node(arguments, "handle", out var node, out var def, out var refusal))
+        if (!bench.Node(arguments, ToolFields.Handle, out var node, out var def, out var refusal))
             return ToolOutcome.Refused(refusal);
 
         if (NodeCatalog.IsSink(node.TypeId))
@@ -102,7 +102,7 @@ internal sealed class GraphEdits(WorkingPatch bench, PatchReports reports)
                 "the Output cannot be switched off. Set its 'volume' to 0, or switch off what is wired into it.");
         }
 
-        var off = Flag(arguments, "off", fallback: true);
+        var off = ToolFields.Off.Flag(arguments, fallback: true);
 
         node.Off = off;
         bench.Edits++;
@@ -120,7 +120,7 @@ internal sealed class GraphEdits(WorkingPatch bench, PatchReports reports)
 
     public ToolOutcome RemoveModule(JsonElement arguments)
     {
-        if (!bench.Node(arguments, "handle", out var node, out _, out var refusal))
+        if (!bench.Node(arguments, ToolFields.Handle, out var node, out _, out var refusal))
             return ToolOutcome.Refused(refusal);
 
         var handle = bench.Handle(node);

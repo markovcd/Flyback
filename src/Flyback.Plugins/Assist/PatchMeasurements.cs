@@ -21,7 +21,7 @@ internal sealed class PatchMeasurements(WorkingPatch bench, WorkbenchLimits limi
     {
         var chosen = new List<Guid>();
 
-        if (arguments.TryGetProperty("handles", out var handles) && handles.ValueKind == JsonValueKind.Array)
+        if (ToolFields.Handles.List(arguments, out var handles))
         {
             foreach (var handle in handles.EnumerateArray())
             {
@@ -32,13 +32,9 @@ internal sealed class PatchMeasurements(WorkingPatch bench, WorkbenchLimits limi
             }
         }
 
-        var seconds = arguments.TryGetProperty("seconds", out var length) && length.ValueKind == JsonValueKind.Number
-            ? Math.Clamp(length.GetDouble(), 0.25d, LongestMeasure)
-            : 2d;
+        var seconds = ToolFields.Seconds.Number(arguments, out var length) ? Math.Clamp(length, 0.25d, LongestMeasure) : 2d;
 
-        var from = arguments.TryGetProperty("from", out var start) && start.ValueKind == JsonValueKind.Number
-            ? Math.Clamp(start.GetDouble(), 0d, limits.LatestStart)
-            : 0d;
+        var from = ToolFields.From.Number(arguments, out var start) ? Math.Clamp(start, 0d, limits.LatestStart) : 0d;
 
         var patch = bench.Patch;
 

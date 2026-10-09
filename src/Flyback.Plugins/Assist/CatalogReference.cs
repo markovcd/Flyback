@@ -12,8 +12,8 @@ internal sealed class CatalogReference(ModuleCatalog modules, IReadOnlyList<Patc
 {
     public ToolOutcome DescribeModule(JsonElement arguments)
     {
-        if (!Text(arguments, "type_id", out var typeId))
-            return ToolOutcome.Refused("'type_id' is required and must be a string.");
+        if (!ToolFields.TypeId.Text(arguments, out var typeId))
+            return ToolOutcome.Refused($"{ToolFields.TypeId.Quoted} is required and must be a string.");
 
         if (modules.Get(typeId) is null)
             return ToolOutcome.Refused($"there is no module with type id '{typeId}'. {Nearest(typeId)}");
@@ -25,8 +25,8 @@ internal sealed class CatalogReference(ModuleCatalog modules, IReadOnlyList<Patc
 
     public ToolOutcome DescribePreset(JsonElement arguments)
     {
-        if (!Text(arguments, "name", out var name))
-            return ToolOutcome.Refused("'name' is required and must be a string.");
+        if (!ToolFields.PresetName.Text(arguments, out var name))
+            return ToolOutcome.Refused($"{ToolFields.PresetName.Quoted} is required and must be a string.");
 
         if (presets.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)) is not { } preset)
         {
@@ -53,8 +53,8 @@ internal sealed class CatalogReference(ModuleCatalog modules, IReadOnlyList<Patc
 
     public ToolOutcome FindModules(JsonElement arguments)
     {
-        if (!Text(arguments, "query", out var query))
-            return ToolOutcome.Refused("'query' is required and must be a string.");
+        if (!ToolFields.Query.Text(arguments, out var query))
+            return ToolOutcome.Refused($"{ToolFields.Query.Quoted} is required and must be a string.");
 
         var hits = modules.All
             .Where(d => d.TypeId.Contains(query, StringComparison.OrdinalIgnoreCase)

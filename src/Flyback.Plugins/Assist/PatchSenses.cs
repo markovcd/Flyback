@@ -118,9 +118,7 @@ internal sealed class PatchSenses(WorkingPatch bench, WorkbenchLimits limits)
     }
 
     private double From(JsonElement arguments) =>
-        arguments.TryGetProperty("from", out var start) && start.ValueKind == JsonValueKind.Number
-            ? Math.Clamp(start.GetDouble(), 0d, limits.LatestStart)
-            : 0d;
+        ToolFields.From.Number(arguments, out var start) ? Math.Clamp(start, 0d, limits.LatestStart) : 0d;
 
     /// <summary>Seconds after the window's start, so a window is never longer than <see cref="WorkbenchLimits.LatestTime"/>.</summary>
     private double[] Times(JsonElement arguments)
@@ -130,7 +128,7 @@ internal sealed class PatchSenses(WorkingPatch bench, WorkbenchLimits limits)
         // panel tends to go and "fix" a patch that was working.
         double[] fallback = [0.5d, 1.5d, 3.5d];
 
-        if (!arguments.TryGetProperty("times", out var times) || times.ValueKind != JsonValueKind.Array)
+        if (!ToolFields.Times.List(arguments, out var times))
             return fallback;
 
         var asked = times.EnumerateArray()
@@ -292,15 +290,10 @@ internal sealed class PatchSenses(WorkingPatch bench, WorkbenchLimits limits)
     /// <summary>Which stretch of the timeline to render, clamped to what one call may spend.</summary>
     private (double From, double Seconds) Window(JsonElement arguments)
     {
-        var from = arguments.TryGetProperty("from", out var start) && start.ValueKind == JsonValueKind.Number
-            ? Math.Clamp(start.GetDouble(), 0d, limits.LatestStart)
-            : 0d;
+        var seconds = ToolFields.Seconds.Number(arguments, out var length)
+            ? Math.Clamp(length, 0.25d, limits.LongestListen)
+            : Math.Min(2d, limits.LongestListen);
 
-        var seconds = arguments.TryGetProperty("seconds", out var length)
-            && length.ValueKind == JsonValueKind.Number
-                ? Math.Clamp(length.GetDouble(), 0.25d, limits.LongestListen)
-                : Math.Min(2d, limits.LongestListen);
-
-        return (from, seconds);
+        return (From(arguments), seconds);
     }
 }

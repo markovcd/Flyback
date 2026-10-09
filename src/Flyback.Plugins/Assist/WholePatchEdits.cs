@@ -21,9 +21,7 @@ internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, 
     /// </summary>
     public ToolOutcome SetKeyboard(JsonElement arguments)
     {
-        var layout = arguments.TryGetProperty("layout", out var given) && given.ValueKind == JsonValueKind.String
-            ? given.GetString()
-            : null;
+        ToolFields.Layout.Text(arguments, out var layout);
 
         if (layout == "piano")
         {
@@ -34,19 +32,18 @@ internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, 
         }
 
         if (layout != "scale")
-            return ToolOutcome.Refused("'layout' is required, and is 'piano' or 'scale'.");
+            return ToolOutcome.Refused($"{ToolFields.Layout.Quoted} is required, and is 'piano' or 'scale'.");
 
-        if (!arguments.TryGetProperty("tonic", out var number) || number.ValueKind != JsonValueKind.Number
-            || !number.TryGetInt32(out var tonic) || tonic is < 0 or >= Pitch.Classes)
-            return ToolOutcome.Refused("a scale needs 'tonic': a pitch class, 0 to 11, where 0 is C and 9 is A.");
+        if (!ToolFields.Tonic.Whole(arguments, out var tonic) || tonic is < 0 or >= Pitch.Classes)
+            return ToolOutcome.Refused($"a scale needs {ToolFields.Tonic.Quoted}: a pitch class, 0 to 11, where 0 is C and 9 is A.");
 
-        var scale = arguments.TryGetProperty("scale", out var named) && named.ValueKind == JsonValueKind.String
-            ? Chords.Scales.FirstOrDefault(mode => mode.Id == named.GetString())
+        var scale = ToolFields.KeyScale.Text(arguments, out var named)
+            ? Chords.Scales.FirstOrDefault(mode => mode.Id == named)
             : null;
 
         if (scale is null)
             return ToolOutcome.Refused(
-                $"a scale needs 'scale', one of {string.Join(", ", Chords.Scales.Select(mode => mode.Id))}.");
+                $"a scale needs {ToolFields.KeyScale.Quoted}, one of {string.Join(", ", Chords.Scales.Select(mode => mode.Id))}.");
 
         bench.Patch.Keyboard = new KeyboardScale(tonic, scale.Id);
         bench.Edits++;
@@ -57,11 +54,10 @@ internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, 
     /// <summary>How long the patch plays for, which is the patch's rather than any module's, so it takes no handle.</summary>
     public ToolOutcome SetLength(JsonElement arguments)
     {
-        if (!arguments.TryGetProperty("seconds", out var number) || number.ValueKind != JsonValueKind.Number
-            || !number.TryGetDouble(out var seconds) || !double.IsFinite(seconds)
+        if (!ToolFields.Length.Number(arguments, out var seconds) || !double.IsFinite(seconds)
             || seconds is < PatchLength.Shortest or > PatchLength.Longest)
             return ToolOutcome.Refused(
-                $"'seconds' is required: a number from {PatchLength.Shortest} to {PatchLength.Longest:0} (a day).");
+                $"{ToolFields.Length.Quoted} is required: a number from {PatchLength.Shortest} to {PatchLength.Longest:0} (a day).");
 
         bench.Patch.Length = seconds;
         bench.Edits++;
@@ -97,8 +93,8 @@ internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, 
     /// </remarks>
     public ToolOutcome WritePatch(JsonElement arguments)
     {
-        if (!Text(arguments, "source", out var source))
-            return ToolOutcome.Refused("'source' is required: the patch, written in the language.");
+        if (!ToolFields.Source.Text(arguments, out var source))
+            return ToolOutcome.Refused($"{ToolFields.Source.Quoted} is required: the patch, written in the language.");
 
         var load = PatchLanguage.Build(source, bench.Modules);
 

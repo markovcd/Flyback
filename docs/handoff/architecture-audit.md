@@ -14,19 +14,6 @@ three editor hosts, with no hand-built service outside composition; every public
 by decision (ADR-0035); the binder is one walk (ADR-0183); presets are C# by
 decision (ADR-0138).
 
-## 7. A tool's argument names are declared twice (Medium)
-
-`src/Flyback.Plugins/Assist/ToolTable.cs:64-477` declares sixteen tools with a
-JSON schema string each; the bodies re-spell the property names as literals
-(`ModuleEdits.cs:24,41` and 17 more reads through `ToolArguments`). Nothing ties
-a schema's properties to what its body reads, so a rename drifts silently and
-`ToolOutcome.Refused` is the only symptom.
-
-**Fix.** A `ToolField(Name, Kind, Required, Description)` record declared once
-per tool; `PatchTool.Schema` is rendered from it and `ToolArguments` reads
-through it. Cheaper first step: a test asserting every property a body reads is
-in its tool's schema.
-
 ## 8. Startup has three homes and a bag of statics (Medium)
 
 Registration is one `AddPart<T>` and the graph is validated, so the container
@@ -91,7 +78,8 @@ gestures are `ModuleDrag`, `WireDrag` and `RubberBand` under `CanvasGestures`.
 is `TextWriteBack`, the caret's selection `CaretFollow`, and a pasted patch
 file `PastedPatch`.
 `ContractSurfaceTests` checks members as well as types, and what only the host
-called is internal.
+called is internal. A tool's arguments are `ToolFields`, which its schema
+is rendered from and its body reads through.
 Still written per shell, and small: the speaker handshake in two JS files, the
 viewer's and the CLI's `--size` and `--oversample` option declarations, and the
 viewer's `--cpu` against the CLI's `--processor`.
