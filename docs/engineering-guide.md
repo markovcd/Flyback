@@ -31,8 +31,9 @@ Where an ADR and the code disagree, that is a finding worth raising.
 One module graph makes a picture and a sound. A patch is compiled to a flat
 program for a register machine, once for the screen and once for the speakers,
 and everything else in the repository either builds that graph, runs that
-program, or shows the result. Who uses it and what it talks to is the C4 model in
-[`diagrams/`](diagrams/README.md).
+program, or shows the result. Who uses Flyback and what it talks to, and the
+programs and stores it is made of, are the C4 model in [`diagrams/`](diagrams/README.md);
+this section is how the projects inside those programs depend on each other.
 
 ```text
 Flyback.Core           the patch model, the module catalog, the opcodes, the Emitter
@@ -51,12 +52,12 @@ Flyback.Ui             what two shells draw with: preview, sound device, colors
    ^
 Flyback.Editor         the editor (Avalonia), no platform in it
    ^
-Flyback.Editor.Desktop the editor on the desktop      Flyback.exe
-Flyback.Viewer.Desktop plays a patch, writes nothing  flyback-viewer.exe
-Flyback.Cli            render, check, print, pack     flyback-cli.exe   (Gpu, but no Ui and no Avalonia)
-Flyback.Viewer.Web     the viewer in a browser        wwwroot/           (Gpu, the module plugins referenced, no Ui)
-Flyback.Editor.Web     the editor in a browser        wwwroot/           (Editor under Avalonia.Browser; needs wasm-tools)
-Flyback.Editor.Android the editor on Android          .apk               (Editor under Avalonia.Android; not built with the solution)
+Flyback.Editor.Desktop Flyback.exe
+Flyback.Viewer.Desktop flyback-viewer.exe
+Flyback.Cli            flyback-cli.exe     (Gpu, but no Ui and no Avalonia)
+Flyback.Viewer.Web     wwwroot/            (Gpu, the module plugins referenced, no Ui)
+Flyback.Editor.Web     wwwroot/            (Editor under Avalonia.Browser; needs wasm-tools)
+Flyback.Editor.Android .apk                (Editor under Avalonia.Android; not built with the solution)
 
 Flyback.Plugins.* twelve plugins, built into plugins/<Name>/ and loaded at run time
 ```
@@ -78,10 +79,10 @@ layer between the layers: a shell calls the engine's concrete types
 | `Flyback.Editor.Desktop` | `Program`, `FlybackApp`, `Startup`, installing an update, the shipped plugins | The desktop program around `Flyback.Editor`. |
 | `Flyback.Viewer.Desktop` | A window, a transport and an argument parser | Writes nothing to disk ([0123](adr/0123-a-third-program-plays-a-patch-and-writes-nothing.md)). |
 | `Flyback.Viewer.Web` | `WebSound`, `WebPicture`, `WebExports`, `JsSound`, the page, its sound worker, and `hear.mjs` for Node | The sound as JavaScript in a worker, the interpreter where it cannot be; ahead-of-time compiled only on publish; a patch too heavy to keep up plays its picture alone ([0160](adr/0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md)). |
-| `Flyback.Editor.Web` | `PageApp`, `CanvasPreview`, `PageSound`, `PageExports`, the page | `Flyback.Editor` under Avalonia.Browser, with the page's own preview, sound, title, focus and close registered in its container; the picture on a canvas of its own, the sound in the web viewer's worker. Served by the preset site's Worker at `/editor/`, built into its pages by `worker/build-assets.sh`; also built with `Flyback.slnx`, which therefore needs the wasm-tools workload; the gate's image installs it ([0162](adr/0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)). |
-| `Flyback.Editor.Android` | `MainActivity`, `DeviceApp`, `DeviceFolders`, `DeviceRequest` | `Flyback.Editor` under Avalonia.Android, the module plugins and `Flyback.Plugins.AndroidIO`'s `AudioTrack` linked in and its files in the app's private folder. Listed in `Flyback.slnx` with `<Build Project="false" />`, since it needs the android workload, a JDK and the Android SDK; built by path ([0184](adr/0184-the-editor-runs-on-android-with-its-plugins-linked-in.md)). |
+| `Flyback.Editor.Web` | `PageApp`, `CanvasPreview`, `PageSound`, `PageExports`, the page | `Flyback.Editor` under Avalonia.Browser, with the page's own preview, sound, title, focus and close registered in its container; the picture on a canvas of its own, the sound in the web viewer's worker. Built into the preset site's pages by `worker/build-assets.sh`; also built with `Flyback.slnx`, which therefore needs the wasm-tools workload; the gate's image installs it ([0162](adr/0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)). |
+| `Flyback.Editor.Android` | `MainActivity`, `DeviceApp`, `DeviceFolders`, `DeviceRequest` | `Flyback.Editor` under Avalonia.Android, the module plugins and `Flyback.Plugins.AndroidIO`'s `AudioTrack` linked in. Listed in `Flyback.slnx` with `<Build Project="false" />`, since it needs the android workload, a JDK and the Android SDK; built by path ([0184](adr/0184-the-editor-runs-on-android-with-its-plugins-linked-in.md)). |
 | `Flyback.Cli` | One file per command over `System.CommandLine` | The only place export lives ([0078](adr/0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md)); on the GPU where there is one, and exact to the bit with `--processor` ([0157](adr/0157-flyback-cli-render-draws-on-the-gpu.md)). |
-| `Flyback.Site` | `flyback-site`: the readers a submission is checked with, and the commands the preset site's workflows run | Run by GitHub and the author, never shipped; references the plugins the web pages link, to say what a browser lacks ([0175](adr/0175-the-preset-site-is-a-worker-and-github-reads-what-is-submitted.md)). The Worker itself is TypeScript in `worker/`, tested with Vitest. |
+| `Flyback.Site` | `flyback-site`: the readers a submission is checked with, and the commands the preset site's workflows run | Never shipped; references the plugins the web pages link, to say what a browser lacks ([0175](adr/0175-the-preset-site-is-a-worker-and-github-reads-what-is-submitted.md)). The Worker is in `worker/`, tested with Vitest; the [site's containers](diagrams/site.svg) show how the two check a submission. |
 
 A project's namespace is its assembly name, with no exceptions: `Flyback.Ui`,
 `Flyback.Editor`, `Flyback.Editor.Desktop`, `Flyback.Editor.Web`, `Flyback.Engine`. A folder
@@ -484,6 +485,10 @@ apiece beside them in `Flyback.Plugins/Assist`. The two session loops in `OpenAi
 
 ## 9. The shells
 
+What each shell talks to, and where it keeps its files, is drawn in the
+[desktop](diagrams/desktop.svg) and [web and Android](diagrams/web.svg) container
+views. This section is how each is built inside.
+
 ### The editor
 
 **No XAML** ([0016](adr/0016-build-the-ui-in-c-sharp-without-xaml.md)). Controls
@@ -572,10 +577,9 @@ container has built the editor, a part with something to do at start declares
 `IStartAt` and its phase: `Built` puts saved settings in force, `Shown` the
 layout and the first patch, `Opened` whatever needs a dialog or a file.
 
-**What it writes**, all JSON under `%APPDATA%/Flyback`
-(`GlobalConstants.DataFolder`): `settings.json`, one section a concern
-(`SettingsFile`, ADR-0171), `layout.json`, and the `recovery/`, `updates/`, `sessions/`,
-`groups/` and `presets/` folders. API keys go to the operating system's store,
+**What it writes** goes to the data folder, `%APPDATA%/Flyback`
+(`GlobalConstants.DataFolder`), as JSON; `settings.json` holds one section a
+concern (`SettingsFile`, ADR-0171). API keys go to the operating system's store,
 never to a file.
 
 - **Recovery** ([0103](adr/0103-unsaved-work-outlives-a-crash.md)): each window
