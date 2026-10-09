@@ -83,7 +83,7 @@ public sealed unsafe class JackAudioDevice : IAudioDevice
     {
         if (client != IntPtr.Zero) return;
 
-        var opened = LibJack.Open(GlobalConstants.ApplicationName, LibJack.NoStartServer, out var status);
+        var opened = LibJack.Open(GlobalConstants.ApplicationName, LibJack.NoStartServer | LibJack.ServerName, out var status, JackServer.Name);
 
         if (opened == IntPtr.Zero)
             throw new InvalidOperationException($"could not connect to the JACK server (status {status}).");

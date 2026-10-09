@@ -11,6 +11,7 @@ internal static unsafe partial class LibJack
     public const string Library = "libjack.so.0";
 
     public const int NoStartServer = 0x01;  // JackNoStartServer
+    public const int ServerName = 0x04;     // JackServerName
 
     public const ulong PortIsInput = 0x1;   // JackPortIsInput
     public const ulong PortIsOutput = 0x2;  // JackPortIsOutput
@@ -20,11 +21,12 @@ internal static unsafe partial class LibJack
     public const string AudioType = "32 bit float mono audio";
 
     /// <summary>
-    /// Connects to the running server, or returns null. The C function is variadic for
-    /// server options this plugin never passes, so a fixed signature calls it correctly.
+    /// Connects to the running server named <paramref name="server"/>, or returns null. The C
+    /// function is variadic; with <see cref="ServerName"/> in <paramref name="options"/> its one
+    /// extra argument is the server's name, which a fixed signature passes correctly.
     /// </summary>
     [LibraryImport(Library, EntryPoint = "jack_client_open", StringMarshalling = StringMarshalling.Utf8)]
-    public static partial IntPtr Open(string name, int options, out int status);
+    public static partial IntPtr Open(string name, int options, out int status, string server);
 
     [LibraryImport(Library, EntryPoint = "jack_client_close")]
     public static partial int Close(IntPtr client);
