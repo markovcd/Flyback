@@ -20,10 +20,8 @@ using Xunit.v3;
 // application, on a UI thread the session owns. Declared once, at the assembly.
 [assembly: AvaloniaTestApplication(typeof(EditorTest))]
 
-// xunit 4 runs every test in parallel by default, regardless of collection. The
-// UI ones all queue on the one thread headless gives the assembly, so that buys
-// nothing and only puts more of them in the queue at once. This is what xunit 3
-// did, and what the timings here were measured against.
+// xunit's default, named because the UI tests depend on it: they all queue on the
+// one thread headless gives the assembly, so running a class's tests at once buys nothing.
 [assembly: Parallelization(Mode = ParallelMode.Collections)]
 
 // Enough pool threads that the tests waiting on the UI thread cannot use them all up.

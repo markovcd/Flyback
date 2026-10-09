@@ -50,37 +50,6 @@ picture (the `IlProgramTests.ShouldMatch` shape), `GlslEmitter.Emit` succeeds in
 both dialects, and the same for `JsProgram` where Node is present. `Drawn` runs
 over all of `Presets.All`, or says in a comment why seven.
 
-## 3. Tests mutate the process in assemblies that run tests in parallel (Medium)
-
-Four UI assemblies pin `ParallelMode.Collections`
-(`Editor.Tests/Ui/EditorTest.cs:26`, and the three `Headless.cs`). The other
-ten take xunit 4's default, which runs every test in parallel regardless of
-collection, and in those:
-
-- `Cli.Tests/ProbeCommandTests.cs:338` sets `ONE_KEY`/`TWO_KEY`/`ALL_KEY` and
-  `Dispose` nulls them; ten tests share the names, so one test's dispose unsets
-  another's key mid-run. `CredentialsTests.cs:140` already does this right with
-  a Guid suffix.
-- `Cli.Tests/ViewerCommandTests.cs:21-34` sets `FLYBACK_TEST_ARGS` and the
-  static seam `ViewerCommand.Beside`; its `[Collection("viewer")]` serializes
-  only against other collections.
-- `Plugins.Codex.Tests/CliTests.cs:186-196` and
-  `Plugins.ClaudeCode.Tests/CliTests.cs:150-158` set the real `CODEX_API_KEY`,
-  `OPENAI_API_KEY` and `ANTHROPIC_API_KEY`; `Plugins.Programs.Tests/LocatorTests.cs:56-63`
-  rewrites `PATH`; `Specs/Steps/CodexSteps.cs:41-45` and `ClaudeCodeSteps.cs:41-45`
-  prepend to `PATH` and restore a copy captured at construction, so two
-  scenarios in flight restore in the wrong order while `WebViewerSteps.cs:470`
-  and `NodeJs.cs:15` read `PATH` to find node.
-- `Plugins.Tests/SecretStoreTests.cs:109-138` writes one account name,
-  `flyback-test-account`, to the machine's real keyring from two tests; on a
-  desktop with a locked keyring the first `Keep` can block on an unlock prompt.
-- `Ui.Tests/StallTraceTests.cs:20-58` opens and closes a process-global static.
-
-Build 599 hung in Plugins.Tests for thirty minutes and no commit names the
-cause; this and item 4 are the candidates. Fix: the same `Parallelization`
-assembly attribute in every test assembly, and per-test variable names in
-`ProbeCommandTests`.
-
 ## 4. Waits with no cap, and assertions on the wall clock (Medium)
 
 - `Viewer.Desktop.Tests/ViewerWindowTests.cs:89,173` `Player.Compiled().Wait()`
@@ -94,6 +63,10 @@ assembly attribute in every test assembly, and per-test variable names in
 - `Plugins.Testing/JackDaemon.cs:119-131`: after sixty seconds on the lock the
   `IOException` propagates, so a sibling assembly holding it longer fails every
   JACK test from the fixture constructor instead of skipping with a `Why`.
+- `Plugins.Tests/SecretStoreTests.cs:109-138` writes to the machine's real
+  keyring; on a desktop with a locked keyring the first `Keep` can block on an
+  unlock prompt. Build 599 hung in Plugins.Tests for thirty minutes and no
+  commit names the cause.
 - `Core.Tests/Graph/BeamTests.cs:200-203` asserts a noise draw is under five
   times a circle draw, best of three stopwatch runs: a ratio of two timings on
   a shared box. `Ui.Tests/StallTraceTests.cs:33` asserts a 5 ms sleep stays

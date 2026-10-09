@@ -1,5 +1,6 @@
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
+using Flyback.Specs.Support;
 using Reqnroll;
 using Shouldly;
 
@@ -10,8 +11,8 @@ namespace Flyback.Specs.Steps;
 public sealed class CodexSteps : IDisposable
 {
     private readonly DirectoryInfo folder = Directory.CreateTempSubdirectory("flyback-codex-specs");
-    private readonly string? path = Environment.GetEnvironmentVariable("PATH");
 
+    private ScenarioPath? path;
     private IPatchAssistant? assistant;
 
     private IPatchAssistant Assistant => assistant.ShouldNotBeNull();
@@ -38,11 +39,11 @@ public sealed class CodexSteps : IDisposable
     public void ThenNoKey() => Assistant.NeedsKey.ShouldBeFalse();
 
     /// <summary>Puts the scenario's folder on the path, where a program is found first.</summary>
-    private void Point() => Environment.SetEnvironmentVariable("PATH", folder.FullName + Path.PathSeparator + path);
+    private void Point() => path ??= new ScenarioPath(folder.FullName);
 
     public void Dispose()
     {
-        Environment.SetEnvironmentVariable("PATH", path);
+        path?.Dispose();
         folder.Delete(recursive: true);
     }
 }
