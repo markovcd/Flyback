@@ -1,4 +1,6 @@
+using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization.Metadata;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Shouldly;
@@ -52,6 +54,37 @@ public class SavedLayoutTests
                 JsonNode.Parse(File.ReadAllText(Path.Combine(Folder, name))),
                 JsonNode.Parse(PatchIO.ToJson(opened.Patch, NodeCatalog.BuiltIn)))
             .ShouldBeTrue();
+    }
+
+    /// <summary>A file holds what was set; what is worked out from it is worked out again on reading.</summary>
+    [Fact]
+    public void Nothing_worked_out_from_other_fields_is_written()
+    {
+        var resolver = new DefaultJsonTypeInfoResolver();
+        var options = new JsonSerializerOptions { TypeInfoResolver = resolver };
+        var seen = new HashSet<Type>();
+        var pending = new Queue<Type>([typeof(Patch)]);
+        var computed = new List<string>();
+
+        while (pending.TryDequeue(out var type))
+        {
+            if (!seen.Add(type) || typeof(JsonNode).IsAssignableFrom(type)) continue;
+
+            var info = resolver.GetTypeInfo(type, options);
+
+            if (info.ElementType is { } element) pending.Enqueue(element);
+            if (info.Kind != JsonTypeInfoKind.Object) continue;
+
+            foreach (var property in info.Properties)
+            {
+                if (property.Get is not null && property.Set is null && property.AssociatedParameter is null)
+                    computed.Add($"{type.Name}.{property.Name}");
+
+                pending.Enqueue(Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+            }
+        }
+
+        computed.ShouldBeEmpty("a property with no setter is [JsonIgnore]");
     }
 
     private static LoadedBundle Open(string name) =>

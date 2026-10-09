@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Flyback.Core.Graph;
 
 /// <summary>
@@ -79,6 +81,7 @@ public sealed class NodeGroup
     /// it, which is the only thing that can be said about one without looking
     /// inside.
     /// </summary>
+    [JsonIgnore]
     public string Counted => Members.Count == 1 ? "1 module" : $"{Members.Count} modules";
 
     /// <summary>

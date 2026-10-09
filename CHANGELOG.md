@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A saved patch holds only what was set, not what Flyback works out from it, such as a group's module count or a knob's MIDI label.
+
 - An OpenAI-compatible or Gemini endpoint that answers with an error page instead of JSON says so, rather than quoting the JSON reader.
 
 - On Linux, a JACK server that has stopped answering no longer freezes Flyback when it looks for one.

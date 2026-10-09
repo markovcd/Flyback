@@ -52,7 +52,7 @@ public sealed class PatchControl
     internal static string KeyOf(Guid control) => $"control/{control:N}";
 
     /// <inheritdoc cref="KeyOf(Guid)"/>
-    public string Key => KeyOf(Id);
+    internal string Key => KeyOf(Id);
 
     /// <summary>A copy of this knob, with the same id.</summary>
     internal PatchControl Clone() => new() { Id = Id, Name = Name, Value = Value, Midi = Midi, Word = Word, Held = Held };

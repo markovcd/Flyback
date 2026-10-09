@@ -118,8 +118,7 @@
           "Port": 0,
           "IsOutput": true
         }
-      ],
-      "Counted": "2 modules"
+      ]
     }
   ],
   "Controls": [
@@ -130,41 +129,14 @@
       "Midi": {
         "Device": "Keys",
         "Channel": 1,
-        "Controller": 74,
-        "Label": "CC74\u00B71",
-        "What": "CC74"
+        "Controller": 74
       },
-      "Word": "pitch",
-      "Key": "control/66011ddc8988681f45a878aeab915bfd"
+      "Word": "pitch"
     }
   ],
   "Keyboard": {
     "Tonic": 2,
-    "Scale": "dorian",
-    "Mode": {
-      "Id": "dorian",
-      "Name": "Dorian",
-      "Classes": [
-        0,
-        2,
-        3,
-        5,
-        7,
-        9,
-        10
-      ]
-    },
-    "TonicClass": 2,
-    "Row": [
-      2,
-      4,
-      5,
-      7,
-      9,
-      11,
-      12
-    ],
-    "Name": "D Dorian"
+    "Scale": "dorian"
   },
   "Length": 12.5,
   "Description": "Every field a patch file holds, as layout 1 wrote it.",

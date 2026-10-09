@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Flyback.Core.Graph;
 
 /// <summary>
@@ -12,17 +14,18 @@ public sealed record KeyboardScale(int Tonic, string Scale)
     internal static KeyboardScale Major { get; } = new(0, Chords.Scales[0].Id);
 
     /// <summary>The scale itself, and the major scale for an id nothing answers to.</summary>
-    public ScaleMode Mode => Chords.Scale(Scale);
+    internal ScaleMode Mode => Chords.Scale(Scale);
 
     /// <summary>The tonic held to the octave.</summary>
-    public int TonicClass => (Tonic % Pitch.Classes + Pitch.Classes) % Pitch.Classes;
+    internal int TonicClass => (Tonic % Pitch.Classes + Pitch.Classes) % Pitch.Classes;
 
     /// <summary>
     /// The notes along a row, in semitones above the C the row's octave starts on:
     /// the tonic first, and upward from it.
     /// </summary>
+    [JsonIgnore]
     public IReadOnlyList<int> Row => [.. Mode.Classes.Select(c => TonicClass + c)];
 
     /// <summary>What it is called: "D Dorian".</summary>
-    public string Name => $"{Pitch.ClassName(TonicClass)} {Mode.Name}";
+    internal string Name => $"{Pitch.ClassName(TonicClass)} {Mode.Name}";
 }

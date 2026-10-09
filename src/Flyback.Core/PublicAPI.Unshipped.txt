@@ -1,1 +1,5 @@
 #nullable enable
+*REMOVED*Flyback.Core.Graph.KeyboardScale.Mode.get -> Flyback.Core.Graph.ScaleMode!
+*REMOVED*Flyback.Core.Graph.KeyboardScale.Name.get -> string!
+*REMOVED*Flyback.Core.Graph.KeyboardScale.TonicClass.get -> int
+*REMOVED*Flyback.Core.Graph.PatchControl.Key.get -> string!
