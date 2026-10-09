@@ -27,7 +27,7 @@ public sealed class PickingWhatPlaysSteps : IDisposable
     [When("{word} is picked to play through")]
     public void WhenPicked(string name) => settings.SoundOutput = name.ToLowerInvariant();
 
-    [Then("the sound plays through {word}")]
+    [Then("^the sound plays through (WASAPI|ASIO)$")]
     public void ThenItPlaysThrough(string name)
     {
         opened = Sound.Open(plugins, settings);
