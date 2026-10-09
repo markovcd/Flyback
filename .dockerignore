@@ -7,6 +7,7 @@
 artifacts/
 dist/
 coverage/
+test-results/
 
 # The Worker's packages are restored inside the build, and what wrangler made is not source.
 **/node_modules/
