@@ -52,6 +52,7 @@ public class IssueTriageTests
     }
 
     /// <summary>Says yes to a complaint that mentions one word, and no to any other.</summary>
+    /// <remarks>Records under a lock: the triage asks about every complaint at once.</remarks>
     internal sealed class Blaming(string word) : IDecisionModel
     {
         public List<DecisionRequest> Asked { get; } = [];
@@ -70,7 +71,7 @@ public class IssueTriageTests
 
         public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel)
         {
-            Asked.Add(request);
+            lock (Asked) Asked.Add(request);
 
             return Task.FromResult(new Decision("blaming", request.Questions.ToDictionary(q => q.Key, q =>
             {
