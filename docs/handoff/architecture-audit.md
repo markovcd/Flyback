@@ -14,24 +14,6 @@ three editor hosts, with no hand-built service outside composition; every public
 by decision (ADR-0035); the binder is one walk (ADR-0183); presets are C# by
 decision (ADR-0138).
 
-## 8. Startup has three homes and a bag of statics (Medium)
-
-Registration is one `AddPart<T>` and the graph is validated, so the container
-holds (ADR-0150). What sprawls is *when* things run: `EditorView.cs:377-382`
-starts every `ISettingsSection` from the constructor while `Reactions.building`
-is true, so a section's `Start` cannot raise a notice, against ADR-0148's "say
-it from Start"; `EditorStart.cs:27-45` runs nine steps from `MainWindow.Start`;
-`EditorOpened.cs:15-22` runs three more from `Window.Opened`. A new startup step
-has three candidate homes. `Editor.Desktop/Startup.cs:20-79` exposes ten static
-settable properties copied field by field into `EditorLaunch` at
-`FlybackApp.cs:58-68`. `EditState.cs:57-80` rebuilds the inspector and sets
-toolbar buttons from a fourth class.
-
-**Fix.** `IStartAt { Phase; Task On(); }` collected by `Parts` with phases
-Built, Shown, Opened; `EditorStart` and `EditorOpened` become ordinary parts;
-`Startup.Load` returns an `EditorLaunch` instead of statics; Inspector and
-Toolbar react to `OwnershipChanged` themselves.
-
 ## 9. One feature written twice, smaller (Medium to Low)
 
 - **MIDI learn**: `Knobs/PanelKnobs.cs:388-396` and `Knobs/KnobRandomizer.cs:200-208`, same device list, cancel-and-replace and "no MIDI device" report. A `MidiLearn` part both call. `ControlsPanel.cs` carries five events that exist only to forward `RollCell` to `KnobRandomizer`.
@@ -79,7 +61,8 @@ is `TextWriteBack`, the caret's selection `CaretFollow`, and a pasted patch
 file `PastedPatch`.
 `ContractSurfaceTests` checks members as well as types, and what only the host
 called is internal. A tool's arguments are `ToolFields`, which its schema
-is rendered from and its body reads through.
+is rendered from and its body reads through. A part with something to do at start
+declares an `IStartAt` phase, and `Startup.Load` returns a `DesktopLaunch`.
 Still written per shell, and small: the speaker handshake in two JS files, the
 viewer's and the CLI's `--size` and `--oversample` option declarations, and the
 viewer's `--cpu` against the CLI's `--processor`.

@@ -27,7 +27,8 @@ internal sealed class Inspector
         IReactTo<UndescribedChanged>,
         IReactTo<DocumentArrived>,
         IReactTo<DocumentSaved>,
-        IReactTo<Touched>
+        IReactTo<Touched>,
+        IReactTo<OwnershipChanged>
 {
     private readonly NodeEditor editor;
     private readonly TextWriteBack writeBack;
@@ -139,6 +140,21 @@ internal sealed class Inspector
         var (node, _) = notice.Pick;
 
         if (editor.Selection.Focused?.Id == node || editor.Selection.Group?.Members.Contains(node) == true) Build();
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>A knob turned here on a patch the text owns is written back into the text, which the panel says.</summary>
+    public Task On(OwnershipChanged notice)
+    {
+        Build();
+
+        ToolTip.SetTip(
+            Panel,
+            notice.Owned
+                ? "The text is the document. A knob turned here is written back into it "
+                  + "where it already says it."
+                : null);
 
         return Task.CompletedTask;
     }

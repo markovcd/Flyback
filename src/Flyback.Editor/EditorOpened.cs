@@ -1,6 +1,7 @@
 using Flyback.Editor.Controls;
 using Flyback.Editor.Files;
 using Flyback.Editor.Gallery;
+using Flyback.Editor.Notices;
 using Flyback.Editor.Updates;
 
 namespace Flyback.Editor;
@@ -12,9 +13,11 @@ internal sealed class EditorOpened(
     WorkKeeper keeper,
     WorkRecovery recovery,
     PatchOpening opening,
-    PresetSlot presets)
+    PresetSlot presets) : IStartAt
 {
-    public async Task RunAsync()
+    public StartPhase Phase => StartPhase.Opened;
+
+    public async Task On()
     {
         if (launch.WhatsNew is not null)
             await dialog.Show(WhatsNew.Title(launch.WhatsNew), WhatsNew.View(launch.WhatsNew));

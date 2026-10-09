@@ -48,12 +48,17 @@ internal static class EditorServices
         // Every reactor is built here, so no notice raised later builds one mid-chain.
         var window = provider.GetRequiredService<Reactions>().Building(provider.GetRequiredService<MainWindow>);
         window.Closed += (_, _) => provider.Dispose();
+        provider.GetRequiredService<Starting>().Run(StartPhase.Built);
         return window;
     }
 
     /// <summary>Builds the editor the container composes, for a host that is not a desktop window: a page.</summary>
-    public static EditorView View(this ServiceProvider provider) =>
-        provider.GetRequiredService<Reactions>().Building(provider.GetRequiredService<EditorView>);
+    public static EditorView View(this ServiceProvider provider)
+    {
+        var view = provider.GetRequiredService<Reactions>().Building(provider.GetRequiredService<EditorView>);
+        provider.GetRequiredService<Starting>().Run(StartPhase.Built);
+        return view;
+    }
 
     /// <summary>The container a window is composed in, with any registration <paramref name="replace"/> swaps. Nothing is resolved from it.</summary>
     /// <param name="validate">Whether every registration is checked to be buildable, which costs a walk of the whole graph.</param>
@@ -98,6 +103,8 @@ internal static class EditorServices
         services.AddSingleton<PresetLibrary>();
         services.AddPart<OutputSettingRepository>();
         services.AddPart<SettingsSession>();
+        services.AddSingleton<Starting>();
+        services.AddPart<SettingsStart>();
         services.AddPart<EditorStart>();
 
         services.AddSingleton<IStillShelf, FolderStills>();

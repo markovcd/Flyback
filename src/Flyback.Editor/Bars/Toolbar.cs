@@ -20,7 +20,7 @@ namespace Flyback.Editor.Bars;
 /// stand in (ADR-0148). A press raises a notice, and the part that does the thing
 /// reacts to it, as it does to the same thing asked for with a key.
 /// </summary>
-internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IReactTo<Touched>
+internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IReactTo<Touched>, IReactTo<OwnershipChanged>
 {
     private readonly RecordingState recording;
 
@@ -64,7 +64,7 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
 
     /// <summary>
     /// What laying out means, and whether it is worth doing at all, depends on
-    /// which view is showing, so the window rewrites its tip and whether it is on.
+    /// which view is showing, so its tip and whether it is on follow <see cref="OwnershipChanged"/>.
     /// </summary>
     public Button Tidy { get; } = ToolbarButtons.Drawn("tidy", Glyphs.Tidy(), TidyTip);
 
@@ -308,6 +308,21 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
     public Task On(ViewChanged notice)
     {
         if (Code.IsChecked != notice.ShowingCode) Code.IsChecked = notice.ShowingCode;
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>What laying out means, and whether it is worth doing, follows who owns the patch and which view is showing.</summary>
+    public Task On(OwnershipChanged notice)
+    {
+        Tidy.IsEnabled = notice.ShowingCode || !notice.Owned;
+
+        ToolTip.SetTip(Tidy, notice.ShowingCode
+            ? "Fold the long lines so the patch reads down the page  (Ctrl+L)"
+            : notice.Owned
+                ? "The text is the document, so the canvas is laid out from it on every "
+                  + "apply. Fold the text instead."
+                : TidyTip);
 
         return Task.CompletedTask;
     }

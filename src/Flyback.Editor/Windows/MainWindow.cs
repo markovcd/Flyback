@@ -32,7 +32,6 @@ internal sealed class MainWindow : Window
         TakeRecording recording,
         RecordingState recordingState,
         WorkKeeper keeper,
-        EditorOpened editorOpened,
         WindowLayoutKeeper layoutKeeper,
         ShellLayout shell,
         SettingsSession settingsSession)
@@ -73,7 +72,7 @@ internal sealed class MainWindow : Window
         Content = view;
 
         // Dialogs and the storage provider are ready only once the window is open.
-        Opened += async (_, _) => await editorOpened.RunAsync();
+        Opened += async (_, _) => await view.OpenedAsync();
     }
 
     /// <summary>The take this window is recording, counting in, or about to.</summary>

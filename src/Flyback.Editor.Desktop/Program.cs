@@ -67,7 +67,7 @@ internal static class Program
 
         rest = withoutTrace;
 
-        Startup.Load(
+        var launch = Startup.Load(
             rest.FirstOrDefault(a => !a.StartsWith('-')),
             interpreted: args.Contains(EditorLaunch.InterpretedFlag, StringComparer.OrdinalIgnoreCase),
             updates: updates,
@@ -89,7 +89,7 @@ internal static class Program
 
         try
         {
-            return BuildAvaloniaApp()
+            return BuildAvaloniaApp(launch)
                 .UseDriver(OutputSettings.Load(SettingsFile.Path).Driver)
                 .StartWithClassicDesktopLifetime(TraceFlag.Taken(args).Without);
         }
@@ -107,8 +107,10 @@ internal static class Program
     /// they reach the terminal, which is the only place a person running the
     /// program from a terminal would think to look.
     /// </remarks>
-    public static AppBuilder BuildAvaloniaApp() =>
-        AppBuilder.Configure<FlybackApp>()
+    public static AppBuilder BuildAvaloniaApp() => BuildAvaloniaApp(new DesktopLaunch());
+
+    private static AppBuilder BuildAvaloniaApp(DesktopLaunch launch) =>
+        AppBuilder.Configure(() => new FlybackApp(launch))
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace();

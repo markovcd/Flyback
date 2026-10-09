@@ -15,6 +15,10 @@ namespace Flyback.Editor.Desktop;
 
 public sealed class FlybackApp : Application
 {
+    private readonly DesktopLaunch launch;
+
+    internal FlybackApp(DesktopLaunch launch) => this.launch = launch;
+
     public override void Initialize() => EditorTheme.Apply(this);
 
     public override void OnFrameworkInitializationCompleted()
@@ -35,7 +39,7 @@ public sealed class FlybackApp : Application
         // soon as it has asked for a sound device (ADR-0094).
         var usage = Usage.Start(
             UsageSettings.Load(SettingsFile.Path),
-            new Launch(First: Startup.FirstRun, Updated: Startup.Updated, File: Startup.OpenPath is not null));
+            new Launch(First: launch.FirstRun, Updated: launch.Updated, File: launch.Editor.OpenPath is not null));
 
         // A crash is said with the little that may be said about it, and the
         // process kept for as long as that takes and no longer (ADR-0103).
@@ -55,28 +59,17 @@ public sealed class FlybackApp : Application
             usage.Drain(Usage.LongestWait);
         };
 
-        var setup = EditorSetup.ThisMachine(usage) with
-        {
-            Launch = new EditorLaunch
-            {
-                OpenPath = Startup.OpenPath,
-                OpenShared = Startup.OpenShared,
-                Interpreted = Startup.Interpreted,
-                OpeningNote = Startup.OpeningNote,
-                WhatsNew = Startup.WhatsNew,
-            },
-            Plugins = Startup.Plugins,
-        };
+        var setup = EditorSetup.ThisMachine(usage) with { Launch = launch.Editor, Plugins = launch.Plugins };
         var provider = EditorServices.Provider(setup);
         var window = provider.Window();
         window.Start();
         desktop.MainWindow = window;
 
         // Once there is a window, so a slow network is never a slow start.
-        Updater.CheckInBackground(Startup.Updates);
+        Updater.CheckInBackground(launch.Updates);
 
         // Windows and Linux hand a file to open in through argv, which
-        // Startup.OpenPath already carries — see Program.Main. macOS never
+        // the launch's OpenPath already carries — see Program.Main. macOS never
         // does: Finder delivers "open this file" as an activation instead,
         // whether it is what launches the program or a file dropped on its
         // Dock icon while it is already running, and there is no other way

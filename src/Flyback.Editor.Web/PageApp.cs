@@ -66,7 +66,7 @@ internal sealed class PageApp : Application
             view.Hold(top);
             view.Start();
 
-            await provider.GetRequiredService<EditorOpened>().RunAsync();
+            await view.OpenedAsync();
         };
 
         page.MainView = view;

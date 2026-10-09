@@ -163,3 +163,17 @@ where it has them. A test of the transport takes it from the same registrations.
 What stays built inside a part is its own: a control it lays out, an object
 made per take or per request (`LiveRecorder`, `PresetSite`), and a helper no
 other part reads (`CanvasLift`, `AssistantSession`).
+
+## Amendment, 2026-10-09: a part starts at a phase
+
+What runs as the editor starts had three homes: the view's constructor started
+the settings sections while notices were refused, and two classes ran the rest
+from the window's `Start` and its `Opened`. A part with something to do at start
+now declares `IStartAt` with a `StartPhase`, and `Starting` runs each phase's
+parts in the order they were registered: `Built` once the container has built the
+editor, outside the build so a notice may be raised; `Shown` when a window or a
+page holds it; `Opened` when the window can show a dialog. `EditorStart`,
+`EditorOpened`, `SettingsStart` and `EditState` are ordinary parts of it, and a
+host calls `EditorView.Start` and `EditorView.OpenedAsync` rather than reaching
+for either. `Startup.Load` returns a `DesktopLaunch` the app is built with, in
+place of static properties copied into the `EditorLaunch`.

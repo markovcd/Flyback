@@ -24,7 +24,6 @@ namespace Flyback.Editor;
 /// </summary>
 internal sealed class EditorView : Border
 {
-    private readonly IEnumerable<ISettingsSection> settingsSections;
     private readonly IDialog dialog;
     private readonly Document document;
     private readonly PatchOpening patchOpening;
@@ -33,17 +32,15 @@ internal sealed class EditorView : Border
     private readonly KnobRandomizer randomizer;
     private readonly ReportLine report;
     private readonly Playback playback;
-    private readonly EditorStart editorStart;
+    private readonly Starting starting;
     private readonly MidiHub midi;
     private readonly FullScreenPreview fullScreen;
     private readonly TransportControls transport;
-    private readonly EditState editState;
     private readonly Reactions reactions;
     private readonly WindowHolder holder;
     private readonly bool inPage;
 
     private TopLevel? host;
-    private bool started;
 
     public EditorView(
         Document document,
@@ -55,12 +52,10 @@ internal sealed class EditorView : Border
         KnobRandomizer randomizer,
         PresetSlot presets,
         Reactions reactions,
-        EditorStart editorStart,
+        Starting starting,
         FullScreenPreview fullScreen,
         TransportControls transport,
         ShellLayout shell,
-        EditState editState,
-        IEnumerable<ISettingsSection> settingsSections,
         IDialog dialog,
         WindowHolder holder,
         EditorHost editorHost)
@@ -71,24 +66,17 @@ internal sealed class EditorView : Border
         this.report = report;
         this.midi = midi;
         this.playback = playback;
-        this.editorStart = editorStart;
-        this.settingsSections = settingsSections;
+        this.starting = starting;
         this.knobs = knobs;
         this.randomizer = randomizer;
         this.presets = presets;
         this.fullScreen = fullScreen;
         this.transport = transport;
-        this.editState = editState;
         this.dialog = dialog;
         this.reactions = reactions;
         this.holder = holder;
 
         Background = new SolidColorBrush(Colors.Window);
-
-        // Before the layout, because these are live from the moment the editor
-        // is: the preview needs its resolution and its backend whether or not
-        // anybody has selected the Output to look at them.
-        InitializeOutputControls();
 
         Child = shell.Build();
     }
@@ -121,16 +109,16 @@ internal sealed class EditorView : Border
 
     /// <summary>
     /// Brings the editor up: the saved layout, the first patch and everything that
-    /// compiling it starts. Once, after <see cref="Hold"/>; the constructor only wires.
+    /// compiling it starts (<see cref="StartPhase.Shown"/>). Once, after <see cref="Hold"/>;
+    /// the constructor only wires.
     /// </summary>
     public void Start()
     {
-        if (started || host is null) return;
-        started = true;
-
-        editState.Refresh();
-        editorStart.Start(host);
+        if (host is not null) starting.Run(StartPhase.Shown);
     }
+
+    /// <summary>What the editor does once its window is open (<see cref="StartPhase.Opened"/>): a dialog, a recovered patch, a file to open.</summary>
+    public Task OpenedAsync() => starting.RunAsync(StartPhase.Opened);
 
     /// <summary>
     /// Takes the selection off the preset list, for a document that arrived by some
@@ -368,16 +356,5 @@ internal sealed class EditorView : Border
 
             await patchOpening.OpenActivatedFileAsync(file);
         });
-    }
-
-    /// <summary>
-    /// Called once, from the constructor: what was last saved has to be in force
-    /// before anybody has looked.
-    /// </summary>
-    private void InitializeOutputControls()
-    {
-        // Quietly, because nobody asked for anything yet: a saved answer is
-        // what the program starts in, not a change to report.
-        foreach (var section in settingsSections) section.Start();
     }
 }

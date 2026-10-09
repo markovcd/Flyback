@@ -998,7 +998,7 @@ internal sealed class Document
         // button that does nothing.
         source.Owns = sourceOwned;
 
-        reactions.Raise(new OwnershipChanged());
+        reactions.Raise(new OwnershipChanged(sourceOwned, showingCode));
     }
 
     /// <summary>

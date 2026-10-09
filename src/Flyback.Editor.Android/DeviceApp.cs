@@ -64,7 +64,7 @@ public sealed class DeviceApp : Avalonia.Application
             view.Hold(top);
             view.Start();
 
-            await provider.GetRequiredService<EditorOpened>().RunAsync();
+            await view.OpenedAsync();
 
             if (request.Preset is { } preset)
                 provider.GetRequiredService<PresetSlot>().StartOn(preset);

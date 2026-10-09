@@ -565,8 +565,11 @@ and encodes with ffmpeg where it is found, Motion JPEG AVI where it is not
 ([0089](adr/0089-ffmpeg-encodes-what-it-can-and-the-avi-is-the-fallback.md)).
 
 **Startup** is in `Startup.Load`: tidy a pending update, `PluginHost.Load()`,
-`NodeCatalog.Install`, then the first window. The catalog is final before any
-palette is built.
+`NodeCatalog.Install`, then the first window, handed the `DesktopLaunch` that
+`Load` returns. The catalog is final before any palette is built. Once the
+container has built the editor, a part with something to do at start declares
+`IStartAt` and its phase: `Built` puts saved settings in force, `Shown` the
+layout and the first patch, `Opened` whatever needs a dialog or a file.
 
 **What it writes**, all JSON under `%APPDATA%/Flyback`
 (`GlobalConstants.DataFolder`): `settings.json`, one section a concern

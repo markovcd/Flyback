@@ -3,6 +3,7 @@ using Flyback.Core.Graph;
 using Flyback.Editor.Files;
 using Flyback.Editor.Gallery;
 using Flyback.Editor.Knobs;
+using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Statistics;
 using Flyback.Editor.Windows;
@@ -11,7 +12,7 @@ using Flyback.Ui.Midi;
 
 namespace Flyback.Editor;
 
-/// <summary>Starts the editor run once its window is ready to be shown.</summary>
+/// <summary>Starts the editor run once its window or page is about to show it.</summary>
 internal sealed class EditorStart(
     EditorLaunch launch,
     WorkKeeper keeper,
@@ -24,10 +25,15 @@ internal sealed class EditorStart(
     PresetSlot presets,
     OutputSettingRepository outputSettings,
     ShellLayout shell,
-    ReportLine report)
+    ReportLine report,
+    WindowHolder holder) : IStartAt
 {
-    public void Start(TopLevel host)
+    public StartPhase Phase => StartPhase.Shown;
+
+    public Task On()
     {
+        var host = holder.Instance;
+
         keeper.Start();
         layout.Load();
         if (host is Window window) layout.Apply(window);
@@ -41,6 +47,8 @@ internal sealed class EditorStart(
             report.Say($"Running interpreted ({EditorLaunch.InterpretedFlag}): the CPU's programs are not compiled this run.");
         if (launch.WhatsNew is null && launch.OpeningNote is not null) report.Say(launch.OpeningNote);
         shell.ApplyPanelLayout();
+
+        return Task.CompletedTask;
     }
 
     private static IReadOnlyList<int> ScreenHeights(TopLevel host)
