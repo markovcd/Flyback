@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Surveys;
 using Shouldly;
 using Xunit;
 
@@ -68,6 +69,17 @@ public class SurveyTests
         var found = await Survey(endpoint);
 
         found.ShouldHaveSingleItem().Vision.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task A_rate_limit_is_said_rather_than_read_as_a_missing_sense()
+    {
+        using var endpoint = new Endpoint(["gpt-4o"]) { Limited = true };
+        var said = new Transcript();
+
+        await Survey(endpoint, said: said);
+
+        said.Lines.ShouldContain(line => line.Contains("asked at a bad moment", StringComparison.Ordinal));
     }
 
     /// <summary>
@@ -156,7 +168,7 @@ public class SurveyTests
     {
         var probe = new OpenAiProbe(new KeyedTransport(null, null, new AssistantCredential("", ""), endpoint), "https://example.test/v1");
 
-        return await probe.Run(options ?? new SurveyOptions(), said, CancellationToken.None);
+        return await SurveyLoop.Run(probe, options ?? new SurveyOptions(), said, CancellationToken.None);
     }
 
     /// <summary>

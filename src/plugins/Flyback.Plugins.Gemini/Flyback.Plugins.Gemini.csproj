@@ -36,6 +36,11 @@
   -->
 
   <ItemGroup>
+    <!-- What every plugin that surveys an endpoint shares, compiled into each so none needs the other. -->
+    <Compile Include="..\Shared\Surveys\*.cs" LinkBase="Surveys" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="Flyback.Plugins.Gemini.Tests" />
   </ItemGroup>
 

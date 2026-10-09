@@ -17,7 +17,6 @@ decision (ADR-0138).
 ## 9. One feature written twice, smaller (Medium to Low)
 
 - **Stage keys**: Escape, F3, F11, Space and Ctrl+P handled in `EditorView.cs:166-178`, `Windows/PictureWindow.cs:64-66` and `Viewer.Desktop/ViewerWindow.cs:131-138`. A `StageKeys` map in Ui all three ask. `TransportControls.cs:44,50` takes `Overlay` and `PictureWindow` as public settable properties; `Register(...)` instead.
-- **The model survey loop**: `OpenAi/OpenAiProbe.cs:49-95` and `Gemini/GeminiSurvey.cs:61-117` are one loop (bare, picture, sound, report). ADR-0161 pulled the turn into the host and left the survey out; `GeminiSession.cs` declines sharing the *session* loop, not this. `Assist/SurveyLoop.cs` over an `IModelProbe`.
 - **CLI and Site**: `Flyback.Cli.csproj:34` links `Site/Admin/SiteAdmin.cs` as source, and the media PUT and `--server` check are still written twice (`Cli/Rendering/MediaUpload.cs:25-30` vs `Site/Commands/PushMediaCommand.cs:95-100`; `RenderPresetsCommand.cs:95-100` vs `SiteAdmin.Client:16`). A `Flyback.Site.Client` library both reference. Check while there: `Flyback.Site.csproj:24-33` lists the web plugins twice, minus Drawings, and `LoadLinked(..., "WebPlugin")` names Drawings; if `Assembly.Load` fails there, a Drawings preset is reported as lacking. Not confirmed by running.
 - **`CompiledPatch`** (406) is the program description, the interpreter, the IL hand-over and the arithmetic library. `Arithmetic` and `Interpreter` beside it; ADR-0076's "IL calls the interpreter's own helpers" survives the move.
 

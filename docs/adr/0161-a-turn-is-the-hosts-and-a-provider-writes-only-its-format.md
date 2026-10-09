@@ -58,6 +58,15 @@ to read.
 > matched, not understood, so a request that names none of them gets the
 > briefing alone.
 
+> **Amended.** *(2026-10-09.)* The survey is shared too, as source rather than
+> contract. `src/plugins/Shared/Surveys` holds the loop: the bare ping, a picture,
+> a sound, an unclear answer read as the cautious value, and the line each model
+> gets. A provider's `IModelProbe` says where its catalog is, how it writes one
+> question, whether a refused ping means "send a sound", and whether it has a
+> thinking budget to measure. It is compiled into each plugin as `Shared/Programs`
+> is (ADR-0173), and stays out of `Flyback.Plugins`: helper code is not a promise
+> a release has to keep.
+
 **The listening brief is the host's** (`TurnLoop.Ear`): what to ask about a synth's
 clip is knowledge of Flyback, not of a provider.
 

@@ -1,5 +1,6 @@
 ﻿using Flyback.Plugins.Assist;
 using Flyback.Plugins.Settings;
+using Flyback.Plugins.Surveys;
 
 namespace Flyback.Plugins.OpenAi;
 
@@ -116,6 +117,6 @@ public sealed class OpenAiAssistant : IPatchAssistant, IModelSurvey
 
         var probe = new OpenAiProbe(config.Transport, chosen.BaseUrl ?? Schema.DefaultBaseUrl!);
 
-        return await probe.Run(Schema.Asking(options, config.Values), said, cancel).ConfigureAwait(false);
+        return await SurveyLoop.Run(probe, Schema.Asking(options, config.Values), said, cancel).ConfigureAwait(false);
     }
 }

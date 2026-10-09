@@ -452,6 +452,8 @@ folder out from under it.
 ClaudeCode and Codex share `src/plugins/Shared/Programs`, the `<calls>` protocol, the session, the process
 and the locator, as source compiled into each plugin: it is not a project, so no plugin needs another
 ([0173](adr/0173-codex-is-an-assistant-the-same-way-and-gemini-is-not.md)).
+OpenAi and Gemini share `src/plugins/Shared/Surveys`, the survey loop over each one's `IModelProbe`, the
+same way ([0161](adr/0161-a-turn-is-the-hosts-and-a-provider-writes-only-its-format.md)).
 
 An assistant never touches the patch directly. Everything it does goes through
 `PatchWorkbench`, which is the tool surface, the limits and the senses (looking

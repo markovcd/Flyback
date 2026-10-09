@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json.Nodes;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Settings;
+using Flyback.Plugins.Surveys;
 using Shouldly;
 using Xunit;
 
@@ -166,7 +167,7 @@ public class SurveyTests
     {
         var probe = new GeminiProbe(new KeyedTransport(null, null, new AssistantCredential("", ""), endpoint), "https://example.test/v1beta");
 
-        return await probe.Run(options ?? new SurveyOptions(), said, CancellationToken.None);
+        return await SurveyLoop.Run(probe, options ?? new SurveyOptions(), said, CancellationToken.None);
     }
 
     /// <summary>

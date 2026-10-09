@@ -1,22 +1,21 @@
-using System.Net;
 using System.Text.Json.Nodes;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Surveys;
 
 namespace Flyback.Plugins.OpenAi;
 
 /// <summary>
-/// One survey of one chat-completions endpoint, whoever is running it.
+/// What a survey needs to know about a chat-completions endpoint, whoever is running it.
 /// </summary>
 /// <remarks>
-/// Shaped like the Gemini adapter's and deliberately not shared with it: there the
-/// catalog says which models can hold a conversation, and here it says nothing beyond
-/// a list of ids, so the gate that decides whether a model is present has to be
-/// conditional — see <see cref="Run"/>. Nothing here measures a thinking budget, since
-/// this adapter sends no effort at all.
+/// The catalog here says nothing beyond a list of ids, and the models this adapter
+/// listens with refuse a ping without a sound, so the gate takes a second question
+/// (<see cref="OnlyHears"/>). Nothing here measures a thinking budget, since this
+/// adapter sends no effort at all.
 /// </remarks>
 /// <param name="transport">What to send over, which adds the key (<see cref="IAssistantTransport"/>).</param>
 /// <param name="baseUrl">The endpoint, which may be anybody's.</param>
-internal sealed class OpenAiProbe(IAssistantTransport transport, string baseUrl)
+internal sealed class OpenAiProbe(IAssistantTransport transport, string baseUrl) : IModelProbe
 {
     private const string Ping = "Reply with the single word: ok";
 
@@ -33,8 +32,7 @@ internal sealed class OpenAiProbe(IAssistantTransport transport, string baseUrl)
     /// asks about everything for whoever thinks it is wrong.
     /// <para>
     /// <c>audio</c> is conspicuously absent. Those are the models this adapter
-    /// listens with, and they are the whole reason the gate below is not a
-    /// single question.
+    /// listens with, and they are the reason for <see cref="OnlyHears"/>.
     /// </para>
     /// </remarks>
     private static readonly string[] Elsewhere =
@@ -46,84 +44,6 @@ internal sealed class OpenAiProbe(IAssistantTransport transport, string baseUrl)
 
     private readonly string address = baseUrl.TrimEnd('/');
 
-    public async Task<IReadOnlyList<ModelReport>> Run(
-        SurveyOptions options,
-        IProgress<string>? said,
-        CancellationToken cancel)
-    {
-        // Only asked for when it is needed. A run naming its models wants
-        // nothing from the catalog, and a local runtime that has no /models is
-        // then a server this works against rather than one it refuses.
-        var chosen = options.Only is { Count: > 0 } named
-            ? named
-            : (await Catalog(said, cancel).ConfigureAwait(false))
-                .Where(m => options.All || Candidate(m))
-                .ToList();
-
-        if (options.Bounds)
-            said?.Report("Nothing here has a thinking budget to measure; asking the other questions only.");
-
-        var found = new List<ModelReport>();
-
-        foreach (var model in chosen)
-        {
-            cancel.ThrowIfCancellationRequested();
-
-            if (await Look(model, cancel).ConfigureAwait(false) is not { } report)
-            {
-                said?.Report($"{model}: no");
-                continue;
-            }
-
-            found.Add(report);
-            said?.Report($"{model}: {Says(report)}");
-        }
-
-        return found;
-    }
-
-    /// <summary>
-    /// What one model turned out to be, or null where it is not a model here.
-    /// </summary>
-    /// <remarks>
-    /// The gate is two questions rather than one, and that is forced. A plain
-    /// text turn is how you find out whether a model exists — except for the
-    /// ones this adapter listens with, which require <em>every</em> request to
-    /// carry a sound and answer a text-only one by saying so (ADR-0047). Gating
-    /// on text alone would drop exactly the models the ear is for, so a refusal
-    /// that names audio is a second question rather than an answer.
-    /// </remarks>
-    private async Task<ModelReport?> Look(string model, CancellationToken cancel)
-    {
-        var text = await Ask(model, Turn(), cancel).ConfigureAwait(false);
-
-        if (text.Verdict is Verdict.Took)
-        {
-            var sees = await Ask(model, Turn(pictures: [Probe.Picture()]), cancel).ConfigureAwait(false);
-            var hears = await Ask(model, Turn(sounds: [Probe.Sound()]), cancel).ConfigureAwait(false);
-
-            // An indeterminate answer keeps the cautious value. A limit read as
-            // "takes a sound" would send one to a model that refuses it and lose
-            // every turn from the first listen onwards; read the other way it
-            // costs a setting somebody can turn back on.
-            return new ModelReport(model)
-            {
-                Vision = sees.Verdict is Verdict.Took,
-                Hearing = hears.Verdict is Verdict.Took,
-            };
-        }
-
-        if (text.Verdict is not Verdict.Refused || !MeansAudio(text.Detail)) return null;
-
-        var only = await Ask(model, Turn(sounds: [Probe.Sound()]), cancel).ConfigureAwait(false);
-
-        // Sight is not asked about: a model that refuses a turn without a sound
-        // is one of the audio models, and none of them takes a picture.
-        return only.Verdict is Verdict.Took
-            ? new ModelReport(model) { Vision = false, Hearing = true }
-            : null;
-    }
-
     /// <summary>
     /// Every id the endpoint lists, or nothing where it does not list any.
     /// </summary>
@@ -133,7 +53,7 @@ internal sealed class OpenAiProbe(IAssistantTransport transport, string baseUrl)
     /// and let somebody name what they wanted — not to refuse to work against
     /// the server they actually have.
     /// </remarks>
-    private async Task<List<string>> Catalog(IProgress<string>? said, CancellationToken cancel)
+    public async Task<IReadOnlyList<string>> Catalog(IProgress<string>? said, CancellationToken cancel)
     {
         var found = new List<string>();
 
@@ -167,73 +87,29 @@ internal sealed class OpenAiProbe(IAssistantTransport transport, string baseUrl)
     /// this format and <c>max_completion_tokens</c> by others, and a probe that
     /// argued about the parameter would be measuring itself.
     /// </remarks>
-    private static JsonObject Turn(IEnumerable<byte[]>? pictures = null, IEnumerable<byte[]>? sounds = null) =>
+    private static JsonObject Turn(string model, byte[]? picture, byte[]? sound) =>
         new()
         {
-            ["messages"] = new JsonArray(Wire.UserWithMedia(Ping, pictures ?? [], sounds ?? [])),
+            ["messages"] = new JsonArray(
+                Wire.UserWithMedia(Ping, picture is null ? [] : [picture], sound is null ? [] : [sound])),
+            ["model"] = model,
         };
 
-    private async Task<Answer> Ask(string model, JsonObject body, CancellationToken cancel)
-    {
-        body["model"] = model;
-
-        try
-        {
-            var response = await transport
-                .Send(new Uri($"{address}/chat/completions"), body.ToJsonString(), cancel)
-                .ConfigureAwait(false);
-
-            if (response.Succeeded) return new Answer(Verdict.Took, string.Empty);
-
-            // A refusal of the request is an answer about the model; anything
-            // else — a limit, an outage, a proxy — is an answer about the
-            // moment, and recording it as a capability would outlive the moment.
-            return response.Status is (int)HttpStatusCode.BadRequest or (int)HttpStatusCode.NotFound
-                ? new Answer(Verdict.Refused, Probe.Detail(response.Body))
-                : new Answer(Verdict.Unclear, Probe.Detail(response.Body));
-        }
-        catch (HttpRequestException)
-        {
-            return new Answer(Verdict.Unclear, string.Empty);
-        }
-        catch (TaskCanceledException) when (!cancel.IsCancellationRequested)
-        {
-            return new Answer(Verdict.Unclear, string.Empty);
-        }
-    }
+    public Task<ProbeAnswer> Ask(string model, byte[]? picture, byte[]? sound, CancellationToken cancel) =>
+        SurveyLoop.Ask(
+            transport,
+            new Uri($"{address}/chat/completions"),
+            Turn(model, picture, sound).ToJsonString(),
+            cancel);
 
     /// <summary>
     /// Whether a refusal is the one that means "this model only works with a
     /// sound", read off the sentence because the status code is the same 400
     /// every other refusal uses.
     /// </summary>
-    private static bool MeansAudio(string said) =>
-        said.Contains("audio", StringComparison.OrdinalIgnoreCase);
+    public bool OnlyHears(ProbeAnswer refused) =>
+        refused.Detail.Contains("audio", StringComparison.OrdinalIgnoreCase);
 
-    private static bool Candidate(string model) =>
+    public bool Candidate(string model) =>
         !Elsewhere.Any(m => model.Contains(m, StringComparison.OrdinalIgnoreCase));
-
-    private static string Says(ModelReport report) => (report.Vision, report.Hearing) switch
-    {
-        (true, true) => "sees, hears",
-        (true, false) => "sees",
-        (false, true) => "hears, and takes no picture",
-        (false, false) => "text only",
-    };
-
-
-
-    /// <param name="Detail">What the endpoint said, which is load-bearing for one refusal.</param>
-    private sealed record Answer(Verdict Verdict, string Detail);
-
-    /// <summary>
-    /// What one question came back as. Three rather than two because a limit and
-    /// a refusal look the same to a caller that only asks whether it worked.
-    /// </summary>
-    private enum Verdict
-    {
-        Took,
-        Refused,
-        Unclear,
-    }
 }
