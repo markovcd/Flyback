@@ -1,3 +1,4 @@
+using Flyback.Tests;
 using Shouldly;
 using Xunit;
 
@@ -9,7 +10,7 @@ namespace Flyback.Site.Tests;
 /// </summary>
 public sealed class ViewerScriptTests
 {
-    private static readonly string Script = File.ReadAllText(Path.Combine(Repository(), "src", "Flyback.Viewer.Web", "wwwroot", "main.js"));
+    private static readonly string Script = File.ReadAllText(Repository.Path("src", "Flyback.Viewer.Web", "wwwroot", "main.js"));
 
     [Fact]
     public void The_screen_is_kept_on_while_the_picture_has_the_whole_screen_and_plays()
@@ -40,13 +41,4 @@ public sealed class ViewerScriptTests
     [Fact]
     public void Back_goes_to_the_presets_page_unless_the_address_says_otherwise() =>
         Script.ShouldContain("params.get('back') ?? 'presets.html'");
-
-    private static string Repository()
-    {
-        var root = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (!File.Exists(Path.Combine(root.FullName, "Flyback.slnx"))) root = root.Parent!;
-
-        return root.FullName;
-    }
 }

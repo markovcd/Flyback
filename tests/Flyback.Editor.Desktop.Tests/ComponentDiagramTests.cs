@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using Flyback.Tests;
 using Shouldly;
 using Xunit;
 
@@ -45,7 +46,7 @@ public sealed partial class ComponentDiagramTests
     /// <summary>Each project the program is built from, with the projects it references directly.</summary>
     private static Dictionary<string, string[]> References()
     {
-        var src = Path.Combine(Repository(), "src");
+        var src = Repository.Path("src");
         var references = new Dictionary<string, string[]>();
         var pending = new Stack<string>([Program]);
 
@@ -86,7 +87,7 @@ public sealed partial class ComponentDiagramTests
     /// <summary>The components named for projects, by identifier, and every arrow in the model.</summary>
     private static (Dictionary<string, string> Components, (string From, string To)[] Arrows) Drawn()
     {
-        var model = File.ReadAllText(Path.Combine(Repository(), "docs", "diagrams", "workspace.dsl"));
+        var model = File.ReadAllText(Repository.Path("docs", "diagrams", "workspace.dsl"));
 
         var components = ProjectComponent().Matches(model)
             .ToDictionary(m => m.Groups["id"].Value, m => m.Groups["name"].Value);
@@ -95,14 +96,6 @@ public sealed partial class ComponentDiagramTests
             .ToArray();
 
         return (components, arrows);
-    }
-
-    private static string Repository()
-    {
-        for (var at = new DirectoryInfo(AppContext.BaseDirectory); at is not null; at = at.Parent)
-            if (File.Exists(Path.Combine(at.FullName, "Flyback.slnx"))) return at.FullName;
-
-        throw new InvalidOperationException("The tests are not running inside the repository.");
     }
 
     [GeneratedRegex("""^\s*(?<id>\w+)\s*=\s*component\s+"(?<name>Flyback\.[\w.]+)"\s""", RegexOptions.Multiline)]

@@ -15,6 +15,7 @@ using Flyback.Engine.Language;
 using Flyback.Engine.Render;
 using Flyback.Plugins.Hosting;
 using Flyback.Specs.Support;
+using Flyback.Tests;
 using Flyback.Cli.Common;
 using PluginRegistry = Flyback.Cli.Plugins;
 using Flyback.Host;
@@ -519,12 +520,9 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     {
         var output = new DirectoryInfo(AppContext.BaseDirectory);
         var (framework, configuration) = (output.Name, output.Parent!.Name);
-        var root = output;
 
-        while (!File.Exists(System.IO.Path.Combine(root.FullName, "Flyback.slnx"))) root = root.Parent!;
-
-        return System.IO.Path.Combine(
-            root.FullName, "src", "Flyback.Editor.Desktop", "bin", configuration, framework,
+        return Repository.Path(
+            "src", "Flyback.Editor.Desktop", "bin", configuration, framework,
             OperatingSystem.IsWindows() ? "Flyback.exe" : "Flyback");
     }
 

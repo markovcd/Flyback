@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Flyback.Tests;
 using Shouldly;
 using Xunit;
 
@@ -11,7 +12,7 @@ namespace Flyback.Core.Tests.Architecture;
 public partial class WorkflowTests
 {
     public static TheoryData<string> Workflows() =>
-        [.. Directory.GetFiles(Path.Combine(Repository(), ".github", "workflows"), "*.yml").Select(file => Path.GetFileName(file)).Order(StringComparer.Ordinal)];
+        [.. Directory.GetFiles(Repository.Path(".github", "workflows"), "*.yml").Select(file => Path.GetFileName(file)).Order(StringComparer.Ordinal)];
 
     [Theory]
     [MemberData(nameof(Workflows))]
@@ -75,13 +76,5 @@ public partial class WorkflowTests
     private static partial Regex Job();
 
     private static List<string> Lines(string workflow) =>
-        [.. File.ReadAllLines(Path.Combine(Repository(), ".github", "workflows", workflow))];
-
-    private static string Repository()
-    {
-        for (var at = new DirectoryInfo(AppContext.BaseDirectory); at is not null; at = at.Parent)
-            if (File.Exists(Path.Combine(at.FullName, "Flyback.slnx"))) return at.FullName;
-
-        throw new InvalidOperationException("The tests are not running inside the repository.");
-    }
+        [.. File.ReadAllLines(Repository.Path(".github", "workflows", workflow))];
 }

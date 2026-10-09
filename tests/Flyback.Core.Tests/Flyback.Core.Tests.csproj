@@ -29,4 +29,9 @@
     <None Include="Graph\layouts\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- Where the checkout is, for tests that read its files. -->
+  <ItemGroup>
+    <Compile Include="..\Shared\Repository.cs" Link="Shared\Repository.cs" />
+  </ItemGroup>
+
 </Project>

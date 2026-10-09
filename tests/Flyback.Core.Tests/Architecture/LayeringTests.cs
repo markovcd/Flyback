@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+using Flyback.Tests;
 using Shouldly;
 using Xunit;
 
@@ -58,13 +59,5 @@ public class LayeringTests
             .ToArray();
 
     private static XDocument Load(string project) =>
-        XDocument.Load(Path.Combine(Repository(), "src", project, project + ".csproj"));
-
-    private static string Repository()
-    {
-        for (var at = new DirectoryInfo(AppContext.BaseDirectory); at is not null; at = at.Parent)
-            if (File.Exists(Path.Combine(at.FullName, "Flyback.slnx"))) return at.FullName;
-
-        throw new InvalidOperationException("The tests are not running inside the repository.");
-    }
+        XDocument.Load(Repository.Path("src", project, project + ".csproj"));
 }

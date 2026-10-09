@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Flyback.Editor.PluginPackages;
 using Flyback.Editor.Site;
+using Flyback.Tests;
 using Shouldly;
 using Xunit;
 
@@ -16,7 +17,7 @@ public sealed class SiteContractTests
     private static readonly Uri Root = new("https://presets.example.org/");
 
     private static JsonDocument Recorded(string name) =>
-        JsonDocument.Parse(File.ReadAllText(Path.Combine(Repository(), "worker", "test", "fixtures", "contract", name + ".json")));
+        JsonDocument.Parse(File.ReadAllText(Repository.Path("worker", "test", "fixtures", "contract", name + ".json")));
 
     [Fact]
     public void The_preset_listing_reads_as_the_gallery_shows_it()
@@ -54,13 +55,5 @@ public sealed class SiteContractTests
         plugin.Downloads.ShouldBe(3);
         plugin.File.ShouldBe(new Uri(Root, "/api/v1/plugins/0199a000000070008000000000000003/file"));
         plugin.Preview.ShouldBe(new Uri(Root, "/api/v1/plugins/0199a000000070008000000000000003/preview"));
-    }
-
-    private static string Repository()
-    {
-        for (var at = new DirectoryInfo(AppContext.BaseDirectory); at is not null; at = at.Parent)
-            if (File.Exists(Path.Combine(at.FullName, "Flyback.slnx"))) return at.FullName;
-
-        throw new InvalidOperationException("The tests are not running inside the repository.");
     }
 }

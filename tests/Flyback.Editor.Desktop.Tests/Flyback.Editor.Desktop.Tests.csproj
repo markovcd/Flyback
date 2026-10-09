@@ -22,4 +22,9 @@
     <PackageReference Include="xunit.v3" />
   </ItemGroup>
 
+  <!-- Where the checkout is, for tests that read its files. -->
+  <ItemGroup>
+    <Compile Include="..\Shared\Repository.cs" Link="Shared\Repository.cs" />
+  </ItemGroup>
+
 </Project>
