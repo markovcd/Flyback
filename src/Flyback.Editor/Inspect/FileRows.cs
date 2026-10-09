@@ -15,7 +15,7 @@ namespace Flyback.Editor.Inspect;
 /// currently is, and a button that goes and finds another.
 /// </summary>
 /// <param name="files">The folders the patch reads its sound files and pictures from.</param>
-internal sealed class FileRows(IFilePickers pickers, Document document, PatchFiles files)
+internal sealed class FileRows(IFilePickers pickers, TextWriteBack writeBack, PatchFiles files)
 {
     /// <summary>
     /// The file a module reads: what it is called, and a button to pick another.
@@ -87,14 +87,14 @@ internal sealed class FileRows(IFilePickers pickers, Document document, PatchFil
             name.Opacity = 0.75;
             ToolTip.SetTip(name, picked);
 
-            document.Edited(node);
+            writeBack.Edited(node);
 
             // Every other control in the panel is written into the text by the
             // hand coming off it, and the hand came off this button before the
             // dialog opened: the file arrives after that release, with nothing
             // left to flush it. Said here, because the gesture is over the
             // moment the picker answers.
-            document.HandCameOff();
+            writeBack.HandCameOff();
         };
 
         Grid.SetColumn(caption, 0);

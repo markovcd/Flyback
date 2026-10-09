@@ -42,14 +42,14 @@ internal sealed class InspectorSurface
     /// <summary>The plate folded to one pinned line, shown where the plate is not.</summary>
     public InspectorHeader Header { get; } = new();
 
-    public InspectorSurface(Document document, Renamer renamer)
+    public InspectorSurface(TextWriteBack writeBack, Renamer renamer)
     {
         Header.Renamer = renamer;
 
         // A drag on a slider is one edit, written into the text once the hand is off it.
-        Panel.AddHandler(InputElement.PointerReleasedEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble, handledEventsToo: true);
-        Panel.AddHandler(InputElement.LostFocusEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble);
-        Panel.AddHandler(InputElement.KeyUpEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble, handledEventsToo: true);
-        Panel.AddHandler(InputElement.PointerWheelChangedEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble, handledEventsToo: true);
+        Panel.AddHandler(InputElement.PointerReleasedEvent, (_, _) => writeBack.HandCameOff(), RoutingStrategies.Bubble, handledEventsToo: true);
+        Panel.AddHandler(InputElement.LostFocusEvent, (_, _) => writeBack.HandCameOff(), RoutingStrategies.Bubble);
+        Panel.AddHandler(InputElement.KeyUpEvent, (_, _) => writeBack.HandCameOff(), RoutingStrategies.Bubble, handledEventsToo: true);
+        Panel.AddHandler(InputElement.PointerWheelChangedEvent, (_, _) => writeBack.HandCameOff(), RoutingStrategies.Bubble, handledEventsToo: true);
     }
 }

@@ -11,7 +11,7 @@ using Flyback.Ui.Controls;
 namespace Flyback.Editor.Inspect;
 
 /// <summary>The inspector's rows for how the computer keyboard is laid out, on a MIDI In that listens to it.</summary>
-internal sealed class KeyboardSection(NodeEditor editor, Document document, InspectorRows rows)
+internal sealed class KeyboardSection(NodeEditor editor, TextWriteBack writeBack, InspectorRows rows)
 {
     /// <summary>
     /// How the computer keyboard is laid out, on a MIDI In that listens to it.
@@ -63,7 +63,7 @@ internal sealed class KeyboardSection(NodeEditor editor, Document document, Insp
                     editor.History.Patch.Keyboard = null;
                 }
 
-                document.Relaid();
+                writeBack.Relaid();
 
                 // After the picker has finished with its own event, since what
                 // is rebuilt includes the picker.
@@ -92,7 +92,7 @@ internal sealed class KeyboardSection(NodeEditor editor, Document document, Insp
         void Lay(KeyboardScale next)
         {
             editor.History.Patch.Keyboard = next;
-            document.Relaid();
+            writeBack.Relaid();
         }
     }
 

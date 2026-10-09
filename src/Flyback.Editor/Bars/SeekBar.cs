@@ -32,16 +32,16 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
     private readonly Playback playback;
     private readonly PreviewHost preview;
     private readonly NodeEditor editor;
-    private readonly Document document;
+    private readonly TextWriteBack writeBack;
 
     private readonly List<TransportOverlay> overlays = [];
 
-    public SeekBar(Playback playback, PreviewHost preview, CanvasSection settings, NodeEditor editor, Document document, Usage usage)
+    public SeekBar(Playback playback, PreviewHost preview, CanvasSection settings, NodeEditor editor, TextWriteBack writeBack, Usage usage)
     {
         this.playback = playback;
         this.preview = preview;
         this.editor = editor;
-        this.document = document;
+        this.writeBack = writeBack;
 
         Track = new SeekTrack
         {
@@ -215,9 +215,9 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
         if ((cleared || typed is not null) && typed != patch.Length)
         {
             patch.Length = typed;
-            document.Relaid();
+            writeBack.Relaid();
             editor.History.Record();
-            document.HandCameOff();
+            writeBack.HandCameOff();
         }
 
         Length.Text = Said();

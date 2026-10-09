@@ -151,7 +151,9 @@ internal static class EditorServices
         services.AddPart<PreviewHost>();
         services.AddSingleton<PictureAside>();
 
+        services.AddPart<CaretFollow>();
         services.AddPart<Document>();
+        services.AddPart<TextWriteBack>();
         services.AddSingleton<IDialog, WindowDialog>();
         services.AddSingleton<IFilePickers, WindowFilePickers>();
         services.AddSingleton<IMonitors, WindowMonitors>();
@@ -194,7 +196,7 @@ internal static class EditorServices
         services.AddSingleton<InspectorSurface>();
         services.AddSingleton(sp => new InspectorRows(
             because => sp.GetRequiredService<NodeEditor>().History.Record(because),
-            sp.GetRequiredService<Document>().HandCameOff));
+            sp.GetRequiredService<TextWriteBack>().HandCameOff));
         services.AddSingleton<PatchHeader>();
         services.AddSingleton<MeasuredRows>();
         services.AddSingleton<SocketRows>();

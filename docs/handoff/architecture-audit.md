@@ -14,23 +14,6 @@ three editor hosts, with no hand-built service outside composition; every public
 by decision (ADR-0035); the binder is one walk (ADR-0183); presets are C# by
 decision (ADR-0138).
 
-## 4. `Document` is the editor's god object (Medium)
-
-`src/Flyback.Editor/Document.cs` is 657 code lines with 30 public members
-reached from 20 files, holding seven concerns: ownership transitions
-(`:1236-1421`), the undo landing (`:794-1032`, ADR-0071), the knob-to-text
-write-back with five pending sets `turned/restated/dialed/given/relaid`
-(`:482-771`), caret-follows-selection with `adrift` flags (`:385-441`), paste of
-JSON into text (`:451-479`), view toggling and printing (`:1044-1137`), and
-evaluation (`:1150-1221`). The `writingBack/stepping/mapped/printed` guards are
-shared by all seven, so every feature touching text or knobs edits this file.
-ADR-0148 gives Document ownership, write-back and the undo landing; it does not
-forbid helpers.
-
-**Fix.** `TextWriteBack` (the five sets and WriteBack/Write/Carry/Rest/Lay/Put/
-PanelEdited), `CaretFollow` (PointAt/Adrift, raising PanelStale) and a static
-`PastedPatch.Written`, each a part in the container. Document keeps ownership,
-the undo landing, Evaluate and ShowCode, about 350 lines.
 
 ## 6. Public members only the host calls, one of them a hole (Medium)
 
@@ -111,8 +94,8 @@ Toolbar react to `OwnershipChanged` themselves.
 
 ## Order
 
-4 first, since the editor's churn lands in it. 6 before 1.0.0, since the
-contract is a promise from then on. The rest as each file is next touched.
+6 before 1.0.0, since the contract is a promise from then on. The rest as each
+file is next touched.
 
 Landed: the host code that is not Avalonia has a home, `Flyback.Host`
 (ADR-0188), and with it one plugin bootstrap, one bytes-to-patch reader, one
@@ -124,6 +107,9 @@ every opcode, refuses one it does not, and owns the "registers an op reads" loop
 and the line-or-cell question for every pass and backend. The preset gallery's
 parts are top-level types rather than partials of `PresetGallery`, and the canvas's
 gestures are `ModuleDrag`, `WireDrag` and `RubberBand` under `CanvasGestures`.
+`Document` keeps ownership, the undo landing and applying; the write-back
+is `TextWriteBack`, the caret's selection `CaretFollow`, and a pasted patch
+file `PastedPatch`.
 Still written per shell, and small: the speaker handshake in two JS files, the
 viewer's and the CLI's `--size` and `--oversample` option declarations, and the
 viewer's `--cpu` against the CLI's `--processor`.

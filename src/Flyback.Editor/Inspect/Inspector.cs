@@ -30,7 +30,8 @@ internal sealed class Inspector
         IReactTo<Touched>
 {
     private readonly NodeEditor editor;
-    private readonly Document document;
+    private readonly TextWriteBack writeBack;
+    private readonly CaretFollow caret;
     private readonly PatchHeader header;
     private readonly MeasuredRows measuredRows;
     private readonly SocketRows socketRows;
@@ -54,7 +55,8 @@ internal sealed class Inspector
 
     public Inspector(
         NodeEditor editor,
-        Document document,
+        TextWriteBack writeBack,
+        CaretFollow caret,
         EditorHost host,
         InspectorSurface surface,
         Renamer renamer,
@@ -67,7 +69,8 @@ internal sealed class Inspector
         GroupInspector groups)
     {
         this.editor = editor;
-        this.document = document;
+        this.writeBack = writeBack;
+        this.caret = caret;
         this.header = header;
         this.measuredRows = measuredRows;
         this.socketRows = socketRows;
@@ -200,12 +203,12 @@ internal sealed class Inspector
 
             foreach (var part in header.Build()) Panel.Children.Add(part);
 
-            if (document.IsAdrift || editor.History.Locked)
+            if (caret.IsAdrift || editor.History.Locked)
             {
                 Panel.Children.Add(new TextBlock
                 {
-                    Text = document.IsAdrift
-                        ? document.IsAdriftBox ? InspectorHelp.AdriftingGroup : InspectorHelp.Adrifting
+                    Text = caret.IsAdrift
+                        ? caret.IsAdriftBox ? InspectorHelp.AdriftingGroup : InspectorHelp.Adrifting
                         : InspectorHelp.Locked(fingers, editor.Gestures.DragToPan),
                     TextWrapping = TextWrapping.Wrap,
                     Foreground = Text.Muted,
@@ -529,14 +532,14 @@ internal sealed class Inspector
         // A sequencer's tune is a list rather than a row of knobs (ADR-0038),
         // so it is edited as one — added to, taken from and reordered.
         StepsExtra steps => new StepList(
-            node, steps.Spec, Colors.Palette(def).Accent, because => document.Edited(node, because)).View,
+            node, steps.Spec, Colors.Palette(def).Accent, because => writeBack.Edited(node, because)).View,
 
         // A quantiser's scale is a set rather than a sequence, so it is edited
         // as the octave it is a subset of rather than as a list of numbers.
-        ScaleExtra => new ScaleKeys(node, def, because => document.Edited(node, because)).View,
+        ScaleExtra => new ScaleKeys(node, def, because => writeBack.Edited(node, because)).View,
 
         // An Arrangement's parts are a grid, read as a shape and written a row at a time.
-        ArrangementExtra => new PartGrid(node, def, because => document.Edited(node, because)).View,
+        ArrangementExtra => new PartGrid(node, def, because => writeBack.Edited(node, because)).View,
 
         // The one a node carries that is not a number, so it is a name and a
         // button rather than a control with a range.

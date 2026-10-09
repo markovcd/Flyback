@@ -29,7 +29,7 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
     private readonly PanelKnobs knobs;
     private readonly ControlHub hub;
     private readonly NodeEditor editor;
-    private readonly Document document;
+    private readonly TextWriteBack writeBack;
     private readonly OutputSettingRepository settings;
     private readonly EditorFolders folders;
     private readonly MidiHub midi;
@@ -57,7 +57,7 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
         PanelKnobs knobs,
         ControlHub hub,
         NodeEditor editor,
-        Document document,
+        TextWriteBack writeBack,
         OutputSettingRepository settings,
         EditorFolders folders,
         MidiHub midi,
@@ -67,7 +67,7 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
         this.knobs = knobs;
         this.hub = hub;
         this.editor = editor;
-        this.document = document;
+        this.writeBack = writeBack;
         this.settings = settings;
         this.folders = folders;
         this.midi = midi;
@@ -195,7 +195,7 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
         glide++;
         gliding = null;
 
-        foreach (var id in moved) document.LetGoOfKnob(id);
+        foreach (var id in moved) writeBack.LetGoOfKnob(id);
         moved.Clear();
     }
 

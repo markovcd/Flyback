@@ -13,7 +13,7 @@ namespace Flyback.Editor.Inspect;
 /// The inspector's row for a socket: an input's knob, or what is patched into
 /// it or driving it with no wire; an output's name and what it feeds.
 /// </summary>
-internal sealed class SocketRows(NodeEditor editor, Document document, InspectorRows rows)
+internal sealed class SocketRows(NodeEditor editor, TextWriteBack writeBack, InspectorRows rows)
 {
     /// <summary>
     /// A range typed into a linked row settled the panel's shape from here, so the
@@ -192,7 +192,7 @@ internal sealed class SocketRows(NodeEditor editor, Document document, Inspector
 
             // Noted rather than written. A drag is a knob turned a hundred times
             // and the text should be edited once, when the hand comes off it.
-            document.Turned(node.Id, index);
+            writeBack.Turned(node.Id, index);
         }, reading, reads, flag);
     }
 

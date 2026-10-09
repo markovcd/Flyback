@@ -493,8 +493,9 @@ drift. The site's CSS mirrors `Colors.cs`.
 
 **Hubs and the regions around them**
 ([0148](adr/0148-the-window-is-its-hubs-and-the-regions-around-them.md)).
-`Document` owns who owns the patch, the write-back into the text and where an
-undo lands; `Playback` owns compiling and the sound device, and drives pause,
+`Document` owns who owns the patch and where an undo lands, `TextWriteBack`
+writes what the panel changes into the text, and `CaretFollow` points the panel
+at what the caret stands on; `Playback` owns compiling and the sound device, and drives pause,
 mute and rewind through the `Transport` the viewer shares;
 `PatchFiles` owns which file the patch is, and opening and saving it. A region
 is a class that takes what it reads (the canvas, the document, the plugins, the

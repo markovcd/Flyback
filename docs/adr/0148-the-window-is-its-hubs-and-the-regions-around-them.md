@@ -102,3 +102,16 @@ sit in.
 and stays one class in one file. `ShellLayout` owns the editor grid and its
 panels. There is still no binding layer and no view model: state lives in the
 `Patch`, and 0016 stands as written.
+
+## Amendment, 2026-10-09: the write-back and the caret are parts of their own
+
+`Document` keeps who owns the patch, the undo landing, applying and which view
+shows. The write-back is `TextWriteBack`: regions tell it what happened
+(`Turned`, `Edited`, `HandCameOff`, `PanelEdited`) and it writes into the text
+through the map and the undo landing `Document` keeps. `CaretFollow` points the
+inspector at what the caret stands on and says whether the text has moved on
+from it (`IsAdrift`), and `TextWriteBack` holds it still while it writes.
+`PastedPatch` writes a pasted patch file as text. `Document` takes
+`CaretFollow` and `TextWriteBack` takes `Document`, so nothing closes a cycle;
+`Document.Forgot` tells the write-back to drop what it was waiting to write when
+the text comes to mean something else.

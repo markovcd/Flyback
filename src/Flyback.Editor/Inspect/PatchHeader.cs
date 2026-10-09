@@ -20,7 +20,7 @@ namespace Flyback.Editor.Inspect;
 /// keyboard's layout is. Not while the text has moved on from the patch, when the
 /// line it would land on may not be the one playing.
 /// </remarks>
-internal sealed class PatchHeader(NodeEditor editor, Document document, PatchFiles files)
+internal sealed class PatchHeader(NodeEditor editor, TextWriteBack writeBack, CaretFollow caret, PatchFiles files)
 {
     private PatchDescription? description;
 
@@ -57,7 +57,7 @@ internal sealed class PatchHeader(NodeEditor editor, Document document, PatchFil
 
     private Patch Patch => editor.History.Patch;
 
-    private Control Description() => (description ??= new(() => editor.History.Patch, document, Finished)).Shown();
+    private Control Description() => (description ??= new(() => editor.History.Patch, caret, Finished)).Shown();
 
     /// <summary>
     /// Who made the patch: a dashed button to say, a card once it is said, and a box
@@ -66,7 +66,7 @@ internal sealed class PatchHeader(NodeEditor editor, Document document, PatchFil
     private Control Author()
     {
         if (Patch.Author is not { } author)
-            return document.IsAdrift ? new Border { IsVisible = false } : AskingWho();
+            return caret.IsAdrift ? new Border { IsVisible = false } : AskingWho();
 
         return Credited(author);
     }
@@ -149,7 +149,7 @@ internal sealed class PatchHeader(NodeEditor editor, Document document, PatchFil
             Child = line,
         };
 
-        if (document.IsAdrift) return card;
+        if (caret.IsAdrift) return card;
 
         var edit = Tool("patch-author-edit", "Edit author", Glyphs.Pencil(14, Text.Muted));
         var remove = Tool("patch-author-remove", "Remove author", Glyphs.Cross(14, Text.Muted));
@@ -260,7 +260,7 @@ internal sealed class PatchHeader(NodeEditor editor, Document document, PatchFil
     {
         var chips = new WrapPanel { Name = "patch-tags", Margin = new Thickness(0, 4, 0, 8) };
         var tags = Patch.Tags ?? [];
-        var readOnly = document.IsAdrift;
+        var readOnly = caret.IsAdrift;
 
         chips.IsVisible = !readOnly || tags.Count > 0;
 
@@ -437,8 +437,8 @@ internal sealed class PatchHeader(NodeEditor editor, Document document, PatchFil
     /// <summary>Finished as a box closes, which the panel is told of only after Enter has taken the box away.</summary>
     private void Finished()
     {
-        document.Relaid();
+        writeBack.Relaid();
         editor.History.Record();
-        document.HandCameOff();
+        writeBack.HandCameOff();
     }
 }

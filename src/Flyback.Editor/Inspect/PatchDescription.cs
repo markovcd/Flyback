@@ -14,7 +14,7 @@ namespace Flyback.Editor.Inspect;
 /// What the patch is for: text that a click turns into a box with Save and Cancel
 /// under it, standing exactly where the text stood.
 /// </summary>
-internal sealed class PatchDescription(Func<Patch> patch, Document document, Action finished)
+internal sealed class PatchDescription(Func<Patch> patch, CaretFollow caret, Action finished)
 {
     /// <summary>How far the text keeps in from the edge of the button or box that holds it.</summary>
     private static readonly Thickness Inset = new(10, 8);
@@ -39,7 +39,7 @@ internal sealed class PatchDescription(Func<Patch> patch, Document document, Act
             Foreground = description is null ? Text.Muted : new SolidColorBrush(Colors.Label),
         };
 
-        if (document.IsAdrift)
+        if (caret.IsAdrift)
         {
             text.IsVisible = description is not null;
             return text;

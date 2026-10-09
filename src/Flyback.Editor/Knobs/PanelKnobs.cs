@@ -24,7 +24,7 @@ namespace Flyback.Editor.Knobs;
 internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArrived>
 {
     private readonly NodeEditor editor;
-    private readonly Document document;
+    private readonly TextWriteBack writeBack;
     private readonly PreviewHost preview;
     private readonly IAudioEngine audio;
     private readonly MidiHub midi;
@@ -89,7 +89,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
 
     public PanelKnobs(
         NodeEditor editor,
-        Document document,
+        TextWriteBack writeBack,
         ReportLine report,
         PreviewHost preview,
         IAudioEngine audio,
@@ -104,7 +104,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
         this.hub = hub;
         this.instruments = instruments;
         this.editor = editor;
-        this.document = document;
+        this.writeBack = writeBack;
         this.preview = preview;
         this.audio = audio;
         this.midi = midi;
@@ -142,7 +142,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
             learning?.Cancel();
             control.Midi = binding;
             editor.History.Record();
-            document.PanelEdited();
+            writeBack.PanelEdited();
             report.Say($"'{control.Name}' follows {instruments.Describe(binding, Source(binding.Device))}.");
         };
 
@@ -165,14 +165,14 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
             var added = editor.History.Patch.AddControl();
 
             editor.History.Record();
-            document.PanelEdited();
+            writeBack.PanelEdited();
             Link(added.Id);
         };
 
         View.Turning += Turn;
         Stage.Turning += Turn;
-        View.TurnEnded += document.LetGoOfKnob;
-        Stage.TurnEnded += document.LetGoOfKnob;
+        View.TurnEnded += writeBack.LetGoOfKnob;
+        Stage.TurnEnded += writeBack.LetGoOfKnob;
 
         View.LinkRequested += id => Link(editor.Linking.Control == id ? null : id);
 
@@ -185,7 +185,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
 
             control.Midi = null;
             editor.History.Record();
-            document.PanelEdited();
+            writeBack.PanelEdited();
         };
 
         View.Renamed += (id, name) =>
@@ -194,7 +194,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
 
             control.Name = name;
             editor.History.Record();
-            document.PanelEdited();
+            writeBack.PanelEdited();
         };
 
         View.Logarithmic = id =>
@@ -234,7 +234,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
 
             control.Held = held;
             editor.History.Record();
-            document.PanelEdited();
+            writeBack.PanelEdited();
             report.Say(held ? $"'{control.Name}' stays where it is when the panel is randomized." : $"'{control.Name}' is randomized with the rest.");
         };
 
@@ -243,7 +243,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
             if (!editor.History.Patch.MoveControl(id, index)) return;
 
             editor.History.Record();
-            document.PanelEdited();
+            writeBack.PanelEdited();
         };
 
         View.SwapRequested += (first, second) =>
@@ -251,7 +251,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
             if (!editor.History.Patch.SwapControls(first, second)) return;
 
             editor.History.Record();
-            document.PanelEdited();
+            writeBack.PanelEdited();
         };
 
         View.RemoveRequested += id =>
@@ -262,7 +262,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
             if (!editor.History.Patch.RemoveControl(id)) return;
 
             editor.History.Record();
-            document.PanelEdited();
+            writeBack.PanelEdited();
         };
 
         editor.Linking.SocketPicked += (_, pick) => PickSocket(pick);
@@ -436,7 +436,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
                 still.Midi = binding;
                 editor.History.Record();
                 usage.Count(Used.Learned);
-                document.PanelEdited();
+                writeBack.PanelEdited();
                 last = moved;
 
                 report.Say(instruments.For(source ?? default) is not null

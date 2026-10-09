@@ -18,7 +18,7 @@ namespace Flyback.Editor.Inspect;
 /// fields it declares (ADR-0055).
 /// </summary>
 /// <param name="instruments">The instruments a MIDI In can be played from, whose tracks name its channels.</param>
-internal sealed class FieldRows(NodeEditor editor, Document document, MidiHub midi, InstrumentLibrary instruments, InspectorRows rows)
+internal sealed class FieldRows(NodeEditor editor, TextWriteBack writeBack, MidiHub midi, InstrumentLibrary instruments, InspectorRows rows)
 {
     /// <summary>
     /// A plugin's extra, drawn from its <see cref="NodeExtra.Fields"/>.
@@ -104,9 +104,9 @@ internal sealed class FieldRows(NodeEditor editor, Document document, MidiHub mi
                 }
 
                 // A Send's only text is its bus, and its Receives go where it goes.
-                foreach (var receive in BusEdits.Rename(editor.History.Patch, node, next)) document.Restated(receive.Id, field.Key);
+                foreach (var receive in BusEdits.Rename(editor.History.Patch, node, next)) writeBack.Restated(receive.Id, field.Key);
 
-                document.Restated(node.Id, field.Key);
+                writeBack.Restated(node.Id, field.Key);
             },
 
             // An Expression's formula is the one field whose text is a language,
@@ -135,7 +135,7 @@ internal sealed class FieldRows(NodeEditor editor, Document document, MidiHub mi
 
         // Noted rather than written, for the reason a knob is: a field on a
         // slider is dragged, and the text should be edited once at the end of it.
-        document.Restated(node.Id, field.Key);
+        writeBack.Restated(node.Id, field.Key);
     }
 
     /// <summary>

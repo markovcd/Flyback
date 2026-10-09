@@ -24,7 +24,7 @@ namespace Flyback.Editor.Canvas;
 internal sealed class Palette
 {
     private readonly NodeEditor editor;
-    private readonly Document document;
+    private readonly TextWriteBack writeBack;
     private readonly Func<KeyboardLayout> keyboard;
     private readonly Lazy<ModulePalette> list;
     private readonly ReportLine report;
@@ -54,7 +54,7 @@ internal sealed class Palette
             return;
 
         editor.History.Patch.Keyboard = KeyboardScale.Major;
-        document.Relaid();
+        writeBack.Relaid();
     }
 
     /// <param name="knobs">The instruments the list offers.</param>
@@ -62,7 +62,7 @@ internal sealed class Palette
     /// <param name="folders">Where kept groups are read from and written to, or the usual place.</param>
     public Palette(
         NodeEditor editor,
-        Document document,
+        TextWriteBack writeBack,
         PluginCatalog plugins,
         ReportLine report,
         Usage usage,
@@ -75,7 +75,7 @@ internal sealed class Palette
         var groupFolder = folders.GroupFolder ?? Path.Combine(Path.GetTempPath(), "flyback-no-groups", Guid.NewGuid().ToString("N"));
 
         this.editor = editor;
-        this.document = document;
+        this.writeBack = writeBack;
         keyboard = () => repository.Current.Keyboard;
         this.report = report;
         this.usage = usage;

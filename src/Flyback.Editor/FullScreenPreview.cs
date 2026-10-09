@@ -35,7 +35,7 @@ internal sealed class FullScreenPreview(
     StatusBar statusBar,
     NodeEditor editor,
     Playback playback,
-    Document document,
+    TextWriteBack writeBack,
     Usage usage,
     OutputSettingRepository settings,
     TransportControls transport)
@@ -141,7 +141,7 @@ internal sealed class FullScreenPreview(
         knobs.Away = window.Knobs;
         window.Knobs.Show(editor.History.Patch);
         window.Knobs.Turning += knobs.Turn;
-        window.Knobs.TurnEnded += document.LetGoOfKnob;
+        window.Knobs.TurnEnded += writeBack.LetGoOfKnob;
 
         window.Transport.PauseClicked += transport.TogglePause;
         window.Transport.MuteClicked += playback.ToggleMute;
