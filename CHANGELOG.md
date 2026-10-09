@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- On Android, the web editor's sound stops other playback, as the web viewer's does.
+
 - On Linux, Flyback plays through a running JACK server, at its sample rate, as two ports patched to the system playback ports or left for you to route.
 
 - The plugin contract no longer offers what only Flyback itself calls, such as `NodeCatalog.Install` and `PatchWorkbench.Edits`.

@@ -4,8 +4,7 @@
 
 import { dotnet } from './_framework/dotnet.js';
 import * as gl from './gl.js';
-import { Microphone } from './microphone.js';
-import { takeAudio, throughElement } from './session.js';
+import { Speakers } from './speakers.js';
 import { onTap } from './tap.js';
 
 const params = new URLSearchParams(location.search);
@@ -51,12 +50,10 @@ const tabs = ['controls', 'keys', 'about'].map(name => ({ name, tab: $(`tab-${na
 /** A screen too narrow for the panel beside the picture, which puts it in a sheet under it. */
 const narrow = matchMedia('(max-width: 640px)');
 
-/** The microphone, held open only while the sound that is playing reads a Line In. */
-const microphone = new Microphone();
-microphone.onTrouble = () => paint();
-
-/** The sound's thread, what it last said of the sound, and why it stopped where it did. */
-const speaker = new Worker('speaker.js', { type: 'module' });
+/** The speakers and the sound's worker, what it last said of the sound, and why it stopped where it did. */
+const speakers = new Speakers();
+const worker = speakers.worker;
+speakers.microphone.onTrouble = () => paint();
 let soundStatus = {};
 let speakerFailure = null;
 
@@ -72,14 +69,14 @@ const speakerReady = new Promise(resolve => {
     for (const reply of replies.values()) reply({ error: null, status: null, speed: null });
   };
 
-  speaker.onmessage = ({ data }) => {
+  worker.onmessage = ({ data }) => {
     if (data.ready) resolve(true);
     else if (data.failure !== undefined) failed(data.failure);
     else if (data.state !== undefined) hearState(data);
     else if (data.opened !== undefined) replies.get(data.opened)?.(data);
   };
 
-  speaker.onerror = event => failed(event.message || "The sound's worker would not start.");
+  worker.onerror = event => failed(event.message || "The sound's worker would not start.");
 });
 
 const runtime = await dotnet.create();
@@ -101,10 +98,6 @@ let source = null;
 /** Whether the seek bar is held, which is when the playhead leaves it alone. */
 let dragging = false;
 
-let playing = false;
-let pausedAt = 0;
-let origin = 0;
-let wallStart = 0;
 let drawnAt = NaN;
 let drawnSize = '';
 
@@ -120,37 +113,16 @@ let loudness = (() => {
     return 1;
   }
 })();
-let context = null;
-let queue = null;
-let volume = null;
+speakers.gain(muted ? 0 : loudness);
 
-/** The <audio> element the sound plays through where the page must take audio focus, else null. */
-let element = null;
-let generation = 0;
-let played = 0;
-let reportedAt = 0;
-
-/** Whether the speaker is the clock: only while the queue it plays starts where the picture is. */
-let heard = false;
-
-/** Where the patch is: the speaker's position while it plays, the wall clock where there is no sound. */
-function now() {
-  if (!playing) return pausedAt;
-
-  if (heard) {
-    const since = played > 0 ? Math.min(Math.max(context.currentTime - reportedAt, 0), 0.1) : 0;
-    return origin + played / info.sampleRate + since;
-  }
-
-  return origin + (performance.now() - wallStart) / 1000;
+/** Whether the patch plays, on the speakers or the wall clock. */
+function playing() {
+  return speakers.running;
 }
 
-/** The speaker's count of what it has played, which is the clock while the sound is heard. */
-function report({ data }) {
-  if (data.generation !== generation) return;
-
-  played = data.played;
-  reportedAt = data.at;
+/** Where the patch is: the speakers' position while they play, the wall clock where there is no sound. */
+function now() {
+  return speakers.time();
 }
 
 /** Hands the picture the Meters' readings the worker packed, when they are of the patch open now. */
@@ -183,7 +155,7 @@ async function openSound(what, id) {
       resolve(reply);
     });
 
-    speaker.postMessage({ open: what, width, height, opened: id });
+    worker.postMessage({ open: what, width, height, opened: id });
   });
 }
 
@@ -192,45 +164,11 @@ function status() {
   return { ...soundStatus, ...JSON.parse(flyback.Status()) };
 }
 
-/** Starts the speaker, and says whether the browser let it: it holds sound back until the page is clicked. */
-async function startSound() {
-  if (context === null) {
-    takeAudio();
-    context = new AudioContext({ sampleRate: info.sampleRate, latencyHint: 'interactive' });
-    await context.audioWorklet.addModule('sound.js');
-
-    queue = new AudioWorkletNode(context, 'flyback-queue', { outputChannelCount: [2], channelCount: 2, channelCountMode: 'explicit' });
-    microphone.attach(context, queue);
-    volume = new GainNode(context, { gain: muted ? 0 : loudness });
-    queue.connect(volume);
-    element = throughElement(context, volume);
-    if (element === null) volume.connect(context.destination);
-    queue.port.onmessage = report;
-
-    // The worker feeds the speaker straight, so a busy page never keeps the sound waiting.
-    const channel = new MessageChannel();
-    queue.port.postMessage({ feed: channel.port1 }, [channel.port1]);
-    speaker.postMessage({ speaker: channel.port2 }, [channel.port2]);
-  }
-
-  await Promise.race([context.resume(), new Promise(resolve => setTimeout(resolve, 250))]);
-
-  const running = context.state === 'running';
-  if (running) element?.play().catch(() => {});
-
-  return running;
-}
-
-/** Both halves to <seconds>, the speaker's queue emptied and counted again from there. */
+/** Both halves to <seconds>, the speakers' queue emptied and counted again from there. */
 function seek(seconds) {
   flyback.Seek(seconds);
-  origin = pausedAt = seconds;
-  wallStart = performance.now();
   drawnAt = NaN;
-
-  generation++;
-  played = 0;
-  speaker.postMessage({ seek: seconds, generation });
+  speakers.seek(seconds);
 }
 
 /** Where the open patch ends, in seconds: never, for one that has not said how long it plays. */
@@ -240,41 +178,30 @@ const end = () => info?.length ?? Infinity;
 let held = null;
 
 async function play() {
-  if (info === null || playing) return;
+  if (info === null || playing()) return;
 
-  if (pausedAt >= end()) seek(0);
+  if (now() >= end()) seek(0);
 
   // A queue left by a pause carries on where it stopped; anything else starts again where the picture is.
-  const carryOn = heard;
-  heard = soundAllowed && (await startSound());
+  const carryOn = speakers.heard;
+  const heard = soundAllowed && (await speakers.resume(info.sampleRate));
 
-  if (heard && !carryOn) seek(pausedAt);
+  if (heard && !carryOn) seek(now());
 
   held = soundAllowed && !heard ? 'The browser holds the sound back until the page is clicked, so the picture plays alone.' : null;
 
-  if (!heard) {
-    origin = pausedAt;
-    wallStart = performance.now();
-  }
-
-  playing = true;
+  speakers.start(heard);
   ui.cover.hidden = true;
-  speaker.postMessage({ run: heard });
   listen();
   keepAwake();
   paint();
 }
 
-function pause() {
-  if (!playing) return;
+/** Pauses at <at>, where the patch is unless given. */
+function pause(at = now()) {
+  if (!playing()) return;
 
-  pausedAt = now();
-  playing = false;
-
-  // The queue stays where it is, so play carries on from the very next sample.
-  speaker.postMessage({ run: false });
-  if (heard) context.suspend();
-  element?.pause();
+  speakers.stop(at);
   keepAwake();
   listen();
   paint();
@@ -282,13 +209,13 @@ function pause() {
 
 /** Opens the microphone while the sound is heard and reads a Line In, and lets it go otherwise. */
 function listen() {
-  microphone.want(playing && heard && Boolean(soundStatus.lineIn));
+  speakers.microphone.want(playing() && speakers.heard && Boolean(soundStatus.lineIn));
 }
 
 /** Stops, and forgets the speaker's queue, so the next play starts both halves at one moment. */
 function stop() {
   pause();
-  heard = false;
+  speakers.drop();
 }
 
 /** Whether the sound was asked for after it was found too slow, which is never taken back. */
@@ -309,7 +236,7 @@ function oversampling(factor) {
  * step lower since <was>, and hands the picture the clock when it falls behind with none too.
  */
 function follow(was) {
-  if (!playing || !heard || insisted) return;
+  if (!playing() || !speakers.heard || insisted) return;
 
   if (soundStatus.behind) {
     stop();
@@ -323,7 +250,7 @@ function follow(was) {
 function toggleMute() {
   if (!soundAllowed) {
     // Asked to hear a patch too heavy to keep up: its sound joins where the picture is.
-    const was = playing;
+    const was = playing();
 
     stop();
     soundAllowed = true;
@@ -332,7 +259,7 @@ function toggleMute() {
     if (was) play();
   } else {
     muted = !muted;
-    if (volume) volume.gain.value = muted ? 0 : loudness;
+    speakers.gain(muted ? 0 : loudness);
   }
 
   paint();
@@ -348,7 +275,7 @@ function setLooped(on) {
 function setVolume(level) {
   loudness = Math.round(Math.min(Math.max(Number(level) || 0, 0), 1) * 100) / 100;
   if (loudness > 0) muted = false;
-  if (volume) volume.gain.value = muted ? 0 : loudness;
+  speakers.gain(muted ? 0 : loudness);
 
   try {
     localStorage.setItem(VOLUME_KEPT, String(loudness));
@@ -367,7 +294,7 @@ const playable = () => info?.played === true && speakerFailure === null;
 
 /** A note on the computer keyboard, <down> or up, for the sound's worker, which hands the picture its voice. */
 function strike(note, down = true) {
-  speaker.postMessage({ strike: note, down });
+  worker.postMessage({ strike: note, down });
 }
 
 /** Every computer keyboard note let go: when the page loses the keys, or before they move. */
@@ -375,7 +302,7 @@ function release() {
   if (pressed.size === 0) return;
 
   pressed.clear();
-  speaker.postMessage({ release: true });
+  worker.postMessage({ release: true });
 }
 
 /** Where the computer keyboard's notes are, as it was last said. */
@@ -747,7 +674,7 @@ function turn(knob, value, atOnce = false) {
   knob.reading.textContent = Math.round(knob.value * 100);
   knob.draw();
 
-  speaker.postMessage({ turn: knob.key, value: knob.value });
+  worker.postMessage({ turn: knob.key, value: knob.value });
 
   const turned = ++knob.turns;
   const to = knob.value;
@@ -757,10 +684,10 @@ function turn(knob, value, atOnce = false) {
 
     knob.shown = turned;
     flyback.Turn(knob.key, to);
-    if (!playing) drawnAt = NaN;
+    if (!playing()) drawnAt = NaN;
   };
 
-  const wait = !atOnce && playing && heard ? (soundStatus.queued ?? 0) * 1000 : 0;
+  const wait = !atOnce && playing() && speakers.heard ? (soundStatus.queued ?? 0) * 1000 : 0;
   if (wait > 0) setTimeout(show, wait);
   else show();
 }
@@ -770,7 +697,7 @@ function turn(knob, value, atOnce = false) {
  * in the worker with <opening.sound>, and starts it at <at> seconds.
  */
 async function open(opening, label, at = 0, keepKnobs = false) {
-  const was = playing;
+  const was = playing();
   const id = ++opens;
 
   stop();
@@ -984,7 +911,7 @@ let awake = null;
 
 /** Keeps a phone's screen on while the picture has all of it and plays. */
 function keepAwake() {
-  const wanted = playing && document.fullscreenElement != null && !document.hidden;
+  const wanted = playing() && document.fullscreenElement != null && !document.hidden;
 
   if (wanted && awake === null && navigator.wakeLock) {
     const asked = awake = navigator.wakeLock.request('screen').then(lock => {
@@ -1015,7 +942,7 @@ function paint() {
   ui.loop.setAttribute('aria-pressed', String(looped));
   ui.edit.disabled = source === null;
   if (ready && !dragging) ui.seek.value = now();
-  ui.play.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+  ui.play.setAttribute('aria-label', playing() ? 'Pause' : 'Play');
   ui.mute.classList.toggle('silent', !soundAllowed || muted || loudness === 0);
   ui.mute.setAttribute('aria-pressed', String(muted));
   ui.volume.value = loudness;
@@ -1039,7 +966,7 @@ function paint() {
 
   ui.status.replaceChildren(parts.join(' · '));
 
-  for (const [text, kind] of [[warning, 'warn'], [held, 'warn'], [microphone.trouble, 'warn'], [noPicture, 'error'], [error, 'error']]) {
+  for (const [text, kind] of [[warning, 'warn'], [held, 'warn'], [speakers.microphone.trouble, 'warn'], [noPicture, 'error'], [error, 'error']]) {
     if (!text) continue;
 
     const span = document.createElement('span');
@@ -1055,13 +982,13 @@ function frame() {
 
   let t = now();
 
-  if (playing && t >= end()) {
+  if (playing() && t >= end()) {
     if (looped) {
       seek(0);
       t = 0;
     } else {
-      pause();
-      pausedAt = t = end();
+      t = end();
+      pause(t);
     }
   }
 
@@ -1092,7 +1019,7 @@ function frame() {
   drawnSize = size;
 }
 
-ui.play.onclick = () => (playing ? pause() : play());
+ui.play.onclick = () => (playing() ? pause() : play());
 ui.cover.onclick = () => { if (info !== null) play(); };
 ui.rewind.onclick = () => { seek(0); paint(); };
 ui.loop.onclick = () => setLooped(!looped);
@@ -1101,7 +1028,7 @@ ui.volume.oninput = () => setVolume(Number(ui.volume.value));
 ui.fullscreen.onclick = toggleFullscreen;
 ui.edit.onclick = edit;
 // A double click is two taps, which leave the patch as it was.
-onTap(ui.canvas, () => { if (info !== null) (playing ? pause() : play()); });
+onTap(ui.canvas, () => { if (info !== null) (playing() ? pause() : play()); });
 ui.canvas.ondblclick = toggleFullscreen;
 ui.size.onchange = () => (ui.size.value === OFF ? setPicture(false) : resize(...ui.size.value.split('x').map(Number)));
 
@@ -1146,7 +1073,7 @@ document.addEventListener('keydown', event => {
   if (event.ctrlKey || event.metaKey || event.altKey) return;
 
   switch (event.code) {
-    case 'Space': event.preventDefault(); playing ? pause() : play(); break;
+    case 'Space': event.preventDefault(); playing() ? pause() : play(); break;
     case 'Home': seek(0); paint(); break;
     case 'ArrowLeft': seekBy(-5); break;
     case 'ArrowRight': seekBy(5); break;
@@ -1163,22 +1090,22 @@ window.flyback = {
   open: openPreset,
   openUrl,
   play,
-  pause,
+  pause: () => pause(),
   seek: seconds => { seek(seconds); paint(); },
   size: resize,
   picture: setPicture,
   status: () => ({
     ...status(),
-    name, preview, playing, looped, picture: pictureOn, awake: awake !== null, time: now(), sound: heard, soundAllowed, held, muted, volume: loudness,
+    name, preview, playing: playing(), looped, picture: pictureOn, awake: awake !== null, time: now(), sound: speakers.heard, soundAllowed, held, muted, volume: loudness,
     queued: soundStatus.queued ?? 0, warning, error, speakerFailure,
-    microphone: { wanted: microphone.wanted, listening: microphone.listening, trouble: microphone.trouble },
+    microphone: speakers.status().microphone,
   }),
   loop: setLooped,
   volume: setVolume,
   strike,
   release: () => {
     pressed.clear();
-    speaker.postMessage({ release: true });
+    worker.postMessage({ release: true });
   },
   panel: pixels => { sizePanel(pixels); return ui.sheet.getBoundingClientRect().height; },
   tab: name => { if (tabs.some(t => t.name === name && !t.tab.hidden)) openTab(name); return tab; },

@@ -1,39 +1,19 @@
-// The editor's sound, for PageSound.cs: the web viewer's worker plays each edit, the web
-// viewer's worklet is the speaker, and how far the speaker has got is the clock. Until the
-// browser lets the page make a sound and the worker is up, the wall clock stands in, and
-// the sound joins where the picture is. The worker works the sound out a step lower
+// The editor's sound, for PageSound.cs, on the web viewer's speakers: its worker plays each
+// edit. Until the browser lets the page make a sound and the worker is up, the wall clock
+// stands in, and the sound joins where the picture is. The worker works the sound out a step lower
 // itself when it keeps falling behind; the editor never gives the sound up.
 
-import { Microphone } from '../viewer/microphone.js';
-import { takeAudio } from '../viewer/session.js';
+import { Speakers } from '../viewer/speakers.js';
 
-const worker = new Worker('../viewer/speaker.js', { type: 'module' });
+const speakers = new Speakers();
+const worker = speakers.worker;
+speakers.onState = join;
 
 let rate = 48000;
 let ready = false;
 let failure = null;
 let error = null;
-
-let context = null;
-let volume = null;
-let attached = false;
 let loudness = 1;
-
-let running = false;
-
-/** The microphone, held open for a Line In while the editor asks for it. */
-const microphone = new Microphone();
-
-/** Whether the speaker is the clock: the browser lets it play, the worker is up, and it has joined. */
-let heard = false;
-
-let generation = 0;
-let origin = 0;
-let played = 0;
-let reportedAt = 0;
-
-let wallStart = 0;
-let held = 0;
 
 /** The Meters last named, how many of them there are, and the latest readings of them the worker sent. */
 let meters = 0;
@@ -65,117 +45,59 @@ worker.onerror = event => { failure = event.message || "The sound's worker would
 // A touch's pointerdown does not count as use in WebKit; its release does.
 for (const kind of ['pointerdown', 'pointerup', 'click', 'keydown']) {
   document.addEventListener(kind, () => {
-    if (running && context !== null && context.state !== 'running') context.resume();
+    if (speakers.running && speakers.state !== null && speakers.state !== 'running') resume();
   }, { capture: true });
 }
 
-/** The speaker's count of what it has played, which is the clock while the sound is heard. */
-function report({ data }) {
-  if (data.generation !== generation) return;
-
-  played = data.played;
-  reportedAt = data.at;
+/** Asks the browser to let the speakers play, and joins them once it does. */
+function resume() {
+  speakers.resume(rate).then(join, reason => { failure = String(reason?.message ?? reason); });
 }
 
-function open() {
-  if (context !== null) return;
-
-  takeAudio();
-  context = new AudioContext({ sampleRate: rate, latencyHint: 'interactive' });
-  context.onstatechange = join;
-  volume = new GainNode(context, { gain: loudness });
-
-  context.audioWorklet.addModule('../viewer/sound.js').then(() => {
-    const queue = new AudioWorkletNode(context, 'flyback-queue', { outputChannelCount: [2], channelCount: 2, channelCountMode: 'explicit' });
-    queue.connect(volume).connect(context.destination);
-    microphone.attach(context, queue);
-    queue.port.onmessage = report;
-
-    // The worker feeds the speaker straight, so a busy page never keeps the sound waiting.
-    const channel = new MessageChannel();
-    queue.port.postMessage({ feed: channel.port1 }, [channel.port1]);
-    worker.postMessage({ speaker: channel.port2 }, [channel.port2]);
-
-    attached = true;
-    join();
-  }).catch(reason => { failure = String(reason?.message ?? reason); });
-}
-
-/** Hands the clock to the speaker once everything it needs is there, starting it where the picture is. */
+/** Hands the clock to the speakers once everything they need is there, starting them where the picture is. */
 function join() {
-  if (heard || !running || !ready || !attached || failure !== null || context.state !== 'running') return;
+  if (speakers.heard || !speakers.running || !ready || !speakers.attached || failure !== null || speakers.state !== 'running') return;
 
-  const at = time();
-  heard = true;
-  seek(at);
-  worker.postMessage({ run: true });
-}
-
-function seek(seconds) {
-  generation++;
-  origin = held = seconds;
-  played = 0;
-  wallStart = performance.now();
-  worker.postMessage({ seek: seconds, generation });
+  speakers.seek(speakers.time());
+  speakers.start(true);
 }
 
 export function time() {
-  if (!running) return held;
-
-  if (heard) {
-    const since = played > 0 ? Math.min(Math.max(context.currentTime - reportedAt, 0), 0.1) : 0;
-    held = origin + played / rate + since;
-  } else {
-    held = origin + (performance.now() - wallStart) / 1000;
-  }
-
-  return held;
+  return speakers.time();
 }
 
 export function start(sampleRate) {
-  if (running) return;
+  if (speakers.running) return;
 
   rate = sampleRate;
-  running = true;
 
   // A queue left by a stop carries on where it stopped; on the wall clock, the picture does.
-  if (!heard) {
-    origin = held;
-    wallStart = performance.now();
-  }
-
-  open();
-  context.resume().catch(() => {});
-  worker.postMessage({ run: heard });
+  speakers.start(speakers.heard);
+  resume();
   join();
 }
 
 export function stop() {
-  if (!running) return;
-
-  time();
-  running = false;
-  worker.postMessage({ run: false });
-  if (heard) context.suspend();
+  if (speakers.running) speakers.stop();
 }
 
 /** Opens the microphone for a Line In, or lets it go. */
 export function listen(on) {
-  microphone.want(on);
+  speakers.microphone.want(on);
 }
 
 /** Has <say> told of a sentence whenever the microphone will not open or stops. */
 export function onMicrophoneTrouble(say) {
-  microphone.onTrouble = say;
+  speakers.microphone.onTrouble = say;
 }
 
 export function seekTo(seconds) {
-  seek(seconds);
+  speakers.seek(seconds);
 }
 
 export function gain(level) {
   loudness = level;
-  if (volume !== null) volume.gain.value = level;
+  speakers.gain(level);
 }
 
 /** Works the sound out at <factor> times the output rate from here on. */
@@ -234,9 +156,8 @@ export function read(number) {
 /** What a script driving the page can read of the sound. */
 export function status() {
   return {
-    running, heard, ready, failure, error,
-    context: context?.state ?? null,
-    time: time(), played, generation,
+    ...speakers.status(),
+    ready, failure, error,
     soundOps: soundStatus.soundOps ?? 0,
     speed: soundStatus.speed ?? 0,
     queued: soundStatus.queued ?? 0,
@@ -247,7 +168,6 @@ export function status() {
     late: soundStatus.late ?? 0,
     volume: loudness,
     handed,
-    microphone: { wanted: microphone.wanted, listening: microphone.listening, trouble: microphone.trouble },
     lineIn: soundStatus.lineIn ?? false,
     meters: Array.from(readings.values.subarray(0, metered)),
   };

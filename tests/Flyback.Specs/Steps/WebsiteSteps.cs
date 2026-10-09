@@ -147,7 +147,7 @@ public sealed partial class WebsiteSteps
     {
         page.ShouldContain("Flyback Viewer");
 
-        foreach (var file in (string[])["main.js", "gl.js", "microphone.js", "program.js", "sound.js", "speaker.js", "viewer.css"])
+        foreach (var file in (string[])["main.js", "gl.js", "microphone.js", "program.js", "sound.js", "speaker.js", "speakers.js", "viewer.css"])
             if (SiteFiles.Find($"/viewer/{file}") is null) missing.Add(file);
 
         missing.ShouldBeEmpty(string.Join(Environment.NewLine, missing));
