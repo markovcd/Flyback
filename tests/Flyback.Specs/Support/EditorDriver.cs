@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
@@ -20,6 +21,7 @@ using Flyback.Editor.Controls;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Files;
 using Flyback.Editor.Inspect;
+using Flyback.Editor.Keys;
 using Flyback.Editor.Site;
 using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
@@ -929,6 +931,67 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
 
     /// <summary>Presses a toolbar toggle into <paramref name="on"/>, as a click does.</summary>
     public void Toggle(string name, bool on) => DoWindow((open, _) => Toggler(open, name).IsChecked = on);
+
+    /// <summary>Whether the keys along the foot of the window are up.</summary>
+    public bool KeysUp => ReadWindow(open => Named<Keybed>(open, "keybed").IsVisible);
+
+    /// <summary>The notes of the keys on the screen, left to right.</summary>
+    public IReadOnlyList<string> Keys => ReadWindow(open => Named<Keybed>(open, "keybed").Row.Select(key => key.Name).ToList());
+
+    /// <summary>The finger on a key of the screen and the key under it, from <see cref="PressKey"/> until <see cref="LiftKey"/>.</summary>
+    private (Pointer Finger, Border Key)? fingerOnKey;
+
+    /// <summary>Puts a finger down on the key labeled <paramref name="note"/> and holds it there.</summary>
+    public void PressKey(string note) =>
+        DoWindow((open, _) =>
+        {
+            var key = Named<Keybed>(open, "keybed").GetVisualDescendants().OfType<Border>()
+                .Single(border => border.Name?.StartsWith("key-", StringComparison.Ordinal) == true && AutomationProperties.GetName(border) == note);
+
+            var finger = new Pointer(Pointer.GetNextFreeId(), PointerType.Touch, true);
+
+            fingerOnKey = (finger, key);
+            key.RaiseEvent(new PointerPressedEventArgs(
+                key,
+                finger,
+                open,
+                key.TranslatePoint(new Point(key.Bounds.Width / 2, key.Bounds.Height / 2), open)!.Value,
+                1_000,
+                new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed),
+                KeyModifiers.None));
+        });
+
+    /// <summary>Lifts the finger <see cref="PressKey"/> put down.</summary>
+    public void LiftKey() =>
+        DoWindow((open, _) =>
+        {
+            var (finger, key) = fingerOnKey ?? throw new InvalidOperationException("no finger is on a key");
+
+            key.RaiseEvent(new PointerReleasedEventArgs(
+                key,
+                finger,
+                open,
+                key.TranslatePoint(new Point(key.Bounds.Width / 2, key.Bounds.Height / 2), open)!.Value,
+                1_100,
+                new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonReleased),
+                KeyModifiers.None,
+                MouseButton.Left));
+            fingerOnKey = null;
+        });
+
+    /// <summary>What the picture holds of the computer keyboard's first voice: its <paramref name="signal"/>, or 0 where it reads none.</summary>
+    public double KeyboardHeld(string signal) => ReadWindow(open =>
+    {
+        var block = open.GetVisualDescendants().OfType<PreviewHost>().Single().Live;
+        var key = block.Keys.FirstOrDefault(candidate =>
+            candidate.StartsWith(MidiSources.Keyboard + "/auto/", StringComparison.Ordinal)
+            && candidate.EndsWith("/" + signal, StringComparison.Ordinal));
+
+        return key is null ? 0d : block.At(block.Keys.ToList().IndexOf(key));
+    });
+
+    /// <summary>Whether the toolbar button named <paramref name="name"/> is on the bar or in its menu at all.</summary>
+    public bool ToolbarShows(string name) => ReadWindow(open => Named<ToggleButton>(open, name).IsVisible);
 
     /// <summary>Whether a toolbar toggle is pressed in, and whether it can be pressed at all.</summary>
     public (bool On, bool Enabled) Toggled(string name) => ReadWindow(open =>

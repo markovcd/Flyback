@@ -82,6 +82,14 @@ internal static class Glyphs
     /// <summary>A knob seen from the front, its pointer at two o'clock: the knob panel.</summary>
     public static Control Knob() => Stroked(Ring(5.5) + " M8,8 L10.8,5.2");
 
+    /// <summary>An octave of a piano: four white keys with the black ones over their gaps.</summary>
+    public static Control Keys() => Stroked(
+        "M2,3 L14,3 L14,13 L2,13 Z M5,8.5 L5,13 M8,8.5 L8,13 M11,8.5 L11,13 "
+        + "M4,3 L4,8.5 L6,8.5 L6,3 M7,3 L7,8.5 L9,8.5 L9,3 M10,3 L10,8.5 L12,8.5 L12,3");
+
+    /// <summary>A minus, the other half of <see cref="Add"/>.</summary>
+    public static Control Minus() => Stroked("M2.5,8 L13.5,8");
+
     /// <summary>A window with its right-hand column marked off: the column beside the canvas.</summary>
     public static Control Side() => Stroked("M2,3 L14,3 L14,13 L2,13 Z M10,3 L10,13");
 

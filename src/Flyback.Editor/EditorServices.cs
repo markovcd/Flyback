@@ -11,6 +11,7 @@ using Flyback.Ui.Controls;
 using Flyback.Editor.Files;
 using Flyback.Editor.Gallery;
 using Flyback.Editor.Inspect;
+using Flyback.Editor.Keys;
 using Flyback.Editor.Knobs;
 using Flyback.Ui.Midi;
 using Flyback.Editor.Notices;
@@ -196,6 +197,7 @@ internal static class EditorServices
         services.AddPart<PageSettings>();
 
         services.AddPart<PanelKnobs>();
+        services.AddPart<ScreenKeys>();
         services.AddPart<KnobRandomizer>();
         services.AddPart<Palette>();
         services.AddPart<Inspector>();

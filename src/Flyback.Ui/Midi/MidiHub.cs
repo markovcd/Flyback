@@ -183,9 +183,17 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
     /// key is not a note, which is what lets the window offer this every keystroke
     /// and only take the ones it means.
     /// </summary>
-    public bool KeyDown(Avalonia.Input.Key key)
+    public bool KeyDown(Avalonia.Input.Key key) => KeyDown(KeyCodes.Of(key));
+
+    public bool KeyUp(Avalonia.Input.Key key) => KeyUp(KeyCodes.Of(key));
+
+    /// <summary>
+    /// The key the browser calls <paramref name="code"/> (<c>KeyZ</c>) went down, on the
+    /// computer's keyboard or on the screen's keys, which play the same layout.
+    /// </summary>
+    public bool KeyDown(string code)
     {
-        if (Keyboard.Note(key) is not { } note) return false;
+        if (Keyboard.Note(code) is not { } note) return false;
 
         lock (gate) Down(MidiSources.Keyboard, note, ComputerKeyboard.Velocity);
 
@@ -194,9 +202,9 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
         return true;
     }
 
-    public bool KeyUp(Avalonia.Input.Key key)
+    public bool KeyUp(string code)
     {
-        if (Keyboard.Note(key) is not { } note) return false;
+        if (Keyboard.Note(code) is not { } note) return false;
 
         lock (gate) Up(MidiSources.Keyboard, note);
 
@@ -208,8 +216,6 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
     /// <summary>
     /// Moves the computer keyboard's two rows up or down an octave, and says where
     /// they ended up — null when the key was not one of the two that do it.
-    /// Everything already down is let go first: a note released after the shift
-    /// would be a different note, so it would never be found and would hang.
     /// </summary>
     public string? Shift(Avalonia.Input.Key key)
     {
@@ -220,12 +226,20 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
             _ => 0,
         };
 
-        if (moved == 0) return null;
+        return moved == 0 ? null : Shift(moved);
+    }
 
+    /// <summary>
+    /// Moves the computer keyboard's rows <paramref name="octaves"/> up, and says where
+    /// they ended up. Everything already down is let go first: a note released after
+    /// the shift would be a different note, so it would never be found and would hang.
+    /// </summary>
+    public string Shift(int octaves)
+    {
         lock (gate)
         {
             Voices(MidiSources.Keyboard).Silence();
-            Keyboard.Octave += moved;
+            Keyboard.Octave += octaves;
         }
 
         Publish();

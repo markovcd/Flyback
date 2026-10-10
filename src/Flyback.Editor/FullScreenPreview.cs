@@ -7,6 +7,7 @@ using Flyback.Ui.Audio;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
 using Flyback.Ui.Controls;
+using Flyback.Editor.Keys;
 using Flyback.Editor.Knobs;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Statistics;
@@ -30,6 +31,7 @@ internal sealed class FullScreenPreview(
     PreviewHost preview,
     IAudioEngine audio,
     PanelKnobs knobs,
+    ScreenKeys keys,
     Toolbar toolbar,
     TransportRow row,
     StatusBar statusBar,
@@ -186,6 +188,7 @@ internal sealed class FullScreenPreview(
 
         IsFullScreen = full;
         knobs.OverPicture = full;
+        keys.Away = full;
 
         if (full) usage.Count(Used.FullScreen);
 

@@ -9,6 +9,7 @@ using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Inspect;
+using Flyback.Editor.Keys;
 using Flyback.Editor.Knobs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
@@ -26,6 +27,7 @@ internal sealed class ShellLayout(
     NodeEditor editor,
     SourceView source,
     PanelKnobs knobs,
+    ScreenKeys keys,
     AssistantPanel assistant,
     Inspector inspector,
     PreviewHost preview,
@@ -173,6 +175,7 @@ internal sealed class ShellLayout(
         DockPanel.SetDock(toolbar.View, Dock.Top);
         DockPanel.SetDock(statusBar.View, Dock.Bottom);
         DockPanel.SetDock(row.View, Dock.Bottom);
+        DockPanel.SetDock(keys.View, Dock.Bottom);
 
         columns = new Grid
         {
@@ -238,6 +241,7 @@ internal sealed class ShellLayout(
         root.Children.Add(toolbar.View);
         root.Children.Add(statusBar.View);
         root.Children.Add(row.View);
+        root.Children.Add(keys.View);
         root.Children.Add(columns);
         fullScreen.ShowPreview = ShowPreview;
         return root;

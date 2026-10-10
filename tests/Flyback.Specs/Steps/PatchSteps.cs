@@ -457,6 +457,11 @@ public sealed class PatchSteps(PatchContext context)
             $"let keys = midi.in(device: \"{PatchContext.Keyboard}\", voices: {voices}){(char)10}"
             + "keys.pitch * keys.gate |> out.left");
 
+    /// <summary>A MIDI In the computer keyboard plays, its pitch read by the picture.</summary>
+    [Given("a MIDI In played from the computer keyboard, its pitch on the screen")]
+    public void GivenAKeyboardMidiInOnTheScreen() =>
+        Written($"midi.in(device: \"{MidiSources.Keyboard}\").pitch |> out.color");
+
     [Given("a polyphonic wire of {int} voices numbered from 0, merged into the speakers")]
     public void GivenMergedVoices(int voices) => Written($"voice(voices: {voices}) |> merge() |> out.left");
 

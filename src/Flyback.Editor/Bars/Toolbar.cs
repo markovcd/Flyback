@@ -88,6 +88,10 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
     public ToggleButton Knobs { get; } =
         ToolbarButtons.Toggle("controls", Glyphs.Knob(), "Show the knob panel, for turning the patch by hand or from a MIDI controller  (Ctrl+K)");
 
+    /// <summary>Shows the keys along the foot of the window that play a MIDI In, for a finger. On the bar only while one listens.</summary>
+    public ToggleButton Keys { get; } =
+        ToolbarButtons.Toggle("keys", Glyphs.Keys(), "Show keys that play the patch's MIDI In, as the computer keyboard does.");
+
     /// <summary>
     /// Puts the picture in the wide column and the canvas where the picture was.
     /// Enabled only while there is a picture to put there.
@@ -147,6 +151,7 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         Viewer.Click += (_, _) => reactions.Raise(new ViewAsked());
         Code.IsCheckedChanged += (_, _) => reactions.Raise(new CodeAsked(Code.IsChecked == true));
         Knobs.IsCheckedChanged += (_, _) => reactions.Raise(new KnobsAsked(Knobs.IsChecked == true));
+        Keys.IsCheckedChanged += (_, _) => reactions.Raise(new KeysAsked(Keys.IsChecked == true));
         Side.IsChecked = true;
         Side.IsCheckedChanged += (_, _) => reactions.Raise(new SideAsked(Side.IsChecked == true));
         Swap.IsCheckedChanged += (_, _) => reactions.Raise(new SwapAsked(Swap.IsChecked == true));
@@ -223,6 +228,7 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         if (full) patchwork.Children.Add(Assistant);
         patchwork.Children.Add(Code);
         patchwork.Children.Add(Knobs);
+        patchwork.Children.Add(Keys);
         patchwork.Children.Add(Swap);
         patchwork.Children.Add(Side);
         patchwork.Children.Add(Transport);
@@ -276,6 +282,7 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
                 (Open, "Open…"),
                 (Viewer, "View it"),
                 (Code, "Show the patch as text"),
+                (Keys, "Keys on the screen"),
                 (Knobs, "Knob panel"),
                 (Transport, "Transport row"),
                 (Redo, "Redo"),

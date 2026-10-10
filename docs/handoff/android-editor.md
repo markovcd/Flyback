@@ -92,11 +92,11 @@ runtime costs rather than the phone. The engine's own leads are in the `performa
    `UseInterpreter=false`. On a Pixel 9 Pro it is about eleven times slower than a desktop.
 6. **Trimming.** Release builds trim, and the patch reader deserializes by reflection: take
    the page's `TrimMode=partial`.
-7. **Touch, the bulk.** ADR-0165 makes a finger a mouse button, but
-   [touch-bugs.md](touch-bugs.md) has twelve open: the keyboard over the code view, wires
-   lost to the socket snap, a two-finger pan that edits, sliders that change on a scroll, no
-   on-screen keyboard for a MIDI In preset. Land those first. A tablet then works; a phone
-   needs a `ShellLayout` of its own, which is design, not plumbing.
+7. **Touch, the bulk.** ADR-0165 makes a finger a mouse button, and the touch bugs it left
+   (the keyboard over the code view, wires lost to the socket snap, a two-finger pan that
+   edits, sliders that change on a scroll, no keys on the screen for a MIDI In preset) are
+   fixed. A tablet works; a phone needs a `ShellLayout` of its own, which is design, not
+   plumbing.
 8. **Packaging.** arm64-v8a, plus x86_64 for the emulator, as an APK or AAB. The Android
    signing keystore is a second secret and stays out of the repo (`security.md`);
    `release.sh` grows an Android step; no self-update, since the store or a sideload owns

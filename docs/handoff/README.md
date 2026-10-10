@@ -12,7 +12,6 @@ Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or 
 | [grab-the-output.md](grab-the-output.md) | Grab the picture or the sound and the knobs move: derivatives through the patch | Plan | Open, parked; spiked |
 | [android-editor.md](android-editor.md) | An Android editor: a third shell beside the desktop and the page | Plan | Open, parked |
 | [ios-editor.md](ios-editor.md) | An iPhone and iPad editor: what differs from Android | Plan | Open, parked |
-| [touch-bugs.md](touch-bugs.md) | What a finger still cannot do, on the desktop and in the page | Issue | Open: 7 of 20 fixed, the rest not yet checked on a phone |
 | [frame-sequences.md](frame-sequences.md) | A Path that plays a numbered sequence of drawings, a frame at a time, so the animation is the music | Plan | Open |
 | [youtube-videos.md](youtube-videos.md) | Videos for the YouTube channel: how one is made, what was made, what is proposed | Backlog | Open, grows |
 | [architecture-audit.md](architecture-audit.md) | Where the architecture is weakest, and the refactor each point wants | Audit | Open |

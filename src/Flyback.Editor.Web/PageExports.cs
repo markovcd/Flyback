@@ -4,6 +4,7 @@ using Flyback.Editor.Canvas;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Files;
 using Flyback.Editor.Gallery;
+using Flyback.Editor.Keys;
 using Flyback.Editor.Notices;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -44,6 +45,7 @@ internal static partial class PageExports
             ["time"] = Math.Round(preview.Time, 2),
             ["said"] = said.Count > 0 ? said[^1] : null,
             ["unsaved"] = Unsaved(),
+            ["keys"] = Get<ScreenKeys>().Shown,
         }.ToJsonString();
     }
 
