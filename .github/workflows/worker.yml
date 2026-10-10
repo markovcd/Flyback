@@ -1,9 +1,14 @@
 # Deploys the preset site's Worker (worker/) with the pages, the viewer and the
 # editor, puts the framework files too large to be assets in R2, then gives the site
 # the presets and plugins it starts with and says again what the web pages lack for
-# every preset (deploy/cloudflare/README.md). Runs on a
-# push to main that touches what the site is built from, once the Build workflow
-# has passed on that commit, and by hand.
+# every preset (deploy/cloudflare/README.md). Runs when Build passes on a push to
+# main that touches what the site is built from, however late Build finishes, and
+# by hand.
+#
+# A workflow_run takes no paths filter, so the first job reads the pushed range
+# against the list itself, and the deploy is skipped rather than started and
+# stopped: a started one would take the queue's one pending place from a deploy
+# that matters.
 #
 # Off until the repository variable WORKER_ENVIRONMENT names the wrangler environment
 # to deploy, so nothing reaches Cloudflare before it is set up. The plugins the site
@@ -12,56 +17,81 @@
 
 name: Worker
 
+run-name: Worker on ${{ github.event.workflow_run.head_sha || github.sha }}
+
 on:
-  push:
+  workflow_run:
+    workflows: [Build]
+    types: [completed]
     branches: [main]
-    # What the Worker, the pages, the viewer, the editor, the stills and the defaults
-    # are built from. A new project they reference is added here.
-    paths:
-      - "worker/**"
-      - "site/**"
-      - "src/Flyback.Site/**"
-      - "src/Flyback.Site.Client/**"
-      - "src/Flyback.Viewer.Web/**"
-      - "src/Flyback.Editor.Web/**"
-      - "src/Flyback.Editor/**"
-      - "src/Flyback.Editor.Desktop/**"
-      - "src/Flyback.Cli/**"
-      - "src/Flyback.Ui/**"
-      - "src/Flyback.Host/**"
-      - "src/Flyback.Gpu/**"
-      - "src/Flyback.Assist/**"
-      - "src/Flyback.Engine/**"
-      - "src/Flyback.Core/**"
-      - "src/Flyback.Plugins/**"
-      - "src/plugins/**"
-      - ".editorconfig"
-      - "Directory.Build.props"
-      - "Directory.Build.targets"
-      - "Directory.Packages.props"
-      - "global.json"
-      - "scripts/stills.sh"
-      - "Dockerfile"
-      - ".github/workflows/worker.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  # A red main is never deployed. A job of its own, so that waiting on Build holds
-  # nothing: the deploys below queue one pending, and a burst of pushes ships the
-  # newest that passed.
-  gate:
-    if: github.event_name == 'push' && vars.WORKER_ENVIRONMENT != ''
+  # Whether the pushed range touches what the site is built from. Only a push to
+  # this repository's main that passed: a fork's pull request can have a branch
+  # called main too. The range starts at the commit the Build before this one
+  # built, since every push to main gets a Build of its own.
+  changes:
+    if: >-
+      vars.WORKER_ENVIRONMENT != '' && github.event_name == 'workflow_run' &&
+      github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       actions: read
-    uses: ./.github/workflows/wait-for-build.yml
+      contents: read
+    outputs:
+      touched: ${{ steps.range.outputs.touched }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Read the pushed range against what the site is built from
+        id: range
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILT: ${{ github.event.workflow_run.head_sha }}
+          RUN: ${{ github.event.workflow_run.id }}
+        run: |
+          base="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --event push --limit 100 \
+            --json databaseId,headSha --jq "map(select(.databaseId < $RUN))[0].headSha // empty")"
+          # No earlier Build, or one off this line: deploy rather than guess.
+          if [ -z "$base" ] || ! git merge-base --is-ancestor "$base" "$BUILT"; then
+            echo "touched=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          touched=false
+          while read -r file; do
+            # What the Worker, the pages, the viewer, the editor, the stills and the
+            # defaults are built from. A new project they reference is added here.
+            case "$file" in
+              worker/* | site/* | src/Flyback.Site/* | src/Flyback.Site.Client/* \
+              | src/Flyback.Viewer.Web/* | src/Flyback.Editor.Web/* | src/Flyback.Editor/* \
+              | src/Flyback.Editor.Desktop/* | src/Flyback.Cli/* | src/Flyback.Ui/* \
+              | src/Flyback.Host/* | src/Flyback.Gpu/* | src/Flyback.Assist/* \
+              | src/Flyback.Engine/* | src/Flyback.Core/* | src/Flyback.Plugins/* | src/plugins/* \
+              | .editorconfig | Directory.Build.props | Directory.Build.targets \
+              | Directory.Packages.props | global.json | scripts/stills.sh | Dockerfile \
+              | .github/workflows/worker.yml)
+                touched=true
+                echo "$file"
+                ;;
+            esac
+          done < <(git diff --name-only "$base" "$BUILT")
+          echo "touched=$touched" >> "$GITHUB_OUTPUT"
 
   deploy:
-    needs: gate
-    # By hand there is no gate to wait for; a push deploys only if it passed.
-    if: ${{ !cancelled() && vars.WORKER_ENVIRONMENT != '' && (needs.gate.result == 'success' || needs.gate.result == 'skipped') }}
+    needs: changes
+    # By hand there is nothing to wait for; after Build, only a range that touched the site.
+    if: >-
+      ${{ !cancelled() && vars.WORKER_ENVIRONMENT != '' &&
+      (github.event_name == 'workflow_dispatch' || needs.changes.outputs.touched == 'true') }}
     # A deploy finishes what it started, as Pages does.
     concurrency:
       group: worker
@@ -75,6 +105,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
 
       - name: Name the version

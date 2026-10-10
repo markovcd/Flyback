@@ -20,50 +20,6 @@ rendered with no token in the step. A Build run on `main` takes about four and a
 half minutes when the layer cache is warm, and nothing in the last forty runs
 timed out.
 
-## 1. The waiter polls for a verdict `workflow_run` would deliver (Medium)
-
-`wait-for-build.yml` holds a GitHub runner in a thirty-second `gh run list` loop
-for as long as Build takes, called once by Android and once by Worker on every
-push to `main`. Build on `main` queues for a self-hosted runner that is one
-machine: run 616 was created at 18:19:53 and started at 18:31:32, behind run 615,
-and both waiters sat 25 minutes on GitHub's runners for it.
-
-The 110-minute deadline is the real fault. `ci.yml` says GitHub fails a queued
-job after 24 hours, so a push made while the machine is off keeps Build queued
-for hours, while Android and Worker give up and go red on that commit. When
-Build later passes, the two stay red, and `/release` refuses the commit until
-somebody re-runs them by hand.
-
-**Fix:** trigger both on Build finishing, and delete the waiter.
-
-```yaml
-on:
-  workflow_run:
-    workflows: [Build]
-    types: [completed]
-    branches: [main]
-
-jobs:
-  build:
-    if: github.event.workflow_run.conclusion == 'success'
-    steps:
-      - uses: actions/checkout@...
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-```
-
-The run starts the moment Build ends, however late, and holds no runner until
-then. `gh run list --commit` still finds it, since a `workflow_run` run's
-`head_sha` is the built commit; the concurrency groups move from `github.sha`,
-which would be the branch tip, to `github.event.workflow_run.head_sha`. Android
-keeps its `pull_request` trigger beside it, checking out
-`github.event.workflow_run.head_sha || github.sha`.
-
-What it costs: `workflow_run` takes no `paths:` filter, so `worker.yml` checks
-its list in a first step (`git diff --name-only` between the built commit and its
-parent against the same globs) and skips the deploy when nothing matched. A
-manual dispatch keeps working as it does now.
-
 ## 3. The Windows-bash dance is written three times (Low)
 
 `ci.yml` and `coverage.yml` each carry a Linux step and a Windows step running

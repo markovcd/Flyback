@@ -5,8 +5,9 @@
 # image and would grow it for every push. So this is the only place the project
 # is compiled in CI, and /release refuses a commit it has not passed on.
 #
-# A push to main waits for Build to pass on its commit first, so a red main is
-# not built.
+# On main it runs when Build passes on a push, however late, so a red main is
+# not built. The run is named for the built commit, which is how /release finds
+# it: a workflow_run run belongs to the branch's tip, not the commit it built.
 #
 # It runs on GitHub's machines for every ref, `main` included: the self-hosted
 # runner builds in Docker, and a workload install would leave state on it. It
@@ -18,8 +19,12 @@
 
 name: Android
 
+run-name: Android on ${{ github.event.workflow_run.head_sha || github.sha }}
+
 on:
-  push:
+  workflow_run:
+    workflows: [Build]
+    types: [completed]
     branches: [main]
   pull_request:
   workflow_dispatch:
@@ -30,24 +35,23 @@ permissions:
 # On main every push runs to its verdict, in a group of its own commit, as Build
 # does: /release looks for this run on the exact commit.
 concurrency:
-  group: android-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  group: android-${{ github.event.workflow_run.head_sha || (github.ref == 'refs/heads/main' && github.sha) || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_run' && github.ref != 'refs/heads/main' }}
 
 jobs:
-  gate:
-    if: github.event_name == 'push'
-    permissions:
-      actions: read
-    uses: ./.github/workflows/wait-for-build.yml
-
   build:
-    needs: gate
-    if: ${{ !cancelled() && (needs.gate.result == 'success' || needs.gate.result == 'skipped') }}
+    # Only a push to this repository's main that passed: a fork's pull request
+    # can have a branch called main too.
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     # A run is about two minutes; the default of six hours is what a hang costs.
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:

@@ -51,11 +51,14 @@ Each of these ends the run, says which one and why, and changes no file.
   being happy. Push and wait for it.
 
 - **The Android build has not passed on this commit.** `android.yml` is outside
-  the gate (ADR-0184) and runs on every push to `main`. Same rule as the gate: a
-  red run refuses, and so does no run.
+  the gate (ADR-0184) and runs on `main` when Build passes on a push. Same rule
+  as the gate: a red run refuses, and so does no run. The run is found by its
+  name, since GitHub files a `workflow_run` run under the branch's tip rather
+  than the commit it built:
 
   ```bash
-  gh run list --workflow=android.yml --commit "$(git rev-parse HEAD)" --json conclusion,status
+  gh run list --workflow=android.yml --limit 50 --json displayTitle,conclusion,status \
+    --jq "map(select(.displayTitle == \"Android on $(git rev-parse HEAD)\"))"
   ```
 
 - **A locked restore fails.** The gate restores with `--locked-mode`, so a release
