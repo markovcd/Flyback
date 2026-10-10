@@ -62,6 +62,17 @@
   </ItemGroup>
 
   <!--
+    Built first and never loaded, as the web viewer: the browser scenarios serve it from
+    the folder named here, beside the viewer, as the preset site does.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Flyback.Editor.Web\Flyback.Editor.Web.csproj"
+                      ReferenceOutputAssembly="false"
+                      SkipGetTargetFrameworkProperties="true" />
+    <AssemblyMetadata Include="WebEditor" Value="$(MSBuildThisFileDirectory)..\..\src\Flyback.Editor.Web\bin\$(Configuration)\net10.0" />
+  </ItemGroup>
+
+  <!--
     Every shipped plugin, laid out under plugins\ the way an install has them,
     so PluginHost.Load() finds them. Platform ones included on every system, as
     Flyback.Plugins.Tests does: a scenario that needs one skips where it cannot work.

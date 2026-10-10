@@ -89,12 +89,28 @@ COPY --from=worker /tested /tmp/worker-tested
 #
 # The wasm-tools workload links Skia into the web editor the preset site builds
 # beside itself (ADR-0162), and its Emscripten runs on Python.
+#
+# libnss3 and unzip are for the headless Chromium below.
 RUN apt-get update \
  && apt-get install --yes --no-install-recommends libfontconfig1 libx11-6 ffmpeg \
       libegl1 libegl-mesa0 libgl1-mesa-dri libopengl0 nodejs python3 jackd2 \
-      gnome-keyring libsecret-tools dbus \
+      gnome-keyring libsecret-tools dbus libnss3 unzip \
  && rm -rf /var/lib/apt/lists/* \
  && dotnet workload install wasm-tools
+
+# Chrome for Testing's headless shell: the specs open the web viewer and the web
+# editor in it, as a visitor's browser would. Ubuntu's chromium is a snap and does
+# not run in a container, so this is Google's build, pinned by version and hash as
+# an action is pinned to a commit. To move it, take the version Puppeteer's
+# src/revisions.ts names, and the new zip's sha256sum.
+ARG CHROME_VERSION=155.0.8059.39
+ARG CHROME_SHA256=39dcb8c46550632a3d911850ab3b8af840b4e3f6d8622faa2018eb8756278786
+RUN curl --fail --silent --show-error --location --output /tmp/chrome.zip \
+      "https://storage.googleapis.com/chrome-for-testing-public/${CHROME_VERSION}/linux64/chrome-headless-shell-linux64.zip" \
+ && echo "${CHROME_SHA256}  /tmp/chrome.zip" | sha256sum --check --quiet \
+ && unzip -q /tmp/chrome.zip -d /opt \
+ && rm /tmp/chrome.zip \
+ && ln -s /opt/chrome-headless-shell-linux64/chrome-headless-shell /usr/local/bin/chrome-headless-shell
 
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_NOLOGO=1

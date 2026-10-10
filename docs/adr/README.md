@@ -202,6 +202,7 @@ context, decision, consequences.
 | [0088](0088-a-release-installs-itself-at-the-next-start.md) | A release installs itself at the next start, if its signature says it is ours *(user-directed)* |
 | [0127](0127-the-person-chooses-what-opens-a-flyback-file.md) | The person chooses what opens a Flyback file *(user-directed)* |
 | [0120](0120-every-change-passes-the-gate-a-release-passes.md) | Every change passes the gate a release passes |
+| [0193](0193-the-pages-are-checked-in-a-headless-chromium-the-gate-carries.md) | The pages are checked in a headless Chromium the gate carries |
 | [0094](0094-a-run-says-what-it-played-and-nothing-about-who-played-it.md) | A run says what it played, and nothing about who played it *(user-directed; two more events and a wait at the end added by [0103](0103-a-run-says-how-it-ended-in-bands.md))* |
 | [0103](0103-a-run-says-how-it-ended-in-bands.md) | A run says how it ended, in bands *(user-directed; the modules picked and more of the editor added 2026-09-28)* |
 | [0047](0047-the-agent-may-listen-where-the-model-can.md) | The agent gets an ear, which is a second model *(user-directed)* |

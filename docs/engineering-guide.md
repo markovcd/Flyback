@@ -622,7 +622,8 @@ docker build --target gate .
 The second is the truth ([0120](adr/0120-every-change-passes-the-gate-a-release-passes.md)).
 The first runs against whatever the machine happens to have, and the tests that
 need something missing skip rather than fail — the headless UI tests want a font
-stack to rasterize with, the recording tests want ffmpeg on `PATH` — so a local
+stack to rasterize with, the recording tests want ffmpeg on `PATH`, the browser
+scenarios want a Chromium (`FLYBACK_CHROMIUM`, or one on `PATH`) — so a local
 run can be green about code it never ran. The Dockerfile carries both, which is
 why CI builds it rather than installing an SDK.
 
@@ -1015,7 +1016,10 @@ with `flyback-cli render` and plays through the editor's sound engine,
 `KeyboardSteps` plays a stand-in keyboard through the editor's MIDI hub,
 `CanvasEditingSteps`, `UnsavedWorkSteps` and `TransportSteps` press keys, answer
 questions and move the seek bar in the editor's own window, headless, `ViewerSteps`
-plays a patch through `flyback-viewer`'s own arguments and window, and `CliSteps` runs `flyback-cli` on files. They
+plays a patch through `flyback-viewer`'s own arguments and window, `BrowserSteps` opens the
+web viewer and the web editor in a headless Chromium and drives them through `window.flyback`
+and a finger ([0193](adr/0193-the-pages-are-checked-in-a-headless-chromium-the-gate-carries.md)),
+and `CliSteps` runs `flyback-cli` on files. They
 share a fresh `PatchContext`, `Session`, `Editor` and `ViewerRun` per scenario, and the
 two windows one headless UI thread (`Headless`). A step drives
 the program the way somebody would; a scenario that composes services by hand

@@ -93,18 +93,6 @@ Plugins.Tests.
 
 ## 10. What has no test at all (Low to Medium)
 
-- The web shells: `src/Flyback.Editor.Web` (656 code lines) and
-  `src/Flyback.Viewer.Web` (761) are named by no test, and `wwwroot/*.js`
-  (`main.js`, `speakers.js`, `gl.js`, `session.js`, `tap.js`, `microphone.js`)
-  have no JavaScript tests; the only vitest is `worker/`. `hear.mjs` reaches
-  the viewer's sound and nothing else. A vitest file for the pure parts of
-  `session.js` and `tap.js`, run by the gate as the Worker's are, and one
-  `hear.mjs` scenario that feeds a line-in buffer. Each shell's `main.js` runs
-  only in a browser: the editor's starts Avalonia.Browser, which needs a DOM, so
-  the page scenarios drive the desktop editor headless and `window.flyback` is
-  reached by nothing, and the viewer's wake lock, sizes and landscape are text
-  checks (`Site.Tests/ViewerScriptTests`). A headless Chromium in the gate image
-  would reach both.
 - Android: `Flyback.Editor.Android` and `Flyback.Plugins.AndroidIO` are
   `Build="false"` in the solution, referenced by no test, and `android.yml`
   builds an APK and tests nothing. The declaration theories
