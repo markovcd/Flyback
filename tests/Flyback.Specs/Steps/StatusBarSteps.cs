@@ -44,6 +44,9 @@ public sealed class StatusBarSteps(EditorDriver editor) : IDisposable
     [Then("the status bar says nothing of how fast the sound renders")]
     public void ThenItSaysNothingOfTheSpeed() => editor.StatusCount.ShouldNotContain("sound renders at");
 
+    [Then("the status bar says the sound plays through {string}")]
+    public void ThenItNamesTheBackend(string backend) => editor.StatusCount.ShouldEndWith($"   |   {backend}");
+
     [Then("the status bar says nothing of oversampling")]
     public void ThenItSaysNothingOfOversampling() => editor.StatusCount.ShouldNotContain("oversampl");
 

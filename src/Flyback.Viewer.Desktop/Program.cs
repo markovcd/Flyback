@@ -96,17 +96,18 @@ internal static class Program
             }
         }
 
-        var device = Device(options, settings, plugins);
+        var sound = Speakers(options, settings, plugins);
 
         ViewerApp.Launch = new ViewerLaunch(
             opened,
-            device,
+            sound?.Device,
             options with { Title = options.Title ?? $"Flyback Viewer — {name}" },
             settings.Takeover)
         {
             Instruments = plugins.PreferredMidiInput,
             Plugins = plugins,
             Settings = settings,
+            Output = sound?.Output,
         };
 
         try
@@ -140,8 +141,8 @@ internal static class Program
         }
     }
 
-    /// <summary>The device to play through, or null where none was asked for or none could be had.</summary>
-    private static Plugins.Audio.IAudioDevice? Device(ViewerOptions options, OutputSettings settings, PluginCatalog plugins)
+    /// <summary>The device to play through and its backend, or null where none was asked for or none could be had.</summary>
+    private static AudioSetup? Speakers(ViewerOptions options, OutputSettings settings, PluginCatalog plugins)
     {
         if (options.NoAudio) return null;
 
@@ -149,7 +150,7 @@ internal static class Program
 
         if (setup.Failure is { } failure) Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: no sound — {failure}");
 
-        if (setup.Output is not null) return setup.Device;
+        if (setup.Output is not null) return setup;
 
         setup.Device.Dispose();
 

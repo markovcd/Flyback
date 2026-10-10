@@ -177,6 +177,9 @@ internal sealed class Playback
     /// <summary>How many times real time the sound renders at lately, or 0 while nothing is measured.</summary>
     public double SoundSpeed => audio.Speed;
 
+    /// <summary>What the sound plays through, or null where nothing can play.</summary>
+    public string? SoundBackend => audio.Backend;
+
     /// <summary>How long the open patch plays for, in seconds.</summary>
     public double Length => editor.History.Patch.Lasts;
 
@@ -209,7 +212,7 @@ internal sealed class Playback
 
         if (audio.IsRunning) SetAudioEnabled(false);
 
-        if (!audio.Use(next.Device))
+        if (!audio.Use(next))
         {
             next.Device.Dispose();
             report.Say("That device plays at another rate, so it is used from the next time Flyback starts.");

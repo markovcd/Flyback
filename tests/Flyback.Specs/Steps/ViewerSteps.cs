@@ -22,6 +22,9 @@ public sealed class ViewerSteps(ViewerRun viewer)
     [When("the viewer plays it with {string}")]
     public void WhenPlayedWith(string flags) => viewer.Play(flags.Split(' '));
 
+    [When("the viewer plays it through {string} with {string}")]
+    public void WhenPlayedThrough(string backend, string flags) => viewer.PlayThrough(backend, flags.Split(' '));
+
     [When("the viewer's picture is tapped")]
     public void WhenTapped() => viewer.TapPicture();
 
@@ -40,6 +43,15 @@ public sealed class ViewerSteps(ViewerRun viewer)
 
     [Then("the viewer's report says there is no sound")]
     public void ThenReportNoSound() => viewer.Report.ShouldContain("sound: none");
+
+    [Then("the viewer's report says the sound played through {string}")]
+    public void ThenReportBackend(string backend) => viewer.Report.ShouldContain($"sound: {backend}");
+
+    [Then("the viewer's picture says the sound plays through {string}")]
+    public void ThenItNamesTheBackend(string backend) => viewer.Stats.ShouldNotBeNull("nothing is showing").ShouldContain($"CPU · {backend} · t ");
+
+    [Then("the viewer's picture names no sound backend")]
+    public void ThenItNamesNoBackend() => viewer.Stats.ShouldNotBeNull("nothing is showing").ShouldContain("CPU · t ");
 
     [Then("the viewer is paused")]
     public void ThenPaused() => viewer.Paused.ShouldBe(true);

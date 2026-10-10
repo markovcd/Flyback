@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json.Nodes;
 using Flyback.Editor.Canvas;
+using Flyback.Ui.Audio;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Files;
 using Flyback.Editor.Gallery;
@@ -39,6 +40,7 @@ internal static partial class PageExports
             ["wires"] = patch.Connections.Count,
             ["backend"] = preview.Backend.ToString(),
             ["renderer"] = preview.Renderer,
+            ["soundBackend"] = Get<IAudioEngine>().Backend,
             ["canvasSays"] = (preview.Child as CanvasPreview)?.Said,
             ["framesPerSecond"] = Math.Round(preview.FramesPerSecond, 1),
             ["frameMilliseconds"] = Math.Round(preview.FrameMilliseconds, 2),

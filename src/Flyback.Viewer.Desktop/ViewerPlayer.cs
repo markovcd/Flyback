@@ -321,6 +321,7 @@ internal sealed class ViewerPlayer : IDisposable
             preview?.Frames ?? 0,
             preview?.SlowestFrameMilliseconds ?? 0,
             Sounding,
+            Audio.Backend,
             Audio.Oversample,
             Audio.Speed,
             Audio.Timing);

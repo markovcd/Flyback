@@ -22,6 +22,9 @@ internal interface IAudioEngine
     /// <summary>The rate the sound plays at, which a recording has to match.</summary>
     int SampleRate { get; }
 
+    /// <summary>What the sound plays through, as its backend names itself, or null where nothing can play.</summary>
+    string? Backend { get; }
+
     /// <summary>Where a recording listens, while one is running.</summary>
     IAudioSink? Capture { get; set; }
 
@@ -56,8 +59,8 @@ internal interface IAudioEngine
 
     void Stop();
 
-    /// <summary>Plays through <paramref name="next"/> from here on, and says whether it was taken.</summary>
-    bool Use(IAudioDevice next);
+    /// <summary>Plays through <paramref name="next"/>'s device from here on, and says whether it was taken.</summary>
+    bool Use(AudioSetup next);
 
     /// <summary>Takes the sound, and what its program remembers, back to nought.</summary>
     void Rewind();

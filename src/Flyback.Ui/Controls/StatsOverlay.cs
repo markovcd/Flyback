@@ -11,7 +11,7 @@ namespace Flyback.Ui.Controls;
 /// <summary>
 /// A line in the corner of a full-screen picture saying how it is being drawn: frames a
 /// second, what a frame costs, the sound's oversampling, the size,
-/// the renderer and the clock.
+/// the renderer, the sound's backend and the clock.
 /// </summary>
 /// <remarks>
 /// Hidden until asked for, and read only while shown, so a picture nobody is measuring
@@ -86,13 +86,15 @@ public sealed class StatsOverlay : Border
             heard() ? sound.Oversample : null,
             preview.Resolution,
             preview.Renderer,
+            sound.Backend,
             preview.Time);
 
     /// <summary>The line, from what was measured.</summary>
     /// <param name="oversample">The sound's oversampling, or null for a patch with no sound.</param>
     /// <param name="renderer">What draws the picture, or null while a graphics context is still coming up.</param>
-    public static string Line(double fps, double milliseconds, int? oversample, PixelSize size, string? renderer, double seconds) =>
+    /// <param name="backend">What the sound plays through, or null where nothing can play.</param>
+    public static string Line(double fps, double milliseconds, int? oversample, PixelSize size, string? renderer, string? backend, double seconds) =>
         string.Create(
             CultureInfo.InvariantCulture,
-            $"{fps:0} fps · {milliseconds:0.0} ms · {(oversample is { } factor ? OversamplingText.Of(factor) + " · " : "")}{size.Width}×{size.Height} · {(renderer is null ? "" : renderer + " · ")}t {StatusClock.Text(seconds)}");
+            $"{fps:0} fps · {milliseconds:0.0} ms · {(oversample is { } factor ? OversamplingText.Of(factor) + " · " : "")}{size.Width}×{size.Height} · {(renderer is null ? "" : renderer + " · ")}{(backend is null ? "" : backend + " · ")}t {StatusClock.Text(seconds)}");
 }

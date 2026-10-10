@@ -11,7 +11,10 @@ internal sealed class PageSpeakers : IAudioOutput
 {
     public string Id => "page";
 
-    public string Name => "This page";
+    /// <summary>The browser's API the page's sound plays through.</summary>
+    public const string Named = "Web Audio";
+
+    public string Name => Named;
 
     public int Priority => 0;
 

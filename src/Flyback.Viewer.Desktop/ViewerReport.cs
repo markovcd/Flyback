@@ -10,6 +10,7 @@ namespace Flyback.Viewer.Desktop;
 /// <param name="Frames">Frames put on screen.</param>
 /// <param name="SlowestFrameMilliseconds">The longest a frame took to draw.</param>
 /// <param name="Sound">Whether a sound device ran.</param>
+/// <param name="SoundBackend">What the sound played through, or null where no backend was named.</param>
 /// <param name="Oversample">How many times the output rate the sound was evaluated at.</param>
 /// <param name="Speed">How many times real time the sound rendered at lately, or 0 where nothing was measured.</param>
 /// <param name="Timing">Buffers of sound timed, and how many ran late.</param>
@@ -20,6 +21,7 @@ internal sealed record ViewerReport(
     long Frames,
     double SlowestFrameMilliseconds,
     bool Sound,
+    string? SoundBackend,
     int Oversample,
     double Speed,
     SoundTiming Timing)
@@ -50,6 +52,8 @@ internal sealed record ViewerReport(
             yield return "sound: none";
             yield break;
         }
+
+        if (SoundBackend is { } backend) yield return $"sound: {backend}";
 
         yield return $"sound-oversample: {Oversample}";
         yield return Line("sound-speed", Speed, "0.0");

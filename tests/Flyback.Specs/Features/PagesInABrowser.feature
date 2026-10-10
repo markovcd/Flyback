@@ -42,7 +42,7 @@ Feature: The web viewer and the web editor work in a browser
 
   Scenario: The web editor starts in a browser on the preset its address names
     Given the web editor is open in a browser on the preset "Sidebands"
-    Then the web editor says it started on "Sidebands", drawn with WebGL
+    Then the web editor says it started on "Sidebands", drawn with WebGL and heard through Web Audio
     And the web editor's text has "One sine bending another's phase"
 
   Scenario: A script edits the patch in the web editor in a browser

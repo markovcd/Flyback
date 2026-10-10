@@ -146,6 +146,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
         // Which renderer produced the rate is part of what it means, so it is
         // said alongside — what is actually drawing, not what was asked for.
         var renderer = preview.Renderer is { } name ? $"   |   {name}" : "";
+        var backend = playback.SoundBackend is { } through ? $"   |   {through}" : "";
 
         // Nothing is said of the sound of a patch that has none.
         var sound = playback.HasSound ? $"{OversamplingText.Of(playback.Oversample)}   |   " : "";
@@ -159,7 +160,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
 
         status.Text = string.Create(
             CultureInfo.InvariantCulture,
-            $"{sound}{preview.FramesPerSecond:0} fps{renderer}");
+            $"{sound}{preview.FramesPerSecond:0} fps{renderer}{backend}");
     }
 
     private static Button Glyph(string name, Control glyph, string tip)

@@ -33,6 +33,8 @@ internal sealed partial class PageSound : UnplayedSound
     private (Guid Node, float Window, ChartKind Chart)[] charted = [];
     private int watching;
 
+    public override string? Backend => PageSpeakers.Named;
+
     public override double Time => JsTime();
 
     public override float Aspect

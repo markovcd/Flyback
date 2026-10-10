@@ -47,6 +47,7 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
 
     /// <summary>What plays, which <see cref="Use"/> may replace while nothing is playing.</summary>
     private IAudioDevice current = sound.Device;
+    private string? backend = sound.Output?.Name;
     private State activeState = new(CompiledPatch.Silent, null, LiveValues.None, new AudioRenderer(sound.Device.SampleRate));
     private IAudioSink? capture;
 
@@ -102,6 +103,8 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
 
     /// <summary>How many ops the sound's program runs for each sample.</summary>
     public int Ops => Volatile.Read(ref activeState).Program.Ops.Length;
+
+    public string? Backend => backend;
 
     /// <summary>The rate the device actually opened at, which a recording has to match.</summary>
     public int SampleRate => current.SampleRate;
@@ -175,7 +178,7 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
     public void Stop() => current.Stop();
 
     /// <summary>
-    /// Plays through <paramref name="next"/> from here on, and lets the old device go.
+    /// Plays through <paramref name="next"/>'s device from here on, and lets the old device go.
     /// Everything else — the program, its memory, the cursor — carries on as it was,
     /// so the sound picks up where it left off on another device (ADR-0085).
     /// </summary>
@@ -187,13 +190,14 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
     /// for the caller to dispose.
     /// </remarks>
     /// <returns>Whether <paramref name="next"/> was taken.</returns>
-    public bool Use(IAudioDevice next)
+    public bool Use(AudioSetup next)
     {
         if (current.IsRunning) throw new InvalidOperationException("Stop the sound before changing its device.");
-        if (next.SampleRate != current.SampleRate) return false;
+        if (next.Device.SampleRate != current.SampleRate) return false;
 
         current.Dispose();
-        current = next;
+        current = next.Device;
+        backend = next.Output?.Name;
 
         return true;
     }

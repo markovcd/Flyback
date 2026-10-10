@@ -20,6 +20,8 @@ internal abstract class UnplayedSound : IAudioEngine
 
     public int SampleRate => GlobalConstants.SampleRate;
 
+    public virtual string? Backend => null;
+
     public IAudioSink? Capture { get; set; }
 
     public abstract double Time { get; }
@@ -42,7 +44,7 @@ internal abstract class UnplayedSound : IAudioEngine
 
     public virtual void Stop() => IsRunning = false;
 
-    public bool Use(IAudioDevice next) => false;
+    public bool Use(AudioSetup next) => false;
 
     public void Rewind() => SeekTo(0);
 

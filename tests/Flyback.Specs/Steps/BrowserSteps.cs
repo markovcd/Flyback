@@ -196,7 +196,7 @@ public sealed class BrowserSteps(PatchContext context, IUnitTestRuntimeProvider 
         ((bool?)status["microphone"]!["listening"]).ShouldBe(false);
     }
 
-    [Then("the web editor says it started on {string}, drawn with WebGL")]
+    [Then("the web editor says it started on {string}, drawn with WebGL and heard through Web Audio")]
     public void ThenTheEditorStarted(string preset)
     {
         var state = Page.Evaluate("flyback.state()")!;
@@ -204,6 +204,7 @@ public sealed class BrowserSteps(PatchContext context, IUnitTestRuntimeProvider 
         ((bool?)state["started"]).ShouldBe(true);
         ((string?)state["preset"]).ShouldBe(preset);
         ((string?)state["renderer"]).ShouldBe("WebGL");
+        ((string?)state["soundBackend"]).ShouldBe("Web Audio");
         ((int?)state["modules"]).ShouldNotBeNull().ShouldBeGreaterThan(0);
     }
 

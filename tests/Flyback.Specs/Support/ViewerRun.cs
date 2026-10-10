@@ -42,7 +42,11 @@ public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDispos
     /// <summary>Plays the patch as <c>flyback-viewer patch.fbk</c> with <paramref name="arguments"/> after it, with no sound device.</summary>
     public void Play(params string[] arguments) => Play(null, arguments);
 
-    private void Play(IAudioDevice? device, params string[] arguments)
+    /// <summary>Plays the patch on a device that runs without a sound card, from a backend called <paramref name="backend"/>.</summary>
+    public void PlayThrough(string backend, params string[] arguments) =>
+        Play(new SilentAudioDevice(), arguments, new NamedSoundOutput(backend));
+
+    private void Play(IAudioDevice? device, string[] arguments, IAudioOutput? output = null)
     {
         var path = Path.Combine(folder.FullName, "patch.fbk");
         File.WriteAllText(path, PatchIO.ToJson(context.Patch));
@@ -62,7 +66,7 @@ public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDispos
 
         Run(() =>
         {
-            window = ViewerServices.Window(new ViewerLaunch(opened, device, options) { Input = Input });
+            window = ViewerServices.Window(new ViewerLaunch(opened, device, options) { Input = Input, Output = output });
             window.Show();
             Settle();
         });

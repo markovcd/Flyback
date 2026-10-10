@@ -458,7 +458,7 @@ public class AudioEngineTests
         for (var i = 0; i < 10; i++) speakers.Pump();
 
         engine.Stop();
-        engine.Use(headphones).ShouldBeTrue();
+        engine.Use(new AudioSetup(headphones)).ShouldBeTrue();
         engine.Start();
 
         headphones.Pump().ShouldBe(expected);
@@ -473,7 +473,7 @@ public class AudioEngineTests
 
         engine.Start();
 
-        Should.Throw<InvalidOperationException>(() => engine.Use(other));
+        Should.Throw<InvalidOperationException>(() => engine.Use(new AudioSetup(other)));
     }
 
     /// <summary>
@@ -487,7 +487,7 @@ public class AudioEngineTests
         using var engine = new AudioEngine(new AudioSetup(device));
         using var slower = new SilentAudioDevice(GlobalConstants.SampleRate / 2);
 
-        engine.Use(slower).ShouldBeFalse();
+        engine.Use(new AudioSetup(slower)).ShouldBeFalse();
 
         engine.Start();
         device.IsRunning.ShouldBeTrue();

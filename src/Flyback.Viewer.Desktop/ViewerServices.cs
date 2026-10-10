@@ -52,7 +52,7 @@ internal static class ViewerServices
         services.AddSingleton(launch.Plugins);
 
         // A run with no sound plays nothing through a silent device.
-        services.AddSingleton(new AudioSetup(launch.Device ?? new SilentAudioDevice()));
+        services.AddSingleton(launch.Device is { } device ? new AudioSetup(device, launch.Output) : new AudioSetup(new SilentAudioDevice()));
 
         // A surface only for a picture there is a window to show, since one in the tree renders on a timer.
         services.AddSingleton(_ => launch.Pictured ? new PreviewHost() : null!);

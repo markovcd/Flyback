@@ -23,6 +23,9 @@ internal sealed record ViewerLaunch(
     /// <summary>The settings the run plays under, as the file and the command line left them.</summary>
     public OutputSettings Settings { get; init; } = new();
 
+    /// <summary>The backend <see cref="Device"/> came from, which the stats line and the report name.</summary>
+    public IAudioOutput? Output { get; init; }
+
     /// <summary>A sound input of the run's own for a Line In, or null for the plugins' preferred.</summary>
     public IAudioInput? Input { get; init; }
 
