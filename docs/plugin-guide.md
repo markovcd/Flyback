@@ -53,12 +53,12 @@ Four things matter, and each of them fixes a specific failure. This is the shape
     <EnableDynamicLoading>true</EnableDynamicLoading>
 
     <!-- The folder Flyback is installed in: the one holding the executable. -->
-    <Flyback>C:\Path\To\Flyback</Flyback>
+    <Flyback>C:/Path/To/Flyback</Flyback>
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="Flyback.Plugins" HintPath="$(Flyback)\Flyback.Plugins.dll" Private="false" />
-    <Reference Include="Flyback.Core" HintPath="$(Flyback)\Flyback.Core.dll" Private="false" />
+    <Reference Include="Flyback.Plugins" HintPath="$(Flyback)/Flyback.Plugins.dll" Private="false" />
+    <Reference Include="Flyback.Core" HintPath="$(Flyback)/Flyback.Core.dll" Private="false" />
   </ItemGroup>
 
 </Project>
@@ -106,7 +106,7 @@ The types live in three namespaces:
 | Namespace | What is in it |
 |---|---|
 | `Flyback.Plugins` | `IFlybackPlugin`, `IPluginRegistry`, `PluginInfo`, `FlybackModuleAttribute`; `Flyback.Plugins.Audio` and `Flyback.Plugins.Midi` hold the backend interfaces |
-| `Flyback.Core.Graph` | `NodeDef`, `PortSpec`, `PortKind`, `EmitFn`, `EmitContext`, `ModuleProvider`, `ModuleSinks`, `ModuleSkin`, `Swatch`, `NodeExtra`, `ExtraField`, `ExtraState`, `SocketHelp`, `NodeCatalog`, `ModuleCatalog`, `PatchBuilder`, `PatchPreset`, `PresetKind`, `PresetFiles`, `Patch` |
+| `Flyback.Core.Graph` | `NodeDef`, `PortSpec`, `PortKind`, `EmitFn`, `EmitContext`, `ModuleProvider`, `ModuleSinks`, `ModuleSkin`, `Swatch`, `NodeExtra`, `ExtraField`, `ExtraState`, `NodeCatalog`, `ModuleCatalog`, `PatchBuilder`, `PatchPreset`, `PresetKind`, `PresetFiles`, `Patch` |
 | `Flyback.Core.Compile` | `Emitter`, `Slot`, `OpCode` |
 
 ```csharp
@@ -212,7 +212,7 @@ Every type id must begin with your provider's id and a dot. That single rule doe
 | Field | What it does |
 |---|---|
 | `Help` | Set with `{ Help = … }`: what this one socket is for, in a sentence or two that stand on their own. The inspector shows it as the tip on the socket's row, outputs included, and the assistant reads it when it looks the module up. What the module is for, and how its sockets work together, goes in the `NodeDef`'s description, which heads the inspector. Give every socket one; nothing checks that you did. |
-| `Standard` | Set with `{ Standard = true }` in place of `Help` where the socket means what its name means everywhere. Its help is then the standard for its name, the same words as on every other module. The standard inputs are `x`, `y`, `freq`, `phase`, `amp`, `bias`, `right`, `mix`, `resonance`, `attack`, `depth`, `seed`, `angle`, `t` and `gate length`; the standard outputs are `x`, `y`, `lfo`, `radius` and `distance`; any input marked `Domain` has one too. `SocketHelp.Inputs` and `SocketHelp.Outputs` hold the words. Read them before opting in: standard `freq` is "cycles for each unit of 'in'", which is wrong for a rings count or a filter's corner. There is no standard `cutoff`. A socket that asks for a name with no standard is a mistake in the plugin: the module is refused, and the refusal names the socket. |
+| `Standard` | Set with `{ Standard = true }` in place of `Help` where the socket means what its name means everywhere. Its help is then the standard for its name, the same words as on every other module, listed in [Standard help](#standard-help) below. Read them before opting in: standard `freq` is wrong for a rings count or a filter's corner, and standard `t` is a blend's position, not a clock. A socket that asks for a name with no standard is a mistake in the plugin: the module is refused, and the refusal names the socket. |
 | `Kind` | `Scalar`, `Color`, or `Any`. `Any` passes through whatever arrives, which is how one Expression works on both a tone and a picture. |
 | `Default`, `Min`, `Max` | The knob on the node, and the range the editor gives it. A `Color` input has no knob at all: a single number cannot hold a color, so it takes a wire only. On an output, `Min` and `Max` say what it puts out (`-1f, 1f` for a wave, `0f, 1f` for an envelope), and an Auto remap wired to it reads them. Left at the default −4 to 4, a socket has no range, and an Auto remap asks for plain numbers there. A `Color` socket is always 0 to 1. |
 | `Lenient` | Set with `{ Lenient = true }` on an input where a value past either end of the range still means something: a phase or a hue wraps round, a gate or a trigger reads a threshold. A wire swinging past any other input's range is drawn in orange and warned about. |
@@ -224,6 +224,37 @@ Every type id must begin with your provider's id and a dot. That single rule doe
 | `Swept` | True when the module supplies the domain this input is read under. Resolve it yourself with `EmitContext.Resolve`. |
 | `PatchOnly` | True when `Default` is a filler nobody should dial, kept only so the compiler has something to read while nothing is wired in. The editor draws no knob for it and says what the socket does instead. The Output's `left` is one. |
 
+### Standard help
+
+What `{ Standard = true }` fills in, by socket name. Any input marked `Domain` gets the domain line whatever it is called, and needs no `Standard`. There is no standard `cutoff`.
+
+| Input | Help |
+|---|---|
+| `x`, `y` | Where on the picture it is read: the pixel's own without a wire. A Geometry module in between moves, turns or bends it. |
+| `freq` | Cycles for each unit of 'in': hertz while it runs on Time. |
+| `phase` | Where in the cycle it starts. 1 is once round, so it wraps. |
+| `amp` | Multiplies what comes out, which swings -1 to 1 before it. |
+| `bias` | Added after 'amp', moving the whole output up or down. |
+| `right` | Carries 'left' when nothing is patched. |
+| `mix` | Dry against wet: 0 is a wire, 1 the effect alone. |
+| `resonance` | Peaks the corner, until it rings on a sharp edge. |
+| `attack` | How long the rise to full takes. |
+| `depth` | How far the sweep swings. |
+| `seed` | Which random run it takes. Give each module its own; two with the same seed move together. |
+| `angle` | In radians. |
+| `t` | How far along: 0 is all 'a', 1 is all 'b'. |
+| `gate length` | How much of each step the gate stays open. |
+| any `Domain` | What it runs across: Time without a wire, so it moves. A coordinate lays it across the screen instead. |
+
+| Output | Help |
+|---|---|
+| `x`, `y` | The moved coordinate. Patch it into the 'x' and 'y' of the pattern to be moved. |
+| `lfo` | The sweep itself, -1 to 1. It works on the picture too. |
+| `radius` | Distance from the center. |
+| `distance` | Negative inside, zero on the edge, positive outside. |
+
+`flyback-cli modules <type id>` prints the help each socket ended up with, which is the quickest check.
+
 ### What a module means to the speakers
 
 The speakers have no pixel. On the sound side Coordinates reads 0 for `x` and `y`, so a module that is a function of position alone, like Rings above, is silent there however it is wired. A module is heard in one of two ways:
@@ -232,6 +263,18 @@ The speakers have no pixel. On the sound side Coordinates reads 0 for `x` and `y
 - or a patch hears its picture through a Scan, which sweeps a loop round the image at an audible rate. A Scan centered on rings hears a constant; move its `x` off the center and it hears the rings.
 
 Say which in the description.
+
+An oscillator takes its phase from `em.Phase(domain, frequency, offset)` rather than multiplying the domain by the frequency. It accumulates, so turning the frequency glides the pitch instead of jumping the wave, and a long run stays exact. It answers 0 to 1, once round per cycle:
+
+```csharp
+new PortSpec("t", NormalledTo: NodeCatalog.Clock) { Domain = true },
+new PortSpec("freq", PortKind.Scalar, 220f, 0f, 20000f) { Standard = true, Knee = 0.02f },
+
+private static Slot[] Emit(Emitter em, EmitContext i) =>
+    [em.Unary(OpCode.Sin, em.Mul(em.Phase(i[0], i[1], em.Constant(0f)), MathF.Tau))];
+```
+
+On the picture, where there is no previous sample to accumulate from, `Phase` is the plain multiply.
 
 ### Which sink a module is for
 
@@ -612,17 +655,24 @@ public sealed class JackMidiInput : IMidiInput
 
 ## 9. Building and installing
 
-Drop your build output into a folder under `plugins/` beside the executable (assembly, dependencies and `.deps.json` together) and allow it. A folder copied in by hand is a stranger's code until somebody says yes to it, so a Release build loads it only once allowed, and only while its files are as they were then; a Debug build loads every folder. Allow it once per build:
+Drop your build output into a folder under `plugins/` beside the executable (assembly, dependencies and `.deps.json` together) and allow it. A folder copied in by hand is a stranger's code until somebody says yes to it, so a Release build loads it only once allowed, and only while its files are as they were then; a Debug build loads every folder. Allow it once per build.
+
+`flyback-cli` sits in the install folder beside the executable, and is not on the path unless you put it there. Below, `$FLYBACK` is that folder:
 
 ```bash
 dotnet build -c Release
+rm -rf "$FLYBACK/plugins/Flyback.Plugins.Yours"
 cp -r bin/Release/net10.0 "$FLYBACK/plugins/Flyback.Plugins.Yours"
-flyback-cli plugin allow plugins/Flyback.Plugins.Yours
-flyback-cli plugin list --json
-flyback-cli modules yours
+cd "$FLYBACK"
+./flyback-cli plugin allow plugins/Flyback.Plugins.Yours
+./flyback-cli plugin list --json
+./flyback-cli modules
+./flyback-cli modules yours.rings
 ```
 
-`plugin list` says which folders are allowed to load and why the others are not: `"standing": "allowed"` and `"loads": true` once allowed, `not-allowed` or `changed` with the file named and the command that fixes it otherwise. `flyback-cli modules` then lists your provider and its modules; `modules <type id>` prints one module's sockets, help, ranges and extras as the editor will show them.
+Remove the old folder first: copying over it keeps files the new build no longer has, and they count against the allow.
+
+`plugin list` says which folders are allowed to load and why the others are not: `"standing": "allowed"` and `"loads": true` once allowed, `not-allowed` or `changed` with the file named and the command that fixes it otherwise. `flyback-cli modules` then lists your provider among the others, with a count of its modules; `modules <type id>` prints one module's sockets, help, ranges and extras as the editor will show them.
 
 `plugin allow --secrets` lets the plugin register a secret store, which holds every assistant key typed from then on, and `plugin deny` takes the yes back. The yes is kept in the data folder, never in `plugins/`.
 
@@ -656,7 +706,7 @@ The package is a zip with a folder per system (`win`, `osx`, `linux`, or `any` f
 
 - its name, version, author and description, from `<Product>`, `<Version>`, `<Authors>` and `<Description>` in your project;
 - its tags, from an `AssemblyMetadata` item named `Tags`, split at commas and semicolons;
-- its preview, from a PNG or WebP of up to 1 MB embedded as `preview.png` or `preview.webp`;
+- its preview, from a PNG or WebP of up to 1 MB embedded as `preview.png` or `preview.webp`, which `flyback-cli render --preset "Pond" --at 1 --size 640x360 -o preview.png` makes from your own preset;
 - what it adds (modules, presets, a sound output, a MIDI input, an assistant, a secret store), from the `IPluginRegistry` methods your code calls;
 - its modules, by name, from its `FlybackModule` declarations;
 - what it reaches (the network, files, other programs, the registry, native code, code it loads while running), from what any assembly in the build names.
