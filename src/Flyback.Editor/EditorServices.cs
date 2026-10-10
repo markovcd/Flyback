@@ -225,6 +225,7 @@ internal static class EditorServices
         services.AddPart<TransportControls>();
         services.AddPart<FullScreenPreview>();
         services.AddPart<ShellLayout>();
+        services.AddSingleton<EditorReadout>();
 
         services.AddPart<EditorView>();
         services.AddPart<MainWindow>();

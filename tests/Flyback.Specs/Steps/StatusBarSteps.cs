@@ -33,6 +33,17 @@ public sealed class StatusBarSteps(EditorDriver editor) : IDisposable
         editor.SoundSpeed.ShouldBeGreaterThan(0, "the sound was never timed");
     }
 
+    [When("the speakers have played until the sound's program is in")]
+    public void WhenProgramIn()
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+
+        while (editor.Readout["soundRunsOn"] is null && DateTime.UtcNow < deadline)
+            if (speakers.IsRunning) speakers.Pump(Frames);
+
+        editor.Readout["soundRunsOn"].ShouldNotBeNull("the sound's program never arrived");
+    }
+
     [When("the speakers have played for {float} second(s)")]
     public void WhenPlayed(float seconds)
     {

@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -903,6 +904,9 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
 
     /// <summary>How many times real time the editor says the sound renders at, or 0 while it has not measured it.</summary>
     public double SoundSpeed => ReadWindow(_ => Service<Playback>().SoundSpeed);
+
+    /// <summary>What a script driving the editor is told of how it is doing.</summary>
+    public JsonObject Readout => ReadWindow(_ => Service<EditorReadout>().Read());
 
     /// <summary>What the status bar says the patch costs, written afresh.</summary>
     public string StatusCount => ReadWindow(open =>

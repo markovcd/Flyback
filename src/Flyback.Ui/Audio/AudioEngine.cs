@@ -78,6 +78,13 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
 
     public double Speed => current.IsRunning ? Volatile.Read(ref speed) : 0;
 
+    public string? RunsOn => Volatile.Read(ref activeState).Program switch
+    {
+        { Ops.Length: 0 } => null,
+        { Il: null } => "interpreter",
+        _ => "IL",
+    };
+
     /// <summary>
     /// How loud the speakers are turned down to, from 0 to 1, against what the patch
     /// made. Applied after the capture sink is written, so a recording keeps what the

@@ -33,10 +33,14 @@ playback; it also hangs and dies while a full test run has the machine loaded.
 
 A launch opens a preset and picks the interpreter from the intent:
 `adb shell am start -n app.flybackmodular.editor/crc64ce5bee3bb3e85030.MainActivity --es preset Sidebands --ez interpreted true`.
-The status bar's "sound renders at" is the only read-out of the sound's speed, and it shows
-only while IL plays.
+A broadcast asks the running editor how it is doing, and the answer is the JSON the web
+editor's `window.flyback.state()` gives, read by the same `EditorReadout`: the preset, the
+renderer and its rate, what the sound plays through, `soundRunsOn` (`IL` or `interpreter`),
+`soundSpeed` (0 until IL plays) and the status bar's last message:
+`adb shell am broadcast -a app.flybackmodular.editor.STATE -p app.flybackmodular.editor | sed -n 's/.*data="\(.*\)"$/\1/p'`.
+Only a sender holding `DUMP` reaches it, which adb's shell does and another app does not.
 
-Not yet checked on a device: MIDI, the dialogs (`WindowDialog`), the file pickers, the gallery's
+Not yet checked on a device: MIDI, the state broadcast (compiled against the bindings only), the dialogs (`WindowDialog`), the file pickers, the gallery's
 download from the preset site, and anything after a rotation.
 
 ### Speed on a phone
@@ -102,9 +106,8 @@ runtime costs rather than the phone. The engine's own leads are in the `performa
    that. The site's list of platforms changes in the same commit (`website` skill).
 9. **Driving it.** Test everything platform-free headless at a phone-sized window with
    `flyback-cli shot` (ADR-0166); only the GL context, the audio device and permissions need
-   an emulator over `adb`. The friction to remove first is a command that launches the
-   activity on a preset and returns `logcat` and the meters' readings, so a session can
-   confirm sound without ears.
+   an emulator over `adb`. An intent opens a preset, and the state broadcast says what plays
+   and how fast; what remains is a script that does both and waits for the sound to be timed.
 
 ## The order
 

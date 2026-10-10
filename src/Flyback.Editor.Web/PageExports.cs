@@ -1,11 +1,9 @@
 using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json.Nodes;
 using Flyback.Editor.Canvas;
-using Flyback.Ui.Audio;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Files;
 using Flyback.Editor.Gallery;
-using Flyback.Editor.Keys;
 using Flyback.Editor.Notices;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -28,27 +26,10 @@ internal static partial class PageExports
     {
         if (Provider is null) return new JsonObject { ["started"] = false }.ToJsonString();
 
-        var patch = Get<CanvasHistory>().Patch;
-        var preview = Get<PreviewHost>();
-        var said = Get<ReportLine>().History;
+        var state = Get<EditorReadout>().Read();
+        state["canvasSays"] = (Get<PreviewHost>().Child as CanvasPreview)?.Said;
 
-        return new JsonObject
-        {
-            ["started"] = true,
-            ["preset"] = Get<PresetSlot>().Showing?.Name,
-            ["modules"] = patch.Nodes.Count,
-            ["wires"] = patch.Connections.Count,
-            ["backend"] = preview.Backend.ToString(),
-            ["renderer"] = preview.Renderer,
-            ["soundBackend"] = Get<IAudioEngine>().Backend,
-            ["canvasSays"] = (preview.Child as CanvasPreview)?.Said,
-            ["framesPerSecond"] = Math.Round(preview.FramesPerSecond, 1),
-            ["frameMilliseconds"] = Math.Round(preview.FrameMilliseconds, 2),
-            ["time"] = Math.Round(preview.Time, 2),
-            ["said"] = said.Count > 0 ? said[^1] : null,
-            ["unsaved"] = Unsaved(),
-            ["keys"] = Get<ScreenKeys>().Shown,
-        }.ToJsonString();
+        return state.ToJsonString();
     }
 
     /// <summary>Whether leaving the page would lose an edit, which the page asks about before it goes.</summary>

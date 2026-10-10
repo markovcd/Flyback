@@ -13,9 +13,19 @@ namespace Flyback.Editor.Android;
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize)]
 public sealed class MainActivity : AvaloniaMainActivity
 {
+    private DeviceState? state;
+
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         DeviceRequest.Take(Intent);
         base.OnCreate(savedInstanceState);
+        state = DeviceState.Listen(this);
+    }
+
+    protected override void OnDestroy()
+    {
+        if (state is not null) UnregisterReceiver(state);
+        state = null;
+        base.OnDestroy();
     }
 }

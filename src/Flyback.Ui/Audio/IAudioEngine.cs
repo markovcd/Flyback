@@ -46,6 +46,9 @@ internal interface IAudioEngine
     /// <summary>How many times real time the sound renders at lately, or 0 while nothing is measured.</summary>
     double Speed { get; }
 
+    /// <summary>The backend the playing program runs on, <c>IL</c> or <c>interpreter</c>, or null where this engine does not say.</summary>
+    string? RunsOn => null;
+
     /// <summary>What a Line In hears, or null for silence. The page and a still have no microphone, so they keep the default.</summary>
     ILineInSource? Input { get => null; set { } }
 
