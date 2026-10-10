@@ -15,6 +15,7 @@
 
 ### Editor
 
+- In a page, a phone's keyboard shrinks the editor rather than covering the field being typed into, and an iPhone no longer zooms in on it.
 - On Windows, Flyback plays through an ASIO driver when you pick ASIO on the Sound tab; on Linux, through a running JACK server. Where more than one way of playing sound is installed, the Sound tab asks which one plays.
 - Over the editor's full-screen picture, Space pauses and F11 gives the window back, as in the viewer.
 - A saved patch holds only what was set, not what Flyback works out from it.

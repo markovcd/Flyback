@@ -225,6 +225,16 @@ public sealed class BrowserSteps(PatchContext context, IUnitTestRuntimeProvider 
     [Then("the web editor says the patch is edited")]
     public void ThenEdited() => ((bool?)Page.Evaluate("flyback.state()")!["unsaved"]).ShouldBe(true);
 
+    /// <summary>Chrome on Android resizes only what it is told to; with this, the page shrinks and a box low on the screen stays in view.</summary>
+    [Then("the page lets the phone's keyboard shrink it")]
+    public void ThenTheKeyboardShrinksThePage() =>
+        ((string)Page.Evaluate("document.querySelector('meta[name=viewport]').content")!).ShouldContain("interactive-widget=resizes-content");
+
+    /// <summary>Safari zooms in on a focused field smaller than 16px, and the page refuses the pinch that would zoom back out.</summary>
+    [Then("the field the editor types through is big enough that an iPhone does not zoom in on it")]
+    public void ThenTheInputIsBigEnough() =>
+        ((string)Page.Evaluate("getComputedStyle(document.querySelector('.avalonia-input-element')).fontSize")!).ShouldBe("16px");
+
     private JsonNode Status() => Page.Evaluate("flyback.status()")!;
 
     /// <summary>The middle of the element <paramref name="id"/> names, in the page's pixels.</summary>

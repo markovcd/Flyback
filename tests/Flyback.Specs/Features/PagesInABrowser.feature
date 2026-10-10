@@ -52,3 +52,8 @@ Feature: The web viewer and the web editor work in a browser
     Then the web editor tells the script nothing is wrong
     And the web editor's text has "freq: 330"
     And the web editor says the patch is edited
+
+  Scenario: A phone's keyboard shrinks the web editor's page rather than covering the field typed into
+    Given the web editor is open in a browser on the preset "Sidebands"
+    Then the page lets the phone's keyboard shrink it
+    And the field the editor types through is big enough that an iPhone does not zoom in on it

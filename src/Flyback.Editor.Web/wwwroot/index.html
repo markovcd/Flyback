@@ -2,13 +2,16 @@
 <html lang="en" data-preset-site="../">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- A phone's keyboard shrinks the page rather than covering the field being typed into. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
   <title>Flyback</title>
   <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
   <style>
     html, body, #out { margin: 0; height: 100%; background: #16181c; overflow: hidden; }
     /* Every finger is the editor's: no page pinch, scroll or pull-to-refresh. */
     html, body, #out { touch-action: none; overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
+    /* Avalonia types through a hidden input; below 16px an iPhone zooms in on it, and no pinch gets back out. */
+    .avalonia-input-element { font-size: 16px; }
   </style>
 </head>
 <body>

@@ -45,8 +45,7 @@ both. Nothing here was run; it is read from the code and from what iOS is known 
 
 ## Does it earn its place
 
-The web editor already runs on a phone, with the sound held back on an iPhone until the touch
-bug (touch-bugs.md item 4) is fixed. What a native app adds is sound without the browser's
+The web editor already runs on a phone, an iPhone included. What a native app adds is sound without the browser's
 gating, MIDI and Line In, files in the Files app, and an icon on the home screen. Settle that
 before spending a Mac runner on it.
 
