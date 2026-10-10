@@ -1,8 +1,9 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Flyback.Core;
 using Flyback.Core.Graph;
+using Flyback.Ui.Midi;
 
-namespace Flyback.Ui.Midi;
+namespace Flyback.Editor.Midi;
 
 /// <summary>
 /// The profiles Flyback knows: the ones it ships, and the ones in the user's

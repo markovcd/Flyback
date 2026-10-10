@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Flyback.Ui.Controls;
 using Shouldly;
+using Flyback.Editor.Windows;
 
 namespace Flyback.Editor.Tests.Windows;
 

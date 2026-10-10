@@ -1,13 +1,13 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Flyback.Engine.Graph;
-using Flyback.Ui.Midi;
 using Flyback.Core.Graph;
 using Flyback.Engine.Language;
 using Flyback.Editor.Canvas;
 using Xunit;
+using Flyback.Editor.Midi;
 
 namespace Flyback.Editor.Tests.Canvas;
 

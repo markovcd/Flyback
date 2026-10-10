@@ -6,9 +6,9 @@ using Flyback.Editor.Site;
 using Flyback.Editor.Windows;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
-using Flyback.Ui.Midi;
 using Flyback.Ui;
 using Flyback.Host;
+using Flyback.Editor.Midi;
 
 namespace Flyback.Editor;
 

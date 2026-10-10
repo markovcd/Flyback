@@ -3,8 +3,9 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Flyback.Core.Graph;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.Ui.Controls;
+namespace Flyback.Editor.Bars;
 
 /// <summary>
 /// How far through its length the patch is, as a line the width of the window. Drawn

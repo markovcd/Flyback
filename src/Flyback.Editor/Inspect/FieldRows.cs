@@ -10,6 +10,7 @@ using Flyback.Editor.Notices;
 using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
 using Flyback.Ui.Midi;
+using Flyback.Editor.Midi;
 
 namespace Flyback.Editor.Inspect;
 

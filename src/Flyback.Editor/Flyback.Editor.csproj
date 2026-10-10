@@ -89,6 +89,11 @@
     <EmbeddedResource Include="Controls\Flyback.xshd" />
   </ItemGroup>
 
+  <!-- One file per instrument Flyback knows by name: its tracks, its knobs and whether it conducts. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Midi\Instruments\*.json" LogicalName="instruments/%(Filename)%(Extension)" />
+  </ItemGroup>
+
   <ItemGroup>
     <!--
       The application key usage statistics are counted under, which is public and

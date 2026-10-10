@@ -13,7 +13,6 @@ using Flyback.Editor.Gallery;
 using Flyback.Editor.Inspect;
 using Flyback.Editor.Keys;
 using Flyback.Editor.Knobs;
-using Flyback.Ui.Midi;
 using Flyback.Editor.Notices;
 using Flyback.Editor.PluginPackages;
 using Flyback.Editor.Settings;
@@ -27,6 +26,7 @@ using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Flyback.Ui;
 using Flyback.Host;
+using Flyback.Editor.Midi;
 
 namespace Flyback.Editor;
 

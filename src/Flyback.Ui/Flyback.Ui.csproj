@@ -31,11 +31,6 @@
     <PackageReference Include="Avalonia.Win32" PrivateAssets="all" />
   </ItemGroup>
 
-  <!-- One file per instrument Flyback knows by name: its tracks, its knobs and whether it conducts. -->
-  <ItemGroup>
-    <EmbeddedResource Include="Instruments\*.json" LogicalName="instruments/%(Filename)%(Extension)" />
-  </ItemGroup>
-
   <ItemGroup>
     <InternalsVisibleTo Include="Flyback" />
     <InternalsVisibleTo Include="Flyback.Editor" />

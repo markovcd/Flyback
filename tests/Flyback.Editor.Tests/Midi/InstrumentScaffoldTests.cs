@@ -7,6 +7,7 @@ using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Shouldly;
 using Xunit;
+using Flyback.Editor.Midi;
 
 namespace Flyback.Editor.Tests.Midi;
 

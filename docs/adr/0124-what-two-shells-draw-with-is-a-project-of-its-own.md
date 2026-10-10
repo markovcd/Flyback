@@ -37,3 +37,11 @@ enum.
 to `Flyback.Host`, which holds what every host reads and carries no Avalonia
 ([0188](0188-what-every-host-reads-is-a-project-of-its-own.md)). Ui keeps what
 the two windows draw and sound with.
+
+## Amendment, 2026-10-10
+
+`InstrumentLibrary` and its shipped profiles, `PlayheadLine` and `PopupHoles` moved
+to the editor, which alone names them: the viewer plays an instrument but keeps no
+library of them, has no seek bar and draws no popups over a page's canvas. What
+remains in Ui is named by both windows or by Ui itself (`GraphicsDrivers` and
+`KeyCodes` reach the shells as extension methods).

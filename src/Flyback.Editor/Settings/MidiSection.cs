@@ -10,6 +10,7 @@ using Flyback.Ui.Controls;
 using Flyback.Ui.Midi;
 using Flyback.Ui;
 using Flyback.Host;
+using Flyback.Editor.Midi;
 
 namespace Flyback.Editor.Settings;
 
