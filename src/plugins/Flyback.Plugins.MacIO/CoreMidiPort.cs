@@ -33,7 +33,8 @@ internal sealed unsafe class CoreMidiPort : IMidiPort
 
     private const string PortName = "MIDI In";
 
-    private readonly MidiCallback deliver;
+    /// <summary>Cuts each packet's bytes into messages and delivers them.</summary>
+    private readonly MidiStream stream;
 
     /// <summary>Keeps this instance findable from the callback's context pointer.</summary>
     private GCHandle self;
@@ -55,7 +56,7 @@ internal sealed unsafe class CoreMidiPort : IMidiPort
         ArgumentNullException.ThrowIfNull(deliver);
 
         Id = id;
-        this.deliver = deliver;
+        stream = new MidiStream(deliver);
         source = device.Endpoint;
         self = GCHandle.Alloc(this);
 
@@ -171,6 +172,12 @@ internal sealed unsafe class CoreMidiPort : IMidiPort
     /// the same instant, and there may be several packets in a list because the
     /// server hands over everything it has been holding at once.
     /// </summary>
+    /// <remarks>
+    /// Apple's rule is that every message in a packet is complete and carries its own
+    /// status byte, and that a packet holding a system-exclusive message holds nothing
+    /// else, so the stream reader never has to carry half a message from one packet to
+    /// the next; it reads the packet's bytes as it would any wire's.
+    /// </remarks>
     private void Read(byte* packets)
     {
         var count = MidiServices.PacketCount(packets);
@@ -178,108 +185,11 @@ internal sealed unsafe class CoreMidiPort : IMidiPort
 
         for (var index = 0u; index < count; index++)
         {
-            Decode(MidiServices.PacketData(packet), MidiServices.PacketLength(packet));
+            stream.Feed(new ReadOnlySpan<byte>(MidiServices.PacketData(packet), MidiServices.PacketLength(packet)));
 
             packet = MidiServices.NextPacket(packet);
         }
     }
-
-    /// <summary>
-    /// One packet's bytes, cut into messages.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The part that is CoreMIDI's alone. winmm delivers exactly one message per
-    /// callback and the ALSA sequencer has a decoder that produces one; a packet
-    /// here is a run of them — three keys struck in the same millisecond arrive
-    /// together — so somebody has to say where each ends. Apple's rule is what
-    /// makes that possible without a parser: every message in a packet is
-    /// complete and carries its own status byte, running status never appears,
-    /// and a packet holding a system-exclusive message holds nothing else.
-    /// </para>
-    /// <para>
-    /// What the bytes then mean is <see cref="MidiMessages.Of"/>, in the contract
-    /// rather than here, because it is the same on every platform and the other
-    /// two backends already read them that way.
-    /// </para>
-    /// </remarks>
-    private void Decode(byte* data, int length)
-    {
-        var at = 0;
-
-        while (at < length)
-        {
-            var status = data[at];
-
-            // A data byte where a message should have begun: the tail of a
-            // system-exclusive message split across packets. Nothing else can be
-            // read out of what follows it.
-            if (status < 0x80) return;
-
-            var size = MessageBytes(status);
-
-            // System-exclusive, which runs to the end of the packet and is the
-            // only message this cannot step over.
-            if (size == 0) return;
-
-            // A message cut short by the end of the packet, which Apple says
-            // cannot happen. Believing the length rather than the promise costs
-            // one comparison.
-            if (at + size > length) return;
-
-            var read = MidiMessages.Of(
-                status,
-                size > 1 ? data[at + 1] : (byte)0,
-                size > 2 ? data[at + 2] : (byte)0);
-
-            at += size;
-
-            if (read is not { } message) continue;
-
-            try
-            {
-                deliver(message);
-            }
-            catch
-            {
-                // Whoever is listening threw. One dropped note is the answer
-                // that leaves the rest of the packet playing.
-            }
-        }
-    }
-
-    /// <summary>
-    /// How long a message is, from its status byte. Nought for system-exclusive,
-    /// which has no length until its end byte turns up.
-    /// </summary>
-    /// <remarks>
-    /// Here rather than in the contract beside <see cref="MidiMessages.Of"/>,
-    /// even though it is a fact about MIDI and not about macOS: it is the answer
-    /// to a question only this backend asks, because it is the only one handed
-    /// more than one message at a time. A second backend that needed it would be
-    /// the moment to move it.
-    /// </remarks>
-    private static int MessageBytes(byte status) => status switch
-    {
-        // Clock, start, stop, sensing and the rest of real time, which may
-        // appear between any two bytes of anything else.
-        >= 0xF8 => 1,
-
-        0xF0 => 0,
-
-        // Quarter frame and song select carry one byte; song position carries
-        // two; the rest of system common carries none.
-        0xF1 or 0xF3 => 2,
-        0xF2 => 3,
-        >= 0xF4 => 1,
-
-        // Program change and channel pressure, the two channel messages with a
-        // single byte after them.
-        >= 0xC0 and <= 0xDF => 2,
-
-        // Notes, aftertouch, controllers and the wheel.
-        _ => 3,
-    };
 
     private static void Check(int status, string what)
     {

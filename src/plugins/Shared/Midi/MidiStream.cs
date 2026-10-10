@@ -7,9 +7,10 @@ namespace Flyback.Plugins.Midi;
 /// <remarks>
 /// Android's <c>MidiReceiver</c> hands over whatever has arrived, so a message may come in
 /// two pieces, a run of notes may share one status byte (running status), and a clock tick
-/// may land between two bytes of a note. What has been gathered is kept between calls, so
-/// each message reaches <see cref="MidiMessages.Of"/> once, whole. A system-exclusive
-/// message is stepped over to its end byte.
+/// may land between two bytes of a note; a CoreMIDI packet is a run of whole messages. What
+/// has been gathered is kept between calls, so each message reaches
+/// <see cref="MidiMessages.Of"/> once, whole. A system-exclusive message is stepped over to
+/// its end byte.
 /// </remarks>
 internal sealed class MidiStream(MidiCallback deliver)
 {

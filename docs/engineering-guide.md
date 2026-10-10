@@ -463,8 +463,8 @@ and the locator, as source compiled into each plugin: it is not a project, so no
 OpenAi and Gemini share `src/plugins/Shared/Surveys`, the survey loop over each one's `IModelProbe`, the
 same way ([0161](adr/0161-a-turn-is-the-hosts-and-a-provider-writes-only-its-format.md)).
 LinuxIO and AndroidIO share `src/plugins/Shared/Audio`, the thread a blocking device is written or read
-on, and AndroidIO alone compiles `src/plugins/Shared/Midi`, the reader that cuts a stream of MIDI bytes
-into messages, since Android is the one backend not handed a message at a time.
+on; MacIO and AndroidIO share `src/plugins/Shared/Midi`, the reader that cuts a stream of MIDI bytes
+into messages, since a CoreMIDI packet and an Android delivery hold more than one message.
 
 An assistant never touches the patch directly. Everything it does goes through
 `PatchWorkbench`, which is the tool surface, the limits and the senses (looking

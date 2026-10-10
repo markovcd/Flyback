@@ -52,4 +52,9 @@
                       GlobalPropertiesToRemove="OutDir" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The reader that cuts a packet's bytes into messages, compiled in as the Android plugin compiles it. -->
+    <Compile Include="..\Shared\Midi\*.cs" LinkBase="Midi" />
+  </ItemGroup>
+
 </Project>

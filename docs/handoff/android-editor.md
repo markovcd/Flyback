@@ -125,8 +125,8 @@ runtime costs rather than the phone. The engine's own leads are in the `performa
    says so. Checked on a Pixel 9 Pro with the Visualizer preset. MIDI is written:
    `MidiManagerInput` lists what `android.media.midi` has over USB or from another app, opens
    a device through Android's listener and hears its bytes through `MidiStream`, the stream
-   reader in `src/plugins/Shared/Midi`, since Android hands over a raw stream where the other
-   three backends get a message at a time. Compiled against the bindings and the SDK's
+   reader in `src/plugins/Shared/Midi` that MacIO reads its packets through too, since
+   Android hands over a raw stream where Windows and ALSA get a message at a time. Compiled against the bindings and the SDK's
    analyzers; not run on a device. A Bluetooth keyboard is left out, since Android lists one
    only once an app has opened it by address.
 
