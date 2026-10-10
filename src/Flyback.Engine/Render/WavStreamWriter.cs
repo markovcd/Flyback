@@ -26,8 +26,11 @@ public sealed class WavStreamWriter : IDisposable
     private readonly Stream output;
     private readonly long start;
 
+    /// <summary>The most samples converted at once, so a write costs this and not its own length.</summary>
+    private const int Piece = 1 << 15;
+
     /// <summary>Reused across calls, since a take is thousands of these.</summary>
-    private byte[] pcm = [];
+    private readonly byte[] pcm = new byte[Piece * sizeof(short)];
 
     private long dataBytes;
     private bool closed;
@@ -56,18 +59,19 @@ public sealed class WavStreamWriter : IDisposable
         if (closed) throw new InvalidOperationException("This file has already been finished.");
         if (interleaved.Length == 0) return;
 
-        var wanted = interleaved.Length * sizeof(short);
-
-        if (dataBytes + wanted > MaximumDataBytes)
+        if (dataBytes + (long)interleaved.Length * sizeof(short) > MaximumDataBytes)
             throw new InvalidOperationException("A WAV cannot exceed 4 GB. Record a shorter take.");
 
-        if (pcm.Length < wanted) pcm = new byte[wanted];
+        for (var left = interleaved; !left.IsEmpty; left = left[Math.Min(Piece, left.Length)..])
+        {
+            var piece = left[..Math.Min(Piece, left.Length)];
 
-        for (var i = 0; i < interleaved.Length; i++)
-            BinaryPrimitives.WriteInt16LittleEndian(pcm.AsSpan(i * sizeof(short)), WavWriter.ToPcm16(interleaved[i]));
+            for (var i = 0; i < piece.Length; i++)
+                BinaryPrimitives.WriteInt16LittleEndian(pcm.AsSpan(i * sizeof(short)), WavWriter.ToPcm16(piece[i]));
 
-        output.Write(pcm.AsSpan(0, wanted));
-        dataBytes += wanted;
+            output.Write(pcm.AsSpan(0, piece.Length * sizeof(short)));
+            dataBytes += piece.Length * sizeof(short);
+        }
     }
 
     /// <summary>Fills in the two lengths the header could not know up front.</summary>

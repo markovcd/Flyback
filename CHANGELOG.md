@@ -57,6 +57,7 @@
 - An OpenAI-compatible or Gemini endpoint that answers with an error page says so, and probing a chat-completions endpoint says when a rate limit left a model's senses unsure.
 - `flyback-cli render` and `compare` refuse a `--seconds`, `--from`, `--at` or `--fps` they cannot use instead of overflowing, running for ever or calling any two patches the same.
 - A patch nested deeper than Flyback follows, an Expression's formula or a chain of more than 128 modules, says so instead of freezing or closing the editor.
+- `flyback-cli render` writes a sound longer than an hour and a half through ffmpeg instead of failing.
 - A number too large to hold, written on a knob, a knob's range or a module's setting in the code view, is refused there instead of stopping the patch from saving.
 - A damaged thumbnail in the gallery's cache is drawn again instead of running out of memory.
 - A `settings.json` or `allowed-plugins.json` with a key written twice reads as damaged: the next save replaces the one, and the other allows nothing instead of stopping Flyback from starting.

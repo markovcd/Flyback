@@ -38,6 +38,9 @@ public sealed class FfmpegClipWriter : IClipWriter
     /// </summary>
     private const int TroubleKept = 4000;
 
+    /// <summary>The most samples handed down the pipe in one write.</summary>
+    private const int SoundPiece = 1 << 20;
+
     private readonly ClipTarget target;
     private readonly string ffmpeg;
     /// <summary>The one process frames or samples are fed to, whichever this clip is.</summary>
@@ -135,8 +138,15 @@ public sealed class FfmpegClipWriter : IClipWriter
 
         // Into the WAV beside the file while there is a picture being encoded,
         // and down the pipe when the sound is the whole clip.
-        if (sound is not null) sound.WriteAudio(interleaved);
-        else Feed(MemoryMarshal.AsBytes(interleaved));
+        if (sound is not null)
+        {
+            sound.WriteAudio(interleaved);
+            return;
+        }
+
+        // A piece at a time: past 2 GB a take is more bytes than one span can count.
+        for (var left = interleaved; !left.IsEmpty; left = left[Math.Min(SoundPiece, left.Length)..])
+            Feed(MemoryMarshal.AsBytes(left[..Math.Min(SoundPiece, left.Length)]));
     }
 
     /// <summary>

@@ -73,6 +73,23 @@ public class WavStreamWriterTests
     }
 
     /// <summary>An empty take is still a valid file, just one with no samples in it.</summary>
+    /// <summary>
+    /// A sound export hands over the whole take in one call, three hours of it at
+    /// most, so what it costs is a piece and not the take.
+    /// </summary>
+    [Fact]
+    public void A_long_write_costs_a_piece_rather_than_its_own_length()
+    {
+        var samples = new float[4_000_000];
+        using var memory = new MemoryStream(capacity: 8_100_000);
+        using var writer = new WavStreamWriter(memory, SampleRate, Channels);
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        writer.WriteAudio(samples);
+
+        (GC.GetAllocatedBytesForCurrentThread() - before).ShouldBeLessThan(1 << 20);
+    }
+
     [Fact]
     public void A_take_with_nothing_in_it_is_a_header_and_no_more()
     {
