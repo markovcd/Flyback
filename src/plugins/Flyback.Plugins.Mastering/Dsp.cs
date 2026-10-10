@@ -2,9 +2,6 @@ using Flyback.Core.Compile;
 
 namespace Flyback.Plugins.Mastering;
 
-/// <summary>What three of a state-variable filter's outputs are, read at once.</summary>
-internal readonly record struct Svf(Slot Low, Slot Band, Slot High);
-
 /// <summary>
 /// The arithmetic every module here is built from: decibels both ways, a time
 /// socket turned into a coefficient, and the one filter all the equalizing is

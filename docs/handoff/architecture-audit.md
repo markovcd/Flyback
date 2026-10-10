@@ -20,11 +20,6 @@ decision (ADR-0138).
 
 ## 11. Drift in the documents, no code change (Low)
 
-- ADR-0017's body says "about 2 700 across seven files"; `Canvas/` is 5,232 code lines in 42 files, `NodeEditor.cs` itself 211. The decision holds; the count in the latest amendment does not.
-- ADR-0148 says `MainWindow` owns layout and keys in one file; ADR-0162 moved them to `EditorView.cs`, and neither cites the other. A dated amendment on 0148 and a README cross-reference.
-- ADR-0035 and the guide's section 4 place `GlslEmitter` in `Core/Compile`; it is `Engine/Compile/GlslEmitter.cs`.
-- `src/Flyback.Editor/IDialog.cs` sits at the project root and declares `namespace Flyback.Editor.Controls`, the one exception to "no exceptions".
-- Eight `src/` files declare two top-level types, all in plugins: `Mastering/Dsp.cs`, `Figures/Strike.cs`, `Gemini/GeminiSurvey.cs`, `MacIO/CoreMidiInput.cs`, `LinuxIO/AlsaMidiInput.cs`, and the three secret-store plugins' `*Plugin.cs`. Split as each is next touched, per the rule.
 - `Flyback.Ui` holds about 640 code lines nothing but the editor names (`Midi/InstrumentLibrary.cs`, `Audio/LineIn.cs`, `Controls/SeekTrack.cs`, `PlayheadLine.cs`, `FrameRateMeter.cs`, `PopupHoles.cs`, `FingerSwipe.cs`, `RandomizeSettings.cs`, `StatusClock.cs`, `MonitorSpot.cs`, `FullScreenOn.cs`, `OversamplingText.cs`, `GraphicsDriver(s).cs`, `GraphicsApi.cs`, `IPresetFolder.cs`, `Capture/IAudioSink.cs`), and `Midi/KeyCodes.cs` and `GraphicsDrivers.cs` are named only by tests. Item 1 decides where these go; until then, move them into the editor's feature folders and amend ADR-0124's list.
 
 ## Order
