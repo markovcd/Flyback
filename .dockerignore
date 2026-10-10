@@ -21,7 +21,7 @@ worker/large/
 .vscode/
 .claude/
 
-Dockerfile
+# The Dockerfile stays in: BaseImageTests reads its FROM lines.
 .dockerignore
 
 *.user
