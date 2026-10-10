@@ -10,6 +10,13 @@ namespace Flyback.Engine.Compile;
 /// </summary>
 internal sealed class PatchWalk
 {
+    /// <summary>
+    /// The longest chain of modules followed back from a root. The walk recurses a
+    /// module at a time, and past a length like this a patch file would run the
+    /// thread out of stack, which ends the program.
+    /// </summary>
+    internal const int MostDeep = 128;
+
     private readonly Patch patch;
     private readonly NodeCatalog.SinkKind sink;
     private readonly ModuleCatalog catalog;
@@ -65,6 +72,9 @@ internal sealed class PatchWalk
     private readonly Dictionary<(Guid Node, int Port), Slot> knobs = [];
 
     private readonly HashSet<(Guid Node, int Voice)> visiting = [];
+
+    // The modules the walk stopped at for being too far down a chain, said once each.
+    private readonly HashSet<Guid> tooDeep = [];
 
     // The wires that run backwards, and the plane each carries its value round
     // in. One per output rather than one per wire, so an output feeding two loops
@@ -317,6 +327,17 @@ internal sealed class PatchWalk
         {
             issues.Add(new CompileIssue(node.Id, $"Unknown module '{node.TypeId}'."));
             return Remember(resolved, (node.Id, at), ([emitter.Constant(0f)], default));
+        }
+
+        // The root and the chain behind it.
+        if (visiting.Count > MostDeep)
+        {
+            if (tooDeep.Add(node.Id))
+                issues.Add(new CompileIssue(node.Id,
+                    $"'{node.Title(def)}' is at the end of a chain more than {MostDeep} modules long, "
+                    + "further than a patch is followed, so it gives 0."));
+
+            return [.. def.Outputs.Select(_ => emitter.Constant(0f))];
         }
 
         if (!visiting.Add((node.Id, at)))

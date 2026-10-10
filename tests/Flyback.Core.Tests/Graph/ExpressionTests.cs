@@ -184,6 +184,38 @@ public class ExpressionTests
     public void What_stops_a_formula_reading_can_be_asked_for(string formula, string? problem) =>
         NodeCatalog.FormulaProblem(formula).ShouldBe(problem);
 
+    /// <summary>Each as long as the field holds, and each far deeper than the text language reads.</summary>
+    public static TheoryData<string, string> Deep => new()
+    {
+        { "brackets", new string('(', 2047) + "a" + new string(')', 2047) },
+        { "minus signs", new string('-', 4095) + "a" },
+        { "a sum", "a" + string.Concat(Enumerable.Repeat("+a", 2047)) },
+        { "calls", string.Concat(Enumerable.Repeat("sin(", 800)) + "a" + new string(')', 800) },
+    };
+
+    /// <summary>
+    /// The reading and the lowering both recurse, and the lowering keys every part
+    /// by its spelling, so a formula nested past the language's depth would run
+    /// the editor out of stack or keep it compiling for minutes. Read on the stack
+    /// the editor's own thread has on Windows.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(Deep))]
+    public void A_formula_nested_deeper_than_the_language_reads_is_refused(string shape, string formula)
+    {
+        string? problem = null;
+
+        var thread = new Thread(() => problem = NodeCatalog.FormulaProblem(formula), maxStackSize: 1 << 20);
+        thread.Start();
+        thread.Join(TimeSpan.FromSeconds(30)).ShouldBeTrue(shape);
+
+        problem.ShouldNotBeNull(shape).ShouldContain($"nested more than {Core.Graph.Formula.MostDeep} deep");
+    }
+
+    [Fact]
+    public void A_formula_as_deep_as_the_language_reads_is_read() =>
+        NodeCatalog.FormulaProblem(new string('-', Core.Graph.Formula.MostDeep - 1) + "a").ShouldBeNull();
+
     [Fact]
     public void A_color_on_a_socket_is_worked_on_a_channel_at_a_time()
     {

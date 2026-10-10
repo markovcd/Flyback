@@ -166,6 +166,67 @@ public class CompilerInvariants
         }
     }
 
+    /// <summary>
+    /// The walk back from the Output recurses a module at a time, and a stack
+    /// overflow ends the editor with no chance to save, so a chain past what is
+    /// followed is said instead. Run on the stack the editor's own thread has on
+    /// Windows.
+    /// </summary>
+    [Fact]
+    public void A_chain_longer_than_a_patch_is_followed_is_said_rather_than_ending_the_program()
+    {
+        var patch = Chain(1_000);
+
+        var result = OnASmallStack(() => patch.CompileForAudio(NodeCatalog.BuiltIn));
+
+        result.Issues.ShouldHaveSingleItem().Message.ShouldContain($"more than {PatchWalk.MostDeep} modules long");
+    }
+
+    [Fact]
+    public void A_chain_as_long_as_is_followed_is_heard_on_a_small_stack()
+    {
+        var patch = Chain(PatchWalk.MostDeep);
+
+        var result = OnASmallStack(() => patch.CompileForAudio(NodeCatalog.BuiltIn));
+
+        result.Issues.ShouldBeEmpty();
+
+        var registers = result.Program.AllocateRegisters();
+        result.Program.Evaluate(0d, 0d, 0d, registers, default);
+        registers[result.Program.OutputBase].ShouldBe(0.25d);
+    }
+
+    /// <summary>Adds in a row, each feeding the next, the first adding a quarter and the last heard.</summary>
+    private static Patch Chain(int length)
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var previous = b.Add("math.add", (1, 0.25f));
+
+        for (var i = 1; i < length; i++)
+        {
+            var next = b.Add("math.add");
+            b.Wire(previous, 0, next, 0);
+            previous = next;
+        }
+
+        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        b.Wire(previous, 0, sink, NodeCatalog.OutputLeftPort);
+
+        return b.Patch;
+    }
+
+    /// <summary>Runs <paramref name="run"/> on a thread with the smallest stack a Windows program starts with.</summary>
+    private static T OnASmallStack<T>(Func<T> run)
+    {
+        T result = default!;
+        var thread = new Thread(() => result = run(), maxStackSize: 1 << 20);
+
+        thread.Start();
+        thread.Join();
+
+        return result;
+    }
+
     private static Patch BuildPreset(string name) =>
         Presets.All.Single(p => p.Name == name).Build(NodeCatalog.BuiltIn);
 

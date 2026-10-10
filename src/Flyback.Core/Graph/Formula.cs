@@ -29,6 +29,14 @@ internal sealed class Formula
     /// <summary>The socket names, in socket order.</summary>
     public const string Sockets = "abcd";
 
+    /// <summary>
+    /// How deep brackets, minus signs, calls and arithmetic may nest, as deep as the
+    /// text language reads. The reader and the lowering both recurse, and the
+    /// lowering keys every part by its spelling, so past this a formula runs the
+    /// thread out of stack or out of time.
+    /// </summary>
+    public const int MostDeep = 128;
+
     private readonly Term root;
 
     private Formula(Term root) => this.root = root;
@@ -243,7 +251,11 @@ internal sealed class Formula
     /// One node of the tree. Written back out in a canonical form, which is what
     /// finds a part written twice.
     /// </summary>
-    private abstract record Term;
+    private abstract record Term
+    {
+        /// <summary>How many terms deep this one stands, itself counted.</summary>
+        public virtual int Height => 1;
+    }
 
     private sealed record Literal(float Value) : Term
     {
@@ -257,6 +269,8 @@ internal sealed class Formula
 
     private sealed record Call(NodeDef Module, IReadOnlyList<Term> Arguments) : Term
     {
+        public override int Height { get; } = 1 + Arguments.Select(argument => argument.Height).DefaultIfEmpty(0).Max();
+
         public override string ToString() => $"{Module.TypeId}({string.Join(", ", Arguments)})";
     }
 
@@ -265,6 +279,9 @@ internal sealed class Formula
     private sealed class Reader(string text, IReadOnlyDictionary<string, NodeDef> functions)
     {
         private int at;
+
+        /// <summary>How many brackets, arguments and minus signs the reading is inside.</summary>
+        private int depth;
 
         public Term Whole()
         {
@@ -281,11 +298,14 @@ internal sealed class Formula
 
         private Term Sum()
         {
+            Deeper();
+
             var left = Product();
 
             while (Take('+', '-') is { } sign)
                 left = Operator(sign == '+' ? "add" : "sub", left, Product());
 
+            depth--;
             return left;
         }
 
@@ -303,9 +323,13 @@ internal sealed class Formula
         {
             if (Take('-') is null) return Primary();
 
+            Deeper();
+
             // A minus on a number is a number, as it would be on a knob.
             var operand = Unary();
-            return operand is Literal literal ? new Literal(-literal.Value) : new Call(functions["neg"], [operand]);
+
+            depth--;
+            return operand is Literal literal ? new Literal(-literal.Value) : Built(new Call(functions["neg"], [operand]));
         }
 
         private Term Primary()
@@ -377,7 +401,7 @@ internal sealed class Formula
                 }
 
                 at++;
-                return new Call(module, Arguments(module, name, start));
+                return Built(new Call(module, Arguments(module, name, start)));
             }
 
             if (name.Length == 1 && Sockets.IndexOf(name[0]) is >= 0 and var socket) return new Socket(socket);
@@ -436,8 +460,18 @@ internal sealed class Formula
                 if (folded is { } value && float.IsFinite(value)) return new Literal(value);
             }
 
-            return new Call(functions[name], [left, right]);
+            return Built(new Call(functions[name], [left, right]));
         }
+
+        private void Deeper()
+        {
+            if (++depth > MostDeep) throw TooDeep();
+        }
+
+        /// <summary><paramref name="call"/>, or a fault where it stands taller than a formula may.</summary>
+        private Call Built(Call call) => call.Height > MostDeep ? throw TooDeep() : call;
+
+        private FormatException TooDeep() => Fault($"it is nested more than {MostDeep} deep");
 
         private char? Take(params char[] wanted)
         {
