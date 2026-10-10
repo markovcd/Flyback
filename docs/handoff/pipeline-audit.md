@@ -66,11 +66,3 @@ runs twice on the Worker deploy.
 **Fix:** `FROM ${SDK} AS base` with the packages and the workload once, and the
 three stages on top of it. One list, one cached layer. A refactor of its own,
 with nothing else in the commit.
-
-## 8. Small
-
-- Pull-request runs export every layer of every stage to the Actions cache with
-  `--cache-to type=gha,mode=max` on each push. The repository's cache is 10 GB
-  and the image is several, so each Dependabot push evicts the last.
-  `mode=min` keeps the layers the final stage reaches, which is what the next
-  run reads.
