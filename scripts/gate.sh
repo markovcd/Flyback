@@ -5,9 +5,9 @@
 #   ./scripts/gate.sh
 #
 # The tests' JUnit reports land in test-results/, with summary.md beside them: the
-# counts, and each failing test with its message and stack, or the compile errors
-# of a build that never reached the tests. The build's whole log is build.log. On
-# GitHub the summary is also the run's. The script fails exactly when the gate stage would, on the
+# counts, each skipped test with its reason, and each failing test with its
+# message and stack, or the compile errors of a build that never reached the
+# tests. The build's whole log is build.log. On GitHub the summary is also the run's. The script fails exactly when the gate stage would, on the
 # same run.
 set -euo pipefail
 
@@ -60,6 +60,7 @@ TEXT = 4000
 exit_code = open("test-results/exit-code").read().strip()
 projects = {}
 failures = []
+skips = []
 
 for path in sorted(glob.glob("test-results/*.junit.xml")):
     for suite in ET.parse(path).getroot().iter("testsuite"):
@@ -72,8 +73,9 @@ for path in sorted(glob.glob("test-results/*.junit.xml")):
             if failure is not None:
                 counts[1] += 1
                 failures.append((project, case.get("name"), failure.get("message") or "", failure.text or ""))
-            elif case.find("skipped") is not None:
+            elif (skip := case.find("skipped")) is not None:
                 counts[2] += 1
+                skips.append((project, case.get("name"), skip.get("message") or skip.text or ""))
             else:
                 counts[0] += 1
 
@@ -81,9 +83,21 @@ passed = sum(c[0] for c in projects.values())
 failed = sum(c[1] for c in projects.values())
 skipped = sum(c[2] for c in projects.values())
 
+def cell(text):
+    return html.escape(" ".join(text.split())).replace("|", "\\|")
+
+def list_skips():
+    if not skips:
+        return
+    print("| Project | Skipped | Reason |")
+    print("|---|---|---|")
+    for project, name, reason in sorted(skips):
+        print(f"| {cell(project)} | {cell(name)} | {cell(reason)} |")
+
 if exit_code == "0":
     print("### Tests passed\n")
-    print(f"{passed} passed and {skipped} skipped, in {len(projects)} projects.")
+    print(f"{passed} passed and {skipped} skipped, in {len(projects)} projects.\n")
+    list_skips()
 else:
     print("### Tests failed\n")
     print(f"{failed} failed, {passed} passed and {skipped} skipped, in {len(projects)} projects.\n")
@@ -109,7 +123,8 @@ else:
         print(f"<pre>{html.escape(text)}</pre>\n</details>\n")
 
     if len(failures) > LISTED:
-        print(f"And {len(failures) - LISTED} more, in the reports under test-results/.")
+        print(f"And {len(failures) - LISTED} more, in the reports under test-results/.\n")
+    list_skips()
 PY
 
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
