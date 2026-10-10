@@ -132,7 +132,7 @@ jobs:
           rm -rf worker/public
           cp -r out/public worker/public
           docker run --rm -e CLOUDFLARE_API_TOKEN -e CLOUDFLARE_ACCOUNT_ID -e WORKER_ENVIRONMENT -e CI=true -e WRANGLER_SEND_METRICS=false \
-            -v "$PWD/worker":/w -w /w node:24.21.0-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20 \
+            -v "$PWD/worker":/w -w /w node:26.10.0-bookworm-slim@sha256:3ffc19ea878019d9e9ae8971732ad4a03cda44f167107173174b60ed7c65bed3 \
             sh -c 'npm ci --no-audit --no-fund && npx wrangler d1 migrations apply DB --remote --env "$WORKER_ENVIRONMENT" && npx wrangler deploy --env "$WORKER_ENVIRONMENT"'
 
       # A hostname the deploy has just taken takes a minute to resolve.
