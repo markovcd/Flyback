@@ -29,34 +29,23 @@ found this week was fixed in the harness the same day, in the open.
 - Android: `Flyback.Editor.Android` and `Flyback.Plugins.AndroidIO` are
   `Build="false"` in the solution, referenced by no test, and `android.yml`
   builds an APK and tests nothing. The declaration theories
-  (`ModuleDeclarationTests`, `AudioOutputSelectionTests`) read from the
-  AndroidIO assembly without running it, as `PluginPackageTests` does for others.
-- Settings sections: `SoundSection`, `MidiSection`, `PictureSection` (214),
-  `RecordingSection` (217), `PrivacySection`, `KeyRows` are named by no test;
-  the tabs are covered one fact at a time, so a field added without a fact goes
-  unnoticed. A theory over every `ISettingsSection`: set each row to a
-  non-default, save, reopen, equal.
-- Shortcuts: keys are handled in twelve editor files and listed in
-  `Inspect/InspectorHelp.cs` (43 rows) and on `site/index.html` (10 `<kbd>`),
-  and no test ties the three. A `Specs` scenario that every `<kbd>` on the site
-  is a row in the help.
+  (`ModuleDeclarationTests`, `AudioOutputSelectionTests`) could read from the
+  AndroidIO assembly without running it, as `PluginPackageTests` does for others,
+  once something builds that assembly where the tests run: it needs the android
+  workload, which the gate image does not carry (ADR-0184).
 - `shot` and `stills` are tested in Cli.Tests up to their refusals, `stills` also
-  for the presets that draw nothing. What is left needs a seam: the hand-over's
-  arguments to the editor (a fake editor), `stills` encoding (a fake ffmpeg) and
-  its "no ffmpeg" refusal (an ffmpeg lookup that is not the process-wide PATH).
+  for the presets that draw nothing and, with an ffmpeg on the machine, for the
+  WebP a preset that draws gets. What is left needs a seam: the hand-over's
+  arguments to the editor (a fake editor), and the "no ffmpeg" refusal, which
+  `Ffmpeg.Resolve` answers from the process-wide PATH.
 - Unreached after reading, largest first: `Canvas/CanvasPainter.cs` (509; the
   window tests settle it and nothing asserts a pixel outside `SHOT_DIR`),
   `ShellLayout.cs` (439), `Gallery/GalleryLayout.cs` (438), `Gallery/SiteRun.cs`
   and `GalleryChoice.cs` (240 each), `Ui/Controls/GpuPreviewSurface.cs` (296),
   `Flyback.Gpu` (1,243 across `Gl.cs`, `WglContext.cs`, `EglContext.cs`,
   `GpuReadback.cs`; `GpuRenderTests` only, which skips without Mesa),
-  `Keyring/SecretTool.cs` (107; its output parsing has no fixture).
-- `tools/TestOnlyMembers` is in the solution and run by nothing: not the gate,
-  not a workflow. Its listing was committed by accident and removed on Oct 8
-  (`6dbf6ec`) with ten rows in it, among them `MovieRenderer.Render`,
-  `IlProgram.Compile` and `ImageLibrary.Count`; whether they still stand needs
-  the tool run. A weekly job beside coverage, or a gate step against a
-  committed baseline.
+  `Keyring/SecretTool.cs` (107; its output parsing has no fixture, and would
+  need a seam for the process it runs).
 
 ## 11. Shape and drift (Low)
 
@@ -74,7 +63,4 @@ found this week was fixed in the harness the same day, in the open.
 
 ## Order
 
-Items 1, 2 and 3 are each one commit and go first: they are the ones that let a
-real bug through or blame the wrong commit for it. Item 8 lands in the four
-commits it names, each as its files are next touched. The rest as each file is
-next touched.
+Each as its file is next touched.

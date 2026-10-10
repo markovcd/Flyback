@@ -854,7 +854,7 @@ it, and `Bug3` does not.
 
 ### Nothing in `src/` exists only for tests
 
-A member that only tests call is a test of nothing real: either the app should use it or it should not be there. Where a test-only member has to stay (a shipped plugin contract, a seam that reads a result back), its doc comment says so and why. `dotnet run --project tools/TestOnlyMembers -- Flyback.slnx` lists the non-private members of `src/` that no `src/` code uses and tests do, one tab-separated row each; run it after a refactor and clear what it finds.
+A member that only tests call is a test of nothing real: either the app should use it or it should not be there. Where a test-only member has to stay (a shipped plugin contract, a seam that reads a result back), its doc comment says so and why. `dotnet run --project tools/TestOnlyMembers -- Flyback.slnx` lists the non-private members of `src/` that no `src/` code uses and tests do, one tab-separated row each; run it after a refactor and clear what it finds. `tools/TestOnlyMembers/baseline.tsv` holds the rows that stand, and the weekly `test-only-members.yml` fails on a row not in it.
 
 ### An engine test
 

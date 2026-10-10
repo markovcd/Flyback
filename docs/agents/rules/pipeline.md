@@ -38,7 +38,7 @@ A release carries a signed `SHA256SUMS`, and Flyback installs an update only if 
 
 ## Measure on a schedule, gate on correctness
 
-Coverage runs on Mondays (`coverage.yml`), outside the gate, with no threshold: it is for noticing that something stopped being covered. A failed run says why in one line, and a scheduled one opens an issue, since nobody watches Monday. Benchmarks are run by hand. The gate fails only on what is wrong.
+Coverage runs on Mondays (`coverage.yml`), outside the gate, with no threshold: it is for noticing that something stopped being covered. A failed run says why in one line, and a scheduled one opens an issue, since nobody watches Monday. The members of `src/` that only tests call are listed on Tuesdays (`test-only-members.yml`) against `tools/TestOnlyMembers/baseline.tsv`; a new one fails the run and opens an issue the same way. Benchmarks are run by hand. The gate fails only on what is wrong.
 
 ## Read the whole log
 

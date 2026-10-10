@@ -1,0 +1,11 @@
+Flyback.Core	Ordinary	Internal	Emitter.ToProgram()	Flyback.Core.Compile.Emitter
+Flyback.Core	Ordinary	Internal	ExtraState.Toggle(string)	Flyback.Core.Graph.ExtraState
+Flyback.Core	Ordinary	Public	MidiFileExtra.Set(NodeInstance, string)	Flyback.Core.Graph.Extras.MidiFileExtra
+Flyback.Core	Property	Public	LoadedMidi.Notes	Flyback.Core.Compile.LoadedMidi
+Flyback.Core	Property	Public	LoadedMidi.Seconds	Flyback.Core.Compile.LoadedMidi
+Flyback.Engine	Constructor	Public	IlCompiler.IlCompiler(IIlCompilerSetup?)	Flyback.Engine.Compile.IlCompiler
+Flyback.Engine	Ordinary	Public	IlProgram.Compile(CompiledPatch, IlParts)	Flyback.Engine.Compile.IlProgram
+Flyback.Engine	Ordinary	Public	MovieRenderer.Render(Stream, CompiledPatch, CompiledPatch?, MovieSettings, IProgress<double>?, CancellationToken)	Flyback.Engine.Render.MovieRenderer
+Flyback.Engine	Property	Public	ImageLibrary.Count	Flyback.Engine.Render.ImageLibrary
+Flyback.Engine	Property	Public	LineInFeed.Pending	Flyback.Engine.Render.LineInFeed
+Flyback.Engine	Property	Public	SampleLibrary.Count	Flyback.Engine.Render.SampleLibrary

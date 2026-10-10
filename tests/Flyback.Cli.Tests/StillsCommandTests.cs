@@ -10,8 +10,9 @@ using Xunit;
 namespace Flyback.Cli.Tests;
 
 /// <summary>
-/// <c>flyback-cli stills</c> over presets that draw nothing, so no ffmpeg ever runs: what the
-/// index says of each, and the folder it is written into.
+/// <c>flyback-cli stills</c>: what the index says of presets that draw nothing, where no
+/// ffmpeg ever runs; the folder it is written into; and, with an ffmpeg on the machine, the
+/// WebP a preset that draws gets.
 /// </summary>
 public sealed class StillsCommandTests : IDisposable
 {
@@ -49,13 +50,27 @@ public sealed class StillsCommandTests : IDisposable
         return builder.Patch;
     }
 
-    private (int Code, string Said, string Complaint) Run(DirectoryInfo folder, params PatchPreset[] presets)
+    /// <summary>A picture: the x of each pixel as its color.</summary>
+    private static Patch Drawn()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var coord = builder.Add("coord", 0, 0);
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        builder.Wire(coord, 0, sink, NodeCatalog.OutputColorPort);
+
+        return builder.Patch;
+    }
+
+    private (int Code, string Said, string Complaint) Run(DirectoryInfo folder, params PatchPreset[] presets) =>
+        Run(folder, FakeFfmpeg, presets);
+
+    private static (int Code, string Said, string Complaint) Run(DirectoryInfo folder, string ffmpeg, params PatchPreset[] presets)
     {
         var (output, error) = (new StringWriter(), new StringWriter());
         var catalog = new PluginCatalog([], [], NodeCatalog.BuiltIn, presets, []);
         var plugins = new PluginRegistry(() => catalog, "nowhere", null);
 
-        var code = StillsCommand.Run(plugins, folder, FakeFfmpeg, output, error, CancellationToken.None).GetAwaiter().GetResult();
+        var code = StillsCommand.Run(plugins, folder, ffmpeg, output, error, CancellationToken.None).GetAwaiter().GetResult();
 
         return (code, output.ToString(), error.ToString());
     }
@@ -97,6 +112,28 @@ public sealed class StillsCommandTests : IDisposable
         hum.Heard.ShouldBeTrue();
         idle.Heard.ShouldBeFalse();
         folder.GetFiles().Select(f => f.Name).ShouldBe([StillIndex.FileName]);
+    }
+
+    /// <summary>With an ffmpeg to encode it, a preset that draws gets a WebP named in the index.</summary>
+    [Fact]
+    public void A_preset_that_draws_is_written_as_webp_and_indexed()
+    {
+        var ffmpeg = Ffmpeg.Resolve(null);
+        Assert.SkipWhen(ffmpeg is null, "no ffmpeg on this machine");
+
+        var folder = new DirectoryInfo(Path.Combine(root.FullName, "drawn"));
+
+        var (code, said, complaint) = Run(folder, ffmpeg!, new PatchPreset("Ramp", _ => Drawn()));
+
+        code.ShouldBe(Exit.Ok, complaint);
+        said.Trim().ShouldBe("Ramp: drawn");
+
+        var entry = Entry(Index(folder.FullName), "Ramp");
+        entry.Still.ShouldBe(StillKind.Picture);
+
+        var bytes = File.ReadAllBytes(Path.Combine(folder.FullName, entry.File.ShouldNotBeNull()));
+        System.Text.Encoding.ASCII.GetString(bytes, 0, 4).ShouldBe("RIFF");
+        System.Text.Encoding.ASCII.GetString(bytes, 8, 4).ShouldBe("WEBP");
     }
 
     [Fact]

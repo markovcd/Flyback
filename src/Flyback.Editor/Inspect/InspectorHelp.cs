@@ -26,6 +26,8 @@ internal static class InspectorHelp
         [
             Row("Add a module", "Type to narrow the list, arrows to move through it, Enter to add.", "Space / Right-click"),
             Row("Edit a module", "Select it to change its values. Double-click its name in the panel to rename it."),
+            Row("Edit as text", "The patch as text to edit, diff and generate. Again shows the canvas.", "F2"),
+            Row("Build the text", "Puts the text back on the canvas as a patch.", "Ctrl+Enter"),
             .. inPage ? [] : new[]
             {
                 Row("Open", "Also on the toolbar.", "Ctrl+O"),
@@ -36,6 +38,8 @@ internal static class InspectorHelp
         new(inPage ? "Run" : "Run and record",
         [
             Row("Pause / play", "Pauses the patch, and plays it on.", "Ctrl+P"),
+            Row("Knob panel", "Shows the knobs under the canvas, and hides them again.", "Ctrl+K"),
+            Row("Randomize the knobs", "Throws the die at the end of the panel.", "Ctrl+Shift+K"),
             .. inPage ? [] : new[]
             {
                 Row("Measure", "Runs the patch for a few seconds and pins what each output carries beside it. Again hides them.", "Ctrl+M"),
@@ -48,6 +52,7 @@ internal static class InspectorHelp
             Row("Unplug", "Drag a connected input to take the wire somewhere else.", "Drag"),
             Row("Re-route an output", "Feeds one of its wires from somewhere else instead. Put it back and the next one takes the next wire.", "Ctrl+Drag"),
             Row("Cancel a drag", "Puts back whatever it had moved.", "Esc"),
+            Row("Switch a module off", "Passes what is patched into it straight through. Again switches it on.", "Ctrl+B"),
         ]),
         new("Selecting and moving",
         [
@@ -61,6 +66,7 @@ internal static class InspectorHelp
         ]),
         new("Copying and arranging",
         [
+            Row("Undo, redo", "Takes the last edit back, and puts it back.", "Ctrl+Z / Ctrl+Y"),
             Row("Copy, cut, paste", keys: "Ctrl+C / Ctrl+X / Ctrl+V"),
             Row("Duplicate", "Without touching the clipboard.", "Ctrl+D"),
             Row("Group", "Draws a selection as one box. Double-click a box to look inside, Esc to put it back.", "Ctrl+G"),
