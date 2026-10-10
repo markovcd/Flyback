@@ -53,6 +53,7 @@ internal static class ProgramProcess
             StandardOutputEncoding = Encoding.UTF8,
             StandardErrorEncoding = Encoding.UTF8,
             WorkingDirectory = folder,
+            CreateNoWindow = true,
         };
 
         foreach (var argument in arguments) start.ArgumentList.Add(argument);
