@@ -35,7 +35,8 @@
     Kept as close to upstream as it can be, so a newer Avalonia can be diffed
     against it: what changed is the xunit 4 extensibility API it sits on — the
     scheduling values ISelfExecutingXunitTestCase.Run now carries, threaded down
-    to the runner contexts, and a discoverer override whose signature moved. The
+    to the runner contexts, and a discoverer override whose signature moved; and
+    the two attributes file their test under the ui category. The
     four AvaloniaTestFramework* files are left out, being the assembly-attribute
     route that [AvaloniaFact] does not take.
 

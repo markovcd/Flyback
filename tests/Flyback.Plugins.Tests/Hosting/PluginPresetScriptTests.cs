@@ -1,4 +1,5 @@
 using Flyback.Core.Tests.Compile;
+using Flyback.Tests;
 using Xunit;
 
 namespace Flyback.Plugins.Tests.Hosting;
@@ -12,10 +13,11 @@ public class PluginPresetScriptTests
     public static TheoryData<string> Names => PluginPresetPrograms.Names;
 
     [Theory]
+    [TestCategory(TestCategory.Node)]
     [MemberData(nameof(Names))]
     public void The_sound_is_the_interpreters(string name)
     {
-        Assert.SkipWhen(NodeJs.Path is null, "no Node on this machine");
+        TestCategory.Node.Require(NodeJs.Path is not null, "no Node on this machine");
 
         var program = PluginPresetPrograms.Compiled(name, video: false);
 

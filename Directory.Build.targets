@@ -44,6 +44,11 @@
     <PackageReference Include="Microsoft.Testing.Extensions.HangDump" />
   </ItemGroup>
 
+  <!-- The categories a test is filed under by what it needs beyond the runtime (TestCategory). -->
+  <ItemGroup Condition="'$(IsTestProject)' == 'true'">
+    <Compile Include="$(MSBuildThisFileDirectory)tests\Shared\TestCategor*.cs" LinkBase="Shared" Visible="false" />
+  </ItemGroup>
+
   <!--
     A page cannot load plugins from a folder, so it links them in: a ProjectReference
     marked LinkedPlugin="true" is named to the program as AssemblyMetadata("Plugin",

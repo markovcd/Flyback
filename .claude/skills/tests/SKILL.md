@@ -63,6 +63,10 @@ While iterating, run only the test classes a change touches:
 ./tests/Flyback.Editor.Tests/bin/Release/net10.0/Flyback.Editor.Tests -class "*PresetLibraryTests" -class "*EditorServicesTests"
 ```
 
+A change to how a clip is written runs `-trait "Category=ffmpeg"` across the projects;
+a machine without Chromium leaves it out with `-trait- "Category=browser"` (the
+engineering guide's *Test categories*).
+
 Build only the test project those classes live in, not the whole solution. Run
 the full suites once, just before each commit, and not again after an edit that
 only touches comments, docs or a test's own file. Proving a new test fails

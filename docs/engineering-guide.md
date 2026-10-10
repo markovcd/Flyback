@@ -833,6 +833,28 @@ the repository are `Assert.SkipWhen` and `Assert.SkipUnless`.
 
 `-list tests` lists them and `-xml results.xml` writes a time per test.
 
+### Test categories
+
+A test is filed under what it needs beyond the .NET runtime, as its `Category` trait (no relation to a module's [category](glossary.md#the-patch)):
+
+| Category | Needs | Filed by |
+|---|---|---|
+| `ui` | The headless Avalonia thread | `[AvaloniaFact]` and `[AvaloniaTheory]` themselves |
+| `ffmpeg` | ffmpeg, to write or read a clip | `[TestCategory(TestCategory.Ffmpeg)]`, or `@ffmpeg` on a feature or scenario |
+| `node` | Node, to run what a page runs | `[TestCategory(TestCategory.Node)]`, or `@node` |
+| `browser` | A Chromium to open the pages in | `@browser` |
+| `jack` | A JACK server to play into | `[TestCategory(TestCategory.Jack)]`, or `@jack` |
+| `gpu` | An OpenGL context | `[TestCategory(TestCategory.Gpu)]`, or `@gpu` |
+
+The gate's image has all of them. Pick a category out, or leave one out:
+
+```bash
+./tests/Flyback.Core.Tests/bin/Release/net10.0/Flyback.Core.Tests -trait "Category=ffmpeg"
+./tests/Flyback.Specs/bin/Release/net10.0/Flyback.Specs -trait- "Category=browser" -trait- "Category=gpu"
+```
+
+A test asks for its tool with `TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine")`, and a step with `Needs.Tool(runtime, TestCategory.Ffmpeg, …)`. Either skips where the tool is missing, and fails on any machine when the test is not filed under the category.
+
 ### Naming
 
 The file, the class and the subject share a name: `MixerTests.cs` holds
@@ -1041,18 +1063,19 @@ exactly what the patch computed. C# tests cover the edges.
 
 ### Skips and optional outputs
 
-A test that needs something the machine may lack says so and skips:
+A test that needs something the machine may lack says so and skips, through its
+category when it has one ([Test categories](#test-categories)):
 
 ```csharp
-Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 Assert.SkipUnless(OperatingSystem.IsWindows(), "the Windows backend only opens on Windows.");
 ```
 
-Never a custom attribute, and never a silent pass: an early `return` is a pass
+Never a custom skip attribute, and never a silent pass: an early `return` is a pass
 that checked nothing. The shot tests (`PatchShotTests`, `SkinShotTests` and the
 rest) write the website's pictures when `SHOT_DIR` is set and skip when it is not.
 
-A scenario that needs a tool calls `Needs.Tool`: it skips where the tool is
+A scenario that needs a tool is tagged with its category and calls `Needs.Tool`: it skips where the tool is
 missing, and fails when `FLYBACK_GATE` is set. The gate's run sets it, since its
 image has every tool and a skip there is a regression.
 

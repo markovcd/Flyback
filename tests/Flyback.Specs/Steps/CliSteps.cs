@@ -434,7 +434,7 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     [When("flyback-cli draws the stills")]
     public void WhenStillsDrawn()
     {
-        Needs.Tool(runtime, Ffmpeg.OnPath() is not null, "no ffmpeg on this machine, and the stills are WebP");
+        Needs.Tool(runtime, TestCategory.Ffmpeg, Ffmpeg.OnPath() is not null, "no ffmpeg on this machine, and the stills are WebP");
 
         Run("stills", "--out", Path("stills"));
     }

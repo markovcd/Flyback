@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Engine.Render;
+using Flyback.Tests;
 using Shouldly;
 
 namespace Flyback.Core.Tests.Rendering;
@@ -61,9 +62,10 @@ public class SoundReaderTests : IDisposable
 
     /// <summary>ffmpeg trims what the encoder padded either end with, so the length is the tone's to the sample.</summary>
     [Fact]
+    [TestCategory(TestCategory.Ffmpeg)]
     public void An_mp3_is_as_long_as_the_sound_it_was_made_from()
     {
-        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 
         var clip = SoundReader.Read(Mp3("tone.mp3", 0.5), Encoder, out var fault).ShouldNotBeNull();
 
@@ -75,9 +77,10 @@ public class SoundReaderTests : IDisposable
 
     /// <summary>Mixed down the way a WAV is, the average of the channels.</summary>
     [Fact]
+    [TestCategory(TestCategory.Ffmpeg)]
     public void A_stereo_mp3_becomes_the_average_of_its_channels()
     {
-        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 
         var clip = SoundReader.Read(Mp3("left.mp3", 0.5, channels: 2, leftOnly: true), Encoder, out _).ShouldNotBeNull();
 
@@ -86,9 +89,10 @@ public class SoundReaderTests : IDisposable
 
     /// <summary>What a bundle carries is bytes, and they read as the file does.</summary>
     [Fact]
+    [TestCategory(TestCategory.Ffmpeg)]
     public void An_mp3_read_from_bytes_is_the_mp3_read_from_its_file()
     {
-        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 
         var path = Mp3("bytes.mp3", 0.25);
         var fromFile = SoundReader.Read(path, Encoder, out _).ShouldNotBeNull();
@@ -100,9 +104,10 @@ public class SoundReaderTests : IDisposable
     }
 
     [Fact]
+    [TestCategory(TestCategory.Ffmpeg)]
     public void An_mp3_that_ffmpeg_cannot_decode_says_so()
     {
-        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 
         var path = File("broken.mp3");
         System.IO.File.WriteAllBytes(path, [(byte)'I', (byte)'D', (byte)'3', 4, 0, 0, 0, 0, 0, 0, 1, 2, 3]);

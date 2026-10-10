@@ -4,6 +4,7 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
+using Flyback.Tests;
 using Shouldly;
 
 namespace Flyback.Core.Tests.Rendering;
@@ -184,11 +185,12 @@ public class MovieRendererTests
     /// the tenth of the size that was the whole reason for it.
     /// </summary>
     [Fact]
+    [TestCategory(TestCategory.Ffmpeg)]
     public void A_format_ffmpeg_writes_is_rendered_by_the_same_loop()
     {
         var ffmpeg = Ffmpeg.Resolve(null);
 
-        Assert.SkipWhen(ffmpeg is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(ffmpeg is not null, "no ffmpeg on this machine");
 
         var folder = Directory.CreateTempSubdirectory("flyback-export-");
 

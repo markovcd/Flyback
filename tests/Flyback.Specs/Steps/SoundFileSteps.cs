@@ -3,6 +3,7 @@ using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Flyback.Engine.Render;
 using Flyback.Specs.Support;
+using Flyback.Tests;
 using Reqnroll;
 using Reqnroll.UnitTestProvider;
 
@@ -38,7 +39,7 @@ public sealed class SoundFileSteps(PatchContext context, IUnitTestRuntimeProvide
     /// <summary>A 440 Hz tone at half level, encoded as a take's MP3 is.</summary>
     private string Mp3(double seconds)
     {
-        Needs.Tool(runtime, Encoder is not null, "no ffmpeg on this machine");
+        Needs.Tool(runtime, TestCategory.Ffmpeg, Encoder is not null, "no ffmpeg on this machine");
 
         Directory.CreateDirectory(folder);
 

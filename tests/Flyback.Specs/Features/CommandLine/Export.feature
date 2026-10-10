@@ -21,6 +21,7 @@ Feature: An export is the patch, exactly
     And it is exported as "sound.wav" 2 seconds long
     Then the exported sound is what the editor played, sample for sample
 
+  @gpu
   Scenario: The graphics card draws the picture the processor draws
     When it is exported as "still.png" on the graphics card and on the processor
     Then the two pictures differ by no more than a shade

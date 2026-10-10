@@ -1,3 +1,4 @@
+@node
 Feature: The editor in a page plays its sound
   A page hands each edit to the web viewer's worker, which plays it on from where
   the sound had got to, keeping what the patch remembers, as the desktop's engine does.

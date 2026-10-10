@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using Flyback.Tests;
 using Reqnroll.UnitTestProvider;
 
 namespace Flyback.Specs.Support;
@@ -53,7 +54,7 @@ internal sealed partial class Chromium : IDisposable
     /// <summary>Starts the browser on a blank page, or skips the scenario where there is none.</summary>
     public static Chromium Start(IUnitTestRuntimeProvider runtime)
     {
-        Needs.Tool(runtime, Path is not null, "no Chromium on this machine to open the pages in (set FLYBACK_CHROMIUM)");
+        Needs.Tool(runtime, TestCategory.Browser, Path is not null, "no Chromium on this machine to open the pages in (set FLYBACK_CHROMIUM)");
 
         var profile = Directory.CreateTempSubdirectory("flyback-chromium-");
         var start = new ProcessStartInfo(Path!, [.. Flags, $"--user-data-dir={profile.FullName}", "about:blank"])

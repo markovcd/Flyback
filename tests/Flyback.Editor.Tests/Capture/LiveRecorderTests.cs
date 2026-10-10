@@ -6,6 +6,7 @@ using Flyback.Editor.Capture;
 using Flyback.Core;
 using Flyback.Core.Tests.Rendering;
 using Flyback.Engine.Render;
+using Flyback.Tests;
 using Shouldly;
 using Xunit;
 
@@ -104,9 +105,10 @@ public class LiveRecorderTests : IDisposable
     /// finishing works from the recorder's own thread.
     /// </summary>
     [Fact]
+    [TestCategory(TestCategory.Ffmpeg)]
     public void A_take_is_written_through_ffmpeg()
     {
-        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 
         var file = path + ClipFormats.H264Mp4.Extension;
         long frames;
@@ -133,9 +135,10 @@ public class LiveRecorderTests : IDisposable
 
     /// <summary>A take of the sound alone, in the format somebody sends to somebody.</summary>
     [Fact]
+    [TestCategory(TestCategory.Ffmpeg)]
     public void A_sound_only_take_is_written_through_ffmpeg()
     {
-        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 
         using (var recorder = new LiveRecorder(Through(ClipFormats.Mp3)))
         {

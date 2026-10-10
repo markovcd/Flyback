@@ -1,3 +1,4 @@
+@ffmpeg
 Feature: A Sample plays an MP3
   A Sample plays an MP3 as it plays a WAV. The MP3 is read by ffmpeg: the one
   picked in the settings, or the one on PATH.

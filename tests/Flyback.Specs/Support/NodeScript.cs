@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using Flyback.Core.Tests.Compile;
+using Flyback.Tests;
 using Reqnroll.UnitTestProvider;
 
 namespace Flyback.Specs.Support;
@@ -14,7 +15,7 @@ internal static class NodeScript
         IUnitTestRuntimeProvider runtime, string what, string script, IEnumerable<string> arguments, string folder, TimeSpan cap)
     {
         var node = NodeJs.Path;
-        Needs.Tool(runtime, node is not null, $"no Node on this machine to run {what} with");
+        Needs.Tool(runtime, TestCategory.Node, node is not null, $"no Node on this machine to run {what} with");
 
         var start = new ProcessStartInfo(node!, [script, .. arguments])
         {

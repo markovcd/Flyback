@@ -11,6 +11,7 @@ using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 using Flyback.Gpu;
 using Flyback.Specs.Support;
+using Flyback.Tests;
 
 using Flyback.Cli.Common;
 using PluginRegistry = Flyback.Cli.Plugins;
@@ -76,7 +77,7 @@ public sealed class ExportSteps(PatchContext context, IUnitTestRuntimeProvider r
     public void WhenExportedOnBoth(string name)
     {
         using (var probe = HeadlessRenderer.Open(out var why))
-            Needs.Tool(runtime, probe is not null, $"no GPU on this machine. {why}");
+            Needs.Tool(runtime, TestCategory.Gpu, probe is not null, $"no GPU on this machine. {why}");
 
         Export(name, "gpu", Seconds, "--gpu");
         Export(name, "processor", Seconds, "--processor");

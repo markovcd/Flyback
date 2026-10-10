@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Settings;
+using Flyback.Tests;
 using Shouldly;
 using Xunit;
 
@@ -29,9 +30,10 @@ public class JackOutputTests(JackServerFixture server) : IClassFixture<JackServe
     }
 
     [Fact]
+    [TestCategory(TestCategory.Jack)]
     public void Its_form_asks_where_the_ports_connect_and_starts_on_the_system_playback()
     {
-        Assert.SkipUnless(server.Available, server.Why);
+        TestCategory.Jack.Require(server.Available, server.Why);
 
         var pick = server.Output.Form(SettingValues.None).ShouldHaveSingleItem().ShouldBeOfType<SettingField.Pick>();
 
@@ -45,9 +47,10 @@ public class JackOutputTests(JackServerFixture server) : IClassFixture<JackServe
     /// rate and period, and stopping lets the client go.
     /// </summary>
     [Fact(Timeout = Cap)]
+    [TestCategory(TestCategory.Jack)]
     public Task The_server_drives_the_callback_until_stopped() => Bounded(() =>
     {
-        Assert.SkipUnless(server.Available, server.Why);
+        TestCategory.Jack.Require(server.Available, server.Why);
 
         using var device = server.Output.Create(AudioFormat.Default, Unconnected);
         using var heard = new ManualResetEventSlim();
@@ -74,9 +77,10 @@ public class JackOutputTests(JackServerFixture server) : IClassFixture<JackServe
     });
 
     [Fact(Timeout = Cap)]
+    [TestCategory(TestCategory.Jack)]
     public Task A_stopped_device_starts_again() => Bounded(() =>
     {
-        Assert.SkipUnless(server.Available, server.Why);
+        TestCategory.Jack.Require(server.Available, server.Why);
 
         using var device = server.Output.Create(AudioFormat.Default, Unconnected);
 
@@ -101,9 +105,10 @@ public class JackOutputTests(JackServerFixture server) : IClassFixture<JackServe
     /// libjack cancels inside the runtime aborts the process or freezes it whole.
     /// </summary>
     [Fact(Timeout = Cap)]
+    [TestCategory(TestCategory.Jack)]
     public Task Stopping_mid_callback_while_collecting_leaves_the_process_running() => Bounded(() =>
     {
-        Assert.SkipUnless(server.Available, server.Why);
+        TestCategory.Jack.Require(server.Available, server.Why);
 
         using var done = new CancellationTokenSource();
         var churn = Task.Factory.StartNew(() =>

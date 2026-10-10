@@ -1,3 +1,4 @@
+@ffmpeg
 Feature: A build draws every preset's still once, for every program to show
   flyback-cli stills draws a still of each preset the build offers and writes the index
   the galleries read them by, so the editor, the web editor and the presets page show a

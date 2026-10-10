@@ -10,6 +10,7 @@ Feature: The Worker serves the whole website
     When someone follows every link between the preset site's pages
     Then none of them is missing
 
+  @node
   Scenario: The presets page lists the built-in presets and the shared ones
     Given someone has shared a preset
     When someone opens the preset site's presets page
@@ -17,6 +18,7 @@ Feature: The Worker serves the whole website
     And it lists the presets Flyback ships with, marked as built in, beside the shared one
     And it lists the built-in showcases first, then sound and picture, then one idea
 
+  @node
   Scenario: A shared preset a browser cannot play is offered to download
     Given someone has shared a preset that needs a plugin a browser lacks
     When someone opens the preset site's presets page

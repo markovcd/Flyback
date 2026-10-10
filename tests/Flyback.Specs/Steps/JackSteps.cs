@@ -2,6 +2,7 @@ using Flyback.Plugins.Audio;
 using Flyback.Plugins.Settings;
 using Flyback.Plugins.Testing;
 using Flyback.Specs.Support;
+using Flyback.Tests;
 using Reqnroll;
 using Reqnroll.UnitTestProvider;
 using Shouldly;
@@ -21,7 +22,7 @@ public sealed class JackSteps(IUnitTestRuntimeProvider runtime) : IDisposable
     {
         daemon = new JackDaemon(ShippedPlugins.Loaded.AudioOutputs.Single(o => o.Id == "jack"));
 
-        Needs.Tool(runtime, daemon.Available, daemon.Why);
+        Needs.Tool(runtime, TestCategory.Jack, daemon.Available, daemon.Why);
     }
 
     [Then("the sound plays through JACK")]

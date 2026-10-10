@@ -1,3 +1,4 @@
+@jack
 Feature: Sound plays through a JACK server when one is running
   Where somebody started a JACK server, Flyback plays through it rather than through
   ALSA, at the server's sample rate, and the server clocks the sound.

@@ -1,5 +1,6 @@
 using Flyback.Engine.Render;
 using Flyback.Engine.Render.ClipWriters;
+using Flyback.Tests;
 using Shouldly;
 
 namespace Flyback.Core.Tests.Rendering;
@@ -112,11 +113,12 @@ public class FfmpegClipWriterTests : IDisposable
     /// the pass that writes the finished file, whichever that is.
     /// </summary>
     [Theory]
+    [TestCategory(TestCategory.Ffmpeg)]
     [InlineData(true)]
     [InlineData(false)]
     public void An_mp4_is_indexed_at_the_front_with_or_without_sound(bool sound)
     {
-        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 
         var bytes = System.IO.File.ReadAllBytes(Write(ClipFormats.H264Mp4, "fast.mp4", sound: sound));
 
@@ -150,13 +152,14 @@ public class FfmpegClipWriterTests : IDisposable
     }
 
     [Theory]
+    [TestCategory(TestCategory.Ffmpeg)]
     [InlineData("mp4")]
     [InlineData("hevc")]
     [InlineData("webm")]
     [InlineData("prores")]
     public void A_clip_of_both_streams_is_written(string id)
     {
-        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 
         var format = ClipFormats.ById(id)!;
         var path = Write(format, $"both{format.Extension}");
@@ -171,9 +174,10 @@ public class FfmpegClipWriterTests : IDisposable
     /// to the file — which on a long take is gigabytes.
     /// </summary>
     [Fact]
+    [TestCategory(TestCategory.Ffmpeg)]
     public void The_two_files_the_sound_pass_needs_are_gone_afterwards()
     {
-        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 
         var path = Write(ClipFormats.H264Mp4, "tidy.mp4");
 
@@ -182,9 +186,10 @@ public class FfmpegClipWriterTests : IDisposable
 
     /// <summary>One process and no second pass, which is the path a patch with nothing in its 'left' takes.</summary>
     [Fact]
+    [TestCategory(TestCategory.Ffmpeg)]
     public void A_clip_with_no_sound_is_written_straight_through()
     {
-        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 
         var path = Write(ClipFormats.H264Mp4, "silent.mp4", sound: false);
 
@@ -193,12 +198,13 @@ public class FfmpegClipWriterTests : IDisposable
     }
 
     [Theory]
+    [TestCategory(TestCategory.Ffmpeg)]
     [InlineData("mp3")]
     [InlineData("m4a")]
     [InlineData("flac")]
     public void A_sound_on_its_own_is_written(string id)
     {
-        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 
         var format = ClipFormats.ById(id)!;
         var path = Write(format, $"sound{format.Extension}", frames: 20);
@@ -212,9 +218,10 @@ public class FfmpegClipWriterTests : IDisposable
     /// a clip a second short of what it claims is the failure this prevents.
     /// </summary>
     [Fact]
+    [TestCategory(TestCategory.Ffmpeg)]
     public void A_repeated_frame_is_written_as_many_times_as_it_is_asked_for()
     {
-        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 
         var path = File("repeated.mp4");
 
@@ -235,9 +242,10 @@ public class FfmpegClipWriterTests : IDisposable
     /// wider than the frame is the shape a cropped readback arrives in.
     /// </summary>
     [Fact]
+    [TestCategory(TestCategory.Ffmpeg)]
     public void A_frame_wider_in_memory_than_on_screen_is_written()
     {
-        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 
         var stride = Width * 4 + 64;
         var pixels = new byte[stride * Height];
@@ -261,9 +269,10 @@ public class FfmpegClipWriterTests : IDisposable
     /// that silently excludes sizes — see ADR-0089.
     /// </summary>
     [Fact]
+    [TestCategory(TestCategory.Ffmpeg)]
     public void An_odd_frame_size_is_written_rather_than_refused()
     {
-        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 
         var path = File("odd.mp4");
         var stride = 65 * 4;
@@ -292,9 +301,10 @@ public class FfmpegClipWriterTests : IDisposable
     /// account of why, so it has to survive as far as the caller.
     /// </summary>
     [Fact]
+    [TestCategory(TestCategory.Ffmpeg)]
     public void What_ffmpeg_refused_is_said_rather_than_swallowed()
     {
-        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 
         var nonsense = ClipFormats.H264Mp4 with { Picture = "-c:v no-such-encoder" };
 
@@ -310,17 +320,19 @@ public class FfmpegClipWriterTests : IDisposable
     /// them the formats the one on <c>PATH</c> can still write.
     /// </summary>
     [Fact]
+    [TestCategory(TestCategory.Ffmpeg)]
     public void An_ffmpeg_that_is_not_there_falls_back_to_the_one_on_the_path()
     {
-        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 
         Ffmpeg.Resolve(Path.Combine(folder, "not-ffmpeg")).ShouldBe(Encoder);
     }
 
     [Fact]
+    [TestCategory(TestCategory.Ffmpeg)]
     public void The_ffmpeg_found_says_what_it_is()
     {
-        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(Encoder is not null, "no ffmpeg on this machine");
 
         Ffmpeg.Version(Encoder).ShouldStartWith("ffmpeg version");
     }

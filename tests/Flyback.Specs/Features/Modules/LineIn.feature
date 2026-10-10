@@ -32,6 +32,7 @@ Feature: A Line In plays what the microphone hears
     When the viewer plays it with a sound input plugged in
     Then the viewer is listening to the sound input
 
+  @node
   Scenario: A Line In in the web viewer plays what the page's microphone hears
     Given a Line In is patched into the speakers
     And the web viewer's microphone hears a 440 Hz tone
@@ -39,6 +40,7 @@ Feature: A Line In plays what the microphone hears
     Then the web viewer says it reads a Line In
     And the web viewer plays a 440 Hz tone
 
+  @node
   Scenario: A patch without a Line In does not ask the web viewer for the microphone
     Given the shipped preset "Sidebands"
     When it plays in the web viewer for 0.1 seconds

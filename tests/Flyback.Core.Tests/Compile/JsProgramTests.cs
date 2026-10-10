@@ -3,6 +3,7 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
+using Flyback.Tests;
 using Shouldly;
 
 namespace Flyback.Core.Tests.Compile;
@@ -26,10 +27,11 @@ public class JsProgramTests
     /// sample after it disagreeing.
     /// </summary>
     [Theory]
+    [TestCategory(TestCategory.Node)]
     [MemberData(nameof(AllPresets))]
     public void The_sound_is_the_interpreters(string name)
     {
-        Assert.SkipWhen(NodeJs.Path is null, "no Node on this machine");
+        TestCategory.Node.Require(NodeJs.Path is not null, "no Node on this machine");
 
         var program = Presets.All.Single(p => p.Name == name).Build(NodeCatalog.Current).CompileForAudio().Program;
 
@@ -49,9 +51,10 @@ public class JsProgramTests
 
     /// <summary>A script handed a turned knob's constants as it plays sounds as the interpreter playing the turned program on.</summary>
     [Fact]
+    [TestCategory(TestCategory.Node)]
     public void A_script_retuned_as_it_plays_is_the_turned_program_played_on()
     {
-        Assert.SkipWhen(NodeJs.Path is null, "no Node on this machine");
+        TestCategory.Node.Require(NodeJs.Path is not null, "no Node on this machine");
 
         var (before, after) = SineTurned();
 
@@ -60,9 +63,10 @@ public class JsProgramTests
 
     /// <summary>A Line In's two inputs are written into the script once a frame, from what the renderer hears, as the interpreter's renderer writes them.</summary>
     [Fact]
+    [TestCategory(TestCategory.Node)]
     public void A_line_in_is_heard_a_frame_at_a_time()
     {
-        Assert.SkipWhen(NodeJs.Path is null, "no Node on this machine");
+        TestCategory.Node.Require(NodeJs.Path is not null, "no Node on this machine");
 
         var builder = new PatchBuilder();
         var line = builder.Add(NodeCatalog.LineInTypeId, 0, 0, (0, 0.8f));
@@ -100,10 +104,11 @@ public class JsProgramTests
 
     /// <summary>Fails the day an opcode is added and the emitter is not told about it.</summary>
     [Theory]
+    [TestCategory(TestCategory.Node)]
     [MemberData(nameof(AllOpCodes))]
     public void Every_opcode_gives_the_interpreters_answer(OpCode code)
     {
-        Assert.SkipWhen(NodeJs.Path is null, "no Node on this machine");
+        TestCategory.Node.Require(NodeJs.Path is not null, "no Node on this machine");
 
         var program = OneOp(code);
 
@@ -115,9 +120,10 @@ public class JsProgramTests
     /// and accumulators from where the one before it stopped, and hands its registers on.
     /// </summary>
     [Fact]
+    [TestCategory(TestCategory.Node)]
     public void A_program_split_across_functions_keeps_its_memory_in_order()
     {
-        Assert.SkipWhen(NodeJs.Path is null, "no Node on this machine");
+        TestCategory.Node.Require(NodeJs.Path is not null, "no Node on this machine");
 
         var ops = new List<Op> { new(OpCode.LoadT, 0), new(OpCode.Const, 1, k: 0.5f) };
         var last = 0;

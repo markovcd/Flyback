@@ -3,6 +3,7 @@ using Flyback.Cli.Common;
 using Flyback.Core.Graph;
 using Flyback.Engine.Render;
 using Flyback.Plugins.Hosting;
+using Flyback.Tests;
 using PluginRegistry = Flyback.Cli.Plugins;
 using Shouldly;
 using Xunit;
@@ -116,10 +117,11 @@ public sealed class StillsCommandTests : IDisposable
 
     /// <summary>With an ffmpeg to encode it, a preset that draws gets a WebP named in the index.</summary>
     [Fact]
+    [TestCategory(TestCategory.Ffmpeg)]
     public void A_preset_that_draws_is_written_as_webp_and_indexed()
     {
         var ffmpeg = Ffmpeg.Resolve(null);
-        Assert.SkipWhen(ffmpeg is null, "no ffmpeg on this machine");
+        TestCategory.Ffmpeg.Require(ffmpeg is not null, "no ffmpeg on this machine");
 
         var folder = new DirectoryInfo(Path.Combine(root.FullName, "drawn"));
 

@@ -1,3 +1,4 @@
+@browser
 Feature: The web viewer and the web editor work in a browser
   A page is its WebAssembly build, its scripts, a worker, WebGL and Web Audio together,
   so these open the pages in a real browser, headless, served as the preset site serves

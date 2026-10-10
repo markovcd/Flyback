@@ -1,5 +1,6 @@
 using Avalonia.Headless.XUnit;
 using Flyback.Engine.Compile;
+using Flyback.Tests;
 using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
@@ -46,12 +47,13 @@ public class PreviewBackendTests : EditorTest
     }
 
     [AvaloniaFact]
+    [TestCategory(TestCategory.Gpu)]
     public void A_program_that_reads_a_clip_stays_on_the_shader()
     {
         var host = new PreviewHost();
         var (plain, playing) = Programs();
 
-        Assert.SkipUnless(host.GpuAvailable, "no shader on offer here to stay on");
+        TestCategory.Gpu.Require(host.GpuAvailable, "no shader on offer here to stay on");
 
         host.Program = plain;
         host.Program = playing;

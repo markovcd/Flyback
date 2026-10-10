@@ -4,6 +4,7 @@ using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
 using Flyback.Gpu;
+using Flyback.Tests;
 using Shouldly;
 using Xunit;
 
@@ -19,6 +20,7 @@ namespace Flyback.Cli.Tests;
 /// differ in their last bits, and a frame upside down, a channel swapped or a
 /// history a frame behind differs by far more than that.
 /// </remarks>
+[TestCategory(TestCategory.Gpu)]
 public class GpuRenderTests
 {
     private const int Width = 160;
@@ -130,7 +132,7 @@ public class GpuRenderTests
     private static void Agrees(CompiledPatch program)
     {
         using var gpu = HeadlessRenderer.Open(out var why);
-        Assert.SkipWhen(gpu is null, $"No GPU here. {why}");
+        TestCategory.Gpu.Require(gpu is not null, $"No GPU here. {why}");
 
         IlCompiler.CompileOnce(program, IlParts.Staged);
 

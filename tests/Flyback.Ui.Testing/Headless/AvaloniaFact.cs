@@ -13,4 +13,8 @@ namespace Avalonia.Headless.XUnit;
 public sealed class AvaloniaFactAttribute(
     [CallerFilePath] string? sourceFilePath = null,
     [CallerLineNumber] int sourceLineNumber = -1)
-    : FactAttribute(sourceFilePath, sourceLineNumber);
+    : FactAttribute(sourceFilePath, sourceLineNumber), ITraitAttribute
+{
+    /// <summary>Files the test under <c>TestCategory.Ui</c>.</summary>
+    public IReadOnlyCollection<KeyValuePair<string, string>> GetTraits() => [new("Category", "ui")];
+}
