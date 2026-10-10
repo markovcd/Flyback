@@ -12,6 +12,8 @@ public sealed class JackServerTests : IDisposable
     [Fact]
     public void A_server_that_takes_clients_answers()
     {
+        Assert.SkipUnless(OperatingSystem.IsLinux(), "a non-blocking connect completes at once only on Linux, the one place the output asks");
+
         using var listener = Listening(backlog: 4);
 
         JackServer.Answers(path).ShouldBeTrue();
@@ -20,6 +22,8 @@ public sealed class JackServerTests : IDisposable
     [Fact]
     public void The_socket_a_dead_server_left_does_not_answer()
     {
+        Assert.SkipUnless(OperatingSystem.IsLinux(), "a non-blocking connect completes at once only on Linux, the one place the output asks");
+
         Listening(backlog: 4).Dispose();
 
         JackServer.Answers(path).ShouldBeFalse();
