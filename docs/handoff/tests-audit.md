@@ -119,8 +119,9 @@ Plugins.Tests.
   `Inspect/InspectorHelp.cs` (43 rows) and on `site/index.html` (10 `<kbd>`),
   and no test ties the three. A `Specs` scenario that every `<kbd>` on the site
   is a row in the help.
-- `shot` and `stills` have no in-process test in Cli.Tests
-  (`ShotCommand.cs` 103, `StillsCommand.cs` 123); only the specs drive them.
+- `shot` has no in-process test in Cli.Tests (`ShotCommand.cs`, 103); only the
+  specs drive it. `stills` has them for the presets that draw nothing and for
+  its folder; the encoding path needs an ffmpeg and a seam to fake one.
 - Unreached after reading, largest first: `Canvas/CanvasPainter.cs` (509; the
   window tests settle it and nothing asserts a pixel outside `SHOT_DIR`),
   `ShellLayout.cs` (439), `Gallery/GalleryLayout.cs` (438), `Gallery/SiteRun.cs`
