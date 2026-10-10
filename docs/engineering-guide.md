@@ -627,7 +627,8 @@ The second is the truth ([0120](adr/0120-every-change-passes-the-gate-a-release-
 The first runs against whatever the machine happens to have, and the tests that
 need something missing skip rather than fail — the headless UI tests want a font
 stack to rasterize with, the recording tests want ffmpeg on `PATH`, the browser
-scenarios want a Chromium (`FLYBACK_CHROMIUM`, or one on `PATH`) — so a local
+scenarios want a Chromium (`FLYBACK_CHROMIUM`, or one on `PATH`; `scripts/setup.sh`
+sets it to the Playwright one where there is one) — so a local
 run can be green about code it never ran. The Dockerfile carries both, which is
 why CI builds it rather than installing an SDK.
 

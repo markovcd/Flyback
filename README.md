@@ -56,6 +56,8 @@ The solution builds the web editor, which needs the wasm-tools workload:
 dotnet workload install wasm-tools
 ```
 
+On a machine with no .NET SDK, such as a cloud session's container, `./scripts/setup.sh` puts the one `global.json` names under `~/.dotnet` from Microsoft's Debian packages (the usual download hosts are blocked behind a cloud session's proxy), installs that workload, points the page scenarios at the Playwright Chromium under `/opt/pw-browsers`, and writes what a shell needs to `~/.flyback-env`; `--android` adds the android workload.
+
 ```bash
 dotnet publish src/Flyback.Editor.Desktop -c Release -r win-x64 -o artifacts/win-x64
 dotnet publish src/Flyback.Cli -c Release -r win-x64 -o artifacts/win-x64
