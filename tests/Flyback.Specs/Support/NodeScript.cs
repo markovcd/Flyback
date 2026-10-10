@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using Flyback.Core.Tests.Compile;
 using Reqnroll.UnitTestProvider;
 
@@ -19,6 +20,8 @@ internal static class NodeScript
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8,
             WorkingDirectory = folder,
         };
 
