@@ -63,6 +63,9 @@ public sealed class StillsCommandTests : IDisposable
     private static StillIndex Index(string folder) =>
         StillIndex.Read(File.ReadAllText(Path.Combine(folder, StillIndex.FileName))).ShouldNotBeNull();
 
+    private static StillEntry Entry(StillIndex index, string name) =>
+        index.Of(name, PresetKind.Idea).ShouldNotBeNull();
+
     [Fact]
     public void A_preset_with_no_picture_is_listed_with_why_and_no_file()
     {
@@ -75,18 +78,24 @@ public sealed class StillsCommandTests : IDisposable
             new PatchPreset("Broken", _ => throw new InvalidOperationException("no build")));
 
         code.ShouldBe(Exit.Ok, complaint);
-        said.ShouldBe($"Hum: sound only{Environment.NewLine}Idle: nothing to draw{Environment.NewLine}Broken: would not draw{Environment.NewLine}");
+
+        // The catalog orders its presets, so the order they are listed in is not this command's to promise.
+        said.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).ShouldBe(
+            ["Hum: sound only", "Idle: nothing to draw", "Broken: would not draw"], ignoreOrder: true);
 
         var index = Index(folder.FullName);
         index.Current.ShouldBeTrue();
-        index.Presets.Select(p => (p.Name, p.Still, p.File)).ShouldBe(
-        [
-            ("Hum", StillKind.SoundOnly, null),
-            ("Idle", StillKind.Nothing, null),
-            ("Broken", StillKind.Unavailable, null),
-        ]);
-        index.Presets[0].Heard.ShouldBeTrue();
-        index.Presets[1].Heard.ShouldBeFalse();
+        index.Presets.Count.ShouldBe(3);
+
+        var (hum, idle, broken) = (Entry(index, "Hum"), Entry(index, "Idle"), Entry(index, "Broken"));
+        hum.Still.ShouldBe(StillKind.SoundOnly);
+        idle.Still.ShouldBe(StillKind.Nothing);
+        broken.Still.ShouldBe(StillKind.Unavailable);
+        hum.File.ShouldBeNull();
+        idle.File.ShouldBeNull();
+        broken.File.ShouldBeNull();
+        hum.Heard.ShouldBeTrue();
+        idle.Heard.ShouldBeFalse();
         folder.GetFiles().Select(f => f.Name).ShouldBe([StillIndex.FileName]);
     }
 
