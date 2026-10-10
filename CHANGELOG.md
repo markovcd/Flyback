@@ -14,6 +14,7 @@
 - Asked to listen, an assistant with no model able to hear, such as Claude Code or Codex, says it cannot hear.
 - Claude Code's model box offers Fable.
 - A model name pasted with a space before or after it is read without the space.
+- Picking a model from the list no longer crashes the editor when the model saved was one the list does not have.
 
 ### Editor
 

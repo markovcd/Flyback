@@ -349,6 +349,30 @@ public partial class AssistantPanelTests
     }
 
     /// <summary>
+    /// A saved name that is not on the list sits in the box as text. Picking a row
+    /// over it must leave the list as it was: the box once dropped the unlisted row
+    /// mid-pick, and the selection it was leaving threw.
+    /// </summary>
+    [AvaloniaFact]
+    public void Picking_a_row_over_a_name_that_is_not_on_the_list_keeps_the_list()
+    {
+        var host = Settings(Showing(
+            With(new Deaf()),
+            Configured("deaf", (AssistantSchema.ModelKey, "released-after-this-build"))));
+
+        var box = All<ComboBox>(host).Single(c => c.Name == AssistantSchema.ModelKey);
+
+        box.Text.ShouldBe("released-after-this-build");
+        ((IEnumerable<string>)box.ItemsSource!).ShouldBe(["quiet"]);
+
+        box.SelectedIndex = 0;
+        Settle(host);
+
+        box.Text.ShouldBe("quiet");
+        ((IEnumerable<string>)box.ItemsSource!).ShouldBe(["quiet"]);
+    }
+
+    /// <summary>
     /// The settings open showing who is actually being talked to.
     /// </summary>
     /// <remarks>

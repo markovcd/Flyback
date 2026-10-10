@@ -302,11 +302,17 @@ public sealed class SettingsForm : UserControl
 
     /// <summary>
     /// A list to choose from, which may also be typed into. What is stored is always
-    /// in the list whether or not the plugin offered it — a model released after
-    /// this build, or one at an endpoint somebody pointed this at by hand — because
-    /// a setting that rewrote itself on being looked at is worse than an unfamiliar
+    /// shown whether or not the plugin offered it — a model released after this
+    /// build, or one at an endpoint somebody pointed this at by hand — because a
+    /// setting that rewrote itself on being looked at is worse than an unfamiliar
     /// name in a box.
     /// </summary>
+    /// <remarks>
+    /// A plain box carries an unlisted value as a row of its own. An editable one
+    /// shows it as text and leaves the list alone: picking a row sets the text, and
+    /// a list that shrinks under that pick takes the row that was selected with it,
+    /// which the selection then trips over.
+    /// </remarks>
     private sealed class PickRow : Row
     {
         private readonly ComboBox box;
@@ -355,7 +361,7 @@ public sealed class SettingsForm : UserControl
 
             var options = pick.Options.ToList();
 
-            if (options.All(option => option.Id != value) && !string.IsNullOrEmpty(value))
+            if (!editable && options.All(option => option.Id != value) && !string.IsNullOrEmpty(value))
                 options.Add(new SettingOption(value, pick.Name(value)));
 
             // Replacing the items clears the selection on the way past, so it is
