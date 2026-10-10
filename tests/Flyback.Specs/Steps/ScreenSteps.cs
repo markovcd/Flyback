@@ -50,6 +50,14 @@ public sealed class ScreenSteps(PatchContext context)
         ShouldShow(context.RenderAfterRewind(5, 1).Center, first, first, first, "after rewind");
     }
 
+    [Then("a second later the trail is as faint at {int} frames a second as at {int}")]
+    public void ThenAsFaintAtEitherRate(int slow, int fast)
+    {
+        var expected = context.RenderFor(1d, fast).Center.R;
+        expected.ShouldBeGreaterThan(Tolerance, "the trail is gone at either rate");
+        ShouldShow(context.RenderFor(1d, slow).Center, expected, expected, expected, $"at {slow} frames a second");
+    }
+
     [Then("after {int} frames and a rewind the next frame is back at {float}")]
     public void ThenRewound(int frames, float level) =>
         ShouldShow(context.RenderAfterRewind(frames, 1).Center, level, level, level, "after rewind");

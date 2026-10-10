@@ -147,6 +147,9 @@ internal static class JsEmitter
             OpCode.LoadX or OpCode.LoadY => $"{o} = 0;",
             OpCode.LoadT => $"{o} = t;",
             OpCode.LoadAspect => $"{o} = aspect;",
+
+            // The speakers never have a frame before.
+            OpCode.LoadFeedbackAge => $"{o} = 0;",
             OpCode.LoadLive => k >= 0 ? $"{o} = {k} < LIVEN ? F32[LIVE + {k}] : 0;" : $"{o} = 0;",
             OpCode.Copy => $"{o} = {a};",
 

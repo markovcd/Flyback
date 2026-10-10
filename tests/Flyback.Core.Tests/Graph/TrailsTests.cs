@@ -11,9 +11,9 @@ namespace Flyback.Core.Tests.Graph;
 /// </summary>
 /// <remarks>
 /// Rendered rather than evaluated, because what it reads is a frame and only a
-/// renderer keeps one. The first test is the one that matters: it is a Scale, a
-/// Rotate, a Translate, a Feedback, a Gain and a Maximum, and a patch that swaps
-/// those six for this has to draw the same picture.
+/// renderer keeps one. The first test is the one that matters: at sixty frames a
+/// second it is a Scale, a Rotate, a Translate, a Feedback, a Gain and a Maximum,
+/// and a patch that swaps those six for this has to draw the same picture.
 /// </remarks>
 public class TrailsTests
 {
@@ -78,7 +78,18 @@ public class TrailsTests
         wrapped.Wire(Spark(wrapped), 0, trails, In)
             .Wire(trails, Color, sink2, NodeCatalog.OutputColorPort);
 
-        Rendered(wrapped.Patch).ShouldBe(Rendered(byHand.Patch));
+        Rendered(wrapped.Patch, NodeCatalog.TrailsFrameRate).ShouldBe(Rendered(byHand.Patch, NodeCatalog.TrailsFrameRate));
+    }
+
+    /// <summary>A flash left to fade for a second is as faint at any frame rate.</summary>
+    [Theory]
+    [InlineData(24d)]
+    [InlineData(30d)]
+    [InlineData(144d)]
+    public void A_trail_lasts_as_long_at_any_frame_rate(double fps)
+    {
+        // Within a step of the byte the frame is written in.
+        Faded(fps).ShouldBe(Faded(NodeCatalog.TrailsFrameRate), 1d);
     }
 
     [Fact]
@@ -138,19 +149,48 @@ public class TrailsTests
         return b.Patch;
     }
 
-    private static byte[] Rendered(Patch patch)
+    private static byte[] Rendered(Patch patch, double fps = 30d)
     {
-        var result = patch.CompileForVideo(NodeCatalog.BuiltIn);
-        result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));
-
+        var program = Compiled(patch);
         var renderer = new SynthRenderer();
         var stride = Width * 4;
         var buffer = new byte[stride * Height];
 
         for (var frame = 0; frame < Frames; frame++)
-            renderer.Render(result.Program, frame / 30d, Width, Height, buffer, stride);
+            renderer.Render(program, frame / fps, Width, Height, buffer, stride);
 
         return buffer;
+    }
+
+    /// <summary>The middle pixel's red a second after one white frame, left to fade at 'persist' 0.99.</summary>
+    private static double Faded(double fps)
+    {
+        var flash = new PatchBuilder(NodeCatalog.BuiltIn);
+        var lit = flash.Add(Trails, (Persist, 0.99f));
+        flash.Wire(flash.Add("color.rgb"), 0, lit, In)
+            .Wire(lit, Color, flash.Add(NodeCatalog.OutputTypeId), NodeCatalog.OutputColorPort);
+
+        var dark = new PatchBuilder(NodeCatalog.BuiltIn);
+        dark.Wire(dark.Add(Trails, (Persist, 0.99f)), Color, dark.Add(NodeCatalog.OutputTypeId), NodeCatalog.OutputColorPort);
+
+        var renderer = new SynthRenderer();
+        var stride = Width * 4;
+        var buffer = new byte[stride * Height];
+
+        renderer.Render(Compiled(flash.Patch), 0d, Width, Height, buffer, stride);
+
+        var fading = Compiled(dark.Patch);
+        for (var frame = 1; frame <= (int)fps; frame++)
+            renderer.Render(fading, frame / fps, Width, Height, buffer, stride);
+
+        return buffer[(Height / 2 * Width + Width / 2) * 4 + 2];
+    }
+
+    private static CompiledPatch Compiled(Patch patch)
+    {
+        var result = patch.CompileForVideo(NodeCatalog.BuiltIn);
+        result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));
+        return result.Program;
     }
 
     /// <summary>How many pixels have anything in them.</summary>

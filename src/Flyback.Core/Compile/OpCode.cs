@@ -281,4 +281,12 @@ public enum OpCode : byte
     /// lowers to on the processor and what the shader agrees with.
     /// </remarks>
     SamplePicture = 46,
+
+    /// <summary>out = seconds since the frame <see cref="SampleFeedback"/> reads was drawn, and 0 wherever there is none</summary>
+    /// <remarks>
+    /// What lets a loop fade by the second rather than by the frame, so a trail
+    /// lasts as long at 30 frames a second as at 60. Never negative: a clock
+    /// that went back counts as no time.
+    /// </remarks>
+    LoadFeedbackAge = 47,
 }

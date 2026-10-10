@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Flyback.Core.Compile;
 using Flyback.Engine.Compile;
+using Flyback.Engine.Render;
 using static Flyback.Gpu.GlConstants;
 
 namespace Flyback.Gpu;
@@ -85,6 +86,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     /// <summary>A 1 the shader compiler cannot see, which keeps its two-float sums exact.</summary>
     private int patchOne = -1;
     private int patchAspect = -1;
+    private int patchFeedbackAge = -1;
     private int patchPrevious = -1;
     private int patchFeedbackX = -1;
     private int patchFeedbackY = -1;
@@ -302,6 +304,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
         patchTimeLow = gl.GetUniformLocation(compiled, "uTimeLo");
         patchOne = gl.GetUniformLocation(compiled, "uOne");
         patchAspect = gl.GetUniformLocation(compiled, "uAspect");
+        patchFeedbackAge = gl.GetUniformLocation(compiled, "uFeedbackAge");
         patchPrevious = gl.GetUniformLocation(compiled, "uPrevious");
         patchFeedbackX = gl.GetUniformLocation(compiled, "uFeedbackScaleX");
         patchFeedbackY = gl.GetUniformLocation(compiled, "uFeedbackScaleY");
@@ -576,6 +579,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
 
         var aspect = resolution.Height == 0 ? 1f : (float)resolution.Width / resolution.Height;
         if (patchAspect >= 0) gl.Uniform1f(patchAspect, aspect);
+        if (patchFeedbackAge >= 0) gl.Uniform1f(patchFeedbackAge, (float)SynthRenderer.AgeOf(time, drawnAt));
 
         for (var i = 0; i < patchConstants.Length && i < constants.Length; i++)
             if (patchConstants[i] >= 0)

@@ -43,6 +43,10 @@ public sealed class SynthRenderer : IFrameRenderer
 
     private float[] currentFrame = [];
     private float[] previousFrame = [];
+
+    /// <summary>The time the last frame was drawn at, or NaN before the first.</summary>
+    private double drawnAt = double.NaN;
+
     private int bufferWidth;
     private int bufferHeight;
 
@@ -66,6 +70,7 @@ public sealed class SynthRenderer : IFrameRenderer
     {
         Array.Clear(previousFrame);
         planes.Clear();
+        drawnAt = double.NaN;
     }
 
     /// <summary>Renders one frame into a BGRA8888 buffer.</summary>
@@ -131,7 +136,7 @@ public sealed class SynthRenderer : IFrameRenderer
         // the loop gives them back.
         planes.Fit(patch, width, height);
 
-        var feedback = new FeedbackFrame(previousFrame, width, height);
+        var feedback = new FeedbackFrame(previousFrame, width, height, AgeOf(time, drawnAt));
         var current = currentFrame;
         var aspect = AspectOf(width, height);
         var outputBase = patch.OutputBase;
@@ -212,7 +217,12 @@ public sealed class SynthRenderer : IFrameRenderer
             _ => { });
 
         (previousFrame, currentFrame) = (currentFrame, previousFrame);
+        drawnAt = time;
     }
+
+    /// <summary>Seconds from <paramref name="drawnAt"/> to <paramref name="time"/>, and 0 before the first frame or when the clock went back.</summary>
+    internal static double AgeOf(double time, double drawnAt) =>
+        double.IsNaN(drawnAt) ? 0d : Math.Max(0d, time - drawnAt);
 
     private void EnsureBuffers(int width, int height)
     {

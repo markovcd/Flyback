@@ -192,7 +192,7 @@ public static class Measurements
         for (var frame = 0; frame < frames; frame++)
         {
             var t = options.From + frame / (double)options.FramesPerSecond;
-            var before = new FeedbackFrame(previous, columns, rows);
+            var before = new FeedbackFrame(previous, columns, rows, frame == 0 ? 0d : 1d / options.FramesPerSecond);
 
             if (video is not null)
             {

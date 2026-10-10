@@ -23,6 +23,9 @@ public partial class NodeCatalog
         yield return Blur();
     }
 
+    /// <summary>How many frames a second 'persist' is the dimming of one frame at.</summary>
+    internal const float TrailsFrameRate = 60f;
+
     /// <summary>
     /// The loop nearly every picture closes with a Feedback: the last frame read
     /// from somewhere slightly else, dimmed, and laid under the new one.
@@ -53,7 +56,7 @@ public partial class NodeCatalog
                 Num("angle", 0f, -0.5f, 0.5f) with { Help = "In radians. A small one spirals the trail." },
                 Num("dx", 0f, -0.1f, 0.1f) with { Help = slide },
                 Num("dy", 0f, -0.1f, 0.1f) with { Help = slide },
-                Num("persist", 0.9f, 0f, 1f) with { Help = "What the last frame is dimmed by: 0.8 is a short ghost, 0.98 fades over seconds." },
+                Num("persist", 0.9f, 0f, 1f) with { Help = "What the last frame is dimmed by each sixtieth of a second, whatever the frame rate: 0.8 is a short ghost, 0.98 fades over seconds." },
             ],
             [
                 Col("color") with { Help = "The brighter of the trail and 'in'. Patch it into the Output." },
@@ -74,7 +77,9 @@ public partial class NodeCatalog
                     em.Binary(OpCode.Sub, turnedX, i[dx]),
                     em.Binary(OpCode.Sub, turnedY, i[dy]));
 
-                var tail = em.Mul(before, i[persist]);
+                // Raised to the frames that passed, so a trail lasts as long at any frame rate.
+                var frames = em.Mul(em.Load(OpCode.LoadFeedbackAge), TrailsFrameRate);
+                var tail = em.Mul(before, em.Binary(OpCode.Pow, i[persist], frames));
 
                 return [em.Binary(OpCode.Max, tail, i[0]), tail];
             },

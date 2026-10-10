@@ -4,7 +4,8 @@ uniform float uTime;
 uniform float uTimeLo;
 uniform float uOne;
 uniform float uAspect;
-uniform float uK[13];
+uniform float uFeedbackAge;
+uniform float uK[14];
 
 in vec2 vUv;
 out vec4 fragColor;
@@ -257,12 +258,16 @@ void main()
     float r53 = r51 - r15;
     vec3 t54 = fb(r52, r53);
     float r54 = t54.x; float r55 = t54.y; float r56 = t54.z;
-    float r57 = r54 * r41;
-    float r58 = r55 * r41;
-    float r59 = r56 * r41;
-    float r60 = max(r57, r34);
-    float r61 = max(r58, r35);
-    float r62 = max(r59, r36);
+    float r57 = uFeedbackAge;
+    float r58 = uK[13];
+    float r59 = r57 * r58;
+    float r60 = pw(r41, r59);
+    float r61 = r54 * r60;
+    float r62 = r55 * r60;
+    float r63 = r56 * r60;
+    float r64 = max(r61, r34);
+    float r65 = max(r62, r35);
+    float r66 = max(r63, r36);
 
-    fragColor = vec4(sat(r60), sat(r61), sat(r62), 1.0);
+    fragColor = vec4(sat(r64), sat(r65), sat(r66), 1.0);
 }

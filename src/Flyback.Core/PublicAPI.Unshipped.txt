@@ -3,3 +3,4 @@
 *REMOVED*Flyback.Core.Graph.KeyboardScale.Name.get -> string!
 *REMOVED*Flyback.Core.Graph.KeyboardScale.TonicClass.get -> int
 *REMOVED*Flyback.Core.Graph.PatchControl.Key.get -> string!
+Flyback.Core.Compile.OpCode.LoadFeedbackAge = 47 -> Flyback.Core.Compile.OpCode

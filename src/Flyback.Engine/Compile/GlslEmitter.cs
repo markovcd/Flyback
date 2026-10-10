@@ -508,6 +508,9 @@ public static class GlslEmitter
         text.AppendLine("uniform float uOne;");
         text.AppendLine("uniform float uAspect;");
 
+        // Only where it is read, as with the live inputs below.
+        if (patch.Ops.Any(op => op.Code == OpCode.LoadFeedbackAge)) text.AppendLine("uniform float uFeedbackAge;");
+
         // A zero-length array is not a legal declaration, and a patch of nothing
         // but loads genuinely has no constants in it.
         if (constants > 0) text.AppendLine($"uniform float uK[{constants}];");
@@ -747,6 +750,7 @@ public static class GlslEmitter
                 OpCode.LoadX => "px",
                 OpCode.LoadY => "py",
                 OpCode.LoadAspect => "uAspect",
+                OpCode.LoadFeedbackAge => "uFeedbackAge",
 
                 // The one load whose value the shader is handed per frame rather
                 // than per program. A picture drawn while a key is down is drawn

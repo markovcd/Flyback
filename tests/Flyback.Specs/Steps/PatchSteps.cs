@@ -174,6 +174,21 @@ public sealed class PatchSteps(PatchContext context)
         context.SetInput("brighten", "bias", step);
     }
 
+    [Given("a white flash on the first frame, left to trail at a persist of {float}")]
+    public void GivenAFlashTrailing(float persist)
+    {
+        // White while the clock is still at its start, and black from the next frame on.
+        context.Add("clock", "time");
+        context.Add("flash", "math.step");
+        context.SetInput("flash", "in", 0.001f);
+        context.Wire("clock", "t", "flash", "edge");
+
+        context.Add("trail", "feedback.trails");
+        context.SetInput("trail", "persist", persist);
+        context.Wire("flash", "out", "trail", "in");
+        Show("trail", "color");
+    }
+
     [Given("feedback brightened each frame by {float} plus one divided by zero")]
     public void GivenFeedbackWithADivisionByZero(float step)
     {

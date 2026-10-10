@@ -37,6 +37,7 @@ internal sealed class IlEmitter
     private const short Bank = 1, X = 2, Y = 3, T = 4, Aspect = 5, Feedback = 6, Delays = 7, Live = 8, Planes = 9;
 
     private static readonly FieldInfo ConstantsField = typeof(IlContext).GetField(nameof(IlContext.Constants))!;
+    private static readonly FieldInfo FeedbackAgeField = typeof(FeedbackFrame).GetField(nameof(FeedbackFrame.Age))!;
     private static readonly FieldInfo TablesField = typeof(IlContext).GetField(nameof(IlContext.Tables))!;
     private static readonly FieldInfo PicturesField = typeof(IlContext).GetField(nameof(IlContext.Pictures))!;
     private static readonly MethodInfo ConstantMethod = typeof(IlOps).GetMethod(nameof(IlOps.Constant))!;
@@ -165,6 +166,12 @@ internal sealed class IlEmitter
             case OpCode.LoadY: il.Emit(ReflectionOpCodes.Ldarg, Y); break;
             case OpCode.LoadT: il.Emit(ReflectionOpCodes.Ldarg, T); break;
             case OpCode.LoadAspect: il.Emit(ReflectionOpCodes.Ldarg, Aspect); break;
+
+            case OpCode.LoadFeedbackAge:
+                il.Emit(ReflectionOpCodes.Ldarg, Feedback);
+                il.Emit(ReflectionOpCodes.Ldfld, FeedbackAgeField);
+                break;
+
             case OpCode.Copy: Load(op.A); break;
 
             case OpCode.LoadLive:

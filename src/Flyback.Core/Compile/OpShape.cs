@@ -25,6 +25,7 @@ internal static class OpShape
             or OpCode.LoadY
             or OpCode.LoadT
             or OpCode.LoadAspect
+            or OpCode.LoadFeedbackAge
             or OpCode.LoadLive
             or OpCode.UnitRead
             or OpCode.PlaneRead => 0,
@@ -89,6 +90,7 @@ internal static class OpShape
             or OpCode.LoadY
             or OpCode.LoadT
             or OpCode.LoadAspect
+            or OpCode.LoadFeedbackAge
             or OpCode.LoadLive
             or OpCode.Copy
             or OpCode.Neg

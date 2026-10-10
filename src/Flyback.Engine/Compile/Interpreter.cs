@@ -73,6 +73,7 @@ internal static class Interpreter
                 case OpCode.LoadY: Reg(ref bank, op.Out) = y; break;
                 case OpCode.LoadT: Reg(ref bank, op.Out) = t; break;
                 case OpCode.LoadAspect: Reg(ref bank, op.Out) = aspect; break;
+                case OpCode.LoadFeedbackAge: Reg(ref bank, op.Out) = feedback.Age; break;
                 case OpCode.LoadLive: Reg(ref bank, op.Out) = live?.At((int)op.K) ?? 0d; break;
                 case OpCode.Copy: Reg(ref bank, op.Out) = Reg(ref bank, op.A); break;
 

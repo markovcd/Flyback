@@ -309,6 +309,20 @@ public sealed class PatchContext
         return new Frame(buffer, width, height);
     }
 
+    /// <summary>Renders <paramref name="seconds"/> of frames at <paramref name="fps"/>, from the start.</summary>
+    public Frame RenderFor(double seconds, int fps)
+    {
+        var program = Picture.Program;
+        var renderer = new SynthRenderer();
+        var stride = Width * 4;
+        var buffer = new byte[stride * Height];
+
+        for (var frame = 0; frame <= (int)Math.Round(seconds * fps); frame++)
+            renderer.Render(program, frame / (double)fps, Width, Height, buffer, stride);
+
+        return new Frame(buffer, Width, Height);
+    }
+
     /// <summary>
     /// Renders, clears the history the way the Rewind button does, then renders
     /// again, so the assertion is about Reset rather than about a fresh renderer.
