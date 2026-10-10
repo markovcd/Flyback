@@ -117,9 +117,8 @@ Plugins.Tests.
   non-default, save, reopen, equal.
 - Shortcuts: keys are handled in twelve editor files and listed in
   `Inspect/InspectorHelp.cs` (43 rows) and on `site/index.html` (10 `<kbd>`),
-  and no test ties the three. `--help` is not checked to list every command
-  `Program.Run` adds. A `Specs` scenario that every `<kbd>` on the site is a
-  row in the help, and a fact that `--help` names all nineteen commands.
+  and no test ties the three. A `Specs` scenario that every `<kbd>` on the site
+  is a row in the help.
 - `shot` and `stills` have no in-process test in Cli.Tests
   (`ShotCommand.cs` 103, `StillsCommand.cs` 123); only the specs drive them.
 - Unreached after reading, largest first: `Canvas/CanvasPainter.cs` (509; the
@@ -128,8 +127,7 @@ Plugins.Tests.
   and `GalleryChoice.cs` (240 each), `Ui/Controls/GpuPreviewSurface.cs` (296),
   `Flyback.Gpu` (1,243 across `Gl.cs`, `WglContext.cs`, `EglContext.cs`,
   `GpuReadback.cs`; `GpuRenderTests` only, which skips without Mesa),
-  `Keyring/SecretTool.cs` (107; its output parsing has no fixture),
-  `osc.triangle` (the one built-in id no test names).
+  `Keyring/SecretTool.cs` (107; its output parsing has no fixture).
 - `tools/TestOnlyMembers` is in the solution and run by nothing: not the gate,
   not a workflow. Its listing was committed by accident and removed on Oct 8
   (`6dbf6ec`) with ten rows in it, among them `MovieRenderer.Render`,
