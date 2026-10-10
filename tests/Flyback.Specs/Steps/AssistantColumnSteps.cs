@@ -1,4 +1,6 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
+using Avalonia.Media;
 using Avalonia.LogicalTree;
 using Flyback.Assist;
 using Flyback.Editor.Assist;
@@ -7,6 +9,7 @@ using Flyback.Plugins.Settings;
 using Flyback.Specs.Support;
 using Reqnroll;
 using Shouldly;
+using Flyback.Ui.Controls;
 using Flyback.Ui.Testing;
 
 namespace Flyback.Specs.Steps;
@@ -30,6 +33,21 @@ public sealed class AssistantColumnSteps(HeadlessTurn turn, EditorDriver editor)
             var transcript = new TranscriptView();
 
             transcript.Put(Voice.You, string.Join("\n", Enumerable.Range(1, lines).Select(line => $"Line {line} of what is wanted.")));
+            shown = transcript;
+        });
+    }
+
+    [Given("the assistant replied")]
+    public void GivenReplied(string reply)
+    {
+        turn.Take(this);
+
+        Headless.Run(() =>
+        {
+            var transcript = new TranscriptView();
+
+            transcript.Put(Voice.You, "how loud is it?");
+            transcript.Put(Voice.Said, reply);
             shown = transcript;
         });
     }
@@ -79,6 +97,18 @@ public sealed class AssistantColumnSteps(HeadlessTurn turn, EditorDriver editor)
                 .ShouldBe([input, cached, output, turns]);
         });
 
+    [Then("{string} is drawn in bold")]
+    public void ThenBold(string words) =>
+        Headless.Run(() => Runs().ShouldContain(run => run.Text == words && run.FontWeight == FontWeight.SemiBold));
+
+    [Then("{string} is drawn as code")]
+    public void ThenCode(string words) =>
+        Headless.Run(() => Runs().ShouldContain(run => run.Text == words && run.FontFamily == Markdown.Code));
+
+    [Then("the reply reads {string}, {string} and {string}")]
+    public void ThenReads(string first, string second, string third) =>
+        Headless.Run(() => Reply().Inlines!.Text!.Split('\n').ShouldBe([first, second, third]));
+
     public void Dispose()
     {
         shown = null;
@@ -91,6 +121,12 @@ public sealed class AssistantColumnSteps(HeadlessTurn turn, EditorDriver editor)
             double.IsPositiveInfinity(Named<Panel>("message").MaxHeight).ShouldBe(open);
             Named<Button>("more").GetLogicalDescendants().OfType<TextBlock>().Single().Text.ShouldBe(offer);
         });
+
+    /// <summary>The assistant's words: the one block of them in the column.</summary>
+    private SelectableTextBlock Reply() =>
+        Shown.GetLogicalDescendants().OfType<SelectableTextBlock>().Single(block => block.Inlines is { Count: > 0 });
+
+    private IEnumerable<Run> Runs() => Reply().Inlines!.OfType<Run>();
 
     private T Named<T>(string name) where T : Control =>
         Shown.GetLogicalDescendants().OfType<T>().Single(control => control.Name == name);

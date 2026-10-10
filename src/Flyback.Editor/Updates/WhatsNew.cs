@@ -10,14 +10,12 @@ namespace Flyback.Editor.Updates;
 /// The contents of the dialog that says what the release just installed changed.
 /// </summary>
 /// <remarks>
-/// The changelog's Markdown is drawn rather than shown as it was typed, but only as
-/// much of it as the changelog uses: a <c>###</c> heading, a <c>-</c> bullet, a plain
-/// paragraph, and <c>`code`</c> inside any of them.
+/// The changelog's Markdown is drawn rather than shown as it was typed: a <c>###</c>
+/// heading, a <c>-</c> bullet and a plain paragraph, each laid out here, with
+/// <see cref="Markdown.Spans"/> inside them.
 /// </remarks>
 internal static class WhatsNew
 {
-    private static readonly FontFamily Code = new("Consolas, Menlo, DejaVu Sans Mono, monospace");
-
     /// <summary>
     /// What the dialog is headed: the release installed, or where more than one
     /// release is shown, the one it was updated from.
@@ -96,27 +94,12 @@ internal static class WhatsNew
         return row;
     }
 
-    /// <summary>A wrapped line, with what the changelog put in backticks set in monospace.</summary>
+    /// <summary>A wrapped line, with its code and bold drawn as such.</summary>
     private static TextBlock Inline(string text)
     {
         var block = new TextBlock { FontSize = Text.Body, TextWrapping = TextWrapping.Wrap, Inlines = [] };
 
-        var parts = text.Split('`');
-
-        // An odd number of pieces means every backtick was paired; a stray one
-        // is shown as typed rather than turning the rest of the line into code.
-        if (parts.Length % 2 == 0) parts = [text];
-
-        for (var index = 0; index < parts.Length; index++)
-        {
-            if (parts[index].Length == 0) continue;
-
-            var run = new Run(parts[index]);
-
-            if (index % 2 == 1) run.FontFamily = Code;
-
-            block.Inlines!.Add(run);
-        }
+        block.Inlines!.AddRange(Markdown.Spans(text));
 
         return block;
     }

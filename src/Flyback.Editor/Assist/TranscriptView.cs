@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
@@ -47,6 +48,9 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
     /// block" is changes the moment anything else is written.
     /// </summary>
     private SelectableTextBlock? saying;
+
+    /// <summary>The Markdown <see cref="saying"/> has been sent so far.</summary>
+    private string sayingSoFar = string.Empty;
 
     /// <summary>The run of working the transcript is in the middle of, or null when the last thing was words.</summary>
     private StepsGroup? working;
@@ -309,14 +313,16 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
         var inside = new StackPanel { Spacing = 6 };
 
         inside.Children.Add(heading);
-        inside.Children.Add(new SelectableTextBlock
+        var body = new SelectableTextBlock
         {
-            Text = said,
             TextWrapping = TextWrapping.Wrap,
             Foreground = Ink,
             FontSize = Text.Body,
             LineHeight = 18,
-        });
+        };
+
+        Draw(body, said);
+        inside.Children.Add(body);
 
         saidPanel.Children.Add(new Border
         {
@@ -545,21 +551,32 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
     {
         if (saying is not null)
         {
-            saying.Text += text;
+            sayingSoFar += text;
+            Draw(saying, sayingSoFar);
             return;
         }
 
         Closed();
 
+        sayingSoFar = text;
         saying = new SelectableTextBlock
         {
-            Text = text,
             TextWrapping = TextWrapping.Wrap,
             Foreground = Ink,
             FontSize = Text.Body,
             LineHeight = 18,
         };
 
+        Draw(saying, sayingSoFar);
         saidPanel.Children.Add(saying);
+    }
+
+    /// <summary>The assistant's words as their Markdown draws them, drawn again whole as each piece arrives.</summary>
+    private static void Draw(SelectableTextBlock block, string markdown)
+    {
+        var inlines = new InlineCollection();
+
+        inlines.AddRange(Markdown.Block(markdown));
+        block.Inlines = inlines;
     }
 }

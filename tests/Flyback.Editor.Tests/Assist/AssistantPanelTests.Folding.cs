@@ -46,7 +46,7 @@ public partial class AssistantPanelTests
     private static IEnumerable<Control> Parts(Button fold) => (fold.Content as Panel)?.Children ?? [];
 
     private static SelectableTextBlock Block(Window window, string text) =>
-        All<SelectableTextBlock>(window).Single(block => block.Text == text);
+        All<SelectableTextBlock>(window).Single(block => Says(block) == text);
 
     [AvaloniaFact]
     public void A_block_too_long_to_read_on_the_way_past_arrives_folded()

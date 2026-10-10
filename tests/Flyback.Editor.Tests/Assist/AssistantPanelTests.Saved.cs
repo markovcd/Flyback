@@ -63,10 +63,10 @@ public partial class AssistantPanelTests
         All<TextBlock>(PanelOf(window)).Single(block => block.Name == name).Text ?? string.Empty;
 
     private static List<string?> Counts(Window window) =>
-        [.. All<TextBlock>(PanelOf(window)).Where(block => block.Name == "count").Select(block => block.Text)];
+        [.. All<TextBlock>(PanelOf(window)).Where(block => block.Name == "count").Select(Says)];
 
     private static List<string?> Shown(Window window) =>
-        [.. All<SelectableTextBlock>(PanelOf(window)).Select(block => block.Text)];
+        [.. All<SelectableTextBlock>(PanelOf(window)).Select(Says)];
 
     [AvaloniaFact]
     public void A_conversation_saved_with_a_patch_is_shown_when_the_patch_opens()

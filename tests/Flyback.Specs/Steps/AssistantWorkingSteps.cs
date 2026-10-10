@@ -85,5 +85,5 @@ public sealed class AssistantWorkingSteps(HeadlessTurn turn) : IDisposable
         Transcript.GetLogicalDescendants().OfType<Button>().Where(button => button.Name == "steps");
 
     private IEnumerable<SelectableTextBlock> Sayings() =>
-        Transcript.GetLogicalDescendants().OfType<SelectableTextBlock>().Where(block => said.Contains(block.Text ?? string.Empty));
+        Transcript.GetLogicalDescendants().OfType<SelectableTextBlock>().Where(block => said.Contains((block.Inlines is { Count: > 0 } runs ? runs.Text : block.Text) ?? string.Empty));
 }

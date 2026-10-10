@@ -90,6 +90,9 @@ public sealed partial class AssistantPanelTests : EditorTest
     /// <summary>The assistant's column in <paramref name="window"/>.</summary>
     private static AssistantPanel PanelOf(Window window) => All<AssistantPanel>(window).Single();
 
+    /// <summary>What a block reads as, whether it holds plain text or the runs its Markdown drew.</summary>
+    private static string? Says(TextBlock block) => block.Inlines is { Count: > 0 } runs ? runs.Text : block.Text;
+
     /// <summary>
     /// A catalog holding one provider and the shipped presets, as every scan
     /// does, which is the only way to see the half of this panel that reacts to

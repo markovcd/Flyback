@@ -112,7 +112,7 @@ public partial class AssistantPanelTests
         var window = Asked(settings);
 
         Handbook(window).IsVisible.ShouldBeFalse();
-        All<SelectableTextBlock>(window).ShouldContain(block => block.Text == "a filter it is." && block.IsVisible);
+        All<SelectableTextBlock>(window).ShouldContain(block => Says(block) == "a filter it is." && block.IsVisible);
 
         var host = Settings(window);
         All<CheckBox>(host).Single(c => c.Name == "showLookups").IsChecked = true;

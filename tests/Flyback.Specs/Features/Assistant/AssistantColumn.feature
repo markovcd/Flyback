@@ -3,7 +3,8 @@ Feature: The assistant's column reads as a conversation
   assistant's words, folded steps and proposals follow under its mark. A message
   too long to read past stands cut short until it is opened. Under the column's
   header a line says how full the conversation's context is, and opens onto what
-  the conversation has cost.
+  the conversation has cost. What the assistant writes in Markdown is drawn as
+  such rather than shown as typed.
 
   Scenario: A long message stands cut short until it is opened
     Given a message of 20 lines was sent to the assistant
@@ -17,3 +18,14 @@ Feature: The assistant's column reads as a conversation
     Then the column shows "45k / 100k" of context
     When the context line is pressed
     Then the column shows "87k" in, "80k" cached, "3.1k" out and "1" turn
+
+  Scenario: The assistant's Markdown is drawn rather than shown as typed
+    Given the assistant replied
+      """
+      **Loudness:** about right.
+      - `level` sits at 0.8
+      - nothing clips
+      """
+    Then "Loudness:" is drawn in bold
+    And "level" is drawn as code
+    And the reply reads "Loudness: about right.", "•  level sits at 0.8" and "•  nothing clips"

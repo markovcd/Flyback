@@ -97,7 +97,7 @@ public partial class AssistantPanelTests
         var flow = (Panel)steps.Parent!;
         var after = flow.Children[flow.Children.IndexOf(steps) + 1];
 
-        after.ShouldBeOfType<SelectableTextBlock>().Text.ShouldBe("that is a blue field.");
+        Says(after.ShouldBeOfType<SelectableTextBlock>()).ShouldBe("that is a blue field.");
         frame.Child.ShouldBeOfType<Image>().Source.ShouldNotBeNull();
     }
 }
