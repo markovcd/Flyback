@@ -97,7 +97,7 @@ internal sealed class AssistantPanel : UserControl
     /// <summary>How full the context is and what this conversation has cost, under the header.</summary>
     private readonly ContextStrip spent = new();
 
-    /// <summary>Which model answered last, or which provider will, under the panel's name.</summary>
+    /// <summary>Which model answered last, or which one will, under the panel's name.</summary>
     private readonly TextBlock model = new()
     {
         Name = "model",
@@ -861,7 +861,7 @@ internal sealed class AssistantPanel : UserControl
                 : (new TokensSpent(), 0);
 
         spent.Show(tokens, turns, settingsRepository.Current.ContextLimit);
-        model.Text = tokens.Model ?? chosenAssistant.Value?.Name ?? "No provider";
+        model.Text = tokens.Model ?? settings.Model() ?? chosenAssistant.Value?.Name ?? "No provider";
     }
 
     /// <summary>

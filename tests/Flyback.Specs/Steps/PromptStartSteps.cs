@@ -43,6 +43,10 @@ public sealed class PromptStartSteps(EditorDriver editor, PatchContext context) 
     public void GivenAnIdeasModel(string model) =>
         settings.Choices[assistant.Id] = new Dictionary<string, string> { [AssistantSchema.IdeasModelKey] = model };
 
+    [Given("the assistant's model is {string}")]
+    public void GivenAModel(string model) =>
+        settings.Choices[assistant.Id] = new Dictionary<string, string> { [AssistantSchema.ModelKey] = model };
+
     [When("{string} is typed in the prompt card")]
     public void WhenAnIdeaIsTyped(string idea) => editor.TypePrompt(idea);
 
@@ -74,6 +78,9 @@ public sealed class PromptStartSteps(EditorDriver editor, PatchContext context) 
     [Then("the assistant was asked to write out a new patch")]
     public void ThenAskedForANewPatch() =>
         assistant.Heard.Where(Writing).ShouldHaveSingleItem().ShouldContain("short idea for a new patch");
+
+    [Then("the column's header names {string}")]
+    public void ThenTheHeaderNames(string model) => editor.AssistantModel.ShouldBe(model);
 
     [Then("nothing has been sent to build from")]
     public void ThenNothingSent() => assistant.Heard.ShouldAllBe(heard => Writing(heard));

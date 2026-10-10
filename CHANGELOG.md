@@ -13,6 +13,7 @@
 - With a decision model chosen under Settings → Decisions, a word a module is known by finds it in the module list (a Slew by portamento), a phrase that names no module finds the ones it describes, a message that surely asks a question is answered rather than built from, and the status line's complaints come likeliest first; `flyback-cli modules --find` and `check --triage` do the same.
 - Asked to listen, an assistant with no model able to hear, such as Claude Code or Codex, says it cannot hear.
 - The assistant's replies draw their bold, lists, headings and code rather than showing the Markdown as typed.
+- The assistant's column names the model it is set to before anything has answered.
 - Claude Code's model box offers Fable.
 - A model name pasted with a space before or after it is read without the space.
 - Picking a model from the list no longer crashes the editor when the model saved was one the list does not have.

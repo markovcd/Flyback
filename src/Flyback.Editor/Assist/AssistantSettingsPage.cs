@@ -357,6 +357,13 @@ internal sealed class AssistantSettingsPage
             ? new AssistantConfig(credentials.Transport(assistant, form.Values), form.Values)
             : null;
 
+    /// <summary>The model the chosen provider's form is set to, or null where its form names none.</summary>
+    public string? Model() =>
+        chosenAssistant.Value?.Form(form.Values).FirstOrDefault(f => f.Key == AssistantSchema.ModelKey) is { } field
+            && field.Sane(form.Values.Text(field.Key)) is { Length: > 0 } model
+                ? model.Trim()
+                : null;
+
     /// <summary>
     /// Says whether there is a key without ever showing one.
     /// </summary>

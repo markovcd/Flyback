@@ -327,6 +327,15 @@ public partial class AssistantPanelTests
         offered.ShouldBe(["Low", "Medium", "High"]);
     }
 
+    /// <summary>The header names the model set up, before anything has answered to name one itself.</summary>
+    [AvaloniaFact]
+    public void The_header_names_the_model_set_up_before_anything_has_answered()
+    {
+        var window = Showing(With(new Deaf()), Configured("deaf", (AssistantSchema.ModelKey, "deaf-large")));
+
+        Reading(window, "model").ShouldBe("deaf-large");
+    }
+
     /// <summary>
     /// The model list is a set of suggestions, not a set of choices. The
     /// endpoint is a field — an OpenAI-shaped one reaches a dozen providers and

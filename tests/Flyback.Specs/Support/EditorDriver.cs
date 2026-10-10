@@ -553,6 +553,9 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     /// <summary>What the assistant's box holds.</summary>
     public string MessageText => ReadWindow(open => Named<TextBox>(open, "instruction").Text ?? string.Empty);
 
+    /// <summary>The model the assistant's column names under its header.</summary>
+    public string AssistantModel => ReadWindow(open => Named<TextBlock>(open, "model").Text ?? string.Empty);
+
     /// <summary>Types a message into the assistant's box.</summary>
     public void TypeMessage(string message) =>
         DoWindow((open, _) => Named<TextBox>(open, "instruction").Text = message);
