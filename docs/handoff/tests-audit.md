@@ -59,7 +59,7 @@ hold:
   loop in three more, while `Figures.cs:71` and `Fractals.cs` hold public
   versions nobody else calls.
 - Four preset-site `HttpMessageHandler`s answering `/api/v1/presets`
-  (`Editor.Tests/Ui/FakePresetSite.cs`, `SharedPresetSteps.cs:124`,
+  (`Editor.Tests/FakePresetSite.cs`, `SharedPresetSteps.cs:124`,
   `SiteSteps.cs:164`, `RenderPresetsTests.cs:372`); the first two serve the
   same gallery feature.
 
@@ -139,9 +139,8 @@ Plugins.Tests.
 
 ## 11. Shape and drift (Low)
 
-- `Editor.Tests/Ui/` holds 120 of 172 files in a folder `src/Flyback.Editor`
-  does not have; `Plugins.Tests` is 89 files flat against seven `src` folders.
-  Move only. Four files hold a fifth of Editor.Tests
+- `Plugins.Tests` is 89 files flat against seven `src` folders. Move only.
+  Four files hold a fifth of Editor.Tests
   (`AssistantPanelTests.cs` 1,186, `SourceViewTests.cs` 1,154,
   `OutputSettingsTests.cs` 944, `NodeEditorTests.cs` 676) and
   `PatchWorkbenchTests.cs` is 1,420.

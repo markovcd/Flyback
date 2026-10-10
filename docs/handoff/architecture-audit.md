@@ -16,7 +16,6 @@ decision (ADR-0138).
 
 ## 10. Tests (Medium to Low)
 
-- **`Editor.Tests/Ui/` is a bucket.** 120 of 170 files sit in a folder `src/Flyback.Editor` does not have; the guide says the namespace mirrors the folder. Move only, into the feature folders.
 - **Four files hold a fifth of Editor.Tests.** `AssistantPanelTests.cs` 1,186 code lines, `SourceViewTests.cs` 1,154, `OutputSettingsTests.cs` 943, `NodeEditorTests.cs` 676; `AssistantPanelTests` and `CredentialsTests` each carry a private `FakeStore : ISecretStore`. Split by rule group; one `FakeSecretStore`.
 
 ## 11. Drift in the documents, no code change (Low)

@@ -1,0 +1,437 @@
+﻿using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Threading;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Controls;
+using Flyback.Engine.Graph;
+using Flyback.Editor.Gallery;
+using Flyback.Editor.Windows;
+using Flyback.Core.Graph;
+using Shouldly;
+
+namespace Flyback.Editor.Tests.Gallery;
+
+/// <summary>
+/// The patch on the canvas saved as a preset from the gallery, which then lists it
+/// under a heading of its own after every preset the program offers.
+/// </summary>
+public class SavedPresetTests : EditorTest
+{
+    private readonly string folder = Path.Combine(
+        Path.GetTempPath(),
+        "flyback-presets-" + Guid.NewGuid().ToString("N"));
+
+    public override void Dispose()
+    {
+        base.Dispose();
+
+        if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+
+        GC.SuppressFinalize(this);
+    }
+
+    private MainWindow Open()
+    {
+        var window = NewMainWindow(new EditorSetup { Folders = new() { PresetFolder = folder } });
+
+        window.Show();
+        window.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+
+        return window;
+    }
+
+    private static ComboBox Presets(MainWindow window) =>
+        All<ComboBox>(window).Single(box => box.Name == "presets");
+
+    private static void OpenGallery(MainWindow window)
+    {
+        All<Button>(window).Single(b => b.Name == "presets-glyph")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        Settle(window);
+    }
+
+    private static void Click(Button button, MainWindow window)
+    {
+        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+    }
+
+    /// <summary>Chooses a tile and opens it with the button the gallery has for that.</summary>
+    private static void Use(Button tile, MainWindow window)
+    {
+        Click(tile, window);
+        Click(All<Button>(window).Single(b => b.Name == "use-preset"), window);
+    }
+
+    private static WrapPanel Yours(MainWindow window) =>
+        All<WrapPanel>(window).Single(p => p.Name == "yours");
+
+    private static List<PatchPreset> SavedTiles(MainWindow window) =>
+        [.. All<Button>(Yours(window)).Where(b => b.Name == "tile").Select(b => (PatchPreset)b.Tag!)];
+
+    /// <summary>Saves the patch on the canvas under <paramref name="name"/>, the way a person would.</summary>
+    private static void SaveAs(MainWindow window, string name)
+    {
+        Click(All<Button>(window).Single(b => b.Name == "keep-preset"), window);
+
+        All<TextBox>(window).Single(b => b.Name == "preset-name").Text = name;
+        Settle(window);
+
+        Click(All<Button>(window).Single(b => b.Name == "save-preset"), window);
+    }
+
+    [AvaloniaFact]
+    public void The_saved_run_comes_last_with_a_way_to_save_one()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+
+        var gallery = All<StackPanel>(window).Single(p => p.Name == "gallery");
+
+        gallery.Children[^2].ShouldBeOfType<Grid>().Children.OfType<TextBlock>().Single(t => t.Name == "run-title")
+            .Text.ShouldBe(PresetGallery.YoursHeading);
+        gallery.Children[^1].ShouldBeSameAs(Yours(window));
+
+        SavedTiles(window).ShouldBeEmpty("nothing has been saved yet");
+        All<Button>(Yours(window)).ShouldContain(b => b.Name == "keep-preset");
+    }
+
+    [AvaloniaFact]
+    public void A_patch_saved_as_a_preset_is_a_tile_and_a_file()
+    {
+        var window = Open();
+        var offered = Presets(window).ItemsSource!.Cast<PatchPreset>().Count();
+
+        OpenGallery(window);
+        SaveAs(window, "Mine");
+
+        SavedTiles(window).Select(p => p.Name).ShouldBe(["Mine"]);
+        File.Exists(Path.Combine(folder, "Mine" + PatchBundle.Extension)).ShouldBeTrue();
+
+        var listed = Presets(window).ItemsSource!.Cast<PatchPreset>().ToList();
+
+        listed.Count.ShouldBe(offered + 1);
+        listed[^1].Name.ShouldBe("Mine", "a saved preset comes after every other");
+    }
+
+    [AvaloniaFact]
+    public void Using_a_saved_preset_puts_it_on_the_canvas()
+    {
+        var window = Open();
+        var editor = All<NodeEditor>(window).Single();
+        var saved = editor.History.Patch.Nodes.Select(n => n.TypeId).Order().ToList();
+
+        OpenGallery(window);
+        SaveAs(window, "Mine");
+
+        // Somewhere else first, so arriving back is visibly the saved one.
+        Use(All<Button>(window).Single(b => b.Name == "tile" && ((PatchPreset)b.Tag!).Name == "Empty"), window);
+        editor.History.Patch.Nodes.Count.ShouldBe(1);
+
+        OpenGallery(window);
+        Use(All<Button>(Yours(window)).Single(b => b.Name == "tile"), window);
+
+        (Presets(window).SelectedItem as PatchPreset)!.Name.ShouldBe("Mine");
+        editor.History.Patch.Nodes.Select(n => n.TypeId).Order().ShouldBe(saved);
+    }
+
+    [AvaloniaFact]
+    public void A_built_in_name_is_refused()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+
+        Click(All<Button>(window).Single(b => b.Name == "keep-preset"), window);
+
+        All<TextBox>(window).Single(b => b.Name == "preset-name").Text = "Plasma";
+        Settle(window);
+
+        All<Button>(window).Single(b => b.Name == "save-preset").IsEnabled.ShouldBeFalse();
+    }
+
+    /// <summary>Saves "Mine", then presses Save on the same name again, which puts the question up.</summary>
+    private static void AskToReplace(MainWindow window)
+    {
+        OpenGallery(window);
+        SaveAs(window, "Mine");
+
+        Click(All<Button>(window).Single(b => b.Name == "keep-preset"), window);
+
+        All<TextBox>(window).Single(b => b.Name == "preset-name").Text = "Mine";
+        Settle(window);
+
+        Click(All<Button>(window).Single(b => b.Name == "save-preset"), window);
+    }
+
+    private static Button ReplaceAnswer(MainWindow window, string name) =>
+        All<Button>(All<Border>(window).Single(b => b.Name == "keep-card")).Single(b => b.Name == name);
+
+    [AvaloniaFact]
+    public void Saving_over_a_preset_asks_before_replacing_it()
+    {
+        var window = Open();
+
+        AskToReplace(window);
+
+        var kept = Path.Combine(folder, "Mine" + PatchBundle.Extension);
+        var before = File.GetLastWriteTimeUtc(kept);
+
+        ReplaceAnswer(window, "yes").ShouldNotBeNull();
+        File.GetLastWriteTimeUtc(kept).ShouldBe(before, "nothing is replaced until the question is answered yes");
+    }
+
+    [AvaloniaFact]
+    public void Answering_no_to_a_replace_goes_back_to_the_name()
+    {
+        var window = Open();
+
+        AskToReplace(window);
+        Click(ReplaceAnswer(window, "no"), window);
+
+        All<TextBox>(window).Single(b => b.Name == "preset-name").Text.ShouldBe("Mine");
+        SavedTiles(window).Select(p => p.Name).ShouldBe(["Mine"]);
+    }
+
+    [AvaloniaFact]
+    public void Answering_yes_to_a_replace_saves_over_it()
+    {
+        var window = Open();
+
+        AskToReplace(window);
+        Click(ReplaceAnswer(window, "yes"), window);
+
+        SavedTiles(window).Select(p => p.Name).ShouldBe(["Mine"], "one name, one tile");
+        All<Button>(window).ShouldContain(b => b.Name == "keep-preset", "the card is the offer again");
+    }
+
+    /// <summary>Saves "Mine", then asks to delete it, and returns its tile with the question up.</summary>
+    private static Button AskToDelete(MainWindow window)
+    {
+        OpenGallery(window);
+        SaveAs(window, "Mine");
+
+        return AskAboutTheTile(window);
+    }
+
+    /// <summary>Asks to delete the one saved tile, with the gallery up, and returns it.</summary>
+    private static Button AskAboutTheTile(MainWindow window)
+    {
+        var tile = All<Button>(Yours(window)).Single(b => b.Name == "tile");
+
+        ((MenuFlyout)tile.ContextFlyout!).Items.OfType<MenuItem>().Single()
+            .RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        Settle(window);
+
+        return tile;
+    }
+
+    private static Button Answer(Button tile, string name) =>
+        All<Button>(tile).Single(b => b.Name == name);
+
+    [AvaloniaFact]
+    public void A_tile_being_asked_about_deleting_does_not_open()
+    {
+        var window = Open();
+        var tile = AskToDelete(window);
+        var showing = Presets(window).SelectedItem;
+
+        Click(tile, window);
+
+        All<ModalOverlay>(window).ShouldNotBeEmpty("the gallery is still up");
+        Presets(window).SelectedItem.ShouldBeSameAs(showing);
+    }
+
+    [AvaloniaFact]
+    public void Keeping_a_preset_that_was_asked_about_does_not_open_it()
+    {
+        var window = Open();
+        var tile = AskToDelete(window);
+        var showing = Presets(window).SelectedItem;
+
+        Click(Answer(tile, "no"), window);
+
+        All<ModalOverlay>(window).ShouldNotBeEmpty("the gallery is still up");
+        Presets(window).SelectedItem.ShouldBeSameAs(showing);
+        SavedTiles(window).Select(p => p.Name).ShouldBe(["Mine"]);
+
+        // The question is gone, so the tile is an ordinary one again.
+        Use(All<Button>(Yours(window)).Single(b => b.Name == "tile"), window);
+
+        All<ModalOverlay>(window).ShouldBeEmpty();
+        (Presets(window).SelectedItem as PatchPreset)!.Name.ShouldBe("Mine");
+    }
+
+    [AvaloniaFact]
+    public void Deleting_a_preset_does_not_open_it_either()
+    {
+        var window = Open();
+        var tile = AskToDelete(window);
+        var showing = Presets(window).SelectedItem;
+
+        Click(Answer(tile, "yes"), window);
+
+        All<ModalOverlay>(window).ShouldNotBeEmpty("the gallery is still up");
+        Presets(window).SelectedItem.ShouldBeSameAs(showing);
+        SavedTiles(window).ShouldBeEmpty();
+        File.Exists(Path.Combine(folder, "Mine" + PatchBundle.Extension)).ShouldBeFalse();
+    }
+
+    /// <summary>Closes whatever dialog is up by its cross.</summary>
+    private static void Dismiss(MainWindow window)
+    {
+        All<Button>(All<ModalOverlay>(window).Single()).Single(b => b.Name == "dismiss")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Any(); attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        Settle(window);
+    }
+
+    /// <summary>Opens the settings, and from their Startup patch row the gallery over them.</summary>
+    private static Button OpenStartupGallery(MainWindow window)
+    {
+        Click(All<Button>(window).Single(b => b.Name == "settings"), window);
+
+        for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        Settle(window);
+
+        ShowSettingsTab(All<ModalOverlay>(window).Single(), "Files");
+        Settle(window);
+
+        var row = All<Button>(window).Single(b => b.Name == "defaultPreset");
+
+        Click(row, window);
+
+        for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Count() < 2; attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        Settle(window);
+
+        return row;
+    }
+
+    [AvaloniaFact]
+    public void The_startup_patch_is_picked_from_a_gallery_that_saves_and_deletes_nothing()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+        SaveAs(window, "Mine");
+        Dismiss(window);
+
+        var row = OpenStartupGallery(window);
+        var mine = All<Button>(Yours(window)).Single(b => b.Name == "tile");
+
+        All<Button>(window).ShouldNotContain(b => b.Name == "keep-preset");
+        mine.ContextFlyout.ShouldBeNull();
+
+        Use(mine, window);
+
+        All<ModalOverlay>(window).Count().ShouldBe(1, "the settings are still up under the gallery");
+        All<TextBlock>(row).Single(t => t.Name == "defaultPresetName").Text.ShouldBe("Mine");
+    }
+
+    [AvaloniaFact]
+    public void With_nothing_saved_the_startup_gallery_has_no_saved_run()
+    {
+        var window = Open();
+
+        OpenStartupGallery(window);
+
+        All<WrapPanel>(window).ShouldNotContain(p => p.Name == "yours");
+    }
+
+    /// <summary>
+    /// Windows hands a box its character only for a key press nobody handled, and a
+    /// text box leaves a letter unhandled, so the dialog around it must too.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_letter_typed_into_the_name_reaches_the_window_unhandled()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+        Click(All<Button>(window).Single(b => b.Name == "keep-preset"), window);
+
+        var name = All<TextBox>(window).Single(b => b.Name == "preset-name");
+        var handled = new List<bool>();
+
+        name.Focus();
+        window.AddHandler(InputElement.KeyDownEvent, (_, e) => handled.Add(e.Handled), handledEventsToo: true);
+
+        window.KeyPressQwerty(PhysicalKey.A, RawInputModifiers.None);
+
+        handled.ShouldBe([false]);
+    }
+
+    [AvaloniaFact]
+    public void A_saved_preset_is_found_by_its_tags_and_its_author()
+    {
+        var window = Open();
+        var patch = All<NodeEditor>(window).Single().History.Patch;
+
+        patch.Credit("Wendelin");
+        patch.Tag(["drone", "quokka"]);
+
+        OpenGallery(window);
+        SaveAs(window, "Mine");
+
+        var tile = All<Button>(Yours(window)).Single(b => b.Name == "tile");
+
+        Click(tile, window);
+
+        var tags = All<WrapPanel>(window).Single(p => p.Name == "detail-topics");
+        var deadline = DateTime.UtcNow.AddSeconds(60);
+
+        while (tags.Children.Count == 0 && DateTime.UtcNow < deadline)
+        {
+            Dispatcher.UIThread.RunJobs();
+            Thread.Sleep(20);
+        }
+
+        tags.Children.Select(chip => ((Button)chip).Content).ShouldBe(["drone", "quokka"]);
+        All<TextBlock>(window).Single(t => t.Name == "detail-credit").Text.ShouldBe("by Wendelin");
+
+        var filter = All<TextBox>(window).Single(b => b.Name == "preset-filter");
+
+        foreach (var typed in (string[])["quokk", "wendel"])
+        {
+            filter.Text = typed;
+            Settle(window);
+
+            All<Button>(window).Where(b => b is { Name: "tile", IsVisible: true })
+                .Select(b => ((PatchPreset)b.Tag!).Name)
+                .ShouldBe(["Mine"], typed);
+        }
+
+        filter.Text = "nobody-tagged-this";
+        Settle(window);
+
+        tile.IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void A_window_given_no_folder_has_no_saved_run()
+    {
+        var window = NewMainWindow();
+
+        window.Show();
+        Settle(window);
+        OpenGallery(window);
+
+        All<WrapPanel>(window).ShouldNotContain(p => p.Name == "yours");
+    }
+}

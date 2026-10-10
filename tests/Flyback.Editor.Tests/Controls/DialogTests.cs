@@ -1,0 +1,172 @@
+﻿using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Threading;
+using Flyback.Editor.Controls;
+using Flyback.Editor.Windows;
+using Shouldly;
+using Xunit;
+
+namespace Flyback.Editor.Tests.Controls;
+
+/// <summary>
+/// The two dialogs that ask nothing — Settings and About — opened from the toolbar
+/// and dismissed again.
+/// </summary>
+/// <remarks>
+/// Opening each twice is the point: the settings panel is lent to the dialog rather
+/// than built for it, and a control has one parent, so the failure when it is not
+/// returned is a throw on the second opening — a bug nobody meets until the second
+/// time they look at a setting.
+/// </remarks>
+public class DialogTests : EditorTest
+{
+
+    /// <summary>Presses a toolbar button and waits for what it puts up.</summary>
+    private static ModalOverlay Show(MainWindow window, string named)
+    {
+        All<Button>(window).Single(b => b.Name == named)
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        Settle(window);
+
+        return All<ModalOverlay>(window).SingleOrDefault()
+            ?? throw new InvalidOperationException($"'{named}' should have opened a dialog");
+    }
+
+    private static void Dismiss(MainWindow window, ModalOverlay dialog)
+    {
+        All<Button>(dialog).Single(b => b.Name == "dismiss")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        Dispatcher.UIThread.RunJobs();
+        Settle(window);
+    }
+
+    [AvaloniaTheory]
+    [InlineData("settings", "Settings")]
+    [InlineData("about", "About")]
+    public void It_opens_says_what_it_is_and_can_be_dismissed(string named, string titled)
+    {
+        var window = Open();
+        var dialog = Show(window, named);
+
+        All<TextBlock>(dialog).Select(t => t.Text).ShouldContain(titled);
+
+        Dismiss(window, dialog);
+
+        All<ModalOverlay>(window).ShouldBeEmpty("the cross should have taken it down");
+    }
+
+    /// <summary>About fits its window: the dialog's own scroller has nothing to scroll.</summary>
+    [AvaloniaFact]
+    public void About_does_not_scroll_as_a_whole()
+    {
+        var window = Open();
+        var dialog = Show(window, "about");
+        var outer = All<ScrollViewer>(dialog).First();
+
+        outer.Extent.Height.ShouldBeLessThanOrEqualTo(outer.Viewport.Height, "the whole window would have a scroll bar");
+    }
+
+    /// <summary>Every dialog casts a shadow on the sheet behind it, so its edge reads against a busy patch.</summary>
+    [AvaloniaTheory]
+    [InlineData("settings")]
+    [InlineData("about")]
+    public void It_casts_a_shadow(string named)
+    {
+        var window = Open();
+        var frame = All<Border>(Show(window, named)).Single(b => b.Name == "dialog");
+
+        frame.BoxShadow.Count.ShouldBe(1);
+        frame.BoxShadow[0].Blur.ShouldBeGreaterThan(0);
+    }
+
+    /// <summary>
+    /// A narrow window gives the margin up before the content: the dialog keeps the
+    /// width its content needs, and the sides shrink to nothing if they must.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData("settings", 450)]
+    [InlineData("about", 450)]
+    [InlineData("about", 380)]
+    public void A_narrow_window_takes_the_margin_and_not_the_content(string named, double width)
+    {
+        var window = Open();
+
+        window.Width = width;
+        Settle(window);
+
+        var frame = All<Border>(Show(window, named)).Single(b => b.Name == "dialog");
+        var scroller = All<ScrollViewer>(frame).First();
+
+        frame.Bounds.Width.ShouldBeGreaterThanOrEqualTo(frame.MinWidth);
+        frame.Bounds.Width.ShouldBeLessThanOrEqualTo(width);
+        frame.Margin.Left.ShouldBeLessThan(40, "the margin should have given way");
+
+        if (frame.MinWidth < width)
+            scroller.Extent.Width.ShouldBeLessThanOrEqualTo(scroller.Viewport.Width + 1, "the content should not be cut off");
+    }
+
+    [AvaloniaFact]
+    public void A_wide_window_keeps_the_full_margin()
+    {
+        var window = Open();
+
+        window.Width = 1200;
+        Settle(window);
+
+        All<Border>(Show(window, "about")).Single(b => b.Name == "dialog").Margin.Left.ShouldBe(40);
+    }
+
+    /// <summary>
+    /// And again. The settings panel is the shell's, not the dialog's — it holds
+    /// what was last typed into it — so the dialog it was shown in has to let go
+    /// of it on the way out.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData("settings")]
+    [InlineData("about")]
+    public void It_opens_a_second_time(string named)
+    {
+        var window = Open();
+
+        Dismiss(window, Show(window, named));
+
+        var again = Show(window, named);
+
+        All<TextBlock>(again).ShouldNotBeEmpty("the second opening should have contents");
+    }
+
+    /// <summary>
+    /// Two dialogs are never up at once, and not because anything counts them:
+    /// the button that would open the second is under the sheet, and the sheet
+    /// takes the click and does nothing with it.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_click_over_the_toolbar_reaches_the_sheet_and_not_the_button()
+    {
+        var window = Open();
+
+        var about = All<Button>(window).Single(b => b.Name == "about");
+        var at = about.TranslatePoint(about.Bounds.Center - about.Bounds.Position, window)
+            ?? throw new InvalidOperationException("the toolbar is not in this window");
+
+        Show(window, "settings");
+
+        window.MouseDown(at, MouseButton.Left);
+        window.MouseUp(at, MouseButton.Left);
+        Settle(window);
+
+        var still = All<ModalOverlay>(window).ShouldHaveSingleItem();
+
+        All<TextBlock>(still).Select(t => t.Text)
+            .ShouldContain("Settings", "the About button under the sheet should not have been pressed");
+    }
+}

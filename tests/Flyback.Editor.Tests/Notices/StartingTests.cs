@@ -1,6 +1,5 @@
 using Avalonia.Headless.XUnit;
 using Flyback.Editor.Notices;
-using Flyback.Editor.Tests.Ui;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 

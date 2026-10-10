@@ -1,0 +1,286 @@
+﻿using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
+using Avalonia.Headless;
+using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using Flyback.Editor.Inspect;
+using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
+using Shouldly;
+
+namespace Flyback.Editor.Tests.Inspect;
+
+/// <summary>
+/// The keyboard a quantiser's scale is edited on: twelve switches laid out as an
+/// octave, not a list and not twelve sockets.
+/// </summary>
+/// <remarks>
+/// The layout is the part worth testing: twelve toggles are only readable where an
+/// eye expects them — sharps above and between the naturals, gaps at E–F and B–C —
+/// and every assertion about "twelve buttons that toggle" would pass on a row of
+/// twelve.
+/// </remarks>
+public class ScaleKeysTests : EditorTest
+{
+    private static readonly int[] Major = [0, 2, 4, 5, 7, 9, 11];
+
+    private Window Open(out NodeInstance node, out Func<int> edits)
+    {
+        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.QuantiserTypeId);
+        var built = NodeInstance.Create(def, 0, 0);
+        var count = 0;
+
+        node = built;
+        edits = () => count;
+
+        return Show(new ScaleKeys(built, def, _ => count++).View);
+    }
+
+    /// <summary>Every key, in the order the canvas holds them: seven naturals then five sharps.</summary>
+    private static Button[] Keys(Window window) =>
+        [.. All<Button>(window).Where(b => b.Classes.Contains(ScaleKeys.KeyTag))];
+
+    /// <summary>The key for one pitch class, found by the name written on it.</summary>
+    private static Button Key(Window window, int pitchClass) =>
+        Keys(window).Single(b =>
+            b.Content is TextBlock text && text.Text == Pitch.ClassName(pitchClass));
+
+    /// <summary>Focuses a button and presses it, as a key or a click would leave the focus.</summary>
+    private static void PressFocused(Button button)
+    {
+        button.Focus();
+        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+    }
+
+    [AvaloniaFact]
+    public void There_is_one_key_for_each_note_of_the_octave()
+    {
+        var window = Open(out _, out _);
+
+        Keys(window).Length.ShouldBe(Pitch.Classes);
+
+        // Named, and each name used once — which is what says the twelve are
+        // twelve different notes rather than twelve buttons.
+        Keys(window)
+            .Select(b => ((TextBlock)b.Content!).Text)
+            .Distinct()
+            .Count()
+            .ShouldBe(Pitch.Classes);
+    }
+
+    [AvaloniaFact]
+    public void A_new_quantiser_opens_on_its_major_scale()
+    {
+        Open(out var node, out _);
+
+        ScaleExtra.Of(node).ShouldBe(Major);
+    }
+
+    [AvaloniaFact]
+    public void Pressing_a_key_that_is_off_turns_it_on()
+    {
+        var window = Open(out var node, out var edits);
+
+        ScaleExtra.Of(node).ShouldNotContain(1);
+
+        PressFocused(Key(window, 1));
+
+        ScaleExtra.Of(node).ShouldContain(1);
+        edits().ShouldBe(1);
+    }
+
+    [AvaloniaFact]
+    public void Pressing_a_key_that_is_on_turns_it_off()
+    {
+        var window = Open(out var node, out _);
+
+        ScaleExtra.Of(node).ShouldContain(4);
+
+        PressFocused(Key(window, 4));
+
+        ScaleExtra.Of(node).ShouldNotContain(4);
+    }
+
+    /// <summary>
+    /// A set, so what the keys add up to is in ascending order however they were
+    /// pressed — two scales with the same notes on have to be the same scale.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_scale_stays_a_tidy_set_whatever_order_the_keys_are_pressed()
+    {
+        var window = Open(out var node, out _);
+
+        ScaleExtra.Set(node, []);
+
+        PressFocused(Key(window, 7));
+        PressFocused(Key(window, 0));
+        PressFocused(Key(window, 4));
+
+        ScaleExtra.Of(node).ShouldBe([0, 4, 7]);
+    }
+
+    /// <summary>
+    /// Turning every key off is a state somebody may want — the module becomes a
+    /// wire — so nothing here stops the last one going.
+    /// </summary>
+    [AvaloniaFact]
+    public void Every_key_may_be_turned_off()
+    {
+        var window = Open(out var node, out _);
+
+        foreach (var pitchClass in Major) PressFocused(Key(window, pitchClass));
+
+        ScaleExtra.Of(node).ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// The layout is the whole of what makes twelve switches readable. A sharp
+    /// sits above the join between two naturals and is shorter than they are;
+    /// the pairs with no sharp between them, E–F and B–C, are what give the
+    /// keyboard the gaps an eye navigates by.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_keys_are_laid_out_as_an_octave()
+    {
+        var window = Open(out _, out _);
+
+        var naturals = Major.Select(p => Key(window, p)).ToArray();
+        var sharps = Enumerable.Range(0, Pitch.Classes)
+            .Where(p => !Major.Contains(p))
+            .Select(p => Key(window, p))
+            .ToArray();
+
+        sharps.Length.ShouldBe(5);
+
+        foreach (var sharp in sharps)
+            sharp.Height.ShouldBeLessThan(naturals[0].Height);
+
+        // The naturals run left to right in pitch order and none of them
+        // overlaps the next.
+        var lefts = naturals.Select(Avalonia.Controls.Canvas.GetLeft).ToArray();
+
+        for (var i = 1; i < lefts.Length; i++)
+            lefts[i].ShouldBeGreaterThan(lefts[i - 1]);
+
+        // And each sharp sits between the natural below it and the one above,
+        // which is the arrangement rather than a row of twelve.
+        foreach (var pitchClass in Enumerable.Range(0, Pitch.Classes).Where(p => !Major.Contains(p)))
+        {
+            var below = Avalonia.Controls.Canvas.GetLeft(Key(window, pitchClass - 1));
+            var above = Avalonia.Controls.Canvas.GetLeft(Key(window, pitchClass + 1));
+            var sharp = Avalonia.Controls.Canvas.GetLeft(Key(window, pitchClass));
+
+            sharp.ShouldBeGreaterThan(below);
+            sharp.ShouldBeLessThan(above);
+        }
+    }
+
+    /// <summary>
+    /// A key that is on has to look different from one that is off, or the
+    /// control says nothing at all. The colors are what the panel is for.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_key_that_is_on_is_painted_differently_from_one_that_is_off()
+    {
+        var window = Open(out _, out _);
+
+        var on = Key(window, 0);
+        var off = Key(window, 1);
+
+        on.Background.ShouldNotBe(off.Background);
+
+        PressFocused(on);
+
+        // And the paint follows the state rather than the press: the key that
+        // was on now matches the one that was always off.
+        on.Background.ShouldBe(off.Background);
+    }
+
+    /// <summary>
+    /// The theme repaints a hovered button, which is exactly when the eye is on
+    /// the key: what is painted under the pointer has to still say on or off.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_hovered_key_is_still_painted_as_on_or_off()
+    {
+        var window = Open(out _, out _);
+
+        var on = Key(window, 0);
+        var off = Key(window, 1);
+
+        var restingOn = Painted(on);
+        var restingOff = Painted(off);
+
+        Hover(window, on);
+        Painted(on).ShouldBe(restingOn);
+
+        Hover(window, off);
+        Painted(off).ShouldBe(restingOff);
+        Painted(on).ShouldBe(restingOn);
+
+        static IBrush? Painted(Button key) =>
+            key.GetVisualDescendants().OfType<ContentPresenter>().First().Background;
+
+        static void Hover(Window window, Button key)
+        {
+            var at = key.TranslatePoint(new Point(key.Width / 2, key.Height - 6), window)!.Value;
+
+            window.MouseMove(at);
+            Dispatcher.UIThread.RunJobs();
+        }
+    }
+
+    /// <summary>
+    /// The two ends of the range are where the module stops being a quantiser,
+    /// and both look from the keys alone like an ordinary scale that happens to
+    /// be full or empty — so the panel says so in words.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_line_underneath_says_what_the_scale_adds_up_to()
+    {
+        var window = Open(out var node, out _);
+
+        Summary(window).ShouldContain("7 notes");
+
+        foreach (var pitchClass in Enumerable.Range(0, Pitch.Classes))
+            if (!ScaleExtra.Of(node).Contains(pitchClass))
+                PressFocused(Key(window, pitchClass));
+
+        Summary(window).ShouldContain("nearest semitone");
+
+        foreach (var pitchClass in Enumerable.Range(0, Pitch.Classes))
+            PressFocused(Key(window, pitchClass));
+
+        Summary(window).ShouldContain("passes straight through");
+
+        static string Summary(Window window) =>
+            All<TextBlock>(window)
+                .Select(t => t.Text ?? string.Empty)
+                .First(t => t.Length > 40);
+    }
+
+    /// <summary>
+    /// All and None are the two scales worth a button: one is the nearest
+    /// semitone and the other is a wire, and reaching either by hand is twelve
+    /// presses.
+    /// </summary>
+    [AvaloniaFact]
+    public void All_and_None_switch_every_key_at_once()
+    {
+        var window = Open(out var node, out _);
+
+        PressFocused(Shortcut(window, "All"));
+        ScaleExtra.Of(node).Count.ShouldBe(Pitch.Classes);
+
+        PressFocused(Shortcut(window, "None"));
+        ScaleExtra.Of(node).ShouldBeEmpty();
+
+        static Button Shortcut(Window window, string label) =>
+            All<Button>(window).Single(b =>
+                !b.Classes.Contains(ScaleKeys.KeyTag) && b.Content as string == label);
+    }
+}

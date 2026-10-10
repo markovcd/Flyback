@@ -6,7 +6,7 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
 
-  <!-- Drives real controls through Avalonia's headless platform: see Ui/EditorTest.cs for what a UI test costs. -->
+  <!-- Drives real controls through Avalonia's headless platform: see EditorTest.cs for what a UI test costs. -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\Flyback.Editor\Flyback.Editor.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Ui\Flyback.Ui.csproj" />
