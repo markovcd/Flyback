@@ -83,7 +83,7 @@ internal static class IlParity
         var pixels = new float[width * height * 3];
         for (var i = 0; i < pixels.Length; i++) pixels[i] = i * 37 % 101 / 100f;
 
-        return new FeedbackFrame(pixels, width, height);
+        return new FeedbackFrame(pixels, width, height, 1d / 30d);
     }
 
     public static void ShouldMatch(CompiledPatch program, double[] expected, double[] actual, string where)
