@@ -1143,7 +1143,7 @@ internal static class MyceliumPreset
         // nothing, and the repeats come round through the wire at the bottom of this
         // group instead — which is what lets something be done to them on the way.
         // Three sixteenths then two, counted off the tempo, so the left tap is a
-        // dotted eighth and the right lands on the beat after it.
+        // dotted eighth and the right lands two sixteenths after it.
         var sent = Expression(b, "a + b * 0.3", send, words);
         var echoIn = b.Add("math.add");
         var taps = b.Add(EchoModule.TypeId, (2, 3f), (3, 2f), (4, 0f), (5, 1f));

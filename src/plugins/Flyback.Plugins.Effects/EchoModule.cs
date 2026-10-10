@@ -61,7 +61,8 @@ internal static class EchoModule
         ],
         Emit,
         "A stereo echo that keeps time: with a Tempo in 'tempo', 'left' and 'right' are counted "
-        + "in steps, so 3 and 2 at four steps a beat are a dotted eighth and the beat after. Set "
+        + "in steps, so 3 and 2 in a row at four steps a beat echo left a dotted eighth after the "
+        + "note and right two sixteenths after that. Set "
         + "on the node: steps per beat, and whether the taps are in a row (the repeats cross "
         + "over) or side by side. Two seconds at most. Audio only.")
     {

@@ -383,7 +383,7 @@ internal sealed class OutrunPreset : PresetBench
         // --- the space -------------------------------------------------------
 
         // An Echo of three sixteenths on the left and two more on the right — a dotted
-        // eighth and the beat after it — and one hall on a send for what should sound
+        // eighth, then five sixteenths after the note — and one hall on a send for what should sound
         // far away.
         var send = b.Add("math.mixer", (1, 0.6f), (3, 0.7f), (5, 0.3f));
         var taps = Echo(send, beat, 3f, 2f, 0.45f, 1f);

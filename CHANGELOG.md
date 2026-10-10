@@ -58,6 +58,7 @@
 - A number too large to hold, written on a knob, a knob's range or a module's setting in the code view, is refused there instead of stopping the patch from saving.
 - A damaged thumbnail in the gallery's cache is drawn again instead of running out of memory.
 - A `settings.json` or `allowed-plugins.json` with a key written twice reads as damaged: the next save replaces the one, and the other allows nothing instead of stopping Flyback from starting.
+- The Echo's help no longer says its right tap lands on the beat after the left.
 
 ## 0.8.0 — 2026-10-07
 

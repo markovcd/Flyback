@@ -402,7 +402,7 @@ internal sealed class FracturePreset : PresetBench
         var riser = Hiss(ramp, 250f, 0.55f, "band", 1.4f, seed: 1f);
 
         // An Echo of three sixteenths on the left and two more on the right — a dotted
-        // eighth and the beat after it — and one hall for what should sound far away.
+        // eighth, then five sixteenths after the note — and one hall for what should sound far away.
         var taps = Echo(Sum(bells, Times(lead, 0.6f)), beat, 3f, 2f, 0.5f, 1f);
         var roomSend = b.Add("math.mixer", (1, 0.6f), (3, 0.5f), (5, 0.25f), (7, 0.7f));
         var room = b.Add(NodeCatalog.ReverbTypeId, (1, 0.85f), (2, 0.8f), (3, 1f));
