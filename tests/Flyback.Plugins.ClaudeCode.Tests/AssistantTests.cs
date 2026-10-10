@@ -59,6 +59,14 @@ public class AssistantTests
     }
 
     [Fact]
+    public void The_model_box_offers_each_alias_claude_takes()
+    {
+        var model = Installed.Form(SettingValues.None).OfType<SettingField.Pick>().Single(f => f.Key == AssistantSchema.ModelKey);
+
+        model.Options.Select(o => o.Id).ShouldBe(["sonnet", "opus", "fable", "haiku"]);
+    }
+
+    [Fact]
     public void It_looks_and_does_not_listen()
     {
         var senses = Installed.Senses(SettingValues.None);

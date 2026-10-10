@@ -24,7 +24,7 @@ public sealed class ClaudeCodeAssistant : IPatchAssistant
     /// <summary>Aliases, not ids: Claude Code resolves each to its newest model, so nothing here ages.</summary>
     internal AssistantSchema Schema { get; } = new(
         "sonnet",
-        [new AssistantModel("sonnet"), new AssistantModel("opus"), new AssistantModel("haiku")],
+        [new AssistantModel("sonnet"), new AssistantModel("opus"), new AssistantModel("fable"), new AssistantModel("haiku")],
         string.Empty,
         "Not needed: Flyback runs the Claude Code you are signed in to.",
         HearingAsked: false);
