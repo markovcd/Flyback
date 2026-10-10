@@ -7,7 +7,7 @@ using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Decide;
 
 /// <summary>A model's files arrive whole and as pinned, inside its own folder, or not at all.</summary>
 public sealed class ModelStoreTests : IDisposable

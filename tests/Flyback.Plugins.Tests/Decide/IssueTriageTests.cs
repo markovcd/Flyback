@@ -5,7 +5,7 @@ using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Decide;
 
 /// <summary>A patch's complaints, judged by how likely each is why it is silent or dark.</summary>
 public class IssueTriageTests

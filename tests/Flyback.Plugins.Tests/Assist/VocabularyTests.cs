@@ -3,7 +3,7 @@ using Flyback.Plugins.Assist;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Assist;
 
 /// <summary>
 /// That what a module listing tells a model to call is a tool the workbench actually

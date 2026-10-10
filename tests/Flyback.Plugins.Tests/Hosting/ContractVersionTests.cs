@@ -3,8 +3,9 @@ using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
+using Flyback.Plugins.Tests.Assist;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Hosting;
 
 /// <summary>
 /// The question a plugin is asked before any of it runs: whether what it was

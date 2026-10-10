@@ -4,7 +4,7 @@ using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Audio;
 
 /// <summary>
 /// Which backend plays, given several. Everything here is decided from what a

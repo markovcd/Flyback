@@ -3,7 +3,7 @@ using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Effects;
 
 /// <summary>
 /// The "Echo chamber" preset, which pairs the engine's own Delay and Reverb.

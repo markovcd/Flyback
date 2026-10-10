@@ -5,7 +5,7 @@ using Flyback.Plugins.Assist;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Assist;
 
 /// <summary>A tool's arguments, declared once and read by name through the same field.</summary>
 public class ToolFieldTests

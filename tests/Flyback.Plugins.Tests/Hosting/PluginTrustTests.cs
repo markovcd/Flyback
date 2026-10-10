@@ -5,7 +5,7 @@ using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Hosting;
 
 /// <summary>Which plugin folders load: what Flyback shipped, and what somebody allowed, each as its files stand.</summary>
 public sealed class PluginTrustTests : IDisposable

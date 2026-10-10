@@ -6,7 +6,7 @@ using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Effects;
 
 /// <summary>
 /// Mycelium's words: the recordings it carries, and where in the song they are heard.

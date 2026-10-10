@@ -4,7 +4,7 @@ using Flyback.Plugins.Secrets;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Secrets;
 
 /// <summary>
 /// The stores that keep a key between runs. This is the one place where a bug

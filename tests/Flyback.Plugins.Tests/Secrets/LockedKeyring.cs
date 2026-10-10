@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Secrets;
 
 /// <summary>
 /// Whether the Secret Service's default collection is locked. <c>secret-tool</c> cannot say

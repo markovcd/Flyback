@@ -4,7 +4,7 @@ using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Voice;
 
 /// <summary>
 /// The Decay envelope, triggered through Coordinates' x with real state behind it.

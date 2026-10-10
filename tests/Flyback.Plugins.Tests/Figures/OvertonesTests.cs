@@ -3,9 +3,9 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
-using static Flyback.Plugins.Tests.Figures;
+using static Flyback.Plugins.Tests.Figures.Figures;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Figures;
 
 /// <summary>A picture is read along a row as the overtones of a tone, and drawn back.</summary>
 public class OvertonesTests

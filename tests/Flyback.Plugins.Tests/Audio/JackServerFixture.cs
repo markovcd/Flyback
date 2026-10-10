@@ -1,7 +1,7 @@
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Testing;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Audio;
 
 /// <summary>A <see cref="JackDaemon"/> for the length of a test class.</summary>
 public sealed class JackServerFixture : IDisposable

@@ -3,7 +3,7 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Shouldly;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Mastering;
 
 /// <summary>
 /// Plays a pair of signals through one Mastering module, sample by sample with

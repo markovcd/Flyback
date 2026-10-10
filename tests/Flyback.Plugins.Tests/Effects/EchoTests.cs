@@ -5,7 +5,7 @@ using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Effects;
 
 /// <summary>
 /// The Echo, run a sample at a time on a click. It is two delay lines, so it needs

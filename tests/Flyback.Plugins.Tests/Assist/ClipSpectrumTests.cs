@@ -5,7 +5,7 @@ using Flyback.Plugins.Assist;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Assist;
 
 /// <summary>What <c>listen</c> tells a model about a clip's frequency content.</summary>
 public sealed partial class ClipSpectrumTests

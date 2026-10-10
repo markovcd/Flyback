@@ -3,7 +3,7 @@ using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Voice;
 
 /// <summary>
 /// The Euclid kit preset, which exists to put Noise, Slew, Decay, Euclid, Layer and Line

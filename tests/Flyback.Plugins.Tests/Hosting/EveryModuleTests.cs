@@ -4,7 +4,7 @@ using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Hosting;
 
 /// <summary>
 /// Every module the shipped catalog holds, run rather than only lowered.

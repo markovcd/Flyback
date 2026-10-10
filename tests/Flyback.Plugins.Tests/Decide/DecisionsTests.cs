@@ -4,7 +4,7 @@ using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Decide;
 
 /// <summary>Which model a feature's question goes to, and that a question never takes the feature down with it.</summary>
 public class DecisionsTests

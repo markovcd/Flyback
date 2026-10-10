@@ -3,9 +3,9 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
-using static Flyback.Plugins.Tests.Figures;
+using static Flyback.Plugins.Tests.Figures.Figures;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Figures;
 
 /// <summary>A struck plate rings and shows its sand figure from one strike.</summary>
 public class PlateTests

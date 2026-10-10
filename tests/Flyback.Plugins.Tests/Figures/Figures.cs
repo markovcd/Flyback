@@ -4,7 +4,7 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Shouldly;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Figures;
 
 /// <summary>
 /// What the Figures tests share: a module wired alone to the Output with

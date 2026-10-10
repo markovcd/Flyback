@@ -5,7 +5,7 @@ using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Hosting;
 
 /// <summary>
 /// Loads the sound plugins that this test project builds into its own output,

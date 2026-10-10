@@ -3,7 +3,7 @@ using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Assist;
 
 /// <summary>
 /// What a shipped assistant says it can see and hear agrees with the form it

@@ -5,7 +5,7 @@ using Flyback.Engine.Language;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Picture;
 
 /// <summary>
 /// The Layer module: two RGB swatches blended in each mode and read off the screen.

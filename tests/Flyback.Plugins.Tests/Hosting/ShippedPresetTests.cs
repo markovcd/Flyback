@@ -5,7 +5,7 @@ using Flyback.Engine.Render;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Hosting;
 
 /// <summary>
 /// Every patch that ships, built and compiled from the catalog the app actually
@@ -22,6 +22,10 @@ public class ShippedPresetTests
 {
     public static TheoryData<string> Every =>
         [.. ShippedPlugins.Loaded.Presets.Select(p => p.Name)];
+
+    /// <summary>The presets the one-idea-one-sink rule holds for: an idea, or an interplay of two.</summary>
+    public static TheoryData<string> AboutOneIdea =>
+        [.. ShippedPlugins.Loaded.Presets.Where(p => p.Kind is PresetKind.Idea or PresetKind.Interplay).Select(p => p.Name)];
 
     /// <summary>The presets that say how long they play, in seconds; every other one plays on.</summary>
     private static readonly Dictionary<string, double> Lengths = new()
@@ -246,13 +250,11 @@ public class ShippedPresetTests
     /// rather than keep it for its own sake.
     /// </remarks>
     [Theory]
-    [MemberData(nameof(Every))]
+    [MemberData(nameof(AboutOneIdea))]
     public void A_preset_about_one_idea_reaches_one_sink(string name)
     {
         var loaded = ShippedPlugins.Loaded;
         var preset = loaded.Presets.Single(p => p.Name == name);
-
-        if (preset.Kind is not (PresetKind.Idea or PresetKind.Interplay)) return;
 
         var patch = preset.Build(loaded.Modules);
         var sink = patch.Nodes.Single(n => NodeCatalog.IsSink(n.TypeId));

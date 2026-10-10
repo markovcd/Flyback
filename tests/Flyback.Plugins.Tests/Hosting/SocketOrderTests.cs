@@ -2,7 +2,7 @@ using Flyback.Core.Graph;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Hosting;
 
 /// <summary>
 /// Every module's sockets by position, the engine's and every plugin's, held to <c>sockets.txt</c>.

@@ -3,7 +3,7 @@ using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Picture;
 
 /// <summary>
 /// The Line form, read point by point as the renderer reads it.

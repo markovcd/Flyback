@@ -1,7 +1,7 @@
 using Flyback.Core.Tests.Compile;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Hosting;
 
 /// <summary>
 /// Every plugin's preset as the JavaScript the page plays, under Node, against the

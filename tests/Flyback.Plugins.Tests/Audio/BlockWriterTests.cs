@@ -2,7 +2,7 @@ using Flyback.Plugins.Audio;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Audio;
 
 /// <summary>The thread ALSA's and Android's outputs write on, against a device made of delegates.</summary>
 public class BlockWriterTests

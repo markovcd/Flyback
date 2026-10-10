@@ -2,9 +2,9 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
-using static Flyback.Plugins.Tests.Figures;
+using static Flyback.Plugins.Tests.Figures.Figures;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Figures;
 
 /// <summary>The harmonograph's drawing and its chord are the same pendulums.</summary>
 public class HarmonographTests

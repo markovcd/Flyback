@@ -4,7 +4,7 @@ using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Easy;
 
 /// <summary>
 /// The Easy Drum: it plays in time with nothing wired, each sound in the rhythm that

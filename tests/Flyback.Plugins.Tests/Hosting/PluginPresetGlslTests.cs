@@ -2,7 +2,7 @@ using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Hosting;
 
 /// <summary>Every plugin's preset lowers to the shader the GPU draws, in every dialect.</summary>
 /// <remarks>An opcode with no lowering throws here rather than drawing a black region on screen.</remarks>

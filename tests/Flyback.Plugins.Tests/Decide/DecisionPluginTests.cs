@@ -5,7 +5,7 @@ using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Decide;
 
 /// <summary>Decision models loaded off disk, the way a real one is.</summary>
 public class DecisionPluginTests
@@ -100,7 +100,7 @@ public class DecisionPluginTests
 
         public int Priority => 0;
 
-        public Assist.AssistantCredential? Credential => null;
+        public Flyback.Plugins.Assist.AssistantCredential? Credential => null;
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 

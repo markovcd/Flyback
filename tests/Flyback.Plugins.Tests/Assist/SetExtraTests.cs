@@ -4,7 +4,7 @@ using Flyback.Plugins.Assist;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Assist;
 
 /// <summary>
 /// The one tool that sets whatever a plugin invented, in place of a tool written

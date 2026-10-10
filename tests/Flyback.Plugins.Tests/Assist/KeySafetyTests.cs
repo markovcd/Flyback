@@ -2,7 +2,7 @@ using Flyback.Plugins.Assist;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Assist;
 
 /// <summary>Which keys are never sent, and where a key would cross the network readable.</summary>
 public sealed class KeySafetyTests

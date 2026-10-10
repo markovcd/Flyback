@@ -4,7 +4,7 @@ using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Voice;
 
 /// <summary>
 /// The Crush module, fed through Coordinates' x one sample at a time with real

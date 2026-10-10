@@ -3,7 +3,7 @@ using Flyback.Engine.Graph;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Hosting;
 
 /// <summary>
 /// Every module a user patches, the engine's and every shipped plugin's, is named by a feature in

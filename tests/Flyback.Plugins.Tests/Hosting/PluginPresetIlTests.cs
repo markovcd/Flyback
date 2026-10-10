@@ -2,7 +2,7 @@ using Flyback.Core.Tests.Compile;
 using Flyback.Engine.Render;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Hosting;
 
 /// <summary>Every plugin's preset as the IL the editor plays, against the interpreter to the bit.</summary>
 /// <remarks>

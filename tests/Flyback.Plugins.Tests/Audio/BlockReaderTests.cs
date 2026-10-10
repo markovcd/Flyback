@@ -2,7 +2,7 @@ using Flyback.Plugins.Audio;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Audio;
 
 /// <summary>The thread ALSA's and Android's inputs read on, against an input made of delegates.</summary>
 public class BlockReaderTests

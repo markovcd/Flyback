@@ -1,9 +1,9 @@
 using Flyback.Core.Graph;
 using Shouldly;
 using Xunit;
-using static Flyback.Plugins.Tests.MasteringBench;
+using static Flyback.Plugins.Tests.Mastering.MasteringBench;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Mastering;
 
 public class EqTests
 {
@@ -91,6 +91,6 @@ public class EqTests
     {
         float[] values = [-0.75f, 0f, 0.5f, 1f];
 
-        Picture(Type, values, (LowCut, 100f), (LowGain, 12f), (HighGain, -12f)).ShouldBe(values);
+        MasteringBench.Picture(Type, values, (LowCut, 100f), (LowGain, 12f), (HighGain, -12f)).ShouldBe(values);
     }
 }

@@ -4,7 +4,7 @@ using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Effects;
 
 /// <summary>
 /// The Chorus, Flanger and Phaser modules, loaded off disk and driven sample by

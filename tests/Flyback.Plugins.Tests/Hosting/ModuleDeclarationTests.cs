@@ -7,7 +7,7 @@ using Xunit;
 [assembly: Flyback.Plugins.FlybackModule("flyback.honest.spare", "Spare")]
 [assembly: Flyback.Plugins.FlybackModule("flyback.misnamed.tone", "Tone")]
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Hosting;
 
 /// <summary>
 /// A plugin declares its modules with <see cref="FlybackModuleAttribute"/>, and the host

@@ -7,7 +7,7 @@ using Flyback.Tests;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Hosting;
 
 /// <summary>
 /// The presets the preset site starts with. They are files rather than code, so a

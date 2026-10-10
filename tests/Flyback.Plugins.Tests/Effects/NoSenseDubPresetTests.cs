@@ -8,7 +8,7 @@ using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Effects;
 
 /// <summary>
 /// The No Sense Dub preset: a backing that runs on its own, four played voices over it, and a

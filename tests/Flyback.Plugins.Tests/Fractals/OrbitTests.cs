@@ -2,9 +2,9 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
-using static Flyback.Plugins.Tests.Fractals;
+using static Flyback.Plugins.Tests.Fractals.Fractals;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Fractals;
 
 /// <summary>The orbit of c: stepped at a rate and heard, and drawn as the path it takes.</summary>
 public class OrbitTests

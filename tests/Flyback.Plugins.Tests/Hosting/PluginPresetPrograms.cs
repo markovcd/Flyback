@@ -6,7 +6,7 @@ using Flyback.Engine.Render;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Hosting;
 
 /// <summary>
 /// The presets the shipped plugins add, compiled as the app compiles them, for holding

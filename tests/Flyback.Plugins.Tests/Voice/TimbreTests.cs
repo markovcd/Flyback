@@ -4,7 +4,7 @@ using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Voice;
 
 /// <summary>
 /// The Fold module, loaded off disk and driven sample by sample with real state

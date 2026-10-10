@@ -3,7 +3,7 @@ using Flyback.Plugins.Midi;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Midi;
 
 /// <summary>
 /// The half of hearing a keyboard that needs no keyboard: what three bytes off a wire

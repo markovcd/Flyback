@@ -47,20 +47,6 @@ found this week was fixed in the harness the same day, in the open.
   `Keyring/SecretTool.cs` (107; its output parsing has no fixture, and would
   need a seam for the process it runs).
 
-## 11. Shape and drift (Low)
-
-- `Plugins.Tests` is 89 files flat against seven `src` folders. Move only.
-  Four files hold a fifth of Editor.Tests
-  (`AssistantPanelTests.cs` 1,186, `SourceViewTests.cs` 1,154,
-  `OutputSettingsTests.cs` 944, `NodeEditorTests.cs` 676) and
-  `PatchWorkbenchTests.cs` is 1,420.
-- Fourteen test files declare more than one top-level type:
-  `PluginTrustTests.cs` (5), `PluginTrustSteps.cs` (3), `DecisionPluginTests.cs` (3),
-  `FakeAssistant/RehearsedAssistantPlugin.cs` (3), and ten with two. Split as
-  each is next touched.
-- `ShippedPresetTests.cs:255` filters kinds with a `return` where a filtered
-  `MemberData` would show the count.
-
 ## Order
 
 Each as its file is next touched.

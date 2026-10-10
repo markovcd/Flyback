@@ -5,7 +5,7 @@ using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Voice;
 
 /// <summary>
 /// The Hiss, run a sample at a time with its level on a wire. It has a Filter in it,

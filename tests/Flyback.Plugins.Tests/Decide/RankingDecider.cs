@@ -2,7 +2,7 @@ using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Settings;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Decide;
 
 /// <summary>A decision model that favors one option by label in every choice, and says yes to nothing.</summary>
 internal sealed class RankingDecider(params (string Label, double P)[] favored) : IDecisionModel

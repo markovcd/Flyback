@@ -3,7 +3,7 @@ using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Picture;
 
 /// <summary>
 /// The four color modules: one to choose a color, one to read one back, and two to
@@ -541,17 +541,5 @@ public class ColorTests
         yield return (0f, 0.5f, 1f);
         yield return (0.2f, 0.7f, 0.35f);
         yield return (0.9f, 0.9f, 0.1f);
-    }
-}
-
-internal static class ColorAssertions
-{
-    /// <summary>Three channels at once, so a failure names the color rather than a register.</summary>
-    public static void ShouldBe(
-        this (float R, float G, float B) actual, (float R, float G, float B) expected, float tolerance)
-    {
-        actual.R.ShouldBe(expected.R, tolerance, $"red of {actual}");
-        actual.G.ShouldBe(expected.G, tolerance, $"green of {actual}");
-        actual.B.ShouldBe(expected.B, tolerance, $"blue of {actual}");
     }
 }

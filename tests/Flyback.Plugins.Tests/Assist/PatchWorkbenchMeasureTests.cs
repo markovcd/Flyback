@@ -4,7 +4,7 @@ using Flyback.Plugins.Assist;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Assist;
 
 /// <summary><c>measure</c> tells the assistant what an output carries, in numbers, wired or not.</summary>
 public class PatchWorkbenchMeasureTests

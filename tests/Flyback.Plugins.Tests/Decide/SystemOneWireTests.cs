@@ -2,7 +2,7 @@ using Flyback.Plugins.Decide;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Decide;
 
 /// <summary>The System One format, read and written without a network.</summary>
 public class SystemOneWireTests

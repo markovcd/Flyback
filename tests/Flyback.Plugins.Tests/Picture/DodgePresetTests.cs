@@ -7,7 +7,7 @@ using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Picture;
 
 /// <summary>
 /// Dodge, played by a script: a strike starts a run, a wall in your lane ends it,

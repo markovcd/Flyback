@@ -4,7 +4,7 @@ using Flyback.Plugins.Decide;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Decide;
 
 /// <summary>A phrase finds the modules it means, and finds nothing without a model.</summary>
 public class ModuleFinderTests

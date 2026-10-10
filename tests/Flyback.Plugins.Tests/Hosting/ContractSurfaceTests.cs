@@ -7,7 +7,7 @@ using Flyback.Core.Graph;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Hosting;
 
 /// <summary>
 /// The contract is what a plugin may name, so a public type no plugin built here

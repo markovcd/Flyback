@@ -4,7 +4,7 @@ using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Audio;
 
 /// <summary>
 /// The JACK sound output against a real server, which a machine without JACK cannot

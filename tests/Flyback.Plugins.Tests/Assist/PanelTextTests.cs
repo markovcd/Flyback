@@ -6,7 +6,7 @@ using Flyback.Engine.Language;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Assist;
 
 /// <summary>
 /// Every shipped patch written out as text and read back: the same programs,

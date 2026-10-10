@@ -4,7 +4,7 @@ using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Picture;
 
 /// <summary>
 /// The seven Form modules, loaded off disk and read the way the renderer reads them:

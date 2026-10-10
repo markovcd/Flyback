@@ -7,7 +7,7 @@ using Flyback.Plugins.Assist;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Assist;
 
 /// <summary>The key goes on requests to the origin it was entered for, and on nothing else.</summary>
 public sealed class KeyedTransportTests

@@ -4,7 +4,7 @@ using Flyback.Engine.Graph;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Hosting;
 
 /// <summary>
 /// The whole path for a module that came from outside the engine: loaded from a

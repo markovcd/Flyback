@@ -5,7 +5,7 @@ using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Assist;
 
 /// <summary>
 /// How much of the catalog's prose the assistant is told, and the list of

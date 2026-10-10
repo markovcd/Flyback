@@ -1,9 +1,9 @@
 using Flyback.Core.Graph;
 using Shouldly;
 using Xunit;
-using static Flyback.Plugins.Tests.MasteringBench;
+using static Flyback.Plugins.Tests.Mastering.MasteringBench;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Mastering;
 
 public class LoudnessTests
 {

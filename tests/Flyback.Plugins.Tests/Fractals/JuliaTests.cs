@@ -1,8 +1,8 @@
 using Shouldly;
 using Xunit;
-using static Flyback.Plugins.Tests.Fractals;
+using static Flyback.Plugins.Tests.Fractals.Fractals;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Fractals;
 
 /// <summary>The Julia set: the Mandelbrot's arithmetic with the start and the constant swapped.</summary>
 public class JuliaTests

@@ -4,7 +4,7 @@ using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Easy;
 
 /// <summary>
 /// The Easy Synth: it sounds with nothing wired, plays the note it is given, and

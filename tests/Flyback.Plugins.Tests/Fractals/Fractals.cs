@@ -4,7 +4,7 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Shouldly;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Fractals;
 
 /// <summary>
 /// What the Fractals tests share: a module wired alone to the Output, read at a

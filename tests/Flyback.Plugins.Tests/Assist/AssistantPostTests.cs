@@ -3,7 +3,7 @@ using Flyback.Plugins.Assist;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Assist;
 
 /// <summary>One request to a provider, and when a refusal is waited out.</summary>
 public class AssistantPostTests

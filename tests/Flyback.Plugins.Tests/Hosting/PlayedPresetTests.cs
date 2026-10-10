@@ -6,7 +6,7 @@ using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Plugins.Tests.Hosting;
 
 /// <summary>
 /// The Played preset: a key plucking a string, four voices at once down one chain, into a little reverb.
