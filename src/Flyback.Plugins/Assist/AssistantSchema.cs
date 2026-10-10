@@ -118,7 +118,7 @@ public sealed record AssistantSchema(
     /// </remarks>
     public IReadOnlyList<SettingField> Form(SettingValues values)
     {
-        var model = values.Text(ModelKey, DefaultModel);
+        var model = values.Text(ModelKey, DefaultModel).Trim();
         var known = Known(model);
         var ears = Ears.Select(m => new SettingOption(m.Id, m.Id)).ToList();
 
@@ -260,7 +260,7 @@ public sealed record AssistantSchema(
     /// </remarks>
     public AssistantChoices Read(SettingValues values)
     {
-        var model = values.Text(ModelKey, DefaultModel);
+        var model = values.Text(ModelKey, DefaultModel).Trim();
         var known = Known(model);
         var endpoint = values.Text(EndpointKey, DefaultBaseUrl ?? string.Empty);
 
@@ -321,7 +321,7 @@ public sealed record AssistantSchema(
         _ => $"{model.Id} takes no pictures, so it builds from the compiler alone.",
     };
 
-    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
+    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     /// <summary>
     /// Whether a typed name is one of ours: the name itself, or that name with a

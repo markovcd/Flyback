@@ -48,6 +48,12 @@ public class AssistantTests
     }
 
     [Fact]
+    public void A_model_pasted_with_a_space_around_it_is_available()
+    {
+        Installed.Unavailable(Configured(" claude-fable-5-1 ")).ShouldBeNull();
+    }
+
+    [Fact]
     public void The_form_asks_for_no_address_and_offers_no_ear()
     {
         var keys = Installed.Form(SettingValues.None).Select(f => f.Key).ToList();
