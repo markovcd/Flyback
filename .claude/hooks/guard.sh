@@ -22,7 +22,7 @@ Bash)
     deny "git stash is unsafe in a tree other sessions commit into (git-workflow.md); use a worktree."
   fi
   # pipeline.md: a release is release.sh, never a dispatch from here.
-  grep -Eq 'release\.yml|gh[[:space:]]+workflow[[:space:]]+run' <<<"$cmd" &&
+  grep -Eq 'gh[[:space:]]+workflow[[:space:]]+run|gh[[:space:]]+api[^;&|]*/dispatches' <<<"$cmd" &&
     deny "Release dispatch waits for the user's go (pipeline.md)."
   ;;
 Edit|Write)
