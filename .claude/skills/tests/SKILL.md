@@ -18,7 +18,7 @@ The runner takes `-xml` directly, and the file has a `time` on every `<test>`.
 `dotnet test` prints a duration per assembly and per failure, which is not the
 same thing and will not show you a passing test that costs thirty seconds.
 
-The shape to compare against: about 6900 tests in Flyback.Editor.Tests, a median of
+The shape to compare against: about 7600 tests in Flyback.Editor.Tests, a median of
 under a millisecond, and a slowest test of a few seconds. Against that, anything
 past a second is an outlier worth explaining, and the fifteen slowest are a third
 of the whole run.

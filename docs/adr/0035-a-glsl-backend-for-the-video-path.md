@@ -182,6 +182,11 @@ harness. The agreement figures above were measured by hand.
 
 ## Amendments
 
+**2026-10-10 — the emitter is in the Engine.** `GlslEmitter` is
+`src/Flyback.Engine/Compile/GlslEmitter.cs`, beside the IL and JavaScript backends;
+Core keeps the opcodes and the interpreter that is their specification. It still
+does nothing but turn an `Op[]` into text, and 0019 is still untouched.
+
 **2026-09-23 — the clock in two floats.** [0137](0137-the-clock-reaches-the-gpu-in-two-floats.md)
 built the deferred fix, and more of it than was named here: the clock, the arithmetic
 on it and the arithmetic feeding it are carried as pairs, and fract, mod, the

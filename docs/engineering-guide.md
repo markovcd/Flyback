@@ -804,12 +804,13 @@ changed: saved patches name it.
 | `Flyback.Site.Tests` | flyback-site's checks, and its commands against a stand-in site | |
 | `Flyback.Plugins.Tests` | The host, every shipped module and preset | Loads real plugins off disk |
 | `Flyback.Plugins.OpenAi.Tests`, `.Gemini.Tests`, `.ClaudeCode.Tests`, `.Codex.Tests`, `.Programs.Tests`, `.SystemOne.Tests` | Wire translation and sessions | Reference the plugin directly: translation is pure |
+| `Flyback.Plugins.Drawings.Tests` | The Path and Shape modules' reader and drawing | References the plugin directly |
 | `Flyback.Plugins.WinIO.Tests` | The ASIO output, against `FakeAsioDriver`, a driver's vtable in memory | References the plugin directly; runs anywhere |
 | `Flyback.Plugins.LinuxIO.Tests` | What the JACK output offers, against a stand-in for the server | References the plugin directly; runs anywhere |
 | `Flyback.Ui.Testing` | The headless harness: `UiTest`, the Avalonia xunit adapter | Not a test project |
 | `Flyback.Plugins.Testing` | What sound-backend tests share: `JackDaemon`, a JACK server to play into | Not a test project |
 | `Flyback.Core.Benchmarks` | BenchmarkDotNet | Not a test project |
-| `Flyback.Plugins.Sample`, `.FakeAssistant` | Plugins the tests load | Not test projects |
+| `Flyback.Plugins.Sample`, `.FakeAssistant`, `.FakeDecider` | Plugins the tests load | Not test projects |
 
 A test goes in the project that owns the behavior, not the one that is convenient.
 

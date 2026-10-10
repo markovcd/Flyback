@@ -135,7 +135,7 @@ context, decision, consequences.
 | [0122](0122-the-panel-wears-the-block-it-is-about.md) | The panel wears the block it is about *(user-directed; the face it borrows is [0116](0116-a-module-is-drawn-as-its-category-and-a-standout-as-itself.md))* |
 | [0124](0124-what-two-shells-draw-with-is-a-project-of-its-own.md) | What two shells draw with is a project of its own *(user-directed)* |
 | [0147](0147-a-socket-says-what-it-is-for-in-words-the-panel-and-the-assistant-share.md) | A socket says what it is for, in words the panel and the assistant share *(user-directed)* |
-| [0148](0148-the-window-is-its-hubs-and-the-regions-around-them.md) | The window is its hubs and the regions around them *(user-directed)* |
+| [0148](0148-the-window-is-its-hubs-and-the-regions-around-them.md) | The window is its hubs and the regions around them *(user-directed; the layout and the keys handed to `EditorView` by [0162](0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md))* |
 | [0150](0150-the-editor-is-composed-in-a-container.md) | The editor and the viewer are each composed in a container *(user-directed)* |
 | [0149](0149-compact-modules-share-rows-and-tip-their-values.md) | Compact modules share rows and put their values in the tooltip *(user-directed)* |
 

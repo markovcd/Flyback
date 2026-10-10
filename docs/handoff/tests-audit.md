@@ -138,13 +138,6 @@ Plugins.Tests.
   each is next touched.
 - `ShippedPresetTests.cs:255` filters kinds with a `return` where a filtered
   `MemberData` would show the count.
-- The tests skill says "about 6900 tests in Flyback.Editor.Tests"; the last run
-  here counted 7,622. The guide's project table lacks `Flyback.Plugins.Drawings.Tests`
-  and `Flyback.Plugins.FakeDecider`.
-- The gate runs no tests on a commit that changes nothing in the build context
-  (the layer cache, as `ci.yml` says), so a green check on such a commit is
-  the cache's, not a run's; the four docs-only reds in item 2 ran only because
-  the red layer before them was never cached.
 
 ## Order
 

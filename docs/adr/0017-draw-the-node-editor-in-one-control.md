@@ -127,3 +127,11 @@ rather than a member of the control.
 gesture on hold, and hands the pointer to a service per gesture: `ModuleDrag`
 (carrying the selection and regrouping it), `WireDrag` (drawing and lifting wires)
 and `RubberBand`. Each owns the fields only it reads.
+
+## Amendment, 2026-10-10: the count
+
+`src/Flyback.Editor/Canvas/` is about 5,300 code lines across 45 files, and
+`NodeEditor.cs` itself is 211. The "2 700 across seven files" above was the
+canvas before the regions became services; what the figure measures is still
+how much the editor does, and the decision still holds as the 2026-09-24
+amendment states it.

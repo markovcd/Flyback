@@ -2,7 +2,7 @@
 
 ## One gate, the same everywhere
 
-`docker build --target gate .` is the gate, and CI runs exactly that through `scripts/gate.sh` (`ci.yml`), failing on the exit code of the one test run it summarizes, not a list of steps that resembles it (ADR-0120). The image carries the fonts the headless UI tests rasterize with, the ffmpeg the recording tests look for and the Chromium the page scenarios open, so nothing skips in CI that runs locally. The stages stack: `publish` builds on `gate`, so no artifact exists unless every test passed. Restores are locked to the committed `packages.lock.json` files, so a version that moved fails the gate instead of building.
+`docker build --target gate .` is the gate, and CI runs exactly that through `scripts/gate.sh` (`ci.yml`), failing on the exit code of the one test run it summarizes, not a list of steps that resembles it (ADR-0120). The image carries the fonts the headless UI tests rasterize with, the ffmpeg the recording tests look for and the Chromium the page scenarios open, so nothing skips in CI that runs locally. The stages stack: `publish` builds on `gate`, so no artifact exists unless every test passed. Restores are locked to the committed `packages.lock.json` files, so a version that moved fails the gate instead of building. A commit that changes nothing in the build context hits the layer cache all the way through and runs no tests, so its green check is the cache's, not a run's; a change to `docs/` alone is such a commit.
 
 **Why:** two descriptions of what a change has to pass drift apart, and the one that drifts is the one nobody runs locally.
 

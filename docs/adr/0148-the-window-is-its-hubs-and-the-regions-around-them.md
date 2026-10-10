@@ -115,3 +115,11 @@ from it (`IsAdrift`), and `TextWriteBack` holds it still while it writes.
 `CaretFollow` and `TextWriteBack` takes `Document`, so nothing closes a cycle;
 a `TextForgotten` notice tells the write-back to drop what it was waiting to
 write when the text comes to mean something else.
+
+## Amendment, 2026-10-10: the layout and the keys are `EditorView`'s
+
+[0162](0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)
+made the editor a control a window or a page holds: `EditorView` lays out the
+regions and answers the keys and dropped files, and `MainWindow` is the desktop's
+window around it, keeping the title, the closing question and full screen. "One
+class in one file" above now describes `EditorView`.
