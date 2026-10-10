@@ -23,6 +23,7 @@
 - The status bar, the full-screen stats line, `flyback-viewer --report` and a page's state name what plays the sound (ASIO, JACK, WASAPI, Web Audio) beside what draws the picture.
 - Over the editor's full-screen picture, Space pauses and F11 gives the window back, as in the viewer.
 - A saved patch holds only what was set, not what Flyback works out from it.
+- The unsaved-work and assistant-working questions carry a glyph: a disk, or the assistant's star.
 - The plugin contract no longer offers what only Flyback itself calls, such as `NodeCatalog.Install` and `PatchWorkbench.Edits`.
 
 ### Viewer

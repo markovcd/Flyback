@@ -5,6 +5,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
@@ -73,6 +74,10 @@ public sealed class UnsavedDialogTests : EditorTest
             ?? throw new InvalidOperationException("closing an edited patch should have asked about it");
     }
 
+    /// <summary>How many drawn glyphs sit beside the question's words; the frame's cross is in a button.</summary>
+    private static int Marks(Visual root) =>
+        All<Avalonia.Controls.Shapes.Path>(root).Count(p => !p.GetVisualAncestors().OfType<Button>().Any());
+
     private static string[] Words(Visual root) =>
         All<TextBlock>(root).Select(t => t.Text ?? string.Empty).ToArray();
 
@@ -130,6 +135,7 @@ public sealed class UnsavedDialogTests : EditorTest
         labels.ShouldContain("Save…");
         labels.ShouldContain("Discard changes");
         labels.ShouldContain("Cancel");
+        Marks(dialog).ShouldBe(1, "the question should carry the disk that says it is about saving");
     }
 
     /// <summary>
@@ -153,6 +159,7 @@ public sealed class UnsavedDialogTests : EditorTest
 
         Words(dialog).ShouldContain("Assistant is working");
         labels.ShouldBe(["Stop the assistant", "Cancel"], ignoreOrder: true);
+        Marks(dialog).ShouldBe(1, "the question should carry the star that says it is about the assistant");
     }
 
     [AvaloniaFact]

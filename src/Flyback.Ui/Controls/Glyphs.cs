@@ -28,10 +28,10 @@ internal static class Glyphs
     /// A three-and-a-half inch disk: the clipped corner, the shutter at the top
     /// and the label at the bottom.
     /// </summary>
-    public static Control Save() => Stroked(
+    public static Control Save(double size = Box, IBrush? ink = null) => Stroked(
         "M2.5,2.5 L11.5,2.5 L13.5,4.5 L13.5,13.5 L2.5,13.5 Z "
         + "M5.5,2.5 L10.5,2.5 L10.5,6 L5.5,6 Z "
-        + "M4.5,9.5 L11.5,9.5 L11.5,13.5 L4.5,13.5 Z");
+        + "M4.5,9.5 L11.5,9.5 L11.5,13.5 L4.5,13.5 Z", size, ink);
 
     /// <summary>
     /// A patch in miniature: two modules on the left feeding one on the right,

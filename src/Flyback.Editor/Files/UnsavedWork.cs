@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Avalonia.Platform.Storage;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Canvas;
@@ -10,6 +11,8 @@ using Flyback.Editor.Controls;
 using Flyback.Engine.Graph;
 using Flyback.Editor.Notices;
 using Flyback.Core;
+using Flyback.Ui.Controls;
+using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Files;
 
@@ -125,7 +128,8 @@ internal sealed class UnsavedWork(
                 "The assistant is still working on this patch. Going on now stops it and loses "
                 + "what it has not finished. Saving the patch does not keep that.",
                 discard: "Stop the assistant",
-                offerSave: false) == Unsaved.Discard;
+                offerSave: false,
+                mark: Badge(Colors.Feedback, ink => Glyphs.Spark(24, ink))) == Unsaved.Discard;
         }
         finally
         {
@@ -219,7 +223,8 @@ internal sealed class UnsavedWork(
                 + "not been saved: its comments, its names and its defs go with it. Save it as "
                 + $"{GlobalConstants.ApplicationName} text to keep them.",
                 discard: "Save without the text",
-                offerSave: false) == Unsaved.Discard;
+                offerSave: false,
+                mark: Badge(Colors.Attention, ink => Glyphs.Save(24, ink))) == Unsaved.Discard;
         }
         finally
         {
@@ -238,7 +243,7 @@ internal sealed class UnsavedWork(
         try
         {
             // Not in a page, which has nowhere to save to.
-            return await AskAsync(about, question, offerSave: !host.InPage) switch
+            return await AskAsync(about, question, offerSave: !host.InPage, mark: Badge(Colors.Attention, ink => Glyphs.Save(24, ink))) switch
             {
                 // A canceled save picker is a canceled close: somebody who thought
                 // better of where has not agreed to lose the patch.
@@ -255,14 +260,28 @@ internal sealed class UnsavedWork(
 
     /// <param name="discard">What the answer that goes ahead is called.</param>
     /// <param name="offerSave">Whether saving is one of the answers, which it is not where saving is what asked.</param>
+    /// <param name="mark">The tile beside the question that says what it is about.</param>
     private Task<Unsaved> AskAsync(
         string about,
         string question,
+        Control mark,
         string discard = "Discard changes",
-        bool offerSave = true) => dialog.Show<Unsaved>(about, a => DialogContent(question, a, discard, offerSave));
+        bool offerSave = true) => dialog.Show<Unsaved>(about, a => DialogContent(question, mark, a, discard, offerSave));
+
+    /// <summary>A glyph in <paramref name="color"/> on a tile of the same color, faded.</summary>
+    private static Border Badge(Color color, Func<IBrush, Control> glyph) => new()
+    {
+        Width = 40,
+        Height = 40,
+        CornerRadius = new CornerRadius(10),
+        VerticalAlignment = VerticalAlignment.Top,
+        Background = new ImmutableSolidColorBrush(Colors.Faded(color, 0.14)),
+        Child = glyph(new ImmutableSolidColorBrush(color)),
+    };
 
     private static Control DialogContent(
         string question,
+        Control mark,
         Action<Unsaved> answer,
         string discard,
         bool offerSave)
@@ -281,23 +300,30 @@ internal sealed class UnsavedWork(
         buttons.Children.Add(Answering(discard, Unsaved.Discard, wide: true));
         buttons.Children.Add(Answering("Cancel", Unsaved.Cancel));
 
-        var asking = new StackPanel
+        var asked = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*"),
+            ColumnSpacing = 14,
+        };
+
+        var words = new TextBlock
+        {
+            Text = question,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        Grid.SetColumn(words, 1);
+        asked.Children.Add(mark);
+        asked.Children.Add(words);
+
+        return new StackPanel
         {
             Margin = new Thickness(20),
             Spacing = 16,
             MaxWidth = 420,
-            Children =
-            {
-                new TextBlock
-                {
-                    Text = question,
-                    TextWrapping = TextWrapping.Wrap,
-                },
-                buttons,
-            },
+            Children = { asked, buttons },
         };
-
-        return asking;
 
         Button Answering(string text, Unsaved with, bool wide = false)
         {
