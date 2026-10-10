@@ -48,6 +48,11 @@
     <Compile Include="..\Flyback.Core.Tests\Compile\NodeJs.cs" Link="Support\NodeJs.cs" />
   </ItemGroup>
 
+  <!-- The MIDI stream reader the Android plugin hears through, compiled in here as it is there. -->
+  <ItemGroup>
+    <Compile Include="..\..\src\plugins\Shared\Midi\*.cs" LinkBase="SharedMidi" />
+  </ItemGroup>
+
   <!--
     Built first and never loaded: the web viewer runs in a browser, or under Node,
     which is where its scenarios run it from the folder named here. Built in All plugins,

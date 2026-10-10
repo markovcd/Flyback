@@ -54,9 +54,10 @@
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Drawings\Flyback.Plugins.Drawings.csproj" FolderName="Drawings" />
   </ItemGroup>
 
-  <!-- The blocking devices' thread, compiled in here as it is into each plugin that has one. -->
+  <!-- The blocking devices' thread and the MIDI stream reader, compiled in here as they are into each plugin that has one. -->
   <ItemGroup>
     <Compile Include="..\..\src\plugins\Shared\Audio\*.cs" LinkBase="SharedAudio" />
+    <Compile Include="..\..\src\plugins\Shared\Midi\*.cs" LinkBase="SharedMidi" />
   </ItemGroup>
 
   <!-- Core.Tests' backend comparisons, for holding the plugins' presets to what the engine's are held to. -->

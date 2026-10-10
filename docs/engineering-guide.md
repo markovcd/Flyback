@@ -64,7 +64,7 @@ Flyback.Editor.Android .apk                Editor under Avalonia.Android; not bu
 | `Flyback.Viewer.Desktop` | A window, a transport and an argument parser | Writes nothing to disk ([0123](adr/0123-a-third-program-plays-a-patch-and-writes-nothing.md)). |
 | `Flyback.Viewer.Web` | `WebSound`, `WebPicture`, `WebExports`, `JsSound`, the page, its sound worker, and `hear.mjs` for Node | The sound as JavaScript in a worker, the interpreter where it cannot be; ahead-of-time compiled only on publish; a patch too heavy to keep up plays its picture alone ([0160](adr/0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md)). |
 | `Flyback.Editor.Web` | `PageApp`, `CanvasPreview`, `PageSound`, `PageExports`, the page | `Flyback.Editor` under Avalonia.Browser, with the page's own preview, sound, title, focus and close registered in its container; the picture on a canvas of its own, the sound in the web viewer's worker. Built into the preset site's pages by `worker/build-assets.sh`; also built with `Flyback.slnx`, which therefore needs the wasm-tools workload; the gate's image installs it ([0162](adr/0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)). |
-| `Flyback.Editor.Android` | `MainActivity`, `DeviceApp`, `DeviceFolders`, `DeviceRequest` | `Flyback.Editor` under Avalonia.Android, the module plugins and `Flyback.Plugins.AndroidIO`'s `AudioTrack` linked in. Listed in `Flyback.slnx` with `<Build Project="false" />`, since it needs the android workload, a JDK and the Android SDK; built by path ([0184](adr/0184-the-editor-runs-on-android-with-its-plugins-linked-in.md)). |
+| `Flyback.Editor.Android` | `MainActivity`, `DeviceApp`, `DeviceFolders`, `DeviceRequest` | `Flyback.Editor` under Avalonia.Android, the module plugins and `Flyback.Plugins.AndroidIO` (`AudioTrack`, `AudioRecord` and `MidiManager`) linked in. Listed in `Flyback.slnx` with `<Build Project="false" />`, since it needs the android workload, a JDK and the Android SDK; built by path ([0184](adr/0184-the-editor-runs-on-android-with-its-plugins-linked-in.md)). |
 | `Flyback.Cli` | One file per command over `System.CommandLine` | The only place export lives ([0078](adr/0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md)); on the GPU where there is one, and exact to the bit with `--processor` ([0157](adr/0157-flyback-cli-render-draws-on-the-gpu.md)). |
 | `Flyback.Site` | `flyback-site`: the readers a submission is checked with, and the commands the preset site's workflows run | Never shipped; references the plugins the web pages link, to say what a browser lacks ([0175](adr/0175-the-preset-site-is-a-worker-and-github-reads-what-is-submitted.md)). The Worker is in `worker/`, tested with Vitest; the [site's containers](diagrams/site.svg) show how the two check a submission. |
 | `Flyback.Site.Client` | `SiteAdmin`, `SiteAddress`, `SiteMedia`, `SiteAnswer` | The admin API's address, token, uploads and refusals, for `flyback-site` and `flyback-cli render-presets`; no packages. |
@@ -449,6 +449,7 @@ folder out from under it.
 | Plugin | Adds | Third-party |
 |---|---|---|
 | WinIO, MacIO, LinuxIO | Sound and MIDI per platform ([0063](adr/0063-one-plugin-per-platform-for-sound-and-midi.md)) | `NAudio.Wasapi` for WASAPI in WinIO; ASIO and the others are hand-written P/Invoke |
+| AndroidIO | Sound and MIDI on Android, linked into `Flyback.Editor.Android` rather than loaded from a folder ([0184](adr/0184-the-editor-runs-on-android-with-its-plugins-linked-in.md)) | none |
 | Dpapi, Keychain, Keyring | Where an API key is kept ([0034](adr/0034-settings-in-a-file-the-key-in-the-operating-system.md)) | `ProtectedData` in Dpapi |
 | Picture, Voice, Effects, Mastering | Modules and presets | none |
 | ClaudeCode | Patch assistant over the installed `claude` program, so a subscription pays and no key exists | none: a process with JSON lines in and out |
@@ -461,6 +462,9 @@ and the locator, as source compiled into each plugin: it is not a project, so no
 ([0173](adr/0173-codex-is-an-assistant-the-same-way-and-gemini-is-not.md)).
 OpenAi and Gemini share `src/plugins/Shared/Surveys`, the survey loop over each one's `IModelProbe`, the
 same way ([0161](adr/0161-a-turn-is-the-hosts-and-a-provider-writes-only-its-format.md)).
+LinuxIO and AndroidIO share `src/plugins/Shared/Audio`, the thread a blocking device is written or read
+on, and AndroidIO alone compiles `src/plugins/Shared/Midi`, the reader that cuts a stream of MIDI bytes
+into messages, since Android is the one backend not handed a message at a time.
 
 An assistant never touches the patch directly. Everything it does goes through
 `PatchWorkbench`, which is the tool surface, the limits and the senses (looking

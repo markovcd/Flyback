@@ -104,13 +104,13 @@ public sealed partial class KeyboardSteps(PatchContext context) : IDisposable
         hub.Follow([sound.Value.Live, .. probes.Select(p => p.Live)]);
     }
 
-    private static IEnumerable<int> Parse(string notes) => Split(notes).Select(NoteNumber);
+    internal static IEnumerable<int> Parse(string notes) => Split(notes).Select(NoteNumber);
 
-    private static IEnumerable<string> Split(string list) =>
+    internal static IEnumerable<string> Split(string list) =>
         list.Replace(" and ", ", ", StringComparison.Ordinal).Split(", ");
 
     /// <summary>A note's name as MIDI numbers it, middle C being C4 and 60.</summary>
-    private static int NoteNumber(string name)
+    internal static int NoteNumber(string name)
     {
         var match = NoteName().Match(name);
         var semitone = "C D EF G A B".IndexOf(match.Groups[1].Value[0], StringComparison.Ordinal);

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    Sound on Android, linked into Flyback.Editor.Android rather than loaded from a folder
+    Sound and MIDI on Android, linked into Flyback.Editor.Android rather than loaded from a folder
     (ADR-0184). Needs the android workload, so Flyback.slnx lists it without building it.
   -->
   <PropertyGroup>
@@ -10,16 +10,16 @@
     <RootNamespace>Flyback.Plugins.AndroidIO</RootNamespace>
 
     <!-- What the plugins window shows. -->
-    <Product>Android sound</Product>
+    <Product>Android sound and MIDI</Product>
     <Authors>Flyback</Authors>
-    <Description>Sound out through AudioTrack and in through AudioRecord.</Description>
+    <Description>Sound out through AudioTrack, in through AudioRecord, and MIDI in through MidiManager.</Description>
 
     <!-- As the Android editor: the packages the workload adds are versioned with it. -->
     <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <AssemblyMetadata Include="Tags" Value="sound; android" />
+    <AssemblyMetadata Include="Tags" Value="sound; midi; android" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,6 +37,9 @@
   <ItemGroup>
     <!-- The thread every blocking device writes or reads on, compiled into each plugin that has one. -->
     <Compile Include="..\Shared\Audio\*.cs" LinkBase="Audio" />
+
+    <!-- The stream reader for a backend handed MIDI bytes as they come. -->
+    <Compile Include="..\Shared\Midi\*.cs" LinkBase="Midi" />
   </ItemGroup>
 
 </Project>

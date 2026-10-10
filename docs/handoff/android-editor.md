@@ -4,7 +4,7 @@ Planned on 2026-10-06, on `main` at `7a65ff53`. It is on TODO.md; take it off th
 delete this file, in the commit that lands the last step.
 
 - **Kind:** Plan
-- **Status:** In progress. Steps 1 to 4, the phone layout and Line In are done (ADR-0184); MIDI is left.
+- **Status:** In progress. Steps 1 to 5 are done (ADR-0184); MIDI compiles against the bindings and has not been run on a device.
 
 ## What is wanted
 
@@ -36,7 +36,7 @@ A launch opens a preset and picks the interpreter from the intent:
 The status bar's "sound renders at" is the only read-out of the sound's speed, and it shows
 only while IL plays.
 
-Not yet checked on a device: the dialogs (`WindowDialog`), the file pickers, the gallery's
+Not yet checked on a device: MIDI, the dialogs (`WindowDialog`), the file pickers, the gallery's
 download from the preset site, and anything after a rotation.
 
 ### Speed on a phone
@@ -83,9 +83,8 @@ runtime costs rather than the phone. The engine's own leads are in the `performa
    a `.fbkp` is off. The CLI-wrapping assistant plugins (Claude Code, Codex) cannot run;
    OpenAi and Gemini could, once a keystore plugin holds the key (ADR-0158).
 4. **Sound.** `Flyback.Plugins.AndroidIO`, linked in, registers an `AudioTrack` output,
-   written from a thread of its own as ALSA's is, and an `AudioRecord` input. Line In (`AudioRecord`, `RECORD_AUDIO`) and MIDI
-   (`android.media.midi`) follow as later plugins against `IAudioInput` and the MIDI
-   interface.
+   written from a thread of its own as ALSA's is, an `AudioRecord` input and a `MidiManager`
+   input, against `IAudioInput` and `IMidiInput`.
 5. **The IL path.** The sound's desktop speed is IL generated at run time (ADR-0076). It runs
    under Mono's JIT. A Debug build runs Mono's interpreter by default, where
    `RuntimeFeature.IsDynamicCodeCompiled` is false and no IL is built, so the project sets
@@ -123,6 +122,12 @@ runtime costs rather than the phone. The engine's own leads are in the `performa
    Line In is done: `Flyback.Plugins.AndroidIO` records through `AudioRecord`, unprocessed
    where the device allows, stereo where the microphone has it, after a transparent
    `MicrophoneActivity` has put Android's question; a refusal leaves the Line In silent and
-   says so. Checked on a Pixel 9 Pro with the Visualizer preset. MIDI is next.
+   says so. Checked on a Pixel 9 Pro with the Visualizer preset. MIDI is written:
+   `MidiManagerInput` lists what `android.media.midi` has over USB or from another app, opens
+   a device through Android's listener and hears its bytes through `MidiStream`, the stream
+   reader in `src/plugins/Shared/Midi`, since Android hands over a raw stream where the other
+   three backends get a message at a time. Compiled against the bindings and the SDK's
+   analyzers; not run on a device. A Bluetooth keyboard is left out, since Android lists one
+   only once an app has opened it by address.
 
 The ADR is ADR-0184.
