@@ -16,7 +16,7 @@ public sealed class CommandScenarioTests
 {
     /// <summary>Every feature's text, as one.</summary>
     private static readonly string Features = string.Join(
-        '\n', Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory, "Features"), "*.feature").Select(File.ReadAllText));
+        '\n', Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory, "Features"), "*.feature", SearchOption.AllDirectories).Select(File.ReadAllText));
 
     /// <summary>
     /// The commands no feature named when this rule was made. One leaves the list in the commit that gives it a

@@ -1013,6 +1013,9 @@ Scenario: Turning a tone's frequency while it plays does not click
 ```
 
 Every new feature ships with at least one scenario (see the `tests` skill).
+Features sit in a folder per area under `Features/`: `Modules`, `Patching`,
+`PatchesAndPresets`, `Canvas`, `Playing`, `Devices`, `CommandLine`, `Assistant`,
+`DecisionModel`, `Pages`, `PresetSite` and `Plugins`.
 The wiring behind each phrase lives in the steps: `PatchSteps` builds and edits
 patches, `ScreenSteps`, `SpeakerSteps` and `CompilerSteps` check the picture, the
 sound and what the compiler says, `EditingSteps` saves, opens, writes out, undoes

@@ -79,7 +79,7 @@
 
   <!-- The specs' features, which every module a user patches is named by. -->
   <ItemGroup>
-    <None Include="..\Flyback.Specs\Features\*.feature" LinkBase="Features" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Flyback.Specs\Features\**\*.feature" LinkBase="Features" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- Every module's sockets by position, which saved patches wire by. -->

@@ -21,7 +21,7 @@
 
   <!-- The specs' features, which every command is named by. -->
   <ItemGroup>
-    <None Include="..\Flyback.Specs\Features\*.feature" LinkBase="Features" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Flyback.Specs\Features\**\*.feature" LinkBase="Features" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
