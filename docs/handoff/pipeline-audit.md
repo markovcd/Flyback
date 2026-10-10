@@ -64,22 +64,6 @@ its list in a first step (`git diff --name-only` between the built commit and it
 parent against the same globs) and skips the deploy when nothing matched. A
 manual dispatch keeps working as it does now.
 
-## 2. A compile failure leaves no summary (Medium)
-
-Run 627 failed in two minutes on a CA1822 warning raised to an error. Its run
-summary is empty and its artifact upload found no `test-results/`: `gate.sh` is
-`set -e`, so the failing `docker buildx build --target test-results` exits the
-script before the Python that writes `summary.md`, and nothing has captured the
-build's output to a file. `pipeline.md` says a gate failure is the first sentence
-of the report, and says to capture a build's output to a file and filter it
-afterwards; `gate.sh` does neither for a build that stops before the tests.
-
-**Fix:** in `gate.sh`, `tee` the buildx output to `test-results/build.log`, turn
-`set -e` off around the build, and when it fails write a summary of its own:
-"The build failed before the tests ran", then the first `error` lines from the
-log (`grep -E 'error [A-Z]+[0-9]+:'`), then exit with the build's code. The
-artifact upload then carries the log too.
-
 ## 3. The Windows-bash dance is written three times (Low)
 
 `ci.yml` and `coverage.yml` each carry a Linux step and a Windows step running
