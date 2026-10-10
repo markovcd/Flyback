@@ -60,7 +60,7 @@ public sealed class StillsCommandTests : IDisposable
         return (code, output.ToString(), error.ToString());
     }
 
-    private StillIndex Index(string folder) =>
+    private static StillIndex Index(string folder) =>
         StillIndex.Read(File.ReadAllText(Path.Combine(folder, StillIndex.FileName))).ShouldNotBeNull();
 
     [Fact]
