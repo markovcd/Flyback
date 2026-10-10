@@ -24,15 +24,6 @@ tested with hostile input (zip-slip, size caps, a changed plugin, an unsigned
 package, a list changed after signing, `--seconds` at infinity); every flake
 found this week was fixed in the harness the same day, in the open.
 
-## 4. A locked keyring fails the secret-store tests (Low)
-
-`Plugins.Tests/SecretStoreTests.cs` writes to the machine's real keyring. On a
-desktop with a locked keyring the first `Keep` waits on the unlock prompt for
-`SecretTool`'s 30 s and then fails. It is not what hung build 599 in
-Plugins.Tests for thirty minutes: the gate image had no keyring then, so these
-tests skipped, and no commit names that hang's cause. Fix: none yet;
-`secret-tool` cannot say whether the keyring is locked without prompting.
-
 ## 8. The harness and the doubles are written many times (Medium to Low)
 
 The architecture audit's item 10 is half landed: `Flyback.Ui.Testing` exists

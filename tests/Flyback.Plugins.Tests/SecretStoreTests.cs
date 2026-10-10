@@ -26,6 +26,8 @@ public class SecretStoreTests
     /// <summary>The stores that ship in the box, one per operating system.</summary>
     public static TheoryData<string> PlatformStores => ["dpapi", "keychain", "secret-service"];
 
+    private const string Unavailable = "nothing installed on this machine can hold a secret, or its keyring is locked.";
+
     private static PluginCatalog Shipped() => ShippedPlugins.Loaded;
 
     private static ISecretStore Store(string id) => Shipped().SecretStores.Single(s => s.Id == id);
@@ -103,7 +105,7 @@ public class SecretStoreTests
     [Fact]
     public void A_secret_survives_being_put_away_and_asked_for()
     {
-        Assert.SkipWhen(Here is null, "nothing installed on this machine can hold a secret.");
+        Assert.SkipWhen(Here is null || LockedKeyring.IsLocked, Unavailable);
 
         var store = Here;
         const string secret = "sk-a-value-that-is-not-a-real-key";
@@ -123,7 +125,7 @@ public class SecretStoreTests
     [Fact]
     public void A_secret_that_was_never_kept_is_simply_absent()
     {
-        Assert.SkipWhen(Here is null, "nothing installed on this machine can hold a secret.");
+        Assert.SkipWhen(Here is null || LockedKeyring.IsLocked, Unavailable);
 
         Here.Recall(Absent).ShouldBeNull();
     }
@@ -131,7 +133,7 @@ public class SecretStoreTests
     [Fact]
     public void Forgetting_a_secret_removes_it()
     {
-        Assert.SkipWhen(Here is null, "nothing installed on this machine can hold a secret.");
+        Assert.SkipWhen(Here is null || LockedKeyring.IsLocked, Unavailable);
 
         var store = Here;
 
@@ -144,7 +146,7 @@ public class SecretStoreTests
     [Fact]
     public void Forgetting_something_that_was_never_there_is_not_an_error()
     {
-        Assert.SkipWhen(Here is null, "nothing installed on this machine can hold a secret.");
+        Assert.SkipWhen(Here is null || LockedKeyring.IsLocked, Unavailable);
 
         Should.NotThrow(() => Here.Forget(Absent));
     }
