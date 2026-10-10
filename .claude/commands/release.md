@@ -150,8 +150,9 @@ not have been.
 
 ## The install script
 
-`install.sh` is what the website tells people to pipe into bash, and nothing else
-in the repository tests it. Run it, both sides of the release.
+`install.sh` is what the website tells people to pipe into bash. The Release
+workflow's `install` job runs it against the release it just published, on a
+clean Linux machine. Run it here before the release, and read that job after.
 
 **Before**, against the release that already exists — this proves the script
 works without needing the new one to be published. `--no-links` writes only the
@@ -180,8 +181,9 @@ HOME="$SCRATCH/home" bash install.sh --uninstall
 Never run the default install on the user's own account to test it, and on
 Windows, where the shortcut and PATH cannot be redirected, not at all.
 
-**After** the workflow finishes, the same run with no `FLYBACK_VERSION`. That one
-is the point: it says the artifacts just published are installable.
+**After** the workflow finishes, its `install` job is the proof that the artifacts
+just published are installable. A red one is a release already up that does not
+install: say so first.
 
 ## Landing it
 

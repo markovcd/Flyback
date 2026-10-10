@@ -79,20 +79,6 @@ lost dispatch waits hours.
 not see picked up within a minute, which is the Worker's own `wrangler` cron.
 The schedule stays as the last net.
 
-## 7. `install.sh` is checked by a person, during `/release` (Medium)
-
-The release command says nothing else in the repository tests the script the
-website tells people to pipe into bash, and asks the releasing session to run it
-by hand before and after the workflow. A release's install path is the one
-piece of the pipeline that no machine checks.
-
-**Fix:** a last step in `release.yml`, after the release is created, runs
-`install.sh --no-links` with a scratch `FLYBACK_DIR` against the version just
-published, on the runner that built it. The publish then proves it is
-installable: the download, the SHA256SUMS, the signature against the committed
-key, the unzip. The step's failure is a red Release run on a release that is
-already up, which is still better than a person finding it.
-
 ## 8. Small
 
 - Pull-request runs export every layer of every stage to the Actions cache with
@@ -100,8 +86,3 @@ already up, which is still better than a person finding it.
   and the image is several, so each Dependabot push evicts the last.
   `mode=min` keeps the layers the final stage reaches, which is what the next
   run reads.
-- `release.yml` says the gate that passed in `ci.yml` is the one that runs in the
-  release, which holds only when the same self-hosted machine picks up both: the
-  Windows and the Linux runner each have a builder and a cache of their own, so
-  the other machine rebuilds and retests. True as written for the build within
-  `release.sh`; not true across the two workflows. A line in the header.

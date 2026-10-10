@@ -32,12 +32,16 @@ permissions:
 jobs:
   release:
     # Only from main, and only on a self-hosted runner, where ci.yml builds
-    # main: the gate that passed there is the one that runs here. The key is the
-    # secret below, held in this step's environment and never written to a file.
+    # main. release.sh runs the gate again and publishes from that same build;
+    # the Windows and the Linux runner each keep a cache of their own, so on the
+    # other machine from ci.yml's run that gate is a rebuild and a retest. The key
+    # is the secret below, held in this step's environment and never written to a file.
     if: github.ref == 'refs/heads/main'
     runs-on: [self-hosted, X64]
     # A run is about six minutes; the default of six hours is what a hang costs.
     timeout-minutes: 30
+    outputs:
+      tag: ${{ steps.linux.outputs.tag || steps.version.outputs.tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -78,3 +82,27 @@ jobs:
             dist/SHA256SUMS
             dist/SHA256SUMS.sig
           body_path: dist/RELEASE_NOTES.md
+
+  # install.sh against the release just published, as a visitor runs it: the
+  # download, the SHA256SUMS, the signature against the key in the script and the
+  # unzip. On GitHub's runner, a clean Linux machine. A failure here is a release
+  # already up that does not install.
+  install:
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install the release and remove it
+        env:
+          TAG: ${{ needs.release.outputs.tag }}
+        run: |
+          export FLYBACK_VERSION="${TAG#v}" FLYBACK_DIR="$RUNNER_TEMP/flyback"
+          bash install.sh --no-links
+          test -x "$FLYBACK_DIR/Flyback"
+          bash install.sh --uninstall
