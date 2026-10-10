@@ -42,7 +42,7 @@ ARG VERSION=0.1.0-dev
 # a commit, and Dependabot says when one should move. A workflow or a script that
 # runs one names it exactly as here (BaseImageTests), and global.json names the
 # SDK's version.
-FROM node:24.21.0-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20 AS worker
+FROM node:26.10.0-bookworm-slim@sha256:3ffc19ea878019d9e9ae8971732ad4a03cda44f167107173174b60ed7c65bed3 AS worker
 WORKDIR /worker
 COPY worker/package.json worker/package-lock.json ./
 RUN npm ci --no-audit --no-fund
