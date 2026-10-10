@@ -244,7 +244,7 @@
       },
       "Avalonia.Win32": {
         "type": "CentralTransitive",
-        "requested": "[12.1.3, )",
+        "requested": "[12.1.4, )",
         "resolved": "12.1.4",
         "contentHash": "N/Ra73KLQBoQOcnpROWdCA49vCFij8MSyU7MFv8JWMxcQvkG98K19/hmdcyiqB/B1sBahyZuHgIsoO8ryajC0g==",
         "dependencies": {

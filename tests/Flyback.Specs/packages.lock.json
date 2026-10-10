@@ -635,7 +635,7 @@
           "Avalonia": "[12.1.4, )",
           "Avalonia.Desktop": "[12.1.4, )",
           "Avalonia.Fonts.Inter": "[12.1.4, )",
-          "Avalonia.Themes.Fluent": "[12.1.3, )",
+          "Avalonia.Themes.Fluent": "[12.1.4, )",
           "Flyback.Core": "[0.1.0-dev, )",
           "Flyback.Engine": "[0.1.0-dev, )",
           "Flyback.Host": "[0.1.0-dev, )",
@@ -663,7 +663,7 @@
           "Avalonia.AvaloniaEdit": "[12.0.0, )",
           "Avalonia.Fonts.Inter": "[12.1.4, )",
           "Avalonia.Skia": "[12.1.4, )",
-          "Avalonia.Themes.Fluent": "[12.1.3, )",
+          "Avalonia.Themes.Fluent": "[12.1.4, )",
           "Flyback.Assist": "[0.1.0-dev, )",
           "Flyback.Core": "[0.1.0-dev, )",
           "Flyback.Engine": "[0.1.0-dev, )",
@@ -793,8 +793,8 @@
           "Avalonia.Fonts.Inter": "[12.1.4, )",
           "Avalonia.Headless": "[12.1.4, )",
           "Avalonia.Skia": "[12.1.4, )",
-          "Avalonia.Themes.Fluent": "[12.1.3, )",
-          "xunit.v3.extensibility.core": "[4.0.1, )"
+          "Avalonia.Themes.Fluent": "[12.1.4, )",
+          "xunit.v3.extensibility.core": "[4.0.2, )"
         }
       },
       "Avalonia": {
@@ -842,16 +842,16 @@
       },
       "Avalonia.Themes.Fluent": {
         "type": "CentralTransitive",
-        "requested": "[12.1.3, )",
-        "resolved": "12.1.3",
-        "contentHash": "ens/GHfXXk0W1ZScHZ2XG6DFiVyUVKR+0O8QK6zkviMNAPQCNwkftXlRVSFSQGtBYxXoJHZMsKYvCLEtVyzkug==",
+        "requested": "[12.1.4, )",
+        "resolved": "12.1.4",
+        "contentHash": "vx7P4as07WLQqA2mhMy4iBsqhkWEGwZI7g9Rd2DlJgz3uKS2tSvY6nZqHq3sWMFDBYBT65jkTsetPrgV8oprsQ==",
         "dependencies": {
-          "Avalonia": "12.1.3"
+          "Avalonia": "12.1.4"
         }
       },
       "Avalonia.Win32": {
         "type": "CentralTransitive",
-        "requested": "[12.1.3, )",
+        "requested": "[12.1.4, )",
         "resolved": "12.1.4",
         "contentHash": "N/Ra73KLQBoQOcnpROWdCA49vCFij8MSyU7MFv8JWMxcQvkG98K19/hmdcyiqB/B1sBahyZuHgIsoO8ryajC0g==",
         "dependencies": {
@@ -922,7 +922,7 @@
       },
       "xunit.v3.extensibility.core": {
         "type": "CentralTransitive",
-        "requested": "[4.0.1, )",
+        "requested": "[4.0.2, )",
         "resolved": "4.0.2",
         "contentHash": "ARTt+pGyd86mdtiFBkKpyBQvRC3u0rr8oidBlII2GsAg7D6TfOsDFCsoQtFij83V5pE57m3whUIqT4xjiARXbQ==",
         "dependencies": {
