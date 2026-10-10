@@ -1,7 +1,7 @@
 Feature: Sound plays through an ASIO driver when it is picked
   On Windows, somebody with an audio interface picks ASIO on the Sound tab, and Flyback
   writes straight into the interface's driver, on its first two outputs, at Flyback's own
-  sample rate.
+  sample rate where the driver can be set to it and at the driver's own where it cannot.
 
   Specified by ADR-0192.
 
@@ -15,7 +15,8 @@ Feature: Sound plays through an ASIO driver when it is picked
     When the sound plays through it
     Then the driver runs at 48000 Hz
 
-  Scenario: A driver held at another rate does not play at the wrong pitch
+  Scenario: A driver held at another rate plays at its own, at the right pitch
     Given an ASIO driver held at 44100 Hz by an outside clock
-    When the sound is started through it
-    Then it refuses, saying it cannot play at 48000 Hz
+    When the sound plays through it
+    Then the driver runs at 44100 Hz
+    And the sound is rendered at 44100 Hz

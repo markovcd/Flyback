@@ -92,17 +92,62 @@ public sealed class AsioOutputTests : IDisposable
         driver.Rate.ShouldBe(48_000);
     }
 
-    /// <summary>A driver clocked from outside cannot change rate, and playing at its own would play at another pitch.</summary>
     [Fact]
-    public void A_driver_that_cannot_take_the_rate_refuses_to_start_and_is_let_go()
+    public void A_driver_that_can_take_the_engines_rate_is_opened_at_it_and_let_go()
+    {
+        driver.Rate = 44_100;
+
+        using var opened = AsioAudioDevice.Open(Format, driver.Load);
+
+        opened.SampleRate.ShouldBe(48_000);
+        driver.Released.ShouldBeTrue();
+        driver.BuffersMade.ShouldBe(0);
+        opened.IsRunning.ShouldBeFalse();
+    }
+
+    /// <summary>A driver clocked from outside cannot change rate.</summary>
+    [Fact]
+    public void A_driver_held_at_another_rate_is_opened_and_played_at_its_own()
     {
         driver.Rate = 44_100;
         driver.AcceptsAnyRate = false;
 
-        Should.Throw<InvalidOperationException>(() => device.Start(Stereo(0f, 0f))).Message.ShouldContain("48000 Hz");
+        using var opened = AsioAudioDevice.Open(Format, driver.Load);
+        opened.Start(Stereo(0f, 0f));
 
+        opened.SampleRate.ShouldBe(44_100);
+        opened.IsRunning.ShouldBeTrue();
+        opened.Latency.ShouldBe(TimeSpan.FromSeconds(300 / 44_100.0));
+    }
+
+    /// <summary>Playing at its rate would play at another pitch than the engine renders at.</summary>
+    [Fact]
+    public void A_driver_moved_to_a_rate_it_cannot_leave_refuses_to_start_saying_both_and_is_let_go()
+    {
+        driver.Rate = 44_100;
+        driver.AcceptsAnyRate = false;
+
+        var message = Should.Throw<InvalidOperationException>(() => device.Start(Stereo(0f, 0f))).Message;
+
+        message.ShouldContain("44100 Hz");
+        message.ShouldContain("48000 Hz");
         device.IsRunning.ShouldBeFalse();
         driver.Released.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void A_driver_already_playing_answers_for_the_rate_without_being_loaded_again()
+    {
+        driver.Rate = 44_100;
+        driver.AcceptsAnyRate = false;
+
+        using var playing = AsioAudioDevice.Open(Format, driver.Load);
+        playing.Start(Stereo(0f, 0f));
+
+        using var next = AsioAudioDevice.Open(Format, driver.Load);
+
+        next.SampleRate.ShouldBe(44_100);
+        driver.Loads.ShouldBe(2);
     }
 
     [Fact]

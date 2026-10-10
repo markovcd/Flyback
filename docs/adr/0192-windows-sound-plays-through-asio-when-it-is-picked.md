@@ -32,11 +32,13 @@ Windows and no driver.
 no proxy, so it is created, called and released on one single-threaded apartment,
 `AsioThread`. The driver's audio thread calls back directly.
 
-**Nothing is loaded until `Start`.** The rate is the engine's: a driver at another rate is
-set to it, and one that cannot be, clocked from outside, refuses to start rather than play
-at another pitch. The block size is the driver's preferred one. Flyback plays on the
-first two outputs, or the left alone on a driver with one. Latency is the driver's output
-latency.
+**Nothing is held until `Start`, but the driver is asked its rate first.** `Create` loads
+the driver for long enough to ask: one that can be set to the engine's rate plays at it,
+and one that cannot, clocked from outside, plays at its own, and the engine renders at
+that, as it does at a JACK server's. A driver that moves to a rate it cannot leave between
+then and `Start` refuses to start, naming both, rather than play at another pitch. The
+block size is the driver's preferred one. Flyback plays on the first two outputs, or the
+left alone on a driver with one. Latency is the driver's output latency.
 
 **The driver writes its own format.** Little-endian 16, 24 and 32-bit integers, the 32-bit
 containers of 16 to 24 bits, and 32 and 64-bit floats, each scaled and clipped.

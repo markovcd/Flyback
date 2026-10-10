@@ -3,7 +3,6 @@ using Flyback.Plugins.WinIO;
 using Flyback.Plugins.WinIO.Tests;
 using Reqnroll;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.Specs.Steps;
 
@@ -13,7 +12,6 @@ public sealed class AsioSteps : IDisposable
 {
     private readonly FakeAsioDriver driver = new();
     private AsioAudioDevice? device;
-    private Exception? refusal;
 
     [Given("an ASIO driver is installed")]
     public static void GivenADriver()
@@ -33,7 +31,7 @@ public sealed class AsioSteps : IDisposable
     [When("the sound plays through it")]
     public void WhenItPlays()
     {
-        device = new AsioAudioDevice(new AudioFormat(48_000, 2, 30), driver.Load);
+        device = AsioAudioDevice.Open(new AudioFormat(48_000, 2, 30), driver.Load);
         device.Start(buffer =>
         {
             for (var i = 0; i < buffer.Length; i += 2)
@@ -43,9 +41,6 @@ public sealed class AsioSteps : IDisposable
             }
         });
     }
-
-    [When("the sound is started through it")]
-    public void WhenItIsStarted() => refusal = Record.Exception(WhenItPlays);
 
     [Then("each block the driver plays carries the left and the right on its first two outputs")]
     public void ThenEachBlockCarriesBoth()
@@ -62,11 +57,11 @@ public sealed class AsioSteps : IDisposable
     [Then("the driver runs at {int} Hz")]
     public void ThenTheDriverRunsAt(int rate) => driver.Rate.ShouldBe(rate);
 
-    [Then("it refuses, saying it cannot play at {int} Hz")]
-    public void ThenItRefuses(int rate)
+    [Then("the sound is rendered at {int} Hz")]
+    public void ThenTheSoundIsRenderedAt(int rate)
     {
-        refusal.ShouldNotBeNull().Message.ShouldContain($"{rate} Hz");
-        device!.IsRunning.ShouldBeFalse();
+        device!.SampleRate.ShouldBe(rate);
+        device.IsRunning.ShouldBeTrue();
     }
 
     public void Dispose()

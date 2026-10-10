@@ -9,8 +9,9 @@ namespace Flyback.Plugins.WinIO;
 /// </summary>
 /// <remarks>
 /// The driver calls us, once per half of its double buffer, on a thread of its own. Nothing is
-/// loaded until <see cref="Start"/>, so the rate is the one asked for: a driver that cannot be set
-/// to it refuses to start rather than play at another pitch. The block size is the driver's own,
+/// held until <see cref="Start"/>; <see cref="Open"/> asks the driver its rate first, so the engine
+/// renders at whichever the driver will play. A driver that has since moved to a rate it cannot
+/// leave refuses to start rather than play at another pitch. The block size is the driver's own,
 /// set in its control panel.
 /// </remarks>
 /// <param name="format">What to play; its rate is set on the driver.</param>
@@ -41,6 +42,43 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
 
     public bool IsRunning => running;
 
+    /// <summary>A device at the rate asked for where the driver can be set to it, and at the driver's own where it cannot.</summary>
+    public static AsioAudioDevice Open(AudioFormat format, Func<AsioDriver> load) =>
+        new(format with { SampleRate = RateFor(format.SampleRate, load) }, load);
+
+    /// <summary>
+    /// Loads the driver for long enough to ask its rate. A device already playing answers instead,
+    /// since a driver loaded twice may stop the one playing.
+    /// </summary>
+    private static int RateFor(int wanted, Func<AsioDriver> load)
+    {
+        if (Volatile.Read(ref playing) is { } other) return other.SampleRate;
+
+        var rate = wanted;
+
+        try
+        {
+            using var thread = new AsioThread();
+
+            thread.Invoke(() =>
+            {
+                using var driver = load();
+
+                if (!driver.Init(IntPtr.Zero)) return;
+
+                var own = driver.SampleRate();
+
+                if (own > 0 && own != wanted && !driver.CanSampleRate(wanted)) rate = own;
+            });
+        }
+        catch
+        {
+            // Start loads the driver again and says what is wrong with it.
+        }
+
+        return rate;
+    }
+
     public void Start(AudioCallback fill)
     {
         lock (gate)
@@ -55,7 +93,7 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
 
             try
             {
-                thread.Invoke(Open);
+                thread.Invoke(Play);
             }
             catch
             {
@@ -73,7 +111,7 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
     public void Dispose() => Stop();
 
     /// <summary>Loads the driver and starts it. On the driver's thread.</summary>
-    private void Open()
+    private void Play()
     {
         if (Interlocked.CompareExchange(ref playing, this, null) is { } other && other != this)
             throw new InvalidOperationException("another ASIO driver is already playing.");
@@ -83,8 +121,12 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
         if (!driver.Init(IntPtr.Zero))
             throw new InvalidOperationException(Said(driver.ErrorMessage, "the driver would not start"));
 
-        if (driver.SampleRate() != SampleRate && (!driver.CanSampleRate(SampleRate) || driver.SetSampleRate(SampleRate) != Asio.Ok))
-            throw new InvalidOperationException($"the driver cannot play at {SampleRate} Hz.");
+        var own = driver.SampleRate();
+
+        if (own != SampleRate && (!driver.CanSampleRate(SampleRate) || driver.SetSampleRate(SampleRate) != Asio.Ok))
+            throw new InvalidOperationException(own > 0
+                ? $"the driver is at {own} Hz and cannot be set to {SampleRate} Hz; restart Flyback to play at {own} Hz."
+                : $"the driver cannot play at {SampleRate} Hz.");
 
         var (_, outputs) = driver.Channels();
 

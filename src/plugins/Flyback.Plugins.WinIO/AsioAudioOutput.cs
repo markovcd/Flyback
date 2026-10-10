@@ -58,7 +58,7 @@ public sealed class AsioAudioOutput : IAudioOutput
         var drivers = AsioDrivers.Installed();
         var name = settings.Text(DriverKey, drivers.Count > 0 ? drivers[0].Id : string.Empty);
 
-        return new AsioAudioDevice(format, Loader(name));
+        return AsioAudioDevice.Open(format, Loader(name));
     }
 
     [SupportedOSPlatform("windows")]

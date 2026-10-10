@@ -61,11 +61,12 @@ internal sealed unsafe class AsioDriver(IntPtr instance) : IDisposable
 
     public bool CanSampleRate(double rate) => ((delegate* unmanaged[Thiscall]<IntPtr, double, int>)Slot(12))(instance, rate) == Asio.Ok;
 
-    public double SampleRate()
+    /// <summary>The rate the driver runs at, or 0 where it has none to give.</summary>
+    public int SampleRate()
     {
         var rate = 0.0;
-        ((delegate* unmanaged[Thiscall]<IntPtr, double*, int>)Slot(13))(instance, &rate);
-        return rate;
+        var status = ((delegate* unmanaged[Thiscall]<IntPtr, double*, int>)Slot(13))(instance, &rate);
+        return status == Asio.Ok && rate > 0 ? (int)Math.Round(rate) : 0;
     }
 
     public int SetSampleRate(double rate) => ((delegate* unmanaged[Thiscall]<IntPtr, double, int>)Slot(14))(instance, rate);
