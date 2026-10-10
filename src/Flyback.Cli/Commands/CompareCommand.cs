@@ -89,10 +89,11 @@ internal static class CompareCommand
         TextWriter error,
         CancellationToken cancellation = default)
     {
-        // No time at all would compare nothing and call any two patches the same.
-        if (!(options.Seconds > 0d && options.Seconds <= RenderOptions.MostSeconds))
+        // Less than a frame would compare nothing and call any two patches the same.
+        if (!(options.Seconds > 0d && options.Seconds <= RenderOptions.MostSeconds) || Math.Round(options.Seconds * options.Fps) < 1d)
         {
-            error.WriteLine($"{GlobalConstants.ApplicationName}: --seconds runs above 0 and up to {RenderOptions.MostSeconds:0}.");
+            error.WriteLine(
+                $"{GlobalConstants.ApplicationName}: --seconds runs from a frame, {1d / options.Fps:0.###} s, up to {RenderOptions.MostSeconds:0}.");
             return Exit.Failed;
         }
 

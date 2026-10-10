@@ -1,4 +1,5 @@
 using System.Globalization;
+using Flyback.Engine.Render;
 
 namespace Flyback.Editor.Desktop.Shots;
 
@@ -72,10 +73,11 @@ internal sealed record ShotRequest(
 
             switch (flag)
             {
-                case "--at" when double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds) && seconds >= 0:
+                case "--at" when double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds)
+                                 && double.IsFinite(seconds) && seconds >= 0:
                     at = seconds;
                     break;
-                case "--size" when Size(value) is { } size:
+                case "--size" when FrameSize.Of(value) is { } size:
                     (width, height) = size;
                     break;
                 case "--select":
@@ -99,17 +101,5 @@ internal sealed record ShotRequest(
             error.WriteLine($"Flyback {Flag}: {why}");
             return null;
         }
-    }
-
-    private static (int Width, int Height)? Size(string text)
-    {
-        var parts = text.Split('x', 'X');
-
-        return parts.Length == 2
-            && int.TryParse(parts[0], CultureInfo.InvariantCulture, out var width)
-            && int.TryParse(parts[1], CultureInfo.InvariantCulture, out var height)
-            && width > 0 && height > 0
-                ? (width, height)
-                : null;
     }
 }

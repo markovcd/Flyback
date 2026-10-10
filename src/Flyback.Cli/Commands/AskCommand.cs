@@ -1,5 +1,6 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
+using System.Globalization;
 using Flyback.Assist;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
@@ -86,6 +87,7 @@ internal static class AskCommand
         {
             Description = $"How many tokens a request may send before the conversation stops, {AssistantSettings.LeastContext} to "
                 + $"{AssistantSettings.MostContext}. Defaults to the editor's Settings → Assistant.",
+            CustomParser = Context,
         };
 
         var expand = new Option<bool>("--expand")
@@ -101,12 +103,6 @@ internal static class AskCommand
         {
             patch, message, preset, output, provider, model, set, fresh, seen, briefing, context, expand, json,
         };
-
-        command.Validators.Add(result =>
-        {
-            if (result.GetValue(context) is { } limit and (< AssistantSettings.LeastContext or > AssistantSettings.MostContext))
-                result.AddError($"--context is {AssistantSettings.LeastContext} to {AssistantSettings.MostContext}.");
-        });
 
         command.SetAction((result, cancellation) =>
         {
@@ -400,6 +396,19 @@ internal static class AskCommand
         var files = BundleFiles.Of(bundle);
 
         return new AskedPatch(new Opened(bundle.Patch, files, files), target, file, bundle.Conversation, AskedPatch.Within(files, file));
+    }
+
+    /// <summary>A <c>--context</c> as a whole number of tokens in range, and a complaint in the shell's own words where it is not.</summary>
+    private static int? Context(ArgumentResult result)
+    {
+        if (int.TryParse(result.Tokens[0].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var limit)
+            && limit is >= AssistantSettings.LeastContext and <= AssistantSettings.MostContext)
+        {
+            return limit;
+        }
+
+        result.AddError($"--context is a whole number of tokens, {AssistantSettings.LeastContext} to {AssistantSettings.MostContext}.");
+        return null;
     }
 
     /// <summary>The provider's saved settings with <paramref name="set"/> laid over them, or null having said which pair is not one.</summary>

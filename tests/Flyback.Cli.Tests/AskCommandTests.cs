@@ -340,6 +340,20 @@ public sealed class AskCommandTests : IDisposable
     }
 
     [Theory]
+    [InlineData("abc")]
+    [InlineData("1e5")]
+    [InlineData("99999999999")]
+    [InlineData("1000")]
+    public void A_context_that_is_not_a_whole_number_in_range_is_refused_in_a_sentence(string typed)
+    {
+        var (code, complained) = Run("ask", Path("field.fbk"), "--context", typed, "a gray field");
+
+        code.ShouldBe(Exit.Failed);
+        complained.ShouldContain("--context is a whole number of tokens, 40000 to 1000000.");
+        File.Exists(Path("field.fbk")).ShouldBeFalse();
+    }
+
+    [Theory]
     [InlineData("--", "--turns", "1")]
     [InlineData("make", "it", "-3", "dB")]
     public void A_message_with_a_dash_in_it_is_still_a_message(params string[] words)

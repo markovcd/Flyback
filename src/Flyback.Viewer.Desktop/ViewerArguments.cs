@@ -65,7 +65,12 @@ internal static class ViewerArguments
             DefaultValueFactory = _ => settings.PreviewFrameRate,
         };
 
-        Atleast(fps, 0);
+        // The settings' own floor: nought for uncapped, else a frame a second at least.
+        fps.Validators.Add(result =>
+        {
+            if (Typed<double>(result) is { } value && !(value == 0d || (double.IsFinite(value) && value >= OutputSettings.SlowestFrameRate)))
+                result.AddError($"--fps is 0, or {OutputSettings.SlowestFrameRate:0} or more.");
+        });
 
         var gpu = new Option<bool>("--gpu")
         {

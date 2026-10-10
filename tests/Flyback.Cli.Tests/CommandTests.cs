@@ -396,6 +396,7 @@ public class CommandTests
     [InlineData("out.avi", 1d, 0d, 0d, double.NaN, "--fps")]
     [InlineData("out.avi", 1d, 0d, 0d, 1e9, "--fps")]
     [InlineData("out.avi", 1d, 0d, 0d, -1d, "--fps")]
+    [InlineData("out.avi", 1d, 0d, 0d, 0.001d, "--fps")]
     public void A_number_a_render_cannot_use_is_refused_before_anything_is_written(
         string name, double seconds, double from, double at, double fps, string said)
     {
@@ -886,12 +887,13 @@ public class CommandTests
         output.ShouldContain("are the same instrument");
     }
 
-    /// <summary>No time at all compares nothing, which is not two patches being the same.</summary>
+    /// <summary>No time at all, or less than a frame of it, compares nothing, which is not two patches being the same.</summary>
     [Theory]
     [InlineData(0d)]
     [InlineData(-1d)]
     [InlineData(double.NaN)]
     [InlineData(double.PositiveInfinity)]
+    [InlineData(0.008d)]
     public void A_length_that_compares_nothing_is_refused(double seconds)
     {
         var (code, output, error) = Run((o, e) => CompareCommand.Run(

@@ -1,3 +1,4 @@
+using System.CommandLine;
 using System.Net;
 using System.Text;
 using System.Text.Json.Nodes;
@@ -5,6 +6,7 @@ using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
+using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
 using Flyback.Cli.Commands;
@@ -55,6 +57,31 @@ public sealed class RenderPresetsTests : IDisposable
 
     private string[] Written() =>
         [.. Directory.GetFiles(media).Select(Path.GetFileName).Order(StringComparer.Ordinal)!];
+
+    /// <summary>
+    /// Each becomes a wait: nought marks every waiting preset failed or asks the
+    /// site without pause, and past a day it is no wait a timer can hold.
+    /// </summary>
+    [Theory]
+    [InlineData("--timeout-minutes", "0")]
+    [InlineData("--timeout-minutes", "-1")]
+    [InlineData("--timeout-minutes", "1e309")]
+    [InlineData("--timeout-minutes", "NaN")]
+    [InlineData("--poll-minutes", "0")]
+    [InlineData("--poll-minutes", "100000")]
+    [InlineData("--poll-minutes", "NaN")]
+    public void A_wait_no_render_could_keep_to_is_refused_before_the_site_is_asked(string flag, string minutes)
+    {
+        using var error = new StringWriter();
+
+        var code = Program.Run(
+            ["render-presets", "--server", "http://127.0.0.1:9/", "--media", media, flag, minutes],
+            new Flyback.Cli.Plugins(() => PluginCatalog.Empty, "nowhere", null),
+            new InvocationConfiguration { Output = TextWriter.Null, Error = error });
+
+        code.ShouldBe(Exit.Failed);
+        error.ToString().ShouldContain($"{flag} {minutes}");
+    }
 
     [Fact]
     public async Task A_patch_with_a_picture_and_a_sound_gets_a_still_a_loop_and_a_track()

@@ -40,6 +40,9 @@ internal sealed record RenderOptions(
     /// <summary>The longest a render runs, starts at or is a still of, in seconds: three hours.</summary>
     public const double MostSeconds = 10_800d;
 
+    /// <summary>The fewest frames a second a clip is drawn at, since each frame carries its own length of sound.</summary>
+    public const double LeastFps = 1d;
+
     /// <summary>The most frames a second a clip is drawn at.</summary>
     public const double MostFps = 240d;
 }

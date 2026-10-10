@@ -309,6 +309,8 @@ public class ViewerOptionsTests
     [InlineData("--for", "0")]
     [InlineData("--loop", "-3")]
     [InlineData("--fps", "-1")]
+    [InlineData("--fps", "0.5")]
+    [InlineData("--fps", "1e-300")]
     public void A_number_out_of_its_range_is_refused(string flag, string value)
     {
         var ran = Run(Machine, flag, value);

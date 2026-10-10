@@ -557,7 +557,8 @@ internal static class RenderCommand
         if (!(options.From >= 0d && options.From <= most)) return $"--from is a second of the patch, from 0 to {most:0}.";
         if (still && !(options.At >= 0d && options.At <= most)) return $"--at is a second of the patch, from 0 to {most:0}.";
         if (!still && !(options.Seconds > 0d && options.Seconds <= most)) return $"--seconds runs above 0 and up to {most:0}.";
-        if (!still && !(options.Fps > 0d && options.Fps <= RenderOptions.MostFps)) return $"--fps runs above 0 and up to {RenderOptions.MostFps:0}.";
+        if (!still && !(options.Fps >= RenderOptions.LeastFps && options.Fps <= RenderOptions.MostFps))
+            return $"--fps runs from {RenderOptions.LeastFps:0} up to {RenderOptions.MostFps:0}.";
 
         return null;
     }

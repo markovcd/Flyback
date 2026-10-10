@@ -55,7 +55,7 @@
 - On Linux, a JACK server that has stopped answering no longer freezes Flyback, and forgetting a key that was never kept no longer reports an error.
 - A patch file with no knob values for a module opens with the module's defaults instead of crashing.
 - An OpenAI-compatible or Gemini endpoint that answers with an error page says so, and probing a chat-completions endpoint says when a rate limit left a model's senses unsure.
-- `flyback-cli render` and `compare` refuse a `--seconds`, `--from`, `--at` or `--fps` they cannot use instead of overflowing, running for ever or calling any two patches the same.
+- `flyback-cli` and `flyback-viewer` refuse a number they cannot use, such as a `--seconds`, `--fps`, `--at` or `--context`, instead of overflowing, crashing, running for ever or calling any two patches the same.
 - A patch nested deeper than Flyback follows, an Expression's formula or a chain of more than 128 modules, says so instead of freezing or closing the editor.
 - `flyback-cli render` writes a sound longer than an hour and a half through ffmpeg instead of failing.
 - A number too large to hold, written on a knob, a knob's range or a module's setting in the code view, is refused there instead of stopping the patch from saving.

@@ -26,6 +26,9 @@ internal static class RenderPresetsCommand
 {
     private static readonly JsonSerializerOptions Web = new(JsonSerializerDefaults.Web);
 
+    /// <summary>The shortest and longest wait, in minutes: nought would fail every render, or ask the site without pause.</summary>
+    private const double LeastMinutes = 1d, MostMinutes = 24d * 60d;
+
     public static Command Build(PluginRegistry plugins)
     {
         var server = new Option<string>("--server")
@@ -72,23 +75,35 @@ internal static class RenderPresetsCommand
 
         command.SetAction(async (result, cancellation) =>
         {
+            var error = result.InvocationConfiguration.Error;
             var folder = result.GetValue(media);
 
             if (folder is { Exists: false })
             {
-                Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {folder.FullName}: the media folder is not there. Mount the site's share.");
+                error.WriteLine($"{GlobalConstants.ApplicationName}: {folder.FullName}: the media folder is not there. Mount the site's share.");
                 return Exit.Failed;
             }
 
             if (result.GetValue(limit) is < 1)
             {
-                Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: --limit {result.GetValue(limit)}: a pass renders at least one preset.");
+                error.WriteLine($"{GlobalConstants.ApplicationName}: --limit {result.GetValue(limit)}: a pass renders at least one preset.");
                 return Exit.Failed;
+            }
+
+            foreach (var wait in (Option<double>[])[poll, timeout])
+            {
+                if (result.GetValue(wait) is not (>= LeastMinutes and <= MostMinutes))
+                {
+                    var typed = result.GetResult(wait)?.Tokens is [{ } token, ..] ? token.Value : null;
+
+                    error.WriteLine($"{GlobalConstants.ApplicationName}: {wait.Name} {typed}: a wait is {LeastMinutes:0} to {MostMinutes:0} minutes.");
+                    return Exit.Failed;
+                }
             }
 
             if (Ffmpeg.Resolve(result.GetValue(ffmpeg)) is not { } found)
             {
-                Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: there is no ffmpeg on PATH. Install it or point --ffmpeg at it.");
+                error.WriteLine($"{GlobalConstants.ApplicationName}: there is no ffmpeg on PATH. Install it or point --ffmpeg at it.");
                 return Exit.Failed;
             }
 
@@ -100,7 +115,7 @@ internal static class RenderPresetsCommand
 
             if (site is null)
             {
-                Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {problem}");
+                error.WriteLine($"{GlobalConstants.ApplicationName}: {problem}");
                 return Exit.Failed;
             }
 
@@ -115,7 +130,7 @@ internal static class RenderPresetsCommand
             {
                 while (true)
                 {
-                    await Pass(site, render, Console.Out, Console.Error, cancellation, result.GetValue(limit));
+                    await Pass(site, render, result.InvocationConfiguration.Output, error, cancellation, result.GetValue(limit));
 
                     if (result.GetValue(once)) return Exit.Ok;
 

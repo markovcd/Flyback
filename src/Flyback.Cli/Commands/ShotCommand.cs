@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.Globalization;
 using Flyback.Cli.Common;
+using Flyback.Cli.Models;
 using Flyback.Core;
 using PluginRegistry = Flyback.Cli.Plugins;
 
@@ -106,6 +107,12 @@ internal static class ShotCommand
             if (!into.Extension.Equals(".png", StringComparison.OrdinalIgnoreCase))
             {
                 error.WriteLine($"{GlobalConstants.ApplicationName}: {into.Name}: a shot is a PNG.");
+                return Exit.Failed;
+            }
+
+            if (result.GetValue(at) is not (>= 0d and <= RenderOptions.MostSeconds))
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: --at is a second of the patch, from 0 to {RenderOptions.MostSeconds:0}.");
                 return Exit.Failed;
             }
 
