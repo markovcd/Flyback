@@ -943,7 +943,7 @@ Prefer asserting on the smallest thing that holds the behavior. Much of the
 editor's logic is reachable as `internal static` methods (`NodeEditor.Fit`,
 `NodeEditor.Text`), and a test of one needs no window at all.
 
-`Flyback.Ui.Testing` holds what any headless UI test needs (`UiTest`: `Show`, `Settle`,
+`Flyback.Ui.Testing` holds what any headless UI test needs, the specs' included (`HeadlessApp`; `UiTest`: `Show`, `Settle`,
 `Pump`, and windows closed with the test); `EditorTest` adds the editor's canvas and
 container on top of it. The Headless xunit adapter is vendored under
 `tests/Flyback.Ui.Testing/Headless` because the published package does not discover tests on xunit.v3 4.x. The

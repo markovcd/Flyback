@@ -27,6 +27,7 @@
     <ProjectReference Include="..\..\src\Flyback.Cli\Flyback.Cli.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Site\Flyback.Site.csproj" />
     <ProjectReference Include="..\Flyback.Plugins.Testing\Flyback.Plugins.Testing.csproj" />
+    <ProjectReference Include="..\Flyback.Ui.Testing\Flyback.Ui.Testing.csproj" />
   </ItemGroup>
 
   <!--

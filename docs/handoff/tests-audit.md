@@ -26,16 +26,10 @@ found this week was fixed in the harness the same day, in the open.
 
 ## 8. The harness and the doubles are written many times (Medium to Low)
 
-The architecture audit's item 10 is half landed: `Flyback.Ui.Testing` exists
-and the four UI assemblies build on `UiTest`. `Flyback.Specs` still does not
-reference it (`Flyback.Specs.csproj:21-29`), and carries the third headless
-`Application` (`Support/Headless.cs:54-66`, identical to `Ui.Testing/HeadlessApp.cs:14-18`
-plus `Editor.Tests/Ui/TestApp.cs`), `EditorDriver.cs` (907 code lines) and
-`ViewerRun.cs` with their own `Settle` (`EditorDriver.cs:1396`, `ViewerRun.cs:166`,
-both one layout pass short of `UiTest.cs:83`), their own key `Press`, and the
-turn-take, `Run` and close-on-dispose trio written three times
-(`EditorDriver.cs:1297-1418`, `ViewerRun.cs:130-164`, `AboutSteps.cs:25-50`).
-`Headless.cs` holds three top-level types.
+`Flyback.Specs` builds on `Flyback.Ui.Testing`: its `EditorApp` is
+`HeadlessApp.Build` and its drivers settle through `UiTest.Settle`. What it still
+writes for itself is a key `Press` and the turn-take, `Run` and close-on-dispose
+trio, three times (`EditorDriver.cs`, `ViewerRun.cs`, `AboutSteps.cs:25-50`).
 
 Counted across `tests/`, each a private copy the guide's shared place could
 hold:
@@ -69,9 +63,8 @@ hold:
   `SiteSteps.cs:164`, `RenderPresetsTests.cs:372`); the first two serve the
   same gallery feature.
 
-Fix, each its own commit: Specs references Ui.Testing and its drivers build on
-`UiTest` (`Settle`, `Press`, `Pump`, `Named`), with one `HeadlessWindow` base
-for the turn trio; Editor.Tests deletes its `Until`, `Named`, press and close
+Fix, each its own commit: Specs' drivers build on `UiTest` (`Press`, `Pump`,
+`Named`), with one `HeadlessWindow` base for the turn trio; Editor.Tests deletes its `Until`, `Named`, press and close
 helpers for `UiTest` and `EditorTest` members, with the dialog closer finding
 by `Name`; `LoopbackDevice` and `Canned` move into `Flyback.Plugins.Testing`,
 whose remit widens from "what sound tests share" to "what plugin-facing tests
@@ -152,9 +145,8 @@ Plugins.Tests.
   (`AssistantPanelTests.cs` 1,186, `SourceViewTests.cs` 1,154,
   `OutputSettingsTests.cs` 944, `NodeEditorTests.cs` 676) and
   `PatchWorkbenchTests.cs` is 1,420.
-- Fifteen test files declare more than one top-level type:
-  `PluginTrustTests.cs` (5), `Specs/Support/Headless.cs` (3),
-  `PluginTrustSteps.cs` (3), `DecisionPluginTests.cs` (3),
+- Fourteen test files declare more than one top-level type:
+  `PluginTrustTests.cs` (5), `PluginTrustSteps.cs` (3), `DecisionPluginTests.cs` (3),
   `FakeAssistant/RehearsedAssistantPlugin.cs` (3), and ten with two. Split as
   each is next touched.
 - `ShippedPresetTests.cs:255` filters kinds with a `return` where a filtered

@@ -80,7 +80,7 @@ public abstract class UiTest : IDisposable
     protected static void Press(Button button) => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
     /// <summary>Runs layout to completion, after something has changed the tree.</summary>
-    protected static void Settle(Window window)
+    public static void Settle(Window window)
     {
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();

@@ -11,6 +11,7 @@ using Avalonia.VisualTree;
 using Flyback.Editor;
 using Flyback.Editor.Assist;
 using Flyback.Ui;
+using Flyback.Ui.Testing;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
@@ -1390,11 +1391,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     private static NodeEditor CanvasIn(MainWindow window) =>
         window.GetVisualDescendants().OfType<NodeEditor>().Single();
 
-    private void Settle()
-    {
-        window!.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-    }
+    private void Settle() => UiTest.Settle(window!);
 
     private void Run(Action act)
     {

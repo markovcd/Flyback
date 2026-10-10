@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.Engine.Graph;
 using Flyback.Ui;
+using Flyback.Ui.Testing;
 using Flyback.Ui.Controls;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
@@ -163,9 +164,5 @@ public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDispos
         return Headless.Run(act);
     }
 
-    private void Settle()
-    {
-        window!.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-    }
+    private void Settle() => UiTest.Settle(window!);
 }
