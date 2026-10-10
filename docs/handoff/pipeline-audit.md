@@ -48,21 +48,9 @@ literal `FROM`; so nothing says when they moved.
 
 **Fix:** pin, the same way the actions are pinned. A `base` stage holds the one
 literal `FROM mcr.microsoft.com/dotnet/sdk:10.0.<patch>@sha256:…` with its apt
-packages (item 5), and `dependabot.yml` gets a `docker` entry that reads it.
+packages, and `dependabot.yml` gets a `docker` entry that reads it.
 `global.json` names the same SDK with `rollForward: latestPatch`, so a developer's
 build and the gate agree. `worker.yml` and `validate.yml` take their image tags
 from the Dockerfile's stages, or carry the same digest with a comment saying
 where it is kept. The alternative is a line in `pipeline.md` saying base images
 float on purpose; either is a decision, and neither is made today.
-
-## 5. Three apt lists for one set of packages (Low)
-
-`built`, `site-build` and `renderer` each start from the SDK image and each run
-their own `apt-get install`: the renderer's list is a subset of the gate's, and
-`site-build` installs ffmpeg, python3 and the wasm-tools workload the gate
-already has. Three lists drift one package at a time, and the workload install
-runs twice on the Worker deploy.
-
-**Fix:** `FROM ${SDK} AS base` with the packages and the workload once, and the
-three stages on top of it. One list, one cached layer. A refactor of its own,
-with nothing else in the commit.

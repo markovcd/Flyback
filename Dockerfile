@@ -46,37 +46,54 @@ RUN npm ci --no-audit --no-fund
 COPY worker/ ./
 RUN npx tsc --noEmit && npx vitest run && touch /tested
 
-# Everything a change has to get past, up to the tests. An argument declared above
-# the first FROM is one default for every stage, and a stage asks for one by
-# repeating it bare.
-FROM ${SDK} AS built
+# What the SDK image does not already have, in three stages so each package is
+# listed once and a stage takes only what it needs. An argument declared above the
+# first FROM is one default for every stage, and a stage asks for one by repeating
+# it bare.
+#
+# base is what draws and encodes a picture, which the renderer needs and nothing
+# more. libSkiaSharp is what the headless UI tests rasterize with, and it will not
+# load at all without fontconfig beside it — which reads as a DllNotFoundException
+# in every UI test rather than as anything to do with fonts. libX11 is Attention's
+# ICCCM urgency hint on the Linux side (see Attention.cs) — XOpenDisplay already
+# returns null and backs off quietly when there is no X server to answer, but the
+# library it calls into still has to be there to be called. The fonts themselves
+# are embedded in the application, so there is nothing else to install: no X
+# server, no ICU (the projects are built InvariantGlobalization), no window
+# manager.
+#
+# ffmpeg is a program Flyback looks for on PATH and does without (ADR-0089).
+# Nothing links against it and nothing published carries it, but the tests that
+# write an MP4 skip themselves when there is none, and the stills are encoded with
+# it.
+#
+# Mesa is EGL with no surface and llvmpipe behind it: a GPU with no GPU and no
+# display, which is what lets the tests and the renderer draw the picture the way
+# flyback-cli render does on a real card (ADR-0157). Without them those tests skip
+# themselves.
+FROM ${SDK} AS base
+RUN apt-get update \
+ && apt-get install --yes --no-install-recommends ffmpeg libfontconfig1 libx11-6 \
+      libegl1 libegl-mesa0 libgl1-mesa-dri libopengl0 \
+ && rm -rf /var/lib/apt/lists/*
+
+# tools adds what builds the web editor: the wasm-tools workload links Skia into
+# the web editor the preset site builds beside itself (ADR-0162), and its
+# Emscripten runs on Python.
+FROM base AS tools
+RUN apt-get update \
+ && apt-get install --yes --no-install-recommends python3 \
+ && rm -rf /var/lib/apt/lists/* \
+ && dotnet workload install wasm-tools
+
+# Everything a change has to get past, up to the tests.
+FROM tools AS built
 ARG CONFIGURATION
 
 # The Worker's tests are part of the gate: nothing past here is built if they fail.
 COPY --from=worker /tested /tmp/worker-tested
 
-# What the SDK image does not already have. libSkiaSharp is what the headless
-# UI tests rasterize with, and it will not load at all without fontconfig
-# beside it — which reads as a DllNotFoundException in every UI test rather
-# than as anything to do with fonts. libX11 is Attention's ICCCM urgency hint
-# on the Linux side (see Attention.cs) — XOpenDisplay already returns null and
-# backs off quietly when there is no X server to answer, but the library it
-# calls into still has to be there to be called. The fonts themselves are
-# embedded in the application, so there is nothing else to install: no X
-# server, no ICU (the projects are built InvariantGlobalization), no window
-# manager.
-#
-# ffmpeg is the exception, and it is here for the tests rather than for the
-# build. Nothing links against it and nothing published below carries it — it
-# is a program Flyback looks for on PATH and does without (ADR-0089). But the
-# tests that write an MP4 skip themselves when there is none, so without this
-# the format most people will record in would be the one thing the gate below
-# never exercises.
-#
-# Mesa is here for the same reason: EGL with no surface and llvmpipe behind it
-# are a GPU with no GPU and no display, which is what lets the tests draw the
-# picture the way flyback-cli render does on a real card (ADR-0157). Without
-# them those tests skip themselves.
+# What only the tests need.
 #
 # jackd runs the dummy-driver server the JACK output's tests play into. Without it they
 # skip themselves.
@@ -87,16 +104,11 @@ COPY --from=worker /tested /tmp/worker-tested
 # gnome-keyring, secret-tool and a session bus are the keyring the Linux secret
 # store keeps a key in. Without them its round trip skips itself.
 #
-# The wasm-tools workload links Skia into the web editor the preset site builds
-# beside itself (ADR-0162), and its Emscripten runs on Python.
-#
 # libnss3 and unzip are for the headless Chromium below.
 RUN apt-get update \
- && apt-get install --yes --no-install-recommends libfontconfig1 libx11-6 ffmpeg \
-      libegl1 libegl-mesa0 libgl1-mesa-dri libopengl0 nodejs python3 jackd2 \
+ && apt-get install --yes --no-install-recommends nodejs jackd2 \
       gnome-keyring libsecret-tools dbus libnss3 unzip \
- && rm -rf /var/lib/apt/lists/* \
- && dotnet workload install wasm-tools
+ && rm -rf /var/lib/apt/lists/*
 
 # Chrome for Testing's headless shell: the specs open the web viewer and the web
 # editor in it, as a visitor's browser would. Ubuntu's chromium is a snap and does
@@ -261,14 +273,8 @@ COPY --from=packed /out/ /
 # and the default presets beside the site's
 # plugins packed and signed with the release key handed in as a build secret
 # (ADR-0141). Built from the SDK rather than the gate: CI has already gated the commit.
-FROM ${SDK} AS site-build
+FROM tools AS site-build
 ARG VERSION
-
-# ffmpeg encodes the stills.
-RUN apt-get update \
- && apt-get install --yes --no-install-recommends python3 ffmpeg \
- && rm -rf /var/lib/apt/lists/* \
- && dotnet workload install wasm-tools
 
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_NOLOGO=1
@@ -303,13 +309,8 @@ COPY --from=site-build /out/ /
 # workflow: flyback-cli beside the editor so the shipped plugins load, as a release
 # lays them out, with ffmpeg to encode and Mesa's software OpenGL to draw on, and
 # flyback-site to send what it made.
-FROM ${SDK} AS renderer
+FROM base AS renderer
 ARG VERSION
-
-RUN apt-get update \
- && apt-get install --yes --no-install-recommends ffmpeg libfontconfig1 libx11-6 \
-      libegl1 libegl-mesa0 libgl1-mesa-dri libopengl0 \
- && rm -rf /var/lib/apt/lists/*
 
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_NOLOGO=1
