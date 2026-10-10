@@ -111,7 +111,7 @@ public readonly record struct PortSpec(
     /// <remarks>
     /// Only what is true of this one socket. What the module is for, and how its
     /// sockets work together, is <see cref="NodeDef.Description"/>. A
-    /// socket that means the same everywhere takes its words from <see cref="SocketHelp"/>.
+    /// socket that means the same everywhere takes the standard words instead: see <see cref="Standard"/>.
     /// </remarks>
     public string Help
     {
@@ -139,7 +139,8 @@ public readonly record struct PortSpec(
 
     /// <summary>
     /// Whether this socket means what its name means everywhere, and so takes its
-    /// <see cref="Help"/> from <see cref="SocketHelp"/> rather than saying it here.
+    /// <see cref="Help"/> from the standard words for its name rather than saying it here.
+    /// The plugin guide lists them, and <c>flyback-cli modules &lt;type id&gt;</c> prints what each socket ended up with.
     /// </summary>
     /// <remarks>
     /// Filled in by <see cref="NodeDef"/>, which knows an input from an output. A
