@@ -4,7 +4,6 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
-using Avalonia.Threading;
 using Flyback.Editor.Controls;
 using Flyback.Engine.Compile;
 using Flyback.Core;
@@ -76,20 +75,6 @@ public class AboutTests : EditorTest
         var mark = All<LogoMark>(window).Single();
 
         return mark.TranslatePoint(mark.Bounds.Center - mark.Bounds.Position, window) ?? default;
-    }
-
-    /// <summary>Frames are drawn off the UI thread, so it has to be let go of for one to arrive.</summary>
-    private static bool Until(Func<bool> done, double seconds = 30)
-    {
-        var deadline = DateTime.UtcNow.AddSeconds(seconds);
-
-        while (!done() && DateTime.UtcNow < deadline)
-        {
-            Dispatcher.UIThread.RunJobs();
-            Thread.Sleep(5);
-        }
-
-        return done();
     }
 
     private static bool Playing(Window window) => All<Image>(window).Any(picture => picture.Source is not null);
@@ -207,7 +192,7 @@ public class AboutTests : EditorTest
         Click(window, at, 1);
         All<LogoMark>(window).Single().IsVisible.ShouldBeFalse();
 
-        Until(() => Playing(window)).ShouldBeTrue("no frame was ever drawn");
+        Pump(() => Playing(window), window);
     }
 
     /// <summary>
@@ -247,7 +232,7 @@ public class AboutTests : EditorTest
         var at = Middle(window);
 
         Click(window, at, 7);
-        Until(() => Playing(window)).ShouldBeTrue("no frame was ever drawn");
+        Pump(() => Playing(window), window);
 
         Click(window, at, 8);
 

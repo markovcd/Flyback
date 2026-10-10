@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
-using Avalonia.Interactivity;
 using Flyback.Core.Graph;
 using Flyback.Editor.Inspect;
 using Flyback.Editor.Windows;
@@ -32,7 +31,7 @@ public class ShortcutListTests : EditorTest
 
     private static void Press(MainWindow window, string group)
     {
-        Heading(window, group).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(Heading(window, group));
         Settle(window);
     }
 

@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
-using Avalonia.Threading;
 using Flyback.Editor.Gallery;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
@@ -30,23 +29,6 @@ public class PresetMotionTests : EditorTest
         PixelFormat.Bgra8888,
         AlphaFormat.Opaque);
 
-    /// <summary>
-    /// Frames are drawn off the UI thread and handed over on it, so the thread
-    /// running this has to be let go of for one to arrive.
-    /// </summary>
-    private static bool Until(Func<bool> done, double seconds = 30)
-    {
-        var deadline = DateTime.UtcNow.AddSeconds(seconds);
-
-        while (!done() && DateTime.UtcNow < deadline)
-        {
-            Dispatcher.UIThread.RunJobs();
-            Thread.Sleep(5);
-        }
-
-        return done();
-    }
-
     [AvaloniaFact]
     public void A_frame_arrives_in_place_of_the_still()
     {
@@ -55,7 +37,7 @@ public class PresetMotionTests : EditorTest
 
         using var motion = PresetMotion.Play(Files(Plasma()), picture, () => 0);
 
-        Until(() => !ReferenceEquals(picture.Source, still)).ShouldBeTrue("no frame was ever handed over");
+        Pump(() => !ReferenceEquals(picture.Source, still));
 
         picture.Source.ShouldBeOfType<WriteableBitmap>().ShouldNotBe(still);
     }
@@ -68,7 +50,7 @@ public class PresetMotionTests : EditorTest
 
         var motion = PresetMotion.Play(Files(Plasma()), picture, () => 0);
 
-        Until(() => !ReferenceEquals(picture.Source, still)).ShouldBeTrue("no frame was ever handed over");
+        Pump(() => !ReferenceEquals(picture.Source, still));
 
         motion.Dispose();
 
@@ -89,9 +71,8 @@ public class PresetMotionTests : EditorTest
 
         // Short, because this waits to prove nothing happens: the patch is turned
         // away before a renderer is ever built.
-        Until(() => !ReferenceEquals(picture.Source, still), seconds: 2)
-            .ShouldBeFalse("an empty patch has no frame to show");
+        RunFor(TimeSpan.FromSeconds(2));
 
-        picture.Source.ShouldBe(still);
+        picture.Source.ShouldBe(still, "an empty patch has no frame to show");
     }
 }

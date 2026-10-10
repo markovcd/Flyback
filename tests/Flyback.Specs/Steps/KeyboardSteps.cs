@@ -22,7 +22,7 @@ public sealed partial class KeyboardSteps(PatchContext context) : IDisposable
     private const string Note = @"[A-G]#?-?\d";
     private const string Notes = $@"({Note}(?:, {Note})*(?: and {Note})?)";
 
-    private readonly StandIn keyboard = new();
+    private readonly StandInMidiInput keyboard = new("Stage Piano");
     private readonly List<(CompiledPatch Program, LiveValues Live)> probes = [];
     private MidiHub? hub;
     private (CompiledPatch Program, LiveValues Live)? sound;
@@ -124,33 +124,4 @@ public sealed partial class KeyboardSteps(PatchContext context) : IDisposable
 
     public void Dispose() => hub?.Dispose();
 
-    /// <summary>A MIDI backend with one keyboard plugged in, and nothing behind it.</summary>
-    private sealed class StandIn : IMidiInput
-    {
-        public Played? Port { get; private set; }
-
-        public string Id => "stand-in";
-
-        public string Name => "Stand-in";
-
-        public int Priority => 1;
-
-        public bool IsSupported => true;
-
-        public IReadOnlyList<MidiPortInfo> Ports => MidiPorts.Named(["Stage Piano"]);
-
-        public IMidiPort Open(string port, MidiCallback deliver) => Port = new Played(port, deliver);
-    }
-
-    /// <summary>The keyboard, sending on this thread what a driver would send on its own.</summary>
-    private sealed class Played(string id, MidiCallback deliver) : IMidiPort
-    {
-        public string Id => id;
-
-        public bool IsOpen { get; private set; } = true;
-
-        public void Send(MidiMessage message) => deliver(message);
-
-        public void Dispose() => IsOpen = false;
-    }
 }

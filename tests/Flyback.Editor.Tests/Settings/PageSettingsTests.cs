@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
-using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
 using Flyback.Editor.Controls;
@@ -45,7 +44,7 @@ public sealed class PageSettingsTests : EditorTest
 
     private static void PressGear(MainWindow window)
     {
-        All<Button>(window).Single(b => b.Name == "settings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == "settings"));
         Dispatcher.UIThread.RunJobs();
         Settle(window);
     }

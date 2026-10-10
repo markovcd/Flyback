@@ -1,9 +1,8 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Windows;
@@ -28,8 +27,7 @@ public class DialogTests : EditorTest
     /// <summary>Presses a toolbar button and waits for what it puts up.</summary>
     private static ModalOverlay Show(MainWindow window, string named)
     {
-        All<Button>(window).Single(b => b.Name == named)
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == named));
 
         for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
             Dispatcher.UIThread.RunJobs();
@@ -42,8 +40,7 @@ public class DialogTests : EditorTest
 
     private static void Dismiss(MainWindow window, ModalOverlay dialog)
     {
-        All<Button>(dialog).Single(b => b.Name == "dismiss")
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(dialog).Single(b => b.Name == "dismiss"));
 
         Dispatcher.UIThread.RunJobs();
         Settle(window);

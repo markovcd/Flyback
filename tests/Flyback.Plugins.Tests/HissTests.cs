@@ -82,7 +82,7 @@ public class HissTests
 
         var envelope = Falling(Rate / 4);
 
-        Run(b.Patch, envelope).ShouldBe(
+        Interpreted.Run(b.Patch, envelope).ShouldBe(
             Played(envelope, noise, band, (CutoffPort, 1900f), (ResonancePort, 0.3f), (GainPort, 2.5f), (SeedPort, 3f)));
     }
 
@@ -105,25 +105,10 @@ public class HissTests
 
         b.Wire(coord, 0, hiss, LevelPort).Wire(hiss, 0, sink, NodeCatalog.OutputLeftPort);
 
-        return Run(b.Patch, level);
+        return Interpreted.Run(b.Patch, level);
     }
 
     /// <summary>The level arrives as x, which is the one input a test can vary per sample.</summary>
-    private static double[] Run(Patch patch, float[] level)
-    {
-        var program = patch.CompileForAudio(Catalog).Program;
-        var state = new DelayState(program.DelayLengths, Rate, program.PhaseCount, program.UnitCount);
-        var registers = program.AllocateRegisters();
-        var output = new double[level.Length];
-
-        for (var i = 0; i < level.Length; i++)
-        {
-            program.Evaluate(level[i], 0f, i / (double)Rate, registers, default, state);
-            output[i] = registers[program.OutputBase];
-        }
-
-        return output;
-    }
 
     private static int Crossings(double[] signal)
     {

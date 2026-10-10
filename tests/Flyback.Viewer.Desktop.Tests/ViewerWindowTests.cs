@@ -18,6 +18,7 @@ using Shouldly;
 using Xunit;
 using Flyback.Ui;
 using Flyback.Host;
+using Flyback.Plugins.Testing;
 
 namespace Flyback.Viewer.Desktop.Tests;
 
@@ -29,30 +30,6 @@ public class ViewerWindowTests : UiTest
 {
     /// <summary>How long a patch may take to compile; these take well under a second.</summary>
     private static readonly TimeSpan CompileCap = TimeSpan.FromMinutes(1);
-
-    /// <summary>A sound card the test drives: a buffer is made when the test asks for one.</summary>
-    private sealed class Loopback : IAudioDevice
-    {
-        private AudioCallback? fill;
-
-        public int SampleRate => GlobalConstants.SampleRate;
-
-        public bool IsRunning => fill is not null;
-
-        public void Start(AudioCallback callback) => fill = callback;
-
-        public void Stop() => fill = null;
-
-        public void Dispose() => Stop();
-
-        public float[] Pump(int frames = 512)
-        {
-            var buffer = new float[frames * 2];
-            (fill ?? throw new InvalidOperationException("nothing started the device"))(buffer);
-
-            return buffer;
-        }
-    }
 
     /// <summary>A sound card that will not open, counting how often it was asked.</summary>
     private sealed class Refusing : IAudioDevice
@@ -155,7 +132,7 @@ public class ViewerWindowTests : UiTest
     public void A_line_in_listens_through_the_runs_sound_input()
     {
         var microphone = new Microphone();
-        var window = Open(Files(ThroughLineIn()), Options(), new Loopback(), microphone);
+        var window = Open(Files(ThroughLineIn()), Options(), new LoopbackDevice(), microphone);
 
         window.Player.Sounding.ShouldBeTrue();
         window.Player.Audio.IsRunning.ShouldBeTrue();
@@ -240,26 +217,10 @@ public class ViewerWindowTests : UiTest
         window.Overlay!.IsOpen.ShouldBeTrue();
     }
 
-    /// <summary>A sound card that remembers being let go.</summary>
-    private sealed class Kept : IAudioDevice
-    {
-        public bool Disposed { get; private set; }
-
-        public int SampleRate => GlobalConstants.SampleRate;
-
-        public bool IsRunning { get; private set; }
-
-        public void Start(AudioCallback callback) => IsRunning = true;
-
-        public void Stop() => IsRunning = false;
-
-        public void Dispose() => Disposed = true;
-    }
-
     [AvaloniaFact]
     public void Closing_the_window_lets_its_sound_device_go()
     {
-        var device = new Kept();
+        var device = new LoopbackDevice();
         var window = Open(Files(Tone()), Options(), device);
 
         window.Close();
@@ -270,7 +231,7 @@ public class ViewerWindowTests : UiTest
     [AvaloniaFact]
     public void Ending_a_run_with_no_window_lets_its_sound_device_go()
     {
-        var device = new Kept();
+        var device = new LoopbackDevice();
 
         ViewerServices.Player(new ViewerLaunch(Files(Tone()), device, Options() with { Hidden = true })).Dispose();
 
@@ -371,7 +332,7 @@ public class ViewerWindowTests : UiTest
     public void Loop_rewinds_on_played_time_and_a_rewind_starts_its_count_again()
     {
         var now = 0.0;
-        var device = new Loopback();
+        var device = new LoopbackDevice();
         using var run = Clocked(Options() with { Loop = 2 }, () => now, device, Files(Tone()));
         var player = run.Player;
 
@@ -401,7 +362,7 @@ public class ViewerWindowTests : UiTest
     }
 
     /// <summary>A sine a second long, on a device the test drives, played for <paramref name="seconds"/> of it.</summary>
-    private static PlayerRun Played(ViewerOptions options, double seconds, Func<double> now, Loopback device)
+    private static PlayerRun Played(ViewerOptions options, double seconds, Func<double> now, LoopbackDevice device)
     {
         var patch = Tone();
         patch.Length = 1;
@@ -417,7 +378,7 @@ public class ViewerWindowTests : UiTest
     public void A_patch_stops_at_the_end_of_its_length_and_plays_again_from_nought()
     {
         var now = 0.0;
-        var device = new Loopback();
+        var device = new LoopbackDevice();
         using var run = Played(Options(), 1.2, () => now, device);
         var player = run.Player;
 
@@ -436,7 +397,7 @@ public class ViewerWindowTests : UiTest
     public void A_looped_patch_comes_round_at_the_end_of_its_length()
     {
         var now = 0.0;
-        var device = new Loopback();
+        var device = new LoopbackDevice();
         using var run = Played(Options(), 1.2, () => now, device);
         var player = run.Player;
 
@@ -453,7 +414,7 @@ public class ViewerWindowTests : UiTest
     public void A_run_with_no_window_ends_with_its_patch()
     {
         var now = 0.0;
-        var device = new Loopback();
+        var device = new LoopbackDevice();
         using var run = Played(Options() with { Hidden = true }, 1.2, () => now, device);
         var finished = 0;
         run.Player.Finished += () => finished++;
@@ -468,7 +429,7 @@ public class ViewerWindowTests : UiTest
     public void A_patch_with_no_length_plays_on_past_the_editors_three_minutes()
     {
         var now = 0.0;
-        var device = new Loopback();
+        var device = new LoopbackDevice();
         using var run = Clocked(Options() with { From = Patch.DefaultLength - 0.5 }, () => now, device, Files(Tone()));
         var player = run.Player;
 
@@ -484,7 +445,7 @@ public class ViewerWindowTests : UiTest
     public void A_run_with_no_window_ends_a_patch_with_no_length_at_three_minutes()
     {
         var now = 0.0;
-        var device = new Loopback();
+        var device = new LoopbackDevice();
         using var run = Clocked(Options() with { Hidden = true, From = Patch.DefaultLength - 0.5 }, () => now, device, Files(Tone()));
         var finished = 0;
         run.Player.Finished += () => finished++;
@@ -605,7 +566,7 @@ public class ViewerWindowTests : UiTest
     [AvaloniaFact]
     public void A_key_held_in_the_window_is_a_note_in_the_sound_and_the_picture()
     {
-        var device = new Loopback();
+        var device = new LoopbackDevice();
         var window = Open(Files(Keyed()), Options(), device);
 
         window.Player.Keyed.ShouldBeTrue();
@@ -651,7 +612,7 @@ public class ViewerWindowTests : UiTest
     [AvaloniaFact]
     public void The_sound_starts_with_the_window_and_the_picture_follows_its_clock()
     {
-        var device = new Loopback();
+        var device = new LoopbackDevice();
         var window = Open(Files(Tone()), Options(), device);
 
         device.IsRunning.ShouldBeTrue();
@@ -664,7 +625,7 @@ public class ViewerWindowTests : UiTest
     [AvaloniaFact]
     public void Pausing_stops_the_device_and_playing_starts_it_again()
     {
-        var device = new Loopback();
+        var device = new LoopbackDevice();
         var window = Open(Files(Tone()), Options(), device);
 
         window.Player.Pause();
@@ -677,7 +638,7 @@ public class ViewerWindowTests : UiTest
     [AvaloniaFact]
     public void No_audio_opens_no_device_and_the_picture_runs_on_its_own_clock()
     {
-        var device = new Loopback();
+        var device = new LoopbackDevice();
         var window = Open(Files(Tone()), Options() with { NoAudio = true }, device);
 
         device.IsRunning.ShouldBeFalse();
@@ -687,7 +648,7 @@ public class ViewerWindowTests : UiTest
     [AvaloniaFact]
     public void Mute_still_runs_the_device_so_the_clock_does_not_drift()
     {
-        var device = new Loopback();
+        var device = new LoopbackDevice();
         var window = Open(Files(Tone()), Options() with { Mute = true }, device);
 
         device.IsRunning.ShouldBeTrue();
@@ -700,11 +661,11 @@ public class ViewerWindowTests : UiTest
     [AvaloniaFact]
     public void Volume_is_how_loud_against_what_the_patch_made()
     {
-        var full = new Loopback();
+        var full = new LoopbackDevice();
         Open(Files(Tone()), Options(), full);
         var loud = Loudest(full.Pump());
 
-        var half = new Loopback();
+        var half = new LoopbackDevice();
         Open(Files(Tone()), Options() with { Volume = 0.5f }, half);
         var quiet = Loudest(half.Pump());
 
@@ -714,7 +675,7 @@ public class ViewerWindowTests : UiTest
     [AvaloniaFact]
     public void From_seeks_the_sound_too()
     {
-        var device = new Loopback();
+        var device = new LoopbackDevice();
         var window = Open(Files(Tone()), Options() with { From = 5 }, device);
 
         device.Pump(GlobalConstants.SampleRate / 10);
@@ -726,7 +687,7 @@ public class ViewerWindowTests : UiTest
     [AvaloniaFact]
     public void Rewind_takes_the_sound_back_to_nought()
     {
-        var device = new Loopback();
+        var device = new LoopbackDevice();
         var window = Open(Files(Tone()), Options(), device);
 
         device.Pump(GlobalConstants.SampleRate / 2);

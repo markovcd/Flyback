@@ -516,12 +516,6 @@ public sealed class PluginHubTests : EditorTest
         new PluginInstaller(Plugins, [], checkKeys: false).Waiting().ShouldBeEmpty();
     }
 
-    private sealed class Unreachable : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            throw new HttpRequestException("No connection could be made.");
-    }
-
     [AvaloniaFact]
     public void A_site_plugin_is_reported_to_the_site_with_the_reason_picked()
     {

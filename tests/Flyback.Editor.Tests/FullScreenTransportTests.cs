@@ -152,8 +152,7 @@ public sealed class FullScreenTransportTests : EditorTest
         FullScreen(window);
         Reach(window, Overlay(window));
 
-        All<Button>(Overlay(window)).Single(b => ToolTip.GetTip(b) as string == "Play the patch's length round and round")
-            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(Overlay(window)).Single(b => ToolTip.GetTip(b) as string == "Play the patch's length round and round"));
         Settle(window);
 
         loop.IsChecked.ShouldBe(true);

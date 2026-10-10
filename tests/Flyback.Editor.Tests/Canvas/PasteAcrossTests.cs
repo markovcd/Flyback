@@ -4,7 +4,6 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
-using Avalonia.Interactivity;
 using AvaloniaEdit;
 using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
@@ -56,7 +55,7 @@ public class PasteAcrossTests : EditorTest
     {
         ShowCode(window).Text = source;
 
-        All<Button>(window).Single(b => b.Name == "apply").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == "apply"));
         Settle(window);
     }
 

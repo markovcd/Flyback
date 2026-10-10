@@ -4,6 +4,7 @@ using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Shouldly;
 using Xunit;
+using Flyback.Plugins.Testing;
 
 namespace Flyback.Plugins.OpenAi.Tests;
 
@@ -115,9 +116,9 @@ public class SessionTests
     public async Task A_second_message_keeps_the_first_ones_history()
     {
         var canned = new Canned(
-            new Answer(Asking(Building)),
-            new Answer(Prose("Done. Gray enough?")),
-            new Answer(Asking(("propose", """{"summary":"a flat gray field"}"""))));
+            new CannedAnswer(Asking(Building)),
+            new CannedAnswer(Prose("Done. Gray enough?")),
+            new CannedAnswer(Asking(("propose", """{"summary":"a flat gray field"}"""))));
 
         var workbench = new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false);
 
@@ -152,9 +153,9 @@ public class SessionTests
     public async Task A_proposal_is_not_offered_a_second_time_by_the_next_message()
     {
         var canned = new Canned(
-            new Answer(Asking(Building)),
-            new Answer(Asking(("propose", """{"summary":"a flat gray field"}"""))),
-            new Answer(Prose("It is the one I just offered you.")));
+            new CannedAnswer(Asking(Building)),
+            new CannedAnswer(Asking(("propose", """{"summary":"a flat gray field"}"""))),
+            new CannedAnswer(Prose("It is the one I just offered you.")));
 
         var workbench = new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false);
 
@@ -294,8 +295,8 @@ public class SessionTests
     {
         var canned = new Canned(
             Limited("Rate limit reached for gpt-4o ... Please try again in 916ms."),
-            new Answer(Asking(Building)),
-            new Answer(Asking(("propose", """{"summary":"a flat gray field"}"""))));
+            new CannedAnswer(Asking(Building)),
+            new CannedAnswer(Asking(("propose", """{"summary":"a flat gray field"}"""))));
 
         var events = await Drive(canned);
 
@@ -332,7 +333,7 @@ public class SessionTests
     [Fact]
     public async Task A_wait_longer_than_the_session_will_sit_out_is_reported_at_once()
     {
-        var canned = new Canned(new Answer(
+        var canned = new Canned(new CannedAnswer(
             """{"error":{"message":"Rate limit reached."}}""",
             HttpStatusCode.TooManyRequests,
             [("retry-after-ms", "600000")]));
@@ -351,7 +352,7 @@ public class SessionTests
     [Fact]
     public async Task An_account_out_of_credit_is_reported_at_once()
     {
-        var canned = new Canned(new Answer(
+        var canned = new Canned(new CannedAnswer(
             """{"error":{"message":"You have no credits remaining.","type":"insufficient_quota","code":"insufficient_quota"}}""",
             HttpStatusCode.TooManyRequests));
 
@@ -371,9 +372,9 @@ public class SessionTests
     public async Task Rendered_frames_say_they_come_from_Flyback()
     {
         var canned = new Canned(
-            new Answer(Asking(Building)),
-            new Answer(Asking(("render", """{"times":[0.5]}"""))),
-            new Answer(Asking(("propose", """{"summary":"a flat gray field"}"""))));
+            new CannedAnswer(Asking(Building)),
+            new CannedAnswer(Asking(("render", """{"times":[0.5]}"""))),
+            new CannedAnswer(Asking(("propose", """{"summary":"a flat gray field"}"""))));
 
         using var session = new OpenAiSession(
             new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: true),
@@ -520,10 +521,10 @@ public class SessionTests
     public async Task An_ear_that_fails_is_a_sentence_rather_than_the_end_of_the_run()
     {
         var canned = new Canned(
-            new Answer(Asking(Sounding)),
-            new Answer(Asking(("listen", """{"seconds":0.5}"""))),
-            new Answer("""{"error":{"message":"that model is not available here."}}""", HttpStatusCode.NotFound),
-            new Answer(Asking(("propose", """{"summary":"a sine at 440"}"""))));
+            new CannedAnswer(Asking(Sounding)),
+            new CannedAnswer(Asking(("listen", """{"seconds":0.5}"""))),
+            new CannedAnswer("""{"error":{"message":"that model is not available here."}}""", HttpStatusCode.NotFound),
+            new CannedAnswer(Asking(("propose", """{"summary":"a sine at 440"}"""))));
 
         var events = await Drive(canned, hearing: true);
 
@@ -566,7 +567,7 @@ public class SessionTests
     [Fact]
     public async Task A_saved_conversation_is_carried_on_after_this_runs_own_briefing()
     {
-        var first = new Canned(new Answer(Prose("Which key should it be in?")));
+        var first = new Canned(new CannedAnswer(Prose("Which key should it be in?")));
         string saved;
 
         using (var session = Session(first))
@@ -577,7 +578,7 @@ public class SessionTests
 
         JsonNode.Parse(saved)!.AsArray().Select(Wire.Role).ShouldNotContain("system");
 
-        var second = new Canned(new Answer(Prose("D minor it is.")));
+        var second = new Canned(new CannedAnswer(Prose("D minor it is.")));
         using var carried = Session(second);
 
         carried.Take(saved).ShouldBeTrue();
@@ -611,7 +612,7 @@ public class SessionTests
     [InlineData("""[{"role":"system","content":"a second briefing"}]""")]
     public void Something_that_is_not_a_conversation_is_not_taken_up(string saved)
     {
-        using var session = Session(new Canned(new Answer(Prose("hello"))));
+        using var session = Session(new Canned(new CannedAnswer(Prose("hello"))));
 
         session.Take(saved).ShouldBeFalse();
     }
@@ -624,8 +625,8 @@ public class SessionTests
     public async Task A_stop_in_the_middle_of_a_batch_still_answers_every_call()
     {
         var canned = new Canned(
-            new Answer(Asking(("describe_patch", "{}"), ("describe_patch", "{}"), ("describe_patch", "{}"))),
-            new Answer(Prose("ok")));
+            new CannedAnswer(Asking(("describe_patch", "{}"), ("describe_patch", "{}"), ("describe_patch", "{}"))),
+            new CannedAnswer(Prose("ok")));
 
         using var session = Session(canned);
         using var stop = new CancellationTokenSource();
@@ -654,11 +655,11 @@ public class SessionTests
     public async Task Calls_after_a_proposal_in_one_batch_are_answered_and_not_run()
     {
         var canned = new Canned(
-            new Answer(Asking(Building)),
-            new Answer(Asking(
+            new CannedAnswer(Asking(Building)),
+            new CannedAnswer(Asking(
                 ("propose", """{"summary":"a flat gray field"}"""),
                 ("add_module", """{"type_id":"value","handle":"knob2"}"""))),
-            new Answer(Prose("ok")));
+            new CannedAnswer(Prose("ok")));
 
         using var session = Session(canned);
 
@@ -679,14 +680,14 @@ public class SessionTests
 
     private static async Task<(List<PatchEvent> Events, List<JsonNode> Sent)> Run(params string[] replies)
     {
-        var canned = new Canned([.. replies.Select(r => new Answer(r))]);
+        var canned = new Canned([.. replies.Select(r => new CannedAnswer(r))]);
         return (await Drive(canned), canned.Sent);
     }
 
     private static async Task<(List<PatchEvent> Events, List<JsonNode> Sent)> Listening(
         params string[] replies)
     {
-        var canned = new Canned([.. replies.Select(r => new Answer(r))]);
+        var canned = new Canned([.. replies.Select(r => new CannedAnswer(r))]);
         return (await Drive(canned, hearing: true), canned.Sent);
     }
 
@@ -784,51 +785,16 @@ public class SessionTests
     }
 
     /// <summary>One canned answer, with whatever the endpoint would have said around it.</summary>
-    private sealed record Answer(
-        string Body,
-        HttpStatusCode Status = HttpStatusCode.OK,
-        (string Name, string Value)[]? Headers = null);
 
     /// <summary>
     /// Refused, and asking to be tried again almost immediately — the shape of a
     /// real 429, whose wait is routinely under the second that the standard
     /// header would have to round to. Milliseconds so the tests do not sleep.
     /// </summary>
-    private static Answer Limited(string message) => new(
+    private static CannedAnswer Limited(string message) => new(
         new JsonObject { ["error"] = new JsonObject { ["message"] = message } }.ToJsonString(),
         HttpStatusCode.TooManyRequests,
         [("retry-after-ms", "1")]);
 
-    private static Answer Refusing(HttpStatusCode status, string body) => new(body, status);
-
-    /// <summary>
-    /// Answers each request with the next canned one, and keeps what it was
-    /// sent. The last answer repeats once they run out, so a test that wants a
-    /// refusal to keep happening only has to say it once.
-    /// </summary>
-    private sealed class Canned(params Answer[] answers) : HttpMessageHandler
-    {
-        private int next;
-
-        public List<JsonNode> Sent { get; } = [];
-
-        protected override async Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request,
-            CancellationToken cancel)
-        {
-            var body = await request.Content!.ReadAsStringAsync(cancel).ConfigureAwait(false);
-            Sent.Add(JsonNode.Parse(body)!);
-
-            var answer = answers[Math.Min(next++, answers.Length - 1)];
-            var response = new HttpResponseMessage(answer.Status)
-            {
-                Content = new StringContent(answer.Body),
-            };
-
-            foreach (var (name, value) in answer.Headers ?? [])
-                response.Headers.TryAddWithoutValidation(name, value);
-
-            return response;
-        }
-    }
+    private static CannedAnswer Refusing(HttpStatusCode status, string body) => new(body, status);
 }

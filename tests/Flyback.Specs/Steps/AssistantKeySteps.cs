@@ -42,7 +42,7 @@ public sealed class AssistantKeySteps : IDisposable
     [When("the assistant sends a request there")]
     public async Task WhenSent()
     {
-        var transport = credentials.Transport(Assistant, SettingValues.None, new Recorder(carried));
+        var transport = credentials.Transport(Assistant, SettingValues.None, new AuthorizationRecorder(carried));
 
         await transport.Send(new Uri(Assistant.Origin + "/v1/models"), null, CancellationToken.None);
     }
@@ -106,14 +106,4 @@ public sealed class AssistantKeySteps : IDisposable
         public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => throw new NotSupportedException();
     }
 
-    /// <summary>The network, as far as the key is concerned: what each request carried.</summary>
-    private sealed class Recorder(List<string?> carried) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            carried.Add(request.Headers.Authorization?.ToString());
-
-            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK));
-        }
-    }
 }

@@ -5,7 +5,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -115,53 +114,12 @@ public class OutputSettingsTests : EditorTest
     private static ComboBox Size(Visual within) =>
         All<ComboBox>(within).Single(c => c.ItemsSource is IEnumerable<string> items && items.Any(i => i.Contains(" x ")));
 
-    /// <summary>
-    /// Presses the settings button, waits for the window it puts up, and turns to
-    /// <paramref name="tab"/> — the Picture tab unless told otherwise.
-    /// </summary>
-    private static ModalOverlay OpenSettings(MainWindow window, string tab = PictureTab)
-    {
-        Named<Button>(window, "settings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
-        for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
-            Dispatcher.UIThread.RunJobs();
-
-        Settle(window);
-
-        var dialog = All<ModalOverlay>(window).Single();
-
-        if (tab != PictureTab)
-        {
-            ShowSettingsTab(dialog, tab);
-            Settle(window);
-        }
-
-        return dialog;
-    }
-
     private static TabControl Tabs(Visual within) => All<TabControl>(within).Single(t => t.Name == "settingsTabs");
 
     private const string PictureTab = "Picture", RecordingTab = "Recording", SoundTab = "Sound", MidiTab = "MIDI", FilesTab = "Files";
 
-    /// <summary>Answers the settings window by its Save, or by its cross.</summary>
-    private static void CloseSettings(MainWindow window, ModalOverlay dialog, bool save) =>
-        CloseSettings(window, dialog, save ? "Save" : Cross);
-
-    /// <summary>What <see cref="CloseSettings(MainWindow, ModalOverlay, string)"/> takes to mean the frame's cross.</summary>
+    /// <summary>The name of the frame's cross, which answers as Cancel does.</summary>
     private const string Cross = "dismiss";
-
-    /// <summary>Answers the settings window by the button labeled <paramref name="by"/>, or by its cross.</summary>
-    private static void CloseSettings(MainWindow window, ModalOverlay dialog, string by)
-    {
-        All<Button>(dialog)
-            .Single(b => by == Cross ? b.Name == Cross : b.Content as string == by)
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
-        for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Any(); attempt++)
-            Dispatcher.UIThread.RunJobs();
-
-        Settle(window);
-    }
 
     [AvaloniaFact]
     public void Nothing_selected_shows_no_settings()
@@ -229,7 +187,7 @@ public class OutputSettingsTests : EditorTest
             var dialog = OpenSettings(window);
             ShowingSettings(dialog).ShouldBeTrue($"round {round + 1}: the settings should be there");
 
-            CloseSettings(window, dialog, save: round % 2 == 0);
+            CloseSettings(window, dialog, round % 2 == 0 ? "save" : "cancel");
             ShowingSettings(window).ShouldBeFalse($"round {round + 1}: and gone with the window");
         }
     }
@@ -241,7 +199,7 @@ public class OutputSettingsTests : EditorTest
         var dialog = OpenSettings(window);
 
         Size(dialog).SelectedIndex = 1;
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         File.Exists(settingsPath).ShouldBeTrue();
 
@@ -269,17 +227,15 @@ public class OutputSettingsTests : EditorTest
     /// <summary>Picks the startup patch the way a person would: the row's button, then a tile of the gallery it opens, and its button.</summary>
     private static void PickStartupPreset(MainWindow window, ModalOverlay dialog, string name)
     {
-        StartupPreset(dialog).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(StartupPreset(dialog));
 
         for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Count() < 2; attempt++)
             Dispatcher.UIThread.RunJobs();
 
         Settle(window);
 
-        All<Button>(window).Single(b => b.Name == "tile" && ((PatchPreset)b.Tag!).Name == name)
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        All<Button>(window).Single(b => b.Name == "use-preset")
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == "tile" && ((PatchPreset)b.Tag!).Name == name));
+        Press(All<Button>(window).Single(b => b.Name == "use-preset"));
 
         for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Count() > 1; attempt++)
             Dispatcher.UIThread.RunJobs();
@@ -303,7 +259,7 @@ public class OutputSettingsTests : EditorTest
         var dialog = OpenSettings(window);
 
         All<ComboBox>(dialog).Single(c => c.Name == "transportEdge").SelectedIndex = 1;
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         All<TransportOverlay>(window).Single().VerticalAlignment.ShouldBe(Avalonia.Layout.VerticalAlignment.Bottom);
         All<StageKnobs>(window).Single().VerticalAlignment.ShouldBe(Avalonia.Layout.VerticalAlignment.Top);
@@ -319,7 +275,7 @@ public class OutputSettingsTests : EditorTest
         All<CheckBox>(dialog).Single(c => c.Name == "knobGrid").IsChecked = true;
         All<NumericUpDown>(dialog).Single(c => c.Name == "knobColumns").Value = 3;
         All<NumericUpDown>(dialog).Single(c => c.Name == "knobRows").Value = 2;
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         All<ControlsPanel>(window).Single().KnobGrid.ShouldNotBeNull().ToString().ShouldBe("3x2");
         All<StageKnobs>(window).Single().KnobGrid.ShouldNotBeNull().ToString().ShouldBe("3x2");
@@ -332,9 +288,9 @@ public class OutputSettingsTests : EditorTest
         var window = Open(settingsPath);
         var dialog = OpenSettings(window);
 
-        IBrush? Fill(string label) => All<Avalonia.Controls.Presenters.ContentPresenter>(All<Button>(dialog).Single(b => b.Content as string == label)).First().Background;
+        IBrush? Fill(string name) => All<Avalonia.Controls.Presenters.ContentPresenter>(Named<Button>(dialog, name)).First().Background;
 
-        Fill("Save").ShouldNotBe(Fill("Cancel"));
+        Fill("save").ShouldNotBe(Fill("cancel"));
     }
 
     [AvaloniaFact]
@@ -429,7 +385,7 @@ public class OutputSettingsTests : EditorTest
         render.SelectedItem.ShouldBe("OpenGL");
 
         render.SelectedItem = "Direct3D";
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         OutputSettings.Load(settingsPath).Driver.ShouldBe(GraphicsDriver.Direct3D);
         OutputSettings.Load(settingsPath).Gpu.ShouldBeTrue();
@@ -447,7 +403,7 @@ public class OutputSettingsTests : EditorTest
         var dialog = OpenSettings(window);
 
         All<ComboBox>(dialog).Single(c => c.Name == "render").SelectedItem = "CPU";
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         OutputSettings.Load(settingsPath).Gpu.ShouldBeFalse();
         OutputSettings.Load(settingsPath).Driver.ShouldBe(GraphicsDriver.Direct3D);
@@ -478,7 +434,7 @@ public class OutputSettingsTests : EditorTest
         StartupName(dialog).ShouldBe(Patches[2]);
         editor.History.Patch.ShouldBeSameAs(before);
 
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         editor.History.Patch.ShouldBeSameAs(before);
     }
@@ -492,7 +448,7 @@ public class OutputSettingsTests : EditorTest
         var chosen = Patches[3];
 
         PickStartupPreset(window, dialog, chosen);
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         OutputSettings.Load(settingsPath).DefaultPreset.ShouldBe(chosen);
 
@@ -512,7 +468,7 @@ public class OutputSettingsTests : EditorTest
         var before = StartupName(dialog);
 
         PickStartupPreset(window, dialog, Patches[4]);
-        CloseSettings(window, dialog, save: false);
+        CloseSettings(window, dialog, "cancel");
 
         File.Exists(settingsPath).ShouldBeFalse();
 
@@ -547,7 +503,7 @@ public class OutputSettingsTests : EditorTest
         rate.SelectedIndex = rate.SelectedIndex == 1 ? 2 : 1;
         Settle(window);
 
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         OutputSettings.Load(settingsPath).DefaultPreset.ShouldBe("A Plugin's Preset");
     }
@@ -619,7 +575,7 @@ public class OutputSettingsTests : EditorTest
         choice.SelectedIndex.ShouldBe(0);
 
         choice.SelectedIndex = 1;
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         var kept = OutputSettings.Load(settingsPath);
         kept.SoundInOf("two").Text("device", "").ShouldBe("rear");
@@ -658,7 +614,7 @@ public class OutputSettingsTests : EditorTest
         var device = All<ComboBox>(Named<SettingsForm>(dialog, "soundForm")).Single();
         device.SelectedIndex = 1;
 
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         var kept = OutputSettings.Load(settingsPath);
         kept.SoundOutput.ShouldBe("asio");
@@ -677,7 +633,7 @@ public class OutputSettingsTests : EditorTest
         var dialog = OpenSettings(window, SoundTab);
 
         Latency(dialog).SelectedIndex = 0;
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         OutputSettings.Load(settingsPath).SoundOutput.ShouldBeEmpty();
     }
@@ -752,7 +708,7 @@ public class OutputSettingsTests : EditorTest
 
         Latency(dialog).SelectedIndex = 0;
 
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         var kept = OutputSettings.Load(settingsPath);
 
@@ -781,7 +737,7 @@ public class OutputSettingsTests : EditorTest
         CountIn(dialog).SelectedIndex = 0;
         RewindFirst(dialog).IsChecked = false;
 
-        CloseSettings(window, dialog, save: false);
+        CloseSettings(window, dialog, "cancel");
 
         File.Exists(settingsPath).ShouldBeFalse();
 
@@ -838,7 +794,7 @@ public class OutputSettingsTests : EditorTest
         // With a space on the end, which is what pasting one in leaves behind.
         FfmpegBox(dialog).Text = " /opt/ffmpeg ";
 
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         var kept = OutputSettings.Load(settingsPath);
 
@@ -863,7 +819,7 @@ public class OutputSettingsTests : EditorTest
 
         VideoFormat(dialog).SelectedIndex = ClipFormats.Pictures.Count - 1;
 
-        CloseSettings(window, dialog, save: false);
+        CloseSettings(window, dialog, "cancel");
 
         var again = OpenSettings(window, RecordingTab);
 
@@ -892,8 +848,8 @@ public class OutputSettingsTests : EditorTest
         var window = Open();
         var dialog = OpenSettings(window);
 
-        var save = All<Button>(dialog).Single(b => b.Content as string == "Save");
-        var cancel = All<Button>(dialog).Single(b => b.Content as string == "Cancel");
+        var save = Named<Button>(dialog, "save");
+        var cancel = Named<Button>(dialog, "cancel");
 
         var row = save.Parent.ShouldBeOfType<StackPanel>();
 
@@ -910,7 +866,7 @@ public class OutputSettingsTests : EditorTest
     /// <summary>Cancel and the cross are every way out that is not Save, and change nothing.</summary>
     [AvaloniaTheory]
     [InlineData(Cross)]
-    [InlineData("Cancel")]
+    [InlineData("cancel")]
     public void Closing_without_saving_puts_the_settings_back(string by)
     {
         var window = Open(settingsPath);
@@ -1066,7 +1022,7 @@ public class OutputSettingsTests : EditorTest
 
         preview.Resolution.ShouldBe(before);
 
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         preview.Resolution.Width.ShouldBe(320);
     }
@@ -1121,7 +1077,7 @@ public class OutputSettingsTests : EditorTest
         size.IsEnabled.ShouldBeFalse();
         size.SelectedIndex.ShouldNotBe(row, "a gray box still holds whatever row it is given");
 
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         var saved = OutputSettings.Load(settingsPath);
 
@@ -1165,7 +1121,7 @@ public class OutputSettingsTests : EditorTest
 
         preview.FrameRate.ShouldBe(0, "a draft until Save");
 
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         preview.FrameRate.ShouldBe(24);
     }
@@ -1178,7 +1134,7 @@ public class OutputSettingsTests : EditorTest
         var dialog = OpenSettings(window);
 
         PreviewFrameRate(dialog).SelectedIndex = 3; // 30 fps
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         var kept = OutputSettings.Load(settingsPath);
         kept.PreviewFrameRate.ShouldBe(30);
@@ -1255,7 +1211,7 @@ public class OutputSettingsTests : EditorTest
 
         preview.Wanted.ShouldBe(wanted);
 
-        CloseSettings(window, dialog, save: false);
+        CloseSettings(window, dialog, "cancel");
 
         preview.Wanted.ShouldBe(wanted);
     }
@@ -1419,7 +1375,7 @@ public class OutputSettingsTests : EditorTest
 
         Said(window)[^1].ShouldBe($"Recording {Path.GetFileName(path)} in 3…");
 
-        Record(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(Record(window));
         await counting;
     }
 
@@ -1441,7 +1397,7 @@ public class OutputSettingsTests : EditorTest
         button.IsEnabled.ShouldBeTrue("or the count could not be called off");
         (ToolTip.GetTip(button) as string).ShouldNotBeNull().ShouldContain("Call off the count");
 
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(button);
         await counting;
 
         Settle(window);
@@ -1522,7 +1478,7 @@ public class OutputSettingsTests : EditorTest
         var dialog = OpenSettings(window, RecordingTab);
 
         CountIn(dialog).SelectedIndex = 0;
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         await window.Recording.CountInAsync(TakePath(ClipFormats.Wav.Extension), Noticeable);
 
@@ -1544,7 +1500,7 @@ public class OutputSettingsTests : EditorTest
         var dialog = OpenSettings(window, RecordingTab);
 
         RewindFirst(dialog).IsChecked = false;
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         var preview = All<PreviewHost>(window).Single();
 
@@ -1603,7 +1559,7 @@ public class OutputSettingsTests : EditorTest
         var dialog = OpenSettings(window, RecordingTab);
 
         Quality(dialog).Value = null;
-        CloseSettings(window, dialog, save: true);
+        CloseSettings(window, dialog);
 
         Quality(OpenSettings(window, RecordingTab)).Value.ShouldBe(85);
     }

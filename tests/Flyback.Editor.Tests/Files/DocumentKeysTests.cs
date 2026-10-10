@@ -79,8 +79,7 @@ public class DocumentKeysTests : EditorTest
 
         // Answered rather than left standing, so the window is not disposed with
         // a question on it that nothing ever replied to.
-        All<Button>(asking).Single(b => b.Content as string == "Cancel")
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(Named<Button>(asking, "cancel"));
 
         Dispatcher.UIThread.RunJobs();
     }

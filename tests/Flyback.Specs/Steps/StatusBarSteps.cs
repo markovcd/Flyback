@@ -6,6 +6,7 @@ using Flyback.Ui.Audio;
 using Microsoft.Extensions.DependencyInjection;
 using Reqnroll;
 using Shouldly;
+using Flyback.Plugins.Testing;
 
 namespace Flyback.Specs.Steps;
 
@@ -13,10 +14,12 @@ namespace Flyback.Specs.Steps;
 [Binding]
 public sealed class StatusBarSteps(EditorDriver editor) : IDisposable
 {
-    private readonly Loopback speakers = new();
+    private const int Frames = 512;
+
+    private readonly LoopbackDevice speakers = new();
 
     [Given("the speakers play whatever they are handed")]
-    public void GivenTheSpeakers() => editor.Services += services => services.AddSingleton(new AudioSetup(speakers, new Plug(speakers)));
+    public void GivenTheSpeakers() => editor.Services += services => services.AddSingleton(new AudioSetup(speakers, new LoopbackOutput(speakers)));
 
     /// <summary>The sound waits for its compiled program, which is the one timed, so this plays until it has been.</summary>
     [When("the speakers have played long enough to time the sound")]
@@ -25,7 +28,7 @@ public sealed class StatusBarSteps(EditorDriver editor) : IDisposable
         var deadline = DateTime.UtcNow.AddSeconds(10);
 
         while (editor.SoundSpeed <= 0 && DateTime.UtcNow < deadline)
-            for (var i = 0; i < 8; i++) speakers.Pull();
+            for (var i = 0; i < 8; i++) speakers.Pump(Frames);
 
         editor.SoundSpeed.ShouldBeGreaterThan(0, "the sound was never timed");
     }
@@ -35,7 +38,9 @@ public sealed class StatusBarSteps(EditorDriver editor) : IDisposable
     {
         editor.Open();
 
-        for (var at = 0; at < seconds * GlobalConstants.SampleRate; at += Loopback.Frames) speakers.Pull();
+        // A patch with no sound starts no device, and the scenario is about what is then said.
+        for (var at = 0; at < seconds * GlobalConstants.SampleRate; at += Frames)
+            if (speakers.IsRunning) speakers.Pump(Frames);
     }
 
     [Then("the status bar says how many times real time the sound renders at")]
@@ -67,37 +72,4 @@ public sealed class StatusBarSteps(EditorDriver editor) : IDisposable
 
     public void Dispose() => speakers.Dispose();
 
-    /// <summary>A sound card that plays nothing, and makes a buffer whenever it is pulled once the editor has started it.</summary>
-    private sealed class Loopback : IAudioDevice
-    {
-        public const int Frames = 512;
-
-        private AudioCallback? fill;
-
-        public int SampleRate => GlobalConstants.SampleRate;
-
-        public bool IsRunning => fill is not null;
-
-        public void Start(AudioCallback callback) => fill = callback;
-
-        public void Stop() => fill = null;
-
-        public void Dispose() => Stop();
-
-        public void Pull() => fill?.Invoke(new float[Frames * 2]);
-    }
-
-    /// <summary>The output the loopback came from, which is what lets the editor start it.</summary>
-    private sealed class Plug(IAudioDevice device) : IAudioOutput
-    {
-        public string Id => "loopback";
-
-        public string Name => "Loopback";
-
-        public int Priority => 0;
-
-        public bool IsSupported => true;
-
-        public IAudioDevice Create(AudioFormat format, SettingValues settings) => device;
-    }
 }

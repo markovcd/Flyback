@@ -1,9 +1,8 @@
-﻿using System.IO.Compression;
+using System.IO.Compression;
 using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Flyback.Editor.Controls;
@@ -195,8 +194,7 @@ public sealed class FileDropTests : EditorTest
 
         var dialog = Asking(window);
 
-        All<Button>(dialog).Single(b => b.Content as string == "Discard changes")
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(Named<Button>(dialog, "discard"));
 
         WaitForTitleChange(window, named);
 
@@ -218,8 +216,7 @@ public sealed class FileDropTests : EditorTest
 
         var dialog = Asking(window);
 
-        All<Button>(dialog).Single(b => b.Content as string == "Cancel")
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(Named<Button>(dialog, "cancel"));
 
         Settle(window);
         Dispatcher.UIThread.RunJobs();
@@ -304,8 +301,7 @@ public sealed class FileDropTests : EditorTest
         var window = Open();
         var title = window.Title;
 
-        All<Button>(window).Single(b => b.Name == "settings")
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == "settings"));
 
         Pump(() => All<ModalOverlay>(window).Any());
         Settle(window);

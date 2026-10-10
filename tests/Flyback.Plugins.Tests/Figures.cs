@@ -68,21 +68,7 @@ internal static class Figures
     /// The speakers' program run for <paramref name="trigger"/>'s length, the trigger
     /// arriving on x, and what came out of the Output's left.
     /// </summary>
-    public static float[] Heard(Patch patch, float[] trigger)
-    {
-        var program = patch.CompileForAudio(Catalog).Program;
-        var state = new DelayState(program, Rate);
-        var registers = program.AllocateRegisters();
-        var output = new float[trigger.Length];
-
-        for (var i = 0; i < trigger.Length; i++)
-        {
-            program.Evaluate(trigger[i], 0f, i / (double)Rate, registers, default, state);
-            output[i] = (float)registers[program.OutputBase];
-        }
-
-        return output;
-    }
+    public static float[] Heard(Patch patch, float[] trigger) => Interpreted.Heard(patch, trigger);
 
     /// <summary>
     /// The screen's program run frame by frame at one pixel, whose planes are kept

@@ -38,7 +38,7 @@ public class PatchDescriptionTests : EditorTest
 
     private static void Click(MainWindow window, string name)
     {
-        All<Button>(window).Single(b => b.Name == name).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == name));
         Settle(window);
     }
 
@@ -170,8 +170,7 @@ public class PatchDescriptionTests : EditorTest
 
         var text = All<TextEditor>(window).Single(e => e.Name == "source");
         text.Text = "let hum = t |> sine(freq: 220)\nhum |> out.left\n";
-        All<Button>(window).Single(b => b.Name == "apply")
-            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == "apply"));
         Settle(window);
 
         Editor(window).History.Locked.ShouldBeTrue();

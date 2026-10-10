@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -12,6 +12,7 @@ using Flyback.Core.Graph;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
+using Flyback.Tests;
 
 namespace Flyback.Editor.Tests.Site;
 
@@ -176,12 +177,6 @@ public sealed class SitePresetTests : EditorTest
         aurora.Tags.ShouldBe(["calm"]);
         aurora.FileName.ShouldBe("aurora.fbkb");
         page.More.ShouldBeTrue();
-    }
-
-    private sealed class Unreachable : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            throw new HttpRequestException("No connection could be made.");
     }
 
     [AvaloniaFact]

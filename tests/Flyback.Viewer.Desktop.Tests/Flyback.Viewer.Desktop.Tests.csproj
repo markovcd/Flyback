@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Flyback.Viewer.Desktop\Flyback.Viewer.Desktop.csproj" />
     <ProjectReference Include="..\Flyback.Ui.Testing\Flyback.Ui.Testing.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Testing\Flyback.Plugins.Testing.csproj" />
   </ItemGroup>
 
   <ItemGroup>

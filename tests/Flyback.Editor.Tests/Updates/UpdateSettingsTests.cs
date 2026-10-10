@@ -1,6 +1,5 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
-using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Updates;
@@ -42,35 +41,6 @@ public sealed class UpdateSettingsTests : EditorTest
         return window;
     }
 
-    private static ModalOverlay OpenSettings(MainWindow window)
-    {
-        All<Button>(window).Single(b => b.Name == "settings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
-        for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
-            Dispatcher.UIThread.RunJobs();
-
-        Settle(window);
-
-        var dialog = All<ModalOverlay>(window).Single();
-
-        ShowSettingsTab(dialog, PrivacyTab);
-        Settle(window);
-
-        return dialog;
-    }
-
-    private static void Close(MainWindow window, ModalOverlay dialog, string by)
-    {
-        All<Button>(dialog)
-            .Single(b => b.Content as string == by)
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
-        for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Any(); attempt++)
-            Dispatcher.UIThread.RunJobs();
-
-        Settle(window);
-    }
-
     private static CheckBox Switch(ModalOverlay dialog) =>
         All<CheckBox>(dialog).Single(c => c.Name == "checkForUpdates");
 
@@ -79,33 +49,33 @@ public sealed class UpdateSettingsTests : EditorTest
     {
         var window = Open(settingsPath);
 
-        Switch(OpenSettings(window)).IsChecked.ShouldBe(true);
+        Switch(OpenSettings(window, PrivacyTab)).IsChecked.ShouldBe(true);
     }
 
     [AvaloniaFact]
     public void Switching_off_and_saving_keeps_it_off()
     {
         var window = Open(settingsPath);
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, PrivacyTab);
 
         Switch(dialog).IsChecked = false;
-        Close(window, dialog, "Save");
+        CloseSettings(window, dialog);
 
         UpdateSettings.Load(settingsPath).CheckForUpdates.ShouldBeFalse();
-        Switch(OpenSettings(Open(settingsPath))).IsChecked.ShouldBe(false, "the next launch reads it back");
+        Switch(OpenSettings(Open(settingsPath), PrivacyTab)).IsChecked.ShouldBe(false, "the next launch reads it back");
     }
 
     [AvaloniaFact]
     public void Cancel_puts_the_switch_back()
     {
         var window = Open(settingsPath);
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, PrivacyTab);
 
         Switch(dialog).IsChecked = false;
-        Close(window, dialog, "Cancel");
+        CloseSettings(window, dialog, "cancel");
 
         File.Exists(settingsPath).ShouldBeFalse();
-        Switch(OpenSettings(window)).IsChecked.ShouldBe(true);
+        Switch(OpenSettings(window, PrivacyTab)).IsChecked.ShouldBe(true);
     }
 
     [AvaloniaFact]

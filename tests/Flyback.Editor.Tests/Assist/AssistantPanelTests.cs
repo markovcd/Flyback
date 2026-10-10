@@ -1,10 +1,9 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
-using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using Flyback.Editor.Assist;
@@ -300,7 +299,7 @@ public sealed class AssistantPanelTests : EditorTest
         Settle(window);
 
         Fresh(window).IsEnabled.ShouldBeTrue();
-        Fresh(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(Fresh(window));
         Settle(window);
 
         Shown(window).ShouldNotContain("make a hard techno patch");
@@ -354,13 +353,13 @@ public sealed class AssistantPanelTests : EditorTest
         panel.Open(Saved(new TranscriptLine(Voice.Note, machinery)));
         Settle(window);
 
-        Fold(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(Fold(window));
         Settle(window);
 
         Block(window, machinery).IsVisible.ShouldBeTrue();
         Opened(Fold(window)).ShouldBeTrue();
 
-        Fold(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(Fold(window));
         Settle(window);
 
         Block(window, machinery).IsVisible.ShouldBeFalse();
@@ -438,12 +437,12 @@ public sealed class AssistantPanelTests : EditorTest
 
         var run = Runs(window)[0];
 
-        run.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(run);
         Settle(window);
 
         Opened(run).ShouldBeTrue();
 
-        run.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(run);
         Settle(window);
 
         Opened(run).ShouldBeFalse();
@@ -528,7 +527,7 @@ public sealed class AssistantPanelTests : EditorTest
         Instruction(window).Text = "make something";
         Settle(window);
 
-        SendButton(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(SendButton(window));
         Settle(window);
 
         Thinking(window).IsVisible.ShouldBeTrue();
@@ -553,7 +552,7 @@ public sealed class AssistantPanelTests : EditorTest
         Instruction(window).Text = "make something";
         Settle(window);
 
-        SendButton(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(SendButton(window));
         Settle(window);
 
         conversation.Working.ShouldBeTrue();
@@ -622,7 +621,7 @@ public sealed class AssistantPanelTests : EditorTest
         Instruction(window).Text = "make something";
         Settle(window);
 
-        SendButton(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(SendButton(window));
         Settle(window);
         Settle(window);
 
@@ -682,7 +681,7 @@ public sealed class AssistantPanelTests : EditorTest
         Instruction(window).Text = "make something";
         Settle(window);
 
-        SendButton(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(SendButton(window));
         Settle(window);
         Settle(window);
 
@@ -1385,7 +1384,7 @@ public sealed class AssistantPanelTests : EditorTest
             Instruction(window).Text = $"my key is {Key}, make something";
             Settle(window);
 
-            Click(SendButton(window));
+            Press(SendButton(window));
             Settle(window);
             Settle(window);
 
@@ -1536,7 +1535,7 @@ public sealed class AssistantPanelTests : EditorTest
     [AvaloniaFact]
     public void Saving_again_with_nothing_changed_does_not_repeat_the_key_saved_message()
     {
-        var store = new FakeStore();
+        var store = new FakeSecretStore();
         var plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, [.. Presets.All], [], [new Deaf()], [store]);
         var messages = new List<string>();
 
@@ -1629,9 +1628,6 @@ public sealed class AssistantPanelTests : EditorTest
     private static TextBox KeyBox(Window host) =>
         All<TextBox>(host).Single(box => box.PasswordChar != default);
 
-    private static void Click(Button button) =>
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
     /// <summary>
     /// The point of the button: the settings window is where somebody finds out
     /// whether a key and an endpoint work at all, and they have not been saved
@@ -1649,7 +1645,7 @@ public sealed class AssistantPanelTests : EditorTest
         All<ComboBox>(host).Single(box => box.Name == AssistantSchema.ModelKey).Text = "typed-model";
         Settle(host);
 
-        Click(ProbeButton(host));
+        Press(ProbeButton(host));
         Settle(host);
 
         provider.Asked.ShouldNotBeNull();
@@ -1677,7 +1673,7 @@ public sealed class AssistantPanelTests : EditorTest
         All<ComboBox>(host).Single(box => box.Name == AssistantSchema.ModelKey).Text = "the-one-i-picked";
         Settle(host);
 
-        Click(ProbeButton(host));
+        Press(ProbeButton(host));
         Settle(host);
 
         provider.Wanted.ShouldNotBeNull();
@@ -1710,7 +1706,7 @@ public sealed class AssistantPanelTests : EditorTest
         KeyBox(host).Text = "sk-typed";
         Settle(host);
 
-        Click(ProbeButton(host));
+        Press(ProbeButton(host));
         Settle(host);
 
         var models = All<ComboBox>(host).Single(box => box.Name == AssistantSchema.ModelKey);
@@ -1744,7 +1740,7 @@ public sealed class AssistantPanelTests : EditorTest
         KeyBox(host).Text = "sk-typed";
         Settle(host);
 
-        Click(ProbeButton(host));
+        Press(ProbeButton(host));
         Settle(host);
 
         panel.SaveSettings();
@@ -1766,7 +1762,7 @@ public sealed class AssistantPanelTests : EditorTest
         KeyBox(host).Text = "sk-typed";
         Settle(host);
 
-        Click(ProbeButton(host));
+        Press(ProbeButton(host));
         Settle(host);
 
         ProbeNote(host).ShouldContain("did not answer");
@@ -1818,35 +1814,16 @@ public sealed class AssistantPanelTests : EditorTest
         KeyBox(host).Text = "sk-typed";
         Settle(host);
 
-        Click(ProbeButton(host));
+        Press(ProbeButton(host));
         Settle(host);
 
         ProbeButton(host).Content.ShouldBe("Stop");
 
-        Click(ProbeButton(host));
+        Press(ProbeButton(host));
         Settle(host);
 
         ProbeButton(host).Content.ShouldBe("Probe this model");
         ProbeNote(host).ShouldBe("Stopped. Nothing was kept.");
-    }
-
-    private sealed class FakeStore : ISecretStore
-    {
-        private readonly Dictionary<string, string> held = new(StringComparer.Ordinal);
-
-        public string Id => "fake";
-
-        public string Name => "Fake store";
-
-        public int Priority => 0;
-
-        public bool IsSupported => true;
-
-        public void Keep(string account, string secret) => held[account] = secret;
-
-        public string? Recall(string account) => held.GetValueOrDefault(account);
-
-        public void Forget(string account) => held.Remove(account);
     }
 
     /// <summary>

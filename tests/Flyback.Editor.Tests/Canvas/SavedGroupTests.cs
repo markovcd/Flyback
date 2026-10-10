@@ -1,9 +1,8 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Windows;
@@ -113,7 +112,7 @@ public class SavedGroupTests : EditorTest
         var button = Button(root, by);
 
         button.Focus();
-        button.RaiseEvent(new RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
+        Press(button);
         Settle(window);
     }
 

@@ -1,7 +1,6 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
-using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Flyback.Editor.Files;
 using Flyback.Editor.Windows;
@@ -197,7 +196,7 @@ public sealed class WindowTitleTests : EditorTest
     /// <summary>Presses the toolbar button of this name, the way the mouse would.</summary>
     private static void Press(MainWindow window, string named)
     {
-        All<Button>(window).Single(b => b.Name == named).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == named));
         Settle(window);
     }
 

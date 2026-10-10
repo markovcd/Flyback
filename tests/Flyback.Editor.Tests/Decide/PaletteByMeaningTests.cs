@@ -42,29 +42,17 @@ public sealed class PaletteByMeaningTests : EditorTest
         Settle(window);
     }
 
-    private static async Task Until(MainWindow window, Func<bool> done)
-    {
-        for (var i = 0; i < 400 && !done(); i++)
-        {
-            Dispatcher.UIThread.RunJobs();
-            await Task.Delay(5);
-        }
-
-        Settle(window);
-        done().ShouldBeTrue();
-    }
-
     private static bool Likely(ModulePalette palette) => All<TextBlock>(palette).Any(t => t.Text == "LIKELY");
 
     [AvaloniaFact]
-    public async Task A_phrase_lists_the_module_it_means_first_and_Enter_adds_it()
+    public void A_phrase_lists_the_module_it_means_first_and_Enter_adds_it()
     {
         var window = Opened(new Kaleidoscopic());
         var palette = Palette(window);
 
         Type(window, palette, "a mirror maze of shards");
 
-        await Until(window, () => Likely(palette));
+        Pump(() => Likely(palette), window);
 
         var first = All<Button>(palette).First(b => b.Content is "Kaleidoscope");
         first.Background.ShouldNotBeNull("the likeliest is the one Enter adds");

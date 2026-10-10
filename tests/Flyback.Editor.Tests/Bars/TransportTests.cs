@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Windows;
 using Shouldly;
@@ -23,8 +22,6 @@ public class TransportTests : EditorTest
 
     private static TransportOverlay Overlay(MainWindow window) => All<TransportOverlay>(window).Single();
 
-    private static void Click(Button button) => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
     /// <summary>The overlay's own button, found by what its tip says.</summary>
     private static Button Tool(MainWindow window, string tip) =>
         All<Button>(Overlay(window)).Single(b => ToolTip.GetTip(b) as string == tip);
@@ -38,7 +35,7 @@ public class TransportTests : EditorTest
         var preview = Preview(window);
 
         Play(window);
-        Click(Pause(window));
+        Press(Pause(window));
         Settle(window);
 
         Service<Playback>(window).Paused.ShouldBeTrue();
@@ -75,7 +72,7 @@ public class TransportTests : EditorTest
 
         Service<Playback>(window).Paused.ShouldBeTrue();
 
-        Click(Pause(window));
+        Press(Pause(window));
 
         Service<Playback>(window).Paused.ShouldBeFalse();
     }
@@ -91,12 +88,12 @@ public class TransportTests : EditorTest
         var whenPlaying = ToolTip.GetTip(pause);
         var glyph = pause.Content;
 
-        Click(pause);
+        Press(pause);
 
         ToolTip.GetTip(pause).ShouldNotBe(whenPlaying);
         pause.Content.ShouldNotBeSameAs(glyph);
 
-        Click(pause);
+        Press(pause);
 
         Service<Playback>(window).Paused.ShouldBeFalse();
         ToolTip.GetTip(pause).ShouldBe(whenPlaying);
@@ -110,9 +107,9 @@ public class TransportTests : EditorTest
 
         Play(window);
         preview.Time = 5;
-        Click(Pause(window));
+        Press(Pause(window));
 
-        Click(All<Button>(window).Single(b => b.Name == "rewind"));
+        Press(All<Button>(window).Single(b => b.Name == "rewind"));
         Settle(window);
 
         Service<Playback>(window).Paused.ShouldBeTrue();
@@ -145,7 +142,7 @@ public class TransportTests : EditorTest
         Play(window);
         FullScreen(window);
 
-        Click(Tool(window, "Pause or play"));
+        Press(Tool(window, "Pause or play"));
 
         Service<Playback>(window).Paused.ShouldBeTrue();
         Preview(window).Clock.ShouldNotBeNull();
@@ -154,7 +151,7 @@ public class TransportTests : EditorTest
 
         Service<Playback>(window).Paused.ShouldBeTrue("pausing outlives the full screen");
 
-        Click(Pause(window));
+        Press(Pause(window));
 
         Service<Playback>(window).Paused.ShouldBeFalse();
     }
@@ -166,11 +163,11 @@ public class TransportTests : EditorTest
 
         FullScreen(window);
 
-        Click(Tool(window, "Sound on or off"));
+        Press(Tool(window, "Sound on or off"));
 
         Service<Playback>(window).Muted.ShouldBeTrue();
 
-        Click(Tool(window, "Sound on or off"));
+        Press(Tool(window, "Sound on or off"));
 
         Service<Playback>(window).Muted.ShouldBeFalse();
     }

@@ -14,6 +14,7 @@ using Flyback.Specs.Support;
 
 using Flyback.Cli.Common;
 using PluginRegistry = Flyback.Cli.Plugins;
+using Flyback.Plugins.Testing;
 
 namespace Flyback.Specs.Steps;
 
@@ -56,7 +57,7 @@ public sealed class ExportSteps(PatchContext context, IUnitTestRuntimeProvider r
     {
         const int buffer = 480;
 
-        var device = new Loopback();
+        var device = new LoopbackDevice();
         using var engine = new AudioEngine(new AudioSetup(device));
 
         engine.Update(context.Patch);
@@ -66,7 +67,7 @@ public sealed class ExportSteps(PatchContext context, IUnitTestRuntimeProvider r
         var sound = new float[frames * NodeCatalog.AudioChannels];
 
         for (var at = 0; at < frames; at += buffer)
-            device.Pull(sound.AsSpan(at * 2, Math.Min(buffer, frames - at) * 2));
+            device.Fill(sound.AsSpan(at * 2, Math.Min(buffer, frames - at) * 2));
 
         played = sound;
     }
@@ -149,23 +150,4 @@ public sealed class ExportSteps(PatchContext context, IUnitTestRuntimeProvider r
     private static string Invariant(float value) => value.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     public void Dispose() => folder.Delete(recursive: true);
-
-    /// <summary>A sound card that plays nothing and hands back what it was given.</summary>
-    private sealed class Loopback : IAudioDevice
-    {
-        private AudioCallback? fill;
-
-        public int SampleRate => GlobalConstants.SampleRate;
-
-        public bool IsRunning => fill is not null;
-
-        public void Start(AudioCallback callback) => fill = callback;
-
-        public void Stop() => fill = null;
-
-        public void Dispose() => Stop();
-
-        public void Pull(Span<float> buffer) =>
-            (fill ?? throw new InvalidOperationException("The engine never started the device."))(buffer);
-    }
 }

@@ -90,11 +90,11 @@ internal sealed class SettingsSession(
 
         foreach (var section in sections) tabs.Items.Add(Tab(section));
 
-        var save = new Button { Content = "Save", Width = 84, Classes = { "accent" } };
+        var save = new Button { Name = "save", Content = "Save", Width = 84, Classes = { "accent" } };
 
         // Cancel answers exactly what the cross and Escape answer, so all three
         // take the one way out rather than each undoing things itself.
-        var cancel = new Button { Content = "Cancel", Width = 84 };
+        var cancel = new Button { Name = "cancel", Content = "Cancel", Width = 84 };
 
         save.Click += (_, _) => answer(true);
         cancel.Click += (_, _) => answer(false);

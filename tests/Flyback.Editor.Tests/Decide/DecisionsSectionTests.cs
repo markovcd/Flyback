@@ -3,8 +3,6 @@ using System.Security.Cryptography;
 using System.Text;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
-using Avalonia.Interactivity;
-using Avalonia.Threading;
 using Flyback.Core.Graph;
 using Flyback.Editor.Decide;
 using Flyback.Editor.Settings;
@@ -51,16 +49,13 @@ public sealed class DecisionsSectionTests : EditorTest
         return (section, container.GetRequiredService<Decisions>());
     }
 
-    private static T Named<T>(DecisionsSection section, string name) where T : Control =>
-        All<T>(section.View).Single(c => c.Name == name);
-
     [AvaloniaFact]
     public void Nobody_having_chosen_shows_the_model_that_runs_here_ready()
     {
         var (section, _) = Built(models: new ScriptedDecider());
 
-        Named<ComboBox>(section, "decisionModel").SelectedItem.ShouldBe("Scripted decider");
-        Named<TextBlock>(section, "decisionStatus").Text.ShouldBe("Scripted decider is ready, and sends nothing anywhere.");
+        Named<ComboBox>(section.View, "decisionModel").SelectedItem.ShouldBe("Scripted decider");
+        Named<TextBlock>(section.View, "decisionStatus").Text.ShouldBe("Scripted decider is ready, and sends nothing anywhere.");
     }
 
     [AvaloniaFact]
@@ -78,82 +73,82 @@ public sealed class DecisionsSectionTests : EditorTest
     {
         var (section, decisions) = Built(models: new ScriptedDecider());
 
-        Named<ComboBox>(section, "decisionModel").SelectedIndex = 0;
+        Named<ComboBox>(section.View, "decisionModel").SelectedIndex = 0;
         section.Save();
 
         DecisionSettings.Load(SettingsPath).Model.ShouldBe(DecisionSettings.Off);
         decisions.Chosen.ShouldBeNull();
-        Named<TextBlock>(section, "decisionStatus").Text.ShouldNotBeNull().ShouldContain("nothing is sent anywhere");
+        Named<TextBlock>(section.View, "decisionStatus").Text.ShouldNotBeNull().ShouldContain("nothing is sent anywhere");
     }
 
     [AvaloniaFact]
     public void A_hosted_model_asks_for_a_key_and_one_that_runs_here_does_not()
     {
         var (section, _) = Built(models: [new ScriptedDecider(), new Hosted()]);
-        var model = Named<ComboBox>(section, "decisionModel");
-        var key = Named<TextBox>(section, "decisionKey");
+        var model = Named<ComboBox>(section.View, "decisionModel");
+        var key = Named<TextBox>(section.View, "decisionKey");
 
         model.SelectedItem = "Scripted decider";
         key.IsEffectivelyVisible.ShouldBeFalse();
 
         model.SelectedItem = "Hosted";
         key.IsEffectivelyVisible.ShouldBeTrue();
-        Named<TextBlock>(section, "decisionStatus").Text.ShouldBe("No key yet.");
+        Named<TextBlock>(section.View, "decisionStatus").Text.ShouldBe("No key yet.");
     }
 
     [AvaloniaFact]
     public void A_key_typed_is_taken_on_save_said_where_it_is_held_and_can_be_forgotten()
     {
         var (section, _) = Built(models: [new ScriptedDecider(), new Hosted()]);
-        Named<ComboBox>(section, "decisionModel").SelectedItem = "Hosted";
-        var key = Named<TextBox>(section, "decisionKey");
+        Named<ComboBox>(section.View, "decisionModel").SelectedItem = "Hosted";
+        var key = Named<TextBox>(section.View, "decisionKey");
 
         key.Text = "test-key-not-real";
         section.Save();
 
         key.Text.ShouldBeEmpty("a key taken is not left in the box");
-        Named<TextBlock>(section, "decisionStatus").Text.ShouldBe("Hosted is ready. What is asked is sent to it.");
+        Named<TextBlock>(section.View, "decisionStatus").Text.ShouldBe("Hosted is ready. What is asked is sent to it.");
         All<TextBlock>(section.View).ShouldContain(t => t.Text != null && t.Text.StartsWith("In force, held for this window only", StringComparison.Ordinal));
 
-        All<Button>(section.View).Single(b => b.Content as string == "Forget key").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(section.View).Single(b => b.Content as string == "Forget key"));
 
-        Named<TextBlock>(section, "decisionStatus").Text.ShouldBe("No key yet.");
+        Named<TextBlock>(section.View, "decisionStatus").Text.ShouldBe("No key yet.");
     }
 
     [AvaloniaFact]
-    public async Task Trying_it_answers_the_routing_question_about_what_was_typed()
+    public void Trying_it_answers_the_routing_question_about_what_was_typed()
     {
         var scripted = new ScriptedDecider();
         var (section, _) = Built(models: scripted);
 
-        Named<TextBox>(section, "tryDecision").Text = "make the bass slower";
-        Named<Button>(section, "askDecision").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Named<TextBox>(section.View, "tryDecision").Text = "make the bass slower";
+        Press(Named<Button>(section.View, "askDecision"));
 
-        await Until(() => Named<TextBlock>(section, "decisionAnswer").Text != "Asking…");
+        Pump(() => Named<TextBlock>(section.View, "decisionAnswer").Text != "Asking…");
 
-        Named<TextBlock>(section, "decisionAnswer").Text.ShouldBe("Yes, 1.00 that it asks for a change.");
+        Named<TextBlock>(section.View, "decisionAnswer").Text.ShouldBe("Yes, 1.00 that it asks for a change.");
         scripted.Asked.ShouldHaveSingleItem().State.ShouldBe("make the bass slower");
     }
 
     [AvaloniaFact]
-    public async Task Download_fetches_the_model_and_it_is_then_ready()
+    public void Download_fetches_the_model_and_it_is_then_ready()
     {
         var network = new Weights();
         var (section, decisions) = Built(
             services => services.AddHttpClient(DecisionsSection.Client).ConfigurePrimaryHttpMessageHandler(() => network),
             new Downloaded());
 
-        var download = Named<Button>(section, "downloadModel");
+        var download = Named<Button>(section.View, "downloadModel");
 
         download.IsVisible.ShouldBeTrue();
-        Named<TextBlock>(section, "decisionStatus").Text.ShouldNotBeNull().ShouldContain("needs 0 MB downloaded from models.test");
+        Named<TextBlock>(section.View, "decisionStatus").Text.ShouldNotBeNull().ShouldContain("needs 0 MB downloaded from models.test");
 
-        download.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(download);
 
-        await Until(() => decisions.Store.Prepared(decisions.Models[0]));
-        await Until(() => !download.IsVisible);
+        Pump(() => decisions.Store.Prepared(decisions.Models[0]));
+        Pump(() => !download.IsVisible);
 
-        Named<TextBlock>(section, "decisionStatus").Text.ShouldBe("Downloaded is ready, and sends nothing anywhere.");
+        Named<TextBlock>(section.View, "decisionStatus").Text.ShouldBe("Downloaded is ready, and sends nothing anywhere.");
     }
 
     [AvaloniaFact]
@@ -165,12 +160,12 @@ public sealed class DecisionsSectionTests : EditorTest
 
         var (section, _) = Built(models: new Settable());
 
-        Named<TextBox>(section, "model").Text.ShouldBeEmpty("the model's own settings come first");
-        Named<TextBlock>(section, "decisionUses").Text.ShouldBe("For finding a module by meaning: model=typed.");
+        Named<TextBox>(section.View, "model").Text.ShouldBeEmpty("the model's own settings come first");
+        Named<TextBlock>(section.View, "decisionUses").Text.ShouldBe("For finding a module by meaning: model=typed.");
 
         section.ShowUse("Finding a module by meaning");
 
-        Named<TextBox>(section, "model").Text.ShouldBe("typed");
+        Named<TextBox>(section.View, "model").Text.ShouldBe("typed");
     }
 
     [AvaloniaFact]
@@ -179,12 +174,12 @@ public sealed class DecisionsSectionTests : EditorTest
         var (section, decisions) = Built(models: new Settable());
 
         section.ShowUse("Finding a module by meaning");
-        Named<TextBox>(section, "model").Text = "typed";
+        Named<TextBox>(section.View, "model").Text = "typed";
 
-        Named<TextBlock>(section, "decisionUses").Text.ShouldBe("For finding a module by meaning: model=typed.");
+        Named<TextBlock>(section.View, "decisionUses").Text.ShouldBe("For finding a module by meaning: model=typed.");
 
         section.ShowUse("Every use");
-        Named<TextBox>(section, "model").Text.ShouldBeEmpty("a use's setting is laid over the model's own, not written into them");
+        Named<TextBox>(section.View, "model").Text.ShouldBeEmpty("a use's setting is laid over the model's own, not written into them");
 
         section.Save();
 
@@ -205,10 +200,10 @@ public sealed class DecisionsSectionTests : EditorTest
         var (section, _) = Built(models: new Settable());
 
         section.ShowUse("Finding a module by meaning");
-        Named<TextBox>(section, "model").Text = "plain";
+        Named<TextBox>(section.View, "model").Text = "plain";
         section.Save();
 
-        Named<TextBlock>(section, "decisionUses").IsVisible.ShouldBeFalse();
+        Named<TextBlock>(section.View, "decisionUses").IsVisible.ShouldBeFalse();
         DecisionSettings.Load(SettingsPath).Uses.ShouldBeEmpty();
     }
 
@@ -218,24 +213,13 @@ public sealed class DecisionsSectionTests : EditorTest
         var (section, _) = Built(models: new Settable());
 
         section.ShowUse("Finding a module by meaning");
-        Named<TextBox>(section, "model").Text = "typed";
+        Named<TextBox>(section.View, "model").Text = "typed";
 
         section.Show();
 
-        Named<TextBlock>(section, "decisionUses").IsVisible.ShouldBeFalse();
+        Named<TextBlock>(section.View, "decisionUses").IsVisible.ShouldBeFalse();
         section.ShowUse("Finding a module by meaning");
-        Named<TextBox>(section, "model").Text.ShouldBeEmpty();
-    }
-
-    private static async Task Until(Func<bool> done)
-    {
-        for (var i = 0; i < 200 && !done(); i++)
-        {
-            Dispatcher.UIThread.RunJobs();
-            await Task.Delay(5);
-        }
-
-        done().ShouldBeTrue();
+        Named<TextBox>(section.View, "model").Text.ShouldBeEmpty();
     }
 
     private sealed class Hosted : IDecisionModel

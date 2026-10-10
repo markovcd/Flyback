@@ -120,22 +120,8 @@ public class DecayTests
 
     // --- harness -----------------------------------------------------------------
 
-    private static float[] Through(float[] trigger, params (int Port, float Value)[] knobs)
-    {
-        var program = Wired(NodeCatalog.OutputLeftPort, knobs).CompileForAudio(Catalog).Program;
-
-        var state = new DelayState(program.DelayLengths, Rate, program.PhaseCount, program.UnitCount);
-        var registers = program.AllocateRegisters();
-        var output = new float[trigger.Length];
-
-        for (var i = 0; i < trigger.Length; i++)
-        {
-            program.Evaluate(trigger[i], 0f, i / (double)Rate, registers, default, state);
-            output[i] = (float)registers[program.OutputBase];
-        }
-
-        return output;
-    }
+    private static float[] Through(float[] trigger, params (int Port, float Value)[] knobs) =>
+        Interpreted.Heard(Wired(NodeCatalog.OutputLeftPort, knobs), trigger);
 
     private static Patch Wired(int into = NodeCatalog.OutputLeftPort, params (int Port, float Value)[] knobs)
     {

@@ -7,7 +7,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <!-- What the tests of a sound backend share. No test lives here. -->
+  <!-- What the plugin-facing tests share: a sound card, an endpoint, a JACK server. No test lives here. -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\Flyback.Plugins\Flyback.Plugins.csproj" />
   </ItemGroup>

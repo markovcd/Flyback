@@ -633,6 +633,12 @@
           "Flyback.Plugins": "[0.1.0-dev, )"
         }
       },
+      "flyback.plugins.testing": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Plugins": "[0.1.0-dev, )"
+        }
+      },
       "flyback.plugins.voice": {
         "type": "Project",
         "dependencies": {

@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
@@ -419,7 +419,7 @@ public class MidiInputTests : EditorTest
     /// <summary>Applies the printing on screen, which is how the text becomes the document.</summary>
     private static void ApplyCode(MainWindow window)
     {
-        ApplyButton(window).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(ApplyButton(window));
         Settle(window);
     }
 

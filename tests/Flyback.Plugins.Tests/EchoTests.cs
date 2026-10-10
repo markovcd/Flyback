@@ -90,7 +90,7 @@ public class EchoTests
         wrapped.Wire(wrapped.Add(NodeCatalog.TempoTypeId, (0, 112f)), 0, echo, TempoPort)
                .Wire(echo, side, sink2, NodeCatalog.OutputLeftPort);
 
-        Run(wrapped.Patch).ShouldBe(Run(b.Patch));
+        Interpreted.Run(wrapped.Patch, new float[Rate]).ShouldBe(Interpreted.Run(b.Patch, new float[Rate]));
     }
 
     // --- harness -----------------------------------------------------------------
@@ -103,7 +103,7 @@ public class EchoTests
 
         b.Wire(echo, side, sink, NodeCatalog.OutputLeftPort);
 
-        return Run(b.Patch);
+        return Interpreted.Run(b.Patch, new float[Rate]);
     }
 
     private static NodeInstance Echo(PatchBuilder b, string taps, params (int Port, float Value)[] knobs)
@@ -124,25 +124,6 @@ public class EchoTests
         b.Wire(clock, 0, early, 1).Wire(early, 0, click, 1);
 
         return click;
-    }
-
-    private static double[] Run(Patch patch)
-    {
-        var result = patch.CompileForAudio(Catalog);
-        result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));
-
-        var program = result.Program;
-        var state = new DelayState(program.DelayLengths, Rate, program.PhaseCount, program.UnitCount);
-        var registers = program.AllocateRegisters();
-        var output = new double[Rate];
-
-        for (var i = 0; i < output.Length; i++)
-        {
-            program.Evaluate(0f, 0f, i / (double)Rate, registers, default, state);
-            output[i] = registers[program.OutputBase];
-        }
-
-        return output;
     }
 
     /// <summary>Where the loudest sample after the click itself is.</summary>

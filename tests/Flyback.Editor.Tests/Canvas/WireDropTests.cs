@@ -1,9 +1,8 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
@@ -87,7 +86,7 @@ public class WireDropTests : EditorTest
         var button = All<Button>(palette).First(b => b.Content as string == name);
 
         button.Focus();
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(button);
         Settle(window);
     }
 

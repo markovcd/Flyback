@@ -1,6 +1,5 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
-using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Files;
@@ -57,35 +56,6 @@ public sealed class FileTypeSettingsTests : EditorTest
         return window;
     }
 
-    private static ModalOverlay OpenSettings(MainWindow window)
-    {
-        All<Button>(window).Single(b => b.Name == "settings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
-        for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
-            Dispatcher.UIThread.RunJobs();
-
-        Settle(window);
-
-        var dialog = All<ModalOverlay>(window).Single();
-
-        ShowSettingsTab(dialog, FilesTab);
-        Settle(window);
-
-        return dialog;
-    }
-
-    private static void Close(MainWindow window, ModalOverlay dialog, string by)
-    {
-        All<Button>(dialog)
-            .Single(b => b.Content as string == by)
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
-        for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Any(); attempt++)
-            Dispatcher.UIThread.RunJobs();
-
-        Settle(window);
-    }
-
     private static ComboBox Opener(ModalOverlay dialog) =>
         All<ComboBox>(dialog).Single(c => c.Name == "fileOpener");
 
@@ -93,11 +63,11 @@ public sealed class FileTypeSettingsTests : EditorTest
     public void Flyback_claims_no_files_until_asked()
     {
         var window = Open();
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, FilesTab);
 
         Opener(dialog).SelectedIndex.ShouldBe((int)FileOpener.None);
 
-        Close(window, dialog, "Save");
+        CloseSettings(window, dialog);
 
         system.Applied.ShouldBeEmpty();
     }
@@ -106,10 +76,10 @@ public sealed class FileTypeSettingsTests : EditorTest
     public void Saving_the_viewer_tells_the_system_and_is_kept()
     {
         var window = Open();
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, FilesTab);
 
         Opener(dialog).SelectedIndex = (int)FileOpener.Viewer;
-        Close(window, dialog, "Save");
+        CloseSettings(window, dialog);
 
         system.Applied.ShouldBe([FileOpener.Viewer]);
         FileTypeSettings.Load(settingsPath).Opener.ShouldBe(FileOpener.Viewer);
@@ -119,13 +89,13 @@ public sealed class FileTypeSettingsTests : EditorTest
     public void Cancel_tells_the_system_nothing_and_puts_the_choice_back()
     {
         var window = Open();
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, FilesTab);
 
         Opener(dialog).SelectedIndex = (int)FileOpener.Editor;
-        Close(window, dialog, "Cancel");
+        CloseSettings(window, dialog, "cancel");
 
         system.Applied.ShouldBeEmpty();
-        Opener(OpenSettings(window)).SelectedIndex.ShouldBe((int)FileOpener.None);
+        Opener(OpenSettings(window, FilesTab)).SelectedIndex.ShouldBe((int)FileOpener.None);
     }
 
     [AvaloniaFact]
@@ -134,11 +104,11 @@ public sealed class FileTypeSettingsTests : EditorTest
         new FileTypeSettings { Opener = FileOpener.Editor }.Save(settingsPath);
 
         var window = Open();
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, FilesTab);
 
         Opener(dialog).SelectedIndex = (int)FileOpener.None;
-        Close(window, dialog, "Save");
-        Close(window, OpenSettings(window), "Save");
+        CloseSettings(window, dialog);
+        CloseSettings(window, OpenSettings(window, FilesTab));
 
         system.Applied.ShouldBe([FileOpener.None]);
     }
@@ -151,8 +121,8 @@ public sealed class FileTypeSettingsTests : EditorTest
 
         var window = Open();
 
-        Close(window, OpenSettings(window), "Save");
-        Close(window, OpenSettings(window), "Save");
+        CloseSettings(window, OpenSettings(window, FilesTab));
+        CloseSettings(window, OpenSettings(window, FilesTab));
 
         system.Applied.ShouldBe([FileOpener.Editor, FileOpener.Editor]);
     }
@@ -161,10 +131,10 @@ public sealed class FileTypeSettingsTests : EditorTest
     public void The_library_folder_is_kept_with_the_output_settings()
     {
         var window = Open();
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, FilesTab);
 
         All<TextBox>(dialog).Single(t => t.Name == "library").Text = @"  D:\Sounds  ";
-        Close(window, dialog, "Save");
+        CloseSettings(window, dialog);
 
         OutputSettings.Load(settingsPath).Library.ShouldBe(@"D:\Sounds");
     }

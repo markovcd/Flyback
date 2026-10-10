@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <IsPackable>false</IsPackable>
@@ -116,6 +116,8 @@
   <!-- Where the checkout is, for tests that read its files. -->
   <ItemGroup>
     <Compile Include="..\Shared\Repository.cs" Link="Shared\Repository.cs" />
+    <Compile Include="..\Shared\FakePresetSite.cs" Link="Shared\FakePresetSite.cs" />
+    <Compile Include="..\Shared\Posted.cs" Link="Shared\Posted.cs" />
   </ItemGroup>
 
 </Project>

@@ -4,6 +4,7 @@ using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Shouldly;
 using Xunit;
+using Flyback.Plugins.Testing;
 
 namespace Flyback.Plugins.Gemini.Tests;
 
@@ -138,9 +139,9 @@ public class SessionTests
     public async Task A_second_message_keeps_the_first_ones_history()
     {
         var canned = new Canned(
-            new Answer(Asking(Building)),
-            new Answer(Prose("Done. Gray enough?")),
-            new Answer(Asking(("propose", """{"summary":"a flat gray field"}"""))));
+            new CannedAnswer(Asking(Building)),
+            new CannedAnswer(Prose("Done. Gray enough?")),
+            new CannedAnswer(Asking(("propose", """{"summary":"a flat gray field"}"""))));
 
         using var session = Session(canned);
 
@@ -159,13 +160,13 @@ public class SessionTests
     [Fact]
     public async Task The_model_is_asked_for_by_url()
     {
-        var canned = new Canned(new Answer(Prose("Hello.")));
+        var canned = new Canned(new CannedAnswer(Prose("Hello.")));
 
         using var session = Session(canned);
 
         await Drain(session, "hello");
 
-        canned.Urls[0].ShouldBe(
+        canned.Requests[0].RequestUri!.ToString().ShouldBe(
             "https://nowhere.invalid/v1beta/models/gemini-test:generateContent");
         canned.Sent[0]["model"].ShouldBeNull();
     }
@@ -269,10 +270,10 @@ public class SessionTests
     public async Task A_driver_that_cannot_hear_borrows_an_ear()
     {
         var canned = new Canned(
-            new Answer(Asking(Sounding)),
-            new Answer(Asking(("listen", """{"seconds":0.5}"""))),
-            new Answer(Prose("One steady low tone and nothing else.")),
-            new Answer(Asking(("propose", """{"summary":"a sine at 440"}"""))));
+            new CannedAnswer(Asking(Sounding)),
+            new CannedAnswer(Asking(("listen", """{"seconds":0.5}"""))),
+            new CannedAnswer(Prose("One steady low tone and nothing else.")),
+            new CannedAnswer(Asking(("propose", """{"summary":"a sine at 440"}"""))));
 
         var events = await Drive(canned, Listener.Another, ownEars: false, ear: "some-ear");
 
@@ -280,7 +281,7 @@ public class SessionTests
 
         // The clip went to the ear on its own, and what came back to the driver
         // is words rather than the sound.
-        canned.Urls.ShouldContain(url => url.Contains("models/some-ear:"));
+        canned.Requests.Select(r => r.RequestUri!.ToString()).ShouldContain(url => url.Contains("models/some-ear:"));
 
         var told = canned.Sent[^1].ToJsonString();
 
@@ -297,10 +298,10 @@ public class SessionTests
     public async Task An_ear_that_fails_is_a_sentence_rather_than_the_end_of_the_run()
     {
         var canned = new Canned(
-            new Answer(Asking(Sounding)),
-            new Answer(Asking(("listen", """{"seconds":0.5}"""))),
-            new Answer("""{"error":{"message":"that model is not available here."}}""", HttpStatusCode.NotFound),
-            new Answer(Asking(("propose", """{"summary":"a sine at 440"}"""))));
+            new CannedAnswer(Asking(Sounding)),
+            new CannedAnswer(Asking(("listen", """{"seconds":0.5}"""))),
+            new CannedAnswer("""{"error":{"message":"that model is not available here."}}""", HttpStatusCode.NotFound),
+            new CannedAnswer(Asking(("propose", """{"summary":"a sine at 440"}"""))));
 
         var events = await Drive(canned, Listener.Another, ownEars: false, ear: "some-ear");
 
@@ -318,7 +319,7 @@ public class SessionTests
     [Fact]
     public async Task What_a_turn_cost_is_reported_including_what_it_thought()
     {
-        var canned = new Canned(new Answer(Spending(Prose("Hello."))));
+        var canned = new Canned(new CannedAnswer(Spending(Prose("Hello."))));
 
         using var session = Session(canned);
 
@@ -339,10 +340,10 @@ public class SessionTests
     public async Task A_rate_limit_that_clears_quickly_costs_nothing_but_time()
     {
         var canned = new Canned(
-            new Answer(
+            new CannedAnswer(
                 """{"error":{"message":"overloaded","details":[{"retryDelay":"0.001s"}]}}""",
                 HttpStatusCode.TooManyRequests),
-            new Answer(Prose("Hello.")));
+            new CannedAnswer(Prose("Hello.")));
 
         using var session = Session(canned);
 
@@ -359,7 +360,7 @@ public class SessionTests
     [Fact]
     public async Task A_bad_request_costs_the_turn_and_says_why()
     {
-        var canned = new Canned(new Answer(
+        var canned = new Canned(new CannedAnswer(
             """{"error":{"message":"Unknown name \"parameters\"."}}""",
             HttpStatusCode.BadRequest));
 
@@ -378,7 +379,7 @@ public class SessionTests
     [InlineData("")]
     public async Task A_success_that_is_not_json_costs_the_turn_and_says_so(string body)
     {
-        using var session = Session(new Canned(new Answer(body)));
+        using var session = Session(new Canned(new CannedAnswer(body)));
 
         var events = await Drain(session, "hello");
 
@@ -394,7 +395,7 @@ public class SessionTests
     [Fact]
     public async Task A_saved_conversation_is_carried_on_by_another_session()
     {
-        var first = new Canned(new Answer(Prose("Which key should it be in?")));
+        var first = new Canned(new CannedAnswer(Prose("Which key should it be in?")));
         string saved;
 
         using (var session = Session(first))
@@ -403,7 +404,7 @@ public class SessionTests
             saved = session.Save();
         }
 
-        var second = new Canned(new Answer(Prose("D minor it is.")));
+        var second = new Canned(new CannedAnswer(Prose("D minor it is.")));
         using var carried = Session(second);
 
         carried.Take(saved).ShouldBeTrue();
@@ -426,9 +427,9 @@ public class SessionTests
     public async Task A_saved_conversation_leaves_the_clips_out()
     {
         var canned = new Canned(
-            new Answer(Asking(Sounding)),
-            new Answer(Asking(("listen", """{"seconds":0.5}"""))),
-            new Answer(Prose("A steady tone.")));
+            new CannedAnswer(Asking(Sounding)),
+            new CannedAnswer(Asking(("listen", """{"seconds":0.5}"""))),
+            new CannedAnswer(Prose("A steady tone.")));
 
         using var session = Session(canned, Listener.Itself, ownEars: true);
 
@@ -447,7 +448,7 @@ public class SessionTests
     [InlineData("""[{"parts":[]}]""")]
     public void Something_that_is_not_a_conversation_is_not_taken_up(string saved)
     {
-        using var session = Session(new Canned(new Answer(Prose("hello"))));
+        using var session = Session(new Canned(new CannedAnswer(Prose("hello"))));
 
         session.Take(saved).ShouldBeFalse();
     }
@@ -482,7 +483,7 @@ public class SessionTests
 
     private static async Task<(List<PatchEvent> Events, List<JsonNode> Sent)> Run(params string[] replies)
     {
-        var canned = new Canned([.. replies.Select(r => new Answer(r))]);
+        var canned = new Canned([.. replies.Select(r => new CannedAnswer(r))]);
 
         return (await Drive(canned, Listener.None, ownEars: false), canned.Sent);
     }
@@ -490,7 +491,7 @@ public class SessionTests
     private static async Task<(List<PatchEvent> Events, List<JsonNode> Sent)> Listening(
         params string[] replies)
     {
-        var canned = new Canned([.. replies.Select(r => new Answer(r))]);
+        var canned = new Canned([.. replies.Select(r => new CannedAnswer(r))]);
 
         return (await Drive(canned, Listener.Itself, ownEars: true), canned.Sent);
     }
@@ -525,8 +526,8 @@ public class SessionTests
     public async Task A_stop_in_the_middle_of_a_batch_still_answers_every_call()
     {
         var canned = new Canned(
-            new Answer(Asking(("describe_patch", "{}"), ("describe_patch", "{}"), ("describe_patch", "{}"))),
-            new Answer(Prose("ok")));
+            new CannedAnswer(Asking(("describe_patch", "{}"), ("describe_patch", "{}"), ("describe_patch", "{}"))),
+            new CannedAnswer(Prose("ok")));
 
         using var session = Session(canned);
         using var stop = new CancellationTokenSource();
@@ -622,34 +623,4 @@ public class SessionTests
     }
 
     /// <summary>One canned answer, with whatever the endpoint would have said around it.</summary>
-    private sealed record Answer(string Body, HttpStatusCode Status = HttpStatusCode.OK);
-
-    /// <summary>
-    /// Answers each request with the next canned one, and keeps what it was sent
-    /// and where. The last answer repeats once they run out, so a test that
-    /// wants a refusal to keep happening only has to say it once.
-    /// </summary>
-    private sealed class Canned(params Answer[] answers) : HttpMessageHandler
-    {
-        private int next;
-
-        public List<JsonNode> Sent { get; } = [];
-
-        /// <summary>Which model each request went to, which is in the path here.</summary>
-        public List<string> Urls { get; } = [];
-
-        protected override async Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request,
-            CancellationToken cancel)
-        {
-            var body = await request.Content!.ReadAsStringAsync(cancel).ConfigureAwait(false);
-
-            Sent.Add(JsonNode.Parse(body)!);
-            Urls.Add(request.RequestUri!.ToString());
-
-            var answer = answers[Math.Min(next++, answers.Length - 1)];
-
-            return new HttpResponseMessage(answer.Status) { Content = new StringContent(answer.Body) };
-        }
-    }
 }

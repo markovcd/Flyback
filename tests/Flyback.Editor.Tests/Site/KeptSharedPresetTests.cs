@@ -8,6 +8,7 @@ using Flyback.Editor.Windows;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Shouldly;
+using Flyback.Tests;
 
 namespace Flyback.Editor.Tests.Site;
 

@@ -1,4 +1,4 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -49,8 +49,7 @@ public class SavedPresetTests : EditorTest
 
     private static void OpenGallery(MainWindow window)
     {
-        All<Button>(window).Single(b => b.Name == "presets-glyph")
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == "presets-glyph"));
 
         for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
             Dispatcher.UIThread.RunJobs();
@@ -60,7 +59,7 @@ public class SavedPresetTests : EditorTest
 
     private static void Click(Button button, MainWindow window)
     {
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(button);
         Settle(window);
     }
 
@@ -289,8 +288,7 @@ public class SavedPresetTests : EditorTest
     /// <summary>Closes whatever dialog is up by its cross.</summary>
     private static void Dismiss(MainWindow window)
     {
-        All<Button>(All<ModalOverlay>(window).Single()).Single(b => b.Name == "dismiss")
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(All<ModalOverlay>(window).Single()).Single(b => b.Name == "dismiss"));
 
         for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Any(); attempt++)
             Dispatcher.UIThread.RunJobs();

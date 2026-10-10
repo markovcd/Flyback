@@ -52,7 +52,7 @@ public class KnobRandomizeTests : EditorTest
     {
         var button = All<Button>(Panel(window)).Single(b => b.Name == name);
 
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(button);
         Settle(window);
     }
 

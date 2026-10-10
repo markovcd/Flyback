@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
@@ -30,8 +30,7 @@ public class PresetListTests : EditorTest
     /// <summary>Presses the toolbar's preset button, which puts the gallery up.</summary>
     private static void OpenGallery(MainWindow window)
     {
-        All<Button>(window).Single(b => b.Name == "presets-glyph")
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == "presets-glyph"));
 
         for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
             Dispatcher.UIThread.RunJobs();
@@ -161,7 +160,7 @@ public class PresetListTests : EditorTest
 
         OpenGallery(window);
 
-        Tile(window, "Kaleidoscope").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(Tile(window, "Kaleidoscope"));
         Settle(window);
 
         Described(window).ShouldBe("Kaleidoscope");
@@ -179,8 +178,8 @@ public class PresetListTests : EditorTest
 
         OpenGallery(window);
 
-        Tile(window, "Kaleidoscope").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        All<Button>(window).Single(b => b.Name == "use-preset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(Tile(window, "Kaleidoscope"));
+        Press(All<Button>(window).Single(b => b.Name == "use-preset"));
         Settle(window);
 
         (Presets(window).SelectedItem as PatchPreset)!.Name.ShouldBe("Kaleidoscope");

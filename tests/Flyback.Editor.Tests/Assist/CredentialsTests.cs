@@ -40,7 +40,7 @@ public class CredentialsTests
     [Fact]
     public void A_key_can_be_put_somewhere_that_outlives_the_window()
     {
-        var store = new FakeStore();
+        var store = new FakeSecretStore();
         var credentials = new Credentials(store);
 
         credentials.CanKeep.ShouldBeTrue();
@@ -63,7 +63,7 @@ public class CredentialsTests
     [Fact]
     public void A_key_that_was_kept_says_so_at_once_rather_than_next_launch()
     {
-        var credentials = new Credentials(new FakeStore());
+        var credentials = new Credentials(new FakeSecretStore());
 
         credentials.Accept(Account, "sk-kept", Origin, keep: true);
 
@@ -94,7 +94,7 @@ public class CredentialsTests
     [Fact]
     public void A_key_held_for_the_session_can_be_kept_afterwards()
     {
-        var store = new FakeStore();
+        var store = new FakeSecretStore();
         var credentials = new Credentials(store);
 
         credentials.Accept(Account, "sk-typed", Origin, keep: false);
@@ -109,7 +109,7 @@ public class CredentialsTests
     [Fact]
     public void There_is_nothing_to_keep_afterwards_when_nothing_was_entered()
     {
-        var store = new FakeStore();
+        var store = new FakeSecretStore();
 
         Should.NotThrow(() => new Credentials(store).KeepWhatIsHeld(Account));
 
@@ -119,7 +119,7 @@ public class CredentialsTests
     [Fact]
     public void Declining_to_keep_a_key_really_does_not_keep_it()
     {
-        var store = new FakeStore();
+        var store = new FakeSecretStore();
         var credentials = new Credentials(store);
 
         credentials.Accept(Account, "sk-passing-through", Origin, keep: false);
@@ -136,7 +136,7 @@ public class CredentialsTests
     [Fact]
     public void The_environment_answers_when_nothing_was_entered()
     {
-        var credentials = new Credentials(new FakeStore());
+        var credentials = new Credentials(new FakeSecretStore());
         var variable = "FLYBACK_TEST_KEY_" + Guid.NewGuid().ToString("N");
 
         try
@@ -160,7 +160,7 @@ public class CredentialsTests
     [Fact]
     public void A_key_entered_here_beats_the_environment()
     {
-        var store = new FakeStore();
+        var store = new FakeSecretStore();
         var credentials = new Credentials(store);
         var variable = "FLYBACK_TEST_KEY_" + Guid.NewGuid().ToString("N");
 
@@ -196,7 +196,7 @@ public class CredentialsTests
     [Fact]
     public void Forgetting_an_entered_key_falls_back_to_the_environment()
     {
-        var credentials = new Credentials(new FakeStore());
+        var credentials = new Credentials(new FakeSecretStore());
         var variable = "FLYBACK_TEST_KEY_" + Guid.NewGuid().ToString("N");
 
         try
@@ -224,7 +224,7 @@ public class CredentialsTests
     [Fact]
     public void A_key_entered_without_keeping_it_beats_an_older_kept_one()
     {
-        var store = new FakeStore();
+        var store = new FakeSecretStore();
         store.Held[Account] = "sk-kept-earlier";
 
         var credentials = new Credentials(store);
@@ -267,7 +267,7 @@ public class CredentialsTests
     [Fact]
     public void Forgetting_a_key_removes_it_from_everywhere()
     {
-        var store = new FakeStore();
+        var store = new FakeSecretStore();
         var credentials = new Credentials(store);
 
         credentials.Accept(Account, "sk-kept", Origin, keep: true);
@@ -297,7 +297,7 @@ public class CredentialsTests
     [Fact]
     public void A_key_is_kept_with_the_origin_it_was_entered_for()
     {
-        var store = new FakeStore();
+        var store = new FakeSecretStore();
 
         new Credentials(store).Accept(Account, "sk-kept", Origin, keep: true);
 
@@ -309,7 +309,7 @@ public class CredentialsTests
     [Fact]
     public void A_key_kept_alone_is_bound_to_where_it_is_next_sent()
     {
-        var store = new FakeStore();
+        var store = new FakeSecretStore();
 
         store.Held[Account] = "sk-kept-earlier";
 
@@ -432,25 +432,6 @@ public class CredentialsTests
         public string? Unavailable(AssistantConfig config) => null;
 
         public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => throw new NotSupportedException();
-    }
-
-    private sealed class FakeStore : ISecretStore
-    {
-        public Dictionary<string, string> Held { get; } = new(StringComparer.Ordinal);
-
-        public string Id => "fake";
-
-        public string Name => "Fake store";
-
-        public int Priority => 0;
-
-        public bool IsSupported => true;
-
-        public void Keep(string account, string secret) => Held[account] = secret;
-
-        public string? Recall(string account) => Held.GetValueOrDefault(account);
-
-        public void Forget(string account) => Held.Remove(account);
     }
 
     /// <summary>

@@ -1,10 +1,9 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Canvas;
@@ -76,15 +75,6 @@ public sealed class UnsavedDialogTests : EditorTest
 
     private static string[] Words(Visual root) =>
         All<TextBlock>(root).Select(t => t.Text ?? string.Empty).ToArray();
-
-    /// <summary>Presses the button with this label, the way the mouse would.</summary>
-    private static void Press(Visual dialog, string labeled)
-    {
-        var button = All<Button>(dialog).Single(b => b.Content as string == labeled);
-
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
-    }
 
     /// <summary>
     /// Typing that was never applied is asked about too.
@@ -176,7 +166,8 @@ public sealed class UnsavedDialogTests : EditorTest
         Service<AssistantConversation>(window).Working = true;
 
         window.Close();
-        Press(Asking(window), "Stop the assistant");
+        Press(Named<Button>(Asking(window), "discard"));
+        Dispatcher.UIThread.RunJobs();
 
         for (var attempt = 0; attempt < 20 && window.IsVisible; attempt++)
             Dispatcher.UIThread.RunJobs();
@@ -195,7 +186,8 @@ public sealed class UnsavedDialogTests : EditorTest
         Service<AssistantConversation>(window).Working = true;
 
         window.Close();
-        Press(Asking(window), "Cancel");
+        Press(Named<Button>(Asking(window), "cancel"));
+        Dispatcher.UIThread.RunJobs();
 
         window.IsVisible.ShouldBeTrue();
     }
@@ -205,17 +197,18 @@ public sealed class UnsavedDialogTests : EditorTest
     /// get back to the window and the only way out is the frame.
     /// </summary>
     [AvaloniaTheory]
-    [InlineData("Discard changes")]
-    [InlineData("Cancel")]
-    public void Every_answer_closes_the_dialog(string labeled)
+    [InlineData("discard")]
+    [InlineData("cancel")]
+    public void Every_answer_closes_the_dialog(string named)
     {
         var window = OpenAndEdit();
 
         window.Close();
 
-        Press(Asking(window), labeled);
+        Press(Named<Button>(Asking(window), named));
+        Dispatcher.UIThread.RunJobs();
 
-        All<ModalOverlay>(window).ShouldBeEmpty($"'{labeled}' should have taken the dialog down");
+        All<ModalOverlay>(window).ShouldBeEmpty($"'{named}' should have taken the dialog down");
     }
 
     /// <summary>
@@ -228,7 +221,8 @@ public sealed class UnsavedDialogTests : EditorTest
         var window = OpenAndEdit();
 
         window.Close();
-        Press(Asking(window), "Discard changes");
+        Press(Named<Button>(Asking(window), "discard"));
+        Dispatcher.UIThread.RunJobs();
 
         for (var attempt = 0; attempt < 20 && window.IsVisible; attempt++)
             Dispatcher.UIThread.RunJobs();
@@ -245,7 +239,8 @@ public sealed class UnsavedDialogTests : EditorTest
         var window = OpenAndEdit();
 
         window.Close();
-        Press(Asking(window), "Cancel");
+        Press(Named<Button>(Asking(window), "cancel"));
+        Dispatcher.UIThread.RunJobs();
 
         window.IsVisible.ShouldBeTrue("canceling should have kept the window");
         All<NodeEditor>(window).Single().History.IsModified.ShouldBeTrue("and the work in it");
@@ -273,8 +268,7 @@ public sealed class UnsavedDialogTests : EditorTest
 
         if (how == "cross")
         {
-            All<Button>(dialog).Single(b => b.Name == "dismiss")
-                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Press(All<Button>(dialog).Single(b => b.Name == "dismiss"));
         }
         else
         {
@@ -330,7 +324,8 @@ public sealed class UnsavedDialogTests : EditorTest
 
         // And the one question still answers for the whole thing: canceling
         // leaves the window up rather than leaving a second close pending.
-        Press(All<ModalOverlay>(window).Single(), "Cancel");
+        Press(Named<Button>(All<ModalOverlay>(window).Single(), "cancel"));
+        Dispatcher.UIThread.RunJobs();
 
         for (var attempt = 0; attempt < 20 && window.IsVisible; attempt++)
             Dispatcher.UIThread.RunJobs();
@@ -401,7 +396,8 @@ public sealed class UnsavedDialogTests : EditorTest
         Click(window, empty);
         editor.Selection.Focused?.Id.ShouldBe(selected, "the click should have stopped at the sheet");
 
-        Press(dialog, "Cancel");
+        Press(Named<Button>(dialog, "cancel"));
+        Dispatcher.UIThread.RunJobs();
 
         Click(window, empty);
         editor.Selection.Focused.ShouldBeNull("and reached the canvas once the question was gone");
@@ -446,7 +442,7 @@ public sealed class UnsavedDialogTests : EditorTest
             hum |> out.left
             """;
 
-        All<Button>(window).Single(b => b.Name == "apply").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == "apply"));
         Settle(window);
 
         All<NodeEditor>(window).Single().History.Locked.ShouldBeTrue("the text is the document");
@@ -488,7 +484,8 @@ public sealed class UnsavedDialogTests : EditorTest
         Words(dialog).ShouldContain("Unsaved text");
         All<Button>(dialog).Select(b => b.Content as string).ShouldNotContain("Save…", "saving is what asked");
 
-        Press(dialog, "Cancel");
+        Press(Named<Button>(dialog, "cancel"));
+        Dispatcher.UIThread.RunJobs();
 
         Finished(saving).ShouldBeFalse("nothing was saved");
         File.Exists(path).ShouldBeFalse();
@@ -508,7 +505,8 @@ public sealed class UnsavedDialogTests : EditorTest
 
         var saving = Service<UnsavedWork>(window).SaveToAsync(RealStorageFile(path));
 
-        Press(Asking(window), "Save without the text");
+        Press(Named<Button>(Asking(window), "discard"));
+        Dispatcher.UIThread.RunJobs();
 
         Finished(saving).ShouldBeTrue();
         File.Exists(path).ShouldBeTrue();
@@ -597,7 +595,7 @@ public sealed class UnsavedDialogTests : EditorTest
         All<ToggleButton>(window).Single(t => t.Name == "code").IsChecked = true;
         Settle(window);
 
-        All<Button>(window).Single(a => a.Name == "apply").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(a => a.Name == "apply"));
         Settle(window);
 
         All<NodeEditor>(window).Single().History.Locked.ShouldBeTrue("the text is the document");

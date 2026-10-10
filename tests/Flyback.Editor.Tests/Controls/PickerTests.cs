@@ -1,9 +1,8 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
@@ -62,7 +61,7 @@ public class PickerTests : EditorTest
         var window = Open();
         var button = PresetsButton(window);
 
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(button);
 
         for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
             Dispatcher.UIThread.RunJobs();
@@ -187,8 +186,7 @@ public class PickerTests : EditorTest
         Settle(window);
 
         // The settings window, which is where the preview size lives.
-        All<Button>(window).Single(button => button.Name == "settings")
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(button => button.Name == "settings"));
         Settle(window);
 
         All<TabControl>(window).Single(tabs => tabs.Name == "settingsTabs").SelectedIndex = 0;
@@ -196,8 +194,7 @@ public class PickerTests : EditorTest
 
         Named(window, "960 x 540").ShouldBeOfType<Picker>();
 
-        All<Button>(window).Single(button => button.Name == "dismiss")
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(button => button.Name == "dismiss"));
         Settle(window);
 
         // And the MIDI In's, which is where the instrument is picked.

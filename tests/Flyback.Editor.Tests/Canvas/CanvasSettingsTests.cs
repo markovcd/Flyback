@@ -1,10 +1,9 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
@@ -57,35 +56,6 @@ public sealed class CanvasSettingsTests : EditorTest
         return window;
     }
 
-    private static ModalOverlay OpenSettings(MainWindow window)
-    {
-        All<Button>(window).Single(b => b.Name == "settings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
-        for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
-            Dispatcher.UIThread.RunJobs();
-
-        Settle(window);
-
-        var dialog = All<ModalOverlay>(window).Single();
-
-        ShowSettingsTab(dialog, CanvasTab);
-        Settle(window);
-
-        return dialog;
-    }
-
-    private static void Close(MainWindow window, ModalOverlay dialog, string by)
-    {
-        All<Button>(dialog)
-            .Single(b => b.Content as string == by)
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
-        for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Any(); attempt++)
-            Dispatcher.UIThread.RunJobs();
-
-        Settle(window);
-    }
-
     private static CheckBox Skins(ModalOverlay dialog) =>
         All<CheckBox>(dialog).Single(c => c.Name == "pluginSkins");
 
@@ -98,7 +68,7 @@ public sealed class CanvasSettingsTests : EditorTest
     [AvaloniaFact]
     public void A_plugin_paints_its_own_modules_until_switched_off()
     {
-        var dialog = OpenSettings(Open(settingsPath));
+        var dialog = OpenSettings(Open(settingsPath), CanvasTab);
 
         Skins(dialog).IsChecked.ShouldBe(true);
         Animation(dialog).IsChecked.ShouldBe(true);
@@ -109,18 +79,18 @@ public sealed class CanvasSettingsTests : EditorTest
     public void Switching_compact_modules_on_puts_inputs_beside_outputs()
     {
         var window = Open(settingsPath);
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, CanvasTab);
         var filter = NodeCatalog.Require(NodeCatalog.FilterTypeId);
         var node = NodeInstance.Create(filter, 0, 0);
 
         Compact(dialog).IsChecked = true;
-        Close(window, dialog, "Save");
+        CloseSettings(window, dialog);
 
         Editor(window).Geometry.Compact.ShouldBeTrue();
         Editor(window).Geometry.InputPort(node, filter, 0).Y.ShouldBe(NodeGeometry.OutputPort(node, 0).Y);
         CanvasSettings.Load(settingsPath).CompactModules.ShouldBeTrue();
 
-        Compact(OpenSettings(Open(settingsPath))).IsChecked.ShouldBe(true);
+        Compact(OpenSettings(Open(settingsPath), CanvasTab)).IsChecked.ShouldBe(true);
     }
 
     [AvaloniaFact]
@@ -131,9 +101,9 @@ public sealed class CanvasSettingsTests : EditorTest
 
         Names("Middle-drag").ShouldBeTrue();
 
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, CanvasTab);
         All<CheckBox>(dialog).Single(c => c.Name == "dragToPan").IsChecked = true;
-        Close(window, dialog, "Save");
+        CloseSettings(window, dialog);
 
         Editor(window).Gestures.DragToPan.ShouldBeTrue();
         Names("Middle-drag").ShouldBeFalse();
@@ -152,7 +122,7 @@ public sealed class CanvasSettingsTests : EditorTest
     public void Switching_the_skins_off_draws_every_module_as_its_category()
     {
         var window = Open(settingsPath);
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, CanvasTab);
 
         var def = NodeCatalog.Require("math.add") with
         {
@@ -162,7 +132,7 @@ public sealed class CanvasSettingsTests : EditorTest
         ModuleSkins.Of(def).ShouldNotBeNull();
 
         Skins(dialog).IsChecked = false;
-        Close(window, dialog, "Save");
+        CloseSettings(window, dialog);
 
         ModuleSkins.Of(def).ShouldBeNull();
         Colors.Palette(def).Accent.ShouldBe(Colors.Accent(ModuleCategories.Maths));
@@ -172,10 +142,10 @@ public sealed class CanvasSettingsTests : EditorTest
     public void Switching_the_animation_off_holds_every_picture_still()
     {
         var window = Open(settingsPath);
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, CanvasTab);
 
         Animation(dialog).IsChecked = false;
-        Close(window, dialog, "Save");
+        CloseSettings(window, dialog);
 
         ModuleSkins.Animated.ShouldBeFalse();
         ModuleSkins.Honored.ShouldBeTrue("the two switches are separate complaints");
@@ -185,18 +155,18 @@ public sealed class CanvasSettingsTests : EditorTest
     public void What_is_saved_is_read_back_at_the_next_launch()
     {
         var window = Open(settingsPath);
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, CanvasTab);
 
         Skins(dialog).IsChecked = false;
         Animation(dialog).IsChecked = false;
-        Close(window, dialog, "Save");
+        CloseSettings(window, dialog);
 
         var saved = CanvasSettings.Load(settingsPath);
 
         saved.PluginSkins.ShouldBeFalse();
         saved.AnimateSkins.ShouldBeFalse();
 
-        var next = OpenSettings(Open(settingsPath));
+        var next = OpenSettings(Open(settingsPath), CanvasTab);
 
         Skins(next).IsChecked.ShouldBe(false);
         Animation(next).IsChecked.ShouldBe(false);
@@ -298,10 +268,10 @@ public sealed class CanvasSettingsTests : EditorTest
 
         Wheel(window, ShowText(window), 1, RawInputModifiers.Control);
 
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, CanvasTab);
 
         Skins(dialog).IsChecked = false;
-        Close(window, dialog, "Save");
+        CloseSettings(window, dialog);
 
         CanvasSettings.Load(settingsPath).EditorFontSize.ShouldBe(CanvasSettings.DefaultEditorFontSize + 1);
     }
@@ -310,18 +280,18 @@ public sealed class CanvasSettingsTests : EditorTest
     public void Cancel_puts_the_switches_back()
     {
         var window = Open(settingsPath);
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, CanvasTab);
 
         Skins(dialog).IsChecked = false;
         Animation(dialog).IsChecked = false;
-        Close(window, dialog, "Cancel");
+        CloseSettings(window, dialog, "cancel");
 
         File.Exists(settingsPath).ShouldBeFalse();
 
         ModuleSkins.Honored.ShouldBeTrue("nothing was saved, so nothing changed on the canvas");
         ModuleSkins.Animated.ShouldBeTrue();
 
-        var again = OpenSettings(window);
+        var again = OpenSettings(window, CanvasTab);
 
         Skins(again).IsChecked.ShouldBe(true);
         Animation(again).IsChecked.ShouldBe(true);

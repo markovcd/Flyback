@@ -70,7 +70,7 @@ public class PartGridTests : EditorTest
     {
         var window = Showing(out var node, out var changes);
 
-        Removers(window)[0].RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(Removers(window)[0]);
 
         var parts = ArrangementExtra.Of(node);
 
@@ -311,6 +311,5 @@ public class PartGridTests : EditorTest
     }
 
     private static void Click(Window window, string label) =>
-        All<Button>(window).Single(b => Equals(b.Content, label))
-            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => Equals(b.Content, label)));
 }

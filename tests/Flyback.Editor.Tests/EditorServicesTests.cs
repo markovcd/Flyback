@@ -7,6 +7,7 @@ using Flyback.Core;
 using Flyback.Plugins.Audio;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using Flyback.Plugins.Testing;
 
 namespace Flyback.Editor.Tests;
 
@@ -35,7 +36,7 @@ public class EditorServicesTests : EditorTest
     [AvaloniaFact]
     public void Closing_the_window_lets_its_sound_device_go()
     {
-        var device = new Speakers();
+        var device = new LoopbackDevice();
         var window = NewMainWindow(replace: services => services.AddSingleton(new AudioSetup(device)));
         window.Show();
         Settle(window);
@@ -43,22 +44,6 @@ public class EditorServicesTests : EditorTest
         window.CloseWithoutAsking();
 
         device.Disposed.ShouldBeTrue();
-    }
-
-    /// <summary>A sound card that remembers being let go.</summary>
-    private sealed class Speakers : IAudioDevice
-    {
-        public bool Disposed { get; private set; }
-
-        public int SampleRate => GlobalConstants.SampleRate;
-
-        public bool IsRunning { get; private set; }
-
-        public void Start(AudioCallback fill) => IsRunning = true;
-
-        public void Stop() => IsRunning = false;
-
-        public void Dispose() => Disposed = true;
     }
 
 

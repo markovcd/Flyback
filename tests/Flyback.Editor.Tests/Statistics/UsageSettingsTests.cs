@@ -1,6 +1,5 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
-using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Statistics;
@@ -22,15 +21,6 @@ public sealed class UsageSettingsTests : EditorTest
 
     private const string PrivacyTab = "Privacy";
 
-    private sealed class Collected : IUsageSink
-    {
-        public List<UsageEvent> Events { get; } = [];
-
-        public void Send(UsageEvent happened) => Events.Add(happened);
-
-        public void Drain(TimeSpan most) { }
-    }
-
     public override void Dispose()
     {
         base.Dispose();
@@ -51,35 +41,6 @@ public sealed class UsageSettingsTests : EditorTest
         return window;
     }
 
-    private static ModalOverlay OpenSettings(MainWindow window)
-    {
-        All<Button>(window).Single(b => b.Name == "settings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
-        for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
-            Dispatcher.UIThread.RunJobs();
-
-        Settle(window);
-
-        var dialog = All<ModalOverlay>(window).Single();
-
-        ShowSettingsTab(dialog, PrivacyTab);
-        Settle(window);
-
-        return dialog;
-    }
-
-    private static void Close(MainWindow window, ModalOverlay dialog, string by)
-    {
-        All<Button>(dialog)
-            .Single(b => b.Content as string == by)
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
-        for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Any(); attempt++)
-            Dispatcher.UIThread.RunJobs();
-
-        Settle(window);
-    }
-
     private static CheckBox Switch(ModalOverlay dialog) =>
         All<CheckBox>(dialog).Single(c => c.Name == "sendUsageStatistics");
 
@@ -88,40 +49,40 @@ public sealed class UsageSettingsTests : EditorTest
     {
         var window = Open(settingsPath);
 
-        Switch(OpenSettings(window)).IsChecked.ShouldBe(true);
+        Switch(OpenSettings(window, PrivacyTab)).IsChecked.ShouldBe(true);
     }
 
     [AvaloniaFact]
     public void Switching_off_and_saving_keeps_it_off()
     {
         var window = Open(settingsPath);
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, PrivacyTab);
 
         Switch(dialog).IsChecked = false;
-        Close(window, dialog, "Save");
+        CloseSettings(window, dialog);
 
         UsageSettings.Load(settingsPath).SendUsageStatistics.ShouldBeFalse();
-        Switch(OpenSettings(Open(settingsPath))).IsChecked.ShouldBe(false, "the next launch reads it back");
+        Switch(OpenSettings(Open(settingsPath), PrivacyTab)).IsChecked.ShouldBe(false, "the next launch reads it back");
     }
 
     [AvaloniaFact]
     public void Cancel_puts_the_switch_back()
     {
         var window = Open(settingsPath);
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, PrivacyTab);
 
         Switch(dialog).IsChecked = false;
-        Close(window, dialog, "Cancel");
+        CloseSettings(window, dialog, "cancel");
 
         File.Exists(settingsPath).ShouldBeFalse();
-        Switch(OpenSettings(window)).IsChecked.ShouldBe(true);
+        Switch(OpenSettings(window, PrivacyTab)).IsChecked.ShouldBe(true);
     }
 
     [AvaloniaFact]
     public void The_app_does_not_close_while_the_settings_are_up()
     {
         var window = Open(settingsPath);
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, PrivacyTab);
 
         window.Close();
         Dispatcher.UIThread.RunJobs();
@@ -135,7 +96,7 @@ public sealed class UsageSettingsTests : EditorTest
     {
         var window = Open(settingsPath);
 
-        Close(window, OpenSettings(window), "Cancel");
+        CloseSettings(window, OpenSettings(window, PrivacyTab), "cancel");
 
         window.Close();
         Dispatcher.UIThread.RunJobs();
@@ -146,13 +107,13 @@ public sealed class UsageSettingsTests : EditorTest
     [AvaloniaFact]
     public void Switching_it_off_stops_this_run_too()
     {
-        var sink = new Collected();
+        var sink = new CollectedEvents();
         var usage = new Usage(sink);
         var window = Open(settingsPath, usage);
 
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, PrivacyTab);
         Switch(dialog).IsChecked = false;
-        Close(window, dialog, "Save");
+        CloseSettings(window, dialog);
 
         var said = sink.Events.Count;
 
@@ -169,7 +130,7 @@ public sealed class UsageSettingsTests : EditorTest
     [AvaloniaFact]
     public void A_window_says_what_it_started_as()
     {
-        var sink = new Collected();
+        var sink = new CollectedEvents();
 
         Open(settingsPath, new Usage(sink));
 

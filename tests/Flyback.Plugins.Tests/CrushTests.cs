@@ -131,20 +131,7 @@ public class CrushTests
         patch.Connect(coord.Id, 0, crush.Id, 0);
         patch.Connect(crush.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
 
-        var program = patch.CompileForAudio(Catalog).Program;
-        var delays = new DelayState(
-            program.DelayLengths, Rate, program.PhaseCount, program.UnitCount);
-
-        var registers = program.AllocateRegisters();
-        var output = new float[signal.Length];
-
-        for (var i = 0; i < signal.Length; i++)
-        {
-            program.Evaluate(signal[i], 0f, i / (double)Rate, registers, default, delays);
-            output[i] = (float)registers[program.OutputBase];
-        }
-
-        return output;
+        return Interpreted.Heard(patch, signal);
     }
 
     private static NodeInstance Add(Patch patch, string typeId, params (int Port, float Value)[] knobs)

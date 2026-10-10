@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
@@ -127,7 +127,7 @@ public class GroupInspectorTests : EditorTest
         var before = All<Button>(window).Count(b => b.Name == "exposeSocket");
         before.ShouldBe(1);
 
-        Button(window, "exposeSocket").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
+        Press(Button(window, "exposeSocket"));
         Settle(window);
 
         group.Exposed.ShouldContain(new GroupSocket(mul, 1, IsOutput: false));

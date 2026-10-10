@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -42,8 +42,7 @@ public class MidDragTests : EditorTest
         NodeGeometry.OutputPort(node, index);
 
     private static void Press(MainWindow window, string named) =>
-        All<Button>(window).Single(b => b.Name == named)
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == named));
 
     /// <summary>An oscillator, something to feed, and the Output they need.</summary>
     private (MainWindow Window, NodeInstance Source, NodeInstance Fed) Open()

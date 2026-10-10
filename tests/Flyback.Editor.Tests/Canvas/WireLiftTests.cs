@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -268,7 +268,7 @@ public class WireLiftTests : EditorTest
         var button = All<Button>(palette).First(b => b.Content as string == "Saw");
 
         button.Focus();
-        button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(button);
         Settle(board.Window);
 
         var added = board.Patch.Nodes.Last(n => n.TypeId == Saw);

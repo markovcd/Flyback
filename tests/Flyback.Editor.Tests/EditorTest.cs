@@ -4,6 +4,7 @@ using Avalonia.Headless;
 using Avalonia.Input;
 using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
+using Flyback.Editor.Controls;
 using Flyback.Editor.Site;
 using Flyback.Editor.Tests;
 using Flyback.Editor.Windows;
@@ -284,6 +285,32 @@ public class EditorTest : UiTest
         row.ShouldBeGreaterThanOrEqualTo(0, $"the list offers no preset called {name}");
 
         presets.SelectedIndex = row;
+    }
+
+    /// <summary>Opens the settings window from the toolbar, turned to the tab headed <paramref name="tab"/> where one is given.</summary>
+    internal static ModalOverlay OpenSettings(MainWindow window, string? tab = null)
+    {
+        Press(Named<Button>(window, "settings"));
+        Pump(() => All<ModalOverlay>(window).Any(), window);
+        Settle(window);
+
+        var dialog = All<ModalOverlay>(window).Single();
+
+        if (tab is not null)
+        {
+            ShowSettingsTab(dialog, tab);
+            Settle(window);
+        }
+
+        return dialog;
+    }
+
+    /// <summary>Answers the settings window by the button named <paramref name="button"/>: its Save, its Cancel or the frame's dismiss.</summary>
+    internal static void CloseSettings(MainWindow window, ModalOverlay dialog, string button = "save")
+    {
+        Press(Named<Button>(dialog, button));
+        Pump(() => !All<ModalOverlay>(window).Any(), window);
+        Settle(window);
     }
 
     /// <summary>Turns the settings window to the tab headed <paramref name="name"/>.</summary>

@@ -9,6 +9,7 @@
   <!-- A direct reference: what is checked is the request and the refusals, not how the assembly loads. -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.SystemOne\Flyback.Plugins.SystemOne.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Testing\Flyback.Plugins.Testing.csproj" />
   </ItemGroup>
 
   <ItemGroup>

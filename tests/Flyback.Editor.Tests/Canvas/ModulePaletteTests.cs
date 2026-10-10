@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -490,7 +490,7 @@ public class ModulePaletteTests : EditorTest
     private static void PressFocused(Button button)
     {
         button.Focus();
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(button);
     }
 
     private static void PressKey(InputElement target, Key key) =>

@@ -9,6 +9,7 @@ using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
 
 using PluginRegistry = Flyback.Cli.Plugins;
+using Flyback.Specs.Support;
 
 namespace Flyback.Specs.Steps;
 
@@ -139,7 +140,7 @@ public sealed class PluginTrustSteps : IDisposable
 
         credentials.Accept(assistant.Id, "sk-secret", Entered!, keep: false);
 
-        var transport = credentials.Transport(assistant, SettingValues.None, new Recorder(carried));
+        var transport = credentials.Transport(assistant, SettingValues.None, new AuthorizationRecorder(carried));
 
         await transport.Send(new Uri(Entered + "/v1/models"), null, CancellationToken.None);
         await transport.Send(new Uri(elsewhere + "/v1/models"), null, CancellationToken.None);
@@ -231,14 +232,4 @@ public sealed class PluginTrustSteps : IDisposable
         public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => throw new NotSupportedException();
     }
 
-    /// <summary>The network, as far as the key is concerned.</summary>
-    private sealed class Recorder(List<string?> carried) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            carried.Add(request.Headers.Authorization?.ToString());
-
-            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK));
-        }
-    }
 }

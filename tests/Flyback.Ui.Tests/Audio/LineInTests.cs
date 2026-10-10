@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
 using Flyback.Host;
+using Flyback.Plugins.Testing;
 
 namespace Flyback.Ui.Tests.Audio;
 
@@ -19,29 +20,6 @@ namespace Flyback.Ui.Tests.Audio;
 public class LineInTests
 {
     private const int Frames = 2048;
-
-    /// <summary>A sound card the test is the thread of.</summary>
-    private sealed class Speakers : IAudioDevice
-    {
-        private AudioCallback? fill;
-
-        public int SampleRate => GlobalConstants.SampleRate;
-
-        public bool IsRunning => fill is not null;
-
-        public void Start(AudioCallback callback) => fill = callback;
-
-        public void Stop() => fill = null;
-
-        public void Dispose() => Stop();
-
-        public float[] Pump()
-        {
-            var buffer = new float[Frames * 2];
-            fill!(buffer);
-            return buffer;
-        }
-    }
 
     /// <summary>A microphone the test speaks into.</summary>
     private sealed class Microphone : IAudioCapture
@@ -131,7 +109,7 @@ public class LineInTests
             Line.Trouble += message => Said.Add(message);
         }
 
-        public Speakers Speakers { get; } = new();
+        public LoopbackDevice Speakers { get; } = new();
 
         public Backend Backend { get; }
 
@@ -239,7 +217,7 @@ public class LineInTests
 
         microphone.Say(said);
 
-        var played = rig.Speakers.Pump();
+        var played = rig.Speakers.Pump(Frames);
         var sum = 0d;
 
         for (var frame = 500; frame < Frames; frame++) sum += played[frame * 2] * played[frame * 2];
@@ -288,7 +266,7 @@ public class LineInTests
         rig.Play(ThroughLineIn());
 
         rig.Said.ShouldHaveSingleItem().ShouldContain("no sound input");
-        rig.Speakers.Pump().ShouldAllBe(sample => sample == 0f);
+        rig.Speakers.Pump(Frames).ShouldAllBe(sample => sample == 0f);
     }
 
     [Fact]

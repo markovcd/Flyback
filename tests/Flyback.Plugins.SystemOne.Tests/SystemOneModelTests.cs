@@ -5,6 +5,7 @@ using Flyback.Plugins.Decide;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
+using Flyback.Plugins.Testing;
 
 namespace Flyback.Plugins.SystemOne.Tests;
 
@@ -32,7 +33,7 @@ public class SystemOneModelTests
     [Fact]
     public async Task It_posts_the_questions_to_the_endpoint_with_its_key_and_reads_the_answer()
     {
-        var canned = new Canned((HttpStatusCode.OK, Answered));
+        var canned = new Canned(new CannedAnswer(Answered));
 
         var decision = await model.DecideAsync(Asked, Config(canned), TestContext.Current.CancellationToken);
 
@@ -51,7 +52,7 @@ public class SystemOneModelTests
     [Fact]
     public async Task A_laya_serve_of_your_own_is_asked_without_a_key()
     {
-        var canned = new Canned((HttpStatusCode.OK, Answered));
+        var canned = new Canned(new CannedAnswer(Answered));
         var values = SettingValues.None.With(SystemOneModel.EndpointKey, "http://localhost:8000/").With(SystemOneModel.ModelKey, "english");
 
         var config = Config(canned, key: null, values);
@@ -86,7 +87,7 @@ public class SystemOneModelTests
     [InlineData(HttpStatusCode.UnprocessableEntity, """{"detail":[{"msg":"field required"}]}""", "could not read the questions")]
     public async Task A_refusal_is_a_sentence(HttpStatusCode status, string body, string said)
     {
-        var canned = new Canned((status, body));
+        var canned = new Canned(new CannedAnswer(body, status));
 
         var refused = await Should.ThrowAsync<HttpRequestException>(
             model.DecideAsync(Asked, Config(canned), TestContext.Current.CancellationToken));
@@ -105,7 +106,7 @@ public class SystemOneModelTests
     [Fact]
     public async Task An_answer_that_is_not_a_decision_is_a_sentence_rather_than_a_crash()
     {
-        var canned = new Canned((HttpStatusCode.OK, """{"choices":[]}"""));
+        var canned = new Canned(new CannedAnswer("""{"choices":[]}"""));
 
         var refused = await Should.ThrowAsync<InvalidOperationException>(
             model.DecideAsync(Asked, Config(canned), TestContext.Current.CancellationToken));
@@ -116,7 +117,7 @@ public class SystemOneModelTests
     [Fact]
     public async Task A_request_too_big_is_never_sent()
     {
-        var canned = new Canned((HttpStatusCode.OK, Answered));
+        var canned = new Canned(new CannedAnswer(Answered));
         var huge = DecisionRequest.One(new string('x', DecisionRequest.LongestState + 1), "q", new Question.YesNo("Is it?"));
 
         await Should.ThrowAsync<ArgumentException>(model.DecideAsync(huge, Config(canned), TestContext.Current.CancellationToken));

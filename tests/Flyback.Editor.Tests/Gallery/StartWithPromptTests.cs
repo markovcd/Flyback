@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
-using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.Core.Graph;
 using Flyback.Editor.Assist;
@@ -89,8 +88,7 @@ public class StartWithPromptTests : EditorTest
 
     private static void OpenGallery(MainWindow window)
     {
-        All<Button>(window).Single(b => b.Name == "presets-glyph")
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == "presets-glyph"));
 
         for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
             Dispatcher.UIThread.RunJobs();
@@ -104,21 +102,10 @@ public class StartWithPromptTests : EditorTest
     {
         var button = All<Button>(window).Single(b => b.Name == name);
 
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(button);
         Settle(window);
 
         return button;
-    }
-
-    private static void Until(Func<bool> done)
-    {
-        for (var attempt = 0; attempt < 400 && !done(); attempt++)
-        {
-            Dispatcher.UIThread.RunJobs();
-            Thread.Sleep(5);
-        }
-
-        done().ShouldBeTrue();
     }
 
     [AvaloniaFact]
@@ -151,7 +138,7 @@ public class StartWithPromptTests : EditorTest
 
         Press(window, "start-prompt");
 
-        Until(() => assistant.Heard.Count == 2);
+        Pump(() => assistant.Heard.Count == 2);
 
         All<ModalOverlay>(window).ShouldBeEmpty("the gallery has closed");
         editor.History.Patch.Nodes.Count.ShouldBe(1, "the Empty preset is on the canvas");

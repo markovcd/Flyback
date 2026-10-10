@@ -24,43 +24,6 @@ tested with hostile input (zip-slip, size caps, a changed plugin, an unsigned
 package, a list changed after signing, `--seconds` at infinity); every flake
 found this week was fixed in the harness the same day, in the open.
 
-## 8. The harness and the doubles are written many times (Medium to Low)
-
-Counted across `tests/`, each a private copy the guide's shared place could
-hold:
-
-- `Loopback : IAudioDevice`, the double the guide names, eight times
-  (`StatusCountTests.cs:92`, `ExportSteps.cs:154`, `StatusBarSteps.cs:68`,
-  `ViewerWindowTests.cs:30`, `AudioEngineTests.cs:37`, `LineInTests.cs:24`, and
-  two "records Disposed" variants). `Canned : HttpMessageHandler` four times
-  across the provider test projects. MIDI stand-ins (`IMidiInput`, `IMidiPort`)
-  four times each, bodies byte-identical. `FakeStore : ISecretStore`,
-  `Transcript : ITranscript`, `Unreachable` and `Recorder` handlers twice
-  each, byte-equivalent. `Collected : IUsageSink` re-declared beside the shared
-  `CollectedEvents.cs`.
-- `Named<T>` (find a control by `Name`) thirteen times in Editor.Tests,
-  `Until` (a spin-wait with a deadline) seven times beside `UiTest.Pump`, three
-  of them byte-identical and some returning `false` silently where `Pump`
-  throws with the expression; press-a-named-button and close-a-dialog helpers
-  about twenty times, 28 files raising `Button.ClickEvent` by hand against four
-  calling `UiTest.Press`, and five `Close(window, dialog, by)` copies that find
-  the button by caption, which the guide forbids.
-- `Run(Patch, float[])` (compile, evaluate a buffer, collect the output)
-  md5-equal in `BellTests`, `DrumTests`, `FmTests`, `HissTests`, and the same
-  loop in three more, while `Figures.cs:71` and `Fractals.cs` hold public
-  versions nobody else calls.
-- Four preset-site `HttpMessageHandler`s answering `/api/v1/presets`
-  (`Editor.Tests/FakePresetSite.cs`, `SharedPresetSteps.cs:124`,
-  `SiteSteps.cs:164`, `RenderPresetsTests.cs:372`); the first two serve the
-  same gallery feature.
-
-Fix, each its own commit: Editor.Tests deletes its `Until`, `Named`, press and close
-helpers for `UiTest` and `EditorTest` members, with the dialog closer finding
-by `Name`; `LoopbackDevice` and `Canned` move into `Flyback.Plugins.Testing`,
-whose remit widens from "what sound tests share" to "what plugin-facing tests
-share"; one `FakeSecretStore`, `FakeTranscript`, `Unreachable`, `AuthorizationRecorder`
-and MIDI pair per project; one `Played` in Plugins.Tests.
-
 ## 9. Tolerances and comparisons that are looser than their rule (Low)
 
 - `Compile/JsProgramTests.cs:24` compares with `Hair = 1e-5f` on every op; the

@@ -175,8 +175,7 @@ public sealed class SeekBarTests : EditorTest
 
         var text = All<AvaloniaEdit.TextEditor>(window).Single(e => e.Name == "source");
         text.Text = "description \"A hum.\"\nlength 0:45.50\n\nt |> sine(freq: 220) |> out.left\n";
-        All<Button>(window).Single(b => b.Name == "apply")
-            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == "apply"));
         Settle(window);
 
         TypeLength(window, "");
@@ -196,8 +195,7 @@ public sealed class SeekBarTests : EditorTest
 
         var text = All<AvaloniaEdit.TextEditor>(window).Single(e => e.Name == "source");
         text.Text = "description \"A hum.\"\n\nt |> sine(freq: 220) |> out.left\n";
-        All<Button>(window).Single(b => b.Name == "apply")
-            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == "apply"));
         Settle(window);
 
         TypeLength(window, "45.5");

@@ -1,9 +1,8 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
-using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -53,7 +52,7 @@ public class ScaleKeysTests : EditorTest
     private static void PressFocused(Button button)
     {
         button.Focus();
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(button);
     }
 
     [AvaloniaFact]

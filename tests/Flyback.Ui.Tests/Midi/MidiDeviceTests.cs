@@ -70,7 +70,7 @@ public class MidiDeviceTests
     [Fact]
     public void A_note_on_a_channel_plays_that_channels_module_and_the_boxs()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         using var hub = new MidiHub(backend);
         var third = Reading(MidiSignal.Channeled(Device, 3));
         var second = Reading(MidiSignal.Channeled(Device, 2));
@@ -87,7 +87,7 @@ public class MidiDeviceTests
     [Fact]
     public void A_program_on_a_channel_opens_the_device()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         using var hub = new MidiHub(backend);
 
         hub.Follow(Reading(MidiSignal.Channeled(Device, 5)));
@@ -98,7 +98,7 @@ public class MidiDeviceTests
     [Fact]
     public void A_note_held_on_a_channel_is_let_go_when_the_device_closes()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         using var hub = new MidiHub(backend);
         var channel = MidiSignal.Channeled(Device, 3);
 
@@ -119,7 +119,7 @@ public class MidiDeviceTests
     [Fact]
     public void A_program_following_a_clock_opens_the_device()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         using var hub = new MidiHub(backend);
 
         hub.Follow(Following(Device));
@@ -130,7 +130,7 @@ public class MidiDeviceTests
     [Fact]
     public void A_devices_clock_reaches_the_running_program()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         var now = 0d;
         using var hub = new MidiHub(backend) { Now = () => now };
         var block = Following(Device);
@@ -158,7 +158,7 @@ public class MidiDeviceTests
     [Fact]
     public void A_recompile_starts_from_where_the_clock_is()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         using var hub = new MidiHub(backend);
 
         hub.Follow(Following(Device));
@@ -174,7 +174,7 @@ public class MidiDeviceTests
     [Fact]
     public void A_clock_running_when_its_device_closes_is_stopped()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         using var hub = new MidiHub(backend);
 
         hub.Follow(Following(Device));
@@ -195,7 +195,7 @@ public class MidiDeviceTests
     [Fact]
     public void A_tick_asks_for_nothing_and_a_start_asks_for_a_frame()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         using var hub = new MidiHub(backend);
         var frames = 0;
         var heard = 0;
@@ -217,7 +217,7 @@ public class MidiDeviceTests
     [Fact]
     public void The_computer_keyboard_comes_first_and_the_devices_after_it()
     {
-        using var hub = new MidiHub(new FakeInput("Test Keyboard", "Other Thing"));
+        using var hub = new MidiHub(new FakeMidiInput("Test Keyboard", "Other Thing"));
 
         hub.Sources.Select(s => s.Id)
             .ShouldBe([MidiSources.Keyboard, Device, "midi:other-thing"]);
@@ -256,7 +256,7 @@ public class MidiDeviceTests
     [Fact]
     public void A_device_is_opened_only_once_a_program_reads_it()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         using var hub = new MidiHub(backend);
 
         hub.Follow(Reading(MidiSources.Keyboard));
@@ -269,7 +269,7 @@ public class MidiDeviceTests
     [Fact]
     public void A_recompile_that_stops_reading_it_hands_the_device_back()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         using var hub = new MidiHub(backend);
 
         hub.Follow(Reading(Device));
@@ -288,7 +288,7 @@ public class MidiDeviceTests
     [Fact]
     public void A_recompile_that_still_reads_it_leaves_the_device_alone()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         using var hub = new MidiHub(backend);
 
         hub.Follow(Reading(Device));
@@ -303,7 +303,7 @@ public class MidiDeviceTests
     [Fact]
     public void Reading_any_one_signal_is_enough_to_open_it()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         using var hub = new MidiHub(backend);
 
         hub.Follow(new LiveValues([MidiSignal.Key(Device, MidiSignal.Pitch)]));
@@ -314,7 +314,7 @@ public class MidiDeviceTests
     [Fact]
     public void A_note_from_a_device_reaches_the_running_program()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         using var hub = new MidiHub(backend);
         var block = Reading(Device);
 
@@ -330,7 +330,7 @@ public class MidiDeviceTests
     [Fact]
     public void A_device_and_the_computer_keyboard_are_two_instruments()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         using var hub = new MidiHub(backend);
 
         var keys = Reading(MidiSources.Keyboard);
@@ -379,7 +379,7 @@ public class MidiDeviceTests
     [Fact]
     public void A_panic_from_a_device_lets_its_notes_go()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         using var hub = new MidiHub(backend);
         var block = Reading(Device);
 
@@ -401,7 +401,7 @@ public class MidiDeviceTests
     [Fact]
     public void A_note_held_when_a_device_closes_is_not_there_when_it_opens_again()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         using var hub = new MidiHub(backend);
 
         var playing = Reading(Device);
@@ -432,7 +432,7 @@ public class MidiDeviceTests
     [Fact]
     public void Losing_the_focus_does_not_silence_a_device()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         using var hub = new MidiHub(backend);
 
         var keys = Reading(MidiSources.Keyboard);
@@ -452,7 +452,7 @@ public class MidiDeviceTests
     [Fact]
     public void Closing_the_window_hands_every_device_back()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         var hub = new MidiHub(backend);
 
         hub.Follow(Reading(Device));
@@ -471,7 +471,7 @@ public class MidiDeviceTests
     [Fact]
     public void A_device_that_will_not_open_is_reported_rather_than_thrown()
     {
-        var backend = new FakeInput("Test Keyboard") { Refuse = true };
+        var backend = new FakeMidiInput("Test Keyboard") { Refuse = true };
         using var hub = new MidiHub(backend);
 
         var said = new List<string>();
@@ -487,7 +487,7 @@ public class MidiDeviceTests
     [Fact]
     public void A_note_from_a_device_asks_for_a_frame()
     {
-        var backend = new FakeInput("Test Keyboard");
+        var backend = new FakeMidiInput("Test Keyboard");
         using var hub = new MidiHub(backend);
 
         hub.Follow(Reading(Device));
@@ -498,36 +498,6 @@ public class MidiDeviceTests
         backend.Opened.Single().Send(new MidiMessage(MidiAction.Down, 64, 1f));
 
         told.ShouldBeGreaterThan(0);
-    }
-
-    /// <summary>A stand-in for a platform backend, with no platform behind it.</summary>
-    private sealed class FakeInput(params string[] names) : IMidiInput
-    {
-        public List<FakePort> Opened { get; } = [];
-
-        /// <summary>Whether opening fails, the way a device another program holds does.</summary>
-        public bool Refuse { get; init; }
-
-        public string Id => "fake";
-
-        public string Name => "Stand-in";
-
-        public int Priority => 1;
-
-        public bool IsSupported => true;
-
-        public IReadOnlyList<MidiPortInfo> Ports => MidiPorts.Named(names);
-
-        public IMidiPort Open(string port, MidiCallback deliver)
-        {
-            if (Refuse) throw new InvalidOperationException("it is already in use.");
-
-            var opened = new FakePort(port, deliver);
-
-            Opened.Add(opened);
-
-            return opened;
-        }
     }
 
     private sealed class BrokenInput : IMidiInput
@@ -545,22 +515,4 @@ public class MidiDeviceTests
         public IMidiPort Open(string port, MidiCallback deliver) => throw new InvalidOperationException();
     }
 
-    private sealed class FakePort(string id, MidiCallback deliver) : IMidiPort
-    {
-        public string Id => id;
-
-        public bool IsOpen { get; private set; } = true;
-
-        /// <summary>How many times it was closed, because closing twice is its own bug.</summary>
-        public int Closed { get; private set; }
-
-        /// <summary>What the driver's thread would do, done on this one.</summary>
-        public void Send(MidiMessage message) => deliver(message);
-
-        public void Dispose()
-        {
-            IsOpen = false;
-            Closed++;
-        }
-    }
 }

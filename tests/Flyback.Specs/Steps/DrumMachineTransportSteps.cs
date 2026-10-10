@@ -22,7 +22,9 @@ public sealed class DrumMachineTransportSteps(EditorDriver editor) : IDisposable
     /// <summary>How near the top a patch played from the top has to be when it is looked at.</summary>
     private const double Slack = 1;
 
-    private readonly StandIn machine = new();
+    private readonly StandInMidiInput machine = new("Drum Machine");
+
+    private DateTime pressedAt;
 
     private readonly DirectoryInfo settings = Directory.CreateTempSubdirectory("flyback-drum-machine-specs");
 
@@ -48,13 +50,13 @@ public sealed class DrumMachineTransportSteps(EditorDriver editor) : IDisposable
     }
 
     [When("the drum machine presses Start")]
-    public void WhenStart() => machine.Press(MidiAction.Start);
+    public void WhenStart() => Press(MidiAction.Start);
 
     [When("the drum machine presses Stop")]
-    public void WhenStop() => machine.Press(MidiAction.Stop);
+    public void WhenStop() => Press(MidiAction.Stop);
 
     [When("the drum machine presses Continue")]
-    public void WhenContinue() => machine.Press(MidiAction.Continue);
+    public void WhenContinue() => Press(MidiAction.Continue);
 
     [Then("the patch plays from the top")]
     public void ThenPlaysFromTheTop() =>
@@ -72,7 +74,7 @@ public sealed class DrumMachineTransportSteps(EditorDriver editor) : IDisposable
     {
         // Nothing arriving is proved only by waiting; a followed Start is posted to
         // the window at once, so a few frames' worth is plenty.
-        editor.WaitForClock(_ => DateTime.UtcNow > machine.PressedAt.AddMilliseconds(300), TimeSpan.FromSeconds(2));
+        editor.WaitForClock(_ => DateTime.UtcNow > pressedAt.AddMilliseconds(300), TimeSpan.FromSeconds(2));
 
         editor.Paused.ShouldBeTrue();
         editor.Clock.ShouldBeInRange(seconds - Slack, seconds + Slack);
@@ -89,42 +91,10 @@ public sealed class DrumMachineTransportSteps(EditorDriver editor) : IDisposable
         }
     }
 
-    /// <summary>A MIDI backend with one drum machine plugged in, and nothing behind it.</summary>
-    private sealed class StandIn : IMidiInput
+    /// <summary>Sends a transport button, as the driver would, on this thread.</summary>
+    private void Press(MidiAction action)
     {
-        private Pressed? Port { get; set; }
-
-        public DateTime PressedAt { get; private set; }
-
-        public string Id => "stand-in";
-
-        public string Name => "Stand-in";
-
-        public int Priority => 1;
-
-        public bool IsSupported => true;
-
-        public IReadOnlyList<MidiPortInfo> Ports => MidiPorts.Named(["Drum Machine"]);
-
-        public IMidiPort Open(string id, MidiCallback deliver) => Port = new Pressed(id, deliver);
-
-        /// <summary>Sends a transport button, as the driver would, on this thread.</summary>
-        public void Press(MidiAction action)
-        {
-            PressedAt = DateTime.UtcNow;
-            (Port ?? throw new InvalidOperationException("Nothing opened the drum machine: the patch does not listen to it.")).Send(new MidiMessage(action, 0, 0f));
-        }
-    }
-
-    /// <summary>The drum machine's port, sending on the caller's thread what a driver would send on its own.</summary>
-    private sealed class Pressed(string id, MidiCallback deliver) : IMidiPort
-    {
-        public string Id => id;
-
-        public bool IsOpen { get; private set; } = true;
-
-        public void Send(MidiMessage message) => deliver(message);
-
-        public void Dispose() => IsOpen = false;
+        pressedAt = DateTime.UtcNow;
+        (machine.Port ?? throw new InvalidOperationException("Nothing opened the drum machine: the patch does not listen to it.")).Send(new MidiMessage(action, 0, 0f));
     }
 }

@@ -15,7 +15,7 @@ namespace Flyback.Editor.Tests.Assist;
 /// </summary>
 public sealed class AssistantSessionTests
 {
-    private readonly Transcript transcript = new();
+    private readonly FakeTranscript transcript = new();
     private readonly Talking assistant = new();
 
     [Fact]
@@ -139,31 +139,6 @@ public sealed class AssistantSessionTests
         using var earlier = Run();
 
         return SavedConversation.Read(earlier.Save([new TranscriptLine(Voice.Said, "from before")]).ToJson()).ShouldNotBeNull();
-    }
-
-    /// <summary>Kept in memory, with everything it was handed in order.</summary>
-    private sealed class Transcript : ITranscript
-    {
-        private readonly List<TranscriptLine> lines = [];
-
-        public List<Spoken> Said { get; } = [];
-
-        public IReadOnlyList<TranscriptLine> Lines => lines;
-
-        public bool IsEmpty => lines.Count == 0;
-
-        public void Clear()
-        {
-            lines.Clear();
-            Said.Clear();
-        }
-
-        public void Put(Spoken spoken)
-        {
-            Said.Add(spoken);
-
-            if (spoken.Keep) lines.Add(spoken.Line);
-        }
     }
 
     /// <summary>Says one thing a turn and remembers nothing.</summary>

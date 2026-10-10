@@ -12,7 +12,7 @@ namespace Flyback.Editor.Tests.Assist;
 /// <summary>A message read by the decision model before the assistant is sent it, and the proposal checked once it comes back.</summary>
 public sealed class TurnReadingTests
 {
-    private readonly Transcript transcript = new();
+    private readonly FakeTranscript transcript = new();
     private readonly Echoing assistant = new();
 
     private AssistantSession Begun(Reader reader)
@@ -116,29 +116,6 @@ public sealed class TurnReadingTests
         session.Dispose();
     }
 
-    private sealed class Transcript : ITranscript
-    {
-        private readonly List<TranscriptLine> lines = [];
-
-        public List<Spoken> Said { get; } = [];
-
-        public IReadOnlyList<TranscriptLine> Lines => lines;
-
-        public bool IsEmpty => lines.Count == 0;
-
-        public void Clear()
-        {
-            lines.Clear();
-            Said.Clear();
-        }
-
-        public void Put(Spoken spoken)
-        {
-            Said.Add(spoken);
-
-            if (spoken.Keep) lines.Add(spoken.Line);
-        }
-    }
 
     /// <summary>Reads every message as one intent, and believes every proposal to a set degree.</summary>
     private sealed class Reader(string intent, double sure) : IDecisionModel

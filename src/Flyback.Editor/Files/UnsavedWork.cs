@@ -301,7 +301,12 @@ internal sealed class UnsavedWork(
 
         Button Answering(string text, Unsaved with, bool wide = false)
         {
-            var button = new Button { Content = text, MinWidth = wide ? 120 : 96 };
+            var button = new Button
+            {
+                Name = with switch { Unsaved.Save => "save", Unsaved.Discard => "discard", _ => "cancel" },
+                Content = text,
+                MinWidth = wide ? 120 : 96,
+            };
             button.Click += (_, _) => answer(with);
 
             return button;

@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
@@ -57,7 +57,7 @@ public class SourceViewTests : EditorTest
     {
         ShowCode(window).Text = source;
 
-        Apply(window).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(Apply(window));
         Settle(window);
     }
 
@@ -1959,7 +1959,7 @@ public class SourceViewTests : EditorTest
 
         Should.NotThrow(() =>
         {
-            Apply(window).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            Press(Apply(window));
             Settle(window);
         });
 
@@ -2116,7 +2116,7 @@ public class SourceViewTests : EditorTest
         // Typed rather than loaded, so there is a stack under the text to go back
         // down — and a second apply, so the patch is this text's.
         text.Document.Insert(text.Document.TextLength, "\n# and a second note");
-        Apply(window).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(Apply(window));
         Settle(window);
 
         var written = text.Text;

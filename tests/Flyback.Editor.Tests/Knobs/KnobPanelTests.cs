@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -284,8 +284,7 @@ public class KnobPanelTests : EditorTest
 
         (Editor(window).History.Patch.Controls?.Count ?? 0).ShouldBe(0);
 
-        All<Button>(window).Single(b => b.Name == "undo")
-            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == "undo"));
         Settle(window);
 
         Editor(window).History.Patch.Controls!.Single().Value.ShouldBe(left, 1e-4f, "where a hand left a knob is not something Ctrl+Z takes back");

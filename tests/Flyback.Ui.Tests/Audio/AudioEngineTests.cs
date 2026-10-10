@@ -12,6 +12,7 @@ using Flyback.Plugins.Audio;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
+using Flyback.Plugins.Testing;
 
 namespace Flyback.Ui.Tests.Audio;
 
@@ -28,35 +29,6 @@ namespace Flyback.Ui.Tests.Audio;
 public class AudioEngineTests
 {
     private const int BufferFrames = 512;
-
-    /// <summary>
-    /// Stands in for a sound card by keeping the callback and letting the test
-    /// be the audio thread, so a buffer is produced when the test asks for one
-    /// rather than on a clock.
-    /// </summary>
-    private sealed class LoopbackDevice : IAudioDevice
-    {
-        private AudioCallback? fill;
-
-        public int SampleRate => GlobalConstants.SampleRate;
-
-        public bool IsRunning => fill is not null;
-
-        public TimeSpan Latency { get; set; }
-
-        public void Start(AudioCallback callback) => fill = callback;
-
-        public void Stop() => fill = null;
-
-        public void Dispose() => Stop();
-
-        public float[] Pump(int frames = BufferFrames)
-        {
-            var buffer = new float[frames * 2];
-            (fill ?? throw new InvalidOperationException("The engine never started the device."))(buffer);
-            return buffer;
-        }
-    }
 
     /// <summary>Time into a sine into the speakers — one phase accumulator, no delay lines.</summary>
     private static Patch Tone(float hz)

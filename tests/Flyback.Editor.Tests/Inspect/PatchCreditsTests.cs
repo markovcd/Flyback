@@ -34,7 +34,7 @@ public class PatchCreditsTests : EditorTest
 
     private static void Click(MainWindow window, string name)
     {
-        Named(window, name).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(Named(window, name));
         Settle(window);
     }
 
@@ -56,7 +56,7 @@ public class PatchCreditsTests : EditorTest
 
     private static TextBox NewTagBox(MainWindow window)
     {
-        All<Button>(window).Single(b => b.Name == "patch-tag-add").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == "patch-tag-add"));
         Settle(window);
 
         return All<TextBox>(window).Single(t => t.Name == "patch-tag-new");
@@ -138,8 +138,7 @@ public class PatchCreditsTests : EditorTest
 
         var text = All<TextEditor>(window).Single(e => e.Name == "source");
         text.Text = "description \"A hum.\"\n\nlet hum = t |> sine(freq: 220)\nhum |> out.left\n";
-        All<Button>(window).Single(b => b.Name == "apply")
-            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == "apply"));
         Settle(window);
 
         All<Avalonia.Controls.Primitives.ToggleButton>(window).Single(b => b.Name == "code").IsChecked = false;
@@ -171,7 +170,7 @@ public class PatchCreditsTests : EditorTest
         var window = Open();
 
         TypeTags(window, "drone, slow, ambient");
-        All<Button>(window).Single(b => b.Name == "remove-tag-slow").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == "remove-tag-slow"));
         Settle(window);
 
         Chips(window).ShouldBe(["drone", "ambient"]);
@@ -184,7 +183,7 @@ public class PatchCreditsTests : EditorTest
         var window = Open();
 
         TypeTags(window, "drone");
-        All<Button>(window).Single(b => b.Name == "remove-tag-drone").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(All<Button>(window).Single(b => b.Name == "remove-tag-drone"));
         Settle(window);
 
         Editor(window).History.Patch.Tags.ShouldBeNull();

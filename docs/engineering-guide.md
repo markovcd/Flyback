@@ -808,7 +808,7 @@ changed: saved patches name it.
 | `Flyback.Plugins.WinIO.Tests` | The ASIO output, against `FakeAsioDriver`, a driver's vtable in memory | References the plugin directly; runs anywhere |
 | `Flyback.Plugins.LinuxIO.Tests` | What the JACK output offers, against a stand-in for the server | References the plugin directly; runs anywhere |
 | `Flyback.Ui.Testing` | The headless harness: `UiTest`, the Avalonia xunit adapter | Not a test project |
-| `Flyback.Plugins.Testing` | What sound-backend tests share: `JackDaemon`, a JACK server to play into | Not a test project |
+| `Flyback.Plugins.Testing` | What plugin-facing tests share: `LoopbackDevice`, a sound card the test is the thread of; `Canned`, an endpoint with scripted answers; `JackDaemon`, a JACK server to play into | Not a test project |
 | `Flyback.Core.Benchmarks` | BenchmarkDotNet | Not a test project |
 | `Flyback.Plugins.Sample`, `.FakeAssistant`, `.FakeDecider` | Plugins the tests load | Not test projects |
 
@@ -956,13 +956,17 @@ without it a machine short of memory stalls everything else that needs the pool.
 
 ### Doubles
 
-Write a small `private sealed class` in the test file. There is no mocking library
-and no shared fakes project.
+Write a small `private sealed class` in the test file. There is no mocking library.
+A double two test files of one project both want is one `internal` class in that
+project (`FakeSecretStore`, `FakeTranscript`, `Unreachable`); one that test projects
+share is in `Flyback.Plugins.Testing`, or linked from `tests/Shared/` where it names
+the editor (`FakePresetSite`).
 
 - A sound card is `LoopbackDevice : IAudioDevice`, which keeps the callback and
-  lets the test be the audio thread (`Pump(frames)`).
-- An HTTP endpoint is `Canned : HttpMessageHandler`, handing back scripted answers
-  under a keyless `KeyedTransport`.
+  lets the test be the audio thread (`Pump(frames)`); `LoopbackOutput` is the
+  backend a host starts it through.
+- An HTTP endpoint is `Canned : HttpMessageHandler`, handing back scripted
+  `CannedAnswer`s under a keyless `KeyedTransport`.
 - A CLI command is a function of two `StringWriter`s returning an exit code.
 - A whole assistant is `Flyback.Plugins.FakeAssistant`, a real plugin that replays
   a script of tool calls through `PatchWorkbench`.
