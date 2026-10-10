@@ -67,18 +67,6 @@ runs twice on the Worker deploy.
 three stages on top of it. One list, one cached layer. A refactor of its own,
 with nothing else in the commit.
 
-## 6. Validate's net is coarser than its header says (Low)
-
-The schedule is `*/10 * * * *`, and the header calls it the net for a dispatch
-the Worker lost. GitHub fired it five times on 2026-10-09: 06:25, 13:33, 18:57,
-23:02, and 02:16 the next morning; five to six hours apart, not ten minutes.
-GitHub drops frequent schedules under load, and says so in its documentation. A
-lost dispatch waits hours.
-
-**Fix:** either the header says hours, or the Worker retries a dispatch it does
-not see picked up within a minute, which is the Worker's own `wrangler` cron.
-The schedule stays as the last net.
-
 ## 8. Small
 
 - Pull-request runs export every layer of every stage to the Actions cache with

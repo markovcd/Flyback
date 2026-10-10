@@ -1,7 +1,8 @@
 # Checks what the preset site holds unchecked with the app's own readers and sends
 # each verdict back, then renders the still of each preset that waits
 # (deploy/cloudflare/README.md). The Worker starts it on every submission; the
-# schedule is the net for a start that was lost.
+# schedule is the net for a start that was lost. GitHub drops frequent schedules
+# under load and fires this one hours apart, so a lost start waits hours.
 #
 # Off until the repository variable PRESET_SITE_URL names the site, so nothing runs
 # before the site does. It runs on GitHub's machines and never the self-hosted
