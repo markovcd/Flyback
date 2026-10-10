@@ -27,6 +27,31 @@ internal static class ProgramProcess
         return folder;
     }
 
+    /// <summary>How the program is started: all three streams redirected, and no console window of its own.</summary>
+    internal static ProcessStartInfo StartInfo(
+        string executable,
+        IReadOnlyList<string> arguments,
+        string folder,
+        IEnumerable<string> without)
+    {
+        var start = new ProcessStartInfo(executable)
+        {
+            RedirectStandardInput = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            StandardInputEncoding = new UTF8Encoding(false),
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8,
+            WorkingDirectory = folder,
+            CreateNoWindow = true,
+        };
+
+        foreach (var argument in arguments) start.ArgumentList.Add(argument);
+        foreach (var variable in without) start.Environment.Remove(variable);
+
+        return start;
+    }
+
     /// <param name="name">What the person calls the program, for what is said when it fails.</param>
     /// <param name="executable">The program to start.</param>
     /// <param name="arguments">Its command line.</param>
@@ -44,20 +69,7 @@ internal static class ProgramProcess
         IEnumerable<string> without,
         CancellationToken cancel)
     {
-        var start = new ProcessStartInfo(executable)
-        {
-            RedirectStandardInput = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            StandardInputEncoding = new UTF8Encoding(false),
-            StandardOutputEncoding = Encoding.UTF8,
-            StandardErrorEncoding = Encoding.UTF8,
-            WorkingDirectory = folder,
-            CreateNoWindow = true,
-        };
-
-        foreach (var argument in arguments) start.ArgumentList.Add(argument);
-        foreach (var variable in without) start.Environment.Remove(variable);
+        var start = StartInfo(executable, arguments, folder, without);
 
         using var process = new Process { StartInfo = start };
 
