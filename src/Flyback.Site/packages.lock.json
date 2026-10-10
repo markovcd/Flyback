@@ -23,6 +23,13 @@
           "Flyback.Core": "[0.1.0-dev, )"
         }
       },
+      "flyback.plugins.drawings": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Core": "[0.1.0-dev, )",
+          "Flyback.Plugins": "[0.1.0-dev, )"
+        }
+      },
       "flyback.plugins.easy": {
         "type": "Project",
         "dependencies": {
@@ -71,6 +78,9 @@
           "Flyback.Core": "[0.1.0-dev, )",
           "Flyback.Plugins": "[0.1.0-dev, )"
         }
+      },
+      "flyback.site.client": {
+        "type": "Project"
       }
     }
   }

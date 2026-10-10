@@ -1,6 +1,6 @@
 using System.CommandLine;
 using System.Text.RegularExpressions;
-using Flyback.Site.Admin;
+using Flyback.Site.Client;
 
 namespace Flyback.Site.Commands;
 
@@ -73,12 +73,12 @@ internal static partial class PushMediaCommand
                     if (!file.Exists) continue;
 
                     await using var bytes = file.OpenRead();
-                    await Put(site, id, name, new StreamContent(bytes), cancellation);
+                    await SiteMedia.Put(site, id, name, new StreamContent(bytes), cancellation);
                     sent.Add(name);
                 }
 
                 var done = marker.Extension == ".done";
-                await Put(site, id, done ? "done" : "failed", new StringContent(done ? "" : await File.ReadAllTextAsync(marker.FullName, cancellation)), cancellation);
+                await SiteMedia.Put(site, id, done ? "done" : "failed", new StringContent(done ? "" : await File.ReadAllTextAsync(marker.FullName, cancellation)), cancellation);
 
                 output.WriteLine(done ? $"{id}: done ({string.Join(", ", sent)})" : $"{id}: failed");
             }
@@ -90,13 +90,6 @@ internal static partial class PushMediaCommand
         }
 
         return failed ? Exit.Failed : Exit.Ok;
-    }
-
-    private static async Task Put(HttpClient site, string id, string name, HttpContent content, CancellationToken cancellation)
-    {
-        using (content)
-        using (var answer = await site.PutAsync($"api/v1/admin/presets/{id}/media/{name}", content, cancellation))
-            await SiteAnswer.EnsureTaken(answer, cancellation);
     }
 
     /// <summary>A finished render's marker: a preset's id, then done or failed.</summary>

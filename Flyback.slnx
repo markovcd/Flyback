@@ -36,6 +36,7 @@
     <Project Path="src/Flyback.Ui/Flyback.Ui.csproj" />
     <Project Path="src/Flyback.Viewer.Desktop/Flyback.Viewer.Desktop.csproj" />
     <Project Path="src/Flyback.Site/Flyback.Site.csproj" />
+    <Project Path="src/Flyback.Site.Client/Flyback.Site.Client.csproj" />
     <Project Path="src/Flyback.Viewer.Web/Flyback.Viewer.Web.csproj" />
     <Project Path="src/Flyback.Editor.Web/Flyback.Editor.Web.csproj" />
     <Project Path="src/Flyback.Editor.Android/Flyback.Editor.Android.csproj">

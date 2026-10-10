@@ -227,6 +227,7 @@
           "Flyback.Gpu": "[0.1.0-dev, )",
           "Flyback.Host": "[0.1.0-dev, )",
           "Flyback.Plugins": "[0.1.0-dev, )",
+          "Flyback.Site.Client": "[0.1.0-dev, )",
           "System.CommandLine": "[2.0.12, )"
         }
       },
@@ -274,6 +275,9 @@
           "Flyback.Core": "[0.1.0-dev, )",
           "Flyback.Plugins": "[0.1.0-dev, )"
         }
+      },
+      "flyback.site.client": {
+        "type": "Project"
       },
       "System.CommandLine": {
         "type": "CentralTransitive",

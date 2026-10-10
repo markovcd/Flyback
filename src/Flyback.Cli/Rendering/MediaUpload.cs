@@ -1,3 +1,5 @@
+using Flyback.Site.Client;
+
 namespace Flyback.Cli.Rendering;
 
 /// <summary>
@@ -15,17 +17,10 @@ internal sealed class MediaUpload(HttpClient site) : IPresetMedia
     public async Task Put(string id, string suffix, string from, CancellationToken cancellation)
     {
         await using var file = File.OpenRead(from);
-        await Send(id, suffix.TrimStart('.'), new StreamContent(file), cancellation);
+        await SiteMedia.Put(site, id, suffix.TrimStart('.'), new StreamContent(file), cancellation);
     }
 
-    public Task Done(string id, CancellationToken cancellation) => Send(id, "done", new ByteArrayContent([]), cancellation);
+    public Task Done(string id, CancellationToken cancellation) => SiteMedia.Put(site, id, "done", new ByteArrayContent([]), cancellation);
 
-    public Task Failed(string id, string why, CancellationToken cancellation) => Send(id, "failed", new StringContent(why), cancellation);
-
-    private async Task Send(string id, string name, HttpContent content, CancellationToken cancellation)
-    {
-        using (content)
-        using (var sent = await site.PutAsync($"api/v1/admin/presets/{Uri.EscapeDataString(id)}/media/{name}", content, cancellation))
-            sent.EnsureSuccessStatusCode();
-    }
+    public Task Failed(string id, string why, CancellationToken cancellation) => SiteMedia.Put(site, id, "failed", new StringContent(why), cancellation);
 }

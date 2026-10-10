@@ -608,6 +608,7 @@
           "Flyback.Gpu": "[0.1.0-dev, )",
           "Flyback.Host": "[0.1.0-dev, )",
           "Flyback.Plugins": "[0.1.0-dev, )",
+          "Flyback.Site.Client": "[0.1.0-dev, )",
           "System.CommandLine": "[2.0.12, )"
         }
       },
@@ -616,6 +617,7 @@
         "dependencies": {
           "Flyback.Engine": "[0.1.0-dev, )",
           "Flyback.Plugins": "[0.1.0-dev, )",
+          "Flyback.Plugins.Drawings": "[0.1.0-dev, )",
           "Flyback.Plugins.Easy": "[0.1.0-dev, )",
           "Flyback.Plugins.Effects": "[0.1.0-dev, )",
           "Flyback.Plugins.Figures": "[0.1.0-dev, )",
@@ -623,6 +625,7 @@
           "Flyback.Plugins.Mastering": "[0.1.0-dev, )",
           "Flyback.Plugins.Picture": "[0.1.0-dev, )",
           "Flyback.Plugins.Voice": "[0.1.0-dev, )",
+          "Flyback.Site.Client": "[0.1.0-dev, )",
           "System.CommandLine": "[2.0.12, )"
         }
       },
@@ -698,6 +701,13 @@
           "Flyback.Core": "[0.1.0-dev, )"
         }
       },
+      "flyback.plugins.drawings": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Core": "[0.1.0-dev, )",
+          "Flyback.Plugins": "[0.1.0-dev, )"
+        }
+      },
       "flyback.plugins.easy": {
         "type": "Project",
         "dependencies": {
@@ -760,6 +770,9 @@
           "Flyback.Plugins": "[0.1.0-dev, )",
           "NAudio.Wasapi": "[3.1.0, )"
         }
+      },
+      "flyback.site.client": {
+        "type": "Project"
       },
       "flyback.ui": {
         "type": "Project",

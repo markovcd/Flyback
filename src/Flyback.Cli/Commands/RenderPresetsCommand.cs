@@ -8,7 +8,7 @@ using Flyback.Cli.Rendering;
 using Flyback.Core;
 using Flyback.Engine.Render;
 using PluginRegistry = Flyback.Cli.Plugins;
-using Flyback.Site.Admin;
+using Flyback.Site.Client;
 
 namespace Flyback.Cli.Commands;
 
@@ -92,17 +92,11 @@ internal static class RenderPresetsCommand
                 return Exit.Failed;
             }
 
-            if (!Uri.TryCreate(result.GetRequiredValue(server), UriKind.Absolute, out var address))
-            {
-                Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: --server {result.GetValue(server)}: give the site's whole address, e.g. https://presets.example.org/.");
-                return Exit.Failed;
-            }
-
-            string? problem = null;
+            string? problem;
 
             using var site = folder is null
-                ? SiteAdmin.Client(address.AbsoluteUri, Environment.GetEnvironmentVariable, out problem)
-                : new HttpClient { BaseAddress = new Uri(address.AbsoluteUri.TrimEnd('/') + "/") };
+                ? SiteAdmin.Client(result.GetRequiredValue(server), Environment.GetEnvironmentVariable, out problem)
+                : SiteAddress.Parse(result.GetRequiredValue(server), out problem) is { } address ? new HttpClient { BaseAddress = address } : null;
 
             if (site is null)
             {

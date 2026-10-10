@@ -45,6 +45,9 @@
         "dependencies": {
           "Flyback.Core": "[0.1.0-dev, )"
         }
+      },
+      "flyback.site.client": {
+        "type": "Project"
       }
     }
   }

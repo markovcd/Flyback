@@ -1,4 +1,4 @@
-namespace Flyback.Site.Admin;
+namespace Flyback.Site.Client;
 
 /// <summary>
 /// A client for the preset site's admin API, carrying the Cloudflare Access service token
@@ -13,11 +13,7 @@ internal static class SiteAdmin
     /// <summary>The client, or null with what is missing.</summary>
     public static HttpClient? Client(string server, Func<string, string?> environment, out string? problem)
     {
-        if (!Uri.TryCreate(server, UriKind.Absolute, out var address) || address.Scheme is not ("https" or "http"))
-        {
-            problem = $"--server {server}: give the site's whole address, e.g. https://presets.example.org/.";
-            return null;
-        }
+        if (SiteAddress.Parse(server, out problem) is not { } address) return null;
 
         var id = environment(IdVariable);
         var secret = environment(SecretVariable);
@@ -28,9 +24,7 @@ internal static class SiteAdmin
             return null;
         }
 
-        problem = null;
-
-        var client = new HttpClient { BaseAddress = new Uri(address.AbsoluteUri.TrimEnd('/') + "/"), Timeout = TimeSpan.FromMinutes(5) };
+        var client = new HttpClient { BaseAddress = address, Timeout = TimeSpan.FromMinutes(5) };
         client.DefaultRequestHeaders.Add("CF-Access-Client-Id", id);
         client.DefaultRequestHeaders.Add("CF-Access-Client-Secret", secret);
 

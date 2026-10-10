@@ -601,7 +601,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
             gl.BindTexture(GL_TEXTURE_2D, textures[read]);
             if (patchPrevious >= 0) gl.Uniform1i(patchPrevious, 0);
 
-            // The whole of CompiledPatch.Sample's mapping, reduced to two scales:
+            // The whole of Arithmetic.Sample's mapping, reduced to two scales:
             // patch coordinates to texel centers, and the flip between a picture
             // indexed downwards and a texture stored upwards. The offset is 0.5
             // on both axes and so is baked into the shader.

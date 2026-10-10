@@ -12,12 +12,16 @@
     <WebPlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" />
   </ItemGroup>
 
-  <!-- The preset site's plugins only in All plugins: every visit downloads what is linked in. -->
+  <!-- The preset site's plugins, linked only in All plugins: every visit downloads what is linked in. -->
+  <ItemGroup>
+    <SitePlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
+    <SitePlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
+    <SitePlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />
+    <SitePlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Drawings\Flyback.Plugins.Drawings.csproj" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(Configuration)' == 'All plugins'">
-    <WebPlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
-    <WebPlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
-    <WebPlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />
-    <WebPlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Drawings\Flyback.Plugins.Drawings.csproj" />
+    <WebPlugin Include="@(SitePlugin)" />
   </ItemGroup>
 
 </Project>

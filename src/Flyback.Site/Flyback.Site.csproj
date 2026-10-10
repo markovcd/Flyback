@@ -16,6 +16,10 @@
     <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Flyback.Site.Client\Flyback.Site.Client.csproj" />
+  </ItemGroup>
+
   <!--
     The plugins the web viewer and editor link, named to BrowserPlugins, which checks a
     shared preset against them. Every one a page may link is referenced whatever the
@@ -24,13 +28,8 @@
   <Import Project="..\Flyback.Viewer.Web\LinkedPlugins.props" />
 
   <ItemGroup>
-    <ProjectReference Include="..\plugins\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" />
-    <ProjectReference Include="..\plugins\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" />
-    <ProjectReference Include="..\plugins\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" />
-    <ProjectReference Include="..\plugins\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" />
-    <ProjectReference Include="..\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
-    <ProjectReference Include="..\plugins\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
-    <ProjectReference Include="..\plugins\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />
+    <ProjectReference Include="@(WebPlugin)" />
+    <ProjectReference Include="@(SitePlugin)" Exclude="@(WebPlugin)" />
   </ItemGroup>
 
   <Target Name="NameWebPlugins" BeforeTargets="GetAssemblyAttributes">

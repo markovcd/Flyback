@@ -67,6 +67,7 @@ Flyback.Editor.Android .apk                Editor under Avalonia.Android; not bu
 | `Flyback.Editor.Android` | `MainActivity`, `DeviceApp`, `DeviceFolders`, `DeviceRequest` | `Flyback.Editor` under Avalonia.Android, the module plugins and `Flyback.Plugins.AndroidIO`'s `AudioTrack` linked in. Listed in `Flyback.slnx` with `<Build Project="false" />`, since it needs the android workload, a JDK and the Android SDK; built by path ([0184](adr/0184-the-editor-runs-on-android-with-its-plugins-linked-in.md)). |
 | `Flyback.Cli` | One file per command over `System.CommandLine` | The only place export lives ([0078](adr/0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md)); on the GPU where there is one, and exact to the bit with `--processor` ([0157](adr/0157-flyback-cli-render-draws-on-the-gpu.md)). |
 | `Flyback.Site` | `flyback-site`: the readers a submission is checked with, and the commands the preset site's workflows run | Never shipped; references the plugins the web pages link, to say what a browser lacks ([0175](adr/0175-the-preset-site-is-a-worker-and-github-reads-what-is-submitted.md)). The Worker is in `worker/`, tested with Vitest; the [site's containers](diagrams/site.svg) show how the two check a submission. |
+| `Flyback.Site.Client` | `SiteAdmin`, `SiteAddress`, `SiteMedia`, `SiteAnswer` | The admin API's address, token, uploads and refusals, for `flyback-site` and `flyback-cli render-presets`; no packages. |
 
 A project's namespace is its assembly name, with no exceptions: `Flyback.Ui`,
 `Flyback.Editor`, `Flyback.Editor.Desktop`, `Flyback.Editor.Web`, `Flyback.Engine`. A folder
@@ -207,7 +208,7 @@ and both work by pushing a substitute domain onto the emitter before resolving a
 
 | Backend | Where | Runs |
 |---|---|---|
-| Interpreter | `CompiledPatch.Evaluate` | Everything, always. **It is the specification.** |
+| Interpreter | `Interpreter`, `Arithmetic` | Everything, always. **It is the specification.** |
 | IL | `IlEmitter`, `IlOps`, `IlProgram`, `IlCompiler` | The CPU picture and the sound, once built, and every offline render ([0076](adr/0076-the-processor-runs-a-program-as-il-once-it-is-built.md)) |
 | GLSL | `GlslEmitter` | The live preview and live recording ([0035](adr/0035-a-glsl-backend-for-the-video-path.md)) |
 | JavaScript | `JsEmitter`, `JsLayout` | The web viewer's sound ([0160](adr/0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md)) |
@@ -1086,7 +1087,7 @@ the changelog.
 **Add an opcode.** Last resort; first try composing existing ops, then a stateful
 cell ([0041](adr/0041-a-plugin-can-hold-state-without-a-new-opcode.md)). It
 touches `OpCode.cs` (next number, never a reused one), `OpShape.cs`,
-`CompiledPatch.Run`, `IlOps` and `IlEmitter`, `GlslEmitter` (or the named list of
+`Interpreter.Run`, `IlOps` and `IlEmitter`, `GlslEmitter` (or the named list of
 ops that write nothing), and the `Emitter` if it needs a helper. `TotalityTests`,
 `IlProgramTests` and `GlslEmitterTests` fail until all of them agree, and the GLSL
 snapshots change. It moves the plugin contract's minor.

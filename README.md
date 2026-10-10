@@ -333,6 +333,7 @@ src/
   Flyback.Viewer.Web     the web viewer: the same, in a browser
   Flyback.Editor.Web     the web editor: the editor in a browser
   Flyback.Site           flyback-site: reads what is submitted to the preset site, for its workflows
+  Flyback.Site.Client    the preset site's admin API, as flyback-site and flyback-cli talk to it
 
 worker/                  the preset site as a Cloudflare Worker (deploy/cloudflare/README.md)
 

@@ -21,6 +21,7 @@ on:
       - "worker/**"
       - "site/**"
       - "src/Flyback.Site/**"
+      - "src/Flyback.Site.Client/**"
       - "src/Flyback.Viewer.Web/**"
       - "src/Flyback.Editor.Web/**"
       - "src/Flyback.Editor/**"

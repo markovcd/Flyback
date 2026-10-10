@@ -24,15 +24,11 @@
     <ProjectReference Include="..\Flyback.Assist\Flyback.Assist.csproj" />
     <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
     <ProjectReference Include="..\Flyback.Host\Flyback.Host.csproj" />
+    <ProjectReference Include="..\Flyback.Site.Client\Flyback.Site.Client.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="System.CommandLine" />
-  </ItemGroup>
-
-  <!-- The preset site's admin client, which render-presets uploads through as flyback-site's commands do. -->
-  <ItemGroup>
-    <Compile Include="..\Flyback.Site\Admin\SiteAdmin.cs" Link="Rendering\SiteAdmin.cs" />
   </ItemGroup>
 
   <!--

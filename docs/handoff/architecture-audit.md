@@ -14,11 +14,6 @@ three editor hosts, with no hand-built service outside composition; every public
 by decision (ADR-0035); the binder is one walk (ADR-0183); presets are C# by
 decision (ADR-0138).
 
-## 9. One feature written twice, smaller (Medium to Low)
-
-- **CLI and Site**: `Flyback.Cli.csproj:34` links `Site/Admin/SiteAdmin.cs` as source, and the media PUT and `--server` check are still written twice (`Cli/Rendering/MediaUpload.cs:25-30` vs `Site/Commands/PushMediaCommand.cs:95-100`; `RenderPresetsCommand.cs:95-100` vs `SiteAdmin.Client:16`). A `Flyback.Site.Client` library both reference. Check while there: `Flyback.Site.csproj:24-33` lists the web plugins twice, minus Drawings, and `LoadLinked(..., "WebPlugin")` names Drawings; if `Assembly.Load` fails there, a Drawings preset is reported as lacking. Not confirmed by running.
-- **`CompiledPatch`** (406) is the program description, the interpreter, the IL hand-over and the arithmetic library. `Arithmetic` and `Interpreter` beside it; ADR-0076's "IL calls the interpreter's own helpers" survives the move.
-
 ## 10. Tests (Medium to Low)
 
 - **Two headless harnesses for one editor.** `Flyback.Specs` does not reference `Flyback.Ui.Testing`; it carries a third `Application` subclass (`Support/Headless.cs`), its own session, and `Support/EditorDriver.cs` (906 code lines) and `Support/ViewerRun.cs` each re-implement `Settle()` and `Press()`. A fix to how a window settles lands in one harness and not the other. Specs references Ui.Testing and the drivers build on `UiTest`.
@@ -52,8 +47,12 @@ gestures are `ModuleDrag`, `WireDrag` and `RubberBand` under `CanvasGestures`.
 is `TextWriteBack`, the caret's selection `CaretFollow`, and a pasted patch
 file `PastedPatch`.
 `ContractSurfaceTests` checks members as well as types, and what only the host
-called is internal. A tool's arguments are `ToolFields`, which its schema
-is rendered from and its body reads through. A part with something to do at start
+called is internal. The preset site's admin client is `Flyback.Site.Client`, which
+`flyback-site` and `render-presets` both send through, and the site references
+every plugin a page may link, Drawings included. `CompiledPatch` describes the
+program; `Interpreter` runs it and `Arithmetic` holds the guards it and the IL
+share. A tool's arguments are `ToolFields`, which its schema is rendered from and
+its body reads through. A part with something to do at start
 declares an `IStartAt` phase, and `Startup.Load` returns a `DesktopLaunch`.
 Still written per shell, and small: the speaker handshake in two JS files, the
 viewer's and the CLI's `--size` and `--oversample` option declarations, and the

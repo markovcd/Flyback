@@ -7,10 +7,10 @@ namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// One method per op, holding what that op's case in
-/// <see cref="CompiledPatch"/>'s switch does, for the IL backend's methods to call.
+/// <see cref="Interpreter"/>'s switch does, for the IL backend's methods to call.
 /// </summary>
 /// <remarks>
-/// Every guard is the interpreter's own helper, called rather than written again,
+/// Every guard is the interpreter's own, from <see cref="Arithmetic"/>, called rather than written again,
 /// so a zero divisor or a non-finite power is answered in one place. What is
 /// written here is only the glue a case puts round them, and it is kept a line
 /// for a line with the case so the two can be read side by side. The tests that
@@ -29,21 +29,21 @@ internal static class IlOps
     [MethodImpl(Inline)] public static double Abs(double a) => Math.Abs(a);
     [MethodImpl(Inline)] public static double Sin(double a) => Math.Sin(a);
     [MethodImpl(Inline)] public static double Cos(double a) => Math.Cos(a);
-    [MethodImpl(Inline)] public static double Tan(double a) => CompiledPatch.Guard(Math.Tan(a));
+    [MethodImpl(Inline)] public static double Tan(double a) => Arithmetic.Guard(Math.Tan(a));
     [MethodImpl(Inline)] public static double Sqrt(double a) => a <= 0d ? 0d : Math.Sqrt(a);
     [MethodImpl(Inline)] public static double Floor(double a) => Math.Floor(a);
     [MethodImpl(Inline)] public static double Ceil(double a) => Math.Ceiling(a);
-    [MethodImpl(Inline)] public static double Fract(double a) => CompiledPatch.Fract(a);
-    [MethodImpl(Inline)] public static double Sign(double a) => CompiledPatch.Signum(a);
-    [MethodImpl(Inline)] public static double Exp(double a) => CompiledPatch.Guard(Math.Exp(a));
+    [MethodImpl(Inline)] public static double Fract(double a) => Arithmetic.Fract(a);
+    [MethodImpl(Inline)] public static double Sign(double a) => Arithmetic.Signum(a);
+    [MethodImpl(Inline)] public static double Exp(double a) => Arithmetic.Guard(Math.Exp(a));
     [MethodImpl(Inline)] public static double Log(double a) => a <= 0d ? 0d : Math.Log(a);
 
     [MethodImpl(Inline)] public static double Add(double a, double b) => a + b;
     [MethodImpl(Inline)] public static double Sub(double a, double b) => a - b;
     [MethodImpl(Inline)] public static double Mul(double a, double b) => a * b;
-    [MethodImpl(Inline)] public static double Div(double a, double b) => CompiledPatch.Divide(a, b);
-    [MethodImpl(Inline)] public static double Mod(double a, double b) => CompiledPatch.Modulo(a, b);
-    [MethodImpl(Inline)] public static double Pow(double a, double b) => CompiledPatch.Guard(Math.Pow(a, b));
+    [MethodImpl(Inline)] public static double Div(double a, double b) => Arithmetic.Divide(a, b);
+    [MethodImpl(Inline)] public static double Mod(double a, double b) => Arithmetic.Modulo(a, b);
+    [MethodImpl(Inline)] public static double Pow(double a, double b) => Arithmetic.Guard(Math.Pow(a, b));
     [MethodImpl(Inline)] public static double Min(double a, double b) => Math.Min(a, b);
     [MethodImpl(Inline)] public static double Max(double a, double b) => Math.Max(a, b);
     [MethodImpl(Inline)] public static double Atan2(double a, double b) => Math.Atan2(a, b);
@@ -52,7 +52,7 @@ internal static class IlOps
 
     [MethodImpl(Inline)] public static double Clamp(double a, double b, double c) => Math.Clamp(a, b, Math.Max(b, c));
     [MethodImpl(Inline)] public static double Mix(double a, double b, double f) => a + (b - a) * f;
-    [MethodImpl(Inline)] public static double Smoothstep(double a, double b, double c) => CompiledPatch.Smoothstep(a, b, c);
+    [MethodImpl(Inline)] public static double Smoothstep(double a, double b, double c) => Arithmetic.Smoothstep(a, b, c);
     [MethodImpl(Inline)] public static double Noise3(double a, double b, double c) => Noise.Value3(a, b, c);
 
     [MethodImpl(Inline)] public static double LoadLive(LiveValues? live, float k) => live?.At((int)k) ?? 0d;
@@ -85,7 +85,7 @@ internal static class IlOps
         var slot = (int)k;
 
         if (delays is not null) delays.WritePlane(slot, value);
-        else if ((uint)slot < (uint)planes.Length) planes[slot] = CompiledPatch.Bounded(value);
+        else if ((uint)slot < (uint)planes.Length) planes[slot] = Arithmetic.Bounded(value);
     }
 
     /// <summary><paramref name="slot"/> is counted when the IL is emitted, where the interpreter counts it as it walks.</summary>
@@ -95,7 +95,7 @@ internal static class IlOps
         if (delays is null) return a;
 
         var heard = delays.Read(slot, c, k);
-        delays.Write(slot, a + CompiledPatch.Feedback(b) * heard);
+        delays.Write(slot, a + Arithmetic.Feedback(b) * heard);
         return heard;
     }
 
@@ -105,7 +105,7 @@ internal static class IlOps
         if (delays is null) return a;
 
         var heard = delays.Read(slot, c, k);
-        var gain = CompiledPatch.Feedback(b);
+        var gain = Arithmetic.Feedback(b);
         var stored = a + gain * heard;
 
         delays.Write(slot, stored);
@@ -120,11 +120,11 @@ internal static class IlOps
 
     [MethodImpl(Inline)]
     public static void HsvToRgb(ref double bank, int first, double h, double s, double v) =>
-        CompiledPatch.HsvToRgb(h, s, v, Triple(ref bank, first));
+        Arithmetic.HsvToRgb(h, s, v, Triple(ref bank, first));
 
     [MethodImpl(Inline)]
     public static void SampleFeedback(ref double bank, int first, ref FeedbackFrame feedback, double u, double v) =>
-        CompiledPatch.Sample(feedback, u, v, Triple(ref bank, first));
+        Arithmetic.Sample(feedback, u, v, Triple(ref bank, first));
 
     [MethodImpl(Inline)]
     public static void SamplePicture(ref double bank, int first, LoadedImage[] pictures, float k, double a, double b)

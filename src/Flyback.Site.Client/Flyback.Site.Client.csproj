@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    How a program talks to the preset site's admin API: the address, the Access
+    service token and the site's refusals. flyback-site's commands and flyback-cli's
+    render-presets both send through it.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Flyback.Site.Client</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="flyback-cli" />
+    <InternalsVisibleTo Include="flyback-site" />
+    <InternalsVisibleTo Include="Flyback.Cli.Tests" />
+    <InternalsVisibleTo Include="Flyback.Site.Tests" />
+    <InternalsVisibleTo Include="Flyback.Specs" />
+  </ItemGroup>
+
+</Project>

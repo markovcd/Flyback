@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.Net.Http.Json;
 using Flyback.Site.Admin;
 using Flyback.Site.Checking;
+using Flyback.Site.Client;
 using Flyback.Site.Reading;
 
 namespace Flyback.Site.Commands;
