@@ -15,8 +15,6 @@
 # which is what CI runs on every change. See "Building with Docker" in the
 # README for what comes out and how to get at it.
 
-ARG SDK=mcr.microsoft.com/dotnet/sdk:10.0
-
 # One runtime identifier per platform. The project supports two more — win-arm64
 # and osx-x64 — and asking for them is an argument rather than an edit:
 #
@@ -39,12 +37,19 @@ ARG VERSION=0.1.0-dev
 # The preset site's Worker (worker/), type-checked and tested in workerd against a
 # local D1 and R2. Its development packages are restored exactly as
 # package-lock.json has them, as the NuGet restore below is locked.
-FROM node:24-bookworm-slim AS worker
+#
+# Every image this file starts from is pinned by digest, as an action is pinned to
+# a commit, and Dependabot says when one should move. A workflow or a script that
+# runs one names it exactly as here (BaseImageTests), and global.json names the
+# SDK's version.
+FROM node:24.21.0-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20 AS worker
 WORKDIR /worker
 COPY worker/package.json worker/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY worker/ ./
 RUN npx tsc --noEmit && npx vitest run && touch /tested
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0.401@sha256:e70cdb7f80b0348f5cb85f19a8f670fca061f033d57eed12fa003d58b0e06317 AS sdk
 
 # What the SDK image does not already have, in three stages so each package is
 # listed once and a stage takes only what it needs. An argument declared above the
@@ -71,7 +76,7 @@ RUN npx tsc --noEmit && npx vitest run && touch /tested
 # display, which is what lets the tests and the renderer draw the picture the way
 # flyback-cli render does on a real card (ADR-0157). Without them those tests skip
 # themselves.
-FROM ${SDK} AS base
+FROM sdk AS base
 RUN apt-get update \
  && apt-get install --yes --no-install-recommends ffmpeg libfontconfig1 libx11-6 \
       libegl1 libegl-mesa0 libgl1-mesa-dri libopengl0 \
@@ -396,7 +401,7 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 #
 # PACKAGE=folders lays each platform out as a folder to run instead of a zip,
 # which is what release.sh asks for off GitHub; SHA256SUMS then lists every file.
-FROM ${SDK} AS signed
+FROM sdk AS signed
 ARG VERSION
 ARG PACKAGE=zips
 

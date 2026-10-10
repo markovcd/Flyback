@@ -33,24 +33,3 @@ runner, whose PATH is what put WSL's `bash` first.
 **Fix:** try `shell: bash` once on the Windows runner. If it holds, six steps
 become three. If it does not, a composite action under `.github/actions/gate`
 holds the pair once and the three workflows call it.
-
-## 4. Nothing pins the SDK or a base image (Medium)
-
-`global.json` names a test runner and no SDK version. The gate builds on
-`mcr.microsoft.com/dotnet/sdk:10.0`, Android on `setup-dotnet` at `10.0.x`,
-Validate on `sdk:10.0` again, Worker on `runtime:10.0` and `node:24-bookworm-slim`,
-the Dockerfile's `worker` stage on `node:24-bookworm-slim` a second time. The
-restore is locked, so no package moves, but the compiler, the wasm-tools
-workload and the Android workload move with each SDK patch, silently. A release
-built tomorrow is not the gate that passed today, which `ci-cd.md` says it is.
-`dependabot.yml` says the base images are not listed because an `ARG` is not a
-literal `FROM`; so nothing says when they moved.
-
-**Fix:** pin, the same way the actions are pinned. A `base` stage holds the one
-literal `FROM mcr.microsoft.com/dotnet/sdk:10.0.<patch>@sha256:…` with its apt
-packages, and `dependabot.yml` gets a `docker` entry that reads it.
-`global.json` names the same SDK with `rollForward: latestPatch`, so a developer's
-build and the gate agree. `worker.yml` and `validate.yml` take their image tags
-from the Dockerfile's stages, or carry the same digest with a comment saying
-where it is kept. The alternative is a line in `pipeline.md` saying base images
-float on purpose; either is a decision, and neither is made today.

@@ -11,8 +11,9 @@
 # locked restore, which is the failure saying to restore once with the
 # force-evaluate switch and commit what it rewrites.
 #
-# The Dockerfile's base images are not listed: they are reached through an ARG
-# rather than a literal FROM, which Dependabot does not read.
+# The Dockerfile's base images are pinned by digest in literal FROM lines, which
+# the docker entry reads. A workflow or a script that runs one is moved by hand
+# with it (BaseImageTests), and global.json when the SDK's feature band moves.
 
 version: 2
 
@@ -52,6 +53,12 @@ updates:
           - Microsoft.Testing.*
           - CsCheck
           - BenchmarkDotNet
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    labels: []
 
   # The Worker's development packages, locked in worker/package-lock.json.
   - package-ecosystem: npm

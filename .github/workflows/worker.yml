@@ -132,7 +132,7 @@ jobs:
           rm -rf worker/public
           cp -r out/public worker/public
           docker run --rm -e CLOUDFLARE_API_TOKEN -e CLOUDFLARE_ACCOUNT_ID -e WORKER_ENVIRONMENT -e CI=true -e WRANGLER_SEND_METRICS=false \
-            -v "$PWD/worker":/w -w /w node:24-bookworm-slim \
+            -v "$PWD/worker":/w -w /w node:24.21.0-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20 \
             sh -c 'npm ci --no-audit --no-fund && npx wrangler d1 migrations apply DB --remote --env "$WORKER_ENVIRONMENT" && npx wrangler deploy --env "$WORKER_ENVIRONMENT"'
 
       # A hostname the deploy has just taken takes a minute to resolve.
@@ -158,11 +158,13 @@ jobs:
             echo "$path"
           done
 
+      # The gate's SDK image rather than a runtime image, so one pin covers both.
       - name: Give the site its defaults and say what the pages lack
         env:
           FLYBACK_ACCESS_ID: ${{ secrets.FLYBACK_ACCESS_ID }}
           FLYBACK_ACCESS_SECRET: ${{ secrets.FLYBACK_ACCESS_SECRET }}
         run: |
-          docker run --rm -e PRESET_SITE_URL -e FLYBACK_ACCESS_ID -e FLYBACK_ACCESS_SECRET -v "$PWD/out":/out mcr.microsoft.com/dotnet/runtime:10.0 \
+          docker run --rm -e PRESET_SITE_URL -e FLYBACK_ACCESS_ID -e FLYBACK_ACCESS_SECRET -v "$PWD/out":/out \
+            mcr.microsoft.com/dotnet/sdk:10.0.401@sha256:e70cdb7f80b0348f5cb85f19a8f670fca061f033d57eed12fa003d58b0e06317 \
             sh -c 'dotnet /out/flyback-site/flyback-site.dll push-defaults --server "$PRESET_SITE_URL" /out/defaults/* \
               && dotnet /out/flyback-site/flyback-site.dll validate-submissions --server "$PRESET_SITE_URL" --lacks'

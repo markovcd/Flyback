@@ -9,6 +9,7 @@
 ## Workflows are code that holds the keys
 
 - **Every action is pinned to a commit SHA**, with its version in a comment. A tag is the action author's to move. `.github/dependabot.yml` says when a pin should move.
+- **Every base image is pinned to a digest**, with its version in the tag, in a literal `FROM` in the Dockerfile; a workflow or script that runs one names it the same (`BaseImageTests`), and `global.json` names the SDK. A release built tomorrow builds on what the gate passed on today.
 - **Least permission.** Each workflow declares `permissions:`, `contents: read` unless it publishes.
 - **Secrets only where needed.** `RELEASE_SIGNING_KEY` reaches the Release and Site workflows and nothing triggered by a pull request.
 - **The Android editor builds apart from the gate.** `android.yml` needs a workload, a JDK and the Android SDK, none in the gate image (ADR-0184), so it runs on GitHub's machines, `main` included: on a pull request, and on `main` when Build passes on a push (`workflow_run`). `/release` refuses a commit it has not passed on.
