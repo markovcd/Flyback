@@ -22,10 +22,10 @@ Feature: The assistant's column reads as a conversation
   Scenario: The assistant's Markdown is drawn rather than shown as typed
     Given the assistant replied
       """
-      **Loudness:** about right.
+      **Verdict:** about right.
       - `level` sits at 0.8
       - nothing clips
       """
-    Then "Loudness:" is drawn in bold
+    Then "Verdict:" is drawn in bold
     And "level" is drawn as code
-    And the reply reads "Loudness: about right.", "•  level sits at 0.8" and "•  nothing clips"
+    And the reply reads "Verdict: about right.", "•  level sits at 0.8" and "•  nothing clips"
