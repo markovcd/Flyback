@@ -2,72 +2,51 @@
 
 ## Unreleased
 
-- A saved patch holds only what was set, not what Flyback works out from it, such as a group's module count or a knob's MIDI label.
+### Presets
 
-- An OpenAI-compatible or Gemini endpoint that answers with an error page instead of JSON says so, rather than quoting the JSON reader.
+- A Drawings plugin on the preset site plays an SVG, an OBJ model or a PNG's outlines as sound that draws it on a Beam, with Rotate 3D, Translate 3D, Scale 3D and Perspective to turn and project a model, and a Wireframe preset that spins a cube.
+- A Wandering tune preset plays a melody nobody wrote and draws it as a scrolling score.
+- A Visualizer preset draws whatever the Line In hears as a turning kaleidoscope the kick flashes.
 
-- On Linux, a JACK server that has stopped answering no longer freezes Flyback when it looks for one.
+### Assistant
 
-- On Linux, forgetting a key that was never kept no longer reports an error.
+- With a decision model chosen under Settings → Decisions, a word a module is known by finds it in the module list (a Slew by portamento), a phrase that names no module finds the ones it describes, a message that surely asks a question is answered rather than built from, and the status line's complaints come likeliest first; `flyback-cli modules --find` and `check --triage` do the same.
+- Asked to listen, an assistant with no model able to hear, such as Claude Code or Codex, says it cannot hear.
 
-- A patch file with no knob values for a module opens with the module's defaults instead of crashing.
+### Editor
 
-- On Windows, Flyback plays through an ASIO driver when you pick ASIO on the Sound tab, on the driver's first two outputs at its own block size.
-
-- Where more than one way of playing sound is installed, the Sound tab asks which one plays.
-
+- On Windows, Flyback plays through an ASIO driver when you pick ASIO on the Sound tab; on Linux, through a running JACK server. Where more than one way of playing sound is installed, the Sound tab asks which one plays.
 - Over the editor's full-screen picture, Space pauses and F11 gives the window back, as in the viewer.
-
-- Probing a chat-completions endpoint says when a rate limit left a model's senses unsure, as probing Gemini does.
-
-- On Android, the web editor's sound stops other playback, as the web viewer's does.
-
-- On Linux, Flyback plays through a running JACK server, at its sample rate, as two ports patched to the system playback ports or left for you to route.
-
+- A saved patch holds only what was set, not what Flyback works out from it.
 - The plugin contract no longer offers what only Flyback itself calls, such as `NodeCatalog.Install` and `PatchWorkbench.Edits`.
+
+### Viewer
 
 - A Line In in `flyback-viewer` hears the sound input, as it does in the editor.
 
+### Command line
+
+- `flyback-cli decide` asks a decision model typed questions about some text and answers each with a probability; `--set`, `--for` and `--save` set the model up, as Settings → Decisions does.
 - `flyback-cli decide`, `modules --find` and `check --triage` take `--settings`, as `render` does.
-
-- `flyback-cli render --size` takes the names the viewer takes, `720p`, `1080p` or `square`, beside WIDTHxHEIGHT.
-
-- A Drawings plugin on the preset site plays an SVG, an OBJ model or a PNG's outlines as sound that draws it on a Beam, with Rotate 3D, Translate 3D, Scale 3D and Perspective to turn and project a model, and a Wireframe preset that spins a cube.
-
-- A Wandering tune preset plays a melody nobody wrote, a wandering value snapped to a pentatonic with each note its own length, and draws it as a scrolling score.
-
-- A Visualizer preset draws whatever the Line In hears as a turning kaleidoscope the kick flashes, without playing it back, so a monitor of the speakers can be its input.
-
-- `flyback-cli render` of a clip whose picture listens to the sound, through a Meter, a Scope, an Analyzer or a Beam, plays that sound even where none of it reaches the speakers, as a still already did.
-
-- A Beam, such as the Lissajous preset's, draws on its gallery tile while the preset is tried, instead of staying black.
-
+- `flyback-cli render --size` takes `720p`, `1080p` or `square` beside WIDTHxHEIGHT.
+- `flyback-cli render` of a clip whose picture listens to the sound plays that sound even where none of it reaches the speakers.
 - `install.sh --no-links` writes only the copy, leaving the command links, menu entry, shortcut and PATH as they were.
-
-- Typed into the module list, a word a module is known by finds it (a Slew by portamento, a Reverb by room), and a phrase that names no module finds the modules it describes, likeliest first, when a decision model is chosen under Settings → Decisions; `flyback-cli modules --find` lists the same.
-
-- With a decision model chosen, a message to the assistant is read first: one surely asking a question, about a module or the patch, is answered rather than built from, and a proposal that may not do what was asked says so beside it.
-
-- With a decision model chosen, a patch's complaints on the status line are said again likeliest first, the one most likely why it is silent or dark leading; `flyback-cli check --triage` orders them the same way.
-
-- `flyback-cli decide` asks a decision model typed questions about some text and answers each with a probability, through a decision server such as a laya-serve of your own, and with `--set`, `--for` and `--save` sets the model up, for one use at a time where a use does better on another checkpoint; Settings → Decisions sets the same, a use at a time.
-
-- Asked to listen, an assistant that has no model able to hear, such as Claude Code or Codex, says it cannot hear without pointing at a setting it does not have.
 
 ### Fixes
 
 - The editor starts with an assistant chosen and a prose budget too small to describe every module, instead of failing to open.
-- A module's settings can be reached on a short inspector, as on a phone held sideways: its name and buttons fold into a pinned header with on/off, delete and a menu of every action with its name, and the plate scrolls away with the rows.
-- The inspector's plate fits the hand: under a finger, worded Bypass, Duplicate, Delete and More buttons under the name; under a mouse on a wide panel, its buttons in one row beside the name, which now reads from the left. Expand, on the folded header and on a finger's strip, hides the picture so the inspector has the whole side column. Renaming under a finger asks in a dialog at the top of the window, clear of the on-screen keyboard, saying what is being renamed.
-- A finger that wobbles while tapping an Arrangement's grid switches the cell, and a scroll that starts on a sequencer's notes no longer adds one or leaves a row out of place.
-- A finger swiping up or down over the inspector scrolls it instead of moving the slider, level or grid cell it started on, and sliding sideways turns them; a knob turns under a finger moved up or right, and a socket's tooltip comes down when the finger lifts.
+- The inspector works under a finger: it scrolls instead of moving the control the finger started on, folds its name and buttons into a pinned header on a short screen, and has Bypass, Duplicate, Delete and More buttons, an Expand that hides the picture, and a rename dialog clear of the on-screen keyboard.
+- A finger that wobbles while tapping an Arrangement's grid switches the cell, and a scroll that starts on a sequencer's notes no longer adds one.
 - The code view a finger opens waits for its text to be tapped before bringing up the on-screen keyboard.
-- A tall window gives the picture only the height its shape fills, so the inspector gets the room that was black above and below it, and every splitter can be taken hold of a fingertip either side of its gap.
-- A patch stays framed when the window or the screen changes size before anything has moved the view, so one opened on a phone or turned sideways is in view whole instead of small in a corner.
-- A MIDI file with thousands of tempo changes opens at once instead of freezing the editor, and of two changes at one moment the later one holds.
-- A Beam fed a signal too large for a number draws instead of failing every frame.
-- `flyback-cli render` refuses a `--seconds`, `--from`, `--at` or `--fps` it cannot use instead of overflowing or running for ever.
-- `flyback-cli compare` refuses a `--seconds` of nothing instead of calling any two patches the same.
+- A tall window gives the picture only the height its shape fills, and every splitter can be taken hold of a fingertip either side of its gap.
+- A patch stays framed when the window or the screen changes size before anything has moved the view.
+- A MIDI file with thousands of tempo changes opens at once instead of freezing the editor.
+- A Beam fed a signal too large for a number draws instead of failing every frame, and draws on its gallery tile while the preset is tried.
+- On Android, the web editor's sound stops other playback, as the web viewer's does.
+- On Linux, a JACK server that has stopped answering no longer freezes Flyback, and forgetting a key that was never kept no longer reports an error.
+- A patch file with no knob values for a module opens with the module's defaults instead of crashing.
+- An OpenAI-compatible or Gemini endpoint that answers with an error page says so, and probing a chat-completions endpoint says when a rate limit left a model's senses unsure.
+- `flyback-cli render` and `compare` refuse a `--seconds`, `--from`, `--at` or `--fps` they cannot use instead of overflowing, running for ever or calling any two patches the same.
 - A number too large to hold, written on a knob, a knob's range or a module's setting in the code view, is refused there instead of stopping the patch from saving.
 - A damaged thumbnail in the gallery's cache is drawn again instead of running out of memory.
 - A `settings.json` or `allowed-plugins.json` with a key written twice reads as damaged: the next save replaces the one, and the other allows nothing instead of stopping Flyback from starting.
