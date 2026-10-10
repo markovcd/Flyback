@@ -1,11 +1,11 @@
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Flyback.Assist;
 using Flyback.Editor.Assist;
 using Flyback.Specs.Support;
 using Reqnroll;
 using Shouldly;
+using Flyback.Ui.Testing;
 
 namespace Flyback.Specs.Steps;
 
@@ -28,7 +28,7 @@ public sealed class AssistantWorkingSteps(HeadlessTurn turn) : IDisposable
 
     [When("the folded line is pressed")]
     public void WhenPressed() =>
-        Headless.Run(() => Steps().Single().RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
+        Headless.Run(() => UiTest.Press(Steps().Single()));
 
     [Then("the transcript has one folded line counting {int} steps")]
     public void ThenFolded(int count) => Counting(count, open: false);

@@ -1,4 +1,4 @@
-﻿using Flyback.Core;
+using Flyback.Core;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -100,14 +100,6 @@ public class OutputSettingsTests : EditorTest
         Dispatcher.UIThread.RunJobs();
         window.UpdateLayout();
     }
-
-    /// <summary>
-    /// A toolbar control by the name it was given. The buttons up there are
-    /// glyphs now, and a glyph is a poor thing to write an assertion against.
-    /// </summary>
-    private static T Named<T>(Visual within, string name)
-        where T : Control =>
-        All<T>(within).Single(c => c.Name == name);
 
     /// <summary>What every button in the window is labeled, in tree order.</summary>
     private static IEnumerable<string?> Buttons(MainWindow window) =>

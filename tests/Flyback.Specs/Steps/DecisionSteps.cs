@@ -39,7 +39,7 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
     [Given("the decision models that are installed")]
     public void GivenTheModels()
     {
-        catalog = PluginHost.Load(PluginHost.DefaultDirectory, PluginTrust.Shipped(PluginHost.DefaultDirectory));
+        catalog = ShippedPlugins.Loaded;
 
         // The scripted one, which answers without a model or a network.
         new DecisionSettings { Model = "scripted" }.Save(SettingsPath);
@@ -48,7 +48,7 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
     [Given("decisions are turned off")]
     public void GivenOff()
     {
-        catalog ??= PluginHost.Load(PluginHost.DefaultDirectory, PluginTrust.Shipped(PluginHost.DefaultDirectory));
+        catalog ??= ShippedPlugins.Loaded;
         new DecisionSettings { Model = DecisionSettings.Off }.Save(SettingsPath);
     }
 

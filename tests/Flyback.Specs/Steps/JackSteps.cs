@@ -1,5 +1,4 @@
 using Flyback.Plugins.Audio;
-using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
 using Flyback.Plugins.Testing;
 using Flyback.Specs.Support;
@@ -13,8 +12,6 @@ namespace Flyback.Specs.Steps;
 [Binding]
 public sealed class JackSteps(IUnitTestRuntimeProvider runtime) : IDisposable
 {
-    private static readonly PluginCatalog Installed = PluginHost.Load(PluginHost.DefaultDirectory, PluginTrust.Shipped(PluginHost.DefaultDirectory));
-
     private JackDaemon? daemon;
     private IAudioDevice? device;
     private long samples;
@@ -22,18 +19,18 @@ public sealed class JackSteps(IUnitTestRuntimeProvider runtime) : IDisposable
     [Given("a JACK server is running")]
     public void GivenAServer()
     {
-        daemon = new JackDaemon(Installed.AudioOutputs.Single(o => o.Id == "jack"));
+        daemon = new JackDaemon(ShippedPlugins.Loaded.AudioOutputs.Single(o => o.Id == "jack"));
 
         Needs.Tool(runtime, daemon.Available, daemon.Why);
     }
 
     [Then("the sound plays through JACK")]
-    public static void ThenItPlaysThroughJack() => Installed.PreferredAudioOutput!.Id.ShouldBe("jack");
+    public static void ThenItPlaysThroughJack() => ShippedPlugins.Loaded.PreferredAudioOutput!.Id.ShouldBe("jack");
 
     [When("the sound plays through JACK for {int} seconds")]
     public void WhenItPlays(int seconds)
     {
-        var output = Installed.PreferredAudioOutput!;
+        var output = ShippedPlugins.Loaded.PreferredAudioOutput!;
 
         device = output.Create(new AudioFormat(48000, 2, 30), SettingValues.None.With("connect", "none"));
 

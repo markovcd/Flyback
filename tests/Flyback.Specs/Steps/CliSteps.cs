@@ -37,9 +37,6 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
 
     private const string ShotName = "shot.png";
 
-    private static readonly Lazy<PluginCatalog> Shipped =
-        new(() => PluginHost.Load(PluginHost.DefaultDirectory, PluginTrust.Shipped(PluginHost.DefaultDirectory)));
-
     private string? packed;
 
     /// <summary>The patch an oversampled render is compared against.</summary>
@@ -395,11 +392,11 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     [Then("{string} opens as the preset {string}")]
     public void ThenOpensAsPreset(string saved, string name)
     {
-        var preset = Shipped.Value.Presets.Single(p => p.Name == name).Build(Shipped.Value.Modules);
+        var preset = ShippedPlugins.Loaded.Presets.Single(p => p.Name == name).Build(ShippedPlugins.Loaded.Modules);
         var opened = PatchFile.Open(new FileInfo(Path(saved)), null).Patch.ShouldNotBeNull().Patch;
 
-        opened.CompileForAudio(Shipped.Value.Modules).Program.Ops
-            .ShouldBe(preset.CompileForAudio(Shipped.Value.Modules).Program.Ops);
+        opened.CompileForAudio(ShippedPlugins.Loaded.Modules).Program.Ops
+            .ShouldBe(preset.CompileForAudio(ShippedPlugins.Loaded.Modules).Program.Ops);
     }
 
     [Then("the command says to save it as a bundle to take its recordings along")]
@@ -415,12 +412,12 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     [Then("the bundle holds the preset and every file it carries")]
     public void ThenBundleHoldsPreset()
     {
-        var preset = Shipped.Value.Presets.Single(p => p.Name == packed);
+        var preset = ShippedPlugins.Loaded.Presets.Single(p => p.Name == packed);
 
         using var archive = File.OpenRead(Path(Bundle));
-        var bundle = PatchBundle.Read(archive, Shipped.Value.Modules);
+        var bundle = PatchBundle.Read(archive, ShippedPlugins.Loaded.Modules);
 
-        bundle.Patch.Nodes.Count.ShouldBe(preset.Build(Shipped.Value.Modules).Nodes.Count);
+        bundle.Patch.Nodes.Count.ShouldBe(preset.Build(ShippedPlugins.Loaded.Modules).Nodes.Count);
         preset.Files.ShouldNotBeNull();
         bundle.Files.Values.Select(Convert.ToBase64String).Order()
             .ShouldBe(preset.Files().Values.Select(Convert.ToBase64String).Order());
@@ -625,7 +622,7 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     private void Run(params string[] arguments) => Run(() => PluginCatalog.Empty, arguments);
 
     /// <summary>Runs with the plugins that ship, as the installed program loads them.</summary>
-    private void RunShipped(params string[] arguments) => Run(() => Shipped.Value, arguments);
+    private void RunShipped(params string[] arguments) => Run(() => ShippedPlugins.Loaded, arguments);
 
     private void Run(Func<PluginCatalog> catalog, string[] arguments)
     {

@@ -17,40 +17,18 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>The About window, opened on its own, headless.</summary>
 [Binding]
-public sealed class AboutSteps(HeadlessTurn turn)
+public sealed class AboutSteps(HeadlessTurn turn) : HeadlessWindow(turn)
 {
     /// <summary>How many turns the UI thread is given after a click, enough for a clipboard's round trip.</summary>
     private const int Turns = 4;
 
-    private Window? window;
-
     [AfterScenario]
-    public void Close()
-    {
-        try
-        {
-            if (window is not { } open) return;
-
-            window = null;
-
-            Headless.Run(() =>
-            {
-                open.Close();
-                Dispatcher.UIThread.RunJobs();
-            });
-        }
-        finally
-        {
-            turn.Leave(this);
-        }
-    }
+    public void CloseWindow() => Dispose();
 
     [Given("the About window is open")]
     public void GivenAboutIsOpen()
     {
-        turn.Take(this);
-
-        window = Headless.Run(() =>
+        Shown = Run(() =>
         {
             var open = new Window { SizeToContent = SizeToContent.WidthAndHeight, Content = About.View() };
 
@@ -64,7 +42,7 @@ public sealed class AboutSteps(HeadlessTurn turn)
 
     [When("its mark is clicked seven times")]
     public void WhenTheMarkIsClicked() =>
-        Headless.Run(async () =>
+        Run(async () =>
         {
             var open = Open;
             var mark = open.GetVisualDescendants().OfType<LogoMark>().Single();
@@ -89,7 +67,7 @@ public sealed class AboutSteps(HeadlessTurn turn)
     [Then("the clipboard holds text that builds the picture the mark plays")]
     public void ThenTheClipboardBuildsTheMark()
     {
-        var text = Headless.Run(async () =>
+        var text = Run(async () =>
             await (TopLevel.GetTopLevel(Open)?.Clipboard ?? throw new InvalidOperationException("no clipboard")).TryGetTextAsync());
 
         var built = PatchLanguage.Build(text.ShouldNotBeNull(), NodeCatalog.BuiltIn);
@@ -99,5 +77,5 @@ public sealed class AboutSteps(HeadlessTurn turn)
             .ShouldBe(LogoBeam.Patch().CompileForVideo(NodeCatalog.BuiltIn).Program.Ops);
     }
 
-    private Window Open => window.ShouldNotBeNull("the About window is not open");
+    private Window Open => Shown.ShouldNotBeNull("the About window is not open");
 }

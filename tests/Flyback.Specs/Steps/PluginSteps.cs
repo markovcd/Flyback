@@ -4,7 +4,6 @@ using Shouldly;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Engine.Render;
-using Flyback.Plugins.Hosting;
 using Flyback.Specs.Support;
 
 namespace Flyback.Specs.Steps;
@@ -28,7 +27,7 @@ public sealed class PluginSteps
 
     private const int Rate = GlobalConstants.SampleRate;
 
-    private static readonly ModuleCatalog Modules = PluginHost.Load(PluginHost.DefaultDirectory, PluginTrust.Shipped(PluginHost.DefaultDirectory)).Modules;
+    private static ModuleCatalog Modules => ShippedPlugins.Loaded.Modules;
 
     private Frame? frame;
     private float[]? sound;

@@ -44,12 +44,11 @@ namespace Flyback.Specs.Support;
 /// <see cref="HeadlessTurn"/>, so in a parallel run their durations are mostly
 /// waiting: one takes a tenth of a second or so on its own, after the first window's two.
 /// </remarks>
-public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDisposable
+public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : HeadlessWindow(turn)
 {
     /// <summary>How many turns the UI thread is given after a step, enough for a clipboard's round trip.</summary>
     private const int Turns = 4;
 
-    private MainWindow? window;
     private ServiceProvider? provider;
 
     private readonly List<string> said = [];
@@ -64,7 +63,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     public string Title => ReadWindow(open => open.Title ?? string.Empty);
 
     /// <summary>Whether the title says there is work to lose.</summary>
-    public bool Unsaved => Read(_ => window!.Title?.EndsWith('•') == true);
+    public bool Unsaved => Read(_ => Shown!.Title?.EndsWith('•') == true);
 
     /// <summary>Whether the toolbar's undo has anything to take back.</summary>
     public bool CanUndo => Read(canvas => canvas.History.CanUndo);
@@ -139,8 +138,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
         {
             var dialog = open.GetVisualDescendants().OfType<ModalOverlay>().Single();
 
-            dialog.GetVisualDescendants().OfType<Button>().Single(b => b.Content as string == label)
-                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            UiTest.Press(dialog.GetVisualDescendants().OfType<Button>().Single(b => b.Content as string == label));
         });
 
     /// <summary>Drags a wire out of a module's output and lets it go over bare canvas, low on the left.</summary>
@@ -438,8 +436,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     /// <summary>Presses the button the module panel names <paramref name="name"/>.</summary>
     public void PressPanelButton(string name) =>
         DoWindow((open, _) =>
-            Named<Button>(open, name)
-                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
+            UiTest.Press(Named<Button>(open, name)));
 
     /// <summary>Makes a randomize reach anywhere and land at once, on a seeded die.</summary>
     public void RandomizeAtOnce() =>
@@ -464,8 +461,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     /// <summary>Presses the heading of the shortcut group the empty panel calls <paramref name="title"/>.</summary>
     public void PressShortcutGroup(string title) =>
         DoWindow((open, _) =>
-            Named<Button>(open, "shortcuts:" + title)
-                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
+            UiTest.Press(Named<Button>(open, "shortcuts:" + title)));
 
     /// <summary>How wide the report line at the foot of the window is laid out, beside the counts as they stand now.</summary>
     public double ReportWidth => ReadWindow(open =>
@@ -479,12 +475,11 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     /// <summary>Opens the preset gallery from the toolbar.</summary>
     public void OpenGallery() =>
         DoWindow((open, _) =>
-            Named<Button>(open, "presets-glyph")
-                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
+            UiTest.Press(Named<Button>(open, "presets-glyph")));
 
     /// <summary>Chooses the open gallery's card for the preset called <paramref name="name"/>.</summary>
     public void ChooseCard(string name) =>
-        DoWindow((open, _) => Card(open, name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
+        DoWindow((open, _) => UiTest.Press(Card(open, name)));
 
     /// <summary>The type of every module on the canvas, as it is now.</summary>
     public IReadOnlyList<string> CanvasTypes => ReadWindow(open => (IReadOnlyList<string>)[.. CanvasIn(open).History.Patch.Nodes.Select(node => node.TypeId)]);
@@ -498,7 +493,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
         {
             var open = Window();
 
-            Named<Button>(open, "use-preset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            UiTest.Press(Named<Button>(open, "use-preset"));
 
             await Until(() => !open.GetVisualDescendants().OfType<ModalOverlay>().Any(), () => $"the gallery to close. {Situation(open)}");
 
@@ -508,9 +503,8 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
 
     /// <summary>Presses the row of the gallery's left column labeled <paramref name="label"/>.</summary>
     public void PressGalleryRow(string label) =>
-        DoWindow((open, _) => open.GetVisualDescendants().OfType<Button>()
-            .Single(b => b.Name == "filter-row" && (string)b.Tag! == label)
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
+        DoWindow((open, _) => UiTest.Press(open.GetVisualDescendants().OfType<Button>()
+            .Single(b => b.Name == "filter-row" && (string)b.Tag! == label)));
 
     /// <summary>The presets whose cards the open gallery shows, once every card has said what it works with.</summary>
     public IReadOnlyList<string> CardsShown =>
@@ -548,7 +542,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
         {
             var open = Window();
 
-            Named<Button>(open, "start-prompt").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            UiTest.Press(Named<Button>(open, "start-prompt"));
 
             await Until(sent, () => $"the prompt to reach the assistant. {Situation(open)}");
 
@@ -571,7 +565,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
             var box = Named<TextBox>(open, "instruction");
             var typed = box.Text;
 
-            Named<Button>(open, "expand-message").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            UiTest.Press(Named<Button>(open, "expand-message"));
 
             await Until(() => box.Text != typed && !box.IsReadOnly, () => $"the assistant to write the message out. {Situation(open)}");
 
@@ -585,7 +579,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
             var open = Window();
             var box = Named<TextBox>(open, "instruction");
 
-            Named<Button>(open, "expand-message").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            UiTest.Press(Named<Button>(open, "expand-message"));
 
             await Until(() => !box.IsReadOnly, () => $"the assistant to finish writing the message out. {Situation(open)}");
 
@@ -640,7 +634,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
             var entry = list.GetVisualDescendants().OfType<Button>().First(b => b.Content as string == name);
 
             entry.Focus();
-            entry.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            UiTest.Press(entry);
         });
 
     /// <summary>
@@ -662,8 +656,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
         {
             var (_, row) = Row(open, caption) ?? throw new InvalidOperationException($"the panel has no row '{caption}'");
 
-            (RowButton(row, button) ?? throw new InvalidOperationException($"the row '{caption}' has no {button}"))
-                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            UiTest.Press(RowButton(row, button) ?? throw new InvalidOperationException($"the row '{caption}' has no {button}"));
         });
 
     /// <summary>Renames the one module selected: a double-click on its name on the panel, then typing and Enter.</summary>
@@ -693,8 +686,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     public void OpenSettings(string tab) =>
         DoWindow((open, _) =>
         {
-            Named<Button>(open, "settings")
-                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            UiTest.Press(Named<Button>(open, "settings"));
 
             // The dialog is put up on a later turn than the click.
             for (var turn = 0; turn < 20 && !open.GetVisualDescendants().OfType<ModalOverlay>().Any(); turn++)
@@ -721,7 +713,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     /// <summary>The labels of the switches the page's gear offers, opening its panel.</summary>
     public IReadOnlyList<string> PageSettings => ReadWindow(open =>
     {
-        Named<Button>(open, "settings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        UiTest.Press(Named<Button>(open, "settings"));
         Dispatcher.UIThread.RunJobs();
 
         return (IReadOnlyList<string>)[.. PageSwitches().Where(box => Ancestors(box).Prepend(box).All(c => c.IsVisible)).Select(box => (string)box.Content!)];
@@ -1064,7 +1056,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     /// <summary>Deletes the first module on the canvas that is not the Output, as selecting it and pressing Delete does.</summary>
     public void DeleteAModule()
     {
-        var module = CanvasIn(window!).History.Patch.Nodes.First(node => node.TypeId != NodeCatalog.OutputTypeId);
+        var module = CanvasIn(Shown!).History.Patch.Nodes.First(node => node.TypeId != NodeCatalog.OutputTypeId);
 
         Select(module.Id);
         Press(PhysicalKey.Delete);
@@ -1074,16 +1066,14 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     public void Press(PhysicalKey key, RawInputModifiers modifiers = RawInputModifiers.None) =>
         Do(canvas =>
         {
-            var open = window!;
+            var open = Shown!;
 
-            // The keyboard is the whole program's, so the window takes it back first, onto
-            // the canvas or, where that is put away, onto whatever the window keeps it on.
+            // Onto the canvas or, where that is put away, onto whatever the window keeps the focus on.
             open.Activate();
 
             if (!canvas.Focus()) (open.FocusManager.GetFocusedElement() as InputElement)?.Focus();
 
-            open.KeyPressQwerty(key, modifiers);
-            open.KeyReleaseQwerty(key, modifiers);
+            PressKey(open, key, modifiers);
         });
 
     /// <summary>Presses a key with Ctrl held, as every editing shortcut is.</summary>
@@ -1146,7 +1136,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
         DoWindow((open, _) =>
         {
             Source(open).Text = source;
-            Named<Button>(open, "apply").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            UiTest.Press(Named<Button>(open, "apply"));
         });
     }
 
@@ -1179,7 +1169,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
             var open = Window();
 
             if (!open.GetVisualDescendants().OfType<ModalOverlay>().Any())
-                Named<Button>(open, "presets-glyph").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                UiTest.Press(Named<Button>(open, "presets-glyph"));
 
             TextBlock? Status() => open.GetVisualDescendants().OfType<TextBlock>().SingleOrDefault(t => t.Name == "site-status");
 
@@ -1209,7 +1199,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
                 ?? throw new InvalidOperationException(
                     $"The gallery lists no “{name}” from the preset site; it lists: {string.Join(", ", SharedTiles(open).Select(t => ((SitePreset)t.Tag!).Name))}. {Situation(open)}");
 
-            tile.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            UiTest.Press(tile);
 
             await Until(() => Answered() > before, () => $"the editor to say what came of picking “{name}”. {Situation(open)}");
 
@@ -1238,7 +1228,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
         {
             var open = Window();
 
-            Named<Button>(open, "letter").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            UiTest.Press(Named<Button>(open, "letter"));
             Settle();
 
             var letter = Named<StackPanel>(open, "letter");
@@ -1247,7 +1237,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
             Named<TextBox>(letter, "message").Text = message;
             Settle();
 
-            Named<Button>(letter, "send").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            UiTest.Press(Named<Button>(letter, "send"));
 
             await Until(
                 () => !open.GetVisualDescendants().OfType<ModalOverlay>().Any() || Named<TextBlock>(letter, "letterStatus").IsVisible,
@@ -1268,27 +1258,17 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
             + (asking.Count == 0 ? "Nothing is up over the window." : $"Up over the window: {string.Join(" / ", asking)}");
     }
 
-    /// <summary>
-    /// The one <typeparamref name="T"/> named <paramref name="name"/> under <paramref name="within"/>,
-    /// or a failure naming the ones there are.
-    /// </summary>
+    /// <summary><see cref="UiTest.Named{T}"/>, with what the window was doing when it failed.</summary>
     private static T Named<T>(Visual within, string name) where T : Control
     {
-        var all = within.GetVisualDescendants().OfType<T>().ToList();
-        var named = all.Where(control => control.Name == name).ToList();
-
-        if (named.Count == 1) return named[0];
-
-        // Less the parts of a control's own template, which no step looks for.
-        var others = all.Select(control => control.Name).OfType<string>()
-            .Where(other => !other.StartsWith("PART_", StringComparison.Ordinal))
-            .Distinct()
-            .Order(StringComparer.Ordinal);
-        var where = within is MainWindow open ? " " + Situation(open) : string.Empty;
-
-        throw new InvalidOperationException(named.Count == 0
-            ? $"No {typeof(T).Name} named “{name}”; the named ones are: {string.Join(", ", others)}.{where}"
-            : $"{named.Count} of {typeof(T).Name} are named “{name}”, where one was looked for.{where}");
+        try
+        {
+            return UiTest.Named<T>(within, name);
+        }
+        catch (InvalidOperationException failed) when (within is MainWindow open)
+        {
+            throw new InvalidOperationException($"{failed.Message} {Situation(open)}", failed);
+        }
     }
 
     private static IEnumerable<Button> SharedTiles(MainWindow open) =>
@@ -1355,33 +1335,17 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
 
     private T ReadWindow<T>(Func<MainWindow, T> read) => Run(() => read(Window()));
 
-    public void Dispose()
-    {
-        try
-        {
-            if (window is not { } open) return;
-
-            window = null;
-
-            Run(() =>
-            {
-                open.CloseWithoutAsking();
-                Dispatcher.UIThread.RunJobs();
-            });
-        }
-        finally
-        {
-            turn.Leave(this);
-        }
-    }
+    /// <summary>A shell asks about unsaved work and cancels the close to do it, which nothing here would answer.</summary>
+    protected override void Close(Window open) => ((MainWindow)open).CloseWithoutAsking();
 
     /// <summary>The window, opened the first time, on the scenario's patch where it is to be.</summary>
     private MainWindow Window()
     {
-        if (window is not null) return window;
+        if (Shown is MainWindow shown) return shown;
 
         provider = EditorServices.Provider(Setup, Services);
-        window = provider.Window();
+        var window = provider.Window();
+        Shown = window;
 
         if (Screen is { } screen)
         {
@@ -1451,26 +1415,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
             && at.Y + bounds.Height <= window.Bounds.Height + 0.5;
     }
 
-    private static NodeEditor CanvasIn(MainWindow window) =>
+    private static NodeEditor CanvasIn(Window window) =>
         window.GetVisualDescendants().OfType<NodeEditor>().Single();
 
-    private void Settle() => UiTest.Settle(window!);
-
-    private void Run(Action act)
-    {
-        turn.Take(this);
-        Headless.Run(act);
-    }
-
-    private T Run<T>(Func<T> act)
-    {
-        turn.Take(this);
-        return Headless.Run(act);
-    }
-
-    private T Run<T>(Func<Task<T>> act)
-    {
-        turn.Take(this);
-        return Headless.Run(act);
-    }
 }

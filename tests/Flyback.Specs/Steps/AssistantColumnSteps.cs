@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Flyback.Assist;
 using Flyback.Editor.Assist;
@@ -8,6 +7,7 @@ using Flyback.Plugins.Settings;
 using Flyback.Specs.Support;
 using Reqnroll;
 using Shouldly;
+using Flyback.Ui.Testing;
 
 namespace Flyback.Specs.Steps;
 
@@ -54,11 +54,11 @@ public sealed class AssistantColumnSteps(HeadlessTurn turn, EditorDriver editor)
 
     [When("{string} is pressed")]
     public void WhenPressed(string label) =>
-        Headless.Run(() => Named<Button>("more").RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
+        Headless.Run(() => UiTest.Press(Named<Button>("more")));
 
     [When("the context line is pressed")]
     public void WhenContextPressed() =>
-        Headless.Run(() => Named<Button>("context").RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
+        Headless.Run(() => UiTest.Press(Named<Button>("context")));
 
     [Then("the message stands cut short, offering {string}")]
     public void ThenCut(string offer) => Message(open: false, offer);

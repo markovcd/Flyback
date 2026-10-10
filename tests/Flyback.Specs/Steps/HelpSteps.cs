@@ -8,6 +8,7 @@ using Flyback.Plugins.Hosting;
 
 using Flyback.Cli.Common;
 using PluginRegistry = Flyback.Cli.Plugins;
+using Flyback.Specs.Support;
 
 namespace Flyback.Specs.Steps;
 
@@ -15,7 +16,7 @@ namespace Flyback.Specs.Steps;
 [Binding]
 public sealed class HelpSteps
 {
-    private static readonly ModuleCatalog Modules = PluginHost.Load(PluginHost.DefaultDirectory, PluginTrust.Shipped(PluginHost.DefaultDirectory)).Modules;
+    private static ModuleCatalog Modules => ShippedPlugins.Loaded.Modules;
 
     private string read = string.Empty;
     private ToolOutcome? answered;

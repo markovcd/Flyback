@@ -2,11 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
-using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.Engine.Graph;
 using Flyback.Ui;
-using Flyback.Ui.Testing;
 using Flyback.Ui.Controls;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
@@ -20,11 +18,11 @@ namespace Flyback.Specs.Support;
 /// its own file read, then the window its container builds. Silent, and drawn on the
 /// processor, since there is no sound card and no graphics card here.
 /// </summary>
-public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDisposable
+public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : HeadlessWindow(turn)
 {
     private readonly DirectoryInfo folder = Directory.CreateTempSubdirectory("flyback-viewer-specs");
 
-    private ViewerWindow? window;
+    private ViewerWindow Playing => Shown as ViewerWindow ?? throw new InvalidOperationException("the viewer is not playing");
 
     /// <summary>The sound input plugged in for the run, or null where none was.</summary>
     public FakeSoundInput? Input { get; private set; }
@@ -66,7 +64,8 @@ public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDispos
 
         Run(() =>
         {
-            window = ViewerServices.Window(new ViewerLaunch(opened, device, options) { Input = Input, Output = output });
+            var window = ViewerServices.Window(new ViewerLaunch(opened, device, options) { Input = Input, Output = output });
+            Shown = window;
             window.Show();
             Settle();
         });
@@ -76,12 +75,7 @@ public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDispos
     public void Press(PhysicalKey key) =>
         Run(() =>
         {
-            var open = window ?? throw new InvalidOperationException("the viewer is not playing");
-
-            // In the same turn as the key, so no other scenario's window takes the keyboard in between.
-            open.Activate();
-            open.KeyPressQwerty(key, RawInputModifiers.None);
-            open.KeyReleaseQwerty(key, RawInputModifiers.None);
+            PressKey(Playing, key);
             Settle();
         });
 
@@ -89,7 +83,7 @@ public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDispos
     public void TapPicture(int times = 1) =>
         Run(() =>
         {
-            var open = window ?? throw new InvalidOperationException("the viewer is not playing");
+            var open = Playing;
             var preview = open.GetVisualDescendants().OfType<PreviewHost>().Single();
             var at = preview.TranslatePoint(new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 2), open)!.Value;
 
@@ -104,69 +98,38 @@ public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDispos
 
     /// <summary>Whether the viewer is paused, or null where it has no transport showing.</summary>
     public bool? Paused => Run(() =>
-        window!.GetVisualDescendants().OfType<TransportOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } transport
+        Playing.GetVisualDescendants().OfType<TransportOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } transport
             ? transport.Paused
             : (bool?)null);
 
     /// <summary>Whether the viewer's window has the whole screen.</summary>
-    public bool FullScreen => Run(() => window!.WindowState == WindowState.FullScreen);
+    public bool FullScreen => Run(() => Playing.WindowState == WindowState.FullScreen);
 
     /// <summary>What <c>--report</c> would print now, a line each.</summary>
-    public IReadOnlyList<string> Report => Run(() => window!.Player.Report().Lines().ToList());
+    public IReadOnlyList<string> Report => Run(() => Playing.Player.Report().Lines().ToList());
 
     /// <summary>What the line in the picture's corner says, or null while it is not showing.</summary>
     public string? Stats => Run(() =>
-        window!.GetVisualDescendants().OfType<StatsOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } stats
+        Playing.GetVisualDescendants().OfType<StatsOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } stats
             ? stats.Said
             : null);
 
     /// <summary>Which edge of the picture the transport waits at, or null where it has none.</summary>
     public Avalonia.Layout.VerticalAlignment? TransportEdge => Run(() =>
-        window!.GetVisualDescendants().OfType<TransportOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } transport
+        Playing.GetVisualDescendants().OfType<TransportOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } transport
             ? transport.VerticalAlignment
             : (Avalonia.Layout.VerticalAlignment?)null);
 
     /// <summary>Whether the transport has a sound button, or null where there is no transport showing.</summary>
     public bool? TransportHasSound => Run(() =>
-        window!.GetVisualDescendants().OfType<TransportOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } transport
+        Playing.GetVisualDescendants().OfType<TransportOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } transport
             ? transport.HasSound
             : (bool?)null);
 
-    public void Dispose()
+    public override void Dispose()
     {
         Input?.Dispose();
-
-        try
-        {
-            if (window is { } open)
-            {
-                window = null;
-                Run(() =>
-                {
-                    open.Close();
-                    Dispatcher.UIThread.RunJobs();
-                });
-            }
-        }
-        finally
-        {
-            turn.Leave(this);
-        }
-
+        base.Dispose();
         folder.Delete(recursive: true);
     }
-
-    private void Run(Action act)
-    {
-        turn.Take(this);
-        Headless.Run(act);
-    }
-
-    private T Run<T>(Func<T> act)
-    {
-        turn.Take(this);
-        return Headless.Run(act);
-    }
-
-    private void Settle() => UiTest.Settle(window!);
 }

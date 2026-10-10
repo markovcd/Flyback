@@ -5,7 +5,6 @@ using Shouldly;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Language;
-using Flyback.Plugins.Hosting;
 using Flyback.Specs.Support;
 using Flyback.Ui;
 using Flyback.Host;
@@ -16,8 +15,6 @@ namespace Flyback.Specs.Steps;
 [Binding]
 public sealed class PresetSteps(Session session)
 {
-    private static readonly Lazy<PluginCatalog> Installed = new(() => PluginHost.Load(PluginHost.DefaultDirectory, PluginTrust.Shipped(PluginHost.DefaultDirectory)));
-
     private ModuleCatalog modules = NodeCatalog.BuiltIn;
 
     [Given("every shipped preset")]
@@ -26,8 +23,8 @@ public sealed class PresetSteps(Session session)
     [Given("every preset the shipped plugins add as well")]
     public void GivenEveryInstalledPreset()
     {
-        session.Presets = Installed.Value.Presets;
-        modules = Installed.Value.Modules;
+        session.Presets = ShippedPlugins.Loaded.Presets;
+        modules = ShippedPlugins.Loaded.Modules;
     }
 
     [Then("no two of them have the same name")]
@@ -56,7 +53,7 @@ public sealed class PresetSteps(Session session)
     [Given("the shipped preset {string}")]
     public void GivenAPreset(string name)
     {
-        var catalog = Installed.Value;
+        var catalog = ShippedPlugins.Loaded;
 
         session.Presets = [catalog.Presets.Single(preset => preset.Name == name)];
         modules = catalog.Modules;

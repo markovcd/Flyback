@@ -1,8 +1,8 @@
 using Flyback.Plugins.Assist;
-using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
 using Reqnroll;
 using Shouldly;
+using Flyback.Specs.Support;
 
 namespace Flyback.Specs.Steps;
 
@@ -24,7 +24,7 @@ public sealed class AssistantEffortSteps
     [When("^the (.+) assistant's settings are opened$")]
     public void WhenOpened(string name)
     {
-        var assistant = PluginHost.Load(PluginHost.DefaultDirectory, PluginTrust.Shipped(PluginHost.DefaultDirectory))
+        var assistant = ShippedPlugins.Loaded
             .Assistants.Single(a => a.Name == name);
 
         effort = assistant.Form(values).Single(f => f.Key == AssistantSchema.EffortKey);

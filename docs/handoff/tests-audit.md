@@ -26,11 +26,6 @@ found this week was fixed in the harness the same day, in the open.
 
 ## 8. The harness and the doubles are written many times (Medium to Low)
 
-`Flyback.Specs` builds on `Flyback.Ui.Testing`: its `EditorApp` is
-`HeadlessApp.Build` and its drivers settle through `UiTest.Settle`. What it still
-writes for itself is a key `Press` and the turn-take, `Run` and close-on-dispose
-trio, three times (`EditorDriver.cs`, `ViewerRun.cs`, `AboutSteps.cs:25-50`).
-
 Counted across `tests/`, each a private copy the guide's shared place could
 hold:
 
@@ -50,10 +45,6 @@ hold:
   about twenty times, 28 files raising `Button.ClickEvent` by hand against four
   calling `UiTest.Press`, and five `Close(window, dialog, by)` copies that find
   the button by caption, which the guide forbids.
-- `PluginHost.Load(DefaultDirectory, PluginTrust.Shipped(...))` eleven times
-  across nine Specs step classes (static, `Lazy`, `??=`, inline), so the specs
-  load the shipped plugins up to nine times a run; Plugins.Tests has
-  `ShippedPlugins.Loaded` once.
 - `Run(Patch, float[])` (compile, evaluate a buffer, collect the output)
   md5-equal in `BellTests`, `DrumTests`, `FmTests`, `HissTests`, and the same
   loop in three more, while `Figures.cs:71` and `Fractals.cs` hold public
@@ -63,14 +54,12 @@ hold:
   `SiteSteps.cs:164`, `RenderPresetsTests.cs:372`); the first two serve the
   same gallery feature.
 
-Fix, each its own commit: Specs' drivers build on `UiTest` (`Press`, `Pump`,
-`Named`), with one `HeadlessWindow` base for the turn trio; Editor.Tests deletes its `Until`, `Named`, press and close
+Fix, each its own commit: Editor.Tests deletes its `Until`, `Named`, press and close
 helpers for `UiTest` and `EditorTest` members, with the dialog closer finding
 by `Name`; `LoopbackDevice` and `Canned` move into `Flyback.Plugins.Testing`,
 whose remit widens from "what sound tests share" to "what plugin-facing tests
 share"; one `FakeSecretStore`, `FakeTranscript`, `Unreachable`, `AuthorizationRecorder`
-and MIDI pair per project; `Specs/Support/ShippedPlugins.cs`; one `Played` in
-Plugins.Tests.
+and MIDI pair per project; one `Played` in Plugins.Tests.
 
 ## 9. Tolerances and comparisons that are looser than their rule (Low)
 

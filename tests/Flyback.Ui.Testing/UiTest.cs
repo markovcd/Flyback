@@ -77,7 +77,7 @@ public abstract class UiTest : IDisposable
     }
 
     /// <summary>Presses a button the way a click would, without a pointer.</summary>
-    protected static void Press(Button button) => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+    public static void Press(Button button) => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
     /// <summary>Runs layout to completion, after something has changed the tree.</summary>
     public static void Settle(Window window)
@@ -95,7 +95,7 @@ public abstract class UiTest : IDisposable
     /// The deadline only catches a hang: a loaded machine runs a quarter-second debounce and
     /// a pool hop many times slower, and a wait that gives up quietly fails an assertion later.
     /// </remarks>
-    protected static void Pump(
+    public static void Pump(
         Func<bool> until,
         Window? window = null,
         [CallerArgumentExpression(nameof(until))] string waitingFor = "")
@@ -113,7 +113,7 @@ public abstract class UiTest : IDisposable
     }
 
     /// <summary>Every descendant of a control, itself included.</summary>
-    protected static IEnumerable<Visual> Tree(Visual root)
+    public static IEnumerable<Visual> Tree(Visual root)
     {
         yield return root;
 
@@ -122,5 +122,43 @@ public abstract class UiTest : IDisposable
                 yield return node;
     }
 
-    protected static IEnumerable<T> All<T>(Visual root) where T : Visual => Tree(root).OfType<T>();
+    public static IEnumerable<T> All<T>(Visual root) where T : Visual => Tree(root).OfType<T>();
+
+    /// <summary>
+    /// The one <typeparamref name="T"/> named <paramref name="name"/> under <paramref name="within"/>,
+    /// or a failure naming the ones there are. A control a test drives has a name; its caption is the look.
+    /// </summary>
+    public static T Named<T>(Visual within, string name) where T : Control
+    {
+        var all = All<T>(within).ToList();
+        var named = all.Where(control => control.Name == name).ToList();
+
+        if (named.Count == 1) return named[0];
+
+        // Less the parts of a control's own template, which no test looks for.
+        var others = all.Select(control => control.Name).OfType<string>()
+            .Where(other => !other.StartsWith("PART_", StringComparison.Ordinal))
+            .Distinct()
+            .Order(StringComparer.Ordinal);
+
+        throw new InvalidOperationException(named.Count == 0
+            ? $"No {typeof(T).Name} named “{name}”; the named ones are: {string.Join(", ", others)}."
+            : $"{named.Count} of {typeof(T).Name} are named “{name}”, where one was looked for.");
+    }
+
+    /// <summary>
+    /// Runs the dispatcher for <paramref name="time"/>, for a test that proves nothing happens.
+    /// Keep it short, and say beside the call why that short is long enough.
+    /// </summary>
+    public static void RunFor(TimeSpan time, Window? window = null)
+    {
+        var until = DateTime.UtcNow + time;
+
+        while (DateTime.UtcNow < until)
+        {
+            Dispatcher.UIThread.RunJobs();
+            window?.UpdateLayout();
+            Thread.Sleep(5);
+        }
+    }
 }

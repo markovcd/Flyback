@@ -1,5 +1,4 @@
 using Flyback.Plugins.Assist;
-using Flyback.Plugins.Hosting;
 using Flyback.Specs.Support;
 using Reqnroll;
 using Shouldly;
@@ -26,7 +25,7 @@ public sealed class ClaudeCodeSteps : IDisposable
 
     [When("the assistants are listed")]
     public void WhenListed() =>
-        assistant = PluginHost.Load(PluginHost.DefaultDirectory, PluginTrust.Shipped(PluginHost.DefaultDirectory))
+        assistant = ShippedPlugins.Loaded
             .Assistants.FirstOrDefault(a => a.Id == "claude-code");
 
     [Then("Claude Code is among them")]
