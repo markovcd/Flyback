@@ -5,10 +5,10 @@
 #   ./scripts/gate.sh
 #
 # The tests' JUnit reports land in test-results/, with summary.md beside them: the
-# counts, each skipped test with its reason, and each failing test with its
-# message and stack, or the compile errors of a build that never reached the
-# tests. The build's whole log is build.log. On GitHub the summary is also the run's. The script fails exactly when the gate stage would, on the
-# same run.
+# counts per project, each failing test with its message and stack, and each
+# skipped test with its reason, or the compile errors of a build that never
+# reached the tests. The build's whole log is build.log. On GitHub the summary is
+# also the run's. The script fails exactly when the gate stage would, on the same run.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -97,34 +97,32 @@ def list_skips():
 if exit_code == "0":
     print("### Tests passed\n")
     print(f"{passed} passed and {skipped} skipped, in {len(projects)} projects.\n")
-    list_skips()
 else:
     print("### Tests failed\n")
     print(f"{failed} failed, {passed} passed and {skipped} skipped, in {len(projects)} projects.\n")
 
-    if not failures:
-        print(f"The run ended with exit code {exit_code} and no failing test in the reports: "
-              "a test host hung or crashed, or a project ran no tests. The log says which.")
-        raise SystemExit
+print("| Project | Failed | Passed | Skipped |")
+print("|---|---|---|---|")
+for project, (p, f, s) in sorted(projects.items()):
+    print(f"| {project} | {f} | {p} | {s} |")
+print()
 
-    print("| Project | Failed | Passed | Skipped |")
-    print("|---|---|---|---|")
-    for project, (p, f, s) in sorted(projects.items()):
-        if f:
-            print(f"| {project} | {f} | {p} | {s} |")
-    print()
+if exit_code != "0" and not failures:
+    print(f"The run ended with exit code {exit_code} and no failing test in the reports: "
+          "a test host hung or crashed, or a project ran no tests. The log says which.\n")
 
-    for project, name, message, stack in failures[:LISTED]:
-        text = (message + "\n\n" + stack).strip()
-        if len(text) > TEXT:
-            text = text[:TEXT] + "\n…"
-        first = message.strip().splitlines()[0] if message.strip() else "failed"
-        print(f"<details><summary><b>{html.escape(name)}</b> ({html.escape(project)}): {html.escape(first)}</summary>\n")
-        print(f"<pre>{html.escape(text)}</pre>\n</details>\n")
+for project, name, message, stack in failures[:LISTED]:
+    text = (message + "\n\n" + stack).strip()
+    if len(text) > TEXT:
+        text = text[:TEXT] + "\n…"
+    first = message.strip().splitlines()[0] if message.strip() else "failed"
+    print(f"<details><summary><b>{html.escape(name)}</b> ({html.escape(project)}): {html.escape(first)}</summary>\n")
+    print(f"<pre>{html.escape(text)}</pre>\n</details>\n")
 
-    if len(failures) > LISTED:
-        print(f"And {len(failures) - LISTED} more, in the reports under test-results/.\n")
-    list_skips()
+if len(failures) > LISTED:
+    print(f"And {len(failures) - LISTED} more, in the reports under test-results/.\n")
+
+list_skips()
 PY
 
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
