@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The window behind the editor until its first frame, on Android 8 to 11. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+  <item android:drawable="@color/flyback_window" />
+  <item
+      android:width="208dp"
+      android:height="208dp"
+      android:gravity="center"
+      android:drawable="@drawable/logo_mark" />
+</layer-list>

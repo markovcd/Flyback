@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The mark of promo/logo.svg in its 256-unit box, without the badge; the glows are flat halos. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="256dp"
+    android:height="256dp"
+    android:viewportWidth="256"
+    android:viewportHeight="256">
+  <path
+      android:pathData="M73,92V200"
+      android:strokeColor="#E05A5A"
+      android:strokeAlpha="0.25"
+      android:strokeWidth="35"
+      android:strokeLineCap="round" />
+  <path
+      android:pathData="M73,92V200"
+      android:strokeColor="#E05A5A"
+      android:strokeWidth="21"
+      android:strokeLineCap="round" />
+  <path
+      android:pathData="M73,92L183,56M73,148L165,118"
+      android:strokeWidth="21"
+      android:strokeLineCap="round">
+    <aapt:attr name="android:strokeColor">
+      <gradient
+          android:type="linear"
+          android:startX="73"
+          android:startY="92"
+          android:endX="183"
+          android:endY="56">
+        <item android:offset="0" android:color="#4A9EDE" />
+        <item android:offset="0.5" android:color="#3FC8C8" />
+        <item android:offset="1" android:color="#4FC387" />
+      </gradient>
+    </aapt:attr>
+  </path>
+  <path
+      android:pathData="M145,118a20,20 0,1 0,40 0a20,20 0,1 0,-40 0"
+      android:fillColor="#E0A84A"
+      android:fillAlpha="0.3" />
+  <path
+      android:pathData="M152,118a13,13 0,1 0,26 0a13,13 0,1 0,-26 0"
+      android:fillColor="#E0A84A" />
+  <path
+      android:pathData="M159.5,118a5.5,5.5 0,1 0,11 0a5.5,5.5 0,1 0,-11 0"
+      android:fillColor="#FFF3DC" />
+</vector>

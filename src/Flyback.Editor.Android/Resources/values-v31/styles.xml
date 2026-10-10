@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Android 12 draws its own splash at a cold start and ignores the window background for it. -->
+  <style name="Flyback.Theme" parent="Theme.AppCompat.NoActionBar">
+    <item name="android:windowBackground">@drawable/splash</item>
+    <item name="android:windowSplashScreenBackground">@color/flyback_window</item>
+    <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+  </style>
+</resources>

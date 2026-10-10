@@ -27,6 +27,7 @@
 - Over the editor's full-screen picture, Space pauses and F11 gives the window back, as in the viewer.
 - A saved patch holds only what was set, not what Flyback works out from it.
 - The unsaved-work and assistant-working questions carry a glyph: a disk, or the assistant's star.
+- On Android, the editor has the Flyback mark as its home-screen icon and opens on it.
 - The plugin contract no longer offers what only Flyback itself calls, such as `NodeCatalog.Install` and `PatchWorkbench.Edits`.
 
 ### Viewer

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Colors.Window, so the splash gives way to the editor without a change of shade. -->
+  <color name="flyback_window">#16181B</color>
+</resources>
