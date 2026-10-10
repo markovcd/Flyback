@@ -22,6 +22,18 @@ internal static class ScriptRun
     /// <summary>A hair, against a signal whose steps a speaker hears are a thirty-thousandth of full scale.</summary>
     public const float Hair = 1e-5f;
 
+    /// <summary>
+    /// The ops a script computes through <c>Math</c>, whose last bit may round differently
+    /// from .NET's. Every other op is the interpreter's arithmetic and lands on the same float.
+    /// </summary>
+    public static readonly IReadOnlySet<OpCode> Inexact = new HashSet<OpCode>
+    {
+        OpCode.Sin, OpCode.Cos, OpCode.Tan, OpCode.Exp, OpCode.Log, OpCode.Pow, OpCode.Atan2, OpCode.Noise3,
+    };
+
+    /// <summary>What <paramref name="program"/> may be off by: a hair where it runs an inexact op, and nothing otherwise.</summary>
+    public static float HairFor(CompiledPatch program) => program.Ops.Any(op => Inexact.Contains(op.Code)) ? Hair : 0f;
+
     public const int SampleRate = 48_000;
     public const int Oversample = 4;
 
@@ -110,7 +122,7 @@ internal static class ScriptRun
         }
     }
 
-    public static void ShouldMatch(float[] expected, float[] actual, string where)
+    public static void ShouldMatch(float[] expected, float[] actual, string where, float hair)
     {
         actual.Length.ShouldBe(expected.Length);
 
@@ -124,7 +136,7 @@ internal static class ScriptRun
             if (!(off <= worst)) (worst, at) = (off, i);
         }
 
-        worst.ShouldBeLessThanOrEqualTo(Hair, $"{where}: evaluation {at / 2}, {(at % 2 == 0 ? "left" : "right")}: {(at >= 0 ? actual[at] : 0f):R} against {(at >= 0 ? expected[at] : 0f):R}");
+        worst.ShouldBeLessThanOrEqualTo(hair, $"{where}: evaluation {at / 2}, {(at % 2 == 0 ? "left" : "right")}: {(at >= 0 ? actual[at] : 0f):R} against {(at >= 0 ? expected[at] : 0f):R}");
     }
 
     /// <summary>

@@ -19,6 +19,6 @@ public class PluginPresetScriptTests
 
         var program = PluginPresetPrograms.Compiled(name, video: false);
 
-        ScriptRun.ShouldMatch(ScriptRun.Interpret(program, PluginPresetPrograms.Frames), ScriptRun.Script(program, PluginPresetPrograms.Frames), name);
+        ScriptRun.ShouldMatch(ScriptRun.Interpret(program, PluginPresetPrograms.Frames), ScriptRun.Script(program, PluginPresetPrograms.Frames), name, ScriptRun.HairFor(program));
     }
 }

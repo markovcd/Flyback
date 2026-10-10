@@ -24,25 +24,6 @@ tested with hostile input (zip-slip, size caps, a changed plugin, an unsigned
 package, a list changed after signing, `--seconds` at infinity); every flake
 found this week was fixed in the harness the same day, in the open.
 
-## 9. Tolerances and comparisons that are looser than their rule (Low)
-
-- `Compile/JsProgramTests.cs:24` compares with `Hair = 1e-5f` on every op; the
-  guide and ADR-0035 say bit for bit, and the comment's reason (`Math.sin`'s
-  last bit) holds for the transcendental ops only. Bit for bit, with a named
-  list of ops that get the hair.
-- Without a reason beside them: `Graph/ReverbTests.cs:200` 25% relative;
-  `Drawings.Tests/PathTests.cs:136` 15%; `MaximizerTests.cs:96` and
-  `CrossoverTests.cs:56` ±0.5 dB where the same file uses 0.05;
-  `EqTests.cs:75` 0.15 dB against 0.1 on its neighbors; `NoiseTests.cs:73,117`;
-  `DelayTests.cs:71-72` 10% on a half-split impulse against 1e-3 around it;
-  `AnalyzerTests.cs:144,158,175` 20% windows; `HarmonographTests.cs:86`
-  `(0.3, 0.7)`; `SampleTests.cs:293`, `DodgePresetTests.cs:91`, `TextTests.cs:92`.
-- `NoSenseDubPresetTests.cs:183` `(160 * Beat).ShouldBe(130, 0.5)` asserts
-  arithmetic on the test's own constants; nothing under test is read.
-- Weak-only assertions: `ClipFormatTests.cs:54` (every format "says what to do
-  with sound": `ShouldNotBeEmpty` on a string), `PresetSiteDefaultsTests.cs:39`,
-  `RecordKindsTests.cs:119`.
-
 ## 10. What has no test at all (Low to Medium)
 
 - Android: `Flyback.Editor.Android` and `Flyback.Plugins.AndroidIO` are

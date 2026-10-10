@@ -52,8 +52,10 @@ public class CrossoverTests
     {
         var signal = Sine(hertz, 0.5f, hertz < 100d ? 1 : 0.3);
 
+        // Within a quarter of a decibel: the mid band's tone is within a few octaves
+        // of both corners, and each slope takes a sliver of it.
         var own = Settled(Play(Type, signal, heard: (band, band)).Left);
-        Decibels(own / 0.5).ShouldBe(0d, 0.5d);
+        Decibels(own / 0.5).ShouldBe(0d, 0.25d);
 
         foreach (var other in new[] { Low, Mid, High }.Where(b => b != band))
             Decibels(Settled(Play(Type, signal, heard: (other, other)).Left) / 0.5).ShouldBeLessThan(-12d);

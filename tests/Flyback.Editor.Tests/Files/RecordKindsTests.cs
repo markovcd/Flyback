@@ -111,9 +111,10 @@ public class RecordKindsTests
         PatchFileKinds.RecordKinds(Wired(picture: false, sound: false)).ShouldBeEmpty();
 
     /// <summary>
-    /// Whatever can be exported can be recorded, save for the still. A patch that
-    /// the export offers something for and the recorder offers nothing for would
-    /// be a hole in the feature rather than a decision.
+    /// Whatever can be exported can be recorded, save for the still: a preset is offered a
+    /// movie where it draws and a track where it sounds, and nothing else. A patch the
+    /// export offers something for and the recorder offers nothing for would be a hole
+    /// in the feature rather than a decision.
     /// </summary>
     [Fact]
     public void Every_preset_that_can_be_exported_can_be_recorded()
@@ -121,11 +122,11 @@ public class RecordKindsTests
         foreach (var preset in Presets.All)
         {
             var patch = preset.Build(NodeCatalog.BuiltIn);
+            var (picture, sound) = patch.Reaches();
 
-            if (preset.Name == "Empty") continue;
+            string[] offered = [.. picture ? [ClipFormats.MotionJpegAvi.Label] : Array.Empty<string>(), .. sound ? [ClipFormats.Wav.Label] : Array.Empty<string>()];
 
-            PatchFileKinds.RecordKinds(patch)
-                .ShouldNotBeEmpty($"the '{preset.Name}' preset should have something to record");
+            PatchFileKinds.RecordKinds(patch).Select(kind => kind.Name).ShouldBe(offered, $"the '{preset.Name}' preset");
         }
     }
 }

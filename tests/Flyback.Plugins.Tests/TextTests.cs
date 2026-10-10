@@ -89,7 +89,7 @@ public class TextTests
         var hello = Shape(null);
 
         foreach (var (x, y) in new[] { (-15.5f, 0f), (-14.2f, 0.4f), (-10f, -4.5f) })
-            Slope(hello, x * Pixel, y * Pixel).ShouldBe(1d, 0.05);
+            Slope(hello, x * Pixel, y * Pixel).ShouldBe(1d, 1e-3);
     }
 
     [Fact]

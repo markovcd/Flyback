@@ -72,7 +72,7 @@ public class EqTests
         var heard = Play(Type, Sine(18000d, 0.25f, 0.2), knobs: [(HighFreq, 2000f), (HighGain, gain)]);
         var under = Play(Type, Sine(50d, 0.25f, 1), knobs: [(HighFreq, 2000f), (HighGain, gain)]);
 
-        Decibels(Settled(heard.Left) / 0.25).ShouldBe(gain, 0.15d);
+        Decibels(Settled(heard.Left) / 0.25).ShouldBe(gain, 0.1d);
         Decibels(Settled(under.Left) / 0.25).ShouldBe(0d, 0.1d);
     }
 

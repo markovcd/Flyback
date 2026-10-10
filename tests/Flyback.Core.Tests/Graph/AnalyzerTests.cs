@@ -141,7 +141,9 @@ public class AnalyzerTests
 
         var chart = drawn.Taps[0].Trace.Samples;
 
-        At(chart, hertz).ShouldBeInRange(0.85f, 1.05f);
+        // A tone between two bins reads low by the window's scalloping, a seventh at
+        // most, and never above its amplitude.
+        At(chart, hertz).ShouldBeInRange(0.85f, 1.01f);
         At(chart, hertz / 2d).ShouldBeLessThan(0.01f);
         At(chart, hertz * 2d).ShouldBeLessThan(0.01f);
     }
@@ -155,7 +157,8 @@ public class AnalyzerTests
 
         Traces.Refresh(drawn, heard, Played(heard));
 
-        At(drawn.Taps[0].Trace.Samples, 1000d).ShouldBeInRange(0.42f, 0.53f);
+        // Half, less the same scalloping as the full-scale tone reads.
+        At(drawn.Taps[0].Trace.Samples, 1000d).ShouldBeInRange(0.42f, 0.505f);
     }
 
     /// <summary>
@@ -172,7 +175,8 @@ public class AnalyzerTests
 
         Traces.Refresh(drawn, heard, Played(heard, GlobalConstants.SampleRate + 1_000));
 
-        At(drawn.Taps[0].Trace.Samples, 1000d).ShouldBeInRange(0.85f, 1.05f);
+        // Low by the scalloping, as above, and never above the tone's amplitude.
+        At(drawn.Taps[0].Trace.Samples, 1000d).ShouldBeInRange(0.85f, 1.01f);
     }
 
     [Fact]

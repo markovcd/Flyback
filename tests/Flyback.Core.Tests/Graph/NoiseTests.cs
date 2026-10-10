@@ -70,7 +70,10 @@ public class NoiseTests
         var pink = Samples(Pink, 40_000);
 
         pink.ShouldAllBe(s => s >= -1f && s <= 1f);
-        pink.Average().ShouldBe(0f, 0.1f);
+
+        // Pink's power sits in its lowest octaves, where forty thousand samples hold
+        // few cycles, so its mean wanders more than white's.
+        pink.Average().ShouldBe(0f, 0.05f);
         Correlation(pink, 1).ShouldBeGreaterThan(0.5f);
     }
 
@@ -114,7 +117,8 @@ public class NoiseTests
         var first = Samples(White, 20_000);
         var second = Samples(White, 20_000, (SeedPort, 1f));
 
-        Correlation(first, second).ShouldBe(0f, 0.05f);
+        // Two independent runs this long correlate within a few hundredths; a shared seed would read one.
+        Correlation(first, second).ShouldBe(0f, 0.03f);
     }
 
     [Fact]

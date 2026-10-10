@@ -87,6 +87,8 @@ public class DodgePresetTests
     {
         var picture = Play(bot: false, seconds: 6).Single();
 
+        // Within a twentieth of a second: the thud is found where its envelope crosses
+        // the threshold, a few frames after the flash is drawn.
         var heard = Heard(bot: false, seconds: 6);
         heard.ShouldBe(picture, 0.05);
     }

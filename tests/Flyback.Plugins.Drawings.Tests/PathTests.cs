@@ -132,6 +132,8 @@ public sealed class PathTests : IDisposable
         var top = Lit(drawn, 0, 0.125);
         var side = Lit(drawn, 0.5, 0);
 
+        // Within a seventh: each side is read at one point, which lands at a
+        // different place across the beam's width.
         top.ShouldBeGreaterThan(0.1);
         side.ShouldBe(top, top * 0.15);
     }

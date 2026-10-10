@@ -54,7 +54,7 @@ public class ClipFormatTests
     public void Every_format_ffmpeg_writes_says_what_to_do_with_sound()
     {
         foreach (var format in ClipFormats.Pictures.Where(f => f.NeedsFfmpeg))
-            format.Sound.ShouldNotBeEmpty(format.Id);
+            format.Sound.ShouldStartWith("-c:a ", customMessage: format.Id);
     }
 
     [Fact]

@@ -12,7 +12,7 @@ namespace Flyback.Core.Tests.Compile;
 /// interpreter's sound by another route, which is what a browser plays.
 /// </summary>
 /// <remarks>
-/// Compared as <see cref="ScriptRun.ShouldMatch"/> says. Skipped where there is no Node.
+/// Compared bit for bit, save a hair where the script rounds a <c>Math</c> call differently (<see cref="ScriptRun.Inexact"/>). Skipped where there is no Node.
 /// </remarks>
 public class JsProgramTests
 {
@@ -33,7 +33,7 @@ public class JsProgramTests
 
         var program = Presets.All.Single(p => p.Name == name).Build(NodeCatalog.Current).CompileForAudio().Program;
 
-        ScriptRun.ShouldMatch(ScriptRun.Interpret(program, 3_000), ScriptRun.Script(program, 3_000), name);
+        ScriptRun.ShouldMatch(ScriptRun.Interpret(program, 3_000), ScriptRun.Script(program, 3_000), name, ScriptRun.HairFor(program));
     }
 
     /// <summary>A knob turned is a new value in the layout and the same script, so the engine keeps what it optimized.</summary>
@@ -55,7 +55,7 @@ public class JsProgramTests
 
         var (before, after) = SineTurned();
 
-        ScriptRun.ShouldMatch(ScriptRun.Interpret(before, 1_000, (after, 400)), ScriptRun.Script(before, 1_000, (after, 400)), "retuned");
+        ScriptRun.ShouldMatch(ScriptRun.Interpret(before, 1_000, (after, 400)), ScriptRun.Script(before, 1_000, (after, 400)), "retuned", ScriptRun.HairFor(before));
     }
 
     /// <summary>A Line In's two inputs are written into the script once a frame, from what the renderer hears, as the interpreter's renderer writes them.</summary>
@@ -81,7 +81,7 @@ public class JsProgramTests
         var interpreted = ScriptRun.Interpret(program, 1_000, input: heard);
 
         interpreted.ShouldContain(sample => Math.Abs(sample) > 0.1f, "the interpreter heard nothing, so agreeing with it proves nothing");
-        ScriptRun.ShouldMatch(interpreted, ScriptRun.Script(program, 1_000, input: heard), "line in");
+        ScriptRun.ShouldMatch(interpreted, ScriptRun.Script(program, 1_000, input: heard), "line in", ScriptRun.HairFor(program));
     }
 
     /// <summary>A sine heard on the left, before and after its frequency is turned from 220 to 331.</summary>
@@ -107,7 +107,7 @@ public class JsProgramTests
 
         var program = OneOp(code);
 
-        ScriptRun.ShouldMatch(ScriptRun.Interpret(program, 8), ScriptRun.Script(program, 8), code.ToString());
+        ScriptRun.ShouldMatch(ScriptRun.Interpret(program, 8), ScriptRun.Script(program, 8), code.ToString(), ScriptRun.HairFor(program));
     }
 
     /// <summary>
@@ -140,7 +140,7 @@ public class JsProgramTests
 
         program.Ops.Length.ShouldBeGreaterThan(3 * JsEmitter.ChunkSize);
 
-        ScriptRun.ShouldMatch(ScriptRun.Interpret(program, 500), ScriptRun.Script(program, 500), "split");
+        ScriptRun.ShouldMatch(ScriptRun.Interpret(program, 500), ScriptRun.Script(program, 500), "split", ScriptRun.HairFor(program));
     }
 
     [Fact]

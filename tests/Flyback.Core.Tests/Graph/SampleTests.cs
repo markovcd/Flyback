@@ -290,7 +290,7 @@ public sealed class SampleTests : IDisposable
         var rig = new Triggered(Falling(0.8), triggerHz: 0f);
 
         rig.At(0.02).ShouldBeGreaterThan(0.9);
-        rig.At(0.4).ShouldBe(0.5, 0.05);
+        rig.At(0.4).ShouldBe(0.5, 1e-3);
         rig.At(1.0).ShouldBe(0d);
         rig.At(5.0).ShouldBe(0d);
     }

@@ -64,12 +64,13 @@ public class DelayTests
         var between = Through(Impulse(128), (1, 0.0205f), (2, 0f), (3, 1f));
 
         // The whole impulse sits on one sample in each of the outer cases, and is
-        // split across both in the middle one.
+        // split exactly in half across both in the middle one, which is what linear
+        // interpolation does at a half.
         early[20 + Lag].ShouldBe(1f, 1e-3f);
         late[21 + Lag].ShouldBe(1f, 1e-3f);
 
-        between[20 + Lag].ShouldBe(0.5f, 0.05f);
-        between[21 + Lag].ShouldBe(0.5f, 0.05f);
+        between[20 + Lag].ShouldBe(0.5f, 1e-3f);
+        between[21 + Lag].ShouldBe(0.5f, 1e-3f);
     }
 
     /// <summary>

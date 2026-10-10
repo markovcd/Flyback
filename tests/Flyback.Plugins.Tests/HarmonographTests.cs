@@ -83,7 +83,8 @@ public class HarmonographTests
             gone.Frame(0d, 0.8, aspect: 0d);
         }
 
-        kept.Frame(0d, 0.8, aspect: 0d).ShouldBeInRange(0.3, 0.7);
+        // Half, within what sixty fades of a sixtieth land from the exact second.
+        kept.Frame(0d, 0.8, aspect: 0d).ShouldBe(0.5, 0.02);
         gone.Frame(0d, 0.8, aspect: 0d).ShouldBe(0d);
     }
 

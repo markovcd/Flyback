@@ -3,6 +3,7 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
+using Flyback.Tests;
 using Shouldly;
 using Xunit;
 
@@ -35,8 +36,15 @@ public class PresetSiteDefaultsTests
         return new LoadedBundle(load.Patch, new Dictionary<string, byte[]>(), Load: load);
     }
 
+    /// <summary>What the project copies beside the tests is the folder the Worker starts from, whole.</summary>
     [Fact]
-    public void There_is_at_least_one() => Every.ShouldNotBeEmpty();
+    public void Every_default_the_site_starts_with_is_here()
+    {
+        var shipped = Directory.EnumerateFiles(Repository.Path("worker", "defaults")).Select(Path.GetFileName).Order();
+
+        shipped.ShouldNotBeEmpty();
+        Directory.EnumerateFiles(Folder).Select(Path.GetFileName).Order().ShouldBe(shipped);
+    }
 
     [Theory]
     [MemberData(nameof(Every))]

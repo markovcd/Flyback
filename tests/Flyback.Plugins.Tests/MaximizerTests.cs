@@ -93,7 +93,8 @@ public class MaximizerTests
         var glue = Settled(Play(Type, top, configure: In("glue"), knobs: [(Amount, 1f)]).Left);
         var bright = Settled(Play(Type, top, configure: In("bright"), knobs: [(Amount, 1f)]).Left);
 
-        Decibels(bright / glue).ShouldBe(3d, 0.5d);
+        // Three decibels to within a tenth: the shelf has settled, and 8 kHz is on its plateau.
+        Decibels(bright / glue).ShouldBe(3d, 0.1d);
     }
 
     [Fact]

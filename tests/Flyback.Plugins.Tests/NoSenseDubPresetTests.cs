@@ -176,11 +176,27 @@ public class NoSenseDubPresetTests
         Patch().Length.ShouldBe(Math.Round(172 * Beat + 256 * FastBeat + 24, 2));
     }
 
-    /// <summary>The slow part's last two beats, after the drop's line of Patois has faded out.</summary>
+    /// <summary>
+    /// The drop is where the slow Arrangement takes every played part out and leaves them out,
+    /// two bars a section: two minutes ten in, with a line of Patois left to fade.
+    /// </summary>
     [Fact]
     public void The_drop_comes_at_two_minutes_ten()
     {
-        (160 * Beat).ShouldBe(130, 0.5);
+        const int beatsASection = 8;
+        const int played = 6;
+
+        var slow = Patch().Nodes
+            .Where(n => n.TypeId == NodeCatalog.ArrangementTypeId)
+            .Select(ArrangementExtra.Of)
+            .MinBy(parts => parts[0].Count)!;
+
+        bool Silent(int section) => slow.Take(played).All(part => part[section].Value == 0f);
+
+        var drop = Enumerable.Range(0, slow[0].Count).First(section => Enumerable.Range(section, slow[0].Count - section).All(Silent));
+
+        Silent(drop - 1).ShouldBeFalse("the riddim plays up to the drop");
+        (drop * beatsASection * Beat).ShouldBe(130, 0.5);
     }
 
     [Fact]

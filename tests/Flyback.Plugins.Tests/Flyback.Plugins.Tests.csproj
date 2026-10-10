@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <IsPackable>false</IsPackable>
@@ -74,6 +74,7 @@
   <!-- The preset site's defaults, which have to open and compile against the plugins above (ADR-0138). -->
   <ItemGroup>
     <None Include="..\..\worker\defaults\**" LinkBase="Defaults" CopyToOutputDirectory="PreserveNewest" />
+    <Compile Include="..\Shared\Repository.cs" Link="Shared\Repository.cs" />
   </ItemGroup>
 
   <!-- The specs' features, which every module a user patches is named by. -->

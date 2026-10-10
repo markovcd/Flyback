@@ -195,9 +195,11 @@ public class ReverbTests
         var carried = Energy(left, 200, 2_000);
 
         // An allpass passes every frequency at unity, so both chains hand on the
-        // energy the bank gave them and neither channel is the loud one.
+        // energy the bank gave them and neither channel is the loud one. Within a
+        // seventh: the window closes at 2,000 samples, and the longer chain still
+        // holds more of the tail past it.
         carried.ShouldBeGreaterThan(0f);
-        Energy(right, 200, 2_000).ShouldBe(carried, carried * 0.25f);
+        Energy(right, 200, 2_000).ShouldBe(carried, carried * 0.15f);
 
         // And they are not the same signal, which is the point of having two.
         var apart = 0f;
