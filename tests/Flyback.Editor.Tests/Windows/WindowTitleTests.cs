@@ -3,13 +3,13 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Platform.Storage;
 using Flyback.Editor.Files;
-using Flyback.Editor.Windows;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Shouldly;
 using Flyback.Ui;
 using Flyback.Host;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Windows;
 

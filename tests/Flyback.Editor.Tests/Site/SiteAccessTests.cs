@@ -3,6 +3,7 @@ using Flyback.Editor.Site;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Site;
 

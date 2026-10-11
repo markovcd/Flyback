@@ -8,6 +8,7 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
 using Shouldly;
+using Flyback.Editor.Controls;
 
 namespace Flyback.Editor.Tests.Gallery;
 

@@ -87,7 +87,7 @@
 
   <ItemGroup>
     <!-- Read at run time by SourceView, so it travels inside the assembly. -->
-    <EmbeddedResource Include="Controls\Flyback.xshd" />
+    <EmbeddedResource Include="Hubs\Flyback.xshd" />
   </ItemGroup>
 
   <!-- One file per instrument Flyback knows by name: its tracks, its knobs and whether it conducts. -->

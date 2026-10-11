@@ -79,23 +79,6 @@ editor's twenty-one two-way folder pairs.
 `SoundSection` and `PrivacySection` stay: the picture, the sound and privacy have no
 folder of their own, and the guide now says so rather than implying one.
 
-## 4. The editor's folders refer to each other both ways (Low)
-
-Twenty-one pairs of feature folders each `using` the other, counted before item 3
-moved two sections; `Canvas` is in seven, `Settings` was in seven. The repo's rule
-against cycles is the container's (ADR-0150: three `Lazy<T>`, and notices so a reaction
-is never a dependency), and it holds; the folders have no such rule, and the guide
-promises none. Some pairs are the design: `Notices` carries canvas types because a
-notice carries what a reactor needs, and a feature's section reads `Settings`' rows.
-Others are a part reaching across: `UsageCounter` takes `NodeEditor` and `PresetSlot`
-to count what a patch holds when playback starts, where the `PatchCompiled` notice it
-could react to already carries the patch.
-
-**Fix:** none until the user says whether folders should layer. If they should, the
-rule is one sentence in the guide and a test like `ComponentDiagramTests` over the
-`using` lines, and `UsageCounter` is the first move. If not, item 3 was tidiness and
-this item closes.
-
 ## 5. The longest stretches, read (Low, `ExpressionFusion.Fuse` done)
 
 Counting lines between two member declarations, the longest in `src/` after the

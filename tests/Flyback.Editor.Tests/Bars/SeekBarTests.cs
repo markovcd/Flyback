@@ -7,10 +7,11 @@ using Avalonia.Input;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Shell;
 using Flyback.Ui.Controls;
-using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using Flyback.Editor.Hubs;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Bars;
 

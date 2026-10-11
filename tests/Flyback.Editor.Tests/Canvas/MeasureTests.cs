@@ -5,8 +5,8 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
-using Flyback.Editor.Windows;
 using Shouldly;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Canvas;
 

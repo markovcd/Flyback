@@ -9,6 +9,7 @@ using Flyback.Core.Graph;
 using Flyback.Ui;
 using Flyback.Host;
 using Flyback.Editor.Midi;
+using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Knobs;
 

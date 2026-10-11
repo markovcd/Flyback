@@ -9,6 +9,8 @@ using Flyback.Plugins.Audio;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Flyback.Plugins.Testing;
+using Flyback.Editor.Composition;
+using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Tests;
 

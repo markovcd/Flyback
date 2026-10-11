@@ -9,6 +9,7 @@ using Avalonia.Threading;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Windows;
 using Shouldly;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Windows;
 

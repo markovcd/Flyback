@@ -14,6 +14,7 @@ using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
 using Flyback.Engine.Language;
 using Shouldly;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Controls;
 

@@ -7,10 +7,10 @@ using Flyback.Editor.Settings;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Shell;
 using Flyback.Ui.Controls;
-using Flyback.Editor.Inspect;
 using Flyback.Engine.Render;
 using Flyback.Ui;
 using Flyback.Host;
+using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Capture;
 

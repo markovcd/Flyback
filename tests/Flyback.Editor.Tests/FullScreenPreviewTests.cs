@@ -6,8 +6,8 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.Ui.Controls;
-using Flyback.Editor.Windows;
 using Shouldly;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests;
 

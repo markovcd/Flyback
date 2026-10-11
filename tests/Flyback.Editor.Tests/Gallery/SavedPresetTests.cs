@@ -9,9 +9,9 @@ using Flyback.Editor.Controls;
 using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
 using Flyback.Editor.Gallery;
-using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
 using Shouldly;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Gallery;
 

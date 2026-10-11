@@ -6,11 +6,11 @@ using Flyback.Editor.Files;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Statistics;
 using Flyback.Editor.Desktop.Updates;
-using Flyback.Editor.Windows;
 using Flyback.Ui;
 using Flyback.Core;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Desktop;
 
@@ -60,7 +60,7 @@ public sealed class FlybackApp : Application
             usage.Drain(Usage.LongestWait);
         };
 
-        var setup = EditorSetup.ThisMachine(usage) with { Launch = launch.Editor, Plugins = launch.Plugins };
+        var setup = ThisMachine.Setup(usage) with { Launch = launch.Editor, Plugins = launch.Plugins };
         var provider = EditorServices.Provider(setup);
         var window = provider.Window();
         window.Start();

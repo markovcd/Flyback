@@ -5,11 +5,11 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using AvaloniaEdit;
-using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
 using Shouldly;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Canvas;
 

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Flyback.Core;
+using Flyback.Editor.Shell;
 
 namespace Flyback.Editor.Files;
 

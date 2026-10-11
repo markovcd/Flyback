@@ -1,6 +1,6 @@
-using Flyback.Editor.Shell;
 using Flyback.Editor.Site;
 using Flyback.Editor.Statistics;
+using Flyback.Editor.Composition;
 using Shouldly;
 using Xunit;
 
@@ -21,5 +21,5 @@ public sealed class BuiltPresetSiteTests
 
     [Fact]
     public void The_editor_starts_on_the_site_it_was_built_for() =>
-        EditorSetup.ThisMachine(Usage.Off).Host.PresetSite.ShouldBe(PresetSite.Built);
+        ThisMachine.Setup(Usage.Off).Host.PresetSite.ShouldBe(PresetSite.Built);
 }

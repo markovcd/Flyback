@@ -8,14 +8,12 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using Flyback.Editor.Assist;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Capture;
 using Flyback.Editor.Controls;
 using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Knobs;
-using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
@@ -28,6 +26,7 @@ using Shouldly;
 using Xunit;
 using Flyback.Ui;
 using Flyback.Host;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Settings;
 

@@ -5,10 +5,10 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
 using Flyback.Editor.Canvas;
-using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
 using Shouldly;
 using Colors = Flyback.Ui.Controls.Colors;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Inspect;
 

@@ -21,6 +21,7 @@ using Flyback.Plugins.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Assist;
 

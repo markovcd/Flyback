@@ -14,6 +14,7 @@ using Flyback.Editor.Statistics;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui;
 using Colors = Flyback.Ui.Controls.Colors;
+using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Bars;
 

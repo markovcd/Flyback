@@ -1,5 +1,6 @@
 using Avalonia;
 using Flyback.Core.Graph;
+using Flyback.Editor.Notices;
 
 namespace Flyback.Editor.Canvas;
 

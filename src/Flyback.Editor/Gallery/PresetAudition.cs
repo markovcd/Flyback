@@ -7,6 +7,8 @@ using Flyback.Plugins.Hosting;
 using Flyback.Ui.Audio;
 using Flyback.Ui;
 using Flyback.Host;
+using Flyback.Editor.Hubs;
+using Flyback.Editor.Controls;
 
 namespace Flyback.Editor.Gallery;
 

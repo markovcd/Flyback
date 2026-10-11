@@ -8,10 +8,10 @@ using Avalonia.Media;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Shell;
 using Flyback.Ui.Controls;
-using Flyback.Editor.Windows;
 using Shouldly;
 using Flyback.Ui;
 using Flyback.Host;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests;
 

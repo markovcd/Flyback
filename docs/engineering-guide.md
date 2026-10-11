@@ -533,18 +533,27 @@ throws), a notice raised off the UI thread (it throws at the raiser), and a
 notice raised after the window is disposed (it goes nowhere, and a chain still
 running stops).
 
-**A folder per feature.** The project's root holds the composition, the hubs
-and `ReportLine`. `Shell` is what a window or a page hands the editor
-(`EditorSetup`, `EditorHost`, `IClose`, `IFocus`, `IFilePickers` and the rest),
-which the desktop, web and Android programs each fulfil. Everything else
-sits in the folder of what it is for, with its region, its controls and its
-settings section together: `Canvas` (the node editor and the palette), `Inspect`,
-`Knobs`, `Bars`, `Gallery`, `Site`, `Assist`, `Capture`, `Files`, `Midi`,
-`Decide`, `Keys`, `PluginPackages`, `Updates`, `Statistics` and `Windows` (the
-desktop window around the editor). `Settings` holds the settings window itself
-and the sections of what has no folder of its own: the picture, the sound and
-privacy. `Notices` is one record per notice. `Controls` keeps only the widgets
-that belong to no feature. The namespace follows the folder, and a folder is never named for a
+**A folder per feature, on a footing**
+([0194](adr/0194-the-editors-folders-stand-on-a-footing-that-names-no-feature.md)).
+The footing, lowest first: the project's root (`ReportLine`, `Attention`, `Reopen`
+and the other small pieces every folder reads); `Controls`, the widgets that belong
+to no feature; `Updates`, the release feed, installing and restarting; `Statistics`;
+`Shell`, what a window or a page hands the editor (`EditorSetup`, `EditorHost`,
+`IClose`, `IFocus`, `IFilePickers`, `FileTypes` and the rest), which the desktop, web
+and Android programs each fulfil; `Notices`, one record per notice, with `Reactions`
+and the start phases; and `Settings`, what a settings section is built from
+(`ISettingsSection`, `SettingsSession`, `InspectorRows`). Each names only what is
+below it. The features stand on it and may name one another, each with its region,
+its controls and its settings section together: `Hubs` (`Document`, `Playback`,
+`PatchFiles`, and what writes the panel into the text), `Canvas` (the node editor and
+the palette), `Inspect`, `Knobs`, `Bars`, `Gallery`, `Site`, `Assist`, `Capture`,
+`Files`, `Midi`, `Decide`, `Keys`, `PluginPackages` and `Windows` (the picture
+window, full screen and the kept layout). `Composition` is everything that lists the
+features, and nothing names it: the registrations, `EditorView`, `ShellLayout`,
+`MainWindow`, the start, `ThisMachine`, and the settings pages with the sections of
+what has no folder or sits in the footing (the picture, the sound, privacy, usage and
+updates). `FolderLayeringTests` holds the order, read from the compiled editor.
+The namespace follows the folder, and a folder is never named for a
 type, since inside `Flyback.Editor` that name would then mean the namespace. For
 the same reason `Canvas` shadows Avalonia's control, so it is written
 `Avalonia.Controls.Canvas`.

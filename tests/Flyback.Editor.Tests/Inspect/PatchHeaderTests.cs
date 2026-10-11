@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Flyback.Core.Graph;
 using Shouldly;
+using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Tests.Inspect;
 

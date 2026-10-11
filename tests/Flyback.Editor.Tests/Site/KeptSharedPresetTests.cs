@@ -5,11 +5,11 @@ using Flyback.Editor.Controls;
 using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
 using Flyback.Editor.Site;
-using Flyback.Editor.Windows;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Shouldly;
 using Flyback.Tests;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Site;
 

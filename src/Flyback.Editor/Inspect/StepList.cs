@@ -11,6 +11,7 @@ using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Colors = Flyback.Ui.Controls.Colors;
+using Flyback.Editor.Controls;
 
 namespace Flyback.Editor.Inspect;
 

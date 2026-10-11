@@ -5,6 +5,7 @@ using Flyback.Editor.Gallery;
 using Flyback.Editor.Shell;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Android;
 

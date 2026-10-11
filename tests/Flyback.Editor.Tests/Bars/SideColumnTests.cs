@@ -5,6 +5,7 @@ using Flyback.Editor.Bars;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Windows;
 using Shouldly;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Bars;
 

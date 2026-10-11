@@ -9,6 +9,7 @@ using Flyback.Editor.Controls;
 using Flyback.Editor.Notices;
 using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
+using Flyback.Editor.Settings;
 
 namespace Flyback.Editor.Inspect;
 

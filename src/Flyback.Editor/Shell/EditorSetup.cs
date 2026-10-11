@@ -9,7 +9,7 @@ namespace Flyback.Editor.Shell;
 /// </summary>
 /// <remarks>
 /// Everything left unset keeps nothing, reads nothing and reaches no network, which
-/// is what a test gets by default. The program itself starts from <see cref="ThisMachine"/>.
+/// is what a test gets by default. The program itself starts from <c>ThisMachine.Setup</c>.
 /// </remarks>
 public sealed record EditorSetup
 {
@@ -27,12 +27,4 @@ public sealed record EditorSetup
 
     /// <summary>The plugins loaded before any window existed, already installed in the module catalog.</summary>
     internal PluginCatalog Plugins { get; init; } = PluginCatalog.Empty;
-
-    /// <summary>Where this machine keeps everything, and what it reaches: the program's own start.</summary>
-    public static EditorSetup ThisMachine(Usage usage) => new()
-    {
-        Folders = EditorFolders.ThisMachine(),
-        Host = EditorHost.ThisMachine(),
-        Usage = usage,
-    };
 }

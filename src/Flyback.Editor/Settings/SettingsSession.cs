@@ -8,6 +8,7 @@ using Flyback.Ui.Controls;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Statistics;
 using Colors = Flyback.Ui.Controls.Colors;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Settings;
 

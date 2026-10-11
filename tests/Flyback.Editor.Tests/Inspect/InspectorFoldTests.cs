@@ -4,9 +4,9 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Flyback.Core.Graph;
 using Flyback.Editor.Inspect;
-using Flyback.Editor.Windows;
 using Flyback.Engine.Graph;
 using Shouldly;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Inspect;
 

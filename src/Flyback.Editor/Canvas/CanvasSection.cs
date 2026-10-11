@@ -2,10 +2,10 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Editor.Controls;
-using Flyback.Editor.Inspect;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
 using Flyback.Ui.Controls;
+using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Canvas;
 

@@ -10,12 +10,13 @@ using Flyback.Editor.Assist;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Files;
-using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Flyback.Engine.Render;
 using Shouldly;
 using Xunit;
+using Flyback.Editor.Hubs;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Files;
 

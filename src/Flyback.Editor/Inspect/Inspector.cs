@@ -9,6 +9,8 @@ using Flyback.Editor.Notices;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Colors = Flyback.Ui.Controls.Colors;
+using Flyback.Editor.Hubs;
+using Flyback.Editor.Settings;
 
 namespace Flyback.Editor.Inspect;
 

@@ -12,6 +12,7 @@ using Flyback.Core.Graph;
 using Shouldly;
 using Flyback.Ui;
 using Flyback.Host;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Settings;
 

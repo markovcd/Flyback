@@ -9,7 +9,7 @@ using Flyback.Core.Graph;
 using Shouldly;
 using Xunit;
 using Flyback.Editor.Canvas;
-using Flyback.Editor.Windows;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Inspect;
 

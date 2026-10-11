@@ -9,13 +9,13 @@ using Flyback.Editor.Assist;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Shell;
-using Flyback.Editor.Windows;
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Gallery;
 

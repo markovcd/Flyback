@@ -9,6 +9,7 @@ using Flyback.Core.Graph;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Flyback.Host;
+using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Canvas;
 

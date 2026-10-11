@@ -1,0 +1,61 @@
+using Avalonia.Controls;
+using Flyback.Core.Graph;
+using Flyback.Editor.Files;
+using Flyback.Editor.Gallery;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Settings;
+using Flyback.Editor.Shell;
+using Flyback.Editor.Statistics;
+using Flyback.Editor.Windows;
+using Flyback.Plugins.Hosting;
+using Flyback.Ui.Midi;
+using Flyback.Editor.Midi;
+using Flyback.Editor.Hubs;
+
+namespace Flyback.Editor.Composition;
+
+/// <summary>Starts the editor run once its window or page is about to show it.</summary>
+internal sealed class EditorStart(
+    EditorLaunch launch,
+    WorkKeeper keeper,
+    WindowLayoutKeeper layout,
+    MidiHub midi,
+    InstrumentLibrary instruments,
+    Usage usage,
+    PluginCatalog plugins,
+    Playback playback,
+    PresetSlot presets,
+    OutputSettingRepository outputSettings,
+    ShellLayout shell,
+    ReportLine report,
+    WindowHolder holder) : IStartAt
+{
+    public StartPhase Phase => StartPhase.Shown;
+
+    public Task On()
+    {
+        var host = holder.Instance;
+
+        keeper.Start();
+        layout.Load();
+        if (host is Window window) layout.Apply(window);
+        MidiSources.Install(() => [.. midi.Sources.Select(source => source with { Conducts = instruments.For(source)?.Conducts == true })]);
+        usage.Started(plugins.Plugins.Select(plugin => plugin.Info.Id), playback.Sound.Output?.Id, ScreenHeights(host));
+        presets.StartOn(outputSettings.Current.DefaultPreset);
+
+        if (playback.Sound.Output is null)
+            report.Say("No sound backend is installed, so Volume will do nothing. See About for where plugins are looked for.");
+        if (launch.Interpreted)
+            report.Say($"Running interpreted ({EditorLaunch.InterpretedFlag}): the CPU's programs are not compiled this run.");
+        if (launch.WhatsNew is null && launch.OpeningNote is not null) report.Say(launch.OpeningNote);
+        shell.ApplyPanelLayout();
+
+        return Task.CompletedTask;
+    }
+
+    private static IReadOnlyList<int> ScreenHeights(TopLevel host)
+    {
+        try { return host.Screens?.All.Select(screen => screen.Bounds.Height).ToList() ?? []; }
+        catch (Exception) { return []; }
+    }
+}

@@ -10,6 +10,7 @@ using Flyback.Plugins.Hosting;
 using Flyback.Editor.Tests.PluginPackages;
 using Flyback.Editor.Windows;
 using Shouldly;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.PluginPackages;
 

@@ -7,10 +7,11 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Flyback.Editor.Controls;
 using Flyback.Engine.Graph;
-using Flyback.Editor.Windows;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Shouldly;
+using Flyback.Editor.Hubs;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Files;
 

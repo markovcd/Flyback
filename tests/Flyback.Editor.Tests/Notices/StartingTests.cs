@@ -2,6 +2,7 @@ using Avalonia.Headless.XUnit;
 using Flyback.Editor.Notices;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Notices;
 

@@ -1,6 +1,6 @@
-using Flyback.Editor.Files;
 using Shouldly;
 using Xunit;
+using Flyback.Editor.Shell;
 
 namespace Flyback.Editor.Tests.Files;
 

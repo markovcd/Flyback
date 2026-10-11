@@ -7,13 +7,13 @@ using Avalonia.Threading;
 using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Shell;
-using Flyback.Editor.Windows;
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
 using Shouldly;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Decide;
 

@@ -11,6 +11,7 @@ using Flyback.Editor.Settings;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Web;
 

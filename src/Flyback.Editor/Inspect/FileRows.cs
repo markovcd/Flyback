@@ -8,6 +8,9 @@ using Flyback.Core.Graph.Extras;
 using Flyback.Editor.Shell;
 using Flyback.Engine.Render;
 using Flyback.Ui.Controls;
+using Flyback.Editor.Hubs;
+using Flyback.Editor.Settings;
+using FileKind = Flyback.Core.Graph.Extras.FileKind;
 
 namespace Flyback.Editor.Inspect;
 

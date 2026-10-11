@@ -8,10 +8,10 @@ using Flyback.Editor.Controls;
 using Flyback.Editor.Shell;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Gallery;
-using Flyback.Editor.Inspect;
 using Flyback.Editor.Settings;
 using Flyback.Ui;
 using Flyback.Host;
+using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Files;
 

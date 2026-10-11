@@ -137,6 +137,7 @@ context, decision, consequences.
 | [0147](0147-a-socket-says-what-it-is-for-in-words-the-panel-and-the-assistant-share.md) | A socket says what it is for, in words the panel and the assistant share *(user-directed)* |
 | [0148](0148-the-window-is-its-hubs-and-the-regions-around-them.md) | The window is its hubs and the regions around them *(user-directed; the layout and the keys handed to `EditorView` by [0162](0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md))* |
 | [0150](0150-the-editor-is-composed-in-a-container.md) | The editor and the viewer are each composed in a container *(user-directed)* |
+| [0194](0194-the-editors-folders-stand-on-a-footing-that-names-no-feature.md) | The editor's folders stand on a footing that names no feature *(user-directed)* |
 | [0149](0149-compact-modules-share-rows-and-tip-their-values.md) | Compact modules share rows and put their values in the tooltip *(user-directed)* |
 
 ### Sound

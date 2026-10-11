@@ -4,10 +4,11 @@ using Avalonia.Threading;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Files;
 using Flyback.Editor.Shell;
-using Flyback.Editor.Windows;
 using Flyback.Ui;
 using Shouldly;
 using Flyback.Host;
+using Flyback.Editor.Hubs;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Files;
 

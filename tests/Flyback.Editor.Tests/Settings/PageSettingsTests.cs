@@ -4,12 +4,11 @@ using Avalonia.LogicalTree;
 using Avalonia.Threading;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Notices;
-using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
-using Flyback.Editor.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Settings;
 

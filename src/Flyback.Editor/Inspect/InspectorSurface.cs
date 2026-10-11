@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Flyback.Editor.Controls;
+using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Inspect;
 

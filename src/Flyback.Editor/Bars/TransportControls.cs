@@ -8,6 +8,7 @@ using Flyback.Editor.Notices;
 using Flyback.Editor.Statistics;
 using Flyback.Editor.Windows;
 using Flyback.Plugins.Midi;
+using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Bars;
 

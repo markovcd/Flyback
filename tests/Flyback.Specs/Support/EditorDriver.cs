@@ -29,6 +29,8 @@ using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
 using Microsoft.Extensions.DependencyInjection;
 using Flyback.Host;
+using Flyback.Editor.Composition;
+using Flyback.Editor.Hubs;
 
 namespace Flyback.Specs.Support;
 
@@ -729,7 +731,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
         DoWindow((_, _) => PageSwitches().Single(box => box.Content as string == label).IsChecked = on);
 
     private IEnumerable<CheckBox> PageSwitches() =>
-        ((Control)Service<Editor.Settings.PageSettings>().Flyout.Content!).GetLogicalDescendants().OfType<CheckBox>();
+        ((Control)Service<Editor.Composition.PageSettings>().Flyout.Content!).GetLogicalDescendants().OfType<CheckBox>();
 
     private static IEnumerable<Control> Ancestors(Control control)
     {

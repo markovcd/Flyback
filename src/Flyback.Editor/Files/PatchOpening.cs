@@ -5,6 +5,7 @@ using Flyback.Editor.Notices;
 using Flyback.Editor.PluginPackages;
 using Flyback.Editor.Shell;
 using Flyback.Plugins.Hosting;
+using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Files;
 

@@ -3,8 +3,8 @@ using Avalonia.Controls;
 using Avalonia.VisualTree;
 using Avalonia.Headless.XUnit;
 using Flyback.Editor.Bars;
-using Flyback.Editor.Windows;
 using Shouldly;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Bars;
 

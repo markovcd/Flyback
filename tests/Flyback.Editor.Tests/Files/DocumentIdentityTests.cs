@@ -5,9 +5,10 @@ using Flyback.Core.Graph;
 using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
-using Flyback.Editor.Windows;
 using Flyback.Plugins.Hosting;
 using Shouldly;
+using Flyback.Editor.Hubs;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Files;
 

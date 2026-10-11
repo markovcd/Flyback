@@ -13,6 +13,7 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Render;
 using Flyback.Viewer.Desktop;
 using Shouldly;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Knobs;
 

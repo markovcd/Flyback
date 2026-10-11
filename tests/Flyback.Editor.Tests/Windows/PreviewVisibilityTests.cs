@@ -3,9 +3,9 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.Core.Graph;
-using Flyback.Editor.Windows;
 using Flyback.Ui.Controls;
 using Shouldly;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Windows;
 

@@ -10,6 +10,7 @@ using Flyback.Editor.Notices;
 using Flyback.Editor.Statistics;
 using Flyback.Core.Graph;
 using Flyback.Ui;
+using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Bars;
 

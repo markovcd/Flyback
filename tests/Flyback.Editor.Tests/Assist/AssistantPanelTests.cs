@@ -9,7 +9,6 @@ using Avalonia.VisualTree;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Shell;
-using Flyback.Editor.Windows;
 using Flyback.Assist;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
@@ -22,6 +21,7 @@ using Flyback.Plugins.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
+using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Assist;
 

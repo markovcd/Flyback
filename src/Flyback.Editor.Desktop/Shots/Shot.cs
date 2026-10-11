@@ -12,13 +12,14 @@ using Flyback.Ui.Controls;
 using Flyback.Editor.Files;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
-using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Flyback.Ui;
 using Flyback.Host;
+using Flyback.Editor.Composition;
+using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Desktop.Shots;
 
@@ -73,7 +74,7 @@ internal static class Shot
         var sound = new ShotSound();
 
         // The assistant's column names the provider and model this machine's settings choose.
-        var folders = request.Assistant ? new EditorFolders { SettingsPath = EditorFolders.ThisMachine().SettingsPath } : new EditorFolders();
+        var folders = request.Assistant ? new EditorFolders { SettingsPath = ThisMachine.Folders().SettingsPath } : new EditorFolders();
 
         var provider = EditorServices.Provider(new EditorSetup { Plugins = plugins, Folders = folders }, services =>
         {
