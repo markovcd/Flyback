@@ -11,6 +11,7 @@ using Flyback.Editor.Inspect;
 using Flyback.Editor.Knobs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Windows;
 using Flyback.Ui.Controls;
 using Flyback.Ui.Midi;

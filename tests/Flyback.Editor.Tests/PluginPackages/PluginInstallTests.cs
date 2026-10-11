@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using Flyback.Editor.Controls;
 using Flyback.Editor.PluginPackages;
+using Flyback.Editor.Shell;
 using Flyback.Plugins.Hosting;
 using Flyback.Editor.Tests.PluginPackages;
 using Flyback.Editor.Windows;

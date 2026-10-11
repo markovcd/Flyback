@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Flyback.Editor.Controls;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Statistics;
 using Flyback.Editor.Windows;
 using Shouldly;

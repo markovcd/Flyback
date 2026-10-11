@@ -3,6 +3,7 @@ using Flyback.Editor.Capture;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Notices;
 using Flyback.Editor.PluginPackages;
+using Flyback.Editor.Shell;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.Editor.Files;

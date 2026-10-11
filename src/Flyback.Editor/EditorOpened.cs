@@ -2,6 +2,7 @@ using Flyback.Editor.Controls;
 using Flyback.Editor.Files;
 using Flyback.Editor.Gallery;
 using Flyback.Editor.Notices;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Updates;
 
 namespace Flyback.Editor;

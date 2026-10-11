@@ -1,4 +1,4 @@
-namespace Flyback.Editor;
+namespace Flyback.Editor.Shell;
 
 /// <summary>Whether the editor's window is the one in front.</summary>
 internal interface IFocus

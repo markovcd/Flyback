@@ -1,6 +1,7 @@
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Statistics;
 using Flyback.Editor.Tests.Statistics;
 using Flyback.Core.Graph;

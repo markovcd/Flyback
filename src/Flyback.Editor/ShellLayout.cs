@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Flyback.Editor.Assist;
+using Flyback.Editor.Shell;
 using Flyback.Ui.Audio;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;

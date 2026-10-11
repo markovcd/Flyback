@@ -4,6 +4,7 @@ using Flyback.Editor.Bars;
 using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Notices;
+using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Measure;
 using Flyback.Ui.Controls;

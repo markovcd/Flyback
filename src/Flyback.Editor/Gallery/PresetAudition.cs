@@ -1,5 +1,6 @@
 using Avalonia.Threading;
 using Flyback.Core.Graph;
+using Flyback.Editor.Shell;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Hosting;

@@ -1,6 +1,6 @@
 using Avalonia.Platform.Storage;
 
-namespace Flyback.Editor;
+namespace Flyback.Editor.Shell;
 
 /// <summary>The system's file pickers, over the editor's window.</summary>
 internal interface IFilePickers

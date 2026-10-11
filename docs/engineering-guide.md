@@ -533,9 +533,10 @@ throws), a notice raised off the UI thread (it throws at the raiser), and a
 notice raised after the window is disposed (it goes nowhere, and a chain still
 running stops).
 
-**A folder per feature.** The project's root holds the composition, the hubs,
-`ReportLine`, and what a window or a page hands the editor (`EditorSetup`,
-`EditorHost`, `IClose`, `IFocus`, `IFilePickers` and the rest). Everything else
+**A folder per feature.** The project's root holds the composition, the hubs
+and `ReportLine`. `Shell` is what a window or a page hands the editor
+(`EditorSetup`, `EditorHost`, `IClose`, `IFocus`, `IFilePickers` and the rest),
+which the desktop, web and Android programs each fulfil. Everything else
 sits in the folder of what it is for, with its region, its controls and its
 settings section together: `Canvas` (the node editor and the palette), `Inspect`,
 `Knobs`, `Bars`, `Gallery`, `Site`, `Assist`, `Capture`, `Files`, `Midi`,

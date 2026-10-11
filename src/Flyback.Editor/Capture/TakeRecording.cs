@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Flyback.Core.Graph;
+using Flyback.Editor.Shell;
 using Flyback.Engine.Render;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;

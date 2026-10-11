@@ -3,6 +3,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Files;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Windows;
 using Flyback.Ui;
 using Shouldly;

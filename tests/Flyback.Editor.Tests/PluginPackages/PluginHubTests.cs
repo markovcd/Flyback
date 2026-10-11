@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.VisualTree;
 using Flyback.Editor.Controls;
 using Flyback.Editor.PluginPackages;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Tests.PluginPackages;
 using Flyback.Editor.Windows;
 using Flyback.Plugins.Hosting;

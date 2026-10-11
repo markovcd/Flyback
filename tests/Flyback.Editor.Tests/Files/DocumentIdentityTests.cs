@@ -2,6 +2,7 @@
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Flyback.Core.Graph;
+using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
 using Flyback.Editor.Windows;

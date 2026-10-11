@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
+using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
 using Flyback.Editor.Site;
 using Flyback.Editor.Windows;

@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Controls;
+using Flyback.Editor.Shell;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Inspect;
 using Flyback.Engine.Render;

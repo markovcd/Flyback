@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Site;
 using Flyback.Editor.Tests;
 using Flyback.Editor.Windows;

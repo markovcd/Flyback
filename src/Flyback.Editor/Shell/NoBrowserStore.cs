@@ -1,4 +1,4 @@
-namespace Flyback.Editor;
+namespace Flyback.Editor.Shell;
 
 /// <summary>Outside a page: settings live in the settings file instead.</summary>
 internal sealed class NoBrowserStore : IBrowserStore

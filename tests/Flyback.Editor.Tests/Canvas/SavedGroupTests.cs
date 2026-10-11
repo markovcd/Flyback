@@ -5,6 +5,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Flyback.Editor.Canvas;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;

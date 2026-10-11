@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
+using Flyback.Editor.Shell;
 using Flyback.Ui.Audio;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Capture;

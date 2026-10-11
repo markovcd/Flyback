@@ -1,4 +1,4 @@
-namespace Flyback.Editor;
+namespace Flyback.Editor.Shell;
 
 /// <summary>Settings a browser keeps for its page between visits, by section.</summary>
 internal interface IBrowserStore

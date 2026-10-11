@@ -8,6 +8,7 @@ using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Notices;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Windows;
 using Flyback.Assist;
 using Flyback.Core.Compile;

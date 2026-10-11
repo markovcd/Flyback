@@ -8,6 +8,7 @@ using Flyback.Editor.Assist;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Capture;
 using Flyback.Editor.Controls;
+using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
 using Flyback.Editor.Notices;
 using Flyback.Core;

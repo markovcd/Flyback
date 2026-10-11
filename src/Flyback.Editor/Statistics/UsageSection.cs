@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Editor.Settings;
+using Flyback.Editor.Shell;
 using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Statistics;

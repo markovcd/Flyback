@@ -6,6 +6,7 @@ using Avalonia.Headless.XUnit;
 using Flyback.Core.Graph;
 using Flyback.Editor.Decide;
 using Flyback.Editor.Settings;
+using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;

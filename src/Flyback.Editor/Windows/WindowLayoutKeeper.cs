@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
+using Flyback.Editor.Shell;
 
 namespace Flyback.Editor.Windows;
 

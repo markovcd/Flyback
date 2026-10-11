@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Flyback.Editor.Shell;
 using Flyback.Engine.Render;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Inspect;

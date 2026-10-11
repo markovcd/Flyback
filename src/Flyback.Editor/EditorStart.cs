@@ -5,6 +5,7 @@ using Flyback.Editor.Gallery;
 using Flyback.Editor.Knobs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Statistics;
 using Flyback.Editor.Windows;
 using Flyback.Plugins.Hosting;

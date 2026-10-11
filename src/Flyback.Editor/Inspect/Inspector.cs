@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Canvas;
+using Flyback.Editor.Shell;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Notices;
 using Flyback.Core.Graph;

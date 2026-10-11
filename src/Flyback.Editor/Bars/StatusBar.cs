@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
+using Flyback.Editor.Shell;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Site;

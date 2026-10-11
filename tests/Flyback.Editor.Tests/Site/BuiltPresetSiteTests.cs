@@ -1,3 +1,4 @@
+using Flyback.Editor.Shell;
 using Flyback.Editor.Site;
 using Flyback.Editor.Statistics;
 using Shouldly;

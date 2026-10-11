@@ -1,3 +1,4 @@
+using Flyback.Editor.Shell;
 using Flyback.Plugins.Assist;
 
 namespace Flyback.Editor.Assist;

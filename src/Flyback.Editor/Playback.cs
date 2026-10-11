@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Flyback.Editor.Decide;
 using Flyback.Editor.Assist;
+using Flyback.Editor.Shell;
 using Flyback.Engine.Compile;
 using Flyback.Ui.Audio;
 using Flyback.Editor.Canvas;

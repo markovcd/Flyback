@@ -1,3 +1,4 @@
+using Flyback.Editor.Shell;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.Editor.PluginPackages;

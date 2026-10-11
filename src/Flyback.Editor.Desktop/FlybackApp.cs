@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using Flyback.Editor.Files;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Statistics;
 using Flyback.Editor.Desktop.Updates;
 using Flyback.Editor.Windows;

@@ -1,3 +1,4 @@
+using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
 using Reqnroll;
 using Shouldly;

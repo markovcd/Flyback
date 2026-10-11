@@ -79,23 +79,7 @@ editor's twenty-one two-way folder pairs.
 `SoundSection` and `PrivacySection` stay: the picture, the sound and privacy have no
 folder of their own, and the guide now says so rather than implying one.
 
-## 4. The editor's root is a feature folder in disguise (Low)
-
-The guide said the root holds the composition, the window, the hubs and `ReportLine`.
-It holds 37 files. Thirteen are the contract a window or a page fulfils for the editor:
-`EditorSetup`, `EditorHost`, `EditorFolders`, `EditorLaunch`, `IClose`, `IFocus`,
-`ITitle`, `IMonitors`, `IFilePickers`, `IViewer`, `IBrowserStore` and the `No*`
-defaults of the last two. Six more are window behavior with no window type in them:
-`Attention`, `FullScreenPreview`, `MonitorPlacement`, `Restart`, `Reopen`,
-`LastPress`. The rest are the hubs, the composition and the view. The guide now lists
-the contract as the root's, which is true and is the smaller change.
-
-**Fix:** a `Shell/` folder (namespace `Flyback.Editor.Shell`) for the thirteen, named
-for what the glossary calls the programs around the editor. The desktop, web and
-Android programs each implement it, so each gains one `using`. The six behaviors are a
-second step if the first reads well; `Windows/` is the desktop's and is not their home.
-
-## 5. The editor's folders refer to each other both ways (Low)
+## 4. The editor's folders refer to each other both ways (Low)
 
 Twenty-one pairs of feature folders each `using` the other, counted before item 3
 moved two sections; `Canvas` is in seven, `Settings` was in seven. The repo's rule
@@ -112,7 +96,7 @@ rule is one sentence in the guide and a test like `ComponentDiagramTests` over t
 `using` lines, and `UsageCounter` is the first move. If not, item 3 was tidiness and
 this item closes.
 
-## 6. Six long stretches nobody has opened (Low)
+## 5. Six long stretches nobody has opened (Low)
 
 Counting lines between two member declarations, the longest in `src/` after the
 presets' `Build` methods are `GlslEmitter.Emit` (362 lines), `ExpressionFusion.Fuse`
@@ -125,7 +109,7 @@ read and split by its five phases; none of these has been read.
 **Fix:** open each once before deciding. The two command builders are option
 declarations and may be as long as they are.
 
-## 7. The docs named what the code no longer calls things (Low, done with this audit)
+## 6. The docs named what the code no longer calls things (Low, done with this audit)
 
 The guide named `SettingsDialog` (now `SettingsSession`) and listed the editor's
 folders without `Decide`, `Keys`, `Midi`, `Notices` and `Windows`; it said a

@@ -1,5 +1,6 @@
 using System.Net;
 using Flyback.Editor.Assist;
+using Flyback.Editor.Shell;
 using Flyback.Engine.Compile;
 using Flyback.Ui.Audio;
 using Flyback.Editor.Bars;

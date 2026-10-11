@@ -3,6 +3,7 @@ using Avalonia.Threading;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Files;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Windows;
 using Flyback.Core;
 using Flyback.Core.Graph;

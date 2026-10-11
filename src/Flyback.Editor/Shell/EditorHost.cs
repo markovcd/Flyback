@@ -1,6 +1,6 @@
 using Flyback.Editor.Files;
 
-namespace Flyback.Editor;
+namespace Flyback.Editor.Shell;
 
 /// <summary>What the editor is running in, and what it may reach outside itself.</summary>
 /// <remarks>Left unset, it is a desktop window that reaches no network, tells the operating system nothing and offers no restart.</remarks>

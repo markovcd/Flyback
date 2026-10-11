@@ -1,3 +1,5 @@
+using Flyback.Editor.Shell;
+
 namespace Flyback.Editor.Windows;
 
 internal sealed class WindowTitle(WindowHolder holder) : ITitle

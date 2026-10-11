@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Flyback.Editor.Controls;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Windows;
 using Shouldly;
 using Xunit;

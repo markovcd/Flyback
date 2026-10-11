@@ -1,4 +1,4 @@
-namespace Flyback.Editor;
+namespace Flyback.Editor.Shell;
 
 /// <summary>Plays a patch in the viewer, beside the editor.</summary>
 internal interface IViewer

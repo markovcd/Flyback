@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Avalonia.Threading;
 using Flyback.Editor.Canvas;
+using Flyback.Editor.Shell;
 using Flyback.Ui.Midi;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;

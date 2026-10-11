@@ -1,7 +1,7 @@
 using Flyback.Editor.Statistics;
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.Editor;
+namespace Flyback.Editor.Shell;
 
 /// <summary>
 /// What the editor's window is opened into, handed to its container in pieces: each

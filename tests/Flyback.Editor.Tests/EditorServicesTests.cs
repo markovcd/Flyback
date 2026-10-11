@@ -1,5 +1,6 @@
 using Avalonia.Headless.XUnit;
 using Avalonia.Platform.Storage;
+using Flyback.Editor.Shell;
 using Flyback.Ui.Audio;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Canvas;

@@ -10,7 +10,7 @@ using Flyback.Ui;
 using Flyback.Host;
 using Flyback.Editor.Midi;
 
-namespace Flyback.Editor;
+namespace Flyback.Editor.Shell;
 
 /// <summary>Where this machine keeps what the editor reads and saves.</summary>
 /// <remarks>Each one left null keeps nothing and reads nothing, which is what a test gets by default.</remarks>

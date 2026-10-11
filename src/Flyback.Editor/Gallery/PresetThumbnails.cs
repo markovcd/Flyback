@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 using Flyback.Core.Graph;
+using Flyback.Editor.Shell;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Render;
 using Flyback.Plugins.Hosting;

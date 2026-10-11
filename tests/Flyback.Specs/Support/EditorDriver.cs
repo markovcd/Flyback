@@ -10,6 +10,7 @@ using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Flyback.Editor.Shell;
 using Flyback.Editor;
 using Flyback.Editor.Assist;
 using Flyback.Ui;

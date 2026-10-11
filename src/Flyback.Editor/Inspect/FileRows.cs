@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
+using Flyback.Editor.Shell;
 using Flyback.Engine.Render;
 using Flyback.Ui.Controls;
 

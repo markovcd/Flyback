@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Avalonia.Threading;
+using Flyback.Editor.Shell;
 
 namespace Flyback.Editor.Files;
 

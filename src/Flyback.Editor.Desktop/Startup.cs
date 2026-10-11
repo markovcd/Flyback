@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Flyback.Editor.PluginPackages;
 using Flyback.Editor.Desktop.Updates;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Updates;
 using Flyback.Core;
 using Flyback.Plugins.Assist;

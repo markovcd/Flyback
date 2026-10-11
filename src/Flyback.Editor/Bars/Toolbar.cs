@@ -7,6 +7,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Editor.Capture;
 using Flyback.Editor.Controls;
+using Flyback.Editor.Shell;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Gallery;
 using Flyback.Editor.Notices;
