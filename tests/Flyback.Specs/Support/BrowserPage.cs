@@ -100,13 +100,18 @@ internal sealed class BrowserPage : IDisposable
     }
 
     /// <summary>A finger pressed at (<paramref name="x"/>, <paramref name="y"/>) in the page's pixels, moved by (<paramref name="dx"/>, <paramref name="dy"/>), and lifted.</summary>
+    /// <remarks>
+    /// Each touch carries when it happened, as a touchscreen's does. Unstamped, Chrome stamps it on arrival,
+    /// and a page still busy with the press makes a quick tap look like a long one.
+    /// </remarks>
     public void Touch(double x, double y, double dx = 0, double dy = 0)
     {
         Send("Emulation.setTouchEmulationEnabled", new JsonObject { ["enabled"] = true, ["maxTouchPoints"] = 1 });
 
-        Send("Input.dispatchTouchEvent", Finger("touchStart", x, y));
-        if (dx != 0 || dy != 0) Send("Input.dispatchTouchEvent", Finger("touchMove", x + dx, y + dy));
-        Send("Input.dispatchTouchEvent", new JsonObject { ["type"] = "touchEnd", ["touchPoints"] = new JsonArray() });
+        var at = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0;
+        Send("Input.dispatchTouchEvent", Finger("touchStart", x, y, at));
+        if (dx != 0 || dy != 0) Send("Input.dispatchTouchEvent", Finger("touchMove", x + dx, y + dy, at + 0.05));
+        Send("Input.dispatchTouchEvent", new JsonObject { ["type"] = "touchEnd", ["touchPoints"] = new JsonArray(), ["timestamp"] = at + 0.1 });
     }
 
     /// <summary>The left mouse button pressed at (<paramref name="x"/>, <paramref name="y"/>), dragged by (<paramref name="dx"/>, <paramref name="dy"/>) in steps, and released.</summary>
@@ -130,10 +135,11 @@ internal sealed class BrowserPage : IDisposable
         ["clickCount"] = 1,
     };
 
-    private static JsonObject Finger(string type, double x, double y) => new()
+    private static JsonObject Finger(string type, double x, double y, double at) => new()
     {
         ["type"] = type,
         ["touchPoints"] = new JsonArray(new JsonObject { ["x"] = x, ["y"] = y, ["id"] = 1 }),
+        ["timestamp"] = at,
     };
 
     /// <summary>Calls <paramref name="method"/>, and answers its result.</summary>
