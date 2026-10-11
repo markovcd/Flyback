@@ -1,10 +1,8 @@
 using Avalonia.Platform.Storage;
 using Flyback.Editor.Shell;
 using Flyback.Ui;
-using Flyback.Editor.Assist;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Notices;
-using Flyback.Editor.PluginPackages;
 using Flyback.Editor.Statistics;
 using Flyback.Core;
 using Flyback.Core.Compile;
@@ -35,9 +33,8 @@ internal sealed class PatchFiles
     private readonly PluginCatalog plugins;
     private readonly ReportLine report;
     private readonly Usage usage;
-    private readonly AssistantConversation conversation;
+    private readonly IPatchConversation conversation;
     private readonly Playback playback;
-    private readonly PluginInstalls installs;
 
     /// <summary>
     /// Whether this document is a bundle. What it decides is small and worth
@@ -52,16 +49,14 @@ internal sealed class PatchFiles
     private readonly Reactions reactions;
 
     /// <param name="playback">Puts a patch that has just been read on the canvas, from its beginning.</param>
-    /// <param name="installs">Offers the plugins a patch that could not be opened is short of.</param>
     public PatchFiles(
         NodeEditor editor,
         Document document,
         PluginCatalog plugins,
         ReportLine report,
         Usage usage,
-        AssistantConversation conversation,
+        IPatchConversation conversation,
         Playback playback,
-        PluginInstalls installs,
         IFilePickers pickers,
         Reactions reactions)
     {
@@ -74,7 +69,6 @@ internal sealed class PatchFiles
         this.usage = usage;
         this.conversation = conversation;
         this.playback = playback;
-        this.installs = installs;
     }
 
     /// <summary>
@@ -270,7 +264,7 @@ internal sealed class PatchFiles
             if (!loaded.IsComplete)
             {
                 report.Say($"Not opened. {loaded.Summary}", loaded.Detail);
-                await installs.OfferMissingAsync(loaded, new Reopen(Path: file.TryGetLocalPath()));
+                await reactions.RaiseAsync(new PluginsMissing(loaded, new Reopen(Path: file.TryGetLocalPath())));
                 return;
             }
 
@@ -570,7 +564,7 @@ internal sealed class PatchFiles
             if (bundle.Load is { IsComplete: false } lacking)
             {
                 report.Say($"Not opened. {lacking.Summary}", lacking.Detail);
-                await installs.OfferMissingAsync(lacking, new Reopen(Path: file.TryGetLocalPath()));
+                await reactions.RaiseAsync(new PluginsMissing(lacking, new Reopen(Path: file.TryGetLocalPath())));
                 return;
             }
 

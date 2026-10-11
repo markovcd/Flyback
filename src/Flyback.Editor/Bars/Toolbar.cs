@@ -23,8 +23,16 @@ namespace Flyback.Editor.Bars;
 /// reacts to it, as it does to the same thing asked for with a key.
 /// </summary>
 internal sealed class Toolbar
-    : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IReactTo<MeasureModeChanged>, IReactTo<Touched>, IReactTo<OwnershipChanged>
+    : IReactTo<ViewChanged>,
+        IReactTo<TakeMarked>,
+        IReactTo<MeasureModeChanged>,
+        IReactTo<Touched>,
+        IReactTo<OwnershipChanged>,
+        IReactTo<HistoryChanged>,
+        IReactTo<EditStateChanged>,
+        IReactTo<ConversationChanged>
 {
+    private readonly Document document;
     private readonly RecordingState recording;
 
     /// <summary>What the layout button does to the canvas, which is what it says by default.</summary>
@@ -133,15 +141,18 @@ internal sealed class Toolbar
     /// <summary>The bar itself.</summary>
     public Control View { get; }
 
+    /// <param name="document">What Undo and Redo have behind and ahead of them.</param>
     /// <param name="presets">The preset slot, first on the bar.</param>
     /// <param name="plugins">Whether any assistant plugin is installed.</param>
     /// <param name="recording">Whether a take is running, which no other patch may be opened under.</param>
     /// <param name="host">Whether the editor is in a page, whose bar has none of what a page cannot do.</param>
-    public Toolbar(PresetSlot presets, PluginCatalog plugins, Reactions reactions, IDialog dialog, RecordingState recording, EditorHost host)
+    public Toolbar(Document document, PresetSlot presets, PluginCatalog plugins, Reactions reactions, IDialog dialog, RecordingState recording, EditorHost host)
     {
         var full = !host.InPage;
 
+        this.document = document;
         this.recording = recording;
+        FollowHistory();
 
         Open.Click += (_, _) => reactions.Raise(new OpenAsked());
         Save.Click += (_, _) => reactions.Raise(new SaveAsked());
@@ -322,9 +333,35 @@ internal sealed class Toolbar
         return Task.CompletedTask;
     }
 
+    public Task On(HistoryChanged notice)
+    {
+        FollowHistory();
+        return Task.CompletedTask;
+    }
+
+    public Task On(EditStateChanged notice)
+    {
+        FollowHistory();
+        return Task.CompletedTask;
+    }
+
+    public Task On(ConversationChanged notice)
+    {
+        FollowHistory();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Grays Undo and Redo out when there is nothing behind or ahead.</summary>
+    private void FollowHistory()
+    {
+        Undo.IsEnabled = document.CanUndo;
+        Redo.IsEnabled = document.CanRedo;
+    }
+
     /// <summary>What laying out means, and whether it is worth doing, follows who owns the patch and which view is showing.</summary>
     public Task On(OwnershipChanged notice)
     {
+        FollowHistory();
         Tidy.IsEnabled = notice.ShowingCode || !notice.Owned;
 
         ToolTip.SetTip(Tidy, notice.ShowingCode

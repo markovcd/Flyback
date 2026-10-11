@@ -17,7 +17,7 @@ namespace Flyback.Editor.PluginPackages;
 /// Installing, updating and removing a plugin, from a <c>.fbkp</c> opened with
 /// Flyback or from the plugins window (ADR-0132, ADR-0148).
 /// </summary>
-internal sealed class PluginInstalls : IReactTo<PluginsAsked>
+internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsMissing>
 {
     private readonly IDialog dialog;
     private readonly PluginHubFactory pluginHubs;
@@ -75,6 +75,8 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
         this.playback = playback;
         this.chosenAssistant = chosenAssistant;
     }
+
+    public Task On(PluginsMissing notice) => OfferMissingAsync(notice.Load, notice.Reopen);
 
     public Task On(PluginsAsked notice)
     {

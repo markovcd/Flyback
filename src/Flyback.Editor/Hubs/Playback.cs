@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using Flyback.Editor.Decide;
-using Flyback.Editor.Assist;
 using Flyback.Editor.Shell;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
@@ -10,7 +9,6 @@ using Flyback.Ui.Controls;
 using Avalonia.Threading;
 using Flyback.Ui.Midi;
 using Flyback.Editor.Notices;
-using Flyback.Editor.PluginPackages;
 using Flyback.Editor.Statistics;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
@@ -49,7 +47,6 @@ internal sealed class Playback
     private readonly Transport transport;
     private readonly ReportLine report;
     private readonly PluginCatalog plugins;
-    private readonly ChosenAssistant chosenAssistant;
     private readonly RecordingState recording;
     private readonly Reactions reactions;
     private readonly Usage usage;
@@ -79,7 +76,6 @@ internal sealed class Playback
         LineIn lineIn,
         Transport transport,
         AudioSetup sound,
-        ChosenAssistant chosenAssistant,
         RecordingState recording,
         Reactions reactions,
         Usage usage,
@@ -94,7 +90,6 @@ internal sealed class Playback
         this.transport = transport;
         this.report = report;
         this.plugins = plugins;
-        this.chosenAssistant = chosenAssistant;
         this.recording = recording;
         this.reactions = reactions;
         this.usage = usage;
@@ -223,7 +218,7 @@ internal sealed class Playback
         if (next.Failure is { } failure)
         {
             next.Device.Dispose();
-            report.Say($"Could not open sound: {failure}", FailureDetail());
+            reactions.Raise(new SoundFailed($"Could not open sound: {failure}"));
             return;
         }
 
@@ -245,8 +240,6 @@ internal sealed class Playback
 
     /// <summary>Puts the sound input settings just saved in force: a Line In is heard through the device they name.</summary>
     public void ReopenInput() => lineIn.Reconfigure();
-
-    private string FailureDetail() => PluginSummary.Text(plugins, Sound.Failure, chosenAssistant.Summary);
 
     /// <summary>
     /// The chart the picture is rooted at: the selected module, when that is a Probe,
@@ -485,7 +478,7 @@ internal sealed class Playback
             // A device is only really opened here, so this is where a card that is
             // busy, unplugged or missing its library says so. Blocked rather than
             // retried, and never taking the shell down (ADR-0025).
-            report.Say($"Sound could not start — {ex.Message}", FailureDetail());
+            reactions.Raise(new SoundFailed($"Sound could not start — {ex.Message}"));
             blocked = true;
             return;
         }

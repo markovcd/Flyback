@@ -1,21 +1,12 @@
 using Flyback.Core;
-using Flyback.Editor.Bars;
-using Flyback.Editor.Files;
+using Flyback.Editor.Hubs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Shell;
 
-namespace Flyback.Editor.Hubs;
+namespace Flyback.Editor.Files;
 
-/// <summary>
-/// Keeps Undo, Redo and the window title in step with the document's edit state
-/// (ADR-0150).
-/// </summary>
-internal sealed class EditState(
-    Document document,
-    UnsavedWork unsaved,
-    PatchFiles files,
-    Toolbar toolbar,
-    ITitle title)
+/// <summary>Keeps the window title in step with the patch: its name, and a dot while closing would lose something.</summary>
+internal sealed class PatchTitle(UnsavedWork unsaved, PatchFiles files, ITitle title)
     : IReactTo<HistoryChanged>,
         IReactTo<EditStateChanged>,
         IReactTo<ConversationChanged>,
@@ -57,15 +48,8 @@ internal sealed class EditState(
         return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// Grays Undo and Redo out when there is nothing behind or ahead, and puts the
-    /// patch name and the unsaved dot in the window title.
-    /// </summary>
     private void Refresh()
     {
-        toolbar.Undo.IsEnabled = document.CanUndo;
-        toolbar.Redo.IsEnabled = document.CanRedo;
-
         var named = files.Name is null ? BaseTitle : $"{files.Name} — {BaseTitle}";
         title.Set(unsaved.SomethingToLose ? named + " •" : named);
     }

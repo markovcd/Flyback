@@ -136,6 +136,7 @@ internal static class EditorServices
         services.AddPart<AssistantRunFactory>();
         services.AddSingleton(sp => new Credentials(sp.GetRequiredService<PluginCatalog>().PreferredSecretStore));
         services.AddPart<AssistantConversation>();
+        services.AddSingleton<IPatchConversation>(sp => sp.GetRequiredService<AssistantConversation>());
 
         services.AddSingleton<IAssistantEditor, AssistantEditor>();
         services.AddPart<AssistantPanel>();
@@ -171,7 +172,7 @@ internal static class EditorServices
         services.AddSingleton<ITitle, WindowTitle>();
         services.AddSingleton<IBrowserStore, NoBrowserStore>();
         services.AddSingleton<IViewer, NoViewer>();
-        services.AddPart<EditState>();
+        services.AddPart<PatchTitle>();
         services.AddPart<SiteAccess>();
         services.AddPart<Playback>();
         services.AddPart<Measuring>();
@@ -215,6 +216,7 @@ internal static class EditorServices
         services.AddSingleton<KeyboardSection>();
         services.AddSingleton<GroupInspector>();
         services.AddPart<PluginInstalls>();
+        services.AddPart<SoundFailureReport>();
         services.AddPart<PresetAudition>();
         services.AddPart<PresetSlot>();
         services.AddPart<SeekBar>();
