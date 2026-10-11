@@ -27,12 +27,16 @@ found this week was fixed in the harness the same day, in the open.
 ## 10. What has no test at all (Low to Medium)
 
 - Android: `Flyback.Editor.Android` and `Flyback.Plugins.AndroidIO` are
-  `Build="false"` in the solution, referenced by no test, and `android.yml`
-  builds an APK and tests nothing. The declaration theories
-  (`ModuleDeclarationTests`, `AudioOutputSelectionTests`) could read from the
-  AndroidIO assembly without running it, as `PluginPackageTests` does for others,
-  once something builds that assembly where the tests run: it needs the android
-  workload, which the gate image does not carry (ADR-0184).
+  `Build="false"` in the solution and `android.yml` only compiles them. The logic
+  they hold is shared and tested on the desktop (`BlockWriter`, `BlockReader`,
+  `MidiStream`, `EditorReadout`); the glue onto `android.*` runs only on a device.
+  `scripts/android-smoke.sh` checks it by hand on the local AVD: the app boots on a
+  preset, the picture draws, AudioTrack plays, the IL runs, the state broadcast
+  answers, and all of it after a rotation. It moves into `android.yml` on an
+  emulator when the APK ships, or the first time an Android-only break gets past
+  the compile; until then its flakes would block `/release` on a build nobody
+  installs. Reading the AndroidIO assembly in the declaration theories is not
+  worth doing: it declares no modules.
 - `shot` and `stills` are tested in Cli.Tests up to their refusals, `stills` also
   for the presets that draw nothing and, with an ffmpeg on the machine, for the
   WebP a preset that draws gets. What is left needs a seam: the hand-over's

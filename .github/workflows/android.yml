@@ -11,8 +11,8 @@
 #
 # It runs on GitHub's machines for every ref, `main` included: the self-hosted
 # runner builds in Docker, and a workload install would leave state on it. It
-# builds only; an emulator run is slow and flaky, and waits on the app reporting
-# its own state over adb (TODO.md).
+# builds only: an emulator run is slow and flaky, so scripts/android-smoke.sh is
+# run by hand on the local AVD until the APK ships.
 #
 # Every action is pinned to a commit rather than a tag; Dependabot says when a
 # pin should move.

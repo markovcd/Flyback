@@ -107,7 +107,9 @@ runtime costs rather than the phone. The engine's own leads are in the `performa
 9. **Driving it.** Test everything platform-free headless at a phone-sized window with
    `flyback-cli shot` (ADR-0166); only the GL context, the audio device and permissions need
    an emulator over `adb`. An intent opens a preset, and the state broadcast says what plays
-   and how fast; what remains is a script that does both and waits for the sound to be timed.
+   and how fast; `scripts/android-smoke.sh` does both, waits for the sound to be timed,
+   rotates and asks again. Written on 2026-10-11 in a session with no emulator, so its
+   first run is still owed; it goes into `android.yml` when the APK ships.
 
 ## The order
 
