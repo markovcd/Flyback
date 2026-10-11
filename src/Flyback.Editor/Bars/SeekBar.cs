@@ -217,7 +217,7 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
         if ((cleared || typed is not null) && typed != patch.Length)
         {
             patch.Length = typed;
-            writeBack.Relaid();
+            editor.Reactions.Raise(new PatchRelaid());
             editor.History.Record();
             writeBack.HandCameOff();
         }

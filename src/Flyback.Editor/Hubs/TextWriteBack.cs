@@ -129,15 +129,10 @@ internal sealed class TextWriteBack : IReactTo<InputTurned>, IReactTo<InputLetGo
     /// </param>
     public void Restated(Guid node, string? key = null) => restated.Add((node, key));
 
-    /// <summary>
-    /// Notes that something about the whole patch rather than a module has changed,
-    /// the keyboard's layout or the length, for the next write-back.
-    /// </summary>
-    public void Relaid() => relaid = true;
-
+    /// <summary>Something about the whole patch rather than a module has changed, for the next write-back.</summary>
     public Task On(PatchRelaid notice)
     {
-        Relaid();
+        relaid = true;
         return Task.CompletedTask;
     }
 

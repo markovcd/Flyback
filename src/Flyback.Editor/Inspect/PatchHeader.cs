@@ -9,6 +9,7 @@ using Flyback.Editor.Canvas;
 using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 using Flyback.Editor.Hubs;
+using Flyback.Editor.Notices;
 
 namespace Flyback.Editor.Inspect;
 
@@ -438,7 +439,7 @@ internal sealed class PatchHeader(NodeEditor editor, TextWriteBack writeBack, Ca
     /// <summary>Finished as a box closes, which the panel is told of only after Enter has taken the box away.</summary>
     private void Finished()
     {
-        writeBack.Relaid();
+        editor.Reactions.Raise(new PatchRelaid());
         editor.History.Record();
         writeBack.HandCameOff();
     }
