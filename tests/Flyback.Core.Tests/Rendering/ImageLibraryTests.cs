@@ -63,6 +63,21 @@ public sealed class ImageLibraryTests : IDisposable
         library.Find("moon.png").ShouldNotBeNull();
     }
 
+    /// <summary>A picture read ahead, off the thread that compiles, is the one the compile finds.</summary>
+    [Fact]
+    public async Task A_picture_read_ahead_is_kept_for_the_compile()
+    {
+        var path = Write("moon.png");
+        var library = new ImageLibrary { Beside = folder };
+
+        await library.Preload(["moon.png"]);
+
+        File.Delete(path);
+
+        library.Find("moon.png").ShouldNotBeNull();
+        library.Preload(["moon.png"]).IsCompleted.ShouldBeTrue("a picture already held is not read again");
+    }
+
     /// <summary>
     /// A file that is not there is remembered as firmly as one that is — the
     /// recompile that follows every keystroke must not go back to the disk for a

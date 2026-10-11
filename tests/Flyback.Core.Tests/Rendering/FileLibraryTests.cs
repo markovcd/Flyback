@@ -37,6 +37,23 @@ public sealed class FileLibraryTests : IDisposable
         ((ISampleLibrary)library).FindFile(name).ShouldNotBeSameAs(first);
     }
 
+    /// <summary>A sound read ahead, off the thread that compiles, is the one the compile finds.</summary>
+    [Fact]
+    public async Task A_sound_read_ahead_is_kept_for_the_compile()
+    {
+        using (var clip = File.Create(Path.Combine(folder, "hum.wav")))
+            WavWriter.Write(clip, [0.5f, -0.5f], 8_000, 1);
+
+        var library = new SampleLibrary { Beside = folder };
+
+        await library.Preload(["hum.wav"]);
+
+        File.Delete(Path.Combine(folder, "hum.wav"));
+
+        library.Find("hum.wav").ShouldNotBeNull().Samples.Length.ShouldBe(2);
+        library.Preload(["hum.wav"]).IsCompleted.ShouldBeTrue("a sound already held is not read again");
+    }
+
     [Fact]
     public void A_file_that_is_not_there_says_so()
     {

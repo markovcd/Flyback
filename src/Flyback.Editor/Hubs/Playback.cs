@@ -3,6 +3,7 @@ using Flyback.Editor.Decide;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Shell;
 using Flyback.Engine.Compile;
+using Flyback.Engine.Graph;
 using Flyback.Ui.Audio;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Capture;
@@ -118,12 +119,12 @@ internal sealed class Playback
     /// <summary>The programs are rebuilt before anything reads them.</summary>
     public int Priority => -10;
 
-    public Task On(PatchChanged notice)
+    public async Task On(PatchChanged notice)
     {
+        await Preload();
+
         if (pacing is not null && !notice.Opened) pacing.Ask();
         else Recompile(opened: notice.Opened);
-
-        return Task.CompletedTask;
     }
 
     public Task On(SelectionChanged notice)
@@ -138,11 +139,27 @@ internal sealed class Playback
         return Task.CompletedTask;
     }
 
-    public Task On(FilesMoved notice)
+    public async Task On(FilesMoved notice)
     {
         (sounds, pictures) = (notice.Sounds, notice.Pictures);
+        await Preload();
         Recompile();
-        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Reads the sound files and pictures the patch names on a worker, so the compile
+    /// that follows finds them rather than decoding on the UI thread. Complete at once where all are read.
+    /// </summary>
+    private Task Preload()
+    {
+        var named = PatchBundle.Files(editor.History.Patch, plugins.Modules);
+
+        if (named.Count == 0) return Task.CompletedTask;
+
+        var heard = sounds is SampleLibrary samples ? samples.Preload(named) : Task.CompletedTask;
+        var seen = pictures is ImageLibrary images ? images.Preload(named) : Task.CompletedTask;
+
+        return heard.IsCompleted && seen.IsCompleted ? Task.CompletedTask : Task.WhenAll(heard, seen);
     }
 
     public Task On(RewindAsked notice)

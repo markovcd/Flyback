@@ -32,7 +32,7 @@
 - A saved patch holds only what was set, not what Flyback works out from it.
 - The unsaved-work and assistant-working questions carry a glyph: a disk, or the assistant's star.
 - On Android, the editor has the Flyback mark as its home-screen icon and opens on it.
-- Saving a preset or a bundle, installing a plugin, saving the file settings on Linux and typing in the assistant's settings no longer hold up the window.
+- Opening a patch that plays a long sound file, saving a preset or a bundle, installing a plugin, saving the file settings on Linux and typing in the assistant's settings no longer hold up the window.
 - The plugin contract no longer offers what only Flyback itself calls, such as `NodeCatalog.Install` and `PatchWorkbench.Edits`.
 
 ### Viewer

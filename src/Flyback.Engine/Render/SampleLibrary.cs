@@ -31,6 +31,12 @@ public sealed class SampleLibrary : ISampleLibrary
 
     private readonly Dictionary<string, string> lastWhy = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>The sound files <see cref="Preload"/> is reading, so a second ask waits on the first.</summary>
+    private readonly Dictionary<string, Task> reading = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Moved on by every clear, so a read that began before one is not kept after it.</summary>
+    private int generation;
+
     /// <summary>The largest file <see cref="FindFile"/> reads, in bytes.</summary>
     public const int MostFileBytes = 16 * 1024 * 1024;
 
@@ -132,6 +138,8 @@ public sealed class SampleLibrary : ISampleLibrary
         if (path is null) Clear();
         else
         {
+            generation++;
+            reading.Clear();
             known.Remove(path);
             knownMidi.Remove(path);
             knownFiles.Remove(path);
@@ -139,8 +147,58 @@ public sealed class SampleLibrary : ISampleLibrary
         }
     }
 
+    /// <summary>
+    /// Reads the sound files among <paramref name="paths"/> not known yet on a worker, so a
+    /// compile after it finds them here. Complete at once where there are none.
+    /// </summary>
+    /// <remarks>Called on a thread with a synchronization context, which is the one the reads are kept on.</remarks>
+    public Task Preload(IEnumerable<string> paths)
+    {
+        var waits = new List<Task>();
+
+        foreach (var path in paths)
+        {
+            if (string.IsNullOrWhiteSpace(path) || known.ContainsKey(path)) continue;
+
+            if (reading.TryGetValue(path, out var underway))
+            {
+                waits.Add(underway);
+                continue;
+            }
+
+            if (PatchPaths.Resolve(path, Beside, Library) is not { } full) continue;
+
+            var read = ReadAhead(path, full);
+
+            reading[path] = read;
+            waits.Add(read);
+        }
+
+        return waits.Count == 0 ? Task.CompletedTask : Task.WhenAll(waits);
+    }
+
+    private async Task ReadAhead(string path, string full)
+    {
+        var era = generation;
+        var setting = FfmpegPath;
+
+        var (clip, fault) = await Task.Run(() =>
+        {
+            var clip = SoundReader.Read(full, Ffmpeg.Resolve(setting), out var fault);
+
+            return (clip, fault);
+        }).ConfigureAwait(true);
+
+        if (era != generation) return;
+
+        reading.Remove(path);
+        known.TryAdd(path, (clip, fault));
+    }
+
     private void Clear()
     {
+        generation++;
+        reading.Clear();
         known.Clear();
         knownMidi.Clear();
         knownFiles.Clear();
