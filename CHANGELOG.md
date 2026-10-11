@@ -46,6 +46,7 @@
 
 - A Trails fades by the second rather than by the frame, so its tail is as long in a 30 fps export as in a 60 fps preview.
 - The Claude Code and Codex assistants no longer flash a console window on Windows.
+- What the canvas says of an edit, a group declined or modules ungrouped, reaches the status bar.
 - The editor starts with an assistant chosen and a prose budget too small to describe every module, instead of failing to open.
 - The inspector works under a finger: it scrolls instead of moving the control the finger started on, folds its name and buttons into a pinned header on a short screen, and has Bypass, Duplicate, Delete and More buttons, an Expand that hides the picture, and a rename dialog clear of the on-screen keyboard.
 - A finger that wobbles while tapping an Arrangement's grid switches the cell, and a scroll that starts on a sequencer's notes no longer adds one.

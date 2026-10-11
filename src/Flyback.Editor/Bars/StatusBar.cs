@@ -24,12 +24,19 @@ namespace Flyback.Editor.Bars;
 /// A grid rather than a row of controls, because a row hands every child the width
 /// it asks for and the report would push the count off the edge of a narrow window.
 /// </remarks>
-internal sealed class StatusBar : IReactTo<PatchStarting>
+internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
 {
     /// <summary>In the report's place while the patch starts, what is said meanwhile is read once it has.</summary>
     public Task On(PatchStarting notice)
     {
         Compiling.Watch(() => playback.Starting);
+        return Task.CompletedTask;
+    }
+
+    /// <summary>What the canvas says of an edit, on the report line.</summary>
+    public Task On(CanvasSaid notice)
+    {
+        report.Say(notice.Message);
         return Task.CompletedTask;
     }
 
