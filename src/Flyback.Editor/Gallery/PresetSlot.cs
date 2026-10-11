@@ -30,7 +30,8 @@ namespace Flyback.Editor.Gallery;
 /// so the rows those are on stay put however many are saved. Saving one keeps a copy
 /// and nothing else: the patch on the canvas is still whatever document it was.
 /// </remarks>
-internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>, IReactTo<PatchShowing>, IReactTo<HistoryChanged>
+internal sealed class PresetSlot
+    : IReactTo<DocumentSaved>, IReactTo<TakeMarked>, IReactTo<PatchShowing>, IReactTo<HistoryChanged>, IReactTo<StartupPatchAsked>
 {
     private readonly IDialog dialog;
     private readonly NodeEditor editor;
@@ -201,7 +202,9 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
     /// Picks the startup patch from the same gallery, with nothing in it to save or
     /// delete: what is chosen is a name, and Cancel drops it.
     /// </summary>
-    public async Task<string?> PickStartupPatchAsync(string current)
+    public async Task On(StartupPatchAsked notice) => notice.Chosen = await PickStartupPatchAsync(notice.Current);
+
+    private async Task<string?> PickStartupPatchAsync(string current)
     {
         var named = Ordered().FirstOrDefault(preset => preset.Name == current);
 

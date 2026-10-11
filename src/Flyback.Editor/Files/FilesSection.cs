@@ -7,8 +7,9 @@ using Avalonia.Platform.Storage;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Shell;
 using Flyback.Ui.Controls;
-using Flyback.Editor.Gallery;
+using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
+using Flyback.Plugins.Hosting;
 using Flyback.Ui;
 using Flyback.Host;
 using Flyback.Editor.Hubs;
@@ -72,27 +73,34 @@ internal sealed class FilesSection : ISettingsSection
     /// <summary>What tells the operating system, or null to tell it nothing.</summary>
     private readonly FileTypes? system;
 
-    private readonly PresetSlot presets;
+    private readonly PluginCatalog plugins;
+    private readonly PresetLibrary presets;
+    private readonly Reactions reactions;
     private readonly IFilePickers pickers;
     private readonly OutputSettingRepository settings;
     private readonly PatchFiles files;
 
     private readonly Action<string, string?> report;
 
-    /// <param name="presets">The presets the startup patch is named and picked from.</param>
+    /// <param name="plugins">The presets the startup patch is named from, with the ones <paramref name="presets"/> keeps.</param>
+    /// <param name="reactions">Asks the gallery to pick one.</param>
     /// <param name="files">The patch's files, whose samples and pictures are looked for in the library.</param>
     public FilesSection(
         EditorFolders folders,
         EditorHost host,
         ReportLine report,
-        PresetSlot presets,
+        PluginCatalog plugins,
+        PresetLibrary presets,
+        Reactions reactions,
         IFilePickers pickers,
         OutputSettingRepository settings,
         PatchFiles files)
     {
         path = folders.SettingsPath;
         system = host.FileTypes;
+        this.plugins = plugins;
         this.presets = presets;
+        this.reactions = reactions;
         this.pickers = pickers;
         this.settings = settings;
         this.files = files;
@@ -220,7 +228,9 @@ internal sealed class FilesSection : ISettingsSection
 
         defaultPreset.Click += async (_, _) =>
         {
-            if (await presets.PickStartupPatchAsync(startupPatch) is { } chosen) ShowStartupPatch(chosen);
+            var asked = new StartupPatchAsked(startupPatch);
+            await reactions.RaiseAsync(asked);
+            if (asked.Chosen is { } chosen) ShowStartupPatch(chosen);
         };
 
         return InspectorRows.Field("Startup patch", defaultPreset);
@@ -283,7 +293,7 @@ internal sealed class FilesSection : ISettingsSection
     /// </remarks>
     private void ShowStartupPatch(string chosen)
     {
-        var offered = presets.Ordered();
+        var offered = PresetLibrary.Ordered(plugins.Presets, presets);
 
         startupPatch = chosen.Length > 0 ? chosen : offered[PresetLibrary.Opening(offered, chosen)].Name;
         defaultPresetName.Text = startupPatch;

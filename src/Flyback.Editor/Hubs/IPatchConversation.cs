@@ -1,6 +1,6 @@
 namespace Flyback.Editor.Hubs;
 
-/// <summary>The conversation about the patch, which its file carries and gives back (ADR-0072); the assistant fulfils it.</summary>
+/// <summary>The conversation about the patch, which its file carries and gives back (ADR-0072); the assistant fulfills it.</summary>
 internal interface IPatchConversation
 {
     /// <summary>The conversation as the file keeps it, or null where there is none worth keeping.</summary>

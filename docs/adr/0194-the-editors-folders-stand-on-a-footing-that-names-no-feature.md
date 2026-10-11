@@ -18,11 +18,22 @@ through `PresetSlot`, `Playback` and `Toolbar`.
 
 ## Decision
 
-**The features stand on a footing, under the composition.** The footing, lowest
-first, is the root, `Controls`, `Updates`, `Statistics`, `Shell`, `Notices` and
-`Settings`. Each names only what is below it, and none names a feature. The features
-(`Hubs`, `Canvas`, `Inspect` and the rest) name the footing and each other. Nothing
+**The features stand on a footing, in an order, under the composition.** The
+footing, lowest first, is the root, `Controls`, `Updates`, `Statistics`, `Shell`,
+`Notices` and `Settings`. Each names only what is below it, and none names a feature.
+The features stand on it, lowest first: `Site`, `Decide`, `Midi`, `Canvas`, `Hubs`,
+`Assist`, `Knobs`, `PluginPackages`, `Capture`, `Files`, `Gallery`, `Inspect`, `Bars`,
+`Keys` and `Windows`. Each names only the footing and the features below it. Nothing
 names `Composition`.
+
+**What a feature needs from above it arrives, rather than being fetched.** A notice
+(`TakeMarked`, `MeasureModeChanged`, `PatchRelaid`, `SoundFailed`, `PluginsMissing`,
+`StartupPatchAsked`), which carries an answer back where one is needed, as
+`RestartAsked` already did; or an interface the lower feature defines and the upper
+one fulfills (`IPatchConversation`), as `Shell` does with `ITitle`. A settings section
+sets what is below it (the MIDI section is the knob panel's, and sets the panel's
+grid); what is above it reads the section (the text view reads its font size from the
+canvas section).
 
 **The root is the bottom.** A parent namespace cannot see its children without a
 `using`, so once the root names no folder, every way up the order is a line the test
@@ -41,11 +52,15 @@ named through no `using` at all, still counts.
 ## Consequences
 
 - A new tangle fails the gate with both type names, where before it went unnoticed.
-- The features are not ordered among themselves. Ordering them would mean cutting the
-  knot through `PresetSlot` and `Playback`, which is a change to how those classes work,
-  not where they are filed.
+- Ordering the features cut the knot through `PresetSlot`, `Playback` and `Toolbar`.
+  The toolbar draws its own Undo, Redo, Measure and Record from the document and the
+  notices, where it was driven from three features; `PatchFiles` and `Playback` raise
+  what the assistant and the plugins react to; and `PresetSlot` no longer draws with
+  the bar's factory or is taken by the Files section.
 - A small type the footing carries moves down with it: `SocketPick` into `Notices`,
-  `InspectorRows` into `Settings`, `PresetMotion` and `Boxed` into `Controls`, and the
-  file types into `Shell`.
+  `InspectorRows` into `Settings`, `PresetMotion`, `Boxed` and `ToolbarButtons` into
+  `Controls`, and the file types and `PatchFileKinds` into `Shell`. `RecordingState` is
+  a hub, `PanelInstrument` an instrument, and the window title is kept by `PatchTitle`
+  in `Files`.
 - `Shell.FileKind` shares a name with the extras' `FileKind`, so the inspector's file
   rows name the extras' one through an alias.

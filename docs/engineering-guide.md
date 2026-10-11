@@ -540,19 +540,23 @@ and the other small pieces every folder reads); `Controls`, the widgets that bel
 to no feature; `Updates`, the release feed, installing and restarting; `Statistics`;
 `Shell`, what a window or a page hands the editor (`EditorSetup`, `EditorHost`,
 `IClose`, `IFocus`, `IFilePickers`, `FileTypes` and the rest), which the desktop, web
-and Android programs each fulfil; `Notices`, one record per notice, with `Reactions`
+and Android programs each fulfill; `Notices`, one record per notice, with `Reactions`
 and the start phases; and `Settings`, what a settings section is built from
 (`ISettingsSection`, `SettingsSession`, `InspectorRows`). Each names only what is
-below it. The features stand on it and may name one another, each with its region,
-its controls and its settings section together: `Hubs` (`Document`, `Playback`,
-`PatchFiles`, and what writes the panel into the text), `Canvas` (the node editor and
-the palette), `Inspect`, `Knobs`, `Bars`, `Gallery`, `Site`, `Assist`, `Capture`,
-`Files`, `Midi`, `Decide`, `Keys`, `PluginPackages` and `Windows` (the picture
-window, full screen and the kept layout). `Composition` is everything that lists the
-features, and nothing names it: the registrations, `EditorView`, `ShellLayout`,
-`MainWindow`, the start, `ThisMachine`, and the settings pages with the sections of
-what has no folder or sits in the footing (the picture, the sound, privacy, usage and
-updates). `FolderLayeringTests` holds the order, read from the compiled editor.
+below it. The features stand on it in an order of their own, lowest first, each with
+its region, its controls and its settings section together: `Site`, `Decide`, `Midi`
+(the instruments), `Canvas` (the node editor and the palette), `Hubs` (`Document`,
+`Playback`, `PatchFiles`, and what writes the panel into the text), `Assist`, `Knobs`
+(the knob panel and the MIDI section), `PluginPackages`, `Capture`, `Files`, `Gallery`,
+`Inspect`, `Bars`, `Keys` and `Windows` (the picture window, full screen and the kept
+layout). Each names only the footing and the features below it; what it needs from
+above arrives as a notice (`TakeMarked`, `MeasureModeChanged`) or through an interface
+it defines and the feature above fulfills (`IPatchConversation`). `Composition` is
+everything that lists the features, and nothing names it: the registrations,
+`EditorView`, `ShellLayout`, `MainWindow`, the start, `ThisMachine`, and the settings
+pages with the sections of what has no folder or sits in the footing (the picture, the
+sound, privacy, usage and updates). `FolderLayeringTests` holds the order, read from
+the compiled editor.
 The namespace follows the folder, and a folder is never named for a
 type, since inside `Flyback.Editor` that name would then mean the namespace. For
 the same reason `Canvas` shadows Avalonia's control, so it is written

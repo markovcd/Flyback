@@ -8,7 +8,8 @@ namespace Flyback.Editor.Tests;
 
 /// <summary>
 /// The editor's folders layer. The footing the features stand on names nothing above
-/// itself, and nothing but the composition names the composition.
+/// itself, each feature names only the features below it, and nothing but the
+/// composition names the composition.
 /// </summary>
 /// <remarks>
 /// Read from the compiled editor rather than its <c>using</c> lines, since a child
@@ -19,6 +20,10 @@ public class FolderLayeringTests
 {
     /// <summary>The folders under the features, lowest first; the root namespace is the lowest.</summary>
     private static readonly string[] Footing = ["", "Controls", "Updates", "Statistics", "Shell", "Notices", "Settings"];
+
+    /// <summary>The features, lowest first; each names only the footing and the features below it.</summary>
+    private static readonly string[] Features =
+        ["Site", "Decide", "Midi", "Canvas", "Hubs", "Assist", "Knobs", "PluginPackages", "Capture", "Files", "Gallery", "Inspect", "Bars", "Keys", "Windows"];
 
     private const string Composition = "Composition";
 
@@ -44,15 +49,17 @@ public class FolderLayeringTests
             where there is not null && !Allowed(home, there)
             select $"{Name(type)} -> {Name(used)}";
 
-        crossings.Distinct().Order().ShouldBeEmpty("a folder names only the footing below it, and the composition is named by nothing");
+        crossings.Distinct().Order().ShouldBeEmpty("a folder names only what is below it, and the composition is named by nothing");
     }
 
-    private static bool Allowed(string from, string to) =>
-        from == to || Rank(to) < Rank(from) || (Rank(from) == Footing.Length && Rank(to) == Footing.Length);
+    private static bool Allowed(string from, string to) => from == to || Rank(to) < Rank(from);
 
-    /// <summary>A footing folder's place in it, then every feature alike, then the composition.</summary>
+    /// <summary>A footing folder's place in it, then a feature's place above those, then the composition.</summary>
     private static int Rank(string folder) =>
-        folder == Composition ? Footing.Length + 1 : Array.IndexOf(Footing, folder) is >= 0 and var rank ? rank : Footing.Length;
+        folder == Composition ? Footing.Length + Features.Length
+        : Array.IndexOf(Footing, folder) is >= 0 and var footing ? footing
+        : Array.IndexOf(Features, folder) is >= 0 and var feature ? Footing.Length + feature
+        : throw new ArgumentException($"{folder} is in neither the footing nor the features", nameof(folder));
 
     /// <summary>The folder an editor type is declared in, the root namespace being "", or null for any other type.</summary>
     private static string? Folder(Type type)
