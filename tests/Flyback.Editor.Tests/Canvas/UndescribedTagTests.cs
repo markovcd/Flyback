@@ -66,7 +66,7 @@ public class UndescribedTagTests : EditorTest
     }
 
     private static bool Noted(MainWindow window) =>
-        All<TextBlock>(window).Any(t => t.Text == AssistantPanel.UndescribedNote);
+        All<TextBlock>(window).Any(t => t.Text == UndescribedTags.Note);
 
     [AvaloniaFact]
     public void Hovering_the_tag_explains_it()
@@ -77,7 +77,7 @@ public class UndescribedTagTests : EditorTest
         window.MouseMove(OnWindow(window, Tag(sine)));
         Settle(window);
 
-        ToolTip.GetTip(editor).ShouldBe(AssistantPanel.UndescribedNote);
+        ToolTip.GetTip(editor).ShouldBe(UndescribedTags.Note);
         ToolTip.GetIsOpen(editor).ShouldBeTrue();
 
         window.MouseMove(OnWindow(window, new Point(sine.X + 30, sine.Y + 60)));

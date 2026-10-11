@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
-using Flyback.Editor.Assist;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Shell;
 using Flyback.Ui.Controls;
@@ -372,7 +371,7 @@ internal sealed class Inspector
             Panel.Children.Add(new TextBlock
             {
                 Name = "undescribedNote",
-                Text = AssistantPanel.UndescribedNote,
+                Text = UndescribedTags.Note,
                 TextWrapping = TextWrapping.Wrap,
                 Foreground = Text.Muted,
                 FontSize = Text.Small,

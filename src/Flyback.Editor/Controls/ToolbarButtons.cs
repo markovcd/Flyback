@@ -6,7 +6,7 @@ using Avalonia.Media;
 using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.Editor.Bars;
+namespace Flyback.Editor.Controls;
 
 /// <summary>The toolbar's buttons, its groups and the lines between them.</summary>
 internal static class ToolbarButtons

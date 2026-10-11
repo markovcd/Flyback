@@ -4,7 +4,7 @@ using Avalonia.Layout;
 using Flyback.Editor.Shell;
 using Flyback.Ui.Audio;
 using Flyback.Editor.Bars;
-using Flyback.Editor.Capture;
+using Flyback.Editor.Hubs;
 using Flyback.Editor.Controls;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Knobs;

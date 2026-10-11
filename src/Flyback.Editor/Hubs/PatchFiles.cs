@@ -3,7 +3,6 @@ using Flyback.Editor.Shell;
 using Flyback.Ui;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Canvas;
-using Flyback.Editor.Files;
 using Flyback.Editor.Notices;
 using Flyback.Editor.PluginPackages;
 using Flyback.Editor.Statistics;

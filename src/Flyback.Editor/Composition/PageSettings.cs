@@ -7,6 +7,7 @@ using Flyback.Editor.Canvas;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Shell;
 using Flyback.Ui.Controls;
+using Flyback.Editor.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Composition;

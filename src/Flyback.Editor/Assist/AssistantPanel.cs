@@ -209,16 +209,6 @@ internal sealed class AssistantPanel : UserControl
     };
 
     /// <summary>
-    /// What a module the assistant is not told about says so with, on the canvas
-    /// and under its knobs alike.
-    /// </summary>
-    public const string UndescribedNote =
-        "The assistant is not told what this module does. Every module's description "
-        + "together would run past its budget, and this one is not on the priority list. "
-        + "It can still look the module up when it needs to. The budget and the list are "
-        + "in Settings → Assistant.";
-
-    /// <summary>
     /// Type ids whose descriptions the assistant's briefing leaves out, for the
     /// canvas to mark. Empty with no provider chosen: nobody is being told
     /// anything, so nothing is being left out of it.

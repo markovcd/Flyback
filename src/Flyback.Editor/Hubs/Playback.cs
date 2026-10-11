@@ -6,7 +6,6 @@ using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Ui.Audio;
 using Flyback.Editor.Canvas;
-using Flyback.Editor.Capture;
 using Flyback.Ui.Controls;
 using Avalonia.Threading;
 using Flyback.Ui.Midi;

@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
-using Flyback.Editor.Assist;
 using Flyback.Editor.Notices;
 using Flyback.Core.Graph;
 
@@ -19,6 +18,13 @@ namespace Flyback.Editor.Canvas;
 internal sealed class UndescribedTags(CanvasSelection selection, Repaint repaint, NodeGeometry geometry)
     : IReactTo<UndescribedChanged>
 {
+    /// <summary>What a module the assistant is not told about says so with, on the canvas and under its knobs alike.</summary>
+    public const string Note =
+        "The assistant is not told what this module does. Every module's description "
+        + "together would run past its budget, and this one is not on the priority list. "
+        + "It can still look the module up when it needs to. The budget and the list are "
+        + "in Settings → Assistant.";
+
     private const double TagWidth = 16, TagHeight = 10, TagInset = 7;
 
     /// <summary>How much of the header a tag takes from the title, gap included.</summary>

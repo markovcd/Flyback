@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Flyback.Core;
 using Flyback.Editor.Capture;
+using Flyback.Editor.Hubs;
 using Flyback.Editor.Files;
 using Flyback.Editor.Settings;
 using Flyback.Ui.Midi;

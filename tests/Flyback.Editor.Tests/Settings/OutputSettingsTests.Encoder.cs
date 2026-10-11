@@ -11,6 +11,7 @@ using Avalonia.VisualTree;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Capture;
+using Flyback.Editor.Hubs;
 using Flyback.Editor.Controls;
 using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;

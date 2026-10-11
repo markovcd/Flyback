@@ -1,4 +1,4 @@
-namespace Flyback.Editor.Capture;
+namespace Flyback.Editor.Hubs;
 
 /// <summary>The recording state shared with playback without coupling their lifetimes.</summary>
 internal sealed class RecordingState

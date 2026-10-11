@@ -3,7 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.Editor.Bars;
+using Flyback.Editor.Controls;
 using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
 using Flyback.Ui;

@@ -9,7 +9,7 @@ using Avalonia.Styling;
 using Flyback.Editor.Controls;
 using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
-using Flyback.Editor.Knobs;
+using Flyback.Editor.Midi;
 using Flyback.Core.Graph;
 using FoundModule = Flyback.Plugins.Decide.FoundModule;
 using ModuleFinder = Flyback.Plugins.Decide.ModuleFinder;

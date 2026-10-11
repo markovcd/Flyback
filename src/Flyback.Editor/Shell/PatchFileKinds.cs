@@ -5,7 +5,7 @@ using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
 using Flyback.Engine.Render;
 
-namespace Flyback.Editor.Files;
+namespace Flyback.Editor.Shell;
 
 /// <summary>The kinds of file the open, save and record pickers offer, and which kind a picked name is.</summary>
 internal static class PatchFileKinds

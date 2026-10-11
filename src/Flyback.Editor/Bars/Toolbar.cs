@@ -10,6 +10,7 @@ using Flyback.Editor.Controls;
 using Flyback.Editor.Shell;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Gallery;
+using Flyback.Editor.Hubs;
 using Flyback.Editor.Notices;
 using Flyback.Plugins.Hosting;
 using Colors = Flyback.Ui.Controls.Colors;

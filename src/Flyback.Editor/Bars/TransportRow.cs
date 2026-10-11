@@ -5,6 +5,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Notices;
+using Flyback.Editor.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Bars;

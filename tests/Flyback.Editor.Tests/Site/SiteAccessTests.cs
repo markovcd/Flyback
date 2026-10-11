@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
 using Flyback.Editor.Composition;
+using Flyback.Editor.PluginPackages;
 
 namespace Flyback.Editor.Tests.Site;
 
@@ -19,7 +20,7 @@ public sealed class SiteAccessTests
         var page = provider.GetRequiredService<SiteAccess>();
 
         page.Presets().ShouldNotBeNull();
-        page.Plugins().ShouldBeNull();
+        PluginSite.For(page, provider.GetRequiredService<EditorHost>()).ShouldBeNull();
     }
 
     [Fact]
@@ -29,6 +30,6 @@ public sealed class SiteAccessTests
         var window = provider.GetRequiredService<SiteAccess>();
 
         window.Presets().ShouldNotBeNull();
-        window.Plugins().ShouldNotBeNull();
+        PluginSite.For(window, provider.GetRequiredService<EditorHost>()).ShouldNotBeNull();
     }
 }

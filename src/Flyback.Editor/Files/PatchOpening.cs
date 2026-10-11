@@ -1,5 +1,4 @@
 using Avalonia.Platform.Storage;
-using Flyback.Editor.Capture;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Notices;
 using Flyback.Editor.PluginPackages;

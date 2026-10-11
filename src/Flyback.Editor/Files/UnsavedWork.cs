@@ -6,7 +6,6 @@ using Avalonia.Media.Immutable;
 using Avalonia.Platform.Storage;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Canvas;
-using Flyback.Editor.Capture;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;

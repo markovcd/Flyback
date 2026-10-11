@@ -6,7 +6,6 @@ using Flyback.Editor.Shell;
 using Flyback.Engine.Render;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
-using Flyback.Editor.Files;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Statistics;

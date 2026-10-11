@@ -11,6 +11,7 @@ using Flyback.Editor.Statistics;
 using Flyback.Core.Graph;
 using Flyback.Ui;
 using Flyback.Editor.Hubs;
+using Flyback.Editor.Controls;
 
 namespace Flyback.Editor.Bars;
 

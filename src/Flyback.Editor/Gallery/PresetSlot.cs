@@ -1,10 +1,9 @@
 using System.Text;
 using Avalonia.Controls;
 using Flyback.Editor.Assist;
-using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
-using Flyback.Editor.Capture;
 using Flyback.Editor.Controls;
+using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Files;

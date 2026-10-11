@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text.Json;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Site;
 using Flyback.Plugins.Hosting;
 
@@ -10,6 +11,10 @@ namespace Flyback.Editor.PluginPackages;
 internal sealed class PluginSite(HttpClient http, Uri root)
 {
     public Uri Root { get; } = root;
+
+    /// <summary>What the plugins window asks for shared plugins, or null where there is no site or a page, which installs none.</summary>
+    public static PluginSite? For(SiteAccess site, EditorHost host) =>
+        site.Root is null || host.InPage ? null : new PluginSite(site.Http, site.Root);
 
     /// <summary>
     /// The <paramref name="page"/>th page of published plugins that build for this system

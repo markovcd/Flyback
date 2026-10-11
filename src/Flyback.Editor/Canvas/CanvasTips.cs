@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Flyback.Editor.Assist;
 using Flyback.Core.Graph;
 
 namespace Flyback.Editor.Canvas;
@@ -55,7 +54,7 @@ internal sealed class CanvasTips(
 
     private (object? Over, object? Tip) At(Point graph)
     {
-        if (tags.Hit(graph) is { } tag) return (tag.Id, AssistantPanel.UndescribedNote);
+        if (tags.Hit(graph) is { } tag) return (tag.Id, UndescribedTags.Note);
 
         if (measured.Hit(graph) is var (measurement, report)) return (measurement, report);
 

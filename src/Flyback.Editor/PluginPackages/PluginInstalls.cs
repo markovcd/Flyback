@@ -27,6 +27,7 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
     private readonly string? pluginFolder;
     private readonly bool canRestart;
     private readonly SiteAccess site;
+    private readonly EditorHost host;
     private readonly Playback playback;
     private readonly ChosenAssistant chosenAssistant;
     private readonly Reactions reactions;
@@ -43,7 +44,7 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
     private Reopen? refused;
 
     /// <param name="folders">Where a package's plugin is installed.</param>
-    /// <param name="host">Whether a restart is offered.</param>
+    /// <param name="host">Whether a restart is offered, and whether plugins are installed at all.</param>
     /// <param name="site">Where the plugins window lists shared plugins from.</param>
     /// <param name="playback">The sound device the plugins window says what opened.</param>
     public PluginInstalls(
@@ -70,6 +71,7 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
         pluginFolder = folders.PluginFolder;
         canRestart = host.Relaunch is not null;
         this.site = site;
+        this.host = host;
         this.playback = playback;
         this.chosenAssistant = chosenAssistant;
     }
@@ -96,7 +98,7 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
     /// </param>
     public async Task OfferMissingAsync(PatchLoad loaded, Reopen? open = null)
     {
-        if (loaded.MissingProviders.Count == 0 || site.Plugins() is not { } shared) return;
+        if (loaded.MissingProviders.Count == 0 || PluginSite.For(site, host) is not { } shared) return;
 
         using var cancel = new CancellationTokenSource(Looking);
 
@@ -221,7 +223,7 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
     /// <param name="wanted">What a patch was short of, listed first, or null for an ordinary opening.</param>
     public async Task ShowAsync(IReadOnlyList<SitePlugin>? wanted = null)
     {
-        var site = this.site.Plugins();
+        var site = PluginSite.For(this.site, host);
         var (run, troubles) = PluginSummary.Run(plugins, pluginFolder ?? PluginHost.DefaultDirectory, playback.Sound);
         using var hub = pluginHubs.Create(
             site,

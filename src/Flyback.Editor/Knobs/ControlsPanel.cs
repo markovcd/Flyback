@@ -1,3 +1,4 @@
+using Flyback.Editor.Midi;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
