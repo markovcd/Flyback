@@ -4,7 +4,7 @@ Work the user has asked for and nobody has started. Take an item off when it lan
 
 - **Shared sounds and pictures on the preset site.** A third store on the Worker, beside presets and plugins: WAV and PNG only, unchecked and then unpublished until the admin publishes it, a license from a short list, kept as an R2 object by id. The free plan's 10 ms of CPU a request has not been checked against real traffic; take the paid plan if submissions are cut off.
 
-- **Replace the presets' repeated formulas with modules.** A Window (on between two points, soft or hard edged) and a Dice (a stable random for a whole number), then port the presets onto them. Which formulas, how many, where, and what was ruled out are in [docs/handoff/formulas-into-modules.md](docs/handoff/formulas-into-modules.md).
+- **Port the rest of the presets onto Window and Dice.** The ports that compare bit for bit have landed; what is left changes what Tranquility, Overworld, Vigil, Mycelium and Fracture play, by a rounding or a new random, so each wants listening to. Which, and why each is not exact, is in [docs/handoff/formulas-into-modules.md](docs/handoff/formulas-into-modules.md).
 
 - figure how to accept legacy currencies - we need a donation button other than bitcoin
 - **Laya, a decision model that runs here, and what to ask it.** ONNX in-process, its model downloaded once with consent from a Hugging Face repo the maintainer owns, which the maintainer exports and uploads first. Everything else of the decision model has landed (ADR-0186) and was measured against a local laya-serve; the measurements, what is left to do, the plugin, the export and the per-platform native build are in [docs/handoff/decision-model.md](docs/handoff/decision-model.md).

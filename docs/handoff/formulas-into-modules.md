@@ -4,7 +4,7 @@ Surveyed on 2026-09-28, on `main` after every showcase moved onto the Arrangemen
 (ADR-0153). The Arrangement took the biggest family of hand-written formulas out: an
 intensity lane decoded per part with `step` and `smoothstep` thresholds. This is what
 is left and which of it is worth a module. It is on TODO.md; take it off there, and
-delete this file, in the commit that lands the last module it asks for.
+delete this file, in the commit that lands the last port it lists.
 
 ## How much is left
 
@@ -49,39 +49,35 @@ pair of modules does not earn a name.
 | A stable random for a step: `fract(n * 53.1 + m * 7.9)`, Dodge's `mod(… , 997)` chains | 7, and Dodge's three largest formulas | Tranquility 4, Mycelium 2, Fracture, Dodge | **Build a Dice.** |
 | Octaves to hertz: `base * pow(2, x)` | 6 | Tranquility 4, Acid, Dodge | An exponential mode on something existing, not a module. |
 
-### Window
+## Landed
 
-`in`, `from`, `to`, `edge`; out is 0 below `from`, 1 between, 0 past `to`, each edge
-a Smoothstep `edge` wide, and a hard step where `edge` is nought. What it takes over:
+Window (`in`, `from`, `to`, `rise`, `fall`: a Smoothstep pair, the Threshold pair
+where `rise` and `fall` are nought) and Dice (`in`, `seed`, `sides`: Dodge's quadratic
+modulo 997, out 0..1 and a `face`) are Maths modules, so a formula calls them as
+`window()` and `dice()`. These were ported and compare bit for bit over each piece:
 
-- Tranquility's subtitles, one line on screen between two times:
-  `smoothstep(0.1, 0.3, a) * (1 - smoothstep(5.3, 5.6, a))`.
-- Overworld's HUD bar and thin lines: `1 - smoothstep(0.019, 0.021, abs(b - 0.925))`.
-- Dodge's walls: `step(0, a + 0.91) * (1 - step(0, a - 0.91))`.
-- Phase's twelve cells of a row: `step(-0.5, x) * (1 - step(11.5, x))`.
-- The last bar of a section, the most common section cue: a Window from 0.875 to 1
-  on the Arrangement's `progress` (Acid, Tranquility, Warehouse, Whole band).
+- Dodge's gap as `floor(dice(a) * 7)`, its field and walls as `window(x, -0.91, 0.91)`.
+- Phase's twelve cells of a row, a Window from -0.5 to 11.5.
+- Vigil's swell and lift, two Windows of unequal rise and fall.
+- Fracture's second theme, a Window from section 9 to 13.
 
-It is exact to build as a module whose emit is the Smoothstep pair, so a port can be
-checked bit for bit with `flyback-cli compare`, as the convenience-modules skill does.
+## Left: the ports that change what a preset plays
 
-### Dice
+Each of these is a near miss, not the same numbers, so it is a change to hear and see:
+listen, and retake the site's shots and tracks where the preset has them.
 
-A whole number in (a step, a note index, a held count) and a seed; out a value 0..1
-that is the same every time that number comes round, and a whole number 0..n-1 from
-it. No memory, so it runs on the picture too. What it takes over:
-
-- Dodge's gap: `min(floor(mod(mod(mod(floor(a), 997) * mod(floor(a), 997), 997) * 73
-  + mod(floor(a), 997) * 151 + 17, 997) * 7 / 997), 6)`, written four times across
-  three formulas, one of them the note it plays.
+- Tranquility's subtitles, `smoothstep(0.1, 0.3, a) * (1 - smoothstep(5.3, 5.6, a))`:
+  a Window from 0.1 to 5.6 rising 0.2 and falling 0.3, off by the rounding of 0.1 + 0.2.
+  Tranquility is a `.fbkb` in `worker/defaults/` (the `preset-site-defaults` skill).
+- Overworld's HUD bar and thin lines, `1 - smoothstep(0.019, 0.021, abs(b - 0.925))`:
+  symmetric about a center, so a Window is the same band with different rounding.
+- Vigil's bells and knells, `step(100, a) * step(a, 245)`: on at the far end too, where a
+  Window is off, which differs on the one sample that lands exactly on it.
 - Tranquility's chatter: the ratio `fract((a * 0.5 + 0.5) * 37.7 + b * 11.3)`, the
-  vowel `fract(... * 19.1 + ... * 71.7)` and the pitch jitter, each deriving a new
-  random from two held noises.
+  vowel `fract(... * 19.1 + ... * 71.7)` and the pitch jitter, each a new random from
+  two held noises.
 - Mycelium and Fracture: `fract(cells.cell * 13.7 + euclid.index * 5)` to pick which
-  cells light.
-
-Rewiring these changes their numbers (a new hash is not the old arithmetic), so the
-ports are audible and visible changes: listen, and retake the site's shots.
+  cells light, a `dice(cell, index)`.
 
 ### Why not the others
 

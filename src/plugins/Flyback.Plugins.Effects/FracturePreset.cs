@@ -131,9 +131,10 @@ internal sealed class FracturePreset : PresetBench
 
         // Whether it is the second theme, sections nine to twelve. A switch, like the
         // chop, because a bass line half way between two tunes is neither.
-        var second = Formula("step(9, a) * step(a, 12)", new Read(parts, SectionNumber));
+        var second = b.Add("math.window", (1, 9f), (2, 13f));
 
-        b.Wire(parts, Pad, swell, 0)
+        b.Wire(parts, SectionNumber, second, 0)
+         .Wire(parts, Pad, swell, 0)
          .Wire(parts, Chopped, chopped, 1);
 
         Box("Arrangement");

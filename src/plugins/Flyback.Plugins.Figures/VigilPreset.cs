@@ -60,10 +60,12 @@ internal static class VigilPreset
         var place = Formula(b, $"a % {Song}", (time, 0));
 
         // All of it, in from nothing over the first forty seconds and out over the last minute.
-        var swell = Formula(b, "smoothstep(0, 40, a) * (1 - smoothstep(262, 316, a))", (place, 0));
+        var swell = b.Add("math.window", (1, 0f), (2, 316f), (3, 40f), (4, 54f));
+        b.Wire(place, 0, swell, 0);
 
         // The middle: the chords, the upper voices, the bells and the knells.
-        var lift = Formula(b, "smoothstep(52, 100, a) * (1 - smoothstep(214, 266, a))", (place, 0));
+        var lift = b.Add("math.window", (1, 52f), (2, 266f), (3, 48f), (4, 52f));
+        b.Wire(place, 0, lift, 0);
 
         b.Group("Sections", time, place, swell, lift);
 

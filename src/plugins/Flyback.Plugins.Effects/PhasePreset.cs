@@ -310,9 +310,8 @@ internal sealed class PhasePreset : PresetBench
         var within = Plus(Fraction(along), -0.5f);
 
         // Only twelve of the cells are the row: the frame is a little wider than that.
-        var fromFirst = b.Add("math.step", (0, -0.5f));
-        var pastLast = b.Add("math.step", (0, Round - 0.5f));
-        var shown = Product(Product(fromFirst, From(1f, pastLast)), parts, Knock);
+        var row = b.Add("math.window", (1, -0.5f), (2, Round - 0.5f));
+        var shown = Product(row, parts, Knock);
 
         // The column being played. Both numbers are whole, so under a half apart is
         // the same.
@@ -321,8 +320,7 @@ internal sealed class PhasePreset : PresetBench
         var rowA = Row(0.86f, null, strokeA);
         var rowB = Row(-0.86f, ahead, strokeB);
 
-        b.Wire(cell, 0, fromFirst, 1)
-         .Wire(cell, 0, pastLast, 1)
+        b.Wire(cell, 0, row, 0)
          .Wire(Size(Less(cell, playing)), 0, offColumn, 1);
 
         Box("Picture: Rows");

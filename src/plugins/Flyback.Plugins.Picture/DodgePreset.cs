@@ -17,7 +17,7 @@ namespace Flyback.Plugins.Picture;
 /// </para>
 /// <para>
 /// A cell holds ±16, so times wrap at 512 seconds. Gaps are a quadratic residue
-/// modulo 997, in whole numbers, so picture and sound agree.
+/// modulo 997 thrown by a Dice, in whole numbers, so picture and sound agree.
 /// </para>
 /// </remarks>
 internal static class DodgePreset
@@ -29,7 +29,7 @@ internal static class DodgePreset
 
     /// <summary>Which gap row <c>a</c> has: a lane from 0 to 6.</summary>
     private const string Gap =
-        "min(floor(mod(mod(mod(floor(a), 997) * mod(floor(a), 997), 997) * 73 + mod(floor(a), 997) * 151 + 17, 997) * 7 / 997), 6)";
+        "floor(dice(a) * 7)";
 
     /// <summary>A lane's note above C, in C major.</summary>
     private static string Degree(string lane) => $"(2 * {lane} - step(2.5, {lane}))";
@@ -90,13 +90,13 @@ internal static class DodgePreset
         // Dimmed between runs. Drawn first so the Output reaches Over before anything else
         // in the game's loop, which puts the cut on the wires out of Over: the loop's other
         // values run past what a cell holds.
-        var field = Formula(b, "(0.05 - 0.025 * step(-0.5, b)) * step(0, a + 0.91) * (1 - step(0, a - 0.91))");
+        var field = Formula(b, "(0.05 - 0.025 * step(-0.5, b)) * window(a, -0.91, 0.91)");
         b.Wire(here, NodeCatalog.CoordXPort, field, 0).Wire(over, 0, field, 1);
 
         var walls = Formula(
             b,
             "step(-0.8, c) * step(0, a + (c + 0.72) / 0.5) * (1 - step(0.25, fract(a + (c + 0.72) / 0.5))) "
-            + "* step(0, b + 0.91) * (1 - step(0, b - 0.91)) "
+            + "* window(b, -0.91, 0.91) "
             + $"* step(0.5, abs(floor((b + 0.91) / 0.26) - {Gap.Replace("a", "(a + (c + 0.72) / 0.5)")}))");
         b.Wire(rows, 0, walls, 0).Wire(here, NodeCatalog.CoordXPort, walls, 1).Wire(here, NodeCatalog.CoordYPort, walls, 2);
 
