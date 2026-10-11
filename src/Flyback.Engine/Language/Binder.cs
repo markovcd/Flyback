@@ -868,17 +868,42 @@ public sealed class Binder
                 "every patch already has its Output. Wire into 'out.color' or 'out.left'.");
         }
 
-        var taken = new HashSet<int>();
-        var wires = new List<(int Port, Value Value)>();
+        var arguments = new CallArguments();
 
-        // Where each argument's value is written, so a complaint about one points at it.
-        var sites = new Dictionary<int, Site>();
-        var paths = new List<(string Path, int Line, int Column)>();
-        var fields = new List<(NodeExtra Owner, ExtraField Field, JsonNode Value, Site Where)>();
-        int? landing = null;
+        NamedArguments(expr, def, scope, piped, arguments);
+        if (!PipeLands(expr, def, piped, arguments)) return null;
+        FreeArguments(expr, def, scope, arguments);
 
-        // Named arguments first, because what they claim decides where
-        // everything else can go.
+        var node = Place(expr, def, arguments);
+
+        foreach (var (path, line, column) in arguments.Paths) carrying.File(node, def, path, line, column);
+        if (expr.Block is { } block) carrying.Block(node, def, block, expr.Line, expr.Column, (expr.BlockLine, expr.BlockColumn));
+
+        return node;
+    }
+
+    /// <summary>What a call's arguments come to, gathered a phase at a time before the module is placed.</summary>
+    private sealed class CallArguments
+    {
+        public HashSet<int> Taken { get; } = [];
+        public List<(int Port, Value Value)> Piping { get; } = [];
+        public List<(int Port, Value Value)> Wires { get; } = [];
+
+        /// <summary>Where each argument's value is written, so a complaint about one points at it.</summary>
+        public Dictionary<int, Site> Sites { get; } = [];
+        public List<(string Path, int Line, int Column)> Paths { get; } = [];
+        public List<(NodeExtra Owner, ExtraField Field, JsonNode Value, Site Where)> Fields { get; } = [];
+
+        /// <summary>The socket a named <c>_</c> gave what is piped in, if one did.</summary>
+        public int? Landing { get; set; }
+    }
+
+    /// <summary>
+    /// The named arguments, first because what they claim decides where everything
+    /// else can go: a socket by name, a field of the module, or <c>_</c> for the pipe.
+    /// </summary>
+    private void NamedArguments(CallExpr expr, NodeDef def, Scope scope, Value? piped, CallArguments arguments)
+    {
         foreach (var argument in expr.Arguments)
         {
             if (argument.Name is null)
@@ -902,7 +927,7 @@ public sealed class Binder
                     {
                         var where = new Site(argument.Value.Line, argument.Value.Column);
 
-                        fields.Add((owner, field, setting, where));
+                        arguments.Fields.Add((owner, field, setting, where));
                     }
 
                     continue;
@@ -913,7 +938,7 @@ public sealed class Binder
                 continue;
             }
 
-            if (!taken.Add(port))
+            if (!arguments.Taken.Add(port))
             {
                 issues.Complain(IssueCode.GivenTwice, argument.Line, argument.Column, $"'{argument.Name}' is given twice.");
                 continue;
@@ -923,41 +948,54 @@ public sealed class Binder
             {
                 if (piped is null)
                     issues.Complain(IssueCode.PlaceholderMisplaced, argument.Line, argument.Column, "'_' stands for what is piped in, and nothing is.");
-                else if (landing is not null)
+                else if (arguments.Landing is not null)
                     issues.Complain(IssueCode.PlaceholderTwice, argument.Line, argument.Column, "'_' is written twice, and a pipe brings one signal.");
                 else
-                    landing = port;
+                    arguments.Landing = port;
 
                 continue;
             }
 
             if (!Piped(argument) && Bind(argument.Value, scope) is { } value)
             {
-                wires.Add((port, value));
-                sites[port] = new Site(argument.Value.Leftmost.Line, argument.Value.Leftmost.Column);
+                arguments.Wires.Add((port, value));
+                arguments.Sites[port] = new Site(argument.Value.Leftmost.Line, argument.Value.Leftmost.Column);
             }
         }
+    }
 
-        var piping = new List<(int Port, Value Value)>();
-
-        if (landing is { } at)
-            piping.Add((at, piped!.Part(0)));
-        else if (piped is not null)
+    /// <summary>
+    /// Where what is piped in lands: the socket a named <c>_</c> chose, or the ones
+    /// <see cref="PipeLanding"/> works out. False where the pipe has nowhere to go,
+    /// said as an issue.
+    /// </summary>
+    private bool PipeLands(CallExpr expr, NodeDef def, Value? piped, CallArguments arguments)
+    {
+        if (arguments.Landing is { } at)
         {
-            var result = PipeLanding.Resolve(def, piped, taken, expr);
-
-            if (result.Issue is { } issue)
-            {
-                issues.Complain(issue.Code, expr.Line, expr.Column, issue.Message);
-                return null;
-            }
-
-            piping.AddRange(result.Inputs);
-            foreach (var (port, _) in result.Inputs) taken.Add(port);
+            arguments.Piping.Add((at, piped!.Part(0)));
+            return true;
         }
 
-        // Whatever the pipe and the named arguments left, in order.
-        var free = new Queue<int>(Enumerable.Range(0, def.Inputs.Count).Where(i => !taken.Contains(i)));
+        if (piped is null) return true;
+
+        var result = PipeLanding.Resolve(def, piped, arguments.Taken, expr);
+
+        if (result.Issue is { } issue)
+        {
+            issues.Complain(issue.Code, expr.Line, expr.Column, issue.Message);
+            return false;
+        }
+
+        arguments.Piping.AddRange(result.Inputs);
+        foreach (var (port, _) in result.Inputs) arguments.Taken.Add(port);
+        return true;
+    }
+
+    /// <summary>The unnamed arguments, into whatever sockets the pipe and the named ones left, in order.</summary>
+    private void FreeArguments(CallExpr expr, NodeDef def, Scope scope, CallArguments arguments)
+    {
+        var free = new Queue<int>(Enumerable.Range(0, def.Inputs.Count).Where(i => !arguments.Taken.Contains(i)));
 
         foreach (var argument in expr.Arguments)
         {
@@ -965,7 +1003,7 @@ public sealed class Binder
 
             if (argument.Value is TextExpr text)
             {
-                paths.Add((text.Value, argument.Line, argument.Column));
+                arguments.Paths.Add((text.Value, argument.Line, argument.Column));
                 continue;
             }
 
@@ -984,42 +1022,42 @@ public sealed class Binder
                 }
 
                 var port = free.Dequeue();
-                taken.Add(port);
+                arguments.Taken.Add(port);
 
                 if (!refused && Bind(part, scope) is { } value)
                 {
-                    wires.Add((port, value));
-                    sites[port] = new Site(part.Leftmost.Line, part.Leftmost.Column);
+                    arguments.Wires.Add((port, value));
+                    arguments.Sites[port] = new Site(part.Leftmost.Line, part.Leftmost.Column);
                 }
             }
         }
+    }
 
-        var node = wiring.Place(def, [.. piping, .. wires], expr.Line, expr.Column, sites);
+    /// <summary>Places the module with its wires, and puts its fields and its place in the file on it.</summary>
+    private Value Place(CallExpr expr, NodeDef def, CallArguments arguments)
+    {
+        var node = wiring.Place(def, [.. arguments.Piping, .. arguments.Wires], expr.Line, expr.Column, arguments.Sites);
 
-        if (node is Placed made)
-        {
-            // Where this module stands in the file. The call rather than the
-            // binding, because a call is what a module is: four of them on one
-            // line are four modules to point at.
-            var site = new Site(expr.Line, expr.Column);
+        if (node is not Placed made) return node;
 
-            sourceSites.Call(made.Id, site);
-            sourceSites.Mention(site, made.Id);
+        // Where this module stands in the file. The call rather than the
+        // binding, because a call is what a module is: four of them on one
+        // line are four modules to point at.
+        var site = new Site(expr.Line, expr.Column);
 
-            if (patch.Find(made.Id) is { } instance)
-                foreach (var (owner, field, setting, where) in fields)
-                {
-                    Apply(instance, owner, field, setting);
+        sourceSites.Call(made.Id, site);
+        sourceSites.Mention(site, made.Id);
 
-                    // By the key rather than by whichever of key and label the
-                    // file happened to use, since a label is free to be reworded
-                    // and a caller asking for the field will have the key.
-                    sourceSites.Write(made.Id, field.Key, where);
-                }
-        }
+        if (patch.Find(made.Id) is { } instance)
+            foreach (var (owner, field, setting, where) in arguments.Fields)
+            {
+                Apply(instance, owner, field, setting);
 
-        foreach (var (path, line, column) in paths) carrying.File(node, def, path, line, column);
-        if (expr.Block is { } block) carrying.Block(node, def, block, expr.Line, expr.Column, (expr.BlockLine, expr.BlockColumn));
+                // By the key rather than by whichever of key and label the
+                // file happened to use, since a label is free to be reworded
+                // and a caller asking for the field will have the key.
+                sourceSites.Write(made.Id, field.Key, where);
+            }
 
         return node;
     }

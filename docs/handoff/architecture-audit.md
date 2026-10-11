@@ -112,25 +112,18 @@ rule is one sentence in the guide and a test like `ComponentDiagramTests` over t
 `using` lines, and `UsageCounter` is the first move. If not, item 3 was tidiness and
 this item closes.
 
-## 6. `Binder.Call` is one method of 175 lines (Low)
+## 6. Six long stretches nobody has opened (Low)
 
-`Binder` is 931 code lines in some 47 members, the largest file in `src/`, and ADR-0183
-decided two days ago that the walk stays in one class. Inside it, `Call` (lines 857
-to 1032) binds a module call in five phases with a comment heading each: the named
-arguments, where the pipe lands, the free arguments in order, placing the module,
-and what it carries. `Arguments` is 118 lines, `Expand` 58. The ADR is about classes
-and says nothing against a private method per phase.
+Counting lines between two member declarations, the longest in `src/` after the
+presets' `Build` methods are `GlslEmitter.Emit` (362 lines), `ExpressionFusion.Fuse`
+(311), `ViewerArguments.Build` (303), `RenderCommand.Build` (245),
+`GroupInspector.Build` (238), `CanvasPainter.Render` (218) and the `GalleryLayout`
+constructor (218). The count is crude: a method followed by fields or a nested type
+counts long. `Binder.Call`, which topped the list at 175 lines of one method, was
+read and split by its five phases; none of these has been read.
 
-By the same count, the longest stretches elsewhere are `GlslEmitter.Emit` (362
-lines), `ExpressionFusion.Fuse` (311), `ViewerArguments.Build` (303),
-`RenderCommand.Build` (245), `GroupInspector.Build` (238), `CanvasPainter.Render`
-(218) and the `GalleryLayout` constructor (218); the presets' `Build` methods are
-data and are left out. The count is lines between declarations, so a method followed
-by fields or a nested type counts long; only `Call` was read.
-
-**Fix:** split `Call` by its five headings into private methods of `Binder`, which
-keeps ADR-0183 as written. Open each of the others once before deciding; the two
-command builders are option declarations and may be as long as they are.
+**Fix:** open each once before deciding. The two command builders are option
+declarations and may be as long as they are.
 
 ## 7. The docs named what the code no longer calls things (Low, done with this audit)
 
