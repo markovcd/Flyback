@@ -7,7 +7,8 @@ namespace Flyback.Core.Tests.Architecture;
 
 /// <summary>
 /// Every workflow under <c>.github/workflows</c> keeps the rules in <c>docs/agents/rules/pipeline.md</c>:
-/// it says what it does, declares its permissions, pins every action to a commit and times out every job.
+/// it says what it does, declares its permissions, pins every action to a commit, times out every job,
+/// leaves no token behind a checkout and keeps expressions out of its scripts.
 /// </summary>
 [TestCategory(TestCategory.Unmeasured)]
 public partial class WorkflowTests
@@ -64,6 +65,53 @@ public partial class WorkflowTests
         untimed.ShouldBeEmpty($"{workflow}: the default is six hours of a hang");
     }
 
+    [Theory]
+    [MemberData(nameof(Workflows))]
+    public void Every_checkout_drops_its_credentials(string workflow)
+    {
+        var lines = Lines(workflow);
+        var kept = new List<int>();
+
+        for (var i = 0; i < lines.Count; i++)
+        {
+            if (Uses().Match(lines[i]) is not { Success: true } used ||
+                !used.Groups["action"].Value.StartsWith("actions/checkout@", StringComparison.Ordinal)) continue;
+
+            // The step starts at the nearest dash left of the uses: key and runs while lines sit deeper than it.
+            var key = lines[i].IndexOf("uses:", StringComparison.Ordinal);
+            var start = i;
+            while (start > 0 && !(Step().Match(lines[start]) is { Success: true } step && step.Groups["dash"].Length < key)) start--;
+            var dash = Step().Match(lines[start]).Groups["dash"].Length;
+
+            var body = lines.Skip(start + 1).TakeWhile(line => line.Trim().Length == 0 || Indent(line) > dash);
+            if (!body.Any(line => line.Trim() == "persist-credentials: false")) kept.Add(i + 1);
+        }
+
+        kept.ShouldBeEmpty($"{workflow}: a checkout leaves the job's token in .git/config unless it sets persist-credentials: false (lines)");
+    }
+
+    [Theory]
+    [MemberData(nameof(Workflows))]
+    public void No_script_expands_an_expression(string workflow)
+    {
+        var lines = Lines(workflow);
+        var expanded = new List<int>();
+
+        for (var i = 0; i < lines.Count; i++)
+        {
+            if (Run().Match(lines[i]) is not { Success: true } run) continue;
+
+            var key = lines[i].IndexOf("run:", StringComparison.Ordinal);
+            List<string> script = Block().IsMatch(run.Groups["rest"].Value)
+                ? [.. lines.Skip(i + 1).TakeWhile(line => line.Trim().Length == 0 || Indent(line) > key)]
+                : [run.Groups["rest"].Value];
+
+            if (script.Any(line => line.Contains("${{", StringComparison.Ordinal))) expanded.Add(i + 1);
+        }
+
+        expanded.ShouldBeEmpty($"{workflow}: an expression is pasted into the script before the shell parses it; pass it through env: (lines)");
+    }
+
     [GeneratedRegex(@"^\s*(-\s+)?uses:\s*(?<action>\S+)(?<rest>.*)$")]
     private static partial Regex Uses();
 
@@ -75,6 +123,17 @@ public partial class WorkflowTests
 
     [GeneratedRegex(@"^  (?<name>[A-Za-z0-9_-]+):\s*$")]
     private static partial Regex Job();
+
+    [GeneratedRegex(@"^(?<dash>\s*)-\s+\S")]
+    private static partial Regex Step();
+
+    [GeneratedRegex(@"^\s*(-\s+)?run:\s*(?<rest>.*)$")]
+    private static partial Regex Run();
+
+    [GeneratedRegex(@"^[|>][+-]?\s*(#.*)?$")]
+    private static partial Regex Block();
+
+    private static int Indent(string line) => line.Length - line.TrimStart(' ').Length;
 
     private static List<string> Lines(string workflow) =>
         [.. File.ReadAllLines(Repository.Path(".github", "workflows", workflow))];
