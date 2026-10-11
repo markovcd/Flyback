@@ -16,6 +16,7 @@ Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or 
 | [youtube-videos.md](youtube-videos.md) | Videos for the YouTube channel: how one is made, what was made, what is proposed | Backlog | Open, grows |
 | [tests-audit.md](tests-audit.md) | Where the tests are weakest, and what would fix each point | Audit | Open: what is left needs a seam, a workload or a fixture |
 | [pipeline-audit.md](pipeline-audit.md) | Where the pipeline is weakest, and what would fix each point | Audit | Open |
+| [architecture-audit.md](architecture-audit.md) | Where the architecture has drifted, and what would fix each point | Audit | Open: four of seven done; a shell folder, folder layering and `Binder.Call` left |
 
 Severity, for an issue: **Critical**, act now; **High**, a security or data problem in a release; **Medium**, wrong behavior or real risk; **Low**, friction or latent risk.
 

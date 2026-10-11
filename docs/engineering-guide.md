@@ -69,9 +69,11 @@ Flyback.Editor.Android .apk                Editor under Avalonia.Android; not bu
 | `Flyback.Site` | `flyback-site`: the readers a submission is checked with, and the commands the preset site's workflows run | Never shipped; references the plugins the web pages link, to say what a browser lacks ([0175](adr/0175-the-preset-site-is-a-worker-and-github-reads-what-is-submitted.md)). The Worker is in `worker/`, tested with Vitest; the [site's containers](diagrams/site.svg) show how the two check a submission. |
 | `Flyback.Site.Client` | `SiteAdmin`, `SiteAddress`, `SiteMedia`, `SiteAnswer` | The admin API's address, token, uploads and refusals, for `flyback-site` and `flyback-cli render-presets`; no packages. |
 
-A project's namespace is its assembly name, with no exceptions: `Flyback.Ui`,
+A project's namespace is its assembly name: `Flyback.Ui`,
 `Flyback.Editor`, `Flyback.Editor.Desktop`, `Flyback.Editor.Web`, `Flyback.Engine`. A folder
-adds a sub-namespace (`Flyback.Engine.Render`); nothing else does.
+adds a sub-namespace (`Flyback.Engine.Render`); nothing else does. The one exception is
+the source the plugins share: `src/plugins/Shared/Programs` is `Flyback.Plugins.Programs`
+in whichever plugin compiles it, since it is a folder and not a project ([0173](adr/0173-codex-is-an-assistant-the-same-way-and-gemini-is-not.md)).
 
 ---
 
@@ -504,7 +506,7 @@ mute and rewind through the `Transport` the viewer shares;
 `PatchFiles` owns which file the patch is, and opening and saving it. A region
 is a class that takes what it reads (the canvas, the document, the plugins, the
 report line, a dialog, a file picker) and owns its own fields: `Inspector`,
-`Palette`, `PanelKnobs`, the settings sections (`ISettingsSection`), `PluginInstalls`, `SettingsDialog`,
+`Palette`, `PanelKnobs`, the settings sections (`ISettingsSection`), `PluginInstalls`, `SettingsSession`,
 `Toolbar`, `PresetSlot`, `StatusBar`, `PictureWindow`. They are composed in a
 container ([0150](adr/0150-the-editor-is-composed-in-a-container.md)):
 `EditorServices` registers each with `AddPart<T>`, a constructor says what it

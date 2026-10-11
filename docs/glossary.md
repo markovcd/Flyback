@@ -127,7 +127,7 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | Say | Means | Code | Not |
 |---|---|---|---|
 | **the viewer** | `flyback-viewer`: plays a patch, picture and sound, and writes nothing. | `Flyback.Viewer.Desktop`; its transport is `ViewerPlayer` | player (a Sample is the only player) |
-| **the web viewer** | The viewer in a browser: the engine compiled to WebAssembly behind a page. | `Flyback.Viewer.Web`; one patch playing is `WebPlayer` | web player, web app |
+| **the web viewer** | The viewer in a browser: the engine compiled to WebAssembly behind a page. | `Flyback.Viewer.Web`; the page's door is `WebExports` | web player, web app |
 | **transport** | Play, pause and rewind. | `Transport`, shared by `Playback` and `ViewerPlayer` | — |
 | **rewind** | Take the patch back to zero seconds, in the picture and the sound. | — | reset, restart |
 | **sound input** | The microphone or line input the machine hears, which a Line In plays. Opened only while the sound that is playing holds a Line In. | `IAudioInput`, `IAudioCapture`, `LineIn` | audio in, mic input; capture (a take is a recording) |
@@ -156,7 +156,7 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | **plugin problem** | A plugin, or a part of one, that was refused, and why. | `PluginProblem` | error, failure |
 | **allowed** | A plugin folder somebody said yes to, by installing its package or with `flyback-cli plugin allow`, as its files stood then. | `PluginAllowances`, `PluginTrust` | trusted, whitelisted, approved |
 | **plugin site**, **preset site** | Where shared plugins and shared presets are published and found. | `PluginSite`, `PresetSite` | store, marketplace, repository |
-| **letter** | What somebody writes to Flyback's author from the status bar, and the site takes. | `SiteLetters`, `LetterStore` | feedback (that is the Feedback module), comment, ticket |
+| **letter** | What somebody writes to Flyback's author from the status bar, and the site takes. | `SiteLetters`, the worker's `letters.ts` | feedback (that is the Feedback module), comment, ticket |
 
 ## The text language
 
