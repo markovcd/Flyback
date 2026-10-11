@@ -14,7 +14,7 @@ and the C4 model against the tree. Item 1 was confirmed by a test that failed; t
 by reading.
 
 What holds and is not raised again: the references run one way and down, with no cycle
-(`ComponentDiagramTests` holds the editor's to the C3 view); `Flyback.Core` references
+(`LayeringTests` holds the projects' layers, `ComponentDiagramTests` the editor's to the C3 view); `Flyback.Core` references
 nothing, `Flyback.Engine` only Core (ADR-0019), `Flyback.Site.Client` nothing at all;
 `Flyback.Plugins` names no Engine type in its public surface, so its private reference
 to Engine leaks nothing; the in-box plugins see one internal of Plugins,
