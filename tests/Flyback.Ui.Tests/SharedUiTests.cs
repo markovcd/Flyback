@@ -16,6 +16,7 @@ namespace Flyback.Ui.Tests;
 /// the page, the Android program and the desktop program; the editor is left out,
 /// since it is the one that would hoard.
 /// </remarks>
+[TestCategory(TestCategory.Unmeasured)]
 public sealed class SharedUiTests
 {
     /// <summary>Extension classes the shells reach by method name, never by type.</summary>

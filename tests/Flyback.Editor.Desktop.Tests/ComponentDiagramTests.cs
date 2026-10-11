@@ -15,6 +15,7 @@ namespace Flyback.Editor.Desktop.Tests;
 /// A component named for a project is that project. Arrows to anything else, and
 /// the plugins the build copies beside the program, are drawn by hand.
 /// </remarks>
+[TestCategory(TestCategory.Unmeasured)]
 public sealed partial class ComponentDiagramTests
 {
     private const string Program = "Flyback.Editor.Desktop";

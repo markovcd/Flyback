@@ -11,6 +11,7 @@ namespace Flyback.Core.Tests.Graph;
 /// Each preset transliterated in <c>docs/language.md</c> links to the method that builds it,
 /// so a renamed preset method fails here rather than leaving the doc pointing at nothing.
 /// </summary>
+[TestCategory(TestCategory.Unmeasured)]
 public sealed partial class LanguagePresetLinksTests
 {
     [Fact]

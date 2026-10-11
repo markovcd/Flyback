@@ -1,6 +1,6 @@
 namespace Flyback.Tests;
 
-/// <summary>What a test needs beyond the .NET runtime, carried as its <c>Category</c> trait.</summary>
+/// <summary>What a test needs beyond the .NET runtime, or that it runs no Flyback code, carried as its <c>Category</c> trait.</summary>
 /// <remarks>
 /// The gate's image provides each one. Select or leave out a category with the runner's
 /// <c>-trait "Category=ffmpeg"</c> and <c>-trait- "Category=browser"</c>, or a feature's <c>@ffmpeg</c> tag.
@@ -24,4 +24,7 @@ internal enum TestCategory
 
     /// <summary>An OpenGL context to draw the picture in.</summary>
     Gpu,
+
+    /// <summary>Nothing: it reads files or metadata and runs no Flyback code, so the coverage run leaves it out.</summary>
+    Unmeasured,
 }

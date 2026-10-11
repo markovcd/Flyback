@@ -651,8 +651,8 @@ out into `test-results/`, writes `summary.md` there with the counts per project,
 each failing test's message and stack and each skipped test's reason, and on GitHub makes it the run's summary, then exits with
 that exit code, which is all `gate` adds to `tested`. A failed run keeps
 `test-results/`, hang dumps included, as the Build run's artifact. `measured` builds on `gate` too and runs the tests again under
-coverage, weekly rather than per change, one project at a time; nothing else
-reads it. `coverage.sh` builds it and writes the table, the specs' figure apart
+coverage, weekly rather than per change, one project at a time, without the
+tests filed under `unmeasured`; nothing else reads it. `coverage.sh` builds it and writes the table, the specs' figure apart
 from the sum of the rest, for the Coverage workflow and locally alike, as
 `release.sh` is the whole release for the Release workflow. The gate's
 restore is locked to the committed lock files, so a version that moved fails
@@ -856,8 +856,9 @@ A test is filed under what it needs beyond the .NET runtime, as its `Category` t
 | `browser` | A Chromium to open the pages in | `@browser` |
 | `jack` | A JACK server to play into | `[TestCategory(TestCategory.Jack)]`, or `@jack` |
 | `gpu` | An OpenGL context | `[TestCategory(TestCategory.Gpu)]`, or `@gpu` |
+| `unmeasured` | Nothing: it reads files or metadata and runs no Flyback code | `[TestCategory(TestCategory.Unmeasured)]`, or `@unmeasured` |
 
-The gate's image has all of them. Pick a category out, or leave one out:
+The gate's image has all of them. The coverage run leaves out `unmeasured`, since it adds nothing to the figure; a test goes there only once a coverage run of it alone covers no line that loading its assembly does not. Pick a category out, or leave one out:
 
 ```bash
 ./tests/Flyback.Core.Tests/bin/Release/net10.0/Flyback.Core.Tests -trait "Category=ffmpeg"

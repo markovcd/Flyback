@@ -1,5 +1,6 @@
 using System.Reflection;
 using Avalonia.Headless.XUnit;
+using Flyback.Tests;
 using Shouldly;
 using Xunit;
 
@@ -9,6 +10,7 @@ namespace Flyback.Editor.Tests;
 /// What every test on the UI fixture has to be, checked rather than written down.
 /// Not a <see cref="EditorTest"/> itself, or it would break its own rule.
 /// </summary>
+[TestCategory(TestCategory.Unmeasured)]
 public sealed class UiFixtureTests
 {
     [Fact]

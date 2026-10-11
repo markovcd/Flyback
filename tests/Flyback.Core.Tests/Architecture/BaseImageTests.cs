@@ -9,6 +9,7 @@ namespace Flyback.Core.Tests.Architecture;
 /// Every image the Dockerfile starts from is pinned by digest, where Dependabot moves it, and a
 /// workflow or a script that runs the SDK or Node names it exactly as the Dockerfile does.
 /// </summary>
+[TestCategory(TestCategory.Unmeasured)]
 public partial class BaseImageTests
 {
     public static TheoryData<string> Runners() =>

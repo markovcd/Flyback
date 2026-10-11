@@ -4,6 +4,7 @@ using System.Reflection.PortableExecutable;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Flyback.Core.Graph;
+using Flyback.Tests;
 using Shouldly;
 using Xunit;
 
@@ -15,6 +16,7 @@ namespace Flyback.Plugins.Tests.Hosting;
 /// plugins not in this repository, and is listed in <see cref="Promised"/> with the
 /// reason it is kept.
 /// </summary>
+[TestCategory(TestCategory.Unmeasured)]
 public class ContractSurfaceTests
 {
     /// <summary>

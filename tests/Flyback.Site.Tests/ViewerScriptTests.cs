@@ -8,6 +8,7 @@ namespace Flyback.Site.Tests;
 /// The web viewer's <c>main.js</c>, read as text. It runs only in a browser, on the wasm build,
 /// a worker and WebGL, so these hold the lines that keep a phone's behavior rather than running them.
 /// </summary>
+[TestCategory(TestCategory.Unmeasured)]
 public sealed class ViewerScriptTests
 {
     private static readonly string Script = File.ReadAllText(Repository.Path("src", "Flyback.Viewer.Web", "wwwroot", "main.js"));

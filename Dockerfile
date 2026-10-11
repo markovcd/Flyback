@@ -224,6 +224,9 @@ RUN exit "$(cat /test-results/exit-code)"
 # named by a GUID and says nothing of the project that wrote it: coverage.sh
 # reports the specs apart from the rest.
 #
+# A test filed under unmeasured runs no Flyback code, so it is left out here; the
+# gate above still runs it.
+#
 # No test takes a minute, so a test host that finishes none for fifteen has hung:
 # the hang dump prints the tests it was in the middle of and ends it. A bare
 # `exit` keeps the failing project's code for coverage.sh to report.
@@ -235,6 +238,7 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
       dotnet test --project "$project" -c ${CONFIGURATION} --no-build \
         --results-directory "TestResults/$(basename "$project" .csproj)" \
         --coverage --coverage-settings coverage.runsettings --coverage-output-format cobertura \
+        --filter-not-trait "Category=unmeasured" \
         --hangdump --hangdump-timeout 15m --hangdump-type Mini \
       || exit; \
     done

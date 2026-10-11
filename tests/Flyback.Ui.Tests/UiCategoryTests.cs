@@ -5,6 +5,7 @@ using Xunit;
 namespace Flyback.Ui.Tests;
 
 /// <summary>A test on the headless UI thread is filed under ui without being marked.</summary>
+[TestCategory(TestCategory.Unmeasured)]
 public class UiCategoryTests
 {
     [AvaloniaFact]

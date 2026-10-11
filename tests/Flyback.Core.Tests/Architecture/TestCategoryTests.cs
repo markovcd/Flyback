@@ -5,6 +5,7 @@ using Xunit;
 namespace Flyback.Core.Tests.Architecture;
 
 /// <summary>A test that needs a tool is filed under it, so a run can pick it out or leave it out.</summary>
+[TestCategory(TestCategory.Unmeasured)]
 public class TestCategoryTests
 {
     [Fact]

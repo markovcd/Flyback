@@ -9,6 +9,7 @@ namespace Flyback.Core.Tests.Architecture;
 /// Every workflow under <c>.github/workflows</c> keeps the rules in <c>docs/agents/rules/pipeline.md</c>:
 /// it says what it does, declares its permissions, pins every action to a commit and times out every job.
 /// </summary>
+[TestCategory(TestCategory.Unmeasured)]
 public partial class WorkflowTests
 {
     public static TheoryData<string> Workflows() =>
