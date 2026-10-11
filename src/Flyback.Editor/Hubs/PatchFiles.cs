@@ -321,7 +321,12 @@ internal sealed class PatchFiles
 
             // The conversation goes inside, since a bundle is the whole of the
             // document wherever it is taken — ADR-0072.
-            using (StallTrace.Step("Bundle save")) packing = Pack(packed);
+            var pack = Packing();
+
+            packing = await Task.Run(() =>
+            {
+                using (StallTrace.Step("Bundle save")) return pack(packed);
+            });
 
             packed.Position = 0;
 
@@ -349,8 +354,15 @@ internal sealed class PatchFiles
     }
 
     /// <summary>Writes the patch as it stands, with everything it names, into <paramref name="archive"/> as a bundle.</summary>
-    public BundleReport Pack(Stream archive) =>
-        PatchBundle.Write(archive, editor.History.Patch, Bytes, plugins.Modules, conversation.ConversationToSave());
+    public BundleReport Pack(Stream archive) => Packing()(archive);
+
+    /// <summary><see cref="Pack"/> with the patch and its conversation taken now, to write on a worker.</summary>
+    private Func<Stream, BundleReport> Packing()
+    {
+        var (patch, bytes, modules, conversation) = (editor.History.Patch, Bytes(), plugins.Modules, this.conversation.ConversationToSave());
+
+        return archive => PatchBundle.Write(archive, patch, bytes, modules, conversation);
+    }
 
     /// <summary>
     /// Writes what an open bundle is carrying into <paramref name="folder"/>, under
@@ -395,11 +407,15 @@ internal sealed class PatchFiles
     /// holds one, and off the disk where it does not. The same order the libraries
     /// look in, so a bundle cannot come out holding a file nothing was reading.
     /// </summary>
-    public byte[]? Bytes(string path)
+    /// <remarks>Taken as things stand now, so it can be read on a worker while the document moves on.</remarks>
+    public Func<string, byte[]?> Bytes()
     {
-        if (Carried is { } held && held.Bytes.TryGetValue(path, out var bytes)) return bytes;
+        var held = Carried;
+        var (beside, library) = (SoundFolder.Beside, SoundFolder.Library);
 
-        return PatchPaths.Carriable(path, SoundFolder.Beside, SoundFolder.Library);
+        return path => held is not null && held.Bytes.TryGetValue(path, out var bytes)
+            ? bytes
+            : PatchPaths.Carriable(path, beside, library);
     }
 
     /// <summary>

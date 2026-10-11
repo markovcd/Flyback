@@ -277,6 +277,36 @@ public class CredentialsTests
         credentials.Of(Account, Variable, Origin).ShouldBeNull();
     }
 
+    /// <summary>A recall may start a process and wait on a keyring, and the panel asks on every keystroke.</summary>
+    [Fact]
+    public void The_store_is_asked_once_until_something_is_written_to_it()
+    {
+        var store = new FakeSecretStore();
+        store.Held[Account] = new BoundKey("sk-kept", Origin).Stored();
+
+        var credentials = new Credentials(store);
+
+        for (var i = 0; i < 3; i++)
+        {
+            credentials.Of(Account, Variable, Origin);
+            credentials.SourceOf(Account, Variable);
+            credentials.HasEntered(Account);
+        }
+
+        store.Recalls.ShouldBe(1);
+
+        credentials.Accept(Account, "sk-new", Origin, keep: true);
+        credentials.SourceOf(Account, Variable).ShouldBe(CredentialSource.Kept);
+        credentials.HasEntered(Account);
+
+        store.Recalls.ShouldBe(2);
+
+        credentials.Forget(Account);
+        credentials.HasEntered(Account).ShouldBeFalse();
+
+        store.Recalls.ShouldBe(3);
+    }
+
     /// <summary>
     /// A store is a plugin, so it may be broken. A key that cannot be written
     /// still has to work for this run, and the window has to survive.

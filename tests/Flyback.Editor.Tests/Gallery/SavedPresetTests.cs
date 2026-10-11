@@ -86,7 +86,12 @@ public class SavedPresetTests : EditorTest
         Settle(window);
 
         Click(All<Button>(window).Single(b => b.Name == "save-preset"), window);
+        Saved(window);
     }
+
+    /// <summary>Waits for the card to offer a save again, which it does once the preset is written on its worker.</summary>
+    private static void Saved(MainWindow window) =>
+        Pump(() => All<Button>(window).Any(b => b.Name == "keep-preset"), window);
 
     [AvaloniaFact]
     public void The_saved_run_comes_last_with_a_way_to_save_one()
@@ -209,6 +214,7 @@ public class SavedPresetTests : EditorTest
 
         AskToReplace(window);
         Click(ReplaceAnswer(window, "yes"), window);
+        Saved(window);
 
         SavedTiles(window).Select(p => p.Name).ShouldBe(["Mine"], "one name, one tile");
         All<Button>(window).ShouldContain(b => b.Name == "keep-preset", "the card is the offer again");

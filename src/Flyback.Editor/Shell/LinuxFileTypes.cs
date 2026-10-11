@@ -122,9 +122,9 @@ internal sealed class LinuxFileTypes(string data, string editor, string viewer, 
 
     /// <summary>
     /// A desktop without the tool reads the folder directly, only later, so one that
-    /// is missing is not a failure.
+    /// is missing is not a failure. Waited for on a worker, since nothing reads the result.
     /// </summary>
-    private static void Run(string tool, string folder)
+    private static void Run(string tool, string folder) => _ = Task.Run(() =>
     {
         try
         {
@@ -135,5 +135,5 @@ internal sealed class LinuxFileTypes(string data, string editor, string viewer, 
         catch (System.ComponentModel.Win32Exception)
         {
         }
-    }
+    });
 }

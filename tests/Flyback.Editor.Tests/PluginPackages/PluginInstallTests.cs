@@ -72,6 +72,11 @@ public sealed class PluginInstallTests : EditorTest
 
     private static Button Named(Control dialog, string name) => All<Button>(dialog).Single(b => b.Name == name);
 
+    /// <summary>Whether the dialog is down and the install it asked for has said it is done; it stages on a worker.</summary>
+    private static bool Staged(Window window) =>
+        !All<ModalOverlay>(window).Any()
+        && All<ReportLine>(window).Single().History.Any(h => h.EndsWith("loads the next time Flyback starts.", StringComparison.Ordinal));
+
     private static IEnumerable<string?> Texts(Control dialog) => All<SelectableTextBlock>(dialog).Select(t => t.Text);
 
     [AvaloniaFact]
@@ -89,7 +94,7 @@ public sealed class PluginInstallTests : EditorTest
         Directory.Exists(Plugins).ShouldBeFalse("nothing is written before Install is pressed");
 
         Press(Named(dialog, "install"));
-        Pump(() => !All<ModalOverlay>(window).Any());
+        Pump(() => Staged(window));
 
         Directory.Exists(Path.Combine(Plugins, PluginInstaller.PendingName, Packages.Folder)).ShouldBeTrue();
     }
@@ -169,7 +174,7 @@ public sealed class PluginInstallTests : EditorTest
 
         All<CheckBox>(dialog).Single(c => c.Name == "restart").IsChecked = false;
         Press(Named(dialog, "install"));
-        Pump(() => !All<ModalOverlay>(window).Any());
+        Pump(() => Staged(window));
 
         relaunched.ShouldBe(0);
         window.IsVisible.ShouldBeTrue();
@@ -250,7 +255,7 @@ public sealed class PluginInstallTests : EditorTest
             .ShouldBe($"Updates {Packages.Name} {installed}, which is installed now, to {incoming}.");
 
         Press(Named(dialog, "install"));
-        Pump(() => !All<ModalOverlay>(window).Any());
+        Pump(() => Staged(window));
 
         All<ReportLine>(window).Single().History.ShouldContain($"{Packages.Name} {incoming} is updated, and loads the next time Flyback starts.");
     }

@@ -73,13 +73,13 @@ public class PresetLibraryTests : IDisposable
     }
 
     [Fact]
-    public void A_library_with_no_folder_keeps_nothing_and_saves_nothing()
+    public async Task A_library_with_no_folder_keeps_nothing_and_saves_nothing()
     {
         var none = new PresetLibrary((string?)null);
 
         none.Keeps.ShouldBeFalse();
         none.All.ShouldBeEmpty();
-        Should.Throw<InvalidOperationException>(() => none.Save("Tone", Tone(), Nothing, NodeCatalog.BuiltIn));
+        await Should.ThrowAsync<InvalidOperationException>(() => none.SaveAsync("Tone", Tone(), Nothing, NodeCatalog.BuiltIn));
     }
 
     /// <summary>
@@ -99,7 +99,7 @@ public class PresetLibraryTests : IDisposable
         patch.Connect(shown.Id, 0, sink.Id, NodeCatalog.OutputColorPort);
 
         var library = Library();
-        var saved = library.Save("Shown", patch, name => name == "white.png" ? White() : null, NodeCatalog.BuiltIn);
+        var saved = await library.SaveAsync("Shown", patch, name => name == "white.png" ? White() : null, NodeCatalog.BuiltIn);
 
         var opened = PresetLibrary.Open(saved.Preset, library, NodeCatalog.BuiltIn);
 
@@ -133,26 +133,26 @@ public class PresetLibraryTests : IDisposable
 
         var library = Library();
         var kept = Path.Combine(folder, "thumbnails");
-        var first = library.Save("Shown", patch, name => name == "white.png" ? White() : null, NodeCatalog.BuiltIn);
+        var first = await library.SaveAsync("Shown", patch, name => name == "white.png" ? White() : null, NodeCatalog.BuiltIn);
 
         var before = await new PresetThumbnails(PluginCatalog.Empty, folders: new() { ThumbnailFolder = kept }, saved: library).Of(first.Preset, TestContext.Current.CancellationToken);
 
         before.Pixels.ShouldNotBeNull();
 
-        var second = library.Save("Shown", Tone(), Nothing, NodeCatalog.BuiltIn);
+        var second = await library.SaveAsync("Shown", Tone(), Nothing, NodeCatalog.BuiltIn);
         var after = await new PresetThumbnails(PluginCatalog.Empty, folders: new() { ThumbnailFolder = kept }, saved: library).Of(second.Preset, TestContext.Current.CancellationToken);
 
         after.Pixels.ShouldBeNull("the preset is a tone now, with nothing to see");
     }
 
     [Fact]
-    public void A_saved_preset_is_a_bundle_listed_by_its_name()
+    public async Task A_saved_preset_is_a_bundle_listed_by_its_name()
     {
         var library = Library();
 
         library.All.ShouldBeEmpty("nothing has been saved yet");
 
-        library.Save("Low hum", Tone(), Nothing, NodeCatalog.BuiltIn);
+        await library.SaveAsync("Low hum", Tone(), Nothing, NodeCatalog.BuiltIn);
 
         var saved = library.All.ShouldHaveSingleItem();
 
@@ -164,12 +164,12 @@ public class PresetLibraryTests : IDisposable
     }
 
     [Fact]
-    public void A_saved_preset_builds_the_patch_it_was_saved_from()
+    public async Task A_saved_preset_builds_the_patch_it_was_saved_from()
     {
         var library = Library();
         var patch = Tone(330f);
 
-        library.Save("Tone", patch, Nothing, NodeCatalog.BuiltIn);
+        await library.SaveAsync("Tone", patch, Nothing, NodeCatalog.BuiltIn);
 
         var built = library.All.Single().Preset.Build(NodeCatalog.BuiltIn);
 
@@ -183,14 +183,14 @@ public class PresetLibraryTests : IDisposable
     /// and is a new preset, so nothing drawn from the old one is shown for it.
     /// </summary>
     [Fact]
-    public void Saving_under_a_name_already_saved_replaces_it()
+    public async Task Saving_under_a_name_already_saved_replaces_it()
     {
         var library = Library();
 
-        library.Save("Tone", Tone(), Nothing, NodeCatalog.BuiltIn);
+        await library.SaveAsync("Tone", Tone(), Nothing, NodeCatalog.BuiltIn);
         var before = library.All.Single().Preset;
 
-        library.Save("tone", Tone(440f), Nothing, NodeCatalog.BuiltIn);
+        await library.SaveAsync("tone", Tone(440f), Nothing, NodeCatalog.BuiltIn);
 
         var after = library.All.ShouldHaveSingleItem();
 
@@ -204,13 +204,13 @@ public class PresetLibraryTests : IDisposable
     /// which shares it for reading and for deleting.
     /// </summary>
     [Fact]
-    public void Saving_over_one_that_is_being_read_replaces_it_anyway()
+    public async Task Saving_over_one_that_is_being_read_replaces_it_anyway()
     {
         var library = Library();
-        var saved = library.Save("Tone", Tone(), Nothing, NodeCatalog.BuiltIn);
+        var saved = await library.SaveAsync("Tone", Tone(), Nothing, NodeCatalog.BuiltIn);
 
         using (new FileStream(saved.Path, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
-            library.Save("Tone", Tone(440f), Nothing, NodeCatalog.BuiltIn);
+            await library.SaveAsync("Tone", Tone(440f), Nothing, NodeCatalog.BuiltIn);
 
         library.All.ShouldHaveSingleItem().Preset.Build(NodeCatalog.BuiltIn)
             .Nodes.Single(n => n.TypeId == "osc.sine").InputValues[1].ShouldBe(440f);
@@ -219,24 +219,24 @@ public class PresetLibraryTests : IDisposable
     }
 
     [Fact]
-    public void A_preset_stays_the_same_preset_across_a_save_of_another()
+    public async Task A_preset_stays_the_same_preset_across_a_save_of_another()
     {
         var library = Library();
 
-        library.Save("One", Tone(), Nothing, NodeCatalog.BuiltIn);
+        await library.SaveAsync("One", Tone(), Nothing, NodeCatalog.BuiltIn);
         var one = library.All.Single().Preset;
 
-        library.Save("Two", Tone(), Nothing, NodeCatalog.BuiltIn);
+        await library.SaveAsync("Two", Tone(), Nothing, NodeCatalog.BuiltIn);
 
         library.All.Select(entry => entry.Name).ShouldBe(["One", "Two"]);
         library.Holding(one).ShouldNotBeNull().Name.ShouldBe("One");
     }
 
     [Fact]
-    public void Removing_one_deletes_its_file()
+    public async Task Removing_one_deletes_its_file()
     {
         var library = Library();
-        var saved = library.Save("Gone", Tone(), Nothing, NodeCatalog.BuiltIn);
+        var saved = await library.SaveAsync("Gone", Tone(), Nothing, NodeCatalog.BuiltIn);
 
         library.Remove(saved).ShouldBeTrue();
 
@@ -250,11 +250,11 @@ public class PresetLibraryTests : IDisposable
     [InlineData("In/Out")]
     [InlineData("a:b")]
     [InlineData("Trailing.")]
-    public void A_name_that_cannot_be_a_file_name_is_refused(string name)
+    public async Task A_name_that_cannot_be_a_file_name_is_refused(string name)
     {
         PresetLibrary.Refusal(name).ShouldNotBeNull();
 
-        Should.Throw<ArgumentException>(() => Library().Save(name, Tone(), Nothing, NodeCatalog.BuiltIn));
+        await Should.ThrowAsync<ArgumentException>(() => Library().SaveAsync(name, Tone(), Nothing, NodeCatalog.BuiltIn));
     }
 
     [Theory]

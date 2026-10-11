@@ -18,7 +18,7 @@ internal sealed record YourPresets(
     Func<IReadOnlyList<PatchPreset>> All,
     Func<string, (bool Allowed, string Hint)> Check,
     Func<string, bool> Replaces,
-    Func<string, bool> Keep,
+    Func<string, Task<bool>> Keep,
     Action<PatchPreset> Remove)
 {
     /// <summary>Whether the run is only picked from: no card to save one, and no tile that deletes.</summary>

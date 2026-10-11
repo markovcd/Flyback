@@ -143,7 +143,7 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
         try
         {
             await using var stream = await file.OpenReadAsync();
-            package = await PluginPackage.ReadAsync(stream);
+            package = await Task.Run(() => PluginPackage.ReadAsync(stream));
         }
         catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)
         {
@@ -184,9 +184,12 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
 
         try
         {
-            using var traced = StallTrace.Step("Plugin install");
+            await Task.Run(() =>
+            {
+                using var traced = StallTrace.Step("Plugin install");
 
-            installer!.Stage(package, platform);
+                installer!.Stage(package, platform);
+            });
         }
         catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)
         {
@@ -262,7 +265,7 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
         {
             var bytes = await site.DownloadAsync(plugin, CancellationToken.None);
 
-            package = await PluginPackage.ReadAsync(new MemoryStream(bytes, writable: false));
+            package = await Task.Run(() => PluginPackage.ReadAsync(new MemoryStream(bytes, writable: false)));
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidDataException or IOException)
         {

@@ -17,7 +17,15 @@ internal sealed class FakeSecretStore : ISecretStore
 
     public void Keep(string account, string secret) => Held[account] = secret;
 
-    public string? Recall(string account) => Held.GetValueOrDefault(account);
+    /// <summary>How many times <see cref="Recall"/> was asked.</summary>
+    public int Recalls { get; private set; }
+
+    public string? Recall(string account)
+    {
+        Recalls++;
+
+        return Held.GetValueOrDefault(account);
+    }
 
     public void Forget(string account) => Held.Remove(account);
 }

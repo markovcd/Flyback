@@ -316,7 +316,7 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
             switch (e.Key)
             {
                 case Key.Enter when save.IsEnabled:
-                    Save();
+                    _ = SaveAsync();
                     e.Handled = true;
                     break;
                 case Key.Escape:
@@ -327,7 +327,7 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
             }
         };
 
-        save.Click += (_, _) => Save();
+        save.Click += async (_, _) => await SaveAsync();
         cancel.Click += (_, _) => card.Child = offer;
 
         return card;
@@ -341,13 +341,13 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
             hint.IsVisible = words.Length > 0;
         }
 
-        void Save()
+        async Task SaveAsync()
         {
             var wanted = name.Text ?? string.Empty;
 
             if (!yours.Replaces(wanted))
             {
-                if (yours.Keep(wanted)) saved();
+                await KeepAsync(wanted, form);
                 return;
             }
 
@@ -366,8 +366,8 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
                     {
                         if (replace)
                         {
-                            if (yours.Keep(wanted)) saved();
-                            else card.Child = form;
+                            card.Child = form;
+                            _ = KeepAsync(wanted, form);
                         }
                         else
                         {
@@ -376,6 +376,21 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
                         }
                     }),
             };
+        }
+
+        // The form stays up but cannot be sent twice while the preset is written.
+        async Task KeepAsync(string wanted, Control showing)
+        {
+            showing.IsEnabled = false;
+
+            try
+            {
+                if (await yours.Keep(wanted)) saved();
+            }
+            finally
+            {
+                showing.IsEnabled = true;
+            }
         }
     }
 

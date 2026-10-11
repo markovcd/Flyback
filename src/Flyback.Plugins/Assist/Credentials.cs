@@ -28,6 +28,9 @@ internal sealed class Credentials(ISecretStore? store)
 {
     private readonly Dictionary<string, BoundKey> session = new(StringComparer.Ordinal);
 
+    /// <summary>What the store answered per account, since a recall may start a process; cleared by every write.</summary>
+    private readonly Dictionary<string, string?> recalled = new(StringComparer.Ordinal);
+
     /// <summary>Whether a key can outlive the window, and what would hold it if so.</summary>
     public ISecretStore? Store { get; } = store;
 
@@ -158,6 +161,7 @@ internal sealed class Credentials(ISecretStore? store)
     public void Forget(string account)
     {
         session.Remove(account);
+        recalled.Remove(account);
 
         try
         {
@@ -172,6 +176,9 @@ internal sealed class Credentials(ISecretStore? store)
     private void Keep(string account, BoundKey key)
     {
         if (Store is null) return;
+
+        // Before the write, so the panel's read-back reaches the store (ADR-0034).
+        recalled.Remove(account);
 
         try
         {
@@ -197,15 +204,19 @@ internal sealed class Credentials(ISecretStore? store)
     /// <summary>What the store holds; a key kept alone is bound to <paramref name="origin"/> and kept again with it.</summary>
     private BoundKey? FromStore(string account, string? origin)
     {
-        string? stored;
+        if (!recalled.TryGetValue(account, out var stored))
+        {
+            try
+            {
+                stored = Blank(Store?.Recall(account));
+            }
+            catch
+            {
+                // Not remembered: a keyring that was locked may be open next time.
+                return null;
+            }
 
-        try
-        {
-            stored = Blank(Store?.Recall(account));
-        }
-        catch
-        {
-            return null;
+            recalled[account] = stored;
         }
 
         var key = BoundKey.Read(stored, origin ?? "");

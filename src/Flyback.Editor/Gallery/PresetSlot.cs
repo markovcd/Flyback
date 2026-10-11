@@ -520,7 +520,7 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             : (true, "");
     }
 
-    private bool Keep(string name)
+    private async Task<bool> Keep(string name)
     {
         if (!saved.Keeps) return false;
 
@@ -528,7 +528,7 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
 
         try
         {
-            var kept = saved.Save(name, editor.History.Patch, files.Bytes, plugins.Modules);
+            var kept = await saved.SaveAsync(name, editor.History.Patch, files.Bytes(), plugins.Modules);
 
             Refresh();
             usage.Count(Used.KeptPreset);

@@ -12,8 +12,9 @@ file, in the commit that lands the last item.
 
 ## Fix
 
-Ranked by how much a user feels it. 1, 3, 4 and 5 are one small commit with no
-contract change; 2 wants its own.
+Ranked by how much a user feels it. 1, 3, 4 and 5 have landed; 2 is left. Item 5
+runs the two tools on a worker rather than making `FileTypes.Apply` async, since
+nothing reads what they answer.
 
 ### 1. Assistant key lookups start a process per keystroke
 

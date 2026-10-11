@@ -170,7 +170,8 @@ public sealed class PresetLibrary
     /// <param name="open">Hands back the bytes of a file the patch names — see <see cref="PatchBundle.Write"/>.</param>
     /// <exception cref="ArgumentException">The name cannot be a file name — see <see cref="Refusal"/>.</exception>
     /// <exception cref="InvalidOperationException">No presets are kept here — see <see cref="Keeps"/>.</exception>
-    public SavedPreset Save(string name, Patch patch, Func<string, byte[]?> open, ModuleCatalog catalog)
+    /// <remarks>Packs and writes on a worker; the list is reloaded where it was called from.</remarks>
+    public async Task<SavedPreset> SaveAsync(string name, Patch patch, Func<string, byte[]?> open, ModuleCatalog catalog)
     {
         if (Refusal(name) is { } refused) throw new ArgumentException(refused, nameof(name));
 
@@ -178,9 +179,25 @@ public sealed class PresetLibrary
 
         name = name.Trim();
 
-        Directory.CreateDirectory(folder);
-
         var path = Path.Combine(folder, name + PatchBundle.Extension);
+
+        // A plain patch of the same name dropped in by hand is the one being
+        // replaced, and two files for one name would be two tiles that read alike.
+        var before = Named(name) is { } named && named.Path != path ? named.Path : null;
+
+        await Task.Run(() => Write(folder, path, before, patch, open, catalog));
+
+        // Held anew rather than kept, because what it holds has changed: a tile
+        // drawn from the old one would show a patch that is not there any more.
+        kept.RemoveAll(entry => entry.Path == path);
+        Reload();
+
+        return kept.First(entry => entry.Path == path);
+    }
+
+    private static void Write(string folder, string path, string? before, Patch patch, Func<string, byte[]?> open, ModuleCatalog catalog)
+    {
+        Directory.CreateDirectory(folder);
 
         // Into memory first, so a patch that fails to pack leaves the one it
         // would have replaced where it was.
@@ -188,9 +205,7 @@ public sealed class PresetLibrary
 
         PatchBundle.Write(packed, patch, open, catalog);
 
-        // A plain patch of the same name dropped in by hand is the one being
-        // replaced, and two files for one name would be two tiles that read alike.
-        if (Named(name) is { } before && before.Path != path) File.Delete(before.Path);
+        if (before is not null) File.Delete(before);
 
         // Written aside and swapped in whole, because a tile drawing this preset
         // has its file open on a thread of its own — see SavedPreset.Open, which
@@ -210,13 +225,6 @@ public sealed class PresetLibrary
             Forget(writing);
             throw;
         }
-
-        // Held anew rather than kept, because what it holds has changed: a tile
-        // drawn from the old one would show a patch that is not there any more.
-        kept.RemoveAll(entry => entry.Path == path);
-        Reload();
-
-        return kept.First(entry => entry.Path == path);
     }
 
     /// <summary>Forgets one, which is deleting the file it was.</summary>
