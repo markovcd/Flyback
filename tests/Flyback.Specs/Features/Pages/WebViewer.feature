@@ -53,7 +53,7 @@ Feature: The web viewer
     When it plays in the web viewer for 0.1 seconds
     Then the web viewer gives it no length, so no end and no seek bar
 
-  @node
+  @node @unmeasured
   Scenario: A patch needing a plugin the web viewer lacks is refused, naming the plugin
     When a patch needing the "Lantern" plugin is opened in the web viewer
     Then the web viewer refuses it, naming "Lantern"
@@ -88,10 +88,12 @@ Feature: The web viewer
     When the web viewer lists its presets
     Then they are the editor's, in its order, under its headings and with their descriptions, less the blank canvas
 
+  @unmeasured
   Scenario: The web viewer's page and scripts are there
     When someone opens the web viewer on the preset site
     Then its page and everything it loads to start are there
 
+  @unmeasured
   Scenario: The web viewer leaves picking a preset to the presets page
     When someone opens the web viewer on the preset site
     Then it offers no presets of its own, only a way back to the presets page

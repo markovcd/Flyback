@@ -2,10 +2,12 @@ Feature: The Worker serves the whole website
   The preset site's Worker serves the website's pages beside the presets and
   plugins, so one address has all of it.
 
+  @unmeasured
   Scenario: The website opens on the overview
     When someone opens the preset site
     Then they read what Flyback is
 
+  @unmeasured
   Scenario: Every link between the website's pages leads somewhere
     When someone follows every link between the preset site's pages
     Then none of them is missing
@@ -26,6 +28,7 @@ Feature: The Worker serves the whole website
     When someone opens the shared preset's page
     Then it offers it to download, not to play or edit in the browser, and says why
 
+  @unmeasured
   Scenario: The tutorials page plays its videos from one list
     When someone opens the tutorials page
     Then every video in its list has a name of its own to link to, a title and a line on what it shows

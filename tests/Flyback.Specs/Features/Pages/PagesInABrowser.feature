@@ -5,6 +5,7 @@ Feature: The web viewer and the web editor work in a browser
   them. What a script reads off window.flyback is what the page is doing. Each scenario
   takes seconds: the page loads the runtime, interpreted.
 
+  @unmeasured
   Scenario: The web viewer plays a preset in a browser, its picture drawn and its sound heard
     Given the web viewer is open in a browser on the preset "Sidebands"
     When the web viewer's picture is tapped
@@ -12,17 +13,20 @@ Feature: The web viewer and the web editor work in a browser
     And its sound goes straight to the speakers, through no media element
     And the web viewer's picture is drawn
 
+  @unmeasured
   Scenario: On Android the web viewer's sound goes through a media element, so other playback stops
     Given the web viewer is open in Android's browser on the preset "Sidebands"
     When the web viewer's picture is tapped
     Then the web viewer plays, its sound heard
     And its sound goes through a media element, which takes the phone's audio focus
 
+  @unmeasured
   Scenario: A browser holds the web viewer's sound back until the page is touched
     Given the web viewer is open in a browser on the preset "Sidebands"
     When a script plays the web viewer
     Then the web viewer plays its picture alone, saying the browser holds the sound back
 
+  @unmeasured
   Scenario: A tap on the web viewer's playing picture pauses it, and a drag across it does not
     Given the web viewer is open in a browser on the preset "Sidebands"
     When the web viewer's picture is tapped

@@ -15,6 +15,7 @@ Feature: What draws the picture is named for what it is
       | ANGLE over Vulkan               | Vulkan    |
       | OpenGL ES, straight from Mesa   | OpenGL ES |
 
+  @unmeasured
   Scenario: The CPU is named as the CPU
     Given the picture is drawn on the processor
     Then the picture is said to be drawn through CPU

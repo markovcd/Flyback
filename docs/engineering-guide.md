@@ -859,7 +859,7 @@ A test is filed under what it needs beyond the .NET runtime, as its `Category` t
 | `gpu` | An OpenGL context | `[TestCategory(TestCategory.Gpu)]`, or `@gpu` |
 | `unmeasured` | Nothing: it reads files or metadata and runs no Flyback code | `[TestCategory(TestCategory.Unmeasured)]`, or `@unmeasured` |
 
-The gate's image has all of them. The coverage run leaves out `unmeasured`, since it adds nothing to the figure; a test goes there only once a coverage run of it alone covers no line that loading its assembly does not. Pick a category out, or leave one out:
+The gate's image has all of them. The coverage run leaves out `unmeasured`, since it adds nothing to the figure; a test or scenario goes there only once a coverage run of it alone covers no line that every run of its project already does. Pick a category out, or leave one out:
 
 ```bash
 ./tests/Flyback.Core.Tests/bin/Release/net10.0/Flyback.Core.Tests -trait "Category=ffmpeg"
