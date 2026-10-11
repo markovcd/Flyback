@@ -8,7 +8,7 @@
   plugin whose files differ from plugins.sha256 is refused, which leaves the
   plugin tests with no plugins.
 
-  The two excluded assemblies are test fixtures, not part of Flyback.
+  The excluded assemblies are test fixtures and helpers, not part of Flyback.
 -->
 
 <RunSettings>
@@ -23,6 +23,9 @@
               <Exclude>
                 <ModulePath>.*Flyback\.Plugins\.Sample\.dll$</ModulePath>
                 <ModulePath>.*Flyback\.Plugins\.FakeAssistant\.dll$</ModulePath>
+                <ModulePath>.*Flyback\.Plugins\.FakeDecider\.dll$</ModulePath>
+                <ModulePath>.*Flyback\.Plugins\.Testing\.dll$</ModulePath>
+                <ModulePath>.*Flyback\.Ui\.Testing\.dll$</ModulePath>
               </Exclude>
             </ModulePaths>
           </CodeCoverage>
