@@ -71,3 +71,10 @@ says where.
 
 Learning a knob by turning it still works and is still the way to bind a
 controller Flyback has no profile for.
+
+## Amendment, 2026-10-11
+
+The profile files and `InstrumentLibrary` live in `Flyback.Editor/Midi`, with the
+profile types beside them (`InstrumentProfile`, `InstrumentPage`, `InstrumentTrack`,
+`InstrumentControl`): only the editor builds an instrument's panel, and the viewer plays
+one without reading a profile ([0124](0124-what-two-shells-draw-with-is-a-project-of-its-own.md)).

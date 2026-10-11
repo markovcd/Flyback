@@ -9,6 +9,7 @@ using Flyback.Plugins.Settings;
 using Flyback.Specs.Support;
 using Reqnroll;
 using Shouldly;
+using Flyback.Editor.Controls;
 using Flyback.Ui.Controls;
 using Flyback.Ui.Testing;
 

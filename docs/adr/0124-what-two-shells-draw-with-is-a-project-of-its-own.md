@@ -45,3 +45,11 @@ to the editor, which alone names them: the viewer plays an instrument but keeps 
 library of them, has no seek bar and draws no popups over a page's canvas. What
 remains in Ui is named by both windows or by Ui itself (`GraphicsDrivers` and
 `KeyCodes` reach the shells as extension methods).
+
+## Amendment, 2026-10-11
+
+`Markdown` and the instrument profile types (`InstrumentProfile`, `InstrumentPage`,
+`InstrumentTrack`, `InstrumentControl`) moved to the editor, which alone names them:
+the viewer draws no transcript and no release notes, and keeps no instrument. `SharedUiTests`
+now holds the rule: every type in Ui is named by a shell other than the editor, or by
+a Ui type that is.

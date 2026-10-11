@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Media;
+using Flyback.Editor.Controls;
 using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Updates;

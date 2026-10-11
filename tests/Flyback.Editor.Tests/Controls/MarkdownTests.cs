@@ -1,10 +1,10 @@
 using Avalonia.Controls.Documents;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
-using Flyback.Ui.Controls;
+using Flyback.Editor.Controls;
 using Shouldly;
 
-namespace Flyback.Ui.Tests.Controls;
+namespace Flyback.Editor.Tests.Controls;
 
 /// <summary>What the Markdown in the changelog and the assistant's replies draws as.</summary>
 public class MarkdownTests

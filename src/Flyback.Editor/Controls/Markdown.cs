@@ -1,7 +1,7 @@
 using Avalonia.Controls.Documents;
 using Avalonia.Media;
 
-namespace Flyback.Ui.Controls;
+namespace Flyback.Editor.Controls;
 
 /// <summary>
 /// As much Markdown as the changelog and the assistant's replies use, drawn as runs of one

@@ -5,6 +5,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.Media.Imaging;
+using Flyback.Editor.Controls;
 using Flyback.Ui.Controls;
 using Flyback.Assist;
 using Flyback.Plugins.Assist;

@@ -1,4 +1,4 @@
-using Flyback.Ui.Midi;
+using Flyback.Editor.Midi;
 
 namespace Flyback.Editor.Knobs;
 

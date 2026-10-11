@@ -1,7 +1,6 @@
 using System.Text.Json;
 using Flyback.Core;
 using Flyback.Core.Graph;
-using Flyback.Ui.Midi;
 
 namespace Flyback.Editor.Midi;
 

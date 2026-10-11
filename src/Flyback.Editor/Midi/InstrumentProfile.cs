@@ -1,6 +1,6 @@
 using Flyback.Core.Graph;
 
-namespace Flyback.Ui.Midi;
+namespace Flyback.Editor.Midi;
 
 /// <summary>
 /// What Flyback knows about one make of instrument: what its port is called,

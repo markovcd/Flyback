@@ -1,4 +1,3 @@
-using Flyback.Ui.Midi;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Shouldly;

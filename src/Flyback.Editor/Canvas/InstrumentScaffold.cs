@@ -1,5 +1,5 @@
 using System.Text.Json.Nodes;
-using Flyback.Ui.Midi;
+using Flyback.Editor.Midi;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 
