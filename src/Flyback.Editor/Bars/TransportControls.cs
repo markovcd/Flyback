@@ -5,8 +5,8 @@ using Flyback.Editor.Capture;
 using Flyback.Ui.Midi;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Notices;
+using Flyback.Editor.Settings;
 using Flyback.Editor.Statistics;
-using Flyback.Editor.Windows;
 using Flyback.Plugins.Midi;
 using Flyback.Editor.Hubs;
 
@@ -22,19 +22,19 @@ internal sealed class TransportControls : IReactTo<TakeMarked>, IReactTo<Transpo
     private readonly TransportRow row;
     private readonly TakeRecording recording;
     private readonly Usage usage;
+    private readonly OutputSettingRepository settings;
 
-    public TransportControls(Playback playback, TransportRow row, TakeRecording recording, Usage usage, MidiHub midi)
+    /// <param name="settings">Whether an instrument's Start, Continue and Stop play and pause the patch: the MIDI section's setting.</param>
+    public TransportControls(Playback playback, TransportRow row, TakeRecording recording, Usage usage, MidiHub midi, OutputSettingRepository settings)
     {
         this.playback = playback;
         this.row = row;
         this.recording = recording;
         this.usage = usage;
+        this.settings = settings;
 
         midi.Transported += (_, action) => Dispatcher.UIThread.Post(() => Follow(action));
     }
-
-    /// <summary>Whether an instrument's Start, Continue and Stop play and pause the patch — the MIDI section.</summary>
-    public bool FollowsInstruments { get; set; } = true;
 
     private bool pauseShowsPlay;
 
@@ -47,8 +47,8 @@ internal sealed class TransportControls : IReactTo<TakeMarked>, IReactTo<Transpo
     /// <summary>The line saying how the picture is drawn, over the preview's cell while it has the window.</summary>
     public StatsOverlay? Stats { get; private set; }
 
-    /// <summary>The window holding the preview on another monitor, while it is there.</summary>
-    public PictureWindow? PictureWindow { get; private set; }
+    /// <summary>The transport and stats line over the picture on another monitor, while it is there.</summary>
+    public (TransportOverlay Transport, StatsOverlay Stats)? Away { get; private set; }
 
     /// <summary>The transport and stats line over the window's own preview, once the layout has built them.</summary>
     public void Register(TransportOverlay overlay, StatsOverlay stats)
@@ -57,21 +57,21 @@ internal sealed class TransportControls : IReactTo<TakeMarked>, IReactTo<Transpo
         Stats = stats;
     }
 
-    /// <summary>The window the preview has gone to on another monitor.</summary>
-    public void Register(PictureWindow window) => PictureWindow = window;
+    /// <summary>The picture has gone to another monitor, under these.</summary>
+    public void RegisterAway(TransportOverlay transport, StatsOverlay stats) => Away = (transport, stats);
 
-    /// <summary>Forgets <paramref name="window"/>, and says whether it was the one held.</summary>
-    public bool Release(PictureWindow window)
+    /// <summary>Forgets the away picture under <paramref name="transport"/>, and says whether it was the one held.</summary>
+    public bool ReleaseAway(TransportOverlay transport)
     {
-        if (PictureWindow != window) return false;
+        if (Away?.Transport != transport) return false;
 
-        PictureWindow = null;
+        Away = null;
         return true;
     }
 
     /// <summary>Every transport over a picture: the window's own, and the other monitor's while it has one.</summary>
     public IEnumerable<TransportOverlay> Overlays =>
-        new[] { Overlay, PictureWindow?.Transport }.OfType<TransportOverlay>();
+        new[] { Overlay, Away?.Transport }.OfType<TransportOverlay>();
 
     public Task On(TakeMarked notice)
     {
@@ -108,7 +108,7 @@ internal sealed class TransportControls : IReactTo<TakeMarked>, IReactTo<Transpo
     /// </summary>
     private void Follow(MidiAction action)
     {
-        if (!FollowsInstruments || recording.InHand || recording.Counting) return;
+        if (!settings.Current.FollowTransport || recording.InHand || recording.Counting) return;
 
         switch (action)
         {
@@ -167,6 +167,6 @@ internal sealed class TransportControls : IReactTo<TakeMarked>, IReactTo<Transpo
     public void SyncStats(bool previewIsFullScreen)
     {
         if (Stats is not null) Stats.IsVisible = statsShown && previewIsFullScreen;
-        if (PictureWindow is not null) PictureWindow.Stats.IsVisible = statsShown;
+        if (Away is { } away) away.Stats.IsVisible = statsShown;
     }
 }

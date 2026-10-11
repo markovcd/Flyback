@@ -1,9 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.Editor.Bars;
 using Flyback.Editor.Controls;
-using Flyback.Editor.Knobs;
+using Flyback.Editor.Midi;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui.Controls;
 using Flyback.Ui.Midi;
@@ -11,7 +10,7 @@ using Flyback.Ui;
 using Flyback.Host;
 using Flyback.Editor.Settings;
 
-namespace Flyback.Editor.Midi;
+namespace Flyback.Editor.Knobs;
 
 /// <summary>
 /// The MIDI section of the settings window: which plugin hears an instrument, what
@@ -23,7 +22,6 @@ internal sealed class MidiSection : ISettingsSection
     private readonly PanelKnobs knobs;
     private readonly ControlHub hub;
     private readonly InstrumentLibrary instruments;
-    private readonly TransportControls transport;
 
     public string Name => "MIDI";
 
@@ -75,14 +73,12 @@ internal sealed class MidiSection : ISettingsSection
         PanelKnobs knobs,
         ControlHub hub,
         InstrumentLibrary instruments,
-        OutputSettingRepository settings,
-        TransportControls transport)
+        OutputSettingRepository settings)
     {
         this.settings = settings;
         this.knobs = knobs;
         this.hub = hub;
         this.instruments = instruments;
-        this.transport = transport;
 
         ToolTip.SetTip(takeover,
             "When a controller's knob is not where the knob on screen is: jump straight to the controller, "
@@ -159,7 +155,6 @@ internal sealed class MidiSection : ISettingsSection
     private void Apply()
     {
         hub.Takeover = settings.Current.Takeover;
-        transport.FollowsInstruments = settings.Current.FollowTransport;
         knobs.KnobGrid = settings.Current.KnobGrid;
     }
 

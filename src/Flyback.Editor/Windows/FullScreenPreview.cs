@@ -52,7 +52,10 @@ internal sealed class FullScreenPreview(
     public Action<bool>? ShowPreview { get; set; }
 
     /// <summary>Whether the picture has all of the window or a window of its own.</summary>
-    public bool IsAway => IsFullScreen || transport.PictureWindow is not null;
+    public bool IsAway => IsFullScreen || Away is not null;
+
+    /// <summary>The window holding the picture on another monitor, while it is there.</summary>
+    public PictureWindow? Away { get; private set; }
 
     /// <summary>
     /// What each track was set to before the preview took over, in order.
@@ -92,7 +95,7 @@ internal sealed class FullScreenPreview(
     /// <summary>Goes full screen on the monitor the Picture section names, or comes back.</summary>
     public void Toggle()
     {
-        if (IsFullScreen || transport.PictureWindow is not null)
+        if (IsFullScreen || Away is not null)
         {
             Leave();
             return;
@@ -107,7 +110,7 @@ internal sealed class FullScreenPreview(
 
     public void Leave()
     {
-        transport.PictureWindow?.Close();
+        Away?.Close();
         Show(false);
     }
 
@@ -117,7 +120,7 @@ internal sealed class FullScreenPreview(
     /// </summary>
     public void ShowPictureOn(Screen screen)
     {
-        if (PreviewBox is not { } previewBox || transport.PictureWindow is not null || IsFullScreen) return;
+        if (PreviewBox is not { } previewBox || Away is not null || IsFullScreen) return;
 
         var owner = holder.Window;
 
@@ -139,7 +142,8 @@ internal sealed class FullScreenPreview(
         preview.Renew();
 
         var window = new PictureWindow(screen, preview, audio, () => playback.HasSound);
-        transport.Register(window);
+        Away = window;
+        transport.RegisterAway(window.Transport, window.Stats);
 
         knobs.Away = window.Knobs;
         window.Knobs.Show(editor.History.Patch);
@@ -165,8 +169,9 @@ internal sealed class FullScreenPreview(
 
     private void BringPictureBack(PictureWindow window)
     {
-        if (PreviewBox is not { } previewBox || !transport.Release(window)) return;
+        if (PreviewBox is not { } previewBox || !transport.ReleaseAway(window.Transport)) return;
 
+        Away = null;
         knobs.Away = null;
         row.Seek.Drop(window.Transport);
 

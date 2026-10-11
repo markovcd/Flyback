@@ -326,12 +326,12 @@ public partial class OutputSettingsTests
         var dialog = OpenSettings(window);
 
         take.SetRunning(true);
-        reactions.Raise(new TakeMarked());
+        reactions.Raise(new TakeMarked(TakeMode.Recording));
 
         Size(dialog).IsEnabled.ShouldBeFalse();
 
         take.SetRunning(false);
-        reactions.Raise(new TakeMarked());
+        reactions.Raise(new TakeMarked(TakeMode.Ready));
 
         Size(dialog).IsEnabled.ShouldBeTrue();
     }

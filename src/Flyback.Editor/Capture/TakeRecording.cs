@@ -1,10 +1,8 @@
-using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Flyback.Core.Graph;
 using Flyback.Editor.Shell;
 using Flyback.Engine.Render;
-using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
@@ -31,9 +29,9 @@ namespace Flyback.Editor.Capture;
 /// GPU renderer running. Sound is recorded wherever it is playing. It owns the whole
 /// Record gesture, from choosing a file through stopping the take.
 /// <para>
-/// A take owns its recording state and button behavior. The window asks whether one
-/// is running, counting in, or in hand, and listens for state changes to update the
-/// transport. The services a take acts on are handed in here.
+/// A take owns its recording state, and says through <see cref="TakeMarked"/> what the
+/// Record button shows. The window asks whether one is running, counting in, or in
+/// hand, and listens for state changes to update the transport.
 /// </para>
 /// </remarks>
 internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAsked>
@@ -43,23 +41,6 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
 
     /// <summary>A second, as long as one number is left up before the next.</summary>
     internal static readonly TimeSpan CountInStep = TimeSpan.FromSeconds(1);
-
-    internal static readonly string RecordTip =
-        "Record what the patch is doing now, knobs and all, as a video or a sound file.  (Ctrl+R)  "
-        + "Press again to stop. Settings → Recording sets the count-in and the quality.";
-
-    private const string NothingToRecord =
-        "Nothing is wired into the Output, so there is nothing to record. "
-        + "Patch something into its 'color' or its 'left'.";
-
-    private const string StopTip = "End this take and write the file.  (Ctrl+R)";
-
-    private const string CountingTip = "Call off the count and record nothing.  (Ctrl+R)";
-
-    private const string StillFinishing = "The last take is still being written.";
-
-    /// <summary>The toolbar's button that starts a take, calls off its count and ends it.</summary>
-    private readonly Button button;
 
     private readonly PreviewHost preview;
     private readonly IAudioEngine audio;
@@ -104,7 +85,6 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
     private bool gone;
 
     public TakeRecording(
-        Toolbar toolbar,
         PreviewHost preview,
         IAudioEngine audio,
         Usage usage,
@@ -117,7 +97,6 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
         IFilePickers pickers,
         Reactions reactions)
     {
-        button = toolbar.Record;
         this.reactions = reactions;
 
         // A capture cannot continue after its picture disappears.
@@ -148,34 +127,23 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
     /// <summary>Whether a take is running, or stopped and its file not yet closed.</summary>
     internal bool InHand => recorder is not null || finishing is not null;
 
-    /// <summary>
-    /// Puts the button in step with what there is to record, and with what a take
-    /// already running has made of it.
-    /// </summary>
+    /// <summary>Says what there is to record, and what a take already running has made of it.</summary>
+    internal void Mark() => reactions.Raise(new TakeMarked(Mode));
+
+    /// <summary>What pressing Record would do now.</summary>
     /// <remarks>
-    /// A take already running keeps the button enabled whatever the patch says: it is
-    /// <c>Stop</c> by then, and editing mid-take must not take away the only way to
-    /// finish the file. The tip follows the same state, since a patch edit calls this
-    /// again mid-take — ADR-0021 recompiles on every edit — and must not read as an
-    /// offer to start a second recording over the one already running. A count-in is
-    /// the same case: unwiring the Output during it must not strand the count with no
-    /// way to call it off.
+    /// A take already running stays stoppable whatever the patch says: a patch edit
+    /// marks again mid-take (ADR-0021 recompiles on every edit) and must not take away
+    /// the only way to finish the file, nor read as an offer to start a second recording
+    /// over it. A count-in is the same case: unwiring the Output during it must not
+    /// strand the count with no way to call it off.
     /// </remarks>
-    internal void Mark()
-    {
-        var kinds = Kinds();
-
-        button.IsEnabled =
-            recorder is not null || counting is not null || (finishing is null && kinds.Count > 0);
-
-        ToolTip.SetTip(button, recorder is not null ? StopTip
-            : counting is not null ? CountingTip
-            : finishing is not null ? StillFinishing
-            : kinds.Count > 0 ? RecordTip
-            : NothingToRecord);
-
-        reactions.Raise(new TakeMarked());
-    }
+    internal TakeMode Mode =>
+        recorder is not null ? TakeMode.Recording
+        : counting is not null ? TakeMode.Counting
+        : finishing is not null ? TakeMode.Finishing
+        : Kinds().Count > 0 ? TakeMode.Ready
+        : TakeMode.Nothing;
 
     /// <summary>
     /// What the picker offers: the guard on what the patch reaches, asked with the
@@ -203,30 +171,27 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
         return Refusal(format, ffmpeg, patch());
     }
 
-    /// <summary>Starts, calls off or stops a take, according to the Record button's state.</summary>
+    /// <summary>Starts, calls off or stops a take, according to what the Record button offers.</summary>
     internal async Task ToggleAsync()
     {
-        if (!button.IsEnabled) return;
-
-        if (Counting)
+        switch (Mode)
         {
-            CallOffCount();
-            return;
-        }
+            case TakeMode.Counting:
+                CallOffCount();
+                return;
 
-        if (recordingState.Running)
-        {
-            Stop();
-            return;
+            case TakeMode.Recording:
+                Stop();
+                return;
+
+            case TakeMode.Ready:
+                break;
+
+            default:
+                return;
         }
 
         var kinds = Kinds();
-
-        if (kinds.Count == 0)
-        {
-            Say(NothingToRecord);
-            return;
-        }
 
         var file = await pickers.Save(new FilePickerSaveOptions
         {
@@ -274,9 +239,8 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
 
         counting = count;
 
-        // The glyph is the square from the moment the count starts: the button
-        // ends something from here on, and what it ends is the count.
-        button.Content = Glyphs.Stop();
+        // Marked from the moment the count starts: the button ends something from
+        // here on, and what it ends is the count.
         Mark();
 
         try
@@ -299,14 +263,10 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
         {
             counting = null;
 
-            // Put back for every way out of the count, the take that follows
-            // included: Start swaps it straight back to the square, in this
-            // same turn of the dispatcher, so there is nothing to see.
-            if (!gone)
-            {
-                button.Content = Glyphs.Record();
-                Mark();
-            }
+            // Marked again for every way out of the count, the take that follows
+            // included: Start marks it straight back, in this same turn of the
+            // dispatcher, so there is nothing to see.
+            if (!gone) Mark();
         }
 
         // What the count was for, where it was asked for: the take begins at
@@ -522,11 +482,8 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
         recordingState.SetRunning(true);
         recordingState.SetInHand(InHand);
 
-        button.Content = Glyphs.Stop();
-
-        // Recomputed from scratch rather than just flipping the tip: with a
-        // recorder now set, this reads the same branch Stop() will read once
-        // it clears it, so Start and Stop share the one place that decides
+        // With a recorder now set, this reads the same branch Stop() will read
+        // once it clears it, so Start and Stop share the one place that decides
         // what the button says.
         Mark();
 
@@ -560,10 +517,7 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
             progress: true);
     }
 
-    /// <summary>
-    /// Takes the running take away from everything feeding it and puts the
-    /// toolbar back, leaving the file still to be closed.
-    /// </summary>
+    /// <summary>Takes the running take away from everything feeding it, leaving the file still to be closed.</summary>
     private void Detach()
     {
         // Neither the render thread nor the sound callback may still be handing
@@ -577,8 +531,6 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
         recorder = null;
         recordingState.SetRunning(false);
         recordingState.SetInHand(InHand);
-
-        button.Content = Glyphs.Record();
     }
 
     /// <summary>

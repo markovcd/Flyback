@@ -5,7 +5,6 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.Editor.Capture;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Shell;
 using Flyback.Ui.Controls;
@@ -34,6 +33,9 @@ internal sealed class Toolbar
 {
     private readonly Document document;
     private readonly RecordingState recording;
+
+    /// <summary>Whether the record button shows the square, swapped only when that changes.</summary>
+    private bool recordShowsStop;
 
     /// <summary>What the layout button does to the canvas, which is what it says by default.</summary>
     public const string TidyTip =
@@ -116,11 +118,26 @@ internal sealed class Toolbar
     public ToggleButton Transport { get; } =
         ToolbarButtons.Toggle("transport", Glyphs.Transport(), "Show the row that plays the patch: pause, the seek bar, its length, loop and Volume.");
 
-    /// <summary>Starts and stops a take (ADR-0080). What its tip says is decided per patch by TakeRecording.Mark. Only outside a page.</summary>
-    public Button Record { get; } = ToolbarButtons.Drawn("record", Glyphs.Record(), TakeRecording.RecordTip);
+    /// <summary>Starts and stops a take (ADR-0080). What it shows follows <see cref="TakeMarked"/>. Only outside a page.</summary>
+    public Button Record { get; } = ToolbarButtons.Drawn("record", Glyphs.Record(), RecordTip);
 
     /// <summary>Runs the patch for a few seconds from the playhead and pins what each output carries. Only outside a page.</summary>
     public Button Measure { get; } = ToolbarButtons.Drawn("measure", Glyphs.Measure(), MeasureTip);
+
+    /// <summary>What the record button offers while there is something to record.</summary>
+    public const string RecordTip =
+        "Record what the patch is doing now, knobs and all, as a video or a sound file.  (Ctrl+R)  "
+        + "Press again to stop. Settings → Recording sets the count-in and the quality.";
+
+    public const string NothingToRecordTip =
+        "Nothing is wired into the Output, so there is nothing to record. "
+        + "Patch something into its 'color' or its 'left'.";
+
+    public const string StopTakeTip = "End this take and write the file.  (Ctrl+R)";
+
+    public const string CountingTip = "Call off the count and record nothing.  (Ctrl+R)";
+
+    public const string StillFinishingTip = "The last take is still being written.";
 
     public const string MeasureTip =
         "Measure: see the numbers each module is producing, shown next to it on the canvas. "
@@ -381,9 +398,29 @@ internal sealed class Toolbar
         return Task.CompletedTask;
     }
 
+    /// <summary>The Record button shows what pressing it would do now, and no other patch is opened under a take.</summary>
     public Task On(TakeMarked notice)
     {
         Open.IsEnabled = !recording.Running;
+        Record.IsEnabled = notice.Mode is TakeMode.Ready or TakeMode.Counting or TakeMode.Recording;
+
+        var stop = notice.Mode is TakeMode.Counting or TakeMode.Recording;
+
+        if (stop != recordShowsStop)
+        {
+            recordShowsStop = stop;
+            Record.Content = stop ? Glyphs.Stop() : Glyphs.Record();
+        }
+
+        ToolTip.SetTip(Record, notice.Mode switch
+        {
+            TakeMode.Recording => StopTakeTip,
+            TakeMode.Counting => CountingTip,
+            TakeMode.Finishing => StillFinishingTip,
+            TakeMode.Ready => RecordTip,
+            _ => NothingToRecordTip,
+        });
+
         return Task.CompletedTask;
     }
 

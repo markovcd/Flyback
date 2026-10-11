@@ -13,6 +13,7 @@ using Flyback.Engine.Render;
 using Flyback.Ui;
 using Flyback.Host;
 using Flyback.Editor.Settings;
+using Flyback.Editor.Windows;
 
 namespace Flyback.Editor.Composition;
 
@@ -47,6 +48,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
     private readonly ReportLine report;
     private readonly IAudioEngine audio;
     private readonly TransportControls transport;
+    private readonly FullScreenPreview fullScreen;
     private readonly PanelKnobs knobs;
     private readonly RecordingState recording;
 
@@ -111,6 +113,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         EditorHost host,
         IAudioEngine audio,
         TransportControls transport,
+        FullScreenPreview fullScreen,
         PanelKnobs knobs,
         RecordingState recording)
     {
@@ -120,6 +123,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         this.report = report;
         this.audio = audio;
         this.transport = transport;
+        this.fullScreen = fullScreen;
         this.knobs = knobs;
         this.recording = recording;
 
@@ -280,7 +284,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         audio.Aspect = SynthRenderer.AspectOf(size.Width, size.Height);
 
         if (transport.Overlay is { } overlay) TransportOverlay.Lay(now.Transport, overlay, knobs.Stage);
-        if (transport.PictureWindow is { } picture)
+        if (fullScreen.Away is { } picture)
             TransportOverlay.Lay(now.Transport, picture.Transport, picture.Knobs);
 
         // One box picks both, and only the CPU takes effect at once.
