@@ -3,7 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
-using Flyback.Editor.Capture;
+using Flyback.Editor.Settings;
 using Flyback.Editor.Controls;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Inspect;
@@ -11,7 +11,7 @@ using Flyback.Engine.Render;
 using Flyback.Ui;
 using Flyback.Host;
 
-namespace Flyback.Editor.Settings;
+namespace Flyback.Editor.Capture;
 
 /// <summary>The Recording section of the settings window: how a take begins, and what it is written as.</summary>
 /// <remarks>

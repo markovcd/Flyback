@@ -531,13 +531,17 @@ throws), a notice raised off the UI thread (it throws at the raiser), and a
 notice raised after the window is disposed (it goes nowhere, and a chain still
 running stops).
 
-**A folder per feature.** The project's root holds the composition, the window,
-the hubs and `ReportLine`. Everything else sits in the folder of what it is for,
-with its region, its controls and its settings section together: `Canvas`
-(the node editor and the palette), `Inspect`, `Knobs`, `Bars`, `Gallery`,
-`Site`, `Assist`, `Capture`, `Files`, `PluginPackages`, `Updates`,
-`Statistics` and `Settings`. `Controls` keeps only the widgets that belong to no
-feature. The namespace follows the folder, and a folder is never named for a
+**A folder per feature.** The project's root holds the composition, the hubs,
+`ReportLine`, and what a window or a page hands the editor (`EditorSetup`,
+`EditorHost`, `IClose`, `IFocus`, `IFilePickers` and the rest). Everything else
+sits in the folder of what it is for, with its region, its controls and its
+settings section together: `Canvas` (the node editor and the palette), `Inspect`,
+`Knobs`, `Bars`, `Gallery`, `Site`, `Assist`, `Capture`, `Files`, `Midi`,
+`Decide`, `Keys`, `PluginPackages`, `Updates`, `Statistics` and `Windows` (the
+desktop window around the editor). `Settings` holds the settings window itself
+and the sections of what has no folder of its own: the picture, the sound and
+privacy. `Notices` is one record per notice. `Controls` keeps only the widgets
+that belong to no feature. The namespace follows the folder, and a folder is never named for a
 type, since inside `Flyback.Editor` that name would then mean the namespace. For
 the same reason `Canvas` shadows Avalonia's control, so it is written
 `Avalonia.Controls.Canvas`.

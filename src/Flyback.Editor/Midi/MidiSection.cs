@@ -10,9 +10,9 @@ using Flyback.Ui.Controls;
 using Flyback.Ui.Midi;
 using Flyback.Ui;
 using Flyback.Host;
-using Flyback.Editor.Midi;
+using Flyback.Editor.Settings;
 
-namespace Flyback.Editor.Settings;
+namespace Flyback.Editor.Midi;
 
 /// <summary>
 /// The MIDI section of the settings window: which plugin hears an instrument, what
