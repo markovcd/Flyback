@@ -96,18 +96,28 @@ rule is one sentence in the guide and a test like `ComponentDiagramTests` over t
 `using` lines, and `UsageCounter` is the first move. If not, item 3 was tidiness and
 this item closes.
 
-## 5. Six long stretches nobody has opened (Low)
+## 5. The longest stretches, read (Low, `ExpressionFusion.Fuse` done)
 
 Counting lines between two member declarations, the longest in `src/` after the
-presets' `Build` methods are `GlslEmitter.Emit` (362 lines), `ExpressionFusion.Fuse`
+presets' `Build` methods were `GlslEmitter.Emit` (362 lines), `ExpressionFusion.Fuse`
 (311), `ViewerArguments.Build` (303), `RenderCommand.Build` (245),
 `GroupInspector.Build` (238), `CanvasPainter.Render` (218) and the `GalleryLayout`
-constructor (218). The count is crude: a method followed by fields or a nested type
-counts long. `Binder.Call`, which topped the list at 175 lines of one method, was
-read and split by its five phases; none of these has been read.
+constructor (218). Each was read:
 
-**Fix:** open each once before deciding. The two command builders are option
-declarations and may be as long as they are.
+- `GlslEmitter.Emit` is 18 lines; the rest is the fixed shaders' text, held as
+  constants. `CanvasPainter.Render` is 60; the rest is its brushes and pens.
+- `Fuse` was one method of 290 lines over eleven local functions. It is now a
+  `Pass` over one patch: the roots, growing a branch, the branches it is offered,
+  folding them in while the formula fits, reading it back, and the swap.
+- `ViewerArguments.Build` and `RenderCommand.Build` are their options (31 and 21)
+  and one mapping onto the options record. They are as long as what they accept.
+- The `GalleryLayout` constructor is one control tree, pane by pane, assigning
+  readonly fields. A builder per pane would move it, not shorten it.
+- `GroupInspector.Build` is 225 lines in three parts with their local functions:
+  the plate, the sockets on the box's edge, and the row of actions.
+
+**Fix:** split `GroupInspector.Build` by its three parts into private methods, the
+next time the group's panel is touched. The rest stay as they are.
 
 ## 6. The docs named what the code no longer calls things (Low, done with this audit)
 

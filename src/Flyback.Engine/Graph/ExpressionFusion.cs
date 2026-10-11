@@ -91,27 +91,83 @@ internal static class ExpressionFusion
     /// </summary>
     internal static Patch Fuse(Patch patch, ModuleCatalog modules, Dictionary<Guid, Guid>? into)
     {
-        if (modules.Get(NodeCatalog.ExpressionTypeId) is not { } expression
-            || expression.Extra<FormulaExtra>() is not { } extra)
+        if (modules.Get(NodeCatalog.ExpressionTypeId) is { } expression
+            && expression.Extra<FormulaExtra>() is { } extra)
         {
-            return patch;
+            new Pass(patch, modules, expression, extra).Run(into);
         }
 
-        var names = extra.Functions.ToDictionary(pair => pair.Value.TypeId, pair => pair.Key);
-        var backwards = Cycles.Backwards(patch);
-        var looped = Looped(patch);
-        var formulas = new Dictionary<Guid, Formula?>();
+        return patch;
+    }
 
-        Formula? FormulaOf(NodeInstance node) =>
+    /// <summary>One fusion of one patch: what it reads off the patch once, and the phases that fold it.</summary>
+    private sealed class Pass(Patch patch, ModuleCatalog modules, NodeDef expression, FormulaExtra extra)
+    {
+        private readonly Dictionary<string, string> names = extra.Functions.ToDictionary(pair => pair.Value.TypeId, pair => pair.Key);
+        private readonly IReadOnlySet<Connection> backwards = Cycles.Backwards(patch);
+        private readonly HashSet<Guid> looped = Looped(patch);
+        private readonly Dictionary<Guid, Formula?> formulas = [];
+
+        /// <summary>
+        /// Grows a branch from every candidate nothing would fold into, and swaps each
+        /// root whose branch reads back as a formula for the Expression it is.
+        /// </summary>
+        public void Run(Dictionary<Guid, Guid>? into)
+        {
+            var roots = new Queue<NodeInstance>(patch.Nodes.Where(node => Candidate(node) && Consumer(node) is null));
+            var absorbed = new HashSet<Guid>();
+
+            while (roots.TryDequeue(out var root))
+            {
+                var branch = Grow(root);
+                var inputs = new List<Term>();
+
+                Gather(branch.Term, inputs);
+
+                // An Expression nothing folded into is left as it was written, and what
+                // it turned away is folded on its own.
+                if (root.TypeId == NodeCatalog.ExpressionTypeId && branch.Taken.Count == 0)
+                {
+                    foreach (var node in branch.Left) roots.Enqueue(node);
+                    continue;
+                }
+
+                // One reading more signals than there are sockets stays the module it
+                // is, and what feeds it is folded on its own.
+                if (Readable(branch.Term, inputs) is not { } formula)
+                {
+                    foreach (var source in Feeding(root)) roots.Enqueue(source);
+                    continue;
+                }
+
+                absorbed.UnionWith(branch.Taken);
+                foreach (var node in branch.Left) roots.Enqueue(node);
+
+                if (into is not null)
+                {
+                    into[root.Id] = root.Id;
+                    foreach (var id in branch.Taken) into[id] = root.Id;
+                }
+
+                Replace(root, formula, inputs);
+            }
+
+            foreach (var id in absorbed) patch.Remove(id);
+        }
+
+        private Formula? FormulaOf(NodeInstance node) =>
             formulas.TryGetValue(node.Id, out var read)
                 ? read
                 : formulas[node.Id] = Formula.Read(FormulaExtra.Of(node), extra.Functions, out _);
 
-        // An Expression with a wire into a socket its formula never reads is left
-        // alone: folding it would take the wire away. So is a module that is
-        // switched off, which is a wire rather than arithmetic (ADR-0117) —
-        // folding across one would fold away the fact that it is off.
-        bool Candidate(NodeInstance node) =>
+        /// <summary>Whether a node may fold or be folded into.</summary>
+        /// <remarks>
+        /// An Expression with a wire into a socket its formula never reads is left
+        /// alone: folding it would take the wire away. So is a module that is
+        /// switched off, which is a wire rather than arithmetic (ADR-0117): folding
+        /// across one would fold away the fact that it is off.
+        /// </remarks>
+        private bool Candidate(NodeInstance node) =>
             !node.Off
             && node.InputValues.All(float.IsFinite)
             && (node.TypeId == NodeCatalog.ExpressionTypeId
@@ -120,56 +176,11 @@ internal static class ExpressionFusion
                     && !patch.Connections.Any(c => c.TargetNode == node.Id && reads[c.TargetPort] == 0)
                 : names.ContainsKey(node.TypeId) && modules.Get(node.TypeId) is { } def && Retired(def));
 
-        var roots = new Queue<NodeInstance>(patch.Nodes.Where(node => Candidate(node) && Consumer(node) is null));
-        var absorbed = new HashSet<Guid>();
-
-        while (roots.TryDequeue(out var root))
-        {
-            var (term, taken, left) = Tree(root);
-            var inputs = new List<Term>();
-
-            Gather(term, inputs);
-
-            // An Expression nothing folded into is left as it was written, and what
-            // it turned away is folded on its own.
-            if (root.TypeId == NodeCatalog.ExpressionTypeId && taken.Count == 0)
-            {
-                foreach (var node in left) roots.Enqueue(node);
-                continue;
-            }
-
-            // One reading more signals than there are sockets stays the module it
-            // is, and what feeds it is folded on its own.
-            if (inputs.Count > Sockets
-                || Written(term, part => Formula.Sockets[inputs.IndexOf(part)].ToString()) is not { } formula
-                || Formula.Read(formula, extra.Functions, out _) is null)
-            {
-                foreach (var wire in patch.Connections.Where(c => c.TargetNode == root.Id).ToList())
-                    if (patch.Find(wire.SourceNode) is { } source && Consumer(source) == root)
-                        roots.Enqueue(source);
-
-                continue;
-            }
-
-            absorbed.UnionWith(taken);
-            foreach (var node in left) roots.Enqueue(node);
-
-            if (into is not null)
-            {
-                into[root.Id] = root.Id;
-                foreach (var id in taken) into[id] = root.Id;
-            }
-
-            Replace(root, formula, inputs);
-        }
-
-        foreach (var id in absorbed) patch.Remove(id);
-
-        return patch;
-
-        // The candidate a node would fold into: its one reader, where that is a
-        // candidate in the same box reading it forwards, and the node has no name.
-        NodeInstance? Consumer(NodeInstance node)
+        /// <summary>
+        /// The candidate a node would fold into: its one reader, where that is a
+        /// candidate in the same box reading it forwards, and the node has no name.
+        /// </summary>
+        private NodeInstance? Consumer(NodeInstance node)
         {
             if (!Candidate(node) || node.Name is not null || looped.Contains(node.Id)) return null;
             if (patch.Connections.Count(c => c.SourceNode == node.Id) != 1) return null;
@@ -185,17 +196,136 @@ internal static class ExpressionFusion
                     : null;
         }
 
-        // What an input is read as when nothing folds into it: what is wired in,
-        // the panel knob it follows, or the number on its knob.
-        Term Leaf(NodeInstance node, int port) =>
+        /// <summary>The modules wired into a root that would have folded into it.</summary>
+        private List<NodeInstance> Feeding(NodeInstance root) =>
+            [.. patch.Connections
+                .Where(c => c.TargetNode == root.Id)
+                .Select(wire => patch.Find(wire.SourceNode))
+                .OfType<NodeInstance>()
+                .Where(source => Consumer(source) == root)];
+
+        /// <summary>
+        /// What a node would fold to, the modules that would fold into it, and the
+        /// readers-to-be that would not fit and stand as roots of their own.
+        /// </summary>
+        private Branch Grow(NodeInstance node)
+        {
+            var count = node.TypeId == NodeCatalog.ExpressionTypeId
+                ? expression.Inputs.Count
+                : modules.Require(node.TypeId).Inputs.Count;
+
+            var decided = Enumerable.Range(0, count).Select(port => Leaf(node, port)).ToArray();
+            var offers = Offers(node, count);
+            var folded = FoldIn(node, decided, offers);
+
+            var taken = new List<Guid>();
+            var left = new List<NodeInstance>();
+
+            for (var port = 0; port < count; port++)
+            {
+                if (offers[port] is not { } offer) continue;
+
+                if (!folded[port])
+                {
+                    left.Add(offer.Source);
+                    continue;
+                }
+
+                taken.Add(offer.Source.Id);
+                taken.AddRange(offer.Inner!.Taken);
+                left.AddRange(offer.Inner.Left);
+            }
+
+            return new Branch(Build(node, port => decided[port]), taken, left);
+        }
+
+        /// <summary>
+        /// For each input wired from a module that would fold into the node, that
+        /// module and the branch it grows.
+        /// </summary>
+        private Offer?[] Offers(NodeInstance node, int count)
+        {
+            var offers = new Offer?[count];
+            var reads = Reads(node, count);
+
+            for (var port = 0; port < count; port++)
+            {
+                if (patch.IncomingTo(node.Id, port) is not { } wire
+                    || backwards.Contains(wire)
+                    || patch.Find(wire.SourceNode) is not { } source
+                    || Consumer(source) != node)
+                {
+                    continue;
+                }
+
+                // A socket read twice would put the branch in the formula twice.
+                offers[port] = new Offer(source, reads[port] > 1 ? null : Grow(source));
+            }
+
+            return offers;
+        }
+
+        /// <summary>
+        /// Folds each offered branch into its socket while the formula still fits,
+        /// and says which did.
+        /// </summary>
+        /// <remarks>
+        /// Runs until nothing more folds: a branch turned away for a fifth signal may
+        /// fit once another folds down onto a signal the formula already reads.
+        /// </remarks>
+        private bool[] FoldIn(NodeInstance node, Term[] decided, Offer?[] offers)
+        {
+            var folded = new bool[decided.Length];
+
+            for (var more = true; more;)
+            {
+                more = false;
+
+                for (var port = 0; port < decided.Length; port++)
+                {
+                    if (folded[port] || offers[port]?.Inner is not { } inner || !Fits(node, decided, port, inner)) continue;
+
+                    decided[port] = inner.Term;
+                    folded[port] = true;
+                    more = true;
+                }
+            }
+
+            return folded;
+        }
+
+        /// <summary>
+        /// Whether a branch folded into one socket leaves a formula of no more signals
+        /// than sockets, no longer than <see cref="Longest"/>, and computing nothing
+        /// once that the modules computed twice.
+        /// </summary>
+        private bool Fits(NodeInstance node, Term[] decided, int port, Branch inner)
+        {
+            var trial = Trial(inner.Term);
+            var needed = new List<Term>();
+
+            Gather(trial, needed);
+
+            return needed.Count <= Sockets
+                && Written(trial, _ => "a") is { Length: <= Longest }
+                && Repeats(trial) == Repeats(Trial(decided[port])) + Repeats(inner.Term);
+
+            Term Trial(Term here) => Build(node, p => p == port ? here : decided[p]);
+        }
+
+        /// <summary>
+        /// What an input is read as when nothing folds into it: what is wired in,
+        /// the panel knob it follows, or the number on its knob.
+        /// </summary>
+        private Term Leaf(NodeInstance node, int port) =>
             patch.IncomingTo(node.Id, port) is { } wire
                 ? new Signal(wire.SourceNode, wire.SourcePort)
                 : ControlMap.Of(node, port) is { } link
                     ? new Knob(node.InputValues[port], link, node.Id, port)
                     : new Literal(node.InputValues[port]);
 
-        // A node's value built from what each of its inputs is read as.
-        Term Build(NodeInstance node, Func<int, Term> input)
+        /// <summary>A node's value built from what each of its inputs is read as.</summary>
+        private Term Build(NodeInstance node, Func<int, Term> input)
         {
             if (node.TypeId != NodeCatalog.ExpressionTypeId)
                 return Make(node.TypeId, [.. Enumerable.Range(0, modules.Require(node.TypeId).Inputs.Count).Select(input)]);
@@ -206,95 +336,8 @@ internal static class ExpressionFusion
                 (def, arguments) => Make(def.TypeId, arguments));
         }
 
-        // What a node would fold to, the modules that would fold into it, and the
-        // readers-to-be that would not fit and stand as roots of their own.
-        (Term Term, List<Guid> Taken, List<NodeInstance> Left) Tree(NodeInstance node)
-        {
-            var count = node.TypeId == NodeCatalog.ExpressionTypeId
-                ? expression.Inputs.Count
-                : modules.Require(node.TypeId).Inputs.Count;
-
-            var decided = new Term[count];
-            var sources = new NodeInstance?[count];
-            var inners = new (Term Term, List<Guid> Taken, List<NodeInstance> Left)?[count];
-            var reads = Reads(node, count);
-
-            for (var port = 0; port < count; port++)
-            {
-                decided[port] = Leaf(node, port);
-
-                if (patch.IncomingTo(node.Id, port) is not { } wire
-                    || backwards.Contains(wire)
-                    || patch.Find(wire.SourceNode) is not { } source
-                    || Consumer(source) != node)
-                {
-                    continue;
-                }
-
-                sources[port] = source;
-
-                // A socket read twice would put the branch in the formula twice.
-                if (reads[port] > 1) continue;
-
-                inners[port] = Tree(source);
-            }
-
-            // A branch turned away for a fifth signal may fit once another folds
-            // down onto a signal the formula already reads.
-            var folded = new bool[count];
-
-            for (var more = true; more;)
-            {
-                more = false;
-
-                for (var port = 0; port < count; port++)
-                {
-                    if (folded[port] || inners[port] is not { } inner) continue;
-
-                    var at = port;
-
-                    Term Trial(Term here) => Build(node, p => p == at ? here : decided[p]);
-
-                    var trial = Trial(inner.Term);
-                    var needed = new List<Term>();
-
-                    Gather(trial, needed);
-
-                    if (needed.Count <= Sockets
-                        && Written(trial, _ => "a") is { Length: <= Longest }
-                        && Repeats(trial) == Repeats(Trial(decided[port])) + Repeats(inner.Term))
-                    {
-                        decided[port] = inner.Term;
-                        folded[port] = true;
-                        more = true;
-                    }
-                }
-            }
-
-            var taken = new List<Guid>();
-            var left = new List<NodeInstance>();
-
-            for (var port = 0; port < count; port++)
-            {
-                if (sources[port] is not { } source) continue;
-
-                if (!folded[port])
-                {
-                    left.Add(source);
-                    continue;
-                }
-
-                var inner = inners[port]!.Value;
-                taken.Add(source.Id);
-                taken.AddRange(inner.Taken);
-                left.AddRange(inner.Left);
-            }
-
-            return (Build(node, port => decided[port]), taken, left);
-        }
-
-        // How many times a node's formula reads each socket; once each for a module.
-        int[] Reads(NodeInstance node, int count)
+        /// <summary>How many times a node's formula reads each socket; once each for a module.</summary>
+        private int[] Reads(NodeInstance node, int count)
         {
             var reads = new int[count];
 
@@ -316,9 +359,22 @@ internal static class ExpressionFusion
             return reads;
         }
 
-        // Swaps a root for an Expression under the same id and name, so its
-        // readers, its box and its place on the canvas are the Expression's.
-        void Replace(NodeInstance root, string formula, List<Term> inputs)
+        /// <summary>
+        /// The formula a branch is written as over its inputs, or null where it reads
+        /// more signals than there are sockets or does not read back.
+        /// </summary>
+        private string? Readable(Term term, List<Term> inputs) =>
+            inputs.Count <= Sockets
+            && Written(term, part => Formula.Sockets[inputs.IndexOf(part)].ToString()) is { } formula
+            && Formula.Read(formula, extra.Functions, out _) is not null
+                ? formula
+                : null;
+
+        /// <summary>
+        /// Swaps a root for an Expression under the same id and name, so its
+        /// readers, its box and its place on the canvas are the Expression's.
+        /// </summary>
+        private void Replace(NodeInstance root, string formula, List<Term> inputs)
         {
             var fused = NodeInstance.Create(expression, root.X, root.Y, root.Id);
             fused.Name = root.Name;
@@ -344,10 +400,10 @@ internal static class ExpressionFusion
             }
         }
 
-        string? Written(Term term, Func<Term, string> socket) =>
+        private string? Written(Term term, Func<Term, string> socket) =>
             Spelled(term, socket) is { } spelled ? Infix.Write(spelled) : null;
 
-        Infix.Part? Spelled(Term term, Func<Term, string> socket)
+        private Infix.Part? Spelled(Term term, Func<Term, string> socket)
         {
             switch (term)
             {
@@ -527,4 +583,10 @@ internal static class ExpressionFusion
     private sealed record Knob(float Value, ControlLink? Link, Guid Node, int Port) : Term;
 
     private sealed record Call(string TypeId, IReadOnlyList<Term> Arguments) : Term;
+
+    /// <summary>What a node would fold to, the modules folded into it, and the readers-to-be left to stand as roots.</summary>
+    private sealed record Branch(Term Term, List<Guid> Taken, List<NodeInstance> Left);
+
+    /// <summary>A module that would fold into a socket, and its branch unless the socket is read twice.</summary>
+    private sealed record Offer(NodeInstance Source, Branch? Inner);
 }
