@@ -121,8 +121,13 @@ internal sealed class SourceView : UserControl
     /// <summary>Whether the next character typed joins the step the last one made.</summary>
     private bool joining;
 
-    public SourceView()
+    /// <param name="settings">The canvas section, whose setting the font size is.</param>
+    public SourceView(CanvasSection settings)
     {
+        // Read before the event is wired, or the first size would be saved on the way in.
+        EditorFontSize = settings.EditorFontSize;
+        EditorFontSizeChanged += (_, size) => settings.SaveEditorFontSize(size);
+
         complaintsScroll.Content = complaints;
 
         text.TextArea.TextView.BackgroundRenderers.Add(marked);

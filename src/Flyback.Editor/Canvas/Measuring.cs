@@ -1,13 +1,12 @@
-using Avalonia.Controls;
 using Avalonia.Threading;
-using Flyback.Editor.Bars;
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Measure;
+using Flyback.Engine.Render;
 using Flyback.Ui.Controls;
-using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Canvas;
 
@@ -21,42 +20,51 @@ namespace Flyback.Editor.Canvas;
 /// again while it runs stops it, and while its labels are fresh takes them down. Not
 /// in a page, where a pass of seconds on the one thread a page has would hang it.
 /// </remarks>
-internal sealed class Measuring : IReactTo<MeasureAsked>, IDisposable
+internal sealed class Measuring : IReactTo<MeasureAsked>, IReactTo<DocumentArrived>, IReactTo<FilesMoved>, IDisposable
 {
     private readonly NodeEditor editor;
-    private readonly Playback playback;
     private readonly PreviewHost preview;
     private readonly CanvasSection settings;
     private readonly MeasureLabels labels;
     private readonly ReportLine report;
     private readonly Reactions reactions;
     private readonly EditorHost host;
-    private readonly Button button;
+
+    /// <summary>Where the patch's sound files and pictures are read from, as the document last said.</summary>
+    private (ISampleLibrary Sounds, IImageLibrary Pictures) files = (new SampleLibrary(), new ImageLibrary());
 
     private CancellationTokenSource? running;
 
     public Measuring(
         NodeEditor editor,
-        Playback playback,
         PreviewHost preview,
         CanvasSection settings,
         MeasureLabels labels,
         ReportLine report,
         Reactions reactions,
-        EditorHost host,
-        Toolbar toolbar)
+        EditorHost host)
     {
         this.editor = editor;
-        this.playback = playback;
         this.preview = preview;
         this.settings = settings;
         this.labels = labels;
         this.report = report;
         this.reactions = reactions;
         this.host = host;
-        button = toolbar.Measure;
 
         labels.Changed += ShowMode;
+    }
+
+    public Task On(DocumentArrived notice)
+    {
+        files = (notice.Sounds, notice.Pictures);
+        return Task.CompletedTask;
+    }
+
+    public Task On(FilesMoved notice)
+    {
+        files = (notice.Sounds, notice.Pictures);
+        return Task.CompletedTask;
     }
 
     /// <summary>Whether a measurement is under way.</summary>
@@ -68,25 +76,8 @@ internal sealed class Measuring : IReactTo<MeasureAsked>, IDisposable
         : labels.Report is not null && !labels.Stale ? MeasureMode.Shown
         : MeasureMode.Ready;
 
-    /// <summary>Puts on the button the glyph and the tip of what pressing it would do.</summary>
-    private void ShowMode()
-    {
-        var mode = Mode;
-
-        button.Content = mode switch
-        {
-            MeasureMode.Running => Glyphs.MeasureCancel(),
-            MeasureMode.Shown => Glyphs.MeasureHide(),
-            _ => Glyphs.Measure(),
-        };
-
-        ToolTip.SetTip(button, mode switch
-        {
-            MeasureMode.Running => "Cancel the measurement  (Ctrl+M)",
-            MeasureMode.Shown => "Hide the measurements  (Ctrl+M)",
-            _ => Toolbar.MeasureTip,
-        });
-    }
+    /// <summary>Says what pressing the button would do now, for the bar to show.</summary>
+    private void ShowMode() => reactions.Raise(new MeasureModeChanged(Mode));
 
     /// <summary>Measures, or takes fresh labels down, or stops a run under way: one gesture for all three.</summary>
     public async Task On(MeasureAsked notice)
@@ -130,7 +121,7 @@ internal sealed class Measuring : IReactTo<MeasureAsked>, IDisposable
         var chosen = editor.Selection.Ids.Count > 0 ? editor.Selection.Ids.ToArray() : null;
         var (columns, rows) = settings.MeasureGrid;
         var options = new MeasureOptions(seconds, Math.Max(0d, preview.Time), chosen, Columns: columns, Rows: rows);
-        var (sounds, pictures) = playback.Files;
+        var (sounds, pictures) = files;
 
         var shown = -1;
         var progress = new Progress<double>(done =>

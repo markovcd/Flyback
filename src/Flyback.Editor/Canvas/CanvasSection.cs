@@ -5,7 +5,6 @@ using Flyback.Editor.Controls;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
 using Flyback.Ui.Controls;
-using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Canvas;
 
@@ -75,8 +74,7 @@ internal sealed class CanvasSection : ISettingsSection
     private readonly Action<string, string?> report;
 
     /// <param name="canvas">The canvas, redrawn whenever what it draws changes.</param>
-    /// <param name="source">The text view, whose font size is this section's setting.</param>
-    public CanvasSection(EditorFolders folders, NodeEditor canvas, ReportLine report, SourceView source, IBrowserStore browser)
+    public CanvasSection(EditorFolders folders, NodeEditor canvas, ReportLine report, IBrowserStore browser)
     {
         path = folders.SettingsPath;
         this.canvas = canvas;
@@ -85,9 +83,7 @@ internal sealed class CanvasSection : ISettingsSection
 
         saved = path is not null ? CanvasSettings.Load(path) : CanvasSettings.Parse(browser.Read(CanvasSettings.Section));
 
-        source.EditorFontSize = saved.EditorFontSize;
         canvas.Gestures.DragToPan = saved.DragToPan;
-        source.EditorFontSizeChanged += (_, size) => SaveEditorFontSize(size);
 
         ToolTip.SetTip(compactModules,
             "Put each input beside an output on one row, and show a knob's value when "
@@ -202,6 +198,7 @@ internal sealed class CanvasSection : ISettingsSection
     }
 
     /// <summary>The text editor's font size, kept beside the switches but changed by the editor itself.</summary>
+    /// <summary>The text view's font size, as last saved; the view reads it when built.</summary>
     internal double EditorFontSize => saved.EditorFontSize;
 
     /// <summary>Saves the editor's font size on its own, leaving the switches as last saved.</summary>

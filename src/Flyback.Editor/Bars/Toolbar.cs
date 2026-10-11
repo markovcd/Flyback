@@ -22,7 +22,8 @@ namespace Flyback.Editor.Bars;
 /// stand in (ADR-0148). A press raises a notice, and the part that does the thing
 /// reacts to it, as it does to the same thing asked for with a key.
 /// </summary>
-internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IReactTo<Touched>, IReactTo<OwnershipChanged>
+internal sealed class Toolbar
+    : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IReactTo<MeasureModeChanged>, IReactTo<Touched>, IReactTo<OwnershipChanged>
 {
     private readonly RecordingState recording;
 
@@ -346,6 +347,26 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
     public Task On(TakeMarked notice)
     {
         Open.IsEnabled = !recording.Running;
+        return Task.CompletedTask;
+    }
+
+    /// <summary>The Measure button shows what pressing it would do now.</summary>
+    public Task On(MeasureModeChanged notice)
+    {
+        Measure.Content = notice.Mode switch
+        {
+            MeasureMode.Running => Glyphs.MeasureCancel(),
+            MeasureMode.Shown => Glyphs.MeasureHide(),
+            _ => Glyphs.Measure(),
+        };
+
+        ToolTip.SetTip(Measure, notice.Mode switch
+        {
+            MeasureMode.Running => "Cancel the measurement  (Ctrl+M)",
+            MeasureMode.Shown => "Hide the measurements  (Ctrl+M)",
+            _ => MeasureTip,
+        });
+
         return Task.CompletedTask;
     }
 }

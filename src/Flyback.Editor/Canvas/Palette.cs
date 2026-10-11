@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
-using Flyback.Editor.Knobs;
 using Flyback.Editor.Midi;
+using Flyback.Editor.Notices;
 using Flyback.Editor.Shell;
 using Flyback.Ui.Midi;
 using Flyback.Editor.Settings;
@@ -10,7 +10,6 @@ using Flyback.Core.Graph;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Flyback.Host;
-using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Canvas;
 
@@ -27,7 +26,7 @@ namespace Flyback.Editor.Canvas;
 internal sealed class Palette
 {
     private readonly NodeEditor editor;
-    private readonly TextWriteBack writeBack;
+    private readonly Reactions reactions;
     private readonly Func<KeyboardLayout> keyboard;
     private readonly Lazy<ModulePalette> list;
     private readonly ReportLine report;
@@ -57,19 +56,21 @@ internal sealed class Palette
             return;
 
         editor.History.Patch.Keyboard = KeyboardScale.Major;
-        writeBack.Relaid();
+        reactions.Raise(new PatchRelaid());
     }
 
-    /// <param name="knobs">The instruments the list offers.</param>
+    /// <param name="midi">The ports an instrument the list offers is plugged into.</param>
+    /// <param name="instruments">What is known of each.</param>
     /// <param name="repository">How the MIDI section lays out a first keyboard.</param>
     /// <param name="folders">Where kept groups are read from and written to, or the usual place.</param>
     public Palette(
         NodeEditor editor,
-        TextWriteBack writeBack,
+        Reactions reactions,
         PluginCatalog plugins,
         ReportLine report,
         Usage usage,
-        PanelKnobs knobs,
+        MidiHub midi,
+        InstrumentLibrary instruments,
         OutputSettingRepository repository,
         EditorFolders folders,
         LastPress lastPress,
@@ -78,7 +79,7 @@ internal sealed class Palette
         var groupFolder = folders.GroupFolder ?? Path.Combine(Path.GetTempPath(), "flyback-no-groups", Guid.NewGuid().ToString("N"));
 
         this.editor = editor;
-        this.writeBack = writeBack;
+        this.reactions = reactions;
         keyboard = () => repository.Current.Keyboard;
         this.report = report;
         this.usage = usage;
@@ -88,7 +89,7 @@ internal sealed class Palette
 
         // Built when first shown: it lays out a button for every module and asks
         // the hardware which instruments are plugged in.
-        list = new Lazy<ModulePalette>(() => new ModulePalette(plugins.Modules, Add, Groups, AddGroup, knobs.View.Instruments, AddInstrument, finder));
+        list = new Lazy<ModulePalette>(() => new ModulePalette(plugins.Modules, Add, Groups, AddGroup, () => PanelInstrument.PluggedIn(midi, instruments), AddInstrument, finder));
 
         Flyout.FlyoutPresenterClasses.Add(ModulePalette.PresenterClass);
 

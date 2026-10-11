@@ -130,11 +130,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
         View.Label = binding => instruments.Label(binding, Source(binding.Device));
         View.Explain = binding => instruments.Describe(binding, Source(binding.Device));
 
-        View.Instruments = () => midi.Sources
-            .Select(source => (source, Profile: instruments.For(source)))
-            .Where(pair => pair.Profile is not null)
-            .Select(pair => new PanelInstrument(pair.source.Id, pair.Profile!))
-            .ToList();
+        View.Instruments = () => PanelInstrument.PluggedIn(midi, instruments);
 
         View.BindRequested += (id, binding) =>
         {

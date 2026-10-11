@@ -16,7 +16,7 @@ namespace Flyback.Editor.Hubs;
 /// rebuilt — the patch already has the value — since building here would replace
 /// the patch under the control being dragged.
 /// </remarks>
-internal sealed class TextWriteBack : IReactTo<InputTurned>, IReactTo<InputLetGo>, IReactTo<TextForgotten>
+internal sealed class TextWriteBack : IReactTo<InputTurned>, IReactTo<InputLetGo>, IReactTo<TextForgotten>, IReactTo<PatchRelaid>
 {
     private readonly Document document;
     private readonly CaretFollow caret;
@@ -134,6 +134,12 @@ internal sealed class TextWriteBack : IReactTo<InputTurned>, IReactTo<InputLetGo
     /// the keyboard's layout or the length, for the next write-back.
     /// </summary>
     public void Relaid() => relaid = true;
+
+    public Task On(PatchRelaid notice)
+    {
+        Relaid();
+        return Task.CompletedTask;
+    }
 
     /// <summary>
     /// What a module carries has been edited: heard now, and written into the
