@@ -394,6 +394,26 @@ public sealed class PatchSteps(PatchContext context)
     public void GivenAnArrangementsSection(float seconds, string part) =>
         Written($"arrangement(rate: {Number(1f / seconds)}) [ {part} ].section |> out.left");
 
+    [Given("a window from {float} to {float} seconds")]
+    public void GivenAWindow(float from, float to) =>
+        Written($"window(in: t, from: {Number(from)}, to: {Number(to)}) |> out.left");
+
+    [Given("a window from {float} to {float} seconds that takes {float} seconds to turn on and {float} to turn off")]
+    public void GivenASoftWindow(float from, float to, float rise, float fall) =>
+        Written($"window(in: t, from: {Number(from)}, to: {Number(to)}, rise: {Number(rise)}, fall: {Number(fall)}) |> out.left");
+
+    [Given("a die of {int} sides thrown for each of {int} steps a second, coming round every {float} seconds")]
+    public void GivenADie(int sides, int rate, float round) =>
+        Written($"let d = dice(in: floor(t * {rate}) % {Number(rate * round)}, sides: {sides}){(char)10}d.face |> out.left");
+
+    /// <summary>The second die's value taken from the first's, so the sound is nought where they agree.</summary>
+    [Given("two dice of different seeds thrown for each of {int} steps a second")]
+    public void GivenTwoDice(int rate) =>
+        Written(
+            $"let one = dice(in: floor(t * {rate}), seed: 1){(char)10}"
+            + $"let other = dice(in: floor(t * {rate}), seed: 2){(char)10}"
+            + "one.out - other.out |> out.left");
+
     [Given("the gate of a sequencer stepping {int} times a second")]
     public void GivenASequencersGate(int rate) =>
         Written($"let s = values(rate: {rate}) [ 0.5 ]{(char)10}s.gate |> out.left");

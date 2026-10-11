@@ -158,6 +158,24 @@ public sealed class SpeakerSteps(PatchContext context)
     public void ThenTheSoundAt(float expected, float seconds) =>
         context.SampleAt(Samples(seconds)).ShouldBe(expected, Tolerance, $"at {seconds} s");
 
+    [Then("every round of {float} seconds throws what the first threw")]
+    public void ThenEveryRoundRepeats(float seconds)
+    {
+        var first = context.Listen(0d, Samples(seconds));
+
+        for (var round = 1; round < 3; round++)
+            context.Listen(round * seconds, first.Length).ShouldBe(first, $"round {round + 1}");
+    }
+
+    [Then("every face from {int} to {int} comes up")]
+    public void ThenEveryFace(int lowest, int highest) =>
+        context.Listen(0d, Samples(4f)).Distinct().Order().ShouldBe(Enumerable.Range(lowest, highest - lowest + 1).Select(f => (double)f));
+
+    /// <summary>Two sequences agree where their difference is nought: a few steps of the thirty-two by chance, not most.</summary>
+    [Then("they throw different sequences")]
+    public void ThenDifferentSequences() =>
+        context.Listen(0d, Samples(2f)).Count(v => v == 0d).ShouldBeLessThan(Samples(2f) / 8);
+
     [Then(@"^each sample builds on the last: (.+)$")]
     public void ThenEachSampleBuilds(string list)
     {

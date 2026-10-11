@@ -117,6 +117,10 @@ public partial class NodeCatalog
             (em, i) => [em.Binary(OpCode.Step, i[0], i[1])],
             "A hard threshold on 'in'.");
 
+        yield return Window();
+
+        yield return Dice();
+
         yield return new NodeDef(
             "math.remap", "Remap", ModuleCategories.Maths,
             [
@@ -203,6 +207,69 @@ public partial class NodeCatalog
 
         return em.Add(em.Mul(em.Add(rise, -1f), span.Knee), MathF.Min(span.Min, span.Max));
     }
+
+    /// <summary>
+    /// On between two points: a Smoothstep up from 'from' times one less a
+    /// Smoothstep down to 'to', each ramp inside the window.
+    /// </summary>
+    /// <remarks>A Smoothstep whose edges meet is a Threshold, so with no rise and no fall this is the pair of Thresholds bit for bit.</remarks>
+    private static NodeDef Window() => new(
+        "math.window", "Window", ModuleCategories.Maths,
+        [
+            Any("in") with { Help = "The value the window is read at." },
+            Any("from") with { Help = "Where it starts to turn on." },
+            Any("to", 1f) with { Help = "Where it is off again." },
+            Any("rise", 0f, 0f, 1f) with { Help = "How far past 'from' it is fully on: 0 is a hard edge." },
+            Any("fall", 0f, 0f, 1f) with { Help = "How far before 'to' it starts to turn off: 0 is a hard edge." },
+        ],
+        [Any("out") with { Help = "1 between 'from' and 'to', 0 outside." }],
+        (em, i) =>
+        {
+            var rise = em.Ternary(OpCode.Smoothstep, i[1], em.Add(i[1], i[3]), i[0]);
+            var fall = em.Ternary(OpCode.Smoothstep, em.Sub(i[2], i[4]), i[2], i[0]);
+
+            return [em.Mul(rise, em.Sub(em.Constant(1f), fall))];
+        },
+        "1 while 'in' is between 'from' and 'to', 0 outside, each end hard or ramped.")
+    {
+        Words = "between two points, gate a span, last bar",
+    };
+
+    /// <summary>The prime Dice works modulo: small enough that every product stays a whole number in a float.</summary>
+    private const float DicePrime = 997f;
+
+    /// <summary>
+    /// A stable random for a whole number: a quadratic modulo a prime, so the
+    /// picture's floats and the sound's doubles throw the same.
+    /// </summary>
+    private static NodeDef Dice() => new(
+        "math.dice", "Dice", ModuleCategories.Maths,
+        [
+            Any("in") with { Help = "The whole number thrown for: a step, a note, a cell. Rounded down." },
+            Any("seed", 0f, 0f, 16f) with { Help = "Which die: another whole number gives another sequence." },
+            Any("sides", 6f, 1f, 16f) with { Help = "How many faces 'face' counts." },
+        ],
+        [
+            Any("out") with { Help = "0 to 1, the same each time 'in' comes round." },
+            Any("face") with { Help = "A whole number from 0 to one under 'sides'." },
+        ],
+        (em, i) =>
+        {
+            var prime = em.Constant(DicePrime);
+            var n = em.Binary(OpCode.Mod, em.Unary(OpCode.Floor, em.Add(i[0], em.Mul(i[1], 331f))), prime);
+            var square = em.Binary(OpCode.Mod, em.Mul(n, n), prime);
+            var thrown = em.Binary(OpCode.Mod, em.Add(em.Add(em.Mul(square, 73f), em.Mul(n, 151f)), 17f), prime);
+
+            return
+            [
+                em.Binary(OpCode.Div, thrown, prime),
+                em.Unary(OpCode.Floor, em.Binary(OpCode.Div, em.Mul(thrown, i[2]), prime)),
+            ];
+        },
+        "A random 0 to 1 that is the same every time 'in' comes round, and a face of a die from it. No memory.")
+    {
+        Words = "stable random, hash, pick one",
+    };
 
     private static NodeDef Unary(string id, string name, OpCode code, string description, string help, string result) => new(
         id, name, ModuleCategories.Maths, [Any("in") with { Help = help }], [Any("out") with { Help = result }],

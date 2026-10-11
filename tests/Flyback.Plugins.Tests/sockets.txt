@@ -89,6 +89,7 @@ math.autoremap | in, in low, in high, out low, out high | out
 math.clamp | in, low, high | out
 math.cos | in | out
 math.desk | left 1, right 1, level 1, left 2, right 2, level 2, left 3, right 3, level 3, left 4, right 4, level 4, bus left, bus right, trim | left, right, bus left, bus right
+math.dice | in, seed, sides | out, face
 math.div | a, b | out
 math.exp | in | out
 math.expression | a, b, c, d | out
@@ -112,6 +113,7 @@ math.sqrt | in | out
 math.step | edge, in | out
 math.sub | a, b | out
 math.tan | in | out
+math.window | in, from, to, rise, fall | out
 meter | in, window, scale | level, peak
 midi.clock | in, nudge | beats, bpm, running, reset
 midi.file | in | pitch, gate, velocity, trigger, length

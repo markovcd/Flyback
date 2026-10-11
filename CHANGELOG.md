@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Modules
+
+- A Window is 1 between two points and 0 outside, hard or soft edged, and a Dice throws the same random for a whole number every time it comes round; a formula calls them as `window()` and `dice()`.
+
 ### Presets
 
 - A Drawings plugin on the preset site plays an SVG, an OBJ model or a PNG's outlines as sound that draws it on a Beam, with Rotate 3D, Translate 3D, Scale 3D and Perspective to turn and project a model, and a Wireframe preset that spins a cube.
