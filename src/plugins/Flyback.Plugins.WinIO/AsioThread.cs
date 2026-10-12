@@ -47,10 +47,13 @@ internal sealed class AsioThread : IDisposable
 
         if (wedged) throw Unanswered();
 
+        var asked = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
         work.Add(() =>
         {
+            asked.SetResult();
+
             try
             {
                 job();
@@ -62,7 +65,9 @@ internal sealed class AsioThread : IDisposable
             }
         });
 
-        if (!((IAsyncResult)done.Task).AsyncWaitHandle.WaitOne(patience))
+        // The driver is timed from when it is asked, not from when the thread was
+        // started or while it finished earlier work; each wait has the full patience.
+        if (!Answered(asked.Task) || !Answered(done.Task))
         {
             wedged = true;
             throw Unanswered();
@@ -84,6 +89,8 @@ internal sealed class AsioThread : IDisposable
         thread.Join();
         work.Dispose();
     }
+
+    private bool Answered(Task task) => ((IAsyncResult)task).AsyncWaitHandle.WaitOne(patience);
 
     private TimeoutException Unanswered() =>
         new($"the driver did not answer in {patience.TotalSeconds:0.#} seconds; restart Flyback to try it again.");
