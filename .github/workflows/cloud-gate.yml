@@ -1,41 +1,67 @@
-# Runs every test in the solution natively on GitHub's windows-latest and
-# macos-latest, by hand, on either or both.
+# The whole gate on GitHub's machines, by hand: the Linux gate, the solution's
+# tests natively on Windows and macOS, and the Android editor on an emulator.
 #
 # The gate runs in a Linux image, so the tests only Windows can run (the registry,
 # WASAPI, DPAPI, Direct3D, WinIO) or only macOS can (CoreAudio, CoreMIDI, the
-# Keychain) run nowhere else. Each machine is given what the gate's image carries
-# and it lacks: ffmpeg, the Chrome it has off PATH, and on Windows Mesa's software
-# OpenGL beside the test hosts. FLYBACK_GATE stays unset, so what is still missing
-# skips its test and the summary's skip table names it: JACK and ALSA are Linux's,
-# and macOS has no headless OpenGL. docs/handoff/tests-on-github-hosted-runners.md
-# is the plan this serves.
+# Keychain) run nowhere else, and the APK is built but never started. Each native
+# machine is given what the gate's image carries and it lacks: ffmpeg, the Chrome
+# it has off PATH, and on Windows Mesa's software OpenGL beside the test hosts.
+# FLYBACK_GATE stays unset there, so what is still missing skips its test and the
+# summary's skip table names it: JACK and ALSA are Linux's, and macOS has no
+# headless OpenGL. docs/handoff/tests-on-github-hosted-runners.md is the plan this
+# serves.
 #
 # Every action is pinned to a commit rather than a tag; Dependabot says when a
 # pin should move.
 
-name: Hosted tests
+name: Cloud gate
 
-run-name: Hosted tests on ${{ inputs.os }}
+run-name: Cloud gate on ${{ inputs.os }}
 
 on:
   workflow_dispatch:
     inputs:
       os:
-        description: Which hosted machine to test on.
+        description: Which machines to run on.
         type: choice
-        options: [both, windows, macos]
-        default: both
+        options: [all, linux, windows, macos, android]
+        default: all
 
 permissions:
   contents: read
 
 jobs:
-  test:
+  # gate.sh on a fresh builder with GitHub's layer cache, as ci.yml runs it there.
+  linux:
+    if: inputs.os == 'all' || inputs.os == 'linux'
+    runs-on: ubuntu-latest
+    # About eleven minutes cold; the default of six hours is what a hang costs.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build and test
+        run: bash scripts/gate.sh
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: linux-test-results
+          path: test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+  native:
+    if: inputs.os == 'all' || inputs.os == 'windows' || inputs.os == 'macos'
     strategy:
       # One machine's failure says nothing about the other's.
       fail-fast: false
       matrix:
-        os: ${{ fromJSON(inputs.os == 'both' && '["windows","macos"]' || format('["{0}"]', inputs.os)) }}
+        os: ${{ fromJSON(inputs.os == 'all' && '["windows","macos"]' || format('["{0}"]', inputs.os)) }}
     runs-on: ${{ matrix.os }}-latest
     # Restore, build and the suite, cold; the default of six hours is what a hang costs.
     timeout-minutes: 90
@@ -126,3 +152,44 @@ jobs:
 
       - name: Fail on a failed run
         run: exit "$(cat test-results/exit-code)"
+
+  # The APK on an x86_64 emulator, started, timed and turned sideways by
+  # android-smoke.sh. GitHub's Linux runners give a container KVM once its device
+  # is opened to the runner's user.
+  android:
+    if: inputs.os == 'all' || inputs.os == 'android'
+    runs-on: ubuntu-latest
+    # The workload, the system image, the boot and the build; the default of six hours is what a hang costs.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install the android workload
+        run: dotnet workload install android
+
+      - name: Open KVM to the runner
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Start the editor on an emulator and ask it how it is doing
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          disable-animations: true
+          script: bash scripts/android-smoke.sh

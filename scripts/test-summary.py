@@ -1,6 +1,6 @@
 # Writes a test run's summary to stdout: the counts per project, each failing test
 # with its message and stack, and each skipped test with its reason. Reads the
-# JUnit reports and the exit code from test-results/, as gate.sh and hosted-tests.yml leave them.
+# JUnit reports and the exit code from test-results/, as gate.sh and cloud-gate.yml leave them.
 import glob, html, os, xml.etree.ElementTree as ET
 
 LISTED = 50
