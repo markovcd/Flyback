@@ -17,6 +17,8 @@
 # handoff describes. Each answer the editor gives is printed as it comes; the last one
 # is the whole JSON on stdout. Exit 0 when every check holds, 1 naming the first that
 # did not, with the app's logcat after it, and 2 for a usage error.
+# With SMOKE_SHOTS naming a folder, a failure also leaves the screen, the top
+# activity and the whole logcat there.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -60,6 +62,13 @@ trap cleanup EXIT
 
 fail() {
   echo "FAIL: $*" >&2
+  if [ -n "${SMOKE_SHOTS:-}" ]; then
+    mkdir -p "$SMOKE_SHOTS"
+    adb exec-out screencap -p > "$SMOKE_SHOTS/screen.png" 2>/dev/null || true
+    adb shell dumpsys activity top 2>/dev/null | head -n 200 > "$SMOKE_SHOTS/activity.txt" || true
+    adb logcat -d 2>/dev/null > "$SMOKE_SHOTS/logcat.txt" || true
+    echo "--- the screen, the top activity and the whole logcat are in $SMOKE_SHOTS" >&2
+  fi
   echo "--- the device's audio output threads and tracks" >&2
   adb shell dumpsys media.audio_flinger 2>/dev/null | grep -E -A3 "Output thread|Standby|Tracks|Frames written|underrun|Hal stream" | head -n 60 >&2 || true
   if pid="$(adb shell pidof "$package" 2>/dev/null | tr -d '[:space:]')" && [ -n "$pid" ]; then

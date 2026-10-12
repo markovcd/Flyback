@@ -104,4 +104,12 @@ jobs:
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -no-boot-anim -no-snapshot
           disable-animations: true
-          script: bash scripts/android-smoke.sh
+          script: SMOKE_SHOTS=smoke bash scripts/android-smoke.sh
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: android-smoke
+          path: smoke
+          if-no-files-found: ignore
+          retention-days: 14
