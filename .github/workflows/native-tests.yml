@@ -78,6 +78,8 @@ jobs:
       # The runner has no GPU and Windows' own OpenGL stops at 1.1. Mesa's llvmpipe,
       # pinned by version and hash, beside each test host: an application's folder
       # is searched for opengl32.dll before System32.
+      # One rasterizer thread a context: llvmpipe otherwise takes every core while the
+      # GPU tests draw, and the test hosts beside it stall for seconds at a time.
       - name: Put Mesa's software OpenGL beside the test hosts (Windows)
         if: runner.os == 'Windows'
         env:
@@ -93,6 +95,7 @@ jobs:
             done
           done
           echo "GALLIUM_DRIVER=llvmpipe" >> "$GITHUB_ENV"
+          echo "LP_NUM_THREADS=1" >> "$GITHUB_ENV"
 
       # The run never fails this step, so the summary is written from a failing one.
       # The web editor, the viewer and the pages run in a browser or under Node, the
