@@ -26,7 +26,7 @@ public partial class NodeEditorTests
     /// painting order puts it over the wire — which is the thing dragging has to
     /// overturn.
     /// </summary>
-    private static Patch Crossing(out NodeInstance source, out NodeInstance obstacle)
+    private static Patch Crossing(out NodeInstance source, out NodeInstance obstacle, bool wired = true)
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
@@ -34,9 +34,22 @@ public partial class NodeEditorTests
         var sink = builder.Add(NodeCatalog.OutputTypeId, 420, 200);
         obstacle = builder.Add("math.add", 230, 100);
 
-        builder.Wire(source, 0, sink, NodeCatalog.OutputColorPort);
+        if (wired) builder.Wire(source, 0, sink, NodeCatalog.OutputColorPort);
 
         return builder.Patch;
+    }
+
+    /// <summary>
+    /// The canvas <see cref="Crossing"/> draws without its wire, with the source
+    /// held down first when <paramref name="held"/>.
+    /// </summary>
+    private Color[,] Bare(bool held = false)
+    {
+        var (editor, window) = Editing(Crossing(out var source, out _, wired: false));
+
+        if (held) HoldDown(editor, window, source);
+
+        return Frame(window);
     }
 
     /// <summary>
@@ -62,7 +75,7 @@ public partial class NodeEditorTests
         var patch = Crossing(out _, out var obstacle);
         var (editor, window) = Editing(patch);
 
-        WirePixelsOver(editor, window, obstacle).ShouldBe(0);
+        WirePixelsOver(editor, window, obstacle, Bare()).ShouldBe(0);
     }
 
     /// <summary>
@@ -78,7 +91,7 @@ public partial class NodeEditorTests
 
         HoldDown(editor, window, source);
 
-        WirePixelsOver(editor, window, obstacle).ShouldBeGreaterThan(0);
+        WirePixelsOver(editor, window, obstacle, Bare(held: true)).ShouldBeGreaterThan(0);
     }
 
     /// <summary>

@@ -21,12 +21,15 @@ public partial class NodeEditorTests
     // --- reading the pixels -------------------------------------------------
 
     /// <summary>
-    /// How many pixels of wire are visible inside a module's body. Inset off its
-    /// own outline, which is drawn in a color of its own and would otherwise be
-    /// counted as part of what is on top of it. Matched almost exactly, because
-    /// antialiased label text passes through nearby grays.
+    /// How many pixels inside a module's body the wire changes: the canvas as
+    /// drawn, against <paramref name="bare"/>, the same canvas drawn without the
+    /// wire. Inset off the module's outline, whose sockets a wire can light.
     /// </summary>
-    private static int WirePixelsOver(NodeEditor editor, Window window, NodeInstance node)
+    /// <remarks>
+    /// Compared with a twin rather than matched to the wire's color, because label
+    /// text antialiased at nine tenths lands on the wire's gray.
+    /// </remarks>
+    private static int WirePixelsOver(NodeEditor editor, Window window, NodeInstance node, Color[,] bare)
     {
         var def = NodeCatalog.BuiltIn.Require(node.TypeId);
         var bounds = Geometry.Bounds(node, def).Deflate(6);
@@ -39,7 +42,7 @@ public partial class NodeEditorTests
 
         for (var y = (int)Math.Ceiling(topLeft.Y); y < (int)bottomRight.Y; y++)
             for (var x = (int)Math.Ceiling(topLeft.X); x < (int)bottomRight.X; x++)
-                if (Within(pixels, x, y) && Near(pixels[x, y], Colors.ScalarPort, 2))
+                if (Within(pixels, x, y) && !Near(pixels[x, y], bare[x, y], 2))
                     count++;
 
         return count;
