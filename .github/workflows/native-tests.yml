@@ -6,8 +6,8 @@
 # Keychain) run nowhere else. Each machine is given what the gate's image carries
 # and it lacks: ffmpeg, and on Windows Mesa's software OpenGL beside the test
 # hosts. FLYBACK_GATE stays unset, so what is still missing skips its test and the
-# summary's skip table names it: JACK and ALSA are Linux's, and macOS has no
-# headless OpenGL.
+# summary's skip table names it: JACK and ALSA are Linux's, and macOS's headless
+# OpenGL is off unless the cgl input turns it on.
 #
 # Every action is pinned to a commit rather than a tag; Dependabot says when a
 # pin should move.
@@ -21,6 +21,10 @@ on:
         description: A JSON list of windows and macos.
         type: string
         default: '["windows","macos"]'
+      cgl:
+        description: Open CGL on macOS, so its Gpu tests run instead of skipping.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -43,6 +47,7 @@ jobs:
       DOTNET_NOLOGO: "1"
       # The summary writes non-ASCII; Windows' default code page would refuse it.
       PYTHONUTF8: "1"
+      FLYBACK_CGL: ${{ inputs.cgl && '1' || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

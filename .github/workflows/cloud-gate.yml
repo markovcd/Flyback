@@ -18,6 +18,10 @@ on:
         type: choice
         options: [all, linux, windows, macos, android]
         default: all
+      macos-gl:
+        description: Run macOS's Gpu tests on CGL (seven presets are known to disagree).
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -52,6 +56,7 @@ jobs:
     uses: ./.github/workflows/native-tests.yml
     with:
       machines: ${{ inputs.os == 'all' && '["windows","macos"]' || format('["{0}"]', inputs.os) }}
+      cgl: ${{ inputs.macos-gl }}
 
   # The APK on an x86_64 emulator, started, timed and turned sideways by
   # android-smoke.sh, on the API level of the local AVD the smoke was written

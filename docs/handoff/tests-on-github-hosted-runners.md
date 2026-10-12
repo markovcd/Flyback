@@ -2,7 +2,7 @@
 
 2026-10-12, against `7d46025`. On [TODO.md](../../TODO.md); delete this file in the commit that lands the last leg.
 
-**Status:** the Windows and macOS legs run in Build on every push (`native-tests.yml`), and every push is on GitHub's runners (ADR-0195). The Android smoke passes on the Cloud gate's emulator. Left: the guard in step 4 of the order, and macOS's `Gpu` tests, which need a headless CGL context; one opened on GitHub's Mac (Apple Software Renderer) draws seven presets unlike the processor, by up to 255 of 255.
+**Status:** the Windows and macOS legs run in Build on every push (`native-tests.yml`), and every push is on GitHub's runners (ADR-0195). The Android smoke passes on the Cloud gate's emulator. Left: the guard in step 4 of the order, and macOS's `Gpu` tests. `CglContext` opens only with `FLYBACK_CGL=1` (Cloud gate's `macos-gl` box), because on GitHub's Mac (Apple Software Renderer) it draws seven presets unlike the processor, by up to 255 of 255: Ahead and behind, Grid, Nebula, Ring scan, Whole band, Three channels and Feedback tunnel.
 
 ## What is wanted
 

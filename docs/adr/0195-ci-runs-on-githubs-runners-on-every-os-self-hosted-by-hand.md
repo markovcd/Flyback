@@ -41,7 +41,8 @@ waits for the slowest leg, about fifteen minutes on Windows or macOS against
 seven for the gate on a warm self-hosted cache. Free on a public repository.
 
 **Windows needs Mesa's software OpenGL** beside the test hosts (pinned by
-version and hash); macOS has no headless OpenGL, so its `Gpu` tests skip.
+version and hash). macOS's CGL context opens only with `FLYBACK_CGL=1`, which
+the Cloud gate's `macos-gl` box sets, so Build skips its `Gpu` tests.
 
 **The self-hosted builder's cache goes cold** unless a run is started there by
 hand.
