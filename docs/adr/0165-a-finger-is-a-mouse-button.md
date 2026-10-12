@@ -51,3 +51,14 @@ canvas, and a band is the only way a hand selects more than one module.
   output, fine turns and moving modules between groups are a mouse's.
 - Hover says nothing to a finger, so a socket's tip is not reached by touch.
 - A tap selects on lifting rather than on landing.
+
+## Amendment, 2026-10-12: a held finger reads a tip
+
+Off the canvas, a finger held still for the canvas's hold time on anything with a tooltip
+opens it, and a button it was held on is let go rather than pressed on the lift. The tip
+stays up until the next press. One handler on the top level (`TouchTips`) does it for every
+control, rather than each glyph learning a long press, and it mirrors how the tooltip service
+picks a control, disabled ones that show their tip included. A tip opened rather than a line
+on the status bar, since a phone's status bar trims a sentence to a few words. A repeat
+button keeps its hold, and a finger a scroll took over opens nothing. A socket's tip on the
+canvas is still out of reach, since a held finger there is the right button.

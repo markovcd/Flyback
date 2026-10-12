@@ -59,6 +59,15 @@ public sealed class TouchSteps(PatchContext context, EditorDriver editor)
         editor.HoldFinger(heldAt);
     }
 
+    [When("a finger is held on the toolbar's {word} button")]
+    public void WhenAFingerIsHeldOnAButton(string name) => editor.HoldFingerOn(name);
+
+    [Then("the tip that comes up says {string}")]
+    public void ThenTheTipSays(string words) => editor.TipUp.ShouldNotBeNull().ShouldContain(words);
+
+    [Then("the {word} button is not pressed in")]
+    public void ThenNotPressedIn(string name) => editor.PressedIn(name).ShouldBeFalse();
+
     [When("the view is zoomed all the way out")]
     public void WhenZoomedOut() => editor.ZoomAllTheWayOut();
 

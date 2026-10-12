@@ -230,6 +230,7 @@ internal static class EditorServices
         services.AddPart<ShellLayout>();
         services.AddSingleton<EditorReadout>();
 
+        services.AddSingleton<TouchTips>();
         services.AddPart<EditorView>();
         services.AddPart<MainWindow>();
         services.AddPart<WindowHolder>();

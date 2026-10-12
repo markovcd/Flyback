@@ -432,6 +432,33 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
             bar.RaiseEvent(new PointerReleasedEventArgs(bar, finger, open, On(to), 1_100, up, KeyModifiers.None, MouseButton.Left));
         });
 
+    /// <summary>
+    /// Holds a finger on the button named <paramref name="name"/> until it counts as held,
+    /// then lifts it: landing on whatever is drawn there, which takes the finger as a touch
+    /// screen's does.
+    /// </summary>
+    public void HoldFingerOn(string name) =>
+        DoWindow((open, _) =>
+        {
+            var button = Named<Button>(open, name);
+            var at = button.TranslatePoint(new Point(button.Bounds.Width / 2, button.Bounds.Height / 2), open)!.Value;
+            var under = (Control)open.InputHitTest(at)!;
+            var finger = new Pointer(Pointer.GetNextFreeId(), PointerType.Touch, true);
+            var down = new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed);
+            var up = new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonReleased);
+
+            finger.Capture(under);
+            under.RaiseEvent(new PointerPressedEventArgs(under, finger, open, at, 1_000, down, KeyModifiers.None));
+            Service<TouchTips>().Held();
+            under.RaiseEvent(new PointerReleasedEventArgs(under, finger, open, at, 1_000 + (ulong)TouchTips.HoldTime.TotalMilliseconds, up, KeyModifiers.None, MouseButton.Left));
+        });
+
+    /// <summary>The tip a held finger has up, or null while none is.</summary>
+    public string? TipUp => ReadWindow(_ => Service<TouchTips>().Open is { } open ? ToolTip.GetTip(open) as string : null);
+
+    /// <summary>Whether the toggle named <paramref name="name"/> is pressed in.</summary>
+    public bool PressedIn(string name) => ReadWindow(open => Named<ToggleButton>(open, name).IsChecked == true);
+
     /// <summary>Whether the button the module panel names <paramref name="name"/> is shown and wholly inside the window.</summary>
     public bool PanelButtonOnScreen(string name) => ReadWindow(open =>
         open.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.Name == name) is { IsEffectivelyVisible: true } button

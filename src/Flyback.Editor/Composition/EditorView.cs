@@ -40,6 +40,7 @@ internal sealed class EditorView : Border
     private readonly TransportControls transport;
     private readonly Reactions reactions;
     private readonly WindowHolder holder;
+    private readonly TouchTips touchTips;
     private readonly bool inPage;
 
     private TopLevel? host;
@@ -60,6 +61,7 @@ internal sealed class EditorView : Border
         ShellLayout shell,
         IDialog dialog,
         WindowHolder holder,
+        TouchTips touchTips,
         EditorHost editorHost)
     {
         inPage = editorHost.InPage;
@@ -77,6 +79,7 @@ internal sealed class EditorView : Border
         this.dialog = dialog;
         this.reactions = reactions;
         this.holder = holder;
+        this.touchTips = touchTips;
 
         Background = new SolidColorBrush(Colors.Window);
 
@@ -103,6 +106,8 @@ internal sealed class EditorView : Border
         // On the top level, so a key reaches them whatever has the focus, or nothing does.
         top.AddHandler(KeyDownEvent, OnKeyDown);
         top.AddHandler(KeyUpEvent, OnKeyUp);
+
+        touchTips.Attach(top);
 
         // Live from here rather than from Loaded: a drop arriving before the
         // layout has finished is still a drop.

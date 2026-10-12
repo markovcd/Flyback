@@ -19,7 +19,7 @@ namespace Flyback.Editor.Canvas;
 internal sealed class Fingers
 {
     /// <summary>How long a finger stays still before it is the right button.</summary>
-    public static readonly TimeSpan HoldTime = TimeSpan.FromMilliseconds(450);
+    public static readonly TimeSpan HoldTime = TouchTips.HoldTime;
 
     /// <summary>How far a finger travels, in screen pixels, before it is moving rather than resting.</summary>
     public const double Slop = FingerSwipe.Slop;

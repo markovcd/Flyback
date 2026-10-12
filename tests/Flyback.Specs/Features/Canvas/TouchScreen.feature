@@ -1,6 +1,7 @@
 Feature: A hand on a touch screen patches without a mouse or keys
   One finger is the left button, a finger held still is the right, and two fingers
-  move and zoom the view. A fingertip that lands beside a socket lands on it.
+  move and zoom the view. A fingertip that lands beside a socket lands on it. A finger
+  held on a button reads its tip.
 
   Specified by ADR-0165.
 
@@ -67,3 +68,9 @@ Feature: A hand on a touch screen patches without a mouse or keys
     And the patch is open in the editor
     When a finger draws a wire from the clock to just short of the sine's first input
     Then a sine is fed by the clock
+
+  Scenario: A finger held on a toolbar button reads its tip without pressing it
+    Given the patch is open in the editor
+    When a finger is held on the toolbar's code button
+    Then the tip that comes up says "Show the patch as text"
+    And the code button is not pressed in
