@@ -161,6 +161,9 @@ jobs:
   # android-smoke.sh, on the API level of the local AVD the smoke was written
   # against. /release refuses a commit this job has not passed on. GitHub's Linux
   # runners give a container KVM once its device is opened to the runner's user.
+  # Their emulator has no PulseAudio to play into, so AudioTrack never drains and
+  # the clock stays at zero; `-audio none` drains it silently, as the script's own
+  # boot does.
   android:
     if: inputs.os == 'all' || inputs.os == 'android'
     runs-on: ubuntu-latest
@@ -195,6 +198,6 @@ jobs:
           api-level: 36
           arch: x86_64
           target: google_apis
-          emulator-options: -no-window -gpu swiftshader_indirect -no-boot-anim -no-snapshot
+          emulator-options: -no-window -gpu swiftshader_indirect -audio none -no-boot-anim -no-snapshot
           disable-animations: true
           script: bash scripts/android-smoke.sh
