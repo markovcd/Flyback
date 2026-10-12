@@ -124,9 +124,9 @@ internal sealed class PageServer : IDisposable
         return ((IPEndPoint)probe.LocalEndpoint).Port;
     }
 
-    public void Dispose()
-    {
-        listener.Stop();
-        listener.Close();
-    }
+    /// <remarks>
+    /// Close alone: a Close after a Stop binds the port again to let go of it, and fails
+    /// when a scenario running beside this one has taken the port meanwhile.
+    /// </remarks>
+    public void Dispose() => listener.Close();
 }
