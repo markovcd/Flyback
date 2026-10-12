@@ -115,6 +115,10 @@ RUN apt-get update \
       gnome-keyring libsecret-tools dbus libnss3 unzip \
  && rm -rf /var/lib/apt/lists/*
 
+# A container has no sound card, so ALSA's default device is its null one, which
+# captures silence: the capture test then opens and reads it rather than skipping.
+RUN printf 'pcm.!default {\n  type null\n}\n' > /etc/asound.conf
+
 # Chrome for Testing's headless shell: the specs open the web viewer and the web
 # editor in it, as a visitor's browser would. Ubuntu's chromium is a snap and does
 # not run in a container, so this is Google's build, pinned by version and hash as
