@@ -61,6 +61,20 @@ Each of these ends the run, says which one and why, and changes no file.
     --jq "map(select(.displayTitle == \"Android on $(git rev-parse HEAD)\"))"
   ```
 
+- **The Android smoke has not passed on this commit.** The build above never
+  starts the APK; the Cloud gate's `android` job does, on an emulator, and it runs
+  only by hand. Same rule again: a red job refuses, and so does no run. Start
+  Cloud gate on `main` with `android` (or `all`) and wait:
+
+  ```bash
+  sha="$(git rev-parse HEAD)"
+  for id in $(gh run list --workflow=cloud-gate.yml --commit "$sha" --limit 20 --json databaseId --jq '.[].databaseId'); do
+    gh run view "$id" --json jobs --jq '.jobs[] | select(.name == "android") | .conclusion'
+  done
+  ```
+
+  One `success` passes.
+
 - **A locked restore fails.** The gate restores with `--locked-mode`, so a release
   build dies at restore if `Directory.Packages.props` and the `packages.lock.json`
   files disagree — which a version bump is exactly the thing to cause:

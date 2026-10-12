@@ -53,7 +53,7 @@ The same command, for `Flyback.Plugins.Tests` at least (MacIO and Keychain live 
 
 ### 3. Android: `ubuntu-latest` with KVM
 
-`android.yml` already builds the APK. GitHub's Linux runners expose KVM, so `scripts/android-smoke.sh` can run on an emulator after the build (`reactivecircus/android-emulator-runner`, pinned by SHA). Its own job, so a slow emulator never holds up the APK.
+`android.yml` already builds the APK. GitHub's Linux runners expose KVM, so `scripts/android-smoke.sh` can run on an emulator after the build (`reactivecircus/android-emulator-runner`, pinned by SHA). Its own job, so a slow emulator never holds up the APK. It runs before a release, not on every push: `/release` refuses a commit it has not passed on, and on every push it would mostly add emulator flakes.
 
 ### 4. Linux: unchanged
 

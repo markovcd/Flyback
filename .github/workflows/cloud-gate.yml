@@ -18,7 +18,7 @@
 
 name: Cloud gate
 
-run-name: Cloud gate on ${{ inputs.os }}
+run-name: Cloud gate on ${{ inputs.os }} at ${{ github.sha }}
 
 on:
   workflow_dispatch:
@@ -159,8 +159,8 @@ jobs:
 
   # The APK on an x86_64 emulator, started, timed and turned sideways by
   # android-smoke.sh, on the API level of the local AVD the smoke was written
-  # against. GitHub's Linux runners give a container KVM once its device is
-  # opened to the runner's user.
+  # against. /release refuses a commit this job has not passed on. GitHub's Linux
+  # runners give a container KVM once its device is opened to the runner's user.
   android:
     if: inputs.os == 'all' || inputs.os == 'android'
     runs-on: ubuntu-latest
