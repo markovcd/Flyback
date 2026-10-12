@@ -4,12 +4,12 @@
 # The gate runs in a Linux image, so the tests only Windows can run (the registry,
 # WASAPI, DPAPI, Direct3D, WinIO) or only macOS can (CoreAudio, CoreMIDI, the
 # Keychain) run nowhere else, and the APK is built but never started. Each native
-# machine is given what the gate's image carries and it lacks: ffmpeg, the Chrome
-# it has off PATH, and on Windows Mesa's software OpenGL beside the test hosts.
-# FLYBACK_GATE stays unset there, so what is still missing skips its test and the
-# summary's skip table names it: JACK and ALSA are Linux's, and macOS has no
-# headless OpenGL. docs/handoff/tests-on-github-hosted-runners.md is the plan this
-# serves.
+# machine is given what the gate's image carries and it lacks: ffmpeg, the
+# wasm-tools workload, the Chrome it has off PATH, and on Windows Mesa's software
+# OpenGL beside the test hosts. FLYBACK_GATE stays unset there, so what is still
+# missing skips its test and the summary's skip table names it: JACK and ALSA are
+# Linux's, and macOS has no headless OpenGL. The plan this serves is
+# docs/handoff/tests-on-github-hosted-runners.md.
 #
 # Every action is pinned to a commit rather than a tag; Dependabot says when a
 # pin should move.
@@ -86,9 +86,16 @@ jobs:
         if: runner.os == 'Windows'
         run: choco install ffmpeg --yes --no-progress
 
+      # Homebrew's ffmpeg has no WebP encoder, which the stills are written with.
       - name: Install ffmpeg (macOS)
         if: runner.os == 'macOS'
-        run: brew install ffmpeg
+        run: |
+          brew install ffmpeg-full
+          echo "$(brew --prefix ffmpeg-full)/bin" >> "$GITHUB_PATH"
+
+      # Links Skia and HarfBuzz into the web editor's runtime, as the gate's image does.
+      - name: Install the wasm-tools workload
+        run: dotnet workload install wasm-tools
 
       # Chrome is on both images, under a path the specs do not search.
       - name: Point the specs at Chrome
