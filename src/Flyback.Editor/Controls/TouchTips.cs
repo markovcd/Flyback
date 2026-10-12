@@ -5,8 +5,9 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Flyback.Ui.Controls;
 
-namespace Flyback.Ui.Controls;
+namespace Flyback.Editor.Controls;
 
 /// <summary>
 /// A finger held still on anything with a tooltip opens the tip, since a finger never

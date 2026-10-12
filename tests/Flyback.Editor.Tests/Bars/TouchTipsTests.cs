@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Flyback.Editor.Composition;
+using Flyback.Editor.Controls;
 using Flyback.Ui.Controls;
 using Shouldly;
 
@@ -19,14 +20,14 @@ public class TouchTipsTests : EditorTest
     private static T Named<T>(Window window, string name) where T : Control => All<T>(window).Single(b => b.Name == name);
 
     /// <summary>
-    /// A finger on the middle of <paramref name="target"/>, landing on whatever is drawn
-    /// there and taken by it, as a touch screen's is. Held long enough when
+    /// A finger on the middle of <paramref name="target"/>, landing on its glyph and taken
+    /// by it, as a touch screen's is. Held long enough when
     /// <paramref name="tips"/> is given, and slid by <paramref name="slide"/> before lifting.
     /// </summary>
-    private static void Finger(MainWindow window, Control target, TouchTips? tips, Vector slide = default, bool scrolled = false)
+    private static void Finger(MainWindow window, ContentControl target, TouchTips? tips, Vector slide = default, bool scrolled = false)
     {
         var at = MiddleOf(target, window);
-        var under = (Control)window.InputHitTest(at)!;
+        var under = target.Content as Control ?? target;
         var finger = new Pointer(Pointer.GetNextFreeId(), PointerType.Touch, true);
 
         finger.Capture(under);

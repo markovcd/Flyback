@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Flyback.Ui.Controls;
+using Flyback.Editor.Controls;
 using Flyback.Editor.Notices;
 
 namespace Flyback.Editor.Canvas;

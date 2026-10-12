@@ -434,15 +434,14 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
 
     /// <summary>
     /// Holds a finger on the button named <paramref name="name"/> until it counts as held,
-    /// then lifts it: landing on whatever is drawn there, which takes the finger as a touch
-    /// screen's does.
+    /// then lifts it: landing on its glyph, which takes the finger as a touch screen's does.
     /// </summary>
     public void HoldFingerOn(string name) =>
         DoWindow((open, _) =>
         {
             var button = Named<Button>(open, name);
             var at = button.TranslatePoint(new Point(button.Bounds.Width / 2, button.Bounds.Height / 2), open)!.Value;
-            var under = (Control)open.InputHitTest(at)!;
+            var under = button.Content as Control ?? button;
             var finger = new Pointer(Pointer.GetNextFreeId(), PointerType.Touch, true);
             var down = new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed);
             var up = new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonReleased);
