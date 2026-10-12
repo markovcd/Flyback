@@ -25,17 +25,23 @@ on:
         description: "Version to release, e.g. 1.4.0. Leave blank to bump the minor version automatically."
         required: false
         type: string
+      self-hosted:
+        description: Build on the self-hosted runners, Linux before Windows.
+        type: boolean
+        default: false
 
 permissions:
   contents: write
 
 jobs:
-  # Linux self-hosted if online, else Windows, else GitHub's (runner.yml).
+  # GitHub's, or the self-hosted runners when asked (runner.yml).
   runner:
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/runner.yml
+    with:
+      self-hosted: ${{ inputs.self-hosted }}
     secrets:
-      RUNNER_STATUS_TOKEN: ${{ secrets.RUNNER_STATUS_TOKEN }}
+      RUNNER_STATUS_TOKEN: ${{ inputs.self-hosted && secrets.RUNNER_STATUS_TOKEN || '' }}
 
   release:
     # Only from main. release.sh runs the gate again and publishes from that same

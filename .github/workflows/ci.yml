@@ -1,4 +1,5 @@
-# The gate, on every change: restore, compile, and every test in the solution.
+# The gate, on every change: restore, compile, and every test in the solution,
+# in the Linux image and natively on Windows and macOS (native-tests.yml).
 #
 # The same image the release is built from, stopped at the tests — `--target
 # gate` stops before the publishes, so what runs here is what runs before a
@@ -17,6 +18,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      self-hosted:
+        description: Run on the self-hosted runners (main only), Linux before Windows.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -30,12 +36,14 @@ concurrency:
   cancel-in-progress: ${{ github.event_name != 'push' }}
 
 jobs:
-  # Linux self-hosted if online, else Windows, else GitHub's; any ref but main on
-  # GitHub's (runner.yml). Either self-hosted runner needs Docker with buildx.
+  # GitHub's, or by hand on main the self-hosted runners (runner.yml). Either
+  # self-hosted runner needs Docker with buildx.
   runner:
     uses: ./.github/workflows/runner.yml
+    with:
+      self-hosted: ${{ inputs.self-hosted == true }}
     secrets:
-      RUNNER_STATUS_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.RUNNER_STATUS_TOKEN || '' }}
+      RUNNER_STATUS_TOKEN: ${{ inputs.self-hosted && github.ref == 'refs/heads/main' && secrets.RUNNER_STATUS_TOKEN || '' }}
 
   build:
     needs: runner
@@ -82,3 +90,7 @@ jobs:
           path: test-results
           if-no-files-found: ignore
           retention-days: 14
+
+  # What only Windows or only macOS can run, beside the Linux gate.
+  native:
+    uses: ./.github/workflows/native-tests.yml

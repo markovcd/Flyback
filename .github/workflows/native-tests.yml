@@ -1,0 +1,126 @@
+# The solution's tests natively on Windows and macOS, on GitHub's machines. Build
+# runs it on every push beside the Linux gate, and the Cloud gate by hand.
+#
+# The gate runs in a Linux image, so the tests only Windows can run (the registry,
+# WASAPI, DPAPI, Direct3D, WinIO) or only macOS can (CoreAudio, CoreMIDI, the
+# Keychain) run nowhere else. Each machine is given what the gate's image carries
+# and it lacks: ffmpeg, and on Windows Mesa's software OpenGL beside the test
+# hosts. FLYBACK_GATE stays unset, so what is still missing skips its test and the
+# summary's skip table names it: JACK and ALSA are Linux's, and macOS has no
+# headless OpenGL.
+#
+# Every action is pinned to a commit rather than a tag; Dependabot says when a
+# pin should move.
+
+name: Native tests
+
+on:
+  workflow_call:
+    inputs:
+      machines:
+        description: A JSON list of windows and macos.
+        type: string
+        default: '["windows","macos"]'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      # One machine's failure says nothing about the other's.
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(inputs.machines) }}
+    runs-on: ${{ matrix.os }}-latest
+    # Restore, build and the suite, cold; the default of six hours is what a hang costs.
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+      # The summary writes non-ASCII; Windows' default code page would refuse it.
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      # Keyed on what a locked restore resolves, so a cached package is the one asked for.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.lock.json', 'Directory.Packages.props') }}
+
+      - name: Install ffmpeg (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ffmpeg --yes --no-progress
+
+      # Homebrew's ffmpeg has no WebP encoder, which the stills are written with.
+      - name: Install ffmpeg (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install ffmpeg-full
+          echo "$(brew --prefix ffmpeg-full)/bin" >> "$GITHUB_PATH"
+
+      # Locked and Release, as the gate builds.
+      - name: Restore and build
+        run: |
+          dotnet restore Flyback.slnx --locked-mode
+          dotnet build Flyback.slnx -c Release --no-restore
+
+      # The runner has no GPU and Windows' own OpenGL stops at 1.1. Mesa's llvmpipe,
+      # pinned by version and hash, beside each test host: an application's folder
+      # is searched for opengl32.dll before System32.
+      - name: Put Mesa's software OpenGL beside the test hosts (Windows)
+        if: runner.os == 'Windows'
+        env:
+          MESA: "26.2.4"
+          MESA_SHA256: 351fc8c8b695878ffb3eaa044b3ead08672a48b1a045e3c3e3975811df0f6695
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/mesa.7z" "https://github.com/pal1000/mesa-dist-win/releases/download/$MESA/mesa3d-$MESA-release-msvc.7z"
+          echo "$MESA_SHA256  $RUNNER_TEMP/mesa.7z" | sha256sum -c -
+          7z x -y -o"$RUNNER_TEMP/mesa" "$RUNNER_TEMP/mesa.7z" > /dev/null
+          for host in tests/*/bin/Release/*/; do
+            for dll in opengl32.dll libgallium_wgl.dll libglapi.dll; do
+              [ -f "$RUNNER_TEMP/mesa/x64/$dll" ] && cp "$RUNNER_TEMP/mesa/x64/$dll" "$host"
+            done
+          done
+          echo "GALLIUM_DRIVER=llvmpipe" >> "$GITHUB_ENV"
+
+      # The run never fails this step, so the summary is written from a failing one.
+      # The web editor, the viewer and the pages run in a browser or under Node, the
+      # same on every machine, so their tests are the Linux gate's alone.
+      # No test host takes ten minutes, so one that has finished nothing for ten has hung.
+      - name: Test
+        run: |
+          mkdir -p test-results
+          set +e
+          dotnet test --solution Flyback.slnx -c Release --no-build --filter-not-trait "Category=browser" --filter-not-trait "Category=node" \
+            --hangdump --hangdump-timeout 10m --hangdump-type Mini \
+            --report-xunit-junit --results-directory test-results
+          echo $? > test-results/exit-code
+
+      # Python is python3 on macOS and python on Windows.
+      - name: Summarize
+        run: |
+          python3 -c '' 2>/dev/null || python3() { python "$@"; }
+          python3 scripts/test-summary.py > test-results/summary.md
+          cat test-results/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: ${{ matrix.os }}-test-results
+          path: test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Fail on a failed run
+        run: exit "$(cat test-results/exit-code)"

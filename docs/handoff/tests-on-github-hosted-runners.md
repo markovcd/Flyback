@@ -2,6 +2,8 @@
 
 2026-10-12, against `7d46025`. On [TODO.md](../../TODO.md); delete this file in the commit that lands the last leg.
 
+**Status:** the Windows and macOS legs run in Build on every push (`native-tests.yml`), and every push is on GitHub's runners (ADR-0195). Left: the Android smoke green on the Cloud gate's emulator, and the guard in step 4 of the order.
+
 ## What is wanted
 
 Every test in the solution runs on GitHub-hosted runners, so no test needs one of the maintainer's machines to run, and the tests that only one operating system can run do run somewhere.

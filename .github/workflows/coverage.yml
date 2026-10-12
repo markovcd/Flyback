@@ -19,6 +19,11 @@ on:
     # Monday, early.
     - cron: "17 5 * * 1"
   workflow_dispatch:
+    inputs:
+      self-hosted:
+        description: Run on the self-hosted runners (main only), Linux before Windows.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -28,11 +33,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Linux self-hosted if online, else Windows, else GitHub's (runner.yml).
+  # GitHub's, or by hand on main the self-hosted runners (runner.yml).
   runner:
     uses: ./.github/workflows/runner.yml
+    with:
+      self-hosted: ${{ inputs.self-hosted == true }}
     secrets:
-      RUNNER_STATUS_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.RUNNER_STATUS_TOKEN || '' }}
+      RUNNER_STATUS_TOKEN: ${{ inputs.self-hosted && github.ref == 'refs/heads/main' && secrets.RUNNER_STATUS_TOKEN || '' }}
 
   measure:
     needs: runner

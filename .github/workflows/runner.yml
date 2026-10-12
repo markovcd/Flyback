@@ -1,12 +1,13 @@
-# Picks the runner a job on main runs on: the Linux self-hosted runner if it is
-# online, else the Windows one, else GitHub's. Called by Build, Coverage and
-# Release, whose heavy job takes `runs-on: ${{ fromJSON(needs.runner.outputs.runs-on) }}`.
+# Picks the runner Build, Coverage and Release run their heavy job on, which takes
+# `runs-on: ${{ fromJSON(needs.runner.outputs.runs-on) }}`. GitHub's, unless a run
+# on main was started by hand asking for self-hosted: then the Linux self-hosted
+# runner if it is online, else the Windows one, else GitHub's.
 #
 # GitHub has no fallback between runners, so this asks the API which are online.
 # That API needs a token with Administration read on the repository, which
 # GITHUB_TOKEN cannot be given: the RUNNER_STATUS_TOKEN secret is a fine-grained
 # token for this repository with "Administration: Read-only" and nothing else.
-# Without it a run on main waits for either self-hosted runner, as it always did.
+# Without it a self-hosted run waits for either self-hosted runner.
 # With it and the API failing, the run goes to GitHub's rather than waiting.
 #
 # Any ref but main goes to GitHub's: the repo is public, and a fork's workflow
@@ -16,6 +17,11 @@ name: Runner
 
 on:
   workflow_call:
+    inputs:
+      self-hosted:
+        description: Prefer the self-hosted runners.
+        type: boolean
+        default: false
     outputs:
       runs-on:
         description: A JSON runs-on value for fromJSON.
@@ -38,6 +44,7 @@ jobs:
         env:
           TOKEN: ${{ secrets.RUNNER_STATUS_TOKEN }}
           REF: ${{ github.ref }}
+          SELF_HOSTED: ${{ inputs.self-hosted }}
         run: |
           pick() {
             echo "runs-on=$1" >> "$GITHUB_OUTPUT"
@@ -45,7 +52,7 @@ jobs:
             echo "Runs on $1"
             exit 0
           }
-          [ "$REF" = refs/heads/main ] || pick '"ubuntu-latest"'
+          [ "$SELF_HOSTED" = true ] && [ "$REF" = refs/heads/main ] || pick '"ubuntu-latest"'
           if [ -z "$TOKEN" ]; then
             echo "::warning::No RUNNER_STATUS_TOKEN, so this waits for either self-hosted runner instead of falling back to GitHub's."
             pick '["self-hosted","X64"]'
