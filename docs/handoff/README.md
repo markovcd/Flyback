@@ -16,6 +16,7 @@ Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or 
 | [tests-audit.md](tests-audit.md) | Where the tests are weakest, and what would fix each point | Audit | Open: what is left needs a seam, a workload or a fixture |
 | [pipeline-audit.md](pipeline-audit.md) | Where the pipeline is weakest, and what would fix each point | Audit | Open |
 | [architecture-audit.md](architecture-audit.md) | Where the architecture has drifted, and what would fix each point | Audit | Open: `GroupInspector.Build` split by its parts |
+| [asio-amd-crash.md](asio-amd-crash.md) | Rain on a Window on ASIO4ALL crashes inside AMD's OpenGL driver | Issue | Open: needs a session on the Windows machine |
 
 Severity, for an issue: **Critical**, act now; **High**, a security or data problem in a release; **Medium**, wrong behavior or real risk; **Low**, friction or latent risk.
 
