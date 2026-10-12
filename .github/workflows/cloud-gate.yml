@@ -4,11 +4,13 @@
 # The gate runs in a Linux image, so the tests only Windows can run (the registry,
 # WASAPI, DPAPI, Direct3D, WinIO) or only macOS can (CoreAudio, CoreMIDI, the
 # Keychain) run nowhere else, and the APK is built but never started. Each native
-# machine is given what the gate's image carries and it lacks: ffmpeg, the
-# wasm-tools workload, the Chrome it has off PATH, and on Windows Mesa's software
-# OpenGL beside the test hosts. FLYBACK_GATE stays unset there, so what is still
-# missing skips its test and the summary's skip table names it: JACK and ALSA are
-# Linux's, and macOS has no headless OpenGL. The plan this serves is
+# machine is given what the gate's image carries and it lacks: ffmpeg, and on
+# Windows Mesa's software OpenGL beside the test hosts. The web editor, the viewer
+# and the pages run in a browser or under Node, the same everywhere, so their tests
+# (Category=browser and Category=node) are left to the Linux gate.
+# FLYBACK_GATE stays unset there, so what is still missing skips its test and the
+# summary's skip table names it: JACK and ALSA are Linux's, and macOS has no
+# headless OpenGL. The plan this serves is
 # docs/handoff/tests-on-github-hosted-runners.md.
 #
 # Every action is pinned to a commit rather than a tag; Dependabot says when a
@@ -78,18 +80,6 @@ jobs:
         with:
           persist-credentials: false
 
-      # The SDK and its wasm-tools workload in a folder of the run's own, kept between
-      # runs: installing the workload is most of a cold start.
-      - name: Name the SDK's folder
-        run: echo "DOTNET_INSTALL_DIR=$RUNNER_TEMP/dotnet" >> "$GITHUB_ENV"
-
-      - name: Restore the SDK and its workload
-        id: sdk
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ runner.temp }}/dotnet
-          key: dotnet-${{ runner.os }}-${{ hashFiles('global.json') }}-wasm-tools
-
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: global.json
@@ -110,20 +100,6 @@ jobs:
         run: |
           brew install ffmpeg-full
           echo "$(brew --prefix ffmpeg-full)/bin" >> "$GITHUB_PATH"
-
-      # Links Skia and HarfBuzz into the web editor's runtime, as the gate's image does.
-      - name: Install the wasm-tools workload
-        if: steps.sdk.outputs.cache-hit != 'true'
-        run: dotnet workload install wasm-tools
-
-      # Chrome is on both images, under a path the specs do not search.
-      - name: Point the specs at Chrome
-        run: |
-          case "$RUNNER_OS" in
-            Windows) chrome='C:\Program Files\Google\Chrome\Application\chrome.exe' ;;
-            macOS) chrome='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' ;;
-          esac
-          echo "FLYBACK_CHROMIUM=$chrome" >> "$GITHUB_ENV"
 
       # Locked and Release, as the gate builds.
       - name: Restore and build
@@ -151,12 +127,14 @@ jobs:
           echo "GALLIUM_DRIVER=llvmpipe" >> "$GITHUB_ENV"
 
       # The run never fails this step, so the summary is written from a failing one.
+      # The web editor, the viewer and the pages run in a browser or under Node, the
+      # same on every machine, so their tests are the Linux gate's alone.
       # No test host takes ten minutes, so one that has finished nothing for ten has hung.
       - name: Test
         run: |
           mkdir -p test-results
           set +e
-          dotnet test --solution Flyback.slnx -c Release --no-build \
+          dotnet test --solution Flyback.slnx -c Release --no-build --filter-not-trait "Category=browser" --filter-not-trait "Category=node" \
             --hangdump --hangdump-timeout 10m --hangdump-type Mini \
             --report-xunit-junit --results-directory test-results
           echo $? > test-results/exit-code
