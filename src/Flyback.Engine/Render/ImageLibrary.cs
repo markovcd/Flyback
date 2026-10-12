@@ -17,11 +17,9 @@ public sealed class ImageLibrary : IImageLibrary
     private readonly Dictionary<string, (LoadedImage? Picture, PngFault Fault)> known =
         new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>The pictures <see cref="Preload"/> is reading, so a second ask waits on the first.</summary>
-    private readonly Dictionary<string, Task> reading = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ReadAhead<(LoadedImage? Picture, PngFault Fault)> ahead;
 
-    /// <summary>Moved on by every clear, so a read that began before one is not kept after it.</summary>
-    private int generation;
+    public ImageLibrary() => ahead = new(known);
 
     /// <inheritdoc cref="SampleLibrary.Beside"/>
     public string? Beside
@@ -74,8 +72,7 @@ public sealed class ImageLibrary : IImageLibrary
             return;
         }
 
-        generation++;
-        reading.Clear();
+        ahead.Abandon();
         known.Remove(path);
     }
 
@@ -86,50 +83,17 @@ public sealed class ImageLibrary : IImageLibrary
     /// <remarks>Called on a thread with a synchronization context, which is the one the reads are kept on.</remarks>
     public Task Preload(IEnumerable<string> paths)
     {
-        var waits = new List<Task>();
-
-        foreach (var path in paths)
-        {
-            if (string.IsNullOrWhiteSpace(path) || known.ContainsKey(path)) continue;
-
-            if (reading.TryGetValue(path, out var underway))
-            {
-                waits.Add(underway);
-                continue;
-            }
-
-            if (PatchPaths.Resolve(path, Beside, Library) is not { } full) continue;
-
-            var read = ReadAhead(path, full);
-
-            reading[path] = read;
-            waits.Add(read);
-        }
-
-        return waits.Count == 0 ? Task.CompletedTask : Task.WhenAll(waits);
-    }
-
-    private async Task ReadAhead(string path, string full)
-    {
-        var era = generation;
-
-        var (picture, fault) = await Task.Run(() =>
+        return ahead.Preload(paths, path => PatchPaths.Resolve(path, Beside, Library), full =>
         {
             var picture = PngReader.Read(full, out var fault);
 
             return (picture, fault);
-        }).ConfigureAwait(true);
-
-        if (era != generation) return;
-
-        reading.Remove(path);
-        known.TryAdd(path, (picture, fault));
+        });
     }
 
     private void Clear()
     {
-        generation++;
-        reading.Clear();
+        ahead.Abandon();
         known.Clear();
     }
 
