@@ -108,7 +108,7 @@ public sealed class AssistantColumnSteps(HeadlessTurn turn, EditorDriver editor)
 
     [Then("the reply reads {string}, {string} and {string}")]
     public void ThenReads(string first, string second, string third) =>
-        Headless.Run(() => Reply().Inlines!.Text!.Split('\n').ShouldBe([first, second, third]));
+        Headless.Run(() => Reply().Inlines!.Text!.ReplaceLineEndings("\n").Split('\n').ShouldBe([first, second, third]));
 
     public void Dispose()
     {
