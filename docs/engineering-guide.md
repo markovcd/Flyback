@@ -221,10 +221,11 @@ Arithmetic is guarded rather than allowed to produce NaN
 ([0013](adr/0013-guard-arithmetic-instead-of-propagating-nan.md)): divide by zero
 is 0, the root of a negative is 0, `Guard` turns a non-finite value into 0.
 
-**The IL backend** is built on a background thread at below-normal priority and
-attached to the program through a `Volatile` field that renderers read once per
-frame or buffer. Each op is one inlined method in `IlOps` that calls the
-interpreter's own helpers, so a guard exists once. A stretch longer than 256 ops
+**The IL backend** is built on a background thread at below-normal priority (normal
+while a patch just opened waits on it) and attached to the program through a
+`Volatile` field that renderers read once per frame or buffer. Each op is one
+inlined method in `IlOps` that calls the interpreter's own helpers, so a guard
+exists once. A stretch longer than 256 ops
 is several methods called in order, because past a few thousand locals the JIT
 stops optimizing a method and every op becomes a call. Every build is run against the
 interpreter before it is trusted, bit for bit, and refused if it differs.
@@ -319,7 +320,7 @@ nothing in the engine reads a wall clock. `t` is an argument.
 | Compositor render thread | `GpuPreviewSurface.OnOpenGlRender` | Block the dispatcher; hand-off is behind one `gate` lock. |
 | Audio callback | `AudioRenderer` into the device buffer | Lock, allocate or wait. |
 | MIDI driver | Notes into `LiveValues` through `MidiHub` | Open or close a device with the hub's lock held. |
-| `Flyback IL compiler` | Builds IL at below-normal priority | Take the processor from the two above. |
+| `Flyback IL compiler` | Builds IL at below-normal priority, normal while a cue waits on it | Take the processor from the two above. |
 
 The capture sinks (`IFrameSink`, `IAudioSink`) state the rule for anything on a
 hot path: it may copy, and it must not encode, allocate, lock or wait.

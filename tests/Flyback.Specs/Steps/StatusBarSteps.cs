@@ -16,14 +16,6 @@ public sealed class StatusBarSteps(EditorDriver editor) : IDisposable
 {
     private const int Frames = 512;
 
-    /// <summary>How long the sound's IL may take to arrive.</summary>
-    /// <remarks>
-    /// It compiles on a background thread that competes with every other test host on
-    /// the machine; a four-core CI runner running the whole suite at once has taken
-    /// over ten seconds.
-    /// </remarks>
-    private static readonly TimeSpan ProgramArrives = TimeSpan.FromSeconds(60);
-
     private readonly LoopbackDevice speakers = new();
 
     [Given("the speakers play whatever they are handed")]
@@ -33,7 +25,7 @@ public sealed class StatusBarSteps(EditorDriver editor) : IDisposable
     [When("the speakers have played long enough to time the sound")]
     public void WhenTimed()
     {
-        var deadline = DateTime.UtcNow + ProgramArrives;
+        var deadline = DateTime.UtcNow.AddSeconds(10);
 
         while (editor.SoundSpeed <= 0 && DateTime.UtcNow < deadline)
             for (var i = 0; i < 8; i++) speakers.Pump(Frames);
@@ -44,7 +36,7 @@ public sealed class StatusBarSteps(EditorDriver editor) : IDisposable
     [When("the speakers have played until the sound's program is in")]
     public void WhenProgramIn()
     {
-        var deadline = DateTime.UtcNow + ProgramArrives;
+        var deadline = DateTime.UtcNow.AddSeconds(10);
 
         while (editor.Readout["soundRunsOn"] is null && DateTime.UtcNow < deadline)
             if (speakers.IsRunning) speakers.Pump(Frames);

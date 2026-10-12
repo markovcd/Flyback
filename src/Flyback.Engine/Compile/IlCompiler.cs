@@ -195,14 +195,10 @@ public sealed class IlCompiler : IDisposable
         if (settled.Task.IsCompleted) settled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
         // Started with the first build, so a compiler nothing is submitted to has no thread.
-        // Below the audio callback and the render loop, which are what this is
-        // trying to make cheaper: a build that took the processor from either of
-        // them would cost the thing it exists to save.
         worker ??= new Thread(Work)
         {
             IsBackground = true,
             Name = "Flyback IL compiler",
-            Priority = ThreadPriority.BelowNormal,
         };
 
         if (worker.ThreadState.HasFlag(ThreadState.Unstarted)) worker.Start();
@@ -237,6 +233,12 @@ public sealed class IlCompiler : IDisposable
                     program = latest[lane]!;
                     key = latestKey[lane]!.Value;
                 }
+
+                // Below the audio callback and the render loop, which a build exists to
+                // make cheaper, except while a patch just opened waits on it: nothing is
+                // playing then, and Windows gives a below-normal thread nothing at all
+                // while every core is busy.
+                Thread.CurrentThread.Priority = program.Waiting ? ThreadPriority.Normal : ThreadPriority.BelowNormal;
 
                 var failure = Build(program, key.Parts, out var methods);
 

@@ -50,6 +50,7 @@
 
 ### Fixes
 
+- A patch opened on a busy Windows machine starts as soon as it is compiled, instead of standing silent for up to ten seconds.
 - A Trails fades by the second rather than by the frame, so its tail is as long in a 30 fps export as in a 60 fps preview.
 - The Claude Code and Codex assistants no longer flash a console window on Windows.
 - What the canvas says of an edit, a group declined or modules ungrouped, reaches the status bar.

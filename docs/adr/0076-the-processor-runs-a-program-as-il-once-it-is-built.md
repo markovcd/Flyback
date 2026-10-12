@@ -251,3 +251,11 @@ wait rather than the patch. Everything the editor opens passes through
 it opens. An edit to a patch already playing is never cued. The wait is the
 slowest part: IL takes 1-14 ms for the shipped presets and Whole band's shader
 about two seconds (see [0035](0035-a-glsl-backend-for-the-video-path.md)).
+
+## Amendment, 2026-10-12: a waiting cue builds at normal priority
+
+A build runs at normal priority while its program's cue is waiting, and below
+normal otherwise. Nothing is playing while a patch just opened waits, so there is
+no audio callback or render loop to keep the processor for, and Windows runs a
+below-normal thread not at all while every core has a normal one ready: on a
+loaded four-core machine a patch stood silent for the full ten seconds.
