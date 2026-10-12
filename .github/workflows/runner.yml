@@ -1,0 +1,63 @@
+# Picks the runner a job on main runs on: the Linux self-hosted runner if it is
+# online, else the Windows one, else GitHub's. Called by Build, Coverage and
+# Release, whose heavy job takes `runs-on: ${{ fromJSON(needs.runner.outputs.runs-on) }}`.
+#
+# GitHub has no fallback between runners, so this asks the API which are online.
+# That API needs a token with Administration read on the repository, which
+# GITHUB_TOKEN cannot be given: the RUNNER_STATUS_TOKEN secret is a fine-grained
+# token for this repository with "Administration: Read-only" and nothing else.
+# Without it a run on main waits for either self-hosted runner, as it always did.
+# With it and the API failing, the run goes to GitHub's rather than waiting.
+#
+# Any ref but main goes to GitHub's: the repo is public, and a fork's workflow
+# must never reach the self-hosted machines.
+
+name: Runner
+
+on:
+  workflow_call:
+    outputs:
+      runs-on:
+        description: A JSON runs-on value for fromJSON.
+        value: ${{ jobs.pick.outputs.runs-on }}
+    secrets:
+      RUNNER_STATUS_TOKEN:
+        required: false
+
+permissions: {}
+
+jobs:
+  pick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      runs-on: ${{ steps.pick.outputs.runs-on }}
+    steps:
+      - name: Pick the first online runner in the order Linux, Windows, GitHub
+        id: pick
+        env:
+          TOKEN: ${{ secrets.RUNNER_STATUS_TOKEN }}
+          REF: ${{ github.ref }}
+        run: |
+          pick() {
+            echo "runs-on=$1" >> "$GITHUB_OUTPUT"
+            echo "Runs on $1" >> "$GITHUB_STEP_SUMMARY"
+            echo "Runs on $1"
+            exit 0
+          }
+          [ "$REF" = refs/heads/main ] || pick '"ubuntu-latest"'
+          if [ -z "$TOKEN" ]; then
+            echo "::warning::No RUNNER_STATUS_TOKEN, so this waits for either self-hosted runner instead of falling back to GitHub's."
+            pick '["self-hosted","X64"]'
+          fi
+          if ! runners="$(curl -fsS -m 20 -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runners?per_page=100")"; then
+            echo "::warning::The runners API refused RUNNER_STATUS_TOKEN or did not answer; running on GitHub's."
+            pick '"ubuntu-latest"'
+          fi
+          for os in Linux Windows; do
+            online="$(jq --arg os "$os" '[.runners[] | select(.status == "online" and .os == $os
+              and any(.labels[]; .name == "self-hosted") and any(.labels[]; .name == "X64"))] | length' <<< "$runners")"
+            [ "$online" -gt 0 ] && pick "[\"self-hosted\",\"$os\",\"X64\"]"
+          done
+          pick '"ubuntu-latest"'

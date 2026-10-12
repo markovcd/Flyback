@@ -25,7 +25,7 @@ Where input or code from outside crosses into Flyback, what stands at the door, 
 | The preset site's forms | Injection, an oversized upload, one user reaching another's data | Checks at the Worker; parameters, not concatenation; rate limits; uploads unpublished until the admin publishes | `worker/src/checks.ts`, `limits.ts` |
 | The admin page | A request that skips Access | The Worker verifies the Access token itself | `worker/src/access.ts` |
 | A submitted plugin | A package that runs when reviewed | Decompiled and read, never run | `/review-plugin` |
-| CI | A fork's pull request on the self-hosted runner | The runner builds `main` only; workflows pinned to SHAs, least permission; secrets reach Release and Site only | [pipeline.md](agents/rules/pipeline.md) |
+| CI | A fork's pull request on the self-hosted runner | The self-hosted runners build `main` only (`runner.yml` picks GitHub's for any other ref); workflows pinned to SHAs, least permission; secrets reach Release and Site only | [pipeline.md](agents/rules/pipeline.md) |
 | Usage statistics | Identifying a person | Counts what was played and nothing of who; `Usage.cs` is the whole list | ADR-0094 |
 | Dependencies | Code nobody here read | The engine takes none; restores are locked to `packages.lock.json` | ADR-0019 |
 

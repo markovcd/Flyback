@@ -28,14 +28,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # A run on main goes to a self-hosted runner and waits for one; any other
-  # ref stays on GitHub's (see ci.yml for why).
+  # Linux self-hosted if online, else Windows, else GitHub's (runner.yml).
+  runner:
+    uses: ./.github/workflows/runner.yml
+    secrets:
+      RUNNER_STATUS_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.RUNNER_STATUS_TOKEN || '' }}
+
   measure:
+    needs: runner
     outputs:
       why: ${{ steps.linux.outputs.why || steps.windows.outputs.why }}
-    runs-on: ${{ github.ref == 'refs/heads/main' && fromJSON('["self-hosted","X64"]') || 'ubuntu-latest' }}
-    # A run is about ten minutes; the default of six hours is what a hang costs.
-    timeout-minutes: 30
+    runs-on: ${{ fromJSON(needs.runner.outputs.runs-on) }}
+    # About ten minutes on a warm self-hosted cache, longer cold on GitHub's; the
+    # default of six hours is what a hang costs.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

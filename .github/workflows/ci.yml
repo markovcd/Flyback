@@ -30,13 +30,18 @@ concurrency:
   cancel-in-progress: ${{ github.event_name != 'push' }}
 
 jobs:
-  # A run on main goes to a self-hosted runner, Windows or Linux, whichever is
-  # online, and waits for one. Any other ref, a pull request included, stays on
-  # GitHub's: the repo is public, and a fork's workflow would run on that
-  # machine. Either runner needs Docker with buildx.
+  # Linux self-hosted if online, else Windows, else GitHub's; any ref but main on
+  # GitHub's (runner.yml). Either self-hosted runner needs Docker with buildx.
+  runner:
+    uses: ./.github/workflows/runner.yml
+    secrets:
+      RUNNER_STATUS_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.RUNNER_STATUS_TOKEN || '' }}
+
   build:
-    runs-on: ${{ github.ref == 'refs/heads/main' && fromJSON('["self-hosted","X64"]') || 'ubuntu-latest' }}
-    # A run is about seven minutes; the default of six hours is what a hang costs.
+    needs: runner
+    runs-on: ${{ fromJSON(needs.runner.outputs.runs-on) }}
+    # About seven minutes on a self-hosted runner and eleven on GitHub's; the
+    # default of six hours is what a hang costs.
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

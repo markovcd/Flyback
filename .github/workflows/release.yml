@@ -30,16 +30,23 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    # Only from main, and only on a self-hosted runner, where ci.yml builds
-    # main. release.sh runs the gate again and publishes from that same build;
-    # the Windows and the Linux runner each keep a cache of their own, so on the
-    # other machine from ci.yml's run that gate is a rebuild and a retest. The key
-    # is the secret below, held in this step's environment and never written to a file.
+  # Linux self-hosted if online, else Windows, else GitHub's (runner.yml).
+  runner:
     if: github.ref == 'refs/heads/main'
-    runs-on: [self-hosted, X64]
-    # A run is about six minutes; the default of six hours is what a hang costs.
-    timeout-minutes: 30
+    uses: ./.github/workflows/runner.yml
+    secrets:
+      RUNNER_STATUS_TOKEN: ${{ secrets.RUNNER_STATUS_TOKEN }}
+
+  release:
+    # Only from main. release.sh runs the gate again and publishes from that same
+    # build; each runner keeps a cache of its own, so on another machine from
+    # ci.yml's run that gate is a rebuild and a retest. The key is the secret
+    # below, held in this step's environment and never written to a file.
+    needs: runner
+    runs-on: ${{ fromJSON(needs.runner.outputs.runs-on) }}
+    # About six minutes on a warm self-hosted cache, several times that cold on
+    # GitHub's; the default of six hours is what a hang costs.
+    timeout-minutes: 60
     outputs:
       tag: ${{ steps.linux.outputs.tag || steps.version.outputs.tag }}
     steps:
@@ -47,6 +54,9 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        if: runner.environment == 'github-hosted'
 
       # Checks the key and the changelog before building, then builds, tests,
       # packs and signs into dist/. The input reaches the script as a variable,
