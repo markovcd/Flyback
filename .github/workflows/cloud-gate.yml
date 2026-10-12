@@ -57,9 +57,6 @@ jobs:
   # android-smoke.sh, on the API level of the local AVD the smoke was written
   # against. /release refuses a commit this job has not passed on. GitHub's Linux
   # runners give a container KVM once its device is opened to the runner's user.
-  # The emulator plays into PulseAudio, which the runner lacks; without a server
-  # AudioTrack may never drain and the clock stays at zero, so one runs with a
-  # null sink.
   android:
     if: inputs.os == 'all' || inputs.os == 'android'
     runs-on: ubuntu-latest
@@ -87,14 +84,6 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-
-      - name: Start PulseAudio with a null sink
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq pulseaudio > /dev/null
-          pulseaudio --start --exit-idle-time=-1
-          pactl load-module module-null-sink sink_name=silent
-          pactl set-default-sink silent
 
       - name: Start the editor on an emulator and ask it how it is doing
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
