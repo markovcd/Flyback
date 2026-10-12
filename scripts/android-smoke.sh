@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs the Android editor on a device or an emulator and asks it how it is doing, so
-# a session checks the APK without a window (ADR-0184): the app boots on a preset, the
+# a session checks the APK without a window (ADR-0184): the app boots on a preset, Play is pressed, the
 # picture draws, AudioTrack plays, the sound's IL runs under Mono's JIT, the state
 # broadcast answers, and all of it holds after a rotation.
 #
@@ -118,8 +118,9 @@ adb shell am start -W -n "$activity" --es preset "$preset" --ez interpreted "$in
   || fail "the activity would not start"
 
 # The editor's answer to the broadcast: the JSON in the result's data, or nothing before it listens.
+# PLAY presses Play before answering, since a patch opens paused.
 ask() {
-  adb shell am broadcast -a "$package.STATE" -p "$package" 2>/dev/null | tr -d '\r' | sed -n 's/.*data="\(.*\)"$/\1/p'
+  adb shell am broadcast -a "$package.${1:-STATE}" -p "$package" 2>/dev/null | tr -d '\r' | sed -n 's/.*data="\(.*\)"$/\1/p'
 }
 
 # A field of the last answer: a string without its quotes, or a bare number, true, false or null.
@@ -129,6 +130,16 @@ field() {
 
 state=""
 asked_at=$SECONDS
+
+# Pressed once the program is in, so Play is not taken back by the patch opening.
+loaded() {
+  state="$(ask)"
+  [ -n "$state" ] && [ "$(field soundRunsOn)" != null ] && [ -n "$(field soundRunsOn)" ]
+}
+
+await 120 loaded || fail "the patch did not open within two minutes; the last answer: ${state:-none}"
+state="$(ask PLAY)"
+echo "$(( SECONDS - asked_at ))s, Play pressed: $state" >&2
 
 # Done when the sound has been timed, or, on the interpreter, once its program is in.
 settled() {
