@@ -214,12 +214,62 @@ public class ShippedPluginList : Task
     </Task>
   </UsingTask>
 
+  <!--
+    Deletes every folder under plugins/ this build does not lay out, so a plugin an
+    earlier build shipped and this one does not is not left to load as not allowed.
+    A folder installed from a package (it holds package.sha256) and the installer's
+    own dot-folders are kept.
+  -->
+  <UsingTask TaskName="UnshippedPluginFolders" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Root ParameterType="System.String" Required="true" />
+      <Folders ParameterType="System.String[]" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Code Type="Class" Language="cs"><![CDATA[
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
+
+public class UnshippedPluginFolders : Task
+{
+    [Required] public string Root { get; set; }
+
+    [Required] public string[] Folders { get; set; }
+
+    public override bool Execute()
+    {
+        if (!Directory.Exists(Root)) return true;
+
+        var shipped = new HashSet<string>(Folders, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var folder in Directory.EnumerateDirectories(Root))
+        {
+            var name = Path.GetFileName(folder);
+
+            if (name.StartsWith(".") || shipped.Contains(name) || File.Exists(Path.Combine(folder, "package.sha256"))) continue;
+
+            Log.LogMessage(MessageImportance.High, "Deleting plugins/" + name + ", which this build does not ship.");
+            Directory.Delete(folder, true);
+        }
+
+        return true;
+    }
+}
+]]></Code>
+    </Task>
+  </UsingTask>
+
   <Target Name="BuildPlugins" AfterTargets="Build" DependsOnTargets="SelectPlugins" Condition="'@(PluginProject)' != ''">
 
     <PropertyGroup>
       <!-- Combined rather than concatenated: OutDir is relative by default and absolute when one is given. -->
       <PluginBuildRoot>$([MSBuild]::EnsureTrailingSlash($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(OutDir)', 'plugins'))))</PluginBuildRoot>
     </PropertyGroup>
+
+    <UnshippedPluginFolders Root="$(PluginBuildRoot)" Folders="@(ShippedPlugin->'%(FolderName)')" />
 
     <!--
       Restored here, not assumed: a plugin for another platform is never a
