@@ -78,9 +78,27 @@ jobs:
         with:
           persist-credentials: false
 
+      # The SDK and its wasm-tools workload in a folder of the run's own, kept between
+      # runs: installing the workload is most of a cold start.
+      - name: Name the SDK's folder
+        run: echo "DOTNET_INSTALL_DIR=$RUNNER_TEMP/dotnet" >> "$GITHUB_ENV"
+
+      - name: Restore the SDK and its workload
+        id: sdk
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/dotnet
+          key: dotnet-${{ runner.os }}-${{ hashFiles('global.json') }}-wasm-tools
+
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: global.json
+
+      # Keyed on what a locked restore resolves, so a cached package is the one asked for.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.lock.json', 'Directory.Packages.props') }}
 
       - name: Install ffmpeg (Windows)
         if: runner.os == 'Windows'
@@ -95,6 +113,7 @@ jobs:
 
       # Links Skia and HarfBuzz into the web editor's runtime, as the gate's image does.
       - name: Install the wasm-tools workload
+        if: steps.sdk.outputs.cache-hit != 'true'
         run: dotnet workload install wasm-tools
 
       # Chrome is on both images, under a path the specs do not search.
@@ -161,8 +180,9 @@ jobs:
         run: exit "$(cat test-results/exit-code)"
 
   # The APK on an x86_64 emulator, started, timed and turned sideways by
-  # android-smoke.sh. GitHub's Linux runners give a container KVM once its device
-  # is opened to the runner's user.
+  # android-smoke.sh, on the API level of the local AVD the smoke was written
+  # against. GitHub's Linux runners give a container KVM once its device is
+  # opened to the runner's user.
   android:
     if: inputs.os == 'all' || inputs.os == 'android'
     runs-on: ubuntu-latest
@@ -194,9 +214,9 @@ jobs:
       - name: Start the editor on an emulator and ask it how it is doing
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
-          api-level: 34
+          api-level: 36
           arch: x86_64
           target: google_apis
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          emulator-options: -no-window -gpu swiftshader_indirect -no-boot-anim -no-snapshot
           disable-animations: true
           script: bash scripts/android-smoke.sh
