@@ -204,6 +204,43 @@ public sealed class AsioOutputTests : IDisposable
     }
 
     [Fact]
+    public void A_driver_that_stops_answering_as_it_starts_is_given_up_on_and_let_go_once_it_answers()
+    {
+        using var stuck = new ManualResetEventSlim();
+        using var hanging = new AsioAudioDevice(Format, driver.Load, TimeSpan.FromMilliseconds(200));
+
+        driver.Stuck = stuck;
+
+        Should.Throw<TimeoutException>(() => hanging.Start(Stereo(0f, 0f))).Message.ShouldContain("did not answer");
+        hanging.IsRunning.ShouldBeFalse();
+        Should.Throw<InvalidOperationException>(() => hanging.Start(Stereo(0f, 0f))).Message.ShouldContain("stopped answering");
+
+        stuck.Set();
+
+        SpinWait.SpinUntil(() => driver.Released, TimeSpan.FromSeconds(10)).ShouldBeTrue();
+        driver.Started.ShouldBeFalse();
+        hanging.IsRunning.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void A_driver_that_stops_answering_as_it_stops_is_left_behind_without_waiting()
+    {
+        using var stuck = new ManualResetEventSlim();
+        using var hanging = new AsioAudioDevice(Format, driver.Load, TimeSpan.FromMilliseconds(200));
+
+        hanging.Start(Stereo(0f, 0f));
+        driver.Stuck = stuck;
+
+        Should.NotThrow(hanging.Stop);
+        hanging.IsRunning.ShouldBeFalse();
+        driver.Released.ShouldBeFalse();
+
+        stuck.Set();
+
+        SpinWait.SpinUntil(() => driver.Released, TimeSpan.FromSeconds(10)).ShouldBeTrue();
+    }
+
+    [Fact]
     public void It_says_which_messages_it_answers()
     {
         device.Start(Stereo(0f, 0f));

@@ -12,11 +12,20 @@ namespace Flyback.Plugins.WinIO;
 /// </remarks>
 internal sealed class AsioThread : IDisposable
 {
+    /// <summary>How long a driver call is waited on: ASIO4ALL takes a second or two to open its card.</summary>
+    public static readonly TimeSpan Patience = TimeSpan.FromSeconds(5);
+
     private readonly BlockingCollection<Action> work = new();
     private readonly Thread thread;
+    private readonly TimeSpan patience;
 
-    public AsioThread()
+    /// <summary>Set once a call has outlasted the patience, which leaves the thread stuck inside the driver.</summary>
+    private volatile bool wedged;
+
+    /// <param name="patience">How long a call may take before the driver is given up on, so a driver that hangs never hangs its caller.</param>
+    public AsioThread(TimeSpan? patience = null)
     {
+        this.patience = patience ?? Patience;
         thread = new Thread(Run) { IsBackground = true, Name = "ASIO driver" };
 
         if (OperatingSystem.IsWindows()) thread.SetApartmentState(ApartmentState.STA);
@@ -24,7 +33,10 @@ internal sealed class AsioThread : IDisposable
         thread.Start();
     }
 
-    /// <summary>Runs <paramref name="job"/> on the driver's thread and waits for it, throwing what it threw.</summary>
+    /// <summary>
+    /// Runs <paramref name="job"/> on the driver's thread and waits for it, throwing what it threw.
+    /// </summary>
+    /// <exception cref="TimeoutException">The driver did not answer in time, now or on an earlier call.</exception>
     public void Invoke(Action job)
     {
         if (Thread.CurrentThread == thread)
@@ -32,6 +44,8 @@ internal sealed class AsioThread : IDisposable
             job();
             return;
         }
+
+        if (wedged) throw Unanswered();
 
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -48,18 +62,31 @@ internal sealed class AsioThread : IDisposable
             }
         });
 
+        if (!((IAsyncResult)done.Task).AsyncWaitHandle.WaitOne(patience))
+        {
+            wedged = true;
+            throw Unanswered();
+        }
+
         done.Task.GetAwaiter().GetResult();
     }
 
+    /// <summary>Queues <paramref name="job"/> behind whatever the driver's thread is stuck in, without waiting.</summary>
+    public void Post(Action job) => work.Add(job);
+
+    /// <summary>Lets the thread finish its queue. Waits for it, unless it is stuck inside the driver.</summary>
     public void Dispose()
     {
         work.CompleteAdding();
 
-        if (Thread.CurrentThread == thread) return;
+        if (Thread.CurrentThread == thread || wedged) return;
 
         thread.Join();
         work.Dispose();
     }
+
+    private TimeoutException Unanswered() =>
+        new($"the driver did not answer in {patience.TotalSeconds:0.#} seconds; restart Flyback to try it again.");
 
     private void Run()
     {

@@ -30,7 +30,10 @@ Windows and no driver.
 
 **The driver lives on a thread of its own.** `IASIO` is a COM object in shape only, with
 no proxy, so it is created, called and released on one single-threaded apartment,
-`AsioThread`. The driver's audio thread calls back directly.
+`AsioThread`. The driver's audio thread calls back directly. A call the driver has not
+answered in five seconds is given up on: the sound says why and stays off, the driver is
+released whenever it does answer, and it is not started again until Flyback restarts. A
+driver that hangs never hangs the window or the launch.
 
 **Nothing is held until `Start`, but the driver is asked its rate first.** `Create` loads
 the driver for long enough to ask: one that can be set to the engine's rate plays at it,

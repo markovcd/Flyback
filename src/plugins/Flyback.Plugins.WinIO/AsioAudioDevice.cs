@@ -16,7 +16,8 @@ namespace Flyback.Plugins.WinIO;
 /// </remarks>
 /// <param name="format">What to play; its rate is set on the driver.</param>
 /// <param name="load">Creates the driver, on the thread it will live on.</param>
-internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver> load) : IAudioDevice
+/// <param name="patience">How long a driver call is waited on before the driver is given up on.</param>
+internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver> load, TimeSpan? patience = null) : IAudioDevice
 {
     /// <summary>The device the driver's callbacks reach, which carry no pointer of their own.</summary>
     private static AsioAudioDevice? playing;
@@ -35,6 +36,9 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
     private AudioCallback? fill;
     private volatile bool running;
 
+    /// <summary>Set once the driver stopped answering; it is let go of when it does answer, and never started again.</summary>
+    private volatile bool abandoned;
+
     public int SampleRate => format.SampleRate;
 
     /// <summary>What the driver says its output latency is, or one block where it says nothing.</summary>
@@ -43,14 +47,14 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
     public bool IsRunning => running;
 
     /// <summary>A device at the rate asked for where the driver can be set to it, and at the driver's own where it cannot.</summary>
-    public static AsioAudioDevice Open(AudioFormat format, Func<AsioDriver> load) =>
-        new(format with { SampleRate = RateFor(format.SampleRate, load) }, load);
+    public static AsioAudioDevice Open(AudioFormat format, Func<AsioDriver> load, TimeSpan? patience = null) =>
+        new(format with { SampleRate = RateFor(format.SampleRate, load, patience) }, load, patience);
 
     /// <summary>
     /// Loads the driver for long enough to ask its rate. A device already playing answers instead,
     /// since a driver loaded twice may stop the one playing.
     /// </summary>
-    private static int RateFor(int wanted, Func<AsioDriver> load)
+    private static int RateFor(int wanted, Func<AsioDriver> load, TimeSpan? patience)
     {
         if (Volatile.Read(ref playing) is { } other) return other.SampleRate;
 
@@ -58,7 +62,7 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
 
         try
         {
-            using var thread = new AsioThread();
+            using var thread = new AsioThread(patience);
 
             thread.Invoke(() =>
             {
@@ -85,11 +89,13 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
         {
             if (running) return;
 
+            if (abandoned) throw new InvalidOperationException("the driver stopped answering; restart Flyback to try it again.");
+
             // A driver that asked to be reset, or stopped some other way, is let go first.
             Teardown();
 
             this.fill = fill;
-            thread = new AsioThread();
+            thread = new AsioThread(patience);
 
             try
             {
@@ -181,14 +187,26 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
             throw new InvalidOperationException(Said(driver.ErrorMessage, "the driver would not play"));
     }
 
-    /// <summary>Stops and releases the driver, then its thread. Under <see cref="gate"/>.</summary>
+    /// <summary>
+    /// Stops and releases the driver, then its thread. Under <see cref="gate"/>. A driver that has
+    /// stopped answering is released once it answers, and nothing waits for it.
+    /// </summary>
     private void Teardown()
     {
         running = false;
 
         if (thread is null) return;
 
-        thread.Invoke(Close);
+        try
+        {
+            thread.Invoke(Close);
+        }
+        catch (TimeoutException)
+        {
+            abandoned = true;
+            thread.Post(Close);
+        }
+
         thread.Dispose();
         thread = null;
     }
@@ -196,6 +214,9 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
     /// <summary>On the driver's thread. A driver that has stopped calls back no more.</summary>
     private void Close()
     {
+        // Where the driver was given up on, a start it was stuck in may have finished since.
+        running = false;
+
         if (driver is not null)
         {
             _ = driver.Stop();

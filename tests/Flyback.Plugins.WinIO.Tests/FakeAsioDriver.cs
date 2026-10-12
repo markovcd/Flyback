@@ -37,6 +37,9 @@ internal sealed unsafe class FakeAsioDriver : IDisposable
 
     public bool ListensForReady { get; set; } = true;
 
+    /// <summary>Where set, starting and stopping wait on it, as a driver that has stopped answering does.</summary>
+    public ManualResetEventSlim? Stuck { get; set; }
+
     public int Loads { get; private set; }
 
     public bool Started { get; private set; }
@@ -121,6 +124,7 @@ internal sealed unsafe class FakeAsioDriver : IDisposable
     [UnmanagedCallersOnly]
     private static int Start(IntPtr instance)
     {
+        Of(instance).Stuck?.Wait();
         Of(instance).Started = true;
         return 0;
     }
@@ -128,6 +132,7 @@ internal sealed unsafe class FakeAsioDriver : IDisposable
     [UnmanagedCallersOnly]
     private static int Stop(IntPtr instance)
     {
+        Of(instance).Stuck?.Wait();
         Of(instance).Started = false;
         return 0;
     }
