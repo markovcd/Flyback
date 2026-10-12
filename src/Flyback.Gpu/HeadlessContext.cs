@@ -5,9 +5,8 @@ using static Flyback.Gpu.GlConstants;
 namespace Flyback.Gpu;
 
 /// <summary>
-/// An OpenGL context with no window to show: EGL with no surface on Linux, a
-/// hidden window's WGL context on Windows, and CGL with no drawable on macOS.
-/// Current on the thread that opened it.
+/// An OpenGL context with no window to show: EGL with no surface on Linux, and a
+/// hidden window's WGL context on Windows. Current on the thread that opened it.
 /// </summary>
 internal abstract partial class HeadlessContext : IDisposable
 {
@@ -29,7 +28,6 @@ internal abstract partial class HeadlessContext : IDisposable
     {
         if (OperatingSystem.IsWindows()) return WglContext.Open(out why);
         if (OperatingSystem.IsLinux()) return EglContext.Open(out why);
-        if (OperatingSystem.IsMacOS()) return CglContext.Open(out why);
 
         why = "There is no headless OpenGL on this platform.";
         return null;

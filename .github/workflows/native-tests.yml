@@ -6,7 +6,8 @@
 # Keychain) run nowhere else. Each machine is given what the gate's image carries
 # and it lacks: ffmpeg, and on Windows Mesa's software OpenGL beside the test
 # hosts. FLYBACK_GATE stays unset, so what is still missing skips its test and the
-# summary's skip table names it: JACK and ALSA are Linux's.
+# summary's skip table names it: JACK and ALSA are Linux's, and macOS has no
+# headless OpenGL.
 #
 # Every action is pinned to a commit rather than a tag; Dependabot says when a
 # pin should move.
