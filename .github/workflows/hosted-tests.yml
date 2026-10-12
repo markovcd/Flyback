@@ -1,0 +1,91 @@
+# Runs every test in the solution natively on GitHub's windows-latest and
+# macos-latest, by hand, on either or both.
+#
+# The gate runs in a Linux image, so the tests only Windows can run (the registry,
+# WASAPI, DPAPI, Direct3D, WinIO) or only macOS can (CoreAudio, CoreMIDI, the
+# Keychain) run nowhere else. This is a probe of what a bare hosted machine
+# lacks: nothing is installed beyond the pinned SDK, and
+# FLYBACK_GATE is unset, so a missing tool skips its test and the summary's skip
+# table names it. docs/handoff/tests-on-github-hosted-runners.md is the plan this
+# serves.
+#
+# Every action is pinned to a commit rather than a tag; Dependabot says when a
+# pin should move.
+
+name: Hosted tests
+
+run-name: Hosted tests on ${{ inputs.os }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      os:
+        description: Which hosted machine to test on.
+        type: choice
+        options: [both, windows, macos]
+        default: both
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      # One machine's failure says nothing about the other's.
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(inputs.os == 'both' && '["windows","macos"]' || format('["{0}"]', inputs.os)) }}
+    runs-on: ${{ matrix.os }}-latest
+    # Restore, build and the suite, cold; the default of six hours is what a hang costs.
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+      # The summary writes non-ASCII; Windows' default code page would refuse it.
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      # Locked and Release, as the gate builds.
+      - name: Restore and build
+        run: |
+          dotnet restore Flyback.slnx --locked-mode
+          dotnet build Flyback.slnx -c Release --no-restore
+
+      # The run never fails this step, so the summary is written from a failing one.
+      # No test host takes ten minutes, so one that has finished nothing for ten has hung.
+      - name: Test
+        run: |
+          mkdir -p test-results
+          set +e
+          dotnet test --solution Flyback.slnx -c Release --no-build \
+            --hangdump --hangdump-timeout 10m --hangdump-type Mini \
+            --report-xunit-junit --results-directory test-results
+          echo $? > test-results/exit-code
+
+      # Python is python3 on macOS and python on Windows.
+      - name: Summarize
+        run: |
+          python3 -c '' 2>/dev/null || python3() { python "$@"; }
+          python3 scripts/test-summary.py > test-results/summary.md
+          cat test-results/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: ${{ matrix.os }}-test-results
+          path: test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Fail on a failed run
+        run: exit "$(cat test-results/exit-code)"
