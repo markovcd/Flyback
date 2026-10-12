@@ -57,9 +57,9 @@ jobs:
   # android-smoke.sh, on the API level of the local AVD the smoke was written
   # against. /release refuses a commit this job has not passed on. GitHub's Linux
   # runners give a container KVM once its device is opened to the runner's user.
-  # Their emulator has no PulseAudio to play into, so AudioTrack never drains and
-  # the clock stays at zero; `-audio none` drains it silently, as the script's own
-  # boot does.
+  # The emulator plays into PulseAudio, which the runner lacks; without a server
+  # AudioTrack may never drain and the clock stays at zero, so one runs with a
+  # null sink.
   android:
     if: inputs.os == 'all' || inputs.os == 'android'
     runs-on: ubuntu-latest
@@ -88,12 +88,20 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Start PulseAudio with a null sink
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq pulseaudio > /dev/null
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=silent
+          pactl set-default-sink silent
+
       - name: Start the editor on an emulator and ask it how it is doing
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 36
           arch: x86_64
           target: google_apis
-          emulator-options: -no-window -gpu swiftshader_indirect -audio none -no-boot-anim -no-snapshot
+          emulator-options: -no-window -gpu swiftshader_indirect -no-boot-anim -no-snapshot
           disable-animations: true
           script: bash scripts/android-smoke.sh

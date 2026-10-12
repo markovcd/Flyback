@@ -60,6 +60,8 @@ trap cleanup EXIT
 
 fail() {
   echo "FAIL: $*" >&2
+  echo "--- the device's audio output threads and tracks" >&2
+  adb shell dumpsys media.audio_flinger 2>/dev/null | grep -E -A3 "Output thread|Standby|Tracks|Frames written|underrun|Hal stream" | head -n 60 >&2 || true
   if pid="$(adb shell pidof "$package" 2>/dev/null | tr -d '[:space:]')" && [ -n "$pid" ]; then
     echo "--- logcat of $package ($pid)" >&2
     adb logcat -d --pid="$pid" 2>/dev/null | tail -n 80 >&2 || true
