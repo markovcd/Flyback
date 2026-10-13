@@ -854,7 +854,7 @@ internal sealed class OverworldPreset : PresetBench
         // A dark strip along the top with how far through the level it is: which
         // phrase, and how far into it, as a bar that fills from the left.
         var inBar = Formula(
-            "(1 - smoothstep(0.019, 0.021, abs(b - 0.925))) * step(a, (c - 1 + d) * (1 / 13) * 2.8 - 1.4) * smoothstep(-1.42, -1.4, a)",
+            "window(b, 0.904, 0.946, 0.002, 0.002) * window(a, -1.42, (c - 1 + d) * (1 / 13) * 2.8 - 1.4, 0.02)",
             px, py, new Read(parts, SectionNumber), phraseGone);
         var dimmed = b.Add("color.gain");
 

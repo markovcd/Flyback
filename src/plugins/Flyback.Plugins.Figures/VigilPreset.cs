@@ -187,7 +187,7 @@ internal static class VigilPreset
         // --- the dark -----------------------------------------------------------
 
         // A low plate struck three times in the middle, like a door far below.
-        var knells = Formula(b, "step((a + 16) % 64, 0.3) * step(100, a) * step(a, 245)", (place, 0));
+        var knells = Formula(b, "step((a + 16) % 64, 0.3) * window(a, 100, 245)", (place, 0));
 
         var knell = PlateModule.WithModes(b.Add(
             PlateModule.TypeId,
@@ -281,7 +281,7 @@ internal static class VigilPreset
         var cold = b.Add("color.ink", (2, 0.3f), (3, 0.55f), (4, 1f));
 
         // Each knell a red swell from the floor, and a ring rising through the dark from below.
-        var knellAge = Formula(b, "((a + 16) % 64) * step(100, a) + 64 * step(250, a) + 64 * step(a, 100)", (place, 0));
+        var knellAge = Formula(b, "mix(64, (a + 16) % 64, window(a, 100, 250))", (place, 0));
         var rising = Formula(
             b,
             "smoothstep(0, 0.2, a) * (exp(-a * 0.5) * smoothstep(0.2, -1.1, c) * 0.6 + exp(-a * 0.3) * exp(-pow((hypot(b, c + 1.3) - 0.3 - a * 0.28) * 9, 2)) * 0.45)",

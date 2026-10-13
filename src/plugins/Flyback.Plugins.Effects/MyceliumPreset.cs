@@ -752,13 +752,11 @@ internal static class MyceliumPreset
         var wall = b.Add("math.smoothstep", (0, 0f), (1, 0.09f));
         var threads = b.Add("math.sub", (0, 1f));
 
-        // Which cells flash with the hats. Each cell's own number, scattered, plus a
-        // step that moves on with the pattern; the top eighth of what results is
-        // chosen, and a different eighth on the next hit.
-        var cellDice = b.Add("math.mul", (1, 13.7f));
-        var hatStep = b.Add("math.mul", (1, 5f));
-        var cellPick = b.Add("math.add");
-        var cellRoll = b.Add("math.fract");
+        // Which cells flash with the hats: a die thrown for each cell's own number,
+        // another die on each step of the pattern, and the top eighth lights.
+        var cellDice = b.Add("math.mul", (1, 997f));
+        var hatStep = b.Add("math.mul", (1, 16f));
+        var cellRoll = b.Add("math.dice");
         var chosen = b.Add("math.step", (0, 0.88f));
         var sparkHit = b.Add("math.mul");
         var spark = b.Add("math.mul");
@@ -782,9 +780,8 @@ internal static class MyceliumPreset
          .Wire(wall, 0, threads, 1)
          .Wire(colony, 2, cellDice, 0)
          .Wire(hatHits, 2, hatStep, 0)
-         .Wire(cellDice, 0, cellPick, 0)
-         .Wire(hatStep, 0, cellPick, 1)
-         .Wire(cellPick, 0, cellRoll, 0)
+         .Wire(cellDice, 0, cellRoll, 0)
+         .Wire(hatStep, 0, cellRoll, 1)
          .Wire(cellRoll, 0, chosen, 1)
          .Wire(chosen, 0, sparkHit, 0)
          .Wire(hatHits, 0, sparkHit, 1)
@@ -792,7 +789,7 @@ internal static class MyceliumPreset
          .Wire(cutting, Hats, spark, 1);
 
         b.Group("Picture: Growth", boil, field, reach, bent, churn, cellSize, colony, wall, threads,
-            cellDice, hatStep, cellPick, cellRoll, chosen, sparkHit, spark);
+            cellDice, hatStep, cellRoll, chosen, sparkHit, spark);
 
         // --- the picture: color ----------------------------------------------
 

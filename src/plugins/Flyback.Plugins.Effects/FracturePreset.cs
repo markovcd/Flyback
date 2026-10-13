@@ -506,16 +506,14 @@ internal sealed class FracturePreset : PresetBench
         // --- the picture: sparks ---------------------------------------------
 
         // The bells are squares on a grid of four to the unit, and so is the lead while
-        // it has their place. Each cell has a number of its own, the die that chose the
-        // note is added to it, and the top seventh of what results lights: a different
-        // handful of cells for every note. The number is Clouds read at the cell's
-        // whole corner, where value noise is the hash itself and so the same on the GPU.
+        // it has their place. A die is thrown for each cell's number, seeded by the die
+        // that chose the bell's note and by the lead's note, and the top seventh lights:
+        // a different handful of cells for every note.
         var cellX = Times(coord, 4f);
         var cellY = Times(coord, 4f, 1);
-        var scatter = b.Add("pattern.clouds", (2, 5f), (3, 1f));
-        b.Wire(Floor(cellX), 0, scatter, 0)
-         .Wire(Floor(cellY), 0, scatter, 1);
-        var chosen = b.Add("math.step", (0, 0.85f));
+        var chosen = Formula(
+            "step(0.85, dice(floor(a) + floor(b) * 17, c * 12 + d))",
+            cellX, cellY, new Read(notes, Held), leadLine);
         var tile = b.Add(BoxType, (2, 0.3f), (3, 0.3f), (4, 0f));
         var tileFill = b.Add(FillType, (1, 0.02f));
 
@@ -524,8 +522,7 @@ internal sealed class FracturePreset : PresetBench
         var speck = b.Add(NoiseType, (1, 64f), (2, 6f));
         var grain = Product(Times(Size(speck), 0.22f), hatStroke);
 
-        b.Wire(Fraction(Sum(Sum(scatter, Times(notes, 3.7f, Held)), Times(leadLine, 0.37f))), 0, chosen, 1)
-         .Wire(Plus(Fraction(cellX), -0.5f), 0, tile, 0)
+        b.Wire(Plus(Fraction(cellX), -0.5f), 0, tile, 0)
          .Wire(Plus(Fraction(cellY), -0.5f), 0, tile, 1)
          .Wire(tile, 0, tileFill, 0)
          .Wire(Sum(Sum(Times(coord, 97.3f), Times(coord, 413.7f, 1)), Times(clock, 60f)), 0, speck, 0);
