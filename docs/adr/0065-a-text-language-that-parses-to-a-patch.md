@@ -251,3 +251,14 @@ A printing writes each group as a block, cutting a chain at a box's edge with a
 `let` so a block places only its own group's modules. Blocks with the same name
 are one group, so a group whose modules cannot be written together is opened
 again, and a group built from text is shut.
+
+## Amendment, 2026-10-13: a def call is drawn as a box
+
+A def's call leaves a shut group round the modules it stamped out, named after
+the `let` that binds its result or else the def. It is a box and not a
+definition: calls still share nothing, and the box is presentation the compiler
+never sees, so the reason a group cannot be instantiated still holds. Only the
+outermost call is boxed, since a group holds modules and never another group; a
+call inside a `group` block is in the block's box, and a call that places fewer
+than two modules draws none. Printing writes each box as a `group` block, so a
+printed def comes back boxed but no longer a def.

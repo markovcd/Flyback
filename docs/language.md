@@ -649,6 +649,14 @@ exception, being one shared node per patch wherever they are written.) A value t
 def, passed in as an argument — which is the same distinction the graph itself
 makes between a module and a wire from one.
 
+**Each call is drawn as a box.** The modules a call stamps out are a shut group,
+named after the `let` that binds the call's result, `let bass = voice(A2)`, and
+otherwise after the def. Only the outermost call is boxed: a def called inside
+another def's body is in its caller's box, and one called inside a `group` block
+is in the block's. What the caller passes in, and the clock and coordinates,
+stay outside. A call that places fewer than two modules draws no box and says
+nothing.
+
 The body is a block. Its result is the final expression, which may be a tuple,
 and `let (a, b) = f(...)` takes one apart. A single-expression body needs no
 braces.
@@ -798,7 +806,7 @@ each paying only for what it reaches
 | modules, wires, knob values | node ids, which are regenerated |
 | what a module carries — notes, scales, file paths | canvas positions, re-laid by `PatchLayout.Arrange` |
 | a plugin's declared fields, as named arguments | whether a group is open, and a socket on its edge with no wire |
-| `let` names, as the node's own label | comments, formatting, and every `def`, expanded |
+| `let` names, as the node's own label | comments, formatting, and every `def`, expanded, each call's box a `group` block |
 | plugin requirements, recomputed on write | — |
 | which modules are switched off | — |
 | the panel's knobs, what each follows, and every socket following one | — |

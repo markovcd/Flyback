@@ -31,6 +31,9 @@ public sealed class Binder
     private readonly Dictionary<string, DefStatement> defs = new(StringComparer.Ordinal);
     private readonly HashSet<string> expanding = new(StringComparer.Ordinal);
 
+    /// <summary>Whether a group block is open, whose box holds whatever a def call inside it makes.</summary>
+    private bool inBlock;
+
     private readonly SourceSites sourceSites = new();
     private readonly Carrying carrying;
     private readonly PatchLines lines;
@@ -219,6 +222,7 @@ public sealed class Binder
                 if (Bind(let.Value, scope) is { } value)
                 {
                     Label(value, let.Name);
+                    boxes.Name(value, let.Name);
                     scope.Set(let.Name, value, let.Line);
                     Owns(value);
 
@@ -544,6 +548,9 @@ public sealed class Binder
         var before = patch.Nodes.Select(n => n.Id).ToHashSet();
         var said = issues.Count;
         var inner = new Scope(scope);
+        var outerBlock = inBlock;
+
+        inBlock = true;
 
         foreach (var child in statement.Body)
         {
@@ -573,6 +580,8 @@ public sealed class Binder
                     break;
             }
         }
+
+        inBlock = outerBlock;
 
         // Everything placed while the block was open, which is what "declared
         // inside it" means once a def has been expanded in there too. The clock
@@ -1165,7 +1174,16 @@ public sealed class Binder
 
             for (var i = 0; i < macro.Parameters.Count; i++) inner.Set(macro.Parameters[i].Name, arguments[i], macro.Line);
 
+            // Only the outermost call is drawn as a box, since a box holds
+            // modules and never another box.
+            var boxed = !inBlock && expanding.Count == 1;
+            var before = boxed ? patch.Nodes.Select(n => n.Id).ToHashSet() : null;
+            var where = identity.Where;
+            var said = issues.Count;
+
             foreach (var statement in macro.Body) Run(statement, inner);
+
+            Value? value;
 
             if (macro.Results is { } several)
             {
@@ -1174,10 +1192,21 @@ public sealed class Binder
                 foreach (var result in several)
                     if (Bind(result, inner) is { } item) items.Add(item);
 
-                return items.Count == several.Count ? new Several(items) : null;
+                value = items.Count == several.Count ? new Several(items) : null;
+            }
+            else
+            {
+                value = macro.Result is null ? null : Bind(macro.Result, inner);
             }
 
-            return macro.Result is null ? null : Bind(macro.Result, inner);
+            if (before is not null && value is not null && issues.Count == said)
+            {
+                var made = patch.Nodes.Where(n => !before.Contains(n.Id) && !wiring.IsShared(n.Id)).Select(n => n.Id);
+
+                boxes.Call(macro.Name, NodeIdentity.FromName("def " + where), made, value);
+            }
+
+            return value;
         }
         finally
         {

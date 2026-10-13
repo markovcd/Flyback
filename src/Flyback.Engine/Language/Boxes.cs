@@ -1,11 +1,12 @@
 using Flyback.Core.Graph;
+using Flyback.Engine.Language.Values;
 
 namespace Flyback.Engine.Language;
 
 /// <summary>
-/// Each group the text opens, and the box drawn round it once every block
-/// has been read: a group may be opened more than once, and its first block
-/// may hold fewer modules than a box can be.
+/// Each group the text opens, and each outermost def call, and the box drawn
+/// round it once every block has been read: a group may be opened more than
+/// once, and its first block may hold fewer modules than a box can be.
 /// </summary>
 internal sealed class Boxes(Patch patch, Issues issues, SourceSites sites)
 {
@@ -17,6 +18,9 @@ internal sealed class Boxes(Patch patch, Issues issues, SourceSites sites)
 
     /// <summary>Where each group block begins, and which of <see cref="boxes"/> it is.</summary>
     private readonly List<(Site Where, int Box)> opened = [];
+
+    /// <summary>Each outermost def call, the modules it stamped out, and what it handed back.</summary>
+    private readonly List<(string Name, Guid Id, List<Guid> Members, Value? Result)> calls = [];
 
     /// <summary>A block of a group has been read, having placed <paramref name="made"/>.</summary>
     /// <param name="troubled">Whether something in the block was refused, which leaves the box no say about its size.</param>
@@ -36,6 +40,21 @@ internal sealed class Boxes(Patch patch, Issues issues, SourceSites sites)
 
         if (troubled) this.troubled.Add(index);
         opened.Add((where, index));
+    }
+
+    /// <summary>
+    /// An outermost def call stamped out <paramref name="made"/>. Each call is its own
+    /// box, whatever it is named, since calls share nothing.
+    /// </summary>
+    public void Call(string name, Guid id, IEnumerable<Guid> made, Value? result) =>
+        calls.Add((name, id, [.. made], result));
+
+    /// <summary>Names the box of the call that handed back <paramref name="value"/> after the <c>let</c> it was bound to.</summary>
+    public void Name(Value value, string name)
+    {
+        var index = calls.FindLastIndex(call => ReferenceEquals(call.Result, value));
+
+        if (index >= 0) calls[index] = calls[index] with { Name = name };
     }
 
     /// <summary>Draws each box. Named from the text, so the same text builds the same boxes as it builds the same modules.</summary>
@@ -65,6 +84,20 @@ internal sealed class Boxes(Patch patch, Issues issues, SourceSites sites)
 
             foreach (var (where, box) in opened)
                 if (box == i) sites.Open(where, group.Id);
+        }
+
+        // A group block inside the def's body keeps its modules, and a call
+        // that leaves too few for a box is drawn as the modules it made.
+        var blocked = boxes.SelectMany(box => box.Members).ToHashSet();
+
+        foreach (var (name, id, members, _) in calls)
+        {
+            if (patch.Group(members.Where(member => !blocked.Contains(member))) is not { } made) continue;
+
+            var group = made.Clone(id);
+
+            group.Rename(name);
+            patch.Groups![patch.Groups.IndexOf(made)] = group;
         }
     }
 }

@@ -136,3 +136,16 @@ Feature: A patch can be written as text
     Then it reads with a warning on line 1
     And the patch has no groups
     And the speakers are not silent
+
+  Scenario: Each call of a def is drawn as a box of its own
+    Given the text:
+      """
+      def voice(freq) = sine(freq: freq) |> drive(drive: 2)
+      let bass = voice(110)
+      bass |> out.left
+      voice(220) |> out.right
+      """
+    Then it reads without complaint
+    And the patch has a shut group "bass" of 2 modules
+    And the patch has a shut group "voice" of 2 modules
+    And the speakers are not silent

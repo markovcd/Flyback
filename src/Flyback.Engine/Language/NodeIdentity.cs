@@ -27,6 +27,9 @@ internal sealed class NodeIdentity
     internal void Leave(Position outer) =>
         (where, placedHere, unnamedHere) = (outer.Where, outer.Placed, outer.Unnamed);
 
+    /// <summary>The source segment being named, which is unique to it.</summary>
+    internal string Where => where;
+
     internal string Anonymous() => "#" + unnamedHere++;
 
     internal string Stamping(string name) => name + "~" + unnamedHere++;
