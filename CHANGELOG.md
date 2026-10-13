@@ -19,21 +19,17 @@
 - The assistant's replies draw their bold, lists, headings and code rather than showing the Markdown as typed.
 - The assistant's column names the model it is set to before anything has answered.
 - Claude Code's model box offers Fable.
-- A model name pasted with a space before or after it is read without the space.
-- Picking a model from the list no longer crashes the editor when the model saved was one the list does not have.
 
 ### Editor
 
+- On Windows, Flyback plays through an ASIO driver and on Linux through a running JACK server; where more than one way of playing sound is installed, the Sound tab asks which, and the status bar, the full-screen stats line, `flyback-viewer --report` and a page's state name it.
 - A MIDI In the computer keyboard plays can be played from a row of keys along the foot of the window: an octave of a piano or the patch's scale, moved by octaves, up by itself under a finger and from the toolbar's keys button otherwise.
+- The editor works under a finger: the inspector scrolls instead of moving a control, pins its header on a short screen and has Bypass, Duplicate, Delete and More buttons; a held button reads its tip; a wobbling tap still switches an Arrangement's cell; the code view waits for a tap before the keyboard; and every splitter takes a fingertip either side of its gap.
 - In a page, a phone's keyboard shrinks the editor rather than covering the field being typed into, and an iPhone no longer zooms in on it.
-- On Windows, Flyback plays through an ASIO driver when you pick ASIO on the Sound tab; on Linux, through a running JACK server. Where more than one way of playing sound is installed, the Sound tab asks which one plays.
-- The status bar, the full-screen stats line, `flyback-viewer --report` and a page's state name what plays the sound (ASIO, JACK, WASAPI, Web Audio) beside what draws the picture.
 - Over the editor's full-screen picture, Space pauses and F11 gives the window back, as in the viewer.
 - A saved patch holds only what was set, not what Flyback works out from it.
 - The unsaved-work and assistant-working questions carry a glyph: a disk, or the assistant's star.
-- A finger held on a toolbar or inspector button reads its tip instead of pressing it.
 - On Android, the editor has the Flyback mark as its home-screen icon and opens on it.
-- Opening a patch that plays a long sound file, saving a preset or a bundle, installing a plugin, saving the file settings on Linux and typing in the assistant's settings no longer hold up the window.
 - The plugin contract no longer offers what only Flyback itself calls, such as `NodeCatalog.Install` and `PatchWorkbench.Edits`.
 
 ### Viewer
@@ -42,8 +38,7 @@
 
 ### Command line
 
-- `flyback-cli decide` asks a decision model typed questions about some text and answers each with a probability; `--set`, `--for` and `--save` set the model up, as Settings → Decisions does.
-- `flyback-cli decide`, `modules --find` and `check --triage` take `--settings`, as `render` does.
+- `flyback-cli decide` asks a decision model typed questions about some text and answers each with a probability; `--set`, `--for` and `--save` set the model up, as Settings → Decisions does, and it, `modules --find` and `check --triage` take `--settings`.
 - `flyback-cli render --size` takes `720p`, `1080p` or `square` beside WIDTHxHEIGHT.
 - `flyback-cli render` of a clip whose picture listens to the sound plays that sound even where none of it reaches the speakers.
 - `install.sh --no-links` writes only the copy, leaving the command links, menu entry, shortcut and PATH as they were.
@@ -51,25 +46,23 @@
 ### Fixes
 
 - A patch opened on a busy Windows machine starts as soon as it is compiled, instead of standing silent for up to ten seconds.
+- Opening a patch that plays a long sound file, saving a preset or a bundle, installing a plugin, saving the file settings on Linux and typing in the assistant's settings no longer hold up the window.
 - A Trails fades by the second rather than by the frame, so its tail is as long in a 30 fps export as in a 60 fps preview.
+- Picking a model from the list no longer crashes the editor when the saved model is not on it, and a model name pasted with a space around it is read without the space.
 - The Claude Code and Codex assistants no longer flash a console window on Windows.
 - What the canvas says of an edit, a group declined or modules ungrouped, reaches the status bar.
 - The editor starts with an assistant chosen and a prose budget too small to describe every module, instead of failing to open.
-- The inspector works under a finger: it scrolls instead of moving the control the finger started on, folds its name and buttons into a pinned header on a short screen, and has Bypass, Duplicate, Delete and More buttons, an Expand that hides the picture, and a rename dialog clear of the on-screen keyboard.
-- A finger that wobbles while tapping an Arrangement's grid switches the cell, and a scroll that starts on a sequencer's notes no longer adds one.
-- The code view a finger opens waits for its text to be tapped before bringing up the on-screen keyboard.
-- A tall window gives the picture only the height its shape fills, and every splitter can be taken hold of a fingertip either side of its gap.
+- A tall window gives the picture only the height its shape fills.
 - A patch stays framed when the window or the screen changes size before anything has moved the view.
 - A MIDI file with thousands of tempo changes opens at once instead of freezing the editor.
 - A Beam fed a signal too large for a number draws instead of failing every frame, and draws on its gallery tile while the preset is tried.
 - On Android, the web editor's sound stops other playback, as the web viewer's does.
-- On Linux, a JACK server that has stopped answering no longer freezes Flyback, and forgetting a key that was never kept no longer reports an error.
+- On Linux, forgetting a key that was never kept no longer reports an error.
 - A patch file with no knob values for a module opens with the module's defaults instead of crashing.
 - An OpenAI-compatible or Gemini endpoint that answers with an error page says so, and probing a chat-completions endpoint says when a rate limit left a model's senses unsure.
-- `flyback-cli` and `flyback-viewer` refuse a number they cannot use, such as a `--seconds`, `--fps`, `--at` or `--context`, instead of overflowing, crashing, running for ever or calling any two patches the same.
+- A number Flyback cannot use is refused where it is typed, in a flag such as `--seconds`, `--fps`, `--at` or `--context`, or on a knob, a knob's range or a setting in the code view, instead of overflowing, crashing, running for ever or stopping the patch from saving.
 - A patch nested deeper than Flyback follows, an Expression's formula or a chain of more than 128 modules, says so instead of freezing or closing the editor.
 - `flyback-cli render` writes a sound longer than an hour and a half through ffmpeg instead of failing.
-- A number too large to hold, written on a knob, a knob's range or a module's setting in the code view, is refused there instead of stopping the patch from saving.
 - A damaged thumbnail in the gallery's cache is drawn again instead of running out of memory.
 - A `settings.json` or `allowed-plugins.json` with a key written twice reads as damaged: the next save replaces the one, and the other allows nothing instead of stopping Flyback from starting.
 - The Echo's help no longer says its right tap lands on the beat after the left.
