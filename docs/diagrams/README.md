@@ -14,6 +14,9 @@ drawn to an SVG here, committed beside the model.
 
 ![C1: who uses Flyback and what it talks to](context.svg)
 
+The CI pipeline is not part of the model: [`pipeline.md`](pipeline.md) draws it in
+Mermaid, which GitHub renders inline.
+
 After changing the model, redraw and commit both:
 
 ```sh

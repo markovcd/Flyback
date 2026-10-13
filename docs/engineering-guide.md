@@ -644,7 +644,8 @@ dotnet test --solution Flyback.slnx -c Release
 docker build --target gate .
 ```
 
-The second is the truth ([0120](adr/0120-every-change-passes-the-gate-a-release-passes.md)).
+The second is the truth ([0120](adr/0120-every-change-passes-the-gate-a-release-passes.md)),
+and the [pipeline](diagrams/pipeline.md) shows which workflow runs it where.
 The first runs against whatever the machine happens to have, and the tests that
 need something missing skip rather than fail — the headless UI tests want a font
 stack to rasterize with, the recording tests want ffmpeg on `PATH`, the browser

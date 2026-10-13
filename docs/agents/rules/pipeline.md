@@ -6,6 +6,8 @@
 
 **Why:** two descriptions of what a change has to pass drift apart, and the one that drifts is the one nobody runs locally.
 
+The workflows and how they follow one another are drawn in [docs/diagrams/pipeline.md](../../diagrams/pipeline.md).
+
 ## Workflows are code that holds the keys
 
 - **Every action is pinned to a commit SHA**, with its version in a comment. A tag is the action author's to move. `.github/dependabot.yml` says when a pin should move.
