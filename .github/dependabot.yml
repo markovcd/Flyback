@@ -33,6 +33,12 @@ updates:
     # Five at a time, because each one has to be read before it is taken.
     open-pull-requests-limit: 5
 
+    # Version 18 pulls a StringTools that MSBuildLocator refuses (MSBL001) in
+    # tools/TestOnlyMembers. Lift this when global.json's SDK carries MSBuild 18.
+    ignore:
+      - dependency-name: Microsoft.Build.Framework
+        update-types: ["version-update:semver-major"]
+
     groups:
       # Avalonia ships as six packages of one version, and a build with five of
       # them moved does not work. One pull request, or none.
