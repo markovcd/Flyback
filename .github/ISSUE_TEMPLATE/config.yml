@@ -1,0 +1,12 @@
+# The issue chooser: questions go to Discussions, vulnerabilities to a private advisory.
+blank_issues_enabled: true
+contact_links:
+  - name: Ask a question
+    url: https://github.com/markovcd/Flyback/discussions/categories/q-a
+    about: How a patch, the text language, the CLI or an install works. Ask in Q&A.
+  - name: Share an idea
+    url: https://github.com/markovcd/Flyback/discussions/categories/ideas
+    about: A module or a feature you'd like. Talk it through in Ideas before it becomes an issue.
+  - name: Report a security problem
+    url: https://github.com/markovcd/Flyback/security/advisories/new
+    about: Privately, through a security advisory. Never in a public issue.
