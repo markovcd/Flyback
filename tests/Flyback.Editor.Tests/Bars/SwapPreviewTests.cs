@@ -77,6 +77,34 @@ public class SwapPreviewTests : EditorTest
         Preview(window).Bounds.Height.ShouldBeGreaterThan(1000);
     }
 
+    /// <summary>
+    /// Swapped into a column taller than its picture's shape fills, the picture takes the
+    /// height, and the knobs under it and the canvas beside it reach down to the transport row.
+    /// </summary>
+    [AvaloniaFact]
+    public void Swapped_into_a_tall_column_leaves_no_gap_above_the_transport()
+    {
+        var window = Open();
+
+        window.Width = 1600;
+        window.Height = 1100;
+        All<ToggleButton>(window).Single(b => b.Name == "controls").IsChecked = true;
+        Settle(window);
+        Press(window, Swap(window));
+
+        double Top(Visual visual) =>
+            (visual.TranslatePoint(default, window) ?? throw new InvalidOperationException("not in this window")).Y;
+
+        var transport = All<Avalonia.Controls.Border>(window).Single(b => b.Name == "transport");
+        var knobs = All<ControlsPanel>(window).Single();
+        var columns = All<Avalonia.Controls.Grid>(window).Single(g => g.Name == "columns");
+
+        (Top(knobs) + knobs.Bounds.Height).ShouldBe(Top(transport), 1, "the knobs fill down to the transport row");
+
+        foreach (var child in columns.Children.Where(c => c.IsVisible && Avalonia.Controls.Grid.GetRowSpan(c) == 3))
+            child.Bounds.Bottom.ShouldBe(columns.Bounds.Height, 1, $"the {child.Name ?? child.GetType().Name} in the columns does too");
+    }
+
     [AvaloniaFact]
     public void Swapping_puts_the_picture_where_the_canvas_was_and_back()
     {

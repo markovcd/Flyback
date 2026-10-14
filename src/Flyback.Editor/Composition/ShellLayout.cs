@@ -347,8 +347,9 @@ internal sealed class ShellLayout(
     {
         if (previewRow is null || previewBox is not { } box || !ReferenceEquals(box.Parent, columns)) return;
 
-        // Full screen hands the row the whole window, letterbox and all.
-        if (fullScreen.IsFullScreen)
+        // Full screen hands the row the whole window, letterbox and all. Swapped into the wide
+        // column, only the knobs share the column, at their own height, so the picture takes the rest.
+        if (fullScreen.IsFullScreen || Grid.GetColumn(box) == WideColumn)
         {
             previewRow.MaxHeight = double.PositiveInfinity;
             return;
@@ -384,6 +385,7 @@ internal sealed class ShellLayout(
         (outer.MinHeight, inner.MinHeight) = (inner.MinHeight, outer.MinHeight);
         (outer.Height, inner.Height) = (inner.Height, outer.Height);
         if (swapped) usage.Count(Used.Swapped);
+        FitPreviewRow();
 
         static void Hang(Control child, Grid grid, int column, int row)
         {
