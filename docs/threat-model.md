@@ -27,7 +27,7 @@ Where input or code from outside crosses into Flyback, what stands at the door, 
 | A submitted plugin | A package that runs when reviewed | Decompiled and read, never run | `/review-plugin` |
 | CI | A fork's pull request on the self-hosted runner | The self-hosted runners build `main` only, and only when a run is started by hand asking for them (`runner.yml` picks GitHub's otherwise); workflows pinned to SHAs, least permission; secrets reach Release and Site only | [pipeline.md](agents/rules/pipeline.md) |
 | Usage statistics | Identifying a person | Counts what was played and nothing of who; `Usage.cs` is the whole list | ADR-0094 |
-| Dependencies | Code nobody here read | The engine takes none; restores are locked to `packages.lock.json` | ADR-0019 |
+| Dependencies | Code nobody here read | The engine takes none; restores are locked to `packages.lock.json`; a Dependabot update merges unread once Build passes, and the job that writes to its branch runs none of its code | ADR-0019, ADR-0197 |
 
 ## Not defended
 

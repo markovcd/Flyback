@@ -10,7 +10,7 @@ The workflows and how they follow one another are drawn in [docs/diagrams/pipeli
 
 ## Workflows are code that holds the keys
 
-- **Every action is pinned to a commit SHA**, with its version in a comment. A tag is the action author's to move. `.github/dependabot.yml` says when a pin should move.
+- **Every action is pinned to a commit SHA**, with its version in a comment. A tag is the action author's to move. `.github/dependabot.yml` says when a pin should move, and `dependabot-prs.yml` merges Dependabot's pull requests once Build passes (ADR-0197).
 - **Every base image is pinned to a digest**, with its version in the tag, in a literal `FROM` in the Dockerfile; a workflow or script that runs one names it the same (`BaseImageTests`), and `global.json` names the SDK. A release built tomorrow builds on what the gate passed on today.
 - **Least permission.** Each workflow declares `permissions:`, `contents: read` unless it publishes.
 - **No token left behind, no expression in a script.** Every checkout sets `persist-credentials: false`, and a `run:` script reads `${{ }}` values through `env:`, never spliced into its text (`WorkflowTests`).

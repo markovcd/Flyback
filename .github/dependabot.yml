@@ -6,10 +6,9 @@
 # other half of it: the pin holds, and a pull request says when it should not.
 #
 # The pull requests land on the Build workflow like any other change, so nothing
-# is taken on the strength of the bump alone. A NuGet one that raises a version
-# without rewriting the packages.lock.json files beside it fails the gate's
-# locked restore, which is the failure saying to restore once with the
-# force-evaluate switch and commit what it rewrites.
+# is taken on the strength of the bump alone. dependabot-prs.yml rewrites the
+# packages.lock.json files a NuGet one leaves stale, and squashes every NuGet,
+# Docker and npm one into main once Build passes on it (ADR-0197).
 #
 # The Dockerfile's base images are pinned by digest in literal FROM lines, which
 # the docker entry reads. A workflow or a script that runs one is moved by hand
@@ -30,35 +29,17 @@ updates:
       interval: weekly
     labels: []
 
-    # Five at a time, because each one has to be read before it is taken.
-    open-pull-requests-limit: 5
-
     # Version 18 pulls a StringTools that MSBuildLocator refuses (MSBL001) in
     # tools/TestOnlyMembers. Lift this when global.json's SDK carries MSBuild 18.
     ignore:
       - dependency-name: Microsoft.Build.Framework
         update-types: ["version-update:semver-major"]
 
+    # Every package in one pull request a week: separate ones each move part of
+    # the lock files and conflict with one another once the first is in.
     groups:
-      # Avalonia ships as six packages of one version, and a build with five of
-      # them moved does not work. One pull request, or none.
-      avalonia:
-        patterns:
-          - Avalonia
-          - Avalonia.*
-
-      # The runner, the assertions and the snapshots are read together whenever
-      # one of them moves.
-      testing:
-        patterns:
-          - xunit.v3
-          - xunit.v3.*
-          - Shouldly
-          - Verify.*
-          - Reqnroll.*
-          - Microsoft.Testing.*
-          - CsCheck
-          - BenchmarkDotNet
+      nuget:
+        patterns: ["*"]
 
   - package-ecosystem: docker
     directory: /

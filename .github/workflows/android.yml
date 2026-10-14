@@ -5,7 +5,8 @@
 # image and would grow it for every push. So this is the only place the project
 # is compiled in CI, and /release refuses a commit it has not passed on.
 #
-# On main it runs when Build passes on a push, however late, so a red main is
+# On main it runs when Build passes on a push or on a run started by hand (as
+# dependabot-prs.yml does after a merge), however late, so a red main is
 # not built. The run is named for the built commit, which is how /release finds
 # it: a workflow_run run belongs to the branch's tip, not the commit it built.
 #
@@ -40,11 +41,12 @@ concurrency:
 
 jobs:
   build:
-    # Only a push to this repository's main that passed: a fork's pull request
-    # can have a branch called main too.
+    # Only a push to this repository's main, or a Build started on it by hand,
+    # that passed: a fork's pull request can have a branch called main too.
     if: >-
       github.event_name != 'workflow_run' ||
-      (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success')
+      ((github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch') &&
+      github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     # A run is about two minutes; the default of six hours is what a hang costs.
     timeout-minutes: 10

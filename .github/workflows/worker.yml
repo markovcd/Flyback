@@ -31,13 +31,14 @@ permissions:
 
 jobs:
   # Whether the pushed range touches what the site is built from. Only a push to
-  # this repository's main that passed: a fork's pull request can have a branch
-  # called main too. The range starts at the commit the Build before this one
+  # this repository's main, or a Build started on it by hand, that passed: a
+  # fork's pull request can have a branch called main too. The range starts at the commit the Build before this one
   # built, since every push to main gets a Build of its own.
   changes:
     if: >-
       vars.WORKER_ENVIRONMENT != '' && github.event_name == 'workflow_run' &&
-      github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success'
+      (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch') &&
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:

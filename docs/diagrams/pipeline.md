@@ -39,6 +39,13 @@ flowchart TB
     end
 
     pages["Pages · pages.yml<br/>the redirect stub, when deploy/pages changes"]
+
+    bot(["Dependabot's pull request"]) --> d_locks
+    subgraph dependabot["Dependabot · dependabot-prs.yml"]
+        d_locks["locks → push<br/>NuGet: rewrites the lock files, starts Build on the branch"]
+        d_merge["merge<br/>squashes into main, starts Build on main"]
+    end
+    build -- "green on a Dependabot branch" --> d_merge
 ```
 
 Build, Coverage and Release each have a `self-hosted` box under Run workflow. Ticked

@@ -28,12 +28,13 @@ permissions:
   contents: read
 
 # A pull request's newer push leaves its older run testing a commit nobody is
-# waiting on, so that run is cancelled. Every push to main runs to its verdict:
+# waiting on, so that run is cancelled. Every run on main, pushed or started by
+# hand (dependabot-prs.yml starts one after each merge), runs to its verdict:
 # cancelled, a break lands unseen and the next commit wears it. Its group is the
 # commit, since a group keeps one pending run and drops the rest.
 concurrency:
-  group: build-${{ github.event_name == 'push' && github.sha || github.ref }}
-  cancel-in-progress: ${{ github.event_name != 'push' }}
+  group: build-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   # GitHub's, or by hand on main the self-hosted runners (runner.yml). Either

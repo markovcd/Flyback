@@ -1,0 +1,137 @@
+# Takes Dependabot's pull requests into main once Build passes on them (ADR-0197).
+#
+# On a NuGet pull request, the locks job restores the branch with force-evaluate,
+# since Dependabot rewrites only some of the packages.lock.json files, and the
+# push job commits what moved back to the branch. On any Dependabot branch whose
+# head Build passes on, the merge job squashes its pull request into main.
+#
+# A push or a merge made with GITHUB_TOKEN starts no workflow, so each of those
+# jobs starts Build by hand on what it wrote: the branch, or main. Android and
+# Worker follow a Build started by hand on main as they follow a push.
+#
+# Only the locks job runs anything from the branch, and its token reads. The jobs
+# that write run nothing from it, and the push job commits lock files only.
+# GitHub Actions bumps are left to be merged by hand, since GITHUB_TOKEN may not
+# change a workflow file.
+
+name: Dependabot
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_run:
+    workflows: [Build]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  locks:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.head_ref, 'dependabot/nuget/')
+    runs-on: ubuntu-latest
+    # A restore is about two minutes.
+    timeout-minutes: 15
+    outputs:
+      moved: ${{ steps.restore.outputs.moved }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Restore with force-evaluate
+        id: restore
+        run: |
+          dotnet restore Flyback.slnx --force-evaluate
+          git diff --binary -- '*packages.lock.json' > "$RUNNER_TEMP/locks.patch"
+          if [ -s "$RUNNER_TEMP/locks.patch" ]; then
+            git diff --stat -- '*packages.lock.json'
+            echo "moved=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: steps.restore.outputs.moved == 'true'
+        with:
+          name: locks
+          path: ${{ runner.temp }}/locks.patch
+          retention-days: 1
+
+  push:
+    needs: locks
+    if: needs.locks.outputs.moved == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: locks
+          path: ${{ runner.temp }}/locks
+
+      # A push that is not a fast-forward fails: Dependabot moved the branch, and
+      # this workflow runs again on what it pushed.
+      - name: Commit the lock files and start Build on the branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          git apply --index "$RUNNER_TEMP/locks/locks.patch"
+          if git diff --cached --name-only | grep -v -E '(^|/)packages\.lock\.json$'; then
+            echo "::error::The patch touches more than packages.lock.json files."
+            exit 1
+          fi
+          git -c user.name='github-actions[bot]' \
+            -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            commit --quiet -m "Every lock file restores against the updated packages."
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${BRANCH}"
+          gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
+
+  merge:
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      startsWith(github.event.workflow_run.head_branch, 'dependabot/') &&
+      !startsWith(github.event.workflow_run.head_branch, 'dependabot/github_actions/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      # The pull request is looked up rather than taken from the run: a fork's
+      # branch can carry the same name, and only Dependabot's own, still at the
+      # commit Build passed on, is merged.
+      - name: Squash the pull request into main and start Build on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          BUILT: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --state open \
+            --json number,author,headRefOid,isCrossRepository,baseRefName \
+            --jq 'map(select((.author.login == "app/dependabot" or .author.login == "dependabot[bot]")
+              and .isCrossRepository == false and .baseRefName == "main" and .headRefOid == $ENV.BUILT))[0].number // empty')"
+          if [ -z "$pr" ]; then
+            echo "No open Dependabot pull request into main has $BUILT at its head."
+            exit 0
+          fi
+          gh pr merge "$pr" --repo "$GITHUB_REPOSITORY" --squash --match-head-commit "$BUILT"
+          gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref main
