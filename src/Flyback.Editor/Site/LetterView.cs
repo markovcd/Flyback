@@ -126,14 +126,16 @@ internal static class LetterView
 
         page.Margin = new Thickness(20, 12, 20, 0);
 
-        return new DialogBody(page, new StackPanel
+        var buttons = new StackPanel
         {
             Orientation = Orientation.Horizontal,
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Right,
             Margin = new Thickness(20, 16, 20, 20),
             Children = { sendButton, cancel },
-        }) { Name = "letter" };
+        };
+
+        return new DialogBody(page, buttons) { Name = "letter" };
 
         void Ready() => sendButton.IsEnabled = mood is not null && message.Text?.Trim().Length > 0;
     }

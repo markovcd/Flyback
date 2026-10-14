@@ -67,13 +67,15 @@ internal static class MissingPluginsView
         look.Click += (_, _) => answer(true);
         later.Click += (_, _) => answer(false);
 
-        return new DialogBody(page, new StackPanel
+        var buttons = new StackPanel
         {
             Orientation = Orientation.Horizontal,
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Right,
             Margin = new Thickness(0, 14, 0, 0),
             Children = { look, later },
-        }) { Name = "missingPlugins" };
+        };
+
+        return new DialogBody(page, buttons) { Name = "missingPlugins" };
     }
 }
