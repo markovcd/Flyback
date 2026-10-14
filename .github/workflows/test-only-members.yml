@@ -42,6 +42,10 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      # Unrestored, every package's types are unresolved and the uses through them go unseen.
+      - name: Restore the solution
+        run: dotnet restore Flyback.slnx
+
       - name: List the members only tests call
         run: |
           dotnet run --project tools/TestOnlyMembers -c Release -- Flyback.slnx test-only-members.tsv
