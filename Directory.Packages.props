@@ -49,7 +49,7 @@
 
     <!-- The editor's container and its HTTP clients (ADR-0150): the runtime's own, versioned with it. -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.13" />
   </ItemGroup>
 
   <!-- The command line, the preset site, and the two platform plugins that need something. -->
