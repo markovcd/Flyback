@@ -18,17 +18,27 @@ public sealed class UsageSettingsFileTests : IDisposable
     }
 
     [Fact]
-    public void Statistics_are_counted_unless_switched_off()
+    public void Statistics_are_not_counted_unless_switched_on()
     {
-        UsageSettings.Load(File).SendUsageStatistics.ShouldBeTrue();
+        UsageSettings.Load(File).CountUsage.ShouldBeFalse();
     }
 
     [Fact]
-    public void Switched_off_stays_off()
+    public void Switched_on_stays_on()
     {
-        new UsageSettings { SendUsageStatistics = false }.Save(File);
+        new UsageSettings { CountUsage = true }.Save(File);
 
-        UsageSettings.Load(File).SendUsageStatistics.ShouldBeFalse();
+        UsageSettings.Load(File).CountUsage.ShouldBeTrue();
+    }
+
+    /// <summary>The old key was saved ticked whether anybody ticked it or not, so it is not a choice.</summary>
+    [Fact]
+    public void The_old_ticked_by_default_key_counts_nothing()
+    {
+        Directory.CreateDirectory(folder);
+        System.IO.File.WriteAllText(File, """{ "usage": { "sendUsageStatistics": true } }""");
+
+        UsageSettings.Load(File).CountUsage.ShouldBeFalse();
     }
 
     [Fact]
@@ -37,13 +47,13 @@ public sealed class UsageSettingsFileTests : IDisposable
         Directory.CreateDirectory(folder);
         System.IO.File.WriteAllText(File, "{ not json");
 
-        UsageSettings.Load(File).SendUsageStatistics.ShouldBeTrue();
+        UsageSettings.Load(File).CountUsage.ShouldBeFalse();
     }
 
     [Fact]
     public void A_build_that_is_not_a_release_counts_nothing()
     {
-        Usage.Start(new UsageSettings { SendUsageStatistics = true }, ReleaseFeed.Released("0.1.0+37fc87f"))
+        Usage.Start(new UsageSettings { CountUsage = true }, ReleaseFeed.Released("0.1.0+37fc87f"))
             .ShouldBeSameAs(Usage.Off);
     }
 
@@ -51,20 +61,20 @@ public sealed class UsageSettingsFileTests : IDisposable
     [Fact]
     public void A_build_made_on_a_developers_machine_is_counted()
     {
-        Usage.Start(new UsageSettings { SendUsageStatistics = true }, ReleaseFeed.Released("0.1.0-dev+37fc87f"), local: "0.1.0-dev+37fc87f")
+        Usage.Start(new UsageSettings { CountUsage = true }, ReleaseFeed.Released("0.1.0-dev+37fc87f"), local: "0.1.0-dev+37fc87f")
             .ShouldNotBeSameAs(Usage.Off);
     }
 
     [Fact]
     public void A_build_made_on_a_developers_machine_is_not_counted_when_switched_off()
     {
-        Usage.Start(new UsageSettings { SendUsageStatistics = false }, running: null, local: "0.1.0-dev+37fc87f")
+        Usage.Start(new UsageSettings { CountUsage = false }, running: null, local: "0.1.0-dev+37fc87f")
             .ShouldBeSameAs(Usage.Off);
     }
 
     [Fact]
     public void Switched_off_it_is_never_started()
     {
-        Usage.Start(new UsageSettings { SendUsageStatistics = false }).ShouldBeSameAs(Usage.Off);
+        Usage.Start(new UsageSettings { CountUsage = false }).ShouldBeSameAs(Usage.Off);
     }
 }

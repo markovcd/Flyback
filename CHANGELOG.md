@@ -23,6 +23,7 @@
 
 ### Editor
 
+- Usage statistics are off until switched on under Settings → Privacy, including for anyone who had them on before.
 - Tutorials in the editor: Tutorials, at the left of the status bar, opens a column that walks you through building a patch, from a first picture, a first sound or a beat you can see, ticking off each step as your patch does what it asks; `flyback-cli tutorial` checks a patch against one.
 - On Windows, Flyback plays through an ASIO driver and on Linux through a running JACK server; where more than one way of playing sound is installed, the Sound tab asks which, and the status bar, the full-screen stats line, `flyback-viewer --report` and a page's state name it.
 - A MIDI In the computer keyboard plays can be played from a row of keys along the foot of the window: an octave of a piano or the patch's scale, moved by octaves, up by itself under a finger and from the toolbar's keys button otherwise.

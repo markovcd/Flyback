@@ -136,3 +136,15 @@ version, commit and all, with Aptabase's `isDebug` set, which the dashboard keep
 apart from the releases. The user wanted local runs visible without mixing them
 into the figures. A build on GitHub never carries the mark, so the gate's and
 coverage's builds still say nothing, and the Usage switch turns it off the same way.
+
+## Amendment, 2026-10-14: off until switched on
+
+*User-directed.* Usage statistics are off by default on every build, and count only
+once the person ticks **Count how Flyback is used** under Settings → Privacy. The
+Android and web editors never started them and still do not; the desktop editor
+was the one build counting by default.
+
+The setting is saved as `countUsage`. The old `sendUsageStatistics` key is ignored:
+the box was ticked by default and the settings window saves every section on Save,
+so a stored `true` cannot be told from somebody who never looked at it. Everybody
+starts off, and somebody who wants to be counted ticks it again.
