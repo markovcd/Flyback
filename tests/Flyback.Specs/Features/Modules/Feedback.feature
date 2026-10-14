@@ -20,3 +20,7 @@ Feature: Feedback shows the previous frame
   Scenario: A trail fades by the second, whatever the frame rate
     Given a white flash on the first frame, left to trail at a persist of 0.99
     Then a second later the trail is as faint at 30 frames a second as at 60
+
+  Scenario: A loop built by hand fades by the second when dimmed by its age
+    Given a white flash on the first frame, fed back through a Gain of 0.99 raised to the frame's age in sixtieths
+    Then a second later the trail is as faint at 30 frames a second as at 60

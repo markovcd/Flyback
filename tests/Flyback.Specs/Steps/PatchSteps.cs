@@ -189,6 +189,32 @@ public sealed class PatchSteps(PatchContext context)
         Show("trail", "color");
     }
 
+    [Given("a white flash on the first frame, fed back through a Gain of {float} raised to the frame's age in sixtieths")]
+    public void GivenAFlashDimmedByAge(float persist)
+    {
+        // White while the clock is still at its start, and black from the next frame on.
+        context.Add("clock", "time");
+        context.Add("flash", "math.step");
+        context.SetInput("flash", "in", 0.001f);
+        context.Wire("clock", "t", "flash", "edge");
+
+        context.Add("before", "feedback");
+        context.Add("sixtieths", "math.mul");
+        context.SetInput("sixtieths", "b", 60f);
+        context.Wire("before", "age", "sixtieths", "a");
+        context.Add("dimming", "math.pow");
+        context.SetInput("dimming", "a", persist);
+        context.Wire("sixtieths", "out", "dimming", "b");
+        context.Add("dimmed", "color.gain");
+        context.Wire("before", "color", "dimmed", "color");
+        context.Wire("dimming", "out", "dimmed", "gain");
+
+        context.Add("brighter", "math.max");
+        context.Wire("dimmed", "color", "brighter", "a");
+        context.Wire("flash", "out", "brighter", "b");
+        Show("brighter", "out");
+    }
+
     [Given("feedback brightened each frame by {float} plus one divided by zero")]
     public void GivenFeedbackWithADivisionByZero(float step)
     {

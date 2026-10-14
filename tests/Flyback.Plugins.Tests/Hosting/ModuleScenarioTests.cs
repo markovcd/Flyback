@@ -22,7 +22,7 @@ public sealed class ModuleScenarioTests
     private static readonly HashSet<string> Unwritten =
     [
         "audio.note", "audio.quantiser", "audio.tune",
-        "color.gain", "color.hsv", "color.ink", "color.mix", "color.rgb", "color.split", "color.vignette",
+        "color.hsv", "color.ink", "color.mix", "color.rgb", "color.split", "color.vignette",
         "coord",
         "env.adsr",
         "feedback.blur", "feedback.trails",

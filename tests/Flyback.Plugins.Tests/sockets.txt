@@ -25,7 +25,7 @@ color.split | color | r, g, b
 color.vignette | color, x, y, from, to, dark | color, shade
 coord |  | x, y, radius, angle, aspect
 env.adsr | gate, attack, decay, sustain, release | out
-feedback | x, y | color
+feedback | x, y | color, age
 feedback.blur | in, x, y, radius, amount | color, soft
 feedback.trails | in, x, y, zoom, angle, dx, dy, persist | color, tail
 flyback.drawings.path | in, freq, phase, amp | x, y, z

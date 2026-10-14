@@ -4,6 +4,7 @@
 
 ### Modules
 
+- Feedback's `age` output is the seconds since the frame it reads, so a loop built by hand can fade by the second as Trails does.
 - A Window is 1 between two points and 0 outside, hard or soft edged, and a Dice throws the same random for a whole number every time it comes round; a formula calls them as `window()` and `dice()`.
 
 ### Presets
