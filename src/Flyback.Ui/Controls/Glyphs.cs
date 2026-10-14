@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Presenters;
-using Avalonia.Data;
+using Avalonia.Controls.Documents;
 using Avalonia.Layout;
 using Avalonia.Media;
 
@@ -339,7 +338,7 @@ internal static class Glyphs
         };
 
         if (ink is not null) path.Stroke = ink;
-        else path[!Avalonia.Controls.Shapes.Shape.StrokeProperty] = ForegroundBinding();
+        else path.Bind(Avalonia.Controls.Shapes.Shape.StrokeProperty, Foreground(path));
 
         return path;
     }
@@ -358,7 +357,7 @@ internal static class Glyphs
         };
 
         if (ink is not null) path.Fill = ink;
-        else path[!Avalonia.Controls.Shapes.Shape.FillProperty] = ForegroundBinding();
+        else path.Bind(Avalonia.Controls.Shapes.Shape.FillProperty, Foreground(path));
 
         return path;
     }
@@ -373,16 +372,9 @@ internal static class Glyphs
     }
 
     /// <summary>
-    /// The ancestor's ContentPresenter, not the Button itself: a disabled
-    /// button dims by setting Foreground on the presenter its template draws
-    /// through, and leaves the Button's own property untouched. Binding to
-    /// the Button would read a color that never changes.
+    /// The foreground the glyph inherits. A button's presenter passes its own on,
+    /// which is where a disabled button dims; outside a button it is the window's.
     /// </summary>
-    private static Binding ForegroundBinding() => new("Foreground")
-    {
-        RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor)
-        {
-            AncestorType = typeof(ContentPresenter),
-        },
-    };
+    private static IObservable<IBrush?> Foreground(Control path) =>
+        path.GetObservable(TextElement.ForegroundProperty);
 }

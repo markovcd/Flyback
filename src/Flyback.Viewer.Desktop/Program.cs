@@ -114,6 +114,8 @@ internal static class Program
         {
             return AppBuilder.Configure<ViewerApp>()
                 .UsePlatformDetect()
+                // No native menu to export; on a desktop without a global menu the attempt only logs.
+                .With(new X11PlatformOptions { UseDBusMenu = false })
                 .UseDriver(settings.Driver)
                 .WithInterFont()
                 .LogToTrace()

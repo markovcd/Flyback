@@ -113,6 +113,8 @@ internal static class Program
     private static AppBuilder BuildAvaloniaApp(DesktopLaunch launch) =>
         AppBuilder.Configure(() => new FlybackApp(launch))
             .UsePlatformDetect()
+            // No native menu to export; on a desktop without a global menu the attempt only logs.
+            .With(new X11PlatformOptions { UseDBusMenu = false })
             .WithInterFont()
             .LogToTrace();
 }
