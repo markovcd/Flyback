@@ -49,7 +49,7 @@ RUN npm ci --no-audit --no-fund
 COPY worker/ ./
 RUN npx tsc --noEmit && npx vitest run && touch /tested
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0.401@sha256:e70cdb7f80b0348f5cb85f19a8f670fca061f033d57eed12fa003d58b0e06317 AS sdk
+FROM mcr.microsoft.com/dotnet/sdk:10.0.402@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa AS sdk
 
 # What the SDK image does not already have, in three stages so each package is
 # listed once and a stage takes only what it needs. An argument declared above the
