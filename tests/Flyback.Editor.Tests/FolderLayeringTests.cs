@@ -23,7 +23,7 @@ public class FolderLayeringTests
 
     /// <summary>The features, lowest first; each names only the footing and the features below it.</summary>
     private static readonly string[] Features =
-        ["Site", "Decide", "Midi", "Canvas", "Hubs", "Assist", "Knobs", "PluginPackages", "Capture", "Files", "Gallery", "Inspect", "Bars", "Keys", "Windows"];
+        ["Site", "Decide", "Midi", "Canvas", "Hubs", "Assist", "Knobs", "PluginPackages", "Capture", "Files", "Gallery", "Tutorials", "Inspect", "Bars", "Keys", "Windows"];
 
     private const string Composition = "Composition";
 

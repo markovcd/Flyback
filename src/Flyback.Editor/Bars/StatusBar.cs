@@ -1,6 +1,7 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -76,7 +77,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
     /// <param name="site">Where the letter at the end of the bar is sent.</param>
     private readonly Playback playback;
 
-    public StatusBar(NodeEditor editor, PluginCatalog plugins, ReportLine report, Usage usage, PreviewHost preview, SiteAccess site, Playback playback, IDialog dialog, IFocus focus)
+    public StatusBar(NodeEditor editor, PluginCatalog plugins, ReportLine report, Usage usage, PreviewHost preview, SiteAccess site, Playback playback, IDialog dialog, IFocus focus, Reactions reactions)
     {
         this.dialog = dialog;
         this.playback = playback;
@@ -89,7 +90,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
 
         var bar = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto"),
+            ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto"),
             Margin = new Thickness(12, 5),
         };
 
@@ -119,16 +120,21 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
             if (e.Property == Visual.IsVisibleProperty) report.IsVisible = !Compiling.IsVisible;
         };
 
-        Grid.SetColumn(report, 0);
-        Grid.SetColumn(Compiling, 0);
-        Grid.SetColumn(status, 1);
-        Grid.SetColumn(rule, 2);
-        Grid.SetColumn(letter, 3);
+        ToolTip.SetTip(Tutorial, "Build a patch step by step, each step checked as you go.");
+        Tutorial.IsCheckedChanged += (_, _) => reactions.Raise(new TutorialAsked(Tutorial.IsChecked == true));
+
+        Grid.SetColumn(Tutorial, 0);
+        Grid.SetColumn(report, 1);
+        Grid.SetColumn(Compiling, 1);
+        Grid.SetColumn(status, 2);
+        Grid.SetColumn(rule, 3);
+        Grid.SetColumn(letter, 4);
 
         // An Auto column never trims, so the counts are held to half the bar by hand,
         // or a narrow window gives them the report's whole width.
         bar.SizeChanged += (_, e) => status.MaxWidth = e.NewSize.Width / 2;
 
+        bar.Children.Add(Tutorial);
         bar.Children.Add(report);
         bar.Children.Add(Compiling);
         bar.Children.Add(status);
@@ -148,6 +154,25 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
         View.AttachedToVisualTree += (_, _) => ticker.Start();
         View.DetachedFromVisualTree += (_, _) => ticker.Stop();
     }
+
+    /// <summary>Opens the tutorials' column beside the canvas, first on the bar where a newcomer looks for help.</summary>
+    public ToggleButton Tutorial { get; } = new()
+    {
+        Name = "tutorial",
+        Content = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 5,
+            Children = { Glyphs.Lesson(), new TextBlock { Text = "Tutorials", FontSize = Text.Small, VerticalAlignment = VerticalAlignment.Center } },
+        },
+        MinHeight = 0,
+        Padding = new Thickness(4, 1),
+        Margin = new Thickness(0, 0, 12, 0),
+        Background = Brushes.Transparent,
+        BorderThickness = new Thickness(0),
+        Foreground = Text.Muted,
+        VerticalAlignment = VerticalAlignment.Center,
+    };
 
     /// <summary>Says what the patch costs.</summary>
     internal void Update()

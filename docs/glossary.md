@@ -108,6 +108,8 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | **skin** | A plugin's own drawing of its module. | `ModuleSkin` | theme |
 | **inspector** | The panel that shows and edits what is selected. | `Inspector` | properties, sidebar |
 | **palette** | The module list that opens on right-click or Space. | `ModulePalette` | module list, menu, browser |
+| **tutorial** | A lesson in the editor's left column: a preset to start on and steps, each checked against the patch as it is edited. The videos on the site are tutorials too. | `Tutorial`, `TutorialPanel` | lesson, walkthrough, guide, onboarding |
+| **step** | One thing a tutorial asks for, with the patch that shows it done (its goal). | `TutorialStep`, `TutorialStep.Goal` | task, lesson |
 | **knob panel** | The row of panel knobs, turned by hand or from a MIDI controller. | `ControlsPanel` | controls panel, mixer |
 | **panel knob** | A knob on the knob panel. It moves every socket linked to it, and a MIDI controller can be learned for it. | `PatchControl`, `Patch.Controls` | control, macro, fader |
 | **link** | A socket following a panel knob over a range. | `ControlLink` | binding, mapping |
