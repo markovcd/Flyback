@@ -588,3 +588,41 @@
 - Split the node editor into one class across a file per region.
 - Unified the five routes by which a patch document arrives: its name, file kind and asset lookup now travel together.
 - Renamed `PatchIo` to `PatchIO`, and added tests for the CLI patches, live values, choice fields and the image library.
+
+## 0.1.0 — 2026-08-31
+
+First release.
+
+### Engine
+
+- One patch makes both a picture and a sound, compiled to one flat program run per pixel and per sample, on the GPU where there is one.
+- A patch may loop back on itself, and feedback modules read the previous frame.
+
+### Modules
+
+- Sources, oscillators, patterns, space, color, maths, envelopes, sequencers and output, with time and coordinates normalled into the sockets that want them.
+- Sequencer, Mixer, ADSR, Quantizer, Sample & Hold, a sample player, Noise, Scan, Scope and Probe.
+- Picture, Voice and Effects plugins: shapes, fractals, cells and palettes; filter, drive, fold and supersaw; reverb, delay, chorus, flanger and phaser.
+- MIDI In plays up to eight voices from a keyboard on Windows, macOS and Linux.
+
+### Presets
+
+- Twenty presets, from one-idea teaching patches like Plasma and Loop to the Nebula, Played and Whole band showcases, plus Acid, Space and Marble from the plugins.
+
+### Editor
+
+- A node editor with re-patching, wire-to-add, marquee select, copy and paste, groups, automatic layout, and undo and redo.
+- Live preview, full screen, live recording, and export to AVI, JPEG and WAV.
+- A patch saves as `.fbk`, or as a `.fbkp` bundle with its samples and pictures.
+
+### Assistant
+
+- An OpenAI assistant that edits the patch and can hear it, with its key kept in the system's secret store.
+
+### Command line
+
+- `flyback-cli` renders an image, a movie or a WAV, and checks, inspects and packs a patch.
+
+### Platforms
+
+- Self-contained builds for Windows and macOS on x64 and arm64, and for Linux on x64.
