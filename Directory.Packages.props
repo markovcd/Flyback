@@ -56,7 +56,7 @@
   <ItemGroup>
     <PackageVersion Include="NAudio.Wasapi" Version="3.1.0" />
     <PackageVersion Include="System.CommandLine" Version="2.0.12" />
-    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.12" />
+    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.13" />
   </ItemGroup>
 
   <!-- Runs in the compiler and ships in nothing, which is what ADR-0019 allows Core. -->
