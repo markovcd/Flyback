@@ -158,6 +158,9 @@ internal static class Handbook
           out to any number.
         - A scalar into a color port fills all three channels; a color into a
           scalar port narrows to its luma.
+        - **Reach for a module before an Expression.** The person edits an
+          Expression as a formula, which is hard to work with, so write one
+          only where no module does the job.
 
         ## Normalled sockets
 
