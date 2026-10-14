@@ -35,10 +35,26 @@ internal sealed class GroupInspector(
         "Several modules drawn as one. Nothing about the patch changes — the modules "
         + "are where they were and so are the wires between them.";
 
+    /// <summary>A module's gutter fits a socket's name, and an edge row's caption is a module's as well.</summary>
+    private const double SocketGutter = 140;
+
     public void Build(NodeGroup group)
     {
-        const double socketGutter = 140;
+        var (plate, above) = Plate(group);
 
+        Edges(group);
+
+        // A box on a locked canvas is drawn from the text's group statements, so
+        // everything that would change one is left off for the same reason
+        // deleting a module is — see Inspector.Build.
+        if (editor.History.Locked) return;
+
+        Actions(group, plate, above);
+    }
+
+    /// <summary>The box's face, its description, and where the row of actions goes under the name.</summary>
+    private (ModulePlate Plate, int Above) Plate(NodeGroup group)
+    {
         // The box's own face, in the grays the canvas draws one in — a box belongs to
         // no category, so there is no accent to carry over.
         var plate = ModulePlate.Box();
@@ -88,6 +104,12 @@ internal sealed class GroupInspector(
             Margin = new Thickness(0, 4, 0, 6),
         });
 
+        return (plate, above);
+    }
+
+    /// <summary>The sockets on the box's edge, inputs then outputs.</summary>
+    private void Edges(NodeGroup group)
+    {
         var sockets = editor.History.Patch.SocketsOf(group);
 
         // Reserved for every slider on the edge if any one of them has a reading,
@@ -96,8 +118,8 @@ internal sealed class GroupInspector(
             editor.History.Patch.Find(s.Node) is { } inner && NodeCatalog.Get(inner.TypeId) is { } def
             && (InspectorRows.Named(def.Inputs[s.Port]) || def.TypeId == NodeCatalog.AutoRemapTypeId));
 
-        Edge("In", sockets.Inputs);
-        Edge("Out", sockets.Outputs);
+        Edge(group, "In", sockets.Inputs, reading);
+        Edge(group, "Out", sockets.Outputs, reading);
 
         if (sockets.Rows == 0)
             surface.Panel.Children.Add(new TextBlock
@@ -107,12 +129,88 @@ internal sealed class GroupInspector(
                 Foreground = Text.Muted,
                 FontSize = Text.Body,
             });
+    }
 
-        // A box on a locked canvas is drawn from the text's group statements, so
-        // everything that would change one is left off for the same reason
-        // deleting a module is — see Build.
-        if (editor.History.Locked) return;
+    /// <summary>One heading and a row per socket, each named for the module and socket inside that it stands for.</summary>
+    private void Edge(NodeGroup group, string heading, IReadOnlyList<GroupSocket> sockets, bool reading)
+    {
+        if (sockets.Count == 0) return;
 
+        surface.Panel.Children.Add(new TextBlock
+        {
+            Text = heading,
+            FontSize = Text.Small,
+            FontWeight = FontWeight.SemiBold,
+            Opacity = 0.7,
+            Margin = new Thickness(0, 10, 0, 2),
+        });
+
+        foreach (var socket in sockets)
+            if (editor.Selection.Scene.Named(socket) is var (_, spec) && editor.History.Patch.Find(socket.Node) is { } node)
+                surface.Panel.Children.Add(Socket(group, socket, node, spec, reading));
+    }
+
+    /// <summary>
+    /// The row the module's own panel has for the port, and on an unwired one the
+    /// way to take it off the edge again.
+    /// </summary>
+    /// <remarks>
+    /// A socket a wire is on comes back the moment anything asks, so a button
+    /// offering to remove one would appear to do nothing.
+    /// </remarks>
+    private Control Socket(NodeGroup group, GroupSocket socket, NodeInstance node, PortSpec spec, bool reading)
+    {
+        var row = new DockPanel { Margin = new Thickness(0, 0, 0, 1) };
+
+        var name = WireEnds.Name(editor.History.Patch, socket.Node, socket.Port, socket.IsOutput);
+
+        var body = socket.IsOutput
+            ? socketRows.Output(node, name, socket.Port)
+            : socketRows.Input(NodeCatalog.Get(node.TypeId)!, node, spec, socket.Port, reading, name);
+
+        if (body is Grid grid && grid.Children.OfType<TextBlock>().FirstOrDefault() is { } caption)
+        {
+            grid.ColumnDefinitions[0].Width = new GridLength(SocketGutter);
+            if (!double.IsNaN(caption.Width)) caption.Width = SocketGutter;
+
+            caption.Foreground = new SolidColorBrush(Colors.PortColor(spec.Kind));
+            ToolTip.SetTip(caption, spec.Help.Length == 0 ? name : $"{name}: {spec.Help}");
+        }
+
+        if (!editor.History.Patch.Wired(group, socket) && !editor.History.Locked)
+        {
+            var remove = new Button
+            {
+                Name = "hideSocket",
+                Content = Glyphs.Cross(12),
+                FontSize = Text.Caption,
+                Padding = new Thickness(5, 0, 5, 0),
+                Background = Brushes.Transparent,
+                Opacity = 0.55,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            ToolTip.SetTip(remove, "Take this socket off the edge. A wire puts it back.");
+            remove.Click += (_, _) => editor.Edits.HideSocket(group, socket);
+
+            DockPanel.SetDock(remove, Dock.Right);
+            row.Children.Add(remove);
+        }
+
+        row.Children.Add(body);
+
+        var helped = InspectorRows.Helped(row, spec.Help);
+
+        if (!socket.IsOutput || measured.Under(node, socket.Port).ToList() is not { Count: > 0 } under) return helped;
+
+        var stack = new StackPanel { Children = { helped } };
+        stack.Children.AddRange(under);
+        return stack;
+    }
+
+    /// <summary>The row of what can be done to the box, and the selection's own row under it.</summary>
+    private void Actions(NodeGroup group, ModulePlate plate, int above)
+    {
         var actions = ActionRows.Row();
 
         // First in the row, as it is on a module's panel: the one action here that
@@ -174,81 +272,6 @@ internal sealed class GroupInspector(
 
         plate.Under.Children.Insert(above, actions);
         if (ActionRows.Selection(editor) is { } taking) plate.Under.Children.Insert(above + 1, taking);
-
-        // One heading and a row per socket, each named for the module and socket
-        // inside that it stands for.
-        void Edge(string heading, IReadOnlyList<GroupSocket> sockets)
-        {
-            if (sockets.Count == 0) return;
-
-            surface.Panel.Children.Add(new TextBlock
-            {
-                Text = heading,
-                FontSize = Text.Small,
-                FontWeight = FontWeight.SemiBold,
-                Opacity = 0.7,
-                Margin = new Thickness(0, 10, 0, 2),
-            });
-
-            foreach (var socket in sockets)
-                if (editor.Selection.Scene.Named(socket) is var (_, spec) && editor.History.Patch.Find(socket.Node) is { } node)
-                    surface.Panel.Children.Add(Socket(socket, node, spec));
-        }
-
-        // The row the module's own panel has for the port, and — on one with nothing plugged into it — the way to
-        // take it off the edge again. Only there while it is unwired: a socket a
-        // wire is on comes back the moment anything asks, so a button offering
-        // to remove one would appear to do nothing.
-        Control Socket(GroupSocket socket, NodeInstance node, PortSpec spec)
-        {
-            var row = new DockPanel { Margin = new Thickness(0, 0, 0, 1) };
-
-            var name = WireEnds.Name(editor.History.Patch, socket.Node, socket.Port, socket.IsOutput);
-
-            var body = socket.IsOutput
-                ? socketRows.Output(node, name, socket.Port)
-                : socketRows.Input(NodeCatalog.Get(node.TypeId)!, node, spec, socket.Port, reading, name);
-
-            // A module's gutter fits a socket's name, and this caption is a module's as well.
-            if (body is Grid grid && grid.Children.OfType<TextBlock>().FirstOrDefault() is { } caption)
-            {
-                grid.ColumnDefinitions[0].Width = new GridLength(socketGutter);
-                if (!double.IsNaN(caption.Width)) caption.Width = socketGutter;
-
-                caption.Foreground = new SolidColorBrush(Colors.PortColor(spec.Kind));
-                ToolTip.SetTip(caption, spec.Help.Length == 0 ? name : $"{name}: {spec.Help}");
-            }
-
-            if (!editor.History.Patch.Wired(group, socket) && !editor.History.Locked)
-            {
-                var remove = new Button
-                {
-                    Name = "hideSocket",
-                    Content = Glyphs.Cross(12),
-                    FontSize = Text.Caption,
-                    Padding = new Thickness(5, 0, 5, 0),
-                    Background = Brushes.Transparent,
-                    Opacity = 0.55,
-                    VerticalAlignment = VerticalAlignment.Center,
-                };
-
-                ToolTip.SetTip(remove, "Take this socket off the edge. A wire puts it back.");
-                remove.Click += (_, _) => editor.Edits.HideSocket(group, socket);
-
-                DockPanel.SetDock(remove, Dock.Right);
-                row.Children.Add(remove);
-            }
-
-            row.Children.Add(body);
-
-            var helped = InspectorRows.Helped(row, spec.Help);
-
-            if (!socket.IsOutput || measured.Under(node, socket.Port).ToList() is not { Count: > 0 } under) return helped;
-
-            var stack = new StackPanel { Children = { helped } };
-            stack.Children.AddRange(under);
-            return stack;
-        }
 
         Button Act(string name, Control icon, string tip, Action gesture)
         {
