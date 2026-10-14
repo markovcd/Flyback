@@ -1267,7 +1267,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
             UiTest.Press(Named<Button>(open, "letter"));
             Settle();
 
-            var letter = Named<StackPanel>(open, "letter");
+            var letter = Named<DialogBody>(open, "letter");
 
             letter.GetVisualDescendants().OfType<RadioButton>().Single(choice => (string?)choice.Tag == mood).IsChecked = true;
             Named<TextBox>(letter, "message").Text = message;

@@ -79,8 +79,8 @@ internal sealed class SettingsSession(
         // later is one more row rather than a strip running out of width. A
         // fixed size, so the window does not jump as the sections are flicked
         // through; a section taller than that scrolls inside its own tab. Save
-        // sits under them all, because it saves them all — not only the tab
-        // showing.
+        // sits under them all and never scrolls away, because it saves them all —
+        // not only the tab showing.
         var tabs = new TabControl
         {
             Name = "settingsTabs",
@@ -88,6 +88,7 @@ internal sealed class SettingsSession(
             Width = Width,
             Height = Height,
             Padding = new Thickness(4, 6, 0, 0),
+            Margin = new Thickness(18, 4, 18, 0),
         };
 
         foreach (var section in sections) tabs.Items.Add(Tab(section));
@@ -114,13 +115,14 @@ internal sealed class SettingsSession(
         // another.
         var divider = new Border { Height = 1, Background = new SolidColorBrush(Colors.Separator) };
 
-        return new StackPanel
-        {
-            Spacing = 12,
-            MinWidth = Width,
-            Margin = new Thickness(18, 4, 18, 18),
-            Children = { tabs, divider, buttons },
-        };
+        return new DialogBody(
+            tabs,
+            new StackPanel
+            {
+                Spacing = 12,
+                Margin = new Thickness(18, 12, 18, 18),
+                Children = { divider, buttons },
+            });
     }
 
     /// <summary>

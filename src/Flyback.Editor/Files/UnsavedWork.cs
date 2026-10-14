@@ -318,13 +318,12 @@ internal sealed class UnsavedWork(
         asked.Children.Add(mark);
         asked.Children.Add(words);
 
-        return new StackPanel
-        {
-            Margin = new Thickness(20),
-            Spacing = 16,
-            MaxWidth = 420,
-            Children = { asked, buttons },
-        };
+        asked.Margin = new Thickness(20, 20, 20, 0);
+        asked.MaxWidth = 420;
+        buttons.Margin = new Thickness(20, 16, 20, 20);
+        buttons.MaxWidth = 420;
+
+        return new DialogBody(asked, buttons);
 
         Button Answering(string text, Unsaved with, bool wide = false)
         {

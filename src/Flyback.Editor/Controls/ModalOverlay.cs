@@ -221,20 +221,32 @@ internal sealed class ModalOverlay : Border
             inside.Children.Add(header);
         }
 
-        // Scrolled rather than clipped. Everything shown this way today fits in
-        // any window this one is allowed to be, but a settings panel grows a row
-        // every time a plugin adds a setting, and a dialog whose buttons are off
-        // the bottom of the screen cannot be answered at all.
-        scroller = new ScrollViewer
+        // Scrolled rather than clipped: a settings panel grows a row every time a
+        // plugin adds a setting. A dialog's buttons stay put below the scroll, or a
+        // short window would leave it unanswerable.
+        Control[] shown;
+
+        if (content is DialogBody body)
         {
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            VerticalScrollBarVisibility = wide ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto,
-            Content = content,
-        };
+            scroller = body.Scroller;
+            shown = [body.Content, body.Buttons];
+            inside.Children.Add(body);
+        }
+        else
+        {
+            scroller = new ScrollViewer
+            {
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                Content = content,
+            };
+            shown = [content];
 
-        inside.Children.Add(scroller);
+            inside.Children.Add(scroller);
+        }
 
-        parts = header is null ? [bar, content] : [bar, header, content];
+        scroller.VerticalScrollBarVisibility = wide ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto;
+
+        parts = header is null ? [bar, .. shown] : [bar, header, .. shown];
 
         return frame = new Border
         {

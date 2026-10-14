@@ -111,6 +111,39 @@ public class DialogTests : EditorTest
             scroller.Extent.Width.ShouldBeLessThanOrEqualTo(scroller.Viewport.Width + 1, "the content should not be cut off");
     }
 
+    /// <summary>
+    /// A window too short for the settings scrolls the tabs and keeps Save and Cancel
+    /// in view below them, so the dialog can always be answered.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_short_window_scrolls_the_settings_and_keeps_their_buttons_in_view()
+    {
+        var window = Open();
+
+        window.Height = 360;
+        Settle(window);
+
+        var dialog = Show(window, "settings");
+        var scroller = All<ScrollViewer>(All<Border>(dialog).Single(b => b.Name == "dialog")).First();
+
+        scroller.Extent.Height.ShouldBeGreaterThan(scroller.Viewport.Height, "the window should be too short for the tabs");
+
+        foreach (var end in new[] { 0, scroller.Extent.Height })
+        {
+            scroller.Offset = new Vector(0, end);
+            Settle(window);
+
+            foreach (var name in new[] { "save", "cancel" })
+            {
+                var button = All<Button>(dialog).Single(b => b.Name == name);
+                var top = button.TranslatePoint(default, window)!.Value.Y;
+
+                top.ShouldBeGreaterThanOrEqualTo(0, $"{name}, scrolled to {end}");
+                (top + button.Bounds.Height).ShouldBeLessThanOrEqualTo(window.Bounds.Height, $"{name}, scrolled to {end}");
+            }
+        }
+    }
+
     [AvaloniaFact]
     public void A_wide_window_keeps_the_full_margin()
     {

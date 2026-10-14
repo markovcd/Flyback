@@ -42,14 +42,14 @@ ARG VERSION=0.1.0-dev
 # a commit, and Dependabot says when one should move. A workflow or a script that
 # runs one names it exactly as here (BaseImageTests), and global.json names the
 # SDK's version.
-FROM node:26.10.0-bookworm-slim@sha256:3ffc19ea878019d9e9ae8971732ad4a03cda44f167107173174b60ed7c65bed3 AS worker
+FROM node:26.11.1-bookworm-slim@sha256:86f07bc9c5dce4578cf37e5a418b7bfc7f817cda25cde66e2b66e95ed86c4567 AS worker
 WORKDIR /worker
 COPY worker/package.json worker/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY worker/ ./
 RUN npx tsc --noEmit && npx vitest run && touch /tested
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0.401@sha256:e70cdb7f80b0348f5cb85f19a8f670fca061f033d57eed12fa003d58b0e06317 AS sdk
+FROM mcr.microsoft.com/dotnet/sdk:10.0.402@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa AS sdk
 
 # What the SDK image does not already have, in three stages so each package is
 # listed once and a stage takes only what it needs. An argument declared above the

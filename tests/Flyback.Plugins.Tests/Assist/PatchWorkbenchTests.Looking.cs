@@ -131,7 +131,8 @@ public partial class PatchWorkbenchTests
             {"type_id":"color.gain","handle":"gain1","knobs":[{"port":"gain","value":1},{"port":"bias","value":0.1}]}
             """);
 
-        await Call(bench, "connect", """{"from":"previous1","to":"gain1","to_port":"color"}""");
+        var fed = await Call(bench, "connect", """{"from":"previous1","from_port":"color","to":"gain1","to_port":"color"}""");
+        fed.Ok.ShouldBeTrue(fed.Text);
         var wired = await Call(bench, "connect", """{"from":"gain1","to":"output1","to_port":"color"}""");
         wired.Ok.ShouldBeTrue(wired.Text);
 

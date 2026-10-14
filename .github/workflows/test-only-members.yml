@@ -42,6 +42,10 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      # Unrestored, every package's types are unresolved and the uses through them go unseen.
+      - name: Restore the solution
+        run: dotnet restore Flyback.slnx
+
       - name: List the members only tests call
         run: |
           dotnet run --project tools/TestOnlyMembers -c Release -- Flyback.slnx test-only-members.tsv
@@ -62,7 +66,7 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: test-only-members
