@@ -28,6 +28,7 @@
 - In a page, a phone's keyboard shrinks the editor rather than covering the field being typed into, and an iPhone no longer zooms in on it.
 - Over the editor's full-screen picture, Space pauses and F11 gives the window back, as in the viewer.
 - A saved patch holds only what was set, not what Flyback works out from it.
+- A dialog too tall for its window scrolls only its contents, keeping Save, Cancel and its other buttons in view.
 - The unsaved-work and assistant-working questions carry a glyph: a disk, or the assistant's star.
 - On Android, the editor has the Flyback mark as its home-screen icon and opens on it.
 - A def call in the text is drawn on the canvas as a shut group of the modules it made, named after the `let` that binds it or else the def.

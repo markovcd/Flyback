@@ -376,10 +376,10 @@ public sealed class PluginHubTests : EditorTest
         var row = InstalledRow(window);
 
         Click(window, row);
-        Pump(() => All<StackPanel>(window).Any(p => p.Name == "pluginInstalled"), window);
+        Pump(() => All<DialogBody>(window).Any(p => p.Name == "pluginInstalled"), window);
         Settle(window);
 
-        var shown = All<StackPanel>(window).Single(p => p.Name == "pluginInstalled");
+        var shown = All<DialogBody>(window).Single(p => p.Name == "pluginInstalled");
 
         All<ModalOverlay>(window).Count().ShouldBe(2, "it sits over the plugins window");
         All<TextBlock>(shown).Single(t => t.Name == "pluginName").Text.ShouldBe(described.Name);
@@ -453,10 +453,10 @@ public sealed class PluginHubTests : EditorTest
         var window = OpenPlugins(site);
 
         Click(window, InstalledRow(window));
-        Pump(() => All<StackPanel>(window).Any(p => p.Name == "pluginInstalled"), window);
+        Pump(() => All<DialogBody>(window).Any(p => p.Name == "pluginInstalled"), window);
         Settle(window);
 
-        var shown = All<StackPanel>(window).Single(p => p.Name == "pluginInstalled");
+        var shown = All<DialogBody>(window).Single(p => p.Name == "pluginInstalled");
 
         Pump(() => All<TextBlock>(shown).Any(t => t.Name == "pluginNewer"), window);
         All<TextBlock>(shown).Single(t => t.Name == "pluginNewer").Text.ShouldBe("The plugin site has Picture 99.0.0.");
@@ -484,9 +484,9 @@ public sealed class PluginHubTests : EditorTest
         var window = OpenPlugins(site);
 
         Click(window, InstalledRow(window));
-        Pump(() => All<StackPanel>(window).Any(p => p.Name == "pluginInstalled"), window);
+        Pump(() => All<DialogBody>(window).Any(p => p.Name == "pluginInstalled"), window);
 
-        var shown = All<StackPanel>(window).Single(p => p.Name == "pluginInstalled");
+        var shown = All<DialogBody>(window).Single(p => p.Name == "pluginInstalled");
 
         All<TextBlock>(shown).ShouldNotContain(t => t.Name == "pluginNewer");
         All<Button>(shown).ShouldNotContain(b => b.Name == "update");
@@ -505,10 +505,10 @@ public sealed class PluginHubTests : EditorTest
         var window = OpenPlugins();
 
         Click(window, InstalledRow(window));
-        Pump(() => All<StackPanel>(window).Any(p => p.Name == "pluginInstalled"), window);
+        Pump(() => All<DialogBody>(window).Any(p => p.Name == "pluginInstalled"), window);
         Settle(window);
 
-        var shown = All<StackPanel>(window).Single(p => p.Name == "pluginInstalled");
+        var shown = All<DialogBody>(window).Single(p => p.Name == "pluginInstalled");
 
         All<TextBlock>(shown).ShouldNotContain(t => t.Name == "pluginNewer");
         Press(All<Button>(shown).Single(b => b.Name == "remove"));

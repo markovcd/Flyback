@@ -4,6 +4,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
+using Flyback.Editor.Controls;
 
 namespace Flyback.Editor.Site;
 
@@ -19,7 +20,7 @@ internal static class LetterView
     /// <summary>The letter, which answers its dialog with what became of it.</summary>
     internal static Control View(Action<string?> answer, LetterAbout about, Func<string, string, string?, CancellationToken, Task> send)
     {
-        var page = new StackPanel { Name = "letter", Spacing = 10, Width = 440, Margin = new Thickness(20, 12, 20, 20) };
+        var page = new StackPanel { Spacing = 10, Width = 440, Margin = new Thickness(20, 12, 20, 20) };
 
         page.Children.Add(new TextBlock
         {
@@ -123,16 +124,16 @@ internal static class LetterView
 
         cancel.Click += (_, _) => answer(null);
 
-        page.Children.Add(new StackPanel
+        page.Margin = new Thickness(20, 12, 20, 0);
+
+        return new DialogBody(page, new StackPanel
         {
             Orientation = Orientation.Horizontal,
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Right,
-            Margin = new Thickness(0, 6, 0, 0),
+            Margin = new Thickness(20, 16, 20, 20),
             Children = { sendButton, cancel },
-        });
-
-        return page;
+        }) { Name = "letter" };
 
         void Ready() => sendButton.IsEnabled = mood is not null && message.Text?.Trim().Length > 0;
     }

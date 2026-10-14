@@ -6,6 +6,7 @@ using Avalonia.Media.Imaging;
 using Flyback.Ui.Controls;
 using Flyback.Plugins.Hosting;
 using Colors = Flyback.Ui.Controls.Colors;
+using Flyback.Editor.Controls;
 
 namespace Flyback.Editor.PluginPackages;
 
@@ -48,7 +49,7 @@ internal static class PluginInstallView
         bool removable = false,
         int awaiting = 0)
     {
-        var page = new StackPanel { Name = "pluginInstall", Spacing = 10, Width = 480, Margin = new Thickness(20, 12, 20, 20) };
+        var page = new StackPanel { Spacing = 10, Width = 480, Margin = new Thickness(20, 12, 20, 20) };
 
         if (package.DescriptionFor(platform) is { } plugin)
         {
@@ -154,16 +155,16 @@ internal static class PluginInstallView
 
         buttons.Children.Add(cancel);
 
-        var row = new DockPanel { Margin = new Thickness(0, 6, 0, 0) };
+        var row = new DockPanel { Margin = new Thickness(20, 16, 20, 20) };
 
         DockPanel.SetDock(buttons, Dock.Right);
         row.Children.Add(buttons);
 
         if (offerRestart && refusal is null) row.Children.Add(restart);
 
-        page.Children.Add(row);
+        page.Margin = new Thickness(20, 12, 20, 0);
 
-        return page;
+        return new DialogBody(page, row) { Name = "pluginInstall" };
     }
 
     /// <summary>
@@ -192,7 +193,7 @@ internal static class PluginInstallView
         string id = "",
         string provider = "")
     {
-        var page = new StackPanel { Name = "pluginInstalled", Spacing = 10, Width = 480, Margin = new Thickness(20, 12, 20, 20) };
+        var page = new StackPanel { Spacing = 10, Width = 480, Margin = new Thickness(20, 12, 20, 20) };
         var facts = Describe(page, listed, described);
 
         if (id.Length > 0) Fact(facts, "Id", id, "pluginId");
@@ -217,7 +218,7 @@ internal static class PluginInstallView
             Orientation = Orientation.Horizontal,
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Right,
-            Margin = new Thickness(0, 6, 0, 0),
+            Margin = new Thickness(20, 16, 20, 20),
         };
 
         buttons.Children.Add(RemoveButton(removal, answer));
@@ -227,11 +228,11 @@ internal static class PluginInstallView
         close.Click += (_, _) => answer(PluginAnswer.Cancel);
         buttons.Children.Add(close);
 
-        page.Children.Add(buttons);
-
         if (newer is not null) _ = OfferAsync(page, buttons, newer, answer);
 
-        return page;
+        page.Margin = new Thickness(20, 12, 20, 0);
+
+        return new DialogBody(page, buttons) { Name = "pluginInstalled" };
     }
 
     /// <summary>Says what newer build the plugin site has, and offers Update, once the site has answered.</summary>
@@ -242,7 +243,7 @@ internal static class PluginInstallView
         var offer = Wrapped($"The plugin site has {found}.", Text.Body);
 
         offer.Name = "pluginNewer";
-        page.Children.Insert(page.Children.IndexOf(buttons), offer);
+        page.Children.Add(offer);
 
         var update = new Button { Name = "update", Content = "Update", MinWidth = 96 };
 

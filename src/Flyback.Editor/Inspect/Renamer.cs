@@ -94,7 +94,7 @@ internal sealed class Renamer(IDialog dialog, LastPress lastPress)
         var keep = new Button { Name = "rename-keep", Content = "Rename", MinWidth = 88, Height = 44, Classes = { "accent" } };
         keep.Click += (_, _) => answer(box.Text ?? string.Empty);
 
-        return new StackPanel
+        var form = new StackPanel
         {
             Spacing = 10,
             MinWidth = 280,
@@ -109,14 +109,16 @@ internal sealed class Renamer(IDialog dialog, LastPress lastPress)
                     Foreground = Text.Muted,
                     TextWrapping = TextWrapping.Wrap,
                 },
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 8,
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    Children = { cancel, keep },
-                },
             },
         };
+
+        return new DialogBody(form, new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Margin = new Thickness(0, 10, 0, 0),
+            Children = { cancel, keep },
+        });
     }
 }

@@ -4,6 +4,7 @@ using Avalonia.Controls.Documents;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Ui.Controls;
+using Flyback.Editor.Controls;
 
 namespace Flyback.Editor.PluginPackages;
 
@@ -24,7 +25,7 @@ internal static class MissingPluginsView
     /// <param name="action"></param>
     public static Control View(IReadOnlyList<SitePlugin> found, Action<bool> answer)
     {
-        var page = new StackPanel { Name = "missingPlugins", Width = 460, Spacing = 8 };
+        var page = new StackPanel { Width = 460, Spacing = 8 };
 
         page.Children.Add(new SelectableTextBlock
         {
@@ -66,15 +67,13 @@ internal static class MissingPluginsView
         look.Click += (_, _) => answer(true);
         later.Click += (_, _) => answer(false);
 
-        page.Children.Add(new StackPanel
+        return new DialogBody(page, new StackPanel
         {
             Orientation = Orientation.Horizontal,
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Right,
-            Margin = new Thickness(0, 6, 0, 0),
+            Margin = new Thickness(0, 14, 0, 0),
             Children = { look, later },
-        });
-
-        return page;
+        }) { Name = "missingPlugins" };
     }
 }

@@ -22,7 +22,7 @@ internal static class ReportView
     /// <summary>The question, which answers its dialog with what became of the report.</summary>
     private static Control View(string name, Func<string, string?, CancellationToken, Task> send, Action<string?> answer)
     {
-        var page = new StackPanel { Name = "report", Spacing = 10, Width = 440, Margin = new Thickness(20, 12, 20, 20) };
+        var page = new StackPanel { Spacing = 10, Width = 440, Margin = new Thickness(20, 12, 20, 20) };
 
         page.Children.Add(new TextBlock
         {
@@ -100,15 +100,15 @@ internal static class ReportView
 
         cancel.Click += (_, _) => answer(null);
 
-        page.Children.Add(new StackPanel
+        page.Margin = new Thickness(20, 12, 20, 0);
+
+        return new DialogBody(page, new StackPanel
         {
             Orientation = Orientation.Horizontal,
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Right,
-            Margin = new Thickness(0, 6, 0, 0),
+            Margin = new Thickness(20, 16, 20, 20),
             Children = { sendButton, cancel },
-        });
-
-        return page;
+        }) { Name = "report" };
     }
 }
