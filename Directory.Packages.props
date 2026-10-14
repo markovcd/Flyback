@@ -48,7 +48,7 @@
     <PackageVersion Include="HarfBuzzSharp.NativeAssets.WebAssembly" Version="14.2.0" />
 
     <!-- The editor's container and its HTTP clients (ADR-0150): the runtime's own, versioned with it. -->
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.12" />
   </ItemGroup>
 
