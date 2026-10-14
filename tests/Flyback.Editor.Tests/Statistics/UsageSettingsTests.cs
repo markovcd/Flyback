@@ -43,27 +43,27 @@ public sealed class UsageSettingsTests : EditorTest
     }
 
     private static CheckBox Switch(ModalOverlay dialog) =>
-        All<CheckBox>(dialog).Single(c => c.Name == "sendUsageStatistics");
+        All<CheckBox>(dialog).Single(c => c.Name == "countUsage");
 
     [AvaloniaFact]
-    public void Statistics_are_counted_until_switched_off()
+    public void Statistics_are_not_counted_until_switched_on()
     {
         var window = Open(settingsPath);
 
-        Switch(OpenSettings(window, PrivacyTab)).IsChecked.ShouldBe(true);
+        Switch(OpenSettings(window, PrivacyTab)).IsChecked.ShouldBe(false);
     }
 
     [AvaloniaFact]
-    public void Switching_off_and_saving_keeps_it_off()
+    public void Switching_on_and_saving_keeps_it_on()
     {
         var window = Open(settingsPath);
         var dialog = OpenSettings(window, PrivacyTab);
 
-        Switch(dialog).IsChecked = false;
+        Switch(dialog).IsChecked = true;
         CloseSettings(window, dialog);
 
-        UsageSettings.Load(settingsPath).SendUsageStatistics.ShouldBeFalse();
-        Switch(OpenSettings(Open(settingsPath), PrivacyTab)).IsChecked.ShouldBe(false, "the next launch reads it back");
+        UsageSettings.Load(settingsPath).CountUsage.ShouldBeTrue();
+        Switch(OpenSettings(Open(settingsPath), PrivacyTab)).IsChecked.ShouldBe(true, "the next launch reads it back");
     }
 
     [AvaloniaFact]
@@ -72,11 +72,11 @@ public sealed class UsageSettingsTests : EditorTest
         var window = Open(settingsPath);
         var dialog = OpenSettings(window, PrivacyTab);
 
-        Switch(dialog).IsChecked = false;
+        Switch(dialog).IsChecked = true;
         CloseSettings(window, dialog, "cancel");
 
         File.Exists(settingsPath).ShouldBeFalse();
-        Switch(OpenSettings(window, PrivacyTab)).IsChecked.ShouldBe(true);
+        Switch(OpenSettings(window, PrivacyTab)).IsChecked.ShouldBe(false);
     }
 
     [AvaloniaFact]
@@ -108,6 +108,7 @@ public sealed class UsageSettingsTests : EditorTest
     [AvaloniaFact]
     public void Switching_it_off_stops_this_run_too()
     {
+        new UsageSettings { CountUsage = true }.Save(settingsPath);
         var sink = new CollectedEvents();
         var usage = new Usage(sink);
         var window = Open(settingsPath, usage);

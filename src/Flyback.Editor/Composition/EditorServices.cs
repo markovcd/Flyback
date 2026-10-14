@@ -1,6 +1,7 @@
 using System.Net;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Shell;
+using Flyback.Editor.Tutorials;
 using Flyback.Engine.Compile;
 using Flyback.Ui.Audio;
 using Flyback.Editor.Bars;
@@ -140,6 +141,7 @@ internal static class EditorServices
 
         services.AddSingleton<IAssistantEditor, AssistantEditor>();
         services.AddPart<AssistantPanel>();
+        services.AddPart<TutorialPanel>();
         services.AddSingleton<AssistantSettingsPage>();
         services.AddPart<ChosenAssistant>();
 

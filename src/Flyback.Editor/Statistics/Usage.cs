@@ -200,7 +200,7 @@ public sealed class Usage
     /// <param name="local">The version of a build made on a developer's machine, or null for any other.</param>
     internal static Usage Start(UsageSettings settings, Version? running, Launch? launch = null, string? local = null)
     {
-        if (!settings.SendUsageStatistics) return Off;
+        if (!settings.CountUsage) return Off;
 
         if (running is null && local is null)
         {

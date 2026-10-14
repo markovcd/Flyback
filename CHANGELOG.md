@@ -2,9 +2,13 @@
 
 ## Unreleased
 
+## 0.9.0 — 2026-10-14
+
+65 commits since 0.8.0.
+
 ### Modules
 
-- Feedback's `age` output is the seconds since the frame it reads, so a loop built by hand can fade by the second as Trails does.
+- Feedback's `age` output is the seconds since the frame it reads.
 - A Window is 1 between two points and 0 outside, hard or soft edged, and a Dice throws the same random for a whole number every time it comes round; a formula calls them as `window()` and `dice()`.
 
 ### Presets
@@ -23,6 +27,8 @@
 
 ### Editor
 
+- Usage statistics are off until switched on under Settings → Privacy, including for anyone who had them on before.
+- Tutorials in the editor: Tutorials, at the left of the status bar, opens a column that walks you through building a patch, from a first picture, a first sound or a beat you can see, ticking off each step as your patch does what it asks; `flyback-cli tutorial` checks a patch against one.
 - On Windows, Flyback plays through an ASIO driver and on Linux through a running JACK server; where more than one way of playing sound is installed, the Sound tab asks which, and the status bar, the full-screen stats line, `flyback-viewer --report` and a page's state name it.
 - A MIDI In the computer keyboard plays can be played from a row of keys along the foot of the window: an octave of a piano or the patch's scale, moved by octaves, up by itself under a finger and from the toolbar's keys button otherwise.
 - The editor works under a finger: the inspector scrolls instead of moving a control, pins its header on a short screen and has Bypass, Duplicate, Delete and More buttons; a held button reads its tip; a wobbling tap still switches an Arrangement's cell; the code view waits for a tap before the keyboard; and every splitter takes a fingertip either side of its gap.
@@ -50,7 +56,7 @@
 
 - A patch opened on a busy Windows machine starts as soon as it is compiled, instead of standing silent for up to ten seconds.
 - Opening a patch that plays a long sound file, saving a preset or a bundle, installing a plugin, saving the file settings on Linux and typing in the assistant's settings no longer hold up the window.
-- A Trails fades by the second rather than by the frame, so its tail is as long in a 30 fps export as in a 60 fps preview.
+- A Trails' tail is as long in a 30 fps export as in a 60 fps preview.
 - Picking a model from the list no longer crashes the editor when the saved model is not on it, and a model name pasted with a space around it is read without the space.
 - The Claude Code and Codex assistants no longer flash a console window on Windows.
 - What the canvas says of an edit, a group declined or modules ungrouped, reaches the status bar.

@@ -12,7 +12,7 @@ namespace Flyback.Editor.Statistics;
 /// A section of its own rather than a field on <see cref="Updates.UpdateSettings"/> or
 /// <see cref="OutputSettings"/>: this is about what Flyback says about itself, not
 /// about what it installs or what comes out of it. Not load-bearing (ADR-0034): an
-/// unreadable section means the defaults, and the default is on (ADR-0094).
+/// unreadable section means the defaults, and the default is off (ADR-0094).
 /// </remarks>
 public sealed class UsageSettings
 {
@@ -26,7 +26,11 @@ public sealed class UsageSettings
     /// Count what this run is made of and send it, anonymously and with nothing
     /// about any patch in it. Off stops the run it is switched off in.
     /// </summary>
-    public bool SendUsageStatistics { get; set; } = true;
+    /// <remarks>
+    /// Saved as <c>countUsage</c>, never <c>sendUsageStatistics</c>: that key was saved
+    /// ticked by default, so it says nothing about what anybody chose and is ignored.
+    /// </remarks>
+    public bool CountUsage { get; set; }
 
     /// <summary>Where these settings are kept in <see cref="SettingsFile"/>.</summary>
     public const string Section = "usage";

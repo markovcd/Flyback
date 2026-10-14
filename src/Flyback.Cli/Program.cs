@@ -102,6 +102,7 @@ internal static class Program
             ShotCommand.Build(plugins),
             RenderPresetsCommand.Build(plugins),
             StillsCommand.Build(plugins),
+            TutorialCommand.Build(plugins, json),
         };
     }
 }

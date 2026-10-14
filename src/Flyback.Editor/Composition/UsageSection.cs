@@ -11,14 +11,13 @@ namespace Flyback.Editor.Composition;
 /// <summary>The usage half of the settings window's Privacy section: whether Flyback counts how it is used (ADR-0094).</summary>
 /// <remarks>
 /// The whole of what is counted is written out here rather than summarized,
-/// because a count nobody asked for is only fair while the person can read what
-/// it is. It is the same list as ADR-0094's and ADR-0103's, in the order the events happen.
+/// because a count is only fair to ask for while the person can read what it is. It is the same list as ADR-0094's and ADR-0103's, in the order the events happen.
 /// </remarks>
 internal sealed class UsageSection
 {
-    private readonly CheckBox sendUsageStatistics = new()
+    private readonly CheckBox countUsage = new()
     {
-        Name = "sendUsageStatistics",
+        Name = "countUsage",
         Content = "Count how Flyback is used",
         FontSize = Text.Body,
         VerticalAlignment = VerticalAlignment.Center,
@@ -43,11 +42,11 @@ internal sealed class UsageSection
 
         if (path is not null) saved = UsageSettings.Load(path);
 
-        ToolTip.SetTip(sendUsageStatistics,
+        ToolTip.SetTip(countUsage,
             "Send an anonymous count of what this run of Flyback is made of, so that what "
             + "is worth working on is known.");
 
-        View.Children.Add(sendUsageStatistics);
+        View.Children.Add(countUsage);
 
         View.Children.Add(new TextBlock
         {
@@ -85,7 +84,7 @@ internal sealed class UsageSection
     internal StackPanel View { get; } = new() { Spacing = 10, Width = SettingsSession.SectionWidth };
 
     /// <summary>Puts what was last saved back on the controls.</summary>
-    internal void Show() => sendUsageStatistics.IsChecked = saved.SendUsageStatistics;
+    internal void Show() => countUsage.IsChecked = saved.CountUsage;
 
     /// <remarks>
     /// Switching it off takes effect now rather than at the next start: there is a
@@ -95,9 +94,9 @@ internal sealed class UsageSection
     /// </remarks>
     internal void Save()
     {
-        saved = new UsageSettings { SendUsageStatistics = sendUsageStatistics.IsChecked == true };
+        saved = new UsageSettings { CountUsage = countUsage.IsChecked == true };
 
-        if (!saved.SendUsageStatistics) usage.Stop();
+        if (!saved.CountUsage) usage.Stop();
 
         if (path is null) return;
 

@@ -391,6 +391,17 @@ internal sealed class PresetSlot
         await SwitchToAsync(preset, picker.SelectedIndex);
     }
 
+    /// <summary>Puts the preset called <paramref name="name"/> on the canvas, after the questions a pick asks; whether it is there.</summary>
+    public async Task<bool> OpenAsync(string name)
+    {
+        var at = offered.FindIndex(preset => preset.Name == name);
+
+        if (at >= 0) return await SwitchToAsync(offered[at], at);
+
+        report.Say($"There is no '{name}' preset.");
+        return false;
+    }
+
     /// <summary>
     /// Puts <paramref name="preset"/>, the row <paramref name="wanted"/> of the picker, on
     /// the canvas after the questions every route out of a patch asks. Answers whether it
