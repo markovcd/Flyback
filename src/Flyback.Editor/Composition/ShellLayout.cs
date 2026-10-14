@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
 using Flyback.Editor.Assist;
@@ -14,6 +15,7 @@ using Flyback.Editor.Knobs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Statistics;
+using Flyback.Editor.Tutorials;
 using Flyback.Editor.Windows;
 using Colors = Flyback.Ui.Controls.Colors;
 using Flyback.Editor.Hubs;
@@ -30,6 +32,7 @@ internal sealed class ShellLayout(
     PanelKnobs knobs,
     ScreenKeys keys,
     AssistantPanel assistant,
+    TutorialPanel tutorial,
     Inspector inspector,
     PreviewHost preview,
     IAudioEngine audio,
@@ -49,6 +52,7 @@ internal sealed class ShellLayout(
         IReactTo<KnobsAsked>,
         IReactTo<SwapAsked>,
         IReactTo<AssistantAsked>,
+        IReactTo<TutorialAsked>,
         IReactTo<SideAsked>,
         IReactTo<TransportAsked>
 {
@@ -155,6 +159,12 @@ internal sealed class ShellLayout(
         return Task.CompletedTask;
     }
 
+    public Task On(TutorialAsked notice)
+    {
+        ShowTutorial(notice.Shown);
+        return Task.CompletedTask;
+    }
+
     public Task On(SideAsked notice)
     {
         ShowSide(notice.Shown);
@@ -223,7 +233,7 @@ internal sealed class ShellLayout(
 
         foreach (var (child, column) in new (Control, int)[]
                  {
-                     (assistant, 0),
+                     (new Panel { Children = { assistant, tutorial } }, 0),
                      (assistantSplitter, 1),
                      (patchPane, WideColumn),
                      (sideSplitter = Splitter(across: true, "side-splitter"), 3),
@@ -235,6 +245,7 @@ internal sealed class ShellLayout(
         }
 
         BuildRightPanel(columns, SideColumn);
+        tutorial.IsVisible = false;
         ShowAssistant(false);
 
         columns.SizeChanged += (_, e) => Narrow(e.NewSize.Width < CanvasMinWidth + SideMinWidth);
@@ -248,16 +259,39 @@ internal sealed class ShellLayout(
         return root;
     }
 
-    public void ShowAssistant(bool shown)
+    public void ShowAssistant(bool shown) => ShowLeft(assistant, toolbar.Assistant, tutorial, statusBar.Tutorial, shown);
+
+    public void ShowTutorial(bool shown) => ShowLeft(tutorial, statusBar.Tutorial, assistant, toolbar.Assistant, shown);
+
+    /// <summary>Whether the column left of the canvas is open, for the assistant or the tutorials.</summary>
+    private bool LeftOpen => assistant.IsVisible || tutorial.IsVisible;
+
+    /// <summary>
+    /// Shows one of the two panels that share the column left of the canvas, putting the other away,
+    /// and opens or closes the column at the width it left with.
+    /// </summary>
+    private void ShowLeft(Control panel, ToggleButton button, Control other, ToggleButton otherButton, bool shown)
     {
         if (assistantColumn is null || assistantSplitter is null) return;
-        if (toolbar.Assistant.IsChecked != shown) toolbar.Assistant.IsChecked = shown;
-        if (shown == assistant.IsVisible) return;
-        if (!shown && assistant.IsVisible) assistantShare = assistantColumn.Width;
-        assistant.IsVisible = shown;
-        assistantSplitter.IsVisible = shown;
-        assistantColumn.MinWidth = shown ? 280d : 0d;
-        assistantColumn.Width = shown ? assistantShare : new GridLength(0);
+        if (button.IsChecked != shown) button.IsChecked = shown;
+        if (shown == panel.IsVisible) return;
+
+        var before = LeftOpen;
+
+        if (shown && other.IsVisible)
+        {
+            other.IsVisible = false;
+            otherButton.IsChecked = false;
+        }
+
+        panel.IsVisible = shown;
+
+        var after = LeftOpen;
+        if (before == after) return;
+        if (!after) assistantShare = assistantColumn.Width;
+        assistantSplitter.IsVisible = after;
+        assistantColumn.MinWidth = after ? 280d : 0d;
+        assistantColumn.Width = after ? assistantShare : new GridLength(0);
     }
 
     /// <summary>
@@ -484,7 +518,7 @@ internal sealed class ShellLayout(
         if (previewBox is { IsVisible: true }) previewRow.Height = previewShare;
         columns.RowDefinitions[2].Height = new GridLength(saved.InspectorWeight, GridUnitType.Star);
         assistantShare = new GridLength(saved.AssistantWidth, GridUnitType.Pixel);
-        if (assistant.IsVisible) assistantColumn.Width = assistantShare;
+        if (LeftOpen) assistantColumn.Width = assistantShare;
         toolbar.Assistant.IsChecked = saved.AssistantOpen && toolbar.Assistant.IsEnabled;
         controlsShare = new GridLength(saved.ControlsHeight, GridUnitType.Pixel);
         if (ControlsRow is { } row && knobs.View.IsVisible) row.Height = controlsShare;
@@ -525,7 +559,7 @@ internal sealed class ShellLayout(
             SideWeight = side,
             PreviewWeight = previewWeight,
             InspectorWeight = inspectorWeight,
-            AssistantWidth = assistant.IsVisible ? assistantColumn!.Width.Value : assistantShare.Value,
+            AssistantWidth = LeftOpen ? assistantColumn!.Width.Value : assistantShare.Value,
             AssistantOpen = assistant.IsVisible,
             ControlsHeight = knobs.View.IsVisible ? Under(knobs.View, length => length.Value) : controlsShare.Value,
             ControlsOpen = knobs.View.IsVisible,

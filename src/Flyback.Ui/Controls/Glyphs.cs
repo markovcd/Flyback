@@ -73,6 +73,10 @@ internal static class Glyphs
     /// <summary>The same arrow turning right: put it back.</summary>
     public static Control Redo() => Stroked("M12,6.5 L6,6.5 A3.5,3.5 0 0 0 6,13.5 L10,13.5 M9.5,4 L12,6.5 L9.5,9");
 
+    /// <summary>An open book: the tutorials.</summary>
+    public static Control Lesson() => Stroked(
+        "M8,4.5 Q5,3 2,3.5 L2,12.5 Q5,12 8,13.5 Q11,12 14,12.5 L14,3.5 Q11,3 8,4.5 Z M8,4.5 L8,13.5");
+
     /// <summary>A pair of braces: the patch as text.</summary>
     public static Control Code() => Stroked(
         "M6,2.5 Q4,2.5 4,4.5 L4,6.5 Q4,8 2.5,8 Q4,8 4,9.5 L4,11.5 Q4,13.5 6,13.5 "

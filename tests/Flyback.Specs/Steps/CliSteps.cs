@@ -335,6 +335,9 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     [When("flyback-cli, with the plugins, checks {string}")]
     public void WhenCheckedWithPlugins(string name) => RunShipped("check", Path(name));
 
+    [When("flyback-cli tutorial checks {string} against {string}")]
+    public void WhenCheckedAgainstTutorial(string name, string tutorial) => Run("tutorial", tutorial, Path(name));
+
     [When("flyback-cli compares {string} with {string}")]
     public void WhenCompared(string first, string second) => Run("compare", Path(first), Path(second));
 

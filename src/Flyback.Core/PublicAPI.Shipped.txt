@@ -119,6 +119,7 @@ Flyback.Core.Compile.OpCode.Fract = 15 -> Flyback.Core.Compile.OpCode
 Flyback.Core.Compile.OpCode.HsvToRgb = 44 -> Flyback.Core.Compile.OpCode
 Flyback.Core.Compile.OpCode.Hypot = 29 -> Flyback.Core.Compile.OpCode
 Flyback.Core.Compile.OpCode.LoadAspect = 4 -> Flyback.Core.Compile.OpCode
+Flyback.Core.Compile.OpCode.LoadFeedbackAge = 47 -> Flyback.Core.Compile.OpCode
 Flyback.Core.Compile.OpCode.LoadLive = 5 -> Flyback.Core.Compile.OpCode
 Flyback.Core.Compile.OpCode.LoadT = 3 -> Flyback.Core.Compile.OpCode
 Flyback.Core.Compile.OpCode.LoadX = 1 -> Flyback.Core.Compile.OpCode
@@ -359,14 +360,11 @@ Flyback.Core.Graph.KeyboardScale.<Clone>$() -> Flyback.Core.Graph.KeyboardScale!
 Flyback.Core.Graph.KeyboardScale.Deconstruct(out int Tonic, out string! Scale) -> void
 Flyback.Core.Graph.KeyboardScale.Equals(Flyback.Core.Graph.KeyboardScale? other) -> bool
 Flyback.Core.Graph.KeyboardScale.KeyboardScale(int Tonic, string! Scale) -> void
-Flyback.Core.Graph.KeyboardScale.Mode.get -> Flyback.Core.Graph.ScaleMode!
-Flyback.Core.Graph.KeyboardScale.Name.get -> string!
 Flyback.Core.Graph.KeyboardScale.Row.get -> System.Collections.Generic.IReadOnlyList<int>!
 Flyback.Core.Graph.KeyboardScale.Scale.get -> string!
 Flyback.Core.Graph.KeyboardScale.Scale.init -> void
 Flyback.Core.Graph.KeyboardScale.Tonic.get -> int
 Flyback.Core.Graph.KeyboardScale.Tonic.init -> void
-Flyback.Core.Graph.KeyboardScale.TonicClass.get -> int
 Flyback.Core.Graph.MidiBinding
 Flyback.Core.Graph.MidiBinding.<Clone>$() -> Flyback.Core.Graph.MidiBinding!
 Flyback.Core.Graph.MidiBinding.Channel.get -> int
@@ -544,7 +542,6 @@ Flyback.Core.Graph.PatchControl.Held.get -> bool
 Flyback.Core.Graph.PatchControl.Held.set -> void
 Flyback.Core.Graph.PatchControl.Id.get -> System.Guid
 Flyback.Core.Graph.PatchControl.Id.init -> void
-Flyback.Core.Graph.PatchControl.Key.get -> string!
 Flyback.Core.Graph.PatchControl.Midi.get -> Flyback.Core.Graph.MidiBinding?
 Flyback.Core.Graph.PatchControl.Midi.set -> void
 Flyback.Core.Graph.PatchControl.Name.get -> string!

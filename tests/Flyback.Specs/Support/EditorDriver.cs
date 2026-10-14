@@ -26,6 +26,8 @@ using Flyback.Editor.Inspect;
 using Flyback.Editor.Keys;
 using Flyback.Editor.Site;
 using Flyback.Editor.Windows;
+using Flyback.Editor.Tutorials;
+using Flyback.Engine.Tutorials;
 using Flyback.Core.Graph;
 using Microsoft.Extensions.DependencyInjection;
 using Flyback.Host;
@@ -639,6 +641,30 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     /// <summary>Whether the assistant's column is open beside the canvas.</summary>
     public bool AssistantColumnOpen => ReadWindow(open =>
         open.GetVisualDescendants().OfType<AssistantPanel>().Single().IsVisible);
+
+    /// <summary>Opens the tutorials' column from the toolbar and presses the card of the tutorial called <paramref name="title"/>.</summary>
+    public void StartTutorial(string title)
+    {
+        DoWindow((open, _) => Named<ToggleButton>(open, "tutorial").IsChecked = true);
+        DoWindow((open, _) =>
+        {
+            var tutorial = ShippedTutorials.Find(title) ?? throw new InvalidOperationException($"No tutorial called {title}.");
+            UiTest.Press(Named<Button>(open, $"tutorial-{tutorial.Id}"));
+        });
+    }
+
+    /// <summary>The step the tutorials' column says to do now.</summary>
+    public string TutorialStep => ReadWindow(open => Named<TextBlock>(open, "tutorial-step").Text ?? string.Empty);
+
+    /// <summary>What the column says the patch still lacks, or null where it says nothing.</summary>
+    public string? TutorialHint => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => t.Name == "tutorial-hint")?.Text);
+
+    /// <summary>The steps the column has ticked off, by title.</summary>
+    public IReadOnlyList<string> TutorialTicked => ReadWindow(open =>
+        UiTest.All<TutorialPanel>(open).Single() is { Taking: { } taking } panel
+            ? (IReadOnlyList<string>)[.. taking.Steps.Where((_, i) => panel.Done[i]).Select(s => s.Title)]
+            : []);
 
     /// <summary>Whether the status bar shows the letter and the rule before it.</summary>
     public (bool Letter, bool Rule) StatusBarLetter => ReadWindow(open => (
