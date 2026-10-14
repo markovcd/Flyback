@@ -2,9 +2,13 @@
 
 ## Unreleased
 
+## 0.9.0 — 2026-10-14
+
+65 commits since 0.8.0.
+
 ### Modules
 
-- Feedback's `age` output is the seconds since the frame it reads, so a loop built by hand can fade by the second as Trails does.
+- Feedback's `age` output is the seconds since the frame it reads.
 - A Window is 1 between two points and 0 outside, hard or soft edged, and a Dice throws the same random for a whole number every time it comes round; a formula calls them as `window()` and `dice()`.
 
 ### Presets
@@ -52,7 +56,7 @@
 
 - A patch opened on a busy Windows machine starts as soon as it is compiled, instead of standing silent for up to ten seconds.
 - Opening a patch that plays a long sound file, saving a preset or a bundle, installing a plugin, saving the file settings on Linux and typing in the assistant's settings no longer hold up the window.
-- A Trails fades by the second rather than by the frame, so its tail is as long in a 30 fps export as in a 60 fps preview.
+- A Trails' tail is as long in a 30 fps export as in a 60 fps preview.
 - Picking a model from the list no longer crashes the editor when the saved model is not on it, and a model name pasted with a space around it is read without the space.
 - The Claude Code and Codex assistants no longer flash a console window on Windows.
 - What the canvas says of an edit, a group declined or modules ungrouped, reaches the status bar.
