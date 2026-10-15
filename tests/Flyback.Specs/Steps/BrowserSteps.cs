@@ -116,7 +116,9 @@ public sealed class BrowserSteps(PatchContext context, IUnitTestRuntimeProvider 
     [Then("the web viewer plays, its sound heard")]
     public void ThenItPlaysHeard()
     {
+        // The worker reports what it rendered at most every 200 ms, and can fill the speakers' queue past 0.25 s before it next does.
         Page.Until("flyback.status().sound && flyback.status().time > 0.25", "the web viewer's speakers did not become its clock", Answering);
+        Page.Until("flyback.status().rendered > 0", "the web viewer's worker never said it rendered any sound", Answering);
 
         var status = Status();
         ((bool?)status["playing"]).ShouldBe(true);
