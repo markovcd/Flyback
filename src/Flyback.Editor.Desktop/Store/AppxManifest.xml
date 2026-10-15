@@ -48,7 +48,7 @@
         Square44x44Logo="Store\Square44x44Logo.png" />
       <Extensions>
         <uap5:Extension Category="windows.appExecutionAlias">
-          <uap5:AppExecutionAlias desktop4:Subsystem="console">
+          <uap5:AppExecutionAlias desktop4:Subsystem="console" desktop4:SupportsMultipleInstances="true">
             <uap5:ExecutionAlias Alias="flyback.exe" />
           </uap5:AppExecutionAlias>
         </uap5:Extension>
@@ -101,7 +101,7 @@
         AppListEntry="none" />
       <Extensions>
         <uap5:Extension Category="windows.appExecutionAlias">
-          <uap5:AppExecutionAlias desktop4:Subsystem="console">
+          <uap5:AppExecutionAlias desktop4:Subsystem="console" desktop4:SupportsMultipleInstances="true">
             <uap5:ExecutionAlias Alias="flyback-cli.exe" />
           </uap5:AppExecutionAlias>
         </uap5:Extension>
@@ -118,7 +118,7 @@
         AppListEntry="none" />
       <Extensions>
         <uap5:Extension Category="windows.appExecutionAlias">
-          <uap5:AppExecutionAlias desktop4:Subsystem="console">
+          <uap5:AppExecutionAlias desktop4:Subsystem="console" desktop4:SupportsMultipleInstances="true">
             <uap5:ExecutionAlias Alias="flyback-viewer.exe" />
           </uap5:AppExecutionAlias>
         </uap5:Extension>
