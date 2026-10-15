@@ -91,7 +91,7 @@ take() {
 
 take phone 1080x1920 420 0
 take tablet7 1080x1920 240 1
-take tablet10 1440x2560 320 1
+take tablet10 1080x1920 200 1
 take desktop 1080x1920 160 1
 
 echo "PASS: $(ls "$out" | wc -l) captures in $out" >&2
