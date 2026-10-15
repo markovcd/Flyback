@@ -35,6 +35,11 @@ internal static class About
 
     public const string Author = "Arkadiusz Markowski";
 
+    /// <summary>The name the author publishes under.</summary>
+    public const string Studio = "Potato Smasher";
+
+    public static string Credit => $"by {Studio} ({Author})";
+
     /// <summary>Where the screenshots and the tutorials live.</summary>
     public const string Website = "https://flybackmodular.app/";
 
@@ -90,7 +95,7 @@ internal static class About
 
         titles.Children.Add(Quiet(Description));
         titles.Children.Add(Quiet($"Version {Version}"));
-        titles.Children.Add(Quiet($"by {Author}"));
+        titles.Children.Add(Credited());
         titles.Children.Add(Link(Website));
         titles.Children.Add(Link($"mailto:{Email}", Email));
 
@@ -168,6 +173,17 @@ internal static class About
         mark.DetachedFromVisualTree += (_, _) => motion?.Dispose();
 
         return mark;
+    }
+
+    /// <summary>The credit line, behind the studio's mark.</summary>
+    private static Control Credited()
+    {
+        var line = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+
+        line.Children.Add(new StudioMark { Width = 18, Height = 18, VerticalAlignment = VerticalAlignment.Center });
+        line.Children.Add(Quiet(Credit));
+
+        return line;
     }
 
     /// <summary>The address as a code to scan, and as a click to copy it by.</summary>

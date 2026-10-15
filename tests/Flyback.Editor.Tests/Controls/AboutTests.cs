@@ -44,7 +44,7 @@ public class AboutTests : EditorTest
         said.ShouldContain(GlobalConstants.ApplicationName);
         said.ShouldContain(About.Description);
         said.ShouldContain($"Version {About.Version}");
-        said.ShouldContain($"by {About.Author}");
+        said.ShouldContain($"by {About.Studio} ({About.Author})");
         said.ShouldContain(t => t.Contains(About.License) && t.Contains(About.Copyright));
     }
 
