@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy — Flyback</title>
+<meta name="description" content="What Flyback, its Android app and flybackmodular.app collect, what it is used for and who it is shared with.">
+<link rel="canonical" href="https://flybackmodular.app/privacy.html">
+<meta name="theme-color" content="#22252A">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+  .doc-head { border-bottom: 1px solid var(--edge); }
+  .doc main ul { padding-left: 20px; }
+  .doc main li { margin: 6px 0; }
+</style>
+</head>
+<body>
+
+<header class="toolbar">
+  <div class="wrap">
+    <a class="brand" href="./"><img src="assets/logo.svg" alt=""><span>Flyback</span></a>
+    <nav aria-label="Site">
+      <a href="./" class="optional">Overview</a>
+      <a href="tutorials.html">Tutorials</a>
+      <a href="presets.html">Presets</a>
+      <a href="shared-plugins.html">Plugins</a>
+      <span class="sep" aria-hidden="true"></span>
+      <a href="https://github.com/markovcd/Flyback">GitHub</a>
+      <a href="https://www.youtube.com/@FlybackModular">YouTube</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+
+<div class="canvas">
+  <div class="wrap">
+    <header class="doc-head" style="border: 0">
+      <p class="eyebrow">Privacy policy · effective 15 October 2026</p>
+      <h1>What Flyback collects.</h1>
+      <p class="lede">Very little, and nothing that says who you are. This page covers the Flyback editor on Windows,
+        macOS and Linux, the Flyback Android app (<code>app.flybackmodular.editor</code>), the command line tool, the
+        viewer and this website. Flyback is free, open source and made by one person; nothing is sold, and there are
+        no ads, no accounts and no tracking.</p>
+    </header>
+  </div>
+</div>
+
+<div class="wrap">
+<div class="doc">
+
+  <nav class="toc" aria-label="Contents">
+    <p>Contents</p>
+    <ol>
+      <li><a href="#device">On your device</a></li>
+      <li><a href="#android">The Android app</a></li>
+      <li><a href="#site">Presets, plugins and letters</a></li>
+      <li><a href="#usage">Usage counts</a></li>
+      <li><a href="#updates">Updates</a></li>
+      <li><a href="#assistants">Assistants</a></li>
+      <li><a href="#shared">Who sees it</a></li>
+      <li><a href="#rights">Your choices</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <section id="device">
+      <h2>On your device</h2>
+      <p>Your patches, recordings, samples, settings and installed plugins stay on your device. Flyback does not
+        upload them. Sound coming in from a microphone or a line input, MIDI from a keyboard or a controller and
+        anything you play are processed on the device and go nowhere unless you record them to a file yourself.</p>
+    </section>
+
+    <section id="android">
+      <h2>The Android app</h2>
+      <p>The Android app asks for one permission, internet access, and uses it only to reach the preset site
+        described below. It does not ask for the microphone, your location, your contacts, your files or anything
+        that identifies the device. It sends no usage counts, has no self-updater, holds no assistants and keeps
+        what it saves in its own private folder. Android's backup of app data is switched off for it.</p>
+    </section>
+
+    <section id="site">
+      <h2>Presets, plugins and letters</h2>
+      <p>The editor and the Android app read the shared presets and plugins from
+        <a href="presets.html">flybackmodular.app</a>, as this website does. Browsing them sends nothing about you
+        beyond the request itself. Some of what you can do there sends something of your choosing:</p>
+      <ul>
+        <li><strong>Sharing a preset or a plugin</strong> publishes the file you send, with the name, author,
+          description and tags it carries, for everyone to see and download.</li>
+        <li><strong>Writing to the author</strong> (the last glyph on the editor's status bar) sends your message, what it is about, the Flyback version, the operating system, and the names of
+          the plugins and sound backend in use. A reply address is optional, and only the author reads it.</li>
+        <li><strong>Rating or reporting</strong> a preset or a plugin sends the rating or the reason. A rating is
+          kept under a one-way hash of your network address, so one person counts once and the stored rating says
+          nothing about who gave it.</li>
+      </ul>
+      <p>To keep the site from being flooded, it counts requests per network address for one hour and then deletes
+        the count. The site sets no cookies for visitors and runs no analytics.</p>
+    </section>
+
+    <section id="usage">
+      <h2>Usage counts</h2>
+      <p>The desktop editor can count how it is used, to show which features matter. It is <strong>off</strong>
+        until you tick it under <strong>Settings → Privacy</strong>, and off again the moment you untick it. When
+        on, it sends coarse bands, never exact figures: the version, the operating system, which of Flyback's own
+        plugins loaded and which sound backend opened, roughly how many cores, how much memory and what screen
+        size, how many of each kind of module a playing patch holds, whether an assistant was asked and which, and
+        at the end of a run which kinds of module were picked, how long it lasted, which features it used and how
+        fast the picture drew. A crash sends the kind of error and where in Flyback's code it happened, never its
+        message.</p>
+      <p>No patch, nothing you type, no file name, no account or machine name and no identifier is sent. Each run
+        gets a random id made at launch and never saved, so two runs cannot be told apart from one. The counts go
+        to <a href="https://aptabase.com">Aptabase</a>, which keeps aggregate figures.</p>
+    </section>
+
+    <section id="updates">
+      <h2>Updates</h2>
+      <p>The desktop editor checks the project's
+        <a href="https://github.com/markovcd/Flyback/releases">GitHub releases</a> once a launch and downloads a
+        new release when there is one, installing it only if it is signed with Flyback's release key. The request
+        carries the version and nothing else of yours. Turn it off under <strong>Settings → Privacy</strong>.
+        Copies installed from an app store update through the store instead.</p>
+    </section>
+
+    <section id="assistants">
+      <h2>Assistants</h2>
+      <p>The desktop editor can ask an AI assistant for help with a patch, but only one you set up yourself with
+        your own account or key: OpenAI, Google Gemini, or a command line tool such as Codex or Claude Code
+        installed on your machine. What you ask, and the patch it is about, then go to that provider under your
+        agreement with them and their privacy policy. Flyback never sees the conversation, and your key is kept in
+        your operating system's own secret store, sent only to the provider it belongs to.</p>
+    </section>
+
+    <section id="shared">
+      <h2>Who sees it</h2>
+      <p>Nothing is sold or used for advertising. The services that handle what is described above are:</p>
+      <ul>
+        <li><strong>Cloudflare</strong>, which hosts this website and the preset site and so sees each request's
+          network address as any host does.</li>
+        <li><strong>Aptabase</strong>, only for usage counts you switched on.</li>
+        <li><strong>GitHub</strong>, for update checks and downloads.</li>
+        <li><strong>Google Fonts</strong>, which serves this website's typeface.</li>
+        <li>The assistant provider you chose, if any.</li>
+      </ul>
+      <p>Shared presets and plugins are public. Letters are kept until the author has read and dealt with them.</p>
+    </section>
+
+    <section id="rights">
+      <h2>Your choices</h2>
+      <p>Everything that sends something optional can be left off: usage counts and updates under
+        <strong>Settings → Privacy</strong>, and sharing, letters and ratings by not using them. Since nothing
+        Flyback keeps identifies you, there is no profile to download or erase; to have a preset, a plugin or a
+        letter you sent taken down, ask below and say which. Flyback is not directed at children and collects
+        nothing about anyone's age.</p>
+    </section>
+
+    <section id="contact">
+      <h2>Contact</h2>
+      <p>Write to the author from inside Flyback, or open a discussion on
+        <a href="https://github.com/markovcd/Flyback/discussions">GitHub</a>. Changes to this policy are made on
+        this page, with a new effective date at the top, and are visible in the
+        <a href="https://github.com/markovcd/Flyback/commits/main/site/privacy.html">repository's history</a>.</p>
+    </section>
+  </main>
+
+</div>
+</div>
+
+</div>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span class="brand-foot"><img src="assets/logo.svg" alt="">Flyback · MIT License</span>
+    <a href="./">Overview</a>
+    <a href="tutorials.html">Tutorials</a>
+    <a href="https://github.com/markovcd/Flyback/blob/main/CHANGELOG.md">Changelog</a>
+    <a href="https://github.com/markovcd/Flyback">GitHub</a>
+    <a href="https://github.com/markovcd/Flyback/discussions">Discussions</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+</body>
+</html>
