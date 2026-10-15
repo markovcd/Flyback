@@ -1,6 +1,6 @@
 # The whole gate on GitHub's machines, by hand: the Linux gate, the native tests
 # on Windows and macOS (native-tests.yml), and the Android editor on an emulator,
-# which nothing else starts. The plan this serves is
+# which nothing else starts, with the Play listing's screenshots when asked. The plan this serves is
 # docs/handoff/tests-on-github-hosted-runners.md.
 #
 # Every action is pinned to a commit rather than a tag; Dependabot says when a
@@ -20,6 +20,10 @@ on:
         default: all
       macos-gl:
         description: Run macOS's Gpu tests on CGL (seven presets are known to disagree).
+        type: boolean
+        default: false
+      play-shots:
+        description: After the Android smoke, take the Play listing's screenshots (android-shots.sh).
         type: boolean
         default: false
 
@@ -92,18 +96,28 @@ jobs:
 
       - name: Start the editor on an emulator and ask it how it is doing
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        env:
+          PLAY_SHOTS: ${{ inputs.play-shots }}
         with:
           api-level: 36
           arch: x86_64
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -no-boot-anim -no-snapshot
           disable-animations: true
-          script: SMOKE_SHOTS=smoke bash scripts/android-smoke.sh
+          script: SMOKE_SHOTS=smoke bash scripts/android-smoke.sh && if [ "$PLAY_SHOTS" = true ]; then bash scripts/android-shots.sh play-shots; fi
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: android-smoke
           path: smoke
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always() && inputs.play-shots
+        with:
+          name: play-shots
+          path: play-shots
           if-no-files-found: ignore
           retention-days: 14
