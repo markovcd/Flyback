@@ -2,6 +2,10 @@
 
 Flyback is mostly written by a large language model (LLM). A human directs the work, reviews it, decides what ships and writes some of it by hand. That is how the project happens to be made, not a requirement on a contribution, and none of it lowers the bar the codebase is held to.
 
+## Picking something to work on
+
+[TODO.md](TODO.md) lists work asked for and not yet started, one line each. [docs/handoff/](docs/handoff/README.md) holds the items too long for a line: a plan, an audit or a known problem, each with the evidence and the fix it wants. Take any of them, or point your coding agent at one ("do the handoff in `docs/handoff/<file>.md`"); each is written to be picked up cold. The commit that lands an item takes its line off TODO.md, and the one that lands the last of a handoff deletes its file.
+
 ## Working with an LLM
 
 If you use one, point it at the repository and let it read the ground rules first:
