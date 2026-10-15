@@ -26,6 +26,8 @@ only the key, so the certificate is made once from the key and committed as
 `src/Flyback.Editor.Android/release-cert.pem`. The Release workflow checks that it pairs
 with the secret and with `release-key.pem`, joins the two into a keystore for the one
 step that signs, and holds the APK to having been signed under that certificate alone.
+While the certificate is missing, the job makes it from the secret, uploads it as the
+`release-cert` artifact for someone to commit, and fails.
 
 **The version code rises with the version**: major × 1,000,000 + minor × 1,000 + patch,
 worked out by `scripts/release-version.sh`, which `release.sh` sources for the version
