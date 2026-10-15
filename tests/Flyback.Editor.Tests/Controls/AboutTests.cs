@@ -57,6 +57,14 @@ public class AboutTests : EditorTest
         Words(window).ShouldContain(About.Website);
     }
 
+    [AvaloniaFact]
+    public void It_shows_where_to_write_to_the_author()
+    {
+        var window = Showing();
+
+        Words(window).ShouldContain(About.Email);
+    }
+
     /// <summary>Clicks the mark, wherever it has ended up in the window.</summary>
     private static void Click(Window window, Point at, int times)
     {

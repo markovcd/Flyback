@@ -38,6 +38,9 @@ internal static class About
     /// <summary>Where the screenshots and the tutorials live.</summary>
     public const string Website = "https://flybackmodular.app/";
 
+    /// <summary>Where mail to the author goes.</summary>
+    public const string Email = "hello@flybackmodular.app";
+
     public const string License = "MIT";
 
     public const string Copyright = "Copyright © 2026 Arkadiusz Markowski";
@@ -89,6 +92,7 @@ internal static class About
         titles.Children.Add(Quiet($"Version {Version}"));
         titles.Children.Add(Quiet($"by {Author}"));
         titles.Children.Add(Link(Website));
+        titles.Children.Add(Link($"mailto:{Email}", Email));
 
         Grid.SetColumn(mark, 0);
         Grid.SetColumn(titles, 1);
@@ -232,12 +236,13 @@ internal static class About
         return block;
     }
 
-    /// <summary>A line of text that opens <paramref name="uri"/> in the system browser.</summary>
-    private static TextBlock Link(string uri)
+    /// <summary>A line of text that opens <paramref name="uri"/> with the system's handler for it.</summary>
+    /// <param name="text">What the line says, or null for the address itself.</param>
+    private static TextBlock Link(string uri, string? text = null)
     {
         var link = new TextBlock
         {
-            Text = uri,
+            Text = text ?? uri,
             FontSize = Text.Body,
             Foreground = new SolidColorBrush(Colors.Attention),
             TextDecorations = TextDecorations.Underline,
