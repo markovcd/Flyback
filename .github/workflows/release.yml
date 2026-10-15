@@ -118,19 +118,10 @@ jobs:
       # Android checks an update against the certificate, not only the key, so the
       # certificate is made once and committed, and has to pair with the secret.
       - name: Check the key and the certificate
-        id: cert
         env:
           RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
         run: |
           cert=src/Flyback.Editor.Android/release-cert.pem
-          # Made here only the once, for someone to commit: the run then fails.
-          if [ ! -f "$cert" ]; then
-            printf '%s\n' "$RELEASE_SIGNING_KEY" | openssl req -new -x509 -key /dev/stdin \
-              -subj "/CN=Flyback" -days 36500 -out "$RUNNER_TEMP/release-cert.pem"
-            echo "release: $cert is missing; commit the release-cert artifact this run uploads there (ADR-0198)" >&2
-            echo "missing=true" >> "$GITHUB_OUTPUT"
-            exit 1
-          fi
           printf '%s\n' "$RELEASE_SIGNING_KEY" | openssl pkey -pubout -outform DER -out "$RUNNER_TEMP/derived.der"
           openssl x509 -in "$cert" -noout -pubkey | openssl pkey -pubin -outform DER -out "$RUNNER_TEMP/cert.der"
           openssl pkey -pubin -in src/Flyback.Editor/Updates/release-key.pem -outform DER -out "$RUNNER_TEMP/committed.der"
@@ -138,12 +129,6 @@ jobs:
             echo "release: $cert, RELEASE_SIGNING_KEY and release-key.pem are not one key" >&2
             exit 1
           fi
-
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: failure() && steps.cert.outputs.missing == 'true'
-        with:
-          name: release-cert
-          path: ${{ runner.temp }}/release-cert.pem
 
       - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:

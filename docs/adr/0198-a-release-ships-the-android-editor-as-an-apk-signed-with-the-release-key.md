@@ -26,8 +26,6 @@ only the key, so the certificate is made once from the key and committed as
 `src/Flyback.Editor.Android/release-cert.pem`. The Release workflow checks that it pairs
 with the secret and with `release-key.pem`, joins the two into a keystore for the one
 step that signs, and holds the APK to having been signed under that certificate alone.
-While the certificate is missing, the job makes it from the secret, uploads it as the
-`release-cert` artifact for someone to commit, and fails.
 
 **The version code rises with the version**: major × 1,000,000 + minor × 1,000 + patch,
 worked out by `scripts/release-version.sh`, which `release.sh` sources for the version
@@ -46,8 +44,9 @@ both have passed. `release.sh` run here builds no APK.
   under the same certificate, so rotating `RELEASE_SIGNING_KEY` now means a signing
   lineage (APK signature scheme v3) for Android as well as a new `release-key.pem` for the
   updater.
-- A Release run without the certificate, or with one that does not pair, fails in the
-  `android` job before anything is published.
+- A Release run whose certificate does not pair with the secret fails in the `android`
+  job before anything is published, and `AndroidCertificateTests` holds the certificate to
+  `release-key.pem` on every push.
 - The Flyback updater (0088) does not touch Android; the APK is not in `SHA256SUMS`, and
   its own signature is what Android checks.
 - If IzzyOnDroid's policy changes, the release already carries what it needs except the
