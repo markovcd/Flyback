@@ -102,6 +102,7 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | Say | Means | Code | Not |
 |---|---|---|---|
 | **the editor** | The window a patch is built in, and the program that opens it. | `MainWindow`, `Flyback.exe` | the app (except for the whole product), the node editor (except as the type's name) |
+| **Store copy** | Flyback installed from the Microsoft Store as an MSIX package, listed as Flyback Modular: read-only, updated by the Store, its installed plugins kept under the data folder. | `StoreCopy` | Store app, packaged app, UWP app |
 | **canvas** | Where modules and wires are drawn. | `NodeEditor` | graph, board, workspace, node editor |
 | **block** | A module as it is drawn: its face, header and mark. Only for the drawing. | `ModulePlate`, `ModuleWash` | block for the module in any other sense |
 | **standout** | A module drawn as itself rather than as its category. | — | — |

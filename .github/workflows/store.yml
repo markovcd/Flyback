@@ -1,0 +1,96 @@
+# Packs a release's win-x64 zip into the MSIX the Microsoft Store is handed, installs it on
+# a clean Windows machine the way the Store would, checks it answers, and attaches it to the
+# release (ADR-0199). Release calls it once the release is up; by hand it takes a tag and
+# attaches only when asked. Submitting the package in Partner Center is a person's step.
+#
+# The package goes up unsigned: the Store signs what it ingests. The smoke signs its own
+# copy with a throwaway certificate, which is why that job needs Windows' TrustedPeople store.
+#
+# Every action is pinned to a commit rather than a tag; Dependabot says when a pin should move.
+
+name: Store package
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: The release to pack, e.g. v1.4.0.
+        required: true
+        type: string
+      attach:
+        description: Attach the package to the release.
+        type: boolean
+        default: true
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The release to pack, e.g. v1.4.0.
+        required: true
+        type: string
+      attach:
+        description: Attach the package to the release.
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  msix:
+    runs-on: windows-latest
+    # Download, pack, install and remove, about five minutes; the default of six hours is what a hang costs.
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download the release's Windows zip
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          gh release download $env:TAG --repo $env:GITHUB_REPOSITORY --pattern '*-win-x64.zip' --dir release
+          Expand-Archive -Path (Get-ChildItem release\*-win-x64.zip).FullName -DestinationPath release
+
+      - name: Pack the MSIX
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          $version = $env:TAG.TrimStart('v')
+          ./scripts/pack-msix.ps1 -Folder release\win-x64 -Version $version -Out "dist\flyback-$version-win-x64.msix"
+
+      - name: Install it and ask it how it is doing
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          $version = $env:TAG.TrimStart('v')
+          ./scripts/store-smoke.ps1 -Msix "dist\flyback-$version-win-x64.msix" -Version $version
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: msix
+          path: dist/*.msix
+          if-no-files-found: error
+
+  attach:
+    needs: msix
+    if: inputs.attach
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: msix
+          path: dist
+
+      - name: Attach the package to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: gh release upload "$TAG" dist/*.msix --repo "$GITHUB_REPOSITORY" --clobber

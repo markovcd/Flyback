@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Flyback.Plugins.Hosting;
 
 namespace Flyback.Editor.Updates;
 
@@ -18,11 +19,12 @@ internal sealed record Installation(string Root, string Executable, string Rid, 
 
     /// <summary>
     /// The copy that is running, or null for one that cannot be told apart from
-    /// its surroundings — a Mac build run from outside a bundle, say.
+    /// its surroundings — a Mac build run from outside a bundle, say — or for a
+    /// <see cref="StoreCopy"/>, which the Store updates and Windows registers.
     /// </summary>
     public static Installation? Current()
     {
-        if (Environment.ProcessPath is not { } process) return null;
+        if (StoreCopy.Running || Environment.ProcessPath is not { } process) return null;
 
         var directory = Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);
         var rid = RuntimeInformation.RuntimeIdentifier;

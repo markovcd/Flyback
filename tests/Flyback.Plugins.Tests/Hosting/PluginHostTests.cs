@@ -234,6 +234,49 @@ public class PluginHostTests
     }
 
     /// <summary>
+    /// A Store copy's own folder is read-only, so it loads what it shipped with from
+    /// there and what was installed since from the data folder, as one catalog.
+    /// </summary>
+    [Fact]
+    public void Plugins_load_from_every_directory_given()
+    {
+        using var shipped = new TempFolder();
+        using var installed = new TempFolder();
+
+        CopyPlugin("FakeAssistant", shipped.Path);
+        CopyPlugin("FakeDecider", installed.Path);
+
+        var catalog = PluginHost.Load([(shipped.Path, PluginTrust.Unchecked), (installed.Path, PluginTrust.Unchecked)]);
+
+        catalog.Assistants.ShouldNotBeEmpty();
+        catalog.DecisionModels.ShouldNotBeEmpty();
+        catalog.Problems.ShouldBeEmpty();
+    }
+
+    /// <summary>An installed plugin replaces the shipped one of the same name rather than loading beside it.</summary>
+    [Fact]
+    public void A_plugin_in_a_later_directory_replaces_the_one_of_its_name_in_an_earlier_one()
+    {
+        using var shipped = new TempFolder();
+        using var installed = new TempFolder();
+
+        CopyPlugin("FakeAssistant", shipped.Path);
+        CopyPlugin("FakeAssistant", installed.Path);
+
+        var catalog = PluginHost.Load([(shipped.Path, PluginTrust.Unchecked), (installed.Path, PluginTrust.Unchecked)]);
+
+        catalog.Plugins.ShouldHaveSingleItem().AssemblyPath.ShouldStartWith(installed.Path);
+    }
+
+    private static void CopyPlugin(string name, string directory)
+    {
+        var from = Path.Combine(PluginHost.ShippedDirectory, name);
+        var to = Directory.CreateDirectory(Path.Combine(directory, name)).FullName;
+
+        foreach (var file in Directory.EnumerateFiles(from)) File.Copy(file, Path.Combine(to, Path.GetFileName(file)));
+    }
+
+    /// <summary>
     /// A plugin folder with nothing in it at all is a common half-state — an
     /// uninstall that left the directory behind.
     /// </summary>

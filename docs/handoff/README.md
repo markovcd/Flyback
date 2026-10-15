@@ -17,6 +17,7 @@ Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or 
 | [asio-amd-crash.md](asio-amd-crash.md) | Rain on a Window on ASIO4ALL crashes inside AMD's OpenGL driver | Issue | Open: needs a session on the Windows machine |
 | [nested-def-boxes.md](nested-def-boxes.md) | Showing a def called inside a def, inside the outer call's box | Plan | Open, parked; no option chosen |
 | [tests-on-github-hosted-runners.md](tests-on-github-hosted-runners.md) | Every test on GitHub's runners: Windows, macOS and Android legs beside the gate | Plan | Open |
+| [microsoft-store.md](microsoft-store.md) | Flyback Modular on the Microsoft Store: the submission steps left to the user | Plan | Open: waits on the user |
 
 Severity, for an issue: **Critical**, act now; **High**, a security or data problem in a release; **Medium**, wrong behavior or real risk; **Low**, friction or latent risk.
 

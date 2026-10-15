@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Net.Http.Headers;
 using Flyback.Core;
 using Flyback.Editor.Updates;
+using Flyback.Plugins.Hosting;
 
 namespace Flyback.Editor.Desktop.Updates;
 
@@ -190,6 +191,12 @@ internal static class Updater
         if (ReleaseFeed.Running() is not { } running)
         {
             Trace.WriteLine("updates: not a release build, so not looking for one");
+            return;
+        }
+
+        if (StoreCopy.Running)
+        {
+            Trace.WriteLine("updates: the Microsoft Store updates this copy");
             return;
         }
 

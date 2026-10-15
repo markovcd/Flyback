@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The Microsoft Store's package of a win-x64 release folder (ADR-0199). scripts/pack-msix.ps1
+  lays this beside the folder's files with the release's version in place of 0.0.0.0, and the
+  Store signs what it is handed. The identity is the one Partner Center reserved for
+  "Flyback Modular"; the file types are FileTypes.Kinds, which StoreManifestTests holds them to.
+
+  File-system write virtualization is off so %AppData%\Flyback is the real folder, the one a
+  zip copy, the assistant's own program and a terminal all see.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
+  xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
+  xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap5 desktop4 desktop6 rescap">
+
+  <Identity
+    Name="PotatoSmasher.FlybackModular"
+    Publisher="CN=DEA73A02-E076-4B08-BD88-B3BCFC24BA5B"
+    Version="0.0.0.0"
+    ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>Flyback Modular</DisplayName>
+    <PublisherDisplayName>Potato Smasher</PublisherDisplayName>
+    <Logo>Store\StoreLogo.png</Logo>
+    <desktop6:FileSystemWriteVirtualization>disabled</desktop6:FileSystemWriteVirtualization>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="Flyback" Executable="Flyback.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Flyback Modular"
+        Description="A patchable synthesizer: one module graph makes a picture and a sound."
+        BackgroundColor="transparent"
+        Square150x150Logo="Store\Square150x150Logo.png"
+        Square44x44Logo="Store\Square44x44Logo.png" />
+      <Extensions>
+        <uap5:Extension Category="windows.appExecutionAlias">
+          <uap5:AppExecutionAlias desktop4:Subsystem="console">
+            <uap5:ExecutionAlias Alias="flyback.exe" />
+          </uap5:AppExecutionAlias>
+        </uap5:Extension>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="flyback-patch">
+            <uap:DisplayName>Flyback patch</uap:DisplayName>
+            <uap:Logo>FileIcons\patch.png</uap:Logo>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.fbk</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="flyback-bundle">
+            <uap:DisplayName>Flyback bundle</uap:DisplayName>
+            <uap:Logo>FileIcons\bundle.png</uap:Logo>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.fbkb</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="flyback-text">
+            <uap:DisplayName>Flyback text</uap:DisplayName>
+            <uap:Logo>FileIcons\text.png</uap:Logo>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.fbks</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="flyback-plugin">
+            <uap:DisplayName>Flyback plugin</uap:DisplayName>
+            <uap:Logo>FileIcons\plugin.png</uap:Logo>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.fbkp</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+      </Extensions>
+    </Application>
+
+    <Application Id="Cli" Executable="flyback-cli.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Flyback command line"
+        Description="Flyback's command line."
+        BackgroundColor="transparent"
+        Square150x150Logo="Store\Square150x150Logo.png"
+        Square44x44Logo="Store\Square44x44Logo.png"
+        AppListEntry="none" />
+      <Extensions>
+        <uap5:Extension Category="windows.appExecutionAlias">
+          <uap5:AppExecutionAlias desktop4:Subsystem="console">
+            <uap5:ExecutionAlias Alias="flyback-cli.exe" />
+          </uap5:AppExecutionAlias>
+        </uap5:Extension>
+      </Extensions>
+    </Application>
+
+    <Application Id="Viewer" Executable="flyback-viewer.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Flyback viewer"
+        Description="Plays a Flyback patch."
+        BackgroundColor="transparent"
+        Square150x150Logo="Store\Square150x150Logo.png"
+        Square44x44Logo="Store\Square44x44Logo.png"
+        AppListEntry="none" />
+      <Extensions>
+        <uap5:Extension Category="windows.appExecutionAlias">
+          <uap5:AppExecutionAlias desktop4:Subsystem="console">
+            <uap5:ExecutionAlias Alias="flyback-viewer.exe" />
+          </uap5:AppExecutionAlias>
+        </uap5:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+    <rescap:Capability Name="unvirtualizedResources" />
+  </Capabilities>
+</Package>

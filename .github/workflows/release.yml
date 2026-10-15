@@ -237,3 +237,13 @@ jobs:
           bash install.sh --no-links
           test -x "$FLYBACK_DIR/Flyback"
           bash install.sh --uninstall
+
+  # The Microsoft Store's package of the release just published, installed and checked on
+  # a clean Windows machine, then attached to the release for Partner Center (ADR-0199).
+  store:
+    needs: [release, publish]
+    permissions:
+      contents: write
+    uses: ./.github/workflows/store.yml
+    with:
+      tag: ${{ needs.release.outputs.tag }}

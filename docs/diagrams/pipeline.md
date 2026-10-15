@@ -31,6 +31,7 @@ flowchart TB
     subgraph release["Release · release.yml"]
         r_pick["runner<br/>started by /release"] --> r_release["release<br/>release.sh"] --> r_publish["publish<br/>tags and publishes"] --> r_install["install"]
         r_android["android<br/>the signed arm64 APK"] --> r_publish
+        r_publish --> r_store["store<br/>Store package · store.yml<br/>packs, installs and attaches the MSIX"]
     end
 
     subgraph scheduled["Scheduled"]

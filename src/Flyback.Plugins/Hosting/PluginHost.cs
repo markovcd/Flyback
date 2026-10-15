@@ -1,3 +1,4 @@
+using Flyback.Core;
 using System.Reflection;
 
 namespace Flyback.Plugins.Hosting;
@@ -18,18 +19,49 @@ internal static class PluginHost
 {
     public const string DirectoryName = "plugins";
 
-    /// <summary>The <c>plugins</c> folder beside the executable.</summary>
-    public static string DefaultDirectory => Path.Combine(AppContext.BaseDirectory, DirectoryName);
+    /// <summary>The <c>plugins</c> folder beside the executable, holding the plugins this copy was built with.</summary>
+    public static string ShippedDirectory => Path.Combine(AppContext.BaseDirectory, DirectoryName);
 
-    public static PluginCatalog Load() => Load(DefaultDirectory, PluginTrust.For(DefaultDirectory));
+    /// <summary>
+    /// Where plugins are installed: <see cref="ShippedDirectory"/>, or for a
+    /// <see cref="StoreCopy"/>, whose own folder is read-only, a folder under the data folder.
+    /// </summary>
+    public static string DefaultDirectory => StoreCopy.Running
+        ? Path.Combine(GlobalConstants.DataFolder, DirectoryName)
+        : ShippedDirectory;
 
-    public static PluginCatalog Load(string directory, PluginTrust trust)
+    public static PluginCatalog Load() => DefaultDirectory == ShippedDirectory
+        ? Load(DefaultDirectory, PluginTrust.For(DefaultDirectory))
+        : Load([(ShippedDirectory, PluginTrust.For(ShippedDirectory)), (DefaultDirectory, PluginTrust.For(DefaultDirectory))]);
+
+    public static PluginCatalog Load(string directory, PluginTrust trust) => Load([(directory, trust)]);
+
+    /// <summary>
+    /// Loads several plugins folders into one catalog, in order. A plugin folder a later
+    /// directory also holds loads from the later one alone, so an installed plugin
+    /// replaces the shipped plugin of the same name.
+    /// </summary>
+    internal static PluginCatalog Load(IReadOnlyList<(string Directory, PluginTrust Trust)> directories)
     {
-        if (!Directory.Exists(directory)) return PluginCatalog.Empty;
+        var present = directories.Where(d => Directory.Exists(d.Directory)).ToList();
+
+        if (present.Count == 0) return PluginCatalog.Empty;
 
         var catalog = new PluginCatalogBuilder();
 
-        foreach (var folder in Folders(directory)) LoadFolder(folder, catalog, trust);
+        for (var i = 0; i < present.Count; i++)
+        {
+            var later = present.Skip(i + 1).Select(d => d.Directory).ToList();
+
+            foreach (var folder in Folders(present[i].Directory))
+            {
+                var name = Path.GetFileName(folder);
+
+                if (later.Any(directory => Directory.Exists(Path.Combine(directory, name)))) continue;
+
+                LoadFolder(folder, catalog, present[i].Trust);
+            }
+        }
 
         return catalog.Build();
     }
