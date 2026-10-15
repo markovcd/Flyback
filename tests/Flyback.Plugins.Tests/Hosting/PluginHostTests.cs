@@ -235,7 +235,9 @@ public class PluginHostTests
 
     /// <summary>
     /// A Store copy's own folder is read-only, so it loads what it shipped with from
-    /// there and what was installed since from the data folder, as one catalog.
+    /// there and what was installed since from the data folder, as one catalog. Each
+    /// folder is refused rather than loaded, so the folders it names are the ones looked
+    /// at and nothing holds the copies open on Windows.
     /// </summary>
     [Fact]
     public void Plugins_load_from_every_directory_given()
@@ -246,11 +248,11 @@ public class PluginHostTests
         CopyPlugin("FakeAssistant", shipped.Path);
         CopyPlugin("FakeDecider", installed.Path);
 
-        var catalog = PluginHost.Load([(shipped.Path, PluginTrust.Unchecked), (installed.Path, PluginTrust.Unchecked)]);
+        var catalog = PluginHost.Load([(shipped.Path, Refusing()), (installed.Path, Refusing())]);
 
-        catalog.Assistants.ShouldNotBeEmpty();
-        catalog.DecisionModels.ShouldNotBeEmpty();
-        catalog.Problems.ShouldBeEmpty();
+        catalog.Problems.Select(p => p.Folder).ShouldBe(
+            [Path.Combine(shipped.Path, "FakeAssistant"), Path.Combine(installed.Path, "FakeDecider")],
+            ignoreOrder: true);
     }
 
     /// <summary>An installed plugin replaces the shipped one of the same name rather than loading beside it.</summary>
@@ -263,10 +265,13 @@ public class PluginHostTests
         CopyPlugin("FakeAssistant", shipped.Path);
         CopyPlugin("FakeAssistant", installed.Path);
 
-        var catalog = PluginHost.Load([(shipped.Path, PluginTrust.Unchecked), (installed.Path, PluginTrust.Unchecked)]);
+        var catalog = PluginHost.Load([(shipped.Path, Refusing()), (installed.Path, Refusing())]);
 
-        catalog.Plugins.ShouldHaveSingleItem().AssemblyPath.ShouldStartWith(installed.Path);
+        catalog.Problems.ShouldHaveSingleItem().Folder.ShouldBe(Path.Combine(installed.Path, "FakeAssistant"));
     }
+
+    /// <summary>A trust that allows nothing, so a folder is judged and named but never loaded.</summary>
+    private static PluginTrust Refusing() => new(true, ShippedList.Empty, PluginAllowances.None);
 
     private static void CopyPlugin(string name, string directory)
     {
