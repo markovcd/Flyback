@@ -29,7 +29,8 @@ flowchart TB
     c_android -- "green on the commit" --> release
 
     subgraph release["Release · release.yml"]
-        r_pick["runner<br/>started by /release"] --> r_release["release<br/>release.sh"] --> r_install["install"]
+        r_pick["runner<br/>started by /release"] --> r_release["release<br/>release.sh"] --> r_publish["publish<br/>tags and publishes"] --> r_install["install"]
+        r_android["android<br/>the signed arm64 APK"] --> r_publish
     end
 
     subgraph scheduled["Scheduled"]

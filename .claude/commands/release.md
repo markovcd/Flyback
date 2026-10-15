@@ -75,6 +75,16 @@ Each of these ends the run, says which one and why, and changes no file.
 
   One `success` passes.
 
+- **The Android keystore is not set.** The Release workflow signs the APK with
+  the `ANDROID_KEYSTORE` and `ANDROID_KEYSTORE_PASSWORD` secrets (ADR-0198) and
+  fails without them, after the gate has run:
+
+  ```bash
+  gh secret list --json name --jq '.[].name' | grep -c '^ANDROID_KEYSTORE'
+  ```
+
+  Anything but `2` refuses.
+
 - **A locked restore fails.** The gate restores with `--locked-mode`, so a release
   build dies at restore if `Directory.Packages.props` and the `packages.lock.json`
   files disagree — which a version bump is exactly the thing to cause:

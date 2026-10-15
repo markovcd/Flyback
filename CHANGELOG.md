@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Each release carries the Android editor as a signed arm64 APK.
+
 ## 0.9.0 — 2026-10-14
 
 65 commits since 0.8.0.

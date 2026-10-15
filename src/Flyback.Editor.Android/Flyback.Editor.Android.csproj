@@ -16,7 +16,9 @@
     <ApplicationTitle>Flyback</ApplicationTitle>
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
-    <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
+    <!-- A release ships arm64 alone (ADR-0198); x64 is for the emulator. -->
+    <RuntimeIdentifiers Condition="'$(FlybackAndroidRuntimes)' == ''">android-arm64;android-x64</RuntimeIdentifiers>
+    <RuntimeIdentifiers Condition="'$(FlybackAndroidRuntimes)' != ''">$(FlybackAndroidRuntimes)</RuntimeIdentifiers>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
 
     <!-- Mono's JIT in Debug too: on its interpreter the sound's IL is never built (ADR-0076). -->

@@ -322,6 +322,8 @@ The gallery shows the build's stills from `/stills/` where the site has them (AD
 dotnet build src/Flyback.Editor.Android -t:Run
 ```
 
+Each release carries it as `flyback-<version>-android-arm64.apk`, signed with the release keystore (ADR-0198).
+
 ## How it works
 
 A patch is a graph, but during rendering it is compiled into a flat straight-line program over registers. Unused sections are not compiled, and the inner loop is designed to be cheap and predictable.
