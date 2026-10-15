@@ -42,6 +42,7 @@ flowchart TB
     end
 
     pages["Pages · pages.yml<br/>the redirect stub, when deploy/pages changes"]
+    cert["Android certificate · android-cert.yml<br/>once, when it lands on main"]
 
     bot(["Dependabot's pull request"]) --> d_locks
     subgraph dependabot["Dependabot · dependabot-prs.yml"]
