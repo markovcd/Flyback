@@ -1,6 +1,7 @@
 # Builds a release with release.sh, tags it, and publishes it as a GitHub
 # Release: every platform zipped and a signed SHA256SUMS, which is what lets Flyback install the release as an update,
-# and the Android editor as an arm64 APK signed with the same key.
+# and the Android editor as an arm64 APK signed with the same key, with a bundle for
+# Google Play signed with the Play upload key once PLAY_UPLOAD_KEYSTORE is a secret.
 # Everything but the APK and the publishing is release.sh, which runs the same on
 # a machine with a local test key. The APK needs the android workload, which the
 # gate image does not carry (ADR-0184), so it builds on GitHub's runner beside it,
@@ -189,6 +190,35 @@ jobs:
           fi
           ls -l "$apk"
 
+      # The bundle Google Play takes, signed with the RSA upload key Play holds on file:
+      # Play rejects an EC key, and re-signs the bundle with its own app signing key.
+      # Skipped, not failed, until the upload keystore is a secret.
+      - name: Build the Play bundle
+        env:
+          PLAY_UPLOAD_KEYSTORE: ${{ secrets.PLAY_UPLOAD_KEYSTORE }}
+          PLAY_UPLOAD_PASSWORD: ${{ secrets.PLAY_UPLOAD_PASSWORD }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [ -z "$PLAY_UPLOAD_KEYSTORE" ] || [ -z "$PLAY_UPLOAD_PASSWORD" ]; then
+            echo "::notice::No PLAY_UPLOAD_KEYSTORE secret, so no Play bundle"
+            exit 0
+          fi
+          . scripts/release-version.sh "$VERSION"
+          keystore="$RUNNER_TEMP/upload.jks"
+          trap 'rm -f "$keystore"' EXIT
+          printf '%s' "$PLAY_UPLOAD_KEYSTORE" | base64 -d > "$keystore"
+          dotnet build src/Flyback.Editor.Android -c Release -v minimal --nologo \
+            -t:Build,SignAndroidPackage \
+            -p:AndroidSdkDirectory="$ANDROID_HOME" -p:AcceptAndroidSDKLicenses=true \
+            -p:FlybackAndroidRuntimes=android-arm64 -p:AndroidPackageFormat=aab \
+            -p:ApplicationDisplayVersion="$version" -p:ApplicationVersion="$version_code" \
+            -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="$keystore" \
+            -p:AndroidSigningKeyAlias=upload \
+            -p:AndroidSigningStorePass=env:PLAY_UPLOAD_PASSWORD \
+            -p:AndroidSigningKeyPass=env:PLAY_UPLOAD_PASSWORD
+          cp src/Flyback.Editor.Android/bin/Release/net10.0-android/*-Signed.aab "apk/flyback-${version}-android-play.aab"
+          ls -l apk/*.aab
+
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: apk
@@ -218,6 +248,7 @@ jobs:
           files: |
             dist/*.zip
             dist/*.apk
+            dist/*.aab
             dist/SHA256SUMS
             dist/SHA256SUMS.sig
           body_path: dist/RELEASE_NOTES.md

@@ -51,3 +51,10 @@ both have passed. `release.sh` run here builds no APK.
   its own signature is what Android checks.
 - If IzzyOnDroid's policy changes, the release already carries what it needs except the
   Fastlane metadata.
+- **Google Play gets a bundle under a key of its own.** Play takes only an `.aab` signed
+  with an RSA upload key, and `RELEASE_SIGNING_KEY` is EC. Arek chose Play App Signing:
+  Google holds the app signing key, and the `PLAY_UPLOAD_KEYSTORE` and
+  `PLAY_UPLOAD_PASSWORD` secrets hold the upload key, which Google can reset if it is
+  lost. The `android` job builds the bundle beside the APK and the release carries both;
+  without the secrets it builds no bundle. A Play install and the GitHub APK have
+  different signatures, so moving between them means uninstalling first.
