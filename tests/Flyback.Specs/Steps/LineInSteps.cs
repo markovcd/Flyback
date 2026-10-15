@@ -28,6 +28,19 @@ public sealed class LineInSteps(PatchContext context)
     public void WhenItHears(float hertz) =>
         heard = context.RenderAudio(GlobalConstants.SampleRate * Seconds, new RecordedLineIn(Tone(hertz, GlobalConstants.SampleRate, Seconds)));
 
+    /// <summary>
+    /// The shipped plugins carry the backend, and on the system running the suite it is the
+    /// one a Line In listens through wherever it can run.
+    /// </summary>
+    [Then("on {word} a Line In listens through {word}")]
+    public static void ThenItListensThrough(string system, string backend)
+    {
+        var plugins = ShippedPlugins.Loaded;
+        var input = plugins.AudioInputs.Where(i => i.Name.StartsWith(backend, StringComparison.Ordinal)).ShouldHaveSingleItem();
+
+        if (OperatingSystem.IsOSPlatform(system) && input.IsSupported) plugins.PreferredAudioInput.ShouldBeSameAs(input);
+    }
+
     /// <summary>Whole cycles in the left speaker, counted as rising crossings of nought, past the filters' first few frames.</summary>
     [Then("the speakers play a {float} Hz tone")]
     public void ThenTheSpeakersPlay(float hertz) =>

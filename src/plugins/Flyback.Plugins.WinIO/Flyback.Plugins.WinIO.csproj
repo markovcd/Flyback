@@ -13,7 +13,7 @@
     <!-- What the install dialog and the plugins window show. -->
     <Product>Windows sound and MIDI</Product>
     <Authors>Flyback</Authors>
-    <Description>Sound out through WASAPI or an ASIO driver, and a patch played from a MIDI keyboard through the multimedia library Windows already has.</Description>
+    <Description>Sound out through WASAPI or an ASIO driver, sound in through WASAPI, and a patch played from a MIDI keyboard through the multimedia library Windows already has.</Description>
 
     <!--
       The MIDI driver callback is a function pointer and a device name is a fixed
@@ -60,7 +60,7 @@
 
   <ItemGroup>
     <!--
-      Sound only, and only WASAPI: the NAudio metapackage leaves the Windows
+      Sound out and in, and only WASAPI: the NAudio metapackage leaves the Windows
       backends out of a target framework that does not name Windows. The MIDI
       half calls winmm, which Windows has always had.
     -->

@@ -629,7 +629,7 @@ The tab says whose rows those are: *Played by WASAPI (shared mode), from the Win
 
 ### Sound inputs
 
-A sound input is the mirror of a sound backend: `IAudioInput` offers itself with an `Id`, `Name`, `Priority`, `IsSupported` and a `Form`, and `Create` makes an `IAudioCapture` that opens nothing until `Start` is handed a callback. The callback receives interleaved frames of `Channels` samples at `SampleRate`, on the capture thread, and must not block, allocate or throw. Flyback starts it only while the sound that is playing holds a Line In, and stops it when the sound stops, so a patch that never listens never opens the microphone. The shipped one is in the Linux plugin, through ALSA.
+A sound input is the mirror of a sound backend: `IAudioInput` offers itself with an `Id`, `Name`, `Priority`, `IsSupported` and a `Form`, and `Create` makes an `IAudioCapture` that opens nothing until `Start` is handed a callback. The callback receives interleaved frames of `Channels` samples at `SampleRate`, on the capture thread, and must not block, allocate or throw. Flyback starts it only while the sound that is playing holds a Line In, and stops it when the sound stops, so a patch that never listens never opens the microphone. The shipped ones are in the Linux plugin, through ALSA, and the Windows plugin, through WASAPI.
 
 ### MIDI inputs
 

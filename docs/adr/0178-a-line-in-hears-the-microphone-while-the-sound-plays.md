@@ -69,3 +69,10 @@ monitoring, and Firefox may refuse a microphone whose rate is not the page's.
 
 macOS will also need the microphone's usage string and entitlement in the app bundle,
 which no part of the build has.
+
+## Amendment, 2026-10-15: Windows hears through WASAPI
+
+The Windows plugin has a backend: WASAPI in shared mode, from the default recording
+device or one picked in the Sound settings. It asks Windows for stereo float at the
+engine's rate, so Windows converts the microphone's own rate and channels, and nothing
+in the host resamples. Only macOS is left silent.

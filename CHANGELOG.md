@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A Line In hears the microphone on Windows.
 - Each release carries the Android editor as a signed arm64 APK.
 - Each release carries an MSIX for the Microsoft Store, where Flyback is listed as Flyback Modular; the Store updates a copy installed from it.
 

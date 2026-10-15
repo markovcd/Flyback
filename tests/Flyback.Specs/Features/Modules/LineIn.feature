@@ -51,3 +51,11 @@ Feature: A Line In plays what the microphone hears
     And the patch is saved as "listen.fbk"
     When flyback-cli renders "listen.fbk" as "heard.wav" for 1 seconds
     Then "heard.wav" is silent
+
+  Scenario Outline: A Line In on <system> hears the microphone through <backend>
+    Then on <system> a Line In listens through <backend>
+
+    Examples:
+      | system  | backend |
+      | Linux   | ALSA    |
+      | Windows | WASAPI  |

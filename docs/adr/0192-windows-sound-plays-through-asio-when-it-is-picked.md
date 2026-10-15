@@ -55,7 +55,7 @@ The callbacks carry no pointer back to the host, so one ASIO driver plays at a t
 second refuses to start while the first plays.
 
 Which outputs play is not a setting; a patchbay in the driver's panel moves them. Line In
-through ASIO's inputs would be a backend of its own, beside WASAPI's in `TODO.md`.
+through ASIO's inputs would be a backend of its own, beside WASAPI's.
 
 Only the fake driver is exercised by the suite; a real one was not run when this was
 written.
