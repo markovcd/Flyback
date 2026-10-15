@@ -64,6 +64,7 @@ flyback.picture.hsv | color | hue, saturation, value
 flyback.picture.layer | base, top, amount | color
 flyback.picture.line | x, y, x1, y1, x2, y2, width | distance, along
 flyback.picture.palette | t, cycles, spread, brightness, contrast | color
+flyback.picture.plot | x, y, under, in, bpm, span, page, ahead, future, low, high, left, right, bottom, top, color, width, glow, dot, level, grid | out, ink
 flyback.picture.polygon | x, y, radius, sides | distance
 flyback.picture.posterise | color, levels | color
 flyback.picture.star | x, y, radius, points, sharpness | distance

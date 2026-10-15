@@ -73,6 +73,7 @@ meant.
 | **Beam** | The X-Y display: what the speakers played on two inputs, drawn against each other as a beam on phosphor. | `BeamTypeId` | oscilloscope, XY scope, vectorscope |
 | **Path**, **drawing** | The Drawings plugin's module that plays a drawing as sound, and the SVG, OBJ or PNG it plays, read as one closed path. | `PathModule`, `DrawingExtra`, `LoadedShape` | vector, model (for an SVG or a PNG) |
 | **Measure**, **measurement** | Running the patch offline for a few seconds and saying what each output carried; one output's value or range and rate is a measurement. | `Measurements`, `Measurement` | debug, watch, reading (a knob's display), survey |
+| **Plot** | The Picture plugin's module that draws a pitch function across beats as a curve in the picture, with a dot at now. | `PlotModule` | lane, piano roll |
 | **Probe**, **Scan** | A module that reads a signal across a domain it substitutes, and a Probe read backwards, which is how a picture is heard. | `ProbeTypeId`, `ScanTypeId` | — |
 | **voice** | One of the notes MIDI plays at once, and the copy of a chain that plays it down a polyphonic wire. | `MidiVoice`; `EmitContext.Voice` | channel, note, lane |
 | **polyphonic wire** | A wire carrying one signal per voice, so one chain plays a chord. Every module it reaches runs once per voice until a Merge or the Output adds the voices into one. | `VoiceCounts` | poly cable, multichannel wire, bus |

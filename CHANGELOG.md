@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A Plot in the Picture plugin draws a pitch function as a glowing curve across beats with a dot at now, and Plots chain through `under` for a song made of functions.
 - The sound is given five seconds after Play before falling behind lowers its oversampling, so the stutters of starting up no longer do.
 - Four more tutorials: seeing a sound, playing from the keyboard, echo and space, and the patch as text.
 - A Line In hears the microphone on Windows.
