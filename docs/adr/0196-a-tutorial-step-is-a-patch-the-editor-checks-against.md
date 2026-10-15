@@ -24,7 +24,10 @@ step's goal. A step without a goal is read and moved past by hand.
 **A goal is written in the text language, and checking it is matching it.**
 `StepCheck` builds the goal and looks for it inside the patch: a module of each
 kind it places, wired as it wires them, with each knob it moves off its default
-within two percent of its value. Everything else on the canvas is the person's
+within two percent of its value, and each socket it puts on the knob panel
+following a panel knob: over the goal's range where it gives one, and on one
+knob with the sockets the goal puts on the same one. The knob's name is the
+person's own. Everything else on the canvas is the person's
 own and never held against them. A step not met says the first thing missing in
 words: "Add a Sine.", "Wire the Sine's out into the Output's color.", "Turn the
 Sine's freq to 4; it is at 1." A goal needs no matcher of its own and reads as
@@ -40,9 +43,11 @@ when one is unmet.
 
 ## Consequences
 
-- A tutorial is checked by tests: every goal builds and meets itself, and no
-  step is met by the goal before it, so nothing is ticked off before it is done.
+- A tutorial is checked by tests against the in-box plugins: every goal builds
+  and meets itself, and no step is met by the goal before it, so nothing is
+  ticked off before it is done. A goal may use a plugin's modules and open on a
+  plugin's preset.
 - A goal knob left at its default is not checked; a step that wants a default
-  says so in its text.
+  says so in its text. Where a panel knob rests is not checked either.
 - An Expression's formula is not compared, so goals keep to modules.
 - Progress is not saved: closing the column or the editor starts a tutorial over.

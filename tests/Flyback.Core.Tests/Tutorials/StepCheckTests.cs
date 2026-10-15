@@ -77,4 +77,35 @@ public class StepCheckTests
     [Fact]
     public void A_goal_that_does_not_build_is_refused() =>
         Should.Throw<FormatException>(() => Check("sine() |> out.color", "sine( |> out.color"));
+
+    [Fact]
+    public void A_goal_knob_on_the_panel_is_asked_for() =>
+        Check("sine() |> out.left", "panel level = 0.5\nsine(amp: level) |> out.left").Hint.ShouldBe("Add a knob to the knob panel.");
+
+    [Fact]
+    public void A_socket_the_goal_puts_on_a_knob_has_to_follow_one() =>
+        Check("panel level = 0.5\nsine(amp: 0.5) |> out.left", "panel level = 0.5\nsine(amp: level) |> out.left")
+            .Hint.ShouldBe("Put the Sine's amp on a knob on the knob panel.");
+
+    [Fact]
+    public void A_socket_on_any_knob_counts_whatever_it_is_called() =>
+        Check("panel loud = 0.9\nsine(amp: loud) |> out.left", "panel level = 0.5\nsine(amp: level) |> out.left")
+            .ShouldBe(StepVerdict.Met);
+
+    [Fact]
+    public void A_range_the_goal_gives_is_checked() =>
+        Check("panel level = 0.5\nsine(freq: level) |> out.left", "panel level = 0.5\nsine(freq: level(100..800)) |> out.left")
+            .Hint.ShouldBe("Have the Sine's freq follow its knob from 100 to 800.");
+
+    [Fact]
+    public void Sockets_the_goal_puts_on_one_knob_share_one() =>
+        Check(
+                "panel a = 0.5\npanel b = 0.5\nsine(amp: a) |> out.left\nsaw(amp: b) |> out.right",
+                "panel a = 0.5\npanel b = 0.5\nsine(amp: a) |> out.left\nsaw(amp: a) |> out.right")
+            .Hint.ShouldBe("Put the Saw's amp on the same knob as the Sine's amp.");
+
+    [Fact]
+    public void A_socket_on_a_knob_is_not_also_checked_as_a_turned_knob() =>
+        Check("panel level = 0.1\nsine(amp: level) |> out.left", "panel level = 0.9\nsine(amp: level) |> out.left")
+            .ShouldBe(StepVerdict.Met);
 }

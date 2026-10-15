@@ -1,13 +1,16 @@
-using Flyback.Core.Graph;
-using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
 using Flyback.Engine.Tutorials;
+using Flyback.Plugins.Hosting;
 using Shouldly;
+using Xunit;
 
-namespace Flyback.Core.Tests.Tutorials;
+namespace Flyback.Plugins.Tests.Tutorials;
 
+/// <summary>The tutorials as shipped, checked against the in-box plugins, so a step may use a plugin's modules or open on its preset.</summary>
 public class ShippedTutorialTests
 {
+    private static readonly PluginCatalog Loaded = ShippedPlugins.Loaded;
+
     public static TheoryData<string> Ids => [.. ShippedTutorials.Order];
 
     [Fact]
@@ -17,7 +20,7 @@ public class ShippedTutorialTests
     [Theory]
     [MemberData(nameof(Ids))]
     public void A_tutorial_opens_on_a_shipped_preset(string id) =>
-        Presets.All.Select(p => p.Name).ShouldContain(ShippedTutorials.Find(id)!.From);
+        Loaded.Presets.Select(p => p.Name).ShouldContain(ShippedTutorials.Find(id)!.From);
 
     /// <summary>A step's goal is a patch somebody could have built, so it meets itself.</summary>
     [Theory]
@@ -26,10 +29,10 @@ public class ShippedTutorialTests
     {
         foreach (var step in ShippedTutorials.Find(id)!.Steps.Where(s => s.Goal is not null))
         {
-            var load = PatchLanguage.Build(step.Goal!, NodeCatalog.BuiltIn);
+            var load = PatchLanguage.Build(step.Goal!, Loaded.Modules);
             load.Issues.ShouldBeEmpty($"{id}, '{step.Title}': {load.Report}");
 
-            StepCheck.Against(load.Patch, load.Patch, NodeCatalog.BuiltIn).ShouldBe(StepVerdict.Met, $"{id}, '{step.Title}'");
+            StepCheck.Against(load.Patch, load.Patch, Loaded.Modules).ShouldBe(StepVerdict.Met, $"{id}, '{step.Title}'");
         }
     }
 
@@ -39,12 +42,12 @@ public class ShippedTutorialTests
     public void No_step_is_met_by_the_one_before_it(string id)
     {
         var tutorial = ShippedTutorials.Find(id)!;
-        var before = Presets.All.Single(p => p.Name == tutorial.From).Build(NodeCatalog.BuiltIn);
+        var before = Loaded.Presets.Single(p => p.Name == tutorial.From).Build(Loaded.Modules);
 
         foreach (var step in tutorial.Steps.Where(s => s.Goal is not null))
         {
-            StepCheck.Against(before, step.Goal!, NodeCatalog.BuiltIn).Done.ShouldBeFalse($"{id}, '{step.Title}'");
-            before = PatchLanguage.Build(step.Goal!, NodeCatalog.BuiltIn).Patch;
+            StepCheck.Against(before, step.Goal!, Loaded.Modules).Done.ShouldBeFalse($"{id}, '{step.Title}'");
+            before = PatchLanguage.Build(step.Goal!, Loaded.Modules).Patch;
         }
     }
 

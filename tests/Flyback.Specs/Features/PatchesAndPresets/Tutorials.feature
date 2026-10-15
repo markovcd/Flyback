@@ -25,6 +25,17 @@ Feature: A tutorial checks the patch as it is built
     Then the tutorial says to "More stripes"
     And the tutorial shows "Still to do: Turn the Sine's freq to 4; it is at 2."
 
+  Scenario: A socket a step puts on a knob has to follow one
+    Given the text saved as "mine.fbks":
+      """
+      panel pitch = 0.5
+      let swell = sine(freq: 0.15, amp: 0.5, bias: 0.5)
+      sine(freq: 55) * swell |> out.left
+      sine(freq: 55.5) * swell |> out.right
+      """
+    When flyback-cli tutorial checks "mine.fbks" against "patch-as-text"
+    Then it names "✗ 4. Give it a knob  Put the Sine's freq on a knob on the knob panel."
+
   Scenario: The command line checks a patch against a tutorial
     Given the text saved as "mine.fbks":
       """
