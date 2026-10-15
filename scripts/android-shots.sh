@@ -5,8 +5,10 @@
 #
 #   ./scripts/android-shots.sh <folder> [preset...]    Plasma, Nebula, Marble and Visualizer by default
 #
-# The folder gets phone-, tablet7-, tablet10- and desktop-<preset>.png. The
-# screen's size, density and rotation are put back on exit. Exit 0 when every capture was
+# The folder gets <form>-<preset>-canvas.png and <form>-<preset>-picture.png, the second with
+# the side button pressed, for phone, tablet7, tablet10 and desktop. The status bar is in
+# demo mode, the microphone granted so no question covers a preset with a Line In, and the
+# screen's size, density, rotation and status bar are put back on exit. Exit 0 when every capture was
 # taken, 1 naming the first that was not, and 2 for a usage error.
 set -euo pipefail
 
@@ -25,7 +27,10 @@ command -v adb >/dev/null || { echo "no adb on PATH" >&2; exit 2; }
 activity="$(adb shell cmd package resolve-activity --brief "$package" 2>/dev/null | tr -d '\r' | tail -n 1)"
 [[ "$activity" == "$package"/* ]] || { echo "$package is not installed" >&2; exit 1; }
 
+demo() { adb shell am broadcast -a com.android.systemui.demo -e command "$@" >/dev/null; }
+
 cleanup() {
+  demo exit 2>/dev/null || true
   adb shell wm size reset >/dev/null 2>&1 || true
   adb shell wm density reset >/dev/null 2>&1 || true
   adb shell settings put system user_rotation 0 >/dev/null 2>&1 || true
@@ -34,10 +39,19 @@ cleanup() {
 trap cleanup EXIT
 
 adb shell settings put system accelerometer_rotation 0
+adb shell pm grant "$package" android.permission.RECORD_AUDIO
+adb shell settings put global sysui_demo_allowed 1
+demo enter
+demo clock -e hhmm 1200
+demo battery -e level 100 -e plugged false
+demo network -e wifi show -e level 4 -e mobile hide
+demo notifications -e visible false
 
-# The editor's answer to the broadcast; PLAY presses Play first, since a patch opens paused.
+# The editor's answer to the broadcast; PLAY presses Play first, since a patch opens paused, and SIDE the side button.
 ask() {
-  adb shell am broadcast -a "$package.${1:-STATE}" -p "$package" 2>/dev/null | tr -d '\r' | sed -n 's/.*data="\(.*\)"$/\1/p'
+  local action="${1:-STATE}"
+  [ $# -gt 0 ] && shift
+  adb shell am broadcast -a "$package.$action" -p "$package" "$@" 2>/dev/null | tr -d '\r' | sed -n 's/.*data="\(.*\)"$/\1/p'
 }
 
 loaded() {
@@ -63,10 +77,14 @@ take() {
       sleep 1
     done
 
+    ask SIDE --ez shown false >/dev/null
     ask PLAY >/dev/null
     # Long enough for the picture to move off its first frame.
     sleep 8
-    adb exec-out screencap -p > "$out/$name-${preset// /-}.png"
+    adb exec-out screencap -p > "$out/$name-${preset// /-}-canvas.png"
+    ask SIDE >/dev/null
+    sleep 3
+    adb exec-out screencap -p > "$out/$name-${preset// /-}-picture.png"
     echo "$name: $preset" >&2
   done
 }
