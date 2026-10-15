@@ -19,8 +19,15 @@ public sealed class OversampleStepDownSteps
     private int factor;
     private bool behind;
 
-    [Given("live sound worked out at {int} times the output rate")]
+    [Given("live sound worked out at {int} times the output rate, warmed up")]
     public void GivenLive(int at)
+    {
+        GivenStarted(at);
+        Play((int)OversampleStepDown.Warmup.TotalSeconds, lateEvery: 0);
+    }
+
+    [Given("live sound just started at {int} times the output rate")]
+    public void GivenStarted(int at)
     {
         factor = at;
         Look();

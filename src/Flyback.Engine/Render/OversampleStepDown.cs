@@ -9,7 +9,8 @@ namespace Flyback.Engine.Render;
 /// <see cref="FewestLate"/>, lowers the factor a step, or at 1× says the sound is behind.
 /// After a step it waits <see cref="Settle"/> before judging again, since a new rate starts
 /// with a new renderer. A sound made anew by <see cref="Renewed"/> has nothing counted until
-/// it has settled. Only a person raises the factor again, through Settings → Sound.
+/// it has settled, and a sound that starts playing nothing until <see cref="Warmup"/> has
+/// passed. Only a person raises the factor again, through Settings → Sound.
 /// </remarks>
 public sealed class OversampleStepDown
 {
@@ -18,6 +19,9 @@ public sealed class OversampleStepDown
 
     /// <summary>How long a new factor plays before it is judged.</summary>
     public static readonly TimeSpan Settle = TimeSpan.FromSeconds(3);
+
+    /// <summary>How long a sound plays after it starts before it is judged, since its first buffers stutter while the device and the code warm up.</summary>
+    public static readonly TimeSpan Warmup = TimeSpan.FromSeconds(5);
 
     /// <summary>The fewest late buffers in a window that count as falling behind, whatever their share.</summary>
     public const int FewestLate = 4;
@@ -32,17 +36,23 @@ public sealed class OversampleStepDown
     /// <summary>When those buffers are judged: a window on, or after a step, once the new factor has settled.</summary>
     private TimeSpan due;
 
-    /// <summary>Until when the buffers of a sound made anew count for nothing.</summary>
+    /// <summary>Until when the buffers of a sound made anew or just started count for nothing.</summary>
     private TimeSpan settled;
+
+    /// <summary>Whether the sound was playing at the last look.</summary>
+    private bool wasPlaying;
 
     /// <summary>
     /// Looks at the buffers timed since the last look, and answers the factor to play at
     /// now, or that the sound is behind with none lower to go to.
     /// </summary>
     /// <param name="now">Time since some fixed moment.</param>
-    /// <param name="playing">Whether the sound is running; a stopped sound is not judged, and its buffers start a new window.</param>
+    /// <param name="playing">Whether the sound is running; a stopped sound is not judged, and one that starts again warms up first.</param>
     public StepDownVerdict Check(TimeSpan now, bool playing, SoundTiming timing, int oversample)
     {
+        if (playing && !wasPlaying && now + Warmup > settled) settled = now + Warmup;
+        wasPlaying = playing;
+
         if (!playing || !counting || now < settled)
         {
             Start(now, timing, Window);

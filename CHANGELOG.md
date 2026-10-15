@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The sound is given five seconds after Play before falling behind lowers its oversampling, so the stutters of starting up no longer do.
 - Four more tutorials: seeing a sound, playing from the keyboard, echo and space, and the patch as text.
 - A Line In hears the microphone on Windows.
 - Each release carries the Android editor as a signed arm64 APK.

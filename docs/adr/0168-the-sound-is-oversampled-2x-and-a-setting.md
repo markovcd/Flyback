@@ -49,3 +49,7 @@ where it was and the memory empty, in the same write as the program.
   heavy patch in a browser had been missing.
 - ADR-0023's reasoning stands; only its number moves. Its aliasing test still compares
   1× against 4×.
+
+## Amendment, 2026-10-15: a warmup after Play
+
+A sound that starts playing is not judged for its first five seconds. Opening the device, compiling the patch and the first touch of its memory make the opening buffers late on a machine that keeps up fine afterwards, and those stutters were enough to step the factor down on Play. Five seconds clears them with room to spare; a patch that really is too heavy stutters that much longer before it steps down.

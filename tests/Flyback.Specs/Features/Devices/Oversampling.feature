@@ -16,7 +16,7 @@ Feature: The sound's oversampling is a render setting
       | 1 times        | , --oversample 4  | 4      |
 
   Scenario: A live sound that keeps falling behind is worked out a step lower, and never back up
-    Given live sound worked out at 4 times the output rate
+    Given live sound worked out at 4 times the output rate, warmed up
     When a third of its buffers come late for 2 seconds
     Then it is worked out at 2 times the output rate
     When a third of its buffers come late for 3 seconds more
@@ -26,20 +26,28 @@ Feature: The sound's oversampling is a render setting
     And it is not said to be behind
 
   Scenario: A live sound with a few late buffers is left where it is
-    Given live sound worked out at 2 times the output rate
+    Given live sound worked out at 2 times the output rate, warmed up
     When 3 of its buffers come late in 2 seconds
     Then it is worked out at 2 times the output rate
     And it is not said to be behind
 
   Scenario: A live sound that keeps falling behind with no oversampling is said to be behind, which the web viewer gives up
-    Given live sound worked out at 1 times the output rate
+    Given live sound worked out at 1 times the output rate, warmed up
     When a third of its buffers come late for 2 seconds
     Then it is worked out at 1 times the output rate
     And it is said to be behind, with no lower rate to go to
 
   Scenario: A live sound made anew is not judged until it has settled
-    Given live sound worked out at 2 times the output rate
+    Given live sound worked out at 2 times the output rate, warmed up
     When it is made anew
     And a third of its buffers come late for 3 seconds
     And every buffer is on time for 2 seconds
     Then it is worked out at 2 times the output rate
+
+  Scenario: A live sound just started is not judged until it has warmed up
+    Given live sound just started at 2 times the output rate
+    When a third of its buffers come late for 5 seconds
+    And every buffer is on time for 2 seconds
+    Then it is worked out at 2 times the output rate
+    When a third of its buffers come late for 2 seconds
+    Then it is worked out at 1 times the output rate
