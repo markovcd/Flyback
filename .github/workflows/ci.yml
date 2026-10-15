@@ -1,5 +1,7 @@
 # The gate, on every change: restore, compile, and every test in the solution,
-# in the Linux image and natively on Windows and macOS (native-tests.yml).
+# in the Linux image and natively on Windows (native-tests.yml). macOS runs only
+# when the `macos` box is ticked, since its minutes cost ten times Linux's
+# (ADR-0200); /release refuses a commit it has not passed on.
 #
 # The same image the release is built from, stopped at the tests — `--target
 # gate` stops before the publishes, so what runs here is what runs before a
@@ -21,6 +23,10 @@ on:
     inputs:
       self-hosted:
         description: Run on the self-hosted runners (main only), Linux before Windows.
+        type: boolean
+        default: false
+      macos:
+        description: Run the native tests on macOS too.
         type: boolean
         default: false
 
@@ -95,3 +101,5 @@ jobs:
   # What only Windows or only macOS can run, beside the Linux gate.
   native:
     uses: ./.github/workflows/native-tests.yml
+    with:
+      machines: ${{ inputs.macos && '["windows","macos"]' || '["windows"]' }}

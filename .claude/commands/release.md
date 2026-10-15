@@ -75,6 +75,21 @@ Each of these ends the run, says which one and why, and changes no file.
 
   One `success` passes.
 
+- **macOS has not passed on this commit.** Build runs the native tests on macOS
+  only when its `macos` box is ticked (ADR-0200), so a push never does. Same rule:
+  a red job refuses, and so does no run. Start Build on `main` with `macos`, or
+  Cloud gate with `macos` (or `all`), and wait:
+
+  ```bash
+  sha="$(git rev-parse HEAD)"
+  for id in $(gh run list --commit "$sha" --limit 20 --json databaseId,workflowName \
+      --jq '.[] | select(.workflowName == "Build" or .workflowName == "Cloud gate") | .databaseId'); do
+    gh run view "$id" --json jobs --jq '.jobs[] | select(.name == "native / test (macos)") | .conclusion'
+  done
+  ```
+
+  One `success` passes.
+
 - **The Android keystore is not set.** The Release workflow signs the APK with
   the `ANDROID_KEYSTORE` and `ANDROID_KEYSTORE_PASSWORD` secrets (ADR-0198) and
   fails without them, after the gate has run:

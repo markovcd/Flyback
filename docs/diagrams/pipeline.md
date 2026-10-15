@@ -13,7 +13,7 @@ flowchart TB
     subgraph build["Build · ci.yml"]
         b_pick["runner / pick<br/>Runner · runner.yml"] --> b_gate["build<br/>Docker gate on ubuntu-latest"]
         b_win["native / test (windows)<br/>Native tests · native-tests.yml"]
-        b_mac["native / test (macos)<br/>Native tests · native-tests.yml"]
+        b_mac["native / test (macos)<br/>only when the macos box is ticked"]
     end
 
     subgraph cloud["Cloud gate · cloud-gate.yml"]
@@ -27,6 +27,7 @@ flowchart TB
     build -- "green on main" --> site["Worker · worker.yml<br/>deploys the site"]
     build -- "green on the commit" --> release
     c_android -- "green on the commit" --> release
+    b_mac -- "green on the commit, here or in Cloud gate" --> release
 
     subgraph release["Release · release.yml"]
         r_pick["runner<br/>started by /release"] --> r_release["release<br/>release.sh"] --> r_publish["publish<br/>tags and publishes"] --> r_install["install"]
@@ -54,3 +55,5 @@ Build, Coverage and Release each have a `self-hosted` box under Run workflow. Ti
 on `main`, `runner.yml` puts the Docker gate on the Linux self-hosted runner if it is
 online, else the Windows one, else GitHub's. Nothing a push or a pull request starts
 runs on a self-hosted machine.
+
+Build's `macos` box adds the macOS leg, which a push leaves out for its cost (ADR-0200).

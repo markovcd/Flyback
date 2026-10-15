@@ -204,10 +204,11 @@ context, decision, consequences.
 | [0127](0127-the-person-chooses-what-opens-a-flyback-file.md) | The person chooses what opens a Flyback file *(user-directed)* |
 | [0120](0120-every-change-passes-the-gate-a-release-passes.md) | Every change passes the gate a release passes |
 | [0193](0193-the-pages-are-checked-in-a-headless-chromium-the-gate-carries.md) | The pages are checked in a headless Chromium the gate carries |
-| [0195](0195-ci-runs-on-githubs-runners-on-every-os-self-hosted-by-hand.md) | CI runs on GitHub's runners on every OS; the self-hosted ones are by hand *(user-directed)* |
+| [0195](0195-ci-runs-on-githubs-runners-on-every-os-self-hosted-by-hand.md) | CI runs on GitHub's runners on every OS; the self-hosted ones are by hand *(user-directed; macOS taken off every push by [0200](0200-macos-runs-by-hand-and-before-a-release.md))* |
 | [0198](0198-a-release-ships-the-android-editor-as-an-apk-signed-with-a-keystore-of-its-own.md) | A release ships the Android editor as an APK signed with a keystore of its own *(user-directed)* |
 | [0197](0197-dependabot-updates-arrive-as-one-pull-request-and-merge-when-build-passes.md) | Dependabot's updates arrive as one pull request and merge when Build passes *(user-directed)* |
 | [0199](0199-the-microsoft-store-gets-an-msix-the-store-signs-and-updates.md) | The Microsoft Store gets an MSIX the Store signs and updates *(user-directed)* |
+| [0200](0200-macos-runs-by-hand-and-before-a-release.md) | macOS runs by hand and before a release, not on every push *(user-directed)* |
 | [0196](0196-a-tutorial-step-is-a-patch-the-editor-checks-against.md) | A tutorial step is a patch the editor checks against |
 | [0094](0094-a-run-says-what-it-played-and-nothing-about-who-played-it.md) | A run says what it played, and nothing about who played it *(user-directed; two more events and a wait at the end added by [0103](0103-a-run-says-how-it-ended-in-bands.md))* |
 | [0103](0103-a-run-says-how-it-ended-in-bands.md) | A run says how it ended, in bands *(user-directed; the modules picked and more of the editor added 2026-09-28)* |

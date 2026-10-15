@@ -46,3 +46,5 @@ the Cloud gate's `macos-gl` box sets, so Build skips its `Gpu` tests.
 
 **The self-hosted builder's cache goes cold** unless a run is started there by
 hand.
+
+**Amended 2026-10-15:** macOS no longer runs on every push; Build runs it when its `macos` box is ticked, and `/release` waits for it ([0200](0200-macos-runs-by-hand-and-before-a-release.md)).

@@ -1,5 +1,6 @@
 # The solution's tests natively on Windows and macOS, on GitHub's machines. Build
-# runs it on every push beside the Linux gate, and the Cloud gate by hand.
+# runs Windows on every push beside the Linux gate and macOS when its box is
+# ticked; the Cloud gate runs either by hand.
 #
 # The gate runs in a Linux image, so the tests only Windows can run (the registry,
 # WASAPI, DPAPI, Direct3D, WinIO) or only macOS can (CoreAudio, CoreMIDI, the

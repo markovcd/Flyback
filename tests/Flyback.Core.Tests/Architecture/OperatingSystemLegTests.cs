@@ -7,7 +7,8 @@ namespace Flyback.Core.Tests.Architecture;
 
 /// <summary>
 /// A test that only Windows or only macOS can run is run there: its project is in the solution
-/// both native legs test, Build starts both legs, and it is not filed under a category they leave out.
+/// both native legs test, Build starts Windows on every push and macOS by hand, the Cloud gate's all
+/// runs both, and the test is not filed under a category the legs leave out.
 /// </summary>
 /// <remarks>A test that skips everywhere CI runs it passes without ever having run.</remarks>
 [TestCategory(TestCategory.Unmeasured)]
@@ -31,17 +32,25 @@ public partial class OperatingSystemLegTests
     }
 
     [Fact]
-    public void Build_runs_the_native_legs_on_windows_and_macos()
+    public void Build_runs_windows_on_every_push_and_macos_when_its_box_is_ticked()
     {
-        File.ReadAllText(NativeLegs).ShouldContain("default: '[\"windows\",\"macos\"]'");
-
         var build = File.ReadAllLines(Repository.Path(".github", "workflows", "ci.yml")).ToList();
         var call = build.FindIndex(line => line.Trim() == "uses: ./.github/workflows/native-tests.yml");
 
         call.ShouldBeGreaterThan(0, "ci.yml starts native-tests.yml");
-        build.Skip(call + 1).TakeWhile(line => line.StartsWith("    ", StringComparison.Ordinal))
-            .ShouldNotContain(line => line.Contains("machines:", StringComparison.Ordinal), "Build runs every machine the native legs default to");
+        build.Skip(call + 1).TakeWhile(line => line.StartsWith("    ", StringComparison.Ordinal)).Select(line => line.Trim())
+            .ShouldContain("machines: ${{ inputs.macos && '[\"windows\",\"macos\"]' || '[\"windows\"]' }}");
+
+        var dispatch = build.SkipWhile(line => line.Trim() != "workflow_dispatch:").TakeWhile(line => line.Trim() != "permissions:").ToList();
+        var macos = dispatch.FindIndex(line => line.Trim() == "macos:");
+        macos.ShouldBeGreaterThan(0, "Build has a macos box under Run workflow");
+        dispatch.Skip(macos + 1).Take(3).ShouldContain(line => line.Trim() == "type: boolean");
     }
+
+    [Fact]
+    public void The_cloud_gate_runs_macos_with_everything_else() =>
+        File.ReadAllText(Repository.Path(".github", "workflows", "cloud-gate.yml"))
+            .ShouldContain("inputs.os == 'all' && '[\"windows\",\"macos\"]'");
 
     [Fact]
     public void A_test_only_windows_or_macos_runs_is_not_filed_under_a_category_their_legs_leave_out()
