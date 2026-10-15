@@ -76,3 +76,18 @@ The Windows plugin has a backend: WASAPI in shared mode, from the default record
 device or one picked in the Sound settings. It asks Windows for stereo float at the
 engine's rate, so Windows converts the microphone's own rate and channels, and nothing
 in the host resamples. Only macOS is left silent.
+
+## Amendment, 2026-10-15: macOS hears through an input queue
+
+The macOS plugin listens through an Audio Toolbox input queue, from the default input or
+one picked in the Sound settings by its UID. A queue rather than the HAL unit the output
+uses, because the HAL unit does not convert an input's sample rate and a queue does: it is
+asked for stereo float at the engine's rate, as WASAPI is, and nothing in the host
+resamples.
+
+`Info.plist` carries `NSMicrophoneUsageDescription`, which is what makes macOS ask rather
+than end the program. A refused microphone records silence without an error, so the capture
+asks `AVCaptureDevice` first and refuses to start with a message naming the setting. The
+audio-input entitlement matters only under the hardened runtime or the sandbox, neither of
+which the bundle is signed with; it goes in with notarization. Every platform with a
+desktop editor now hears a Line In.

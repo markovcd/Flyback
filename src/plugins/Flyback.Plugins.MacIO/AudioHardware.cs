@@ -4,8 +4,8 @@ namespace Flyback.Plugins.MacIO;
 
 /// <summary>
 /// The slice of the CoreAudio framework's hardware layer this plugin needs: what
-/// output devices there are, what each is called, and the id that stays the same
-/// across a reboot.
+/// devices there are to play through and to listen to, what each is called, and the
+/// id that stays the same across a reboot.
 /// </summary>
 /// <remarks>
 /// Its own file because it is its own framework — Audio Toolbox plays, this one
@@ -28,6 +28,7 @@ internal static unsafe partial class AudioHardware
 
     public const uint GlobalScope = 0x676C_6F62; // 'glob'
     public const uint OutputScope = 0x6F75_7470; // 'outp'
+    public const uint InputScope = 0x696E_7074;  // 'inpt'
 
     /// <summary><c>kAudioObjectPropertyElementMain</c>.</summary>
     public const uint MainElement = 0;
@@ -51,7 +52,13 @@ internal static unsafe partial class AudioHardware
     /// outlives the boot, and the name the Sound settings show. A device whose UID
     /// cannot be read is left out, since it could not be chosen again next launch.
     /// </summary>
-    public static IReadOnlyList<(uint Id, string Uid, string Name)> OutputDevices()
+    public static IReadOnlyList<(uint Id, string Uid, string Name)> OutputDevices() => Devices(OutputScope);
+
+    /// <summary>Every device that can listen, in the shape <see cref="OutputDevices"/> gives.</summary>
+    public static IReadOnlyList<(uint Id, string Uid, string Name)> InputDevices() => Devices(InputScope);
+
+    /// <summary>Every device with a stream in <paramref name="scope"/>.</summary>
+    private static IReadOnlyList<(uint Id, string Uid, string Name)> Devices(uint scope)
     {
         var all = new PropertyAddress { Selector = DevicesProperty, Scope = GlobalScope, Element = MainElement };
 
@@ -68,7 +75,7 @@ internal static unsafe partial class AudioHardware
 
         foreach (var id in ids.AsSpan(0, (int)(size / sizeof(uint))))
         {
-            if (!Plays(id)) continue;
+            if (!HasStreams(id, scope)) continue;
 
             var uid = Text(id, DeviceUidProperty);
 
@@ -82,10 +89,10 @@ internal static unsafe partial class AudioHardware
         return found;
     }
 
-    /// <summary>Whether a device has any output streams — a microphone has none.</summary>
-    private static bool Plays(uint device)
+    /// <summary>Whether a device has any streams in a scope: a microphone has none for output.</summary>
+    private static bool HasStreams(uint device, uint scope)
     {
-        var streams = new PropertyAddress { Selector = StreamsProperty, Scope = OutputScope, Element = MainElement };
+        var streams = new PropertyAddress { Selector = StreamsProperty, Scope = scope, Element = MainElement };
 
         return DataSize(device, streams, 0, IntPtr.Zero, out var size) == AudioToolbox.NoError && size > 0;
     }

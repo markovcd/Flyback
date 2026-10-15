@@ -56,6 +56,10 @@ Feature: A Line In plays what the microphone hears
     Then on <system> a Line In listens through <backend>
 
     Examples:
-      | system  | backend |
-      | Linux   | ALSA    |
-      | Windows | WASAPI  |
+      | system  | backend   |
+      | Linux   | ALSA      |
+      | Windows | WASAPI    |
+      | macOS   | CoreAudio |
+
+  Scenario: The macOS app says why it asks for the microphone
+    Then the macOS app's Info.plist explains its use of the microphone

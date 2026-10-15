@@ -42,6 +42,10 @@
   <key>LSApplicationCategoryType</key>
   <string>public.app-category.music</string>
 
+  <!-- Shown in the prompt the first time a Line In plays; without it macOS ends the program instead of asking. -->
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Flyback listens to the microphone while a patch with a Line In plays.</string>
+
   <!-- The oldest macOS the .NET 10 runtime supports. -->
   <key>LSMinimumSystemVersion</key>
   <string>13.0</string>

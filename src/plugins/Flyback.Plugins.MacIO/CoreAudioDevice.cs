@@ -1,7 +1,5 @@
-using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Settings;
 
@@ -328,21 +326,6 @@ public sealed unsafe class CoreAudioDevice(AudioFormat format, string? uid = nul
     {
         if (status == AudioToolbox.NoError) return;
 
-        throw new InvalidOperationException($"could not {what}: CoreAudio returned {Describe(status)}.");
-    }
-
-    /// <summary>
-    /// CoreAudio reports most failures as a four-character code arriving as a
-    /// signed integer — <c>'fmt?'</c> is far easier to look up than -10868.
-    /// </summary>
-    private static string Describe(int status)
-    {
-        Span<byte> code = [(byte)(status >> 24), (byte)(status >> 16), (byte)(status >> 8), (byte)status];
-
-        foreach (var b in code)
-            if (b is < 0x20 or > 0x7E)
-                return status.ToString(CultureInfo.InvariantCulture);
-
-        return $"'{Encoding.ASCII.GetString(code)}' ({status.ToString(CultureInfo.InvariantCulture)})";
+        throw new InvalidOperationException($"could not {what}: CoreAudio returned {CoreAudioStatus.Describe(status)}.");
     }
 }

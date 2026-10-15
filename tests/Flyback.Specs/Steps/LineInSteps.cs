@@ -1,7 +1,10 @@
+using System.Xml;
+using System.Xml.Linq;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Engine.Render;
 using Flyback.Specs.Support;
+using Flyback.Tests;
 using Reqnroll;
 using Shouldly;
 
@@ -39,6 +42,22 @@ public sealed class LineInSteps(PatchContext context)
         var input = plugins.AudioInputs.Where(i => i.Name.StartsWith(backend, StringComparison.Ordinal)).ShouldHaveSingleItem();
 
         if (OperatingSystem.IsOSPlatform(system) && input.IsSupported) plugins.PreferredAudioInput.ShouldBeSameAs(input);
+    }
+
+    /// <summary>The usage string macOS shows when it asks, without which it ends the program instead.</summary>
+    [Then("the macOS app's Info.plist explains its use of the microphone")]
+    public static void ThenThePlistExplains()
+    {
+        using var reader = XmlReader.Create(
+            Path.Combine(Repository.Root, "src", "Flyback.Editor.Desktop", "Info.plist"),
+            new XmlReaderSettings { DtdProcessing = DtdProcessing.Ignore });
+
+        var entries = XDocument.Load(reader).Root!.Element("dict")!.Elements().ToList();
+        var key = entries.FindIndex(entry => entry.Name == "key" && entry.Value == "NSMicrophoneUsageDescription");
+
+        key.ShouldBeGreaterThanOrEqualTo(0);
+        entries[key + 1].Name.LocalName.ShouldBe("string");
+        entries[key + 1].Value.ShouldContain("Line In");
     }
 
     /// <summary>Whole cycles in the left speaker, counted as rising crossings of nought, past the filters' first few frames.</summary>

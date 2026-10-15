@@ -14,7 +14,7 @@
     <!-- What the install dialog and the plugins window show. -->
     <Product>macOS sound and MIDI</Product>
     <Authors>Flyback</Authors>
-    <Description>Sound out through the default output audio unit, and a patch played from a MIDI keyboard through the framework every Mac routes MIDI over.</Description>
+    <Description>Sound out through the default output audio unit, sound in through an input queue, and a patch played from a MIDI keyboard through the framework every Mac routes MIDI over.</Description>
 
     <!--
       Both halves need it: the render callback is a function pointer and the
