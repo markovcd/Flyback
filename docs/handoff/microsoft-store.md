@@ -31,10 +31,8 @@ delete this file, in the commit that adds the Store badge to the site.
    - **Submission options → restricted capabilities:** justify `runFullTrust` (a desktop
      program) and `unvirtualizedResources` (settings and plugins in `%AppData%\Flyback`,
      shared with the command line, a zip copy and the assistant's own program; ADR-0199).
-3. **A privacy policy page.** The Store requires one for a Win32 program. It says what
-   `Statistics/Usage.cs` counts, that it can be switched off under Settings → Privacy, and
-   that a patch reaches a model only when the user asks an assistant. `site/privacy.html`
-   is the natural place; a thread can write it.
+3. **A privacy policy page.** Done: https://flybackmodular.app/privacy.html, the URL for
+   the Properties page.
 4. **Submit**, and wait for certification. A rejection names the policy it failed.
 5. **Once live:** a "Get it from Microsoft" badge on the site's download section, linking
    Store ID `9P89P2K38TWB`, in the same commit that deletes this file.
