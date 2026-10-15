@@ -132,7 +132,6 @@ public sealed class Usage
         "Flyback.Editor",
         "Flyback.Engine",
         "Flyback.Plugins",
-        "Flyback.Plugins.ClaudeCode",
         "Flyback.Plugins.Codex",
         "Flyback.Plugins.Dpapi",
         "Flyback.Plugins.Effects",

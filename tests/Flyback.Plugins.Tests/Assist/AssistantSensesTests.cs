@@ -32,7 +32,7 @@ public class AssistantSensesTests
     {
         var data = new TheoryData<string, string?, string?, bool?, bool?>();
 
-        foreach (var id in new[] { "claude-code", "codex", "gemini", "openai" })
+        foreach (var id in new[] { "codex", "gemini", "openai" })
             foreach (var hearing in new bool?[] { null, false, true })
                 foreach (var vision in new bool?[] { null, false, true })
                 {

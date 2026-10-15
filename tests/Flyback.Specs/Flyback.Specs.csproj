@@ -93,7 +93,6 @@
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Drawings\Flyback.Plugins.Drawings.csproj" FolderName="Drawings" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" FolderName="OpenAi" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Gemini\Flyback.Plugins.Gemini.csproj" FolderName="Gemini" />
-    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.ClaudeCode\Flyback.Plugins.ClaudeCode.csproj" FolderName="ClaudeCode" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Codex\Flyback.Plugins.Codex.csproj" FolderName="Codex" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.SystemOne\Flyback.Plugins.SystemOne.csproj" FolderName="SystemOne" />
     <PluginProject Include="..\Flyback.Plugins.FakeDecider\Flyback.Plugins.FakeDecider.csproj" FolderName="FakeDecider" />

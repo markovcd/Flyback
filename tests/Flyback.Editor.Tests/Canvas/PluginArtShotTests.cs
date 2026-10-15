@@ -38,7 +38,6 @@ public class PluginArtShotTests : EditorTest
         ("keyring", dc => SecretStore(dc, Linux, "Secret Service  ·  GNOME Keyring  ·  KWallet")),
         ("gemini", dc => Assistant(dc, Colors.Feedback, sees: true, "Gemini  ·  sees the picture, hears the sound")),
         ("openai", dc => Assistant(dc, Colors.Form, sees: false, "any chat-completions endpoint")),
-        ("claudecode", dc => Cli(dc, Colors.Shaping, spark: true, "Claude Code  ·  already signed in, no API key")),
         ("codex", dc => Cli(dc, Colors.Oscillator, spark: false, "Codex  ·  already signed in, no API key")),
     ];
 

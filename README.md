@@ -42,7 +42,7 @@ dotnet run --project src/Flyback.Editor.Desktop -c Release
 - A web viewer that plays a patch in a browser, on the same engine compiled to WebAssembly
 - Plugin-based architecture for platform-specific audio/video backends and extensions
 - Patch bundles that package the patch with its referenced sample and image files
-- Agentic patch authoring through a model-backed assistant that can listen, propose changes and work inside the same patch graph — over any chat-completions endpoint, over Gemini, whose models hear the patch themselves, or through the Claude Code or Codex you are signed in to, with no API key
+- Agentic patch authoring through a model-backed assistant that can listen, propose changes and work inside the same patch graph — over any chat-completions endpoint, over Gemini, whose models hear the patch themselves, or through the Codex you are signed in to, with no API key
 - A decision model, run here or hosted, that answers small questions about words with a probability: the module list finds a module by what a phrase means (Settings → Decisions), and does without one exactly as before
 - Cross-platform publish targets for Windows, macOS and Linux
 - Updates itself from signed GitHub releases: downloads a new release in the background and installs it at the next start (Settings → Privacy to turn off)
@@ -361,7 +361,6 @@ tests/
   Flyback.Plugins.Tests         plugin and runtime behavior tests
   Flyback.Plugins.OpenAi.Tests  chat-completions session tests
   Flyback.Plugins.Gemini.Tests  generateContent session tests
-  Flyback.Plugins.ClaudeCode.Tests  Claude Code session tests
   Flyback.Plugins.Codex.Tests   Codex command line and output tests
   Flyback.Plugins.Programs.Tests  what the program-backed assistants share
 ```

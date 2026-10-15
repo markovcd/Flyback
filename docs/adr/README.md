@@ -225,7 +225,8 @@ context, decision, consequences.
 | [0180](0180-a-conversation-is-bounded-by-how-large-it-has-grown.md) | A conversation is bounded by how large it has grown *(user-directed)* |
 | [0161](0161-a-turn-is-the-hosts-and-a-provider-writes-only-its-format.md) | A turn is the host's, and a provider writes only its format *(user-directed)* |
 | [0169](0169-the-hosts-side-of-a-conversation-is-a-project-of-its-own.md) | The host's side of a conversation is a project of its own *(user-directed)* |
-| [0172](0172-claude-code-is-an-assistant-by-running-the-program-the-person-signed-in.md) | Claude Code is an assistant by running the program the person signed in *(user-directed)* |
+| [0172](0172-claude-code-is-an-assistant-by-running-the-program-the-person-signed-in.md) | Claude Code is an assistant by running the program the person signed in *(user-directed; superseded by [0201](0201-claude-code-is-not-an-assistant-until-anthropic-says-it-may-be.md))* |
 | [0173](0173-codex-is-an-assistant-the-same-way-and-gemini-is-not.md) | Codex is an assistant the same way, and Gemini is not *(user-directed)* |
+| [0201](0201-claude-code-is-not-an-assistant-until-anthropic-says-it-may-be.md) | Claude Code is not an assistant until Anthropic says it may be *(user-directed)* |
 | [0186](0186-a-decision-model-answers-typed-questions-behind-the-plugin-boundary.md) | A decision model answers typed questions behind the plugin boundary *(user-directed)* |
 | [0188](0188-what-every-host-reads-is-a-project-of-its-own.md) | What every host reads is a project of its own *(user-directed)* |

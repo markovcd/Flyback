@@ -18,6 +18,6 @@ Feature: The effort setting can only be changed where it is sent
     When the Gemini assistant's settings are opened
     Then the effort setting can be changed
 
-  Scenario: Claude Code always sends effort
-    When the Claude Code assistant's settings are opened
+  Scenario: Codex always sends effort
+    When the Codex assistant's settings are opened
     Then the effort setting can be changed

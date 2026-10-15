@@ -455,13 +455,12 @@ folder out from under it.
 | AndroidIO | Sound and MIDI on Android, linked into `Flyback.Editor.Android` rather than loaded from a folder ([0184](adr/0184-the-editor-runs-on-android-with-its-plugins-linked-in.md)) | none |
 | Dpapi, Keychain, Keyring | Where an API key is kept ([0034](adr/0034-settings-in-a-file-the-key-in-the-operating-system.md)) | `ProtectedData` in Dpapi |
 | Picture, Voice, Effects, Mastering | Modules and presets | none |
-| ClaudeCode | Patch assistant over the installed `claude` program, so a subscription pays and no key exists | none: a process with JSON lines in and out |
-| Codex | The same over the installed `codex` program and a ChatGPT sign-in ([0173](adr/0173-codex-is-an-assistant-the-same-way-and-gemini-is-not.md)) | none: a process with text in and JSON lines out |
+| Codex | Patch assistant over the installed `codex` program and a ChatGPT sign-in, so a subscription pays and no key exists ([0173](adr/0173-codex-is-an-assistant-the-same-way-and-gemini-is-not.md)) | none: a process with text in and JSON lines out |
 | SystemOne | A decision model over HTTP, the Decision server: whatever server it is given, such as a laya-serve ([0186](adr/0186-a-decision-model-answers-typed-questions-behind-the-plugin-boundary.md)) | none: hand-written JSON over HTTP |
 | OpenAi, Gemini | Patch assistants ([0033](adr/0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md), [0066](adr/0066-a-second-wire-format-so-one-model-can-hear.md)) | none: hand-written JSON over HTTP |
 
-ClaudeCode and Codex share `src/plugins/Shared/Programs`, the `<calls>` protocol, the session, the process
-and the locator, as source compiled into each plugin: it is not a project, so no plugin needs another
+Codex's `<calls>` protocol, session, process and locator are in `src/plugins/Shared/Programs`, source any
+plugin that runs a program compiles in rather than a project it references
 ([0173](adr/0173-codex-is-an-assistant-the-same-way-and-gemini-is-not.md)).
 OpenAi and Gemini share `src/plugins/Shared/Surveys`, the survey loop over each one's `IModelProbe`, the
 same way ([0161](adr/0161-a-turn-is-the-hosts-and-a-provider-writes-only-its-format.md)).
@@ -830,7 +829,7 @@ changed: saved patches name it.
 | `Flyback.Cli.Tests` | Commands run in-process | |
 | `Flyback.Site.Tests` | flyback-site's checks, and its commands against a stand-in site | |
 | `Flyback.Plugins.Tests` | The host, every shipped module and preset | Loads real plugins off disk |
-| `Flyback.Plugins.OpenAi.Tests`, `.Gemini.Tests`, `.ClaudeCode.Tests`, `.Codex.Tests`, `.Programs.Tests`, `.SystemOne.Tests` | Wire translation and sessions | Reference the plugin directly: translation is pure |
+| `Flyback.Plugins.OpenAi.Tests`, `.Gemini.Tests`, `.Codex.Tests`, `.Programs.Tests`, `.SystemOne.Tests` | Wire translation and sessions | Reference the plugin directly: translation is pure |
 | `Flyback.Plugins.Drawings.Tests` | The Path and Shape modules' reader and drawing | References the plugin directly |
 | `Flyback.Plugins.WinIO.Tests` | The ASIO output, against `FakeAsioDriver`, a driver's vtable in memory | References the plugin directly; runs anywhere |
 | `Flyback.Plugins.LinuxIO.Tests` | What the JACK output offers, against a stand-in for the server | References the plugin directly; runs anywhere |

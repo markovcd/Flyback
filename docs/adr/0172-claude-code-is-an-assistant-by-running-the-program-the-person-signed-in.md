@@ -1,6 +1,6 @@
 # ADR-0172: Claude Code is an assistant by running the program the person signed in
 
-**Status:** Accepted · 2026-10-05 · *user-directed* · follows
+**Status:** Superseded by [0201](0201-claude-code-is-not-an-assistant-until-anthropic-says-it-may-be.md) · 2026-10-05 · *user-directed* · follows
 [0158](0158-a-plugin-loads-only-once-somebody-said-yes-and-never-holds-a-key.md),
 which declined signing in with a provider; implemented in
 `src/plugins/Flyback.Plugins.ClaudeCode`

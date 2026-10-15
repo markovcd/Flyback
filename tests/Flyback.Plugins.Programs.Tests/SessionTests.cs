@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Flyback.Plugins.Programs.Tests;
 
-/// <summary>A turn driven by the host's loop over canned replies from Claude Code.</summary>
+/// <summary>A turn driven by the host's loop over canned replies from a program.</summary>
 public class SessionTests
 {
     private const string Building = """

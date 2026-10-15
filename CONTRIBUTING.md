@@ -60,7 +60,6 @@ tests/
   Flyback.Plugins.Tests         plugin and runtime behavior tests
   Flyback.Plugins.OpenAi.Tests  chat-completions session tests
   Flyback.Plugins.Gemini.Tests  generateContent session tests
-  Flyback.Plugins.ClaudeCode.Tests  Claude Code session tests
   Flyback.Plugins.Codex.Tests   Codex command line and output tests
   Flyback.Plugins.Programs.Tests  what the program-backed assistants share
 ```

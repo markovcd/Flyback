@@ -5,6 +5,7 @@
 - Four more tutorials: seeing a sound, playing from the keyboard, echo and space, and the patch as text.
 - A Line In hears the microphone on Windows.
 - Each release carries the Android editor as a signed arm64 APK.
+- The Claude Code assistant is gone: Anthropic does not allow another program to use a Claude plan. Use the OpenAI-compatible assistant with an Anthropic API key.
 - Each release carries an MSIX for the Microsoft Store, where Flyback is listed as Flyback Modular; the Store updates a copy installed from it.
 
 ## 0.9.0 — 2026-10-14
