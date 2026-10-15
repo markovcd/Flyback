@@ -39,7 +39,7 @@
   </Resources>
 
   <Applications>
-    <Application Id="Flyback" Executable="Flyback.exe" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="Flyback" Executable="Flyback.exe" EntryPoint="Windows.FullTrustApplication" desktop4:SupportsMultipleInstances="true">
       <uap:VisualElements
         DisplayName="Flyback Modular"
         Description="A patchable synthesizer: one module graph makes a picture and a sound."
@@ -48,7 +48,7 @@
         Square44x44Logo="Store\Square44x44Logo.png" />
       <Extensions>
         <uap5:Extension Category="windows.appExecutionAlias">
-          <uap5:AppExecutionAlias desktop4:Subsystem="console" desktop4:SupportsMultipleInstances="true">
+          <uap5:AppExecutionAlias desktop4:Subsystem="console">
             <uap5:ExecutionAlias Alias="flyback.exe" />
           </uap5:AppExecutionAlias>
         </uap5:Extension>
@@ -91,7 +91,7 @@
       </Extensions>
     </Application>
 
-    <Application Id="Cli" Executable="flyback-cli.exe" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="Cli" Executable="flyback-cli.exe" EntryPoint="Windows.FullTrustApplication" desktop4:SupportsMultipleInstances="true">
       <uap:VisualElements
         DisplayName="Flyback command line"
         Description="Flyback's command line."
@@ -101,14 +101,14 @@
         AppListEntry="none" />
       <Extensions>
         <uap5:Extension Category="windows.appExecutionAlias">
-          <uap5:AppExecutionAlias desktop4:Subsystem="console" desktop4:SupportsMultipleInstances="true">
+          <uap5:AppExecutionAlias desktop4:Subsystem="console">
             <uap5:ExecutionAlias Alias="flyback-cli.exe" />
           </uap5:AppExecutionAlias>
         </uap5:Extension>
       </Extensions>
     </Application>
 
-    <Application Id="Viewer" Executable="flyback-viewer.exe" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="Viewer" Executable="flyback-viewer.exe" EntryPoint="Windows.FullTrustApplication" desktop4:SupportsMultipleInstances="true">
       <uap:VisualElements
         DisplayName="Flyback viewer"
         Description="Plays a Flyback patch."
@@ -118,7 +118,7 @@
         AppListEntry="none" />
       <Extensions>
         <uap5:Extension Category="windows.appExecutionAlias">
-          <uap5:AppExecutionAlias desktop4:Subsystem="console" desktop4:SupportsMultipleInstances="true">
+          <uap5:AppExecutionAlias desktop4:Subsystem="console">
             <uap5:ExecutionAlias Alias="flyback-viewer.exe" />
           </uap5:AppExecutionAlias>
         </uap5:Extension>
