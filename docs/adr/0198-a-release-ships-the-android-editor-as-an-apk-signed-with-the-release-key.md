@@ -1,4 +1,4 @@
-# ADR-0198: A release ships the Android editor as an APK signed with a keystore of its own
+# ADR-0198: A release ships the Android editor as an APK signed with the release key
 
 **Status:** Accepted · 2026-10-15 · *user-directed* · builds on
 [0184](0184-the-editor-runs-on-android-with-its-plugins-linked-in.md) and
@@ -20,10 +20,12 @@ apps whose code is written in part by generative AI, and Flyback's is.
 **Each GitHub release carries `flyback-<version>-android-arm64.apk`**, which a person
 installs by hand or follows with an updater that reads GitHub releases.
 
-**It is signed with a keystore of its own**, the repository secrets `ANDROID_KEYSTORE`
-(a PKCS12 file in base64, the key under the alias `flyback`) and
-`ANDROID_KEYSTORE_PASSWORD`. Not `RELEASE_SIGNING_KEY`: Android signs with an RSA key in a
-keystore, and that key signs `SHA256SUMS`.
+**It is signed with `RELEASE_SIGNING_KEY`**, the P-256 key that signs `SHA256SUMS`, so a
+release holds one secret. Android checks an update against the signing certificate, not
+only the key, so the certificate is made once from the key and committed as
+`src/Flyback.Editor.Android/release-cert.pem`. The Release workflow checks that it pairs
+with the secret and with `release-key.pem`, joins the two into a keystore for the one
+step that signs, and holds the APK to having been signed under that certificate alone.
 
 **The version code rises with the version**: major × 1,000,000 + minor × 1,000 + patch,
 worked out by `scripts/release-version.sh`, which `release.sh` sources for the version
@@ -33,16 +35,17 @@ too.
 
 **It builds beside `release.sh`, not in it.** The android workload is not in the gate
 image (0184), so the Release workflow's `android` job builds it on GitHub's runner,
-checking the keystore first. A `publish` job tags and publishes only once both have
-passed. `release.sh` run here builds no APK.
+checking the key and the certificate first. A `publish` job tags and publishes only once
+both have passed. `release.sh` run here builds no APK.
 
 ## Consequences
 
-- **The keystore is for good.** Android installs an update only over an APK signed with
-  the same key, so a lost keystore means every user uninstalls and starts again. It is
-  kept somewhere besides the repository secret.
-- A Release run without the two secrets fails in the `android` job, before anything is
-  published.
+- **The certificate is for good.** Android installs an update only over an APK signed
+  under the same certificate, so rotating `RELEASE_SIGNING_KEY` now means a signing
+  lineage (APK signature scheme v3) for Android as well as a new `release-key.pem` for the
+  updater.
+- A Release run without the certificate, or with one that does not pair, fails in the
+  `android` job before anything is published.
 - The Flyback updater (0088) does not touch Android; the APK is not in `SHA256SUMS`, and
   its own signature is what Android checks.
 - If IzzyOnDroid's policy changes, the release already carries what it needs except the

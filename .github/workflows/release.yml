@@ -1,6 +1,6 @@
 # Builds a release with release.sh, tags it, and publishes it as a GitHub
 # Release: every platform zipped and a signed SHA256SUMS, which is what lets Flyback install the release as an update,
-# and the Android editor as an arm64 APK signed with the release keystore.
+# and the Android editor as an arm64 APK signed with the same key.
 # Everything but the APK and the publishing is release.sh, which runs the same on
 # a machine with a local test key. The APK needs the android workload, which the
 # gate image does not carry (ADR-0184), so it builds on GitHub's runner beside it,
@@ -12,9 +12,9 @@
 #
 # Needs the repository secret RELEASE_SIGNING_KEY: the private half of the key
 # whose public half is src/Flyback.Editor/Updates/release-key.pem. See ADR-0088.
-# And ANDROID_KEYSTORE, a PKCS12 keystore in base64 holding the key `flyback`, with
-# ANDROID_KEYSTORE_PASSWORD. Every APK is signed with it for good: Android installs
-# an update only over an APK of the same key. See ADR-0198.
+# The APK is signed with it too, under src/Flyback.Editor.Android/release-cert.pem,
+# for good: Android installs an update only over an APK of the same certificate.
+# See ADR-0198.
 #
 # The actions are pinned to commits rather than tags. This workflow is handed the
 # signing key and publishes what every copy of Flyback installs as an update, so
@@ -101,8 +101,9 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # The Android editor, signed with the release keystore, beside the release job
-  # rather than after it: the keystore is checked before anything builds.
+  # The Android editor, signed with RELEASE_SIGNING_KEY under the committed
+  # certificate, beside the release job rather than after it: the key and the
+  # certificate are checked before anything builds.
   android:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -114,24 +115,29 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      # Android checks an update against the certificate, not only the key, so the
+      # certificate is made once and committed, and has to pair with the secret.
+      - name: Check the key and the certificate
+        env:
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+        run: |
+          cert=src/Flyback.Editor.Android/release-cert.pem
+          if [ ! -f "$cert" ]; then
+            echo "release: $cert is missing; make it once from RELEASE_SIGNING_KEY (ADR-0198)" >&2
+            exit 1
+          fi
+          printf '%s\n' "$RELEASE_SIGNING_KEY" | openssl pkey -pubout -outform DER -out "$RUNNER_TEMP/derived.der"
+          openssl x509 -in "$cert" -noout -pubkey | openssl pkey -pubin -outform DER -out "$RUNNER_TEMP/cert.der"
+          openssl pkey -pubin -in src/Flyback.Editor/Updates/release-key.pem -outform DER -out "$RUNNER_TEMP/committed.der"
+          if ! cmp -s "$RUNNER_TEMP/derived.der" "$RUNNER_TEMP/cert.der" || ! cmp -s "$RUNNER_TEMP/cert.der" "$RUNNER_TEMP/committed.der"; then
+            echo "release: $cert, RELEASE_SIGNING_KEY and release-key.pem are not one key" >&2
+            exit 1
+          fi
+
       - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: 21
-
-      # Outside the workspace, so nothing uploads it, and removed in the last step.
-      - name: Check the keystore
-        env:
-          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-        run: |
-          if [ -z "$ANDROID_KEYSTORE" ] || [ -z "$ANDROID_KEYSTORE_PASSWORD" ]; then
-            echo "release: the ANDROID_KEYSTORE and ANDROID_KEYSTORE_PASSWORD secrets are not set (ADR-0198)" >&2
-            exit 1
-          fi
-          printf '%s' "$ANDROID_KEYSTORE" | base64 --decode > "$RUNNER_TEMP/flyback.keystore"
-          keytool -list -storetype PKCS12 -keystore "$RUNNER_TEMP/flyback.keystore" \
-            -storepass:env ANDROID_KEYSTORE_PASSWORD -alias flyback > /dev/null
 
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
@@ -140,34 +146,44 @@ jobs:
       - name: Install the android workload
         run: dotnet workload install android
 
-      # The version as release.sh works it out, from the same input and tags.
+      # The version as release.sh works it out, from the same input and tags. The
+      # keystore lives for this step only, outside the workspace, under a password
+      # made for it.
       # Never -p:RuntimeIdentifier: it flows into every referenced project and rewrites their lock files.
       - name: Build the APK
         env:
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
           VERSION: ${{ inputs.version }}
         run: |
           . scripts/release-version.sh "$VERSION"
+          keystore="$RUNNER_TEMP/flyback.p12"
+          trap 'rm -f "$keystore"' EXIT
+          ANDROID_KEYSTORE_PASSWORD=$(openssl rand -hex 32)
+          export ANDROID_KEYSTORE_PASSWORD
+          openssl pkcs12 -export -name flyback -in src/Flyback.Editor.Android/release-cert.pem \
+            -inkey <(printf '%s\n' "$RELEASE_SIGNING_KEY") -out "$keystore" -passout env:ANDROID_KEYSTORE_PASSWORD
           dotnet build src/Flyback.Editor.Android -c Release -v minimal --nologo \
             -t:Restore,Build,SignAndroidPackage \
             -p:AndroidSdkDirectory="$ANDROID_HOME" -p:AcceptAndroidSDKLicenses=true \
             -p:FlybackAndroidRuntimes=android-arm64 \
             -p:ApplicationDisplayVersion="$version" -p:ApplicationVersion="$version_code" \
-            -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="$RUNNER_TEMP/flyback.keystore" \
+            -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="$keystore" \
             -p:AndroidSigningKeyAlias=flyback \
             -p:AndroidSigningStorePass=env:ANDROID_KEYSTORE_PASSWORD \
             -p:AndroidSigningKeyPass=env:ANDROID_KEYSTORE_PASSWORD
           mkdir -p apk
           cp src/Flyback.Editor.Android/bin/Release/net10.0-android/*-Signed.apk "apk/flyback-${version}-android-arm64.apk"
 
-      # Signed by the keystore, never the debug key, and not debuggable.
+      # Signed under the committed certificate and nothing else, and not debuggable.
       - name: Check the APK
         run: |
           apk=$(ls apk/*.apk)
           apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n1)
           "$apksigner" verify --print-certs "$apk" | tee "$RUNNER_TEMP/certs.txt"
-          if grep -q 'CN=Android Debug' "$RUNNER_TEMP/certs.txt"; then
-            echo "release: $apk is signed with the debug key" >&2
+          expected=$(openssl x509 -in src/Flyback.Editor.Android/release-cert.pem -outform DER | sha256sum | cut -d' ' -f1)
+          signers=$(grep -c 'certificate SHA-256 digest' "$RUNNER_TEMP/certs.txt")
+          if [ "$signers" != 1 ] || ! grep -q "certificate SHA-256 digest: $expected" "$RUNNER_TEMP/certs.txt"; then
+            echo "release: $apk is not signed under release-cert.pem alone" >&2
             exit 1
           fi
           aapt2=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -n1)
@@ -176,10 +192,6 @@ jobs:
             exit 1
           fi
           ls -l "$apk"
-
-      - name: Remove the keystore
-        if: always()
-        run: rm -f "$RUNNER_TEMP/flyback.keystore"
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

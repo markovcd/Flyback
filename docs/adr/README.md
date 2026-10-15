@@ -205,7 +205,7 @@ context, decision, consequences.
 | [0120](0120-every-change-passes-the-gate-a-release-passes.md) | Every change passes the gate a release passes |
 | [0193](0193-the-pages-are-checked-in-a-headless-chromium-the-gate-carries.md) | The pages are checked in a headless Chromium the gate carries |
 | [0195](0195-ci-runs-on-githubs-runners-on-every-os-self-hosted-by-hand.md) | CI runs on GitHub's runners on every OS; the self-hosted ones are by hand *(user-directed; macOS taken off every push by [0200](0200-macos-runs-by-hand-and-before-a-release.md))* |
-| [0198](0198-a-release-ships-the-android-editor-as-an-apk-signed-with-a-keystore-of-its-own.md) | A release ships the Android editor as an APK signed with a keystore of its own *(user-directed)* |
+| [0198](0198-a-release-ships-the-android-editor-as-an-apk-signed-with-the-release-key.md) | A release ships the Android editor as an APK signed with the release key *(user-directed)* |
 | [0197](0197-dependabot-updates-arrive-as-one-pull-request-and-merge-when-build-passes.md) | Dependabot's updates arrive as one pull request and merge when Build passes *(user-directed)* |
 | [0199](0199-the-microsoft-store-gets-an-msix-the-store-signs-and-updates.md) | The Microsoft Store gets an MSIX the Store signs and updates *(user-directed)* |
 | [0200](0200-macos-runs-by-hand-and-before-a-release.md) | macOS runs by hand and before a release, not on every push *(user-directed)* |

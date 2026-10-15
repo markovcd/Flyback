@@ -90,15 +90,17 @@ Each of these ends the run, says which one and why, and changes no file.
 
   One `success` passes.
 
-- **The Android keystore is not set.** The Release workflow signs the APK with
-  the `ANDROID_KEYSTORE` and `ANDROID_KEYSTORE_PASSWORD` secrets (ADR-0198) and
-  fails without them, after the gate has run:
+- **The Android certificate is missing or is not the release key's.** The Release
+  workflow signs the APK with `RELEASE_SIGNING_KEY` under the committed
+  `src/Flyback.Editor.Android/release-cert.pem` (ADR-0198) and fails without it,
+  after the gate has run:
 
   ```bash
-  gh secret list --json name --jq '.[].name' | grep -c '^ANDROID_KEYSTORE'
+  cmp <(openssl x509 -in src/Flyback.Editor.Android/release-cert.pem -noout -pubkey | openssl pkey -pubin -outform DER) \
+      <(openssl pkey -pubin -in src/Flyback.Editor/Updates/release-key.pem -outform DER)
   ```
 
-  Anything but `2` refuses.
+  Anything but silence refuses.
 
 - **A locked restore fails.** The gate restores with `--locked-mode`, so a release
   build dies at restore if `Directory.Packages.props` and the `packages.lock.json`

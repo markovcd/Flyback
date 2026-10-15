@@ -322,7 +322,7 @@ The gallery shows the build's stills from `/stills/` where the site has them (AD
 dotnet build src/Flyback.Editor.Android -t:Run
 ```
 
-Each release carries it as `flyback-<version>-android-arm64.apk`, signed with the release keystore (ADR-0198).
+Each release carries it as `flyback-<version>-android-arm64.apk`, signed with the release key under `release-cert.pem` (ADR-0198).
 
 ## How it works
 
