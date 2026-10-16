@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Flyback was built — Flyback</title>
+<meta name="description" content="Nine and a half weeks, about 201,000 lines, mostly written by Claude: the method that made Flyback possible, and what it costs.">
+<link rel="canonical" href="https://flybackmodular.app/method.html">
+<meta property="og:title" content="How Flyback was built">
+<meta property="og:description" content="Nine and a half weeks, about 201,000 lines, mostly written by Claude: the method that made Flyback possible, and what it costs.">
+<meta property="og:url" content="https://flybackmodular.app/method.html">
+<meta property="og:image" content="https://flybackmodular.app/assets/share.jpg">
+<meta name="theme-color" content="#22252A">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+  .doc main ul, .doc main ol:not(.steps) { padding-left: 20px; }
+  .doc main li { margin: 6px 0; }
+  .chart { margin: 28px 0 0; }
+  .chart svg { display: block; width: 100%; height: auto; }
+  .chart figcaption { margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .chart .bar { fill: var(--separator); }
+  .chart .bar.after { fill: var(--attention); }
+  .chart .bar.partial { fill: var(--grid-major); }
+  .chart .band { fill: var(--panel); }
+  .chart .axis { stroke: var(--separator); }
+  .chart text { fill: var(--muted); font-size: 12px; font-family: inherit; }
+  .chart text.value { fill: var(--label); }
+</style>
+</head>
+<body>
+
+<header class="toolbar">
+  <div class="wrap">
+    <a class="brand" href="./"><img src="assets/logo.svg" alt=""><span>Flyback</span></a>
+    <nav aria-label="Site">
+      <a href="./" class="optional">Overview</a>
+      <a href="tutorials.html">Tutorials</a>
+      <a href="presets.html">Presets</a>
+      <a href="shared-plugins.html">Plugins</a>
+      <span class="sep" aria-hidden="true"></span>
+      <a href="https://github.com/markovcd/Flyback">GitHub</a>
+      <a href="https://www.youtube.com/@FlybackModular">YouTube</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+
+<div class="canvas">
+  <div class="wrap">
+    <header class="doc-head" style="border: 0">
+      <p class="eyebrow">How it was built · 16 October 2026</p>
+      <h1>Seven years of work in nine weeks.</h1>
+      <p class="lede">I built Flyback, a patchable synthesizer that makes a picture and a sound from one module graph,
+        in nine and a half weeks, mostly by directing Claude. It runs on Windows, macOS, Linux, Android and in a
+        browser. By a rough estimate, a four-person team would have needed about seven years to write it by hand.
+        The point is not that an AI typed a lot of code. It is that AI used properly ships many times faster, and
+        "properly" is a method you can learn.</p>
+    </header>
+  </div>
+</div>
+
+<div class="wrap">
+<div class="doc">
+
+  <nav class="toc" aria-label="Contents">
+    <p>Contents</p>
+    <ol>
+      <li><a href="#numbers">The numbers</a></li>
+      <li><a href="#agent-first">Build for the agent first</a></li>
+      <li><a href="#memory">The repo is the memory</a></li>
+      <li><a href="#gate">One trunk, one gate, honest tests</a></li>
+      <li><a href="#requirements">Every feature ships with its requirement</a></li>
+      <li><a href="#directing">I direct, sessions build</a></li>
+      <li><a href="#made">What it made possible</a></li>
+      <li><a href="#costs">What it costs</a></li>
+      <li><a href="#start">If you start tomorrow</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <section id="numbers">
+      <h2>The numbers</h2>
+      <div class="scroll">
+        <table>
+          <tr><th>Measure</th><th>Value</th></tr>
+          <tr><td>First commit</td><td>11 August 2026</td></tr>
+          <tr><td>Calendar time</td><td>9.5 weeks, to 16 October 2026</td></tr>
+          <tr><td>Commits on main</td><td>1,956</td></tr>
+          <tr><td>Lines of code, comments and blanks excluded</td><td>about 201,000 (180,600 of them C#)</td></tr>
+          <tr><td>App code / test code</td><td>98,200 / 90,500 lines</td></tr>
+          <tr><td>Tests</td><td>about 3,800 test methods, plus 132 Gherkin feature files</td></tr>
+          <tr><td>Architecture decision records</td><td>205</td></tr>
+          <tr><td>Projects</td><td>16 app projects, 19 in-box plugins, 23 test projects</td></tr>
+          <tr><td>CI workflows</td><td>13</td></tr>
+        </table>
+      </div>
+      <p>The seven-year figure is an estimate, not a measurement: 25 to 50 finished lines a day per developer, four
+        developers, about 220 working days a year, leaning to the slow end because a compiler whose four backends
+        must agree exactly, and real-time sound drivers on three operating systems, are slow code to write. Against
+        it, the calendar speedup is roughly 40 times.</p>
+
+      <figure class="chart">
+        <svg viewBox="0 0 760 330" role="img" aria-label="Commits per week rose about ninefold in mid-September">
+          <text x="40" y="20" style="font-size:15px; fill: var(--bright)">Commits per week rose about ninefold in mid-September</text>
+          <text x="40" y="38">Average 51 a week before, 451 a week in the three full weeks after</text>
+          <rect class="band" x="380" y="48" width="204" height="232"/>
+          <text x="388" y="64">Max plan and rules land, Sep 17–29</text>
+          <line class="axis" x1="40" x2="720" y1="280" y2="280"/>
+          <g>
+            <rect class="bar" x="52" y="268" width="44" height="12"/><text class="value" x="74" y="262" text-anchor="middle">32</text><text x="74" y="298" text-anchor="middle">Aug 10</text>
+            <rect class="bar" x="120" y="259" width="44" height="21"/><text class="value" x="142" y="253" text-anchor="middle">56</text><text x="142" y="298" text-anchor="middle">Aug 17</text>
+            <rect class="bar" x="188" y="258" width="44" height="22"/><text class="value" x="210" y="252" text-anchor="middle">59</text><text x="210" y="298" text-anchor="middle">Aug 24</text>
+            <rect class="bar" x="256" y="269" width="44" height="11"/><text class="value" x="278" y="263" text-anchor="middle">30</text><text x="278" y="298" text-anchor="middle">Aug 31</text>
+            <rect class="bar" x="324" y="251" width="44" height="29"/><text class="value" x="346" y="245" text-anchor="middle">78</text><text x="346" y="298" text-anchor="middle">Sep 7</text>
+            <rect class="bar" x="392" y="196" width="44" height="84"/><text class="value" x="414" y="190" text-anchor="middle">225</text><text x="414" y="298" text-anchor="middle">Sep 14</text>
+            <rect class="bar after" x="460" y="93" width="44" height="187"/><text class="value" x="482" y="87" text-anchor="middle">498</text><text x="482" y="298" text-anchor="middle">Sep 21</text>
+            <rect class="bar after" x="528" y="128" width="44" height="152"/><text class="value" x="550" y="122" text-anchor="middle">405</text><text x="550" y="298" text-anchor="middle">Sep 28</text>
+            <rect class="bar after" x="596" y="111" width="44" height="169"/><text class="value" x="618" y="105" text-anchor="middle">451</text><text x="618" y="298" text-anchor="middle">Oct 5</text>
+            <rect class="bar partial" x="664" y="234" width="44" height="46"/><text class="value" x="686" y="228" text-anchor="middle">122</text><text x="686" y="298" text-anchor="middle">Oct 12</text>
+          </g>
+          <text x="40" y="322">Weeks start Monday. The week of Oct 12 runs only to Oct 16.</text>
+        </svg>
+        <figcaption>Commits on main per week, from the repository's git log.</figcaption>
+      </figure>
+      <p>Two things changed in the same fortnight. On 17 September I moved to a Claude Max plan with five times the
+        usage, and between 19 and 29 September the rules, skills and CI were written down. The chart cannot separate
+        the two. My reading is that they needed each other: more capacity without the method would have meant more
+        code to untangle, and the method without the capacity would have stayed at fifty commits a week. Commits are a
+        crude measure of output anyway; the shape is what matters.</p>
+    </section>
+
+    <section id="agent-first">
+      <h2>Build for the agent first</h2>
+      <p>The single most important rule in the repo: <strong>when something can be built more than one way, pick the
+        way an agent can drive with no eyes on the window.</strong> It outranks convenience and polish. If the only
+        way to confirm a feature works is a screenshot or a person, the feature is not finished.</p>
+      <p>Flyback is a visual, real-time instrument. Claude can read a screenshot, and sometimes that is the right
+        check, but a screenshot gives an impression, not an answer a script can assert on, and a sound has no
+        screenshot at all. So every question a person would answer by looking or listening also got a command:</p>
+      <ul>
+        <li><code>flyback-cli check</code>, <code>info</code> and <code>print --check</code> say whether a patch compiles and what it holds.</li>
+        <li><code>render --at</code> draws a still, <code>shot</code> captures the editor window headless, <code>measure</code> and <code>probe</code> read numbers off the sound.</li>
+        <li><code>compare</code> answers "is this still the same instrument" after a refactor.</li>
+        <li><code>flyback-viewer --hidden --for</code> plays a patch and listens to it.</li>
+        <li>Every report has <code>--json</code>, every exit code means one thing, and stdout carries only the answer.</li>
+      </ul>
+      <p>The second half of the rule matters as much: <strong>a hack is a feature request.</strong> When Claude reaches
+        for reflection into private state, a throwaway program to read one value, screen coordinates or parsing
+        human-readable output, that is the signal a command is missing. It finishes the job with the hack, then
+        proposes the command. Those proposals become to-do items, and the next session never pays for the same
+        friction. The tooling grew out of the work instead of being designed up front.</p>
+    </section>
+
+    <section id="memory">
+      <h2>The repo is the memory</h2>
+      <p>Every session starts cold. Whatever it needs to know has to be written down where it will be read, so the
+        repository carries the knowledge instead of anyone's head.</p>
+      <div class="scroll">
+        <table>
+          <tr><th>Layer</th><th>What it holds</th><th>How it is loaded</th></tr>
+          <tr><td><a href="https://github.com/markovcd/Flyback/blob/main/AGENTS.md">AGENTS.md</a></td><td>The entry point: what Flyback is and where everything else lives</td><td>Every session</td></tr>
+          <tr><td><a href="https://github.com/markovcd/Flyback/tree/main/docs/agents/rules">docs/agents/rules/</a></td><td>12 standing rules: git workflow, honest tests, security, saved data, plugin contract, prose style</td><td>Every session, in full</td></tr>
+          <tr><td>.claude/skills/</td><td>17 skills of task know-how: authoring presets, performance, release keys, site screenshots</td><td>When the task matches the skill's one-line description</td></tr>
+          <tr><td><a href="https://github.com/markovcd/Flyback/tree/main/docs/adr">docs/adr/</a></td><td>205 records of why each design is the shape it is, and which refactors were declined</td><td>Before proposing a change of shape</td></tr>
+          <tr><td>docs/glossary.md</td><td>One word for each thing, and the words ruled out</td><td>Corrected on the spot when I use the wrong one</td></tr>
+          <tr><td>TODO.md and docs/handoff/</td><td>Work asked for and not started; plans too long for a line</td><td>Any session picks an item up cold</td></tr>
+        </table>
+      </div>
+      <p>Each rule file has the same shape: the rule, <strong>why</strong>, and <strong>how to apply</strong> it. The
+        why is what lets a model apply a rule sensibly to a case it was never written for.</p>
+      <p>Rules come from friction. When a session swept another session's half-finished compiler change into its own
+        commit, the git rule grew a section on isolating from other sessions' work. When the plugin contract grew by
+        a third in one release with members no plugin named, the plugin contract rule was written, with a test to
+        hold it. I rarely write a rule in advance; I write it the second time something hurts.</p>
+      <p>Architecture decision records do the same job for design. With 205 of them, a fresh session that spots
+        "duplication" can find that the shape was chosen on purpose and the refactor already declined, instead of
+        undoing a week of decisions.</p>
+    </section>
+
+    <section id="gate">
+      <h2>One trunk, one gate, honest tests</h2>
+      <p>Speed only counts if what lands works. The guardrails are classic continuous delivery, applied strictly
+        because the author never gets tired of following them.</p>
+      <ul>
+        <li><strong>Commit straight to main.</strong> Trunk-based development, small commits, many sessions landing on one trunk within hours of each other. Churn is squashed before it is pushed.</li>
+        <li><strong>One gate.</strong> <code>docker build --target gate .</code> restores, compiles and runs every test. CI runs exactly that command, and a release is built from the same image, so there is one definition of "passes".</li>
+        <li><strong>A red main stops the line.</strong> Fixing it comes before the task in hand, even if another session broke it.</li>
+        <li><strong>Honest tests.</strong> A failing test is fixed by fixing the code. Never a wider tolerance, a skip, an exception list or a special case in the source. This is the rule a model is most tempted to break, so it is spelled out item by item.</li>
+        <li><strong>The pipeline is code that holds keys.</strong> Every action pinned to a commit SHA, every base image to a digest, least permission, timeouts on every job, releases signed.</li>
+      </ul>
+      <p><strong>Architecture is enforced by tests, not by review.</strong> <code>ContractSurfaceTests</code> fails
+        when the public plugin API grows a member no plugin uses. <code>ComponentDiagramTests</code> and
+        <code>PipelineDiagramTests</code> fail when the diagrams disagree with the project files and workflows. Other
+        guards fail if a test project is missing from the solution or a workflow splices an expression into a script.
+        A model reads its failures far more reliably than it remembers a convention.</p>
+    </section>
+
+    <section id="requirements">
+      <h2>Every feature ships with its requirement</h2>
+      <p>Every feature lands with a Gherkin scenario written as a requirement, in the words a musician would use, not
+        the words of the code. There are 132 feature files, from modules to the canvas, the assistant, devices and
+        the preset site. A real one:</p>
+<pre><code>Feature: Chance lets some notes through and not others
+
+  Scenario: At even chance about half the notes play
+    Given the gate of a sequencer stepping 16 times a second, through a chance of 0.5
+    When it plays for 20 seconds
+    Then about half of its notes play
+    And every note that plays, plays whole</code></pre>
+      <p>I review the requirement, which is short and in my language, instead of every line of the implementation.
+        And the requirement outlives the code: when a later session rewrites the module, the scenario says what must
+        still be true.</p>
+      <p>The same idea runs through the engine. The patch compiler has four backends (an interpreter, IL, GLSL and
+        JavaScript), and tests hold them to the interpreter's answer. When a backend differs, the backend is wrong,
+        not the comparison. That is what lets a model rewrite a backend for speed without me checking the output by
+        ear.</p>
+    </section>
+
+    <section id="directing">
+      <h2>I direct, sessions build</h2>
+      <p>My job changed from writing code to running a small team. I drop an ask into a project chat; a coordinating
+        Claude starts a thread for it, and a separate Claude session does the work there: reads the rules, writes the
+        code and the scenario, runs the suites, commits to main and reads CI's verdict. I come back to a result, a
+        question with a recommendation, or a blocker only I can clear.</p>
+      <p>On 15 October alone I opened 12 threads, among them a Microsoft Store listing, a macOS sound input driver, a
+        privacy policy page, an investigation of a YouTuber's math-music videos and an experiment with a decision
+        model choosing knob settings. They ran side by side. Locally the same thing happens with git worktrees: each
+        session works in isolation and lands on main when its step is whole.</p>
+      <p>What I keep for myself:</p>
+      <ul>
+        <li><strong>Deciding what to build</strong>, and saying no. Many asks end in a decision record or a proposal I approve or decline, not in code.</li>
+        <li><strong>Taste.</strong> How a preset sounds, how a panel feels, what a word should be.</li>
+        <li><strong>Real hardware.</strong> An ASIO driver crash on an AMD card, a USB MIDI keyboard, a phone. Sessions say plainly what they could not check, and that list is my to-do.</li>
+        <li><strong>Turning friction into rules.</strong> When a session does something wrong twice, the fix goes in a rule, a skill or a test, not into my memory of what to watch for.</li>
+      </ul>
+      <p>Project memory carries the facts that are not in the repo, such as which machine runs which CI runner, so a
+        fresh coordinator picks up where the last one stopped.</p>
+    </section>
+
+    <section id="made">
+      <h2>What it made possible</h2>
+      <p>The method did not just make Flyback faster to write. It made a scope possible that one person would never
+        attempt.</p>
+      <div class="scroll">
+        <table>
+          <tr><th>Area</th><th>What exists</th></tr>
+          <tr><td>Engine</td><td>A patch compiler to a flat register machine, with interpreter, IL, GLSL and JavaScript backends held to one answer; no third-party dependencies</td></tr>
+          <tr><td>Picture and sound</td><td>One graph drives both; GPU rendering through OpenGL and WebGL 2; hand-written PNG, JPEG, WAV and AVI writers</td></tr>
+          <tr><td>Platforms</td><td>Desktop editor on Windows, macOS and Linux; Android editor; the editor and a viewer in the browser on WebAssembly</td></tr>
+          <tr><td>Sound and MIDI</td><td>ASIO, WASAPI, CoreAudio, JACK and Android sound, line in, USB MIDI keyboards and controllers</td></tr>
+          <tr><td>Patching</td><td>A visual editor and a text language for the same patch, presets with played MIDI voices</td></tr>
+          <tr><td>Plugins</td><td>A versioned plugin contract, 19 in-box plugins, signed plugin packages, and a review that decompiles a submission without running it</td></tr>
+          <tr><td>Assistant</td><td>An in-app assistant that edits the open patch</td></tr>
+          <tr><td>Distribution</td><td>This website and a preset site, signed releases and self-updates, a Microsoft Store package and an Android app on the way</td></tr>
+          <tr><td>Command line</td><td><code>flyback-cli</code> with 18 commands, from <code>render</code> and <code>measure</code> to <code>pack-plugin</code></td></tr>
+        </table>
+      </div>
+      <p>None of these is a demo. Each has its tests, its decision records, its place in CI, and the security checks
+        where outside input enters, written down in a threat model.</p>
+    </section>
+
+    <section id="costs">
+      <h2>What it costs, and where it breaks</h2>
+      <p>This is not free speed, and pretending otherwise would undercut the point.</p>
+      <ul>
+        <li><strong>Models are confidently wrong.</strong> A session told me the project's history began on 13 October, because its copy of the repo was a shallow clone. It corrected itself within a minute, but only because I asked. Claims need evidence attached, and the rules ask for it.</li>
+        <li><strong>Parallel sessions collide.</strong> One session once swept another's half-finished compiler change, forty shader snapshots included, into its own commit. The isolation rule exists because of it.</li>
+        <li><strong>Hardware is still mine.</strong> A macOS microphone driver passed CI and has never heard a real microphone. An ASIO crash in AMD's OpenGL driver is still open. A green build is not a played instrument.</li>
+        <li><strong>I am the bottleneck.</strong> Nobody reads 1,956 commits line by line. That is exactly why the weight sits on scenarios, guard tests and the gate rather than on my review.</li>
+        <li><strong>The writing is real work.</strong> About 23,000 lines of Markdown: rules, skills, decision records, a glossary, handoffs. It pays for itself, but it has to be kept true.</li>
+        <li><strong>Not everyone accepts it.</strong> IzzyOnDroid's inclusion policy rejects apps with LLM-written code, which rules Flyback out there.</li>
+      </ul>
+    </section>
+
+    <section id="start">
+      <h2>If you start tomorrow</h2>
+      <ol class="steps">
+        <li><strong>Write an AGENTS.md on day one</strong>, even if it is ten lines. Point it at everything else.</li>
+        <li><strong>Give every visual or physical thing a command</strong> that answers with text and an exit code. If an agent cannot check it, nobody will.</li>
+        <li><strong>Treat every hack as a missing feature.</strong> Let the agent finish, then have it propose the tool that would have made the hack unnecessary.</li>
+        <li><strong>Write a rule the second time something hurts</strong>, with the why. Put architectural rules in tests, not in prose.</li>
+        <li><strong>Record decisions</strong>, including the refactors you decline. They stop fresh sessions undoing your choices.</li>
+        <li><strong>One gate, run identically everywhere.</strong> Never let a test be weakened to make it pass.</li>
+        <li><strong>Ship each feature with a requirement you can read</strong>, so you review intent rather than code.</li>
+        <li><strong>Run work in parallel and stay the director.</strong> Your time goes to deciding, tasting and testing on real hardware.</li>
+      </ol>
+      <p>The speedup did not come from a better model alone. It came from building a place where a model's output is
+        checked, remembered and corrected without me in the loop for every step. That place is the thing worth
+        copying. The repository is public: start with
+        <a href="https://github.com/markovcd/Flyback/blob/main/AGENTS.md">AGENTS.md</a> and
+        <a href="https://github.com/markovcd/Flyback/tree/main/docs/agents/rules">docs/agents/rules/</a>.</p>
+    </section>
+  </main>
+
+</div>
+</div>
+
+</div>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span class="brand-foot"><img src="assets/logo.svg" alt="">Flyback · MIT License · by <img src="assets/potato-smasher.svg" alt="">Potato Smasher</span>
+    <a href="./">Overview</a>
+    <a href="tutorials.html">Tutorials</a>
+    <a href="https://github.com/markovcd/Flyback/blob/main/CHANGELOG.md">Changelog</a>
+    <a href="https://github.com/markovcd/Flyback">GitHub</a>
+    <a href="https://github.com/markovcd/Flyback/discussions">Discussions</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+</body>
+</html>
