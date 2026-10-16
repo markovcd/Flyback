@@ -110,7 +110,7 @@
           <text x="40" y="20" style="font-size:15px; fill: var(--bright)">Commits per week rose about ninefold in mid-September</text>
           <text x="40" y="38">Average 51 a week before, 451 a week in the three full weeks after</text>
           <rect class="band" x="380" y="48" width="204" height="232"/>
-          <text x="388" y="64">Max plan and rules land, Sep 17–29</text>
+          <text x="388" y="64">Max plan Sep 17, gate Sep 20</text>
           <line class="axis" x1="40" x2="720" y1="280" y2="280"/>
           <g>
             <rect class="bar" x="52" y="268" width="44" height="12"/><text class="value" x="74" y="262" text-anchor="middle">32</text><text x="74" y="298" text-anchor="middle">Aug 10</text>
@@ -128,11 +128,16 @@
         </svg>
         <figcaption>Commits on main per week, from the repository's git log.</figcaption>
       </figure>
-      <p>Two things changed in the same fortnight. On 17 September I moved to a Claude Max plan with five times the
-        usage, and between 19 and 29 September the rules, skills and CI were written down. The chart cannot separate
-        the two. My reading is that they needed each other: more capacity without the method would have meant more
-        code to untangle, and the method without the capacity would have stayed at fifty commits a week. Commits are a
-        crude measure of output anyway; the shape is what matters.</p>
+      <p>The jump came from capacity. On 17 September I moved to a Claude Max plan with five times the usage. What the
+        method did was keep that speed from breaking things: in the same fortnight the rules moved into the repo and the
+        gate started running on every push. From 20 September to 16 October:</p>
+      <ul>
+        <li>Build ran on 624 finished pushes to main, and 99 of them failed (16%).</li>
+        <li>Main went red 52 times. 37 of those were green again within an hour, and the median was 25 minutes.</li>
+        <li>Eight releases shipped (0.4.0 to 0.9.0), each from a commit that had passed the whole gate, because the release refuses any other.</li>
+      </ul>
+      <p>Things did break. They were caught at the push that broke them, named, and fixed before anything else, and no
+        red commit was ever released.</p>
     </section>
 
     <section id="agent-first">
