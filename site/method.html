@@ -74,6 +74,7 @@
       <li><a href="#agent-first">Build for the agent first</a></li>
       <li><a href="#memory">The repo is the memory</a></li>
       <li><a href="#gate">One trunk, one gate, honest tests</a></li>
+      <li><a href="#caught">Coverage, and what the pipeline caught</a></li>
       <li><a href="#requirements">Every feature ships with its requirement</a></li>
       <li><a href="#directing">I direct, sessions build</a></li>
       <li><a href="#made">What it made possible</a></li>
@@ -198,6 +199,43 @@
         <code>PipelineDiagramTests</code> fail when the diagrams disagree with the project files and workflows. Other
         guards fail if a test project is missing from the solution or a workflow splices an expression into a script.
         A model reads its failures far more reliably than it remembers a convention.</p>
+    </section>
+
+    <section id="caught">
+      <h2>Coverage, and what the pipeline caught</h2>
+      <p>The tests run <strong>90.6% of the lines and 79.9% of the branches</strong> of the code, measured on 13 October
+        2026. The Gherkin scenarios on their own reach 70.3% of the lines: that is how much of the program is stated as
+        a requirement, not just tested.</p>
+      <div class="scroll">
+        <table>
+          <tr><th>Part</th><th>Lines</th><th>Branches</th></tr>
+          <tr><td>All tests but the scenarios</td><td>90.6%</td><td>79.9%</td></tr>
+          <tr><td>Flyback.Core, the plugin contract</td><td>99.1%</td><td>92.6%</td></tr>
+          <tr><td>Flyback.Engine, the compiler and backends</td><td>95.9%</td><td>88.9%</td></tr>
+          <tr><td>Flyback.Editor</td><td>92.0%</td><td>79.3%</td></tr>
+          <tr><td>The scenarios alone</td><td>70.3%</td><td>50.6%</td></tr>
+        </table>
+      </div>
+      <p>The low figures are platform code. The measurement runs on Linux, so the macOS and Windows sound and key-store
+        drivers barely show (macOS input and output: 3.8%), even though a Windows runner tests them on every push and a
+        macOS runner before every release.</p>
+      <p><strong>How it is measured.</strong> A Coverage workflow runs every Monday on the same Docker image as the
+        gate. Each test project runs under <code>dotnet test --coverage</code> and writes a Cobertura report;
+        <code>scripts/coverage.sh</code> merges them, counting a line as covered if any project ran it, and prints the
+        table into the run summary. The scenarios get a figure of their own, because what they reach says what is
+        specified. There is no threshold and nothing fails on the number: the gate fails only on what is wrong, and the
+        weekly figure is there to notice when something stops being covered. A second weekly job lists code in the app
+        that only tests call, so dead code kept alive by its own tests gets noticed too.</p>
+      <p><strong>What the pipeline caught.</strong> The pipeline is how a session finds out it broke something without
+        me noticing. A few real catches:</p>
+      <ul>
+        <li><strong>Tests that asserted nothing.</strong> Ten guard tests were passing without checking anything. Making them skip with a reason, and making the gate fail when a tool it needs is missing, found three real bugs: a sound-only recording that wrote no sound, a module with empty knob values crashing the compiler, and the Linux key store reporting an error for a key it never held.</li>
+        <li><strong>Hangs with no clue.</strong> A hung test project sat for half an hour until the job was cancelled. The gate now takes a hang dump after ten minutes and names the tests in flight, and every wait in the tests has a cap with a message.</li>
+        <li><strong>A break blamed on the wrong commit.</strong> Build used to cancel the older run on main, so a break landed with no verdict and the next commit wore its red. Every push to main now gets its own verdict.</li>
+        <li><strong>The GPU disagreeing with itself.</strong> The macOS GPU run found seven presets whose picture on a Mac's GPU differs from the processor's.</li>
+        <li><strong>Tests that silently never run.</strong> A test only Windows or macOS can run fails the gate if no runner would actually run it.</li>
+        <li><strong>Dependencies that move.</strong> The SDK and every base image are pinned by digest, and restores are locked, so a package version that moved fails the gate instead of building.</li>
+      </ul>
     </section>
 
     <section id="requirements">
