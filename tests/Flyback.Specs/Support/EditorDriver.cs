@@ -27,6 +27,7 @@ using Flyback.Editor.Keys;
 using Flyback.Editor.Site;
 using Flyback.Editor.Windows;
 using Flyback.Editor.Tutorials;
+using Flyback.Engine.Compile;
 using Flyback.Engine.Tutorials;
 using Flyback.Core.Graph;
 using Microsoft.Extensions.DependencyInjection;
@@ -959,6 +960,9 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
 
     /// <summary>How many times real time the editor says the sound renders at, or 0 while it has not measured it.</summary>
     public double SoundSpeed => ReadWindow(_ => Service<Playback>().SoundSpeed);
+
+    /// <summary>Whether the IL compiler has built everything handed to it within <paramref name="within"/>.</summary>
+    public bool IlSettles(TimeSpan within) => Service<IlCompiler>().Settled().Wait(within);
 
     /// <summary>What a script driving the editor is told of how it is doing.</summary>
     public JsonObject Readout => ReadWindow(_ => Service<EditorReadout>().Read());

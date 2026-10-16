@@ -25,6 +25,9 @@ public sealed class StatusBarSteps(EditorDriver editor) : IDisposable
     [When("the speakers have played long enough to time the sound")]
     public void WhenTimed()
     {
+        // Pumping without pause starves the compiler's below-normal thread on a loaded Windows runner.
+        editor.IlSettles(TimeSpan.FromSeconds(30)).ShouldBeTrue("the sound's IL was never built");
+
         var deadline = DateTime.UtcNow.AddSeconds(10);
 
         while (editor.SoundSpeed <= 0 && DateTime.UtcNow < deadline)
