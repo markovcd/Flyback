@@ -234,3 +234,4 @@ context, decision, consequences.
 | [0202](0202-a-coding-assistant-the-person-runs-edits-the-open-patch-over-mcp.md) | A coding assistant the person runs edits the open patch over MCP *(user-directed)* |
 | [0186](0186-a-decision-model-answers-typed-questions-behind-the-plugin-boundary.md) | A decision model answers typed questions behind the plugin boundary *(user-directed)* |
 | [0188](0188-what-every-host-reads-is-a-project-of-its-own.md) | What every host reads is a project of its own *(user-directed)* |
+| [0206](0206-the-gate-has-a-ten-minute-time-budget.md) | The gate has a ten-minute time budget *(user-directed)* |

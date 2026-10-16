@@ -193,6 +193,9 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 # hung: the hang dump names the tests it was in and ends it, well inside the
 # workflow's timeout, which would cancel the run without saying where.
 #
+# The run's wall-clock seconds are kept too: test-summary.py holds them to the
+# gate's time budget.
+#
 # The run is inside a session bus with a keyring unlocked, which only a password
 # that is not empty does. FLYBACK_GATE turns a spec's skip for a missing tool into
 # a failure, since this image has every one.
@@ -201,14 +204,16 @@ ARG CONFIGURATION
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
     mkdir -p /test-results; \
+    started=$(date +%s); \
     FLYBACK_GATE=1 dbus-run-session -- sh -c ' \
       printf gate | gnome-keyring-daemon --unlock --components=secrets > /dev/null; \
       exec dotnet test --solution Flyback.slnx -c "$CONFIGURATION" --no-build \
         --hangdump --hangdump-timeout 10m --hangdump-type Mini \
         --report-xunit-junit --results-directory /test-results'; \
-    echo $? > /test-results/exit-code
+    echo $? > /test-results/exit-code; \
+    echo $(( $(date +%s) - started )) > /test-results/seconds
 
-# The reports and the exit code, which gate.sh asks for with --output to write
+# The reports, the exit code and the seconds, which gate.sh asks for with --output to write
 # the run's summary.
 FROM scratch AS test-results
 COPY --from=tested /test-results/ /
