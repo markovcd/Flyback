@@ -186,6 +186,13 @@
       <p>Architecture decision records do the same job for design. With 205 of them, a fresh session that spots
         "duplication" can find that the shape was chosen on purpose and the refactor already declined, instead of
         undoing a week of decisions.</p>
+      <p><strong>The repo teaches by example, so a repeated mistake is a design signal.</strong> The agent does not only
+        follow the written rules. It picks up its ideas and its ways of working from what is already there: it names
+        things the way neighboring code names them, copies the shape of the nearest similar feature, and reaches for the
+        patterns the docs describe. Good shape spreads, and so does bad. When an agent makes the same wrong move twice, I
+        stop correcting the agent and change the repo instead: split the file it keeps getting lost in, move the logic it
+        keeps duplicating into one place, rewrite the doc it keeps misreading, or add a test that makes the wrong move
+        fail. A correction in chat fixes one session. A change to the repo fixes every session after it.</p>
     </section>
 
     <section id="gate">
@@ -199,6 +206,14 @@
         <li><strong>Honest tests.</strong> A failing test is fixed by fixing the code. Never a wider tolerance, a skip, an exception list or a special case in the source. This is the rule a model is most tempted to break, so it is spelled out item by item.</li>
         <li><strong>The pipeline is code that holds keys.</strong> Every action pinned to a commit SHA, every base image to a digest, least permission, timeouts on every job, releases signed.</li>
       </ul>
+      <p><strong>This is continuous integration as written, not as usually practiced.</strong> Most teams know the rules:
+        integrate small and often, one trunk, every change through the whole suite, fix a red build first, pin every
+        dependency, keep main releasable. Most teams also skip part of it, because each rule costs time a deadline
+        doesn't have. Branches live for weeks, the flaky test gets retried, the pin moves "later", the hang never gets a
+        dump. With an agent doing the work, that overhead stops being an argument. Writing the guard test, rebasing for
+        the tenth time today, chasing a red build before anything else, reading the whole log: none of it tires the
+        agent, and the extra minutes cost me nothing. Good engineering practice used to be a trade-off against speed.
+        Here it is what makes the speed safe, and there is no excuse left to skip it.</p>
       <p><strong>Architecture is enforced by tests, not by review.</strong> <code>ContractSurfaceTests</code> fails
         when the public plugin API grows a member no plugin uses. <code>ComponentDiagramTests</code> and
         <code>PipelineDiagramTests</code> fail when the diagrams disagree with the project files and workflows. Other
