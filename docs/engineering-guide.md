@@ -1133,7 +1133,8 @@ rebuilding per test what the class could build once.
 
 A behavior change lands with a test that fails before it and passes after. A bug
 fix lands with the failing test that confirmed the bug, filed under the rule it
-broke. `/bughunt` is that loop as a command.
+broke. `/bughunt` is that loop as a command. `/mutate` checks the tests a commit arrived with: it plants plausible bugs in the
+lines the commit changed, and every one the suite misses gets a test (ADR-0207).
 
 ---
 

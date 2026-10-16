@@ -42,6 +42,7 @@ Task-specific know-how is in `.claude/skills/`, and Claude Code loads each skill
 Commands in `.claude/commands/` are run by name rather than matched:
 
 - `/bughunt`: hunt for bugs, confirm each as a failing test, fix it, and file the test where it belongs.
+- `/mutate`: plant plausible bugs in the lines a commit changed, write a test for each the suite missed, and log the score in `tests/mutation-log.tsv`.
 - `/release`: check the changelog and the plugin contract, land the release commit on main, and fire the Release workflow.
 - `/review-plugin`: decompile submitted `.fbkp` packages without running them and write the Accept/Reject report the admin publishes from.
 
