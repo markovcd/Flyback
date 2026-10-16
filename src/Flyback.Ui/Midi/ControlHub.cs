@@ -35,7 +35,10 @@ internal sealed class ControlHub
     /// </summary>
     private readonly Dictionary<Guid, float> gone = [];
 
-    private (MidiBinding Binding, Guid Control)[] bindings = [];
+    private (MidiBinding Binding, Guid Control, ControlKind Kind)[] bindings = [];
+
+    /// <summary>The switches whose controller's button was last heard down, so a press flips one once.</summary>
+    private readonly HashSet<Guid> buttonsDown = [];
 
     /// <summary>The knobs a controller has caught up with, under <see cref="Takeover.PickUp"/>.</summary>
     private readonly HashSet<Guid> caught = [];
@@ -57,7 +60,14 @@ internal sealed class ControlHub
         this.midi = midi;
         midi.Controlled += Receive;
         midi.Struck += Strike;
+        midi.Lifted += Lift;
     }
+
+    /// <summary>
+    /// How long a switch's learn listens after the press for the button to send its
+    /// release: one that does not is a button that holds itself down.
+    /// </summary>
+    internal TimeSpan ReleaseWindow { get; set; } = TimeSpan.FromMilliseconds(600);
 
     public Takeover Takeover { get; set; }
 
@@ -137,8 +147,9 @@ internal sealed class ControlHub
                     gone[id] = at;
 
             caught.RemoveWhere(id => !values.ContainsKey(id));
+            buttonsDown.RemoveWhere(id => !values.ContainsKey(id));
 
-            bindings = [.. controls.Where(c => c.Midi is not null).Select(c => (c.Midi!, c.Id))];
+            bindings = [.. controls.Where(c => c.Midi is not null).Select(c => (c.Midi!, c.Id, c.Kind))];
             bound = Devices();
         }
 
@@ -164,6 +175,7 @@ internal sealed class ControlHub
             gone.Clear();
             caught.Clear();
             lastHeard.Clear();
+            buttonsDown.Clear();
         }
     }
 
@@ -196,9 +208,16 @@ internal sealed class ControlHub
     /// which is still moving under the same hand while the next knob waits.
     /// </param>
     /// <param name="notes">Whether a note struck is taken as well, for a button that may be a pad.</param>
-    public async Task<MidiBinding?> LearnAsync(IEnumerable<string> devices, CancellationToken cancel, MidiBinding? except = null, bool notes = false)
+    /// <param name="kind">
+    /// What the binding is for. A switch or a button takes a note struck, or the first
+    /// press of a controller's button rather than waiting for it to move; a switch
+    /// then listens for the release, and a button that sends none is
+    /// <see cref="MidiBinding.Latching"/>.
+    /// </param>
+    public async Task<MidiBinding?> LearnAsync(
+        IEnumerable<string> devices, CancellationToken cancel, MidiBinding? except = null, bool notes = false, ControlKind kind = ControlKind.Knob)
     {
-        var waiting = new Pending(except, notes);
+        var waiting = new Pending(except, notes || kind != ControlKind.Knob, kind != ControlKind.Knob);
 
         lock (gate)
         {
@@ -212,7 +231,13 @@ internal sealed class ControlHub
         {
             try
             {
-                return await waiting.Done.Task.ConfigureAwait(true);
+                var taken = await waiting.Done.Task.ConfigureAwait(true);
+
+                if (taken is null || taken.Note || kind != ControlKind.Switch) return taken;
+
+                return await Released(waiting, cancel).ConfigureAwait(true) is { } released
+                    ? taken with { Latching = !released }
+                    : null;
             }
             finally
             {
@@ -230,6 +255,24 @@ internal sealed class ControlHub
                 // one waiting on ports that are shut.
                 if (last) Hold();
             }
+        }
+    }
+
+    /// <summary>Whether the button just learned sent its release in time, or null where the learn was stopped first.</summary>
+    private async Task<bool?> Released(Pending waiting, CancellationToken cancel)
+    {
+        try
+        {
+            await waiting.Released.Task.WaitAsync(ReleaseWindow, cancel).ConfigureAwait(true);
+            return true;
+        }
+        catch (TimeoutException)
+        {
+            return false;
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
         }
     }
 
@@ -260,11 +303,22 @@ internal sealed class ControlHub
         {
             if (learning is { } waiting)
             {
+                if (waiting.Taken is { } taken)
+                {
+                    if (taken.Hears(device, message.Channel, message.Note) && message.Velocity < 0.5f) waiting.Released.TrySetResult();
+                    return;
+                }
+
                 if (waiting.Except is { } except && except.Hears(device, message.Channel, message.Note)) return;
 
                 var key = (device, message.Channel, message.Note);
 
-                if (!waiting.First.TryGetValue(key, out var first))
+                if (waiting.Presses && message.Velocity >= 0.5f)
+                {
+                    waiting.Taken = new MidiBinding(device, message.Channel, message.Note);
+                    waiting.Done.TrySetResult(waiting.Taken);
+                }
+                else if (!waiting.First.TryGetValue(key, out var first))
                     waiting.First[key] = message.Velocity;
                 else if (MathF.Abs(message.Velocity - first) >= LearnDistance)
                     waiting.Done.TrySetResult(new MidiBinding(device, message.Channel, message.Note));
@@ -279,10 +333,18 @@ internal sealed class ControlHub
                 triggerDown = down;
             }
 
-            foreach (var (binding, control) in bindings)
+            foreach (var (binding, control, kind) in bindings)
             {
                 if (!binding.Hears(device, message.Channel, message.Note)) continue;
                 if (!values.TryGetValue(control, out var at)) continue;
+
+                if (kind != ControlKind.Knob)
+                {
+                    if (Pressed(control, kind, binding.Latching, message.Velocity >= 0.5f, at) is { } flipped)
+                        turned.Add((control, flipped));
+
+                    continue;
+                }
 
                 var reading = message.Velocity;
                 var before = lastHeard.TryGetValue(control, out var heard) ? heard : (float?)null;
@@ -311,10 +373,43 @@ internal sealed class ControlHub
         if (fired) Triggered?.Invoke();
     }
 
+    /// <summary>
+    /// Where a switch or a button goes as its controller's button goes down or up,
+    /// or null where it stays. A switch flips at each press unless its button holds
+    /// itself down, which it then follows; a button follows its controller's. Under
+    /// <see cref="gate"/>.
+    /// </summary>
+    private float? Pressed(Guid control, ControlKind kind, bool follows, bool pressed, float at)
+    {
+        float reading;
+
+        if (kind == ControlKind.Switch && !follows)
+        {
+            var was = !buttonsDown.Add(control);
+            if (!pressed) buttonsDown.Remove(control);
+            if (!pressed || was) return null;
+
+            reading = at >= 0.5f ? 0f : 1f;
+        }
+        else
+        {
+            reading = pressed ? 1f : 0f;
+        }
+
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
+        if (reading == at) return null;
+
+        values[control] = reading;
+        foreach (var block in following) block.Set(PatchControl.KeyOf(control), reading);
+
+        return reading;
+    }
+
     /// <summary>A note was struck. On the driver's thread.</summary>
     private void Strike(string device, MidiMessage message)
     {
         var fired = false;
+        var turned = new List<(Guid, float)>();
 
         lock (gate)
         {
@@ -326,16 +421,58 @@ internal sealed class ControlHub
                 return;
             }
 
-            fired = learning is null && trigger is { } pad && pad.Strikes(device, message.Channel, message.Note);
+            if (learning is not null) return;
+
+            fired = trigger is { } pad && pad.Strikes(device, message.Channel, message.Note);
+
+            Played(device, message, pressed: true, turned);
         }
+
+        foreach (var (control, reading) in turned) Turned?.Invoke(control, reading);
 
         if (fired) Triggered?.Invoke();
     }
 
-    private sealed class Pending(MidiBinding? except, bool notes)
+    /// <summary>A note was let go. On the driver's thread.</summary>
+    private void Lift(string device, MidiMessage message)
+    {
+        var turned = new List<(Guid, float)>();
+
+        lock (gate)
+        {
+            if (learning is not null) return;
+
+            Played(device, message, pressed: false, turned);
+        }
+
+        foreach (var (control, reading) in turned) Turned?.Invoke(control, reading);
+    }
+
+    /// <summary>Presses or lets go of every switch and button bound to the note in <paramref name="message"/>. Under <see cref="gate"/>.</summary>
+    private void Played(string device, MidiMessage message, bool pressed, List<(Guid, float)> turned)
+    {
+        foreach (var (binding, control, kind) in bindings)
+        {
+            if (kind == ControlKind.Knob || !binding.Strikes(device, message.Channel, message.Note)) continue;
+            if (!values.TryGetValue(control, out var at)) continue;
+
+            if (Pressed(control, kind, follows: false, pressed, at) is { } reading) turned.Add((control, reading));
+        }
+    }
+
+    private sealed class Pending(MidiBinding? except, bool notes, bool presses)
     {
         /// <summary>Whether a note struck is taken as well as a controller moving.</summary>
         public bool Notes { get; } = notes;
+
+        /// <summary>Whether a controller's button going down is taken at once, for a switch or a button.</summary>
+        public bool Presses { get; } = presses;
+
+        /// <summary>The button a press was taken from, listened to for its release.</summary>
+        public MidiBinding? Taken { get; set; }
+
+        /// <summary>The button taken let go.</summary>
+        public TaskCompletionSource Released { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public TaskCompletionSource<MidiBinding?> Done { get; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);

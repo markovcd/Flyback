@@ -75,6 +75,7 @@ context, decision, consequences.
 | [0099](0099-the-computer-keyboard-can-be-laid-out-by-scale.md) | The computer keyboard can be laid out by scale, and the patch says how *(user-directed)* |
 | [0086](0086-panel-knobs-are-read-as-live-values.md) | Panel knobs are read as live values, and a MIDI controller turns a knob rather than a socket *(user-directed; a learn walks the panel and keeps a drum machine's channel by amendment)* |
 | [0170](0170-the-knob-panel-randomizes-and-a-held-knob-sits-it-out.md) | The knob panel randomizes, and a held knob sits it out *(user-directed)* |
+| [0205](0205-a-panel-knob-can-be-played-as-a-switch-or-a-button.md) | A panel knob can be played as a switch or a button *(user-directed)* |
 | [0139](0139-a-patch-keeps-to-an-instruments-clock.md) | A patch keeps to an instrument's clock *(user-directed)* |
 | [0179](0179-a-midi-file-plays-as-tables-read-by-the-clock.md) | A MIDI file plays as tables read by the clock *(user-directed)* |
 | [0140](0140-an-instrument-is-known-by-a-profile-file.md) | An instrument is known by a profile file *(user-directed)* |

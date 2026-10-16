@@ -12,6 +12,13 @@ public sealed record MidiBinding(string Device, int Channel, int Controller)
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public bool Note { get; init; }
 
+    /// <summary>
+    /// Whether the controller's button holds itself down, sending on at one press and
+    /// off at the next, so a switch follows it rather than flipping at each press.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool Latching { get; init; }
+
     /// <summary>What a panel shows under a knob: <c>CC21</c>, or <c>CC21·2</c> on a channel; <c>Note C3</c> for a note.</summary>
     [JsonIgnore]
     public string Label => Channel == 0 ? What : $"{What}·{Channel}";

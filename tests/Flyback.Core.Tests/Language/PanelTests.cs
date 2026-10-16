@@ -290,4 +290,40 @@ public class PanelTests
     {
         Refused("panel level = 0.8, frozen\nsine(amp: level) |> out.left").Code.ShouldBe(IssueCode.UnknownSetting);
     }
+
+    /// <summary>A switch or a button says so on its line, with the pad or button it follows, and keeps saying so through a printing.</summary>
+    [Theory]
+    [InlineData("panel drop = 1, switch")]
+    [InlineData("panel kick = 0, button, note: 36, channel: 10, device: \"midi:test\"")]
+    [InlineData("panel drop = 0, switch, cc: 64, device: \"midi:test\", latching, held")]
+    public void A_switch_or_a_button_is_written_as_one_and_read_back_as_one(string line)
+    {
+        var word = line.Split(' ')[1];
+        var patch = Built(line + $"\nsine(amp: {word}) |> out.left");
+        var control = patch.Controls.ShouldNotBeNull().Single();
+
+        control.Kind.ShouldBe(line.Contains("switch") ? ControlKind.Switch : ControlKind.Button);
+        PatchPrinter.Print(patch, NodeCatalog.BuiltIn).ShouldStartWith(line + "\n");
+    }
+
+    [Fact]
+    public void A_pad_binds_a_note_and_a_latching_button_says_so()
+    {
+        var kick = Built("panel kick = 0, button, note: 36, device: \"midi:test\"\nsine(amp: kick) |> out.left").Controls!.Single();
+        var drop = Built("panel drop = 0, switch, cc: 64, device: \"midi:test\", latching\nsine(amp: drop) |> out.left").Controls!.Single();
+
+        kick.Midi.ShouldBe(new MidiBinding("midi:test", 0, 36) { Note = true });
+        drop.Midi.ShouldBe(new MidiBinding("midi:test", 0, 64) { Latching = true });
+    }
+
+    [Theory]
+    [InlineData("panel drop = 0.5, switch")]
+    [InlineData("panel level = 0.5, note: 36, device: \"midi:test\"")]
+    [InlineData("panel kick = 0, button, cc: 1, note: 36, device: \"midi:test\"")]
+    [InlineData("panel kick = 0, button, cc: 1, device: \"midi:test\", latching")]
+    [InlineData("panel drop = 0, switch, latching")]
+    public void A_switch_or_a_button_said_wrong_is_refused(string line)
+    {
+        Refused(line).Code.ShouldBe(IssueCode.UnknownSetting);
+    }
 }

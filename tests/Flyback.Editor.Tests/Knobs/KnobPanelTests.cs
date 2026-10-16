@@ -513,4 +513,25 @@ public class KnobPanelTests : EditorTest
             Settle(window);
         });
     }
+
+    [AvaloniaFact]
+    public void The_knob_menu_plays_a_knob_as_a_switch_that_rests_on_or_off()
+    {
+        var (patch, value) = Board();
+        var knob = patch.AddControl(value: 0.7f);
+        var window = Open(patch);
+
+        var menu = All<Button>(Panel(window)).First(b => b.Name == "knob-menu").Flyout.ShouldBeOfType<MenuFlyout>();
+        var playAs = menu.Items.OfType<MenuItem>().Single(i => (i.Header as string) == "Play as");
+
+        playAs.Items.OfType<MenuItem>().Single(i => (i.Header as string) == "Switch")
+            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
+        Settle(window);
+
+        var control = Editor(window).History.Patch.Control(knob.Id).ShouldNotBeNull();
+        control.Kind.ShouldBe(ControlKind.Switch);
+        control.Value.ShouldBe(1f);
+        All<PanelSwitch>(Panel(window)).ShouldHaveSingleItem().Value.ShouldBe(1d);
+        All<Knob>(Panel(window)).Where(k => k.Name == "panel-knob").ShouldBeEmpty();
+    }
 }

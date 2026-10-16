@@ -23,6 +23,8 @@ public sealed class StageKnobs : TuckedAway
 
     private readonly Dictionary<Guid, StageKnob> knobs = [];
 
+    private readonly Dictionary<Guid, StageSwitch> switches = [];
+
     private Patch? patch;
 
     private string shape = string.Empty;
@@ -62,10 +64,13 @@ public sealed class StageKnobs : TuckedAway
     }
 
     /// <summary>Whether there is a knob to show at all.</summary>
-    public bool Any => knobs.Count > 0;
+    public bool Any => knobs.Count + switches.Count > 0;
 
     /// <summary>The knobs, for the tests that turn one.</summary>
     internal IReadOnlyDictionary<Guid, StageKnob> Knobs => knobs;
+
+    /// <summary>The switches and buttons, for the tests that press one.</summary>
+    internal IReadOnlyDictionary<Guid, StageSwitch> Switches => switches;
 
     /// <summary>
     /// Shows <paramref name="from"/>'s knobs where they sit, rebuilding only where one
@@ -76,24 +81,37 @@ public sealed class StageKnobs : TuckedAway
         patch = from;
 
         var controls = from.Controls ?? [];
-        var now = string.Join('|', controls.Select(c => c.Id.ToString("N")));
+        var now = string.Join('|', controls.Select(c => $"{c.Id:N}{c.Kind}"));
 
         if (now != shape)
         {
             shape = now;
             row.Children.Clear();
             knobs.Clear();
+            switches.Clear();
 
             foreach (var control in controls)
             {
                 var id = control.Id;
-                var knob = new StageKnob();
+                ITurnable played;
 
-                knob.Turned += turned => Turning?.Invoke(id, (float)turned);
-                knob.Released += () => TurnEnded?.Invoke(id);
+                if (control.Kind == ControlKind.Knob)
+                {
+                    var knob = new StageKnob();
+                    knobs[id] = knob;
+                    row.Children.Add(knob);
+                    played = knob;
+                }
+                else
+                {
+                    var flip = new StageSwitch { Momentary = control.Kind == ControlKind.Button };
+                    switches[id] = flip;
+                    row.Children.Add(flip);
+                    played = flip;
+                }
 
-                knobs[id] = knob;
-                row.Children.Add(knob);
+                played.Turned += turned => Turning?.Invoke(id, (float)turned);
+                played.Released += () => TurnEnded?.Invoke(id);
             }
         }
 
@@ -103,15 +121,21 @@ public sealed class StageKnobs : TuckedAway
     /// <summary>Moves a knob without reporting it as turned.</summary>
     public void Move(Guid id, float value)
     {
-        if (!knobs.TryGetValue(id, out var knob)) return;
+        Control? knob = knobs.TryGetValue(id, out var turned) ? turned : switches.GetValueOrDefault(id);
 
-        knob.Value = value;
+        if (knob is not ITurnable played) return;
 
-        var name = patch?.Control(id)?.Name ?? "Knob";
+        played.Value = value;
+
+        var control = patch?.Control(id);
         var reading = patch is null ? null : Reading(patch, id, value);
 
-        ToolTip.SetTip(knob, $"{name}  {reading ?? value.ToString("0.00", CultureInfo.InvariantCulture)}");
+        ToolTip.SetTip(knob, $"{control?.Name ?? "Knob"}  {reading ?? Position(control?.Kind ?? ControlKind.Knob, value)}");
     }
+
+    /// <summary>Where a knob is, as a number, or a switch or a button, as on or off.</summary>
+    internal static string Position(ControlKind kind, float value) =>
+        kind == ControlKind.Knob ? value.ToString("0.00", CultureInfo.InvariantCulture) : value >= 0.5f ? "on" : "off";
 
     /// <summary>
     /// What a knob at <paramref name="value"/> reads as in the units of the one socket

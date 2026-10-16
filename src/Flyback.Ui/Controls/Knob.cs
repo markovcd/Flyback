@@ -11,7 +11,7 @@ namespace Flyback.Ui.Controls;
 /// the wheel steps it, and a double-click puts it back to the middle. The pointer is held still and
 /// hidden while it turns, so the edge of the screen never stops a turn.
 /// </summary>
-internal class Knob : Control
+internal class Knob : Control, ITurnable
 {
     public static readonly StyledProperty<double> ValueProperty =
         AvaloniaProperty.Register<Knob, double>(nameof(Value), 0.5, coerce: (_, v) => Math.Clamp(v, 0d, 1d));

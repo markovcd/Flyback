@@ -1147,13 +1147,16 @@ public static class PatchPrinter
         {
             var line = new StringBuilder($"panel {word} = {PatchValueWriter.Number(control.Value)}");
 
+            if (control.Kind != ControlKind.Knob) line.Append($", {PanelDeclaration.Word(control.Kind)}");
+
             if (control.Name != word && Quotable(control.Name) is { } label) line.Append($", label: {label}");
 
-            if (control.Midi is { } midi && Quotable(midi.Device) is { } device)
+            if (control.Midi is { } midi && Quotable(midi.Device) is { } device && (!midi.Note || control.Kind != ControlKind.Knob))
             {
-                line.Append(CultureInfo.InvariantCulture, $", cc: {midi.Controller}");
+                line.Append(CultureInfo.InvariantCulture, $", {(midi.Note ? "note" : "cc")}: {midi.Controller}");
                 if (midi.Channel != 0) line.Append(CultureInfo.InvariantCulture, $", channel: {midi.Channel}");
                 line.Append($", device: {device}");
+                if (midi.Latching && control.Kind == ControlKind.Switch) line.Append(", latching");
             }
 
             if (control.Held) line.Append(", held");

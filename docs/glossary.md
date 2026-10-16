@@ -114,6 +114,9 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | **step** | One thing a tutorial asks for, with the patch that shows it done (its goal). | `TutorialStep`, `TutorialStep.Goal` | task, lesson |
 | **knob panel** | The row of panel knobs, turned by hand or from a MIDI controller. | `ControlsPanel` | controls panel, mixer |
 | **panel knob** | A knob on the knob panel. It moves every socket linked to it, and a MIDI controller can be learned for it. | `PatchControl`, `Patch.Controls` | control, macro, fader |
+| **switch** | A panel knob played as off or on: a click or a press flips it, and it stays. | `ControlKind.Switch`, `PanelSwitch` | toggle |
+| **button** | A panel knob that is on only while it is held, on screen or on a controller. | `ControlKind.Button` | momentary, gate (a socket) |
+| **latching** | A controller button that holds itself down, sending on at one press and off at the next. | `MidiBinding.Latching` | toggle mode |
 | **link** | A socket following a panel knob over a range. | `ControlLink` | binding, mapping |
 | **randomize** | Send every panel knob not held somewhere new, gliding there; **back** returns them. A **held** knob sits it out. | `KnobRandomizer`, `PatchControl.Held` | shuffle, dice, roll, locked |
 | **text view** | The patch as text, over the canvas. | `SourceView` | code view, source view, editor |

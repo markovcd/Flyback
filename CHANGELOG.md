@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A panel knob can be played as a switch or a button, on screen and from a controller's button or pad: `panel drop = 0, switch`.
 - A Plot in the Picture plugin draws a pitch function as a glowing curve across beats with a dot at now, and Plots chain through `under` for a song made of functions.
 - The sound is given five seconds after Play before falling behind lowers its oversampling, so the stutters of starting up no longer do.
 - Four more tutorials: seeing a sound, playing from the keyboard, echo and space, and the patch as text.

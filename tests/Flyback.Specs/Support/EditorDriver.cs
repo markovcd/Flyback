@@ -32,8 +32,10 @@ using Flyback.Engine.Tutorials;
 using Flyback.Core.Graph;
 using Microsoft.Extensions.DependencyInjection;
 using Flyback.Host;
+using Shouldly;
 using Flyback.Editor.Composition;
 using Flyback.Editor.Hubs;
+using Flyback.Editor.Knobs;
 
 namespace Flyback.Specs.Support;
 
@@ -478,6 +480,34 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
             Service<Editor.Settings.OutputSettingRepository>().Current.Randomize = new RandomizeSettings { Amount = 1, GlideSeconds = 0 };
             Service<Editor.Knobs.KnobRandomizer>().Random = new Random(1);
         });
+
+    /// <summary>
+    /// Presses the switch or the button the knob panel calls <paramref name="name"/>
+    /// with the mouse, and lets it go unless <paramref name="hold"/>.
+    /// </summary>
+    public void PressPanelSwitch(string name, bool hold = false) =>
+        DoWindow((open, canvas) =>
+        {
+            var at = PanelSwitchAt(open, canvas, name);
+
+            open.MouseDown(at, MouseButton.Left);
+            if (!hold) open.MouseUp(at, MouseButton.Left);
+        });
+
+    /// <summary>Lets go of the button the knob panel calls <paramref name="name"/>.</summary>
+    public void LetGoOfPanelSwitch(string name) =>
+        DoWindow((open, canvas) => open.MouseUp(PanelSwitchAt(open, canvas, name), MouseButton.Left));
+
+    private static Point PanelSwitchAt(MainWindow open, NodeEditor canvas, string name)
+    {
+        var index = canvas.History.Patch.Controls!.FindIndex(control => control.Name == name);
+        var played = open.GetVisualDescendants().OfType<ControlsPanel>().Single()
+            .GetVisualDescendants().Where(control => control is Knob or PanelSwitch).Cast<Control>().ElementAt(index);
+
+        played.ShouldBeOfType<PanelSwitch>();
+
+        return played.TranslatePoint(new Point(played.Bounds.Width / 2, played.Bounds.Height / 2), open)!.Value;
+    }
 
     /// <summary>Where the editor's panel knob called <paramref name="name"/> rests.</summary>
     public float KnobAt(string name) => Read(canvas => canvas.History.Patch.Controls!.Single(control => control.Name == name).Value);

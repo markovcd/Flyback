@@ -111,7 +111,8 @@ internal static class Handbook
           shown keeps the line only if you write it again.
         - **`panel cutoff = 0.4`**, on its own line, puts a knob on the panel,
           resting from 0 to 1, with `label:`, and `cc:`, `channel:` and
-          `device:` for a MIDI controller. A socket follows it by naming it
+          `device:` for a MIDI controller; `switch` or `button` plays it as one,
+          resting at 0 or 1. A socket follows it by naming it
           where a number goes, `freq: cutoff`, or over a range of its own,
           `cutoff(200..4000)`; the Output by a statement, `out.volume = level`.
         - **`keyboard scale [ D E F G A B C ]`**, on its own line, lays the

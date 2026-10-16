@@ -91,6 +91,9 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
     /// </summary>
     public event Action<string, MidiMessage>? Struck;
 
+    /// <summary>A note was let go on a device, with the device's id. Raised on the driver's thread, outside the lock.</summary>
+    public event Action<string, MidiMessage>? Lifted;
+
     /// <summary>
     /// A device pressed Start, Continue or Stop, with the device's id. Raised on the
     /// driver's thread, outside the lock, after its clock has heard it.
@@ -458,6 +461,7 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
         }
 
         if (message.Action == MidiAction.Down) Struck?.Invoke(source, message);
+        else if (message.Action == MidiAction.Up) Lifted?.Invoke(source, message);
 
         lock (gate)
         {

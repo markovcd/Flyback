@@ -486,6 +486,20 @@ function dial(knob) {
   face.title = `${knob.name}: drag to turn, double-click to put it back`;
   face.append(svg, input);
 
+  // A switch flips at a press, and a button is on only while it is held.
+  if (knob.kind !== 'knob') {
+    input.step = '1';
+    face.title = knob.kind === 'switch' ? `${knob.name}: press to flip` : `${knob.name}: hold to play`;
+    face.onpointerdown = event => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      face.setPointerCapture(event.pointerId);
+      turn(knob, knob.kind === 'switch' ? 1 - knob.value : 1);
+    };
+    face.onpointerup = face.onpointercancel = () => { if (knob.kind === 'button') turn(knob, 0); };
+    return finish();
+  }
+
   // Up or right turns it up, two hundred pixels end to end, a tenth as fast with Shift held.
   let from = null;
   face.onpointerdown = event => {
@@ -503,29 +517,36 @@ function dial(knob) {
   face.onpointerup = face.onpointercancel = () => { from = null; };
   face.ondblclick = () => turn(knob, knob.rest);
 
-  called.className = 'name';
-  called.textContent = called.title = knob.name;
-  cell.className = 'cell';
-  cell.append(face, called, reading);
+  return finish();
 
-  knob.cell = cell;
-  knob.input = input;
-  knob.reading = reading;
-  knob.draw = () => {
-    const angle = FROM + SWEEP * knob.value;
-    const [ax, ay] = onRing(angle, 26), [px0, py0] = onRing(angle, 7), [px1, py1] = onRing(angle, 16);
-    arc.setAttribute('d', `M${x0} ${y0} A26 26 0 ${SWEEP * knob.value > 180 ? 1 : 0} 1 ${ax} ${ay}`);
-    pointer.setAttribute('x1', px0);
-    pointer.setAttribute('y1', py0);
-    pointer.setAttribute('x2', px1);
-    pointer.setAttribute('y2', py1);
-  };
+  function finish() {
+    called.className = 'name';
+    called.textContent = called.title = knob.name;
+    cell.className = 'cell';
+    cell.append(face, called, reading);
 
-  reading.textContent = Math.round(knob.value * 100);
-  knob.draw();
+    knob.cell = cell;
+    knob.input = input;
+    knob.reading = reading;
+    knob.draw = () => {
+      const angle = FROM + SWEEP * knob.value;
+      const [ax, ay] = onRing(angle, 26), [px0, py0] = onRing(angle, 7), [px1, py1] = onRing(angle, 16);
+      arc.setAttribute('d', `M${x0} ${y0} A26 26 0 ${SWEEP * knob.value > 180 ? 1 : 0} 1 ${ax} ${ay}`);
+      pointer.setAttribute('x1', px0);
+      pointer.setAttribute('y1', py0);
+      pointer.setAttribute('x2', px1);
+      pointer.setAttribute('y2', py1);
+    };
 
-  return cell;
+    reading.textContent = position(knob);
+    knob.draw();
+
+    return cell;
+  }
 }
+
+/** What a knob's reading says: how far it is turned, or on or off for a switch or a button. */
+const position = knob => knob.kind === 'knob' ? Math.round(knob.value * 100) : knob.value >= 0.5 ? 'on' : 'off';
 
 /** The note names a key is labeled with, from C. */
 const NOTE_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
@@ -670,8 +691,9 @@ narrow.addEventListener('change', placeSheet);
  */
 function turn(knob, value, atOnce = false) {
   knob.value = Math.min(Math.max(Number(value) || 0, 0), 1);
+  if (knob.kind !== 'knob') knob.value = knob.value >= 0.5 ? 1 : 0;
   knob.input.value = knob.value;
-  knob.reading.textContent = Math.round(knob.value * 100);
+  knob.reading.textContent = position(knob);
   knob.draw();
 
   worker.postMessage({ turn: knob.key, value: knob.value });

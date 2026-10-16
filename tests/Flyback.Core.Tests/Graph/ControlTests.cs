@@ -306,4 +306,51 @@ public class ControlTests
         knob.Hears("midi:x", 3, 36).ShouldBeTrue();
         knob.Strikes("midi:x", 3, 36).ShouldBeFalse();
     }
+
+    [Fact]
+    public void A_switch_and_its_latching_button_survive_a_file_and_a_knob_writes_no_kind()
+    {
+        var (patch, _) = Built();
+        var drop = patch.AddControl("Drop", 1f);
+        drop.Kind = ControlKind.Switch;
+        drop.Midi = new MidiBinding("midi:minilab", 0, 64) { Latching = true };
+        patch.AddControl("Tone", 0.3f);
+
+        var json = PatchIO.ToJson(patch, NodeCatalog.BuiltIn);
+        var read = PatchIO.Read(json, NodeCatalog.BuiltIn).Patch.Controls.ShouldNotBeNull();
+
+        json.ShouldContain("\"Kind\": \"Switch\"");
+        json.Split("\"Kind\"").Length.ShouldBe(2);
+        read[0].Kind.ShouldBe(ControlKind.Switch);
+        read[0].Value.ShouldBe(1f);
+        read[0].Midi.ShouldNotBeNull().Latching.ShouldBeTrue();
+        read[1].Kind.ShouldBe(ControlKind.Knob);
+    }
+
+    [Theory]
+    [InlineData(ControlKind.Switch, 0.7f, 1f)]
+    [InlineData(ControlKind.Switch, 0.2f, 0f)]
+    [InlineData(ControlKind.Button, 0.6f, 1f)]
+    [InlineData(ControlKind.Knob, 0.6f, 0.6f)]
+    public void A_switch_or_a_button_rests_only_on_or_off(ControlKind kind, float set, float rests)
+    {
+        var knob = new PatchControl { Id = Guid.NewGuid(), Value = set, Kind = kind };
+
+        knob.Value.ShouldBe(rests);
+
+        knob.Value = set;
+        knob.Value.ShouldBe(rests);
+    }
+
+    [Theory]
+    [InlineData(200f, 200f, 20_000f)]
+    [InlineData(20_000f, 20_000f, 20f)]
+    public void A_switch_linked_reads_where_the_socket_rested_when_off_and_the_far_end_when_on(float resting, float off, float on)
+    {
+        var socket = new PortSpec("cutoff", PortKind.Scalar, 1000f, 20f, 20_000f);
+        var link = ControlLink.Flipping(Guid.NewGuid(), socket, resting);
+
+        link.At(0f).ShouldBe(off);
+        link.At(1f).ShouldBe(on);
+    }
 }

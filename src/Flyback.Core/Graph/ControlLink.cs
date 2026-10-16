@@ -23,6 +23,13 @@ public readonly record struct ControlLink(Guid Control, float Min, float Max)
         new(control, Math.Min(socket.Min, resting), Math.Max(socket.Max, resting)) { Knee = socket.Knee };
 
     /// <summary>
+    /// A link for a switch or a button: off reads <paramref name="resting"/>, and on
+    /// the far end of <paramref name="socket"/>'s range from it.
+    /// </summary>
+    internal static ControlLink Flipping(Guid control, PortSpec socket, float resting) =>
+        new(control, resting, resting < socket.Max ? socket.Max : socket.Min);
+
+    /// <summary>
     /// This link swept in decades, or evenly where <paramref name="inDecades"/> is
     /// false. In decades it takes <paramref name="socket"/>'s knee, or where the
     /// socket has none, one fitted to the range: its bottom where that is above

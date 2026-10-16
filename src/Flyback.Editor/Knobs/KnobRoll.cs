@@ -1,3 +1,5 @@
+using Flyback.Core.Graph;
+
 namespace Flyback.Editor.Knobs;
 
 /// <summary>Where a randomized knob goes.</summary>
@@ -15,4 +17,13 @@ internal static class KnobRoll
 
         return low + (high - low) * random.NextSingle();
     }
+
+    /// <summary>
+    /// Where <paramref name="control"/> goes: a knob anywhere within the amount, and a
+    /// switch flipped with the amount as its chance, so an amount of 1 always flips it.
+    /// </summary>
+    public static float Next(PatchControl control, double amount, Random random) =>
+        control.Kind == ControlKind.Knob ? Next(control.Value, amount, random)
+        : random.NextDouble() < amount ? 1f - control.Value
+        : control.Value;
 }

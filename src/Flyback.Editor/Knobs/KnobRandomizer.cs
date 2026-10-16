@@ -119,13 +119,13 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
     public void Roll()
     {
         var controls = editor.History.Patch.Controls ?? [];
-        var free = controls.Where(control => !control.Held).ToList();
+        var free = controls.Where(control => !control.Held && control.Kind != ControlKind.Button).ToList();
 
         if (free.Count == 0)
         {
             report.Say(controls.Count == 0
                 ? "There are no knobs to randomize. Add one with + on the knob panel."
-                : "Every knob is held, so randomizing has nothing to move.");
+                : "Every knob is held or a button, so randomizing has nothing to move.");
             return;
         }
 
@@ -133,7 +133,7 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
         if (before.Count > Remembered) before.RemoveAt(0);
 
         usage.Count(Used.Randomized);
-        Glide(free.ToDictionary(control => control.Id, control => (control.Value, KnobRoll.Next(control.Value, Wanted.Amount, Random))));
+        Glide(free.ToDictionary(control => control.Id, control => (control.Value, KnobRoll.Next(control, Wanted.Amount, Random))));
         Show();
     }
 

@@ -616,6 +616,18 @@ Output's knobs are never in a call, so they follow one by a statement,
 it hears the controller on any channel. `held`, a bare word, keeps the knob
 where it is when the panel is randomized: `panel level = 0.8, held`.
 
+`switch` or `button`, a bare word, plays the knob as one, resting at 0 for off
+or 1 for on. A switch flips at each press and stays; a button is on only while
+held. Either takes `note:` in place of `cc:` for a pad or a key, and a switch on
+a controller button that holds itself down, sending on and off at alternate
+presses, says `latching`. A socket follows one as it does a knob, reading the
+bottom of its range when off and the top when on:
+
+```
+panel drop = 0, switch, cc: 64, device: "midi:launchkey-49"
+panel hit  = 0, button, note: 36, channel: 10, device: "midi:launchkey-49"
+```
+
 A knob is a name like a `let`: bound once, never one of the words every patch
 already has, and never a module's name, since `cutoff(200..4000)` is written
 like a call. It is not a signal, so it is never piped, and a socket that follows
@@ -879,7 +891,7 @@ statement  = comment
            | selector "=" expr
            | selector "<-" pipeline
            | "off" ident
-           | "panel" ident "=" number { "," ( ident ":" ( number | string ) | "held" ) }
+           | "panel" ident "=" number { "," ( ident ":" ( number | string ) | "held" | "switch" | "button" | "latching" ) }
            | "keyboard" ( "piano" | "scale" "[" { pitch } "]" )
            | "requires" plugin { "," plugin }
            | "group" [ string ] "{" { statement } "}"

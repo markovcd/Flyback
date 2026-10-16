@@ -32,6 +32,7 @@ public class ContractSurfaceTests
         ["Flyback.Core.Graph.NodeGroup"] = "Patch.Groups, saved in the patch file.",
         ["Flyback.Core.Graph.GroupSocket"] = "NodeGroup.Exposed, saved in the patch file.",
         ["Flyback.Core.Graph.MidiBinding"] = "PatchControl.Midi, saved in the patch file.",
+        ["Flyback.Core.Graph.ControlKind"] = "PatchControl.Kind, saved in the patch file.",
         ["Flyback.Core.Graph.Connection"] = "Patch.Connections: a plugin that reads a patch rather than building one walks its wires.",
         ["Flyback.Core.Graph.ScaleMode"] = "KeyboardScale.Mode's type.",
         ["Flyback.Core.Graph.StepSpec"] = "The Steps extra's field.",

@@ -27,11 +27,27 @@ public sealed class PatchControl
         set => field = Named(value);
     } = "Knob";
 
-    /// <summary>Where it rests, 0 to 1: what a saved patch opens at and a fresh live block is seeded with.</summary>
+    /// <summary>
+    /// Where it rests, 0 to 1: what a saved patch opens at and a fresh live block is
+    /// seeded with. A switch or a button rests at 0 or 1.
+    /// </summary>
     public float Value
     {
         get;
-        set => field = float.IsFinite(value) ? Math.Clamp(value, 0f, 1f) : 0f;
+        set => field = Snapped(float.IsFinite(value) ? Math.Clamp(value, 0f, 1f) : 0f, Kind);
+    }
+
+    /// <summary>Whether it is turned as a knob, flipped as a switch or held as a button.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<ControlKind>))]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public ControlKind Kind
+    {
+        get;
+        set
+        {
+            field = value;
+            Value = Snapped(Value, value);
+        }
     }
 
     /// <summary>The hardware controller it follows, or null for a knob only turned on screen.</summary>
@@ -55,7 +71,10 @@ public sealed class PatchControl
     internal string Key => KeyOf(Id);
 
     /// <summary>A copy of this knob, with the same id.</summary>
-    internal PatchControl Clone() => new() { Id = Id, Name = Name, Value = Value, Midi = Midi, Word = Word, Held = Held };
+    internal PatchControl Clone() => new() { Id = Id, Name = Name, Kind = Kind, Value = Value, Midi = Midi, Word = Word, Held = Held };
+
+    /// <summary><paramref name="value"/> as <paramref name="kind"/> can rest: on or off for a switch or a button.</summary>
+    internal static float Snapped(float value, ControlKind kind) => kind == ControlKind.Knob ? value : value >= 0.5f ? 1f : 0f;
 
     private static string Named(string? name)
     {

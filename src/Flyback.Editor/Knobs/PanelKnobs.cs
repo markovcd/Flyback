@@ -10,6 +10,7 @@ using Flyback.Ui;
 using Flyback.Host;
 using Flyback.Editor.Midi;
 using Flyback.Editor.Hubs;
+using Flyback.Engine.Language;
 
 namespace Flyback.Editor.Knobs;
 
@@ -225,6 +226,21 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
             editor.History.Record();
         };
 
+        View.KindRequested += (id, kind) =>
+        {
+            if (editor.History.Patch.Control(id) is not { } control || control.Kind == kind) return;
+
+            control.Kind = kind;
+
+            // A knob is turned by a controller, never struck by a pad.
+            if (kind == ControlKind.Knob && control.Midi is { Note: true }) control.Midi = null;
+
+            hub.Set(id, control.Value);
+            editor.History.Record();
+            writeBack.PanelEdited();
+            report.Say($"'{control.Name}' is played as a {PanelDeclaration.Word(kind)}.");
+        };
+
         View.HoldRequested += (id, held) =>
         {
             if (editor.History.Patch.Control(id) is not { } control) return;
@@ -271,9 +287,9 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
         if (editor.History.Patch.Control(id) is not { } control) return;
 
         control.Value = value;
-        hub.Set(id, value);
-        View.Move(id, value, heard: false);
-        foreach (var stage in Stages) stage.Move(id, value);
+        hub.Set(id, control.Value);
+        View.Move(id, control.Value, heard: false);
+        foreach (var stage in Stages) stage.Move(id, control.Value);
         editor.InvalidateVisual();
         preview.Refresh();
     }
@@ -361,7 +377,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
         }
 
         var resting = pick.Port < node.InputValues.Length ? node.InputValues[pick.Port] : spec.Default;
-        var link = ControlLink.For(id, spec, resting);
+        var link = knob.Kind == ControlKind.Knob ? ControlLink.For(id, spec, resting) : ControlLink.Flipping(id, spec, resting);
 
         // A knob linked for the first time is turned to where the socket already is,
         // so linking changes nothing that is heard or seen.
@@ -407,11 +423,13 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
 
                 showing = knob.Id;
                 View.Learning = knob.Id;
-                report.Say(run.Count == 1
-                    ? $"Move a knob or fader on your controller for '{knob.Name}'. Esc to stop."
-                    : $"Move a knob or fader on your controller for '{knob.Name}' ({i + 1} of {run.Count}). Esc to stop.");
+                var ask = knob.Kind == ControlKind.Knob ? "Move a knob or fader" : "Press a button or a pad";
 
-                var moved = await hub.LearnAsync(cancel.Devices, cancel.Token, last);
+                report.Say(run.Count == 1
+                    ? $"{ask} on your controller for '{knob.Name}'. Esc to stop."
+                    : $"{ask} on your controller for '{knob.Name}' ({i + 1} of {run.Count}). Esc to stop.");
+
+                var moved = await hub.LearnAsync(cancel.Devices, cancel.Token, last, kind: knob.Kind);
 
                 if (moved is null || editor.History.Patch.Control(knob.Id) is not { } still) return;
 
@@ -424,9 +442,11 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
                 writeBack.PanelEdited();
                 last = moved;
 
+                var latching = binding.Latching ? " It holds itself down, so the switch follows it rather than flipping at each press." : string.Empty;
+
                 report.Say(instruments.For(source ?? default) is not null
-                    ? $"'{still.Name}' follows {instruments.Describe(binding, source)}."
-                    : $"'{still.Name}' follows {binding.Label} on {source?.Name ?? binding.Device}.");
+                    ? $"'{still.Name}' follows {instruments.Describe(binding, source)}.{latching}"
+                    : $"'{still.Name}' follows {binding.Label} on {source?.Name ?? binding.Device}.{latching}");
             }
         }
         finally

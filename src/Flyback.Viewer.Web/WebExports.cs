@@ -415,8 +415,8 @@ public static partial class WebExports
     public static double Measure(double seconds) => sound?.Measure(seconds) ?? 0;
 
     /// <summary>
-    /// The panel's knobs as JSON: each one's key, name, where it rests and where the open
-    /// half has it turned to, 0 to 1.
+    /// The panel's knobs as JSON: each one's key, name, kind (knob, switch or button),
+    /// where it rests and where the open half has it turned to, 0 to 1.
     /// </summary>
     [JSExport]
     public static string Knobs() => new JsonArray([
@@ -424,6 +424,7 @@ public static partial class WebExports
         {
             ["key"] = k.Key,
             ["name"] = k.Name,
+            ["kind"] = k.Kind.ToString().ToLowerInvariant(),
             ["rest"] = k.Value,
             ["value"] = sound?.Reading(k.Key) ?? picture?.Reading(k.Key) ?? k.Value,
         }),

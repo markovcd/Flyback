@@ -101,6 +101,9 @@ internal sealed class ControlsPanel : Border
 
     public event Action<Guid>? RemoveRequested;
 
+    /// <summary>A knob was asked to be played as a knob, a switch or a button.</summary>
+    public event Action<Guid, ControlKind>? KindRequested;
+
     /// <summary>A knob's sockets were asked to follow it in decades, or evenly.</summary>
     public event Action<Guid, bool>? LogarithmicRequested;
 
@@ -195,7 +198,7 @@ internal sealed class ControlsPanel : Border
     {
         shown = controls;
 
-        var now = string.Join('|', controls.Select(c => $"{c.Id:N}{c.Name}{c.Held}{(c.Midi is { } bound ? LabelOf(bound) : null)}"));
+        var now = string.Join('|', controls.Select(c => $"{c.Id:N}{c.Name}{c.Held}{c.Kind}{(c.Midi is { } bound ? LabelOf(bound) : null)}"));
 
         if (now != shape)
         {
@@ -207,7 +210,7 @@ internal sealed class ControlsPanel : Border
             if (cells.TryGetValue(control.Id, out var cell))
             {
                 cell.Show(control.Value, Reading?.Invoke(control.Id, control.Value));
-                ToolTip.SetTip(cell.Knob, Describe?.Invoke(control.Id));
+                ToolTip.SetTip(cell.Played, Describe?.Invoke(control.Id));
             }
     }
 
@@ -369,7 +372,15 @@ internal sealed class ControlsPanel : Border
 
             renaming = new TextBox { FontSize = Text.Small, IsVisible = false, MinHeight = 0, Padding = new Thickness(2, 0) };
 
-            Knob = new Knob { Name = "panel-knob", Value = control.Value, HorizontalAlignment = HorizontalAlignment.Center };
+            Played = control.Kind == ControlKind.Knob
+                ? new Knob { Name = "panel-knob", Value = control.Value, HorizontalAlignment = HorizontalAlignment.Center }
+                : new PanelSwitch
+                {
+                    Name = "panel-switch",
+                    Momentary = control.Kind == ControlKind.Button,
+                    Value = control.Value,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                };
 
             value = new TextBlock
             {
@@ -428,7 +439,7 @@ internal sealed class ControlsPanel : Border
                 Children =
                 {
                     new Panel { Children = { name, renaming } },
-                    Knob,
+                    Played,
                     value,
                     footer,
                 },
@@ -572,17 +583,20 @@ internal sealed class ControlsPanel : Border
             };
         }
 
-        public Knob Knob { get; }
+        /// <summary>What the knob is played with: a knob, or a switch or a button.</summary>
+        public Control Played { get; }
+
+        public ITurnable Knob => (ITurnable)Played;
 
         public void Show(float at, string? reading)
         {
             Knob.Value = at;
-            value.Text = reading ?? at.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+            value.Text = reading ?? StageKnobs.Position(control.Kind, at);
         }
 
         public void Footer(bool learning)
         {
-            midi.Text = learning ? "turn a knob…" : control.Midi is { } bound ? panel.LabelOf(bound) : string.Empty;
+            midi.Text = learning ? control.Kind == ControlKind.Knob ? "turn a knob…" : "press a button…" : control.Midi is { } bound ? panel.LabelOf(bound) : string.Empty;
             midi.Foreground = learning ? Heard : Text.Muted;
             ToolTip.SetTip(midi, !learning && control.Midi is { } explained ? panel.ExplainOf(explained) : null);
         }
@@ -606,7 +620,7 @@ internal sealed class ControlsPanel : Border
             flyout.Items.Add(Item("Link sockets…", () => panel.LinkRequested?.Invoke(control.Id)));
 
             flyout.Items.Add(control.Midi is null
-                ? Item("Learn MIDI controller", () => panel.LearnRequested?.Invoke(control.Id))
+                ? Item(control.Kind == ControlKind.Knob ? "Learn MIDI controller" : "Learn MIDI button or pad", () => panel.LearnRequested?.Invoke(control.Id))
                 : Item($"Forget {panel.ExplainOf(control.Midi)}", () => panel.ForgetRequested?.Invoke(control.Id)));
 
             if (control.Midi is not null)
@@ -641,9 +655,23 @@ internal sealed class ControlsPanel : Border
                 }).ToList();
             };
 
+            flyout.Items.Add(new MenuItem
+            {
+                Header = "Play as",
+                ItemsSource = new[] { (ControlKind.Knob, "Knob"), (ControlKind.Switch, "Switch"), (ControlKind.Button, "Button") }
+                    .Select(kind =>
+                    {
+                        var item = Item(kind.Item2, () => panel.KindRequested?.Invoke(control.Id, kind.Item1));
+                        item.ToggleType = MenuItemToggleType.Radio;
+                        item.IsChecked = control.Kind == kind.Item1;
+                        return item;
+                    })
+                    .ToList(),
+            });
+
             // Ticked as it opens: whether it is depends on the links, which change
             // without the cell being rebuilt.
-            var log = new MenuItem { Header = "Logarithmic", ToggleType = MenuItemToggleType.CheckBox };
+            var log = new MenuItem { Header = "Logarithmic", ToggleType = MenuItemToggleType.CheckBox, IsVisible = control.Kind == ControlKind.Knob };
             log.Click += (_, _) => panel.LogarithmicRequested?.Invoke(control.Id, panel.Logarithmic?.Invoke(control.Id) != true);
             flyout.Items.Add(log);
 
