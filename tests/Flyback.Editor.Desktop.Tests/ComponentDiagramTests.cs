@@ -7,7 +7,7 @@ using Xunit;
 namespace Flyback.Editor.Desktop.Tests;
 
 /// <summary>
-/// The editor's C3 view in <c>docs/diagrams/workspace.dsl</c> draws the projects the
+/// The editor's C3 view in <c>docs/diagrams/editor.md</c> draws the projects the
 /// editor is built from, so it is held to their project files: the same projects,
 /// and an arrow for each reference not already reached through another.
 /// </summary>
@@ -26,8 +26,8 @@ public sealed partial class ComponentDiagramTests
         var drawn = Drawn().Components.Values.ToHashSet();
         var built = References().Keys.ToHashSet();
 
-        built.Except(drawn).Order().ShouldBeEmpty($"{Program} is built from these, and workspace.dsl has no component named for them");
-        drawn.Except(built).Order().ShouldBeEmpty($"workspace.dsl has components named for these, and {Program} is not built from them");
+        built.Except(drawn).Order().ShouldBeEmpty($"{Program} is built from these, and editor.md has no component named for them");
+        drawn.Except(built).Order().ShouldBeEmpty($"editor.md has components named for these, and {Program} is not built from them");
     }
 
     [Fact]
@@ -40,8 +40,8 @@ public sealed partial class ComponentDiagramTests
             .ToHashSet();
         var needed = Needed(References()).ToHashSet();
 
-        needed.Except(drawn).Order().ShouldBeEmpty("these references reach nothing another does, and workspace.dsl draws no arrow for them");
-        drawn.Except(needed).Order().ShouldBeEmpty("workspace.dsl draws these arrows, and they are no reference, or one another reference already reaches");
+        needed.Except(drawn).Order().ShouldBeEmpty("these references reach nothing another does, and editor.md draws no arrow for them");
+        drawn.Except(needed).Order().ShouldBeEmpty("editor.md draws these arrows, and they are no reference, or one another reference already reaches");
     }
 
     /// <summary>Each project the program is built from, with the projects it references directly.</summary>
@@ -88,7 +88,7 @@ public sealed partial class ComponentDiagramTests
     /// <summary>The components named for projects, by identifier, and every arrow in the model.</summary>
     private static (Dictionary<string, string> Components, (string From, string To)[] Arrows) Drawn()
     {
-        var model = File.ReadAllText(Repository.Path("docs", "diagrams", "workspace.dsl"));
+        var model = File.ReadAllText(Repository.Path("docs", "diagrams", "editor.md"));
 
         var components = ProjectComponent().Matches(model)
             .ToDictionary(m => m.Groups["id"].Value, m => m.Groups["name"].Value);
@@ -99,9 +99,9 @@ public sealed partial class ComponentDiagramTests
         return (components, arrows);
     }
 
-    [GeneratedRegex("""^\s*(?<id>\w+)\s*=\s*component\s+"(?<name>Flyback\.[\w.]+)"\s""", RegexOptions.Multiline)]
+    [GeneratedRegex("""^\s*(?<id>\w+)\["<b>(?<name>Flyback\.[\w.]+)</b><br/>\[Component:""", RegexOptions.Multiline)]
     private static partial Regex ProjectComponent();
 
-    [GeneratedRegex("""^\s*(?<from>\w+)\s*->\s*(?<to>\w+)\s""", RegexOptions.Multiline)]
+    [GeneratedRegex("""^\s*(?<from>\w+)\s+--\s+"[^"]*"\s+-->\s+(?<to>\w+)\s*$""", RegexOptions.Multiline)]
     private static partial Regex Arrow();
 }

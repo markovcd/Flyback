@@ -36,7 +36,7 @@ programs and stores it is made of, are the C4 model in [`diagrams/`](diagrams/RE
 this section is how the projects inside those programs depend on each other.
 
 The editor's projects, and which references which, are the
-[editor's components](diagrams/editor.svg) (C3); `ComponentDiagramTests` holds that
+[editor's components](diagrams/editor.md) (C3); `ComponentDiagramTests` holds that
 drawing to the project files. References run one way, down in that drawing, and
 there is no abstraction layer between the layers: a shell calls the engine's
 concrete types ([0002](adr/0002-split-engine-from-shell.md)). The other programs
@@ -66,7 +66,7 @@ Flyback.Editor.Android .apk                Editor under Avalonia.Android; not bu
 | `Flyback.Editor.Web` | `PageApp`, `CanvasPreview`, `PageSound`, `PageExports`, the page | `Flyback.Editor` under Avalonia.Browser, with the page's own preview, sound, title, focus and close registered in its container; the picture on a canvas of its own, the sound in the web viewer's worker. Built into the preset site's pages by `worker/build-assets.sh`; also built with `Flyback.slnx`, which therefore needs the wasm-tools workload; the gate's image installs it ([0162](adr/0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)). |
 | `Flyback.Editor.Android` | `MainActivity`, `DeviceApp`, `DeviceFolders`, `DeviceRequest` | `Flyback.Editor` under Avalonia.Android, the module plugins and `Flyback.Plugins.AndroidIO` (`AudioTrack`, `AudioRecord` and `MidiManager`) linked in. Listed in `Flyback.slnx` with `<Build Project="false" />`, since it needs the android workload, a JDK and the Android SDK; built by path ([0184](adr/0184-the-editor-runs-on-android-with-its-plugins-linked-in.md)). |
 | `Flyback.Cli` | One file per command over `System.CommandLine` | The only place export lives ([0078](adr/0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md)); on the GPU where there is one, and exact to the bit with `--processor` ([0157](adr/0157-flyback-cli-render-draws-on-the-gpu.md)). |
-| `Flyback.Site` | `flyback-site`: the readers a submission is checked with, and the commands the preset site's workflows run | Never shipped; references the plugins the web pages link, to say what a browser lacks ([0175](adr/0175-the-preset-site-is-a-worker-and-github-reads-what-is-submitted.md)). The Worker is in `worker/`, tested with Vitest; the [site's containers](diagrams/site.svg) show how the two check a submission. |
+| `Flyback.Site` | `flyback-site`: the readers a submission is checked with, and the commands the preset site's workflows run | Never shipped; references the plugins the web pages link, to say what a browser lacks ([0175](adr/0175-the-preset-site-is-a-worker-and-github-reads-what-is-submitted.md)). The Worker is in `worker/`, tested with Vitest; the [site's containers](diagrams/site.md) show how the two check a submission. |
 | `Flyback.Site.Client` | `SiteAdmin`, `SiteAddress`, `SiteMedia`, `SiteAnswer` | The admin API's address, token, uploads and refusals, for `flyback-site` and `flyback-cli render-presets`; no packages. |
 
 A project's namespace is its assembly name: `Flyback.Ui`,
@@ -485,7 +485,7 @@ apiece beside them in `Flyback.Plugins/Assist`. The two session loops in `OpenAi
 ## 9. The shells
 
 What each shell talks to, and where it keeps its files, is drawn in the
-[desktop](diagrams/desktop.svg) and [web and Android](diagrams/web.svg) container
+[desktop](diagrams/desktop.md) and [web and Android](diagrams/web.md) container
 views. This section is how each is built inside.
 
 ### The editor

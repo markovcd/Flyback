@@ -1,28 +1,20 @@
 # Diagrams
 
-Flyback's [C4 model](https://c4model.com) is [`workspace.dsl`](workspace.dsl), in
-[Structurizr DSL](https://docs.structurizr.com/dsl) (ADR-0189). Each view in it is
-drawn to an SVG here, committed beside the model.
+Flyback's [C4 model](https://c4model.com) is drawn in Mermaid (ADR-0204), one view
+to a page, and GitHub draws each one inline. A view is a flowchart in C4's notation:
+people, software systems, containers, components and stores, each in its own color.
 
 | View | Level | Shows |
 |---|---|---|
-| [`context.svg`](context.svg) | C1, system context | Who uses Flyback, and what it talks to |
-| [`desktop.svg`](desktop.svg) | C2, containers | The editor, flyback-viewer and flyback-cli, and the folders they keep |
-| [`web.svg`](web.svg) | C2, containers | The web editor, the web viewer and the Android editor |
-| [`site.svg`](site.svg) | C2, containers | The preset site's Worker and stores, and how a submission is checked |
-| [`editor.svg`](editor.svg) | C3, components | The projects the editor is built from, and the plugin contract between them |
+| [`context.md`](context.md) | C1, system context | Who uses Flyback, and what it talks to |
+| [`desktop.md`](desktop.md) | C2, containers | The editor, flyback-viewer and flyback-cli, and the folders they keep |
+| [`web.md`](web.md) | C2, containers | The web editor, the web viewer and the Android editor |
+| [`site.md`](site.md) | C2, containers | The preset site's Worker and stores, and how a submission is checked |
+| [`editor.md`](editor.md) | C3, components | The projects the editor is built from, and the plugin contract between them |
 
-![C1: who uses Flyback and what it talks to](context.svg)
+The CI pipeline is [`pipeline.md`](pipeline.md), drawn the same way.
 
-The CI pipeline is not part of the model: [`pipeline.md`](pipeline.md) draws it in
-Mermaid, which GitHub renders inline.
-
-After changing the model, redraw and commit both:
-
-```sh
-./scripts/diagrams.sh
-```
-
-It needs only Docker, and fails on a model that does not validate. A component
-named for a project is that project: `ComponentDiagramTests` fails when the editor's
-components or the arrows between them disagree with the project files.
+An element that appears in several views is written in each; a rename is made in
+every page that names it. A component named for a project is that project:
+`ComponentDiagramTests` fails when the editor's components or the arrows between them
+disagree with the project files.

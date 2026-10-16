@@ -1,6 +1,6 @@
 # ADR-0189: The architecture is a C4 model in Structurizr DSL
 
-**Status:** Accepted · 2026-10-09 · *user-directed*
+**Status:** Superseded by [0204](0204-the-c4-views-are-mermaid-flowcharts.md) · 2026-10-09 · *user-directed*
 
 ## Context
 

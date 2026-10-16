@@ -7,7 +7,7 @@ namespace Flyback.Core.Tests.Architecture;
 
 /// <summary>
 /// The projects depend downward only: the model, then the engine, then what hosts
-/// need, then the shells (the layers in <c>docs/diagrams/workspace.dsl</c>).
+/// need, then the shells (the layers in <c>docs/diagrams/editor.md</c>).
 /// </summary>
 [TestCategory(TestCategory.Unmeasured)]
 public class LayeringTests
