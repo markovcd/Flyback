@@ -26,6 +26,7 @@ public sealed class ToolSteps : IDisposable
     private int code;
     private string complained = string.Empty;
     private List<JsonNode> answers = [];
+    private readonly StringWriter told = new();
 
     private ToolHistory History => new(Path("history"));
 
@@ -80,6 +81,26 @@ public sealed class ToolSteps : IDisposable
 
         answers = [.. output.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(line => JsonNode.Parse(line)!)];
     }
+
+    [When("a coding assistant says {string} over flyback-cli mcp")]
+    public async Task WhenSays(string text)
+    {
+        patch = "said.fbk";
+
+        var request = new JsonObject
+        {
+            ["jsonrpc"] = "2.0",
+            ["id"] = 1,
+            ["method"] = "tools/call",
+            ["params"] = new JsonObject { ["name"] = "say", ["arguments"] = new JsonObject { ["text"] = text } },
+        };
+
+        await new McpServer(Catalog, History, new FileInfo(Path(patch)), told, Path("settings.json"))
+            .Serve(new StringReader(request.ToJsonString()), TextWriter.Null, CancellationToken.None);
+    }
+
+    [Then("the person reads {string}")]
+    public void ThenReads(string text) => told.ToString().ShouldContain(text);
 
     [Then("every request it made was answered without an error")]
     public void ThenAnswered()

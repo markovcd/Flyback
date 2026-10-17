@@ -13,7 +13,8 @@ namespace Flyback.Cli.Common;
 /// </summary>
 /// <remarks>
 /// Only what a client needs to call tools: <c>initialize</c>, <c>ping</c>, <c>tools/list</c>
-/// and <c>tools/call</c>. Notifications are read and never answered.
+/// and <c>tools/call</c>. Notifications are read and never answered. <c>say</c> is the
+/// server's own tool, beside the workbench's.
 /// </remarks>
 internal sealed class McpServer(PluginCatalog plugins, ToolHistory history, FileInfo patch, TextWriter log, string? settingsPath = null)
 {
@@ -99,15 +100,49 @@ internal sealed class McpServer(PluginCatalog plugins, ToolHistory history, File
         };
     }
 
+    /// <summary>The one tool the server answers itself rather than the workbench: what the person is told.</summary>
+    internal const string Say = "say";
+
+    private static readonly JsonObject SayTool = new()
+    {
+        ["name"] = Say,
+        ["description"] = "Tells the person something: what you built, what you found, or a question. "
+            + "Say it here rather than only in your own reply, since the person may be watching Flyback and not you.",
+        ["inputSchema"] = new JsonObject
+        {
+            ["type"] = "object",
+            ["properties"] = new JsonObject
+            {
+                ["text"] = new JsonObject { ["type"] = "string", ["description"] = "What to say, in a sentence or a short paragraph." },
+            },
+            ["required"] = new JsonArray("text"),
+        },
+    };
+
     private JsonObject List() => new()
     {
-        ["tools"] = new JsonArray([.. blank.Value.Tools.Select(tool => (JsonNode)new JsonObject
-        {
-            ["name"] = tool.Name,
-            ["description"] = tool.Description,
-            ["inputSchema"] = ToolCommand.Schema(tool),
-        })]),
+        ["tools"] = new JsonArray([
+            .. blank.Value.Tools.Select(tool => (JsonNode)new JsonObject
+            {
+                ["name"] = tool.Name,
+                ["description"] = tool.Description,
+                ["inputSchema"] = ToolCommand.Schema(tool),
+            }),
+            SayTool.DeepClone(),
+        ]),
     };
+
+    /// <summary>What <c>say</c> was handed, written where the person reads it: standard error, headless.</summary>
+    private async Task<JsonObject> Said(JsonNode id, JsonObject? arguments)
+    {
+        if ((arguments?["text"] as JsonValue)?.TryGetValue(out string? text) != true || string.IsNullOrWhiteSpace(text))
+            return Result(id, Content([Text("'text' is required: what to tell the person.")], error: true));
+
+        await log.WriteLineAsync(text.Trim()).ConfigureAwait(false);
+        await log.FlushAsync().ConfigureAwait(false);
+
+        return Result(id, Content([Text("said.")], error: false));
+    }
 
     private async Task<JsonObject> Call(JsonNode id, JsonObject? parameters, CancellationToken cancel)
     {
@@ -116,6 +151,8 @@ internal sealed class McpServer(PluginCatalog plugins, ToolHistory history, File
 
         if (parameters!["arguments"] is not null and not JsonObject)
             return Error(id, InvalidParams, "a tool's arguments are a JSON object.");
+
+        if (tool == Say) return await Said(id, parameters["arguments"] as JsonObject).ConfigureAwait(false);
 
         using var arguments = JsonDocument.Parse(parameters["arguments"]?.ToJsonString() ?? "{}");
         var said = new StringWriter();

@@ -30,3 +30,7 @@ Feature: A coding assistant somebody runs builds a patch with Flyback's own tool
     When a coding assistant builds rings moved across by a sine in "served.fbks" over flyback-cli mcp
     Then every request it made was answered without an error
     And "served.fbks" is rings moved across by a sine
+
+  Scenario: What a client says over MCP reaches the person
+    When a coding assistant says "Built a slow drone in A." over flyback-cli mcp
+    Then the person reads "Built a slow drone in A."

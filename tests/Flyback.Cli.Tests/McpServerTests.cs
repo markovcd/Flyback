@@ -82,6 +82,23 @@ public sealed class McpServerTests : IDisposable
     }
 
     [Fact]
+    public async Task Say_is_listed_and_writes_what_it_is_handed_where_the_person_reads_it()
+    {
+        var tools = (await Ask("tools/list"))["result"]!["tools"]!.AsArray();
+        tools.ShouldContain(tool => tool!["name"]!.GetValue<string>() == "say");
+
+        var result = await Call("say", new JsonObject { ["text"] = "Built a slow drone in A." });
+
+        result["isError"]!.GetValue<bool>().ShouldBeFalse();
+        log.ToString().ShouldContain("Built a slow drone in A.");
+        File.Exists(Path("p.fbk")).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Say_with_nothing_to_say_is_a_tool_error() =>
+        (await Call("say", []))["isError"]!.GetValue<bool>().ShouldBeTrue();
+
+    [Fact]
     public async Task A_refused_call_is_a_tool_error_saying_why()
     {
         var result = await Call("set_knobs", new JsonObject { ["handle"] = "nobody" });
