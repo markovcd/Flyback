@@ -28,6 +28,7 @@ Feature: A coding assistant somebody runs builds a patch with Flyback's own tool
 
   Scenario: A client that speaks MCP builds a patch, and the file holds it
     When a coding assistant builds rings moved across by a sine in "served.fbks" over flyback-cli mcp
+    And it asks what the patch holds, giving the call no arguments
     Then every request it made was answered without an error
     And "served.fbks" is rings moved across by a sine
 

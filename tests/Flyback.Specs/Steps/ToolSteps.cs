@@ -26,6 +26,7 @@ public sealed class ToolSteps : IDisposable
     private int code;
     private string complained = string.Empty;
     private List<JsonNode> answers = [];
+    private List<int> asked = [];
     private readonly StringWriter told = new();
 
     private ToolHistory History => new(Path("history"));
@@ -74,13 +75,12 @@ public sealed class ToolSteps : IDisposable
             """{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"connect","arguments":{"from":"lfo","to":"rings1","to_port":"x"}}}""",
         ];
 
-        var output = new StringWriter();
-
-        await new McpServer(Catalog, History, new FileInfo(Path(name)), TextWriter.Null, Path("settings.json"))
-            .Serve(new StringReader(string.Join('\n', lines)), output, CancellationToken.None);
-
-        answers = [.. output.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(line => JsonNode.Parse(line)!)];
+        await Serve(lines);
     }
+
+    [When("it asks what the patch holds, giving the call no arguments")]
+    public Task WhenDescribed() =>
+        Serve(["""{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"describe_patch"}}"""]);
 
     [When("a coding assistant says {string} over flyback-cli mcp")]
     public async Task WhenSays(string text)
@@ -105,7 +105,7 @@ public sealed class ToolSteps : IDisposable
     [Then("every request it made was answered without an error")]
     public void ThenAnswered()
     {
-        answers.Select(answer => answer["id"]!.GetValue<int>()).ShouldBe([1, 2, 3, 4, 5]);
+        answers.Select(answer => answer["id"]!.GetValue<int>()).ShouldBe(asked);
         foreach (var answer in answers)
         {
             answer["error"].ShouldBeNull(answer.ToJsonString());
@@ -165,6 +165,18 @@ public sealed class ToolSteps : IDisposable
     {
         code.ShouldBe(Exit.Problems);
         complained.ShouldContain($"there is no module called '{handle}'");
+    }
+
+    /// <summary>Hands <paramref name="lines"/> to a server on the scenario's patch, as a client's session would.</summary>
+    private async Task Serve(string[] lines)
+    {
+        var output = new StringWriter();
+
+        await new McpServer(Catalog, History, new FileInfo(Path(patch)), TextWriter.Null, Path("settings.json"))
+            .Serve(new StringReader(string.Join('\n', lines)), output, CancellationToken.None);
+
+        asked.AddRange(lines.Select(line => JsonNode.Parse(line)!["id"]).OfType<JsonNode>().Select(id => id.GetValue<int>()));
+        answers.AddRange(output.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(line => JsonNode.Parse(line)!));
     }
 
     private async Task Call(string tool, string arguments, bool expectOk = true)

@@ -145,6 +145,29 @@ public sealed class McpServerTests : IDisposable
         JsonNode.Parse(lines[1])!["id"]!.GetValue<string>().ShouldBe("two");
     }
 
+    [Fact]
+    public async Task A_blank_line_between_messages_is_not_answered()
+    {
+        var output = new StringWriter();
+
+        await server.Serve(new StringReader("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\n\n  \n{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"ping\"}\n"), output, CancellationToken.None);
+
+        var answers = output.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(line => JsonNode.Parse(line)!).ToList();
+
+        answers.Select(answer => answer["id"]!.GetValue<int>()).ShouldBe([1, 2]);
+    }
+
+    [Fact]
+    public async Task A_patch_file_that_cannot_be_read_is_a_tool_error_saying_why()
+    {
+        File.WriteAllText(Path("p.fbk"), "not a patch");
+
+        var result = await Call("describe_patch", []);
+
+        result["isError"]!.GetValue<bool>().ShouldBeTrue(result.ToJsonString());
+        result["content"]![0]!["text"]!.GetValue<string>().ShouldContain("p.fbk");
+    }
+
     private async Task<JsonObject> Call(string tool, JsonObject arguments) =>
         (JsonObject)(await Ask("tools/call", new JsonObject { ["name"] = tool, ["arguments"] = arguments }))["result"]!;
 
