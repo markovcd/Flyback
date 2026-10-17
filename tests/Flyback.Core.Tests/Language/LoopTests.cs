@@ -94,6 +94,37 @@ public class LoopTests
             .Single(n => n.TypeId == "osc.sine").InputValues[1].ShouldBe(111f);
 
     [Fact]
+    public void Taking_a_loop_of_tuples_apart_gives_a_list_for_each_part() =>
+        SameInstrument(Built("""
+            let (tones, levels) = for (pitch, rate) in [(A2, 0.1), (E3, 0.2)] {
+              let level = sine(freq: rate, amp: 0.5, bias: 0.5)
+              (sine(freq: note(pitch)) * level, level)
+            }
+
+            sum(tones) |> out.left
+            hsv(hue: 0.3, value: sum(levels)) |> out.color
+            """), Built("""
+            let level_a = sine(freq: 0.1, amp: 0.5, bias: 0.5)
+            let level_b = sine(freq: 0.2, amp: 0.5, bias: 0.5)
+
+            sine(freq: note(A2)) * level_a + sine(freq: note(E3)) * level_b |> out.left
+            hsv(hue: 0.3, value: level_a + level_b) |> out.color
+            """));
+
+    /// <summary>Three tuples of three is the one case either reading fits, and the lists win.</summary>
+    [Fact]
+    public void As_many_tuples_as_names_are_still_taken_apart_by_part() =>
+        Built("""
+            let (lows, mids, highs) = for k in 1..3 { (k, k * 10, k * 100) }
+
+            sine(freq: sum(highs)) |> out.left
+            """).Nodes.Single(n => n.TypeId == "osc.sine").InputValues[1].ShouldBe(600f);
+
+    [Fact]
+    public void A_loop_of_tuples_with_more_parts_than_names_is_refused() =>
+        Refused("let (a, b) = for k in 1..3 { (k, k, k) }").Code.ShouldBe(IssueCode.TupleMismatch);
+
+    [Fact]
     public void A_count_takes_in_both_ends() =>
         Frequencies(Built("sum(for k in 2..4 { sine(freq: k * 100) }) |> out.left")).ShouldBe([200f, 300f, 400f]);
 

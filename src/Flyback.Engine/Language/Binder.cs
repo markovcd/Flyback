@@ -379,6 +379,8 @@ public sealed class Binder
             return;
         }
 
+        if (Unzipped(several, statement.Names.Count) is { } lists) several = lists;
+
         if (several.Items.Count != statement.Names.Count)
         {
             issues.Complain(IssueCode.TupleMismatch, statement.Line, statement.Column,
@@ -391,6 +393,18 @@ public sealed class Binder
             Label(several.Items[i], statement.Names[i]);
             scope.Set(statement.Names[i], several.Items[i], statement.Line);
         }
+    }
+
+    /// <summary>
+    /// A list whose items are all tuples of <paramref name="parts"/>, as one list per part,
+    /// or null for anything else.
+    /// </summary>
+    private static Several? Unzipped(Several list, int parts)
+    {
+        if (!list.Listed || !list.Items.All(item => item is Several { Listed: false } tuple && tuple.Items.Count == parts)) return null;
+
+        return new Several([.. Enumerable.Range(0, parts)
+            .Select(part => new Several([.. list.Items.Select(item => ((Several)item).Items[part])]) { Listed = true })]);
     }
 
     private void Turn(KnobStatement statement, Scope scope)
@@ -627,7 +641,7 @@ public sealed class Binder
         SelectExpr select => Select(select, scope, piped: null),
         PipeExpr pipe => Pipe(pipe, scope),
         RangeExpr range => Refuse(IssueCode.RangeOutsideArgument, range.Line, range.Column, "a range only means something as an argument, or as what a loop counts over."),
-        ListExpr list => Items(list.Items, scope),
+        ListExpr list => Items(list.Items, scope) is { } items ? items with { Listed = true } : null,
         TupleExpr tuple => Items(tuple.Items, scope),
         ForExpr loop => Loop(loop, scope),
         _ => null,
@@ -1245,7 +1259,7 @@ public sealed class Binder
                 if (issues.Count > said) return null;
             }
 
-            return new Several(results);
+            return new Several(results) { Listed = true };
         }
         finally
         {

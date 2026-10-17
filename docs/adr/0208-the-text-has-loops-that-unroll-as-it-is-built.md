@@ -35,6 +35,11 @@ sum(spoken) |> out.left
   both ends. The body is a def's: statements, then what each pass is worth.
   Names bound inside a pass are that pass's; the names outside are in sight. A
   `for` with nothing at the end of its body is worth nothing and only places.
+- **`let (a, b) = ` a list of pairs** is two lists, one of each pair's first part
+  and one of its second, so a pass can hand back a voice and its picture and
+  each be summed apart. Taking a list apart by part wins even where it has as
+  many items as names; a def's or a bracket's tuple is still taken apart item
+  by item.
 - **`...list`** spreads a list into a call's free sockets in order, a tuple's
   parts each taking one: `mixer(...for v in voices { (v, 0.5) })`.
 - **`sum(list)`** adds the items up, as `a + b + c` would, one Expression for the

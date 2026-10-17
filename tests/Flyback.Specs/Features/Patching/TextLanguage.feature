@@ -164,3 +164,15 @@ Feature: A patch can be written as text
     And the speakers play 0.75
     When the patch is written out as text and read back
     Then the speakers play 0.75
+
+  Scenario: A loop whose passes hand back pairs comes apart into two lists
+    Given the text:
+      """
+      let (loud, quiet) = for level in [0.25, 0.5] {
+        (value(1) * level, value(1) * level * 0.1)
+      }
+      sum(loud) |> out.left
+      out.volume = 1
+      """
+    Then it reads without complaint
+    And the speakers play 0.75

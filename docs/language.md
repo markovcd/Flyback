@@ -736,6 +736,9 @@ sum(voices) |> out.left
 - **The body is a def's**: statements, then what a pass is worth, which may be a
   tuple. Names bound inside a pass are that pass's alone, and the names outside
   are in sight. A body with nothing at the end only places modules.
+- **`let (a, b) = for ...`** takes a loop of tuples apart into a list per part:
+  `let (tones, levels) = for v in voices { (tone(v), level(v)) }`, then
+  `sum(tones)`. A written list of tuples comes apart the same way.
 - **`...list`** spreads a list over a call's free sockets in order, each tuple's
   parts a socket apiece: `mixer(...for v in voices { (v, 0.5) })` fills `in_1`,
   `level_1`, `in_2`, `level_2` and on.
