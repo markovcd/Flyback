@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Flyback.Cli.Commands;
+using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Plugins.Hosting;
 
@@ -9,14 +10,14 @@ namespace Flyback.Cli.Common;
 
 /// <summary>
 /// The workbench's tools served over MCP on standard input and output, one JSON-RPC
-/// message a line, each call run on a patch file as <c>flyback-cli tool</c> runs it (ADR-0202).
+/// message a line, each call run on <paramref name="target"/>: a patch file or the open editor (ADR-0202).
 /// </summary>
 /// <remarks>
 /// Only what a client needs to call tools: <c>initialize</c>, <c>ping</c>, <c>tools/list</c>
 /// and <c>tools/call</c>. Notifications are read and never answered. <c>say</c> is the
 /// server's own tool, beside the workbench's.
 /// </remarks>
-internal sealed class McpServer(PluginCatalog plugins, ToolHistory history, FileInfo patch, TextWriter log, string? settingsPath = null)
+internal sealed class McpServer(PluginCatalog plugins, IToolTarget target, string? settingsPath = null)
 {
     /// <summary>The protocol versions this answers in, newest first.</summary>
     internal static readonly string[] Versions = ["2025-06-18", "2025-03-26", "2024-11-05"];
@@ -85,6 +86,9 @@ internal sealed class McpServer(PluginCatalog plugins, ToolHistory history, File
     {
         var asked = (parameters?["protocolVersion"] as JsonValue)?.TryGetValue(out string? version) == true ? version : null;
 
+        if ((parameters?["clientInfo"]?["name"] as JsonValue)?.TryGetValue(out string? client) == true && !string.IsNullOrWhiteSpace(client))
+            target.Greet(client);
+
         return new JsonObject
         {
             ["protocolVersion"] = Versions.Contains(asked) ? asked : Versions[0],
@@ -95,8 +99,7 @@ internal sealed class McpServer(PluginCatalog plugins, ToolHistory history, File
                 ["title"] = GlobalConstants.ApplicationName,
                 ["version"] = typeof(McpServer).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "0",
             },
-            ["instructions"] = $"Every tool edits or reads the patch {patch.FullName}, which is saved after each edit. "
-                + "Undo with `flyback-cli tool undo` on that file.\n\n" + blank.Value.Briefing,
+            ["instructions"] = target.Describes + "\n\n" + blank.Value.Briefing,
         };
     }
 
@@ -132,16 +135,12 @@ internal sealed class McpServer(PluginCatalog plugins, ToolHistory history, File
         ]),
     };
 
-    /// <summary>What <c>say</c> was handed, written where the person reads it: standard error, headless.</summary>
-    private async Task<JsonObject> Said(JsonNode id, JsonObject? arguments)
+    private async Task<JsonObject> Said(JsonNode id, JsonObject? arguments, CancellationToken cancel)
     {
         if ((arguments?["text"] as JsonValue)?.TryGetValue(out string? text) != true || string.IsNullOrWhiteSpace(text))
             return Result(id, Content([Text("'text' is required: what to tell the person.")], error: true));
 
-        await log.WriteLineAsync(text.Trim()).ConfigureAwait(false);
-        await log.FlushAsync().ConfigureAwait(false);
-
-        return Result(id, Content([Text("said.")], error: false));
+        return Answered(id, await target.Say(text.Trim(), cancel).ConfigureAwait(false));
     }
 
     private async Task<JsonObject> Call(JsonNode id, JsonObject? parameters, CancellationToken cancel)
@@ -152,25 +151,21 @@ internal sealed class McpServer(PluginCatalog plugins, ToolHistory history, File
         if (parameters!["arguments"] is not null and not JsonObject)
             return Error(id, InvalidParams, "a tool's arguments are a JSON object.");
 
-        if (tool == Say) return await Said(id, parameters["arguments"] as JsonObject).ConfigureAwait(false);
+        if (tool == Say) return await Said(id, parameters["arguments"] as JsonObject, cancel).ConfigureAwait(false);
 
         using var arguments = JsonDocument.Parse(parameters["arguments"]?.ToJsonString() ?? "{}");
-        var said = new StringWriter();
 
-        var ran = await ToolCommand
-            .Dispatch(plugins, history, patch, tool, arguments.RootElement, said, cancel, settingsPath)
-            .ConfigureAwait(false);
+        return Answered(id, await target.Call(tool, arguments.RootElement, cancel).ConfigureAwait(false));
+    }
 
-        if (ran is null) return Result(id, Content([Text(said.ToString().Trim())], error: true));
+    private static JsonObject Answered(JsonNode id, ToolAnswered answered)
+    {
+        List<JsonNode> content = [Text(answered.Text)];
 
-        if (said.ToString() is { Length: > 0 } aside) await log.WriteAsync(aside).ConfigureAwait(false);
-
-        List<JsonNode> content = [Text(ran.Outcome.Text)];
-
-        if (ran.Outcome.Png is { } png)
+        if (answered.Png is { } png)
             content.Add(new JsonObject { ["type"] = "image", ["data"] = Convert.ToBase64String(png), ["mimeType"] = "image/png" });
 
-        return Result(id, Content(content, error: !ran.Outcome.Ok));
+        return Result(id, Content(content, error: !answered.Ok));
     }
 
     private static JsonObject Text(string text) => new() { ["type"] = "text", ["text"] = text };

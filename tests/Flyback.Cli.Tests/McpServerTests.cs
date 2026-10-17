@@ -20,7 +20,7 @@ public sealed class McpServerTests : IDisposable
     private readonly McpServer server;
 
     public McpServerTests() =>
-        server = new McpServer(Catalog, new ToolHistory(Path("history")), new FileInfo(Path("p.fbk")), log, Path("settings.json"));
+        server = new McpServer(Catalog, new FileTarget(Catalog, new ToolHistory(Path("history")), new FileInfo(Path("p.fbk")), log, Path("settings.json")), Path("settings.json"));
 
     public void Dispose() => folder.Delete(recursive: true);
 

@@ -1489,6 +1489,19 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
 
     private T Service<T>() where T : notnull => provider!.GetRequiredService<T>();
 
+    /// <summary>Opens the channel a program drives the editor over, on <paramref name="name"/>, as the setting does.</summary>
+    internal void LetAProgramDrive(string name) => Run(() =>
+    {
+        Window();
+        Service<DrivenEditor>().Open(name);
+    });
+
+    /// <summary>
+    /// Runs <paramref name="act"/> with the UI thread turning, as the editor's would while a
+    /// program elsewhere waits on it: a call over the channel is answered there.
+    /// </summary>
+    internal T Turning<T>(Func<Task<T>> act) => Run(act);
+
     /// <summary>
     /// The caption on the module panel reading <paramref name="caption"/>, and the whole
     /// row it heads: everything up to the panel itself.

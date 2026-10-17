@@ -95,7 +95,7 @@ public sealed class ToolSteps : IDisposable
             ["params"] = new JsonObject { ["name"] = "say", ["arguments"] = new JsonObject { ["text"] = text } },
         };
 
-        await new McpServer(Catalog, History, new FileInfo(Path(patch)), told, Path("settings.json"))
+        await new McpServer(Catalog, new FileTarget(Catalog, History, new FileInfo(Path(patch)), told, Path("settings.json")), Path("settings.json"))
             .Serve(new StringReader(request.ToJsonString()), TextWriter.Null, CancellationToken.None);
     }
 
@@ -172,7 +172,7 @@ public sealed class ToolSteps : IDisposable
     {
         var output = new StringWriter();
 
-        await new McpServer(Catalog, History, new FileInfo(Path(patch)), TextWriter.Null, Path("settings.json"))
+        await new McpServer(Catalog, new FileTarget(Catalog, History, new FileInfo(Path(patch)), TextWriter.Null, Path("settings.json")), Path("settings.json"))
             .Serve(new StringReader(string.Join('\n', lines)), output, CancellationToken.None);
 
         asked.AddRange(lines.Select(line => JsonNode.Parse(line)!["id"]).OfType<JsonNode>().Select(id => id.GetValue<int>()));

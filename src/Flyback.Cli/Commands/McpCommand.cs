@@ -1,21 +1,29 @@
 using System.CommandLine;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
+using Flyback.Host.Driving;
 using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
 
 /// <summary>
 /// Serves the assistant's tools over MCP to a coding assistant the person runs, editing a
-/// patch file (ADR-0202). Hidden from help until the editor can be driven the same way.
+/// patch file or the patch open in the editor (ADR-0202). Hidden from help until the column shows it.
 /// </summary>
 internal static class McpCommand
 {
     public static Command Build(PluginRegistry plugins)
     {
-        var patch = new Argument<FileInfo>("patch")
+        var patch = new Argument<FileInfo?>("patch")
         {
-            Description = $"The patch the tools edit, saved after each edit: {AskedPatch.Formats}. One that does not exist yet starts empty.",
+            Description = $"The patch the tools edit, saved after each edit: {AskedPatch.Formats}. "
+                + "Left out, they edit the patch open in the editor.",
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+
+        var editor = new Option<bool>("--editor")
+        {
+            Description = "Edit the patch open in the editor, which has to let programs on this computer edit it.",
         };
 
         var command = new Command(
@@ -23,7 +31,7 @@ internal static class McpCommand
             "Serve the assistant's tools over MCP on standard input and output, for Claude Code, Codex or "
             + "another client you run, editing the patch file as `tool` does.")
         {
-            patch,
+            patch, editor,
         };
 
         command.Hidden = true;
@@ -32,7 +40,20 @@ internal static class McpCommand
         {
             plugins.Ready();
 
-            await new McpServer(plugins.Catalog, new ToolHistory(), result.GetValue(patch)!, result.InvocationConfiguration.Error)
+            var error = result.InvocationConfiguration.Error;
+            var file = result.GetValue(patch);
+
+            if (file is not null && result.GetValue(editor))
+            {
+                error.WriteLine(AskedPatch.Complaint("mcp edits a patch file or the editor's patch, not both: leave out the file or --editor."));
+                return Exit.Failed;
+            }
+
+            await using var open = file is null ? new EditorTarget(EditorChannel.Name) : null;
+
+            IToolTarget target = open ?? (IToolTarget)new FileTarget(plugins.Catalog, new ToolHistory(), file!, error);
+
+            await new McpServer(plugins.Catalog, target)
                 .Serve(Console.In, result.InvocationConfiguration.Output, cancel)
                 .ConfigureAwait(false);
 

@@ -141,6 +141,7 @@ internal static class EditorServices
 
         services.AddSingleton<IAssistantEditor, AssistantEditor>();
         services.AddPart<AssistantPanel>();
+        services.AddPart<DrivenEditor>();
         services.AddPart<TutorialPanel>();
         services.AddSingleton<AssistantSettingsPage>();
         services.AddPart<ChosenAssistant>();
