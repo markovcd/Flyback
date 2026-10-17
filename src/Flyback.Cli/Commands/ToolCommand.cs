@@ -161,7 +161,7 @@ internal static class ToolCommand
     }
 
     /// <summary>The workbench a call runs on, built over <paramref name="over"/>.</summary>
-    private static PatchWorkbench Bench(PluginCatalog plugins, Patch over, string? settingsPath, AskedPatch? about = null) => new(
+    internal static PatchWorkbench Bench(PluginCatalog plugins, Patch over, string? settingsPath, AskedPatch? about = null) => new(
         plugins.Modules,
         over,
         vision: true,
@@ -214,10 +214,7 @@ internal static class ToolCommand
         return Exit.Ok;
     }
 
-    /// <summary>
-    /// Runs <paramref name="tool"/> on <paramref name="file"/>, writes the patch back where
-    /// the call changed it, and keeps the edit in <paramref name="history"/>.
-    /// </summary>
+    /// <summary>Runs one call from the command line, and says what it did.</summary>
     public static async Task<int> Call(
         PluginCatalog plugins,
         ToolHistory history,
@@ -250,7 +247,57 @@ internal static class ToolCommand
             return Exit.Failed;
         }
 
-        if (AskCommand.Open(plugins, file, null, null, error) is not { } about) return Exit.Failed;
+        if (await Dispatch(plugins, history, file, tool, given, error, cancel, settingsPath).ConfigureAwait(false) is not { } ran)
+            return Exit.Failed;
+
+        var outcome = ran.Outcome;
+        var pictureAt = outcome.Png is { } png ? Media(png, picture, file, "png", error) : null;
+        var soundAt = outcome.Wav is { } wav ? Media(wav, sound, file, "wav", error) : null;
+
+        if (json)
+        {
+            output.WriteLine(new JsonObject
+            {
+                ["tool"] = tool,
+                ["ok"] = outcome.Ok,
+                ["text"] = outcome.Text,
+                ["wrote"] = ran.Wrote,
+                ["step"] = ran.Step,
+                ["picture"] = pictureAt,
+                ["sound"] = soundAt,
+            }.ToJsonString(Line));
+        }
+        else
+        {
+            (outcome.Ok ? output : error).WriteLine(outcome.Ok ? outcome.Text : AskedPatch.Complaint($"{tool} refused: {outcome.Text}"));
+
+            if (pictureAt is not null) output.WriteLine($"The picture is in {pictureAt}.");
+            if (soundAt is not null) output.WriteLine($"The sound is in {soundAt}.");
+            if (ran.Wrote) output.WriteLine(string.Create(CultureInfo.InvariantCulture, $"Wrote {file.Name}: edit {ran.Step}, which tool undo takes back."));
+        }
+
+        return outcome.Ok ? Exit.Ok : Exit.Problems;
+    }
+
+    /// <summary>
+    /// Runs <paramref name="tool"/> on <paramref name="file"/>, writes the patch back where
+    /// the call changed it, and keeps the edit in <paramref name="history"/>; or null, having
+    /// said on <paramref name="error"/> why the patch could not be read or written.
+    /// </summary>
+    internal static async Task<ToolRan?> Dispatch(
+        PluginCatalog plugins,
+        ToolHistory history,
+        FileInfo file,
+        string tool,
+        JsonElement given,
+        TextWriter error,
+        CancellationToken cancel,
+        string? settingsPath = null)
+    {
+        // A server holds one FileInfo across calls, and the first one may have made the file.
+        file.Refresh();
+
+        if (AskCommand.Open(plugins, file, null, null, error) is not { } about) return null;
 
         var modules = plugins.Modules;
         var current = file.Exists ? File.ReadAllBytes(file.FullName) : null;
@@ -265,66 +312,36 @@ internal static class ToolCommand
 
         var outcome = await bench.InvokeAsync(tool, given, cancel).ConfigureAwait(false);
 
-        var pictureAt = outcome.Png is { } png ? Media(png, picture, file, "png", error) : null;
-        var soundAt = outcome.Wav is { } wav ? Media(wav, sound, file, "wav", error) : null;
+        if (!outcome.Ok || bench.Edits == 0) return new ToolRan(outcome, false, log.At);
 
-        var wrote = false;
+        var patch = bench.Snapshot();
+        var state = bench.Save();
+        byte[] bytes;
 
-        if (outcome.Ok && bench.Edits > 0)
+        try
         {
-            var patch = bench.Snapshot();
-            var state = bench.Save();
-            byte[] bytes;
-
-            try
-            {
-                bytes = Bytes(patch, about, modules);
-                File.WriteAllBytes(file.FullName, bytes);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
-            {
-                error.WriteLine(AskedPatch.Complaint($"{file.Name}: {ex.Message}"));
-                return Exit.Failed;
-            }
-
-            if (kept is not null && !ReferenceEquals(kept, log))
-                error.WriteLine($"{file.Name} changed since the last tool call, so its undo history starts again here.");
-
-            log = log.Then(new ToolStep(
-                tool,
-                JsonSerializer.Serialize(given, Line),
-                bytes,
-                PatchIO.ToJson(patch, modules),
-                new Dictionary<string, Guid>(state.Handles, StringComparer.OrdinalIgnoreCase)));
-
-            if (history.Keep(log) is { } problem) error.WriteLine(AskedPatch.Complaint(problem));
-
-            wrote = true;
+            bytes = Bytes(patch, about, modules);
+            File.WriteAllBytes(file.FullName, bytes);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            error.WriteLine(AskedPatch.Complaint($"{file.Name}: {ex.Message}"));
+            return null;
         }
 
-        if (json)
-        {
-            output.WriteLine(new JsonObject
-            {
-                ["tool"] = tool,
-                ["ok"] = outcome.Ok,
-                ["text"] = outcome.Text,
-                ["wrote"] = wrote,
-                ["step"] = log.At,
-                ["picture"] = pictureAt,
-                ["sound"] = soundAt,
-            }.ToJsonString(Line));
-        }
-        else
-        {
-            (outcome.Ok ? output : error).WriteLine(outcome.Ok ? outcome.Text : AskedPatch.Complaint($"{tool} refused: {outcome.Text}"));
+        if (kept is not null && !ReferenceEquals(kept, log))
+            error.WriteLine($"{file.Name} changed since the last tool call, so its undo history starts again here.");
 
-            if (pictureAt is not null) output.WriteLine($"The picture is in {pictureAt}.");
-            if (soundAt is not null) output.WriteLine($"The sound is in {soundAt}.");
-            if (wrote) output.WriteLine(string.Create(CultureInfo.InvariantCulture, $"Wrote {file.Name}: edit {log.At}, which tool undo takes back."));
-        }
+        log = log.Then(new ToolStep(
+            tool,
+            JsonSerializer.Serialize(given, Line),
+            bytes,
+            PatchIO.ToJson(patch, modules),
+            new Dictionary<string, Guid>(state.Handles, StringComparer.OrdinalIgnoreCase)));
 
-        return outcome.Ok ? Exit.Ok : Exit.Problems;
+        if (history.Keep(log) is { } problem) error.WriteLine(AskedPatch.Complaint(problem));
+
+        return new ToolRan(outcome, true, log.At);
     }
 
     /// <summary>The patch as the file's extension says to write it.</summary>

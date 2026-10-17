@@ -3,6 +3,7 @@ Feature: A coding assistant somebody runs builds a patch with Flyback's own tool
   the tools Flyback's assistant has, one at a time on a patch file. flyback-cli tool
   runs one and writes the patch back, flyback-cli tool history lists what the calls
   did, flyback-cli tool undo takes an edit back and flyback-cli tool redo makes it again.
+  flyback-cli mcp serves the same tools to a client that speaks MCP.
 
   Scenario: A patch built a call at a time reads back as what was built
     When a coding assistant writes a patch of rings into "built.fbks"
@@ -24,3 +25,8 @@ Feature: A coding assistant somebody runs builds a patch with Flyback's own tool
     Then the call is refused, saying there is no module called "nobody"
     And "built.fbks" is rings moved across by a sine
     And the history has 3 edits
+
+  Scenario: A client that speaks MCP builds a patch, and the file holds it
+    When a coding assistant builds rings moved across by a sine in "served.fbks" over flyback-cli mcp
+    Then every request it made was answered without an error
+    And "served.fbks" is rings moved across by a sine

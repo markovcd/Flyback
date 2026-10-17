@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Flyback.Cli.Commands;
 using Flyback.Cli.Common;
 using Flyback.Core.Graph;
@@ -24,6 +25,7 @@ public sealed class ToolSteps : IDisposable
     private string patch = string.Empty;
     private int code;
     private string complained = string.Empty;
+    private List<JsonNode> answers = [];
 
     private ToolHistory History => new(Path("history"));
 
@@ -54,6 +56,40 @@ public sealed class ToolSteps : IDisposable
         await WhenWritesRings(name);
         await WhenAddsSine("lfo");
         await WhenWires("lfo");
+    }
+
+    [When("a coding assistant builds rings moved across by a sine in {string} over flyback-cli mcp")]
+    public async Task WhenServed(string name)
+    {
+        patch = name;
+
+        string[] lines =
+        [
+            """{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"specs","version":"1"}}}""",
+            """{"jsonrpc":"2.0","method":"notifications/initialized"}""",
+            """{"jsonrpc":"2.0","id":2,"method":"tools/list"}""",
+            """{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"write_patch","arguments":{"source":"rings() |> out.color"}}}""",
+            """{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"add_module","arguments":{"type_id":"osc.sine","handle":"lfo"}}}""",
+            """{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"connect","arguments":{"from":"lfo","to":"rings1","to_port":"x"}}}""",
+        ];
+
+        var output = new StringWriter();
+
+        await new McpServer(Catalog, History, new FileInfo(Path(name)), TextWriter.Null, Path("settings.json"))
+            .Serve(new StringReader(string.Join('\n', lines)), output, CancellationToken.None);
+
+        answers = [.. output.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(line => JsonNode.Parse(line)!)];
+    }
+
+    [Then("every request it made was answered without an error")]
+    public void ThenAnswered()
+    {
+        answers.Select(answer => answer["id"]!.GetValue<int>()).ShouldBe([1, 2, 3, 4, 5]);
+        foreach (var answer in answers)
+        {
+            answer["error"].ShouldBeNull(answer.ToJsonString());
+            (answer["result"]!["isError"]?.GetValue<bool>() ?? false).ShouldBeFalse(answer.ToJsonString());
+        }
     }
 
     [When("flyback-cli tool undo is run on {string}")]
