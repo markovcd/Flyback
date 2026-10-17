@@ -98,6 +98,7 @@ internal static class Program
             DecideCommand.Build(plugins, json),
             MeasureCommand.Build(plugins, json),
             AskCommand.Build(plugins, json),
+            ToolCommand.Build(plugins, json),
             ViewerCommand.Build(),
             ShotCommand.Build(plugins),
             RenderPresetsCommand.Build(plugins),

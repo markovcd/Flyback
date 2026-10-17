@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `flyback-cli tool` runs the assistant's tools one call at a time, with undo, so your own Claude Code or Codex can build patches; `tool --skill` prints the skill that teaches it how.
 - A panel knob can be played as a switch or a button, on screen and from a controller's button or pad: `panel drop = 0, switch`.
 - A Plot in the Picture plugin draws a pitch function as a glowing curve across beats with a dot at now, and Plots chain through `under` for a song made of functions.
 - The sound is given five seconds after Play before falling behind lowers its oversampling, so the stutters of starting up no longer do.

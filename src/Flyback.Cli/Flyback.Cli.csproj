@@ -47,6 +47,11 @@
     <EditorPlugins>true</EditorPlugins>
   </PropertyGroup>
 
+  <!-- The SKILL.md the tool command prints. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Skill\SKILL.md" LogicalName="Flyback.Cli.SKILL.md" />
+  </ItemGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="Flyback.Cli.Tests" />
     <InternalsVisibleTo Include="Flyback.Specs" />
