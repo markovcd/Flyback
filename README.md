@@ -13,7 +13,7 @@ The [website](https://flybackmodular.app/) has screenshots and tutorials, and [d
 
 Flyback is mostly written by a large language model (LLM). A human directs the work, decides what ships and writes some of it by hand. That is how the project happens to be made, not a requirement on anyone who works on it.
 
-The project holds to the same standards any modern codebase would: a CI gate that restores, compiles and runs the whole test suite on every push and pull request, signed releases built from the same image the gate stops inside, architecture decisions recorded in `docs/adr/`, and a changelog per release. Nothing merges that the gate has not passed.
+The project holds to the same standards any modern codebase would: a CI gate that restores, compiles and runs the whole test suite on every push to `main`, signed releases built from the same image the gate stops inside, architecture decisions recorded in `docs/adr/`, and a changelog per release. A red `main` is fixed before anything else lands.
 
 Tokens are the one thing the project spends money on, and a donation goes on that budget. Flyback is strictly non-profit: nothing in it is sold, nothing is behind a payment, and nobody is paid out of it. The address is in About and in the site's footer.
 
@@ -100,7 +100,7 @@ To choose a specific set of runtimes:
 docker build --build-arg RIDS="win-x64 win-arm64 osx-arm64 osx-x64 linux-x64" --output artifacts .
 ```
 
-To restore, compile and run the whole test suite without publishing anything, which is what the Build workflow (`.github/workflows/ci.yml`) does on every push and pull request:
+To restore, compile and run the whole test suite without publishing anything, which is what the Build workflow (`.github/workflows/ci.yml`) does on every push:
 
 ```bash
 docker build --target gate .
