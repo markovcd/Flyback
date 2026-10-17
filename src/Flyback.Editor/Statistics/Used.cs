@@ -137,4 +137,7 @@ public enum Used
 
     /// <summary>The knob panel was randomized.</summary>
     Randomized,
+
+    /// <summary>The knobs of the selected modules were rolled.</summary>
+    RolledModule,
 }

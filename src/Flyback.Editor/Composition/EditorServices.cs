@@ -203,6 +203,7 @@ internal static class EditorServices
         services.AddPart<PanelKnobs>();
         services.AddPart<ScreenKeys>();
         services.AddPart<KnobRandomizer>();
+        services.AddPart<ModuleDie>();
         services.AddPart<Palette>();
         services.AddPart<Inspector>();
         services.AddSingleton<Renamer>();

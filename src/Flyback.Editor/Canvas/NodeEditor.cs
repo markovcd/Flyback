@@ -222,8 +222,9 @@ internal sealed class NodeEditor
                 Key.X when editable => Cut,
                 Key.V when editable => Paste,
 
-                // Duplicate leaves the clipboard alone, so what was copied earlier survives.
-                Key.D when editable => Edits.DuplicateSelection,
+                // Duplicate leaves the clipboard alone, so what was copied earlier survives;
+                // with Shift, D is the die, rolling the selection's knobs.
+                Key.D when editable => shift ? () => Reactions.Raise(new ModulesRollAsked()) : Edits.DuplicateSelection,
                 Key.A => Selection.SelectAll,
 
                 // Shift tells group from ungroup, and shut from open, the pairing undo and redo use.

@@ -481,6 +481,17 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
             Service<Editor.Knobs.KnobRandomizer>().Random = new Random(1);
         });
 
+    /// <summary>Makes a module roll reach anywhere on each knob, on a seeded die.</summary>
+    public void RollModulesOnASeededDie() =>
+        DoWindow((_, _) =>
+        {
+            Service<Editor.Settings.OutputSettingRepository>().Current.Randomize = new RandomizeSettings { Amount = 1, GlideSeconds = 0 };
+            Service<Editor.Knobs.ModuleDie>().Random = new Random(1);
+        });
+
+    /// <summary>Where an input of a module on the canvas is set.</summary>
+    public float InputOf(Guid node, int port) => Read(canvas => canvas.History.Patch.Find(node)!.InputValues[port]);
+
     /// <summary>
     /// Presses the switch or the button the knob panel calls <paramref name="name"/>
     /// with the mouse, and lets it go unless <paramref name="hold"/>.

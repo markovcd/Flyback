@@ -4,6 +4,7 @@ using Avalonia.Layout;
 using Flyback.Core.Graph;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Canvas;
+using Flyback.Editor.Knobs;
 using Flyback.Editor.Notices;
 using Flyback.Ui.Controls;
 
@@ -34,7 +35,7 @@ internal static class ActionRows
     };
 
     /// <summary>
-    /// What can be done to the selected module: switched, grouped, its boxes
+    /// What can be done to the selected module: switched, rolled, grouped, its boxes
     /// opened or closed, duplicated and deleted, in that order so the
     /// destructive button is at the far end of the row.
     /// </summary>
@@ -65,6 +66,17 @@ internal static class ActionRows
                 },
                 editor.Edits.SwitchSelected);
         }
+
+        var rolling = editor.Selection.Nodes.Sum(n => ModuleDie.Rollable(editor.History.Patch, n).Count());
+
+        if (rolling > 0)
+            Act(
+                "roll-module",
+                Glyphs.Dice(),
+                rolling > 1
+                    ? $"Roll these {rolling} knobs somewhere new; Ctrl+Z goes back  (Ctrl+Shift+D)"
+                    : "Roll this knob somewhere new; Ctrl+Z goes back  (Ctrl+Shift+D)",
+                () => editor.Reactions.Raise(new ModulesRollAsked()));
 
         // Grouping comes ahead of deleting, so the destructive button is at the far
         // end of the row rather than the first thing under the pointer.

@@ -71,6 +71,7 @@ internal static class InspectorHelp
             Row("Undo, redo", "Takes the last edit back, and puts it back.", "Ctrl+Z / Ctrl+Y"),
             Row("Copy, cut, paste", keys: "Ctrl+C / Ctrl+X / Ctrl+V"),
             Row("Duplicate", "Without touching the clipboard.", "Ctrl+D"),
+            Row("Roll a module's knobs", "Sends each of its own knobs somewhere new. Ctrl+Z goes back a roll.", "Ctrl+Shift+D"),
             Row("Group", "Draws a selection as one box. Double-click a box to look inside, Esc to put it back.", "Ctrl+G"),
             Row("Ungroup", "Puts the selection back.", "Ctrl+Shift+G"),
             Row("Expand all touched boxes", "Opens every box the selection touches at once.", "Ctrl+E"),

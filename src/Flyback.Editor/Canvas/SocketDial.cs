@@ -140,10 +140,14 @@ internal sealed class SocketDial(
 
         (node, spec) = (found, def.Inputs[port]);
 
-        return KnobLinking.Linkable(spec)
-            && patch.IncomingTo(nodeId, port) is null
-            && !(ControlMap.Of(found, port) is { } link && patch.Control(link.Control) is not null);
+        return HasOwnKnob(patch, found, port, spec);
     }
+
+    /// <summary>Whether an input is unpatched and rests on a knob of its own rather than a wire or a panel knob.</summary>
+    internal static bool HasOwnKnob(Patch patch, NodeInstance node, int port, PortSpec spec) =>
+        KnobLinking.Linkable(spec)
+        && patch.IncomingTo(node.Id, port) is null
+        && !(ControlMap.Of(node, port) is { } link && patch.Control(link.Control) is not null);
 
     private void Set(Guid nodeId, int port, float value)
     {
