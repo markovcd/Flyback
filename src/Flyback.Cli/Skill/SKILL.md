@@ -47,3 +47,7 @@ Your own checkpoints do not cover these files: undo through these commands. A pa
 
 - `flyback-cli check <patch>` compiles it and names the line of anything wrong.
 - `flyback-cli render <patch> -o clip.mp4 --seconds 4` records it, picture and sound.
+
+## Over MCP instead
+
+`flyback-cli mcp <patch>` serves these tools over MCP on a patch file, and `flyback-cli mcp --editor` on the patch open in Flyback, once its Settings → Assistant lets a program edit it. There each edit is one the person can undo in the editor, and `say` puts what you tell them in its assistant column.

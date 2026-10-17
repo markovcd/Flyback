@@ -59,6 +59,17 @@ internal sealed class AssistantSettingsPage
         FontSize = Text.Body,
     };
 
+    /// <summary>Whether the editor listens for a program to drive it — see <see cref="DrivenSettings.LetProgramsEdit"/>.</summary>
+    private readonly CheckBox drivenBox = new()
+    {
+        Name = "letProgramsEdit",
+        Content = "Let a program on this computer edit the open patch",
+        FontSize = Text.Body,
+    };
+
+    /// <summary>Opens and closes the channel as <see cref="drivenBox"/> is saved; null in a test that has none.</summary>
+    private readonly DrivenEditor? driven;
+
     /// <summary>
     /// How many tokens a request may send — see
     /// <see cref="AssistantSettings.ContextLimit"/>. Stepped in tens of thousands,
@@ -118,8 +129,10 @@ internal sealed class AssistantSettingsPage
         Credentials credentials,
         AssistantSettingRepository settingsRepository,
         IAssistantEditor editor,
-        EditorFolders? folders = null)
+        EditorFolders? folders = null,
+        DrivenEditor? driven = null)
     {
+        this.driven = driven;
         this.chosenAssistant = chosenAssistant;
         this.plugins = plugins;
         this.credentials = credentials;
@@ -143,6 +156,7 @@ internal sealed class AssistantSettingsPage
         lookupsBox.IsChecked = settingsRepository.Current.ShowLookups;
         contextBox.Value = settingsRepository.Current.ContextLimit;
         proseBox.Value = settingsRepository.Current.ProseBudget;
+        drivenBox.IsChecked = LetProgramsEdit();
 
         // The list before what is chosen in it, and both before the handler that
         // watches it: a box with no rows in it cannot be told which row to show,
@@ -241,6 +255,8 @@ internal sealed class AssistantSettingsPage
             TextWrapping = TextWrapping.Wrap,
         });
 
+        if (DrivenEditor.Possible) Driven(fields);
+
         return fields;
 
         static TextBlock Note(string text) => new()
@@ -250,6 +266,29 @@ internal sealed class AssistantSettingsPage
             Foreground = Text.Muted,
             TextWrapping = TextWrapping.Wrap,
         };
+    }
+
+    /// <summary>The switch that lets a program on this computer drive the editor, and the lines that set one up.</summary>
+    private void Driven(StackPanel fields)
+    {
+        fields.Children.Add(drivenBox);
+        fields.Children.Add(new TextBlock
+        {
+            FontSize = Text.Small,
+            Foreground = Text.Muted,
+            TextWrapping = TextWrapping.Wrap,
+            Text = "While this is on, Claude Code, Codex or another MCP client you run can call the assistant's tools on the patch "
+                + "on the canvas, and the column shows what it does. Only programs running as you can connect. Add Flyback to Claude Code "
+                + "with the first line, or to Codex's config.toml with the rest:",
+        });
+        fields.Children.Add(new SelectableTextBlock
+        {
+            Name = "drivenSetup",
+            Text = DrivenSetup.Lines(DrivenSetup.Cli),
+            FontSize = Text.Small,
+            FontFamily = Text.Mono,
+            TextWrapping = TextWrapping.Wrap,
+        });
     }
 
     /// <summary>
@@ -276,9 +315,12 @@ internal sealed class AssistantSettingsPage
         lookupsBox.IsChecked = settingsRepository.Current.ShowLookups;
         contextBox.Value = settingsRepository.Current.ContextLimit;
         proseBox.Value = settingsRepository.Current.ProseBudget;
+        drivenBox.IsChecked = LetProgramsEdit();
 
         ShowProviderForm();
     }
+
+    private bool LetProgramsEdit() => settingsPath is { } path && DrivenSettings.Load(path).LetProgramsEdit;
 
     /// <summary>
     /// Puts the chosen provider's form up, holding what that provider was last set
@@ -340,11 +382,15 @@ internal sealed class AssistantSettingsPage
         try
         {
             settingsRepository.Save();
+
+            if (settingsPath is { } path) new DrivenSettings { LetProgramsEdit = drivenBox.IsChecked == true }.Save(path);
         }
         catch (Exception ex)
         {
             editor.Report($"Could not save the assistant settings: {ex.Message}", settingsPath);
         }
+
+        driven?.Allow(drivenBox.IsChecked == true);
     }
 
     /// <summary>

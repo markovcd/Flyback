@@ -4,7 +4,6 @@ Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or 
 
 | File | What | Kind | Status |
 |---|---|---|---|
-| [mcp-server.md](mcp-server.md) | Claude Code or Codex, run by the person, drives Flyback through `flyback-cli tool` and MCP, and the column shows it | Plan | Open |
 | [decision-model.md](decision-model.md) | Laya, and what to ask a decision model, measured against a local laya-serve | Plan | Open: all but Laya landed; next steps proposed |
 | [assistant-says-what-it-can-do.md](assistant-says-what-it-can-do.md) | The assistant answers what it can do, and offers plugin authoring when a .NET SDK is present | Plan | Open |
 | [assistant-request-cost.md](assistant-request-cost.md) | The assistant spends requests and tokens it does not need | Issue | Open: four of eight fixed |

@@ -1504,11 +1504,29 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
 
     private T Service<T>() where T : notnull => provider!.GetRequiredService<T>();
 
-    /// <summary>Opens the channel a program drives the editor over, on <paramref name="name"/>, as the setting does.</summary>
-    internal void LetAProgramDrive(string name) => Run(() =>
+    /// <summary>Has the editor listen on <paramref name="channel"/>, rather than the user's own, once it is let.</summary>
+    internal void ChannelAt(string channel) => Run(() =>
     {
         Window();
-        Service<DrivenEditor>().Open(name);
+        Service<DrivenEditor>().Channel = channel;
+    });
+
+    /// <summary>Whether the settings file says to let a program edit the open patch, as the next start reads it.</summary>
+    internal bool LetsProgramsEdit => Run(() =>
+        Service<EditorFolders>().SettingsPath is { } path && DrivenSettings.Load(path).LetProgramsEdit);
+
+    /// <summary>
+    /// Ticks Settings → Assistant → "Let a program on this computer edit the open patch" and
+    /// saves, with the editor listening on <paramref name="channel"/> rather than the user's own.
+    /// </summary>
+    internal void LetAProgramDrive(string channel) => Run(() =>
+    {
+        Window();
+        Service<DrivenEditor>().Channel = channel;
+
+        var page = Service<AssistantSettingsPage>();
+        Named<CheckBox>(page.Section(), "letProgramsEdit").IsChecked = true;
+        page.Save();
     });
 
     /// <summary>

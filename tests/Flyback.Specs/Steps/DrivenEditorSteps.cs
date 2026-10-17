@@ -14,8 +14,10 @@ namespace Flyback.Specs.Steps;
 /// scenario's own, as a coding assistant drives the one somebody has open.
 /// </summary>
 [Binding]
-public sealed class DrivenEditorSteps(EditorDriver editor) : IDisposable
+public sealed class DrivenEditorSteps : IDisposable
 {
+    private readonly EditorDriver editor;
+
     private static readonly PluginCatalog Catalog = new([], [], NodeCatalog.BuiltIn, Presets.All, [], []);
 
     private readonly DirectoryInfo folder = Directory.CreateTempSubdirectory("fb-drive");
@@ -28,6 +30,16 @@ public sealed class DrivenEditorSteps(EditorDriver editor) : IDisposable
     private string Channel => OperatingSystem.IsWindows()
         ? $"flyback-specs-{folder.Name}"
         : Path.Combine(folder.FullName, "e.sock");
+
+    /// <summary>The editor keeps its settings in the scenario's folder, so the switch has somewhere to be saved.</summary>
+    public DrivenEditorSteps(EditorDriver editor)
+    {
+        this.editor = editor;
+        editor.Setup = editor.Setup with
+        {
+            Folders = editor.Setup.Folders with { SettingsPath = Path.Combine(folder.FullName, "editor.json") },
+        };
+    }
 
     public void Dispose()
     {
@@ -45,6 +57,21 @@ public sealed class DrivenEditorSteps(EditorDriver editor) : IDisposable
     [When("{string} says {string} to the editor over flyback-cli mcp --editor")]
     public void WhenSays(string client, string text) =>
         Serve(client, new JsonObject { ["name"] = "say", ["arguments"] = new JsonObject { ["text"] = text } });
+
+    [Given("the editor has not been let edit by a program")]
+    public void GivenNotLet() => editor.ChannelAt(Channel);
+
+    [Then("the editor keeps letting programs edit it, next time it starts")]
+    public void ThenKept() => editor.LetsProgramsEdit.ShouldBeTrue();
+
+    [Then("the call is refused, saying to turn on {string}")]
+    public void ThenRefusedOff(string setting)
+    {
+        var answer = answers.ShouldHaveSingleItem();
+
+        answer["result"]!["isError"]!.GetValue<bool>().ShouldBeTrue();
+        answer["result"]!["content"]![0]!["text"]!.GetValue<string>().ShouldContain(setting);
+    }
 
     [Given("the assistant's column is open")]
     public void GivenColumn() => editor.OpenAssistant(null);

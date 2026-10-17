@@ -1,8 +1,7 @@
 # ADR-0202: A coding assistant the person runs edits the open patch over MCP
 
 **Status:** Accepted · 2026-10-15 · *user-directed* · follows
-[0201](0201-claude-code-is-not-an-assistant-until-anthropic-says-it-may-be.md);
-plan in [docs/handoff/mcp-server.md](../handoff/mcp-server.md)
+[0201](0201-claude-code-is-not-an-assistant-until-anthropic-says-it-may-be.md)
 
 ## Context
 
@@ -49,3 +48,10 @@ saved with it. A turn has no end Flyback can see, so how edits group for undo is
 the plan's open question. The local channel is a new boundary and gets its row in
 the threat model in the commit that opens it. Codex keeps its plugin until this
 lands; once it has, the plugin is a second door to the same thing.
+
+## Amendment 2026-10-17: as built
+
+- The JSON-RPC is written by hand in `McpServer`, as the plugins write their wire formats; no package.
+- In the editor each call is its own undo step. MCP has no turn end to group them by.
+- A second program is refused while one drives, and told why.
+- The channel is desktop only: the switch is not offered on Android or in the page.

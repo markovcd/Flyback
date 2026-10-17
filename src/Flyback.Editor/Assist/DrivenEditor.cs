@@ -37,15 +37,34 @@ internal sealed class DrivenEditor(
     /// <summary>Why a call cannot run now, or null when it can; asked before each one.</summary>
     public Func<string?> Held { get; set; } = () => null;
 
+    /// <summary>Whether this platform can host the channel: a desktop, not a phone or a page.</summary>
+    public static bool Possible => !OperatingSystem.IsBrowser() && !OperatingSystem.IsAndroid();
+
+    /// <summary>The pipe or socket listened on.</summary>
+    internal string Channel { get; set; } = EditorChannel.Name;
+
     public Task On()
     {
-        if (folders.SettingsPath is { } path && DrivenSettings.Load(path).LetProgramsEdit) Open(EditorChannel.Name);
+        if (Possible && folders.SettingsPath is { } path && DrivenSettings.Load(path).LetProgramsEdit) Open();
 
         return Task.CompletedTask;
     }
 
-    /// <summary>Listens on <paramref name="name"/>.</summary>
-    internal void Open(string name)
+    /// <summary>Opens the channel or closes it, as the setting now says.</summary>
+    public void Allow(bool on)
+    {
+        if (on && Possible) Open();
+        else Close();
+    }
+
+    /// <summary>Stops listening and lets any program driving the editor go.</summary>
+    private void Close()
+    {
+        server?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        server = null;
+    }
+
+    private void Open()
     {
         if (server is not null) return;
 
@@ -55,7 +74,7 @@ internal sealed class DrivenEditor(
             settings.GetProsePolicy,
             () => editor.Presets() ?? plugins.Presets);
 
-        server = new ChannelServer(name, (request, cancel) => Dispatcher.UIThread.InvokeAsync(() => Answer(bench, request, cancel)));
+        server = new ChannelServer(Channel, (request, cancel) => Dispatcher.UIThread.InvokeAsync(() => Answer(bench, request, cancel)));
         server.Connected += client => Dispatcher.UIThread.Post(() =>
         {
             Client = client;
@@ -104,5 +123,5 @@ internal sealed class DrivenEditor(
     };
 
     /// <summary>Stops listening. Synchronous, since the editor's container is disposed with its window.</summary>
-    public void Dispose() => server?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+    public void Dispose() => Close();
 }

@@ -8,7 +8,7 @@ namespace Flyback.Cli.Commands;
 
 /// <summary>
 /// Serves the assistant's tools over MCP to a coding assistant the person runs, editing a
-/// patch file or the patch open in the editor (ADR-0202). Hidden from help until the column shows it.
+/// patch file or the patch open in the editor (ADR-0202).
 /// </summary>
 internal static class McpCommand
 {
@@ -34,7 +34,6 @@ internal static class McpCommand
             patch, editor,
         };
 
-        command.Hidden = true;
 
         command.SetAction(async (result, cancel) =>
         {

@@ -325,6 +325,9 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
       and can read a preset in full for the idea in it. A short ask, like "make it darker", can be written
       out first: Expand beside Send turns it into the full request, in the box, saying what keeps the patch
       itself, what changes and what stays, for you to edit before sending.</p>
+      <p>Or bring your own. Turn on Settings → Assistant → "Let a program on this computer edit the open patch",
+      add <code>flyback-cli mcp --editor</code> to Claude Code or Codex, and it gets the same tools over MCP:
+      its edits land on the canvas, each one you can undo, and the column shows every call it makes.</p>
     </div>
 
     <figure class="diagram">
@@ -703,6 +706,7 @@ flyback-cli shot --preset "Flyback Theme" -o theme.png --at 30.3
 flyback-cli shot drone.fbks -o drone.png --crop
 flyback-cli ask drone.fbk "slower, and warmer"
 flyback-cli tool connect drone.fbk --args '{"from": "lfo", "to": "filter1", "to_port": "cutoff"}'
+claude mcp add flyback -- flyback-cli mcp --editor
 flyback-cli modules --find "a mirror maze of shards"
 flyback-cli tutorial first-patch mine.fbks
 flyback-cli decide "make the bass slower" --yes-no "Does this ask for an edit?" --json

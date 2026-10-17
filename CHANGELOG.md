@@ -5,6 +5,7 @@
 - Ctrl+Shift+D, or the die on a module's panel, rolls its unpatched knobs somewhere new; Ctrl+Z steps back through the rolls.
 - `flyback-cli render --at` draws a feedback loop's frames up to that second first, so a still of Trails has its trails.
 - `flyback-cli modules <module> --json` gives a knob's `knee` where it turns in decades, so a script sweeps it as the editor does.
+- `flyback-cli mcp --editor` lets your own Claude Code or Codex edit the patch open in the editor, once Settings → Assistant lets it; the column shows each call.
 - `flyback-cli tool` runs the assistant's tools one call at a time, with undo, so your own Claude Code or Codex can build patches; `tool --skill` prints the skill that teaches it how.
 - A plugin can ship a preset written in the text language with `PresetText.Embedded`, and Mycelium now is one.
 - The text language has loops: `for (pitch, level) in [(A2, 0.5), (E3, 0.3)] { ... }` stamps out its body per item, with lists, `...list` and `sum(list)`.
