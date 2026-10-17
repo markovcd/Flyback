@@ -28,4 +28,5 @@ so nothing goes stale, and a score per commit adds up to a trend.
 - One run is a small sample; the rolling score is the number to read.
 - Code nobody changes is never mutated. The weekly coverage run still watches it.
 - No package: the agent is the mutator and the owning test projects are the judge.
+  `scripts/mutate.py` plants each mutant, runs those projects and puts the file back.
 - `MutationLogTests` keeps the log in the shape the script reads.

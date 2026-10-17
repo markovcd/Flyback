@@ -31,11 +31,15 @@ many mutants to plant (`HEAD 8`; five when not given).
 4. **Skip the equivalent ones.** A mutant that cannot change any behavior (a
    reordered commutative sum, a dead branch) is discarded before running, and is
    not counted. When unsure, run it and read why it survived.
-5. **Run the owning tests.** The test project named for the source project
-   (`src/Flyback.Core` → `tests/Flyback.Core.Tests`), plus any other project that
-   tests that code. Caught means at least one test failed or the build broke on
-   a test. Record caught or survived, then revert the file with
-   `git checkout -- <file>` and confirm `git diff -- src` is empty before the next.
+5. **Run them with `scripts/mutate.py`.** Write the mutants to a JSON list of
+   `{"name", "file", "from", "to"}`, each `from` a snippet found once in its file,
+   and run them in one call. It refuses a red suite, plants each mutant alone,
+   builds and runs the test project named for the source project
+   (`src/Flyback.Core` → `tests/Flyback.Core.Tests`), puts the file back, and
+   says caught, survived or rejected. Add `--project` for any other project that
+   tests that code (`Flyback.Specs` for anything a scenario drives), and
+   `--class` to narrow the run while choosing. A mutant the compiler rejects is
+   not counted.
 6. **Kill the survivors.** For each, write a test in the class that owns the
    behavior, named for the rule rather than the mutant. Confirm it fails with the
    mutant applied and passes without it. A survivor not worth a test (logging,
@@ -47,16 +51,15 @@ many mutants to plant (`HEAD 8`; five when not given).
    suites pass. No mutant is ever committed: `git diff` against the commit
    must show only tests and the log.
 
-## Run the tests directly
-
-`dotnet test` hides the failure text. Build, then run the assembly:
+## Running the pass
 
 ```bash
-dotnet build tests/Flyback.Core.Tests -c Debug -v q --nologo && ./tests/Flyback.Core.Tests/bin/Debug/net10.0/Flyback.Core.Tests -class "Flyback.Core.Tests.Compile.TotalityTests"
+python3 scripts/mutate.py mutants.json --project Flyback.Specs
 ```
 
-A mutant only needs the classes that could notice it while choosing; it is
-counted against the whole owning project.
+`--json` gives the report to a script, and the logs of every run are kept in the
+folder the report names. To check that a new test kills its mutant, run that
+mutant alone with `--method` naming the test: it should come back caught.
 
 ## Reporting
 
