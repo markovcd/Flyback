@@ -148,7 +148,7 @@ internal static class ToolCommand
         return command;
     }
 
-    /// <summary>The SKILL.md that ships with the command.</summary>
+    /// <summary>The SKILL.md that ships with the command, in LF line endings however the repo was checked out.</summary>
     internal static string Skill
     {
         get
@@ -156,7 +156,7 @@ internal static class ToolCommand
             using var stream = typeof(ToolCommand).Assembly.GetManifestResourceStream("Flyback.Cli.SKILL.md")!;
             using var reader = new StreamReader(stream);
 
-            return reader.ReadToEnd();
+            return reader.ReadToEnd().ReplaceLineEndings("\n");
         }
     }
 
