@@ -277,6 +277,46 @@ public class InspectorFoldTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void Under_a_mouse_the_headers_name_renames_again_after_a_rename()
+    {
+        var window = Selecting(out var sine);
+        window.Width = 1100;
+        Settle(window);
+        Short(window, 120);
+
+        foreach (var typed in new[] { "Lead", "Bass" })
+        {
+            var name = All<TextBlock>(Header(window)).Single(t => t.Name == "header-name");
+            name.RaiseEvent(new Avalonia.Input.TappedEventArgs(Avalonia.Input.InputElement.DoubleTappedEvent, null!));
+            Settle(window);
+
+            var box = All<TextBox>(Header(window)).ShouldHaveSingleItem("the name should have become a box");
+            box.Text = typed;
+            box.RaiseEvent(new Avalonia.Input.KeyEventArgs { RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent, Key = Avalonia.Input.Key.Enter });
+            Settle(window);
+        }
+
+        Editor(window).History.Patch.Find(sine.Id)!.Name.ShouldBe("Bass");
+        All<TextBlock>(Header(window)).Single(t => t.Name == "header-name").Text.ShouldBe("Bass");
+    }
+
+    [AvaloniaFact]
+    public void The_headers_picture_button_says_what_pressing_it_would_do_now()
+    {
+        var window = Selecting(out _);
+        Fingered(window);
+        Short(window, 120);
+
+        ToolTip.GetTip(Named(Header(window), "header-picture")).ShouldBe(PictureAsideWords.Tip(hidden: false));
+
+        Press(Named(Header(window), "header-picture"));
+        Settle(window);
+
+        PictureBox(window).IsVisible.ShouldBeFalse();
+        ToolTip.GetTip(Named(Header(window), "header-picture")).ShouldBe(PictureAsideWords.Tip(hidden: true));
+    }
+
+    [AvaloniaFact]
     public void Cancelling_the_rename_dialog_leaves_the_name()
     {
         var window = Selecting(out var sine);

@@ -248,4 +248,18 @@ public class PresetGalleryTests : EditorTest
         All<Button>(bar).Count(b => b.Name == "kind-chip").ShouldBe(3);
         All<Button>(foot).ShouldContain(b => b.Name == "use-preset");
     }
+
+    [AvaloniaFact]
+    public void A_narrow_gallerys_chip_stands_pressed_while_its_half_is_shown()
+    {
+        var (window, picker) = Picker(width: 460);
+        Button Chip(string label) => All<Button>(picker).Single(b => b.Name == "kind-chip" && (string)b.Tag! == label);
+
+        Press(Chip("Sound"));
+        Settle(window);
+
+        Chip("Sound").Classes.ShouldContain("pressed");
+        Chip("Anything").Classes.ShouldNotContain("pressed");
+        Chip("Picture").Classes.ShouldNotContain("pressed");
+    }
 }

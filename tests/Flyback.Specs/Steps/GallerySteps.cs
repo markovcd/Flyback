@@ -33,6 +33,12 @@ public sealed class GallerySteps(EditorDriver editor, PatchContext context)
         context.Patch.Nodes.ShouldNotContain(node => node.TypeId == NodeCatalog.SineTypeId);
     }
 
+    [Then("the gallery's {string} row stands pressed")]
+    public void ThenTheRowIsPressed(string label) => editor.GalleryRowPressed(label).ShouldBeTrue();
+
+    [Then("the gallery's {string} row does not")]
+    public void ThenTheRowIsNotPressed(string label) => editor.GalleryRowPressed(label).ShouldBeFalse();
+
     [Then("the gallery shows a card for every preset that is heard, and no other")]
     public void ThenOnlyTheHeard()
     {

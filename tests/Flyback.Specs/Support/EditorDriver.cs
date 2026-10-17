@@ -569,6 +569,10 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
         DoWindow((open, _) => UiTest.Press(open.GetVisualDescendants().OfType<Button>()
             .Single(b => b.Name == "filter-row" && (string)b.Tag! == label)));
 
+    /// <summary>Whether the row of the gallery's left column labeled <paramref name="label"/> stands pressed.</summary>
+    public bool GalleryRowPressed(string label) => ReadWindow(open => open.GetVisualDescendants().OfType<Button>()
+        .Single(b => b.Name == "filter-row" && (string)b.Tag! == label).Classes.Contains("pressed"));
+
     /// <summary>The presets whose cards the open gallery shows, once every card has said what it works with.</summary>
     public IReadOnlyList<string> CardsShown =>
         Run(async () =>

@@ -23,3 +23,5 @@ Feature: A preset is chosen in the gallery before it is opened
     When the preset gallery is opened
     And the gallery's "Sound" row is pressed
     Then the gallery shows a card for every preset that is heard, and no other
+    And the gallery's "Sound" row stands pressed
+    And the gallery's "Anything" row does not

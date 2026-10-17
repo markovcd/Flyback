@@ -337,6 +337,17 @@ public class GroupInspectorTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void Rename_from_the_menu_turns_the_name_into_a_box()
+    {
+        var window = Open(out _);
+
+        All<Flyback.Editor.Inspect.ModulePlate>(window).Single().BeginRename!();
+        Settle(window);
+
+        Box(window).ShouldNotBeNull("the title should have become a box");
+    }
+
+    [AvaloniaFact]
     public void What_is_typed_becomes_the_name_on_the_panel_and_on_the_canvas()
     {
         var window = Open(out var group);
