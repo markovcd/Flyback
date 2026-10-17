@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
 using System.Text.Json;
@@ -397,6 +398,7 @@ public class CommandTests
     [InlineData("out.avi", 1d, 0d, 0d, 1e9, "--fps")]
     [InlineData("out.avi", 1d, 0d, 0d, -1d, "--fps")]
     [InlineData("out.avi", 1d, 0d, 0d, 0.001d, "--fps")]
+    [InlineData("out.png", 1d, 0d, 1d, 0d, "--fps")]
     public void A_number_a_render_cannot_use_is_refused_before_anything_is_written(
         string name, double seconds, double from, double at, double fps, string said)
     {
@@ -590,6 +592,36 @@ public class CommandTests
         }
 
         File.ReadAllBytes(first.FullName).ShouldBe(File.ReadAllBytes(second.FullName));
+    }
+
+    /// <summary>A still of a feedback loop carries the trails the frames before it drew, as a clip's frame at that second does.</summary>
+    [Fact]
+    public void A_still_of_a_feedback_loop_is_drawn_through_the_frames_before_it()
+    {
+        const int width = 64, height = 36, fps = 30;
+        const double at = 1d;
+
+        using var directory = new Scratch();
+        var still = directory.File("still.png");
+        var drawn = directory.File("drawn.png");
+
+        RenderCommand.Run(
+                Preset("Trails"),
+                new RenderOptions(still, width, height, At: at, Fps: fps, Backend: PictureBackend.Processor),
+                TextWriter.Null,
+                cancellation: TestContext.Current.CancellationToken)
+            .ShouldBe(Exit.Ok);
+
+        var program = Preset("Trails").CompileForVideo(NodeCatalog.BuiltIn).Program;
+        var frames = new SynthRenderer();
+        var pixels = new byte[width * 4 * height];
+
+        RenderCommand.Remembers(program).ShouldBeTrue();
+        for (var frame = 0; frame < at * fps; frame++) frames.Render(program, frame / (double)fps, width, height, pixels, width * 4);
+        frames.Render(program, at, width, height, pixels, width * 4);
+        PngWriter.WriteBgra(drawn.FullName, pixels, width, height, width * 4);
+
+        File.ReadAllBytes(still.FullName).ShouldBe(File.ReadAllBytes(drawn.FullName));
     }
 
     /// <summary>A render on the processor runs compiled, and the interpreter is the reference it has to match.</summary>
