@@ -1027,6 +1027,23 @@ public class CommandTests
         output.ShouldMatch(@"attack\s+10 ms\s+100 µs to 31\.62 s");
     }
 
+    /// <summary>A knob that turns in decades gives its knee, so a script can sweep it as the editor does; an even one gives none.</summary>
+    [Fact]
+    public void A_described_module_says_where_a_knob_turns_in_decades()
+    {
+        var sine = NodeCatalog.BuiltIn.Require("osc.sine");
+        var (_, json, _) = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, sine.TypeId, true, o, e));
+
+        using var document = JsonDocument.Parse(json);
+
+        var knees = document.RootElement.GetProperty("inputs").EnumerateArray()
+            .ToDictionary(port => port.GetProperty("name").GetString()!, port => port.TryGetProperty("knee", out var knee) && knee.ValueKind == JsonValueKind.Number ? knee.GetSingle() : (float?)null);
+
+        foreach (var port in sine.Inputs.Where(p => p.Ranged))
+            knees[port.Name].ShouldBe(port.Knee > 0f ? port.Knee : null);
+        knees.Values.ShouldContain(k => k > 0f);
+    }
+
     /// <summary>Each socket's help is under its row, and in the JSON beside it, outputs included.</summary>
     [Fact]
     public void A_described_module_says_what_each_socket_is_for()

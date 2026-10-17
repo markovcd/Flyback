@@ -317,6 +317,7 @@ internal static class ModulesCommand
         port.Default,
         port.Ranged ? port.Min : null,
         port.Ranged ? port.Max : null,
+        port.Ranged && port.Knee > 0f ? port.Knee : null,
         port.NeedsAWire,
         port.Help);
 
