@@ -212,8 +212,16 @@ internal sealed class ExpressionParser
 
                 if (Pipeline() is not { } inner) return null;
 
+                if (Current.Kind == TokenKind.Comma) return Tupled(inner, open);
+
                 return parser.Expect(TokenKind.CloseParen, Closing(")", "(", open)) ? Selected(inner) : null;
             }
+
+            case TokenKind.Block:
+                return Listed();
+
+            case TokenKind.Identifier when AtLoop():
+                return Loop(line, column);
 
             case TokenKind.Identifier:
                 return NameOrCall(line, column);
@@ -230,6 +238,87 @@ internal sealed class ExpressionParser
                 if (!parser.Closer()) parser.Complain(IssueCode.Syntax, $"expected a value here, but found {parser.Found()}.");
                 return null;
         }
+    }
+
+    /// <summary>The rest of <c>(a, b, ...)</c> once its first item is read.</summary>
+    private Expr? Tupled(Expr first, Token open)
+    {
+        var items = new List<Expr> { first };
+
+        while (parser.Take(TokenKind.Comma) && Current.Kind != TokenKind.CloseParen)
+        {
+            if (Pipeline() is not { } item) return null;
+            items.Add(item);
+        }
+
+        if (!parser.Expect(TokenKind.CloseParen, Closing(")", "(", open))) return null;
+
+        return Built(new TupleExpr(items, open.Line, open.Column), [.. items]);
+    }
+
+    /// <summary>
+    /// <c>[a, b, c]</c> where a value goes. The lexer keeps every bracket whole for the
+    /// blocks a module carries, so the list's text is read again here as items.
+    /// </summary>
+    private Expr? Listed()
+    {
+        var block = Current;
+        parser.Advance();
+
+        var scanned = Lexer.Scan(block.Text, issues, block.Line, block.Column + 1);
+        var inner = new Parser([.. scanned.Where(token => token.Kind != TokenKind.NewLine)], issues);
+
+        if (inner.Items() is not { } items) return null;
+
+        return Built(new ListExpr(items, block.Line, block.Column), [.. items]);
+    }
+
+    /// <summary>Whether a loop starts here: <c>for name in</c> or <c>for (a, b) in</c>.</summary>
+    private bool AtLoop()
+    {
+        if (Current.Text != "for") return false;
+
+        if (Ahead().Kind == TokenKind.Identifier) return Ahead(2) is { Kind: TokenKind.Identifier, Text: "in" };
+        if (Ahead().Kind != TokenKind.OpenParen) return false;
+
+        for (var by = 2; ; by += 2)
+        {
+            if (Ahead(by).Kind != TokenKind.Identifier) return false;
+            if (Ahead(by + 1).Kind == TokenKind.CloseParen) return Ahead(by + 2) is { Kind: TokenKind.Identifier, Text: "in" };
+            if (Ahead(by + 1).Kind != TokenKind.Comma) return false;
+        }
+    }
+
+    /// <summary><c>for name in list { body }</c>, which <see cref="AtLoop"/> has already seen the start of.</summary>
+    private Expr? Loop(int line, int column)
+    {
+        parser.Advance();
+
+        var names = new List<string>();
+        var tupled = parser.Take(TokenKind.OpenParen);
+
+        do
+        {
+            names.Add(Current.Text);
+            parser.Advance();
+        }
+        while (tupled && parser.Take(TokenKind.Comma));
+
+        if (tupled) parser.Advance();
+
+        parser.Advance();
+
+        if (Pipeline() is not { } source) return null;
+
+        if (!parser.Take(TokenKind.OpenBrace))
+        {
+            parser.Complain(IssueCode.Syntax, $"expected '{{' to open what each pass does, but found {parser.Found()}.");
+            return null;
+        }
+
+        if (!parser.Braced(out var body, out var result, out var results)) return null;
+
+        return Built(new ForExpr(names, tupled, source, body, result, results, line, column), source);
     }
 
     /// <summary>
@@ -371,11 +460,22 @@ internal sealed class ExpressionParser
             parser.Advance(2);
         }
 
+        if (parser.Take(TokenKind.Spread))
+        {
+            if (name is not null)
+            {
+                parser.Complain(IssueCode.Syntax, $"'...' spreads a list over the sockets left free, so it goes without a name: '...list', not '{name}: ...list'.");
+                return null;
+            }
+
+            return Pipeline() is { } spread ? new Argument(null, spread, line, column, Spread: true) : null;
+        }
+
         return Pipeline() is { } value ? new Argument(name, value, line, column) : null;
     }
 
     private bool AtValue() => Current.Kind
-        is TokenKind.Number or TokenKind.Text or TokenKind.Identifier or TokenKind.OpenParen or TokenKind.Minus;
+        is TokenKind.Number or TokenKind.Text or TokenKind.Identifier or TokenKind.OpenParen or TokenKind.Minus or TokenKind.Block;
 
     private static string Closing(string closer, string opener, Token open) =>
         $"'{closer}' to close the '{opener}' on line {open.Line}, column {open.Column}";

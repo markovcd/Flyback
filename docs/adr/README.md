@@ -15,13 +15,14 @@ context, decision, consequences.
 | [0002](0002-split-engine-from-shell.md) | Split the engine from the UI shell |
 | [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md) | Render on the CPU, leave a GPU backend possible *(user-directed)* |
 | [0004](0004-visual-patch-editor-as-the-authoring-model.md) | Author patches in a visual node editor *(user-directed)* |
-| [0065](0065-a-text-language-that-parses-to-a-patch.md) | A text language, which parses to a patch *(user-directed; the pipe rule amended by [0144](0144-a-pipe-lands-where-the-text-says.md), the panel added by [0145](0145-the-panel-is-written-in-the-text.md))* |
+| [0065](0065-a-text-language-that-parses-to-a-patch.md) | A text language, which parses to a patch *(user-directed; the pipe rule amended by [0144](0144-a-pipe-lands-where-the-text-says.md), the panel added by [0145](0145-the-panel-is-written-in-the-text.md), loops by [0208](0208-the-text-has-loops-that-unroll-as-it-is-built.md))* |
 | [0067](0067-a-module-keeps-its-name-and-its-memory-across-a-rebuild.md) | A module keeps its name, and its memory, across a rebuild *(user-directed)* |
 | [0068](0068-the-file-that-was-opened-decides-who-owns-the-patch.md) | The file that was opened decides who owns the patch *(user-directed)* |
 | [0119](0119-the-website-shows-a-module-by-photographing-one.md) | The website shows a module by photographing one *(user-directed)* |
 | [0123](0123-a-third-program-plays-a-patch-and-writes-nothing.md) | A third program plays a patch and writes nothing *(user-directed)* |
 | [0144](0144-a-pipe-lands-where-the-text-says.md) | A pipe lands where the text says *(user-directed)* |
 | [0145](0145-the-panel-is-written-in-the-text.md) | The panel is written in the text *(user-directed)* |
+| [0208](0208-the-text-has-loops-that-unroll-as-it-is-built.md) | The text has loops, unrolled as it is built *(user-directed)* |
 | [0160](0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md) | A patch plays in a browser on the engine compiled to WebAssembly *(user-directed)* |
 | [0162](0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md) | The editor runs in a browser, with the picture on a canvas of its own *(user-directed; a few settings given back by [0182](0182-drag-to-pan-is-a-setting-that-trades-the-left-and-right-buttons.md))* |
 | [0163](0163-a-build-draws-every-presets-still-once.md) | A build draws every preset's still once, for every program to show *(user-directed)* |

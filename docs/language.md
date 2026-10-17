@@ -708,7 +708,46 @@ before any connection is built. The two are complementary: a group is a box
 drawn round nodes that exist, a `def` is a stencil for nodes that do not yet.
 
 The Four voices preset is a `for` loop over four voices in C#. It is a `def` and
-four calls here.
+four calls here, or one call in a loop, below.
+
+### Loops
+
+`for` stamps its body out once per item of a list, as the text is built, and is
+worth the list of what each pass ends with
+([0208](adr/0208-the-text-has-loops-that-unroll-as-it-is-built.md)). Nothing
+loops when the patch plays: the patch is the modules the passes placed, the
+same as the copies written out.
+
+```
+let voices = for (pitch, level) in [(A2, 0.5), (E3, 0.3), (A3, 0.2)] {
+  sine(freq: note(pitch), amp: level)
+}
+
+sum(voices) |> out.left
+```
+
+- **A list** is `[a, b, c]` where a value goes: numbers, notes, texts, signals,
+  or bracketed tuples like `(A2, 0.5)`. Items are separated by commas and may run
+  over several lines. A `[` straight after a call's `)` is still that module's
+  block.
+- **`for name in list { ... }`** binds each item to the name in turn;
+  `for (a, b) in list` takes each item's tuple apart. A loop may count instead:
+  `for k in 1..4` is 1, 2, 3 and 4, both ends in.
+- **The body is a def's**: statements, then what a pass is worth, which may be a
+  tuple. Names bound inside a pass are that pass's alone, and the names outside
+  are in sight. A body with nothing at the end only places modules.
+- **`...list`** spreads a list over a call's free sockets in order, each tuple's
+  parts a socket apiece: `mixer(...for v in voices { (v, 0.5) })` fills `in_1`,
+  `level_1`, `in_2`, `level_2` and on.
+- **`sum(list)`**, or `list |> sum()`, adds the items up exactly as `a + b + c`
+  would. `sum` is only this word where nothing else in the patch is called `sum`.
+- **A text bound to a name names a file** as the literal does, so
+  `for file in ["kick.wav", "snare.wav"] { sample(file) }` plays both.
+
+A def, a group, a panel knob and the lines about the whole patch (`requires`,
+`keyboard`, `description`, `author`, `tags`, `length`) are written outside a
+loop. One patch's loops stamp out at most 4096 passes between them. A printing
+writes a loop out unrolled.
 
 ---
 
@@ -885,7 +924,7 @@ patch      = { statement } ;
 
 statement  = comment
            | "let" ident "=" pipeline
-           | "let" "(" ident { "," ident } ")" "=" call
+           | "let" "(" ident { "," ident } ")" "=" ( call | loop )
            | "def" ident "(" [ param { "," param } ] ")" "=" body
            | pipeline
            | selector "=" expr
@@ -911,11 +950,16 @@ expr       = term { ("+" | "-") term } ;
 term       = ranged { ("*" | "/" | "%") ranged } ;
 ranged     = factor [ ".." factor ] ;
 factor     = [ "-" ] primary ;
-primary    = literal | selector | ( call | "(" pipeline ")" ) outputs ;
+primary    = literal | selector | list | tuple | loop | ( call | "(" pipeline ")" ) outputs ;
 outputs    = { "." ident } ;
 
+list       = "[" [ pipeline { "," pipeline } [ "," ] ] "]" ;
+tuple      = "(" pipeline "," pipeline { "," pipeline } ")" ;
+loop       = "for" ( ident | "(" ident { "," ident } ")" ) "in" pipeline
+             "{" { statement } [ result ] "}" ;
+
 call       = name "(" [ arg { "," arg } ] ")" [ block ] ;
-arg        = [ ident ":" ] ( expr | "_" ) ;
+arg        = [ ident ":" ] ( expr | "_" ) | "..." pipeline ;
 block      = "[" { step } "]" | "[" levels { "|" levels } "]" ;
 levels     = { [ ">" ] number } ;
 

@@ -46,6 +46,21 @@ public sealed class Binder
     /// <summary>The line each top-level name is bound on, for saying so where one is read above it.</summary>
     private readonly Dictionary<string, int> boundOn = [];
 
+    /// <summary>How many loop bodies are being stamped out, one inside another.</summary>
+    private int looping;
+
+    /// <summary>Every pass the patch's loops have stamped out so far, against <see cref="MostPasses"/>.</summary>
+    private int passes;
+
+    /// <summary>
+    /// The most passes one patch's loops may stamp out between them. Text is outside
+    /// input, and a loop over a million items would place a million modules.
+    /// </summary>
+    internal const int MostPasses = 4096;
+
+    /// <summary>The word that adds a list up, where nothing else is called it.</summary>
+    private const string SumWord = "sum";
+
     public Binder(ModuleCatalog modules, List<LanguageIssue> issues)
     {
         this.modules = modules;
@@ -145,7 +160,7 @@ public sealed class Binder
         "t" => "the clock",
         "out" => "the Output",
         "_" => "what a pipe brings in",
-        "let" or "def" or "group" => "a word of the language",
+        "let" or "def" or "group" or "for" => "a word of the language",
         _ => Coordinate(name) >= 0 ? "one of the picture's coordinates" : null,
     };
 
@@ -611,9 +626,27 @@ public sealed class Binder
         CallExpr call => Call(call, scope, null),
         SelectExpr select => Select(select, scope, piped: null),
         PipeExpr pipe => Pipe(pipe, scope),
-        RangeExpr range => Refuse(IssueCode.RangeOutsideArgument, range.Line, range.Column, "a range only means something as an argument."),
+        RangeExpr range => Refuse(IssueCode.RangeOutsideArgument, range.Line, range.Column, "a range only means something as an argument, or as what a loop counts over."),
+        ListExpr list => Items(list.Items, scope),
+        TupleExpr tuple => Items(tuple.Items, scope),
+        ForExpr loop => Loop(loop, scope),
         _ => null,
     };
+
+    /// <summary>A list or a tuple, item by item; null where any item fails.</summary>
+    private Several? Items(IReadOnlyList<Expr> items, Scope scope)
+    {
+        var values = new List<Value>(items.Count);
+        var sound = true;
+
+        foreach (var item in items)
+        {
+            if (Bind(item, scope) is { } value) values.Add(value);
+            else sound = false;
+        }
+
+        return sound ? new Several(values) : null;
+    }
 
     private Value? Read(NameExpr expr, Scope scope)
     {
@@ -723,20 +756,22 @@ public sealed class Binder
             }
 
             default:
-            {
-                if (Bind(expr, scope) is not { } value) return null;
-
-                if (value is Figure figure) return new Formulas.Operand(figure);
-
-                // Each reference to a panel knob is a distinct formula input.
-                if (value is Dial) return new Formulas.Signal(value, (Guid.NewGuid(), 0));
-
-                if (Formulas.From(value) is { } from) return new Formulas.Signal(value, from);
-
-                issues.Complain(IssueCode.NotASignal, expr.Line, expr.Column, "this is not a signal, so nothing can be wired from it.");
-                return null;
-            }
+                return Bind(expr, scope) is { } bound ? Term(bound, expr.Line, expr.Column) : null;
         }
+    }
+
+    /// <summary>A value as a term of a sum: a number, or a signal read once.</summary>
+    private Formulas.Term? Term(Value value, int line, int column)
+    {
+        if (value is Figure figure) return new Formulas.Operand(figure);
+
+        // Each reference to a panel knob is a distinct formula input.
+        if (value is Dial) return new Formulas.Signal(value, (Guid.NewGuid(), 0));
+
+        if (Formulas.From(value) is { } from) return new Formulas.Signal(value, from);
+
+        issues.Complain(IssueCode.NotASignal, line, column, "this is not a signal, so nothing can be wired from it.");
+        return null;
     }
 
     /// <summary>Splits an operation until each Expression reads no more signals than it has sockets.</summary>
@@ -868,6 +903,7 @@ public sealed class Binder
         if (scope.Find(expr.Target) is Failed) return null;
         if (scope.Find(expr.Target) is Dial dial) return Ranged(dial, expr, scope, piped);
         if (defs.TryGetValue(expr.Target, out var macro)) return Expand(macro, expr, scope, piped);
+        if (expr.Target == SumWord && scope.Find(SumWord) is null && !moduleNames.Knows(SumWord)) return Summed(expr, scope, piped);
 
         if (Module(expr.Target, expr.Line, expr.Column) is not { } def) return null;
 
@@ -1010,9 +1046,23 @@ public sealed class Binder
         {
             if (argument.Name is not null || argument.Value.Placeholder) continue;
 
+            if (argument.Spread)
+            {
+                Spread(argument, def, scope, free, arguments);
+                continue;
+            }
+
             if (argument.Value is TextExpr text)
             {
                 arguments.Paths.Add((text.Value, argument.Line, argument.Column));
+                continue;
+            }
+
+            // A text reached through a name, a loop's or a def's, names a file as the literal would.
+            if (argument.Value is NameExpr { Port: null } word && scope.Find(word.Name) is Named named)
+            {
+                Mention(word, named);
+                arguments.Paths.Add((named.Path, argument.Line, argument.Column));
                 continue;
             }
 
@@ -1040,6 +1090,254 @@ public sealed class Binder
                 }
             }
         }
+    }
+
+    /// <summary><c>...list</c>: each item into the next free socket, a tuple's parts one socket each.</summary>
+    private void Spread(Argument argument, NodeDef def, Scope scope, Queue<int> free, CallArguments arguments)
+    {
+        if (Piped(argument) || Bind(argument.Value, scope) is not { } value) return;
+
+        if (value is not Several list)
+        {
+            issues.Complain(IssueCode.NotAList, argument.Line, argument.Column,
+                "'...' spreads a list over the sockets left free, and this is one thing. Write it without the dots.");
+            return;
+        }
+
+        var site = new Site(argument.Value.Leftmost.Line, argument.Value.Leftmost.Column);
+
+        foreach (var part in list.Items.SelectMany(item => item is Several tuple ? tuple.Items : [item]))
+        {
+            if (part is Named named)
+            {
+                arguments.Paths.Add((named.Path, argument.Line, argument.Column));
+                continue;
+            }
+
+            if (free.Count == 0)
+            {
+                issues.Complain(IssueCode.TooManyArguments, argument.Line, argument.Column,
+                    $"'{def.Name}' has no socket left for the rest of this list. It has {SocketNames.List(def.Inputs)}.");
+                return;
+            }
+
+            var port = free.Dequeue();
+            arguments.Taken.Add(port);
+            arguments.Wires.Add((port, part));
+            arguments.Sites[port] = site;
+        }
+    }
+
+    /// <summary>
+    /// <c>sum(list)</c>, or a list piped into <c>sum()</c>: the items added up in order, as
+    /// <c>a + b + c</c> would be (ADR-0208).
+    /// </summary>
+    private Value? Summed(CallExpr expr, Scope scope, Value? piped)
+    {
+        var (line, column) = (expr.Line, expr.Column);
+        const string Shape = "'sum' adds up one list: 'sum(voices)', or 'voices |> sum()'.";
+
+        Value? list;
+
+        if (expr.Block is not null) return Refuse(IssueCode.NoBlock, expr.BlockLine, expr.BlockColumn, "'sum' carries no block. " + Shape);
+
+        if (piped is not null && expr.Arguments.Count == 0) list = piped;
+        else if (piped is null && expr.Arguments is [{ Name: null, Spread: false } only])
+            list = Piped(only) ? null : Bind(only.Value, scope);
+        else return Refuse(IssueCode.NotAList, line, column, Shape);
+
+        if (list is null) return null;
+
+        if (list is not Several { Items.Count: > 0 } several)
+        {
+            return Refuse(IssueCode.NotAList, line, column, list is Several
+                ? "there is nothing in this list to add up."
+                : "'sum' adds up a list, and this is one thing. Give it a list, [a, b], or a loop.");
+        }
+
+        Formulas.Term? total = null;
+
+        foreach (var item in several.Items)
+        {
+            if (Term(item, line, column) is not { } term) return null;
+
+            total = total switch
+            {
+                null => term,
+                Formulas.Operand a when term is Formulas.Operand b => Formulas.Fold(TokenKind.Plus, a.Figure, b.Figure, line, column, issues),
+                _ => Fit(new Formulas.Operation('+', total, term, line, column)),
+            };
+
+            if (total is null) return null;
+        }
+
+        return total switch
+        {
+            Formulas.Operand operand => operand.Figure,
+            Formulas.Signal signal => signal.Value,
+            Formulas.Operation operation => Expression(operation),
+            _ => null,
+        };
+    }
+
+    // --- loops ----------------------------------------------------------------
+
+    /// <summary>
+    /// A loop's body stamped out once per item, each pass in a scope of its own off the
+    /// loop's, worth the list of what each pass ends with (ADR-0208).
+    /// </summary>
+    private Value? Loop(ForExpr loop, Scope scope)
+    {
+        if (Each(loop.Source, scope) is not { } items) return null;
+
+        for (var i = 0; i < loop.Names.Count; i++)
+        {
+            if (!Free(loop.Names[i], scope, loop.Line, loop.Column)) return null;
+
+            if (loop.Names.Take(i).Contains(loop.Names[i], StringComparer.Ordinal))
+                return Refuse(IssueCode.BoundTwice, loop.Line, loop.Column, $"'{loop.Names[i]}' is written twice. A name is bound once.");
+        }
+
+        if (passes + items.Count > MostPasses)
+        {
+            return Refuse(IssueCode.TooManyPasses, loop.Line, loop.Column,
+                $"this would stamp the loop's body out {items.Count} times, and a patch's loops stamp out at most {MostPasses} between them.");
+        }
+
+        passes += items.Count;
+
+        var body = Loopable(loop.Body);
+        var outer = identity.Enter(identity.Stamping("for"));
+        var results = new List<Value>(items.Count);
+
+        looping++;
+
+        try
+        {
+            for (var i = 0; i < items.Count; i++)
+            {
+                var pass = identity.Enter(i.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                var said = issues.Count;
+
+                try
+                {
+                    var inner = new Scope(scope);
+
+                    if (!Take(loop, items[i], inner)) return null;
+
+                    foreach (var statement in body) Run(statement, inner);
+
+                    if (loop.Results is { } several)
+                    {
+                        if (Items(several, inner) is { } tuple) results.Add(tuple);
+                    }
+                    else if (loop.Result is { } result && Bind(result, inner) is { } value)
+                    {
+                        results.Add(value);
+                    }
+                }
+                finally
+                {
+                    identity.Leave(pass);
+                }
+
+                // A mistake in the body is the same mistake on every pass, and once is enough to say it.
+                if (issues.Count > said) return null;
+            }
+
+            return new Several(results);
+        }
+        finally
+        {
+            looping--;
+            identity.Leave(outer);
+        }
+    }
+
+    /// <summary>What a loop goes over: a list, or a count written as a range.</summary>
+    private IReadOnlyList<Value>? Each(Expr source, Scope scope)
+    {
+        if (source is RangeExpr range) return Count(range, scope);
+
+        if (Bind(source, scope) is not { } value) return null;
+        if (value is Several list) return list.Items;
+
+        issues.Complain(IssueCode.NotAList, source.Line, source.Column,
+            "a loop goes over a list, [a, b, c], or a count, 1..4, and this is one thing.");
+        return null;
+    }
+
+    /// <summary><c>1..4</c> as a loop counts it: every whole number from the first to the last, both ends in.</summary>
+    private List<Value>? Count(RangeExpr range, Scope scope)
+    {
+        const string Shape = "a loop counts from one whole number up to another: 1..4.";
+
+        if (Bind(range.Low, scope) is not Figure low || Bind(range.High, scope) is not Figure high) return null;
+
+        if (low.Style is NumberStyle.Duration || high.Style is NumberStyle.Duration
+            || low.Amount != Math.Floor(low.Amount) || high.Amount != Math.Floor(high.Amount) || high.Amount < low.Amount)
+        {
+            issues.Complain(IssueCode.BadCount, range.Line, range.Column, Shape);
+            return null;
+        }
+
+        if (high.Amount - low.Amount >= MostPasses)
+        {
+            issues.Complain(IssueCode.TooManyPasses, range.Line, range.Column,
+                $"a loop stamps its body out at most {MostPasses} times, and this counts {high.Amount - low.Amount + 1}.");
+            return null;
+        }
+
+        var count = (int)(high.Amount - low.Amount) + 1;
+
+        return [.. Enumerable.Range(0, count).Select(i => (Value)new Figure(low.Amount + i, low.Style))];
+    }
+
+    /// <summary>Binds a pass's names to its item, taking a tuple apart where the names are bracketed.</summary>
+    private bool Take(ForExpr loop, Value item, Scope inner)
+    {
+        if (!loop.Tupled)
+        {
+            inner.Set(loop.Names[0], item, loop.Line);
+            return true;
+        }
+
+        if (item is not Several tuple || tuple.Items.Count != loop.Names.Count)
+        {
+            var held = item is Several several ? $"{several.Items.Count} things" : "one thing";
+
+            issues.Complain(IssueCode.TupleMismatch, loop.Line, loop.Column,
+                $"an item of this list is {held}, and {loop.Names.Count} names are waiting for it.");
+            return false;
+        }
+
+        for (var i = 0; i < loop.Names.Count; i++) inner.Set(loop.Names[i], tuple.Items[i], loop.Line);
+
+        return true;
+    }
+
+    /// <summary>The statements a loop's body may repeat, each of the rest refused once.</summary>
+    private List<Statement> Loopable(IReadOnlyList<Statement> body)
+    {
+        var kept = new List<Statement>(body.Count);
+
+        foreach (var statement in body)
+        {
+            var refusal = statement switch
+            {
+                DefStatement => "a def is written once, outside the loop, and called inside it.",
+                GroupStatement => "a group is drawn round what is inside it, so put the loop inside the group.",
+                PanelStatement => "a panel knob belongs to the whole patch, so it is declared outside the loop and read inside it.",
+                RequiresStatement or KeyboardStatement or LengthStatement or DescriptionStatement or AuthorStatement or TagsStatement
+                    => "this is said once about the whole patch, so it is written outside the loop.",
+                _ => null,
+            };
+
+            if (refusal is null) kept.Add(statement);
+            else issues.Complain(IssueCode.NotInLoop, statement.Line, statement.Column, refusal);
+        }
+
+        return kept;
     }
 
     /// <summary>Places the module with its wires, and puts its fields and its place in the file on it.</summary>
@@ -1228,6 +1526,13 @@ public sealed class Binder
         var given = new bool[parameters.Count];
         var landing = -1;
         var sound = true;
+
+        if (call.Arguments.FirstOrDefault(a => a.Spread) is { } spread)
+        {
+            issues.Complain(IssueCode.DefArity, spread.Line, spread.Column,
+                $"'...' spreads a list over a module's sockets. Give '{macro.Name}' its arguments one by one, or pass it the list.");
+            return null;
+        }
 
         var placed = call.Arguments.Count(a => a.Value.Placeholder);
 

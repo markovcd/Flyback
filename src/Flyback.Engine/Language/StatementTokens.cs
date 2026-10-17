@@ -34,7 +34,7 @@ internal static class StatementTokens
 
     private static bool Unfinished(TokenKind kind) => kind
         is TokenKind.Pipe or TokenKind.BackWire or TokenKind.Assign or TokenKind.Comma
-        or TokenKind.Colon or TokenKind.Dot or TokenKind.Range or TokenKind.OpenParen
+        or TokenKind.Colon or TokenKind.Dot or TokenKind.Range or TokenKind.Spread or TokenKind.OpenParen
         or TokenKind.OpenBrace or TokenKind.Plus or TokenKind.Minus or TokenKind.Star
         or TokenKind.Slash or TokenKind.Percent;
 

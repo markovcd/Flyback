@@ -352,15 +352,27 @@ public sealed class Parser
                 : null;
         }
 
-        var body = new List<Statement>();
-        Expr? result = null;
-        IReadOnlyList<Expr>? results = null;
+        if (!Braced(out var body, out var result, out var results)) return null;
+        if (result is null && results is null) Complain(IssueCode.EmptyBody, "this body says nothing at the end of it.");
+
+        return new DefStatement(name, parameters, body, result, results, line, column);
+    }
+
+    /// <summary>
+    /// A def's or a loop's body, after its '{' and through its '}': statements, then
+    /// what it is worth. False where the closing brace is missing, said as an issue.
+    /// </summary>
+    internal bool Braced(out List<Statement> body, out Expr? result, out IReadOnlyList<Expr>? results)
+    {
+        body = [];
+        result = null;
+        results = null;
 
         SkipBreaks();
 
         while (Current.Kind is not (TokenKind.CloseBrace or TokenKind.End))
         {
-            // The last thing in the block is what the def is worth, and it is
+            // The last thing in the block is what it is worth, and it is
             // an expression rather than a statement. Recognised by being the
             // last: anything followed by the closing brace.
             if (Tuple(out var several, out var one))
@@ -388,10 +400,28 @@ public sealed class Parser
             SkipBreaks();
         }
 
-        if (!Expect(TokenKind.CloseBrace, "'}' to close the body")) return null;
-        if (result is null && results is null) Complain(IssueCode.EmptyBody, "this body says nothing at the end of it.");
+        return Expect(TokenKind.CloseBrace, "'}' to close the body");
+    }
 
-        return new DefStatement(name, parameters, body, result, results, line, column);
+    /// <summary>The items of a list, separated by commas, to the end of the tokens.</summary>
+    internal List<Expr>? Items()
+    {
+        var items = new List<Expr>();
+
+        while (Current.Kind != TokenKind.End)
+        {
+            if (expressions.Pipeline() is not { } item) return null;
+
+            items.Add(item);
+
+            if (Take(TokenKind.Comma)) continue;
+            if (Current.Kind == TokenKind.End) break;
+
+            Complain(IssueCode.Syntax, $"expected ',' between the items of the list, but found {Found()}.");
+            return null;
+        }
+
+        return items;
     }
 
     /// <summary>

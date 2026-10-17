@@ -35,6 +35,9 @@ public enum TokenKind
     Slash,
     Percent,
 
+    /// <summary><c>...</c>, which spreads a list into a call's sockets.</summary>
+    Spread,
+
     /// <summary>The end of a statement, once the continuation rules have had their say.</summary>
     NewLine,
 

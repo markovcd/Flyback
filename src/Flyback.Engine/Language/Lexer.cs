@@ -30,11 +30,14 @@ public static class Lexer
     /// <see cref="TokenKind.End"/>. Anything it cannot read is reported rather
     /// than thrown, so one bad character does not cost the rest of the file.
     /// </summary>
-    public static IReadOnlyList<Token> Scan(string source, List<LanguageIssue> issues)
+    public static IReadOnlyList<Token> Scan(string source, List<LanguageIssue> issues) => Scan(source, issues, 1, 1);
+
+    /// <summary>The same, for text that starts at <paramref name="firstLine"/> and <paramref name="firstColumn"/> of a larger text.</summary>
+    internal static IReadOnlyList<Token> Scan(string source, List<LanguageIssue> issues, int firstLine, int firstColumn)
     {
         var tokens = new List<Token>();
-        var line = 1;
-        var lineStart = 0;
+        var line = firstLine;
+        var lineStart = 1 - firstColumn;
 
         for (var i = 0; i < source.Length;)
         {
@@ -471,6 +474,7 @@ public static class Lexer
 
         if (rest.StartsWith("|>", StringComparison.Ordinal)) return Two(TokenKind.Pipe, "|>");
         if (rest.StartsWith("<-", StringComparison.Ordinal)) return Two(TokenKind.BackWire, "<-");
+        if (rest.StartsWith("...", StringComparison.Ordinal)) return Two(TokenKind.Spread, "...");
         if (rest.StartsWith("..", StringComparison.Ordinal)) return Two(TokenKind.Range, "..");
 
         return source[i] switch

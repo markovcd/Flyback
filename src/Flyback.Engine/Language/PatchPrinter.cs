@@ -306,7 +306,7 @@ public static class PatchPrinter
         if (name.Any(c => !char.IsAsciiLetterOrDigit(c) && c != '_')) return false;
         if (Lexer.Note(name) is not null) return false;
 
-        return name is not ("_" or "let" or "def" or "group" or "off" or "out" or "in" or "x" or "y" or "t" or "radius" or "angle" or "aspect");
+        return name is not ("_" or "let" or "def" or "group" or "for" or "sum" or "off" or "out" or "in" or "x" or "y" or "t" or "radius" or "angle" or "aspect");
     }
 
     /// <summary>

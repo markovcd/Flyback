@@ -149,3 +149,18 @@ Feature: A patch can be written as text
     And the patch has a shut group "bass" of 2 modules
     And the patch has a shut group "voice" of 2 modules
     And the speakers are not silent
+
+  # Specified by ADR-0208.
+  Scenario: A loop stamps out its body for each item of a list
+    Given the text:
+      """
+      let parts = for level in [0.25, 0.5] {
+        value(1) * level
+      }
+      sum(parts) |> out.left
+      out.volume = 1
+      """
+    Then it reads without complaint
+    And the speakers play 0.75
+    When the patch is written out as text and read back
+    Then the speakers play 0.75

@@ -141,6 +141,20 @@ public static class IssueCode
     public const string DefaultNotAValue = "default-not-a-value";
     public const string OutputCannotBeOff = "output-cannot-be-off";
 
+    // --- loops and lists -------------------------------------------------------
+
+    /// <summary>A loop, a spread or a sum given something that is not a list.</summary>
+    public const string NotAList = "not-a-list";
+
+    /// <summary>A range a loop counts over that is not two whole numbers, low first.</summary>
+    public const string BadCount = "bad-count";
+
+    /// <summary>A loop, or the loops of a patch together, stamped out more times than a patch is built with.</summary>
+    public const string TooManyPasses = "too-many-passes";
+
+    /// <summary>A statement about the whole patch or its panel, written inside a loop's body.</summary>
+    public const string NotInLoop = "not-in-loop";
+
     // --- the panel -------------------------------------------------------------
 
     public const string PanelInDef = "panel-in-def";
