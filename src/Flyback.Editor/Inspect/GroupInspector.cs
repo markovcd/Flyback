@@ -62,7 +62,7 @@ internal sealed class GroupInspector(
         surface.Wash.ShowBox();
         surface.Wash.Off = editor.Edits.SelectionIsOff;
 
-        plate.Named.Children.Add(Title(group, plate.Ink));
+        plate.Named.Children.Add(Title(group, plate));
 
         plate.Named.Children.Add(new TextBlock
         {
@@ -77,8 +77,7 @@ internal sealed class GroupInspector(
         if (!editor.History.Locked)
             plate.BeginRename = () =>
             {
-                if (plate.Named.Children.OfType<TextBlock>().FirstOrDefault(t => t.Name == "groupName") is { } title)
-                    Rename(group, plate.Ink, title);
+                if (plate.Title is { } title) Rename(group, plate, title);
             };
 
         // Under the name, above the description, where a module's own row sits.
@@ -327,7 +326,7 @@ internal sealed class GroupInspector(
             });
     }
 
-    private Control Title(NodeGroup group, IBrush ink)
+    private Control Title(NodeGroup group, ModulePlate plate)
     {
         var title = new TextBlock
         {
@@ -337,13 +336,15 @@ internal sealed class GroupInspector(
             FontWeight = FontWeight.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis,
             TextAlignment = TextAlignment.Left,
-            Foreground = ink,
+            Foreground = plate.Ink,
             Background = Brushes.Transparent,
 
             // Struck through while every module in the box is off — see
             // ADR-0117, and BuildTitle's own strike for a single module.
             TextDecorations = editor.Edits.SelectionIsOff ? TextDecorations.Strikethrough : null,
         };
+
+        plate.Title = title;
 
         ToolTip.SetTip(title, group.Name is null
             ? "Double-click to give this group a name of its own."
@@ -354,23 +355,23 @@ internal sealed class GroupInspector(
         title.DoubleTapped += (_, e) =>
         {
             e.Handled = true;
-            Rename(group, ink, title);
+            Rename(group, plate, title);
         };
 
         return title;
     }
 
     /// <summary>Puts a box where the box's name is.</summary>
-    private void Rename(NodeGroup group, IBrush ink, Control title) =>
+    private void Rename(NodeGroup group, ModulePlate plate, Control title) =>
         renamer.Open(
             title,
-            ink,
+            plate.Ink,
             $"{group.Title()} · Group",
             group.Name,
             group.Counted,
             NodeGroup.NameLimit,
             typed => group.Rename(typed),
             () => group.Name,
-            () => Title(group, ink),
+            () => Title(group, plate),
             () => editor.History.Record());
 }

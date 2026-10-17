@@ -32,6 +32,8 @@ internal sealed class InspectorHeader : Border
 
     private ModulePlate? shown;
     private PlateMenu? menu;
+    private TextBlock? name;
+    private Button? picture;
 
     public InspectorHeader()
     {
@@ -61,6 +63,8 @@ internal sealed class InspectorHeader : Border
         shown = plate;
         line.Children.Clear();
         menu = null;
+        name = null;
+        picture = null;
 
         if (plate?.Face is not { } face) return;
 
@@ -90,10 +94,10 @@ internal sealed class InspectorHeader : Border
 
         if (Aside is { } aside)
         {
-            var spread = Square("header-picture", Glyphs.Spread(), "");
-            spread.Click += (_, _) => aside.Toggle();
-            Grid.SetColumn(spread, 3);
-            line.Children.Add(spread);
+            picture = Square("header-picture", Glyphs.Spread(), "");
+            picture.Click += (_, _) => aside.Toggle();
+            Grid.SetColumn(picture, 3);
+            line.Children.Add(picture);
         }
 
         var more = Square("header-more", Glyphs.Dots(), "Everything that can be done to it");
@@ -107,7 +111,7 @@ internal sealed class InspectorHeader : Border
     /// <summary>Turns the picture button to what pressing it would do now.</summary>
     public void ShowAside()
     {
-        if (Aside is not { } aside || line.Children.OfType<Button>().FirstOrDefault(b => b.Name == "header-picture") is not { } button) return;
+        if (Aside is not { } aside || picture is not { } button) return;
 
         button.Content = aside.Hidden ? Glyphs.Gather() : Glyphs.Spread();
         ToolTip.SetTip(button, PictureAsideWords.Tip(aside.Hidden));
@@ -153,7 +157,7 @@ internal sealed class InspectorHeader : Border
     private Panel Named(PlateFace face, ModulePlate plate) => new StackPanel
     {
         VerticalAlignment = VerticalAlignment.Center,
-        Children = { NameText(face.Title, plate.Ink, face.Naming is not null) },
+        Children = { (name = NameText(face.Title, plate.Ink, face.Naming is not null)) },
     };
 
     /// <summary>The name, renamed by a double-tap where it can be, as the plate's is.</summary>
@@ -185,17 +189,12 @@ internal sealed class InspectorHeader : Border
     /// <summary>Puts a box where the header's name is, as a double-click does on the plate.</summary>
     private void Rename()
     {
-        if (shown is not { Face.Naming: { } naming } plate) return;
-
-        if (line.Children.OfType<DockPanel>().FirstOrDefault(p => p.Name == "header-title") is not { } row
-            || row.Children.OfType<Panel>().FirstOrDefault() is not { } named
-            || named.Children.OfType<TextBlock>().FirstOrDefault() is not { } name)
-            return;
+        if (shown is not { Face.Naming: { } naming } plate || name is not { } title) return;
 
         if (Renamer is null || shown.Face is not { } face) return;
 
         Renamer.Open(
-            name,
+            title,
             plate.Ink,
             $"{face.Title} · {face.Kind}",
             naming.Held(),
@@ -203,7 +202,7 @@ internal sealed class InspectorHeader : Border
             naming.Limit,
             naming.Rename,
             naming.Held,
-            () => NameText(naming.Held() ?? naming.Fallback, plate.Ink, renames: true),
+            () => name = NameText(naming.Held() ?? naming.Fallback, plate.Ink, renames: true),
             naming.Changed);
     }
 

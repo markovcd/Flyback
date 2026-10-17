@@ -90,6 +90,8 @@ internal sealed class ModulePlate : Decorator
     /// </summary>
     private readonly StackPanel name = new() { VerticalAlignment = VerticalAlignment.Center };
 
+    private Button? stripPicture;
+
     /// <summary>The band: the mark, the name, and on a wide panel under a mouse the buttons too.</summary>
     private readonly Grid band = new()
     {
@@ -134,6 +136,9 @@ internal sealed class ModulePlate : Decorator
 
     /// <summary>Puts a box where the name is, as a double-click on it does. Null where the block cannot be renamed.</summary>
     public Action? BeginRename { get; set; }
+
+    /// <summary>The name standing in <see cref="Named"/> now. Whoever builds it, or rebuilds it after a rename, sets it.</summary>
+    public Control? Title { get; set; }
 
     /// <summary>
     /// Lays the plate out for how it is being worked: the rows beside the name under a mouse on
@@ -200,7 +205,7 @@ internal sealed class ModulePlate : Decorator
     /// <summary>Turns the strip's picture button to what pressing it would do now.</summary>
     public void ShowAside(PictureAside aside)
     {
-        if (strip.Children.OfType<Button>().FirstOrDefault(b => b.Name == "strip-picture") is not { } button) return;
+        if (stripPicture is not { } button) return;
 
         var hidden = aside.Hidden;
 
@@ -228,7 +233,7 @@ internal sealed class ModulePlate : Decorator
             strip.Children.Add(button);
         }
 
-        var picture = PlateActions.Worded("strip-picture", Glyphs.Spread(), PictureAsideWords.Label(false), PictureAsideWords.Tip(false), 52);
+        var picture = stripPicture = PlateActions.Worded("strip-picture", Glyphs.Spread(), PictureAsideWords.Label(false), PictureAsideWords.Tip(false), 52);
         picture.Click += (_, _) => aside.Toggle();
         strip.Children.Add(picture);
 

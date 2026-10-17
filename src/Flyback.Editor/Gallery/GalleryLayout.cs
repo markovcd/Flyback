@@ -337,19 +337,19 @@ internal sealed class GalleryLayout
             var local = heading != PresetGallery.SiteHeading;
 
             count.Text = local ? Said(choice.Count(heading, choice.Kind)) : string.Empty;
-            Press(row, choice.Section == heading);
+            PressRow(row, choice.Section == heading);
         }
 
         foreach (var (kind, row, count) in worksRows)
         {
             count.Text = Said(choice.Count(choice.Section, kind));
-            Press(row, choice.Kind == kind);
+            PressRow(row, choice.Kind == kind);
         }
 
         foreach (var (kind, chip, count) in worksChips)
         {
             count.Text = Said(choice.Count(choice.Section, kind));
-            Press(chip, choice.Kind == kind);
+            PressChip(chip, choice.Kind == kind);
         }
 
         if (topicsBuilt != (choice.Topics.Count, choice.Topic))
@@ -522,27 +522,26 @@ internal sealed class GalleryLayout
             VerticalContentAlignment = VerticalAlignment.Center,
         };
 
-        Press(chip, pressed);
+        PressChip(chip, pressed);
         chip.Click += (_, _) => pick();
 
         return chip;
     }
 
-    /// <summary>Paints a row or a chip as showing what it names, or not.</summary>
-    private static void Press(Button button, bool pressed)
+    /// <summary>Paints a filter row as showing what it names, or not.</summary>
+    private static void PressRow(Button row, bool pressed)
     {
-        if (button.Name == "filter-row")
-        {
-            button.Background = pressed ? new SolidColorBrush(Colors.Node) : Brushes.Transparent;
-            button.Foreground = new SolidColorBrush(pressed ? Colors.BeamCore : Colors.Label);
-        }
-        else
-        {
-            button.Background = pressed ? new SolidColorBrush(GalleryChoice.Accent) : Brushes.Transparent;
-            button.BorderBrush = new SolidColorBrush(pressed ? GalleryChoice.Accent : Colors.Separator);
-            button.Foreground = new SolidColorBrush(pressed ? Colors.Edge : Colors.Label);
-        }
+        row.Background = pressed ? new SolidColorBrush(Colors.Node) : Brushes.Transparent;
+        row.Foreground = new SolidColorBrush(pressed ? Colors.BeamCore : Colors.Label);
+        row.Classes.Set("pressed", pressed);
+    }
 
-        button.Classes.Set("pressed", pressed);
+    /// <summary>Paints a chip as showing what it names, or not.</summary>
+    private static void PressChip(Button chip, bool pressed)
+    {
+        chip.Background = pressed ? new SolidColorBrush(GalleryChoice.Accent) : Brushes.Transparent;
+        chip.BorderBrush = new SolidColorBrush(pressed ? GalleryChoice.Accent : Colors.Separator);
+        chip.Foreground = new SolidColorBrush(pressed ? Colors.Edge : Colors.Label);
+        chip.Classes.Set("pressed", pressed);
     }
 }

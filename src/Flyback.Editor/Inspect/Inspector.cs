@@ -259,7 +259,7 @@ internal sealed class Inspector
         Wash.Show(def);
         Wash.Off = node.Off;
 
-        plate.Named.Children.Add(BuildTitle(node, def, plate.Ink));
+        plate.Named.Children.Add(BuildTitle(node, def, plate));
 
         plate.Named.Children.Add(new TextBlock
         {
@@ -290,8 +290,7 @@ internal sealed class Inspector
         if (!editor.History.Locked)
             plate.BeginRename = () =>
             {
-                if (plate.Named.Children.OfType<TextBlock>().FirstOrDefault(t => t.Name == "moduleName") is { } title)
-                    BeginRename(node, def, plate.Ink, title);
+                if (plate.Title is { } title) BeginRename(node, def, plate, title);
             };
 
         if (!string.IsNullOrEmpty(def.Description))
@@ -416,7 +415,7 @@ internal sealed class Inspector
     /// a <see cref="TextBlock"/> with no background is not there as far as the
     /// pointer is concerned.
     /// </remarks>
-    private Control BuildTitle(NodeInstance node, NodeDef def, IBrush ink)
+    private Control BuildTitle(NodeInstance node, NodeDef def, ModulePlate plate)
     {
         var title = new TextBlock
         {
@@ -431,7 +430,7 @@ internal sealed class Inspector
             FontWeight = FontWeight.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis,
             TextAlignment = TextAlignment.Left,
-            Foreground = ink,
+            Foreground = plate.Ink,
             Background = Brushes.Transparent,
 
             // Struck through while the module is switched off — see ADR-0117.
@@ -441,6 +440,8 @@ internal sealed class Inspector
         // A name on a source-built module is the name the `let` gave it, so
         // renaming here would be renaming the wrong copy — the text would put
         // the old one back on the next apply.
+        plate.Title = title;
+
         if (editor.History.Locked)
         {
             ToolTip.SetTip(title, "The text names this module. Rename it there.");
@@ -458,7 +459,7 @@ internal sealed class Inspector
         title.DoubleTapped += (_, e) =>
         {
             e.Handled = true;
-            BeginRename(node, def, ink, title);
+            BeginRename(node, def, plate, title);
         };
 
         return title;
@@ -475,17 +476,17 @@ internal sealed class Inspector
     /// the tree already, and it puts itself back from inside its own
     /// <c>LostFocus</c>.
     /// </remarks>
-    private void BeginRename(NodeInstance node, NodeDef def, IBrush ink, Control title) =>
+    private void BeginRename(NodeInstance node, NodeDef def, ModulePlate plate, Control title) =>
         renamer.Open(
             title,
-            ink,
+            plate.Ink,
             $"{CanvasPainter.Heading(node, def)} · {def.Category}",
             node.Name,
             def.Name,
             NodeInstance.NameLimit,
             typed => node.Rename(def, typed),
             () => node.Name,
-            () => BuildTitle(node, def, ink),
+            () => BuildTitle(node, def, plate),
             () => editor.History.Record());
 
     /// <summary>
