@@ -43,14 +43,15 @@ public sealed record FormulaExtra(IReadOnlyDictionary<string, NodeDef> Functions
 
     /// <summary>The formula an instance carries, as typed.</summary>
     internal static string Of(NodeInstance node) =>
-        ((ExtraField.Text)FieldOf).Value(node.StateOf(StateKey)?[FormulaField]);
+        FieldOf.Value(node.StateOf(StateKey)?[FormulaField]);
 
     /// <inheritdoc/>
     public override string Announce() =>
         $"  {StateKey} {FormulaField}, the formula as a string — not a knob";
 
-    private static readonly ExtraField FieldOf = new ExtraField.Text(FormulaField, "formula", Fresh)
+    private static readonly ExtraField.Text FieldOf = new ExtraField.Text(FormulaField, "formula", Fresh)
     {
         Help = "The formula over 'a' to 'd', as typed. One that does not read gives 0.",
+        Problem = NodeCatalog.FormulaProblem,
     };
 }

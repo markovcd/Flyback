@@ -118,17 +118,16 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
     /// than at every key: a formula half typed is not one anybody meant, and
     /// each would be a step in the history. In a box of several lines Enter
     /// starts the next one, so there it is Ctrl+Enter that keeps it.
+    /// <para>
+    /// The field's <see cref="ExtraField.Text.Problem"/> is asked about what was
+    /// kept rather than about what is being typed, since half a formula does not
+    /// read and nobody meant it yet.
+    /// </para>
     /// </remarks>
-    /// <param name="problem">
-    /// What stops the module reading a value, where the module reads one. It is
-    /// asked about what was kept rather than about what is being typed, since
-    /// half a formula does not read and nobody meant it yet.
-    /// </param>
     internal Control TextRow(
         ExtraField.Text field,
         string value,
-        Action<string> store,
-        Func<string, string?>? problem = null)
+        Action<string> store)
     {
         var row = Row("*");
 
@@ -203,7 +202,7 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
         // caret, so it stays while an unread value is being corrected.
         void Mark()
         {
-            var said = problem?.Invoke(value);
+            var said = field.Problem?.Invoke(value);
 
             if (said is null)
             {

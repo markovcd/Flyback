@@ -10,6 +10,7 @@ using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Shouldly;
 using Xunit;
+using Microsoft.Extensions.DependencyInjection;
 using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Settings;
@@ -568,6 +569,57 @@ public class MidiInputTests : EditorTest
         Select(window, midi);
 
         Layout(window).ShouldBeNull();
+    }
+
+    /// <summary>An instrument Flyback has a profile for names its channels by track, and the rows follow the device.</summary>
+    [AvaloniaFact]
+    public void A_MIDI_In_on_a_known_instrument_picks_its_channel_by_track()
+    {
+        var (patch, midi) = Board();
+        midi.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
+        {
+            [MidiExtra.DeviceField] = "midi:syntakt",
+        });
+
+        var window = Open(patch, replace: services => services.AddSingleton(new Flyback.Ui.Midi.MidiHub(new PluggedIn("Syntakt"))));
+
+        Select(window, midi);
+
+        var channel = Tracks(window);
+        channel.ShouldNotBeNull();
+
+        channel.SelectedItem = channel.ItemsSource!.Cast<ChoiceOption>().Single(option => option.Id == "3");
+        Settle(window);
+
+        var held = Editor(window).History.Patch.Find(midi.Id)!;
+        new ExtraState(new MidiExtra().Fields, held.StateOf(MidiExtra.StateKey)).Number(MidiExtra.ChannelField).ShouldBe(3f);
+
+        var device = All<ComboBox>(window).Single(box =>
+            box.ItemsSource?.Cast<object>().Any(o => o is ChoiceOption { Id: MidiSources.Keyboard }) == true);
+        device.SelectedItem = device.ItemsSource!.Cast<ChoiceOption>().Single(option => option.Id == MidiSources.Keyboard);
+        Settle(window);
+
+        Tracks(window).ShouldBeNull();
+
+        static ComboBox? Tracks(MainWindow window) => All<ComboBox>(window).SingleOrDefault(box =>
+            box.ItemsSource?.Cast<object>().Any(o => o is ChoiceOption { Name: "Every channel" }) == true);
+    }
+
+    /// <summary>One device plugged in, which nothing ever opens.</summary>
+    private sealed class PluggedIn(string name) : Flyback.Plugins.Midi.IMidiInput
+    {
+        public string Id => "plugged-in";
+
+        public string Name => "Plugged in";
+
+        public int Priority => 1;
+
+        public bool IsSupported => true;
+
+        public IReadOnlyList<Flyback.Plugins.Midi.MidiPortInfo> Ports => Flyback.Plugins.Midi.MidiPorts.Named([name]);
+
+        public Flyback.Plugins.Midi.IMidiPort Open(string port, Flyback.Plugins.Midi.MidiCallback deliver) =>
+            throw new InvalidOperationException("this test plays nothing.");
     }
 
     private static double Held(PreviewHost preview, string signal)

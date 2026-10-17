@@ -62,8 +62,9 @@ $ARGUMENTS names an item (`/burn flakes`) or a subsystem to aim it at
 - Full Core and Plugins suites, plus the project the change lives in, before the
   commit. Push, then read Build's verdict on the commit.
 - Append one tab-separated row to `docs/agents/burn-log.tsv`: today's date, the
-  item, the commit's short hash (`-` when the run found nothing), and a note of
-  what was done and what was left. The row rides in the run's commit.
+  item, and a note of what was done and what was left. The row rides in the
+  run's commit, so `git log -- docs/agents/burn-log.tsv` finds the change; a run
+  that found nothing commits its row alone.
 
 ## Reporting
 

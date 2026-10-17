@@ -39,7 +39,11 @@ public sealed record MidiExtra : NodeExtra
             DeviceField,
             "listens to",
             [.. MidiSources.All.Select(source => new ChoiceOption(source.Id, source.Name))],
-            MidiSources.Keyboard) { Help = "Where the notes come from: the computer keyboard or an instrument." },
+            MidiSources.Keyboard)
+        {
+            Help = "Where the notes come from: the computer keyboard or an instrument.",
+            Reshapes = true,
+        },
         new ExtraField.Number(IndexField, "voice", new PortSpec("voice", PortKind.Scalar, 0f, 0f, 8f, -1, PortDisplay.Integer))
         {
             Help = "Which of the notes held at once it plays: 0 shares them out, 1 to 8 takes that one.",
@@ -47,6 +51,7 @@ public sealed record MidiExtra : NodeExtra
         new ExtraField.Number(ChannelField, "channel", new PortSpec("channel", PortKind.Scalar, 0f, 0f, 16f, -1, PortDisplay.Integer))
         {
             Help = "0 hears every channel, 1 to 16 only that one.",
+            ChannelOf = DeviceField,
         },
         new ExtraField.Number(VoicesField, "voices", new PortSpec("voices", PortKind.Scalar, 1f, 1f, VoiceCounts.Most, -1, PortDisplay.Integer))
         {

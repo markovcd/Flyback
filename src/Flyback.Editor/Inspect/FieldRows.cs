@@ -53,9 +53,8 @@ internal sealed class FieldRows(NodeEditor editor, TextWriteBack writeBack, Midi
 
     private Control? FieldRow(NodeInstance node, NodeExtra extra, ExtraField field, bool reading) => field switch
     {
-        // A MIDI In's channel is a list of tracks where its instrument is known by name.
-        ExtraField.Number number when extra is MidiExtra && field.Key == MidiExtra.ChannelField
-            && TracksOf(node) is { } tracks => rows.ChoiceRow(
+        // A channel is a list of tracks where its instrument is known by name.
+        ExtraField.Number { ChannelOf: { } device } number when TracksOf(node, extra, device) is { } tracks => rows.ChoiceRow(
                 new ExtraField.Choice(field.Key, field.Label, tracks, "0"),
                 ((int)number.Value(node.StateOf(extra.Key)?[field.Key])).ToString(System.Globalization.CultureInfo.InvariantCulture),
                 next => Store(node, extra, field, JsonValue.Create(float.TryParse(next, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var channel) ? channel : 0f))),
@@ -80,10 +79,7 @@ internal sealed class FieldRows(NodeEditor editor, TextWriteBack writeBack, Midi
             {
                 Store(node, extra, field, JsonValue.Create(next));
 
-                // The keyboard's section belongs to a MIDI In on the keyboard,
-                // and the channel row's shape to its instrument, so both come and
-                // go with the device.
-                if (extra is MidiExtra && field.Key == MidiExtra.DeviceField) Dispatcher.UIThread.Post(() => editor.Reactions.Raise(new PanelStale()));
+                if (choice.Reshapes) Dispatcher.UIThread.Post(() => editor.Reactions.Raise(new PanelStale()));
             },
 
             // What the same field would say if asked again. An extra is free to
@@ -99,21 +95,16 @@ internal sealed class FieldRows(NodeEditor editor, TextWriteBack writeBack, Midi
             text.Value(node.StateOf(extra.Key)?[field.Key]),
             next =>
             {
-                if (node.TypeId != NodeCatalog.SendTypeId)
+                if (!text.LeadsBus)
                 {
                     Store(node, extra, field, JsonValue.Create(next));
                     return;
                 }
 
-                // A Send's only text is its bus, and its Receives go where it goes.
                 foreach (var receive in BusEdits.Rename(editor.History.Patch, node, next)) writeBack.Restated(receive.Id, field.Key);
 
                 writeBack.Restated(node.Id, field.Key);
-            },
-
-            // An Expression's formula is the one field whose text is a language,
-            // so it is the one that can be marked as unread.
-            node.TypeId == NodeCatalog.ExpressionTypeId ? NodeCatalog.FormulaProblem : null),
+            }),
 
         _ => null,
     };
@@ -141,12 +132,12 @@ internal sealed class FieldRows(NodeEditor editor, TextWriteBack writeBack, Midi
     }
 
     /// <summary>
-    /// The channels a MIDI In may listen to, as the tracks of the instrument it
-    /// is listening to, or null where that instrument is not one Flyback knows.
+    /// The channels a module may listen to, as the tracks of the instrument its
+    /// <paramref name="deviceField"/> names, or null where that instrument is not one Flyback knows.
     /// </summary>
-    private IReadOnlyList<ChoiceOption>? TracksOf(NodeInstance node)
+    private IReadOnlyList<ChoiceOption>? TracksOf(NodeInstance node, NodeExtra extra, string deviceField)
     {
-        var device = new ExtraState(new MidiExtra().Fields, node.StateOf(MidiExtra.StateKey)).Chosen(MidiExtra.DeviceField);
+        var device = new ExtraState(extra.Fields, node.StateOf(extra.Key)).Chosen(deviceField);
         var source = midi.Sources.FirstOrDefault(s => s.Id == device);
 
         if (source.Id is null || instruments.For(source) is not { Tracks.Count: > 0 } profile) return null;

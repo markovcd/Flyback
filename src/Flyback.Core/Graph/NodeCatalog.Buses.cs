@@ -17,13 +17,17 @@ public partial class NodeCatalog
     /// <summary>What a fresh Send and a fresh Receive are set to, so the first two placed are already a pair.</summary>
     private const string FirstBus = "bus";
 
-    private static readonly SettingsExtra BusExtra =
-        new(BusKey, [new ExtraField.Text(BusField, "bus", FirstBus) { Help = "The bus's name: a Send and a Receive with the same one are joined." }]);
+    private static readonly ExtraField.Text BusText =
+        new(BusField, "bus", FirstBus) { Help = "The bus's name: a Send and a Receive with the same one are joined." };
+
+    private static readonly SettingsExtra BusExtra = new(BusKey, [BusText]);
+
+    private static readonly SettingsExtra SendExtra = new(BusKey, [BusText with { LeadsBus = true }]);
 
     /// <summary>The bus a Send or a Receive is on, trimmed; null for any other module.</summary>
     internal static string? BusOf(NodeInstance node) =>
         node.TypeId is SendTypeId or ReceiveTypeId
-            ? ((ExtraField.Text)BusExtra.Fields[0]).Value(node.StateOf(BusKey)?[BusField]).Trim()
+            ? BusText.Value(node.StateOf(BusKey)?[BusField]).Trim()
             : null;
 
     /// <summary>Puts a Send or a Receive on <paramref name="bus"/>.</summary>
@@ -51,7 +55,7 @@ public partial class NodeCatalog
             + "without a wire across it.")
         {
             Words = "send to a bus",
-            Extras = [BusExtra],
+            Extras = [SendExtra],
         };
 
         yield return new NodeDef(

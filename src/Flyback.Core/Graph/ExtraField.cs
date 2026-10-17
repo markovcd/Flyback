@@ -67,6 +67,12 @@ public abstract record ExtraField(string Key, string Label)
         /// <inheritdoc/>
         public override string Format(JsonNode? stored) => Spec.Format(Value(stored));
 
+        /// <summary>
+        /// The key of the choice naming the instrument this is a MIDI channel of, so
+        /// the inspector can list that instrument's tracks instead of numbers.
+        /// </summary>
+        internal string? ChannelOf { get; init; }
+
         /// <summary>This field's value as the number it is, always inside the range.</summary>
         internal float Value(JsonNode? stored)
         {
@@ -123,6 +129,9 @@ public abstract record ExtraField(string Key, string Label)
 
         /// <inheritdoc/>
         public override string Format(JsonNode? stored) => Name(Value(stored));
+
+        /// <summary>Whether the panel's other rows depend on it, so it is redrawn when this changes.</summary>
+        internal bool Reshapes { get; init; }
 
         /// <summary>
         /// What is chosen, which is whatever was stored.
@@ -181,6 +190,12 @@ public abstract record ExtraField(string Key, string Label)
     {
         /// <summary>The most a value may hold, in characters.</summary>
         internal const int Limit = 4096;
+
+        /// <summary>What stops the typed text being read, or null where nothing does, for text that is a language.</summary>
+        internal Func<string, string?>? Problem { get; init; }
+
+        /// <summary>Whether the text is a Send's bus, so the Receives on it move with an edit.</summary>
+        internal bool LeadsBus { get; init; }
 
         /// <inheritdoc/>
         public override JsonNode Sane(JsonNode? stored) => JsonValue.Create(Value(stored));

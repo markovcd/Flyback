@@ -1,1 +1,2 @@
-date	item	commit	note
+date	item	note
+2026-10-17	hacks	The inspector's field rows branched on the Send, Expression and MIDI In by type id; the fields now declare it (LeadsBus, Problem, Reshapes, ChannelOf). Left: Auto remap special-cased by id in 8 editor sites; ShellLayout's bare row indices; the "Proposed: " prefix stripped back off in TranscriptView; ALSA MIDI polls every 1 ms and dies silently; PluginHost unload unverified.
