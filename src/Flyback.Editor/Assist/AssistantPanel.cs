@@ -35,7 +35,7 @@ namespace Flyback.Editor.Assist;
 /// <see cref="AssistantRun"/>'s copy.
 /// </remarks>
 [SuppressMessage("Design", "CA1001", Justification = "The session ends with its conversation, in SetAside.")]
-internal sealed class AssistantPanel : UserControl
+internal sealed partial class AssistantPanel : UserControl
 {
     private static readonly IBrush Amber = new ImmutableSolidColorBrush(Colors.Attention);
 
@@ -271,7 +271,8 @@ internal sealed class AssistantPanel : UserControl
         EditorFolders folders,
         Usage usage,
         Reactions reactions,
-        Decisions decisions)
+        Decisions decisions,
+        DrivenEditor driven)
     {
         this.reactions = reactions;
         this.chosenAssistant = chosenAssistant;
@@ -289,6 +290,7 @@ internal sealed class AssistantPanel : UserControl
         settings.Changed += (_, _) => Refresh();
 
         Content = Build();
+        Follow(driven);
 
         transcript.Shows(Voice.Briefing, settingsRepository.Current.ShowBriefing);
         transcript.Shows(Voice.Handbook, settingsRepository.Current.ShowLookups);
@@ -568,7 +570,7 @@ internal sealed class AssistantPanel : UserControl
         top.Children.Add(spent);
 
         var head = new Border { Child = top, Background = Chrome, BorderBrush = Rule, BorderThickness = new Thickness(0, 0, 0, 1) };
-        var bottom = Composer();
+        var bottom = composing = Composer();
 
         DockPanel.SetDock(head, Dock.Top);
         DockPanel.SetDock(bottom, Dock.Bottom);
@@ -852,7 +854,7 @@ internal sealed class AssistantPanel : UserControl
                 : (new TokensSpent(), 0);
 
         spent.Show(tokens, turns, settingsRepository.Current.ContextLimit);
-        model.Text = tokens.Model ?? settings.Model() ?? chosenAssistant.Value?.Name ?? "No provider";
+        model.Text = driver is { } program ? $"Driven by {program}" : tokens.Model ?? settings.Model() ?? chosenAssistant.Value?.Name ?? "No provider";
     }
 
     /// <summary>
@@ -889,6 +891,12 @@ internal sealed class AssistantPanel : UserControl
     private void ShowStatus()
     {
         if (asking) return;
+
+        if (driver is not null)
+        {
+            ShowDriven();
+            return;
+        }
 
         beacon.Opacity = 1;
         beacon.Fill = blocked is null ? Text.Muted : Amber;

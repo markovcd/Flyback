@@ -684,6 +684,21 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
         return panel;
     });
 
+    /// <summary>Every piece of text in the assistant's column, its header's included.</summary>
+    internal IReadOnlyList<string> AssistantTexts => ReadWindow(open =>
+        (IReadOnlyList<string>)[.. open.GetVisualDescendants().OfType<AssistantPanel>().Single()
+            .GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)]);
+
+    /// <summary>Waits for the assistant column's message box to be <paramref name="shown"/> or hidden.</summary>
+    internal void WaitForComposer(bool shown) => Run(async () =>
+    {
+        var open = Window();
+        await Until(
+            () => Named<Border>(open, "composer").IsEffectivelyVisible == shown,
+            () => $"the message box to be {(shown ? "shown" : "hidden")}. {Situation(open)}");
+        return true;
+    });
+
     /// <summary>Whether the assistant's column is open beside the canvas.</summary>
     public bool AssistantColumnOpen => ReadWindow(open =>
         open.GetVisualDescendants().OfType<AssistantPanel>().Single().IsVisible);

@@ -22,11 +22,18 @@ public sealed class DrivenEditorSteps(EditorDriver editor) : IDisposable
 
     private List<JsonNode> answers = [];
 
+    /// <summary>The program's end of the channel, held open from its first call until it closes.</summary>
+    private EditorTarget? target;
+
     private string Channel => OperatingSystem.IsWindows()
         ? $"flyback-specs-{folder.Name}"
         : Path.Combine(folder.FullName, "e.sock");
 
-    public void Dispose() => folder.Delete(recursive: true);
+    public void Dispose()
+    {
+        target?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        folder.Delete(recursive: true);
+    }
 
     [Given("the editor lets a program on this computer edit the open patch")]
     public void GivenDrivable() => editor.LetAProgramDrive(Channel);
@@ -38,6 +45,40 @@ public sealed class DrivenEditorSteps(EditorDriver editor) : IDisposable
     [When("{string} says {string} to the editor over flyback-cli mcp --editor")]
     public void WhenSays(string client, string text) =>
         Serve(client, new JsonObject { ["name"] = "say", ["arguments"] = new JsonObject { ["text"] = text } });
+
+    [Given("the assistant's column is open")]
+    public void GivenColumn() => editor.OpenAssistant(null);
+
+    [When("the program closes its end")]
+    public void WhenCloses()
+    {
+        editor.Turning(async () =>
+        {
+            await target!.DisposeAsync();
+            return true;
+        });
+        target = null;
+    }
+
+    [Then("the column says it is driven by {string}")]
+    public void ThenDrivenBy(string client) => editor.AssistantTexts.ShouldContain($"Driven by {client}");
+
+    [Then("the column shows the call, and has no box to type in")]
+    public void ThenShowsCall()
+    {
+        editor.WaitForComposer(shown: false);
+        editor.TranscriptLines.ShouldContain(line => line.Contains("osc.sine"));
+    }
+
+    [Then("the column says {string} stopped driving, and has its box back")]
+    public void ThenReleased(string client)
+    {
+        editor.WaitForComposer(shown: true);
+        editor.TranscriptLines.ShouldContain($"{client} stopped driving the editor.");
+    }
+
+    [Then("the column shows {string} as what was said")]
+    public void ThenSaid(string text) => editor.TranscriptLines.ShouldContain(text);
 
     [Then("the call was answered without an error")]
     public void ThenAnswered()
@@ -76,7 +117,7 @@ public sealed class DrivenEditorSteps(EditorDriver editor) : IDisposable
 
             // A channel that stops answering fails the step rather than hanging the run.
             using var cancel = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            await using var target = new EditorTarget(Channel);
+            target ??= new EditorTarget(Channel);
 
             await new McpServer(Catalog, target, Path.Combine(folder.FullName, "settings.json"))
                 .Serve(new StringReader(string.Join('\n', lines)), written, cancel.Token);
