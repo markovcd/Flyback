@@ -616,7 +616,7 @@ public class CommandTests
         var frames = new SynthRenderer();
         var pixels = new byte[width * 4 * height];
 
-        RenderCommand.Remembers(program).ShouldBeTrue();
+        StillFrame.Remembers(program).ShouldBeTrue();
         for (var frame = 0; frame < at * fps; frame++) frames.Render(program, frame / (double)fps, width, height, pixels, width * 4);
         frames.Render(program, at, width, height, pixels, width * 4);
         PngWriter.WriteBgra(drawn.FullName, pixels, width, height, width * 4);

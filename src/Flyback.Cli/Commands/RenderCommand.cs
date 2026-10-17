@@ -522,16 +522,11 @@ internal static class RenderCommand
     private static bool Listens(CompiledPatch program) =>
         program.Taps.Count > 0 || program.LiveInputs.Any(MeterSignals.Is);
 
-    /// <summary>
-    /// Draws the frame at <c>--at</c>. A picture with a history, a feedback loop or a
-    /// plane, is drawn frame by frame from the start first, as a clip would be.
-    /// </summary>
     private static void Still(
         CompiledPatch program, CompiledPatch? audio, IFrameRenderer frames, RenderOptions options, ILineInSource? input)
     {
         var stride = options.Width * 4;
         var pixels = new byte[stride * options.Height];
-        var heard = new LiveValues(program.LiveInputs);
         var speaker = audio is null || options.At <= 0d
             ? null
             : new AudioRenderer(oversample: options.Oversample)
@@ -539,37 +534,11 @@ internal static class RenderCommand
                 Aspect = SynthRenderer.AspectOf(options.Width, options.Height),
                 Input = input,
             };
-        var played = 0L;
 
-        void Hear(double seconds)
-        {
-            if (speaker is null) return;
-
-            var due = (long)Math.Round(seconds * speaker.SampleRate);
-            Play(speaker, audio!, (due - played) / (double)speaker.SampleRate);
-            played = due;
-
-            Meters.Refresh(audio!, speaker.Memory, heard);
-            Traces.Refresh(program, audio!, speaker.Memory);
-        }
-
-        var before = Remembers(program) ? (int)Math.Ceiling(options.At * options.Fps) : 0;
-
-        for (var frame = 0; frame < before; frame++)
-        {
-            Hear(Math.Min(options.At, (frame + 1) / options.Fps));
-            frames.Render(program, frame / options.Fps, options.Width, options.Height, pixels, stride, heard);
-        }
-
-        Hear(options.At);
-        frames.Render(program, options.At, options.Width, options.Height, pixels, stride, heard);
+        StillFrame.Draw(frames, program, options.At, options.Fps, options.Width, options.Height, pixels, stride, speaker, audio);
 
         PngWriter.WriteBgra(options.Out.FullName, pixels, options.Width, options.Height, stride);
     }
-
-    /// <summary>Whether a frame reads what the frames before it drew.</summary>
-    internal static bool Remembers(CompiledPatch program) =>
-        program.PlaneCount > 0 || program.Ops.Any(op => op.Code is OpCode.SampleFeedback);
 
     /// <summary>What is wrong with the numbers a render was given, or null.</summary>
     /// <remarks>Each is multiplied by a rate into a count of samples or frames, so each has a ceiling.</remarks>

@@ -16,7 +16,7 @@ public static class PresetStill
 
     private const double Settle = 1.5d;
 
-    private const double Step = 1d / 20d;
+    private const double Rate = 20d;
 
     /// <summary>
     /// Draws <paramref name="patch"/>'s still as BGRA, or says why there is none.
@@ -40,10 +40,7 @@ public static class PresetStill
 
         const int stride = Width * 4;
         var pixels = new byte[stride * Height];
-        var renderer = new SynthRenderer();
-
-        for (var step = 0; step * Step <= Settle; step++)
-            renderer.Render(video.Program, step * Step, Width, Height, pixels, stride);
+        StillFrame.Draw(new SynthRenderer(), video.Program, Settle, Rate, Width, Height, pixels, stride);
 
         return (StillKind.Picture, pixels);
     }
