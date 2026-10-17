@@ -19,6 +19,9 @@
 Dockerfile      text eol=lf
 */Dockerfile    text eol=lf
 
+# What `flyback-cli tool --skill` prints, the same bytes whichever platform built it.
+src/Flyback.Cli/Skill/SKILL.md text eol=lf
+
 *.png  binary
 *.ico  binary
 *.icns binary
