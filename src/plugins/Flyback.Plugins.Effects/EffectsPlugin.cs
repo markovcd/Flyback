@@ -104,14 +104,14 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 Tags = ["song", "acid", "techno", "bass", "drums"],
             },
             new PatchPreset(
-                MyceliumPreset.Name,
-                MyceliumPreset.Build,
+                "Mycelium",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "Mycelium.fbks"),
                 "A whole psybient track: ninety-six bars in six sections, a "
                 + "picture grown from the same signals, one voice that is the picture heard, and "
                 + "the Caterpillar asking who you are.",
                 PresetKind.Showcase)
             {
-                Files = PresetFiles.Embedded(typeof(MyceliumPreset).Assembly, MyceliumPreset.Name),
+                Files = PresetFiles.Embedded(typeof(EffectsPlugin).Assembly, "Mycelium"),
                 Tags = ["song", "psybient", "ambient", "voice", "scan"],
             },
             new PatchPreset(

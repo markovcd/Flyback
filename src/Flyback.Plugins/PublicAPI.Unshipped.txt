@@ -1,1 +1,3 @@
 #nullable enable
+Flyback.Plugins.PresetText
+static Flyback.Plugins.PresetText.Embedded(System.Reflection.Assembly! assembly, string! name) -> System.Func<Flyback.Core.Graph.ModuleCatalog!, Flyback.Core.Graph.Patch!>!

@@ -1,0 +1,437 @@
+# A whole psybient track: ninety-six bars in six sections that come round again,
+# a picture grown out of the same signals, one voice that is the picture heard,
+# and lines from Alice's meeting with the Caterpillar. The sound runs at about two
+# thirds of one core, so the thrift below (an envelope made of the clock, a lowpass
+# made of a wire) is what pays for the reverb, the scan and the seven saws.
+
+description "A whole psybient track: ninety-six bars in six sections, a picture grown"
+  "from the same signals, one voice that is the picture heard, and the Caterpillar"
+  "asking who you are."
+tags "song" "psybient" "ambient" "voice" "scan"
+length 3:50.40
+
+requires flyback.effects, flyback.picture, flyback.voice
+
+# A hundred a minute. Every rate in the patch is this tempo multiplied, so nothing
+# is typed in seconds. A phrase is eight bars, and the song is twelve of them.
+group "Clock" {
+  let tempo = tempo(bpm: 100)
+  let eighths = tempo * 2
+  let phrases = tempo * 0.03125
+  let clock = time()
+  let bars = tempo * 0.25
+  let sixteenths = tempo * 4
+  let counted = clock * sixteenths
+  let pluck = counted |> stroke()
+}
+
+# Each part's level in each section, a row a part: what cuts on the section and
+# what swells into it. A drum wants the step; a pad arriving as a step is a click.
+group "Arrangement" {
+  let cuts = arrangement(rate: phrases) [
+      0 0 0 1 1 1 0 0 1 1 1 0 |
+      0 0 0.55 1 1 1 0 0 1 1 1 0 |
+      0 0 0.464 0.857 1 1 0.0255 0.143 1 1 1 0 |
+      0 0 0 0 1 1 0 0 1 1 1 0 |
+      0 0 0 1 0 0 0 1 0 0 0 0 |
+      0.1 0.16 0.38 0.5 0.64 0.7 0.22 0.28 0.9 1 1 0.12 |
+      3 3 5 6 6 7 4 4 8 9 9 3 ]
+  let root = notes(rate: bars) [ D2 D2 D2 D2 D#2 D#2 C2 C2 ]
+  let shift = root - 38
+  let swells = arrangement(rate: phrases) [
+      0 0 0 0 0 0 0 0 1 1 1 0 |
+      0 0.031 0.764 1 1 1 0.171 0.383 1 1 1 0 |
+      0.945 0.912 0.791 0.725 0.648 0.615 0.879 0.846 0.505 0.45 0.45 0.934 |
+      1 1 0 0 0 0 0.867 0.467 0 0 0 1 ]
+  let second_half = cuts.progress |> smoothstep(edge0: 0.5)
+  let ramp = second_half * cuts.part_5
+  let opening = cuts.part_6 |> slew(rise: 4s, fall: 2s)
+  let arp_in = swells.part_2 |> slew(rise: 4s, fall: 2s)
+  let pad_in = swells.part_3 |> slew(rise: 4s, fall: 2s)
+  let lead_in = swells |> slew(rise: 4s, fall: 2s)
+  let scan_in = swells.part_4 |> slew(rise: 4s, fall: 2s)
+}
+
+# One slow voltage for what should never repeat, a die thrown every sixteenth,
+# and white noise for the snare, the hats and the riser.
+group "Chance" {
+  let weather = wander(rate: 0.05, seed: 3)
+  let dice = value(value: 3)
+    |> clouds(x: _, y: value(value: 7), z: floor(counted), scale: 1)
+  let drift = wander(rate: bars, seed: 7)
+  let hiss = noise()
+}
+
+# Three in eight over the eighths, the dub half of psydub. A Decay falls from the
+# hit whatever the gate does afterwards.
+group "Kick" {
+  let kick_hits = euclid(rate: eighths, gate_length: 0.4)
+  let thump = kick_hits |> decay(trigger: _, attack: 500us, decay: 400ms, curve: 0.65)
+
+  let kick_out = drum(
+      level: thump,
+      pitch: 41,
+      sweep: 150,
+      bend: 5,
+      drive: 2.5) * cuts
+  let duck = duck(key: thump * cuts, depth: 0.7, attack: 100us, release: 100us)
+}
+
+# Two and four with no sequencer: half the beat rate, offset half a cycle, is a
+# stroke that restarts on every backbeat.
+group "Snare" {
+  let snare_out = (
+      hiss(
+          cutoff: 1900,
+          resonance: 0.3,
+          gain: 2.7,
+          band: "band") + sine(freq: 185, amp: 0.5)) * stroke(rate: tempo * 0.5, offset: 0.5, curve: 10) * cuts.part_4
+}
+
+# How many of sixteen steps carry a hat follows the weather; a Euclid spreads them
+# evenly, so the pattern changes shape rather than filling in.
+group "Hats" {
+  let density = weather
+    |> remap(in_low: 0.2, in_high: 0.8, out_low: 5, out_high: 12)
+  let hat_hits = euclid(
+      rate: sixteenths,
+      steps: 16,
+      hits: density,
+      rotate: 2,
+      gate_length: 0.3,
+      curve: 7)
+  let hat_out = hiss * hat_hits.stroke * cuts.part_3
+}
+
+# Silent on the beat, where the kick is, then three sixteenths. The rests silence
+# the note and hold its pitch, so the Filter is not swept by a rest.
+group "Bass" {
+  let bass_seq = notes(rate: sixteenths, gate_length: 0.7, shape: 0.03) [
+      D2%0 D2 D2%0.8 D2%0.9 D2%0 D2 D2%0.8 D3%0.9 D2%0 D2 D2%0.8 D2%0.9 D2%0 D2 D3%0.85
+      D2%0.9 ]
+  let bass_hz = bass_seq + shift |> note(note: _)
+  let bass_reach = opening |> remap(in_low: 0, out_low: 300, out_high: 2600)
+  let bass_tone = saw(freq: bass_hz, amp: 0.7) + sine(freq: bass_hz, amp: 0.6)
+    |> filter(cutoff: pluck * bass_reach + 110, resonance: 0.45)
+  let bass_grit = bass_tone * bass_seq.gate |> drive(drive: 3)
+
+  let bass_sum = (
+      bass_grit + sine(freq: bass_hz * 0.5, amp: 0.55) * bass_seq.gate) * duck.gain
+  let bass_out = bass_sum * cuts.part_2
+}
+
+# A tune nobody wrote: a one-bar sine knocked about by a die every sixteenth and
+# snapped to the scale. It rests while the drift is low.
+group "Arp" {
+  let jitter = dice |> remap(in_low: 0, out_low: -6, out_high: 6)
+  let arp_note = sine(freq: bars, amp: 9, bias: 66) + jitter
+    |> tune() [ D D# F# G A A# C ]
+  let arp_gate = step(0.4, drift)
+  let arp_open = opening |> remap(in_low: 0, out_low: 600, out_high: 3800)
+  let arp_voice = pulse(
+      freq: arp_note,
+      width: sine(freq: 0.13, amp: 0.3, bias: 0.5),
+      amp: 0.8) * pluck * arp_gate
+    |> filter(cutoff: arp_open, resonance: 0.45)
+  let arp_out = arp_voice * arp_in
+}
+
+# Five in twelve against everything else's sixteen. The arp's note an octave up,
+# held on the hit, since a String's pitch is its delay line.
+group "Drips" {
+  let drip_hits = euclid(
+      rate: sixteenths,
+      steps: 12,
+      hits: 5,
+      rotate: 3,
+      gate_length: 0.3)
+  let drip_hz = arp_note.note |> note(note: _, octave: 1) |> hold(trigger: drip_hits)
+  let drip_out = string(
+      trigger: drip_hits,
+      freq: drip_hz,
+      decay: 900ms,
+      brightness: 0.35) * pad_in
+}
+
+# The one melody written down, kept back for the peak, with the rests holding
+# their pitch so the glide slides across a gap.
+group "Lead" {
+  let lead_seq = notes(rate: sixteenths, gate_length: 0.85, shape: 0.06) [
+      D4 D4%0 D#4 D4 F#4 D4%0 A4 G4%0.8 D5 C5%0 A#4 A4%0.8 G4 F#4%0.8 D#4 D4%0 ]
+  let lead_hz = lead_seq |> slew(rise: 25ms, fall: 25ms) |> note(note: _)
+  let fold_depth = sine(freq: 0.037) |> remap(out_low: 1.2, out_high: 3.2)
+  let cut_floor = sine(freq: 0.021) |> remap(out_low: 350, out_high: 1500)
+  let squelch = saw(freq: lead_hz, amp: 0.8) |> fold(drive: fold_depth)
+    |> filter(cutoff: lead_seq.gate * pluck * 2600 + cut_floor, resonance: 0.78)
+  let lead_out = squelch * lead_seq.gate * lead_in
+}
+
+# Root, fifth and octave: seven detuned saws for the root, a triangle and a sine
+# above it. Opened and closed by the weather.
+group "Pad" {
+  let pad_hz = root + 12 |> note(note: _)
+  let pad_cut = weather
+    |> remap(in_low: 0.2, in_high: 0.8, out_low: 350, out_high: 1700)
+  let pad_tone = osc(
+      freq: pad_hz,
+      detune: 0.35,
+      mix: 0.8,
+      amp: 0.5) + triangle(freq: pad_hz * 1.498307, amp: 0.35) + sine(freq: pad_hz * 2, amp: 0.25)
+    |> filter(cutoff: pad_cut, resonance: 0.25)
+  let wide = pad_tone * sine(freq: 0.043, amp: 0.2, bias: 0.8) * pad_in
+    |> chorus(rate: 0.17, depth: 0.7, mix: 0.6)
+}
+
+# The plane turns slowly, jumps to a new angle with every section, and is pushed
+# in by the kick's gate. More wedges as the track fills.
+group "Picture: Space" {
+  let kick_seen = kick_hits * cuts
+  let pump = kick_seen |> remap(in_low: 0, out_low: 1, out_high: 0.92)
+  let placed = transform(
+      zoom: pump,
+      angle: clock * 0.03 + cuts.part_6 * 2,
+      order: "turn")
+  let plane = placed |> kaleidoscope(segments: cuts.part_7)
+}
+
+# The mycelium: Cells read off a plane bent by a three-octave field, which the
+# Scan also hears. One minus a smoothstep of 'edge' is the walls alone, lit.
+group "Picture: Growth" {
+  let field = plane
+    |> fractal(z: clock * 0.1, scale: 2.2, roughness: 0.55, octaves: "3")
+  let cell_size = cuts.part_6 |> remap(in_low: 0, out_low: 3, out_high: 6.5)
+
+  let reach = weather |> remap(in_low: 0, out_low: 0.1, out_high: 0.5)
+  let bent = plane |> warp(by: field, amount: reach)
+  let colony = bent |> cells(z: clock * 0.12, scale: cell_size, jitter: 0.9)
+  let wall = colony.edge |> smoothstep(edge1: 0.09)
+  let threads = 1 - wall
+
+  let cell_roll = colony.cell * 997 |> dice(seed: hat_hits.index * 16)
+  let spark = step(0.88, cell_roll) * hat_hits * cuts.part_3
+}
+
+# The palette looks up by the field, the cell, a slow crawl and the chord, so the
+# harmony changing is seen. Its spread widens to the whole spectrum at the peak.
+group "Picture: Color" {
+  let hue_at = fract(
+      field * 0.6 + colony.cell * 0.35 + (clock * 0.013 + shift * 0.04))
+  let tint = cuts.part_6
+    |> remap(in_low: 0, out_low: 0.08, out_high: 0.36)
+  let shade = colony |> remap(in_low: 0, out_low: 1.15, out_high: 0.2)
+  let fading = gain(gain: 0.9)
+
+  let throb = bass_seq.gate * pluck * cuts.part_2
+    |> remap(in_low: 0, out_low: 0.55, out_high: 1.3)
+
+  let vein_ink = fract(hue_at + 0.5)
+    |> palette(t: _, spread: tint, brightness: 0.6, contrast: 0.4)
+    |> gain(gain: threads * throb + spark)
+  let glow = max(vein_ink, fading)
+  let grown = hue_at
+    |> palette(t: _, cycles: 1.5, spread: tint, brightness: 0.45)
+    |> gain(gain: shade)
+    |> layer(base: _, top: glow, mode: "add")
+}
+
+# The chord as a shape: six points on D, seven on E flat, four on C, sharpened
+# while the lead sounds. Only the outlines are drawn.
+group "Picture: Mandala" {
+  let turned = transform(zoom: pump, angle: clock * -0.11, order: "turn")
+  let points = shift + 6
+  let halo = circle(radius: 0.62) |> fill(distance: _, softness: 0.006, width: 0.008)
+  let seen = kick_seen |> remap(in_low: 0, out_low: 0.55, out_high: 1.2)
+
+  let sharpness = lead_seq.gate * swells
+    |> remap(in_low: 0, out_low: 0.35, out_high: 0.75)
+  let petals = turned
+    |> star(radius: 0.46, points: points, sharpness: sharpness)
+  let form = turned |> polygon(radius: 0.2, sides: points)
+    |> combine(a: petals, b: _, smoothness: 0.08)
+  let seal = form.difference |> fill(distance: _, softness: 0.006, width: 0.014)
+
+  let thud = kick_out |> meter(window: 30ms)
+  let sigil = fract(hue_at + 0.33)
+    |> palette(t: _, spread: 0.3, brightness: 0.7, contrast: 0.3)
+    |> gain(gain: (seal.outline + halo.outline * 0.6) * (seen + thud.peak * 0.5))
+}
+
+# The arp as rings, a higher note a tighter ripple, drawn outside the star; and
+# where each drip lands.
+group "Picture: Ripples" {
+  let crest = arp_note.note
+    |> remap(in_low: 50, in_high: 86, out_low: 3, out_high: 13)
+    |> rings(freq: _, offset: clock * -0.8)
+    |> smoothstep(edge0: 0.86)
+  let outside = petals |> smoothstep(edge1: 0.25)
+  let crest_lit = crest * outside * pluck * arp_gate
+
+  let drip_at = translate(
+      dx: sin(drip_hits.index * 40) * 0.9,
+      dy: cos(drip_hits.index * 23) * 0.6)
+  let drop = drip_at |> circle(radius: 0.09) |> fill(distance: _)
+  let splash = drop.outline * drip_hits * swells.part_3
+  let marks = crest_lit * swells.part_2 * 0.7 + splash
+}
+
+# Two reads of the last frame, one pulled in and bent by the field, one backing
+# away, split into fringes as the trail ages.
+group "Picture: Feedback" {
+  let drag = warp(by: field, amount: 0.015)
+  let lurch = kick_hits |> remap(in_low: 0, out_low: 0.004, out_high: 0.03)
+  let closer = drag |> transform(zoom: 1.02, angle: lurch)
+  let further = transform(zoom: 0.985, angle: -0.012)
+  let cool = further |> feedback() |> split()
+  let memory = cuts.part_6 |> remap(in_low: 0, out_low: 0.93, out_high: 0.8)
+  let trail = closer |> feedback()
+    |> split()
+    |> rgb(r: _, g: cool.g, b: cool.b)
+    |> gain(gain: memory)
+}
+
+# The picture heard: a circle swept round the fractal field at the pad's pitch,
+# so the image is the wavetable. A Mix and a wire back into it is a cheap lowpass.
+group "Picture Voice" {
+  let read_at = weather |> remap(in_low: 0, out_low: -0.5, out_high: 0.5)
+  let reader = field.folded |> scan(rate: pad_hz, radius: 0.35, x: read_at)
+  let heard = math.mix(b: reader, t: 0.045)
+  let scan_out = heard * scan_in
+}
+
+# The hiss through a band that climbs nearly five octaves in four bars.
+group "Riser" {
+  let sweep_cut = ramp |> remap(in_low: 0, out_low: 250, out_high: 7000)
+  let riser = hiss(
+      level: ramp,
+      cutoff: sweep_cut,
+      resonance: 0.55,
+      gain: 1.6,
+      band: "band")
+}
+
+# Where the song is, in phrases. A Sample is silent before its clip starts and
+# after it ends, so each line is read from when it is due and needs no trigger.
+group "Words" {
+  # Each line: its clip, the phrase it starts on, a phrase it starts again on, and
+  # how many phrases that restart takes off. A zero never restarts.
+  let lines = [
+    ("sleepy-voice.wav", 0.5, 0, 0),
+    ("who-are-you.wav", 1.75, 6, 4.25),
+    ("who-i-was.wav", 6.125, 0, 0),
+    ("so-many-sizes.wav", 6.625, 0, 0),
+    ("one-side.wav", 7.5, 0, 0),
+    ("butterfly.wav", 11.5, 0, 0),
+  ]
+  let song_at = fract(clock * phrases * 0.083333336) * 12
+  let spoken = for (file, at, again, back) in lines {
+    (song_at - at - step(again, song_at) * back) / phrases |> sample(file, level: 1.25)
+  }
+  let words = sum(spoken)
+}
+
+# The Echo's own feedback is at nothing: the repeats come round through a wire
+# instead, darkened and worn on the way.
+group "Dub Echo" {
+  let send = arp_out
+    |> mixer(
+        in_1: _,
+        level_1: 0.8,
+        in_2: drip_out,
+        level_2: 0.7,
+        in_3: lead_out,
+        level_3: 0.6,
+        in_4: snare_out,
+        level_4: 0.2)
+  let dark = math.mix(t: 0.06)
+  let worn = dark |> drive(drive: 1.5)
+  let returned = worn * 0.55
+
+  let sent = send + words * 0.3
+  let taps = sent + returned |> echo(tempo: tempo, feedback: 0, mix: 1)
+}
+
+# One Reverb on a send, fully wet, fed by what should sound far away.
+group "Room" {
+  let room_send = wide
+    |> mixer(
+        in_1: _,
+        level_1: 0.5,
+        in_2: taps,
+        level_2: 0.5,
+        in_3: drip_out,
+        level_3: 0.8,
+        in_4: scan_out,
+        level_4: 0.8)
+  let room = room_send + snare_out * 0.3 + words * 0.35
+    |> reverb(size: 0.85, decay: 0.8, mix: 1)
+}
+
+# Three Desks chained by their buses: the rhythm, the music, and the returns,
+# with the arp and the drips leaned in a pair of Mixers.
+group "Desk" {
+  let lean_r = arp_out
+    |> mixer(in_1: _, level_1: 0.3, in_2: drip_out, level_2: 0.55)
+
+  let rhythm = kick_out
+    |> desk(
+        left_1: _,
+        level_1: 0.9,
+        left_2: bass_out,
+        level_2: 0.7,
+        left_3: snare_out,
+        level_3: 0.85,
+        left_4: hat_out,
+        level_4: 0.4)
+  let music = arp_out
+    |> mixer(in_1: _, level_1: 0.45, in_2: drip_out, level_2: 0.35)
+    |> desk(
+        left_1: wide,
+        right_1: wide.wide,
+        level_1: 0.5,
+        left_2: lead_out,
+        level_2: 0.5,
+        left_3: _,
+        right_3: lean_r,
+        left_4: riser,
+        level_4: 0.5,
+        bus_left: rhythm.bus_left,
+        bus_right: rhythm.bus_right)
+  let returns = taps
+    |> desk(
+        left_1: _,
+        right_1: taps.right,
+        level_1: 0.55,
+        left_2: room,
+        right_2: room.wide,
+        level_2: 0.5,
+        left_3: scan_out,
+        level_3: 0.4,
+        left_4: words,
+        bus_left: music.bus_left,
+        bus_right: music.bus_right,
+        trim: 0.9)
+}
+
+# The growth, the mandala screened over it, the ripples added, the Scan's trace
+# laid on while its voice is in, and the corners darkened.
+group "Picture: Print" {
+  let stamped = grown |> layer(base: _, top: sigil, mode: "screen")
+  let richness = cuts.part_6
+    |> remap(in_low: 0, out_low: 0.85, out_high: 1.35)
+
+  let fresh = stamped + marks
+    |> layer(base: _, top: reader.view, amount: swells.part_4, mode: "add")
+    |> vignette(from: 0.3, to: 1.6)
+
+  max(trail, fresh) |> fold(drive: ramp * 1.5 + 1)
+    |> grade(color: _, saturation: richness, contrast: 1.12, gamma: 1.15)
+    |> out.color
+}
+
+fading.color <- glow
+heard.a <- heard
+dark.a <- dark
+dark.b <- taps.right
+returns |> out.left
+returns.right |> out.right
+out.volume = 0.7

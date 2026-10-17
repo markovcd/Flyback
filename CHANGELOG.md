@@ -3,6 +3,7 @@
 ## Unreleased
 
 - `flyback-cli tool` runs the assistant's tools one call at a time, with undo, so your own Claude Code or Codex can build patches; `tool --skill` prints the skill that teaches it how.
+- A plugin can ship a preset written in the text language with `PresetText.Embedded`, and Mycelium now is one.
 - The text language has loops: `for (pitch, level) in [(A2, 0.5), (E3, 0.3)] { ... }` stamps out its body per item, with lists, `...list` and `sum(list)`.
 - A panel knob can be played as a switch or a button, on screen and from a controller's button or pad: `panel drop = 0, switch`.
 - A Plot in the Picture plugin draws a pitch function as a glowing curve across beats with a dot at now, and Plots chain through `under` for a song made of functions.
