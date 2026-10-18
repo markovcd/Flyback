@@ -67,6 +67,19 @@ public partial class PatchWorkbenchTests
         Knob(bench).ShouldBe(0.25f);
     }
 
+    /// <summary>A file written with Windows line endings keeps them through an edit, however the edit spells its own.</summary>
+    [Fact]
+    public async Task An_edit_keeps_the_line_endings_the_text_was_written_with()
+    {
+        const string text = "# the one knob\r\nlet knob1 = value(value: 0.25)\r\nknob1 |> out.color\r\n";
+        var bench = new PatchWorkbench(NodeCatalog.BuiltIn, PatchLanguage.Build(text, NodeCatalog.BuiltIn).Patch, text: text);
+
+        var turned = await Edit(bench, "knob\nlet knob1 = value(value: 0.25)", "knob\nlet knob1 = value(value: 0.75)");
+
+        turned.Ok.ShouldBeTrue(turned.Text);
+        bench.Text.ShouldBe(text.Replace("0.25", "0.75"));
+    }
+
     /// <summary>A document the text owns is edited in its own words, comments and all.</summary>
     [Fact]
     public async Task A_workbench_over_text_edits_that_text_and_keeps_its_comments()

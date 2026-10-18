@@ -66,7 +66,10 @@ internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, 
         if (!ToolFields.Edits.List(arguments, out var edits) || edits.GetArrayLength() == 0)
             return ToolOutcome.Refused($"{ToolFields.Edits.Quoted} is required: a list of {{find, replace}} pieces of the patch's text.");
 
-        var text = reports.Text().ReplaceLineEndings("\n");
+        // Matched with plain line feeds, and written back with the line endings the text had.
+        var written = reports.Text();
+        var newline = written.Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : "\n";
+        var text = written.ReplaceLineEndings("\n");
 
         if (string.IsNullOrWhiteSpace(text))
             return ToolOutcome.Refused("the patch is empty, so there is nothing to edit; build it with write_patch.");
@@ -105,7 +108,7 @@ internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, 
             changed.Add(Lines(text, at, replace.Length));
         }
 
-        var load = Adopted(text);
+        var load = Adopted(text.ReplaceLineEndings(newline));
 
         if (!load.Ok) return ToolOutcome.Refused($"the edited patch does not read, so nothing was changed:{Environment.NewLine}{Complaints(load)}");
 
