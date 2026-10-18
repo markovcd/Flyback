@@ -117,16 +117,13 @@ Each of these ends the run, says which one and why, and changes no file.
 
 ## The changelog
 
-The `changelog` skill has the rule; this is the release's reading of it.
-
-Groom `## Unreleased` before renaming it:
+The `changelog` skill has the rule, and `ChangelogTests` holds `## Unreleased` to it, so the section arrives
+grouped and terse. Read it once more for what no test sees:
 
 - **One bullet per feature.** Two bullets about the same thing are one bullet.
-  Cut clauses starting "which", "so that", "because".
 - **Nothing a user would not notice.** Drop bullets that are only tests, ADRs,
   comments, the README or a refactor. No Internals section.
-- **Group under `###` headings** the way 0.4.0 does — Modules, Presets, Viewer,
-  Interface, Fixes — once there are enough bullets to need them.
+- **Drop the headings left empty.**
 
 Then rename the heading and count the run:
 
@@ -142,7 +139,7 @@ into the binary to fill the What's-new window — a malformed heading ships a
 release that cannot describe itself. Count with
 `git rev-list --count v0.4.0..HEAD`.
 
-Leave an empty `## Unreleased` above it for the next bullet.
+Leave a `## Unreleased` above it holding the skill's headings, each empty, for the next bullet to go under.
 
 ## The plugin contract
 
