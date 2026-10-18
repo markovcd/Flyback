@@ -46,9 +46,9 @@ public class DocumentIdentityTests : EditorTest
         Service<PatchFiles>(window).IsBundle.ShouldBeTrue();
     }
 
-    /// <summary>A file picked with no path on this machine joins what the document carries, replacing one of its name.</summary>
+    /// <summary>A file picked with no path on this machine joins what the document carries, under its own name.</summary>
     [AvaloniaFact]
-    public void A_carried_file_joins_the_bundle_and_replaces_its_namesake()
+    public void A_carried_file_joins_the_bundle()
     {
         var window = Open();
         var files = Service<PatchFiles>(window);
@@ -56,11 +56,29 @@ public class DocumentIdentityTests : EditorTest
         files.Became("nebula", beside: null, new BundleFiles(new Dictionary<string, byte[]> { ["files/moon.png"] = [1] }));
 
         files.Carry("../tune.mid", [2]).ShouldBe("files/tune.mid");
-        files.Carry("tune.mid", [3]).ShouldBe("files/tune.mid");
+        files.Carry("tune.mid", [2]).ShouldBe("files/tune.mid");
 
         files.IsBundle.ShouldBeTrue();
         files.Carried.ShouldNotBeNull().Bytes.Keys.Order().ShouldBe(["files/moon.png", "files/tune.mid"]);
-        files.Bytes()("files/tune.mid").ShouldBe([3]);
+        files.Bytes()("files/tune.mid").ShouldBe([2]);
+    }
+
+    /// <summary>
+    /// What a carried path holds never changes, so another module that names it, or
+    /// an undo back to it, still has the file it had.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_different_file_of_a_carried_name_is_carried_beside_it()
+    {
+        var window = Open();
+        var files = Service<PatchFiles>(window);
+
+        files.Carry("kick.wav", [1]).ShouldBe("files/kick.wav");
+        files.Carry("kick.wav", [2]).ShouldBe("files/kick (2).wav");
+        files.Carry("kick.wav", [3]).ShouldBe("files/kick (3).wav");
+
+        files.Bytes()("files/kick.wav").ShouldBe([1]);
+        files.Bytes()("files/kick (2).wav").ShouldBe([2]);
     }
 
     /// <summary>

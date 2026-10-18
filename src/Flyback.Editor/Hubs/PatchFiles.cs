@@ -450,17 +450,25 @@ internal sealed class PatchFiles
 
     /// <summary>
     /// Carries <paramref name="bytes"/> under <paramref name="name"/> as a bundle
-    /// would, replacing a file of that name, and answers the path the patch names it by.
+    /// would, and answers the path the patch names it by.
     /// </summary>
-    /// <remarks>The document is a bundle from here on, since nothing else holds the file.</remarks>
+    /// <remarks>
+    /// The document is a bundle from here on, since nothing else holds the file.
+    /// A carried path never changes what it holds, since another module or an undo
+    /// may name it: a different file of a taken name is numbered, as a bundle numbers it.
+    /// </remarks>
     public string Carry(string name, byte[] bytes)
     {
-        var path = PatchBundle.Entry(name);
-
         Dictionary<string, byte[]> held = new(StringComparer.OrdinalIgnoreCase);
 
         if (Carried is { } carried)
             foreach (var (kept, keptBytes) in carried.Bytes) held[kept] = keptBytes;
+
+        var path = PatchBundle.Entry(name);
+        var (stem, suffix) = (Path.GetFileNameWithoutExtension(path), Path.GetExtension(path));
+
+        for (var n = 2; held.TryGetValue(path, out var had) && !had.AsSpan().SequenceEqual(bytes); n++)
+            path = PatchBundle.Entry($"{stem} ({n}){suffix}");
 
         held[path] = bytes;
 
