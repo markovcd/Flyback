@@ -17,8 +17,8 @@ cd "$(dirname "$0")/.."
 
 build=(docker buildx build "${builder[@]}" "${cache[@]}" --target coverage --output type=local,dest=coverage)
 
-# GitHub's runners read the Build workflow's cache and write none of their own,
-# so a run never evicts what the gate depends on.
+# GitHub's runners read the site's cache and write none of their own,
+# so a run never evicts what the Worker depends on.
 if [ "${GITHUB_ACTIONS:-}" != true ]; then
   # Built as release.sh builds here, so the gate's layers are shared with it.
   . ./scripts/release-key.sh

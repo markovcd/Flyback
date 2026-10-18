@@ -127,15 +127,15 @@ jobs:
             for (const name of ['ACTIONS_CACHE_URL', 'ACTIONS_CACHE_SERVICE_V2', 'ACTIONS_RESULTS_URL', 'ACTIONS_RUNTIME_TOKEN'])
               if (process.env[name]) core.exportVariable(name, process.env[name]);
 
-      # The site's own scope in GitHub's layer cache, so the gate's is never overwritten;
-      # the gate's is read too, for the SDK image and the workload both start from.
+      # The site's own scope in GitHub's layer cache; the gate reads its base and
+      # tools layers from it.
       - name: Build the pages, flyback-site and the defaults
         env:
           RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
           VERSION: ${{ steps.version.outputs.version }}
         run: >-
           docker buildx build --target site-assets --build-arg VERSION="$VERSION"
-          --cache-from type=gha,scope=site --cache-from type=gha
+          --cache-from type=gha,scope=site
           --cache-to type=gha,scope=site,mode=max
           --secret id=release-key,env=RELEASE_SIGNING_KEY --output type=local,dest=out .
 

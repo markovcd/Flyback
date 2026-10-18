@@ -78,11 +78,11 @@ jobs:
             for (const name of ['ACTIONS_CACHE_URL', 'ACTIONS_CACHE_SERVICE_V2', 'ACTIONS_RESULTS_URL', 'ACTIONS_RUNTIME_TOKEN'])
               if (process.env[name]) core.exportVariable(name, process.env[name]);
 
-      # The SDK image, the apt packages and the restore are the same on almost
-      # every run, so the layer cache turns them into a lookup (ADR-0120).
+      # On a self-hosted runner the layer cache makes the apt packages and the
+      # restore a lookup; on GitHub's only the base and tools layers are (ADR-0120).
       #
-      # It also means a commit that changes nothing in the build context hits
-      # the cache all the way through and runs no tests. The workflows are in
+      # On a self-hosted runner a commit that changes nothing in the build context
+      # hits the cache all the way through and runs no tests. The workflows are in
       # the context, since a test reads them. A green check here is about the
       # context, not about the run.
       #

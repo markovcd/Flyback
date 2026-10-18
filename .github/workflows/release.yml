@@ -52,9 +52,9 @@ jobs:
 
   release:
     # Only from main. release.sh runs the gate again and publishes from that same
-    # build; on GitHub's runners it reads the layer cache main's gate wrote, so the
-    # gate is a lookup, and a self-hosted runner has a cache of its own. The key is
-    # the secret below, held in this step's environment and never written to a file.
+    # build; each runner keeps a cache of its own, so on another machine from
+    # ci.yml's run that gate is a rebuild and a retest. The key is the secret
+    # below, held in this step's environment and never written to a file.
     needs: runner
     runs-on: ${{ fromJSON(needs.runner.outputs.runs-on) }}
     # About six minutes on a warm self-hosted cache, several times that cold on

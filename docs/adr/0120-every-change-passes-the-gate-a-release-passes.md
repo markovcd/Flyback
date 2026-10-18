@@ -90,3 +90,13 @@ red: of 100 runs, 29 were cancelled, and two real breaks were first seen on the
 commit after them. A push to `main` now runs to the end in a group of its own
 commit; a pull request's older run is still cancelled. The weekly Coverage run
 says in one line why it failed, and a scheduled failure opens an issue.
+
+**2026-10-18 — on GitHub's runners the gate writes no layer cache.** The run
+cache above never reached GitHub's: buildx drops a gha cache without a word when
+the job's cache token is not in a `run:` step's environment, and it never is.
+With the token handed over, exporting the gate's layers took about ten minutes a
+run and saved only the base and tools layers, since `COPY . .` comes before the
+restore and every commit changes it. The gate there now reads those two layers
+from the site's scope, which the Worker writes, and writes nothing. A
+self-hosted runner keeps its own cache, and what the amendment above says still
+holds there.

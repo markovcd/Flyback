@@ -15,9 +15,6 @@ cd "$(dirname "$0")/.."
 
 . ./scripts/builder.sh
 
-# Only GitHub's runners write the shared cache; a self-hosted one has its own.
-[ "${#cache[@]}" -gt 0 ] && cache+=(--cache-to type=gha,mode=max)
-
 # The test run never fails this build, so the reports come out of a failing one.
 # What does fail it is a build that stops before the tests: a compile error, a
 # locked restore. Its log is kept beside the reports and its errors summarized.
