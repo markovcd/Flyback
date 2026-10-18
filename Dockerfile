@@ -300,20 +300,21 @@ COPY Directory.Build.props Directory.Build.targets Directory.Packages.props glob
 COPY src/ src/
 
 # The viewer and the editor compiled ahead of time are most of the site's build.
-# Each is a stage of its own, so BuildKit compiles them side by side with the stills.
+# Each is a stage of its own, so BuildKit compiles them side by side with the stills,
+# each with a package cache of its own: restores running at once into one cache collide.
 FROM site-source AS site-viewer
-RUN --mount=type=cache,target=/root/.nuget/packages \
+RUN --mount=type=cache,id=nuget-site-viewer,target=/root/.nuget/packages \
     Version="${VERSION}" dotnet publish src/Flyback.Viewer.Web -c Release -p:RunAOTCompilation=true -o /out/viewer -nologo -v:q
 
 FROM site-source AS site-editor
-RUN --mount=type=cache,target=/root/.nuget/packages \
+RUN --mount=type=cache,id=nuget-site-editor,target=/root/.nuget/packages \
     Version="${VERSION}" dotnet publish src/Flyback.Editor.Web -c Release -p:RunAOTCompilation=true -o /out/editor -nologo -v:q
 
 # The desktop editor beside the stills command embeds the changelog and the icons.
 FROM site-source AS site-stills
 COPY CHANGELOG.md flyback.ico flyback.icns flyback.png ./
 COPY scripts/stills.sh scripts/
-RUN --mount=type=cache,target=/root/.nuget/packages \
+RUN --mount=type=cache,id=nuget-site-stills,target=/root/.nuget/packages \
     Version="${VERSION}" ./scripts/stills.sh /out/stills
 
 # What the preset site's Worker serves and starts with, for the Worker workflow to
