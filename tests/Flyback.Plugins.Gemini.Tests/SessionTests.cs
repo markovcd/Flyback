@@ -26,9 +26,9 @@ public class SessionTests
     /// </summary>
     private static readonly (string Name, string Arguments)[] Building =
     [
-        ("add_module", """{"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":0.5}]}"""),
-        // The Output is already there under the handle the workbench gave it.
-        ("connect", """{"from":"knob1","to":"output1","to_port":"color"}"""),
+        ("write_patch", """{"source":"let knob1 = value(value: 0.5)"}"""),
+        // The Output is already there, and the text calls it out.
+        ("edit_patch", """{"edits":[{"find":"let knob1 = value(value: 0.5)","replace":"let knob1 = value(value: 0.5)\nknob1 |> out.color"}]}"""),
     ];
 
     /// <summary>
@@ -39,10 +39,8 @@ public class SessionTests
     /// </summary>
     private static readonly (string Name, string Arguments)[] Sounding =
     [
-        ("add_module", """{"type_id":"time","handle":"clock1"}"""),
-        ("add_module", """{"type_id":"osc.sine","handle":"tone1","knobs":[{"port":"freq","value":440}]}"""),
-        ("connect", """{"from":"clock1","from_port":"t","to":"tone1","to_port":"in"}"""),
-        ("connect", """{"from":"tone1","to":"output1","to_port":"left"}"""),
+        ("write_patch", """{"source":"let tone1 = t |> sine(freq: 440)"}"""),
+        ("edit_patch", """{"edits":[{"find":"let tone1 = t |> sine(freq: 440)","replace":"let tone1 = t |> sine(freq: 440)\ntone1 |> out.left"}]}"""),
     ];
 
     /// <summary>
@@ -57,8 +55,7 @@ public class SessionTests
     /// </remarks>
     private static readonly (string Name, string Arguments)[] Mute =
     [
-        ("add_module", """{"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":0}]}"""),
-        ("connect", """{"from":"knob1","to":"output1","to_port":"left"}"""),
+        ("write_patch", """{"source":"let knob1 = value(value: 0)\nknob1 |> out.left"}"""),
     ];
 
     // --- the endings --------------------------------------------------------
@@ -127,7 +124,7 @@ public class SessionTests
             .Select(part => part!["functionResponse"]?["name"]?.GetValue<string>())
             .ToArray();
 
-        answers.ShouldBe(["add_module", "connect"]);
+        answers.ShouldBe(["write_patch", "edit_patch"]);
     }
 
     /// <summary>

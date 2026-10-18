@@ -15,61 +15,48 @@ public partial class PatchWorkbenchTests
     // --- the computer keyboard ------------------------------------------------
 
     /// <summary>
-    /// The patch's layout rather than a module's, so it takes no handle, and it
-    /// is written out where describe_patch and write_patch both see it.
+    /// The patch's layout rather than a module's, written on a line of its own where
+    /// describe_patch and edit_patch both see it.
     /// </summary>
     [Fact]
     public async Task The_keyboard_is_laid_out_for_the_whole_patch()
     {
-        var bench = Bench();
+        var bench = await Lit();
 
-        var set = await Call(bench, "set_keyboard", """{"layout":"scale","tonic":9,"scale":"aeolian"}""");
+        var set = await Edit(bench, "knob1 |> out.color", "knob1 |> out.color\nkeyboard scale [ A B C D E F G ]");
 
         set.Ok.ShouldBeTrue(set.Text);
-        set.Text.ShouldContain("keyboard scale [ A B C D E F G ]");
         bench.Snapshot().Keyboard.ShouldBe(new KeyboardScale(9, "aeolian"));
+        bench.Described.ShouldContain("keyboard scale [ A B C D E F G ]");
 
-        (await Call(bench, "set_keyboard", """{"layout":"piano"}""")).Ok.ShouldBeTrue();
+        (await Edit(bench, "\nkeyboard scale [ A B C D E F G ]", "")).Ok.ShouldBeTrue();
         bench.Snapshot().Keyboard.ShouldBeNull();
     }
 
-    [Theory]
-    [InlineData("""{"layout":"scale"}""")]
-    [InlineData("""{"layout":"scale","tonic":2}""")]
-    [InlineData("""{"layout":"scale","tonic":12,"scale":"dorian"}""")]
-    [InlineData("""{"layout":"scale","tonic":2,"scale":"blues"}""")]
-    public async Task A_scale_layout_short_of_a_tonic_and_a_scale_is_refused(string arguments)
-    {
-        (await Call(Bench(), "set_keyboard", arguments)).Ok.ShouldBeFalse();
-    }
-
     /// <summary>
-    /// The length is the patch's rather than a module's, so it takes no handle, and
-    /// describe_patch reads it back in the language's own statement.
+    /// The length is the patch's rather than a module's, and describe_patch reads it
+    /// back in the language's own statement.
     /// </summary>
     [Fact]
     public async Task The_patch_length_is_set_for_the_whole_patch()
     {
-        var bench = Bench();
+        var bench = await Lit();
 
-        var set = await Call(bench, "set_length", """{"seconds":150.5}""");
+        var set = await Edit(bench, "knob1 |> out.color", "knob1 |> out.color\nlength 2:30.50");
 
         set.Ok.ShouldBeTrue(set.Text);
-        set.Text.ShouldContain("2:30.50");
         bench.Snapshot().Length.ShouldBe(150.5);
         bench.Described.ShouldContain("length 2:30.50");
     }
 
     [Theory]
-    [InlineData("""{}""")]
-    [InlineData("""{"seconds":"90"}""")]
-    [InlineData("""{"seconds":0.01}""")]
-    [InlineData("""{"seconds":90000}""")]
-    public async Task A_length_that_is_missing_or_outside_what_a_patch_keeps_is_refused(string arguments)
+    [InlineData("length 0.01")]
+    [InlineData("length 90000")]
+    public async Task A_length_outside_what_a_patch_keeps_is_refused(string line)
     {
-        var bench = Bench();
+        var bench = await Lit();
 
-        (await Call(bench, "set_length", arguments)).Ok.ShouldBeFalse();
+        (await Edit(bench, "knob1 |> out.color", "knob1 |> out.color\n" + line)).Ok.ShouldBeFalse();
         bench.Snapshot().Length.ShouldBeNull();
     }
 }

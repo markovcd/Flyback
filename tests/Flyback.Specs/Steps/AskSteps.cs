@@ -268,12 +268,11 @@ public sealed class AskSteps : IDisposable
 
                 string[] calls =
                 [
-                    """{"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":0.5}]}""",
-                    """{"from":"knob1","to":"output1","to_port":"color"}""",
+                    """{"source":"let knob1 = value()\nknob1 |> out.color"}""",
                     """{"summary":"a flat gray field"}""",
                 ];
 
-                string[] tools = ["add_module", "connect", "propose"];
+                string[] tools = ["write_patch", "propose"];
 
                 for (var i = 0; i < tools.Length; i++)
                 {

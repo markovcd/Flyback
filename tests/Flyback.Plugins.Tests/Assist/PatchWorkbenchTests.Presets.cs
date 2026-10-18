@@ -104,19 +104,6 @@ public partial class PatchWorkbenchTests
     }
 
     [Fact]
-    public async Task Asking_for_a_retired_maths_module_adds_its_expression()
-    {
-        var bench = Bench();
-
-        var added = await Call(bench, "add_module", """{"type_id":"math.floor","handle":"f1"}""");
-
-        added.Ok.ShouldBeTrue(added.Text);
-        added.Text.ShouldContain("an Expression for math.floor: floor(a)");
-        bench.Snapshot().FirstOf(NodeCatalog.ExpressionTypeId).ShouldNotBeNull();
-        bench.Snapshot().FirstOf("math.floor").ShouldBeNull();
-    }
-
-    [Fact]
     public void The_briefing_carries_what_each_module_is_for()
     {
         // The descriptions are written for a person who does not know the synth,

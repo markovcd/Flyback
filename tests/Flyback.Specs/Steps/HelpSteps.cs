@@ -23,10 +23,10 @@ public sealed class HelpSteps
     private IReadOnlyList<NodeDef> shipped = [];
 
     [When("the assistant looks up the Filter")]
-    public Task WhenTheAssistantLooksItUp() => Asks("describe_module");
+    public Task WhenTheAssistantLooksItUp() => Asks("describe_module", $$"""{"type_id":"{{NodeCatalog.FilterTypeId}}"}""");
 
     [When("the assistant adds a Filter to the patch")]
-    public Task WhenTheAssistantAddsOne() => Asks("add_module");
+    public Task WhenTheAssistantAddsOne() => Asks("write_patch", """{"source":"t |> sine() |> filter() |> out.left"}""");
 
     [Then("what it read is handbook text")]
     public void ThenItIsHandbook() => answered!.Reference.ShouldBeTrue();
@@ -34,13 +34,13 @@ public sealed class HelpSteps
     [Then("what it did is not handbook text")]
     public void ThenItIsNotHandbook() => answered!.Reference.ShouldBeFalse();
 
-    private async Task Asks(string tool)
+    private async Task Asks(string tool, string arguments)
     {
         var bench = new PatchWorkbench(Modules, new Patch());
 
         answered = await bench.InvokeAsync(
             tool,
-            System.Text.Json.JsonDocument.Parse($$"""{"type_id":"{{NodeCatalog.FilterTypeId}}"}""").RootElement,
+            System.Text.Json.JsonDocument.Parse(arguments).RootElement,
             CancellationToken.None);
 
         answered.Ok.ShouldBeTrue(answered.Text);

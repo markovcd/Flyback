@@ -80,6 +80,7 @@ internal sealed class AssistantRun : IDisposable
     /// <param name="resuming">A conversation saved with that patch, to carry on rather than start afresh.</param>
     /// <param name="prose">How much of the catalog's prose the briefing carries.</param>
     /// <param name="presets">The presets the model may read for ideas, and the shipped ones where nobody said.</param>
+    /// <param name="text">The text the patch on the canvas is written in, where the text owns it.</param>
     internal AssistantRun(
         IPatchAssistant assistant,
         AssistantConfig config,
@@ -91,7 +92,8 @@ internal sealed class AssistantRun : IDisposable
         IImageLibrary? pictures = null,
         SavedConversation? resuming = null,
         ProsePolicy? prose = null,
-        IReadOnlyList<PatchPreset>? presets = null)
+        IReadOnlyList<PatchPreset>? presets = null,
+        string? text = null)
     {
         See(startingPoint);
         MaxContext = maxContext;
@@ -110,7 +112,7 @@ internal sealed class AssistantRun : IDisposable
         var restored = resuming is null ? null : Restored(resuming, modules, senses, limits, samples, pictures, prose, presets);
 
         Workbench = restored ?? new PatchWorkbench(
-            modules, startingPoint, senses.Vision, senses.Hearing, limits, samples, pictures, prose, presets);
+            modules, startingPoint, senses.Vision, senses.Hearing, limits, samples, pictures, prose, presets, text);
 
         Workbench.EarOffered = senses.EarOffered;
 
@@ -130,6 +132,9 @@ internal sealed class AssistantRun : IDisposable
         Remember(Canvas(resuming.Canvas) is { } was
             ? Workbench.Follow(was, startingPoint)
             : Workbench.Follow(startingPoint));
+
+        // The document's text as it stands now, which may have been written since.
+        if (text is not null) Workbench.Reread(text);
 
         session = PickUp(assistant, config, resuming.History) ?? assistant.Start(Workbench, config);
         introduced = PickedUp;
@@ -166,7 +171,8 @@ internal sealed class AssistantRun : IDisposable
                 samples,
                 pictures,
                 prose,
-                presets);
+                presets,
+                saved.Bench.StartText);
 
             bench.Restore(saved.Bench);
 
@@ -187,6 +193,9 @@ internal sealed class AssistantRun : IDisposable
     public Patch? Proposal { get; private set; }
 
     public string ProposalSummary { get; private set; } = string.Empty;
+
+    /// <summary>The text <see cref="Proposal"/> is written in, or null where a printing stands for it.</summary>
+    public string? ProposalText { get; private set; }
 
     public bool Running => working is not null;
 
@@ -211,10 +220,14 @@ internal sealed class AssistantRun : IDisposable
     /// Carries settings changed on the canvas since the workbench last looked into
     /// it, for the next message to mention. Between turns.
     /// </summary>
-    public void CatchUp(Patch current)
+    /// <param name="current"></param>
+    /// <param name="text">The text the canvas is written in, where the text owns it, which is the patch's text from here on.</param>
+    public void CatchUp(Patch current, string? text = null)
     {
         Remember(Workbench.Follow(seen, current));
         See(current);
+
+        if (text is not null) Workbench.Reread(text);
     }
 
     /// <summary>
@@ -227,6 +240,8 @@ internal sealed class AssistantRun : IDisposable
         if (Proposal is null) return [];
 
         var carried = Retuning.Carry(seen, current, Proposal);
+
+        if (carried.Any(change => change.Kept)) ProposalText = null;
 
         Remember(Workbench.Follow(seen, current));
 
@@ -393,6 +408,7 @@ internal sealed class AssistantRun : IDisposable
         // one.
         Proposal = null;
         ProposalSummary = string.Empty;
+        ProposalText = null;
 
         using var mine = CancellationTokenSource.CreateLinkedTokenSource(cancel);
         working = mine;
@@ -409,6 +425,7 @@ internal sealed class AssistantRun : IDisposable
                 {
                     Proposal = proposed.Patch;
                     ProposalSummary = proposed.Summary;
+                    ProposalText = Workbench.Text;
                 }
                 else if (happened is PatchEvent.Cost cost)
                 {

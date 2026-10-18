@@ -16,7 +16,7 @@ public sealed class AssistantMeasureSteps
     [Given("the assistant has added an LFO turning {int} times a second")]
     public async Task GivenAnLfo(int hz)
     {
-        var added = await Call("add_module", $$"""{"type_id":"osc.sine","handle":"lfo1","knobs":[{"port":"freq","value":{{hz}}}]}""");
+        var added = await Call("write_patch", $$"""{"source":"let lfo1 = sine(freq: {{hz}})"}""");
 
         added.Ok.ShouldBeTrue(added.Text);
     }

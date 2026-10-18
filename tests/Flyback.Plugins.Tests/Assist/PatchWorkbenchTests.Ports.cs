@@ -15,18 +15,15 @@ public partial class PatchWorkbenchTests
     // --- ports by name ------------------------------------------------------
 
     /// <summary>
-    /// The point of the whole handle-and-name protocol: a model says "value" and
-    /// the wire lands on input 2, without anyone counting sockets.
+    /// The point of naming sockets: a model says "value" and the wire lands on
+    /// input 2, without anyone counting sockets.
     /// </summary>
     [Fact]
     public async Task A_port_named_in_a_wire_lands_on_the_right_index()
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"sine1"}""");
-        await Call(bench, "add_module", """{"type_id":"color.hsv","handle":"tint1"}""");
-
-        var wired = await Call(bench, "connect", """{"from":"sine1","to":"tint1","to_port":"value"}""");
+        var wired = await Write(bench, "let sine1 = sine()\nlet tint1 = color.hsv(value: sine1)\ntint1 |> out.color");
         wired.Ok.ShouldBeTrue(wired.Text);
 
         var patch = bench.Snapshot();
@@ -41,10 +38,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"sine1"}""");
-        await Call(bench, "add_module", """{"type_id":"color.hsv","handle":"tint1"}""");
-
-        var wired = await Call(bench, "connect", """{"from":"sine1","to":"tint1","to_port":"brightness"}""");
+        var wired = await Write(bench, "let sine1 = sine()\nlet tint1 = color.hsv(brightness: sine1)\ntint1 |> out.color");
 
         wired.Ok.ShouldBeFalse();
         wired.Text.ShouldContain("hue");
@@ -55,24 +49,7 @@ public partial class PatchWorkbenchTests
     [Fact]
     public async Task A_source_with_one_output_needs_no_port_named()
     {
-        var bench = Bench();
-
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"sine1"}""");
-
-        var wired = await Call(bench, "connect", """{"from":"sine1","to":"output1","to_port":"color"}""");
+        var wired = await Write(Bench(), "let sine1 = sine()\nsine1 |> out.color");
         wired.Ok.ShouldBeTrue(wired.Text);
-    }
-
-    [Fact]
-    public async Task A_source_with_several_outputs_is_asked_which_one()
-    {
-        var bench = Bench();
-
-        await Call(bench, "add_module", """{"type_id":"coord","handle":"coords1"}""");
-
-        var wired = await Call(bench, "connect", """{"from":"coords1","to":"output1","to_port":"color"}""");
-
-        wired.Ok.ShouldBeFalse();
-        wired.Text.ShouldContain("radius");
     }
 }

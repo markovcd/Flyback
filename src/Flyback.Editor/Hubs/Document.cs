@@ -117,6 +117,12 @@ internal sealed class Document
     /// <summary>What the text view holds.</summary>
     public string Text => source.Source;
 
+    /// <summary>
+    /// The document's own text, for an assistant to edit, while the text owns the patch
+    /// and holds nothing typed since it was applied; null otherwise.
+    /// </summary>
+    public string? AssistantText => sourceOwned && appliedText == source.Source ? appliedText : null;
+
     /// <summary>The patch in the language: the document's own text where the text owns it, else a printing of the canvas.</summary>
     public string AsText() => sourceOwned ? source.Source : PatchPrinter.Print(editor.History.Patch);
 
@@ -179,6 +185,9 @@ internal sealed class Document
     /// are this patch's — see <see cref="CaretFollow.IsAdrift"/>.
     /// </summary>
     private Patch? means;
+
+    /// <summary>The text the patch was last built from or written into, while the text owns it.</summary>
+    private string? appliedText;
 
     /// <summary>
     /// The text <see cref="map"/> was made from, or null for no map at all. Null
@@ -322,6 +331,7 @@ internal sealed class Document
     public void Rewritten()
     {
         if (!sourceOwned) printed = source.Source;
+        else appliedText = source.Source;
 
         mapped = null;
     }
@@ -752,6 +762,7 @@ internal sealed class Document
         // same text a second time to answer the first caret move.
         mapped = source.Source;
         map = load.Map;
+        appliedText = source.Source;
 
         // The patch those names are of, which is now also the patch on the
         // canvas: applying is what puts the two back in step.
@@ -781,15 +792,15 @@ internal sealed class Document
     /// text in step with it.
     /// </summary>
     /// <remarks>
-    /// An assistant builds a graph, and no text describes one. Over a printing that
-    /// is an edit like any other and the printing is made afresh. Where the text is
-    /// the document it has to go on saying what the canvas holds — it is what a
-    /// save writes and what the next apply builds — so the patch is printed into it
-    /// and built from there, the way a preset picked from the text view is. The
-    /// printing and the build are one thing to take back, and taking them back
-    /// returns the text as it was written, comments and all.
+    /// Over a printing that is an edit like any other and the printing is made
+    /// afresh. Where the text is the document it has to go on saying what the canvas
+    /// holds, since it is what a save writes and what the next apply builds, so the
+    /// assistant's text goes into it, or a printing where the assistant has none, and
+    /// is built from there. The two are one thing to take back.
     /// </remarks>
-    public void TakeFromAssistant(Patch patch)
+    /// <param name="patch"></param>
+    /// <param name="text">The text the assistant edited, the document's own, or null where it worked on a printing.</param>
+    public void TakeFromAssistant(Patch patch, string? text = null)
     {
         if (!sourceOwned)
         {
@@ -805,10 +816,10 @@ internal sealed class Document
         // panel clears as the turn ends.
         using (source.Together())
         {
-            source.Rewrite(PatchPrinter.Print(patch));
+            source.Rewrite(text ?? PatchPrinter.Print(patch));
 
-            read = Evaluate("The assistant's patch, written as text. Ctrl+Z puts back the text "
-                + "as it was, and the patch with it.").Ok;
+            read = Evaluate((text is null ? "The assistant's patch, written as text." : "The assistant's edit.")
+                + " Ctrl+Z puts back the text as it was, and the patch with it.").Ok;
         }
 
         // A printing that will not read is this program's fault, and the text it
@@ -951,6 +962,7 @@ internal sealed class Document
         map = SourceMap.Empty;
         mapped = null;
         means = null;
+        appliedText = null;
         unstacked = 0;
         sinceHandover = null;
 

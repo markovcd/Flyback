@@ -7,7 +7,7 @@ Feature: A coding assistant somebody runs edits the patch open in the editor
 
   Scenario: An edit over MCP lands on the canvas, and undo takes it back
     Given the editor lets a program on this computer edit the open patch
-    When "Claude Code" adds a sine to the open patch over flyback-cli mcp --editor
+    When "Claude Code" writes a sine into the open patch over flyback-cli mcp --editor
     Then the call was answered without an error
     And the canvas holds a sine
     And the editor keeps letting programs edit it, next time it starts
@@ -16,7 +16,7 @@ Feature: A coding assistant somebody runs edits the patch open in the editor
 
   Scenario: Until somebody lets it, no program can edit the open patch
     Given the editor has not been let edit by a program
-    When "Claude Code" adds a sine to the open patch over flyback-cli mcp --editor
+    When "Claude Code" writes a sine into the open patch over flyback-cli mcp --editor
     Then the call is refused, saying to turn on "Let a program on this computer edit the open patch"
     And the canvas holds no sine
 
@@ -29,7 +29,7 @@ Feature: A coding assistant somebody runs edits the patch open in the editor
   Scenario: The column shows a program's calls while it drives, and gives the box back after
     Given the assistant's column is open
     And the editor lets a program on this computer edit the open patch
-    When "Claude Code" adds a sine to the open patch over flyback-cli mcp --editor
+    When "Claude Code" writes a sine into the open patch over flyback-cli mcp --editor
     Then the column says it is driven by "Claude Code"
     And the column shows the call, and has no box to type in
     When "Claude Code" says "Added a sine." to the editor over flyback-cli mcp --editor

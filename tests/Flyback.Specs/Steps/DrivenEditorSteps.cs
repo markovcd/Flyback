@@ -50,9 +50,9 @@ public sealed class DrivenEditorSteps : IDisposable
     [Given("the editor lets a program on this computer edit the open patch")]
     public void GivenDrivable() => editor.LetAProgramDrive(Channel);
 
-    [When("{string} adds a sine to the open patch over flyback-cli mcp --editor")]
-    public void WhenAdds(string client) =>
-        Serve(client, new JsonObject { ["name"] = "add_module", ["arguments"] = new JsonObject { ["type_id"] = "osc.sine" } });
+    [When("{string} writes a sine into the open patch over flyback-cli mcp --editor")]
+    public void WhenWrites(string client) =>
+        Serve(client, new JsonObject { ["name"] = "write_patch", ["arguments"] = new JsonObject { ["source"] = "t |> sine() |> out.left" } });
 
     [When("{string} says {string} to the editor over flyback-cli mcp --editor")]
     public void WhenSays(string client, string text) =>
@@ -94,7 +94,7 @@ public sealed class DrivenEditorSteps : IDisposable
     public void ThenShowsCall()
     {
         editor.WaitForComposer(shown: false);
-        editor.TranscriptLines.ShouldContain(line => line.Contains("osc.sine"));
+        editor.TranscriptLines.ShouldContain(line => line.StartsWith("written:", StringComparison.Ordinal));
     }
 
     [Then("the column says {string} stopped driving, and has its box back")]

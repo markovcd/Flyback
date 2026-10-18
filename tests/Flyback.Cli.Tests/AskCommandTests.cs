@@ -226,8 +226,8 @@ public sealed class AskCommandTests : IDisposable
     {
         var (_, said, _) = await Ask("field.fbk", "a gray field");
 
-        said.ShouldContain("→ add_module");
-        said.ShouldContain("\"type_id\":\"value\"");
+        said.ShouldContain("→ write_patch");
+        said.ShouldContain("value(value: 0.25)");
     }
 
     [Fact]
@@ -468,8 +468,7 @@ public sealed class AskCommandTests : IDisposable
         {
             private static readonly (string Tool, string Arguments)[] Field =
             [
-                ("add_module", """{"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":0.5}]}"""),
-                ("connect", """{"from":"knob1","to":"output1","to_port":"color"}"""),
+                ("write_patch", """{"source":"let knob1 = value(value: 0.25)\nknob1 |> out.color"}"""),
                 ("propose", """{"summary":"a flat gray field"}"""),
             ];
 

@@ -15,9 +15,13 @@ internal sealed class FakeAssistantEditor(Patch current) : IAssistantEditor
 
     public List<string> Reported { get; } = [];
 
-    public void Apply(Patch patch)
+    /// <summary>The text the patch is written in, as a document the text owns would say.</summary>
+    public string? Text { get; set; }
+
+    public void Apply(Patch patch, string? text = null)
     {
         Current = patch;
+        Text = text;
         Applied++;
     }
 

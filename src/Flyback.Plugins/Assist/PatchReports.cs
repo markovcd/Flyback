@@ -1,4 +1,6 @@
 using System.Text;
+using System.Text.RegularExpressions;
+using Flyback.Core.Graph;
 using Flyback.Core.Compile;
 using Flyback.Engine.Language;
 
@@ -22,11 +24,10 @@ internal sealed class PatchReports(WorkingPatch bench)
 
         var text = new StringBuilder();
 
-        // The patch in the same language write_patch takes, and under the same
-        // handles the editing tools answer to — so what is read here can be
-        // pointed at by set_knobs and connect, and written back wholesale
-        // without translating between two notations.
-        text.AppendLine(PatchPrinter.Print(working, modules, bench.Handles));
+        // The very text edit_patch finds its pieces in.
+        text.AppendLine(Text());
+
+        if (Unnamed() is { Length: > 0 } unnamed) text.Append("# with no let name, answering to: ").AppendLine(unnamed);
 
         // A module this build cannot place has no syntax, so it is said in
         // prose rather than left out of the picture entirely.
@@ -52,6 +53,20 @@ internal sealed class PatchReports(WorkingPatch bench)
 
         return text.Append('.').ToString();
     }
+
+    /// <summary>
+    /// The patch's text: the one it was written in, or else a printing in which every
+    /// module is bound to its handle.
+    /// </summary>
+    public string Text() => bench.Source ?? PatchPrinter.Print(bench.Patch, bench.Modules, bench.Handles);
+
+    /// <summary>The handles of the modules the text binds to no name, comma-separated, or empty.</summary>
+    public string Unnamed() => bench.Source is not { } source
+        ? string.Empty
+        : string.Join(", ", bench.Patch.Nodes
+            .Where(node => node.TypeId != NodeCatalog.OutputTypeId)
+            .Select(bench.Handle)
+            .Where(handle => !Regex.IsMatch(source, $@"\blet\s+{Regex.Escape(handle)}\b", RegexOptions.IgnoreCase)));
 
     /// <summary>
     /// What the compiler says of the patch after an edit: in full where it is new,

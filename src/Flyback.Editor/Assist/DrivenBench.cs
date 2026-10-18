@@ -22,6 +22,7 @@ internal sealed class DrivenBench(
 {
     private PatchWorkbench? bench;
     private string? start;
+    private string? startText;
     private string? left;
 
     public async Task<ToolOutcome> Call(string tool, JsonElement arguments, CancellationToken cancel)
@@ -32,7 +33,7 @@ internal sealed class DrivenBench(
 
         var outcome = await bench.InvokeAsync(tool, arguments, cancel).ConfigureAwait(true);
 
-        if (outcome.Ok && bench.Edits > 0) editor.Apply(bench.Snapshot());
+        if (outcome.Ok && bench.Edits > 0) editor.Apply(bench.Snapshot(), bench.Text);
 
         left = PatchIO.ToJson(editor.Current, modules);
 
@@ -48,7 +49,11 @@ internal sealed class DrivenBench(
 
         var handles = bench?.Save().Handles;
 
-        start ??= now;
+        if (start is null)
+        {
+            start = now;
+            startText = editor.Text;
+        }
 
         bench = new PatchWorkbench(
             modules,
@@ -58,9 +63,10 @@ internal sealed class DrivenBench(
             samples: editor.Samples,
             pictures: editor.Pictures,
             prose: prose(),
-            presets: presets());
+            presets: presets(),
+            text: startText);
 
-        bench.Restore(new WorkbenchState(start, now, handles ?? new Dictionary<string, Guid>(), 0, 0));
+        bench.Restore(new WorkbenchState(start, now, handles ?? new Dictionary<string, Guid>(), 0, 0) { Text = editor.Text });
 
         return bench;
     }

@@ -93,9 +93,8 @@ internal static class Wire
     /// The schemas are written once, in the workbench, in ordinary JSON Schema; what
     /// is accepted here is a subset of OpenAPI, and two differences bite. An object
     /// with no properties is refused, so a tool that takes no arguments declares no
-    /// parameters at all. And every property must say what type it is, so
-    /// <c>set_extra</c>'s deliberately untyped <c>value</c> becomes an
-    /// <c>anyOf</c> over the three it can be.
+    /// parameters at all. And every property must say what type it is, so an
+    /// untyped property becomes an <c>anyOf</c> over the three it can be.
     /// </remarks>
     public static JsonNode? Parameters(string schema)
     {

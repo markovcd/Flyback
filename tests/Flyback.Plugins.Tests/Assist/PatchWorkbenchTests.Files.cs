@@ -14,17 +14,13 @@ public partial class PatchWorkbenchTests
 {
     // --- a player's file ------------------------------------------------------
 
-    /// <summary>
-    /// The path is neither a knob nor a wire, so this is the only way to set
-    /// one — and it is the one thing in a patch that refers outside it.
-    /// </summary>
+    /// <summary>The path is the call's string, and the one thing in a patch that refers outside it.</summary>
     [Fact]
     public async Task A_players_file_can_be_pointed_at()
     {
         var bench = Bench();
-        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
 
-        var set = await Call(bench, "set_sample", """{"handle":"clip1","path":"drums.wav"}""");
+        var set = await Write(bench, "let clip1 = sample(\"drums.wav\")");
 
         set.Ok.ShouldBeTrue(set.Text);
         SampleExtra.Of(bench.Snapshot().Nodes.Single(n => n.TypeId == NodeCatalog.SampleTypeId))
@@ -39,11 +35,7 @@ public partial class PatchWorkbenchTests
     [Fact]
     public async Task A_file_that_cannot_be_read_is_said_so_by_the_call_that_set_it()
     {
-        var bench = Bench();
-        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
-        await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"left"}""");
-
-        var set = await Call(bench, "set_sample", """{"handle":"clip1","path":"gone.wav"}""");
+        var set = await Write(Bench(), "let clip1 = sample(\"gone.wav\")\nclip1.out |> out.left");
 
         set.Text.ShouldContain("gone.wav");
         set.Text.ShouldContain("Issues:");
@@ -55,13 +47,13 @@ public partial class PatchWorkbenchTests
     /// never leaves in a bundle.
     /// </summary>
     [Theory]
-    [InlineData("set_sample", NodeCatalog.SampleTypeId, @"\\host\share\x.wav")]
-    [InlineData("set_sample", NodeCatalog.SampleTypeId, "../../x.wav")]
-    [InlineData("set_sample", NodeCatalog.SampleTypeId, "/etc/passwd")]
-    [InlineData("set_picture", NodeCatalog.PictureTypeId, @"\\host\share\x.png")]
-    [InlineData("set_picture", NodeCatalog.PictureTypeId, "../../x.png")]
-    [InlineData("set_picture", NodeCatalog.PictureTypeId, "/etc/passwd")]
-    public async Task A_hostile_path_is_checked_where_every_patchs_files_are(string tool, string typeId, string path)
+    [InlineData("sample", @"\\host\share\x.wav")]
+    [InlineData("sample", "../../x.wav")]
+    [InlineData("sample", "/etc/passwd")]
+    [InlineData("picture", @"\\host\share\x.png")]
+    [InlineData("picture", "../../x.png")]
+    [InlineData("picture", "/etc/passwd")]
+    public async Task A_hostile_path_is_checked_where_every_patchs_files_are(string call, string path)
     {
         var root = Directory.CreateTempSubdirectory("flyback-hostile").FullName;
 
@@ -71,9 +63,8 @@ public partial class PatchWorkbenchTests
             File.WriteAllText(Path.Combine(root, Path.GetFileName(path)), "-----BEGIN OPENSSH PRIVATE KEY-----");
 
             var bench = Bench();
-            await Call(bench, "add_module", JsonSerializer.Serialize(new { type_id = typeId, handle = "file1" }));
 
-            var set = await Call(bench, tool, JsonSerializer.Serialize(new { handle = "file1", path }));
+            var set = await Write(bench, $"let file1 = {call}(\"{path}\")");
             set.Ok.ShouldBeTrue(set.Text);
 
             using var bundle = new MemoryStream();
@@ -88,43 +79,26 @@ public partial class PatchWorkbenchTests
         }
     }
 
-    [Fact]
-    public async Task A_module_that_reads_no_file_says_so_rather_than_growing_one()
-    {
-        var bench = Bench();
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-
-        var set = await Call(bench, "set_sample", """{"handle":"tone1","path":"drums.wav"}""");
-
-        set.Ok.ShouldBeFalse();
-        set.Text.ShouldContain("reads no file");
-    }
-
     /// <summary>
-    /// The other kind of file, and its own tool for the reason a sample has one:
-    /// a path is neither a knob nor a wire, and an Image with nothing pointed at
-    /// it shows black. The extra tool is what stops a model placing one and
-    /// having no way to finish it.
+    /// The other kind of file, and the same spelling: an Image's picture is its call's
+    /// string, and a module that shows none has no string to take.
     /// </summary>
     [Fact]
     public async Task An_images_picture_can_be_pointed_at()
     {
         var bench = Bench();
-        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.PictureTypeId}}","handle":"shown1"}""");
 
-        var set = await Call(bench, "set_picture", """{"handle":"shown1","path":"moon.png"}""");
+        var set = await Write(bench, "let shown1 = picture(\"moon.png\")");
 
         set.Ok.ShouldBeTrue(set.Text);
         PictureExtra.Of(bench.Snapshot().Nodes.Single(n => n.TypeId == NodeCatalog.PictureTypeId))
             .ShouldBe("moon.png");
 
-        // And refused on anything that shows none, rather than quietly stored.
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-
-        var wrong = await Call(bench, "set_picture", """{"handle":"tone1","path":"moon.png"}""");
+        var wrong = await Write(bench, "let tone1 = sine(\"moon.png\")");
 
         wrong.Ok.ShouldBeFalse();
-        wrong.Text.ShouldContain("shows no picture");
+        PictureExtra.Of(bench.Snapshot().Nodes.Single(n => n.TypeId == NodeCatalog.PictureTypeId))
+            .ShouldBe("moon.png");
     }
 
     /// <summary>
@@ -134,14 +108,11 @@ public partial class PatchWorkbenchTests
     [Fact]
     public async Task Describing_the_patch_shows_which_file_a_player_reads()
     {
-        var bench = Bench();
-        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
+        static PatchWorkbench Drawn(string source) =>
+            new(NodeCatalog.BuiltIn, PatchLanguage.Build(source, NodeCatalog.BuiltIn).Patch);
 
-        (await Call(bench, "describe_patch")).Text.ShouldNotContain("drums.wav");
-
-        await Call(bench, "set_sample", """{"handle":"clip1","path":"drums.wav"}""");
-
-        (await Call(bench, "describe_patch")).Text.ShouldContain("sample(\"drums.wav\")");
+        (await Call(Drawn("let clip1 = sample()"), "describe_patch")).Text.ShouldNotContain("drums.wav");
+        (await Call(Drawn("let clip1 = sample(\"drums.wav\")"), "describe_patch")).Text.ShouldContain("sample(\"drums.wav\")");
     }
 
     [Fact]
@@ -149,8 +120,7 @@ public partial class PatchWorkbenchTests
     {
         var briefing = Bench().Briefing;
 
-        briefing.ShouldContain("set_sample");
-        briefing.ShouldContain("a path to a WAV or an MP3");
+        briefing.ShouldContain("a path to a WAV or an MP3 — not a knob, written as the call's one unnamed string");
     }
 
     private static IReadOnlyList<int> Scale(PatchWorkbench bench) =>
@@ -165,9 +135,7 @@ public partial class PatchWorkbenchTests
     [Fact]
     public async Task A_sink_with_nothing_wired_into_it_is_said_out_loud()
     {
-        var bench = Bench();
-
-        var added = await Call(bench, "add_module", """{"type_id":"osc.sine"}""");
+        var added = await Write(Bench(), "let tone = sine()");
 
         added.Text.ShouldContain("Nothing is wired into the Output");
     }
@@ -189,10 +157,7 @@ public partial class PatchWorkbenchTests
     [Fact]
     public async Task An_oscillator_with_nothing_driving_it_runs_on_what_it_is_normalled_to()
     {
-        var bench = Bench();
-
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-        var wired = await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"color"}""");
+        var wired = await Write(Bench(), "let tone1 = sine()\ntone1 |> out.color");
 
         wired.Text.ShouldContain("No issues.");
     }
@@ -207,7 +172,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
+        await Write(bench, "let tone1 = sine()");
         var told = await Call(bench, "describe_patch");
 
         told.Text.ShouldContain("carrying a signal with no wire");
@@ -216,41 +181,18 @@ public partial class PatchWorkbenchTests
 
     /// <summary>
     /// There is no knob behind a normalled socket, and an assistant that set one
-    /// would watch the patch not change. Refused with the reason, rather than
-    /// stored where nothing will read it.
+    /// would watch the patch not change, so a number written on one is refused.
     /// </summary>
     [Fact]
     public async Task Turning_a_knob_that_is_normalled_is_refused_with_the_reason()
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-
-        var turned = await Call(bench, "set_knobs", """
-            {"handle":"tone1","knobs":[{"port":"in","value":0.25}]}
-            """);
+        var turned = await Write(bench, "let tone1 = sine(in: 0.25)\ntone1 |> out.color");
 
         turned.Ok.ShouldBeFalse();
-        turned.Text.ShouldContain("normalled to Time");
-        turned.Text.ShouldContain("Value module");
-    }
-
-    /// <summary>
-    /// A model told only that a knob was refused goes on wiring the module it
-    /// thinks it has, so the refusal says the module never arrived.
-    /// </summary>
-    [Fact]
-    public async Task Adding_a_module_with_a_refused_knob_says_it_was_not_added()
-    {
-        var bench = Bench();
-
-        var added = await Call(bench, "add_module", """
-            {"type_id":"osc.sine","handle":"tone1","knobs":[{"port":"in","value":0.25}]}
-            """);
-
-        added.Ok.ShouldBeFalse();
-        added.Text.ShouldContain("tone1 was not added");
-        (await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"left"}""")).Ok.ShouldBeFalse();
+        turned.Text.ShouldContain("normalled");
+        turned.Text.ShouldContain("Value");
     }
 
     /// <summary>
@@ -267,11 +209,7 @@ public partial class PatchWorkbenchTests
     [Fact]
     public async Task A_fault_only_the_speakers_reach_is_still_reported_on_every_edit()
     {
-        var bench = Bench();
-
-        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
-        await Call(bench, "set_sample", """{"handle":"clip1","path":"gone.wav"}""");
-        var wired = await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"left"}""");
+        var wired = await Write(Bench(), "let clip1 = sample(\"gone.wav\")\nclip1.out |> out.left");
 
         wired.Text.ShouldContain("Issues:");
         wired.Text.ShouldContain("gone.wav");
@@ -287,13 +225,11 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
-
         var replies = new[]
         {
-            await Call(bench, "set_sample", """{"handle":"clip1","path":"gone.wav"}"""),
-            await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"color"}"""),
-            await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"left"}"""),
+            await Write(bench, "let clip1 = sample(\"gone.wav\")\nclip1.out |> out.color"),
+            await Edit(bench, "clip1.out |> out.color", "clip1.out |> out.color\nclip1.out |> out.left"),
+            await Edit(bench, "clip1.out |> out.left", "clip1.out |> out.left\nout.volume = 0.8"),
         };
 
         var said = string.Join("\n", replies.Select(reply => reply.Text));
@@ -307,12 +243,7 @@ public partial class PatchWorkbenchTests
     [Fact]
     public async Task A_driven_oscillator_is_not_remarked_on()
     {
-        var bench = Bench();
-
-        await Call(bench, "add_module", """{"type_id":"time","handle":"clock1"}""");
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-        await Call(bench, "connect", """{"from":"clock1","from_port":"t","to":"tone1","to_port":"in"}""");
-        var wired = await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"color"}""");
+        var wired = await Write(Bench(), "let tone1 = t |> sine()\ntone1 |> out.color");
 
         wired.Text.ShouldContain("No issues.");
     }
@@ -332,10 +263,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"value","handle":"knob1"}""");
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-        await Call(bench, "connect", """{"from":"knob1","to":"tone1","to_port":"in"}""");
-        await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"color"}""");
+        (await Write(bench, "let knob1 = value()\nlet tone1 = sine(in: knob1)\ntone1 |> out.color")).Ok.ShouldBeTrue();
 
         var offered = await Call(bench, "propose", """{"summary":"a flat field"}""");
 

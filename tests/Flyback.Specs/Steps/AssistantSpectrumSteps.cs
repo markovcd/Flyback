@@ -16,10 +16,7 @@ public sealed class AssistantSpectrumSteps
     [Given("the assistant has wired a {int} Hz tone to the speakers")]
     public async Task GivenATone(int hz)
     {
-        await Call("add_module", """{"type_id":"time","handle":"clock1"}""");
-        await Call("add_module", $$"""{"type_id":"osc.sine","handle":"tone1","knobs":[{"port":"freq","value":{{hz}}}]}""");
-        await Call("connect", """{"from":"clock1","from_port":"t","to":"tone1","to_port":"in"}""");
-        await Call("connect", """{"from":"tone1","to":"output1","to_port":"left"}""");
+        await Call("write_patch", $$"""{"source":"let tone1 = t |> sine(freq: {{hz}})\ntone1 |> out.left"}""");
     }
 
     [When("the assistant listens to it")]

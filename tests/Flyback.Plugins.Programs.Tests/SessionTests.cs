@@ -11,8 +11,8 @@ public class SessionTests
     private const string Building = """
         Starting with a gray field.
         <calls>
-        [{"name":"add_module","arguments":{"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":0.5}]}},
-         {"name":"connect","arguments":{"from":"knob1","to":"output1","to_port":"color"}},
+        [{"name":"write_patch","arguments":{"source":"let knob1 = value(value: 0.5)"}},
+         {"name":"edit_patch","arguments":{"edits":[{"find":"let knob1 = value(value: 0.5)","replace":"let knob1 = value(value: 0.5)\nknob1 |> out.color"}]}},
          {"name":"propose","arguments":{"summary":"a gray field"}}]
         </calls>
         """;
@@ -48,7 +48,7 @@ public class SessionTests
     public async Task What_the_workbench_answered_goes_back_in_the_next_question()
     {
         var cli = new ScriptedProgram(
-            """<calls>[{"name":"add_module","arguments":{"type_id":"value","handle":"knob1"}}]</calls>""",
+            """<calls>[{"name":"write_patch","arguments":{"source":"let knob1 = value()"}}]</calls>""",
             "Done for now.");
 
         using var session = Session(cli);
@@ -58,7 +58,7 @@ public class SessionTests
         cli.Asked.Count.ShouldBe(3);
         ScriptedProgram.Text(cli.Asked[1]).ShouldContain("<person>");
         cli.LastText.ShouldContain("<you>");
-        cli.LastText.ShouldContain("Call 1 (add_module):");
+        cli.LastText.ShouldContain("Call 1 (write_patch):");
         cli.LastText.ShouldContain("knob1");
     }
 

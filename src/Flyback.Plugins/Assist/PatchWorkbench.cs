@@ -2,6 +2,7 @@ using System.Text.Json;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
+using Flyback.Engine.Language;
 
 namespace Flyback.Plugins.Assist;
 
@@ -25,6 +26,7 @@ public sealed class PatchWorkbench
     private readonly WorkingPatch bench;
     private readonly WorkbenchLimits limits;
     private readonly string startingPoint;
+    private readonly string? startingText;
     private readonly PatchReports reports;
     private readonly CanvasChanges canvas;
 
@@ -42,6 +44,10 @@ public sealed class PatchWorkbench
     /// The presets offered through <c>describe_preset</c>, defaulting to the shipped
     /// ones; an empty list removes the tool.
     /// </param>
+    /// <param name="text">
+    /// The text <paramref name="startingPoint"/> was built from, where it was written
+    /// rather than drawn, so edits go into the person's own words.
+    /// </param>
     internal PatchWorkbench(
         ModuleCatalog modules,
         Patch startingPoint,
@@ -51,7 +57,8 @@ public sealed class PatchWorkbench
         ISampleLibrary? samples = null,
         IImageLibrary? pictures = null,
         ProsePolicy? prose = null,
-        IReadOnlyList<PatchPreset>? presets = null)
+        IReadOnlyList<PatchPreset>? presets = null,
+        string? text = null)
     {
         bench = new WorkingPatch(modules, samples, pictures);
         this.limits = limits ?? new WorkbenchLimits();
@@ -65,7 +72,8 @@ public sealed class PatchWorkbench
         // reached into, and so the starting point is provably reloadable.
         this.startingPoint = PatchIO.ToJson(startingPoint, modules);
 
-        bench.Adopt(PatchIO.Read(this.startingPoint, modules).Patch);
+        startingText = text;
+        Take(PatchIO.Read(this.startingPoint, modules).Patch, text, null);
 
         reports = new PatchReports(bench);
         canvas = new CanvasChanges(bench);
@@ -81,9 +89,7 @@ public sealed class PatchWorkbench
 
         var table = new ToolTable(
             reports,
-            new WholePatchEdits(bench, reports, this.startingPoint),
-            new ModuleEdits(bench, reports, catalog),
-            new GraphEdits(bench, reports),
+            new WholePatchEdits(bench, reports, this.startingPoint, text),
             new PatchProposals(bench, senses, this.limits),
             senses,
             new PatchMeasurements(bench, this.limits),
@@ -135,6 +141,12 @@ public sealed class PatchWorkbench
         ToolCalls = 0;
     }
 
+    /// <summary>
+    /// The text the working patch is written in, or null where it is not and a printing
+    /// stands for it.
+    /// </summary>
+    internal string? Text => bench.Source;
+
     /// <summary>What the model said of its proposal, or nothing where there is none.</summary>
     public string ProposalSummary => bench.Proposal ?? string.Empty;
 
@@ -162,7 +174,11 @@ public sealed class PatchWorkbench
         PatchIO.ToJson(bench.Patch, bench.Modules),
         bench.ByHandle.ToDictionary(pair => pair.Key, pair => pair.Value.Id, StringComparer.OrdinalIgnoreCase),
         Edits,
-        ToolCalls);
+        ToolCalls)
+    {
+        Text = bench.Source,
+        StartText = startingText,
+    };
 
     /// <summary>
     /// Puts back the patch being built, the names its modules answer to and what
@@ -177,11 +193,35 @@ public sealed class PatchWorkbench
     /// </remarks>
     internal void Restore(WorkbenchState state)
     {
-        bench.Adopt(PatchIO.Read(state.Working, bench.Modules).Patch, state.Handles);
+        Take(PatchIO.Read(state.Working, bench.Modules).Patch, state.Text, state.Handles);
 
         bench.Proposal = null;
         bench.Edits = state.Edits;
         ToolCalls = state.ToolCalls;
+    }
+
+    /// <summary>
+    /// Takes <paramref name="text"/> as what the working patch is written in, for a
+    /// document whose text was written since the workbench last read it.
+    /// </summary>
+    internal void Reread(string text) =>
+        Take(bench.Patch, text, bench.ByHandle.ToDictionary(pair => pair.Key, pair => pair.Value.Id, StringComparer.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Makes <paramref name="patch"/> the working patch, written in <paramref name="text"/>,
+    /// each module answering to the name the text binds it to before any in <paramref name="handles"/>.
+    /// </summary>
+    private void Take(Patch patch, string? text, IReadOnlyDictionary<string, Guid>? handles)
+    {
+        var named = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+
+        if (text is not null)
+            foreach (var (id, name) in PatchLanguage.Build(text, bench.Modules).Map.Named) named.TryAdd(name, id);
+
+        foreach (var (handle, id) in handles ?? new Dictionary<string, Guid>()) named.TryAdd(handle, id);
+
+        bench.Adopt(patch, named);
+        bench.Source = text;
     }
 
     /// <summary>What <c>describe_patch</c> answers, for the first message of a conversation to open with.</summary>

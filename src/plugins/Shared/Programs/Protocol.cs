@@ -30,7 +30,7 @@ internal static class Protocol
         text.Append("\n\n# How to use the tools\n\n")
             .Append("You have no tool API here. To act, end your reply with one block holding a JSON array of calls, ")
             .Append("run in order:\n\n")
-            .Append(Open).Append("\n[{\"name\": \"add_module\", \"arguments\": {\"type_id\": \"value\"}}]\n").Append(Close)
+            .Append(Open).Append("\n[{\"name\": \"describe_module\", \"arguments\": {\"type_id\": \"value\"}}]\n").Append(Close)
             .Append("\n\nWrite nothing after the block. Flyback runs the calls and answers in the next message. ")
             .Append("A reply with no block ends your turn, so say what you did in plain words when you are done. ")
             .Append("Never describe a call you could make; make it.\n\n")

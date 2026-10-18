@@ -17,17 +17,16 @@ public partial class PatchWorkbenchTests
     /// <summary>
     /// Where <c>write_patch</c> sits in the list, which is not cosmetic. A model
     /// reads these in order and anchors on the first thing that looks like it
-    /// edits — and with the placing tool second it did exactly that, building
-    /// patches a wire at a time and running out of turns.
+    /// edits.
     /// </summary>
     [Fact]
-    public void Writing_a_patch_is_offered_before_placing_one()
+    public void Writing_a_patch_is_offered_before_editing_one()
     {
         var names = Bench().Tools.Select(t => t.Name).ToList();
 
-        names.IndexOf("write_patch").ShouldBeLessThan(names.IndexOf("add_module"));
         names[0].ShouldBe("describe_patch");
         names[1].ShouldBe("write_patch");
+        names[2].ShouldBe("edit_patch");
     }
 
     /// <summary>
@@ -48,10 +47,10 @@ public partial class PatchWorkbenchTests
         briefing.ShouldNotContain("Build with\n        `add_module`");
     }
 
-    /// <summary>The placing tool points at the one that builds, for a model that reads it first.</summary>
+    /// <summary>The building tool points at the one that changes a patch, for a model that reads it first.</summary>
     [Fact]
-    public void Placing_one_module_points_at_writing_the_patch() =>
-        Bench().Tools.Single(t => t.Name == "add_module").Description.ShouldContain("write_patch");
+    public void Writing_a_patch_points_at_editing_one() =>
+        Bench().Tools.Single(t => t.Name == "write_patch").Description.ShouldContain("edit_patch");
 
     /// <summary>
     /// The arithmetic this exists for. Placing a module is one call and so is
@@ -161,7 +160,7 @@ public partial class PatchWorkbenchTests
         written.Ok.ShouldBeTrue(written.Text);
         bench.Snapshot().Nodes.Count.ShouldBeGreaterThan(300);
 
-        (await Call(bench, "add_module", """{"type_id":"osc.sine"}""")).Ok.ShouldBeTrue();
+        (await Edit(bench, "rings() |> out.color", "rings() |> out.color\nlet tone = sine()")).Ok.ShouldBeTrue();
     }
 
     /// <summary>
@@ -175,8 +174,8 @@ public partial class PatchWorkbenchTests
         var first = await Heard();
         var described = (await Call(first, "describe_patch")).Text;
 
-        // Everything before the counts, which are prose about the patch rather
-        // than part of it.
+        // Everything before the counts, the line naming what the text binds to no
+        // name included, since it is a comment.
         var source = described[..described.IndexOf(" modules, ", StringComparison.Ordinal)];
         source = source[..source.LastIndexOf('\n')];
 
@@ -189,45 +188,28 @@ public partial class PatchWorkbenchTests
 
     /// <summary>
     /// The Output answers to what the language calls it. describe_patch writes
-    /// <c>out.left</c>, so that is the name that comes back to these tools —
-    /// and refusing it cost a model three turns discovering that the block it
-    /// had just read as 'out' was handled 'output1'.
+    /// <c>out.left</c>, so that is the name that comes back to measure, and
+    /// refusing it cost a model three turns discovering that the block it had
+    /// just read as 'out' was handled 'output1'.
     /// </summary>
     [Fact]
     public async Task The_output_answers_to_out_as_well_as_to_its_handle()
     {
-        var bench = Bench();
+        var bench = await Heard();
 
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
+        var measured = await Call(bench, "measure", """{"handles":["out"],"seconds":0.25}""");
 
-        var wired = await Call(bench, "connect", """{"from":"tone1","to":"out","to_port":"left"}""");
-
-        wired.Ok.ShouldBeTrue(wired.Text);
-        bench.Snapshot().Reaches().Sound.ShouldBeTrue();
+        measured.Ok.ShouldBeTrue(measured.Text);
     }
 
     [Fact]
     public async Task A_knob_on_the_output_can_be_turned_through_out()
     {
-        var bench = Bench();
+        var bench = await Heard();
 
-        var turned = await Call(bench, "set_knobs", """
-            {"handle":"out","knobs":[{"port":"volume","value":0.8}]}
-            """);
+        var turned = await Edit(bench, "tone1 |> out.left", "tone1 |> out.left\nout.volume = 0.8");
 
         turned.Ok.ShouldBeTrue(turned.Text);
         bench.Snapshot().Output.InputValues[NodeCatalog.OutputVolumePort].ShouldBe(0.8f);
-    }
-
-    /// <summary>A name nobody has is still refused, and still says what the patch does have.</summary>
-    [Fact]
-    public async Task A_handle_that_is_not_there_is_still_refused()
-    {
-        var refused = await Call(Bench(), "set_knobs", """
-            {"handle":"nonesuch","knobs":[{"port":"volume","value":0.8}]}
-            """);
-
-        refused.Ok.ShouldBeFalse();
-        refused.Text.ShouldContain("nonesuch");
     }
 }

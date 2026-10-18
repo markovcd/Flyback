@@ -27,6 +27,14 @@ internal sealed record AskedPatch(
     public static string Formats =>
         $".{PatchIO.FileExtension}, .{PatchLanguage.FileExtension} or {PatchBundle.Extension}";
 
+    /// <summary>The text the patch was read from, where it was read from a <c>.fbks</c>; null otherwise.</summary>
+    public string? Text()
+    {
+        var file = From ?? Into;
+
+        return PatchFile.Sourced(file) && file.Exists ? File.ReadAllText(file.FullName) : null;
+    }
+
     /// <summary>Whether <paramref name="file"/> is one this can write.</summary>
     public static bool Writable(FileInfo file) =>
         PatchFile.Bundled(file)
@@ -39,7 +47,13 @@ internal sealed record AskedPatch(
     /// change, so a turn that only talked does not reformat it.
     /// </summary>
     /// <returns>Why it could not be written, or null.</returns>
-    public string? Write(Patch patch, bool changed, string conversation, ModuleCatalog modules, ConversationStore store)
+    /// <param name="patch"></param>
+    /// <param name="changed"></param>
+    /// <param name="conversation"></param>
+    /// <param name="modules"></param>
+    /// <param name="store"></param>
+    /// <param name="text">The text the patch is written in, which a <c>.fbks</c> gets in place of a printing.</param>
+    public string? Write(Patch patch, bool changed, string conversation, ModuleCatalog modules, ConversationStore store, string? text = null)
     {
         try
         {
@@ -57,7 +71,7 @@ internal sealed record AskedPatch(
             {
                 File.WriteAllText(
                     Into.FullName,
-                    PatchFile.Sourced(Into) ? PatchPrinter.Print(patch, modules) : PatchIO.ToJson(patch, modules));
+                    PatchFile.Sourced(Into) ? text ?? PatchPrinter.Print(patch, modules) : PatchIO.ToJson(patch, modules));
             }
 
             Into.Refresh();

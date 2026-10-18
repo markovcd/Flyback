@@ -147,9 +147,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = await Heard();
 
-        var turned = await Call(bench, "set_knobs", """
-            {"handle":"output1","knobs":[{"port":"volume","value":0}]}
-            """);
+        var turned = await Edit(bench, "tone1 |> out.left", "tone1 |> out.left\nout.volume = 0");
         turned.Ok.ShouldBeTrue(turned.Text);
 
         var heard = await Call(bench, "listen", """{"seconds":0.5}""");
@@ -168,8 +166,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"audio.note","handle":"pitch1"}""");
-        await Call(bench, "connect", """{"from":"pitch1","from_port":"hz","to":"output1","to_port":"left"}""");
+        (await Write(bench, "let pitch1 = note()\npitch1.hz |> out.left")).Ok.ShouldBeTrue();
 
         var heard = await Call(bench, "listen", """{"from":0,"seconds":2}""");
 
@@ -187,9 +184,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
-        await Call(bench, "set_sample", """{"handle":"clip1","path":"gone.wav"}""");
-        var wired = await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"left"}""");
+        var wired = await Write(bench, "let clip1 = sample(\"gone.wav\")\nclip1.out |> out.left");
         wired.Ok.ShouldBeTrue(wired.Text);
 
         var heard = await Call(bench, "listen", """{"seconds":0.5}""");
@@ -210,10 +205,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """
-            {"type_id":"osc.sine","handle":"tone1","knobs":[{"port":"freq","value":440}]}
-            """);
-        await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"left"}""");
+        (await Write(bench, "let tone1 = sine(freq: 440)\ntone1 |> out.left")).Ok.ShouldBeTrue();
 
         var heard = await Call(bench, "listen", """{"seconds":0.5}""");
 
@@ -226,7 +218,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"osc.sine"}""");
+        await Write(bench, "let tone1 = sine()");
         var heard = await Call(bench, "listen");
 
         heard.Ok.ShouldBeFalse();

@@ -47,8 +47,8 @@ public class WireTests
     }
 
     /// <summary>
-    /// <c>set_extra</c>'s <c>value</c> takes a number, a boolean or a choice's
-    /// id, and says so by carrying no type at all. Everything here must have
+    /// A field that takes a number, a boolean or a choice's id says so by
+    /// carrying no type at all. Everything here must have
     /// one, so the same statement is made in the spelling this accepts.
     /// </summary>
     [Fact]
@@ -224,16 +224,16 @@ public class WireTests
                 "content": {
                   "role": "model",
                   "parts": [
-                    { "text": "Adding an oscillator." },
-                    { "functionCall": { "name": "add_module", "args": { "type_id": "osc.sine" } } }
+                    { "text": "Looking an oscillator up." },
+                    { "functionCall": { "name": "describe_module", "args": { "type_id": "osc.sine" } } }
                   ]
                 }
               }]
             }
             """));
 
-        reply.Text.ShouldBe("Adding an oscillator.");
-        reply.Calls.ShouldHaveSingleItem().Name.ShouldBe("add_module");
+        reply.Text.ShouldBe("Looking an oscillator up.");
+        reply.Calls.ShouldHaveSingleItem().Name.ShouldBe("describe_module");
         reply.Calls[0].Arguments!["type_id"]!.GetValue<string>().ShouldBe("osc.sine");
     }
 

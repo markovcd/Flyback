@@ -48,7 +48,8 @@ internal static class AskExpansion
             samples: about.Opened.Samples,
             pictures: about.Opened.Pictures,
             prose: settings.Prose(settingsPath),
-            presets: presets);
+            presets: presets,
+            text: about.Text());
 
         var (brief, failure) = await PromptExpansion.ExpandAsync(run, message, over, cancel).ConfigureAwait(false);
 

@@ -22,9 +22,7 @@ public partial class PatchWorkbenchTests
         // A clip naming a file that is not there. The tools allow one to be set —
         // the compiler is what refuses it — so this is how a genuine fault gets
         // in.
-        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
-        await Call(bench, "set_sample", """{"handle":"clip1","path":"gone.wav"}""");
-        await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"color"}""");
+        await Write(bench, "let clip1 = sample(\"gone.wav\")\nclip1.out |> out.color");
 
         var offered = await Call(bench, "propose", """{"summary":"a tone"}""");
 
@@ -60,9 +58,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = await Heard();
 
-        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
-        await Call(bench, "set_sample", """{"handle":"clip1","path":"gone.wav"}""");
-        await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"right"}""");
+        (await Edit(bench, "tone1 |> out.left", "tone1 |> out.left\nlet clip1 = sample(\"gone.wav\")\nclip1.out |> out.right")).Ok.ShouldBeTrue();
 
         var offered = await Call(bench, "propose", """{"summary":"a 440 hz tone"}""");
 
@@ -76,7 +72,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"osc.sine"}""");
+        await Write(bench, "let tone1 = sine()");
         var offered = await Call(bench, "propose", """{"summary":"a tone"}""");
 
         offered.Ok.ShouldBeFalse();
@@ -93,8 +89,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench(hearing: Listener.None);
 
-        await Call(bench, "add_module", """{"type_id":"audio.note","handle":"pitch1"}""");
-        await Call(bench, "connect", """{"from":"pitch1","from_port":"hz","to":"output1","to_port":"left"}""");
+        (await Write(bench, "let pitch1 = note()\npitch1.hz |> out.left")).Ok.ShouldBeTrue();
 
         var offered = await Call(bench, "propose", """{"summary":"slow glassy bells"}""");
 
@@ -113,7 +108,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = await Heard();
 
-        await Call(bench, "set_knobs", """{"handle":"output1","knobs":[{"port":"volume","value":0}]}""");
+        (await Edit(bench, "tone1 |> out.left", "tone1 |> out.left\nout.volume = 0")).Ok.ShouldBeTrue();
 
         var offered = await Call(bench, "propose", """{"summary":"an intro","starts_silent":true}""");
 
@@ -134,9 +129,7 @@ public partial class PatchWorkbenchTests
         var told = await Call(bench, "describe_patch");
 
         told.Text.ShouldNotContain("no output");
-        (await Call(bench, "set_knobs", """
-            {"handle":"output1","knobs":[{"port":"volume","value":0.8}]}
-            """)).Text.ShouldContain("No issues.");
+        (await Edit(bench, "tone1 |> out.left", "tone1 |> out.left\nout.volume = 0.8")).Text.ShouldContain("No issues.");
     }
 
     /// <summary>
@@ -149,10 +142,10 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        (await Call(bench, "add_module", """{"type_id":"value","handle":"knob1"}"""))
+        (await Write(bench, "let knob1 = value()"))
             .Text.ShouldContain("Nothing is wired into the Output");
 
-        (await Call(bench, "connect", """{"from":"knob1","to":"output1","to_port":"color"}"""))
+        (await Edit(bench, "let knob1 = value()", "let knob1 = value()\nknob1 |> out.color"))
             .Text.ShouldNotContain("Nothing is wired into the Output");
     }
 }

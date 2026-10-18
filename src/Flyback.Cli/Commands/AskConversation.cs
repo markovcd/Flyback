@@ -31,6 +31,9 @@ internal sealed class AskConversation : IDisposable
 
     private Patch current;
 
+    /// <summary>The text <see cref="current"/> is written in, or null where a printing stands for it.</summary>
+    private string? currentText;
+
     public AskConversation(
         IPatchAssistant assistant,
         AssistantConfig config,
@@ -58,6 +61,7 @@ internal sealed class AskConversation : IDisposable
 
         limit = options.Context ?? settings.ContextLimit;
         current = about.Opened.Patch;
+        currentText = about.Text();
 
         transcript = new ConsoleTranscript(options, output, error, () => session?.Run?.Turns ?? 0);
         session = new AssistantSession(transcript, logFolder, decisions);
@@ -92,7 +96,8 @@ internal sealed class AskConversation : IDisposable
             pictures: about.Opened.Pictures,
             resuming: resuming,
             prose: settings.Prose(settingsPath),
-            presets: presets);
+            presets: presets,
+            text: currentText);
 
         run.Workbench.Calling += transcript.Called;
 
@@ -135,7 +140,7 @@ internal sealed class AskConversation : IDisposable
 
         var run = session.Run!;
 
-        run.CatchUp(current);
+        run.CatchUp(current, currentText);
 
         Failed = false;
         var answered = false;
@@ -174,10 +179,11 @@ internal sealed class AskConversation : IDisposable
         if (proposed is not null)
         {
             current = proposed;
+            currentText = run.ProposalText;
             run.Rebase(current);
         }
 
-        var problem = about.Write(current, proposed is not null, session.Save().ToJson(), modules, store);
+        var problem = about.Write(current, proposed is not null, session.Save().ToJson(), modules, store, currentText);
 
         if (problem is not null)
         {

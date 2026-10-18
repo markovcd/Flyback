@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
@@ -15,18 +16,15 @@ public partial class PatchWorkbenchTests
     // --- a sequencer's notes ------------------------------------------------
 
     /// <summary>
-    /// The notes are a list on the module rather than knobs (ADR-0038), so
-    /// set_knobs cannot reach them and this is the only way to write a tune.
+    /// The notes are a list on the module rather than knobs (ADR-0038), written as
+    /// a block after the call.
     /// </summary>
     [Fact]
     public async Task A_tune_can_be_written_in_one_call()
     {
         var bench = Bench();
-        await Call(bench, "add_module", """{"type_id":"seq.notes","handle":"tune1"}""");
 
-        var set = await Call(bench, "set_steps", """
-            {"handle":"tune1","notes":[{"value":60},{"value":62,"length":2},{"value":64,"volume":0}]}
-            """);
+        var set = await Write(bench, "let tune1 = notes() [ C4 D4@2 E4%0 ]");
 
         set.Ok.ShouldBeTrue(set.Text);
 
@@ -39,31 +37,18 @@ public partial class PatchWorkbenchTests
     }
 
     [Fact]
-    public async Task An_arrangement_is_written_a_part_a_string()
+    public async Task An_arrangement_is_written_a_part_a_row()
     {
         var bench = Bench();
-        await Call(bench, "add_module", """{"type_id":"seq.arrangement","handle":"song1"}""");
 
-        var set = await Call(bench, "set_arrangement", """{"handle":"song1","parts":["1 0 >1","0.5"]}""");
+        var set = await Write(bench, "let song1 = arrangement() [ 1 0 >1 | 0.5 ]");
 
         set.Ok.ShouldBeTrue(set.Text);
 
         var parts = ArrangementExtra.Of(bench.Snapshot().Nodes.Single(n => n.TypeId == "seq.arrangement"));
 
         parts[0].ShouldBe([new PartLevel(1f), new PartLevel(0f), new PartLevel(1f, Glides: true)]);
-        parts[1].Select(l => l.Value).ShouldBe([0.5f, 0f, 0f]);
-    }
-
-    [Fact]
-    public async Task A_part_that_does_not_read_is_refused_by_number()
-    {
-        var bench = Bench();
-        await Call(bench, "add_module", """{"type_id":"seq.arrangement","handle":"song1"}""");
-
-        var set = await Call(bench, "set_arrangement", """{"handle":"song1","parts":["1 1","1 loud"]}""");
-
-        set.Ok.ShouldBeFalse();
-        set.Text.ShouldContain("part 2");
+        parts[1].Select(l => l.Value).ShouldBe([0.5f]);
     }
 
     /// <summary>Replaced outright, so a shorter tune does not leave the tail of a longer one behind.</summary>
@@ -71,37 +56,23 @@ public partial class PatchWorkbenchTests
     public async Task Setting_the_notes_replaces_the_whole_tune()
     {
         var bench = Bench();
-        await Call(bench, "add_module", """{"type_id":"seq.notes","handle":"tune1"}""");
 
-        await Call(bench, "set_steps", """{"handle":"tune1","notes":[{"value":1},{"value":2}]}""");
-        await Call(bench, "set_steps", """{"handle":"tune1","notes":[{"value":9}]}""");
+        await Write(bench, "let tune1 = notes() [ C4 D4 ]");
+        (await Edit(bench, "[ C4 D4 ]", "[ A4 ]")).Ok.ShouldBeTrue();
 
         StepsExtra.Of(bench.Snapshot().Nodes.Single(n => n.TypeId == "seq.notes")).Count.ShouldBe(1);
-    }
-
-    [Fact]
-    public async Task A_module_with_no_notes_says_so_rather_than_growing_some()
-    {
-        var bench = Bench();
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-
-        var set = await Call(bench, "set_steps", """{"handle":"tone1","notes":[{"value":1}]}""");
-
-        set.Ok.ShouldBeFalse();
-        set.Text.ShouldContain("no notes");
     }
 
     [Fact]
     public async Task More_notes_than_a_sequence_holds_is_refused()
     {
         var bench = Bench();
-        await Call(bench, "add_module", """{"type_id":"seq.values","handle":"tune1"}""");
 
-        var many = string.Join(",", Enumerable.Range(0, NodeCatalog.MaxSteps + 1).Select(_ => """{"value":0.5}"""));
-        var set = await Call(bench, "set_steps", $$"""{"handle":"tune1","notes":[{{many}}]}""");
+        var many = string.Join(" ", Enumerable.Range(0, NodeCatalog.MaxSteps + 1).Select(_ => "0.5"));
+        var set = await Write(bench, $"let tune1 = values() [ {many} ]");
 
         set.Ok.ShouldBeFalse();
-        set.Text.ShouldContain(NodeCatalog.MaxSteps.ToString());
+        set.Text.ShouldContain(NodeCatalog.MaxSteps.ToString(CultureInfo.InvariantCulture));
     }
 
     /// <summary>
@@ -112,11 +83,9 @@ public partial class PatchWorkbenchTests
     [Fact]
     public async Task Describing_the_patch_shows_the_tune()
     {
-        var bench = Bench();
-        await Call(bench, "add_module", """{"type_id":"seq.notes","handle":"tune1"}""");
-        await Call(bench, "set_steps", """{"handle":"tune1","notes":[{"value":60},{"value":67}]}""");
+        var drawn = PatchLanguage.Build("let tune1 = notes() [ C4 G4 ]", NodeCatalog.BuiltIn).Patch;
 
-        (await Call(bench, "describe_patch")).Text.ShouldContain("[ C4 G4 ]");
+        (await Call(new PatchWorkbench(NodeCatalog.BuiltIn, drawn), "describe_patch")).Text.ShouldContain("[ C4 G4 ]");
     }
 
     [Fact]
@@ -124,7 +93,7 @@ public partial class PatchWorkbenchTests
     {
         var briefing = Bench().Briefing;
 
-        briefing.ShouldContain("set_steps");
-        briefing.ShouldContain("notes");
+        briefing.ShouldContain("notes  a list of up to");
+        briefing.ShouldContain("written as a block after the call, in step notation");
     }
 }

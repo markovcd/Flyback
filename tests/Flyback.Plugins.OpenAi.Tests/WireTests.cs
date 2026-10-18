@@ -15,8 +15,8 @@ namespace Flyback.Plugins.OpenAi.Tests;
 public class WireTests
 {
     private static readonly PatchTool Adder = new(
-        "add_module",
-        "Places a module.",
+        "describe_module",
+        "Everything about one module.",
         """{ "properties": { "type_id": { "type": "string" } }, "required": ["type_id"] }""");
 
     // --- what goes out ------------------------------------------------------
@@ -29,7 +29,7 @@ public class WireTests
         var function = request["tools"]![0]!["function"]!;
 
         request["model"]!.GetValue<string>().ShouldBe("some-model");
-        function["name"]!.GetValue<string>().ShouldBe("add_module");
+        function["name"]!.GetValue<string>().ShouldBe("describe_module");
         function["description"]!.GetValue<string>().ShouldNotBeNullOrWhiteSpace();
 
         // The schema body is declared as an object here rather than in every
@@ -193,7 +193,7 @@ public class WireTests
     {
         var reply = Wire.Parse(JsonNode.Parse("""
             {"choices":[{"message":{"role":"assistant","content":null,"tool_calls":[
-              {"id":"call_1","type":"function","function":{"name":"add_module","arguments":"{\"type_id\":\"osc.sine\"}"}}
+              {"id":"call_1","type":"function","function":{"name":"describe_module","arguments":"{\"type_id\":\"osc.sine\"}"}}
             ]}}]}
             """));
 
@@ -201,7 +201,7 @@ public class WireTests
 
         var call = reply.Calls.ShouldHaveSingleItem();
         call.Id.ShouldBe("call_1");
-        call.Name.ShouldBe("add_module");
+        call.Name.ShouldBe("describe_module");
 
         JsonDocument.Parse(call.Arguments).RootElement
             .GetProperty("type_id").GetString().ShouldBe("osc.sine");

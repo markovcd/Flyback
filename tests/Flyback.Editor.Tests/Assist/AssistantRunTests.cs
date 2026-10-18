@@ -500,7 +500,7 @@ public class AssistantRunTests
     public async Task A_knob_turned_while_it_worked_is_kept_in_the_proposal_where_the_assistant_left_it_alone()
     {
         var (open, left, right) = TwoValues();
-        var assistant = ScriptedAssistant.Proposing("""{"handle":"value2","knobs":[{"port":"value","value":0.9}]}""");
+        var assistant = ScriptedAssistant.Proposing("""{"edits":[{"find":"let value2 = value()","replace":"let value2 = value(value: 0.9)"}]}""");
 
         using var run = RunOf(assistant, open);
 
@@ -591,7 +591,7 @@ public class AssistantRunTests
     public async Task A_conversation_carried_on_keeps_a_knob_it_set_and_never_offered()
     {
         var (open, _, second) = TwoValues();
-        var assistant = ScriptedAssistant.Proposing("""{"handle":"value2","knobs":[{"port":"value","value":0.9}]}""");
+        var assistant = ScriptedAssistant.Proposing("""{"edits":[{"find":"let value2 = value()","replace":"let value2 = value(value: 0.9)"}]}""");
         SavedConversation saved;
 
         using (var first = RunOf(assistant, open))
@@ -930,6 +930,7 @@ public class AssistantRunTests
         private string? throwsAfterStarting;
         private bool refusesToStart;
         private bool edits;
+        private int built;
         private string? proposes;
         private Queue<PatchEvent[]>? turns;
 
@@ -962,8 +963,8 @@ public class AssistantRunTests
         /// <summary>One that actually builds something, so a copy can be told from the original.</summary>
         public static ScriptedAssistant Editing() => new() { edits = true };
 
-        /// <summary>One that sets knobs with these set_knobs arguments, then proposes what it has.</summary>
-        public static ScriptedAssistant Proposing(string knobs) => new() { proposes = knobs };
+        /// <summary>One that edits the patch's text with these edit_patch arguments, then proposes what it has.</summary>
+        public static ScriptedAssistant Proposing(string edits) => new() { proposes = edits };
 
         /// <summary>
         /// One with something different to say each time it is asked, which is
@@ -1008,19 +1009,22 @@ public class AssistantRunTests
 
             if (proposes is not null && bench is not null)
             {
-                await bench.InvokeAsync("set_knobs", JsonSerializer.Deserialize<JsonElement>(proposes), cancel);
+                var edited = await bench.InvokeAsync("edit_patch", JsonSerializer.Deserialize<JsonElement>(proposes), cancel);
+
+                if (!edited.Ok) throw new InvalidOperationException(edited.Text);
 
                 yield return new PatchEvent.Proposed(bench.Snapshot(), "knobs set");
             }
 
             if (edits && bench is not null)
             {
+                // One more knob under a name of its own, written onto whatever the
+                // patch already says, so this can be told to build twice.
+                built++;
+
                 var added = await bench.InvokeAsync(
-                    "add_module",
-                    // No handle asked for: the workbench names each one, so this
-                    // can be told to build twice without the second refusing
-                    // over a name the first took.
-                    JsonSerializer.Deserialize<JsonElement>("""{"type_id":"value"}"""),
+                    "write_patch",
+                    JsonSerializer.SerializeToElement(new { source = $"{bench.Text}\nlet knob{built} = value()" }),
                     cancel);
 
                 yield return new PatchEvent.Did(added.Text);

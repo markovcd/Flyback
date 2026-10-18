@@ -25,5 +25,6 @@ internal sealed class AssistantRunFactory(
             pictures: editor.Pictures,
             resuming: resuming,
             prose: settings.GetProsePolicy(),
-            presets: editor.Presets() ?? plugins.Presets);
+            presets: editor.Presets() ?? plugins.Presets,
+            text: over is null ? editor.Text : null);
 }

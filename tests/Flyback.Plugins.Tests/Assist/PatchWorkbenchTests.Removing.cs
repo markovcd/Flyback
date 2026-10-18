@@ -19,7 +19,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = await Lit(0.25f);
 
-        var cut = await Call(bench, "disconnect", """{"handle":"output1","port":"color"}""");
+        var cut = await Edit(bench, "knob1 |> out.color", "");
 
         cut.Ok.ShouldBeTrue(cut.Text);
         bench.Snapshot().Connections.ShouldBeEmpty();
@@ -30,26 +30,25 @@ public partial class PatchWorkbenchTests
     {
         var bench = await Lit();
 
-        var gone = await Call(bench, "remove_module", """{"handle":"knob1"}""");
+        var gone = await Edit(bench, "let knob1 = value(value: 0)\nknob1 |> out.color", "");
 
         gone.Ok.ShouldBeTrue(gone.Text);
-        gone.Text.ShouldContain("One wire");
 
         var patch = bench.Snapshot();
         patch.Nodes.Count.ShouldBe(1);
         patch.Connections.ShouldBeEmpty();
     }
 
+    /// <summary>A patch written with no <c>out</c> in it still has its Output, which nothing removes.</summary>
     [Fact]
-    public async Task Removing_the_output_is_refused()
+    public async Task Writing_the_output_out_of_the_text_leaves_it_in_place()
     {
         var bench = await Lit();
 
-        var removed = await Call(bench, "remove_module", """{"handle":"output1"}""");
+        (await Write(bench, "let knob1 = value()")).Ok.ShouldBeTrue();
 
-        removed.Ok.ShouldBeFalse(removed.Text);
-        bench.Snapshot().Connections.Count.ShouldBe(1);
-        (await Call(bench, "connect", """{"from":"knob1","to":"output1","to_port":"left"}""")).Ok.ShouldBeTrue();
+        bench.Snapshot().Nodes.Count(n => n.TypeId == NodeCatalog.OutputTypeId).ShouldBe(1);
+        (await Edit(bench, "let knob1 = value()", "let knob1 = value()\nknob1 |> out.left")).Ok.ShouldBeTrue();
     }
 
     [Fact]
@@ -57,7 +56,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = await Lit();
 
-        var off = await Call(bench, "switch_module", """{"handle":"knob1"}""");
+        var off = await Edit(bench, "knob1 |> out.color", "knob1 |> out.color\noff knob1");
 
         off.Ok.ShouldBeTrue(off.Text);
 
@@ -67,7 +66,7 @@ public partial class PatchWorkbenchTests
         patch.Connections.ShouldHaveSingleItem();
         patch.Nodes.Single(n => n.TypeId == "value").Off.ShouldBeTrue();
 
-        var on = await Call(bench, "switch_module", """{"handle":"knob1","off":false}""");
+        var on = await Edit(bench, "\noff knob1", "");
 
         on.Ok.ShouldBeTrue(on.Text);
         bench.Snapshot().Nodes.Single(n => n.TypeId == "value").Off.ShouldBeFalse();
@@ -78,7 +77,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = await Lit();
 
-        var refused = await Call(bench, "switch_module", """{"handle":"output1"}""");
+        var refused = await Edit(bench, "knob1 |> out.color", "knob1 |> out.color\noff out");
 
         refused.Ok.ShouldBeFalse();
         refused.Text.ShouldContain("volume");
@@ -90,7 +89,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"osc.sine"}""");
+        await Write(bench, "let tone = sine()");
         await Call(bench, "reset");
 
         // Back to what was open, which is never nothing: the Output survives a

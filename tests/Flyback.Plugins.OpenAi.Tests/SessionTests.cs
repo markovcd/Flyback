@@ -25,9 +25,9 @@ public class SessionTests
     /// </summary>
     private static readonly (string Name, string Arguments)[] Building =
     [
-        ("add_module", """{"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":0.5}]}"""),
-        // The Output is already there under the handle the workbench gave it.
-        ("connect", """{"from":"knob1","to":"output1","to_port":"color"}"""),
+        ("write_patch", """{"source":"let knob1 = value(value: 0.5)"}"""),
+        // The Output is already there, and the text calls it out.
+        ("edit_patch", """{"edits":[{"find":"let knob1 = value(value: 0.5)","replace":"let knob1 = value(value: 0.5)\nknob1 |> out.color"}]}"""),
     ];
 
     /// <summary>
@@ -38,10 +38,8 @@ public class SessionTests
     /// </summary>
     private static readonly (string Name, string Arguments)[] Sounding =
     [
-        ("add_module", """{"type_id":"time","handle":"clock1"}"""),
-        ("add_module", """{"type_id":"osc.sine","handle":"tone1","knobs":[{"port":"freq","value":440}]}"""),
-        ("connect", """{"from":"clock1","from_port":"t","to":"tone1","to_port":"in"}"""),
-        ("connect", """{"from":"tone1","to":"output1","to_port":"left"}"""),
+        ("write_patch", """{"source":"let tone1 = t |> sine(freq: 440)"}"""),
+        ("edit_patch", """{"edits":[{"find":"let tone1 = t |> sine(freq: 440)","replace":"let tone1 = t |> sine(freq: 440)\ntone1 |> out.left"}]}"""),
     ];
 
     /// <summary>
@@ -658,7 +656,7 @@ public class SessionTests
             new CannedAnswer(Asking(Building)),
             new CannedAnswer(Asking(
                 ("propose", """{"summary":"a flat gray field"}"""),
-                ("add_module", """{"type_id":"value","handle":"knob2"}"""))),
+                ("edit_patch", """{"edits":[{"find":"knob1 |> out.color","replace":""}]}"""))),
             new CannedAnswer(Prose("ok")));
 
         using var session = Session(canned);

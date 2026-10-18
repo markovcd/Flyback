@@ -62,7 +62,7 @@ public sealed class ToolCommandTests : IDisposable
         await Call("p.fbk", "write_patch", Source("rings() |> out.color"));
         var first = File.ReadAllText(Path("p.fbk"));
 
-        await Call("p.fbk", "add_module", """{"type_id": "osc.sine"}""");
+        await Call("p.fbk", "edit_patch", Adding("sine1 = sine()"));
         PatchIO.Read(File.ReadAllText(Path("p.fbk"))).Patch.Nodes.ShouldContain(node => node.TypeId == "osc.sine");
 
         Step(ToolCommand.Undo).ShouldBe(Exit.Ok);
@@ -73,12 +73,23 @@ public sealed class ToolCommandTests : IDisposable
     }
 
     [Fact]
+    public async Task Editing_a_text_patch_keeps_what_its_author_wrote()
+    {
+        File.WriteAllText(Path("p.fbks"), "# a ring\nrings() |> out.color\n");
+
+        var (code, _, complained) = await Call("p.fbks", "edit_patch", Edit("rings()", "rings(freq: 9)"));
+
+        code.ShouldBe(Exit.Ok, complained);
+        File.ReadAllText(Path("p.fbks")).ShouldBe("# a ring\nrings(freq: 9) |> out.color\n");
+    }
+
+    [Fact]
     public async Task A_handle_chosen_in_one_call_names_the_module_in_the_next()
     {
         await Call("p.fbks", "write_patch", Source("rings() |> out.color"));
-        await Call("p.fbks", "add_module", """{"type_id": "osc.sine", "handle": "lfo"}""");
+        await Call("p.fbks", "edit_patch", Edit("rings() |> out.color", "rings() |> out.color\nlet lfo = sine()"));
 
-        var (code, said, complained) = await Call("p.fbks", "set_knobs", """{"handle": "lfo", "knobs": [{"port": "freq", "value": 2}]}""");
+        var (code, said, complained) = await Call("p.fbks", "edit_patch", Edit("lfo = sine()", "lfo = sine(freq: 2)"));
 
         code.ShouldBe(Exit.Ok, complained);
         said.ShouldContain("edit 3");
@@ -91,10 +102,10 @@ public sealed class ToolCommandTests : IDisposable
         await Call("p.fbk", "write_patch", Source("rings() |> out.color"));
         var before = File.ReadAllText(Path("p.fbk"));
 
-        var (code, _, complained) = await Call("p.fbk", "set_knobs", """{"handle": "nobody"}""");
+        var (code, _, complained) = await Call("p.fbk", "edit_patch", Edit("nobody |> out.left", "nobody |> out.right"));
 
         code.ShouldBe(Exit.Problems);
-        complained.ShouldContain("set_knobs refused");
+        complained.ShouldContain("edit_patch refused");
         File.ReadAllText(Path("p.fbk")).ShouldBe(before);
         History.Find(Path("p.fbk")).ShouldNotBeNull().Steps.Count.ShouldBe(1);
     }
@@ -124,8 +135,8 @@ public sealed class ToolCommandTests : IDisposable
         await Call("p.fbk", "write_patch", Source("rings() |> out.color"));
         var first = File.ReadAllText(Path("p.fbk"));
 
-        await Call("p.fbk", "add_module", """{"type_id": "osc.sine"}""");
-        await Call("p.fbk", "add_module", """{"type_id": "osc.saw"}""");
+        await Call("p.fbk", "edit_patch", Adding("sine1 = sine()"));
+        await Call("p.fbk", "edit_patch", Adding("saw1 = saw()"));
 
         Step(ToolCommand.Undo, to: 1).ShouldBe(Exit.Ok);
 
@@ -143,7 +154,7 @@ public sealed class ToolCommandTests : IDisposable
         ToolCommand.Undo(History, new FileInfo(Path("p.fbk")), null, false, new StringWriter(), error).ShouldBe(Exit.Failed);
         error.ToString().ShouldContain("changed since the last tool call");
 
-        var (_, _, complained) = await Call("p.fbk", "add_module", """{"type_id": "osc.sine"}""");
+        var (_, _, complained) = await Call("p.fbk", "write_patch", Source("rings() |> out.color"));
 
         complained.ShouldContain("starts again");
         History.Find(Path("p.fbk")).ShouldNotBeNull().Steps.Count.ShouldBe(1);
@@ -153,21 +164,21 @@ public sealed class ToolCommandTests : IDisposable
     public async Task A_new_edit_after_an_undo_drops_what_was_undone()
     {
         await Call("p.fbk", "write_patch", Source("rings() |> out.color"));
-        await Call("p.fbk", "add_module", """{"type_id": "osc.sine"}""");
+        await Call("p.fbk", "edit_patch", Adding("sine1 = sine()"));
         Step(ToolCommand.Undo);
 
-        await Call("p.fbk", "add_module", """{"type_id": "osc.saw"}""");
+        await Call("p.fbk", "edit_patch", Adding("saw1 = saw()"));
 
         var log = History.Find(Path("p.fbk")).ShouldNotBeNull();
         log.Steps.Count.ShouldBe(2);
-        log.Steps[1].Arguments.ShouldContain("osc.saw");
+        log.Steps[1].Arguments.ShouldContain("saw()");
     }
 
     [Fact]
     public async Task History_lists_each_edit_and_marks_the_undone()
     {
         await Call("p.fbk", "write_patch", Source("rings() |> out.color"));
-        await Call("p.fbk", "add_module", """{"type_id": "osc.sine"}""");
+        await Call("p.fbk", "edit_patch", Adding("sine1 = sine()"));
         Step(ToolCommand.Undo);
 
         var output = new StringWriter();
@@ -176,7 +187,7 @@ public sealed class ToolCommandTests : IDisposable
         var listed = JsonDocument.Parse(output.ToString()).RootElement;
 
         listed.GetProperty("step").GetInt32().ShouldBe(1);
-        listed.GetProperty("steps")[1].GetProperty("tool").GetString().ShouldBe("add_module");
+        listed.GetProperty("steps")[1].GetProperty("tool").GetString().ShouldBe("edit_patch");
         listed.GetProperty("steps")[1].GetProperty("undone").GetBoolean().ShouldBeTrue();
     }
 
@@ -206,6 +217,12 @@ public sealed class ToolCommandTests : IDisposable
     }
 
     private static string Source(string text) => JsonSerializer.Serialize(new { source = text });
+
+    private static string Edit(string find, string replace) =>
+        JsonSerializer.Serialize(new { edits = new[] { new { find, replace } } });
+
+    /// <summary>An edit adding one module, bound with <c>let</c>, beside the Rings a printing of the patch names <c>rings1</c>.</summary>
+    private static string Adding(string binding) => Edit("rings1 |> out.color", $"rings1 |> out.color\nlet {binding}");
 
     private async Task<(int Code, string Said, string Complained)> Call(
         string patch, string tool, string arguments, string? picture = null, bool json = false)

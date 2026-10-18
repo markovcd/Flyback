@@ -30,6 +30,12 @@ internal sealed class WorkingPatch(ModuleCatalog modules, ISampleLibrary? sample
 
     public Patch Patch { get; private set; } = new();
 
+    /// <summary>
+    /// The text the patch was written in, comments and all, or null where it has none and
+    /// is read as a printing.
+    /// </summary>
+    public string? Source { get; set; }
+
     /// <summary>What the model said of the patch it put forward, or null where it has not.</summary>
     public string? Proposal { get; set; }
 

@@ -18,13 +18,21 @@ internal sealed class CanvasChanges(WorkingPatch bench)
     /// <paramref name="was"/> to <paramref name="now"/> on the canvas, except where
     /// this workbench changed the same one itself. Not while a turn runs.
     /// </summary>
-    public List<Retuned> Follow(Patch was, Patch now) => Retuning.Carry(was, now, bench.Patch);
+    public List<Retuned> Follow(Patch was, Patch now) => Unwritten(Retuning.Carry(was, now, bench.Patch));
 
     /// <summary>
     /// Takes every setting on the canvas that differs from the patch being built,
     /// for a conversation carried on over a patch that was saved after it.
     /// </summary>
-    public List<Retuned> Follow(Patch now) => Retuning.Carry(Retuning.Copy(bench.Patch), now, bench.Patch);
+    public List<Retuned> Follow(Patch now) => Unwritten(Retuning.Carry(Retuning.Copy(bench.Patch), now, bench.Patch));
+
+    /// <summary>A setting carried onto the patch is not in its text, so the patch is read as a printing from here on.</summary>
+    private List<Retuned> Unwritten(List<Retuned> carried)
+    {
+        if (carried.Any(change => change.Kept)) bench.Source = null;
+
+        return carried;
+    }
 
     /// <summary>
     /// The settings in <paramref name="carried"/>, in the handles the modules

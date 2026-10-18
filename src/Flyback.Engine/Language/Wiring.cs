@@ -207,7 +207,7 @@ internal sealed class Wiring(ModuleCatalog modules, Issues issues, SourceSites s
 
         // A normalled socket is already carrying something and the stored value
         // is never read, so a number here would be a knob nobody can turn
-        // (ADR-0050). The same refusal the assistant's set_knobs makes.
+        // (ADR-0050).
         if (modules.Normalled(spec) is { } driver)
         {
             issues.Complain(IssueCode.NormalledSocket, line, column,

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
@@ -39,15 +40,23 @@ public partial class PatchWorkbenchTests
     private static Task<ToolOutcome> Call(PatchWorkbench bench, string tool, string arguments = "{}") =>
         bench.InvokeAsync(tool, JsonSerializer.Deserialize<JsonElement>(arguments), CancellationToken.None);
 
+    private static Task<ToolOutcome> Write(PatchWorkbench bench, string source) =>
+        Call(bench, "write_patch", JsonSerializer.Serialize(new { source }));
+
+    private static Task<ToolOutcome> Edit(PatchWorkbench bench, string find, string replace) =>
+        Call(bench, "edit_patch", JsonSerializer.Serialize(new { edits = new[] { new { find, replace } } }));
+
     /// <summary>Builds the smallest patch that renders: one knob into the screen.</summary>
     private static async Task<PatchWorkbench> Lit(float value = 0f)
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", $$"""
-            {"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":{{value}}}]}
-            """);
-        await Call(bench, "connect", """{"from":"knob1","to":"output1","to_port":"color"}""");
+        var written = await Write(bench, string.Create(CultureInfo.InvariantCulture, $"""
+            let knob1 = value(value: {value})
+            knob1 |> out.color
+            """));
+
+        written.Ok.ShouldBeTrue(written.Text);
 
         return bench;
     }
@@ -61,12 +70,12 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"time","handle":"clock1"}""");
-        await Call(bench, "add_module", """
-            {"type_id":"osc.sine","handle":"tone1","knobs":[{"port":"freq","value":440}]}
+        var written = await Write(bench, """
+            let tone1 = t |> sine(freq: 440)
+            tone1 |> out.left
             """);
-        await Call(bench, "connect", """{"from":"clock1","from_port":"t","to":"tone1","to_port":"in"}""");
-        await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"left"}""");
+
+        written.Ok.ShouldBeTrue(written.Text);
 
         return bench;
     }

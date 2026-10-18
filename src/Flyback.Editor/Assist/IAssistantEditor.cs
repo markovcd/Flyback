@@ -9,8 +9,16 @@ public interface IAssistantEditor
     /// <summary>The patch on the canvas now.</summary>
     Patch Current { get; }
 
+    /// <summary>
+    /// The text the patch is written in, where the text owns it and nothing typed is
+    /// waiting to be applied; null where a printing stands for it.
+    /// </summary>
+    string? Text { get; }
+
     /// <summary>Puts the assistant's patch on the canvas as one edit, which undoes like any other.</summary>
-    void Apply(Patch patch);
+    /// <param name="patch"></param>
+    /// <param name="text">The text the assistant left it in, which replaces the document's where the text owns it.</param>
+    void Apply(Patch patch, string? text = null);
 
     /// <summary>Says <paramref name="message"/> on the status line.</summary>
     void Report(string message, string? detail);

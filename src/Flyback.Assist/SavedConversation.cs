@@ -110,6 +110,8 @@ internal sealed record SavedConversation(
             ["start"] = Embedded(Bench.Start),
             ["working"] = Embedded(Bench.Working),
             ["handles"] = handles,
+            ["text"] = Bench.Text,
+            ["startText"] = Bench.StartText,
             ["history"] = History is null ? null : Embedded(History),
             ["transcript"] = transcript,
             ["canvas"] = Canvas is null ? null : Embedded(Canvas),
@@ -169,7 +171,11 @@ internal sealed record SavedConversation(
                 provider,
                 settings,
                 Number(body["turns"]),
-                new WorkbenchState(start, working, handles, Number(body["edits"]), Number(body["toolCalls"])),
+                new WorkbenchState(start, working, handles, Number(body["edits"]), Number(body["toolCalls"]))
+                {
+                    Text = Word(body["text"]),
+                    StartText = Word(body["startText"]),
+                },
                 Raw(body["history"]),
                 transcript,
                 Raw(body["canvas"]),

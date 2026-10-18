@@ -15,13 +15,14 @@ public partial class PatchWorkbenchTests
     // --- refusing rather than throwing --------------------------------------
 
     [Theory]
-    [InlineData("add_module", """{"type_id":"nowhere.at.all"}""")]
-    [InlineData("add_module", "{}")]
-    [InlineData("set_knobs", """{"handle":"nothing","knobs":[]}""")]
-    [InlineData("connect", """{"from":"nothing","to":"nothing","to_port":"x"}""")]
-    [InlineData("disconnect", """{"handle":"nothing","port":"x"}""")]
-    [InlineData("remove_module", "{}")]
-    [InlineData("switch_module", """{"handle":"nothing"}""")]
+    [InlineData("write_patch", "{}")]
+    [InlineData("write_patch", """{"source":"nonesuch() |> out.color"}""")]
+    [InlineData("edit_patch", "{}")]
+    [InlineData("edit_patch", """{"edits":"nope"}""")]
+    [InlineData("edit_patch", """{"edits":[{"find":"nothing","replace":"x"}]}""")]
+    [InlineData("edit_patch", """{"edits":[{"replace":"x"}]}""")]
+    [InlineData("edit_patch", """{"edits":[{"find":"x"}]}""")]
+    [InlineData("measure", """{"handles":["nothing"]}""")]
     [InlineData("propose", "{}")]
     [InlineData("nonsense", "{}")]
     public async Task Anything_it_cannot_do_is_refused_rather_than_thrown(string tool, string arguments)
@@ -35,10 +36,9 @@ public partial class PatchWorkbenchTests
     [Fact]
     public async Task A_knob_that_is_not_a_number_is_refused()
     {
-        var bench = Bench();
+        var bench = await Lit(0.5f);
 
-        await Call(bench, "add_module", """{"type_id":"value","handle":"knob1"}""");
-        var set = await Call(bench, "set_knobs", """{"handle":"knob1","knobs":[{"port":"value","value":"loud"}]}""");
+        var set = await Edit(bench, "value: 0.5", "value: \"loud\"");
 
         set.Ok.ShouldBeFalse();
     }
@@ -46,9 +46,9 @@ public partial class PatchWorkbenchTests
     [Fact]
     public async Task A_knob_a_float_cannot_hold_is_refused()
     {
-        var bench = await Lit();
+        var bench = await Lit(0.5f);
 
-        var set = await Call(bench, "set_knobs", """{"handle":"knob1","knobs":[{"port":"value","value":1e39}]}""");
+        var set = await Edit(bench, "value: 0.5", "value: 1e39");
 
         set.Ok.ShouldBeFalse();
         Should.NotThrow(() => bench.Save());

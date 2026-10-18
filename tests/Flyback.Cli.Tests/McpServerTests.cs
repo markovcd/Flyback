@@ -60,7 +60,10 @@ public sealed class McpServerTests : IDisposable
     {
         await Call("write_patch", new JsonObject { ["source"] = "rings() |> out.color" });
 
-        var result = await Call("add_module", new JsonObject { ["type_id"] = "osc.sine" });
+        var result = await Call("edit_patch", new JsonObject
+        {
+            ["edits"] = new JsonArray(new JsonObject { ["find"] = "rings1 |> out.color", ["replace"] = "rings1 |> out.color\nlet sine1 = sine()" }),
+        });
 
         result["isError"]!.GetValue<bool>().ShouldBeFalse(result.ToJsonString());
 
@@ -101,10 +104,13 @@ public sealed class McpServerTests : IDisposable
     [Fact]
     public async Task A_refused_call_is_a_tool_error_saying_why()
     {
-        var result = await Call("set_knobs", new JsonObject { ["handle"] = "nobody" });
+        var result = await Call("edit_patch", new JsonObject
+        {
+            ["edits"] = new JsonArray(new JsonObject { ["find"] = "nobody", ["replace"] = "somebody" }),
+        });
 
         result["isError"]!.GetValue<bool>().ShouldBeTrue();
-        result["content"]![0]!["text"]!.GetValue<string>().ShouldContain("nobody");
+        result["content"]![0]!["text"]!.GetValue<string>().ShouldContain("the patch is empty");
     }
 
     [Fact]

@@ -22,8 +22,9 @@ flyback-cli tool --list          # every tool and its --args; --json for the sch
 flyback-cli tool <name> <patch> --args '<json object>'
 ```
 
-- `describe_patch` first, on a patch that already exists: it lists every module by handle, what each input is set to or wired from, and what the compiler says. Edits name modules by these handles.
-- `write_patch` builds a whole patch from Flyback's patch language. Use it for a new patch. To change one, use `set_knobs`, `connect`, `add_module` and the rest, so the modules somebody placed stay where they are.
+- `describe_patch` first, on a patch that already exists: it gives the patch in Flyback's patch language, a `.fbks` exactly as written, and what the compiler says.
+- `write_patch` builds a whole patch from that language. Use it for a new patch.
+- `edit_patch` changes one: each `{find, replace}` swaps a piece of the text `describe_patch` showed, found exactly once. A knob is a number, a wire a pipe, a module a line. It keeps the rest of the text, comments included, so never rewrite a patch whole to change it.
 - `render` draws the picture to a PNG and prints where it is (`--picture <file>` says where). Open it and look before saying a picture is right.
 - `measure` says what an output carries: levels, pitch, how it moves. Use it on the sound, which you cannot hear.
 - `propose` checks the patch compiles cleanly and something reaches the Output. Run it before saying a patch is finished.

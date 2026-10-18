@@ -21,9 +21,11 @@ internal sealed class AssistantEditor(
 {
     public Patch Current => editor.History.Patch;
 
-    public void Apply(Patch patch)
+    public string? Text => document.AssistantText;
+
+    public void Apply(Patch patch, string? text = null)
     {
-        document.TakeFromAssistant(patch);
+        document.TakeFromAssistant(patch, text);
         preview.Rewind();
     }
 

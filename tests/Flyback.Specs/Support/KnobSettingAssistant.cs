@@ -6,7 +6,7 @@ using Flyback.Plugins.Settings;
 namespace Flyback.Specs.Support;
 
 /// <summary>
-/// An assistant with no model behind it: each turn it sets the knobs it was told to,
+/// An assistant with no model behind it: each turn it makes the edit it was told to,
 /// if any, proposes what it has, and remembers what it was sent.
 /// </summary>
 internal sealed class KnobSettingAssistant : IPatchAssistant, IPatchSession
@@ -17,8 +17,8 @@ internal sealed class KnobSettingAssistant : IPatchAssistant, IPatchSession
     /// <summary>Every message it was sent, as it arrived.</summary>
     public List<string> Heard { get; } = [];
 
-    /// <summary><c>set_knobs</c> arguments for the next turn, or null to set none.</summary>
-    public string? Knobs { get; set; }
+    /// <summary><c>edit_patch</c> arguments for the next turn, or null to edit nothing.</summary>
+    public string? Edit { get; set; }
 
     /// <summary>What each turn reports it cost, or null to report none.</summary>
     public PatchEvent.Cost? Costs { get; set; }
@@ -51,10 +51,10 @@ internal sealed class KnobSettingAssistant : IPatchAssistant, IPatchSession
 
         if (bench is null) yield break;
 
-        if (Knobs is { } knobs)
+        if (Edit is { } edit)
         {
-            await bench.InvokeAsync("set_knobs", JsonSerializer.Deserialize<JsonElement>(knobs), cancel);
-            Knobs = null;
+            await bench.InvokeAsync("edit_patch", JsonSerializer.Deserialize<JsonElement>(edit), cancel);
+            Edit = null;
         }
 
         if (Costs is { } cost) yield return cost;

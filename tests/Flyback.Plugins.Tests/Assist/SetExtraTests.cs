@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Shouldly;
@@ -7,13 +8,13 @@ using Xunit;
 namespace Flyback.Plugins.Tests.Assist;
 
 /// <summary>
-/// The one tool that sets whatever a plugin invented, in place of a tool written
+/// Whatever a plugin invented is written as named arguments, in place of a notation
 /// for each kind (ADR-0055).
 /// </summary>
 /// <remarks>
 /// The module below is the only thing here that knows what a "glide" is. Nothing
 /// in the workbench does, which is the property being checked: an assistant can
-/// set a value on a kind of state that did not exist when the workbench was
+/// write a value on a kind of state that did not exist when the workbench was
 /// written.
 /// </remarks>
 public class SetExtraTests
@@ -47,175 +48,79 @@ public class SetExtraTests
     private static Task<ToolOutcome> Call(PatchWorkbench bench, string tool, string arguments = "{}") =>
         bench.InvokeAsync(tool, JsonSerializer.Deserialize<JsonElement>(arguments), CancellationToken.None);
 
-    private static async Task<PatchWorkbench> WithGlide()
+    private static Task<ToolOutcome> Write(PatchWorkbench bench, string source) =>
+        Call(bench, "write_patch", JsonSerializer.Serialize(new { source }));
+
+    private static JsonNode Glided(PatchWorkbench bench) =>
+        bench.Snapshot().FirstOf("test.glide.porta").ShouldNotBeNull().StateOf("glide").ShouldNotBeNull();
+
+    [Fact]
+    public async Task A_declared_number_is_written_and_read_back()
     {
         var bench = Bench();
-        await Call(bench, "add_module", """{"type_id":"test.glide.porta","handle":"g1"}""");
 
-        return bench;
+        var set = await Write(bench, "let g1 = porta(time: 0.4)");
+
+        set.Ok.ShouldBeTrue(set.Text);
+        Glided(bench)["time"]!.GetValue<float>().ShouldBe(0.4f);
     }
 
     [Fact]
-    public async Task A_declared_number_is_set_and_read_back()
+    public async Task A_declared_toggle_is_written_as_one_or_nought()
     {
-        var bench = await WithGlide();
+        var bench = Bench();
 
-        var set = await Call(bench, "set_extra",
-            """{"handle":"g1","extra":"glide","field":"time","value":0.4}""");
+        var set = await Write(bench, "let g1 = porta(legato: 1)");
 
         set.Ok.ShouldBeTrue(set.Text);
-        set.Text.ShouldContain("time 0.4");
-
-        var node = bench.Snapshot().FirstOf("test.glide.porta").ShouldNotBeNull();
-        node.StateOf("glide")!["time"]!.GetValue<float>().ShouldBe(0.4f);
-    }
-
-    [Fact]
-    public async Task A_declared_toggle_takes_a_boolean()
-    {
-        var bench = await WithGlide();
-
-        var set = await Call(bench, "set_extra",
-            """{"handle":"g1","extra":"glide","field":"legato","value":true}""");
-
-        set.Ok.ShouldBeTrue(set.Text);
-
-        var node = bench.Snapshot().FirstOf("test.glide.porta").ShouldNotBeNull();
-        node.StateOf("glide")!["legato"]!.GetValue<bool>().ShouldBeTrue();
+        Glided(bench)["legato"]!.GetValue<bool>().ShouldBeTrue();
     }
 
     [Fact]
     public async Task Declared_text_takes_a_string_with_its_line_breaks()
     {
-        var bench = await WithGlide();
+        var bench = Bench();
 
-        var set = await Call(bench, "set_extra",
-            """{"handle":"g1","extra":"glide","field":"label","value":"up\ndown"}""");
+        var set = await Write(bench, "let g1 = porta(label: \"up|down\")");
 
         set.Ok.ShouldBeTrue(set.Text);
-
-        var node = bench.Snapshot().FirstOf("test.glide.porta").ShouldNotBeNull();
-        node.StateOf("glide")!["label"]!.GetValue<string>().ShouldBe("up\ndown");
+        Glided(bench)["label"]!.GetValue<string>().ShouldBe("up\ndown");
     }
 
     [Fact]
-    public async Task Declared_text_refuses_a_number_and_says_how_lines_are_written()
+    public async Task An_unknown_field_is_refused()
     {
-        var bench = await WithGlide();
-
-        var set = await Call(bench, "set_extra",
-            """{"handle":"g1","extra":"glide","field":"label","value":3}""");
+        var set = await Write(Bench(), "let g1 = porta(depth: 1)");
 
         set.Ok.ShouldBeFalse();
-        set.Text.ShouldContain("line break");
-    }
-
-    [Fact]
-    public async Task A_value_outside_the_range_is_held_to_it_rather_than_refused()
-    {
-        var bench = await WithGlide();
-
-        await Call(bench, "set_extra", """{"handle":"g1","extra":"glide","field":"time","value":9}""");
-
-        var node = bench.Snapshot().FirstOf("test.glide.porta").ShouldNotBeNull();
-        node.StateOf("glide")!["time"]!.GetValue<float>().ShouldBe(1f);
-    }
-
-    [Fact]
-    public async Task The_wrong_shape_of_value_is_refused_and_says_what_was_wanted()
-    {
-        var bench = await WithGlide();
-
-        var set = await Call(bench, "set_extra",
-            """{"handle":"g1","extra":"glide","field":"legato","value":3}""");
-
-        set.Ok.ShouldBeFalse();
-        set.Text.ShouldContain("true or false");
-    }
-
-    [Fact]
-    public async Task An_unknown_field_is_refused_and_lists_the_ones_there_are()
-    {
-        var bench = await WithGlide();
-
-        var set = await Call(bench, "set_extra",
-            """{"handle":"g1","extra":"glide","field":"depth","value":1}""");
-
-        set.Ok.ShouldBeFalse();
-        set.Text.ShouldContain("time");
-        set.Text.ShouldContain("legato");
-    }
-
-    [Fact]
-    public async Task An_unknown_extra_is_refused_and_says_what_the_module_carries()
-    {
-        var bench = await WithGlide();
-
-        var set = await Call(bench, "set_extra",
-            """{"handle":"g1","extra":"chord","field":"time","value":1}""");
-
-        set.Ok.ShouldBeFalse();
-        set.Text.ShouldContain("glide");
-    }
-
-    /// <summary>
-    /// The engine's own three keep their own tools: they store in typed fields
-    /// and declare no schema, so there is nothing here for this to set.
-    /// </summary>
-    [Fact]
-    public async Task A_built_in_kind_is_refused_and_points_at_its_own_tool()
-    {
-        var bench = Bench();
-        await Call(bench, "add_module", """{"type_id":"seq.notes","handle":"s1"}""");
-
-        var set = await Call(bench, "set_extra",
-            """{"handle":"s1","extra":"notes","field":"value","value":1}""");
-
-        set.Ok.ShouldBeFalse();
-        set.Text.ShouldContain("set_steps");
+        set.Text.ShouldContain("depth");
     }
 
     /// <summary>
     /// The listing has to name the extra and its fields, or nothing above is
-    /// discoverable — a tool that can set anything is useless if the model
-    /// cannot find out what there is.
+    /// discoverable: a model cannot write what it cannot find out is there.
     /// </summary>
     [Fact]
     public async Task The_module_listing_names_what_a_plugins_module_carries()
     {
-        var bench = await WithGlide();
-
-        var described = await Call(bench, "describe_module", """{"type_id":"test.glide.porta"}""");
+        var described = await Call(Bench(), "describe_module", """{"type_id":"test.glide.porta"}""");
 
         described.Text.ShouldContain("glide");
         described.Text.ShouldContain("time");
-        described.Text.ShouldContain("set_extra");
+        described.Text.ShouldContain("named arguments");
     }
 
-    /// <summary>
-    /// An Expression's formula is declared rather than drawn by a control of its
-    /// own, so this is the tool that writes it — and a formula that does not read
-    /// is written anyway and complained about, the way the panel would have it.
-    /// </summary>
+    /// <summary>An Expression's formula is declared text, so it is a named argument like any other field.</summary>
     [Fact]
     public async Task A_formula_is_text_and_takes_a_string()
     {
         var bench = Bench();
-        await Call(bench, "add_module", """{"type_id":"math.expression","handle":"e1"}""");
 
-        var set = await Call(bench, "set_extra",
-            """{"handle":"e1","extra":"expression","field":"formula","value":"sin(a * tau) * b"}""");
+        var set = await Write(bench, "let e1 = expression(formula: \"sin(a * tau) * b\")");
 
         set.Ok.ShouldBeTrue(set.Text);
-        set.Text.ShouldContain("formula sin(a * tau) * b");
 
         var node = bench.Snapshot().FirstOf("math.expression").ShouldNotBeNull();
         node.StateOf("expression")!["formula"]!.GetValue<string>().ShouldBe("sin(a * tau) * b");
-
-        var number = await Call(bench, "set_extra",
-            """{"handle":"e1","extra":"expression","field":"formula","value":3}""");
-
-        number.Ok.ShouldBeFalse();
-        number.Text.ShouldContain("as a string");
     }
 }

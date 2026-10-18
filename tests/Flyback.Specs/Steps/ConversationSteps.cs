@@ -133,7 +133,7 @@ public sealed class ConversationSteps : IDisposable
     /// <summary>A turn in which the assistant turns value2 up while <paramref name="meanwhile"/> happens on the canvas.</summary>
     private async Task Works(Action meanwhile)
     {
-        assistant.Knobs = """{"handle":"value2","knobs":[{"port":"value","value":0.9}]}""";
+        assistant.Edit = """{"edits":[{"find":"let value2 = value()","replace":"let value2 = value(value: 0.9)"}]}""";
 
         await Turn("turn the second one up");
 

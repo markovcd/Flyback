@@ -161,7 +161,7 @@ internal static class ToolCommand
     }
 
     /// <summary>The workbench a call runs on, built over <paramref name="over"/>.</summary>
-    internal static PatchWorkbench Bench(PluginCatalog plugins, Patch over, string? settingsPath, AskedPatch? about = null) => new(
+    internal static PatchWorkbench Bench(PluginCatalog plugins, Patch over, string? settingsPath, AskedPatch? about = null, string? text = null) => new(
         plugins.Modules,
         over,
         vision: true,
@@ -169,7 +169,8 @@ internal static class ToolCommand
         samples: about?.Opened.Samples,
         pictures: about?.Opened.Pictures,
         prose: AssistantSettings.Load(settingsPath).Prose(settingsPath ?? SettingsFile.Path),
-        presets: plugins.Presets);
+        presets: plugins.Presets,
+        text: text);
 
     public static int List(PluginCatalog plugins, bool json, TextWriter output, string? settingsPath = null)
     {
@@ -306,9 +307,12 @@ internal static class ToolCommand
             ? kept
             : new ToolLog(file.FullName, PatchIO.ToJson(about.Opened.Patch, modules), current, [], 0);
 
-        var bench = Bench(plugins, PatchIO.Read(log.Start, modules).Patch, settingsPath, about);
+        // A .fbks is its own text at every step, the steps having written it.
+        var sourced = PatchFile.Sourced(file);
+        var bench = Bench(plugins, PatchIO.Read(log.Start, modules).Patch, settingsPath, about, sourced ? Text(log.File(0)) : null);
 
-        if (log.At > 0) bench.Restore(new WorkbenchState(log.Start, log.Working(log.At), log.Handles(log.At)!, 0, 0));
+        if (log.At > 0)
+            bench.Restore(new WorkbenchState(log.Start, log.Working(log.At), log.Handles(log.At)!, 0, 0) { Text = sourced ? Text(current) : null });
 
         var outcome = await bench.InvokeAsync(tool, given, cancel).ConfigureAwait(false);
 
@@ -320,7 +324,7 @@ internal static class ToolCommand
 
         try
         {
-            bytes = Bytes(patch, about, modules);
+            bytes = Bytes(patch, about, modules, bench.Text);
             File.WriteAllBytes(file.FullName, bytes);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
@@ -345,7 +349,7 @@ internal static class ToolCommand
     }
 
     /// <summary>The patch as the file's extension says to write it.</summary>
-    private static byte[] Bytes(Patch patch, AskedPatch about, ModuleCatalog modules)
+    private static byte[] Bytes(Patch patch, AskedPatch about, ModuleCatalog modules, string? text)
     {
         if (PatchFile.Bundled(about.Into))
         {
@@ -357,8 +361,10 @@ internal static class ToolCommand
         }
 
         return System.Text.Encoding.UTF8.GetBytes(
-            PatchFile.Sourced(about.Into) ? PatchPrinter.Print(patch, modules) : PatchIO.ToJson(patch, modules));
+            PatchFile.Sourced(about.Into) ? text ?? PatchPrinter.Print(patch, modules) : PatchIO.ToJson(patch, modules));
     }
+
+    private static string? Text(byte[]? bytes) => bytes is null ? null : System.Text.Encoding.UTF8.GetString(bytes);
 
     /// <summary>Writes a picture or a sound where it was asked for, or to the temporary folder, and says where.</summary>
     private static string? Media(byte[] bytes, FileInfo? into, FileInfo patch, string extension, TextWriter error)

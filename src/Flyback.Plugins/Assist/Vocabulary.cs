@@ -4,49 +4,29 @@ using Flyback.Core.Graph.Extras;
 namespace Flyback.Plugins.Assist;
 
 /// <summary>
-/// Which tool writes what a module carries that is not a knob.
+/// How the text writes what a module carries that is not a knob, for a module listing to say.
 /// </summary>
-/// <remarks>
-/// The tool name is declared once, dispatched by the workbench, and described in
-/// the handbook.
-/// </remarks>
 internal static class Vocabulary
 {
-    public const string SetSteps = "set_steps";
-    public const string SetScale = "set_scale";
-    public const string SetArrangement = "set_arrangement";
-    public const string SetSample = "set_sample";
-    public const string SetPicture = "set_picture";
-    public const string SetExtra = "set_extra";
-
-    /// <summary>Lays the computer keyboard out, which is the patch's and no module's.</summary>
-    public const string SetKeyboard = "set_keyboard";
-
-    /// <summary>Says how long the patch plays for, which is the patch's and no module's.</summary>
-    public const string SetLength = "set_length";
-
-    /// <summary>
-    /// The tool that writes <paramref name="extra"/>.
-    /// </summary>
+    /// <summary>Where <paramref name="extra"/> goes in a module's call.</summary>
     /// <remarks>
-    /// A file, whoever's kind it is, is set by path; anything else not named here is
-    /// <see cref="SetExtra"/>, which is right by construction: every other kind is one
-    /// a plugin declared through <see cref="NodeExtra.Fields"/> (ADR-0055).
+    /// A file, whoever's kind it is, is the call's one unnamed string; anything else not
+    /// named here is a field a plugin declared through <see cref="NodeExtra.Fields"/>
+    /// (ADR-0055), which is a named argument.
     /// </remarks>
-    public static string ToolFor(NodeExtra extra) => extra switch
+    public static string WrittenAs(NodeExtra extra) => extra switch
     {
-        StepsExtra => SetSteps,
-        ScaleExtra => SetScale,
-        ArrangementExtra => SetArrangement,
-        FileExtra { Kind.Picture: true } => SetPicture,
-        FileExtra => SetSample,
-        _ => SetExtra,
+        StepsExtra => "a block after the call, in step notation",
+        ScaleExtra => "a block of note names after the call",
+        ArrangementExtra => "a block of parts after the call",
+        FileExtra => "the call's one unnamed string",
+        _ => "named arguments",
     };
 
     /// <summary>
     /// One extra's line in a module listing: what the module carries, which the
-    /// engine says, and how to write it, which this project says.
+    /// engine says, and how the text writes it, which this project says.
     /// </summary>
     public static string Announce(NodeExtra extra) =>
-        $"{extra.Announce()}, set with {ToolFor(extra)}";
+        $"{extra.Announce()}, written as {WrittenAs(extra)}";
 }

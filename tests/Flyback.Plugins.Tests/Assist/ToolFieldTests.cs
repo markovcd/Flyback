@@ -19,19 +19,19 @@ public class ToolFieldTests
     {
         var schema = JsonNode.Parse(ToolField.Schema(
         [
-            ToolFields.WireFrom,
-            ToolFields.WireFromPort,
-            ToolFields.Knobs,
+            ToolFields.Source,
+            ToolFields.Note,
+            ToolFields.Edits,
         ]))!.AsObject();
 
         var properties = schema["properties"]!.AsObject();
 
-        properties.Select(p => p.Key).ShouldBe(["from", "from_port", "knobs"]);
-        properties["from"]!["type"]!.GetValue<string>().ShouldBe("string");
-        properties["from"]!["description"]!.GetValue<string>().ShouldBe(ToolFields.WireFrom.Description);
-        properties["knobs"]!["items"]!["properties"]!["port"]!["type"]!.GetValue<string>().ShouldBe("string");
-        properties["knobs"]!["items"]!["required"]!.AsArray().Select(n => n!.GetValue<string>()).ShouldBe(["port", "value"]);
-        schema["required"]!.AsArray().Select(n => n!.GetValue<string>()).ShouldBe(["from", "knobs"]);
+        properties.Select(p => p.Key).ShouldBe(["source", "note", "edits"]);
+        properties["source"]!["type"]!.GetValue<string>().ShouldBe("string");
+        properties["source"]!["description"]!.GetValue<string>().ShouldBe(ToolFields.Source.Description);
+        properties["edits"]!["items"]!["properties"]!["find"]!["type"]!.GetValue<string>().ShouldBe("string");
+        properties["edits"]!["items"]!["required"]!.AsArray().Select(n => n!.GetValue<string>()).ShouldBe(["find", "replace"]);
+        schema["required"]!.AsArray().Select(n => n!.GetValue<string>()).ShouldBe(["source", "edits"]);
     }
 
     [Fact]
@@ -54,16 +54,16 @@ public class ToolFieldTests
     [Fact]
     public void A_field_reads_its_own_name_and_only_what_its_kind_holds()
     {
-        var sent = Arguments("""{ "handle": "sine1", "off": false, "tonic": 9, "seconds": "two", "path": "" }""");
+        var sent = Arguments("""{ "type_id": "osc.sine", "starts_silent": false, "from": 9, "seconds": "two", "summary": "" }""");
 
-        ToolFields.Handle.Text(sent, out var handle).ShouldBeTrue();
-        handle.ShouldBe("sine1");
-        ToolFields.Off.Flag(sent, fallback: true).ShouldBeFalse();
-        ToolFields.StartsSilent.Flag(sent, fallback: true).ShouldBeTrue();
-        ToolFields.Tonic.Whole(sent, out var tonic).ShouldBeTrue();
-        tonic.ShouldBe(9);
+        ToolFields.TypeId.Text(sent, out var type).ShouldBeTrue();
+        type.ShouldBe("osc.sine");
+        ToolFields.StartsSilent.Flag(sent, fallback: true).ShouldBeFalse();
+        ToolFields.StartsSilent.Flag(Arguments("{}"), fallback: true).ShouldBeTrue();
+        ToolFields.From.Number(sent, out var from).ShouldBeTrue();
+        from.ShouldBe(9);
         ToolFields.Seconds.Number(sent, out _).ShouldBeFalse();
-        ToolFields.SamplePath.Text(sent, out _).ShouldBeFalse();
-        ToolFields.Handle.Text(Arguments("[]"), out _).ShouldBeFalse();
+        ToolFields.Summary.Text(sent, out _).ShouldBeFalse();
+        ToolFields.TypeId.Text(Arguments("[]"), out _).ShouldBeFalse();
     }
 }

@@ -14,11 +14,11 @@ internal sealed class Rehearsal(PatchWorkbench workbench) : IPatchSession
     /// </summary>
     private static readonly (string Tool, string Arguments)[] Script =
     [
-        ("add_module", """{"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":0.5}]}"""),
+        ("write_patch", """{"source":"let knob1 = value(value: 0.5)"}"""),
 
-        // No sink is added: every patch arrives with its Output already placed,
-        // under the handle the workbench gave it.
-        ("connect", """{"from":"knob1","to":"output1","to_port":"color"}"""),
+        // No sink is written: every patch arrives with its Output already placed,
+        // which the text calls out.
+        ("edit_patch", """{"edits":[{"find":"let knob1 = value(value: 0.5)","replace":"let knob1 = value(value: 0.5)\nknob1 |> out.color"}]}"""),
         ("render", """{"times":[0.5]}"""),
         ("propose", """{"summary":"a flat gray field"}"""),
     ];

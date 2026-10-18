@@ -15,36 +15,18 @@ public partial class PatchWorkbenchTests
     // --- a quantiser's scale --------------------------------------------------
 
     /// <summary>
-    /// The other list a node carries, and the same rule: not knobs, so
-    /// set_knobs cannot reach it and this is the only way to choose a scale.
+    /// The other list a node carries, and the same rule: not knobs, but a block
+    /// after the call, which edit_patch rewrites like any other text.
     /// </summary>
     [Fact]
     public async Task A_scale_can_be_written_in_one_call()
     {
         var bench = Bench();
-        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.QuantiserTypeId}}","handle":"key1"}""");
 
-        var set = await Call(bench, "set_scale", """{"handle":"key1","notes":[0,3,5,7,10]}""");
+        var set = await Write(bench, "let key1 = quantiser() [ C D# F G A# ]");
 
         set.Ok.ShouldBeTrue(set.Text);
         Scale(bench).ShouldBe([0, 3, 5, 7, 10]);
-    }
-
-    /// <summary>
-    /// A set, so a model that sends one out of order or names a note twice gets
-    /// the scale it meant rather than a refusal about something that does not
-    /// matter.
-    /// </summary>
-    [Fact]
-    public async Task A_scale_sent_out_of_order_or_twice_over_is_tidied()
-    {
-        var bench = Bench();
-        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.QuantiserTypeId}}","handle":"key1"}""");
-
-        var set = await Call(bench, "set_scale", """{"handle":"key1","notes":[7,0,4,0,7]}""");
-
-        set.Ok.ShouldBeTrue(set.Text);
-        Scale(bench).ShouldBe([0, 4, 7]);
     }
 
     /// <summary>Replaced outright, so a smaller scale does not leave the rest of a larger one on.</summary>
@@ -52,10 +34,9 @@ public partial class PatchWorkbenchTests
     public async Task Setting_the_scale_replaces_the_whole_of_it()
     {
         var bench = Bench();
-        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.QuantiserTypeId}}","handle":"key1"}""");
 
-        await Call(bench, "set_scale", """{"handle":"key1","notes":[0,2,4,5,7,9,11]}""");
-        await Call(bench, "set_scale", """{"handle":"key1","notes":[0,7]}""");
+        await Write(bench, "let key1 = quantiser() [ C D E F G A B ]");
+        (await Edit(bench, "[ C D E F G A B ]", "[ C G ]")).Ok.ShouldBeTrue();
 
         Scale(bench).ShouldBe([0, 7]);
     }
@@ -68,58 +49,24 @@ public partial class PatchWorkbenchTests
     public async Task An_empty_scale_is_allowed()
     {
         var bench = Bench();
-        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.QuantiserTypeId}}","handle":"key1"}""");
 
-        var set = await Call(bench, "set_scale", """{"handle":"key1","notes":[]}""");
+        await Write(bench, "let key1 = quantiser() [ C E G ]");
+        var set = await Edit(bench, "[ C E G ]", "[ ]");
 
         set.Ok.ShouldBeTrue(set.Text);
         Scale(bench).ShouldBeEmpty();
-        set.Text.ShouldContain("passes the signal through");
-    }
-
-    /// <summary>
-    /// A note number is not a pitch class, and 60 for middle C is exactly the
-    /// mistake a model steeped in MIDI will make — so the refusal says which of
-    /// the two this wants.
-    /// </summary>
-    [Fact]
-    public async Task A_note_number_in_place_of_a_pitch_class_is_refused_by_name()
-    {
-        var bench = Bench();
-        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.QuantiserTypeId}}","handle":"key1"}""");
-
-        var set = await Call(bench, "set_scale", """{"handle":"key1","notes":[60,64,67]}""");
-
-        set.Ok.ShouldBeFalse();
-        set.Text.ShouldContain("pitch class");
-
-        // And nothing was half applied: the scale it arrived with is intact.
-        Scale(bench).ShouldBe([0, 2, 4, 5, 7, 9, 11]);
-    }
-
-    [Fact]
-    public async Task A_module_with_no_scale_says_so_rather_than_growing_one()
-    {
-        var bench = Bench();
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-
-        var set = await Call(bench, "set_scale", """{"handle":"tone1","notes":[0,4,7]}""");
-
-        set.Ok.ShouldBeFalse();
-        set.Text.ShouldContain("no scale");
     }
 
     /// <summary>
     /// A scale is neither wiring nor a knob, so without this a Quantiser reads
     /// as a module with nothing set on it — and the names are there because a
-    /// row of numbers is not a scale anybody recognises.
+    /// row of numbers is not a scale anybody recognizes.
     /// </summary>
     [Fact]
     public async Task Describing_the_patch_shows_the_scale_by_name()
     {
-        var bench = Bench();
-        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.QuantiserTypeId}}","handle":"key1"}""");
-        await Call(bench, "set_scale", """{"handle":"key1","notes":[0,4,7]}""");
+        var drawn = PatchLanguage.Build("let key1 = quantiser() [ C E G ]", NodeCatalog.BuiltIn).Patch;
+        var bench = new PatchWorkbench(NodeCatalog.BuiltIn, drawn);
 
         var told = (await Call(bench, "describe_patch")).Text;
 
@@ -131,7 +78,6 @@ public partial class PatchWorkbenchTests
     {
         var briefing = Bench().Briefing;
 
-        briefing.ShouldContain("set_scale");
-        briefing.ShouldContain("pitch class");
+        briefing.ShouldContain("pitch classes are on — not knobs, written as a block of note names after the call");
     }
 }

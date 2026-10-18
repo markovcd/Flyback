@@ -1034,7 +1034,7 @@ internal sealed partial class AssistantPanel : UserControl
 
         if (because is null && session.Run is { } going)
         {
-            going.CatchUp(editor.Current);
+            going.CatchUp(editor.Current, editor.Text);
             return going;
         }
 
@@ -1151,7 +1151,7 @@ internal sealed partial class AssistantPanel : UserControl
         var overwrote = run.Reshaped(editor.Current);
         IReadOnlyList<Retuned> carried = overwrote ? [] : run.Merge(editor.Current);
 
-        editor.Apply(proposed);
+        editor.Apply(proposed, run.ProposalText);
 
         // What this run just put on the canvas is not somebody editing behind
         // it, so the next message carries on the same conversation rather than

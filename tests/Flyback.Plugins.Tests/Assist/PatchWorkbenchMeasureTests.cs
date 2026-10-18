@@ -14,12 +14,15 @@ public class PatchWorkbenchMeasureTests
     private static Task<ToolOutcome> Call(PatchWorkbench bench, string tool, string arguments = "{}") =>
         bench.InvokeAsync(tool, JsonSerializer.Deserialize<JsonElement>(arguments), CancellationToken.None);
 
+    private static async Task Write(PatchWorkbench bench, string source) =>
+        (await Call(bench, "write_patch", JsonSerializer.Serialize(new { source }))).Ok.ShouldBeTrue(source);
+
     [Fact]
     public async Task An_unwired_oscillator_is_measured_at_its_pitch()
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"lfo1","knobs":[{"port":"freq","value":3}]}""");
+        await Write(bench, "let lfo1 = sine(freq: 3)");
 
         var measured = await Call(bench, "measure", """{"handles":["lfo1"]}""");
 
@@ -33,7 +36,7 @@ public class PatchWorkbenchMeasureTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"lfo1","knobs":[{"port":"freq","value":3}]}""");
+        await Write(bench, "let lfo1 = sine(freq: 3)");
 
         var measured = await Call(bench, "measure", """{"handles":["lfo1"],"from":3000}""");
 
@@ -47,7 +50,7 @@ public class PatchWorkbenchMeasureTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"lfo1","knobs":[{"port":"freq","value":0.1}]}""");
+        await Write(bench, "let lfo1 = sine(freq: 0.1)");
 
         var measured = await Call(bench, "measure", """{"handles":["lfo1"],"seconds":60}""");
 

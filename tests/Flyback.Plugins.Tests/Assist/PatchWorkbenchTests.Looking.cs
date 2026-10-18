@@ -15,10 +15,9 @@ public partial class PatchWorkbenchTests
     // --- looking ------------------------------------------------------------
 
     /// <summary>
-    /// The patch comes back in the language, under the handles the editing tools
-    /// answer to — so what is read here can be pointed at by set_knobs, and
-    /// written back whole by write_patch, without translating between two
-    /// notations.
+    /// The patch comes back in the language, under the handles measure answers to,
+    /// so what is read here is the text edit_patch finds its pieces in and
+    /// write_patch takes back whole.
     /// </summary>
     [Fact]
     public async Task Describing_the_patch_names_handles_wires_and_knobs()
@@ -39,11 +38,11 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        var added = await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
+        var added = await Write(bench, "let tone1 = sine()");
         var proposed = await Call(bench, "propose", """{"summary":"a tone"}""");
 
-        added.Text.ShouldContain("output1: Nothing is wired into the Output");
-        proposed.Text.ShouldContain("into output1's 'color'");
+        added.Text.ShouldContain("out: Nothing is wired into the Output");
+        proposed.Text.ShouldContain("into out's 'color'");
     }
 
     /// <summary>
@@ -56,10 +55,7 @@ public partial class PatchWorkbenchTests
         var bench = Bench();
 
         // A wave swinging below zero into a socket that takes nothing below it is a warning.
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"wobble1"}""");
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-        await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"color"}""");
-        var wired = await Call(bench, "connect", """{"from":"wobble1","to":"tone1","to_port":"freq"}""");
+        var wired = await Write(bench, "let wobble1 = sine()\nlet tone1 = sine(freq: wobble1)\ntone1 |> out.color");
 
         wired.Text.ShouldContain("Worth knowing");
 
@@ -126,14 +122,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"feedback","handle":"previous1"}""");
-        await Call(bench, "add_module", """
-            {"type_id":"color.gain","handle":"gain1","knobs":[{"port":"gain","value":1},{"port":"bias","value":0.1}]}
-            """);
-
-        var fed = await Call(bench, "connect", """{"from":"previous1","from_port":"color","to":"gain1","to_port":"color"}""");
-        fed.Ok.ShouldBeTrue(fed.Text);
-        var wired = await Call(bench, "connect", """{"from":"gain1","to":"output1","to_port":"color"}""");
+        var wired = await Write(bench, "let previous1 = feedback()\nlet gain1 = previous1.color |> color.gain(gain: 1, bias: 0.1)\ngain1 |> out.color");
         wired.Ok.ShouldBeTrue(wired.Text);
 
         var cold = await Call(bench, "render", """{"times":[0]}""");
@@ -149,7 +138,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"osc.sine"}""");
+        await Write(bench, "let tone1 = sine()");
         var looked = await Call(bench, "render");
 
         looked.Ok.ShouldBeFalse();

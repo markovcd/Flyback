@@ -31,7 +31,7 @@ public partial class PatchWorkbenchTests
         var bench = await Lit();
         var first = bench.Snapshot();
 
-        await Call(bench, "add_module", """{"type_id":"osc.sine"}""");
+        (await Edit(bench, "knob1 |> out.color", "knob1 |> out.color\nlet tone = sine()")).Ok.ShouldBeTrue();
 
         first.Nodes.Count.ShouldBe(2);
         bench.Snapshot().Nodes.Count.ShouldBe(3);
@@ -43,7 +43,8 @@ public partial class PatchWorkbenchTests
         var catalog = NodeCatalog.BuiltIn.With(Extras, [Doubler]).Catalog;
         var bench = new PatchWorkbench(catalog, new Patch());
 
-        await Call(bench, "add_module", """{"type_id":"test.extras.double"}""");
+        var written = await Write(bench, "let twice = double()");
+        written.Ok.ShouldBeTrue(written.Text);
 
         bench.Snapshot().Requires.ShouldHaveSingleItem().ShouldBe(Extras);
     }

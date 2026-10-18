@@ -38,7 +38,7 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"value","handle":"knob1"}""");
+        await Write(bench, "let knob1 = value()\nknob1 |> out.color");
         bench.Edits.ShouldBe(1);
 
         bench.Reopen();
@@ -52,21 +52,22 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        var refused = await Call(bench, "add_module", """{"type_id":"value","handle":"knob1","knobs":[{"port":"nonesuch","value":1}]}""");
+        var refused = await Write(bench, "let knob1 = value(nonesuch: 1)\nknob1 |> out.color");
 
         refused.Ok.ShouldBeFalse();
         bench.Snapshot().Nodes.ShouldNotContain(node => node.TypeId == "value");
 
-        (await Call(bench, "add_module", """{"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":1}]}""")).Ok.ShouldBeTrue();
+        (await Write(bench, "let knob1 = value(value: 1)\nknob1 |> out.color")).Ok.ShouldBeTrue();
     }
 
     [Fact]
     public async Task A_knob_list_with_one_bad_entry_changes_nothing()
     {
-        var bench = Bench();
+        var bench = await Lit(0.5f);
 
-        await Call(bench, "add_module", """{"type_id":"value","handle":"knob1"}""");
-        var set = await Call(bench, "set_knobs", """{"handle":"knob1","knobs":[{"port":"value","value":0.9},{"port":"nonesuch","value":1}]}""");
+        var set = await Call(bench, "edit_patch", """
+            {"edits":[{"find":"value: 0.5","replace":"value: 0.9"},{"find":"knob1 |> out.color","replace":"knob1 |> out.colour"}]}
+            """);
 
         set.Ok.ShouldBeFalse();
         bench.Snapshot().Nodes.Single(node => node.TypeId == "value").InputValues[0].ShouldBe(0.5f);
@@ -89,7 +90,7 @@ public partial class PatchWorkbenchTests
         written.Ok.ShouldBeTrue(written.Text);
         written.Text.ShouldNotContain("freq");
 
-        (await Call(bench, "set_knobs", """{"handle":"tone","knobs":[{"port":"freq","value":330}]}""")).Ok.ShouldBeTrue();
+        (await Call(bench, "measure", """{"handles":["tone"],"seconds":0.25}""")).Ok.ShouldBeTrue();
     }
 
     [Fact]
@@ -97,9 +98,9 @@ public partial class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        for (var i = 1; i <= 12; i++) await Call(bench, "add_module", $$"""{"type_id":"value","handle":"value{{i}}"}""");
+        (await Write(bench, string.Join("\n", Enumerable.Range(1, 12).Select(i => $"let value{i} = value()")))).Ok.ShouldBeTrue();
 
-        var missed = await Call(bench, "set_knobs", """{"handle":"valu3","knobs":[{"port":"value","value":1}]}""");
+        var missed = await Call(bench, "measure", """{"handles":["valu3"]}""");
 
         missed.Ok.ShouldBeFalse();
         missed.Text.ShouldContain("value3");

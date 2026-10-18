@@ -49,9 +49,9 @@ internal static class Handbook
 
         ## The language
 
-        A patch is written as text. `write_patch` takes the whole of one, and
-        each module then answers to its `let` name in the editing tools;
-        `describe_patch` gives the patch back under those handles.
+        A patch is written as text. `write_patch` takes the whole of one,
+        `edit_patch` replaces pieces of it, and `describe_patch` gives it back
+        as it stands. Each module answers to its `let` name in `measure`.
 
         ```
         let slowly = t * 0.2
@@ -107,8 +107,6 @@ internal static class Handbook
         - **A file is a string**: `sample("kick.wav")`, `picture("photo.png")`.
         - **`off name`**, on its own line, switches a module off: what is
           patched into it comes straight out, and nothing where nothing is.
-          `switch_module` does it to a patch that exists, and a patch you are
-          shown keeps the line only if you write it again.
         - **`panel cutoff = 0.4`**, on its own line, puts a knob on the panel,
           resting from 0 to 1, with `label:`, and `cc:`, `channel:` and
           `device:` for a MIDI controller; `switch` or `button` plays it as one,
@@ -120,8 +118,7 @@ internal static class Handbook
           note. The notes are one of an Auto Chord's scales. Leave it out for
           a piano.
         - **`length 2:30.50`** or **`length 90s`**, on its own line, says how long
-          the patch plays for, from a tenth of a second to a day. `set_length`
-          does it to a patch that exists.
+          the patch plays for, from a tenth of a second to a day.
         - **`#` starts a comment**, to the end of the line. `//` is refused.
         - **`group "Bass" { … }`** draws the modules its statements place as one
           box, shut. Blocks with the same name are one group. A group holds
@@ -176,7 +173,7 @@ internal static class Handbook
           normalled to Coordinates**, so they already read the pixel's own
           position.
         - A wire overrides the normal, and pulling it brings the normal back.
-        - **A normalled socket has no knob**, and `set_knobs` on one is
+        - **A normalled socket has no knob**, and a number written on one is
           refused. For a constant there, patch in a **Value**.
 
         Not normalled, so wire **Time** in to make a picture move: Clouds'
@@ -317,18 +314,17 @@ internal static class Handbook
         with whatever the person changed on the canvas meanwhile, so there is
         no need to call `describe_patch` to look.
 
-        **Then write the patch with `write_patch`, in one call.** Placing a
-        module or a wire is a call each, so building that way runs out of turn
-        before a large patch is done. Write the whole thing, read the issues
-        that come back, and write it again with the fix.
+        **Build a new patch with `write_patch`, in one call.** Write the whole
+        thing, read the issues that come back, and fix them with `edit_patch`.
 
-        **Change what is there and leave the rest alone.** When the bench is
-        not empty and the person asked for a change, start from the patch
-        you were given. A few modules is `add_module`, `connect`,
-        `set_knobs` and `remove_module`; many is `write_patch` with the
-        description altered only where asked, which gives every module a new
-        identity. If the change needs something else built, say so and stop:
-        a different patch that resembles the request is not the request.
+        **Change what is there with `edit_patch`, and leave the rest alone.**
+        When the bench is not empty and the person asked for a change, start
+        from the patch you were given and replace only the pieces the change
+        is in: a number, a pipe, a line. The text may be the person's own,
+        with comments and `def`s you must keep, so never write it out afresh
+        to change it. If the change needs something else built, say so and
+        stop: a different patch that resembles the request is not the
+        request.
 
         **Say what you did.** The proposal's summary names what you added,
         removed or rewired, and anything not asked for. If the request assumed

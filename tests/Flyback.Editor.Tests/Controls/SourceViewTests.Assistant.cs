@@ -29,13 +29,15 @@ public partial class SourceViewTests
     /// By reflection: the window takes its plugins from a static no test can put a
     /// provider into, so no turn can be run against a real window.
     /// </remarks>
-    private static Action<Patch> AssistantApplies(MainWindow window)
+    private static Action<Patch, string?> AssistantApplies(MainWindow window) => Assistant(window).Apply;
+
+    private static IAssistantEditor Assistant(MainWindow window)
     {
         var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
 
-        return ((IAssistantEditor)typeof(AssistantPanel)
+        return (IAssistantEditor)typeof(AssistantPanel)
             .GetField("editor", flags)!
-            .GetValue(All<AssistantPanel>(window).Single())!).Apply;
+            .GetValue(All<AssistantPanel>(window).Single())!;
     }
 
     /// <summary>Two oscillators mixed into the left speaker: a patch no text here describes.</summary>
@@ -69,7 +71,7 @@ public partial class SourceViewTests
         var window = Open();
         var text = ShowCode(window);
 
-        AssistantApplies(window)(Drone());
+        AssistantApplies(window)(Drone(), null);
         Settle(window);
 
         Editor(window).History.Locked.ShouldBeFalse("a printing is a reading; the canvas still owns the patch");
@@ -90,7 +92,7 @@ public partial class SourceViewTests
 
         Evaluate(window, Hum);
 
-        AssistantApplies(window)(Drone());
+        AssistantApplies(window)(Drone(), null);
         Settle(window);
 
         var editor = Editor(window);
@@ -121,7 +123,7 @@ public partial class SourceViewTests
 
         var written = text.Text;
 
-        AssistantApplies(window)(Drone());
+        AssistantApplies(window)(Drone(), null);
         Settle(window);
 
         text.Text.ShouldNotBe(written);
@@ -132,5 +134,49 @@ public partial class SourceViewTests
         text.Text.ShouldBe(written);
         Oscillators(Editor(window).History.Patch).ShouldBe(1, "the patch the text describes is back with it");
         Editor(window).History.Locked.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// The assistant edits the document's own text, so what it hands back goes in as
+    /// it is, the person's comment included, rather than as a printing.
+    /// </summary>
+    [AvaloniaFact]
+    public void An_assistants_edit_of_a_text_document_keeps_what_the_person_wrote()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+
+        var assistant = Assistant(window);
+
+        assistant.Text.ShouldBe(Text(window).Text, "the assistant is given the document itself");
+
+        var edited = Hum.Replace("220", "330", StringComparison.Ordinal);
+
+        assistant.Apply(PatchLanguage.Build(edited).Patch, edited);
+        Settle(window);
+
+        Text(window).Text.ShouldBe(edited);
+        Text(window).Text.ShouldContain("# one steady tone");
+        Editor(window).History.Locked.ShouldBeTrue("the text is still the document");
+    }
+
+    /// <summary>
+    /// Typing that has not been applied is not the patch, so the assistant is handed a
+    /// printing rather than words the canvas does not mean.
+    /// </summary>
+    [AvaloniaFact]
+    public void Text_typed_and_not_applied_is_not_handed_to_the_assistant()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+
+        var text = Text(window);
+
+        text.Document.Insert(text.Document.TextLength, "\nlet more = t |> sine(freq: 440)");
+        Settle(window);
+
+        Assistant(window).Text.ShouldBeNull();
     }
 }

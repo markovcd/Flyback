@@ -184,7 +184,7 @@ flyback-cli probe --keys
 flyback-cli shot --preset "Flyback Theme" -o theme.png --at 30.3 --select "Picture: Scope"
 flyback-cli probe --provider all
 flyback-cli ask drone.fbk "slower, and warmer"
-flyback-cli tool add_module drone.fbk --args '{"type_id": "osc.sine", "handle": "lfo"}'
+flyback-cli tool edit_patch drone.fbks --args '{"edits": [{"find": "freq: 220", "replace": "freq: 110"}]}'
 flyback-cli tool undo drone.fbk
 claude mcp add flyback -- flyback-cli mcp --editor
 flyback-cli decide "make the bass slower" --yes-no "Does this ask for an edit?" --json

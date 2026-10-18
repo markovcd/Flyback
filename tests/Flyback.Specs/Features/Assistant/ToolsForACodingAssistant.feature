@@ -21,10 +21,16 @@ Feature: A coding assistant somebody runs builds a patch with Flyback's own tool
 
   Scenario: A call the patch cannot take changes nothing and says why
     Given a coding assistant has built rings moved across by a sine in "built.fbks"
-    When it turns a knob on a module called "nobody"
-    Then the call is refused, saying there is no module called "nobody"
+    When it edits a piece of text that is not in the patch, "nobody |> out.left"
+    Then the call is refused, saying the piece is not in the patch's text
     And "built.fbks" is rings moved across by a sine
     And the history has 3 edits
+
+  Scenario: Editing a patch written as text keeps what its author wrote
+    Given "noted.fbks" holds rings under the comment "# turn slowly"
+    When a coding assistant turns the rings up to 9 in "noted.fbks"
+    Then "noted.fbks" still says "# turn slowly"
+    And the rings in "noted.fbks" are at 9
 
   Scenario: A client that speaks MCP builds a patch, and the file holds it
     When a coding assistant builds rings moved across by a sine in "served.fbks" over flyback-cli mcp

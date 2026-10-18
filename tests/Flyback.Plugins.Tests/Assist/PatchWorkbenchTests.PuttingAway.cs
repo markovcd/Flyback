@@ -72,6 +72,7 @@ public partial class PatchWorkbenchTests
         var state = (await Lit()).Save() with
         {
             Handles = new Dictionary<string, Guid> { ["ghost1"] = Guid.NewGuid() },
+            Text = null,
         };
 
         var described = (await Call(Restored(state), "describe_patch")).Text;
@@ -114,7 +115,7 @@ public partial class PatchWorkbenchTests
     {
         var briefing = Bench().Briefing;
 
-        briefing.ShouldContain("Change what is there and leave the rest alone.");
+        briefing.ShouldContain("Change what is there with `edit_patch`, and leave the rest alone.");
         briefing.ShouldContain("Say what you did.");
         briefing.ShouldContain("Keep the sum out of clipping.");
     }

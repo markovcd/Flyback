@@ -42,15 +42,40 @@ public sealed class ToolSteps : IDisposable
 
     [When("it adds a sine it calls {string}")]
     public Task WhenAddsSine(string handle) =>
-        Call("add_module", JsonSerializer.Serialize(new { type_id = "osc.sine", handle }));
+        Call("edit_patch", Edit("rings() |> out.color", $"let {handle} = sine()\nrings() |> out.color"));
 
     [When("it wires {string} into the rings across")]
     public Task WhenWires(string handle) =>
-        Call("connect", JsonSerializer.Serialize(new { from = handle, to = "rings1", to_port = "x" }));
+        Call("edit_patch", Edit("rings() |> out.color", $"rings(x: {handle}) |> out.color"));
 
-    [When("it turns a knob on a module called {string}")]
-    public Task WhenTurnsKnob(string handle) =>
-        Call("set_knobs", JsonSerializer.Serialize(new { handle, knobs = new[] { new { port = "freq", value = 2 } } }), expectOk: false);
+    [When("it edits a piece of text that is not in the patch, {string}")]
+    public Task WhenEditsMissing(string piece) =>
+        Call("edit_patch", Edit(piece, "nothing"), expectOk: false);
+
+    [Given("{string} holds rings under the comment {string}")]
+    public void GivenNoted(string name, string comment)
+    {
+        patch = name;
+        File.WriteAllText(Path(name), $"{comment}\nrings() |> out.color\n");
+    }
+
+    [When("a coding assistant turns the rings up to {int} in {string}")]
+    public Task WhenTurnsUp(int freq, string name)
+    {
+        patch = name;
+        return Call("edit_patch", Edit("rings()", $"rings(freq: {freq})"));
+    }
+
+    [Then("{string} still says {string}")]
+    public void ThenStillSays(string name, string text) => File.ReadAllText(Path(name)).ShouldContain(text);
+
+    [Then("the rings in {string} are at {int}")]
+    public void ThenRingsAt(string name, int freq)
+    {
+        var (_, rings) = Read(name);
+
+        rings.InputValues[NodeCatalog.BuiltIn.Get(rings.TypeId)!.Inputs.ToList().FindIndex(input => input.Name == "freq")].ShouldBe(freq);
+    }
 
     [Given("a coding assistant has built rings moved across by a sine in {string}")]
     public async Task GivenBuilt(string name)
@@ -71,8 +96,8 @@ public sealed class ToolSteps : IDisposable
             """{"jsonrpc":"2.0","method":"notifications/initialized"}""",
             """{"jsonrpc":"2.0","id":2,"method":"tools/list"}""",
             """{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"write_patch","arguments":{"source":"rings() |> out.color"}}}""",
-            """{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"add_module","arguments":{"type_id":"osc.sine","handle":"lfo"}}}""",
-            """{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"connect","arguments":{"from":"lfo","to":"rings1","to_port":"x"}}}""",
+            """{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"edit_patch","arguments":{"edits":[{"find":"rings() |> out.color","replace":"let lfo = sine()\nrings() |> out.color"}]}}}""",
+            """{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"edit_patch","arguments":{"edits":[{"find":"rings() |> out.color","replace":"rings(x: lfo) |> out.color"}]}}}""",
         ];
 
         await Serve(lines);
@@ -147,7 +172,8 @@ public sealed class ToolSteps : IDisposable
 
         var last = JsonDocument.Parse(output.ToString()).RootElement.GetProperty("steps").EnumerateArray().Last();
 
-        last.GetProperty("tool").GetString().ShouldBe("connect");
+        last.GetProperty("tool").GetString().ShouldBe("edit_patch");
+        last.GetProperty("arguments").GetRawText().ShouldContain("rings(x: lfo)");
         last.GetProperty("undone").GetBoolean().ShouldBeTrue();
     }
 
@@ -160,12 +186,15 @@ public sealed class ToolSteps : IDisposable
         log.At.ShouldBe(count);
     }
 
-    [Then("the call is refused, saying there is no module called {string}")]
-    public void ThenRefused(string handle)
+    [Then("the call is refused, saying the piece is not in the patch's text")]
+    public void ThenRefused()
     {
         code.ShouldBe(Exit.Problems);
-        complained.ShouldContain($"there is no module called '{handle}'");
+        complained.ShouldContain("is not in the patch's text");
     }
+
+    private static string Edit(string find, string replace) =>
+        JsonSerializer.Serialize(new { edits = new[] { new { find, replace } } });
 
     /// <summary>Hands <paramref name="lines"/> to a server on the scenario's patch, as a client's session would.</summary>
     private async Task Serve(string[] lines)

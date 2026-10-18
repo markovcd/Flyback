@@ -22,13 +22,13 @@ public class ProtocolTests
         var (text, calls) = Protocol.Parse("""
             Adding two things.
             <calls>
-            [{"name":"add_module","arguments":{"type_id":"value"}},
-             {"name":"connect","arguments":{"from":"a","to":"b"}}]
+            [{"name":"describe_module","arguments":{"type_id":"value"}},
+             {"name":"edit_patch","arguments":{"edits":[]}}]
             </calls>
             """);
 
         text.ShouldBe("Adding two things.");
-        calls.Select(c => c.Name).ShouldBe(["add_module", "connect"]);
+        calls.Select(c => c.Name).ShouldBe(["describe_module", "edit_patch"]);
         calls[0].Arguments.ShouldBe("""{"type_id":"value"}""");
         calls.Select(c => c.Id).Distinct().Count().ShouldBe(2);
     }
@@ -74,11 +74,11 @@ public class ProtocolTests
     {
         var preamble = Protocol.Preamble(
             "BRIEFING",
-            [new PatchTool("add_module", "Adds one.", """{"properties":{}}""")]);
+            [new PatchTool("describe_module", "Describes one.", """{"properties":{}}""")]);
 
         preamble.ShouldStartWith("BRIEFING");
-        preamble.ShouldContain("## add_module");
-        preamble.ShouldContain("Adds one.");
+        preamble.ShouldContain("## describe_module");
+        preamble.ShouldContain("Describes one.");
         preamble.ShouldContain(Protocol.Open);
     }
 }

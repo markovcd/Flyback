@@ -22,4 +22,11 @@ internal sealed record WorkbenchState(
     string Working,
     IReadOnlyDictionary<string, Guid> Handles,
     int Edits,
-    int ToolCalls);
+    int ToolCalls)
+{
+    /// <summary>The text the patch being built is written in, or null where a printing stands for it.</summary>
+    public string? Text { get; init; }
+
+    /// <summary>The text the starting patch was written in, or null where it was drawn.</summary>
+    public string? StartText { get; init; }
+}

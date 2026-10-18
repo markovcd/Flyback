@@ -35,10 +35,10 @@ public sealed class EditorTargetTests : IAsyncDisposable
         target.Greet("Claude Code");
 
         using var arguments = JsonDocument.Parse("""{"type_id":"osc.sine"}""");
-        var answered = await target.Call("add_module", arguments.RootElement, CancellationToken.None);
+        var answered = await target.Call("describe_module", arguments.RootElement, CancellationToken.None);
 
         answered.Ok.ShouldBeTrue(answered.Text);
-        answered.Text.ShouldBe("ran add_module");
+        answered.Text.ShouldBe("ran describe_module");
         answered.Png.ShouldBe(new byte[] { 1, 2, 3 });
         greeted.ShouldBe("Claude Code");
         heard.ShouldHaveSingleItem().Arguments!.Value.GetProperty("type_id").GetString().ShouldBe("osc.sine");

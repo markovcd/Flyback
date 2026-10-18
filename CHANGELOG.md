@@ -13,6 +13,7 @@
 
 ### Assistant
 
+- The assistant changes a patch by editing its text with `edit_patch`, in place of a tool per knob, wire and module; a patch written as text keeps its comments and `def`s through the assistant's edits.
 - Your own Claude Code or Codex can build patches: `flyback-cli tool` runs the assistant's tools one call at a time, with undo, and `tool --skill` prints the skill that teaches it; `flyback-cli mcp --editor` edits the patch open in the editor once Settings → Assistant lets it, and the column shows each call.
 - The Claude Code assistant is gone: Anthropic does not allow another program to use a Claude plan. Use the OpenAI-compatible assistant with an Anthropic API key.
 

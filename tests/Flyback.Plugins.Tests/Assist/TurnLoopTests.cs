@@ -14,8 +14,8 @@ public class TurnLoopTests
     /// <summary>A gray field: the smallest patch that may be proposed.</summary>
     private static readonly ToolCall[] Building =
     [
-        new("a", "add_module", """{"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":0.5}]}"""),
-        new("b", "connect", """{"from":"knob1","to":"output1","to_port":"color"}"""),
+        new("a", "write_patch", """{"source":"let knob1 = value(value: 0.5)"}"""),
+        new("b", "edit_patch", """{"edits":[{"find":"let knob1 = value(value: 0.5)","replace":"let knob1 = value(value: 0.5)\nknob1 |> out.color"}]}"""),
     ];
 
     private static readonly ToolCall Proposing = new("p", "propose", """{"summary":"a gray field"}""");
@@ -100,7 +100,7 @@ public class TurnLoopTests
         var bench = Bench();
         var conversation = new Scripted(
             new ModelReply(null, Building),
-            new ModelReply(null, [Proposing, new ToolCall("c", "add_module", """{"type_id":"value","handle":"knob2"}""")]));
+            new ModelReply(null, [Proposing, new ToolCall("c", "write_patch", """{"source":"let knob2 = value()"}""")]));
 
         var events = await Turn(bench, conversation);
 
@@ -265,7 +265,7 @@ public class TurnLoopTests
     [Fact]
     public async Task Arguments_that_will_not_read_are_refused_rather_than_thrown()
     {
-        var conversation = new Scripted(new ModelReply(null, [new ToolCall("x", "set_knobs", "{not json")]), new ModelReply("sorry", []));
+        var conversation = new Scripted(new ModelReply(null, [new ToolCall("x", "edit_patch", "{not json")]), new ModelReply("sorry", []));
 
         await Turn(Bench(), conversation);
 
@@ -277,14 +277,14 @@ public class TurnLoopTests
     {
         var conversation = new Scripted(new ModelReply(null,
         [
-            new ToolCall("a", "add_module", """{"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":1e39}]}"""),
+            new ToolCall("a", "write_patch", """{"source":"let knob1 = value(value: 1e39)"}"""),
             Building[1],
             Proposing,
         ]));
 
         await Turn(Bench(), conversation);
 
-        conversation.Answered[0][0].Text.ShouldContain("float");
+        conversation.Answered[0][0].Text.ShouldContain("[malformed-number]");
     }
 
     [Fact]
