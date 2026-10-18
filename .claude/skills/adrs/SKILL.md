@@ -1,17 +1,13 @@
 ---
 name: adrs
-description: Use before proposing a refactor, or when writing or editing an ADR under docs/adr/ - which refactors the ~70 existing ADRs already declined, how to tell real drift from a pattern that was never extended, when to rewrite a day-old ADR in place versus add a dated amendment, and how to number a new one at commit time.
+description: Use before proposing a refactor, or when writing or editing an ADR under docs/adr/ - where the refactors the ADRs already declined are listed, how to tell real drift from a pattern that was never extended, when to rewrite a day-old ADR in place versus add a dated amendment, and how to number a new one at commit time.
 ---
 
 # ADRs
 
 ## Check them before proposing a refactor
 
-Flyback keeps about 70 ADRs in `docs/adr/`. They are not background reading: they pre-emptively decline the refactors a scan would otherwise surface first.
-
-- MVVM / view models for `MainWindow`: declined by ADR-0016 and again by ADR-0148, which splits the window into hub and region classes instead.
-- Unifying the interpreter / GLSL / `OpShape` opcode switches: ADR-0035 requires the transcription, because GLSL builtins disagree with `CompiledPatch.Evaluate`, which is the specification. Already guarded by an opcode-coverage test.
-- Sharing the Gemini/OpenAi session tool loops: documented as deliberate in `GeminiSession.cs`'s own header.
+The ADRs in `docs/adr/` are not background reading: they decline the refactors a scan would otherwise surface first. The ones a first scan finds are listed in the engineering guide's [Refactors that are already declined](../../../docs/engineering-guide.md#14-refactors-that-are-already-declined); read that list before proposing anything, and add to it when an ADR declines a new one.
 
 Proposing these reads as not having done the reading, and the rationale comments are usually better than the reasoning that would replace them.
 

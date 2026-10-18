@@ -9,8 +9,8 @@ description: Use when the user asks for a local build of main - run release.sh (
 published nowhere: the gate (restore, compile, every test), the self-contained publishes for
 the default runtimes (`ARG RIDS` in the Dockerfile: win-x64, osx-arm64, linux-x64) as folders
 under `dist/<rid>/`, a signed `SHA256SUMS`, and beside them the `.fbkp` of each plugin the preset site starts with. Run it only when
-the user asks for it. `main`'s CI runner is on their machine and builds every push, so a
-local build after landing is the same work done twice on one machine. `dist/` is ignored by
+the user asks for it. CI already runs the gate on every push, so a local build after landing
+repeats it. `dist/` is ignored by
 git and by the Docker context.
 
 The version is the next minor after the latest tag, and a missing changelog heading for it is
@@ -66,5 +66,5 @@ which is news the user needs in the first sentence, with the failing test's name
 ## Say what is there
 
 When it finishes, say which runtimes are under `dist/`, that they are the build of the
-commit named, and nothing more. Do not launch the built app: `running-the-app.md` still
+commit named, and nothing more. Do not launch the built app: the `running-the-app` skill still
 applies, and the build is the user's to run.

@@ -760,7 +760,7 @@ that only a person watching the screen can check is not finished.
   report has `--json`, and stdout carries only the answer.
 - **The editor headless.** A UI feature is reachable from a `EditorTest` and, where
   it has a look, from `PatchShotTests`. Screen coordinates and `SendKeys` are the
-  last resort (`running-the-app.md`), not the test.
+  last resort (the `running-the-app` skill), not the test.
 - **The editor without a window.** What a gesture or a key does lives in a service
   the container builds (ADR-0150), and the control only hands the pointer and the
   keys on. So a command can be run and checked headless: the specs' `Editor`

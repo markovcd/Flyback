@@ -29,4 +29,4 @@ A run says what it played and nothing about who played it (ADR-0094). `Statistic
 
 ## Dependencies are code nobody here read
 
-The engine takes none (ADR-0019), and a package elsewhere is a question to raise, not a line to add. Restores are locked to the committed `packages.lock.json` files, so a version that moved fails the gate rather than building.
+The engine takes none (ADR-0019), and a package elsewhere is a question to raise, not a line to add. Restores are locked (`pipeline.md`).
