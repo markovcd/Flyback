@@ -69,6 +69,15 @@ jobs:
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
         if: runner.environment == 'github-hosted'
 
+      # buildx drops a gha cache silently unless the cache service's address and
+      # token are in the environment, and only an action's process is given them.
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        if: runner.environment == 'github-hosted'
+        with:
+          script: |
+            for (const name of ['ACTIONS_CACHE_URL', 'ACTIONS_CACHE_SERVICE_V2', 'ACTIONS_RESULTS_URL', 'ACTIONS_RUNTIME_TOKEN'])
+              if (process.env[name]) core.exportVariable(name, process.env[name]);
+
       # The SDK image, the apt packages and the restore are the same on almost
       # every run, so the layer cache turns them into a lookup (ADR-0120).
       #
