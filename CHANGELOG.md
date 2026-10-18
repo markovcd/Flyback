@@ -2,22 +2,41 @@
 
 ## Unreleased
 
-- Ctrl+Shift+D, or the die on a module's panel, rolls its unpatched knobs somewhere new; Ctrl+Z steps back through the rolls.
-- `flyback-cli render --at` draws a feedback loop's frames up to that second first, so a still of Trails has its trails.
-- `flyback-cli modules <module> --json` gives a knob's `knee` where it turns in decades, so a script sweeps it as the editor does.
-- `flyback-cli mcp --editor` lets your own Claude Code or Codex edit the patch open in the editor, once Settings → Assistant lets it; the column shows each call.
-- `flyback-cli tool` runs the assistant's tools one call at a time, with undo, so your own Claude Code or Codex can build patches; `tool --skill` prints the skill that teaches it how.
+### Modules
+
+- A Plot in the Picture plugin draws a pitch function as a glowing curve across beats with a dot at now, and Plots chain through `under` for a song made of functions.
+- A Line In hears the microphone on Windows and macOS.
+
+### Presets
+
 - A plugin can ship a preset written in the text language with `PresetText.Embedded`, and Mycelium now is one.
+
+### Assistant
+
+- Your own Claude Code or Codex can build patches: `flyback-cli tool` runs the assistant's tools one call at a time, with undo, and `tool --skill` prints the skill that teaches it; `flyback-cli mcp --editor` edits the patch open in the editor once Settings → Assistant lets it, and the column shows each call.
+- The Claude Code assistant is gone: Anthropic does not allow another program to use a Claude plan. Use the OpenAI-compatible assistant with an Anthropic API key.
+
+### Editor
+
+- Ctrl+Shift+D, or the die on a module's panel, rolls its unpatched knobs somewhere new; Ctrl+Z steps back through the rolls.
 - The text language has loops: `for (pitch, level) in [(A2, 0.5), (E3, 0.3)] { ... }` stamps out its body per item, with lists, `...list` and `sum(list)`.
 - A panel knob can be played as a switch or a button, on screen and from a controller's button or pad: `panel drop = 0, switch`.
-- A Plot in the Picture plugin draws a pitch function as a glowing curve across beats with a dot at now, and Plots chain through `under` for a song made of functions.
-- The sound is given five seconds after Play before falling behind lowers its oversampling, so the stutters of starting up no longer do.
 - Four more tutorials: seeing a sound, playing from the keyboard, echo and space, and the patch as text.
-- A Line In hears the microphone on Windows and macOS.
-- Each release carries the Android editor as a signed arm64 APK.
-- The Claude Code assistant is gone: Anthropic does not allow another program to use a Claude plan. Use the OpenAI-compatible assistant with an Anthropic API key.
-- Each release carries an MSIX for the Microsoft Store, where Flyback is listed as Flyback Modular; the Store updates a copy installed from it.
 - The About box and the website credit Potato Smasher, the name Flyback is published under.
+
+### Command line
+
+- A still from `flyback-cli render --at` has a feedback loop's history: a Trails has its trails.
+- `flyback-cli modules <module> --json` gives the `knee` of a knob that turns in decades.
+
+### Installing
+
+- Each release carries the Android editor as a signed arm64 APK.
+- Each release carries an MSIX for the Microsoft Store, where Flyback is listed as Flyback Modular; the Store updates a copy installed from it.
+
+### Fixes
+
+- The stutters of starting up no longer lower the sound's oversampling: it gets five seconds after Play first.
 
 ## 0.9.0 — 2026-10-14
 
