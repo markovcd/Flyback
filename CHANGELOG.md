@@ -24,6 +24,7 @@
 - A panel knob can be played as a switch or a button, on screen and from a controller's button or pad: `panel drop = 0, switch`.
 - Four more tutorials: seeing a sound, playing from the keyboard, echo and space, and the patch as text.
 - The About box and the website credit Potato Smasher, the name Flyback is published under.
+- In the web editor, a sound, picture or MIDI file chosen for a module travels in the patch, and View it plays it.
 
 ### Command line
 

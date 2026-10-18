@@ -247,6 +247,9 @@ public static class PatchBundle
         }
     }
 
+    /// <summary>The path a file called <paramref name="name"/> has inside a bundle, as a patch names it.</summary>
+    public static string Entry(string name) => FilesFolder + Safe(name);
+
     /// <summary>
     /// What to call a file inside the archive: its own name, and its own name with
     /// a number after it where that is taken already.

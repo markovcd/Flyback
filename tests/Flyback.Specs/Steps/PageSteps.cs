@@ -11,10 +11,8 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>The editor as a browser page holds it: <see cref="App.EditorHost.InPage"/>.</summary>
 [Binding]
-public sealed class PageSteps(EditorDriver editor, PatchContext context)
+public sealed class PageSteps(EditorDriver editor, PatchContext context, HandedViewer viewer)
 {
-    private readonly HandedViewer viewer = new();
-
     /// <summary>The page's local storage.</summary>
     private readonly KeptByBrowser browser = new();
 

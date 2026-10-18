@@ -59,6 +59,12 @@ Feature: The web viewer
     Then the web viewer refuses it, naming "Lantern"
 
   @node
+  Scenario: A MIDI file a bundle carries plays in the web viewer
+    Given a tone a MIDI File lets through while it holds a note for half a second, in a bundle with the file
+    When the bundle plays in the web viewer for 1 second
+    Then the web viewer is heard while the note is held, and not once it is let go
+
+  @node
   Scenario: A Scope in the web viewer charts the sound the desktop's Scope charts
     Given the shipped preset "Duck"
     When it plays in the web viewer for 1 second, keeping what its sound hands the picture

@@ -1,3 +1,4 @@
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
@@ -63,6 +64,17 @@ public sealed class PatchContext
 
     /// <summary>The sound files a Sample in the patch plays, as the editor would read them.</summary>
     public SampleLibrary Sounds { get; } = new();
+
+    /// <summary>What the patch reads its files from in place of <see cref="Sounds"/>, such as a bundle's, or null.</summary>
+    public ISampleLibrary? Files
+    {
+        get;
+        set
+        {
+            field = value;
+            Changed();
+        }
+    }
 
     /// <summary>Every sample of the left channel played so far, across every edit.</summary>
     public IReadOnlyList<double> Heard => heard;
@@ -164,7 +176,7 @@ public sealed class PatchContext
     {
         if (result is null || compiledFor != sink)
         {
-            result = sink == Audio ? Patch.CompileForAudio(samples: Sounds) : Patch.CompileForVideo(samples: Sounds);
+            result = sink == Audio ? Patch.CompileForAudio(samples: Files ?? Sounds) : Patch.CompileForVideo(samples: Files ?? Sounds);
             compiledFor = sink;
         }
 

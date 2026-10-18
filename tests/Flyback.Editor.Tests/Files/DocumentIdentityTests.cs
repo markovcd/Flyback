@@ -46,6 +46,23 @@ public class DocumentIdentityTests : EditorTest
         Service<PatchFiles>(window).IsBundle.ShouldBeTrue();
     }
 
+    /// <summary>A file picked with no path on this machine joins what the document carries, replacing one of its name.</summary>
+    [AvaloniaFact]
+    public void A_carried_file_joins_the_bundle_and_replaces_its_namesake()
+    {
+        var window = Open();
+        var files = Service<PatchFiles>(window);
+
+        files.Became("nebula", beside: null, new BundleFiles(new Dictionary<string, byte[]> { ["files/moon.png"] = [1] }));
+
+        files.Carry("../tune.mid", [2]).ShouldBe("files/tune.mid");
+        files.Carry("tune.mid", [3]).ShouldBe("files/tune.mid");
+
+        files.IsBundle.ShouldBeTrue();
+        files.Carried.ShouldNotBeNull().Bytes.Keys.Order().ShouldBe(["files/moon.png", "files/tune.mid"]);
+        files.Bytes()("files/tune.mid").ShouldBe([3]);
+    }
+
     /// <summary>
     /// A preset is not the bundle that was open, and the sounds it names are not
     /// that bundle's sounds.

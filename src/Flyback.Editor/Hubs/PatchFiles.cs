@@ -411,6 +411,67 @@ internal sealed class PatchFiles
             : PatchPaths.Carriable(path, beside, library);
     }
 
+    /// <summary>The largest file <see cref="CarryAsync"/> takes in, in bytes.</summary>
+    public const int MostCarriedBytes = 256 * 1024 * 1024;
+
+    /// <summary>
+    /// Takes a picked file with no path on this machine, as a page's picker hands
+    /// over, into the files the document carries, and answers the path the patch
+    /// names it by, or null where it could not be read.
+    /// </summary>
+    public async Task<string?> CarryAsync(IStorageFile file)
+    {
+        try
+        {
+            await using var stream = await file.OpenReadAsync();
+            using var bytes = new MemoryStream();
+
+            var buffer = new byte[81920];
+
+            for (int read; (read = await stream.ReadAsync(buffer)) > 0;)
+            {
+                if (bytes.Length + read > MostCarriedBytes)
+                {
+                    report.Say($"Not taken. {file.Name} is larger than {MostCarriedBytes / (1024 * 1024)} MB.");
+                    return null;
+                }
+
+                bytes.Write(buffer, 0, read);
+            }
+
+            return Carry(file.Name, bytes.ToArray());
+        }
+        catch (Exception ex)
+        {
+            report.Say($"Could not read {file.Name}: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Carries <paramref name="bytes"/> under <paramref name="name"/> as a bundle
+    /// would, replacing a file of that name, and answers the path the patch names it by.
+    /// </summary>
+    /// <remarks>The document is a bundle from here on, since nothing else holds the file.</remarks>
+    public string Carry(string name, byte[] bytes)
+    {
+        var path = PatchBundle.Entry(name);
+
+        Dictionary<string, byte[]> held = new(StringComparer.OrdinalIgnoreCase);
+
+        if (Carried is { } carried)
+            foreach (var (kept, keptBytes) in carried.Bytes) held[kept] = keptBytes;
+
+        held[path] = bytes;
+
+        Carried = new BundleFiles(held, SoundFolder, PictureFolder);
+        bundled = true;
+
+        reactions.Raise(new FilesMoved(Sounds, Pictures));
+
+        return path;
+    }
+
     /// <summary>
     /// Writes the patch as text, in the language.
     /// </summary>

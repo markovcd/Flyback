@@ -317,6 +317,54 @@ public sealed class WebViewerSteps(Session session, PatchContext context, IUnitT
         heard = MemoryMarshal.Cast<byte, float>(File.ReadAllBytes(output)).ToArray();
     }
 
+    [Given("a tone a MIDI File lets through while it holds a note for half a second, in a bundle with the file")]
+    public void GivenAGatedToneInABundle()
+    {
+        var song = MidiFiles.Bytes((60, 0, 0.5));
+
+        context.Add("tone", NodeCatalog.SineTypeId);
+        context.SetInput("tone", "freq", 440f);
+        context.Add("song", NodeCatalog.MidiFileTypeId);
+        Core.Graph.Extras.MidiFileExtra.Set(context.Node("song"), "tune.mid");
+        context.Add("gate", "math.mul");
+        context.Wire("tone", "out", "gate", "a");
+        context.Wire("song", "gate", "gate", "b");
+        context.Add("screen", "output");
+        context.Wire("gate", "out", "screen", "left");
+        context.SetInput("screen", "volume", 1f);
+
+        using var bundle = File.Create(Path.Combine(folder.FullName, "tune.fbkb"));
+        PatchBundle.Write(bundle, context.Patch, path => path == "tune.mid" ? song : null, Installed.Value.Modules)
+            .Missing.ShouldBeEmpty();
+    }
+
+    [When("the bundle plays in the web viewer for {float} second(s)")]
+    public void WhenTheBundlePlays(float length)
+    {
+        var output = Path.Combine(folder.FullName, "heard.f32");
+
+        Hear(
+            Path.Combine(folder.FullName, "tune.fbkb"),
+            "--seconds", length.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            "--size", $"{Width}x{Height}",
+            "--out", output);
+
+        heard = MemoryMarshal.Cast<byte, float>(File.ReadAllBytes(output)).ToArray();
+    }
+
+    [Then("the web viewer is heard while the note is held, and not once it is let go")]
+    public void ThenHeardWhileHeld()
+    {
+        float Loudest(double from, double to) => heard
+            .Where((_, i) => i % 2 == 0)
+            .Skip((int)(from * GlobalConstants.SampleRate))
+            .Take((int)((to - from) * GlobalConstants.SampleRate))
+            .Max(Math.Abs);
+
+        Loudest(0.1, 0.4).ShouldBeGreaterThan(0.5f, "the note was held, so the tone should come through");
+        Loudest(0.6, 0.9).ShouldBeLessThan(0.01f, "the note was let go at half a second");
+    }
+
     [Given("the web viewer's microphone hears a {float} Hz tone")]
     public void GivenTheMicrophoneHears(float hertz)
     {

@@ -6,7 +6,11 @@ public static class MidiFiles
     private const int TicksPerSecond = 960;
 
     /// <summary>Writes a file of <paramref name="notes"/> to <paramref name="path"/>, each a key, when it starts and how long it lasts.</summary>
-    public static void Write(string path, params (int Note, double Start, double Length)[] notes)
+    public static void Write(string path, params (int Note, double Start, double Length)[] notes) =>
+        File.WriteAllBytes(path, Bytes(notes));
+
+    /// <summary>The bytes of a file of <paramref name="notes"/>, as <see cref="Write"/> writes them.</summary>
+    public static byte[] Bytes(params (int Note, double Start, double Length)[] notes)
     {
         var events = notes
             .SelectMany(n => new[]
@@ -34,7 +38,7 @@ public static class MidiFiles
         file.AddRange(BitConverter.GetBytes(track.Count).Reverse());
         file.AddRange(track);
 
-        File.WriteAllBytes(path, [.. file]);
+        return [.. file];
     }
 
     private static byte[] Quantity(int value)

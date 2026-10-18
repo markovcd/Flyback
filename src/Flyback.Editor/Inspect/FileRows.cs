@@ -36,20 +36,28 @@ internal sealed class FileRows(IFilePickers pickers, TextWriteBack writeBack, Pa
             ? (files.PictureFolder.Library, (Action<string>)files.PictureFolder.Forget)
             : (files.SoundFolder.Library, files.SoundFolder.Forget);
 
-        return Row(node, file.Kind, file.PathOf(node), picked =>
+        return Row(node, file.Kind, file.PathOf(node), async picked =>
         {
-            var named = PatchPaths.Named(picked, library);
+            // A file with no path on this machine, as a page's picker hands over, travels in the patch.
+            var named = picked.TryGetLocalPath() is { } local
+                ? PatchPaths.Named(local, library)
+                : await files.CarryAsync(picked);
+
+            if (named is null) return null;
 
             file.Point(node, named);
 
             // Forgotten first, so a file that has been replaced since it was
             // last read is read again rather than answered from the cache.
             forget(named);
+
+            return named;
         });
     }
 
     /// <summary>The row itself: the caption, the file's name and the button that picks another.</summary>
-    private Control Row(NodeInstance node, FileKind kind, string? held, Action<string> store)
+    /// <param name="store">Points the module at the file picked, and answers the path it now names, or null where it took none.</param>
+    private Control Row(NodeInstance node, FileKind kind, string? held, Func<IStorageFile, Task<string?>> store)
     {
         var chosen = held ?? string.Empty;
 
@@ -70,7 +78,7 @@ internal sealed class FileRows(IFilePickers pickers, TextWriteBack writeBack, Pa
 
         if (chosen.Length > 0) ToolTip.SetTip(name, chosen);
 
-        var choose = new Button { Content = "Choose…", FontSize = Text.Small };
+        var choose = new Button { Name = "chooseFile", Content = "Choose…", FontSize = Text.Small };
 
         choose.Click += async (_, _) =>
         {
@@ -81,9 +89,7 @@ internal sealed class FileRows(IFilePickers pickers, TextWriteBack writeBack, Pa
                 FileTypeFilter = [new FilePickerFileType(kind.Described) { Patterns = kind.Patterns, MimeTypes = kind.MimeTypes }],
             });
 
-            if (files.Count == 0 || files[0].TryGetLocalPath() is not { } picked) return;
-
-            store(picked);
+            if (files.Count == 0 || await store(files[0]) is not { } picked) return;
 
             // The shape of the panel has not changed, so it is not rebuilt — the
             // one row that did is written here, the way a knob writes its own.
