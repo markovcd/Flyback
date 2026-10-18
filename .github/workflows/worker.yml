@@ -98,7 +98,8 @@ jobs:
       group: worker
       cancel-in-progress: false
     runs-on: ubuntu-latest
-    # The ahead-of-time viewer and editor are most of a run of about twenty minutes.
+    # The ahead-of-time viewer and editor are most of a run of about twenty minutes,
+    # and a run that changed none of src/ takes them from the layer cache.
     timeout-minutes: 90
     env:
       WORKER_ENVIRONMENT: ${{ vars.WORKER_ENVIRONMENT }}
@@ -118,12 +119,16 @@ jobs:
 
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
+      # The site's own scope in GitHub's layer cache, so the gate's is never overwritten;
+      # the gate's is read too, for the SDK image and the workload both start from.
       - name: Build the pages, flyback-site and the defaults
         env:
           RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
           VERSION: ${{ steps.version.outputs.version }}
         run: >-
           docker buildx build --target site-assets --build-arg VERSION="$VERSION"
+          --cache-from type=gha,scope=site --cache-from type=gha
+          --cache-to type=gha,scope=site,mode=max
           --secret id=release-key,env=RELEASE_SIGNING_KEY --output type=local,dest=out .
 
       - name: Migrate the database and deploy

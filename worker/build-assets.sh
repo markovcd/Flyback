@@ -5,25 +5,30 @@
 # may be goes to worker/large instead, for the Worker workflow to put in R2, where the
 # Worker serves it from on the same path.
 #
-#   worker/build-assets.sh [--no-aot] [--no-editor] [--no-stills]
+#   worker/build-assets.sh [--no-aot] [--no-editor] [--no-stills] [--built <folder>]
 #
 # The viewer and editor are compiled ahead of time unless --no-aot, which needs the
-# wasm-tools workload, as the editor does in any case. The flags are for trying the
-# pages on a machine without it; a deploy takes none of them.
+# wasm-tools workload, as the editor does in any case. The --no- flags are for trying
+# the pages on a machine without it; a deploy takes none of them. --built takes the
+# viewer, the editor and the stills from a folder holding viewer/, editor/ and stills/
+# as the Dockerfile's site stages publish them, rather than building them here.
 
 set -euo pipefail
 
 aot=true
 editor=true
 stills=true
+built=""
 
-for flag in "$@"; do
-  case "$flag" in
+while [ $# -gt 0 ]; do
+  case "$1" in
     --no-aot) aot=false ;;
     --no-editor) editor=false ;;
     --no-stills) stills=false ;;
-    *) echo "build-assets.sh: $flag: not a flag this takes" >&2; exit 2 ;;
+    --built) [ $# -ge 2 ] || { echo "build-assets.sh: --built names a folder" >&2; exit 2; }; built="$2"; shift ;;
+    *) echo "build-assets.sh: $1: not a flag this takes" >&2; exit 2 ;;
   esac
+  shift
 done
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -37,17 +42,27 @@ mkdir -p "$out"
 
 cp -r "$root/site/." "$out/"
 
-dotnet publish "$root/src/Flyback.Viewer.Web" -c Release -p:RunAOTCompilation=$aot -o "$work/viewer" -nologo -v:q
+if [ -n "$built" ]; then
+  cp -r "$built/." "$work/"
+else
+  dotnet publish "$root/src/Flyback.Viewer.Web" -c Release -p:RunAOTCompilation=$aot -o "$work/viewer" -nologo -v:q
+  if [ "$editor" = true ]; then
+    dotnet publish "$root/src/Flyback.Editor.Web" -c Release -p:RunAOTCompilation=$aot -o "$work/editor" -nologo -v:q
+  fi
+  if [ "$stills" = true ]; then
+    (cd "$root" && ./scripts/stills.sh "$work/stills")
+  fi
+fi
+
 cp -r "$work/viewer/wwwroot/." "$out/"
 
 if [ "$editor" = true ]; then
-  dotnet publish "$root/src/Flyback.Editor.Web" -c Release -p:RunAOTCompilation=$aot -o "$work/editor" -nologo -v:q
   mkdir -p "$out/editor"
   cp -r "$work/editor/wwwroot/." "$out/editor/"
 fi
 
 if [ "$stills" = true ]; then
-  (cd "$root" && ./scripts/stills.sh "$out/stills")
+  cp -r "$work/stills" "$out/stills"
 fi
 
 # What a browser that came over HTTPS is told to keep to, on the files the Worker never sees; it says the same on its own answers.

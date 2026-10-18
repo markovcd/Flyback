@@ -285,8 +285,39 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 FROM scratch AS site-plugins
 COPY --from=packed /out/ /
 
+# What the site's web viewer, web editor and stills are built from: src/ and the
+# files at the root that every project reads, and not site/, worker/ or docs/. A push
+# that changes none of it finds these stages in the layer cache, so only the pages
+# and the Worker are built again (worker.yml keeps the cache between runs).
+FROM tools AS site-source
+ARG VERSION
+
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+    DOTNET_NOLOGO=1
+
+WORKDIR /src
+COPY Directory.Build.props Directory.Build.targets Directory.Packages.props global.json nuget.config .editorconfig ./
+COPY src/ src/
+
+# The viewer and the editor compiled ahead of time are most of the site's build.
+# Each is a stage of its own, so BuildKit compiles them side by side with the stills.
+FROM site-source AS site-viewer
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    Version="${VERSION}" dotnet publish src/Flyback.Viewer.Web -c Release -p:RunAOTCompilation=true -o /out/viewer -nologo -v:q
+
+FROM site-source AS site-editor
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    Version="${VERSION}" dotnet publish src/Flyback.Editor.Web -c Release -p:RunAOTCompilation=true -o /out/editor -nologo -v:q
+
+# The desktop editor beside the stills command embeds the changelog and the icons.
+FROM site-source AS site-stills
+COPY CHANGELOG.md flyback.ico flyback.icns flyback.png ./
+COPY scripts/stills.sh scripts/
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    Version="${VERSION}" ./scripts/stills.sh /out/stills
+
 # What the preset site's Worker serves and starts with, for the Worker workflow to
-# deploy: the pages, the viewer and editor compiled ahead of time and the stills
+# deploy: the pages with the viewer, the editor and the stills built above
 # (worker/build-assets.sh), the framework files too large to be assets, flyback-site,
 # and the default presets beside the site's
 # plugins packed and signed with the release key handed in as a build secret
@@ -299,11 +330,14 @@ ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
 
 WORKDIR /src
 COPY . .
+COPY --from=site-viewer /out/ /built/
+COPY --from=site-editor /out/ /built/
+COPY --from=site-stills /out/ /built/
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
     set -eu; \
     export Version="${VERSION}"; \
-    worker/build-assets.sh; \
+    worker/build-assets.sh --built /built; \
     mkdir -p /out/large; \
     cp -r worker/public /out/public; \
     if [ -d worker/large ]; then cp -r worker/large/. /out/large/; fi; \
