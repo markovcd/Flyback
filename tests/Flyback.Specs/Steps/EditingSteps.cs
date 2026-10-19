@@ -17,9 +17,16 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>Saving, opening, writing out as text, undoing and pasting.</summary>
 [Binding]
-public sealed class EditingSteps(PatchContext context, Session session, EditorDriver editor)
+public sealed class EditingSteps(PatchContext context, Session session, EditorDriver editor) : IDisposable
 {
     private const string Stranger = "module.from.the.future";
+
+    public void Dispose()
+    {
+        if (folder is not null) Directory.Delete(folder, recursive: true);
+        if (library is not null) Directory.Delete(library, recursive: true);
+        if (patchFolder is not null) Directory.Delete(patchFolder, recursive: true);
+    }
 
     // --- files ----------------------------------------------------------------
 
@@ -377,12 +384,6 @@ public sealed class EditingSteps(PatchContext context, Session session, EditorDr
     private byte[]? bundle;
     private LoadedBundle unpacked;
 
-    [AfterScenario]
-    public void RemoveTheFolder()
-    {
-        if (folder is not null) Directory.Delete(folder, recursive: true);
-    }
-
     [Given("a picture module pointed at a private key on this machine")]
     public void GivenAPictureThatIsAKey()
     {
@@ -455,13 +456,6 @@ public sealed class EditingSteps(PatchContext context, Session session, EditorDr
     private string? savedShowing;
     private Opened openedWithLibrary;
     private NodeInstance? chosenFor;
-
-    [AfterScenario]
-    public void RemoveTheLibrary()
-    {
-        if (library is not null) Directory.Delete(library, recursive: true);
-        if (patchFolder is not null) Directory.Delete(patchFolder, recursive: true);
-    }
 
     [Given("a picture {string} in the library folder")]
     public void GivenAPictureInTheLibrary(string name)

@@ -85,6 +85,8 @@ states the requirement.
 A run writes Reqnroll's HTML report, every scenario and its result, to
 `reqnroll_report.html` beside the specs' assembly; the gate keeps it as
 `test-results/specs.html` and the Build run as its `specs-report` artifact.
+A step class cleans up in `Dispose`, never an `[AfterScenario]` hook: a hook
+runs for every scenario and shows on each as a bare After row.
 
 A feature is something a user patches, plays or does: a module, a setting, a
 command, an editor gesture. A change to how the engine runs what they already

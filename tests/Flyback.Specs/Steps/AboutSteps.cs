@@ -22,9 +22,6 @@ public sealed class AboutSteps(HeadlessTurn turn) : HeadlessWindow(turn)
     /// <summary>How many turns the UI thread is given after a click, enough for a clipboard's round trip.</summary>
     private const int Turns = 4;
 
-    [AfterScenario]
-    public void CloseWindow() => Dispose();
-
     [Given("the About window is open")]
     public void GivenAboutIsOpen()
     {
