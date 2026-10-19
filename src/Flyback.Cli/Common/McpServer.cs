@@ -24,6 +24,9 @@ internal sealed class McpServer(PluginCatalog plugins, IToolTarget target, strin
 
     private const int ParseError = -32700, InvalidRequest = -32600, MethodNotFound = -32601, InvalidParams = -32602;
 
+    /// <summary>A key given twice is refused while parsing rather than thrown on first read.</summary>
+    private static readonly JsonDocumentOptions Strict = new() { AllowDuplicateProperties = false };
+
     private readonly Lazy<Flyback.Plugins.Assist.PatchWorkbench> blank = new(() =>
         ToolCommand.Bench(plugins, Flyback.Engine.Graph.Presets.Empty(plugins.Modules), settingsPath));
 
@@ -48,7 +51,7 @@ internal sealed class McpServer(PluginCatalog plugins, IToolTarget target, strin
 
         try
         {
-            message = JsonNode.Parse(line);
+            message = JsonNode.Parse(line, documentOptions: Strict);
         }
         catch (JsonException ex)
         {

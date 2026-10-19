@@ -22,6 +22,9 @@ internal static class Protocol
     /// <summary>The name a block that would not read is called under, answered by <see cref="ProgramSession"/> with why.</summary>
     public const string Malformed = "malformed_calls";
 
+    /// <summary>A key given twice is refused while parsing rather than thrown on first read.</summary>
+    private static readonly JsonDocumentOptions Strict = new() { AllowDuplicateProperties = false };
+
     /// <summary>What the model is told before the conversation: the briefing, the way to call tools and the tools.</summary>
     public static string Preamble(string briefing, IReadOnlyList<PatchTool> tools)
     {
@@ -84,7 +87,7 @@ internal static class Protocol
         {
             var body = reply[(start + Open.Length)..close].Trim();
 
-            if (JsonNode.Parse(body) is not JsonArray array)
+            if (JsonNode.Parse(body, documentOptions: Strict) is not JsonArray array)
                 return (said, [Rejected($"the {Open} block must hold a JSON array of calls.")]);
 
             var calls = new List<ToolCall>();

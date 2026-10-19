@@ -50,6 +50,7 @@ public class ProtocolTests
     [Theory]
     [InlineData("""<calls>[{"name":"a"}]""", "never closed")]
     [InlineData("<calls>not json</calls>", "not valid JSON")]
+    [InlineData("""<calls>[{"name":"a","name":"b"}]</calls>""", "not valid JSON")]
     [InlineData("""<calls>{"name":"a"}</calls>""", "JSON array")]
     [InlineData("<calls>[{\"arguments\":{}}]</calls>", "\"name\"")]
     public void A_block_that_will_not_read_is_one_rejected_call_that_says_why(string reply, string why)

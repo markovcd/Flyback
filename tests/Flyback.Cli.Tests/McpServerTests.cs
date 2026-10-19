@@ -129,6 +129,22 @@ public sealed class McpServerTests : IDisposable
         answer["error"]!["code"]!.GetValue<int>().ShouldBe(-32700);
     }
 
+    [Theory]
+    [InlineData("""{"jsonrpc":"2.0","id":1,"method":"ping","method":"ping"}""")]
+    [InlineData("""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"describe_patch","name":"describe_patch"}}""")]
+    public async Task A_key_given_twice_is_a_parse_error_and_the_server_carries_on(string line)
+    {
+        var output = new StringWriter();
+
+        await server.Serve(new StringReader(line + "\n{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"ping\"}\n"), output, CancellationToken.None);
+
+        var answers = output.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(answer => JsonNode.Parse(answer)!).ToList();
+
+        answers.Count.ShouldBe(2);
+        answers[0]["error"]!["code"]!.GetValue<int>().ShouldBe(-32700);
+        answers[1]["id"]!.GetValue<int>().ShouldBe(2);
+    }
+
     [Fact]
     public async Task An_unknown_method_is_method_not_found() =>
         (await Ask("resources/list"))["error"]!["code"]!.GetValue<int>().ShouldBe(-32601);

@@ -39,6 +39,7 @@
 ### Fixes
 
 - The stutters of starting up no longer lower the sound's oversampling: it gets five seconds after Play first.
+- Codex calling a tool with a key written twice is asked to send the call again, rather than the turn failing.
 
 ## 0.9.0 — 2026-10-14
 
