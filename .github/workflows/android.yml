@@ -65,8 +65,10 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      # The workload set is pinned, as an action is: a newer set can name a manifest
+      # NuGet does not have yet, and the install fails.
       - name: Install the android workload
-        run: dotnet workload install android
+        run: dotnet workload install android --version 10.0.402
 
       # Never -p:RuntimeIdentifier: it flows into every referenced project and rewrites their lock files.
       - name: Build
