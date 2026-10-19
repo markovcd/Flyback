@@ -84,12 +84,13 @@ RUN apt-get update \
 
 # tools adds what builds the web editor: the wasm-tools workload links Skia into
 # the web editor the preset site builds beside itself (ADR-0162), and its
-# Emscripten runs on Python.
+# Emscripten runs on Python. The workload set is pinned, as the android one is:
+# a newer set can name a manifest NuGet does not have yet, and the install fails.
 FROM base AS tools
 RUN apt-get update \
  && apt-get install --yes --no-install-recommends python3 \
  && rm -rf /var/lib/apt/lists/* \
- && dotnet workload install wasm-tools
+ && dotnet workload install wasm-tools --version 10.0.402
 
 # Everything a change has to get past, up to the tests.
 FROM tools AS built
