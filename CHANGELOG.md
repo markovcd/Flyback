@@ -4,6 +4,28 @@
 
 ### Modules
 
+### Presets
+
+### Assistant
+
+### Editor
+
+### Viewer
+
+### Command line
+
+### Installing
+
+### Performance
+
+### Fixes
+
+## 0.10.0 — 2026-10-19
+
+102 commits since 0.9.0.
+
+### Modules
+
 - A Plot in the Picture plugin draws a pitch function as a glowing curve across beats with a dot at now, and Plots chain through `under` for a song made of functions.
 - A Line In hears the microphone on Windows and macOS.
 

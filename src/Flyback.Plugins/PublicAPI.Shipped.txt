@@ -523,6 +523,7 @@ Flyback.Plugins.PluginInfo.Id.init -> void
 Flyback.Plugins.PluginInfo.Name.get -> string!
 Flyback.Plugins.PluginInfo.Name.init -> void
 Flyback.Plugins.PluginInfo.PluginInfo(string! Id, string! Name, string! Description = "") -> void
+Flyback.Plugins.PresetText
 Flyback.Plugins.Secrets.ISecretStore
 Flyback.Plugins.Secrets.ISecretStore.Forget(string! account) -> void
 Flyback.Plugins.Secrets.ISecretStore.Id.get -> string!
@@ -827,6 +828,7 @@ static Flyback.Plugins.Midi.MidiPortInfo.operator ==(Flyback.Plugins.Midi.MidiPo
 static Flyback.Plugins.Midi.MidiPorts.Named(System.Collections.Generic.IEnumerable<string!>! names) -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Midi.MidiPortInfo>!
 static Flyback.Plugins.PluginInfo.operator !=(Flyback.Plugins.PluginInfo? left, Flyback.Plugins.PluginInfo? right) -> bool
 static Flyback.Plugins.PluginInfo.operator ==(Flyback.Plugins.PluginInfo? left, Flyback.Plugins.PluginInfo? right) -> bool
+static Flyback.Plugins.PresetText.Embedded(System.Reflection.Assembly! assembly, string! name) -> System.Func<Flyback.Core.Graph.ModuleCatalog!, Flyback.Core.Graph.Patch!>!
 static Flyback.Plugins.Settings.SettingField.Pick.operator !=(Flyback.Plugins.Settings.SettingField.Pick? left, Flyback.Plugins.Settings.SettingField.Pick? right) -> bool
 static Flyback.Plugins.Settings.SettingField.Pick.operator ==(Flyback.Plugins.Settings.SettingField.Pick? left, Flyback.Plugins.Settings.SettingField.Pick? right) -> bool
 static Flyback.Plugins.Settings.SettingField.Switch.Spell(bool on) -> string!

@@ -182,6 +182,10 @@ Flyback.Core.Graph.Connection.TargetNode.get -> System.Guid
 Flyback.Core.Graph.Connection.TargetNode.init -> void
 Flyback.Core.Graph.Connection.TargetPort.get -> int
 Flyback.Core.Graph.Connection.TargetPort.init -> void
+Flyback.Core.Graph.ControlKind
+Flyback.Core.Graph.ControlKind.Button = 2 -> Flyback.Core.Graph.ControlKind
+Flyback.Core.Graph.ControlKind.Knob = 0 -> Flyback.Core.Graph.ControlKind
+Flyback.Core.Graph.ControlKind.Switch = 1 -> Flyback.Core.Graph.ControlKind
 Flyback.Core.Graph.ControlLink
 Flyback.Core.Graph.ControlLink.At(float value) -> float
 Flyback.Core.Graph.ControlLink.Control.get -> System.Guid
@@ -377,6 +381,8 @@ Flyback.Core.Graph.MidiBinding.Device.init -> void
 Flyback.Core.Graph.MidiBinding.Equals(Flyback.Core.Graph.MidiBinding? other) -> bool
 Flyback.Core.Graph.MidiBinding.Hears(string! device, int channel, int controller) -> bool
 Flyback.Core.Graph.MidiBinding.Label.get -> string!
+Flyback.Core.Graph.MidiBinding.Latching.get -> bool
+Flyback.Core.Graph.MidiBinding.Latching.init -> void
 Flyback.Core.Graph.MidiBinding.MidiBinding(string! Device, int Channel, int Controller) -> void
 Flyback.Core.Graph.MidiBinding.Note.get -> bool
 Flyback.Core.Graph.MidiBinding.Note.init -> void
@@ -542,6 +548,8 @@ Flyback.Core.Graph.PatchControl.Held.get -> bool
 Flyback.Core.Graph.PatchControl.Held.set -> void
 Flyback.Core.Graph.PatchControl.Id.get -> System.Guid
 Flyback.Core.Graph.PatchControl.Id.init -> void
+Flyback.Core.Graph.PatchControl.Kind.get -> Flyback.Core.Graph.ControlKind
+Flyback.Core.Graph.PatchControl.Kind.set -> void
 Flyback.Core.Graph.PatchControl.Midi.get -> Flyback.Core.Graph.MidiBinding?
 Flyback.Core.Graph.PatchControl.Midi.set -> void
 Flyback.Core.Graph.PatchControl.Name.get -> string!

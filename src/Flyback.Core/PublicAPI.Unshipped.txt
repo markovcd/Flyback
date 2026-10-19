@@ -1,9 +1,1 @@
 #nullable enable
-Flyback.Core.Graph.ControlKind
-Flyback.Core.Graph.ControlKind.Button = 2 -> Flyback.Core.Graph.ControlKind
-Flyback.Core.Graph.ControlKind.Knob = 0 -> Flyback.Core.Graph.ControlKind
-Flyback.Core.Graph.ControlKind.Switch = 1 -> Flyback.Core.Graph.ControlKind
-Flyback.Core.Graph.MidiBinding.Latching.get -> bool
-Flyback.Core.Graph.MidiBinding.Latching.init -> void
-Flyback.Core.Graph.PatchControl.Kind.get -> Flyback.Core.Graph.ControlKind
-Flyback.Core.Graph.PatchControl.Kind.set -> void
