@@ -22,7 +22,7 @@
 - Ctrl+Shift+D, or the die on a module's panel, rolls its unpatched knobs somewhere new; Ctrl+Z steps back through the rolls.
 - The text language has loops: `for (pitch, level) in [(A2, 0.5), (E3, 0.3)] { ... }` stamps out its body per item, with lists, `...list` and `sum(list)`.
 - A panel knob can be played as a switch or a button, on screen and from a controller's button or pad: `panel drop = 0, switch`.
-- Four more tutorials: seeing a sound, playing from the keyboard, echo and space, and the patch as text.
+- Seven more tutorials: seeing a sound, drawing with shapes, playing from the keyboard, music that writes itself, echo and space, turning any music into a picture, and the patch as text.
 - The About box and the website credit Potato Smasher, the name Flyback is published under.
 - In the web editor, a sound, picture or MIDI file chosen for a module travels in the patch, and View it plays it.
 

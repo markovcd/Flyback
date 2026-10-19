@@ -4,7 +4,7 @@ namespace Flyback.Engine.Tutorials;
 internal static class ShippedTutorials
 {
     /// <summary>Each tutorial's id, which is its file's name under <c>Tutorials/</c>.</summary>
-    internal static readonly string[] Order = ["first-patch", "first-sound", "seeing-a-sound", "beat", "play-it", "echo-and-space", "patch-as-text"];
+    internal static readonly string[] Order = ["first-patch", "first-sound", "seeing-a-sound", "draw-with-shapes", "beat", "play-it", "music-that-writes-itself", "echo-and-space", "music-into-a-picture", "patch-as-text"];
 
     private const string Prefix = "tutorials/";
 
