@@ -186,7 +186,7 @@ flyback-cli probe --provider all
 flyback-cli ask drone.fbk "slower, and warmer"
 flyback-cli tool edit_patch drone.fbks --args '{"edits": [{"find": "freq: 220", "replace": "freq: 110"}]}'
 flyback-cli tool undo drone.fbk
-claude mcp add flyback -- flyback-cli mcp --editor
+claude mcp add -s user flyback -- flyback-cli mcp --editor
 flyback-cli decide "make the bass slower" --yes-no "Does this ask for an edit?" --json
 flyback-cli decide --status
 flyback-cli modules --find "a mirror maze of shards"

@@ -9,7 +9,7 @@ internal static class DrivenSetup
     /// <summary>The line that adds Flyback to Claude Code, then the lines that add it to Codex's <c>config.toml</c>.</summary>
     public static string Lines(string cli) =>
         $"""
-        claude mcp add flyback -- "{cli}" mcp --editor
+        claude mcp add -s user flyback -- "{cli}" mcp --editor
 
         [mcp_servers.flyback]
         command = "{cli.Replace("\\", "\\\\")}"
