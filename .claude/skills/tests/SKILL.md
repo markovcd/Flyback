@@ -82,6 +82,10 @@ Every new feature gets at least one Gherkin scenario in `tests/Flyback.Specs`,
 in the same commit as the feature. C# tests still cover the edges; the scenario
 states the requirement.
 
+A run writes Reqnroll's HTML report, every scenario and its result, to
+`reqnroll_report.html` beside the specs' assembly; the gate keeps it as
+`test-results/specs.html` and the Build run as its `specs-report` artifact.
+
 A feature is something a user patches, plays or does: a module, a setting, a
 command, an editor gesture. A change to how the engine runs what they already
 had (compiling, scheduling, when a program starts, speed) is not one, however

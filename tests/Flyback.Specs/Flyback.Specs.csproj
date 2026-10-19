@@ -104,6 +104,14 @@
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Keyring\Flyback.Plugins.Keyring.csproj" FolderName="Keyring" />
   </ItemGroup>
 
+  <!--
+    Read from beside the test assembly at run time: the HTML formatter writes
+    every scenario and its result to reqnroll_report.html there.
+  -->
+  <ItemGroup>
+    <None Update="reqnroll.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <!-- The scripts the page scenarios run under Node. -->
   <ItemGroup>
     <None Include="Support\*.mjs" CopyToOutputDirectory="PreserveNewest" />

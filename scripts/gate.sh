@@ -7,8 +7,10 @@
 # The tests' JUnit reports land in test-results/, with summary.md beside them: the
 # counts per project, each failing test with its message and stack, and each
 # skipped test with its reason, or the compile errors of a build that never
-# reached the tests. The build's whole log is build.log. On GitHub the summary is
-# also the run's. The script fails exactly when the gate stage would, on the same run.
+# reached the tests. The build's whole log is build.log, and the specs' Reqnroll
+# HTML report is specs.html. On GitHub the summary is also the run's, and
+# specs.html its specs-report artifact. The script fails exactly when the gate
+# stage would, on the same run.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

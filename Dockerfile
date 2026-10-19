@@ -194,7 +194,8 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 # workflow's timeout, which would cancel the run without saying where.
 #
 # The run's wall-clock seconds are kept too: test-summary.py holds them to the
-# gate's time budget.
+# gate's time budget. So is the specs' Reqnroll HTML report, every scenario with
+# its result.
 #
 # The run is inside a session bus with a keyring unlocked, which only a password
 # that is not empty does. FLYBACK_GATE turns a spec's skip for a missing tool into
@@ -211,10 +212,11 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
         --hangdump --hangdump-timeout 10m --hangdump-type Mini \
         --report-xunit-junit --results-directory /test-results'; \
     echo $? > /test-results/exit-code; \
-    echo $(( $(date +%s) - started )) > /test-results/seconds
+    echo $(( $(date +%s) - started )) > /test-results/seconds; \
+    cp "tests/Flyback.Specs/bin/$CONFIGURATION/net10.0/reqnroll_report.html" /test-results/specs.html || true
 
-# The reports, the exit code and the seconds, which gate.sh asks for with --output to write
-# the run's summary.
+# The reports, the exit code, the seconds and the specs' page, which gate.sh asks
+# for with --output to write the run's summary.
 FROM scratch AS test-results
 COPY --from=tested /test-results/ /
 
