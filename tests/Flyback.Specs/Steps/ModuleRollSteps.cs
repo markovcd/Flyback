@@ -20,6 +20,14 @@ public sealed class ModuleRollSteps(PatchContext context, EditorDriver editor)
         context.Wire("clock", "t", "sine", "phase");
     }
 
+    [Given("the sine's {string} on a panel knob")]
+    public void GivenOnAPanelKnob(string input)
+    {
+        var knob = context.Patch.AddControl(input, 0.5f);
+
+        ControlMap.Link(context.Node("sine"), Port(input), new ControlLink(knob.Id, 0f, 2f));
+    }
+
     [Given("the sine is selected")]
     public void GivenSelected() => editor.Select(context.Node("sine").Id);
 
@@ -42,6 +50,8 @@ public sealed class ModuleRollSteps(PatchContext context, EditorDriver editor)
     [Then("the sine's {string} is what was noted")]
     public void ThenNotedAgain(string input) => At(input).ShouldBe(noted);
 
-    private float At(string input) =>
-        editor.InputOf(context.Node("sine").Id, NodeCatalog.Get(NodeCatalog.SineTypeId)!.Inputs.ToList().FindIndex(port => port.Name == input));
+    private float At(string input) => editor.InputOf(context.Node("sine").Id, Port(input));
+
+    private static int Port(string input) =>
+        NodeCatalog.Get(NodeCatalog.SineTypeId)!.Inputs.ToList().FindIndex(port => port.Name == input);
 }
