@@ -106,7 +106,7 @@ public partial class NodeCatalog
     /// instance carries a scale, and the editor and the assistant both ask
     /// whether a node is it — see <see cref="ScaleExtra"/>.
     /// </summary>
-    public const string QuantiserTypeId = "audio.quantiser";
+    internal const string QuantiserTypeId = "audio.quantiser";
 
     /// <summary>
     /// Whether a module is the sink, which is what keeps it out of the palette

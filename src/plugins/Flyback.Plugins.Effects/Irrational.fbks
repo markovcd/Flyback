@@ -1,0 +1,204 @@
+# Seven concentric orbits at seven speeds, drawing together over about four minutes
+# into an alignment that is never quite exact and then coming apart again. Each dot
+# strikes one degree of A minor as it comes round, into a long delay and a large
+# room.
+#
+# Each orbit is one turn per four minutes faster than the one outside it, so every
+# dot would meet every other on that four minutes exactly, but each speed is nudged
+# by a root of a prime, a fiftieth of a turn per cycle, so the meeting is only ever
+# nearly. In between it does what a pendulum wave does, because it is one: the dots
+# fall into a traveling wave, then two clusters facing each other, then three, then
+# four, and back. A turn takes eleven to sixteen seconds, and a bell rings for the
+# whole of one, so seven voices is a slow chord rather than a clatter.
+
+description "Two pulses whose rates are a ratio of the square root of two: they pass"
+  "close, flare, and never once land together — a piece with no loop, because it cannot"
+  "have one."
+tags "rhythm" "minimalism" "generative"
+
+requires flyback.effects, flyback.picture, flyback.voice
+
+# A knob a dot, resting where the piece is written and reaching from stopped to
+# twice as fast. Turning one turns the whole shape: the four minutes is what the
+# seven speeds are to each other, not a number anything holds.
+panel orbit_1 = 0.5, label: "Orbit 1"
+panel orbit_2 = 0.5, label: "Orbit 2"
+panel orbit_3 = 0.5, label: "Orbit 3"
+panel orbit_4 = 0.5, label: "Orbit 4"
+panel orbit_5 = 0.5, label: "Orbit 5"
+panel orbit_6 = 0.5, label: "Orbit 6"
+panel orbit_7 = 0.5, label: "Orbit 7"
+
+group "Picture" {
+  let coord = coord()
+}
+
+# The faint circle a dot runs on, so its place can be read and the screen keeps its
+# shape between passes.
+def ring(at, size) = {
+  let ring = at |> circle(radius: size) |> fill(distance: _, softness: 0.004, width: 0.0045)
+  ring.outline * 0.14
+}
+
+# How near two neighbors are: nought when opposite and one when together, sharpened
+# so that only a real approach counts.
+def nearness(a, b) = pow(1 - abs(fract(a - b + 0.5) - 0.5) * 2, 6)
+
+# A dot at its turn's angle on an orbit, as bright as it is struck.
+def dot(at, level, turn, orbit, smallest, largest) = {
+  let dot = level |> remap(in_low: 0, out_low: smallest, out_high: largest)
+    |> circle(
+        x: at - cos(turn * 6.2831855) * orbit,
+        y: at.y - sin(turn * 6.2831855) * orbit,
+        radius: _)
+    |> fill(distance: _, softness: 0.03)
+  dot * (level |> remap(in_low: 0, out_low: 0.2, out_high: 1.1))
+}
+
+group "Picture" {
+  let ring_1 = ring(coord, 0.86)
+  let ring_2 = ring(coord, 0.76666665)
+  let ring_3 = ring(coord, 0.67333335)
+  let ring_4 = ring(coord, 0.58000004)
+  let ring_5 = ring(coord, 0.48666668)
+  let ring_6 = ring(coord, 0.39333335)
+  let ring_7 = ring(coord, 0.3)
+}
+
+# One stroke a turn, so a bell rings for the whole of it; the quick ones fall away
+# sooner, which keeps the top clear.
+group "The seven speeds" {
+  let time = time()
+  let turn_1 = time * orbit_1(0..0.12516667)
+  let stroke_1 = turn_1 |> stroke(curve: 2.1)
+  let turn_2 = time * orbit_2(0..0.13356903)
+  let turn_3 = time * orbit_3(0..0.14195535)
+  let turn_4 = time * orbit_4(0..0.15037268)
+  let turn_5 = time * orbit_5(0..0.15877429)
+  let turn_6 = time * orbit_6(0..0.16721943)
+  let turn_7 = time * orbit_7(0..0.17560093)
+  let stroke_2 = turn_2 |> stroke(curve: 2.55)
+  let stroke_3 = turn_3 |> stroke()
+  let stroke_4 = turn_4 |> stroke(curve: 3.4499998)
+  let stroke_5 = turn_5 |> stroke(curve: 3.8999999)
+  let stroke_6 = turn_6 |> stroke(curve: 4.35)
+  let stroke_7 = turn_7 |> stroke(curve: 4.7999997)
+}
+
+# Neighbors only: every pair would be twenty-one signals for a picture that can
+# show one thing at a time. 'passing' is how much passing there is anywhere, which
+# the drone leans on.
+group "The passes" {
+  let pass_1 = nearness(turn_1, turn_2)
+  let pass_2 = nearness(turn_2, turn_3)
+  let pass_3 = nearness(turn_3, turn_4)
+  let pass_4 = nearness(turn_4, turn_5)
+  let pass_5 = nearness(turn_5, turn_6)
+  let pass_6 = nearness(turn_6, turn_7)
+  let passing = sum([pass_1, pass_2, pass_3, pass_4, pass_5, pass_6]) * 0.16666667
+}
+
+# A dot on each orbit, warm outside where the slow low ones are and cold in the
+# middle. Where two neighbors would meet if they ever did, between their orbits at
+# the angle of the faster one, a dot as bright as the pass is close.
+group "Picture" {
+  let dot_1 = dot(coord, stroke_1 * (passing * 0.5 + 0.5), turn_1, 0.86, 0.03375, 0.120000005)
+  let dot_2 = dot(coord, stroke_2 * (passing * 0.5 + 0.5), turn_2, 0.76666665, 0.031050002, 0.11040001)
+  let dot_3 = dot(coord, stroke_3 * (passing * 0.5 + 0.5), turn_3, 0.67333335, 0.02835, 0.1008)
+  let dot_4 = dot(coord, stroke_4 * (passing * 0.5 + 0.5), turn_4, 0.58000004, 0.02565, 0.09120001)
+  let dot_5 = dot(coord, stroke_5 * (passing * 0.5 + 0.5), turn_5, 0.48666668, 0.022950001, 0.0816)
+  let dot_6 = dot(coord, stroke_6 * (passing * 0.5 + 0.5), turn_6, 0.39333335, 0.02025, 0.072000004)
+  let dot_7 = dot(coord, stroke_7 * (passing * 0.5 + 0.5), turn_7, 0.3, 0.01755, 0.06240001)
+  let meet_1 = dot(coord, pass_1 * 0.8, turn_2, 0.81333333, 0.022499999, 0.080000006)
+  let meet_2 = dot(coord, pass_2 * 0.8, turn_3, 0.72, 0.022499999, 0.080000006)
+  let meet_3 = dot(coord, pass_3 * 0.8, turn_4, 0.62666667, 0.022499999, 0.080000006)
+  let meet_4 = dot(coord, pass_4 * 0.8, turn_5, 0.53333336, 0.022499999, 0.080000006)
+  let meet_5 = dot(coord, pass_5 * 0.8, turn_6, 0.44, 0.022499999, 0.080000006)
+  let meet_6 = dot(coord, pass_6 * 0.8, turn_7, 0.3466667, 0.022499999, 0.080000006)
+}
+
+group "Voices" {
+  # A struck tone with one overtone an octave or a twelfth above it, and barely
+  # any of that: what is wanted is the part of a bell left after the strike. The
+  # high ones are let through a little louder, since the room swallows the top of
+  # the chord first.
+  let bells = bell(
+      freq: note(note: A2),
+      level: stroke_1,
+      ratio: 2,
+      index: 0.42) * 0.78 + bell(freq: note(
+          note: E3), level: stroke_2, ratio: 2, index: 0.38) * 0.85999995 + bell(freq: note(), level: stroke_3, ratio: 2, index: 0.33999997) * 0.93999994 + bell(freq: note(note: C4), level: stroke_4, ratio: 2, index: 0.29999998) * 1.02
+  let chord = bells + bell(
+      freq: note(note: E4),
+      level: stroke_5,
+      ratio: 3,
+      index: 0.26) * 1.0999999 + bell(freq: note(
+          note: G4), level: stroke_6, ratio: 3, index: 0.22) * 1.18 + bell(freq: note(note: C5), level: stroke_7, ratio: 3, index: 0.17999999) * 1.26
+
+  # Half a second and five sixths of one, which are not a ratio of each other, so
+  # the repeats interleave rather than doubling up. Then one hall, whose second
+  # output is the stereo.
+  let echo = chord
+    |> echo(tempo: 3, left: 6, right: 10, feedback: 0.55, mix: 0.6, taps: "side")
+  let room = echo + echo.right * 1 |> reverb(size: 0.95, decay: 0.88, mix: 1)
+
+  # Two fifths a long way down that lean up as the dots draw together: the only
+  # thing that says the alignment is coming before it arrives.
+  let swell = wander(rate: 0.05, seed: 3, low: 0.45)
+  let drone_low = sine(freq: 55 * (1 + passing * 0.008), amp: swell * 0.34)
+  let drone_high = sine(freq: 82.5 * (1 + passing * 0.008), amp: swell * 0.16)
+}
+
+# A little of the strike itself, so the attacks are in the room as well as behind
+# it.
+group "Desk" {
+  let dry = chord
+    |> desk(
+        left_1: _,
+        level_1: 0.34,
+        left_2: drone_low,
+        level_2: 0.22,
+        left_3: drone_high,
+        level_3: 0.14,
+        left_4: echo,
+        right_4: echo.right,
+        level_4: 0.3)
+  let master = room
+    |> desk(
+        left_1: _,
+        right_1: room.wide,
+        level_1: 0.5,
+        bus_left: dry.bus_left,
+        bus_right: dry.bus_right,
+        trim: 0.22)
+}
+
+group "Picture" {
+  ink(mask: ring_1, r: 0.3, g: 0.36, b: 0.5)
+    |> ink(mask: ring_2, r: 0.3, g: 0.36, b: 0.5)
+    |> ink(mask: ring_3, r: 0.3, g: 0.36, b: 0.5)
+    |> ink(mask: ring_4, r: 0.3, g: 0.36, b: 0.5)
+    |> ink(mask: ring_5, r: 0.3, g: 0.36, b: 0.5)
+    |> ink(mask: ring_6, r: 0.3, g: 0.36, b: 0.5)
+    |> ink(mask: ring_7, r: 0.3, g: 0.36, b: 0.5)
+    |> ink(mask: dot_1, g: 0.6, b: 0.28)
+    |> ink(mask: dot_2, r: 0.9083333, g: 0.60833335, b: 0.38333333)
+    |> ink(mask: dot_3, r: 0.81666666, g: 0.6166667, b: 0.48666668)
+    |> ink(mask: dot_4, r: 0.725, g: 0.625, b: 0.59000003)
+    |> ink(mask: dot_5, r: 0.6333333, g: 0.6333334, b: 0.6933334)
+    |> ink(mask: dot_6, r: 0.5416666, g: 0.6416667, b: 0.7966666)
+    |> ink(mask: dot_7, r: 0.45, g: 0.65000004, b: 0.9)
+    |> ink(mask: meet_1, g: 0.95, b: 0.82)
+    |> ink(mask: meet_2, g: 0.95, b: 0.82)
+    |> ink(mask: meet_3, g: 0.95, b: 0.82)
+    |> ink(mask: meet_4, g: 0.95, b: 0.82)
+    |> ink(mask: meet_5, g: 0.95, b: 0.82)
+    |> ink(mask: meet_6, g: 0.95, b: 0.82)
+    |> trails(zoom: 1.003, persist: 0.8)
+    |> vignette(from: 0.85, to: 1.55, dark: 0.5)
+    |> out.color
+}
+
+master |> out.left
+master.right |> out.right
+out.volume = 0.56

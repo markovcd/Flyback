@@ -131,8 +131,8 @@ public sealed class PicturePlugin : IFlybackPlugin
                 Tags = ["layers", "shapes", "color"],
             },
             new PatchPreset(
-                DodgePreset.Name,
-                DodgePreset.Build,
+                "Dodge",
+                PresetText.Embedded(typeof(PicturePlugin).Assembly, "Dodge.fbks"),
                 "A game to play on the keys: walls fall down seven lanes, Z to M, and the key under "
                 + "each gap is where you have to be when it arrives.",
                 PresetKind.Showcase)

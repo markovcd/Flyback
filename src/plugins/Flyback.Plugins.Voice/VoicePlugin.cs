@@ -83,8 +83,8 @@ public sealed class VoicePlugin : IFlybackPlugin
                 Tags = ["drums", "rhythm"],
             },
             new PatchPreset(
-                EuclidKitPreset.Name,
-                EuclidKitPreset.Build,
+                "Euclid kit",
+                PresetText.Embedded(typeof(VoicePlugin).Assembly, "EuclidKit.fbks"),
                 "Four Euclidean rhythms playing a noise kit and a gliding bass, drawn as a clock "
                 + "hand, a ring the kick pushes and a flash on the snare.",
                 PresetKind.Interplay)

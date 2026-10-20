@@ -1,0 +1,95 @@
+# A drum kit and a bass line played by four Euclidean rhythms, and a clock face
+# drawn by the same rhythm. Euclid and Decay play the kit, Noise makes the hats,
+# the snare, the bass notes and the filter's drift, and Slew glides the bass. The
+# picture is a hand swept round by the loop, a ring the kick pushes out, and a
+# difference flash on the snare, stacked with three Layers.
+
+description "Four Euclidean rhythms playing a noise kit and a gliding bass, drawn as a"
+  "clock hand, a ring the kick pushes and a flash on the snare."
+tags "drums" "rhythm" "bass" "visualizer"
+
+requires flyback.picture, flyback.voice
+
+group "Rhythm" {
+  let rate = tempo(bpm: 118) * 4
+  let kick_steps = euclid(rate: rate, steps: 16, hits: 4, gate_length: 0.4)
+  let bass_steps = euclid(rate: rate, steps: 16, hits: 5, rotate: 3, gate_length: 0.6)
+  let snare_steps = euclid(rate: rate, steps: 16, hits: 2, rotate: 4, gate_length: 0.4)
+  let hat_steps = euclid(rate: rate, steps: 16, hits: 7, rotate: 1, gate_length: 0.3)
+}
+
+group "Picture: hand" {
+  let sweep = kick_steps.index * 6.2831855
+  let hand_color = bass_steps.index |> color.hsv(hue: _, saturation: 0.6)
+  let hand = line(
+      x1: 0,
+      y1: 0,
+      x2: sin(sweep) * 0.8,
+      y2: cos(sweep) * 0.8,
+      width: 0.006)
+    |> fill(distance: _)
+    |> layer(base: rgb(r: 0.02, g: 0.02, b: 0.05), top: hand_color, amount: _, mode: "add")
+}
+
+# A sine with a fast pitch drop.
+group "Kick" {
+  let kick_level = kick_steps
+    |> decay(trigger: _, attack: 316.2278us, decay: 281.8383ms, curve: 0.7)
+  let kick_drop = kick_steps |> decay(trigger: _, attack: 100us, decay: 39.81072ms, curve: 1)
+  let kick = sine(freq: kick_drop * 160 + 48, amp: kick_level)
+}
+
+# Meters, because an envelope has no memory on the picture and would draw its
+# trigger.
+group "Picture: hits" {
+  let kick_meter = kick_level |> meter(window: 19.95262ms)
+  let ring = kick_meter.peak |> remap(in_low: 0, out_low: 0.35, out_high: 0.6)
+    |> circle(radius: _)
+    |> fill(distance: _, width: 0.015)
+}
+
+# Noise through a filter.
+group "Hats and snare" {
+  let snare_level = snare_steps |> decay(trigger: _, attack: 316.2278us, decay: 112.20185ms)
+  let hat_level = hat_steps |> decay(trigger: _, attack: 100us, decay: 31.62278ms, curve: 1)
+  let hats = noise(seed: 3, amp: hat_level) |> filter(cutoff: 8000, resonance: 0.1)
+  let snare_noise = noise(seed: 7, amp: snare_level)
+  let snare = snare_noise.pink |> filter(cutoff: 1900, resonance: 0.35)
+}
+
+group "Picture: hits" {
+  let snare_meter = snare_level |> meter(window: 31.62278ms)
+}
+
+# Random notes on the step, snapped to A minor pentatonic, glided. The notes share
+# the Euclids' rate, so a new note lands exactly on a step.
+group "Bass" {
+  let bass_notes = noise(rate: rate, seed: 11, amp: 6, bias: 45)
+  let bass_pitch = bass_notes.random |> quantiser() [ A C D E G ]
+    |> note(note: _)
+    |> slew(rise: 31.62278ms, fall: 31.62278ms)
+  let drift = noise(rate: 0.15, seed: 5, amp: 700, bias: 1100)
+  let bass_tone = saw(freq: bass_pitch, amp: 0.8)
+    |> filter(cutoff: drift.drift, resonance: 0.5)
+  let bass_level = bass_steps |> decay(trigger: _, decay: 158.48931ms, curve: 0.4)
+  let bass = bass_tone * bass_level
+}
+
+group "Picture: hits" {
+  rgb(g: 0.55, b: 0.2)
+    |> layer(base: hand, top: _, amount: ring.outline, mode: "screen")
+    |> layer(base: _, top: rgb(), amount: snare_meter.peak, mode: "difference")
+    |> out.color
+}
+
+kick
+  |> mixer(
+      in_1: _,
+      level_1: 0.9,
+      in_2: hats.high,
+      level_2: 0.35,
+      in_3: snare.band,
+      level_3: 1.2,
+      in_4: bass,
+      level_4: 0.5)
+  |> out.left

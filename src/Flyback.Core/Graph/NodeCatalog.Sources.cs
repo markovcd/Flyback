@@ -40,7 +40,7 @@ public partial class NodeCatalog
     internal const string ValueTypeId = "value";
 
     /// <summary>The output socket of the position source that carries x.</summary>
-    public const int CoordXPort = 0;
+    internal const int CoordXPort = 0;
     /// <summary>The output socket of the position source that carries y.</summary>
     public const int CoordYPort = 1;
     /// <summary>The output socket of the position source that carries the picture's aspect ratio.</summary>

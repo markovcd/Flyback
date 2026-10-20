@@ -135,8 +135,8 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 Tags = ["song", "synthwave", "chords", "drums", "shapes"],
             },
             new PatchPreset(
-                IrrationalPreset.Name,
-                IrrationalPreset.Build,
+                "Irrational",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "Irrational.fbks"),
                 "Two pulses whose rates are a ratio of the square root of two: they pass close, "
                 + "flare, and never once land together — a piece with no loop, because it cannot "
                 + "have one.",

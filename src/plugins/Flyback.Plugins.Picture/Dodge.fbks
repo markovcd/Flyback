@@ -1,0 +1,162 @@
+# A game: walls fall down seven lanes, each with one gap, and the key under the gap
+# is the lane you have to be in when the wall arrives. Z to M are the lanes and the
+# lane is the last note struck, so a clean run plays the gaps' tune; black keys and
+# other octaves fall to the nearest white key.
+#
+# Three loops of one (ADR-0075) hold the state: keys (last pitch and gate, and
+# whether a note is new), over (when the run ended, or -1) and start (when it
+# began). Everything else is derived from those and the clock. A cell holds 16 either
+# way, so times wrap at 512 seconds. Gaps are a quadratic residue modulo 997 thrown
+# by a Dice, in whole numbers, so picture and sound agree.
+
+description "A game to play on the keys: walls fall down seven lanes, Z to M, and the"
+  "key under each gap is where you have to be when it arrives."
+tags "game" "playable" "shapes"
+
+requires flyback.picture
+
+let keys_in = midi.in()
+
+group "Game" {
+  # When the run began, over 33 and a sixty-fourth; negative while over says it
+  # is not running.
+  let start = expression(
+      c: t,
+      formula: "mix(-abs(a), mix(mod(c, 512) / 33 + 1 / 64, a, step(1 / 128, a)), 1 - step(-0.5, b))")
+  # Seconds into the run, held where it ended.
+  let played = start
+    |> expression(
+        a: _,
+        c: t,
+        formula: "mix(step(-0.5, b) * mod(32 * b - 33 * (abs(a) - 1 / 64), 512), mod(c - 33 * (abs(a) - 1 / 64), 512), step(1 / 128, a))")
+  # Rows the walls have come, three short of the player at the start: 1.2 a
+  # second, rising to 4.
+  let rows = played
+    |> expression(
+        a: _,
+        formula: "1.2 * min(a, 70) + 0.02 * min(a, 70) * min(a, 70) + 4 * (a - min(a, 70)) - 3")
+  # The last note's nearest white key, or the middle before one is struck.
+  let lane = keys_in
+    |> expression(
+        a: _,
+        b: keys_in.velocity,
+        formula: "mix(3, floor(mod(floor(a + 0.5), 12) * 7 / 12 + 0.5), step(0.001, b))")
+  # Last note and gate in whole numbers, and 256 on top when this one was struck.
+  let keys = expression(
+      b: keys_in,
+      c: keys_in.gate,
+      formula: "(floor(b + 0.5) + 128 * step(0.5, c) + 256 * step(0.5, c) * max(1 - step(128, mod(floor(32 * a + 0.5), 256)), step(0.5, abs(floor(b + 0.5) - mod(floor(32 * a + 0.5), 256) + 128 * step(128, mod(floor(32 * a + 0.5), 256)))))) / 32")
+  # In a wall and not in its gap, the run is over: when it ended, over 32, or -1
+  # while it runs.
+  let over = rows
+    |> expression(
+        a: _,
+        b: lane,
+        formula: "step(0, a) * (1 - step(0.25, fract(a))) * step(0.5, abs(b - floor(dice(a) * 7)))")
+    |> expression(
+        b: keys,
+        c: _,
+        d: t,
+        formula: "mix(mix(a, mod(d, 512) / 32, (1 - step(-0.5, a)) * c), -1, step(-0.5, a) * step(0.8, mod(d - 32 * a, 512)) * step(8, b))")
+}
+
+group "Picture" {
+  # Seven lanes 0.26 wide across the middle, dimmed between runs. Drawn first so
+  # the output reaches over before anything else in the game's loop, which puts
+  # the cut on the wires out of over.
+  let lanes = x
+    |> expression(
+        a: _,
+        b: over,
+        formula: "(0.05 - 0.025 * step(-0.5, b)) * window(a, -0.91, 0.91)")
+  # The player at -0.72, a row every half.
+  let walls = rows
+    |> expression(
+        a: _,
+        b: x,
+        c: y,
+        formula: "step(-0.8, c) * step(0, a + (c + 0.72) / 0.5) * (1 - step(0.25, fract(a + (c + 0.72) / 0.5))) * window(b, -0.91, 0.91) * step(0.5, abs(floor((b + 0.91) / 0.26) - floor(dice((a + (c + 0.72) / 0.5)) * 7)))")
+  let player = lane
+    |> expression(
+        a: _,
+        b: x,
+        c: y,
+        formula: "1 - smoothstep(0, 0.006, max(abs(b - 0.26 * a + 0.78) - 0.09, abs(c + 0.72) - 0.045))")
+  # The key under each lane: one Text, its line chosen by the lane the pixel is in.
+  let pixel_lane = x
+    |> expression(a: _, formula: "clamp(floor((a + 0.91) / 0.26), 0, 6)")
+  let letters = x + 0.78 - 0.26 * pixel_lane
+    |> text(
+        x: _,
+        y: y + 0.88,
+        size: 0.06,
+        line: pixel_lane,
+        lines: "Z|X|C|V|B|N|M",
+        font: "tiny")
+    |> fill(distance: _, softness: 0.004)
+  # Walls cleared, in three digits along the top: one Text, its line the digit.
+  let digit = x
+    |> expression(a: _, formula: "clamp(floor((a + 0.15) / 0.1), 0, 2)")
+  let score = x + 0.1 - 0.1 * digit
+    |> text(
+        x: _,
+        y: y - 0.86,
+        size: 0.09,
+        line: floor(max(0, floor(rows - 0.25) + 1) / pow(10, 2 - digit)),
+        lines: "0|1|2|3|4|5|6|7|8|9")
+    |> fill(distance: _, softness: 0.004)
+  # Between runs: what to do, blinking, and a red flash that fades from the end.
+  let message = text(
+      y: y - 0.1,
+      size: 0.1,
+      line: step(0.0009765625, over),
+      lines: "PRESS A KEY|GAME OVER")
+    |> fill(distance: _, softness: 0.004)
+  let blink = message * step(-0.5, over) * step(0.3, fract(t * 1.5))
+  let flash = t
+    |> expression(
+        a: _,
+        b: over,
+        formula: "0.6 * step(1 / 1024, b) * step(-0.5, b) * exp(-4 * mod(a - 32 * b, 512))")
+}
+
+group "Sound" {
+  # The key plucked, the gap chimed as each wall passes, and a thud when one
+  # does not.
+  let pitch = keys_in |> note(note: _)
+  let chime_pitch = rows
+    |> expression(
+        a: _,
+        formula: "440 * pow(2, (72 + (2 * floor(dice(a) * 7) - step(2.5, floor(dice(a) * 7))) - 69) / 12)")
+  let thud_level = t
+    |> expression(
+        a: _,
+        b: over,
+        formula: "step(1 / 1024, b) * step(-0.5, b) * exp(-4 * mod(a - 32 * b, 512))")
+  let sound = 0.5 * string(
+      trigger: keys_in.trigger,
+      freq: pitch,
+      decay: 3.981072s,
+      brightness: 0.45) + 0.2 * sine(freq: chime_pitch, amp: step(
+          0,
+          rows) * (1 - step(
+              -0.5,
+              over)) * exp(-7 * fract(rows))) + 0.7 * sine(freq: 40 + 120 * exp(-8 * ((t - 32 * over) % 512)), amp: thud_level)
+}
+
+keys.a <- keys
+over.a <- over
+start.a <- start
+start.b <- over
+played.b <- over
+
+ink(mask: lanes, r: 0.4, g: 0.5) |> ink(mask: walls, r: 0.95, g: 0.25, b: 0.75)
+  |> ink(mask: player, r: 0.3, b: 0.9)
+  |> ink(mask: letters, r: 0.45, g: 0.5, b: 0.7)
+  |> ink(mask: score)
+  |> ink(mask: blink, g: 0.85, b: 0.3)
+  |> ink(mask: flash, g: 0.1, b: 0.15)
+  |> out.color
+sound |> out.left
+sound |> out.right
+out.volume = 0.8
