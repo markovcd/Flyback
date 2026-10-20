@@ -96,8 +96,8 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 Tags = ["generative", "melody", "scales"],
             },
             new PatchPreset(
-                AcidPreset.Name,
-                AcidPreset.Build,
+                "Acid",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "Acid.fbks"),
                 "A whole acid techno track: a hundred and twenty-eight bars of a 303 line in two "
                 + "themes, with accents and slides through a four-pole filter, over a galloping "
                 + "bass — three builds, a breakdown, and a second 303 that answers the first.",
@@ -117,8 +117,8 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 Tags = ["song", "psybient", "ambient", "voice", "scan"],
             },
             new PatchPreset(
-                BronzePreset.Name,
-                BronzePreset.Build,
+                "Bronze",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "Bronze.fbks"),
                 "A gamelan: sixteen gong cycles on a tempo that breathes, every part figured out "
                 + "of one melody in a five-note scale, and a mandala with a ring for each tier.",
                 PresetKind.Showcase)
@@ -126,8 +126,8 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 Tags = ["song", "gamelan", "scales", "symmetry"],
             },
             new PatchPreset(
-                OutrunPreset.Name,
-                OutrunPreset.Build,
+                "Outrun",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "Outrun.fbks"),
                 "A whole synthwave track: four chords, gated pads and a gated-reverb snare, under a "
                 + "drawn scene — a slatted sun, a ridge, and a grid that arrives a line to the beat.",
                 PresetKind.Showcase)
@@ -145,8 +145,8 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 Tags = ["rhythm", "minimalism", "generative"],
             },
             new PatchPreset(
-                PhasePreset.Name,
-                PhasePreset.Build,
+                "Phase",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "Phase.fbks"),
                 "Phase music, after Steve Reich: two players on one pattern, the second pulling ahead "
                 + "through all twelve canons, and a picture of two dials that is the diagram of it.",
                 PresetKind.Showcase)
@@ -154,8 +154,8 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 Tags = ["song", "minimalism", "rhythm", "shapes"],
             },
             new PatchPreset(
-                FracturePreset.Name,
-                FracturePreset.Build,
+                "Fracture",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "Fracture.fbks"),
                 "Drum and bass at a hundred and seventy: a synthesized break chopped by bending the "
                 + "clock it reads, a Reese bass, and a picture cut into strips by the same list.",
                 PresetKind.Showcase)
@@ -163,8 +163,8 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 Tags = ["song", "drum-and-bass", "drums", "bass"],
             },
             new PatchPreset(
-                SlowWeatherPreset.Name,
-                SlowWeatherPreset.Build,
+                "Slow weather",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "SlowWeather.fbks"),
                 "A generative ambient patch with no clock in it and five loops: a drone that bends "
                 + "its own phase, an echo that darkens every time round, voices that push each other "
                 + "down, and a picture steered by where it was bright a frame ago. Six panel knobs — "

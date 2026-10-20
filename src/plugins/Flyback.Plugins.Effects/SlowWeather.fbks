@@ -1,0 +1,408 @@
+# A clockless generative patch with five feedback loops and six panel knobs. Random
+# voltages from a noise field pick the notes, open the voices and move the picture;
+# the loops (a self-bending drone, a darkening echo, two ducking followers and a
+# picture steered by last frame's light) make it evolve. Four visitors come and go
+# and mark the picture while they stay.
+#
+# A loop is one evaluation of delay (ADR-0075), each with a gain under one. The
+# voices are sines, a triangle and a dark pluck, the weather is filtered pink noise,
+# and the echo and room darken as they ring. The knobs (ADR-0086) ride on top of
+# what the wanders already drive rather than replacing it.
+
+description "A generative ambient patch with no clock in it and five loops: a drone"
+  "that bends its own phase, an echo that darkens every time round, voices that push"
+  "each other down, and a picture steered by where it was bright a frame ago. Six panel"
+  "knobs — echo, chime decay, reverb, warp, color and trails spin — ride on top of it."
+tags "ambient" "generative" "drone" "feedback" "knobs"
+length 30:00.00
+
+requires flyback.effects, flyback.voice
+
+panel echo_level = 0.5, label: "Echo Level"
+panel chime_decay = 0.5, label: "Chime Decay"
+panel reverb_space = 0.5, label: "Reverb Space"
+panel visual_warp = 0.5, label: "Visual Warp"
+panel color_shift = 0.5, label: "Color Shift"
+panel trails_spin = 0.5, label: "Trails Spin"
+
+group "Four Random Voltages" {
+  # Four Wanders, each with a seed of its own: the engine's noise walked along one
+  # line, the same number on the screen as in the speakers. The slowest takes nearly
+  # two minutes to reach a value it has not seen, which makes the bass move like
+  # weather rather than a bass line.
+  let pad_voltage = wander(rate: 0.043)
+  let clock = time()
+  let slow_voltage = wander(rate: 0.0097, seed: 2)
+  let index_voltage = wander(rate: 0.019, seed: 3)
+  let fast_voltage = wander(rate: 0.091, seed: 1)
+}
+
+group "Picture: Geometry" {
+  # The only thing on the screen that moves at a steady rate is a rotation, which has
+  # nowhere to arrive; everything else is one of the voltages.
+  let zoom = pad_voltage |> remap(in_low: 0, out_low: 0.75, out_high: 1.45)
+  let turning = clock * 0.011
+  let tilt = slow_voltage |> remap(in_low: 0, out_low: -0.6, out_high: 0.6)
+  let kaleidoscope_segments = slow_voltage |> remap(in_low: 0, out_low: 2, out_high: 9)
+}
+
+group "Visitor: Call" {
+  # A call from far off: a sine gliding between notes of the low half of the scale, in
+  # phrases of about five seconds it mostly lets pass, with a vibrato that deepens as
+  # the phrase swells. Each visitor has a Wander of its own that has to climb past a
+  # threshold before it is let in, and the same gate marks the picture while it stays.
+  let call_phrase = clock |> stroke(rate: 0.21, curve: 1)
+  let call_die = noise(rate: 0.21, seed: 12)
+  let call_swell = call_phrase.phase
+    |> expression(
+        a: _,
+        b: call_die.random,
+        formula: "sin(a * pi) * sin(a * pi) * step(-0.3, b)")
+  let call_here = fade(level: wander(rate: 0.043, seed: 7), from: 0.56, to: 0.68)
+  let call_notes = noise(rate: 1.3, seed: 13, amp: 0.5, bias: 0.5)
+  let call_pitch = call_notes.random
+    |> notes(rate: 7, gate_length: 1, shape: 0.5) [ F3 G3 A3 C4 D4 F4 G4 ]
+    |> note(note: _)
+    |> slew(rise: 354.8134ms, fall: 354.8134ms)
+  let call_vibrato = call_pitch * (1 + 0.012 * sine(freq: 5.3) * call_swell)
+  let call = sine(
+      freq: call_vibrato,
+      amp: call_swell) + sine(freq: call_vibrato * 2.01, amp: call_swell * 0.2)
+  let call_left = call * sine(freq: 0.0371, amp: 0.35, bias: 0.6)
+  let call_right = call * sine(freq: 0.0293, phase: 0.5, amp: 0.35, bias: 0.6)
+}
+
+group "Picture: Geometry" {
+  # The cloud is Clouds read off the folded plane, boiling on its own clock: the same
+  # module as the voltages, a texture only because of what its x and y are patched to.
+  let plane = zoom * (1 - 0.3 * call_swell * call_here.gate)
+    |> transform(zoom: _, angle: turning + tilt, order: "turn")
+  let folded = plane |> kaleidoscope(segments: kaleidoscope_segments)
+  let cloud = folded |> clouds(z: clock * 0.035, scale: 1.6)
+}
+
+group "Picture: Memory" {
+  # The fifth loop, on the screen: a blend of what this pixel held a frame ago and
+  # what it sees now, a long exposure with no buffer. What it held pushes the warp
+  # that bends the rings, so a place that was bright reads the rings from somewhere
+  # else. The push is kept small, or the frame fills with light that never leaves.
+  let memory_push = index_voltage |> remap(in_low: 0, out_low: 0.04, out_high: 0.22)
+    |> expression(b: _, formula: "a * b")
+  let warp_depth = fast_voltage |> remap(in_low: 0, out_low: 0.25, out_high: 0.85)
+  let warped = folded
+    |> warp(by: cloud + memory_push, amount: warp_depth * visual_warp(0..2.5))
+  let exposure = fast_voltage |> remap(in_low: 0, out_low: 0.06, out_high: 0.25)
+}
+
+group "Three Quantisers" {
+  # D minor pentatonic over three octaves, split into three lists of coprime length:
+  # eight notes for the pad, five for the root, seven for the bell.
+  let pad_notes = pad_voltage
+    |> notes(rate: 8, gate_length: 1, shape: 0.5) [ A3 C4 D4 F4 G4 A4 C5 D5 ]
+  let root_notes = slow_voltage |> notes(rate: 5, gate_length: 1, shape: 0.5) [ D2 G2 A2 F2 C2 ]
+  let bell_notes = fast_voltage
+    |> notes(rate: 7, gate_length: 0.6188406, shape: 0.5) [ C4 D4 F4 G4 A4 C5 D5 ]
+}
+
+group "Picture: Memory" {
+  let ring_count = pad_notes.index |> remap(in_low: 0, out_low: 1.4, out_high: 3.6)
+}
+
+group "Visitor: Music Box" {
+  # A music box: a plucked string at the top of the scale, on a count of about two a
+  # second that skips most of its beats. The note is held from the pluck, so a ringing
+  # string is never retuned under itself.
+  let box_here = fade(level: wander(rate: 0.037, seed: 6), from: 0.56, to: 0.68)
+  let box_die = noise(rate: 2.4, seed: 11)
+  let box_count = clock |> stroke(rate: 2.4, curve: 4)
+  let pluck = step(0.5, box_count) * step(0.15, box_die.random)
+  let box_notes = noise(rate: 2.4, seed: 10, amp: 0.5, bias: 0.5)
+  let box_pitch = box_notes.random
+    |> notes(rate: 7, gate_length: 1, shape: 0.5) [ D5 F5 G5 A5 C6 D6 F6 ]
+    |> note(note: _)
+    |> hold(trigger: pluck)
+  let music_box = string(
+      trigger: pluck,
+      freq: box_pitch,
+      decay: chime_decay(150.00002ms..5s),
+      brightness: 0.3)
+}
+
+group "Picture: Memory" {
+  # Wide edges: a hard threshold makes filaments and a soft one makes weather.
+  let memory = warped |> rings(freq: ring_count + box_here.gate * 2.5, offset: clock * 0.09)
+    |> smoothstep(edge0: -0.55, edge1: 0.9)
+    |> math.mix(b: _, t: exposure)
+}
+
+group "Picture: Color" {
+  let pad_light = pad_notes.gate |> remap(in_low: 0, out_low: 0.9, out_high: 1.6)
+  # A Vignette read for its 'shade', the only thing that knows where the edge of the
+  # frame is. The hue is off the cloud and the slowest voltage, with a creep under
+  # both. The Trails with nothing patched in is the drift: its tail, read a little
+  # zoomed and turned, blended under the fresh picture.
+  let frame_edge = vignette(from: 0, to: 2.2, dark: 0.3)
+  let hue = cloud * 0.55 + slow_voltage * 0.4 + turning + call_here.gate * 0.22
+  let saturation_depth = fast_voltage |> remap(in_low: 0, out_low: 0.3, out_high: 0.75)
+  let drift = trails(
+      zoom: trails_spin,
+      angle: trails_spin(-0.015..0.015),
+      persist: 0.92)
+  let fresh = pad_voltage |> remap(in_low: 0, out_low: 0.12, out_high: 0.35)
+}
+
+group "Visitor: Thunder" {
+  # Thunder, far off: a slot every five seconds or so that it takes about half the
+  # time, low pink noise swelling a beat after the flash and rolling away, its cutoff
+  # falling with it.
+  let storm_here = fade(level: wander(rate: 0.023, seed: 9), from: 0.58, to: 0.7)
+  let strike = clock |> stroke(rate: 0.19, curve: 1)
+  let strike_die = noise(rate: 0.19, seed: 3)
+  let thunder_level = strike.phase
+    |> expression(
+        a: _,
+        b: strike_die.random,
+        formula: "(1 - a) * (1 - a) * (1 - a) * smoothstep(0.02, 0.12, a) * step(0, b)")
+  let thunder_band = thunder_level |> remap(in_low: 0, out_low: 70, out_high: 260)
+  let thunder = hiss(
+      level: thunder_level * wander(rate: 1.7, seed: 10, low: 0.45),
+      cutoff: thunder_band,
+      resonance: 0.35,
+      gain: 4,
+      seed: 11,
+      noise: "pink",
+      band: "low")
+}
+
+group "Visitor: Rain" {
+  # Rain: pink hiss high up for the wash, and drops, each a sine that rises in pitch
+  # as it dies, on three counts that never line up.
+  let rain_here = fade(level: wander(rate: 0.031, seed: 8), from: 0.55, to: 0.67)
+  let drop_die_1 = noise(rate: 5.3, seed: 14)
+  let drop_1 = clock |> stroke(rate: 5.3, curve: 7)
+  let drop_die_2 = noise(rate: 3.1, seed: 16)
+  let drop_2 = clock |> stroke(rate: 3.1, curve: 7)
+  let drops_middle = sine(
+      freq: (700 + 800 * fract(drop_die_2.random * 7.31)) * (1.6 - 0.6 * drop_2),
+      amp: drop_2 * step(0, drop_die_2.random))
+  let wash = hiss(cutoff: 5200, resonance: 0.15, gain: 0.35, seed: 9, noise: "pink")
+  let rain_left = sine(
+      freq: (700 + 800 * fract(drop_die_1.random * 7.31)) * (1.6 - 0.6 * drop_1),
+      amp: drop_1 * step(0, drop_die_1.random)) + drops_middle * 0.5 + wash
+  let drop_die_3 = noise(rate: 7.7, seed: 15)
+  let drop_3 = clock |> stroke(rate: 7.7, curve: 7)
+  let rain_right = sine(
+      freq: (700 + 800 * fract(drop_die_3.random * 7.31)) * (1.6 - 0.6 * drop_3),
+      amp: drop_3 * step(0, drop_die_3.random)) + drops_middle * 0.5 + wash
+}
+
+group "Picture: Color" {
+  # Each visitor bends something: the music box tightens the rings, the call turns the
+  # hue and breathes the zoom, the rain drains the color and the storm darkens it.
+  let picture = memory * (pad_light * (1 - 0.4 * storm_here.gate)) * frame_edge.shade |> clamp(low: 0)
+    |> color.hsv(
+        hue: fract(hue + (color_shift(0..1) + 0)),
+        saturation: saturation_depth * (1 - 0.6 * rain_here.gate),
+        value: _)
+    |> color.mix(a: drift.tail, b: _, t: fresh)
+}
+
+group "Picture: Visitors" {
+  # What each visitor lays on top as light, after the Trails reads the frame: glints
+  # where a pluck lands, rain as streaks scrolled down a slant, and lightning at the
+  # head of each strike, a beat ahead of its thunder.
+  let glints = clouds(z: box_die.random * 9, scale: 11)
+    |> expression(
+        a: _,
+        b: box_count,
+        c: box_die.random,
+        d: box_here.gate,
+        formula: "smoothstep(0.7, 0.8, a) * b * step(0.15, c) * d")
+  let coord = coord()
+  let streaks = (coord + coord.y * 0.18) * 48
+    |> clouds(x: _, y: coord.y * 1.5 + clock * 2.8, scale: 1)
+    |> expression(a: _, b: rain_here.gate, formula: "smoothstep(0.64, 0.78, a) * b * 0.45")
+  let lightning = strike.phase
+    |> expression(
+        a: _,
+        b: strike_die.random,
+        c: storm_here.gate,
+        d: cloud,
+        formula: "(1 - smoothstep(0, 0.05, a)) * step(0, b) * (0.6 + 0.4 * sin(a * 420)) * c * (0.3 + d)")
+}
+
+group "Ground" {
+  # The first loop: a sine whose phase is pushed by its own last sample, the feedback
+  # of an FM operator. The index is a voltage, held well under a quarter of a turn,
+  # where the loop would start being chaos. The root is nearly always on, and its
+  # filter's cutoff is the slowest voltage.
+  let root_pitch = root_notes |> note(note: _)
+  let drone_bend = index_voltage |> remap(in_low: 0, out_low: 0.02, out_high: 0.16)
+    |> expression(b: _, formula: "a * b")
+  let drone = sine(freq: root_pitch, phase: drone_bend)
+  let root_under = root_notes |> note(note: _, octave: -1)
+  let root_swell = root_notes.gate |> remap(in_low: 0, out_low: 0.55)
+  let ground_open = slow_voltage |> remap(in_low: 0, out_low: 240, out_high: 1500)
+  let ground = (
+      drone + sine(
+          freq: root_under,
+          amp: 0.45)) * (root_swell * sine(freq: 0.0133, amp: 0.25, bias: 0.75))
+    |> filter(cutoff: ground_open, resonance: 0.25)
+}
+
+group "Wind" {
+  let wind_follower = expression(formula: "a * 0.9999")
+  let wind_band = fast_voltage |> remap(in_low: 0, out_low: 500, out_high: 3000)
+}
+
+group "Pad" {
+  # A sine and a triangle a few cents apart, with the cents on a slower sine, so the
+  # beating speeds up and slows down; a third sine at the octave; and a Chorus that
+  # makes the pair stereo.
+  let pad_pitch = pad_notes |> note(note: _)
+  let pad_detuned = sine(freq: 0.0233, amp: 7) |> note(note: pad_pitch.note, cents: _)
+  let pad_swell = pad_notes.gate |> remap(in_low: 0, out_low: 0.45)
+}
+
+group "Bell Follower" {
+  # The second loop, a follower: the bell's level read off its own wave turns the pad
+  # down, pushing it away in under a second, and the pad takes four to come back.
+  let bell_follower = expression(formula: "a * 0.9999")
+}
+
+group "Bell" {
+  # A sine with one partial in its phase at just over three times the pitch,
+  # brightening as it swells; through a Phaser that takes most of a minute a turn, and
+  # panned by two sines at unrelated rates.
+  let bell_pitch = bell_notes |> note(note: _)
+  let bell_index = fast_voltage |> remap(in_low: 0, out_low: 0.08, out_high: 0.22)
+  let bell_voice = bell(
+      freq: bell_pitch,
+      level: bell_notes.gate,
+      ratio: 3.01,
+      index: bell_index) * 0.6
+  let bell_swirl = bell_voice |> phaser(rate: 0.023, depth: 0.85, feedback: 0.55, mix: 0.7)
+  let bell_left = bell_swirl * sine(freq: 0.0311, amp: 0.4, bias: 0.55)
+  let bell_right = bell_swirl * sine(freq: 0.0419, phase: 0.5, amp: 0.4, bias: 0.55)
+}
+
+group "Bell Follower" {
+  let bell_size = abs(bell_voice) * 0.000100016594
+  let bell_held = bell_follower + bell_size
+  let bell_level = bell_held |> slew(rise: 316.22777ms, fall: 3.981072s)
+  let pad_duck = 1 - bell_level * 1.6 |> clamp(low: 0.3)
+}
+
+group "Pad" {
+  let pad_level = pad_swell * sine(freq: 0.0173, amp: 0.2, bias: 0.8) * pad_duck
+  let pad = (
+      sine(
+          freq: pad_pitch,
+          amp: 0.6) + triangle(freq: pad_detuned, amp: 0.45) + sine(freq: pad_pitch * 2, amp: 0.45)) * pad_level
+    |> chorus(rate: 0.19, depth: 0.75, mix: 0.6)
+}
+
+group "Melody Desk" {
+  # The voices that come and go, on a desk of their own, because the wind listens to
+  # exactly these.
+  let melody = pad
+    |> desk(
+        left_1: _,
+        right_1: pad.wide,
+        level_1: 0,
+        left_2: bell_left,
+        right_2: bell_right,
+        level_2: 0,
+        left_3: music_box,
+        level_3: box_here.gate * 0.45,
+        left_4: call_left,
+        right_4: call_right,
+        level_4: call_here.gate * 0.5,
+        trim: 0)
+}
+
+group "Wind" {
+  # The third loop: a follower on the melody desk's bus, turned upside down, so the
+  # wind comes up when the pad and the bell are quiet. A Hiss set to pink on a band
+  # whose center is a voltage is wind; the resonance makes it whistle.
+  let melody_size = abs(melody.bus_left) * 0.000100016594
+  let melody_held = wind_follower + melody_size
+  let melody_level = melody_held |> slew(rise: 501.18722ms, fall: 5.011872s)
+  let wind_level = 1 - melody_level * 2.2 |> clamp(low: 0.1)
+  let wind = hiss(
+      level: wind_level * wander(rate: 0.029, seed: 5, low: 0.25),
+      cutoff: wind_band,
+      resonance: 0.6,
+      seed: 4,
+      noise: "pink",
+      band: "band")
+  let wind_left = wind * sine(freq: 0.0533, amp: 0.45, bias: 0.5)
+  let wind_right = wind * sine(freq: 0.0631, phase: 0.5, amp: 0.45, bias: 0.5)
+}
+
+group "Desk" {
+  # The ground and the wind, with the melody desk's bus arriving at full, read as
+  # buses: what goes into the echo is the sum.
+  let weather = ground
+    |> desk(
+        left_1: _,
+        level_1: 0.34,
+        left_2: wind_left,
+        right_2: wind_right,
+        level_2: 0.36,
+        left_3: rain_left,
+        right_3: rain_right,
+        level_3: rain_here.gate * 0.3,
+        left_4: thunder,
+        level_4: storm_here.gate * 0.9,
+        bus_left: melody.bus_left,
+        bus_right: melody.bus_right)
+}
+
+group "Echo" {
+  # The fourth loop: the Delay's own feedback is at nothing and the repeats go round
+  # the graph instead, through a lowpass and a Chorus, so each is darker and wider
+  # than the last. The gain in the loop is well under one. The time is a voltage, so
+  # the repeats glide like tape wow.
+  let echo_send = (weather.bus_left + weather.bus_right) * echo_level(0..1.3)
+  let repeats = expression(formula: "a * 0.62")
+  let delay_time = pad_voltage
+    |> remap(in_low: 0, in_high: -2.3199975, out_low: 0.52, out_high: 0.86)
+  let echo_open = slow_voltage |> remap(in_low: 0, out_low: 800, out_high: 3200)
+  let echo = echo_send + repeats
+    |> delay(time: delay_time, feedback: 0, mix: 1)
+    |> filter(cutoff: echo_open, resonance: 0.1)
+    |> chorus(rate: 0.11, mix: 0.35)
+  let room_in_left = weather.bus_left + echo * 0.8
+  let room_in_right = weather.bus_right + echo.wide * 0.8
+}
+
+group "Rooms & Master" {
+  # Two rooms, offset in size, so the tails are not the same tail. No drive in front
+  # of the master: ambient has nothing to catch, and the master is here for its rails.
+  let reverb_size = slow_voltage |> remap(in_low: 0, out_low: 0.72, out_high: 0.98)
+  let reverb_size2 = pad_voltage |> remap(in_low: 0, out_low: 0.66, out_high: 0.92)
+  let room_right = room_in_right
+    |> reverb(size: reverb_size2, decay: 0.86, mix: reverb_space(0..0.85))
+  let master = room_in_left
+    |> reverb(size: reverb_size, decay: 0.86, mix: reverb_space(0..0.85))
+    |> desk(left_1: _, right_1: room_right.wide, trim: 0.7)
+}
+
+memory.a <- memory
+drone_bend.a <- drone
+bell_follower.a <- bell_held
+wind_follower.a <- melody_held
+repeats.a <- echo
+memory_push.a <- memory
+
+group "Picture: Visitors" {
+  picture |> ink(mask: glints, g: 0.86, b: 0.55)
+    |> ink(mask: streaks, r: 0.6, g: 0.74)
+    |> ink(mask: lightning, r: 0.88, g: 0.9)
+    |> out.color
+}
+
+master |> out.left
+master.right |> out.right
+out.volume = 0.85

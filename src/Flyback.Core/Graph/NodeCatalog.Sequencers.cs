@@ -75,7 +75,7 @@ public partial class NodeCatalog
     /// it is the module a patch reaches for when a signal has to stop moving
     /// between one note and the next.
     /// </summary>
-    public const string HoldTypeId = "seq.hold";
+    internal const string HoldTypeId = "seq.hold";
 
     /// <summary>A gate that passes each note or sends it to 'else', on a weighted coin.</summary>
     internal const string ChanceTypeId = "seq.chance";

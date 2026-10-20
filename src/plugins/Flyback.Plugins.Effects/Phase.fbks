@@ -1,0 +1,296 @@
+# Phase music, after Steve Reich: two players on one twelve-note pattern, the second
+# pulling ahead a note at a time until it has been through every canon the pattern
+# has and is back in unison, and a picture that is the diagram of it.
+#
+# The process is one signal, 'ahead': how many notes the second player is ahead. It
+# holds a whole number for most of a stage and eases to the next over the end of it,
+# and everything else reads it. Added to the count it is the second player's place
+# in the pattern, so that player speeds up to get there. Rounded, it rotates a
+# second clapping pattern against the first. On the screen it is how far one dial of
+# notes has turned inside the other, and how far apart two sets of rings are.
+#
+# The pattern is D A E G C A D G E C A G: five pitches and no semitone between any
+# two, so every canon is consonant and what changes is the rhythm the pitches make.
+
+description "Phase music, after Steve Reich: two players on one pattern, the second"
+  "pulling ahead through all twelve canons, and a picture of two dials that is the"
+  "diagram of it."
+tags "song" "minimalism" "rhythm" "shapes"
+length 3:56.31
+
+requires flyback.picture, flyback.voice
+
+group "Picture: Dials" {
+  # The pattern as a dial: twelve beads round a ring, each as far out as its note is
+  # high, read from a copy of the players' list at the angle instead of at the count.
+  # The inner dial is turned by the lead, so the two notes sounding are always the two
+  # beads on one spoke, and the canon is how far the dials are out of line. Inside one
+  # twelfth the plane is flat enough to draw on: across is the fraction through it
+  # scaled to the arc, and up is how far the radius is from the bead.
+  let around = polar()
+  let sector = around.angle * 1.9098593 + 6
+  let bead_a = floor(sector % 12)
+  let bead_a_height = bead_a |> notes(rate: 1) [ D4 A4 E4 G4 C5 A4 D4 G4 E4 C5 A4 G4 ]
+    |> remap(in_low: 62, in_high: 72, out_low: 0.58, out_high: 0.7)
+  let bead_a_fill = (fract(sector) + -0.5) * 0.33510324
+    |> circle(x: _, y: around - bead_a_height, radius: 0.032)
+    |> fill(distance: _, softness: 0.004)
+  let coord = coord()
+  let spoke_reach = circle(radius: 0.42) |> fill(distance: _, width: 0.62)
+  let between_line = circle(radius: 0.52) |> fill(distance: _, softness: 0.004, width: 0.008)
+}
+
+group "Process" {
+  # Six and a half notes a second, and which of sixteen stages of 96 notes the count
+  # has reached.
+  let count = time() * 6.5
+  let playing = floor(count % 12)
+  let note_a = count |> stroke(curve: 2)
+  let stage = count * 0.010416667 % 16
+  # One less than the stage, because the first stage is one player alone and the
+  # second the two in unison; the last third of a stage eased on top, which is the
+  # pulling ahead; held between nothing and twelve, the unison again at the far end.
+  let easing = fract(stage) |> smoothstep(edge0: 0.7)
+  let ahead = floor(stage) + -1 + easing |> clamp(low: 0, high: 12)
+  let count_b = count + ahead
+  # What is left of each player's note, squared. The second player's notes are shorter
+  # while it pulls ahead.
+  let note_b = count_b |> stroke(curve: 2)
+}
+
+group "Picture: Dials" {
+  let dial_a_light = (1 - step(0.5, abs(bead_a - playing))) * note_a
+    |> remap(in_low: 0, out_low: 0.4, out_high: 1.7)
+  let dial_a = bead_a_fill * dial_a_light
+  let sector_b = sector + ahead
+  let bead_b = floor(sector_b % 12)
+  let bead_b_height = bead_b |> notes(rate: 1) [ D4 A4 E4 G4 C5 A4 D4 G4 E4 C5 A4 G4 ]
+    |> remap(in_low: 62, in_high: 72, out_low: 0.34, out_high: 0.46)
+  let bead_b_fill = (fract(sector_b) + -0.5) * 0.20943952
+    |> circle(x: _, y: around - bead_b_height, radius: 0.032)
+    |> fill(distance: _, softness: 0.004)
+  let dial_b_light = (1 - step(0.5, abs(bead_b - floor(count_b % 12)))) * note_b
+    |> remap(in_low: 0, out_low: 0.4, out_high: 1.7)
+  # The spoke: how far round from the bead being played a pixel is, the short way,
+  # drawn thin between the middle and the rim.
+  let gap = abs(sector - (playing + 0.5))
+  let spoke_edge = min(gap, 12 - gap) |> smoothstep(edge1: 0.05)
+  let spoke = (1 - spoke_edge) * spoke_reach.outline
+}
+
+group "Picture: Rows" {
+  # The clapping patterns as two rows of twelve squares, filled where there is a clap,
+  # the way the score of such a piece is printed. Which cell a pixel is in is asked of
+  # a copy of each Euclid, and the lower row's is rotated by the lead. The column
+  # being played lights in both.
+  let along = coord * 3.6 + 6
+  let within = fract(along) + -0.5
+  let square_a = within
+    |> box(x: _, y: (coord.y + -0.86) * 3.6, width: 0.34, height: 0.34, corner: 0.05)
+    |> fill(distance: _, softness: 0.02, width: 0.05)
+  let cell = floor(along)
+  let row_claps_a = cell |> euclid(rate: 1, steps: 12, hits: 7)
+  let column = 1 - step(0.5, abs(cell - playing))
+  let row = cell |> window(from: -0.5, to: 11.5)
+  let square_b = within
+    |> box(x: _, y: (coord.y + 0.86) * 3.6, width: 0.34, height: 0.34, corner: 0.05)
+    |> fill(distance: _, softness: 0.02, width: 0.05)
+  let row_claps_b = cell |> euclid(rate: 1, steps: 12, hits: 7, rotate: ahead)
+}
+
+group "Arrangement" {
+  # Which players are in, a stage at a time; the ensemble only grows until the unison
+  # comes back. Then the root the pulses stand on (D, F, G and C, two stages each and
+  # twice round) and how bright the picture is graded.
+  let knock_note = count |> stroke(curve: 12)
+  let parts = count
+    |> arrangement(rate: 0.010416667) [
+        0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 |
+        0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 0 |
+        0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 0 |
+        0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 0 |
+        0 0 0 0 0 0 1 1 1 1 1 1 1 1 0 0 |
+        0 0 0 0 0 0 0 1 1 1 1 1 1 1 0 0 |
+        38 38 41 41 43 43 36 36 38 38 41 41 43 43 38 38 |
+        0.895 0.94 0.985 1.03 1.075 1.0975 1.12 1.165 1.1875 1.21 1.255 1.2775 1.3 1.3
+        1.075 0.9625 ]
+  let knock = knock_note * parts.part_4
+}
+
+group "Claps" {
+  # The same process, stepped instead of eased: seven in twelve on a block of wood,
+  # twice, the second rotated by the lead, which a Euclid rounds to whole steps, so it
+  # jumps where the melody slides.
+  let claps_a = count |> euclid(rate: 1, steps: 12, hits: 7)
+  let wood_a_level = knock * claps_a.hit
+  let claps_b = count |> euclid(rate: 1, steps: 12, hits: 7, rotate: ahead)
+  let wood_b_level = knock * claps_b.hit
+  let wood_a = sine(freq: 1150, amp: wood_a_level)
+  let wood_b = sine(freq: 1150, amp: wood_b_level)
+}
+
+group "Picture: Rows" {
+  let row_a_light = column * wood_a_level
+    |> remap(in_low: 0, out_low: 0.45, out_high: 1.6)
+  let row_a_lit = square_a.outline * 0.4 + square_a * row_claps_a.hit * row_a_light
+  let shown = row * parts.part_4
+  let row_a = row_a_lit * shown
+  let row_b_light = column * wood_b_level
+    |> remap(in_low: 0, out_low: 0.45, out_high: 1.6)
+  let row_b_lit = square_b.outline * 0.4 + square_b * row_claps_b.hit * row_b_light
+  let row_b = row_b_lit * shown
+}
+
+group "Picture: Dials" {
+  let second_in = parts |> remap(in_low: 0, out_low: 0.3)
+  let dial_b = bead_b_fill * dial_b_light * second_in
+}
+
+group "Picture: Print" {
+  let ink_players = ink(mask: dial_a + row_a, r: 0.95, g: 0.33, b: 0.2)
+    |> ink(mask: dial_b + row_b, r: 0.15, g: 0.72, b: 0.75)
+}
+
+group "Picture: Rings" {
+  # Two sets of rings, one a player, pushed apart by the lead. Each is cut to black
+  # and white and compared, so what shows is where they differ: nothing in unison, and
+  # a moire that tightens as the second player gets further ahead.
+  let apart = ahead * 0.03
+  let pushed_a = translate(dx: apart)
+  let flow = count * 0.083333336
+  let rings_a = pushed_a |> rings(freq: 12, offset: flow)
+  let pushed_b = translate(dx: apart * -1)
+  let rings_b = pushed_b |> rings(freq: 12, offset: flow)
+}
+
+group "Pulses" {
+  # A pulse every second note, under everything. Each instrument swells and dies away
+  # like a breath, half a sine over part of a stage, and the two breathe at different
+  # lengths. The organ's two notes are snapped to the pattern's five pitches.
+  let pulse = count |> stroke(rate: 0.5, curve: 1.5)
+  let low_level = pulse * sin(
+      fract(stage * 2) * 3.1415927) * parts.part_2
+  let organ_level = pulse * sin(
+      fract(stage * 3) * 3.1415927) * parts.part_6
+  let root = parts.part_7 |> note(note: _)
+  let low = triangle(
+      freq: root,
+      amp: low_level) + sine(freq: root * 2, amp: low_level * 0.4)
+  let organ_low = parts.part_7 |> tune(transpose: 31) [ D E G A C ]
+  let organ_high = parts.part_7 |> tune(transpose: 40) [ D E G A C ]
+  let organ = sine(
+      freq: organ_low,
+      amp: organ_level) + sine(freq: organ_high, amp: organ_level * 0.7)
+}
+
+group "Picture: Rings" {
+  # Tinted by where in the sixteen stages the piece is, and lit by the pulses.
+  let moire = (parts.section - 1) / 16
+    |> palette(t: _, spread: 0.12, brightness: 0.6, contrast: 0.4)
+    |> gain(
+        gain: abs(
+            step(
+                0,
+                rings_a) - step(0, rings_b)) * ((low_level + organ_level) * 0.3 + 0.1))
+}
+
+group "Players" {
+  # The same list and the same String twice; all that differs is what is on 'in': the
+  # count, and the count with the lead added.
+  let notes_a = count |> notes(rate: 1) [ D4 A4 E4 G4 C5 A4 D4 G4 E4 C5 A4 G4 ]
+  let notes_b = count_b |> notes(rate: 1) [ D4 A4 E4 G4 C5 A4 D4 G4 E4 C5 A4 G4 ]
+  let pitch_a = notes_a |> note(note: _)
+  let player_a = string(
+      trigger: notes_a.gate,
+      freq: pitch_a,
+      decay: 398.10717ms,
+      brightness: 0.55)
+  let pitch_b = notes_b |> note(note: _)
+  let player_b = string(
+      trigger: notes_b.gate,
+      freq: pitch_b,
+      decay: 398.10717ms,
+      brightness: 0.55) * parts
+}
+
+group "Agreement" {
+  # Where the two players land on the same pitch at the same moment, a third voice
+  # plays an octave up: the pattern inside the pattern.
+  let agree = (1 - step(0.5, abs(notes_a - notes_b))) * note_a * parts.part_5
+  let chime_pitch = notes_a + 12 |> note(note: _)
+  let chime = bell(freq: chime_pitch, level: agree, ratio: 4, index: 0.25)
+}
+
+group "Picture: Dials" {
+  # A ring between the dials flashes when the two players agree.
+  let flash_light = agree |> remap(in_low: 0, out_low: 0.12, out_high: 1.6)
+  let flash = flash_light * between_line.outline
+}
+
+group "Picture: Print" {
+  let ink_both = moire
+    |> ink(mask: spoke * 0.3 + flash, r: 0.96, g: 0.92, b: 0.82)
+}
+
+group "Shaker" {
+  # Every note, quietly: the top of a Hiss.
+  let shaker_note = count |> stroke(curve: 10)
+  let shaker = hiss(level: shaker_note * parts.part_3, cutoff: 7000)
+}
+
+group "Desk" {
+  # A small dry room. The first player sits on the left and the second on the right
+  # with a little of each in the other side, which is where the canons are heard. The
+  # second Desk is the middle and the master.
+  let room = player_a
+    |> mixer(
+        in_1: _,
+        level_1: 0.4,
+        in_2: player_b,
+        level_2: 0.4,
+        in_3: chime,
+        level_3: 0.6,
+        in_4: organ,
+        level_4: 0.5)
+    |> reverb(size: 0.55, decay: 0.55, mix: 1)
+  let sides = player_a
+    |> desk(
+        left_1: _,
+        right_1: player_b,
+        level_1: 0.85,
+        left_2: player_b,
+        right_2: player_a,
+        level_2: 0.2,
+        left_3: wood_a,
+        right_3: wood_b,
+        level_3: 0.3,
+        left_4: room,
+        right_4: room.wide,
+        level_4: 0.5)
+  let master = low
+    |> desk(
+        left_1: _,
+        level_1: 0.45,
+        left_2: organ,
+        level_2: 0.28,
+        left_3: chime,
+        level_3: 0.22,
+        left_4: shaker,
+        level_4: 0.2,
+        bus_left: sides.bus_left,
+        bus_right: sides.bus_right,
+        trim: 0.5)
+}
+
+group "Picture: Print" {
+  # Each note leaves the dial as a fading copy of itself, a little larger, then
+  # darkened at the corners and graded by the stage.
+  ink_players + ink_both |> trails(zoom: 0.985, persist: 0.84)
+    |> vignette()
+    |> grade(saturation: parts.part_8, contrast: 1.08)
+    |> out.color
+}
+
+master |> out.left
+master.right |> out.right
+out.volume = 0.7

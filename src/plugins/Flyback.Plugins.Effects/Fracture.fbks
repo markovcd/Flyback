@@ -1,0 +1,326 @@
+# Drum and bass at 170 turning into IDM: a synthesized break, chopped, over a Reese
+# bass, with a picture cut into strips by the same list that cuts the drums.
+#
+# Every drum is a stateless Stroke and Sequencer, so the kit reads a bent clock
+# (which eighth of the bar, and how far into it) instead of the beat count. A list
+# swaps eighths, a die repeats a slice inside itself, and a reversed fraction plays
+# a drum backwards. The picture's eight strips slide apart by how far the list moved
+# each slice, so an unchopped break is an unbroken frame.
+#
+# The form is ABA: a bass falling from F under dice-played bells, then a bass
+# climbing through the scale's major chords under a written tune. The scale is F
+# natural minor.
+
+description "Drum and bass at a hundred and seventy: a synthesized break chopped by"
+  "bending the clock it reads, a Reese bass, and a picture cut into strips by the same"
+  "list."
+tags "song" "drum-and-bass" "drums" "bass"
+length 3:00.71
+
+requires flyback.effects, flyback.picture, flyback.voice
+
+group "Clock" {
+  # A hundred and seventy a minute, and the count of beats everything that is not a
+  # drum reads.
+  let clock = time()
+  let tempo = tempo(bpm: 170)
+  let beats = clock * tempo
+}
+
+group "Arrangement" {
+  # Sixteen sections of eight bars: two of intro, two of build, the drop played
+  # straight, the same drop chopped, a breakdown and a build, then four of everything
+  # before it thins out. The third quarter is the second theme, and the last quarter
+  # is the first come home. The rows are the kick and snare, the hats, the bass,
+  # whether the break is chopped, the pad's level and how bright the picture is
+  # graded.
+  let parts = beats
+    |> arrangement(rate: 0.03125) [
+        0 0 0.5 1 1 1 1 1 0 1 1 1 1 1 1 0 |
+        0 1 1 1 1 1 1 1 0 1 1 1 1 1 1 0 |
+        0 0 0 0 1 1 1 1 0 0 0 1 1 1 1 0 |
+        0 0 0 0 0 0 1 1 0 0 0 1 1 1 0 0 |
+        0.925 0.85 0.775 0.7 0.6 0.6 0.55 0.55 0.9 0.75 0.7 0.525 0.5 0.5 0.575 0.875 |
+        0.875 0.95 1.025 1.1 1.2 1.2 1.25 1.25 0.9 1.05 1.1 1.275 1.3 1.3 1.225 0.925 ]
+  # Whether it is the second theme, and whether the break is chopped: switches,
+  # because half way between two tunes or two places in a bar is neither. The pad
+  # settles rather than steps, and the last of every four sections but the very last
+  # ends in a riser.
+  let second = parts.section |> window(from: 9, to: 13)
+  let chopped = step(0.5, parts.part_4)
+  let swell = parts.part_5 |> slew(rise: 2s, fall: 4s)
+  let ramp = parts.section
+    |> expression(
+        a: _,
+        b: parts.progress,
+        formula: "smoothstep(0.5, 1, b) * step(3, (a - 1) % 4) * step(a, 15)")
+}
+
+group "Cut" {
+  # Which eighth of the bar it is, and the list of which eighth is played instead: two
+  # bars that start as they should and come apart.
+  let eighths = beats * 2
+  let straight = floor(eighths % 8)
+  let cuts = beats |> values(rate: 2) [ 0 1 2 3 4 5 2 3 0 1 0 1 4 2 6 7 ]
+  let slice = straight |> math.mix(a: _, b: cuts, t: chopped)
+  # One die an eighth. The top quarter of its range is a roll, the slice played two,
+  # three or four times inside itself, and the bottom sixth is a slice played
+  # backwards.
+  let die = beats |> noise(rate: 2, seed: 3)
+  let roll_size = die.random |> remap(in_low: 0.45, out_low: 1, out_high: 4.99)
+  let rolls = (max(floor(roll_size), 1) + -1) * chopped + 1
+  let through = fract(fract(eighths) * rolls)
+  let reversed = step(die.random, -0.7) * chopped
+  let within = through |> math.mix(a: _, b: 1 - through, t: reversed)
+  # The kit's clock: the slice and the place in it, back in beats. How far the list
+  # moved the slice is what the picture slides its strips by.
+  let drum_beats = (slice + within) * 0.5
+  let moved = (cuts - straight) * chopped
+}
+
+group "Break" {
+  # One bar of sixteenths and one list for two drums: a step's value is how hard the
+  # kick is hit and its volume how hard the snare is, so the pattern is written once
+  # and cannot disagree with itself.
+  let snare_note = drum_beats |> stroke(rate: 4, curve: 1.6)
+  let pattern = drum_beats
+    |> values(gate_length: 1) [
+        1%0 ~ 0.8%0 ~ 0 ~ ~ 0%0.35 ~ 0%0.35 1%0 0.7%0 0 ~ ~ 0%0.4 ]
+  let snare_stroke = snare_note * pattern.gate * parts
+  let kick_note = drum_beats |> stroke(rate: 4, curve: 1.3)
+  let kick_stroke = kick_note * pattern * parts
+  # Eleven sixteenths in sixteen, off the same bent clock, so a roll rolls the hats
+  # too. The Hiss shares the wires' seed, so it is the same noise.
+  let hat_hits = drum_beats |> euclid(steps: 16, hits: 11, curve: 4)
+  let hat_stroke = hat_hits.stroke * parts.part_2
+  let crush_die = die.random |> smoothstep(edge0: 0.2, edge1: 0.5)
+  let crush = crush_die * chopped
+  # A Drum for the snare's shell, and white noise for the wires: the band round two
+  # kilohertz for the crack and what is over it for the air.
+  let rattle = noise(seed: 1) |> filter(cutoff: 2100, resonance: 0.3)
+  let snare = drum(
+      level: snare_stroke,
+      pitch: 200,
+      sweep: 170,
+      drive: 3) + snare_stroke * (rattle.band * 3.5 + rattle.high * 1.2)
+  # The kit through one Drive, which brings the ghost notes and the hats up to the
+  # level of the hits. Then a Sample and Hold clocked at five kilohertz, a sampler
+  # with not enough of them, only while the die is rolling.
+  let kit = drum(
+      level: kick_stroke,
+      pitch: 55,
+      sweep: 240,
+      bend: 5,
+      drive: 4) + snare + hiss(level: hat_stroke, cutoff: 8500, gain: 0.8, seed: 1)
+    |> drive(drive: 3)
+  let drums = kit |> hold(trigger: square(freq: 5200))
+    |> math.mix(a: kit, b: _, t: crush)
+}
+
+group "Picture: Strips" {
+  let coord = coord()
+  let far_moved = moved |> clamp(low: -2, high: 2)
+  let kick_push = kick_stroke |> remap(in_low: 0, out_low: 1, out_high: 0.9)
+}
+
+group "Bass" {
+  # The first theme's bass sits on F and keeps falling away from it; the second's
+  # climbs from D flat through the scale's three major chords to a bar on C that wants
+  # the F back. Thirty milliseconds of glide, because a Reese slides: two saws a
+  # little over one per cent apart, a Filter a Wander opens, and a Phaser, with a sine
+  # for the sub, all ducked by the kick.
+  let bass_open = wander(rate: 0.3, seed: 5, low: 250, high: 1400)
+  let second_line = beats
+    |> notes(rate: 0.5) [ C#1 C#1 C#1 C#1 D#1 D#1 D#1 D#1 G#1 G#1 G#1 G#1 C1 C1 C1 C2 ]
+  let bass_line = beats
+    |> notes(rate: 0.5) [ F1 F1 F1 F1 F1 F1 G#1 G#1 D#1 D#1 D#1 D#1 C#1 C#1 D#1 D#1 ]
+    |> math.mix(a: _, b: second_line, t: second)
+  let bass_pitch = bass_line |> slew(rise: 31.62278ms, fall: 31.62278ms) |> note(note: _)
+  let reese = saw(freq: bass_pitch * 2, amp: 0.6) + saw(freq: bass_pitch * 2.025, amp: 0.6)
+    |> filter(cutoff: bass_open, resonance: 0.35)
+    |> phaser(rate: 0.15, depth: 0.8, feedback: 0.5, mix: 0.6)
+    |> drive(drive: 2.5)
+  let duck = duck(key: kick_stroke, depth: 0.6, attack: 100us, release: 100us)
+  let bass = (
+      reese + sine(freq: bass_pitch, amp: 0.45)) * duck.gain * parts.part_3
+}
+
+group "Picture: Strips" {
+  # The frame in eight strips, one a slice, each sliding sideways by how far the list
+  # moved the slice playing. The bass ripples down the frame as deep as its Filter is
+  # open, and a roll is the picture as many times smaller.
+  let ripple_depth = bass_open |> remap(in_low: 250, in_high: 1400, out_high: 0.03)
+  let ripple = sin(coord.y * 9 + beats * 2) * (ripple_depth * parts.part_3)
+  let plane = sin(
+      floor((coord.y + 1) * 4) * 2.4 + 1) * 0.12 * far_moved + ripple + coord
+    |> scale(x: _, y: coord.y, scale: rolls * kick_push)
+}
+
+group "Picture: Tunnel" {
+  # Two tunnels, one of squares and one of triangles, turning against each other and
+  # compared, so what shows is where they differ. A slice played backwards is the
+  # picture turned inside out; the white goes lilac for the second theme, and the
+  # snare is orange.
+  let squares_turned = plane |> rotate(angle: beats * 0.04)
+  let triangles_turned = plane |> rotate(angle: beats * -0.07)
+  let triangle_distance = triangles_turned |> polygon(radius: 0.001, sides: 3)
+  let triangles = step(0.5, fract(triangle_distance * 2.2 - beats * 0.125))
+  let differ = step(
+      0.5,
+      fract(max(abs(squares_turned), abs(squares_turned.y)) * 3 - beats * 0.25)) - triangles
+  let difference = abs(differ)
+  let facing = difference |> math.mix(a: _, b: 1 - difference, t: reversed)
+  let kick_light = kick_stroke |> remap(in_low: 0, out_low: 0.6, out_high: 1.15)
+  let tunnel = rgb(r: 0.92, g: 0.94, b: 0.96)
+    |> color.mix(a: _, b: rgb(r: 0.72, g: 0.62), t: second)
+    |> color.mix(a: _, b: rgb(g: 0.35, b: 0.05), t: snare_stroke)
+    |> gain(gain: facing * kick_light)
+}
+
+group "Picture: Sparks" {
+  # The bells are squares on a grid of four to the unit, a die thrown for each cell,
+  # and the hats are grain: a Noise read across the frame instead of along the clock.
+  let cell_x = coord * 4
+  let cell_y = coord.y * 4
+  let tile = fract(cell_x) + -0.5
+    |> box(x: _, y: fract(cell_y) + -0.5, width: 0.3, height: 0.3)
+    |> fill(distance: _, softness: 0.02)
+  let speck = coord * 97.3 + coord.y * 413.7 + clock * 60 |> noise(rate: 64, seed: 6)
+  let grain = abs(speck) * 0.22 * hat_stroke
+}
+
+group "Bells" {
+  # A tune nobody wrote: a die on every sixteenth, an octave either side of a high F,
+  # snapped to the scale, with a Wander for how many sixteenths sound. They belong to
+  # the first theme.
+  let bell_die = beats |> noise(seed: 9)
+  let bell_hits = beats
+    |> euclid(steps: 16, hits: wander(seed: 2, low: 3, high: 9), curve: 4)
+  let bell_stroke = bell_hits.stroke * (1 - second)
+  let bells = bell(
+      freq: tune(in: F5, transpose: bell_die.random * 12) [ F G G# A# C C# D# ],
+      level: bell_stroke,
+      ratio: 3.5)
+}
+
+group "Lead" {
+  # The second theme's tune, written down and sung rather than struck: a note to the
+  # beat, rising through each chord and coming down by step. The rests hold their
+  # pitch, so the glide slides between the notes either side of a gap.
+  let lead_line = beats
+    |> notes(rate: 1, gate_length: 0.9, shape: 0.06) [
+        F5 F5%0 G#5 G#5%0 C6 C6%0 A#5 G#5 G5 G5%0 A#5 A#5%0 D#6 D#6%0 C#6 A#5 C6 C6%0
+        C6%0 A#5 G#5 G#5%0 D#5 D#5%0 G5 G5%0 G5%0 D#5 G5 G#5 A#5 C6 ]
+  let tongue = lead_line.gate |> slew(rise: 7.943284ms, fall: 158.48931ms)
+  let lead_stroke = tongue * second
+  let lead_pitch = lead_line |> slew(rise: 63.09573ms, fall: 63.09573ms) |> note(note: _)
+  let lead = (
+      triangle(
+          freq: lead_pitch,
+          phase: sine(freq: 5.2, amp: 0.12),
+          amp: 0.8) + sine(freq: lead_pitch * 2, amp: 0.25)) * lead_stroke
+}
+
+group "Picture: Sparks" {
+  let chosen = cell_x
+    |> expression(
+        a: _,
+        b: cell_y,
+        c: bell_die.random,
+        d: lead_line,
+        formula: "step(0.85, dice(floor(a) + floor(b) * 17, c * 12 + d))")
+  let sparks = tunnel
+    |> ink(mask: tile * chosen * (bell_stroke + lead_stroke), r: 0.3, b: 0.5)
+}
+
+group "Picture: Print" {
+  # A short trail, shorter the brighter the section. While the drums are crushed the
+  # picture is too: fewer levels instead of fewer moments.
+  let trails_persist = parts.part_6
+    |> remap(in_low: 0.8, in_high: 1.3, out_low: 0.85, out_high: 0.6)
+  let posterise_levels = crush |> remap(in_low: 0, out_low: 24, out_high: 3)
+}
+
+group "Space" {
+  # A dotted eighth and five sixteenths of echo, a riser whose band climbs nearly five
+  # octaves in four bars, and one hall for what should sound far away.
+  let taps = bells + lead * 0.6 |> echo(tempo: tempo, feedback: 0.5, mix: 1)
+  let riser_band = ramp |> remap(in_low: 0, out_low: 250, out_high: 7000)
+  let riser = hiss(
+      level: ramp,
+      cutoff: riser_band,
+      resonance: 0.55,
+      gain: 1.4,
+      seed: 1,
+      band: "band")
+}
+
+group "Pad" {
+  # The chord over the bass, three octaves up: the root on seven detuned saws, and a
+  # third and a seventh snapped to the scale.
+  let pad_note = bass_line + 36
+  let pad_pitch = pad_note |> note(note: _)
+  let third = pad_note |> tune(transpose: 3.6) [ F G G# A# C C# D# ]
+  let seventh = pad_note |> tune(transpose: 10.4) [ F G G# A# C C# D# ]
+  let pad_tone = osc(
+      freq: pad_pitch,
+      mix: 0.8,
+      amp: 0.45) + triangle(freq: third, amp: 0.4) + triangle(freq: seventh, amp: 0.3)
+    |> filter(cutoff: wander(rate: 0.07, seed: 1, low: 600, high: 2600))
+  let pad = pad_tone * swell |> chorus(rate: 0.17, depth: 0.7, mix: 0.6)
+}
+
+group "Space" {
+  let room = bells
+    |> mixer(
+        in_1: _,
+        level_1: 0.6,
+        in_2: pad,
+        level_2: 0.5,
+        in_3: snare,
+        level_3: 0.25,
+        in_4: lead,
+        level_4: 0.7)
+    |> reverb(size: 0.85, decay: 0.8, mix: 1)
+}
+
+group "Desk" {
+  # Two Desks of four, chained by their buses into one of eight.
+  let rhythm = drums
+    |> desk(
+        left_1: _,
+        left_2: bass,
+        level_2: 0.4,
+        left_3: pad,
+        right_3: pad.wide,
+        level_3: 0.4,
+        left_4: riser,
+        level_4: 0.4)
+  let air = bells
+    |> desk(
+        left_1: _,
+        level_1: 0.4,
+        left_2: taps,
+        right_2: taps.right,
+        level_2: 0.4,
+        left_3: room,
+        right_3: room.wide,
+        level_3: 0.45,
+        left_4: lead,
+        level_4: 0.5,
+        bus_left: rhythm.bus_left,
+        bus_right: rhythm.bus_right,
+        trim: 0.34)
+}
+
+group "Picture: Print" {
+  sparks + grain |> trails(zoom: 0.99, dx: 0.004, persist: trails_persist)
+    |> posterise(levels: posterise_levels)
+    |> vignette()
+    |> grade(saturation: parts.part_6, contrast: 1.1)
+    |> out.color
+}
+
+air |> out.left
+air.right |> out.right
+out.volume = 0.7

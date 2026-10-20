@@ -1,0 +1,387 @@
+# A whole synthwave track, ninety-six bars of four dark chords, gated pads, a
+# rolling bass and a gated-reverb snare, under a picture that is drawn rather than
+# grown: a slatted sun over a ridge, and a grid running to the horizon a line to the
+# beat.
+#
+# This one draws a scene: every region of the frame is a mask made of a comparison,
+# every mask mixes one color over what is behind it, and the order of the mixes is
+# the depth. The perspective is one division, how far under the horizon a pixel is,
+# turned over, and everything on the ground is flat pattern read at the plane that
+# division gives back.
+#
+# The harmony is written once, as four roots: A, F, B and E. No part says what kind
+# of chord stands on any of them. A third is a little over three and a half
+# semitones above the root and a fifth is seven, and both go through a scale of A
+# harmonic minor, which has no F sharp, so the chord over B is diminished, and has a
+# G sharp, so the chord over E is the major one that pulls back to A.
+
+description "A whole synthwave track: four chords, gated pads and a gated-reverb snare,"
+  "under a drawn scene — a slatted sun, a ridge, and a grid that arrives a line to the"
+  "beat."
+tags "song" "synthwave" "chords" "drums" "shapes"
+length 3:25.71
+
+requires flyback.effects, flyback.picture, flyback.voice
+
+group "Picture: Sky" {
+  let coord = coord()
+  # Three colors up the frame: the pink of the horizon, violet over it, and nearly
+  # black at the top. Stars are Cells: under a threshold the distance to the nearest
+  # point is a dot. Each twinkles on its own cell's number, only the upper sky has
+  # any, and the hats make them all flare.
+  let dusk_t = coord.y |> smoothstep(edge0: -0.08, edge1: 0.45)
+  let zenith_t = coord.y |> smoothstep(edge0: 0.3)
+  let sky = rgb(g: 0.35, b: 0.5)
+    |> color.mix(a: _, b: rgb(r: 0.32, g: 0.06, b: 0.5), t: dusk_t)
+    |> color.mix(a: _, b: rgb(r: 0.04, g: 0.01, b: 0.16), t: zenith_t)
+  let cells = coord |> cells(scale: 16, jitter: 0.9)
+  let star_dot = cells |> smoothstep(edge0: 0.03, edge1: 0.08)
+  let upper_sky = coord.y |> smoothstep(edge0: 0.15, edge1: 0.6)
+}
+
+group "Clock" {
+  # A hundred and twelve a minute. Every part reads the count of beats, so the tempo
+  # is one knob. What is left of the sixteenth, cubed, is a pluck that cannot drift
+  # off the grid because it is the grid.
+  let clock = time()
+  let tempo = tempo(bpm: 112)
+  let beats = clock * tempo
+  let pluck = beats |> stroke(rate: 4)
+}
+
+group "Picture: Sky" {
+  let twinkle = sin(cells.cell * 50 + clock * 2.5) |> remap(out_low: 0.25)
+}
+
+group "Hats" {
+  # Closed on every sixteenth and open on the off-beat, which rings longer.
+  let closed_hat = beats |> stroke(rate: 4, curve: 7)
+  let open_hat = beats |> stroke(offset: 0.5)
+}
+
+group "Arrangement" {
+  # Twelve sections of eight bars: intro, intro, build, build, drop, drop, breakdown,
+  # build, and three of the peak before the outro. A row a part, then how hard the
+  # pads are chopped, the lead, how far the filters open and how bright the picture is
+  # graded.
+  let parts = beats
+    |> arrangement(rate: 0.03125) [
+        0 0 0.5 1 1 1 0 1 1 1 1 0 |
+        0 0 0 0.8017 1 1 0 0 1 1 1 0 |
+        0 0 1 1 1 1 0 1 1 1 1 0 |
+        0 1 1 1 1 1 1 1 1 1 1 0 |
+        0 0 0.15625 1 1 1 0 0.5 1 1 1 0 |
+        0 0 0 0 0 0 0 0 1 1 1 0 |
+        0.15 0.3 0.45 0.6 0.8 0.85 0.35 0.5 0.95 1 1 0.2 |
+        0.925 1 1.075 1.15 1.25 1.275 1.025 1.1 1.325 1.35 1.35 0.95 ]
+  # The harmony, a bar at a time: A, F, B and E, two bars each. It is the only place
+  # the chords are written down. Every fourth section but the outro ends in a riser,
+  # the filters fade in over four seconds, and the last two beats of a section are a
+  # tom fill.
+  let root = beats |> notes(rate: 0.25) [ A2 A2 F2 F2 B1 B1 E2 E2 ]
+  let rising = parts.progress |> smoothstep(edge0: 0.5)
+  let ramp = rising * (
+      step(3, (parts.section - 1) % 4) * step(parts.section, 11))
+  let swell = parts.part_7 |> slew(rise: 4s, fall: 2s)
+  let fill = step(0.9375, parts.progress) * parts
+}
+
+group "Hats" {
+  let hat_stroke = (closed_hat * 0.5 + open_hat * 0.7) * parts.part_3
+  let hats = hiss(level: hat_stroke)
+}
+
+group "Picture: Sky" {
+  let hat_flare = hat_stroke |> remap(in_low: 0, out_low: 1, out_high: 2.2)
+  let stars = (1 - star_dot) * twinkle * upper_sky * hat_flare
+}
+
+group "Kick" {
+  # Four on the floor, whose level is also the sidechain on the bass.
+  let kick_note = beats |> stroke(curve: 5)
+  let kick_stroke = kick_note * parts
+  let duck = duck(key: kick_stroke, depth: 0.65, attack: 100us, release: 100us)
+  let kick = drum(level: kick_stroke, pitch: 45, sweep: 125, drive: 2.5)
+}
+
+group "Picture: Sun" {
+  # A Circle with the plane slid down under it, swelling a little on the kick, filled
+  # hard for the disc and very soft for the haze; yellow at the top and hot pink at
+  # the bottom. The slats are nine bands down the disc, sliding downwards a band every
+  # four beats, with a gap at the foot of each that grows towards the bottom. Round
+  # the sun, the triangle every record sleeve had, lit by the snare.
+  let sun_y = coord.y + -0.24
+  let disc = kick_stroke |> remap(in_low: 0, out_low: 0.4, out_high: 0.42)
+    |> circle(x: coord, y: sun_y, radius: _)
+  let haze = disc |> fill(distance: _, softness: 0.5)
+  let sun_shade = sun_y |> remap(in_low: 0.3, in_high: -0.4)
+  let sun_color = rgb(g: 0.92, b: 0.35)
+    |> color.mix(a: _, b: rgb(g: 0.18, b: 0.55), t: sun_shade)
+  let sun_fill = disc |> fill(distance: _, softness: 0.004)
+  let gap = sun_y |> remap(in_low: 0.14, in_high: -0.4, out_high: 0.7)
+  let sun = sun_fill * step(gap, fract(sun_y * 9 + beats * 0.25))
+  let triangle = coord |> polygon(x: _, y: sun_y, radius: 0.66, sides: 3)
+    |> fill(distance: _, softness: 0.004, width: 0.014)
+}
+
+group "Snare" {
+  # Two and four: a band of Hiss for the wires and a Drum that does not sweep for the
+  # shell. Then the sound of the decade: a hall far too big for a drum, shut off a
+  # fifth of a second after the hit. The gate is the ramp that struck the drum, so it
+  # cannot open late.
+  let backbeat = beats |> stroke(rate: 0.5, offset: 0.5, curve: 9)
+  let snare_stroke = backbeat * parts.part_2
+  let snare_dry = hiss(
+      level: snare_stroke,
+      cutoff: 1900,
+      resonance: 0.3,
+      gain: 2.5,
+      band: "band") + drum(level: snare_stroke, pitch: 190, sweep: 0, bend: 1, drive: 0)
+  let gate_closing = backbeat.phase |> smoothstep(edge0: 0.2, edge1: 0.26)
+  let gate = 1 - gate_closing
+  let hall = snare_dry |> reverb(size: 0.9, decay: 0.85, mix: 1)
+  let snare_left = snare_dry + gate * hall * 0.8
+  let snare_right = snare_dry + gate * hall.wide * 0.8
+}
+
+group "Picture: Sun" {
+  let snare_light = snare_stroke |> remap(in_low: 0, out_low: 0.55, out_high: 1.7)
+  let neon = snare_light * triangle.outline * (1 - sun_fill)
+}
+
+group "Picture: Ridge" {
+  # Mountains are one row of a Clouds field, read along x with y pinned, standing only
+  # at the sides to leave the sun its gap. Lit along the crest, and wired down the
+  # faces by lines slanted by how far under the crest they are.
+  let magenta = rgb(g: 0.2, b: 0.75)
+  let rock = value(value: 3.7) |> clouds(x: coord, y: _, z: 1.3, scale: 2.2)
+    |> remap(in_low: 0, out_low: 0.05, out_high: 0.5)
+  let sides = abs(coord) |> smoothstep(edge0: 0.3, edge1: 1.3)
+  let ridge = rock * sides + -0.08
+  let drop = ridge - coord.y
+  let crest_edge = abs(drop) |> smoothstep(edge1: 0.012)
+  let faces = abs(fract(coord * 8 + drop * 5) + -0.5)
+    |> smoothstep(edge0: 0.44, edge1: 0.49)
+  let mountain = magenta |> gain(gain: max(1 - crest_edge, faces * 0.3), bias: 0.03)
+  let under = step(coord.y, ridge)
+}
+
+group "Picture: Grid" {
+  # The perspective: how far under the horizon a pixel is, turned over, is how far
+  # away the ground there is, held off nought at the horizon. A line's width grows
+  # with the distance to stay one width on the screen, by its square for the lines
+  # coming towards. Faded before the horizon, struck by the bass, and colored by the
+  # chord.
+  let chord_color = root |> remap(in_low: 35, in_high: 45)
+  let depth = max(-0.08 - coord.y, 0.004)
+  let away = 1 / depth
+  let lines_away = abs(fract(coord * away * 1.5) + -0.5)
+    |> smoothstep(edge1: min(away * 0.02, 0.5))
+  let lines_across = abs(fract(away * 0.5 + beats) + -0.5)
+    |> smoothstep(edge1: min(away * away * 0.006, 0.5))
+  let fade = depth |> smoothstep(edge0: 0.01, edge1: 0.2)
+  let bass_light = pluck * parts.part_4
+    |> remap(in_low: 0, out_low: 0.75, out_high: 1.6)
+  let grid = rgb(r: 0.1, g: 0.9) |> color.mix(a: magenta, b: _, t: chord_color)
+    |> gain(gain: (1 - min(lines_away, lines_across)) * fade * bass_light)
+  let ground = grid + rgb(r: 0.07, g: 0, b: 0.14)
+}
+
+group "Picture: Scene" {
+  # The depth of the scene is the order of these: the sky with its stars and the sun's
+  # haze, the sun where a slat shows, the triangle, the mountains, the ground, and the
+  # line of light where they meet, which the kick brightens.
+  let horizon_edge = abs(coord.y + 0.08) |> smoothstep(edge1: 0.07)
+  let kick_glow = kick_stroke |> remap(in_low: 0, out_low: 0.6, out_high: 1.3)
+  let scene = sky + stars |> ink(under: _, mask: haze * 0.4, g: 0.18, b: 0.55)
+    |> color.mix(a: _, b: sun_color, t: sun)
+    |> ink(mask: neon, r: 0.1, g: 0.9)
+    |> color.mix(a: _, b: mountain, t: under)
+    |> color.mix(a: _, b: ground, t: step(coord.y, -0.08))
+    |> ink(mask: pow(1 - horizon_edge, 2) * kick_glow, g: 0.35, b: 0.5)
+}
+
+group "Picture: Tape" {
+  # What a worn cassette does to it: a ghost that trails everything bright, scanlines,
+  # and the riser taking the colors away a level at a time until the drop gives them
+  # back.
+  let posterise_levels = ramp |> remap(in_low: 0, out_low: 32, out_high: 4)
+  let scanlines = sin(coord.y * 400) |> remap(out_low: 0.86)
+}
+
+group "Arp" {
+  # Up the chord and back in sixteenths, the same list over every chord, snapped to
+  # the scale; over B the fifth it asks for is not in the scale, and what it plays is
+  # the tritone.
+  let arp_line = beats
+    |> values() [ 0 7 12 15.6 19 15.6 12 7 0 7 12 15.6 19 24 19 15.6 ]
+  let arp_pitch = arp_line + root |> tune(transpose: 12) [ A B C D E F G# ]
+  let arp_open = swell |> remap(in_low: 0, out_low: 900, out_high: 4200)
+  let arp = pulse(freq: arp_pitch, width: 0.35, amp: 0.8) * pluck
+    |> filter(cutoff: arp_open, resonance: 0.3)
+}
+
+group "Lead" {
+  # The one melody that was written down, kept back for the peak. It keeps to what
+  # both halves of the harmony can bear. The rests hold their pitch, so the glide
+  # slides between the notes either side of a gap; a second voice a hair sharp, and a
+  # vibrato on the phase.
+  let lead_line = beats
+    |> notes(rate: 2, gate_length: 0.85, shape: 0.06) [
+        E5 E5%0 E5 F5 E5 E5%0 D5 D5%0 B4 B4%0 D5 D5%0 F5 E5 D5 D5%0 E5 E5%0 E5 E5%0 B4
+        B4%0 A4 B4 C5 C5%0 B4 B4%0 A4 A4%0 E4 A4%0.8 ]
+  let lead_pitch = lead_line |> slew(rise: 39.81072ms, fall: 39.81072ms) |> note(note: _)
+  let lead_tone = saw(
+      freq: lead_pitch,
+      phase: sine(freq: 5.5, amp: 0.15),
+      amp: 0.7) + pulse(freq: lead_pitch * 1.006, width: 0.4, amp: 0.5)
+    |> filter(cutoff: 3400, resonance: 0.35)
+  let tongue = lead_line.gate |> slew(rise: 3.162278ms, fall: 63.09573ms)
+  let lead = lead_tone * tongue * parts.part_6
+}
+
+group "Toms" {
+  # Eight sixteenths down the toms, pitched by how far through the section it is, so
+  # the run falls without a list.
+  let tom_note = beats |> stroke(rate: 4, curve: 2.5)
+  let tom_pitch = parts.progress
+    |> remap(in_low: 0.9375, out_low: 230, out_high: 95)
+  let toms = drum(
+      level: tom_note * fill,
+      pitch: tom_pitch,
+      sweep: 60,
+      bend: 3,
+      drive: 0)
+}
+
+group "Space" {
+  # A dotted eighth and five sixteenths of echo, and one hall on a send for what
+  # should sound far away.
+  let taps = arp
+    |> mixer(
+        in_1: _,
+        level_1: 0.6,
+        in_2: lead,
+        level_2: 0.7,
+        in_3: toms,
+        level_3: 0.3)
+    |> echo(tempo: tempo, mix: 1)
+}
+
+group "Pad" {
+  # Seven detuned saws on the root, and a saw each on the third and the fifth the
+  # scale allows. The trance gate is a list of ones and noughts at the sixteenth,
+  # slewed so it chops without clicking. The Chorus makes it stereo.
+  let pad_note = root + 12
+  let pad_pitch = pad_note |> note(note: _)
+  let third = pad_note |> tune(transpose: 3.6) [ A B C D E F G# ]
+  let fifth = pad_note |> tune(transpose: 7) [ A B C D E F G# ]
+  let pad_open = swell |> remap(in_low: 0, out_low: 700, out_high: 3200)
+  let pad_tone = osc(
+      freq: pad_pitch,
+      mix: 0.8,
+      amp: 0.5) + saw(freq: third, amp: 0.35) + saw(freq: fifth, amp: 0.3)
+    |> filter(cutoff: pad_open)
+  let pad_gate = beats |> values() [ 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 0 ]
+    |> slew(rise: 5.011873ms, fall: 39.81072ms)
+    |> math.mix(a: 1, b: _, t: parts.part_5)
+  let pad_level = swell |> remap(in_low: 0, out_low: 1, out_high: 0.6)
+  let pad = pad_tone * pad_gate * pad_level |> chorus(rate: 0.2, depth: 0.7, mix: 0.6)
+}
+
+group "Space" {
+  let room = lead
+    |> mixer(
+        in_1: _,
+        level_1: 0.7,
+        in_2: arp,
+        level_2: 0.4,
+        in_3: pad,
+        level_3: 0.5,
+        in_4: toms,
+        level_4: 0.5)
+    |> reverb(size: 0.85, decay: 0.8, mix: 1)
+}
+
+group "Riser" {
+  # A Hiss whose band climbs nearly five octaves in four bars.
+  let riser_band = ramp |> remap(in_low: 0, out_low: 250, out_high: 7000)
+  let riser = hiss(
+      level: ramp,
+      cutoff: riser_band,
+      resonance: 0.55,
+      gain: 1.4,
+      band: "band")
+}
+
+group "Bass" {
+  # Root and octave in rolling sixteenths over the harmony, with a sub an octave
+  # under, added after the Drive so it stays a sine. How far the pluck opens the
+  # Filter is the arrangement.
+  let bass_line = beats
+    |> values(gate_length: 0.7, shape: 0.03) [
+        0 0%0.8 12%0.9 0%0.8 0 12%0.8 0%0.9 12%0.85 ]
+  let bass_pitch = bass_line + root |> note(note: _)
+  let bass_open = swell |> remap(in_low: 0, out_low: 400, out_high: 2600)
+  let bass_tone = saw(freq: bass_pitch, amp: 0.8)
+    |> filter(cutoff: pluck * bass_open + 120, resonance: 0.4)
+  let bass_grit = bass_tone * bass_line.gate |> drive(drive: 3)
+  let bass_ducked = (
+      bass_grit + sine(freq: bass_pitch * 0.5, amp: 0.5) * bass_line.gate) * duck.gain
+  let bass = bass_ducked * parts.part_4
+}
+
+group "Desk" {
+  # Three Desks of four, chained by their buses into one of twelve; the last is the
+  # master.
+  let drums = kick
+    |> desk(
+        left_1: _,
+        level_1: 0.85,
+        left_2: snare_left,
+        right_2: snare_right,
+        level_2: 0.55,
+        left_3: hats,
+        level_3: 0.3,
+        left_4: toms,
+        level_4: 0.55)
+  let music = bass
+    |> desk(
+        left_1: _,
+        level_1: 0.7,
+        left_2: arp,
+        level_2: 0.4,
+        left_3: pad,
+        right_3: pad.wide,
+        level_3: 0.5,
+        left_4: lead,
+        level_4: 0.45,
+        bus_left: drums.bus_left,
+        bus_right: drums.bus_right)
+  let space = taps
+    |> desk(
+        left_1: _,
+        right_1: taps.right,
+        level_1: 0.45,
+        left_2: room,
+        right_2: room.wide,
+        level_2: 0.5,
+        left_3: riser,
+        level_3: 0.4,
+        bus_left: music.bus_left,
+        bus_right: music.bus_right,
+        trim: 0.34)
+}
+
+group "Picture: Tape" {
+  scene |> trails(dx: 0.007, persist: 0.6)
+    |> posterise(levels: posterise_levels)
+    |> gain(gain: scanlines)
+    |> vignette()
+    |> grade(saturation: parts.part_8, contrast: 1.08)
+    |> out.color
+}
+
+space |> out.left
+space.right |> out.right
+out.volume = 0.7
