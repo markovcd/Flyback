@@ -36,9 +36,6 @@ public abstract record ExtraField(string Key, string Label)
     /// </remarks>
     public abstract JsonNode Sane(JsonNode? stored);
 
-    /// <summary>This field's value, written the way the inspector shows it.</summary>
-    public abstract string Format(JsonNode? stored);
-
     /// <summary>
     /// What this value is for, in words that stand on their own: the inspector
     /// shows them as the tip on its row, and a lookup reads them after its key.
@@ -63,9 +60,6 @@ public abstract record ExtraField(string Key, string Label)
     {
         /// <inheritdoc/>
         public override JsonNode Sane(JsonNode? stored) => JsonValue.Create(Value(stored));
-
-        /// <inheritdoc/>
-        public override string Format(JsonNode? stored) => Spec.Format(Value(stored));
 
         /// <summary>
         /// The key of the choice naming the instrument this is a MIDI channel of, so
@@ -126,9 +120,6 @@ public abstract record ExtraField(string Key, string Label)
     {
         /// <inheritdoc/>
         public override JsonNode Sane(JsonNode? stored) => JsonValue.Create(Value(stored));
-
-        /// <inheritdoc/>
-        public override string Format(JsonNode? stored) => Name(Value(stored));
 
         /// <summary>Whether the panel's other rows depend on it, so it is redrawn when this changes.</summary>
         internal bool Reshapes { get; init; }
@@ -200,13 +191,6 @@ public abstract record ExtraField(string Key, string Label)
         /// <inheritdoc/>
         public override JsonNode Sane(JsonNode? stored) => JsonValue.Create(Value(stored));
 
-        /// <remarks>
-        /// A break written as <c>\n</c>, so text of several lines reads as one
-        /// value rather than ending the sentence it is reported in.
-        /// </remarks>
-        public override string Format(JsonNode? stored) =>
-            Multiline ? Value(stored).Replace("\n", "\\n") : Value(stored);
-
         /// <summary>What was typed, or the fallback where nothing was.</summary>
         internal string Value(JsonNode? stored)
         {
@@ -227,9 +211,6 @@ public abstract record ExtraField(string Key, string Label)
     {
         /// <inheritdoc/>
         public override JsonNode Sane(JsonNode? stored) => JsonValue.Create(Value(stored));
-
-        /// <inheritdoc/>
-        public override string Format(JsonNode? stored) => Value(stored) ? "on" : "off";
 
         /// <summary>This field's value as the switch it is.</summary>
         public bool Value(JsonNode? stored) => stored?.GetValueKind() switch

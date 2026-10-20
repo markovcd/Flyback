@@ -122,13 +122,6 @@ internal static class PlateModule
             new("3", "3 by 3"),
             new("4", "4 by 4"),
         ];
-
-        public override string Report(NodeInstance node)
-        {
-            var each = Modes(new ExtraState(Fields, node.StateOf(StateKey)));
-
-            return $"It rings {each * each} modes.";
-        }
     }
 
     /// <summary>

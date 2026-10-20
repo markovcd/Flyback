@@ -31,25 +31,9 @@ public sealed record StepsExtra(StepSpec Spec) : NodeExtra
         ctx with { Steps = [.. Of(node).Select(s => s.Sane())] };
 
     /// <inheritdoc/>
-    public override string Report(NodeInstance node)
-    {
-        if (Of(node) is not { Count: > 0 } steps) return "It has no notes.";
-
-        var written = steps.Select(s =>
-            s is { Length: 1f, Volume: 1f }
-                ? Number(s.Value)
-                : $"{Number(s.Value)}/{Number(s.Length)}@{Number(s.Volume)}");
-
-        return $"Notes: {string.Join(" ", written)}.";
-    }
-
-    /// <inheritdoc/>
     public override string Announce() =>
         $"  notes  a list of up to {NodeCatalog.MaxSteps} — not knobs";
 
     /// <inheritdoc/>
     public override string Help => "The steps it plays in turn: add, remove and reorder them here.";
-
-    private static string Number(float value) =>
-        value.ToString(System.Globalization.CultureInfo.InvariantCulture);
 }

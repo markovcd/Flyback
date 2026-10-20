@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace Flyback.Core.Graph.Extras;
 
 /// <summary>The parts of an Arrangement and their level in each section.</summary>
@@ -47,17 +45,6 @@ public sealed record ArrangementExtra(IReadOnlyList<IReadOnlyList<PartLevel>> De
         ctx with { Parts = Tidy(Of(node)) };
 
     /// <inheritdoc/>
-    public override string Report(NodeInstance node)
-    {
-        if (Tidy(Of(node)) is not { Count: > 0 } parts) return "It has no parts.";
-
-        var written = parts.Select((part, i) =>
-            $"part {i + 1}: {string.Join(" ", part.Select(Written))}");
-
-        return $"{parts[0].Count} sections. {string.Join("; ", written)}.";
-    }
-
-    /// <inheritdoc/>
     public override string Announce() =>
         $"  arrangement  up to {NodeCatalog.MaxParts} parts of up to {NodeCatalog.MaxSections} sections — not knobs";
 
@@ -65,8 +52,4 @@ public sealed record ArrangementExtra(IReadOnlyList<IReadOnlyList<PartLevel>> De
     public override string Help =>
         "Each part's level in each section, one row a part. A level marked to glide travels "
         + "there from the section before's across its whole section.";
-
-    /// <summary>A level as the text language writes it: '>' in front where it glides.</summary>
-    private static string Written(PartLevel level) =>
-        (level.Glides ? ">" : "") + level.Value.ToString(CultureInfo.InvariantCulture);
 }

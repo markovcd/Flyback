@@ -89,21 +89,4 @@ public class ChoiceFieldTests
     {
         Ports().Name(string.Empty).ShouldBe("nothing");
     }
-
-    /// <summary>
-    /// What a person is shown is the stored value put through the list, so the
-    /// two steps agree rather than being formatted separately.
-    /// </summary>
-    [Fact]
-    public void What_is_shown_is_the_stored_value_named_by_the_list()
-    {
-        var ports = Ports();
-
-        ports.Format(JsonValue.Create("kbd")).ShouldBe("Keystation");
-        ports.Format(JsonValue.Create("unplugged")).ShouldBe("unplugged (not here)");
-
-        // Nothing stored falls back first and is named second, and the fallback
-        // here is not in the list either.
-        ports.Format(null).ShouldBe("none (not here)");
-    }
 }

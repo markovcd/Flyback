@@ -114,9 +114,6 @@ internal static class FractalModule
             .. Enumerable.Range(1, Most).Select(n =>
                 new ChoiceOption(n.ToString(), n == 1 ? "1 octave" : $"{n} octaves")),
         ];
-
-        public override string Report(NodeInstance node) =>
-            $"It builds {Octaves(new ExtraState(Fields, node.StateOf(StateKey)))} octaves.";
     }
 
     private static Slot[] Emit(Emitter em, EmitContext node)

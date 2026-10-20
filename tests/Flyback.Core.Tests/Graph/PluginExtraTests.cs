@@ -191,15 +191,9 @@ public class PluginExtraTests
     }
 
     [Fact]
-    public void What_it_carries_is_described_without_the_engine_knowing_the_kind()
+    public void A_plugins_kind_is_announced_without_the_engine_knowing_it()
     {
         var extra = new ChordExtra();
-        var node = NodeInstance.Create(Chord(), 0, 0);
-
-        // The note display comes through, which is the reuse of PortSpec paying
-        // off: 57 is written as the note it stands for, not as 57.
-        extra.Report(node).ShouldContain("A3");
-        extra.Report(node).ShouldContain("wide on");
 
         // Its name and every field it declares, which is the whole of what this
         // assembly can say about a kind it has never heard of. Which tool writes

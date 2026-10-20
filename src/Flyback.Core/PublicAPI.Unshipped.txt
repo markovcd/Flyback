@@ -1,1 +1,11 @@
 #nullable enable
+*REMOVED*abstract Flyback.Core.Graph.ExtraField.Format(System.Text.Json.Nodes.JsonNode? stored) -> string!
+*REMOVED*override Flyback.Core.Graph.ExtraField.Choice.Format(System.Text.Json.Nodes.JsonNode? stored) -> string!
+*REMOVED*override Flyback.Core.Graph.ExtraField.Number.Format(System.Text.Json.Nodes.JsonNode? stored) -> string!
+*REMOVED*override Flyback.Core.Graph.ExtraField.Text.Format(System.Text.Json.Nodes.JsonNode? stored) -> string!
+*REMOVED*override Flyback.Core.Graph.ExtraField.Toggle.Format(System.Text.Json.Nodes.JsonNode? stored) -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.ArrangementExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.FileExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.ScaleExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.StepsExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!
+*REMOVED*virtual Flyback.Core.Graph.NodeExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!

@@ -65,17 +65,6 @@ public class TextFieldTests
         Lines().Value(JsonValue.Create(essay)).Length.ShouldBe(ExtraField.Text.Limit);
     }
 
-    /// <summary>
-    /// Reported with its breaks escaped, so an assistant reading a listing sees
-    /// one value rather than a sentence that stops halfway.
-    /// </summary>
-    [Fact]
-    public void Several_lines_are_reported_with_their_breaks_escaped()
-    {
-        Lines().Format(JsonValue.Create("one\ntwo")).ShouldBe("one\\ntwo");
-        Formula().Format(JsonValue.Create("a + b")).ShouldBe("a + b");
-    }
-
     [Fact]
     public void A_state_reads_it_back_by_key_and_nothing_for_another_shape()
     {

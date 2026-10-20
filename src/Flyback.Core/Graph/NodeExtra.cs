@@ -108,21 +108,6 @@ public abstract record NodeExtra
     public virtual void Rebase(NodeInstance node, Func<string, string> renamed) { }
 
     /// <summary>
-    /// What this instance is carrying, as prose — what an assistant reading a
-    /// patch sees, and the one place it would otherwise miss: this is neither a
-    /// socket nor a wire.
-    /// </summary>
-    public virtual string Report(NodeInstance node)
-    {
-        if (Fields.Count == 0) return $"{Key}: nothing.";
-
-        var held = node.StateOf(Key);
-        var written = Fields.Select(f => $"{f.Label} {f.Format(held?[f.Key])}");
-
-        return $"{Key}: {string.Join(", ", written)}.";
-    }
-
-    /// <summary>
     /// That the module carries this at all — for the listing of what a module is,
     /// as opposed to what one instance holds.
     /// </summary>

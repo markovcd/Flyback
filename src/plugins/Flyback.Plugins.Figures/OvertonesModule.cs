@@ -96,9 +96,6 @@ internal static class OvertonesModule
             new("16", "16 partials"),
             new("32", "32 partials"),
         ];
-
-        public override string Report(NodeInstance node) =>
-            $"It reads {Partials(new ExtraState(Fields, node.StateOf(StateKey)))} partials.";
     }
 
     /// <summary>

@@ -47,3 +47,10 @@ and the Output always does.
 - An edit costs the lines it touches, not the whole patch.
 - A model has to quote the text exactly; the refusal says which piece missed and why.
 - Canvas positions are laid out afresh by every assistant edit, as before.
+
+## Amendment, 2026-10-20: an extra no longer reports itself
+
+The per-module tools were the only readers of `NodeExtra.Report` and `ExtraField.Format`,
+the prose an extra wrote about what an instance held. The patch's text says the same, so
+both leave the plugin contract, with their overrides. The contract stays at 1.0.0: no
+plugin outside this repo exists yet.

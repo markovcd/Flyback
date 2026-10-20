@@ -82,9 +82,6 @@ internal static class LayerModule
         private static IReadOnlyList<ChoiceOption> Options { get; } =
             [.. Enum.GetValues<Mode>().Select(mode => new ChoiceOption(Id(mode), mode.ToString()))];
 
-        public override string Report(NodeInstance node) =>
-            $"Blends in {Id(Of(new ExtraState(Fields, node.StateOf(StateKey))))} mode.";
-
         public override string Announce() =>
             $"  {StateKey,-6} mode, one of {string.Join(", ", Options.Select(o => o.Id))}, as a string; not a knob";
 

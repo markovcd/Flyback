@@ -38,20 +38,6 @@ public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
         };
 
     /// <inheritdoc/>
-    public override string Report(NodeInstance node)
-    {
-        if (Of(node) is not { Count: > 0 } scale)
-            return "Its scale is empty, so it passes the signal through unchanged.";
-
-        var named = string.Join(" ", scale.Select(Pitch.ClassName));
-        var numbers = string.Join(", ", scale);
-
-        return scale.Count == Pitch.Classes
-            ? $"Scale: all twelve ({numbers}), which is the nearest semitone."
-            : $"Scale: {named} ({numbers}).";
-    }
-
-    /// <inheritdoc/>
     public override string Announce() =>
         $"  scale  which of the {Pitch.Classes} pitch classes are on — not knobs";
 

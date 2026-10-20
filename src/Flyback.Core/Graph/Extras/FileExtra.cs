@@ -37,12 +37,4 @@ public abstract record FileExtra : NodeExtra
 
         if (!string.IsNullOrWhiteSpace(path)) Point(node, renamed(path));
     }
-
-    /// <inheritdoc/>
-    public override string Report(NodeInstance node)
-    {
-        var path = PathOf(node);
-
-        return string.IsNullOrWhiteSpace(path) ? Kind.Unchosen : $"{Kind.Called}: {path}.";
-    }
 }
