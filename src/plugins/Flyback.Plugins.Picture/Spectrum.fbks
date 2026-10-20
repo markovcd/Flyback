@@ -1,0 +1,35 @@
+# Two crossed sine fields colored out of a palette, then graded and posterised.
+# The field is deliberately plain, so what is shown is the color. A slow sweep
+# walks 'spread' from nothing to a third: tints of one color, through sunsets and
+# teals, to the rainbow. There is no sound: x and y are the pixel's own position,
+# and the speakers have no pixel.
+
+description "Two crossed sine fields colored out of a palette, then graded."
+tags "pattern" "color"
+
+requires flyback.picture
+
+# Slow enough that a whole pass takes half a minute. The levels sweep the other way
+# from the palette, so the picture is flattest where the colors are calmest.
+group "Palette Sweep" {
+  let sweep = sine(freq: 0.035, amp: 0.5, bias: 0.5)
+  let levels = sweep |> remap(in_low: 0, out_low: 3, out_high: 24)
+}
+
+# A sine along x, a second along y whose phase drifts, and the two summed.
+group "Field" {
+  let coord = coord()
+  let across = coord |> sine(freq: 1.5)
+  let up = coord.y |> sine(freq: 1.1, phase: time() * 0.2)
+  let field = across + up |> remap(in_low: -2, in_high: 2)
+}
+
+group "Palette Sweep" {
+  sweep |> remap(in_low: 0, out_low: 0.02, out_high: 0.34)
+    |> palette(t: field, spread: _)
+    |> grade(saturation: 1.15, contrast: 1.25, gamma: 1.1)
+    |> posterise(levels: levels)
+    |> out.color
+}
+
+out.volume = 0.45

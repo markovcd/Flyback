@@ -1,0 +1,31 @@
+# The Cells module's outputs, each doing the one job only it can: the cell picks a
+# color, the edge draws the leading, and the distance rounds each pane. One sweep,
+# on 'jitter', goes from a square grid to a scatter and back: the panes were always
+# a grid of points, and the organic look is how far each was let wander from its
+# square. There is no sound in it.
+
+description "Cells as panes: the cell picks a color, the edge is the lead, and jitter"
+  "slides grid to scatter."
+tags "pattern" "color"
+
+requires flyback.picture
+
+# 'z' drifts the points; the jitter goes 0..1 over twenty seconds.
+group "Cells" {
+  let cells = time() * 0.15
+    |> cells(z: _, scale: 5, jitter: sine(freq: 0.05, amp: 0.5, bias: 0.5))
+}
+
+# The leading is dark exactly on the line between two panes and clear a little way
+# in. Each pane darkens towards its rim, which makes flat color read as glass with
+# light behind it.
+group "Lead and Light" {
+  let lead = cells.edge |> smoothstep(edge0: 0.02, edge1: 0.12)
+  let rim = cells |> remap(in_low: 0, out_low: 1, out_high: 0.45)
+  let light = lead * rim
+}
+
+# A fifth of the way to the rainbow: blues with the odd warm pane.
+group "Color" {
+  cells.cell |> palette(t: _, spread: 0.2) |> gain(gain: light) |> out.color
+}

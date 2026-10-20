@@ -1,0 +1,40 @@
+# A star with a hole cut through it, rocking, and the same field read as a
+# waveform. The Scan sweeps a circle through the field, so the star's five points
+# are five bumps in every cycle: a timbre that is the shape. The Scan reads the
+# distance, not the fill, since a loop crossing a fill hears a square wave whatever
+# it crossed. One sweep drives the sharpness and the hue together; the other rocks
+# the star, since a five-fold shape spun through a turn passes its own reflection
+# and jumps.
+
+description "A star's points heard as bumps in a waveform, by sweeping a loop through"
+  "its field."
+tags "shapes" "scan" "synthesis"
+
+requires flyback.picture
+
+group "Sweeps" {
+  let sharpness = sine(freq: 0.11, amp: 0.22, bias: 0.45)
+  let rocking = sine(freq: 0.07, amp: 0.9)
+}
+
+# The hole is cut softly, so its rim meets the star's edges in a fillet rather than
+# a corner.
+group "Shape" {
+  let turned = rotate(angle: rocking)
+  let shape = turned |> star(radius: 0.55, sharpness: sharpness)
+    |> combine(a: _, b: circle(radius: 0.18), smoothness: 0.04)
+  let fill = shape.difference |> fill(distance: _, softness: 0.008)
+}
+
+# The fill lit in a color the sweep chooses, its outline added on top in white.
+group "Eye" {
+  let lit = sharpness |> color.hsv(hue: _, saturation: 0.8, value: fill)
+  lit + fill.outline |> out.color
+}
+
+# A distance swings only a tenth either side of nought, so what the loop reads is
+# brought up to the level of a voice.
+group "Ear" {
+  let heard = shape.difference |> scan(rate: 110, radius: 0.42, scale: 0.5)
+  heard * 4 |> out.left
+}

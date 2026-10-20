@@ -1,0 +1,22 @@
+# A fractal bent by a fractal, which is stone. Warping one noise field by another
+# buys flow: the veins run where they were pushed, not where the noise happens to.
+# The folded output is drawn, because a crease is a vein. Three octaves on the warp
+# and five on the veins: a warp made of fine detail pushes neighboring pixels
+# opposite ways and tears the field. There is no sound in it.
+
+description "A fractal bent by a fractal, which is stone."
+tags "fractal" "pattern"
+
+requires flyback.picture
+
+# The plane is pushed by how the first field reads at each point, so the second is
+# read somewhere other than where it is drawn.
+let push = fractal(z: t, scale: 0.9, octaves: "3")
+let veins = warp(by: push, amount: 0.7)
+  |> fractal(z: t, scale: 2.5, roughness: 0.55, octaves: "5")
+
+# Backwards, so the creases are the dark veins and the body is the light stone; not
+# all the way to black, since marble has no holes in it.
+veins.folded |> remap(in_low: 0, in_high: 0.55, out_low: 1, out_high: 0.1)
+  |> color.hsv(hue: push, saturation: 0.25, value: _)
+  |> out.color

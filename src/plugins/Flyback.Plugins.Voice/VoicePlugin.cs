@@ -62,22 +62,22 @@ public sealed class VoicePlugin : IFlybackPlugin
         registry.AddPresets(
         [
             new PatchPreset(
-                SupersawPreset.Name,
-                SupersawPreset.Build,
+                "Supersaw",
+                PresetText.Embedded(typeof(VoicePlugin).Assembly, "Supersaw.fbks"),
                 "Seven detuned saws, wired the way the module is meant to be driven.")
             {
                 Tags = ["synthesis", "chords"],
             },
             new PatchPreset(
-                TimbrePreset.Name,
-                TimbrePreset.Build,
+                "Filter sweep",
+                PresetText.Embedded(typeof(VoicePlugin).Assembly, "FilterSweep.fbks"),
                 "A saw folded and then filtered: make the harmonics first, take them away second.")
             {
                 Tags = ["basics", "synthesis", "filter"],
             },
             new PatchPreset(
-                StruckPreset.Name,
-                StruckPreset.Build,
+                "Struck",
+                PresetText.Embedded(typeof(VoicePlugin).Assembly, "Struck.fbks"),
                 "A kick, a hat and a wandering bell: each a Stroke into one module, all counted off one Tempo.")
             {
                 Tags = ["drums", "rhythm"],

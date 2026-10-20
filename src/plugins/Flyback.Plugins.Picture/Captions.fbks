@@ -1,0 +1,24 @@
+# Four lines of text that say what Text does, paged by the clock and typed out as
+# each one arrives. One count drives both of the module's sockets: its whole number
+# is the line, since Text floors what it is given, and what is left over is how far
+# through the line the picture is. Filled, in one color, and with no sound, so the
+# letters are the only thing that moves.
+
+description "Lines of text, chosen by the clock and typed out as each one arrives."
+tags "text"
+
+requires flyback.picture
+
+# Half a line a second, so each line has two.
+let page = t * 0.5
+
+# Typed in the first five eighths of a line's time, then held, in a terminal's
+# green.
+text(
+    size: 0.18,
+    line: page,
+    reveal: fract(page) * 1.6,
+    lines: "This is Text.|'line' picks one,|'reveal' types it,|and Fill draws it.")
+  |> fill(distance: _, softness: 0.006)
+  |> color.hsv(hue: 0.36, saturation: 0.55, value: _)
+  |> out.color

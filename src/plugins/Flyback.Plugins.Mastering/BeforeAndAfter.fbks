@@ -1,0 +1,69 @@
+# A small mix and the chain that goes at the end of one (EQ, Compressor,
+# Maximizer) switched out and in every four bars, so what the chain does is the
+# only thing that changes. The mix is deliberately rough: the kick too loud, the
+# pluck too quiet. No picture, since the chain's state lives in cells.
+
+description "A small mix with an EQ, a Compressor and a Maximizer after it, switched"
+  "out and in every four bars."
+tags "mixing" "mastering" "effects"
+
+requires flyback.mastering
+
+let tempo = tempo()
+
+# Four on the floor. One envelope for the level and the pitch, so the drum falls
+# from a knock to a thud as it dies away.
+group "Kick" {
+  let kick_envelope = pulse(freq: tempo, width: 0.2)
+    |> adsr(gate: _, attack: 1ms, decay: 179.8871ms, sustain: 0, release: 50.11873ms)
+  let kick_pitch = kick_envelope |> remap(in_low: 0, out_low: 48, out_high: 160)
+  let kick = sine(freq: kick_pitch) * kick_envelope
+}
+
+# Eighths, an octave apart where the line wants a push.
+group "Bass" {
+  let bass_notes = notes(rate: tempo * 2, gate_length: 0.6) [ A1 A1 A2 A1 C2 C2 G1 G2 ]
+  let bass_pitch = bass_notes |> note(note: _)
+  let bass = triangle(freq: bass_pitch) * bass_notes.gate
+}
+
+# Sixteenths on a string, which is the part a raw mix loses.
+group "Pluck" {
+  let pluck_notes = notes(rate: tempo * 4, gate_length: 0.3) [ A4 E4 C5 E4 G4 E4 D5 E4 ]
+  let pluck_pitch = pluck_notes |> note(note: _)
+  let pluck = string(
+      trigger: pluck_notes.gate,
+      freq: pluck_pitch,
+      decay: 301.9952ms,
+      brightness: 0.6)
+}
+
+let mix = kick
+  |> mixer(
+      in_1: _,
+      level_1: 0.5,
+      in_2: bass,
+      level_2: 0.22,
+      in_3: pluck,
+      level_3: 0.12)
+
+# Rumble out, a little off the boxy middle, a little air on top. Every 'right'
+# carries its 'left', so a mono mix is one wire down the chain.
+group "The Chain" {
+  let mastered = mix
+    |> eq(left: _, low_cut: 30, low_gain: 2, mid_freq: 400, mid_gain: -2, high_gain: 3)
+    |> compressor(left: _, threshold: -24, ratio: 3, release: 151.35613ms, makeup: 4)
+    |> maximizer(left: _, amount: 0.8, style: "punch")
+}
+
+# One turn of a sine every thirty-two beats, squared off nearly all the way. Half a
+# turn in at the start, so the raw mix is heard first and the chain arrives as the
+# improvement.
+group "Before and After" {
+  tempo.beats |> sine(freq: 0.03125, phase: 0.5)
+    |> smoothstep(edge0: -0.05, edge1: 0.05)
+    |> math.mix(a: mix, b: mastered, t: _)
+    |> out.left
+}
+
+out.volume = 0.6

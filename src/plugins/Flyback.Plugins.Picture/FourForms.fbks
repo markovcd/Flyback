@@ -1,0 +1,58 @@
+# All four forms on a ring, turning, round an Arc filling and emptying in the
+# middle, with the seam between them opening and closing: five shapes, then one,
+# then five again. A Minimum would put the four in one picture; what it cannot do
+# is fill the crease where two meet. Swept from nothing to a quarter of the
+# picture, the seam walks from four separate things to one. The ring rocks rather
+# than spins: through a whole turn the four would swap places.
+
+description "Four forms on a turning ring round a slowly filling arc, with the seam"
+  "between them opening and closing."
+tags "shapes" "color"
+
+requires flyback.picture
+
+# One Rotate ahead of the four turns the whole arrangement, not each shape in place.
+group "Sweeps" {
+  let seam = sine(freq: 0.09, amp: 0.24, bias: 0.26)
+  let turned = sine(freq: 0.05, amp: 1.2) |> rotate(angle: _)
+}
+
+group "Circle" {
+  let circle = turned |> translate(dx: -0.4, dy: 0.4) |> circle(radius: 0.28)
+}
+
+group "Box" {
+  let box = turned |> translate(dx: 0.4, dy: 0.4) |> box(width: 0.28, height: 0.26, corner: 0.06)
+}
+
+group "Polygon" {
+  let polygon = turned |> translate(dx: 0.4, dy: -0.4) |> polygon(radius: 0.3, sides: 6)
+}
+
+group "Star" {
+  let star = turned |> translate(dx: -0.4, dy: -0.4) |> star(radius: 0.34)
+}
+
+# At the center, so the Rotate turns it about itself.
+group "Arc" {
+  let arc = turned
+    |> arc(radius: 0.13, sweep: sine(freq: 0.037, amp: 0.5, bias: 0.5), width: 0.05)
+}
+
+# Chained, because a Combine takes two and what comes out is a distance like what
+# goes in.
+group "Merge" {
+  let merged = circle |> combine(a: _, b: box, smoothness: seam)
+    |> combine(a: _, b: polygon, smoothness: seam)
+    |> combine(a: _, b: star, smoothness: seam)
+    |> combine(a: _, b: arc, smoothness: seam)
+}
+
+# The fill lit in a color the same sweep chooses, its outline added on top in white.
+group "Eye" {
+  let fill = merged |> fill(distance: _, softness: 0.006, width: 0.016)
+  let lit = seam |> color.hsv(hue: _, saturation: 0.75, value: fill)
+  lit + fill.outline |> out.color
+}
+
+out.volume = 0.4

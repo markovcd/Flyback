@@ -1,0 +1,38 @@
+# The patch the "Make a beat you can see" video builds: a kick, a hat and a bass
+# line on one Tempo, and rings the kick lights up.
+
+description "A kick, a hat and a bass line on one tempo, and rings the kick lights up."
+tags "drums" "bass" "visualizer"
+
+requires flyback.voice
+
+panel tone = 0.4, label: "Bass filter"
+
+let tempo = tempo(bpm: 118)
+
+# The drums: a kick on every beat, a hat on five sixteenths in eight.
+let kick = tempo.beats |> stroke(curve: 4)
+let hat = tempo.beats |> euclid(hits: 5)
+
+# The bass: eight eighths through a filter the knob opens.
+let line = tempo.beats |> notes(rate: 2, gate_length: 0.4) [ A1 A1 C2 A1 G1 A1 E2 D2 ]
+let pitch = line |> note(note: _)
+let envelope = line.gate
+  |> adsr(gate: _, attack: 2ms, decay: 180ms, sustain: 0.2, release: 80ms)
+let bass = saw(freq: pitch) * envelope |> filter(cutoff: tone(150..3000), resonance: 0.35)
+
+# The picture: rings the kick lights, a hue the bar turns, white where the hat hits.
+let rings = rings(freq: 6, offset: kick * 0.25 - t * 0.2) |> remap()
+
+rings * (0.12 + kick * 0.88)
+  |> color.hsv(
+      hue: fract(tempo.beats / 16),
+      saturation: 0.85 - hat.stroke * 0.5,
+      value: _)
+  |> out.color
+drum(
+    level: kick,
+    pitch: 48,
+    sweep: 160) * 0.8 + hiss(level: hat.stroke, cutoff: 9000, seed: 3) * 0.2 + bass * 0.45
+  |> out.left
+out.volume = 0.6

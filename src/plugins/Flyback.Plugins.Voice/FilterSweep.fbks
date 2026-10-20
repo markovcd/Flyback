@@ -1,0 +1,24 @@
+# A saw folded and then filtered: make the harmonics first, take them away second.
+# Two hands on the instrument and nothing else, both far below audio rate, so what
+# is heard can be traced to a knob without following a wire. Nothing is drawn: the
+# filter holds its integrators in one-evaluation cells (ADR-0041), which the
+# picture has none of.
+
+description "A saw folded and then filtered: make the harmonics first, take them away"
+  "second."
+tags "basics" "synthesis" "filter"
+
+requires flyback.voice
+
+group "The Two Hands" {
+  let drive = sine(freq: 0.07) |> remap(out_low: 1, out_high: 4)
+  let cutoff = sine(freq: 0.12) |> remap(out_low: 180, out_high: 5000)
+}
+
+group "The Tone" {
+  saw(freq: 110, amp: 0.9) |> fold(drive: drive)
+    |> filter(cutoff: cutoff, resonance: 0.75)
+    |> out.left
+}
+
+out.volume = 0.3

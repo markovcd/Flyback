@@ -99,7 +99,7 @@ public partial class NodeCatalog
     /// so what a chart draws of a signal, this hears of a field. Named here only
     /// for the tests and the preset that build one.
     /// </summary>
-    public const string ScanTypeId = "scan";
+    internal const string ScanTypeId = "scan";
 
     /// <summary>
     /// The scale quantiser. Named here because it is the one module whose

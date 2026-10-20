@@ -1,0 +1,25 @@
+# Whatever the Line In hears, drawn as a turning kaleidoscope of clouds that the
+# kick flashes and the loudness colors. Nothing reaches the speakers: the Meters
+# are enough for the sound to run, so a monitor of the speakers can be the input
+# without the patch hearing itself.
+
+description "Any music through the Line In, folded into a turning kaleidoscope: the"
+  "kick flashes it outward and the loudness spreads its colors."
+tags "visualizer" "line-in" "kaleidoscope"
+
+requires flyback.picture
+
+# Half a turn either way is one whole turn every 33 seconds.
+let mirrors = saw(freq: 0.03, amp: 3.1416) |> rotate(angle: _) |> kaleidoscope(segments: 8)
+
+# The loudness is the whole sound read over two seconds; the kick is what is left
+# under 150 Hz, read fast.
+let line_in = audio.in()
+let loudness = line_in |> meter(window: 2s, scale: 0.25)
+let kick = line_in |> filter(cutoff: 150) |> meter(window: 20ms, scale: 0.3)
+
+mirrors |> clouds(z: t, scale: 2.5)
+  |> palette(t: _, cycles: 2, spread: loudness, brightness: 0.45, contrast: 0.55)
+  |> gain(gain: kick.peak)
+  |> trails(zoom: 0.97, persist: 0.82)
+  |> out.color

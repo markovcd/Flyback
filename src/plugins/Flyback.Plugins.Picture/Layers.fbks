@@ -1,0 +1,51 @@
+# A picture composed back to front, the way an image editor stacks one: a sky, a
+# sun laid over it, a sea multiplied into both, a horizon inked on top and a
+# vignette round the lot. A Fill is a mask as well as a picture, and a Layer's
+# 'amount' is where a mask goes. Screen for the sun, because light adds; multiply
+# for the sea, because water darkens what is behind it and lets it through. Only
+# the sun moves, and there is no sound.
+
+description "A sunset composed back to front: a sky, a sun screened over it, a sea"
+  "multiplied in, a line inked on top."
+tags "layers" "shapes" "color"
+
+requires flyback.picture
+
+# A palette read up the frame from the horizon, warm at the bottom, dark at the top.
+group "Sky" {
+  let coord = coord()
+  let sky = coord.y |> remap(in_low: -0.2, out_high: 0.45)
+    |> palette(t: _, spread: 0.1, brightness: 0.55, contrast: 0.45)
+}
+
+# From a third of the way up the sky to half under the water.
+group "Sun" {
+  let rising = sine(freq: 0.05, amp: 0.25, bias: 0.05) |> translate(dy: _)
+  let with_sun = rising |> circle(radius: 0.32)
+    |> fill(distance: _)
+    |> layer(
+        base: sky,
+        top: color.hsv(hue: 0.11, saturation: 0.55),
+        amount: _,
+        mode: "screen")
+}
+
+# Everything under the horizon, in a blue whose brightness is a slow swell.
+group "Sea" {
+  let below = translate(dy: -1)
+  let sea_mask = below |> box(width: 3, height: 0.8)
+    |> fill(distance: _, softness: 0.004)
+  let with_sea = coord.y |> sine(freq: 6, phase: time() * 0.2)
+    |> remap(out_low: 0.55, out_high: 0.95)
+    |> color.hsv(hue: 0.6, saturation: 0.7, value: _)
+    |> layer(base: with_sun, top: _, amount: sea_mask, mode: "multiply")
+}
+
+# One stroke along the horizon, laid on as light.
+group "Horizon" {
+  let horizon = line(x1: -2, y1: -0.2, x2: 2, y2: -0.2, width: 0.004)
+    |> fill(distance: _, softness: 0.004)
+  with_sea |> ink(mask: horizon, g: 0.85, b: 0.6)
+    |> vignette(from: 0.7, to: 1.9, dark: 0.75)
+    |> out.color
+}

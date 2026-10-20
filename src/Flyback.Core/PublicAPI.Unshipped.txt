@@ -1,5 +1,6 @@
 #nullable enable
 *REMOVED*abstract Flyback.Core.Graph.ExtraField.Format(System.Text.Json.Nodes.JsonNode? stored) -> string!
+*REMOVED*const Flyback.Core.Graph.NodeCatalog.ScanTypeId = "scan" -> string!
 *REMOVED*override Flyback.Core.Graph.ExtraField.Choice.Format(System.Text.Json.Nodes.JsonNode? stored) -> string!
 *REMOVED*override Flyback.Core.Graph.ExtraField.Number.Format(System.Text.Json.Nodes.JsonNode? stored) -> string!
 *REMOVED*override Flyback.Core.Graph.ExtraField.Text.Format(System.Text.Json.Nodes.JsonNode? stored) -> string!

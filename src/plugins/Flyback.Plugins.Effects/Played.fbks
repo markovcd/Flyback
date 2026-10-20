@@ -1,0 +1,26 @@
+# The one preset you have to play: each key plucks a string, four at once, and a
+# little reverb puts them in a room. One MIDI In of four voices, so its chain plays
+# once per held note (ADR-0174), and a Merge adds the four. The gate is the damper:
+# held, a string rings for two seconds; let go, it stops in a twentieth of one.
+
+description "The one preset you have to play: each key plucks a string, with a touch of"
+  "reverb."
+tags "playable" "effects" "reverb"
+
+group "Strings" {
+  let keys = midi.in(voices: 4)
+  let pitch = keys |> note(note: _)
+  let damper = keys.gate |> remap(in_low: 0, out_low: -1.3, out_high: 0.3)
+  let strings = string(
+      trigger: keys.trigger,
+      freq: pitch,
+      decay: damper,
+      brightness: 0.4)
+}
+
+# A half each leaves room for a full chord.
+let room = (strings |> merge()) * 0.5 |> reverb(size: 0.45, decay: 0.45, mix: 0.2)
+
+room |> out.left
+room.wide |> out.right
+out.volume = 0.6

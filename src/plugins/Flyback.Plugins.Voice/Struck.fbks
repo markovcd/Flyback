@@ -1,0 +1,40 @@
+# A kick, a hat and a bell, each one module with one envelope into it, and the
+# envelopes all counted off the same beats. A Stroke has no trigger in it: it reads
+# a count of beats and is the envelope of whichever stroke that count is in, so
+# three of them on one Tempo cannot drift apart, and 'rate' and 'offset' are the
+# whole of the rhythm. Nothing is drawn: the Hiss is a filter and the hold is a
+# cell, and neither has a picture side.
+
+description "A kick, a hat and a wandering bell: each a Stroke into one module, all"
+  "counted off one Tempo."
+tags "drums" "rhythm"
+
+requires flyback.voice
+
+let tempo = tempo(bpm: 104)
+
+# Every beat, falling fast: one envelope is the kick's loudness and how far its
+# pitch drops.
+group "Kick" {
+  let kick_stroke = tempo.beats |> stroke(curve: 4)
+  let kick = drum(level: kick_stroke, pitch: 46, sweep: 140)
+}
+
+# The half beats between, with a curve steep enough to be a tick.
+group "Hat" {
+  let hat_stroke = tempo.beats |> stroke(rate: 2, offset: 0.5, curve: 9)
+  let hat = hiss(level: hat_stroke * 0.35, cutoff: 9000)
+}
+
+# Every other beat and a quarter of a stroke late, falling slowly so it rings into
+# the next. Its pitch drifts A3 to A5, is caught as each stroke begins so a note
+# stays one note while it rings, and is put into A minor pentatonic.
+group "Bell" {
+  let bell_stroke = tempo.beats |> stroke(rate: 0.5, offset: 0.25, curve: 2.5)
+  let pitch = wander(rate: 0.6, seed: 3, low: 57, high: 81) |> hold(trigger: bell_stroke)
+    |> tune() [ C D E G A ]
+  let bell = bell(freq: pitch, level: bell_stroke * 0.5, index: 0.5)
+}
+
+kick |> mixer(in_1: _, level_1: 0.8, in_2: hat, level_2: 0.5, in_3: bell, level_3: 0.7)
+  |> out.left

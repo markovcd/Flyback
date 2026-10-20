@@ -1,0 +1,15 @@
+# A plucked tone through the delay into the reverb, the order both are usually
+# wanted in: repeats first, then the room they happen in.
+
+description "A plucked tone through the delay into the reverb: repeats first, then the"
+  "room."
+tags "effects" "echo" "reverb"
+
+# A saw falling from 1 to 0 twice a second is the pluck's envelope: a sharp attack,
+# and a tail for the delay and the reverb.
+let room = sine(freq: 330) * saw(freq: 2, amp: -0.5, bias: 0.5)
+  |> delay(time: 0.33, feedback: 0.5, mix: 0.45)
+  |> reverb(size: 0.7, decay: 0.75, mix: 0.35)
+
+room |> out.left
+room.wide |> out.right

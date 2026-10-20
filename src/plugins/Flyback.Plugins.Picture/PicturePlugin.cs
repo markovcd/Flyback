@@ -81,51 +81,51 @@ public sealed class PicturePlugin : IFlybackPlugin
         registry.AddPresets(
         [
             new PatchPreset(
-                FourFormsPreset.Name,
-                FourFormsPreset.Build,
+                "Four forms",
+                PresetText.Embedded(typeof(PicturePlugin).Assembly, "FourForms.fbks"),
                 "Four forms on a turning ring round a slowly filling arc, with the seam between them opening and closing.")
             {
                 Tags = ["shapes", "color"],
             },
             new PatchPreset(
-                ShapesPreset.Name,
-                ShapesPreset.Build,
+                "Shape scan",
+                PresetText.Embedded(typeof(PicturePlugin).Assembly, "ShapeScan.fbks"),
                 "A star's points heard as bumps in a waveform, by sweeping a loop through its field.",
                 PresetKind.Interplay)
             {
                 Tags = ["shapes", "scan", "synthesis"],
             },
             new PatchPreset(
-                CaptionsPreset.Name,
-                CaptionsPreset.Build,
+                "Captions",
+                PresetText.Embedded(typeof(PicturePlugin).Assembly, "Captions.fbks"),
                 "Lines of text, chosen by the clock and typed out as each one arrives.")
             {
                 Tags = ["text"],
             },
             new PatchPreset(
-                SpectrumPreset.Name,
-                SpectrumPreset.Build,
+                "Spectrum",
+                PresetText.Embedded(typeof(PicturePlugin).Assembly, "Spectrum.fbks"),
                 "Two crossed sine fields colored out of a palette, then graded.")
             {
                 Tags = ["pattern", "color"],
             },
             new PatchPreset(
-                MarblePreset.Name,
-                MarblePreset.Build,
+                "Marble",
+                PresetText.Embedded(typeof(PicturePlugin).Assembly, "Marble.fbks"),
                 "A fractal bent by a fractal, which is stone.")
             {
                 Tags = ["fractal", "pattern"],
             },
             new PatchPreset(
-                StainedGlassPreset.Name,
-                StainedGlassPreset.Build,
+                "Stained glass",
+                PresetText.Embedded(typeof(PicturePlugin).Assembly, "StainedGlass.fbks"),
                 "Cells as panes: the cell picks a color, the edge is the lead, and jitter slides grid to scatter.")
             {
                 Tags = ["pattern", "color"],
             },
             new PatchPreset(
-                LayersPreset.Name,
-                LayersPreset.Build,
+                "Layers",
+                PresetText.Embedded(typeof(PicturePlugin).Assembly, "Layers.fbks"),
                 "A sunset composed back to front: a sky, a sun screened over it, a sea multiplied in, a line inked on top.")
             {
                 Tags = ["layers", "shapes", "color"],

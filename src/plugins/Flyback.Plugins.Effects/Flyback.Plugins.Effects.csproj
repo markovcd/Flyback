@@ -16,7 +16,7 @@
     <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" />
     <!-- Mycelium's words: LibriVox's public-domain reading of Alice, chapter five. -->
     <EmbeddedResource Include="Mycelium\*.wav" LogicalName="Mycelium/%(Filename)%(Extension)" />
-    <EmbeddedResource Include="Mycelium.fbks" LogicalName="Mycelium.fbks" />
+    <EmbeddedResource Include="*.fbks" LogicalName="%(Filename)%(Extension)" />
     <!-- No Sense Dub's voice: "Jamaicanpatois-twosentences2010.ogg" by Nesnad, Wikimedia Commons, CC BY-SA 3.0, cut into its two sentences and leveled. -->
     <EmbeddedResource Include="NoSenseDub\*.wav" LogicalName="NoSenseDub/%(Filename)%(Extension)" />
   </ItemGroup>

@@ -1,0 +1,45 @@
+# The patch the "Music that writes itself" video builds: a wandering value snapped
+# to a pentatonic, one note a beat of a wandering length, drawn as a score that
+# scrolls as it plays. Every Wander walks across whole beats, so a note's pitch
+# cannot move while it sounds, and the picture reads the very pitch the speakers
+# play.
+
+description "A melody nobody wrote: a wandering value snapped to a pentatonic, each"
+  "note its own length, drawn as it plays."
+tags "generative" "melody" "scales"
+
+requires flyback.effects, flyback.picture, flyback.voice
+
+let tempo = tempo(bpm: 300)
+let beat = floor(tempo.beats)
+
+# Two octaves of drift, D3 to E5, snapped to C D E G A so no two notes clash.
+let tune = beat |> wander(rate: 0.14, seed: 3, low: 50, high: 76)
+  |> quantiser() [ C D E G A ]
+let pitch = tune |> note(note: _)
+
+# How much of its beat each note lasts; below nought, it is a rest.
+let length = beat |> wander(rate: 3.1, seed: 11, low: -0.4, high: 0.8)
+let envelope = step(fract(tempo.beats), length)
+  |> adsr(gate: _, attack: 4ms, decay: 150ms, sustain: 0.6, release: 30ms)
+let voice = triangle(freq: pitch, amp: envelope)
+
+# The strike itself, read fast enough to be over before the next note.
+let strike = voice |> meter(window: 10ms, scale: 0.6)
+let echo = voice |> echo(tempo: tempo, left: 6, right: 4, feedback: 0.4, mix: 0.35)
+
+# A dot near the right edge at the note's height, in the note's color.
+let height = tune
+  |> remap(in_low: 50, in_high: 76, out_low: -0.85, out_high: 0.85)
+  |> translate(dx: 1.4, dy: _)
+let hue = tune |> remap(in_low: 50, in_high: 76)
+
+height |> circle(radius: 0.06)
+  |> fill(distance: _, softness: 0.03)
+  |> color.hsv(hue: hue, saturation: 0.75, value: _)
+  |> gain(gain: strike.peak)
+  |> trails(dx: -0.02, persist: 0.99)
+  |> out.color
+echo |> out.left
+echo.right |> out.right
+out.volume = 0.6

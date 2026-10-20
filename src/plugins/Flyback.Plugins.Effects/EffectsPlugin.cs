@@ -41,54 +41,56 @@ public sealed class EffectsPlugin : IFlybackPlugin
         registry.AddPresets(
         [
             new PatchPreset(
-                SpacePreset.Name,
-                SpacePreset.Build,
+                "Echo chamber",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "EchoChamber.fbks"),
                 "A plucked tone through the delay into the reverb: repeats first, then the room.")
             {
                 Tags = ["effects", "echo", "reverb"],
             },
             new PatchPreset(
-                ModulationPreset.Name,
-                ModulationPreset.Build,
+                "Moving parts",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "MovingParts.fbks"),
                 "Flanger, phaser and chorus in the order a pedalboard would have them.")
             {
                 Tags = ["effects", "modulation"],
             },
             new PatchPreset(
-                PlayedPreset.Name,
-                PlayedPreset.Build,
+                "Played",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "Played.fbks"),
                 "The one preset you have to play: each key plucks a string, with a touch of reverb.")
             {
                 Tags = ["playable", "effects", "reverb"],
             },
             new PatchPreset(
-                SeenBeatPreset.Name,
-                SeenBeatPreset.Build,
-                SeenBeatPreset.Description,
+                "Beat you can see",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "BeatYouCanSee.fbks"),
+                "A kick, a hat and a bass line on one tempo, and rings the kick lights up.",
                 PresetKind.Interplay)
             {
                 Tags = ["drums", "bass", "visualizer"],
             },
             new PatchPreset(
-                TwoEchoesPreset.Name,
-                TwoEchoesPreset.Build,
-                TwoEchoesPreset.Description,
+                "Two echoes",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "TwoEchoes.fbks"),
+                "One knob, two loops: a pluck through an echo, and a ring that echoes down a tunnel.",
                 PresetKind.Interplay)
             {
                 Tags = ["echo", "feedback", "knobs"],
             },
             new PatchPreset(
-                VisualizerPreset.Name,
-                VisualizerPreset.Build,
-                VisualizerPreset.Description,
+                "Visualizer",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "Visualizer.fbks"),
+                "Any music through the Line In, folded into a turning kaleidoscope: the kick flashes it "
+                + "outward and the loudness spreads its colors.",
                 PresetKind.Idea)
             {
                 Tags = ["visualizer", "line-in", "kaleidoscope"],
             },
             new PatchPreset(
-                WanderingTunePreset.Name,
-                WanderingTunePreset.Build,
-                WanderingTunePreset.Description,
+                "Wandering tune",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "WanderingTune.fbks"),
+                "A melody nobody wrote: a wandering value snapped to a pentatonic, each note its own "
+                + "length, drawn as it plays.",
                 PresetKind.Interplay)
             {
                 Tags = ["generative", "melody", "scales"],

@@ -1,0 +1,18 @@
+# Flanger, phaser and chorus in the order a pedalboard would have them, the chorus
+# last because its two outputs make the result stereo. The three run at rates that
+# share no common factor worth the name, so the combination never quite repeats.
+# Nothing is drawn: a flanger combs its input with a delay line, which has no
+# picture side.
+
+description "Flanger, phaser and chorus in the order a pedalboard would have them."
+tags "effects" "modulation"
+
+requires flyback.effects
+
+let moved = saw(freq: 165, amp: 0.9) |> flanger(rate: 0.18, feedback: 0.45, mix: 0.35)
+  |> phaser(depth: 0.75, feedback: 0.5)
+  |> chorus(rate: 0.6, depth: 0.6)
+
+moved |> out.left
+moved.wide |> out.right
+out.volume = 0.6
