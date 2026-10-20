@@ -129,15 +129,11 @@ group "Snare" {
 
 group "Picture: Blocks" {
   let block_y = py - (snare_level * 0.03 + 0.02)
-  let block_outer = block_x + -0
-    |> box(x: _, y: block_y + -0, width: 0.08888889, height: 0.08888889)
-    |> fill(distance: _, softness: 0.0005)
-  let block_inner = block_x + -0
-    |> box(x: _, y: block_y + -0, width: 0.06666667, height: 0.06666667)
-    |> fill(distance: _, softness: 0.0005)
-  let block_dot = block_x + -0
-    |> box(x: _, y: block_y + -0, width: 0.022222223, height: 0.022222223)
-    |> fill(distance: _, softness: 0.0005)
+  let (block_outer, block_inner, block_dot) = for size in [0.08888889, 0.06666667, 0.022222223] {
+    block_x + -0
+      |> box(x: _, y: block_y + -0, width: size, height: size)
+      |> fill(distance: _, softness: 0.0005)
+  }
 }
 
 group "Picture: Sky" {
@@ -322,21 +318,16 @@ group "Picture: Hero" {
     |> fill(distance: _, softness: 0.0005)
   let rainbow = stride |> color.hsv(hue: _, saturation: 0.8, value: 0.95)
   let suit = rgb(r: 0.88, g: 0.14, b: 0.12) |> color.mix(a: _, b: rainbow, t: ramp)
-  let body = hero_x + -0
-    |> box(x: _, y: hero_y + -0.1, width: 0.05, height: 0.042)
-    |> fill(distance: _, softness: 0.0005)
-  let face = hero_x + -0.005
-    |> box(x: _, y: hero_y + -0.185, width: 0.045, height: 0.045)
-    |> fill(distance: _, softness: 0.0005)
-  let cap = hero_x + -0.005
-    |> box(x: _, y: hero_y + -0.235, width: 0.05, height: 0.018)
-    |> fill(distance: _, softness: 0.0005)
-  let brim = hero_x + -0.05
-    |> box(x: _, y: hero_y + -0.222, width: 0.03, height: 0.008)
-    |> fill(distance: _, softness: 0.0005)
-  let eye = hero_x + -0.03
-    |> box(x: _, y: hero_y + -0.19, width: 0.008, height: 0.014)
-    |> fill(distance: _, softness: 0.0005)
+  let (body, face, cap, brim, eye) = for (left, down, width, height) in [
+      (-0, -0.1, 0.05, 0.042),
+      (-0.005, -0.185, 0.045, 0.045),
+      (-0.005, -0.235, 0.05, 0.018),
+      (-0.05, -0.222, 0.03, 0.008),
+      (-0.03, -0.19, 0.008, 0.014)] {
+    hero_x + left
+      |> box(x: _, y: hero_y + down, width: width, height: height)
+      |> fill(distance: _, softness: 0.0005)
+  }
   let with_hero = with_coins |> ink(mask: max(leg_front, leg_back), r: 0.2, g: 0.25, b: 0.7)
     |> color.mix(a: _, b: suit, t: body)
     |> color.mix(a: _, b: rgb(g: 0.76, b: 0.56), t: face)

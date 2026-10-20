@@ -92,68 +92,24 @@ group "Arrangement" {
   # Cut on the downbeat of each section, the way a desk's mutes are. Each part is the
   # slow part's level until the steppers, theirs after it, and nothing once the
   # steppers are done.
-  let kick_on = slow_parts
-    |> expression(
-        a: _,
-        b: steppers_parts,
-        c: steppers,
-        d: beats,
-        formula: "mix(a, b, c) * (1 - step(428, d))")
-  let skank_on = slow_parts.part_6
-    |> expression(
-        a: _,
-        b: steppers_parts.part_6,
-        c: steppers,
-        d: beats,
-        formula: "mix(a, b, c) * (1 - step(428, d))")
-  let bass_on = slow_parts.part_5
-    |> expression(
-        a: _,
-        b: steppers_parts.part_5,
-        c: steppers,
-        d: beats,
-        formula: "mix(a, b, c) * (1 - step(428, d))")
-  let echo_throw = slow_parts.part_7
-    |> expression(
-        a: _,
-        b: steppers_parts.part_7,
-        c: steppers,
-        d: beats,
-        formula: "mix(a, b, c) * (1 - step(428, d))")
-  let rim_on = slow_parts.part_2
-    |> expression(
-        a: _,
-        b: steppers_parts.part_2,
-        c: steppers,
-        d: beats,
-        formula: "mix(a, b, c) * (1 - step(428, d))")
-  let hand_drum_on = slow_parts.part_4
-    |> expression(
-        a: _,
-        b: steppers_parts.part_4,
-        c: steppers,
-        d: beats,
-        formula: "mix(a, b, c) * (1 - step(428, d))")
-  let rolls_on = slow_parts.part_8
-    |> expression(
-        a: _,
-        b: steppers_parts.part_8,
-        c: steppers,
-        d: beats,
-        formula: "mix(a, b, c) * (1 - step(428, d))")
+  let (kick_on, rim_on, hats_on, hand_drum_on, bass_on, skank_on, echo_throw, rolls_on) =
+    for (slow, fast) in [
+      (slow_parts, steppers_parts),
+      (slow_parts.part_2, steppers_parts.part_2),
+      (slow_parts.part_3, steppers_parts.part_3),
+      (slow_parts.part_4, steppers_parts.part_4),
+      (slow_parts.part_5, steppers_parts.part_5),
+      (slow_parts.part_6, steppers_parts.part_6),
+      (slow_parts.part_7, steppers_parts.part_7),
+      (slow_parts.part_8, steppers_parts.part_8)] {
+      slow |> expression(a: _, b: fast, c: steppers, d: beats, formula: "mix(a, b, c) * (1 - step(428, d))")
+    }
   # A minor and D minor, two bars each, and four each in the steppers.
   let d_minor = steppers_beats
     |> expression(
         a: _,
         b: steppers,
         formula: "step(1, a * mix(0.125, 0.0625, b) % 2)")
-  let hats_on = slow_parts.part_3
-    |> expression(
-        a: _,
-        b: steppers_parts.part_3,
-        c: steppers,
-        d: beats,
-        formula: "mix(a, b, c) * (1 - step(428, d))")
 }
 
 group "Kick" {
@@ -191,10 +147,9 @@ group "Skank" {
   let skank_stroke = beats |> stroke(rate: 0.25, offset: 0.25, curve: 28)
   let skank_level = skank_stroke * skank_on
   # A minor seventh, and D minor seventh with two notes moved down a tone.
-  let root_note = 57 - d_minor * 0 |> note(note: _)
-  let third_note = 60 - d_minor * 0 |> note(note: _)
-  let fifth_note = 64 - d_minor * 2 |> note(note: _)
-  let seventh_note = 67 - d_minor * 2 |> note(note: _)
+  let skank_notes = for (tone, fall) in [(57, 0), (60, 0), (64, 2), (67, 2)] {
+    tone - d_minor * fall |> note(note: _)
+  }
 }
 
 group "Bass" {
@@ -354,7 +309,7 @@ group "Percussion" {
 group "Skank" {
   # A tenth of a second of chord through a filter that drifts open and shut over half
   # a minute: one skank a bar, on four, and the echo plays the rest.
-  let skank_chord = saw(freq: root_note) + saw(freq: third_note) + saw(freq: fifth_note) + saw(freq: seventh_note)
+  let skank_chord = sum(for pitch in skank_notes { saw(freq: pitch) })
     |> filter(
         cutoff: min(
             knob_cutoff * (

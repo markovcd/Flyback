@@ -85,17 +85,9 @@ group "Picture: Rows" {
   # being played lights in both.
   let along = coord * 3.6 + 6
   let within = fract(along) + -0.5
-  let square_a = within
-    |> box(x: _, y: (coord.y + -0.86) * 3.6, width: 0.34, height: 0.34, corner: 0.05)
-    |> fill(distance: _, softness: 0.02, width: 0.05)
   let cell = floor(along)
-  let row_claps_a = cell |> euclid(rate: 1, steps: 12, hits: 7)
   let column = 1 - step(0.5, abs(cell - playing))
   let row = cell |> window(from: -0.5, to: 11.5)
-  let square_b = within
-    |> box(x: _, y: (coord.y + 0.86) * 3.6, width: 0.34, height: 0.34, corner: 0.05)
-    |> fill(distance: _, softness: 0.02, width: 0.05)
-  let row_claps_b = cell |> euclid(rate: 1, steps: 12, hits: 7, rotate: ahead)
 }
 
 group "Arrangement" {
@@ -121,24 +113,28 @@ group "Claps" {
   # The same process, stepped instead of eased: seven in twelve on a block of wood,
   # twice, the second rotated by the lead, which a Euclid rounds to whole steps, so it
   # jumps where the melody slides.
-  let claps_a = count |> euclid(rate: 1, steps: 12, hits: 7)
-  let wood_a_level = knock * claps_a.hit
-  let claps_b = count |> euclid(rate: 1, steps: 12, hits: 7, rotate: ahead)
-  let wood_b_level = knock * claps_b.hit
-  let wood_a = sine(freq: 1150, amp: wood_a_level)
-  let wood_b = sine(freq: 1150, amp: wood_b_level)
+  let (claps, woods) = for turn in [0, ahead] {
+    let hits = count |> euclid(rate: 1, steps: 12, hits: 7, rotate: turn)
+    let level = knock * hits.hit
+    (level, sine(freq: 1150, amp: level))
+  }
+  let (wood_a_level, wood_b_level) = claps
+  let (wood_a, wood_b) = woods
 }
 
 group "Picture: Rows" {
-  let row_a_light = column * wood_a_level
-    |> remap(in_low: 0, out_low: 0.45, out_high: 1.6)
-  let row_a_lit = square_a.outline * 0.4 + square_a * row_claps_a.hit * row_a_light
   let shown = row * parts.part_4
-  let row_a = row_a_lit * shown
-  let row_b_light = column * wood_b_level
-    |> remap(in_low: 0, out_low: 0.45, out_high: 1.6)
-  let row_b_lit = square_b.outline * 0.4 + square_b * row_claps_b.hit * row_b_light
-  let row_b = row_b_lit * shown
+  let (row_a, row_b) = for (height, turn, level) in [
+      (-0.86, 0, wood_a_level),
+      (0.86, ahead, wood_b_level)] {
+    let square = within
+      |> box(x: _, y: (coord.y + height) * 3.6, width: 0.34, height: 0.34, corner: 0.05)
+      |> fill(distance: _, softness: 0.02, width: 0.05)
+    let row_claps = cell |> euclid(rate: 1, steps: 12, hits: 7, rotate: turn)
+    let light = column * level |> remap(in_low: 0, out_low: 0.45, out_high: 1.6)
+    let lit = square.outline * 0.4 + square * row_claps.hit * light
+    lit * shown
+  }
 }
 
 group "Picture: Dials" {
@@ -197,20 +193,14 @@ group "Picture: Rings" {
 group "Players" {
   # The same list and the same String twice; all that differs is what is on 'in': the
   # count, and the count with the lead added.
-  let notes_a = count |> notes(rate: 1) [ D4 A4 E4 G4 C5 A4 D4 G4 E4 C5 A4 G4 ]
-  let notes_b = count_b |> notes(rate: 1) [ D4 A4 E4 G4 C5 A4 D4 G4 E4 C5 A4 G4 ]
-  let pitch_a = notes_a |> note(note: _)
-  let player_a = string(
-      trigger: notes_a.gate,
-      freq: pitch_a,
-      decay: 398.10717ms,
-      brightness: 0.55)
-  let pitch_b = notes_b |> note(note: _)
-  let player_b = string(
-      trigger: notes_b.gate,
-      freq: pitch_b,
-      decay: 398.10717ms,
-      brightness: 0.55) * parts
+  let (lines, players) = for clock in [count, count_b] {
+    let line = clock |> notes(rate: 1) [ D4 A4 E4 G4 C5 A4 D4 G4 E4 C5 A4 G4 ]
+    let pitch = line |> note(note: _)
+    (line, string(trigger: line.gate, freq: pitch, decay: 398.10717ms, brightness: 0.55))
+  }
+  let (notes_a, notes_b) = lines
+  let (player_a, player_b_alone) = players
+  let player_b = player_b_alone * parts
 }
 
 group "Agreement" {

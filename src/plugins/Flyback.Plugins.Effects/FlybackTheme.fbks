@@ -121,45 +121,29 @@ group "Arp" {
   # Up the chord to the tenth and back, in sixteenths, an octave higher once the
   # filters are open. Four voices take the sixteenths in turn and each rings for a
   # beat, so a note is still sounding under the three after it.
-  let arp_1_stroke = beats |> stroke(curve: 2.1)
-  let arp_1_level = arp_1_stroke * 1
-  let arp_2_stroke = beats |> stroke(offset: 0.25, curve: 2.1)
-  let arp_2_level = arp_2_stroke * 0.55
-  let arp_3_stroke = beats |> stroke(offset: 0.5, curve: 2.1)
-  let arp_3_level = arp_3_stroke * 0.72
-  let arp_4_stroke = beats |> stroke(offset: 0.75, curve: 2.1)
-  let arp_4_level = arp_4_stroke * 0.55
-  let arp_level = max(
-      max(arp_1_level, arp_2_level),
-      max(arp_3_level, arp_4_level))
-  let arp_1_step = beats + -0 |> values(rate: 1) [ 0 15.5 ]
   let arp_octave = 12 + 12 * step(0.9, filters_open)
-  let arp_1_pitch = arp_1_step + roots |> tune(transpose: arp_octave) [ A B C D E F G ]
-  let arp_1_pluck = beats |> stroke(curve: 4.3)
   let arp_opening = filters_open |> remap(in_low: 0, out_low: 900, out_high: 6500)
-  let arp_1 = (
-      saw(freq: arp_1_pitch, amp: 0.6) + saw(freq: arp_1_pitch * 1.0045, amp: 0.4)) * arp_1_level
-    |> filter(cutoff: 180 + arp_1_pluck * arp_opening, resonance: 0.35)
+  let arp_1_step = beats + -0 |> values(rate: 1) [ 0 15.5 ]
   let arp_2_step = beats + -0.25 |> values(rate: 1) [ 3.5 12 ]
-  let arp_2_pitch = arp_2_step + roots |> tune(transpose: arp_octave) [ A B C D E F G ]
-  let arp_2_pluck = beats |> stroke(offset: 0.25, curve: 4.3)
-  let arp_2 = (
-      saw(freq: arp_2_pitch, amp: 0.6) + saw(freq: arp_2_pitch * 1.0045, amp: 0.4)) * arp_2_level
-    |> filter(cutoff: 180 + arp_2_pluck * arp_opening, resonance: 0.35)
   let arp_3_step = beats + -0.5 |> values(rate: 1) [ 7 7 ]
-  let arp_3_pitch = arp_3_step + roots |> tune(transpose: arp_octave) [ A B C D E F G ]
-  let arp_3_pluck = beats |> stroke(offset: 0.5, curve: 4.3)
-  let arp_3 = (
-      saw(freq: arp_3_pitch, amp: 0.6) + saw(freq: arp_3_pitch * 1.0045, amp: 0.4)) * arp_3_level
-    |> filter(cutoff: 180 + arp_3_pluck * arp_opening, resonance: 0.35)
   let arp_4_step = beats + -0.75 |> values(rate: 1) [ 12 3.5 ]
-  let arp_4_pitch = arp_4_step + roots |> tune(transpose: arp_octave) [ A B C D E F G ]
-  let arp_4_pluck = beats |> stroke(offset: 0.75, curve: 4.3)
-  let arp_4 = (
-      saw(freq: arp_4_pitch, amp: 0.6) + saw(freq: arp_4_pitch * 1.0045, amp: 0.4)) * arp_4_level
-    |> filter(cutoff: 180 + arp_4_pluck * arp_opening, resonance: 0.35)
-  let arps = arp_1 + arp_2 + (arp_3 + arp_4)
-  let arp = arps * parts.part_4
+  let (arp_voices, arp_levels, arp_pitches) = for (offset, weight, steps) in [
+      (0, 1, arp_1_step),
+      (0.25, 0.55, arp_2_step),
+      (0.5, 0.72, arp_3_step),
+      (0.75, 0.55, arp_4_step)] {
+    let level = (beats |> stroke(offset: offset, curve: 2.1)) * weight
+    let pitch = steps + roots |> tune(transpose: arp_octave) [ A B C D E F G ]
+    let pluck = beats |> stroke(offset: offset, curve: 4.3)
+    let voice = (saw(freq: pitch, amp: 0.6) + saw(freq: pitch * 1.0045, amp: 0.4)) * level
+      |> filter(cutoff: 180 + pluck * arp_opening, resonance: 0.35)
+    (voice, level, pitch)
+  }
+  let (arp_1, arp_2, arp_3, arp_4) = arp_voices
+  let (arp_1_level, arp_2_level, arp_3_level, arp_4_level) = arp_levels
+  let (arp_1_pitch, arp_2_pitch, arp_3_pitch, arp_4_pitch) = arp_pitches
+  let arp_level = max(max(arp_1_level, arp_2_level), max(arp_3_level, arp_4_level))
+  let arp = (arp_1 + arp_2 + (arp_3 + arp_4)) * parts.part_4
 }
 
 group "Picture: Scope" {
@@ -175,29 +159,19 @@ group "Pops" {
   # its last bar, climbing into the next: seven bars' rest, then the run. Two voices
   # take the eighths in turn, each a sine with its octave and twelfth, ringing over
   # the next note and starting half again as high for its first few milliseconds.
-  let pop_1_stroke = beats |> stroke(curve: 2.9)
   let pop_1_notes = beats + -0 |> notes(rate: 1, gate_length: 1) [ A4%0@28 A4 D5 G5 C6 ]
-  let pop_1_level = pop_1_stroke * pop_1_notes.gate * parts.part_8
-  let pop_2_stroke = beats |> stroke(offset: 0.5, curve: 2.9)
   let pop_2_notes = beats + -0.5
     |> notes(rate: 1, gate_length: 1) [ C5%0@28 C5 E5 A5 A5%0 ]
-  let pop_2_level = pop_2_stroke * pop_2_notes.gate * parts.part_8
-  let pop_1_pitch = pop_1_notes |> note(note: _)
-  let pop_1_chirp = beats |> stroke(curve: 78)
-  let pop_1_freq = pop_1_pitch * (1 + 0.5 * pop_1_chirp)
-  let pop_2_pitch = pop_2_notes |> note(note: _)
-  let pop_2_chirp = beats |> stroke(offset: 0.5, curve: 78)
-  let pop_2_freq = pop_2_pitch * (1 + 0.5 * pop_2_chirp)
-  let pop_2 = sine(
-      freq: pop_2_freq,
-      amp: pop_2_level) + (sine(
-          freq: pop_2_freq * 2,
-          amp: pop_2_level * 0.35) + sine(freq: pop_2_freq * 3, amp: pop_2_level * 0.12))
-  let pops = sine(
-      freq: pop_1_freq,
-      amp: pop_1_level) + (sine(
-          freq: pop_1_freq * 2,
-          amp: pop_1_level * 0.35) + sine(freq: pop_1_freq * 3, amp: pop_1_level * 0.12)) + pop_2
+  let (pop_voices, pop_levels) = for (offset, line) in [(0, pop_1_notes), (0.5, pop_2_notes)] {
+    let level = (beats |> stroke(offset: offset, curve: 2.9)) * line.gate * parts.part_8
+    let freq = (line |> note(note: _)) * (1 + 0.5 * (beats |> stroke(offset: offset, curve: 78)))
+    let voice = sine(freq: freq, amp: level)
+      + (sine(freq: freq * 2, amp: level * 0.35) + sine(freq: freq * 3, amp: level * 0.12))
+    (voice, level)
+  }
+  let (pop_1, pop_2) = pop_voices
+  let (pop_1_level, pop_2_level) = pop_levels
+  let pops = pop_1 + pop_2
 }
 
 group "Picture: Scope" {

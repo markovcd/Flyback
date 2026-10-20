@@ -56,65 +56,72 @@ def dot(at, level, turn, orbit, smallest, largest) = {
 }
 
 group "Picture" {
-  let ring_1 = ring(coord, 0.86)
-  let ring_2 = ring(coord, 0.76666665)
-  let ring_3 = ring(coord, 0.67333335)
-  let ring_4 = ring(coord, 0.58000004)
-  let ring_5 = ring(coord, 0.48666668)
-  let ring_6 = ring(coord, 0.39333335)
-  let ring_7 = ring(coord, 0.3)
+  let (ring_1, ring_2, ring_3, ring_4, ring_5, ring_6, ring_7) =
+    for size in [0.86, 0.76666665, 0.67333335, 0.58000004, 0.48666668, 0.39333335, 0.3] {
+      ring(coord, size)
+    }
 }
 
 # One stroke a turn, so a bell rings for the whole of it; the quick ones fall away
 # sooner, which keeps the top clear.
 group "The seven speeds" {
   let time = time()
-  let turn_1 = time * orbit_1(0..0.12516667)
-  let stroke_1 = turn_1 |> stroke(curve: 2.1)
-  let turn_2 = time * orbit_2(0..0.13356903)
-  let turn_3 = time * orbit_3(0..0.14195535)
-  let turn_4 = time * orbit_4(0..0.15037268)
-  let turn_5 = time * orbit_5(0..0.15877429)
-  let turn_6 = time * orbit_6(0..0.16721943)
-  let turn_7 = time * orbit_7(0..0.17560093)
-  let stroke_2 = turn_2 |> stroke(curve: 2.55)
-  let stroke_3 = turn_3 |> stroke()
-  let stroke_4 = turn_4 |> stroke(curve: 3.4499998)
-  let stroke_5 = turn_5 |> stroke(curve: 3.8999999)
-  let stroke_6 = turn_6 |> stroke(curve: 4.35)
-  let stroke_7 = turn_7 |> stroke(curve: 4.7999997)
+  let (turns, strokes) = for (speed, curve) in [
+      (orbit_1(0..0.12516667), 2.1),
+      (orbit_2(0..0.13356903), 2.55),
+      (orbit_3(0..0.14195535), 3),
+      (orbit_4(0..0.15037268), 3.4499998),
+      (orbit_5(0..0.15877429), 3.8999999),
+      (orbit_6(0..0.16721943), 4.35),
+      (orbit_7(0..0.17560093), 4.7999997)] {
+    let turn = time * speed
+    (turn, turn |> stroke(curve: curve))
+  }
+  let (turn_1, turn_2, turn_3, turn_4, turn_5, turn_6, turn_7) = turns
+  let (stroke_1, stroke_2, stroke_3, stroke_4, stroke_5, stroke_6, stroke_7) = strokes
 }
 
 # Neighbors only: every pair would be twenty-one signals for a picture that can
 # show one thing at a time. 'passing' is how much passing there is anywhere, which
 # the drone leans on.
 group "The passes" {
-  let pass_1 = nearness(turn_1, turn_2)
-  let pass_2 = nearness(turn_2, turn_3)
-  let pass_3 = nearness(turn_3, turn_4)
-  let pass_4 = nearness(turn_4, turn_5)
-  let pass_5 = nearness(turn_5, turn_6)
-  let pass_6 = nearness(turn_6, turn_7)
-  let passing = sum([pass_1, pass_2, pass_3, pass_4, pass_5, pass_6]) * 0.16666667
+  let passes = for (a, b) in [
+      (turn_1, turn_2),
+      (turn_2, turn_3),
+      (turn_3, turn_4),
+      (turn_4, turn_5),
+      (turn_5, turn_6),
+      (turn_6, turn_7)] {
+    nearness(a, b)
+  }
+  let (pass_1, pass_2, pass_3, pass_4, pass_5, pass_6) = passes
+  let passing = sum(passes) * 0.16666667
 }
 
 # A dot on each orbit, warm outside where the slow low ones are and cold in the
 # middle. Where two neighbors would meet if they ever did, between their orbits at
 # the angle of the faster one, a dot as bright as the pass is close.
 group "Picture" {
-  let dot_1 = dot(coord, stroke_1 * (passing * 0.5 + 0.5), turn_1, 0.86, 0.03375, 0.120000005)
-  let dot_2 = dot(coord, stroke_2 * (passing * 0.5 + 0.5), turn_2, 0.76666665, 0.031050002, 0.11040001)
-  let dot_3 = dot(coord, stroke_3 * (passing * 0.5 + 0.5), turn_3, 0.67333335, 0.02835, 0.1008)
-  let dot_4 = dot(coord, stroke_4 * (passing * 0.5 + 0.5), turn_4, 0.58000004, 0.02565, 0.09120001)
-  let dot_5 = dot(coord, stroke_5 * (passing * 0.5 + 0.5), turn_5, 0.48666668, 0.022950001, 0.0816)
-  let dot_6 = dot(coord, stroke_6 * (passing * 0.5 + 0.5), turn_6, 0.39333335, 0.02025, 0.072000004)
-  let dot_7 = dot(coord, stroke_7 * (passing * 0.5 + 0.5), turn_7, 0.3, 0.01755, 0.06240001)
-  let meet_1 = dot(coord, pass_1 * 0.8, turn_2, 0.81333333, 0.022499999, 0.080000006)
-  let meet_2 = dot(coord, pass_2 * 0.8, turn_3, 0.72, 0.022499999, 0.080000006)
-  let meet_3 = dot(coord, pass_3 * 0.8, turn_4, 0.62666667, 0.022499999, 0.080000006)
-  let meet_4 = dot(coord, pass_4 * 0.8, turn_5, 0.53333336, 0.022499999, 0.080000006)
-  let meet_5 = dot(coord, pass_5 * 0.8, turn_6, 0.44, 0.022499999, 0.080000006)
-  let meet_6 = dot(coord, pass_6 * 0.8, turn_7, 0.3466667, 0.022499999, 0.080000006)
+  let (dot_1, dot_2, dot_3, dot_4, dot_5, dot_6, dot_7) =
+    for (stroke, turn, orbit, smallest, largest) in [
+        (stroke_1, turn_1, 0.86, 0.03375, 0.120000005),
+        (stroke_2, turn_2, 0.76666665, 0.031050002, 0.11040001),
+        (stroke_3, turn_3, 0.67333335, 0.02835, 0.1008),
+        (stroke_4, turn_4, 0.58000004, 0.02565, 0.09120001),
+        (stroke_5, turn_5, 0.48666668, 0.022950001, 0.0816),
+        (stroke_6, turn_6, 0.39333335, 0.02025, 0.072000004),
+        (stroke_7, turn_7, 0.3, 0.01755, 0.06240001)] {
+      dot(coord, stroke * (passing * 0.5 + 0.5), turn, orbit, smallest, largest)
+    }
+  let (meet_1, meet_2, meet_3, meet_4, meet_5, meet_6) = for (pass, turn, orbit) in [
+      (pass_1, turn_2, 0.81333333),
+      (pass_2, turn_3, 0.72),
+      (pass_3, turn_4, 0.62666667),
+      (pass_4, turn_5, 0.53333336),
+      (pass_5, turn_6, 0.44),
+      (pass_6, turn_7, 0.3466667)] {
+    dot(coord, pass * 0.8, turn, orbit, 0.022499999, 0.080000006)
+  }
 }
 
 group "Voices" {

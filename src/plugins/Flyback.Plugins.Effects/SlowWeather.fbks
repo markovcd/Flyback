@@ -178,22 +178,16 @@ group "Visitor: Rain" {
   # Rain: pink hiss high up for the wash, and drops, each a sine that rises in pitch
   # as it dies, on three counts that never line up.
   let rain_here = fade(level: wander(rate: 0.031, seed: 8), from: 0.55, to: 0.67)
-  let drop_die_1 = noise(rate: 5.3, seed: 14)
-  let drop_1 = clock |> stroke(rate: 5.3, curve: 7)
-  let drop_die_2 = noise(rate: 3.1, seed: 16)
-  let drop_2 = clock |> stroke(rate: 3.1, curve: 7)
-  let drops_middle = sine(
-      freq: (700 + 800 * fract(drop_die_2.random * 7.31)) * (1.6 - 0.6 * drop_2),
-      amp: drop_2 * step(0, drop_die_2.random))
+  let (drop_left, drops_middle, drop_right) = for (rate, seed) in [(5.3, 14), (3.1, 16), (7.7, 15)] {
+    let die = noise(rate: rate, seed: seed)
+    let drop = clock |> stroke(rate: rate, curve: 7)
+    sine(
+        freq: (700 + 800 * fract(die.random * 7.31)) * (1.6 - 0.6 * drop),
+        amp: drop * step(0, die.random))
+  }
   let wash = hiss(cutoff: 5200, resonance: 0.15, gain: 0.35, seed: 9, noise: "pink")
-  let rain_left = sine(
-      freq: (700 + 800 * fract(drop_die_1.random * 7.31)) * (1.6 - 0.6 * drop_1),
-      amp: drop_1 * step(0, drop_die_1.random)) + drops_middle * 0.5 + wash
-  let drop_die_3 = noise(rate: 7.7, seed: 15)
-  let drop_3 = clock |> stroke(rate: 7.7, curve: 7)
-  let rain_right = sine(
-      freq: (700 + 800 * fract(drop_die_3.random * 7.31)) * (1.6 - 0.6 * drop_3),
-      amp: drop_3 * step(0, drop_die_3.random)) + drops_middle * 0.5 + wash
+  let rain_left = drop_left + drops_middle * 0.5 + wash
+  let rain_right = drop_right + drops_middle * 0.5 + wash
 }
 
 group "Picture: Color" {
