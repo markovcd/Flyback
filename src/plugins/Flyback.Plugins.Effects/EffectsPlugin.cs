@@ -174,8 +174,8 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 Tags = ["ambient", "generative", "drone", "feedback", "knobs"],
             },
             new PatchPreset(
-                NoSenseDubPreset.Name,
-                NoSenseDubPreset.Build,
+                "No Sense Dub",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "NoSenseDub.fbks"),
                 "Roots dub in A minor to perform: a one drop, a bass line and a skank that drop in and "
                 + "out and are thrown into the echo, a drop to silence and steppers at twice the tempo, "
                 + "a drawbar organ to play over them a note at a time, and six panel "
@@ -183,12 +183,12 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "move the sound. The voice is Nesnad's, from Wikimedia Commons, under CC BY-SA 3.0.",
                 PresetKind.Showcase)
             {
-                Files = PresetFiles.Embedded(typeof(NoSenseDubPreset).Assembly, NoSenseDubPreset.Clips),
+                Files = PresetFiles.Embedded(typeof(EffectsPlugin).Assembly, "NoSenseDub"),
                 Tags = ["song", "dub", "playable", "knobs", "echo", "voice"],
             },
             new PatchPreset(
-                OverworldPreset.Name,
-                OverworldPreset.Build,
+                "Overworld",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "Overworld.fbks"),
                 "A whole chiptune track on a console's four voices — two pulses, a stepped triangle "
                 + "and crunching noise — with a key change, the music ducked under the kick, "
                 + "under a side-scroller drawn a pixel at a time.",
@@ -197,8 +197,8 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 Tags = ["song", "chiptune", "pixel-art", "drums"],
             },
             new PatchPreset(
-                ThemePreset.Name,
-                ThemePreset.Build,
+                "Flyback Theme",
+                PresetText.Embedded(typeof(EffectsPlugin).Assembly, "FlybackTheme.fbks"),
                 "Flyback's theme: three minutes of synthwave in A minor, an arp, a pumping bass and "
                 + "a hook, on a two-channel scope whose beam crosses the screen once a beat.",
                 PresetKind.Showcase)

@@ -37,7 +37,7 @@ public partial class NodeCatalog
     /// The level meter. Named here because what it reads is filled in from
     /// outside the program — see <c>Compile.Meters</c>.
     /// </summary>
-    public const string MeterTypeId = "meter";
+    internal const string MeterTypeId = "meter";
 
     /// <summary>
     /// How loud the speakers are, as a number the picture can use.

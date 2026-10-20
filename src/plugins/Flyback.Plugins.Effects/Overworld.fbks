@@ -1,0 +1,608 @@
+# A 104-bar chiptune track on a console's four voices, mastered, under a pixel-drawn
+# side-scroller.
+#
+# The voices are built as the chip built them: pulses at an eighth, a quarter and a
+# half width, a sixteen-step triangle bass, and noise held on a slower clock so it
+# crunches rather than hisses. Chords are arpeggiated at thirty-seconds. Two
+# Arrangements of eight-bar sections say what plays when, one for the band and one
+# for the lead, and a third turns the time of day over the last quarter of each. The
+# three progressions share one list, picked by offsetting its input by 32 beats per
+# progression, and the key change is one number added to every pitch.
+#
+# Everything pitched is ducked by the kick, then the drums rejoin through an EQ, a
+# Width and a Limiter. A Limiter rather than the Maximizer, which would double the
+# op count and not run live.
+
+description "A whole chiptune track on a console's four voices — two pulses, a stepped"
+  "triangle and crunching noise — with a key change, the music ducked under the kick,"
+  "under a side-scroller drawn a pixel at a time."
+tags "song" "chiptune" "pixel-art" "drums"
+length 2:46.40
+
+requires flyback.effects, flyback.mastering, flyback.picture, flyback.voice
+
+group "Picture: Screen" {
+  let coord = coord()
+  # A television's glass bulges, so the frame is read a little further out the further
+  # from the middle it is. Then every coordinate is rounded to the middle of one of 45
+  # rows of pixels, and the rest of the picture never sees anything finer. Off the
+  # edge of the glass is the dark of the set; every other pixel is a dither.
+  let bulge = coord.radius * coord.radius * 0.035 + 1
+  let bulged_x = coord * bulge
+  let pixel_x = floor(bulged_x * 45)
+  let px = (pixel_x + 0.5) * 0.022222223
+  let bulged_y = coord.y * bulge
+  let pixel_y = floor(bulged_y * 45)
+  let py = (pixel_y + 0.5) * 0.022222223
+  let dither = pixel_x |> checker(x: _, y: pixel_y, size: 1)
+  let glass = step(abs(bulged_x), coord.aspect) * step(abs(bulged_y), 0.99)
+}
+
+group "Clock" {
+  # A hundred and fifty a minute. Every part reads the count of beats, so the tempo is
+  # this one knob.
+  let clock = time()
+  let tempo = tempo(bpm: 150)
+  let beats = clock * tempo
+}
+
+group "Picture: Ground" {
+  # Bricks, a tile to the beat: eight pixels by four, every other row set half a brick
+  # over, the mortar the first pixel of each brick either way.
+  let along = px + beats * 0.25
+  let depth = -0.6 - py
+  let bricks = along
+    |> expression(
+        a: _,
+        b: depth * 11.25,
+        formula: "1 - max(1 - step(1 / 8, fract(a * (1 / (8 / 45)) + floor(b) * 0.5)), 1 - step(1 / 4, fract(b))) * 0.55")
+  let grass_edge = depth |> smoothstep(edge0: 0.05, edge1: 0.052)
+}
+
+group "Picture: Blocks" {
+  # A row of the blocks that hold something, one every four tiles over the hero's
+  # head: a dark rim, a gold face that flashes with the beat, and a dot. The snare
+  # knocks them up, and they only hang there once the verse is in.
+  let block_x = (fract(along * 1.40625) - 0.5) * 0.7111111
+  let block_rim = rgb(r: 0.45, g: 0.22, b: 0.05)
+  let beat_note = beats |> stroke()
+  let block_face = rgb(g: 0.72, b: 0.18) |> gain(gain: beat_note * 0.35 + 0.75)
+}
+
+group "Snare" {
+  # The chip's noise is a random value held for a sample of a slower clock: at 6400 a
+  # second it is the crunch rather than a hiss. Two and four once the verse is in, and
+  # in a build, sixteenths that grow louder and thirty-seconds in the last bar.
+  let backbeat = beats |> stroke(rate: 0.5, offset: 0.5, curve: 5)
+  let roll_note = beats |> stroke(rate: 4, curve: 4)
+  let fast_roll_note = beats |> stroke(rate: 8, curve: 4)
+  let crunch = clock * 100 |> noise(rate: 64, seed: 3)
+}
+
+group "Arrangement" {
+  # The track in phrases of eight bars: the title screen, two verses, a build, two
+  # choruses, the night, a build out of it, a solo, two choruses a tone up, and the
+  # credits. A row for each of the kick, the closed hats, the backbeat (with the crash
+  # and the blocks), the bass, how far the arp opens, the choruses, the builds and the
+  # hero's hop. A build's second half is a ramp, and its last two beats are nothing at
+  # all, so the drop lands out of silence.
+  let parts = beats
+    |> arrangement(rate: 0.03125) [
+        0 1 1 1 1 1 1 0 1 1 1 1 0 |
+        0 0.5 1 1 1 1 1 0 1 1 1 1 0 |
+        0 0 1 1 0 1 1 0 0 1 1 1 0 |
+        0 1 1 1 1 1 1 1 1 1 1 1 0 |
+        0.2 0.4 0.7 0.75 0.6 0.9 1 0.3 0.6 0.95 1 1 0.25 |
+        0 0 0 0 0 1 1 0 0 1 1 1 0 |
+        0 0 0 0 1 0 0 0 1 0 0 0 0 |
+        0 0 1 1 1 1 1 0 1 1 1 1 0 ]
+  let ramp = parts.progress
+    |> expression(a: _, b: parts.part_7, formula: "smoothstep(0.5, 1, a) * b")
+  let not_silent = 1 - step(0.9375, parts.progress) * parts.part_7
+  # What the lead plays, one tune at a time: the verse, the chorus, the night or the
+  # solo, and the second pulse playing a third under it, saved for the second time
+  # through anything. The key change is a whole tone from the last two choruses to the
+  # end.
+  let tunes = beats
+    |> arrangement(rate: 0.03125) [
+        0 0 1 1 0 0 0 0 0 0 0 0 1 |
+        0 0 0 0 0 1 1 0 0 0 1 1 0 |
+        0 0 0 0 0 0 0 1 1 0 0 0 0 |
+        0 0 0 0 0 0 0 0 0 1 0 0 0 |
+        0 0 0 1 0 0 1 0 0 0 1 1 0 ]
+  let key_change = step(10.5, parts.section) * 2
+  let arp_open = parts.part_5 |> slew(rise: 3.981072s, fall: 1s)
+}
+
+group "Snare" {
+  let snare_backbeat = backbeat * parts.part_3
+  let fast_roll = fast_roll_note * (
+      step(0.875, parts.progress) * parts.part_7) * not_silent
+  let snare_level = snare_backbeat + (roll_note * ramp * 0.8 + fast_roll)
+  let snare_noise = snare_level * crunch.random |> filter(cutoff: 1200, resonance: 0.1)
+  let snare = snare_noise.high * 2 + drum(
+      level: snare_level,
+      pitch: 185,
+      bend: 6,
+      drive: 1) * 1.2
+}
+
+group "Picture: Blocks" {
+  let block_y = py - (snare_level * 0.03 + 0.02)
+  let block_outer = block_x + -0
+    |> box(x: _, y: block_y + -0, width: 0.08888889, height: 0.08888889)
+    |> fill(distance: _, softness: 0.0005)
+  let block_inner = block_x + -0
+    |> box(x: _, y: block_y + -0, width: 0.06666667, height: 0.06666667)
+    |> fill(distance: _, softness: 0.0005)
+  let block_dot = block_x + -0
+    |> box(x: _, y: block_y + -0, width: 0.022222223, height: 0.022222223)
+    |> fill(distance: _, softness: 0.0005)
+}
+
+group "Picture: Sky" {
+  # The time of day, a phrase at a time: morning, day, dusk for the choruses, night
+  # for the bridge, and back towards gold. It runs a quarter of a phrase ahead and
+  # takes that quarter to change, a slew the picture can have. Two colors for each
+  # time, at the top of the sky and the horizon, seven bands between them, and a
+  # checkerboard where they meet. Stars are Cells laid over the pixels themselves,
+  # only at night and only high up.
+  let time_of_day = beats + 8
+    |> arrangement(rate: 0.03125, fade: 0.25) [
+        0.15 0 0 0 0.3 0.5 0.5 1 0.85 0.65 0.4 0.45 0.2 ]
+  let dusk = time_of_day |> smoothstep(edge1: 0.5)
+  let night = time_of_day |> smoothstep(edge0: 0.5)
+  let sky_top = rgb(r: 0.55, g: 0.82)
+    |> color.mix(a: _, b: rgb(g: 0.5, b: 0.3), t: dusk)
+    |> color.mix(a: _, b: rgb(r: 0.12, g: 0.1, b: 0.32), t: night)
+  let sky_band = py
+    |> expression(
+        a: _,
+        b: dither,
+        formula: "floor(smoothstep(-0.6, 0.95, a) * 7 + b * 0.5) * (1 / 7)")
+  let sky = rgb(r: 0.2, g: 0.4, b: 0.95)
+    |> color.mix(a: _, b: rgb(r: 0.3, g: 0.12, b: 0.5), t: dusk)
+    |> color.mix(a: _, b: rgb(r: 0.02, g: 0.02, b: 0.12), t: night)
+    |> color.mix(a: sky_top, b: _, t: sky_band)
+  let star_cells = pixel_x + 0.5
+    |> cells(x: _, y: pixel_y + 0.5, scale: 0.14285715, jitter: 0.9)
+  let stars = star_cells.cell
+    |> expression(a: _, b: clock, formula: "remap(sin(a * 40 + b * 3), -1, 1, 0.2, 1)")
+    |> expression(
+        a: star_cells,
+        b: _,
+        c: time_of_day,
+        d: py,
+        formula: "(1 - smoothstep(0.08, 0.09, a)) * b * (smoothstep(0.6, 0.9, c) * smoothstep(0, 0.4, d))")
+}
+
+group "Picture: Ground" {
+  let grass = rgb(r: 0.35, g: 0.85, b: 0.3)
+    |> color.mix(a: _, b: rgb(r: 0.5, g: 0.6, b: 0.25), t: dusk)
+    |> color.mix(a: _, b: rgb(r: 0.1, g: 0.25, b: 0.15), t: night)
+}
+
+group "Picture: Hills" {
+  # Nearer, and two and a half times as fast as the mountains: two sines for a line of
+  # hills, a lighter band along the top, and a darker checker down their faces.
+  let hills_along = px + beats * 0.1
+  let hilltop = sin(
+      hills_along * 3) * 0.1 + sin(hills_along * 7.3 + 1) * 0.05 - 0.32
+  let hill_shade = floor(pixel_x + beats * 4.5)
+    |> checker(x: _, y: pixel_y, size: 0.25)
+    |> expression(
+        a: hilltop,
+        b: py,
+        c: _,
+        formula: "(1 - smoothstep(0.025, 0.03, a - b)) * 0.35 - c * (smoothstep(0.1, 0.12, a - b) * 0.2) + 1")
+}
+
+group "Picture: Mountains" {
+  # Far off and slow: one row of a Clouds field is the height of every column, pulled
+  # towards slate the way distance does, with snow where the ridge is high.
+  let ridge = px + beats * 0.04 |> clouds(x: _, scale: 1.6)
+    |> remap(in_low: 0.25, in_high: 0.75, out_low: -0.2, out_high: 0.3)
+  let snow = ridge
+    |> expression(
+        a: _,
+        b: py,
+        c: night,
+        formula: "smoothstep(0.17, 0.19, a) * (1 - smoothstep(0.04, 0.045, a - b)) * (1 - c * 0.6)")
+}
+
+group "Picture: Sun" {
+  let starry_sky = sky |> ink(mask: stars, b: 0.9)
+}
+
+group "Kick" {
+  # One, the and of two, and three, with two and four filled in for the chorus; struck
+  # at the top of the step.
+  let kick_note = beats |> stroke(rate: 2, curve: 4)
+  let kick_pattern = beats |> values(rate: 2, gate_length: 0.75) [ 1 0 0 1 1 0 0 0 ]
+  let chorus_kicks = beats |> values(rate: 2, gate_length: 0.75) [ 0 0 1 0 0 0 1 0 ]
+  let kick_hits = kick_note * (kick_pattern + chorus_kicks * parts.part_6)
+  let kick_level = kick_hits * not_silent * parts
+  let kick = drum(level: kick_level, pitch: 48, sweep: 170, bend: 5, drive: 2.5)
+}
+
+group "Picture: Sun" {
+  # One disc that is the sun by day, sinks and reddens at dusk, and comes back up pale
+  # as the moon. It swells on the kick.
+  let sun_size = kick_level |> remap(in_low: 0, out_low: 0.16, out_high: 0.185)
+  let sun_disc = py
+    |> expression(
+        a: _,
+        b: dusk,
+        c: night,
+        formula: "a - (remap(b, 0, 1, 0.55, 0.25) + c * 0.35)")
+    |> circle(x: px + -1.05, y: _, radius: sun_size)
+    |> fill(distance: _, softness: 0.0005)
+  let with_sun = rgb(g: 0.9, b: 0.35)
+    |> color.mix(a: _, b: rgb(g: 0.4, b: 0.2), t: dusk)
+    |> color.mix(a: _, b: rgb(r: 0.92, g: 0.92, b: 0.8), t: night)
+    |> color.mix(a: starry_sky, b: _, t: sun_disc)
+}
+
+group "Picture: Clouds" {
+  # A Clouds field squashed flat and cut at two heights, drifting at a twelfth of the
+  # ground's speed, only in the upper sky.
+  let cloud_mask = (px + beats * 0.02) * 2.2
+    |> clouds(x: _, y: py * 3.2, z: clock * 0.02, scale: 1)
+    |> expression(
+        a: _,
+        b: py,
+        c: night,
+        formula: "(step(0.63, a) * 0.55 + step(0.71, a) * 0.4) * (smoothstep(0.05, 0.35, b) * (1 - c * 0.65))")
+  let with_clouds = with_sun |> ink(mask: cloud_mask, r: 0.85, g: 0.85, b: 0.9)
+}
+
+group "Picture: Mountains" {
+  let with_mountains = rgb(r: 0.18, g: 0.2, b: 0.42) |> color.mix(a: sky_top, b: _, t: 0.55)
+    |> ink(mask: snow, r: 0.95, g: 0.95)
+    |> color.mix(a: with_clouds, b: _, t: step(py, ridge))
+}
+
+group "Picture: Hills" {
+  let with_hills = rgb(r: 0.2, g: 0.62, b: 0.28)
+    |> color.mix(a: _, b: rgb(r: 0.35, g: 0.4, b: 0.25), t: dusk)
+    |> color.mix(a: _, b: rgb(r: 0.08, g: 0.2, b: 0.18), t: night)
+    |> gain(gain: hill_shade)
+    |> color.mix(a: with_mountains, b: _, t: step(py, hilltop))
+}
+
+group "Picture: Ground" {
+  let with_ground = rgb(r: 0.78, g: 0.42, b: 0.2)
+    |> color.mix(a: _, b: rgb(r: 0.7, g: 0.32, b: 0.22), t: dusk)
+    |> color.mix(a: _, b: rgb(r: 0.3, g: 0.16, b: 0.14), t: night)
+    |> gain(gain: bricks)
+    |> color.mix(a: grass, b: _, t: grass_edge)
+    |> color.mix(a: with_hills, b: _, t: step(py, -0.6))
+}
+
+group "Picture: Blocks" {
+  let with_blocks = block_outer * parts.part_3 |> color.mix(a: with_ground, b: block_rim, t: _)
+    |> color.mix(a: _, b: block_face, t: block_inner * parts.part_3)
+    |> color.mix(a: _, b: block_rim, t: block_dot * parts.part_3)
+}
+
+group "Picture: Coins" {
+  # Between the blocks and higher, a coin turning on the beat. Only in the chorus.
+  let coin = along
+    |> expression(
+        a: _,
+        b: beats,
+        formula: "(fract(a * (1 / (4 * (8 / 45))) + 0.5) - 0.5) * (4 * (8 / 45)) / (abs(sin(b * pi)) * 0.85 + 0.15)")
+    |> circle(
+        x: _,
+        y: py - (sin(beats * 1.5707964) * 0.02 + 0.22),
+        radius: 0.045)
+    |> fill(distance: _, softness: 0.0005)
+  let with_coins = with_blocks |> ink(mask: coin * parts.part_6, g: 0.85, b: 0.25)
+}
+
+group "Picture: Hero" {
+  # Somebody running: a hop every two beats, which the night leaves out, and legs that
+  # swap on the eighth. In a build the suit cycles through every color, which is what
+  # being unstoppable looks like.
+  let hero_x = px + 0.95
+  let stride = fract(beats * 2)
+  let leg_swap = stride
+    |> expression(a: _, formula: "smoothstep(0.5, 0.501, a) * 0.022")
+  let hero_y = py
+    |> expression(
+        a: _,
+        b: beats,
+        c: parts.part_8,
+        formula: "a + 0.6 - fract(b * 0.5) * (1 - fract(b * 0.5)) * (4 * 0.28) * c")
+  let leg_front = hero_x + leg_swap + 0.011
+    |> box(x: _, y: hero_y + -0.03, width: 0.012, height: 0.03)
+    |> fill(distance: _, softness: 0.0005)
+  let leg_back = hero_x - leg_swap + -0.011
+    |> box(x: _, y: hero_y + -0.03, width: 0.012, height: 0.03)
+    |> fill(distance: _, softness: 0.0005)
+  let rainbow = stride |> color.hsv(hue: _, saturation: 0.8, value: 0.95)
+  let suit = rgb(r: 0.88, g: 0.14, b: 0.12) |> color.mix(a: _, b: rainbow, t: ramp)
+  let body = hero_x + -0
+    |> box(x: _, y: hero_y + -0.1, width: 0.05, height: 0.042)
+    |> fill(distance: _, softness: 0.0005)
+  let face = hero_x + -0.005
+    |> box(x: _, y: hero_y + -0.185, width: 0.045, height: 0.045)
+    |> fill(distance: _, softness: 0.0005)
+  let cap = hero_x + -0.005
+    |> box(x: _, y: hero_y + -0.235, width: 0.05, height: 0.018)
+    |> fill(distance: _, softness: 0.0005)
+  let brim = hero_x + -0.05
+    |> box(x: _, y: hero_y + -0.222, width: 0.03, height: 0.008)
+    |> fill(distance: _, softness: 0.0005)
+  let eye = hero_x + -0.03
+    |> box(x: _, y: hero_y + -0.19, width: 0.008, height: 0.014)
+    |> fill(distance: _, softness: 0.0005)
+  let with_hero = with_coins |> ink(mask: max(leg_front, leg_back), r: 0.2, g: 0.25, b: 0.7)
+    |> color.mix(a: _, b: suit, t: body)
+    |> color.mix(a: _, b: rgb(g: 0.76, b: 0.56), t: face)
+    |> color.mix(a: _, b: suit, t: max(cap, brim))
+    |> color.mix(a: _, b: rgb(r: 0.05, g: 0.03, b: 0.08), t: eye)
+}
+
+group "Picture: HUD" {
+  # A dark strip along the top with how far through the level it is, as a bar that
+  # fills from the left.
+  let progress_bar = px
+    |> expression(
+        a: _,
+        b: py,
+        c: parts.section,
+        d: parts.progress,
+        formula: "window(b, 0.904, 0.946, 0.002, 0.002) * window(a, -1.42, (c - 1 + d) * (1 / 13) * 2.8 - 1.4, 0.02)")
+  let with_hud = with_hero |> gain(gain: 1 - step(0.86, py) * 0.75)
+    |> ink(mask: progress_bar, g: 0.85, b: 0.3)
+}
+
+group "Picture: Tube" {
+  # The drop is a white flash, the colors are held to the few a chip had, the rows of
+  # the tube show between the rows of pixels, and the kick lifts it all a little. The
+  # phosphor glows a moment after.
+  let flash_note = beats |> stroke(rate: 0.03125, curve: 20)
+  let tube_rows = bulged_y
+    |> expression(
+        a: _,
+        b: kick_level,
+        formula: "remap(sin(a * (45 * 2 * pi)), -1, 1, 0.78, 1) * remap(b, 0, 1, 1, 1.12)")
+}
+
+group "Lead" {
+  # Three melodies in E minor, one at a time. The verse climbs Em, falls through Am,
+  # reaches for the high B over G and ends on the D sharp the B major needs; the
+  # chorus is higher, peaking on the E over C; the night's is slow, with an F major
+  # that is not in the key. The lead is on for the whole of a phrase that has one.
+  let verse = beats
+    |> notes(rate: 2) [
+        B4@2 E5@2 G5@2 F#5 E5 G5@3 E5 C5@2 E5@2 D5@2 G5@2 B5@3 A5 A5@2 F#5@2 D5@4 B4@2
+        E5@2 G5@2 B5@2 C6@3 B5 G5@2 E5@2 A5@3 G5 F#5@2 A5@2 D#5@3 F#5 A5@2 F#5@2 ]
+  let chorus = beats
+    |> notes(rate: 2) [
+        E5@2 G5@2 C6@3 B5 B5@2 A5@2 F#5@2 A5@2 B5@4 A5@2 G5@2 B5@2 D6@2 B5@2 G5@2 E6@4
+        D6@2 C6 B5 D6@3 C6 B5@2 A5@2 D#6@3 B5 F#5@2 B5@2 B5@4 F#5 A5 B5 D#6 ]
+  let verse_or_chorus = tunes * verse + tunes.part_2 * chorus
+  let night_tune = beats
+    |> notes(rate: 2) [
+        A4@4 C5@2 E5@2 B4@6 G4@2 E5@4 G5@2 E5@2 D#5@6 F#5@2 C5@4 E5@2 A5@2 G5@6 E5@2
+        F5@4 A5@2 C6@2 B5@4 F#5@2 D#5@2 ]
+  let melody = verse_or_chorus + tunes.part_3 * night_tune
+  let lead_on = tunes + tunes.part_2 + tunes.part_3 + tunes.part_4
+    |> slew(rise: 5.011873ms, fall: 5.011873ms)
+  let lead_width = tunes.part_2 * 0.15 + tunes.part_3 * 0.25 + tunes.part_4 * -0.125 + 0.25 + sine(
+      freq: 0.3,
+      amp: 0.04)
+}
+
+group "Harmony" {
+  # Three progressions on one list: the verse's Em Am G Bm Em C D B, the chorus's C D
+  # Em G C D B B, and the bridge's Am Em C B Am Em F B, picked by reading the list 32
+  # beats further along, rounded so a change is a jump. The third over each root is
+  # three for minor and four for major; the root is also folded into the octave over
+  # C3 for the parts that play chords.
+  let progression_beat = parts.progress * 32 + floor(
+      parts.part_6 + tunes.part_3 * 2 + 0.5) * 32
+  let roots = progression_beat
+    |> notes(rate: 0.25) [
+        E2 A2 G2 B1 E2 C2 D2 B1 C2 D2 E2 G2 C2 D2 B1 B1 A2 E2 C2 B1 A2 E2 F2 B1 ]
+  let root = roots + key_change
+  let chord_root = root % 12 + 48
+  let third = progression_beat
+    |> values(rate: 0.25) [ 3 3 4 3 3 4 4 4 4 4 3 4 4 4 4 4 3 3 4 4 3 3 4 4 ]
+}
+
+group "Arp" {
+  # The chord a note at a time, root, third, fifth and octave at the thirty-second, on
+  # the thinnest pulse, pumped on the eighth and opened by the arrangement.
+  let arp_steps = beats |> values(rate: 8, gate_length: 0.75) [ 0 0 7 12 ]
+  let arp_third_steps = beats |> values(rate: 8, gate_length: 0.75) [ 0 1 0 0 ]
+  let arp_note = chord_root + arp_steps + arp_third_steps * third
+  let arp_pitch = arp_note |> note(note: _)
+  let pump = beats |> stroke(rate: 2, curve: 1.5)
+  let arp_cutoff = arp_open |> remap(in_low: 0, out_low: 500, out_high: 6500)
+  let arp = pulse(freq: arp_pitch, width: 0.125, bias: -0.75) * (pump * 0.55 + 0.45)
+    |> filter(cutoff: arp_cutoff, resonance: 0.15)
+}
+
+group "Lead" {
+  # The solo is the arp an octave up, jumping a further octave every other beat. A
+  # chip voice does not know where a note ends, only that its pitch has changed, so a
+  # new pitch strikes it: the note against itself a few milliseconds late is the edge,
+  # and a Decay on the edge is the accent. The vibrato waits for the strike to fade.
+  let solo_note = arp_note + step(0.5, fract(beats * 0.5)) * 12 + 12
+  let lead_note = melody + key_change + tunes.part_4 * solo_note
+  let lead_pitch = lead_note |> note(note: _)
+  let lead_late = lead_note |> slew(rise: 3.162278ms, fall: 3.162278ms)
+  let strike = step(0.2, abs(lead_note - lead_late))
+    |> decay(trigger: _, decay: 251.18863ms, curve: 0.5)
+  let lead_level = lead_on * (strike * 0.5 + 0.5)
+  let lead = pulse(
+      freq: lead_pitch * (sine(freq: 6) * (lead_on * (1 - strike)) * 0.012 + 1),
+      width: lead_width,
+      bias: lead_width * 2 + -1) * lead_level * (tunes.part_3 * -0.35 + 1)
+    |> filter(cutoff: 5500, resonance: 0.1)
+}
+
+group "Space" {
+  # A dotted eighth on the lead crossing to the other side, and a small hall on a
+  # send.
+  let taps = lead |> filter(cutoff: 3000, resonance: 0)
+    |> echo(tempo: tempo, right: 3, feedback: 0.4, mix: 1)
+}
+
+group "Harmony pulse" {
+  # A diatonic third under what is written, snapped to the key, then moved by the key
+  # change like everything else.
+  let harmony_note = melody |> tune(transpose: -3.6) [ E F# G A B C D ]
+  let harmony_pitch = harmony_note.note + key_change |> note(note: _)
+  let harmony = pulse(freq: harmony_pitch) * (lead_level * tunes.part_5)
+    |> filter(cutoff: 4000, resonance: 0.1)
+}
+
+group "Space" {
+  let hall = lead
+    |> mixer(
+        in_1: _,
+        level_1: 0.6,
+        in_2: harmony,
+        level_2: 0.5,
+        in_3: arp,
+        level_3: 0.3,
+        in_4: snare,
+        level_4: 0.35)
+    |> reverb(size: 0.6, decay: 0.55, mix: 1)
+}
+
+group "Power-up" {
+  # A build ends the way a level does when something is picked up: a pulse running up
+  # two octaves a semitone at a time, and noise rising under it.
+  let riser_band = ramp |> remap(in_low: 0, out_low: 300, out_high: 8000)
+  let riser = hiss(
+      level: ramp,
+      cutoff: riser_band,
+      resonance: 0.5,
+      gain: 1.2,
+      band: "band")
+  let power_pitch = chord_root + ramp * 24 |> note(note: _)
+  let power_up = pulse(
+      freq: power_pitch,
+      width: 0.125,
+      bias: -0.75) * (ramp * ramp)
+    |> filter(cutoff: 5000, resonance: 0.1)
+}
+
+group "Bass" {
+  # Root and octave in eighths with the fifth for a pickup, on a triangle of sixteen
+  # steps, the buzz a real one has. A sine an octave under once the chorus is in,
+  # which no console had.
+  let bass_steps = beats |> values(rate: 2, gate_length: 0.75) [ 0 12 0 12 0 12 7 12 ]
+  let bass_pitch = root + bass_steps |> note(note: _)
+  let bass_gate = not_silent * bass_steps.gate
+  let bass_voice = (
+      (
+          floor(
+              triangle(freq: bass_pitch) * 7.5) + 0.5) * 0.13333334 + sine(freq: bass_pitch * 0.5) * parts.part_6 * 0.6) * bass_gate
+  let bass = bass_voice * parts.part_4
+}
+
+group "Desk" {
+  # The music and its space on two Desks chained into one, ducked by the kick alone;
+  # the arp leans left and the harmony right.
+  let music = bass
+    |> desk(
+        left_1: _,
+        level_1: 0.4,
+        left_2: arp,
+        right_2: arp * 0.55,
+        level_2: 0.55,
+        left_3: lead,
+        level_3: 0.45,
+        left_4: harmony * 0.55,
+        right_4: harmony,
+        level_4: 0.4)
+  let music_space = taps
+    |> desk(
+        left_1: _,
+        right_1: taps.right,
+        level_1: 0.3,
+        left_2: hall,
+        right_2: hall.wide,
+        level_2: 0.4,
+        left_3: riser,
+        level_3: 0.25,
+        left_4: power_up,
+        level_4: 0.12,
+        bus_left: music.bus_left,
+        bus_right: music.bus_right)
+  let ducked = music_space
+    |> duck(left: _, right: music_space.right, key: kick, depth: 0.4, attack: 3.162278ms)
+}
+
+group "Hats" {
+  # The same noise held for a sample of a much faster clock is the chip's hat:
+  # sixteenths with the off-beat leant on, an open one in the chorus, and a crash at
+  # the top of any phrase with the backbeat in it.
+  let hat_note = beats |> stroke(rate: 4, curve: 9)
+  let hat_accents = beats |> values(gate_length: 0.75) [ 0.45 0.25 1 0.25 ]
+  let closed_hat = hat_note * hat_accents * parts.part_2
+  let open_note = beats |> stroke(offset: 0.5)
+  let open_hat = open_note * parts.part_6
+  let crash_note = beats |> stroke(rate: 0.03125, curve: 9)
+  let hat_level = closed_hat + open_hat * 0.6 + crash_note * parts.part_3 * 0.9
+  let hiss_noise = clock * 300 |> noise(rate: 64, seed: 7)
+  let hats = hat_level * hiss_noise.random |> filter(cutoff: 5500, resonance: 0.1)
+}
+
+group "Desk" {
+  # The drums added back after the ducking, on a Desk chained into the master, with
+  # the music two decibels over unity.
+  let drums = kick
+    |> desk(
+        left_1: _,
+        left_2: snare,
+        level_2: 0.6,
+        left_3: hats.high,
+        level_3: 0.9)
+  let master_desk = ducked
+    |> desk(
+        left_1: _,
+        right_1: ducked.right,
+        level_1: 1.2589254,
+        bus_left: drums.bus_left,
+        bus_right: drums.bus_right,
+        trim: 0.55)
+}
+
+group "Master" {
+  # Nothing under thirty hertz, the square waves' honk taken out of the upper middle,
+  # and air on top; then wider, with the bass kept in the middle; then held under full
+  # scale.
+  let eq = master_desk
+    |> eq(
+        left: _,
+        right: master_desk.right,
+        low_cut: 30,
+        mid_freq: 2800,
+        mid_gain: -2,
+        mid_q: 0.8,
+        high_freq: 10000,
+        high_gain: 1.5)
+  let width = eq |> width(left: _, right: eq.right, width: 1.35, mono_below: 160)
+  let limiter = width |> limiter(left: _, right: width.right, release: 50.11873ms)
+}
+
+group "Picture: Tube" {
+  with_hud |> ink(mask: flash_note * parts.part_6 * 0.5)
+    |> posterise(levels: 6)
+    |> gain(gain: tube_rows)
+    |> vignette(from: 0.6, to: 2.2, dark: 0.4)
+    |> gain(gain: glass)
+    |> trails(persist: 0.35)
+    |> out.color
+}
+
+limiter |> out.left
+limiter.right |> out.right
+out.volume = 0.8

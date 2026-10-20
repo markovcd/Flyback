@@ -24,7 +24,7 @@ public sealed record KeyboardScale(int Tonic, string Scale)
     /// the tonic first, and upward from it.
     /// </summary>
     [JsonIgnore]
-    public IReadOnlyList<int> Row => [.. Mode.Classes.Select(c => TonicClass + c)];
+    internal IReadOnlyList<int> Row => [.. Mode.Classes.Select(c => TonicClass + c)];
 
     /// <summary>What it is called: "D Dorian".</summary>
     internal string Name => $"{Pitch.ClassName(TonicClass)} {Mode.Name}";

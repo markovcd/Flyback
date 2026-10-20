@@ -14,3 +14,64 @@
 *REMOVED*override Flyback.Core.Graph.Extras.ScaleExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!
 *REMOVED*override Flyback.Core.Graph.Extras.StepsExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!
 *REMOVED*virtual Flyback.Core.Graph.NodeExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!
+*REMOVED*Flyback.Core.Graph.Extras.MidiExtra
+*REMOVED*Flyback.Core.Graph.Extras.MidiExtra.Equals(Flyback.Core.Graph.Extras.MidiExtra? other) -> bool
+*REMOVED*Flyback.Core.Graph.Extras.SampleExtra
+*REMOVED*Flyback.Core.Graph.Extras.SampleExtra.Equals(Flyback.Core.Graph.Extras.SampleExtra? other) -> bool
+*REMOVED*Flyback.Core.Graph.Extras.ScaleExtra
+*REMOVED*Flyback.Core.Graph.Extras.ScaleExtra.Deconstruct(out System.Collections.Generic.IReadOnlyList<int>! Default) -> void
+*REMOVED*Flyback.Core.Graph.Extras.ScaleExtra.Default.get -> System.Collections.Generic.IReadOnlyList<int>!
+*REMOVED*Flyback.Core.Graph.Extras.ScaleExtra.Default.init -> void
+*REMOVED*Flyback.Core.Graph.Extras.ScaleExtra.Equals(Flyback.Core.Graph.Extras.ScaleExtra? other) -> bool
+*REMOVED*Flyback.Core.Graph.Extras.ScaleExtra.ScaleExtra(System.Collections.Generic.IReadOnlyList<int>! Default) -> void
+*REMOVED*Flyback.Core.Graph.KeyboardScale.Row.get -> System.Collections.Generic.IReadOnlyList<int>!
+*REMOVED*Flyback.Core.Graph.ModuleCatalog.Get(string! typeId) -> Flyback.Core.Graph.NodeDef?
+*REMOVED*Flyback.Core.Graph.ModuleCatalog.HasProvider(string! providerId) -> bool
+*REMOVED*const Flyback.Core.Graph.Extras.MidiExtra.IndexField = "index" -> string!
+*REMOVED*const Flyback.Core.Graph.Extras.MidiExtra.StateKey = "midi" -> string!
+*REMOVED*const Flyback.Core.Graph.NodeCatalog.CoordAspectPort = 4 -> int
+*REMOVED*const Flyback.Core.Graph.NodeCatalog.DuckTypeId = "audio.duck" -> string!
+*REMOVED*const Flyback.Core.Graph.NodeCatalog.MeterTypeId = "meter" -> string!
+*REMOVED*const Flyback.Core.Graph.NodeCatalog.MidiTypeId = "midi.in" -> string!
+*REMOVED*const Flyback.Core.Graph.NodeCatalog.SampleTypeId = "audio.sample" -> string!
+*REMOVED*const Flyback.Core.Graph.NodeCatalog.TempoTypeId = "seq.tempo" -> string!
+*REMOVED*const Flyback.Core.Graph.NodeCatalog.TransformOrderKey = "order" -> string!
+*REMOVED*const Flyback.Core.Graph.NodeCatalog.TransformStateKey = "transform" -> string!
+*REMOVED*const Flyback.Core.Graph.NodeCatalog.TurnThenZoom = "turn" -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.MidiExtra.<Clone>$() -> Flyback.Core.Graph.Extras.MidiExtra!
+*REMOVED*override Flyback.Core.Graph.Extras.MidiExtra.Announce() -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.MidiExtra.Equals(object? obj) -> bool
+*REMOVED*override Flyback.Core.Graph.Extras.MidiExtra.Fields.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.ExtraField!>!
+*REMOVED*override Flyback.Core.Graph.Extras.MidiExtra.Fold(Flyback.Core.Graph.EmitContext ctx, Flyback.Core.Graph.NodeInstance! node, Flyback.Core.Graph.ExtraEnv env) -> Flyback.Core.Graph.EmitContext
+*REMOVED*override Flyback.Core.Graph.Extras.MidiExtra.GetHashCode() -> int
+*REMOVED*override Flyback.Core.Graph.Extras.MidiExtra.Key.get -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.MidiExtra.ToString() -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.SampleExtra.<Clone>$() -> Flyback.Core.Graph.Extras.SampleExtra!
+*REMOVED*override Flyback.Core.Graph.Extras.SampleExtra.Announce() -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.SampleExtra.Equals(object? obj) -> bool
+*REMOVED*override Flyback.Core.Graph.Extras.SampleExtra.Fold(Flyback.Core.Graph.EmitContext ctx, Flyback.Core.Graph.NodeInstance! node, Flyback.Core.Graph.ExtraEnv env) -> Flyback.Core.Graph.EmitContext
+*REMOVED*override Flyback.Core.Graph.Extras.SampleExtra.GetHashCode() -> int
+*REMOVED*override Flyback.Core.Graph.Extras.SampleExtra.Help.get -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.SampleExtra.Key.get -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.SampleExtra.Kind.get -> Flyback.Core.Graph.Extras.FileKind!
+*REMOVED*override Flyback.Core.Graph.Extras.SampleExtra.ToString() -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.ScaleExtra.<Clone>$() -> Flyback.Core.Graph.Extras.ScaleExtra!
+*REMOVED*override Flyback.Core.Graph.Extras.ScaleExtra.Announce() -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.ScaleExtra.Equals(object? obj) -> bool
+*REMOVED*override Flyback.Core.Graph.Extras.ScaleExtra.Fold(Flyback.Core.Graph.EmitContext ctx, Flyback.Core.Graph.NodeInstance! node, Flyback.Core.Graph.ExtraEnv env) -> Flyback.Core.Graph.EmitContext
+*REMOVED*override Flyback.Core.Graph.Extras.ScaleExtra.GetHashCode() -> int
+*REMOVED*override Flyback.Core.Graph.Extras.ScaleExtra.Help.get -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.ScaleExtra.Key.get -> string!
+*REMOVED*override Flyback.Core.Graph.Extras.ScaleExtra.Seed(Flyback.Core.Graph.NodeInstance! node) -> void
+*REMOVED*override Flyback.Core.Graph.Extras.ScaleExtra.ToString() -> string!
+*REMOVED*override sealed Flyback.Core.Graph.Extras.MidiExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
+*REMOVED*override sealed Flyback.Core.Graph.Extras.SampleExtra.Equals(Flyback.Core.Graph.Extras.FileExtra? other) -> bool
+*REMOVED*override sealed Flyback.Core.Graph.Extras.ScaleExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
+*REMOVED*static Flyback.Core.Graph.Extras.MidiExtra.operator !=(Flyback.Core.Graph.Extras.MidiExtra? left, Flyback.Core.Graph.Extras.MidiExtra? right) -> bool
+*REMOVED*static Flyback.Core.Graph.Extras.MidiExtra.operator ==(Flyback.Core.Graph.Extras.MidiExtra? left, Flyback.Core.Graph.Extras.MidiExtra? right) -> bool
+*REMOVED*static Flyback.Core.Graph.Extras.SampleExtra.Set(Flyback.Core.Graph.NodeInstance! node, string! path) -> void
+*REMOVED*static Flyback.Core.Graph.Extras.SampleExtra.operator !=(Flyback.Core.Graph.Extras.SampleExtra? left, Flyback.Core.Graph.Extras.SampleExtra? right) -> bool
+*REMOVED*static Flyback.Core.Graph.Extras.SampleExtra.operator ==(Flyback.Core.Graph.Extras.SampleExtra? left, Flyback.Core.Graph.Extras.SampleExtra? right) -> bool
+*REMOVED*static Flyback.Core.Graph.Extras.ScaleExtra.Set(Flyback.Core.Graph.NodeInstance! node, System.Collections.Generic.IEnumerable<int>! classes) -> void
+*REMOVED*static Flyback.Core.Graph.Extras.ScaleExtra.operator !=(Flyback.Core.Graph.Extras.ScaleExtra? left, Flyback.Core.Graph.Extras.ScaleExtra? right) -> bool
+*REMOVED*static Flyback.Core.Graph.Extras.ScaleExtra.operator ==(Flyback.Core.Graph.Extras.ScaleExtra? left, Flyback.Core.Graph.Extras.ScaleExtra? right) -> bool

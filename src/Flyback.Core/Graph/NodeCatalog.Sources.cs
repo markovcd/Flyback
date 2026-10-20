@@ -20,7 +20,7 @@ public partial class NodeCatalog
     /// carries a file, and the editor, the compiler and the assistant all have to
     /// ask whether a given node is it — see <see cref="SampleExtra"/>.
     /// </summary>
-    public const string SampleTypeId = "audio.sample";
+    internal const string SampleTypeId = "audio.sample";
 
     /// <summary>
     /// The sound input. Named here because the shell opens a capture device only while a
@@ -44,7 +44,7 @@ public partial class NodeCatalog
     /// <summary>The output socket of the position source that carries y.</summary>
     public const int CoordYPort = 1;
     /// <summary>The output socket of the position source that carries the picture's aspect ratio.</summary>
-    public const int CoordAspectPort = 4;
+    internal const int CoordAspectPort = 4;
 
     private static IEnumerable<NodeDef> Sources()
     {

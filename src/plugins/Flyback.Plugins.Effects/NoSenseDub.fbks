@@ -1,0 +1,572 @@
+# Roots dub to be played rather than listened to: a one drop at seventy-four, a bass
+# line and a skank that drop in and out every few bars and are thrown into the echo,
+# a drop to one line of Patois and silence, and steppers at twice the tempo after
+# it; a drawbar organ over them played a note at a time, and six knobs on the panel
+# that are the performance. Named for the line of Patois it opens and closes on.
+#
+# The organ is one MIDI In and everything worth riding is a panel knob, left unbound
+# so the player picks a controller. Each knob moves the picture too: feedback is
+# trail length, room is drift, resonance is wobble, cutoff is fog brightness. The
+# organ is a ring sized by pitch, colored by note name and lit by a Meter, since an
+# envelope has no memory on the screen.
+#
+# The whole piece is in A minor, the riddim going between A minor and D minor two
+# bars at a time. Every key is snapped to the scale, and the computer keyboard is
+# laid out in it. The two sentences of Jamaican Patois are by Nesnad on Wikimedia
+# Commons, under CC BY-SA 3.0: that nothing he says makes sense, and a father angry
+# to see his daughter with a dread.
+
+description "Roots dub in A minor to perform: a one drop, a bass line and a skank that"
+  "drop in and out and are thrown into the echo, a drop to silence and steppers at"
+  "twice the tempo, a drawbar organ to play over them a note at a time, and six panel"
+  "knobs — filter, pluck, decay, echo, room — that move the rings on the screen as they"
+  "move the sound. The voice is Nesnad's, from Wikimedia Commons, under CC BY-SA"
+tags "song" "dub" "playable" "knobs" "echo" "voice"
+length 4:27.24
+
+requires flyback.effects, flyback.mastering, flyback.picture, flyback.voice
+
+# Each knob rests where the patch sounds like the genre with nobody touching it.
+panel Cutoff = 0.45
+panel Resonance = 0.35
+panel Pluck = 0.5
+panel Decay_knob = 0.5, label: "Decay"
+panel Echo_knob = 0.6, label: "Echo"
+panel Space = 0.5
+
+keyboard scale [ A B C D E F G ]
+
+group "Picture: Fog" {
+  let coord = coord()
+  let ground = coord.y |> smoothstep(edge0: -1, edge1: -0.3)
+}
+
+group "Clock" {
+  # Seventy-four a minute, where roots dub sits, and twice that for the steppers.
+  # Every part reads the count of beats, which runs on through the change of tempo, so
+  # the drums are envelopes off the grid rather than things triggered on it.
+  let clock = time()
+  let song = clock % 267.24323
+  let beats = song
+    |> expression(
+        a: _,
+        formula: "min(a, 172 * 60 / 74) * (74 / 60) + max(a - 172 * 60 / 74, 0) * (148 / 60)")
+  let steppers = step(139.45946, song)
+  let echo_tempo = 1.2333333 * (1 + steppers)
+}
+
+group "Arrangement" {
+  # Two bars a section, a riddim that never stops for long: a skank and the rim to
+  # open with, the drums and bass coming in behind a roll, then a mix that takes a
+  # part out for two bars and puts it back, leaving the bass alone, the drums alone or
+  # the rim and the bass, and flashing the skank into the echo. The last four bars
+  # drop everything for one line of Patois and its echo, and then silence. A row each
+  # for the kick, the rim, the hats, the hand drum, the bass, the skank, how hard the
+  # echo is thrown and the rolls.
+  let slow_parts = beats
+    |> arrangement() [
+        0 0 1 1 1 1 0 1 1 1 1 1 0 1 1 1 0 1 1 1 0 0 |
+        1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 0 0 1 1 0 0 |
+        0 1 1 1 1 1 0 1 0.6 0.6 1 1 0 1 1 0.5 0 0 0.5 1 0 0 |
+        0 0 0 1 1 1 0 1 1 1 1 1 0 1 1 1 0 0 1 1 0 0 |
+        0 0 1 1 1 1 1 1 1 0 1 1 1 1 1 0 1 1 1 0 0 0 |
+        1 1 1 1 1 0 0 1 0 0 0.5 0 0 1 0 1 0 0 0.5 1 0 0 |
+        0.8 0.6 0.3 0.3 0.3 0.5 0.6 0.4 0.5 0.8 1 0.5 0.7 0.4 0.5 1 0.5 0.5 1 1 1 1 |
+        0 1 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 ]
+  # The steppers after it, two bars a section at twice the tempo: everything in at
+  # once, the same way of taking parts out and putting them back, the rim and the bass
+  # alone for a line of Patois, everything thrown into the echo, and the last two bars
+  # left to one more line and the longest echo of all.
+  let steppers_beats = beats - steppers * 172
+  let steppers_parts = steppers_beats
+    |> arrangement() [
+        1 1 1 1 1 1 0 1 1 1 1 1 0 0 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 0 |
+        1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 |
+        1 1 1 1 1 1 0 1 1 1 1 1 0 0 0.5 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 0 0 |
+        0 0 1 1 1 1 0 1 1 1 1 1 0 0 0 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 0 0 |
+        1 1 1 1 1 1 1 1 1 0 1 1 1 1 0 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 0 |
+        1 0 1 0 1 1 0 1 0 0 1 1 0 0 0 1 1 0 1 1 0 0 1 1 1 1 0 1 1 1 1 0 |
+        0.4 0.4 0.4 0.5 0.4 0.5 0.8 0.5 0.5 1 0.5 0.5 0.8 1 0.7 0.5 0.4 0.4 0.5 0.6 0.5
+        1 0.6 0.5 0.4 0.4 0.7 0.5 0.5 0.7 1 1 |
+        0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 ]
+  # Cut on the downbeat of each section, the way a desk's mutes are. Each part is the
+  # slow part's level until the steppers, theirs after it, and nothing once the
+  # steppers are done.
+  let kick_on = slow_parts
+    |> expression(
+        a: _,
+        b: steppers_parts,
+        c: steppers,
+        d: beats,
+        formula: "mix(a, b, c) * (1 - step(428, d))")
+  let skank_on = slow_parts.part_6
+    |> expression(
+        a: _,
+        b: steppers_parts.part_6,
+        c: steppers,
+        d: beats,
+        formula: "mix(a, b, c) * (1 - step(428, d))")
+  let bass_on = slow_parts.part_5
+    |> expression(
+        a: _,
+        b: steppers_parts.part_5,
+        c: steppers,
+        d: beats,
+        formula: "mix(a, b, c) * (1 - step(428, d))")
+  let echo_throw = slow_parts.part_7
+    |> expression(
+        a: _,
+        b: steppers_parts.part_7,
+        c: steppers,
+        d: beats,
+        formula: "mix(a, b, c) * (1 - step(428, d))")
+  let rim_on = slow_parts.part_2
+    |> expression(
+        a: _,
+        b: steppers_parts.part_2,
+        c: steppers,
+        d: beats,
+        formula: "mix(a, b, c) * (1 - step(428, d))")
+  let hand_drum_on = slow_parts.part_4
+    |> expression(
+        a: _,
+        b: steppers_parts.part_4,
+        c: steppers,
+        d: beats,
+        formula: "mix(a, b, c) * (1 - step(428, d))")
+  let rolls_on = slow_parts.part_8
+    |> expression(
+        a: _,
+        b: steppers_parts.part_8,
+        c: steppers,
+        d: beats,
+        formula: "mix(a, b, c) * (1 - step(428, d))")
+  # A minor and D minor, two bars each, and four each in the steppers.
+  let d_minor = steppers_beats
+    |> expression(
+        a: _,
+        b: steppers,
+        formula: "step(1, a * mix(0.125, 0.0625, b) % 2)")
+  let hats_on = slow_parts.part_3
+    |> expression(
+        a: _,
+        b: steppers_parts.part_3,
+        c: steppers,
+        d: beats,
+        formula: "mix(a, b, c) * (1 - step(428, d))")
+}
+
+group "Kick" {
+  # The one drop: nothing on the one, and the kick on three with the rim; the steppers
+  # put it on every beat. Low and round, the pitch falling with what is left of the
+  # stroke. The chords and the bass lean away from it, by as much as it is up.
+  let kick_stroke = beats
+    |> expression(
+        a: _,
+        b: kick_on,
+        c: steppers,
+        formula: "mix(pow(1 - fract(a * 0.25 + 0.5), 20), pow(1 - fract(a), 5), c) * b")
+  let duck = duck(key: kick_stroke, depth: 0.44, attack: 100us, release: 100us)
+  let kick = drum(level: kick_stroke, pitch: 52, bend: 5, drive: 1.5)
+}
+
+group "Picture: Scene" {
+  # The kick is a disc in the middle that the ring is drawn round, swelling on the
+  # beat and gone while the kick is out.
+  let kick_glow = kick_stroke * 0.8
+  let sun_size = kick_glow |> remap(in_low: 0, out_low: 0.02, out_high: 0.08)
+  let sun = coord |> circle(radius: sun_size)
+    |> fill(distance: _, softness: 0.06)
+  let scanlines = sin(coord.y * 380) |> remap(out_low: 0.88)
+}
+
+group "Picture: Fog" {
+  # Slow Fractal noise in one cold color, with as much light in it as the filter is
+  # open, and a flash of it on every skank. The bass is a glow along the bottom of the
+  # frame.
+  let fog_field = fractal(z: clock * 0.05, scale: 1.6, roughness: 0.55)
+}
+
+group "Skank" {
+  let skank_stroke = beats |> stroke(rate: 0.25, offset: 0.25, curve: 28)
+  let skank_level = skank_stroke * skank_on
+  # A minor seventh, and D minor seventh with two notes moved down a tone.
+  let root_note = 57 - d_minor * 0 |> note(note: _)
+  let third_note = 60 - d_minor * 0 |> note(note: _)
+  let fifth_note = 64 - d_minor * 2 |> note(note: _)
+  let seventh_note = 67 - d_minor * 2 |> note(note: _)
+}
+
+group "Bass" {
+  # Two bars in sixteenths that leave the one to the kick and bounce: the root and the
+  # octave over it, the fifth, a run down through the fourth and the third, a push
+  # back up through the seventh, and pickups on the "a" of the beat, over A and then
+  # over D. A rest holds the pitch it follows, so the glide has somewhere to come
+  # from.
+  let slow_line = beats
+    |> values(gate_length: 0.65, shape: 0.05) [
+        ~@2 0@2 12 12%0 0 7 7%0@2 5@2 3 0 ~ -2 -2%0@2 0 0 12 12%0 10 7@3 7%0 3 5 5%0 7
+        -5 ]
+  # The steppers' own, two bars in eighths and heavier: the root held, a pickup, the
+  # fifth and the octave, then down through the third to the seventh and the fifth
+  # under the root.
+  let steppers_line = steppers_beats
+    |> values(rate: 2, gate_length: 0.85, shape: 0.05) [
+        0@2 ~ 0 7@2 7%0 12 3@2 3%0 0 -2@2 -5@2 ]
+  # Whichever line is playing, the A an octave and a half under the keyboard's bottom
+  # row. Twenty milliseconds of glide on the hertz: a Note snaps to the semitone, so
+  # the slide has to come after it.
+  let bass_gate = slow_line.gate
+    |> expression(a: _, b: steppers_line.gate, c: steppers, formula: "mix(a, b, c)")
+  let bass_pitch = slow_line
+    |> expression(
+        a: _,
+        b: steppers_line,
+        c: steppers,
+        d: d_minor,
+        formula: "mix(a, b, c) + 33 + d * 5")
+    |> note(note: _)
+    |> slew(rise: 19.95262ms, fall: 19.95262ms)
+  let bass_envelope = bass_gate
+    |> adsr(gate: _, attack: 3.162278ms, decay: 251.18863ms, release: 50.11873ms)
+  # A sine with a little saw, driven for the harmonics a small speaker can play, and a
+  # filter that opens with each note's thump.
+  let bass_tone = sine(freq: bass_pitch) - saw(freq: bass_pitch) * 0.5 |> drive(drive: 5)
+    |> filter(cutoff: 350 + bass_envelope * 900)
+  let bass = bass_tone * bass_envelope * duck.gain * bass_on * 1.6
+}
+
+group "Picture: Fog" {
+  let fog = rgb(r: 0.12, g: 0.3, b: 0.36)
+    |> gain(gain: fog_field * Cutoff(0.5..1.5) + skank_level * 0.5)
+    |> ink(
+        mask: (1 - ground) * bass_gate * bass_on * 0.4,
+        r: 0.9,
+        g: 0.35,
+        b: 0.1)
+}
+
+group "Organ" {
+  # A key off the scale plays the nearest note on it. A drawbar organ, on as the key
+  # goes down and off as it comes up: the sixteen, the eight and the five and a third
+  # out, the way a reggae organ's bubble is set, and a little of the four. Its
+  # percussion is the twelfth struck with the key and dying away as fast as the Decay
+  # knob says, with a click high over it.
+  let keys = midi.in(index: 1)
+  let organ_pitch = keys |> tune() [ A B C D E F G ]
+  let drawbars = (
+      sine(
+          freq: organ_pitch * 0.5) * 0.8 + sine(freq: organ_pitch) + sine(freq: organ_pitch * 1.5) * 0.8 + sine(freq: organ_pitch * 2) * 0.3) * 0.7
+  let percussion = keys.gate
+    |> adsr(
+        gate: _,
+        attack: 1ms,
+        decay: Decay_knob(39.81072ms..501.18722ms),
+        sustain: 0,
+        release: 10ms)
+  let organ_gate = keys.gate
+    |> adsr(gate: _, attack: 3.162278ms, sustain: 1, release: 31.62278ms)
+}
+
+group "Knobs" {
+  # A cutoff is heard in octaves, so the knob is an exponent: a hundred and fifty
+  # hertz at the bottom and a little over five octaves above it at the top. Thirty
+  # milliseconds of Slew takes the steps out of a controller's hundred and twenty-
+  # eight values. Pluck is how many times over the envelope opens the filter.
+  let knob_cutoff = exp(
+      slew(in: Cutoff(0..1), rise: 31.62278ms, fall: 31.62278ms) * 3.67) * 150
+  let pluck = slew(in: Pluck(0..1), rise: 31.62278ms, fall: 31.62278ms) * 6
+}
+
+group "Organ" {
+  # The knob's cutoff, opened by the strike, and held under the top of the Filter's
+  # range; as loud as the key was struck, which a typist's never varies and a
+  # keyboard's does. The picture knows it as a twelfth of a second of loudness.
+  let organ_tone = drawbars + sine(
+      freq: organ_pitch * 3) * percussion * 0.6 + sine(freq: organ_pitch * 8, amp: pow(percussion, 6) * 0.2)
+    |> filter(
+        cutoff: min(knob_cutoff * (percussion * pluck + 1) * 2, 11000),
+        resonance: Resonance(0.05..0.85))
+  let organ = organ_tone * organ_gate * keys.velocity * 0.8
+  let organ_loudness = organ |> meter(window: 79.43282ms, scale: 0.15)
+}
+
+group "Picture: Rings" {
+  # As bright as the organ is loud, and never quite dark while its key is down. Three
+  # octaves of keyboard from the middle of the frame to its edge, and a note under
+  # them held off the middle, where the kick is. The resonance is how far the fog
+  # pushes the ring out of round, and the line thickens with the level, so a note is
+  # seen to land. Which of the twelve notes it is, as a hue between teal and magenta,
+  # so a note is always the color it was and an octave is the same color further out.
+  let ring_light = max(min(organ_loudness, 1.5), keys.gate * 0.25)
+  let ring_size = organ_pitch.note |> remap(in_low: 48, in_high: 84, out_low: 0.14)
+  let ring = coord |> circle(radius: max(ring_size, 0.1))
+  let ring_line = ring + (fog_field + -0.5) * Resonance(0..0.35)
+    |> fill(distance: _, softness: 0.012, width: ring_light * 0.025 + 0.004)
+  let rings = fract(organ_pitch.note * 0.083333336)
+    |> remap(in_low: 0, out_low: 0.47, out_high: 0.87)
+    |> color.hsv(hue: _, saturation: 0.45)
+    |> gain(gain: ring_light * ring_line.outline)
+}
+
+group "Amplifier" {
+  # A little Drive for the valves of the amplifier, and a Chorus turning slowly for
+  # the horn of a Leslie.
+  let amp = organ |> drive()
+  let leslie = amp |> chorus(depth: 0.7)
+  let organ_left = leslie * duck.gain
+  let organ_right = leslie.wide * duck.gain
+}
+
+group "Rim" {
+  # A cross-stick on three: a click of noise and a knock under it. Most of what is
+  # heard of it is the echo.
+  let rim_stroke = pow(1 - fract(beats * 0.25 + 0.5), 45) * rim_on
+  let rim = hiss(
+      level: rim_stroke,
+      cutoff: 2200,
+      resonance: 0.5,
+      gain: 2.5,
+      seed: 1,
+      band: "band") + drum(level: rim_stroke, pitch: 380, sweep: 60, bend: 6, drive: 0.5) * 0.5
+}
+
+group "Percussion" {
+  # The funde's heartbeat: a light stroke just before one and three, and the heavy one
+  # on them. The rolls go down the toms in sixteenths through the last beat of a
+  # section, into the next.
+  let hand_stroke = beats
+    |> expression(
+        a: _,
+        b: hand_drum_on,
+        formula: "(pow(1 - fract(a * 0.5), 9) + pow(1 - fract(a * 0.5 + 0.125), 9) * 0.5) * b")
+  let hand_drum = drum(
+      level: hand_stroke,
+      pitch: 140,
+      sweep: 45,
+      bend: 2,
+      drive: 0) + drum(level: pow(
+          1 - fract(steppers_beats * 4),
+          5) * step(7, steppers_beats % 8) * rolls_on, pitch: 220 - floor(fract(
+              beats) * 4) * 35, sweep: 60, bend: 3, drive: 0.3)
+}
+
+group "Skank" {
+  # A tenth of a second of chord through a filter that drifts open and shut over half
+  # a minute: one skank a bar, on four, and the echo plays the rest.
+  let skank_chord = saw(freq: root_note) + saw(freq: third_note) + saw(freq: fifth_note) + saw(freq: seventh_note)
+    |> filter(
+        cutoff: min(
+            knob_cutoff * (
+                1 + skank_stroke * 2) * wander(rate: 0.03, seed: 5, low: 0.6, high: 1.6),
+            8000),
+        resonance: 0.45)
+  let skank = skank_chord * skank_level * 0.6
+}
+
+group "Space" {
+  # The echo every record of this kind is made of: three sixteenths and then two more,
+  # fed back by the knob, and each side darkened on the way out so that the repeats
+  # sit behind what is played. The skank goes in hardest; the organ and the rim as
+  # hard as the mix throws them.
+  let dub_echo = amp
+    |> mixer(
+        in_1: _,
+        level_1: echo_throw,
+        in_2: rim,
+        level_2: echo_throw,
+        in_3: hand_drum,
+        level_3: 0.4,
+        in_4: skank,
+        level_4: 0.9)
+    |> echo(tempo: echo_tempo, feedback: Echo_knob(0.2..0.9), mix: 1)
+  let echo_left = dub_echo |> filter(cutoff: 2200, resonance: 0.1)
+  let echo_right = dub_echo.right |> filter(cutoff: 2200, resonance: 0.1)
+}
+
+group "Voice" {
+  # Two sentences of Patois, each read from the moment it is due so it lands on its
+  # bar, and silent before and after its clip. Each is dry at its start so the words
+  # are heard, and more and more of it goes into an echo of its own as it goes, the
+  # words giving way to the repeats. The last line of the song goes in sooner and
+  # further, and its echo feeds back longest and darkens as it rings. The first comes
+  # in the second bar, where only the rim and the bass play, there again in the
+  # steppers, and to end the song; the second over the bass alone, and alone in the
+  # drop.
+  let line_time = song
+    |> expression(
+        a: _,
+        formula: "(a - (4 * 60 / 74) - step(96 * 60 / 74, a) * ((96 * 60 / 74) - (4 * 60 / 74)) - step(172 * 60 / 74 + 96 * 60 / 148, a) * ((172 * 60 / 74 + 96 * 60 / 148) - (96 * 60 / 74)) - step(172 * 60 / 74 + 248 * 60 / 148, a) * ((172 * 60 / 74 + 248 * 60 / 148) - (172 * 60 / 74 + 96 * 60 / 148)))")
+  let no_sense = line_time |> sample("no-sense.wav", level: 2)
+  let last_line = step(240, song)
+  let no_sense_send = line_time
+    |> expression(
+        a: _,
+        b: no_sense.length,
+        c: last_line,
+        formula: "smoothstep(mix(0.3, 0.05, c), mix(1, 0.6, c), a / b) * mix(1, 1.3, c)")
+  let dread_time = song - 103.78378 - step(129.72974, song) * 25.945953
+  let dread = dread_time |> sample("dread.wav", level: 2)
+  let dread_send = dread_time
+    |> expression(
+        a: _,
+        b: dread.length,
+        c: last_line,
+        formula: "smoothstep(mix(0.3, 0.05, c), mix(1, 0.6, c), a / b) * mix(1, 1.3, c)")
+  let voice_feedback = last_line |> expression(a: _, formula: "mix(0.82, 0.93, a)")
+  let voice_echo = no_sense * no_sense_send + dread * dread_send
+    |> echo(tempo: 1.2333333, feedback: voice_feedback, mix: 1)
+  let voice_cutoff = song
+    |> expression(
+        a: _,
+        formula: "1800 - smoothstep(172 * 60 / 74 + 248 * 60 / 148, 172 * 60 / 74 + 248 * 60 / 148 + 16, a) * 1300")
+  let voice_echo_left = voice_echo |> filter(cutoff: voice_cutoff, resonance: 0.35)
+  let voice_dry = no_sense * max(
+      1 - no_sense_send * 0.6,
+      0) + dread * (1 - dread_send * 0.6)
+  let voice_echo_right = voice_echo.right |> filter(cutoff: voice_cutoff, resonance: 0.35)
+}
+
+group "Hats" {
+  # Eighths swung to the triplet, the one after the beat the louder, and straight with
+  # the off-beat opening in the steppers, played a little harder or softer on a
+  # Wander. Under them a shaker's sixteenths, leaning on the "and".
+  let hat_stroke = wander(seed: 2, low: 0.6)
+    |> expression(
+        a: beats,
+        b: _,
+        c: hats_on,
+        d: steppers,
+        formula: "mix(pow(1 - fract(a), 14) * 0.5 + pow(1 - fract(a + 1 / 3), 14), pow(1 - fract(a), 14) * 0.4 + pow(1 - fract(a + 0.5), 8), d) * b * c")
+  let shaker_stroke = beats
+    |> expression(
+        a: _,
+        b: hats_on,
+        formula: "pow(1 - fract(a * 4), 6) * (0.35 + pow(1 - fract(a + 0.5), 3) * 0.65) * b")
+  let hats = hiss(
+      level: hat_stroke,
+      cutoff: 9000,
+      resonance: 0.15) + hiss(level: shaker_stroke, cutoff: 6000, resonance: 0.3, gain: 0.6, seed: 4, band: "band")
+}
+
+group "Space" {
+  # The room's size stays where it is, because a delay line that changes length while
+  # it rings bends what is in it. The knob is how long it rings and how much of it
+  # comes back.
+  let room = amp
+    |> mixer(
+        in_1: _,
+        level_1: 0.5,
+        in_2: echo_left + voice_echo_left,
+        level_2: 0.4,
+        in_3: rim,
+        level_3: 0.4,
+        in_4: hats,
+        level_4: 0.15)
+    |> reverb(size: 0.85, decay: Space(0.5..0.93), mix: 1)
+}
+
+group "Dust" {
+  # A record that has been played too often: pink hiss that never stops, and a
+  # crackle. The crackle is a Noise a hundred and eighty times a second that lets a
+  # burst of its own white through on the few values near the top. Lifted off for the
+  # drop at the end of the slow part.
+  let crackle = noise(rate: 180, seed: 5)
+  let dust = hiss(
+      cutoff: 4500,
+      resonance: 0,
+      gain: 0.35,
+      seed: 3,
+      noise: "pink",
+      band: "low")
+    |> expression(
+        a: _,
+        b: step(0.988, crackle.random),
+        c: crackle,
+        d: song,
+        formula: "(a + b * c * 0.6) * (1 - step(160 * 60 / 74, d) * (1 - step(172 * 60 / 74, d)))")
+}
+
+group "Desk" {
+  let drum_desk = kick * 2
+    |> desk(
+        left_1: _,
+        level_1: 0.8,
+        left_2: hats,
+        level_2: 0.8,
+        left_3: rim,
+        level_3: 0.7,
+        left_4: hand_drum,
+        level_4: 0.7)
+  let music_desk = bass
+    |> desk(
+        left_1: _,
+        level_1: 0.75,
+        left_2: organ_left,
+        right_2: organ_right,
+        level_2: 0.85,
+        left_3: dust,
+        level_3: 0.2,
+        left_4: skank,
+        level_4: 0.9,
+        bus_left: drum_desk.bus_left,
+        bus_right: drum_desk.bus_right)
+  # Three Desks chained by their buses.
+  let mix = echo_left
+    |> desk(
+        left_1: _,
+        right_1: echo_right,
+        level_1: 0.6,
+        left_2: room,
+        right_2: room.wide,
+        level_2: Space(0.1..0.8),
+        left_3: voice_dry,
+        left_4: voice_echo_left,
+        right_4: voice_echo_right,
+        bus_left: music_desk.bus_left,
+        bus_right: music_desk.bus_right,
+        trim: 0.25)
+}
+
+group "Master" {
+  # Faded out through the drop's last bars, and a few seconds of silence before the
+  # steppers. Then nothing under thirty hertz, a little more weight under the bass,
+  # the mud taken out of the low middle and air on top; then wider, with the kick and
+  # the bass kept in the middle; then glued and held under a decibel.
+  let drop_fade = song
+    |> expression(
+        a: _,
+        formula: "1 - smoothstep(164 * 60 / 74, 170 * 60 / 74, a) * (1 - step(172 * 60 / 74, a))")
+  let eq = mix * drop_fade
+    |> eq(
+        left: _,
+        right: mix.right * drop_fade,
+        low_cut: 30,
+        low_freq: 90,
+        low_gain: 1.5,
+        mid_freq: 350,
+        mid_gain: -2,
+        mid_q: 0.8,
+        high_freq: 9000,
+        high_gain: 2.5)
+  let width = eq |> width(left: _, right: eq.right, width: 1.2, mono_below: 150)
+  let maximizer = width |> maximizer(left: _, right: width.right, amount: 0.4)
+}
+
+group "Picture: Scene" {
+  # Scanlines, the corners darkened, and a little more contrast. Then the echo, seen:
+  # the last frame is read a little smaller than it was, which pushes it outwards, so
+  # a ring that was struck goes on spreading after it has stopped sounding, for as
+  # long as the echo feeds back and as fast as the room is big. It comes last because
+  # the last frame is whatever reached the Output.
+  sun * kick_glow |> ink(under: fog + rings, mask: _, r: 0.75, g: 0.95)
+    |> gain(gain: scanlines)
+    |> vignette(dark: 0.4)
+    |> grade(saturation: 1.15, contrast: 1.1)
+    |> trails(zoom: Space(0.998..0.985), angle: 0.003, persist: Echo_knob(0.9..0.992))
+    |> out.color
+}
+
+maximizer |> out.left
+maximizer.right |> out.right
+out.volume = 0.9

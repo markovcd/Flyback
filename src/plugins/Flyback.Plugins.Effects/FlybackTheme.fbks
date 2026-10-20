@@ -1,0 +1,396 @@
+# Flyback's own theme: three minutes of synthwave at a hundred and twenty-eight in A
+# minor, the promo's arp, bass and hook grown into a song, on a two-channel scope
+# whose beam sweeps the screen once a beat.
+#
+# The harmony is four roots a bar, A, F, C and G, then A, F, A and G. Every chord
+# tone is a root plus an interval snapped to A minor, so the arp and the pads never
+# name a chord. On the screen the upper trace is the bass's sawtooth, as many teeth
+# as its root is high, and its missing vertical edges are the retrace the beam is
+# blanked for; the lower is the arp's sine.
+
+description "Flyback's theme: three minutes of synthwave in A minor, an arp, a pumping"
+  "bass and a hook, on a two-channel scope whose beam crosses the screen once a beat."
+tags "song" "synthwave" "bass" "scope"
+length 3:00.00
+
+requires flyback.effects, flyback.mastering, flyback.picture, flyback.voice
+
+group "Picture: Scope" {
+  let coord = coord()
+}
+
+group "Clock" {
+  let tempo = tempo(bpm: 128)
+  let beats = time() * tempo
+}
+
+group "Drums" {
+  let sixteenth = beats |> stroke(rate: 4, curve: 12)
+  let off_beat = beats |> stroke(offset: 0.5, curve: 4)
+  let on_beat = beats |> stroke(curve: 5)
+  let two_and_four = beats |> stroke(rate: 0.5, offset: 0.5, curve: 7)
+  let roll_sixteenth = beats |> stroke(rate: 4, curve: 5)
+  let section_top = beats |> stroke(rate: 0.03125, curve: 12)
+}
+
+group "Arrangement" {
+  # Twelve sections of eight bars: intro, intro, verse, verse, chorus, chorus,
+  # breakdown, build, three choruses and the outro, three minutes exactly. A row each
+  # for the kick and snare, the hats, the bass, the arp, the chords, the lead, how far
+  # the filters open and the pops. Filters sweep open over four seconds and close over
+  # two, and the roots move a bar a step.
+  let parts = beats
+    |> arrangement(rate: 0.03125) [
+        0 0 0.85 0.85 1 1 0 0.85 1 1 1 0 |
+        0 0.4 0.7 1 1 1 0 0.7 1 1 1 0 |
+        0 0.5 0.85 0.85 1 1 0 0.85 1 1 1 0 |
+        0.3 0.35 0.8 0.8 1 1 0.25 0.8 1 1 1 0.25 |
+        0.35 0.3 0.3 0.35 0.3 0.3 0.2 0.35 0.3 0.3 0.35 0.3 |
+        0 0 0 0 1 1 0.35 0 1 1 1 0 |
+        0.3 0.4 0.55 0.65 1 1 0.45 0.65 1 1 1 0.35 |
+        0 0.7 1 1 1 1 0.6 1 1 1 1 0.8 ]
+  let filters_open = parts.part_7 |> slew(rise: 4s, fall: 2s)
+  let roots = beats |> notes(rate: 0.25) [ A2 F2 C3 G2 A2 F2 A2 G2 ]
+  # The verse and the build end in a riser, a snare roll through their last bar.
+  let ends_in_riser = step(
+      3,
+      (parts.section - 1) % 4) * step(parts.section, 8)
+  let roll = step(
+      0.875,
+      parts.progress) * (parts.progress * 8 - 7) * ends_in_riser
+  let riser_rise = parts.progress |> smoothstep(edge0: 0.5)
+  let riser_level = riser_rise * ends_in_riser
+}
+
+group "Drums" {
+  # Ghost sixteenths under an open hat on the off-beat; the snare on two and four.
+  # Every section the kick plays in opens on a crash and a sub drop.
+  let hat_level = (sixteenth * 0.35 + off_beat * 0.8) * parts.part_2
+  let kick_level = on_beat * parts
+  let snare_stroke = two_and_four * parts
+  let snare = hiss(
+      level: snare_stroke,
+      cutoff: 1800,
+      resonance: 0.25,
+      gain: 2.5,
+      seed: 1,
+      band: "band") + drum(level: snare_stroke, pitch: 195, sweep: 0, bend: 1, drive: 0)
+  let roll_stroke = roll_sixteenth * roll
+  let roll_snare = hiss(
+      level: roll_stroke,
+      cutoff: 1900,
+      resonance: 0.3,
+      gain: 2.5,
+      seed: 3,
+      band: "band") + drum(level: roll_stroke, pitch: 185, sweep: 0, bend: 1, drive: 0)
+  let kick = drum(level: kick_level, pitch: 46, sweep: 130, drive: 3.5)
+  let hats = hiss(level: hat_level, cutoff: 7500, seed: 2)
+  let crash_stroke = section_top * parts
+  let crash = hiss(
+      level: crash_stroke,
+      cutoff: 4200,
+      resonance: 0.1,
+      seed: 4) + drum(level: crash_stroke, pitch: 32, sweep: 40, bend: 1, drive: 0.5)
+}
+
+group "Picture: Scope" {
+  # The graticule, lit by the hats. The beam crosses the screen once a beat, and the
+  # phosphor it leaves fades over the beat after. Channel one, the bass: a sawtooth
+  # with a tooth for every 160 hertz of root, riding the kick.
+  let graticule = coord
+    |> expression(
+        a: _,
+        b: coord.y,
+        c: hat_level,
+        formula: "max(smoothstep(0.46, 0.49, abs(fract(a * 2) - 0.5)), smoothstep(0.46, 0.49, abs(fract(b * 2) - 0.5))) * (0.1 + 0.25 * c)")
+  let bass_height = 0.06 + 0.16 * filters_open + 0.1 * kick_level
+  let root_pitch = roots |> note(note: _)
+  let bass_phase = coord * root_pitch / 160 + beats / 4
+  let bass_trace = 0.005 / (
+      abs(coord.y - 0.35 - bass_height * (2 * fract(bass_phase) - 1)) + 0.005)
+  let phosphor = exp(-3 * fract(beats - (coord / coord.aspect + 1) / 2))
+  # The name, a letter on each pop of the hook, which starts 28 beats into a section.
+  let lettering = text(
+      size: 0.24,
+      reveal: (floor((beats - 28) % 32 * 2) + 1.5) / 7,
+      lines: "FLYBACK")
+    |> fill(distance: _, softness: 0.004)
+}
+
+group "Arp" {
+  # Up the chord to the tenth and back, in sixteenths, an octave higher once the
+  # filters are open. Four voices take the sixteenths in turn and each rings for a
+  # beat, so a note is still sounding under the three after it.
+  let arp_1_stroke = beats |> stroke(curve: 2.1)
+  let arp_1_level = arp_1_stroke * 1
+  let arp_2_stroke = beats |> stroke(offset: 0.25, curve: 2.1)
+  let arp_2_level = arp_2_stroke * 0.55
+  let arp_3_stroke = beats |> stroke(offset: 0.5, curve: 2.1)
+  let arp_3_level = arp_3_stroke * 0.72
+  let arp_4_stroke = beats |> stroke(offset: 0.75, curve: 2.1)
+  let arp_4_level = arp_4_stroke * 0.55
+  let arp_level = max(
+      max(arp_1_level, arp_2_level),
+      max(arp_3_level, arp_4_level))
+  let arp_1_step = beats + -0 |> values(rate: 1) [ 0 15.5 ]
+  let arp_octave = 12 + 12 * step(0.9, filters_open)
+  let arp_1_pitch = arp_1_step + roots |> tune(transpose: arp_octave) [ A B C D E F G ]
+  let arp_1_pluck = beats |> stroke(curve: 4.3)
+  let arp_opening = filters_open |> remap(in_low: 0, out_low: 900, out_high: 6500)
+  let arp_1 = (
+      saw(freq: arp_1_pitch, amp: 0.6) + saw(freq: arp_1_pitch * 1.0045, amp: 0.4)) * arp_1_level
+    |> filter(cutoff: 180 + arp_1_pluck * arp_opening, resonance: 0.35)
+  let arp_2_step = beats + -0.25 |> values(rate: 1) [ 3.5 12 ]
+  let arp_2_pitch = arp_2_step + roots |> tune(transpose: arp_octave) [ A B C D E F G ]
+  let arp_2_pluck = beats |> stroke(offset: 0.25, curve: 4.3)
+  let arp_2 = (
+      saw(freq: arp_2_pitch, amp: 0.6) + saw(freq: arp_2_pitch * 1.0045, amp: 0.4)) * arp_2_level
+    |> filter(cutoff: 180 + arp_2_pluck * arp_opening, resonance: 0.35)
+  let arp_3_step = beats + -0.5 |> values(rate: 1) [ 7 7 ]
+  let arp_3_pitch = arp_3_step + roots |> tune(transpose: arp_octave) [ A B C D E F G ]
+  let arp_3_pluck = beats |> stroke(offset: 0.5, curve: 4.3)
+  let arp_3 = (
+      saw(freq: arp_3_pitch, amp: 0.6) + saw(freq: arp_3_pitch * 1.0045, amp: 0.4)) * arp_3_level
+    |> filter(cutoff: 180 + arp_3_pluck * arp_opening, resonance: 0.35)
+  let arp_4_step = beats + -0.75 |> values(rate: 1) [ 12 3.5 ]
+  let arp_4_pitch = arp_4_step + roots |> tune(transpose: arp_octave) [ A B C D E F G ]
+  let arp_4_pluck = beats |> stroke(offset: 0.75, curve: 4.3)
+  let arp_4 = (
+      saw(freq: arp_4_pitch, amp: 0.6) + saw(freq: arp_4_pitch * 1.0045, amp: 0.4)) * arp_4_level
+    |> filter(cutoff: 180 + arp_4_pluck * arp_opening, resonance: 0.35)
+  let arps = arp_1 + arp_2 + (arp_3 + arp_4)
+  let arp = arps * parts.part_4
+}
+
+group "Picture: Scope" {
+  # Channel two, the arp: a sine for every 250 hertz of its note, struck by it.
+  let arp_height = 0.04 + 0.16 * arp_level * parts.part_4
+  let arp_phase = coord * arp_1_pitch / 250
+  let arp_trace = 0.004 / (
+      abs(coord.y + 0.45 - arp_height * sin(arp_phase * 6.2831855)) + 0.004)
+}
+
+group "Pops" {
+  # The hook: seven eighths up A minor pentatonic, A C D E G A C, once a section, on
+  # its last bar, climbing into the next: seven bars' rest, then the run. Two voices
+  # take the eighths in turn, each a sine with its octave and twelfth, ringing over
+  # the next note and starting half again as high for its first few milliseconds.
+  let pop_1_stroke = beats |> stroke(curve: 2.9)
+  let pop_1_notes = beats + -0 |> notes(rate: 1, gate_length: 1) [ A4%0@28 A4 D5 G5 C6 ]
+  let pop_1_level = pop_1_stroke * pop_1_notes.gate * parts.part_8
+  let pop_2_stroke = beats |> stroke(offset: 0.5, curve: 2.9)
+  let pop_2_notes = beats + -0.5
+    |> notes(rate: 1, gate_length: 1) [ C5%0@28 C5 E5 A5 A5%0 ]
+  let pop_2_level = pop_2_stroke * pop_2_notes.gate * parts.part_8
+  let pop_1_pitch = pop_1_notes |> note(note: _)
+  let pop_1_chirp = beats |> stroke(curve: 78)
+  let pop_1_freq = pop_1_pitch * (1 + 0.5 * pop_1_chirp)
+  let pop_2_pitch = pop_2_notes |> note(note: _)
+  let pop_2_chirp = beats |> stroke(offset: 0.5, curve: 78)
+  let pop_2_freq = pop_2_pitch * (1 + 0.5 * pop_2_chirp)
+  let pop_2 = sine(
+      freq: pop_2_freq,
+      amp: pop_2_level) + (sine(
+          freq: pop_2_freq * 2,
+          amp: pop_2_level * 0.35) + sine(freq: pop_2_freq * 3, amp: pop_2_level * 0.12))
+  let pops = sine(
+      freq: pop_1_freq,
+      amp: pop_1_level) + (sine(
+          freq: pop_1_freq * 2,
+          amp: pop_1_level * 0.35) + sine(freq: pop_1_freq * 3, amp: pop_1_level * 0.12)) + pop_2
+}
+
+group "Picture: Scope" {
+  # The name flares as it lands and fades over the next section's first two bars.
+  # Counting back to the section the run played in keeps the silent run of the first
+  # from typing anything.
+  let lettering_light = beats
+    |> expression(
+        a: _,
+        b: pop_1_level,
+        c: pop_2_level,
+        formula: "step(32, mod(a - mod(a - 28, 32), 384)) * (1 - smoothstep(4, 12, mod(a - 28, 32))) * (0.8 + 0.6 * max(b, c))")
+}
+
+group "Picture: Tube" {
+  let tube_light = filters_open |> remap(in_low: 0, out_low: 0.8, out_high: 1.3)
+}
+
+group "Bass" {
+  # Root and octave in eighths.
+  let bass_steps = beats |> values(rate: 2, gate_length: 0.92, shape: 0.03) [ 0 12 ]
+  let bass_pitch = bass_steps + roots + -12 |> note(note: _)
+  let bass_pluck = beats |> stroke(rate: 2, curve: 6)
+  let bass_opening = filters_open |> remap(in_low: 0, out_low: 0.6)
+  let bass_saw = saw(freq: bass_pitch, amp: 0.7)
+    |> filter(cutoff: 110 + 1700 * bass_pluck * bass_opening, resonance: 0.25)
+  let sub_pitch = roots + -12 |> note(note: _)
+  let bass = (
+      bass_saw + sine(freq: sub_pitch, amp: 0.6)) * bass_steps.gate * parts.part_3
+}
+
+group "Chords" {
+  # Three supersaws on the root, third and fifth: a pad while the filters are shut,
+  # and pumping stabs under the kick once they open.
+  let chord_root = roots + 12
+  let chord_root_pitch = chord_root |> note(note: _)
+  let chord_third = chord_root |> tune(transpose: 3.5) [ A B C D E F G ]
+  let chord_fifth = chord_root |> tune(transpose: 7) [ A B C D E F G ]
+  let chord_cutoff = filters_open |> remap(in_low: 0, out_low: 1100, out_high: 9000)
+  let supersaws = osc(
+      freq: chord_root_pitch,
+      amp: 0.35) + osc(freq: chord_third, amp: 0.35) + osc(freq: chord_fifth, amp: 0.35)
+    |> filter(cutoff: chord_cutoff, resonance: 0.15)
+    |> chorus(rate: 0.25, depth: 0.6, mix: 0.6)
+  let chords = supersaws * parts.part_5
+  let chords_right = supersaws.wide * parts.part_5
+}
+
+group "Lead" {
+  # The promo's hook, in eighths over four bars.
+  let hook = beats
+    |> notes(rate: 2, gate_length: 0.9, shape: 0.06) [
+        E5@2 A5 G5 E5@2 D5 C5 C5 D5 E5@2 F5 E5@0.5 E5%0@2.5 A5@3 G5 E5@2 D5 E5 E5@5
+        E5%0@3 ]
+  let hook_pitch = hook |> slew(rise: 39.81072ms, fall: 39.81072ms) |> note(note: _)
+  let lead_tone = saw(
+      freq: hook_pitch,
+      phase: sine(freq: 5.2, amp: 0.12),
+      amp: 0.5) + saw(freq: hook_pitch * 1.006, amp: 0.5)
+    |> filter(cutoff: 3400, resonance: 0.3)
+  let lead_gate = hook.gate |> slew(rise: 3.162278ms, fall: 63.09573ms)
+  let lead = lead_tone * lead_gate * parts.part_6
+}
+
+group "Desk" {
+  # The dry synths duck under the kick; their echoes and the hall do not.
+  let synths = bass
+    |> desk(
+        left_1: _,
+        level_1: 0.45,
+        left_2: arp,
+        right_2: arp * 0.8,
+        level_2: 0.13,
+        left_3: chords,
+        right_3: chords_right,
+        left_4: lead,
+        level_4: 0.25)
+  let ducked = synths
+    |> duck(
+        left: _,
+        right: synths.right,
+        key: kick_level,
+        depth: 0.72,
+        attack: 100us,
+        release: 100us)
+  let drums = kick
+    |> desk(
+        left_1: _,
+        level_1: 0.65,
+        left_2: snare + roll_snare,
+        level_2: 0.45,
+        left_3: hats,
+        level_3: 0.8,
+        left_4: crash,
+        level_4: 0.3)
+}
+
+group "Space" {
+  # A ping-pong of three sixteenths a side, and a hall.
+  let echo = arp
+    |> mixer(
+        in_1: _,
+        level_1: 0.5,
+        in_2: lead,
+        level_2: 0.35,
+        in_3: pops,
+        level_3: 0.5)
+    |> echo(tempo: tempo, right: 3, feedback: 0.42, mix: 1)
+  let hall = snare
+    |> mixer(
+        in_1: _,
+        level_1: 0.35,
+        in_2: lead,
+        level_2: 0.2,
+        in_3: chords,
+        level_3: 0.25,
+        in_4: roll_snare,
+        level_4: 0.3)
+    |> reverb(size: 0.8, decay: 0.75, mix: 1)
+}
+
+group "Riser" {
+  let riser_cutoff = riser_level |> remap(in_low: 0, out_low: 300, out_high: 9000)
+  let riser = hiss(
+      level: riser_level,
+      cutoff: riser_cutoff,
+      resonance: 0.55,
+      gain: 1.4,
+      seed: 5,
+      band: "band")
+}
+
+group "Desk" {
+  let space = echo
+    |> desk(
+        left_1: _,
+        right_1: echo.right,
+        level_1: 0.3,
+        left_2: hall,
+        right_2: hall.wide,
+        level_2: 0.35,
+        left_3: riser,
+        level_3: 0.25,
+        left_4: pops,
+        level_4: 0.22,
+        bus_left: drums.bus_left,
+        bus_right: drums.bus_right)
+  let master_desk = ducked
+    |> desk(
+        left_1: _,
+        right_1: ducked.right,
+        bus_left: space.bus_left,
+        bus_right: space.bus_right,
+        trim: 0.75)
+}
+
+group "Master" {
+  # Glued a few decibels, as the promo's saturation does, then brightened.
+  let compressor = master_desk
+    |> compressor(
+        left: _,
+        right: master_desk.right,
+        threshold: -10,
+        ratio: 2,
+        attack: 31.62278ms,
+        release: 125.89255ms,
+        makeup: 8)
+  let eq = compressor
+    |> eq(
+        left: _,
+        right: compressor.right,
+        low_cut: 30,
+        mid_freq: 350,
+        mid_gain: -3,
+        mid_q: 0.8,
+        high_freq: 6000,
+        high_gain: 6)
+  let width = eq |> width(left: _, right: eq.right, width: 1.25, mono_below: 150)
+  let limiter = width |> limiter(left: _, right: width.right, release: 50.11873ms)
+}
+
+group "Picture: Tube" {
+  rgb(r: 0.01, g: 0.015, b: 0.03) |> ink(mask: graticule, r: 0.15, g: 0.45, b: 0.5)
+    |> ink(mask: bass_trace * (phosphor * 0.8 + 0.2), r: 0.3, b: 0.75)
+    |> ink(mask: arp_trace * (phosphor * 0.8 + 0.2), g: 0.35, b: 0.7)
+    |> ink(mask: lettering * lettering_light, g: 0.9, b: 0.74)
+    |> trails(zoom: 1.004, persist: 0.72)
+    |> gain(gain: 0.85 + 0.15 * sin(coord.y * 500))
+    |> vignette(from: 0.6, to: 2.1, dark: 0.5)
+    |> gain(gain: tube_light)
+    |> out.color
+}
+
+limiter |> out.left
+limiter.right |> out.right
+out.volume = 0.8

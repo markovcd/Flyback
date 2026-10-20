@@ -10,7 +10,7 @@ public partial class NodeCatalog
     /// shell has to ask whether a patch holds one — a keyboard nothing is
     /// listening to should not be swallowing keystrokes.
     /// </summary>
-    public const string MidiTypeId = "midi.in";
+    internal const string MidiTypeId = "midi.in";
 
     /// <summary>
     /// The module that plays a MIDI file. Named here because the editor, the

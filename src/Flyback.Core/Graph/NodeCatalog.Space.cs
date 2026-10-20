@@ -143,13 +143,13 @@ public partial class NodeCatalog
     private const string TileCellHelp = "Where in its cell the pixel is, -1 to 1 across it.";
 
     /// <summary>What a Transform's settings are filed under, and the one it has.</summary>
-    public const string TransformStateKey = "transform";
+    internal const string TransformStateKey = "transform";
 
     /// <summary>The one setting a Transform has: whether it scales or rotates first.</summary>
-    public const string TransformOrderKey = "order";
+    internal const string TransformOrderKey = "order";
 
     /// <summary>The order that is not the default: Rotate first, then Scale.</summary>
-    public const string TurnThenZoom = "turn";
+    internal const string TurnThenZoom = "turn";
 
     private const string ZoomThenTurn = "zoom";
 

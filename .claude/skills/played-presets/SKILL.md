@@ -5,7 +5,7 @@ description: Use when building or checking a Flyback preset that has MIDI voices
 
 # Presets with MIDI voices and panel knobs
 
-No Sense Dub (`NoSenseDubPreset.cs`) is the first shipped preset with panel knobs; `PresetBench` has `Panel`, `Follows` and a knobbed `Times` for them.
+No Sense Dub (`NoSenseDub.fbks`) is the first shipped preset with panel knobs: `panel Name = rest` declares one, `Name(low..high)` reads it as a range, and `keyboard scale [ ... ]` lays the computer keyboard out in a key.
 
 - **Feedback reads whatever reached the Output, not the Trails' own output.** A Grade, scanlines or Vignette wired after a Trails is inside the loop and compounds every frame; at persist over ~0.9 it burns to one saturated color with striped artifacts. Put the Trails last. Outrun gets away with a Grade after it only because its persist is 0.6.
 - **Do not link a knob to Reverb `size`**: it is a delay length, so turning it while it rings bends the tail. Link `decay` and the return level. A linked socket is not clamped to its port range at compile, so keep link ends inside it (`DubPresetTests` asserts this). A knob that reaches a signal links to the socket that signal ends in: a Multiply's second (`Times(a, knob, low, high)`), a Duck's `depth`. Where that socket's range is too narrow, link it 0..1 and multiply after; never put a Value between the knob and the socket.

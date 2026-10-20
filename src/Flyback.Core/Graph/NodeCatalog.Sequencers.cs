@@ -68,7 +68,7 @@ public partial class NodeCatalog
     private const float WidestGateEdge = 0.5f;
 
     /// <summary>The type id of the Tempo module.</summary>
-    public const string TempoTypeId = "seq.tempo";
+    internal const string TempoTypeId = "seq.tempo";
 
     /// <summary>
     /// The sample and hold. Named here because a preset builds one and because

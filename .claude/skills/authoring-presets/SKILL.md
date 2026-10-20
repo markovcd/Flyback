@@ -13,7 +13,7 @@ Measured on the user's machine: the audio path runs at 4x oversampling on one th
 
 ## Building and checking a big preset
 
-- Write the preset in the text language: a `.fbks` embedded in its plugin and built through `PresetText.Embedded`, like Mycelium in `Flyback.Plugins.Effects`. The C# `PatchBuilder` presets (Bronze, Outrun, Phase) are the older shape, ported by printing, renaming, looping and proving the port bit for bit with `flyback-cli compare`.
+- Write the preset in the text language: a `.fbks` embedded in its plugin and built through `PresetText.Embedded`, like Mycelium in `Flyback.Plugins.Effects`. The site plugins' C# `PatchBuilder` presets (Easy, Fractals, Drawings, Figures) are the older shape, ported by printing, renaming, looping and proving the port bit for bit with `flyback-cli compare`.
 - To measure, name the preset: `flyback-cli info/check/render --preset <name>`, and `flyback-cli pack --preset <name> -o <file>.fbkb` where a file is wanted. A Release CLI loads only the plugin folders a `plugins.sha256` beside them vouches for, and reports a refusal only to a terminal: build `src/Flyback.Editor.Desktop -c Release` and copy its `bin/Release/net10.0/plugins/` and `plugins.sha256` beside the CLI.
 - **Render with the Release CLI** (`dotnet build src/Flyback.Cli -c Release`, plugins laid beside it as above). The Debug CLI is several times slower: a 170 s track had not finished after 11 minutes, while Release rendered it in about 2.5 minutes.
 - CLI render timings are noisy (0.74x to 1.34x for the same patch while the app is running), so never cut features from a preset on the strength of one slow render. The user objected when that was tried on Outrun ("the patch runs fine"). Compare a new preset against a shipped one in the same run.
@@ -31,7 +31,7 @@ Measured on the user's machine: the audio path runs at 4x oversampling on one th
 
 ## Formulas
 
-`PresetBench.Formula("...", a, b, ...)` adds an Expression (ADR-0104). To move a preset's arithmetic onto formulas without changing a pixel, spell a constant the way C# folded it (`1 / 45`, `4 * (8 / 45)`, `45 * 2 * pi`; the formula folds number-on-number in float). Dump before and after and `flyback-cli compare` the two, which plays both sinks and checks them bit for bit: Overworld's picture went 510 -> 381 modules and its sound 381 -> 306, both unchanged.
+To move a preset's arithmetic onto formulas without changing a pixel, spell a constant the way the formula folds it (`1 / 45`, `4 * (8 / 45)`, `45 * 2 * pi`; number-on-number folds in float), then `flyback-cli compare` before and after, which plays both sinks and checks them bit for bit. Copy a printed float literal exactly; a shorter spelling of the same number is a different float.
 
 Every preset is folded as it is built (`Presets.Fused`, ADR-0108, ADR-0109): no one- or two-input Maths module survives, and a test says so. A preset written with `Times`/`Plus`/`Product` arrives as Expressions anyway, and a number linked to a panel knob stays on a socket; hand-written formulas are only worth it where a formula reads better than the chain. To check a change to the folding, dump every preset from the previous commit in a scratch `git worktree` (it needs `dotnet restore` first) and `flyback-cli compare` each against the current build: all 47 matched.
 

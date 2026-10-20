@@ -57,7 +57,7 @@ public sealed class ModuleCatalog
     /// still resolves — from a file <c>PatchIO</c> has not yet rewritten, from the
     /// text language written out in full, or from an assistant's tool call.
     /// </remarks>
-    public NodeDef? Get(string typeId) =>
+    internal NodeDef? Get(string typeId) =>
         index.GetValueOrDefault(typeId)
         ?? (NodeCatalog.LegacyTypeIds.TryGetValue(typeId, out var renamed) ? index.GetValueOrDefault(renamed) : null);
 
@@ -93,7 +93,7 @@ public sealed class ModuleCatalog
     }
 
     /// <summary>Whether the provider with <paramref name="providerId"/> supplied any of the modules.</summary>
-    public bool HasProvider(string providerId) => Providers.Any(p => p.Id == providerId);
+    internal bool HasProvider(string providerId) => Providers.Any(p => p.Id == providerId);
 
     /// <summary>
     /// Folds a provider's modules in. The provider appears only if at least one
