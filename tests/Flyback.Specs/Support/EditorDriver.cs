@@ -927,29 +927,42 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
         });
 
     /// <summary>
-    /// Waits for the patch's clock to come to <paramref name="arrived"/>, for at most
-    /// <paramref name="cap"/>, and throws saying where it got to where it did not.
+    /// Waits for the patch's clock and its pause to come to <paramref name="arrived"/>, for
+    /// at most <paramref name="cap"/>, and throws saying what the last look found where they did not.
     /// </summary>
     /// <remarks>
     /// The clock moves on the UI thread's timers, and headless fires those only while a
     /// dispatch is waiting on the thread, so each look waits there rather than beside it.
+    /// Both are read in one dispatch: the jobs run after each, so two reads can straddle a change.
     /// </remarks>
-    public void WaitForClock(Func<double, bool> arrived, TimeSpan cap)
+    public void WaitForClock(Func<double, bool, bool> arrived, TimeSpan cap)
     {
         var until = DateTime.UtcNow + cap;
+        var looks = 0;
+        var longest = TimeSpan.Zero;
 
-        while (!arrived(Clock))
+        while (true)
         {
+            var started = DateTime.UtcNow;
+            var (clock, paused) = ReadWindow(open => (TimeOf(open), IsPaused(open)));
+
+            looks++;
+
+            if (arrived(clock, paused)) return;
+
             if (DateTime.UtcNow > until)
-                throw new TimeoutException($"Waited {cap.TotalSeconds:0.#} s for the clock, which reads {Clock:0.000} s, {(Paused ? "paused" : "playing")}. {ReadWindow(Situation)}");
+                throw new TimeoutException(
+                    $"Waited {cap.TotalSeconds:0.#} s for the clock over {looks} looks, the longest {longest.TotalSeconds:0.0} s; "
+                    + $"the last found it at {clock:0.000} s, {(paused ? "paused" : "playing")}. {ReadWindow(Situation)}");
 
             Run(async () =>
             {
                 await Task.Delay(20);
                 return true;
             });
-        }
 
+            if (DateTime.UtcNow - started is var took && took > longest) longest = took;
+        }
     }
 
     /// <summary>Waits for the patch to stop by itself, for at most <paramref name="cap"/>, and throws saying where it got to where it did not.</summary>
@@ -1038,10 +1051,14 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
         Named<Slider>(window, "volume");
 
     /// <summary>Where the patch's clock is, in seconds: what the status bar says after "t =".</summary>
-    public double Clock => ReadWindow(open => open.GetVisualDescendants().OfType<PreviewHost>().First().Time);
+    public double Clock => ReadWindow(TimeOf);
 
     /// <summary>Whether the toolbar offers to play rather than to pause.</summary>
-    public bool Paused => ReadWindow(open => ToolTip.GetTip(Named<Button>(open, "pause")) as string == TransportRow.PlayTip);
+    public bool Paused => ReadWindow(IsPaused);
+
+    private static double TimeOf(MainWindow open) => open.GetVisualDescendants().OfType<PreviewHost>().First().Time;
+
+    private static bool IsPaused(MainWindow open) => ToolTip.GetTip(Named<Button>(open, "pause")) as string == TransportRow.PlayTip;
 
     /// <summary>The names of the buttons on the toolbar, left to right.</summary>
     public IReadOnlyList<string?> ToolbarButtons => ReadWindow(_ =>

@@ -60,11 +60,11 @@ public sealed class DrumMachineTransportSteps(EditorDriver editor) : IDisposable
 
     [Then("the patch plays from the top")]
     public void ThenPlaysFromTheTop() =>
-        editor.WaitForClock(seconds => seconds < Slack && !editor.Paused, TimeSpan.FromSeconds(2));
+        editor.WaitForClock((seconds, paused) => seconds < Slack && !paused, TimeSpan.FromSeconds(2));
 
     [Then("the patch plays on from about {int} seconds")]
     public void ThenPlaysOn(int seconds) =>
-        editor.WaitForClock(at => at > seconds - Slack && at < seconds + Slack && !editor.Paused, TimeSpan.FromSeconds(2));
+        editor.WaitForClock((at, paused) => at > seconds - Slack && at < seconds + Slack && !paused, TimeSpan.FromSeconds(2));
 
     [Then("the patch pauses")]
     public void ThenPauses() => editor.WaitForStop(TimeSpan.FromSeconds(2));
@@ -74,7 +74,7 @@ public sealed class DrumMachineTransportSteps(EditorDriver editor) : IDisposable
     {
         // Nothing arriving is proved only by waiting; a followed Start is posted to
         // the window at once, so a few frames' worth is plenty.
-        editor.WaitForClock(_ => DateTime.UtcNow > pressedAt.AddMilliseconds(300), TimeSpan.FromSeconds(2));
+        editor.WaitForClock((_, _) => DateTime.UtcNow > pressedAt.AddMilliseconds(300), TimeSpan.FromSeconds(2));
 
         editor.Paused.ShouldBeTrue();
         editor.Clock.ShouldBeInRange(seconds - Slack, seconds + Slack);

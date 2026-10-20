@@ -53,7 +53,7 @@ public sealed class TransportSteps(EditorDriver editor) : IDisposable
     public void WhenPastTheEnd()
     {
         editor.Seek(editor.SeekLength);
-        editor.WaitForClock(seconds => seconds < Slack, TimeSpan.FromSeconds(2));
+        editor.WaitForClock((seconds, _) => seconds < Slack, TimeSpan.FromSeconds(2));
     }
 
     [When("the patch plays to the end of the seek bar")]
