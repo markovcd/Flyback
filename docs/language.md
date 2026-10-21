@@ -997,7 +997,7 @@ something the preset says, that is a hole and it is marked as one.
 
 The Output, alone. An empty file.
 
-### Picture in — [`PictureIn.fbks`](../src/Flyback.Engine/Graph/Presets/PictureIn.fbks)
+### Picture in — [`Presets.PictureIn`](../src/Flyback.Engine/Graph/Presets/PictureIn.fbks)
 
 ```
 description "A photograph put through the same geometry a generated field goes through,"
@@ -1015,7 +1015,7 @@ scale(scale: zoom)
 `picture()` names no file, exactly as the preset ships it — the file is chosen
 in the editor, and `picture("sunset.png")` is how a patch that has one says so.
 
-### Clip — [`Clip.fbks`](../src/Flyback.Engine/Graph/Presets/Clip.fbks)
+### Clip — [`Presets.Clip`](../src/Flyback.Engine/Graph/Presets/Clip.fbks)
 
 ```
 description "A sound file played and retriggered every two seconds, once you choose one."
@@ -1025,7 +1025,7 @@ sample(level: 0.9, trigger: pulse(freq: 0.5, width: 0.02)) |> out.left
 out.volume = 0.7
 ```
 
-### Plasma — [`Plasma.fbks`](../src/Flyback.Engine/Graph/Presets/Plasma.fbks)
+### Plasma — [`Presets.Plasma`](../src/Flyback.Engine/Graph/Presets/Plasma.fbks)
 
 ```
 description "Three drifting sine fields summed and read through a cosine palette — the hello world of video synths."
@@ -1042,7 +1042,7 @@ let b = field |> sine(freq: 0.2, phase: 0.2, amp: 0.42, bias: 0.5)
 rgb(r: r, g: g, b: b) |> out.color
 ```
 
-### Kaleidoscope — [`Kaleidoscope.fbks`](../src/Flyback.Engine/Graph/Presets/Kaleidoscope.fbks)
+### Kaleidoscope — [`Presets.Kaleidoscope`](../src/Flyback.Engine/Graph/Presets/Kaleidoscope.fbks)
 
 ```
 description "Rotating wedges filled with clouds that boil over time."
@@ -1057,7 +1057,7 @@ rotate(angle: t * 0.15)
 One clock and two speeds off it, as the preset has — `t` is the same node both
 times.
 
-### Grid — [`Grid.fbks`](../src/Flyback.Engine/Graph/Presets/Grid.fbks)
+### Grid — [`Presets.Grid`](../src/Flyback.Engine/Graph/Presets/Grid.fbks)
 
 ```
 description "Tile, mirror and polar in a row, so what each one does to the plane is"
@@ -1078,7 +1078,7 @@ plane |> checker(size: 3)
 `plane` is piped as the pair `(radius, angle)` into Checker, and read once more
 by name for the hue. That is the fan-out the preset draws with two wires.
 
-### Feedback tunnel — [`FeedbackTunnel.fbks`](../src/Flyback.Engine/Graph/Presets/FeedbackTunnel.fbks)
+### Feedback tunnel — [`Presets.FeedbackTunnel`](../src/Flyback.Engine/Graph/Presets/FeedbackTunnel.fbks)
 
 ```
 description "Each frame re-read slightly rotated, scaled and dimmed, with fresh rings"
@@ -1101,7 +1101,7 @@ past |> max(a: _, b: fresh) |> out.color
 The Smoothstep is where the `in` rule earns itself: the rings go to `in`, which
 is the module's *third* port.
 
-### Three channels — [`ThreeChannels.fbks`](../src/Flyback.Engine/Graph/Presets/ThreeChannels.fbks)
+### Three channels — [`Presets.ThreeChannels`](../src/Flyback.Engine/Graph/Presets/ThreeChannels.fbks)
 
 ```
 description "One field read three times, a little apart: a color is three signals, and"
@@ -1122,7 +1122,7 @@ The preset is a loop over three channels in C#, and three lines here rather than
 a `def`: the three share `plane` and `flow`, and what is shared is a `let`
 outside.
 
-### Trails — [`Trails.fbks`](../src/Flyback.Engine/Graph/Presets/Trails.fbks)
+### Trails — [`Presets.Trails`](../src/Flyback.Engine/Graph/Presets/Trails.fbks)
 
 ```
 description "A dot on a looping path and a Trails keeping where it has been, so a point"
@@ -1142,7 +1142,7 @@ One of the few patches that names `x` and `y`: a distance from somewhere other
 than the middle needs the pixel's own position to take that somewhere from. The
 Smoothstep's edges are the wrong way round on purpose, which reads it backwards.
 
-### Loop — [`Loop.fbks`](../src/Flyback.Engine/Graph/Presets/Loop.fbks)
+### Loop — [`Presets.Loop`](../src/Flyback.Engine/Graph/Presets/Loop.fbks)
 
 ```
 description "A wire running backwards: a lowpass built from an add and a multiply, with"
@@ -1160,7 +1160,7 @@ out.volume = 0.2
 `keep` is read twice, once as it is and once taken from one, and the two shares
 are what make this a filter that comes out as loud as it went in.
 
-### Two channels — [`TwoChannels.fbks`](../src/Flyback.Engine/Graph/Presets/TwoChannels.fbks)
+### Two channels — [`Presets.TwoChannels`](../src/Flyback.Engine/Graph/Presets/TwoChannels.fbks)
 
 ```
 description "Stereo from one voice: left and right fed differently rather than panned."
@@ -1179,7 +1179,7 @@ out.volume = 0.55
 The second Note is fed from the first one's `note` output rather than its `hz`,
 which is the whole trick — nine cents of detune on the same note number.
 
-### Staircase — [`Staircase.fbks`](../src/Flyback.Engine/Graph/Presets/Staircase.fbks)
+### Staircase — [`Presets.Staircase`](../src/Flyback.Engine/Graph/Presets/Staircase.fbks)
 
 ```
 description "A slope caught six times a second by a Sample & Hold, which makes steps,"
@@ -1200,7 +1200,7 @@ out.volume = 0.5
 The one clock goes to the Hold's `trigger` and the envelope's `gate`, so a pitch
 is caught on the same edge that plucks it.
 
-### Heads or tails — [`HeadsOrTails.fbks`](../src/Flyback.Engine/Graph/Presets/HeadsOrTails.fbks)
+### Heads or tails — [`Presets.HeadsOrTails`](../src/Flyback.Engine/Graph/Presets/HeadsOrTails.fbks)
 
 ```
 description "One riff and a coin for every note: heads plays it on the left, tails an"
@@ -1220,7 +1220,7 @@ out.volume = 0.5
 `coin` is Chance's `gate` and `coin.else` the notes it let fall, so every note of
 the riff plays on exactly one side.
 
-### Drone — [`Drone.fbks`](../src/Flyback.Engine/Graph/Presets/Drone.fbks)
+### Drone — [`Presets.Drone`](../src/Flyback.Engine/Graph/Presets/Drone.fbks)
 
 ```
 description "One slow oscillator setting both the hue of the image and the tremolo on"
@@ -1241,7 +1241,7 @@ out.volume = 0.6
 One node reaching both sinks, which is the patch. Nothing about it is said
 twice.
 
-### Sequence — [`Sequence.fbks`](../src/Flyback.Engine/Graph/Presets/Sequence.fbks)
+### Sequence — [`Presets.Sequence`](../src/Flyback.Engine/Graph/Presets/Sequence.fbks)
 
 ```
 description "One sequencer heard and seen at once: the steps are the tune and the"
@@ -1265,7 +1265,7 @@ out.volume = 0.5
 
 All three of the sequencer's outputs, each used for what only it can do.
 
-### Four voices — [`FourVoices.fbks`](../src/Flyback.Engine/Graph/Presets/FourVoices.fbks)
+### Four voices — [`Presets.FourVoices`](../src/Flyback.Engine/Graph/Presets/FourVoices.fbks)
 
 The preset is a `for` loop over four voices in C#. It is a `def` here — and it
 is the patch that decides `def` must be able to hand back more than one thing,
@@ -1299,7 +1299,7 @@ out.volume = 0.25
 The band goes to `value` because `_` puts it there. HSV has no `in`, so a pipe
 into it always says which of its three sockets it means.
 
-### Heard — [`Heard.fbks`](../src/Flyback.Engine/Graph/Presets/Heard.fbks)
+### Heard — [`Presets.Heard`](../src/Flyback.Engine/Graph/Presets/Heard.fbks)
 
 ```
 description "A drum the picture listens to rather than being told about, through a"
@@ -1326,7 +1326,7 @@ Both of the Meter's readings: `peak` is the hit and lights the rings, `level` �
 which is what the bare name means — takes the hue, so the color lags the flash
 by as much as a room does.
 
-### Duck — [`Duck.fbks`](../src/Flyback.Engine/Graph/Presets/Duck.fbks)
+### Duck — [`Presets.Duck`](../src/Flyback.Engine/Graph/Presets/Duck.fbks)
 
 ```
 description "A pad that gets out of the way each time the kick hits, on a Scope drawing"
@@ -1349,7 +1349,7 @@ The kick's sound is the key, and it is added back after the Duck, which never
 turns down what keys it. The Scope charts `gain`, the level the Duck applies,
 rather than the pad, so a dip is a line falling rather than a waveform thinning.
 
-### Waveform — [`Waveform.fbks`](../src/Flyback.Engine/Graph/Presets/Waveform.fbks)
+### Waveform — [`Presets.Waveform`](../src/Flyback.Engine/Graph/Presets/Waveform.fbks)
 
 ```
 description "Sine, triangle, square and saw faded one into the next, on a Scope drawing"
@@ -1373,7 +1373,7 @@ A socket with a space in its name takes an underscore, so the Mixer's `in 1` is
 `in_1`. Each fader is the top half of a slow sine, a quarter of a turn after the
 last.
 
-### Sidebands — [`Sidebands.fbks`](../src/Flyback.Engine/Graph/Presets/Sidebands.fbks)
+### Sidebands — [`Presets.Sidebands`](../src/Flyback.Engine/Graph/Presets/Sidebands.fbks)
 
 ```
 description "One sine bending another's phase at audio rate, on an Analyzer showing the"
@@ -1397,7 +1397,7 @@ out.volume = 0.3
 `root * 3.5` is a frequency times a number, which is an Expression like any
 other: the language has no idea that one side of it is a pitch.
 
-### Ahead and behind — [`AheadAndBehind.fbks`](../src/Flyback.Engine/Graph/Presets/AheadAndBehind.fbks)
+### Ahead and behind — [`Presets.AheadAndBehind`](../src/Flyback.Engine/Graph/Presets/AheadAndBehind.fbks)
 
 ```
 description "A Probe and a Scope on one signal, which is the only way to see how they"
@@ -1420,7 +1420,7 @@ of the two ambiguous short names. And the split is `y |> step()` rather than
 `step(y)`, because Threshold is `[edge, in]` — a positional `y` would have
 become the edge.
 
-### Lissajous — [`Lissajous.fbks`](../src/Flyback.Engine/Graph/Presets/Lissajous.fbks)
+### Lissajous — [`Presets.Lissajous`](../src/Flyback.Engine/Graph/Presets/Lissajous.fbks)
 
 ```
 description "Two sines a fifth apart, left against right on a Beam: a knot that turns"
@@ -1439,7 +1439,7 @@ out.volume = 0.2
 Each sine is one speaker and one axis of the Beam, so what is drawn is the stereo
 being heard. Three cycles across against two up is a fifth's knot.
 
-### Ring scan — [`RingScan.fbks`](../src/Flyback.Engine/Graph/Presets/RingScan.fbks)
+### Ring scan — [`Presets.RingScan`](../src/Flyback.Engine/Graph/Presets/RingScan.fbks)
 
 ```
 description "A loop swept round a field at audio rate, so the picture is the waveform."
@@ -1458,7 +1458,7 @@ bands |> remap(-1..1, 0.05..0.55)
 out.volume = 0.25
 ```
 
-### In key — [`InKey.fbks`](../src/Flyback.Engine/Graph/Presets/InKey.fbks)
+### In key — [`Presets.InKey`](../src/Flyback.Engine/Graph/Presets/InKey.fbks)
 
 ```
 description "One cloud field snapped to a pentatonic: heard as a melody, seen as the"
@@ -1486,7 +1486,7 @@ Divide. **Arithmetic between literals is constant-folded at parse time;
 arithmetic involving a signal emits an Expression.** That is what keeps
 `t * 0.2` an Expression and `1 / 12` a number.
 
-### Nebula — [`Nebula.fbks`](../src/Flyback.Engine/Graph/Presets/Nebula.fbks)
+### Nebula — [`Presets.Nebula`](../src/Flyback.Engine/Graph/Presets/Nebula.fbks)
 
 ```
 description "Everything the video side can do, folded, warped and trailing its own"
@@ -1512,7 +1512,7 @@ fresh |> trails(zoom: 0.99, angle: 0.015, persist: 0.92) |> out.color
 preset draws from one node. `field + pulse |> fract()` groups as
 `(field + pulse) |> fract()`, because the pipe is the loosest operator there is.
 
-### Whole band — [`WholeBand.fbks`](../src/Flyback.Engine/Graph/Presets/WholeBand.fbks)
+### Whole band — [`Presets.WholeBand`](../src/Flyback.Engine/Graph/Presets/WholeBand.fbks)
 
 The showcase, and the stress test: a whole song, a hundred and sixty-four
 modules in fifteen groups. It is also the patch that argues hardest for `group`,
