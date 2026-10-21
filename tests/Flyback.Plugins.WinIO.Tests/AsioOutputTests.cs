@@ -226,7 +226,9 @@ public sealed class AsioOutputTests : IDisposable
     public void A_driver_that_stops_answering_as_it_stops_is_left_behind_without_waiting()
     {
         using var stuck = new ManualResetEventSlim();
-        using var hanging = new AsioAudioDevice(Format, driver.Load, TimeSpan.FromMilliseconds(200));
+        // The patience also covers the start, which has to succeed: a busy runner
+        // can take longer than 200 ms just to bring up the driver's thread.
+        using var hanging = new AsioAudioDevice(Format, driver.Load, TimeSpan.FromSeconds(2));
 
         hanging.Start(Stereo(0f, 0f));
         driver.Stuck = stuck;
