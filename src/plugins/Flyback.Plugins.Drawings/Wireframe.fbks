@@ -1,0 +1,20 @@
+# A model played as oscilloscope music: a Path goes round a cube's edges fifty-five
+# times a second, a Rotate 3D turns it about the vertical at 0.7 radians a second
+# and tips it toward the viewer, and a Perspective spreads the near edges wider.
+# What is heard is what the Beam draws, with thirty milliseconds of phosphor: about
+# two trips round the cube.
+
+description "A cube's edges played as one path at a pitch, turned in perspective as it"
+  "plays: a model drawn by its sound."
+tags "stereo" "scope" "3d"
+
+requires flyback.drawings
+
+let cube = path("cube.obj", freq: 55, amp: 0.6)
+let turned = cube |> rotate3d(z: cube.z, yaw: t * 0.7, pitch: 0.4)
+let seen = turned |> perspective(z: turned.z)
+
+seen |> beam(persistence: 29.99853ms) |> out.color
+seen |> out.left
+seen.y |> out.right
+out.volume = 0.4

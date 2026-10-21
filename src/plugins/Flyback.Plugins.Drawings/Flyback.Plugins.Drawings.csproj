@@ -20,6 +20,7 @@
     <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" Condition="Exists('preview.webp')" />
     <!-- The pictures behind the modules (ADR-0118), read out of the assembly by Art. -->
     <EmbeddedResource Include="Art\*.svg" LogicalName="art.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="*.fbks" LogicalName="%(Filename)%(Extension)" />
     <!-- The models the presets play, named as their patches name them. -->
     <EmbeddedResource Include="Wireframe\*.obj" LogicalName="Wireframe/%(Filename)%(Extension)" />
   </ItemGroup>

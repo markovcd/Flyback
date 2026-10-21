@@ -6,7 +6,7 @@
 
 ### Presets
 
-- Thirty presets are written in the text language, their modules named for what they do.
+- Thirty-seven presets are written in the text language, their modules named for what they do.
 
 ### Assistant
 

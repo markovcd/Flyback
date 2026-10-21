@@ -30,16 +30,16 @@ public sealed class EasyPlugin : IFlybackPlugin
         registry.AddPresets(
         [
             new PatchPreset(
-                FirstNotesPreset.Name,
-                FirstNotesPreset.Build,
+                "First notes",
+                PresetText.Embedded(typeof(EasyPlugin).Assembly, "FirstNotes.fbks"),
                 "A Note Sequencer playing an Easy Synth, its filter swaying, with rings flashing on each note.",
                 PresetKind.Interplay)
             {
                 Tags = ["basics", "melody", "sequencer"],
             },
             new PatchPreset(
-                FirstBeatPreset.Name,
-                FirstBeatPreset.Build,
+                "First beat",
+                PresetText.Embedded(typeof(EasyPlugin).Assembly, "FirstBeat.fbks"),
                 "Four Easy Drums on Auto, a kick, a snare and two hats, each playing the rhythm that "
                 + "suits it, with the picture pulsing on the kick.",
                 PresetKind.Interplay)
@@ -47,8 +47,8 @@ public sealed class EasyPlugin : IFlybackPlugin
                 Tags = ["basics", "drums", "rhythm"],
             },
             new PatchPreset(
-                WarehousePreset.Name,
-                WarehousePreset.Build,
+                "Warehouse",
+                PresetText.Embedded(typeof(EasyPlugin).Assembly, "Warehouse.fbks"),
                 "A three-minute acid house track on the Easy modules at 124 bpm: builds, two drops and "
                 + "a breakdown in A minor, a bass line, a chord stab and an organ hook, and knobs for the "
                 + "kick's pump, the echo and the swing.",

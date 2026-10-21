@@ -1,0 +1,32 @@
+# One c going round a circle, seen as its Julia set and heard as the orbit of one of
+# its pixels, drawn over it.
+#
+# The circle is |c| = 0.7885, once round in two minutes, which grazes the Mandelbrot
+# set's edge all the way round, so the Julia set is always one of the lacy ones and
+# the pixel keeps crossing between inside and out: a tone at a fraction of the rate
+# while its orbit settles, a rhythm of restarts while it escapes, a hiss where it
+# never does. Two sines a quarter turn apart are the circle, and the same two wires
+# go to both modules; the Orbit is in Julia mode, so its path lands on the Julia's
+# picture and the two colors are summed.
+
+description "One c going slowly round a circle: its Julia set on the screen, and the"
+  "orbit of one of its pixels drawn over it and heard, a tone where the orbit settles"
+  "and a hiss where it never does."
+tags "fractal" "scan" "synthesis"
+
+requires flyback.fractals
+
+let c_re = sine(freq: 0.008333334, phase: 0.25, amp: 0.7885)
+let c_im = sine(freq: 0.008333334, amp: 0.7885)
+let orbit = orbit(
+    re: c_re,
+    im: c_im,
+    rate: 440,
+    start_re: 0.1,
+    start_im: 0.1,
+    mode: "julia")
+
+julia(re: c_re, im: c_im) + orbit.color |> out.color
+orbit |> out.left
+orbit.right |> out.right
+out.volume = 0.3

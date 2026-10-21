@@ -1,0 +1,33 @@
+# The fewest wires an Easy Synth needs to play a tune: a Note Sequencer's note and
+# gate in, both ears out.
+#
+# LFO 1 sways the filter slowly and LFO 2 is a light vibrato. The picture is rings
+# colored round the wheel by the synth's LFO and lit by its envelope, so they flash
+# with each note.
+
+description "A Note Sequencer playing an Easy Synth, its filter swaying, with rings"
+  "flashing on each note."
+tags "basics" "melody" "sequencer"
+
+requires flyback.easy
+
+let riff = notes() [ A3 C4 D4 E4 G4 E4 D4 C4 ]
+let synth = synth(
+    pitch: riff,
+    gate: riff.gate,
+    glide: 0.04,
+    lfo1_rate: 0.2,
+    lfo1_depth: 0.4,
+    lfo2_rate: 5,
+    lfo2_depth: 0.15,
+    drive: 0.3,
+    lfo1_to: "filter",
+    lfo2_shape: "sine",
+    lfo2_to: "pitch")
+
+rings(freq: 5, offset: synth.lfo)
+  |> color.hsv(hue: _, saturation: 0.7, value: synth.env)
+  |> out.color
+synth |> out.left
+synth.right |> out.right
+out.volume = 0.3

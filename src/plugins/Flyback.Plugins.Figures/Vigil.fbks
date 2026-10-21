@@ -1,0 +1,320 @@
+# Dark ambient on the three Figures: a drone of four voices that is the fog on the
+# screen heard through Overtones, a harmonograph drawing each chord as it swells,
+# and now and then a far bell, a plate struck in a hall.
+#
+# D, E♭, A and A♭ from D phrygian dominant, sixteen seconds a chord, the voices
+# gliding from one to the next. A♭ is outside the scale and borrows its C and E♭.
+# Five turns of the progression make the piece: a turn of bass and wind rising out
+# of nothing, three with the whole drone, the chords, the wind and the rare sounds,
+# and a turn sinking back. Every level that shapes that is a formula of the clock,
+# so the picture keeps the same sections as the sound.
+#
+# The fog is one Clouds field: the screen draws it, and the voices read rows of it
+# as their partials, so the drone's timbre is the fog drifting. The screen lights
+# the rows they read and draws their waves along them, and tints the fog by the
+# chord. Engine modules only besides the three.
+
+description "Dark ambient in D phrygian dominant on the three Figures. The drone is"
+  "four voices reading the fog through Overtones, so its timbre is the mist drifting; a"
+  "harmonograph draws the chords D, E♭, A and A♭ as they swell, and a plate far off in"
+  "the hall is a bell, rarely. 'fog' thickens the mist and the timbre with it, 'glow'"
+  "opens the drone, 'drive' roughens it, 'twist' bends the drawings, and 'wind'"
+tags "dark-ambient" "ambient" "drone" "shapes" "knobs"
+length 5:20.00
+
+requires flyback.figures
+
+panel fog = 0.4
+panel glow = 0.5
+panel drive_knob = 0.4, label: "drive"
+panel twist = 0.3
+panel wind = 0.5
+panel hall = 0.6
+
+group "Picture" {
+  let bloom = blur(radius: 0.018)
+  let coord = coord()
+}
+
+group "Sections" {
+  let clock = time()
+  # Seconds into the piece. All of it comes in from nothing over the first forty
+  # seconds and goes out over the last minute; the middle holds the chords, the upper
+  # voices, the bells and the knells.
+  let seconds = clock % 320
+  let all_of_it = seconds |> window(to: 316, rise: 40, fall: 54)
+  let middle_part = seconds |> window(from: 52, to: 266, rise: 48, fall: 52)
+}
+
+group "Picture" {
+  # Each chord its own hue, turned over the voices' glide: D indigo, E♭ violet, A a
+  # cold blue, A♭ plum. Far behind the mist, a slower fog in cold blue. Each knell is
+  # a red swell from the floor, and a ring rising through the dark from below.
+  let hue = clock % 64
+    |> expression(
+        a: _,
+        formula: "0.83 - 0.15 * smoothstep(0, 2.5, a) + 0.07 * smoothstep(16, 18.5, a) - 0.17 * smoothstep(32, 34.5, a) + 0.25 * smoothstep(48, 50.5, a)")
+  let far_fog = coord * 0.55 + clock * 0.012
+    |> clouds(x: _, y: coord.y * 0.55, z: clock * 0.009 + 7, scale: 1.2)
+    |> expression(a: _, b: all_of_it, formula: "smoothstep(0.3, 0.9, a) * b * 0.3")
+  let knell_light = seconds
+    |> expression(a: _, formula: "mix(64, (a + 16) % 64, window(a, 100, 250))")
+    |> expression(
+        a: _,
+        b: coord,
+        c: coord.y,
+        formula: "smoothstep(0, 0.2, a) * (exp(-a * 0.5) * smoothstep(0.2, -1.1, c) * 0.6 + exp(-a * 0.3) * exp(-pow((hypot(b, c + 1.3) - 0.3 - a * 0.28) * 9, 2)) * 0.45)")
+}
+
+group "Fog" {
+  # Boiling slowly, and cut to wisps: the screen's mist and each voice's partials. The
+  # voices read it with the bass low down, and the chord above it along one row, so
+  # the three are one timbre.
+  let mist = clouds(z: clock * 0.025, scale: fog(0.8..4))
+    |> expression(a: _, formula: "smoothstep(0.3, 0.82, a)")
+  let bass_row = sine(freq: 0.011, amp: 0.12, bias: 0.72)
+  let chord_row = sine(freq: 0.017, amp: 0.15, bias: 0.32)
+}
+
+group "Picture" {
+  let bass_row_y = coord.y - (1 - 2 * bass_row)
+  let chord_row_y = coord.y - (1 - 2 * chord_row)
+}
+
+group "Drone" {
+  # The bass is there from the first breath; the chord above it comes up with the
+  # middle.
+  let chord_level = all_of_it * (0.12 + 0.4 * middle_part)
+  let bass_level = all_of_it |> expression(a: _, formula: "a")
+}
+
+group "Picture" {
+  let chord_row_light = exp(
+      -chord_row_y * chord_row_y * 3000) * (0.2 + mist) * chord_level * 0.3
+}
+
+group "Bass" {
+  # The bass takes sixteen partials to reach up into the filter's range; the chord's
+  # eight already do. The bass two octaves up is the harmonograph's root.
+  let roots = notes(rate: 0.0625, gate_length: 1) [ D2 D#2 A1 G#1 ]
+  let bass_pitch = roots |> note(note: _) |> slew(rise: 6.309574s, fall: 6.309574s)
+  let bass = overtones(
+      spectrum: mist,
+      freq: bass_pitch,
+      row: bass_row,
+      tilt: -3,
+      amp: bass_level,
+      y: bass_row_y,
+      partials: "16")
+}
+
+group "Middle" {
+  let middle_pitch = notes(rate: 0.0625, gate_length: 1) [ D4 D#4 D#4 D#4 ]
+    |> note(note: _, cents: -4)
+    |> slew(rise: 4.4668357s, fall: 4.4668357s)
+  let middle = overtones(
+      spectrum: mist,
+      freq: middle_pitch,
+      row: chord_row,
+      tilt: -6,
+      amp: chord_level,
+      y: chord_row_y)
+}
+
+group "Chords" {
+  # A swell on every chord, a major third over the root but a minor one on A: three
+  # seconds in, two out, so it is silent before the plane lets it go.
+  let swell_gate = step(fract(clock / 16), 0.8)
+  let interval = clock
+    |> expression(
+        a: _,
+        formula: "1.25 - 0.05 * step(0.5, fract(a / 64)) * step(fract(a / 64), 0.75)")
+  let harmonograph = roots |> note(note: _, octave: 2)
+    |> harmonograph(
+        trigger: swell_gate,
+        velocity: middle_part,
+        speed: 0.23,
+        pitch: _,
+        ratio: interval,
+        twist: twist,
+        damping: 7,
+        persist: 0.8,
+        size: 1.3)
+  let swell = swell_gate
+    |> adsr(gate: _, attack: 3.1622777s, sustain: 1, release: 1.9952624s)
+  let chords = harmonograph * swell
+  let chords_right = harmonograph.right * swell
+}
+
+group "Picture" {
+  # The chords' drawing: amber where the ink is fading, near white where it is fresh.
+  let fresh_ink = harmonograph.figure
+    |> expression(a: _, formula: "smoothstep(0.5, 1, a) * 0.6")
+}
+
+group "Bell" {
+  # Every 110 seconds from 80 in, C6 and ten seconds later D6; the last C, in the
+  # fade, goes unanswered. Far off: faint, and mostly its echoes in the hall.
+  let bell = seconds
+    |> expression(
+        a: _,
+        formula: "step((a + 30) % 110, 0.4) + step(10, (a + 30) % 110) * step((a + 30) % 110, 10.4) * step(a, 305)")
+    |> plate(
+        trigger: _,
+        velocity: 0.8,
+        freq: 1046.5 + 128.16 * step(10, (seconds + 30) % 110),
+        aspect: 1.37,
+        decay: 6,
+        brightness: 0.7,
+        strike_x: 0.31,
+        strike_y: 0.23)
+}
+
+group "Picture" {
+  # The bell lights the hall where its sand is thrown: a flash at the strike, closing
+  # in as the sand settles. The mist leans to the next hue and pales in its thick
+  # parts, black at the start and the end, and each voice's row is lit where the fog
+  # is heard, with its wave drawn along it.
+  let bell_light = bell.figure
+    |> expression(
+        a: _,
+        b: coord,
+        c: coord.y,
+        formula: "(1 - a) * smoothstep(1.1, 0.3, hypot(b * 0.56, c)) * 0.4")
+  let lit = hue + 0.05 * mist
+    |> color.hsv(
+        hue: _,
+        saturation: 0.8 - 0.4 * mist,
+        value: mist * (0.4 + 0.6 * mist) * all_of_it * 0.36)
+    |> ink(mask: far_fog, r: 0.16, g: 0.3, b: 0.62)
+    |> ink(
+        mask: exp(
+            -bass_row_y * bass_row_y * 3000) * (0.2 + mist) * all_of_it * 0.35 + chord_row_light,
+        r: 0.5,
+        g: 0.62,
+        b: 0.9)
+    |> ink(mask: bass.wave * all_of_it * 0.3, r: 0.85, g: 0.22, b: 0.08)
+    |> ink(mask: middle.wave * chord_level * 0.4, r: 0.75, g: 0.55, b: 0.3)
+    |> ink(mask: harmonograph.figure, r: 0.95, g: 0.55, b: 0.25)
+    |> ink(mask: fresh_ink, g: 0.95, b: 0.85)
+    |> ink(mask: bell_light, r: 0.3, g: 0.55)
+    |> ink(mask: knell_light, r: 0.62, g: 0.09, b: 0.05)
+}
+
+group "Low" {
+  let low_pitch = notes(rate: 0.0625, gate_length: 1) [ A3 A#3 A3 G#3 ]
+    |> note(note: _, cents: 5)
+    |> slew(rise: 3.981072s, fall: 3.981072s)
+  let low = overtones(
+      spectrum: mist,
+      freq: low_pitch,
+      row: chord_row,
+      tilt: -6,
+      amp: chord_level)
+}
+
+group "High" {
+  let high_pitch = notes(rate: 0.0625, gate_length: 1) [ F#4 G4 C5 C5 ]
+    |> note(note: _, cents: 3)
+    |> slew(rise: 5.011872s, fall: 5.011872s)
+  let high = overtones(
+      spectrum: mist,
+      freq: high_pitch,
+      row: chord_row,
+      tilt: -7.5,
+      amp: chord_level)
+}
+
+group "Drone" {
+  # Summed, driven, and closed down to a murmur outside the middle, then a slow chorus
+  # each side, the two sweeping against each other.
+  let drone = bass + low + middle + high
+    |> drive(drive: drive_knob(1..6))
+    |> filter(
+        cutoff: (
+            140 + 2600 * glow(
+                0.15..1) * (0.15 + 0.85 * middle_part)) * (1 + 0.3 * sine(freq: 0.021)),
+        resonance: 0.35)
+  let chorus_left = drone
+    |> delay(time: sine(freq: 0.07, amp: 0.006, bias: 0.022), feedback: 0.35, mix: 0.5)
+  let chorus_right = drone
+    |> delay(
+        time: sine(freq: 0.07, phase: 0.5, amp: 0.006, bias: 0.029),
+        feedback: 0.35,
+        mix: 0.5)
+}
+
+group "Sounds" {
+  # A thin voice that drifts in and out of the middle, never on a note. The bell and
+  # the wail share the far echoes.
+  let wail_drift = noise(rate: 0.07, seed: 5)
+  let wail_swell = noise(rate: 0.045, seed: 9)
+  let wail_level = wail_swell.drift
+    |> expression(a: _, b: middle_part, formula: "smoothstep(0.25, 0.8, a) * b * 0.07")
+  let far_echoes = bell * 0.5 + sine(freq: 900 * exp(wail_drift.drift * 0.52), amp: wail_level)
+    |> delay(time: 0.61, feedback: 0.55, mix: 0.7)
+  # A low plate struck three times in the middle, like a door far below.
+  let knell = seconds
+    |> expression(a: _, formula: "step((a + 16) % 64, 0.3) * window(a, 100, 245)")
+    |> plate(
+        trigger: _,
+        freq: 36.7,
+        aspect: 1.9,
+        decay: 7,
+        brightness: 0.9,
+        strike_x: 0.21,
+        strike_y: 0.34)
+    |> drive(drive: 3)
+  # Wind, a resonant band over hiss each side, wandering on its own.
+  let (wind_left, wind_right) = for (rate, seed) in [(0.06, 1), (0.05, 2)] {
+    let gusts = noise(rate: rate, seed: seed)
+    gusts * all_of_it |> filter(cutoff: 300 * exp(0.83 + gusts.drift * 0.97), resonance: 0.72)
+  }
+}
+
+group "Mix" {
+  # Nearly everything into one long hall; the bell is almost only its reflections.
+  let room = drone * 0.3 + chords * 0.6 + far_echoes + knell * 0.7
+    |> reverb(size: 0.96, decay: 0.93, mix: 1)
+  let dry = chorus_left
+    |> desk(
+        left_1: _,
+        right_1: chorus_right,
+        level_1: 0.8,
+        left_2: chords,
+        right_2: chords_right,
+        level_2: 0.35,
+        left_3: wind_left.band,
+        right_3: wind_right.band,
+        level_3: wind(0..0.9),
+        left_4: far_echoes,
+        level_4: 0.15)
+  let master = room
+    |> desk(
+        left_1: _,
+        right_1: room.wide,
+        level_1: hall(0.2..1),
+        left_2: bell,
+        level_2: 0.08,
+        left_3: knell,
+        level_3: 0.35,
+        bus_left: dry.bus_left,
+        bus_right: dry.bus_right,
+        trim: 0.9)
+}
+
+group "Picture" {
+  # Bloom: the last frame softened and laid over as light; then the trails drift out
+  # into the hall.
+  bloom.soft |> gain(gain: 0.28, bias: lit)
+    |> trails(
+        zoom: 0.995,
+        angle: 0.004 * sin(clock * 0.05),
+        persist: 0.8 + 0.14 * middle_part)
+    |> vignette(to: 1.6, dark: 0.92)
+    |> out.color
+}
+
+master |> out.left
+master.right |> out.right
+out.volume = 0.8

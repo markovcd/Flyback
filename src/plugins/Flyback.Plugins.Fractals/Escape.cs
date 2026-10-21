@@ -1,4 +1,3 @@
-using System.Text.Json.Nodes;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
@@ -43,14 +42,6 @@ internal static class Escape
             [.. Counts.Select(n => new ChoiceOption(n.ToString(), $"{n} iterations"))],
             Fallback) { Help = "How long each point is run before it counts as in the set. More is finer edges, and slower." },
     ]);
-
-    /// <summary>Sets how many iterations an instance runs, for a preset assembling one in code.</summary>
-    public static NodeInstance WithIterations(NodeInstance node, int iterations)
-    {
-        node.SetState(StateKey, new JsonObject { [CountKey] = JsonValue.Create(Nearest(iterations).ToString()) });
-
-        return node;
-    }
 
     /// <summary>The count this instance carries, held to one the module offers.</summary>
     public static int Iterations(EmitContext node) =>

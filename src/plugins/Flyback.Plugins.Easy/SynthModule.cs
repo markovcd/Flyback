@@ -1,4 +1,3 @@
-using System.Text.Json.Nodes;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
@@ -228,17 +227,6 @@ internal static class SynthModule
         ],
         fallback)
     { Help = "What the LFO wobbles." };
-
-    /// <summary>A node with the given settings chosen, and every other at its fallback.</summary>
-    public static NodeInstance Configure(NodeInstance node, params (string Key, string Value)[] chosen)
-    {
-        var state = new JsonObject();
-        foreach (var (key, value) in chosen) state[key] = value;
-
-        node.SetState(StateKey, state);
-
-        return node;
-    }
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

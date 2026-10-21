@@ -1,0 +1,34 @@
+# A beat from four Easy Drums and no timing wires: each is left on Auto, so each
+# plays the rhythm its sound is usually heard in, and all four share the one tempo.
+#
+# The hats are panned apart and lightly swung. The picture is rings pushed outward
+# by the kick, colored round the wheel by where they sit, and lit by the kick and
+# the snare.
+
+description "Four Easy Drums on Auto, a kick, a snare and two hats, each playing the"
+  "rhythm that suits it, with the picture pulsing on the kick."
+tags "basics" "drums" "rhythm"
+
+requires flyback.easy
+
+let kick = drummer(drive: 0.3)
+let snare = drummer(tone: 0.6, sound: "snare")
+let closed_hat = drummer(swing: 0.3, velocity: 0.6, pan: -0.4, sound: "closed hat")
+let open_hat = drummer(swing: 0.3, velocity: 0.5, pan: 0.4, sound: "open hat")
+let desk = kick
+  |> desk(
+      left_1: _,
+      right_1: kick.right,
+      left_2: snare,
+      right_2: snare.right,
+      left_3: closed_hat,
+      right_3: closed_hat.right,
+      left_4: open_hat,
+      right_4: open_hat.right,
+      trim: 0.7)
+
+rings(freq: 3, offset: kick.env)
+  |> color.hsv(hue: _, saturation: 0.8, value: kick.env + snare.env)
+  |> out.color
+desk |> out.left
+desk.right |> out.right

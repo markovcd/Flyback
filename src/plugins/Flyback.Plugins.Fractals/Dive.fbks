@@ -1,0 +1,23 @@
+# A dive into the Mandelbrot set and back out, with its colors cycling.
+#
+# The whole of the module in three wires: a slow triangle on 'zoom' is the dive, the
+# clock on 'shift' turns the colors, and 'color' goes straight to the screen. The
+# middle is Seahorse Valley, the crease between the main body and the bulb to its
+# left, where the detail never runs out. Down to ten halvings and back up in a
+# minute, starting at the top: a steady ramp on zoom is a steady dive.
+
+description "A dive into the Mandelbrot set and back out, its colors cycling as it"
+  "goes."
+tags "fractal" "color"
+
+requires flyback.fractals
+
+triangle(freq: 0.016666668, phase: 0.5, amp: 5, bias: 5)
+  |> mandelbrot(
+      re: -0.7436439,
+      im: 0.1318259,
+      zoom: _,
+      shift: t * 0.04,
+      iterations: "128")
+  |> out.color
+out.volume = 0

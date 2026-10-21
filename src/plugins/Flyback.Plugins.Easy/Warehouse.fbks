@@ -1,0 +1,372 @@
+# A whole acid house track on the two Easy modules: ninety-six bars of a drum
+# machine, a bass line and a chord stab over A minor, D minor, A minor and E minor,
+# with an organ hook on top.
+#
+# Three Arrangements of eight-bar sections say what plays when, for the drums, the
+# music and the picture: the intro, a build, the first drop, a breakdown where the
+# stab turns into a pad under a soft hook, a second build, the last drop with the
+# hook an octave up, and the way out, which leads back into the start. In a build a
+# snare roll climbs through its second half and the kick sits out its last bar. A
+# fourth Arrangement changes chord every two bars and transposes the bass line, as
+# the machine itself transposes a pattern, and a coin picks each pass of the hook
+# from it and two variations. The hook has its own echo, thrown into eighth by
+# eighth and hardest on the ends of its phrases, a room and some drive, each set by
+# a fifth Arrangement, which also washes a band of noise down into each drop and the
+# breakdown. The drums keep their own time at 124 bpm and everything else steps on
+# Time at the same tempo, so nothing is wired for timing. The picture is rings bent
+# by folded clouds, colored by the chord and folded, bent and turned differently in
+# each section, with the kick punching the zoom and trails carrying it rather than a
+# flash.
+
+description "A three-minute acid house track on the Easy modules at 124 bpm: builds,"
+  "two drops and a breakdown in A minor, a bass line, a chord stab and an organ hook,"
+  "and knobs for the kick's pump, the echo and the swing."
+tags "song" "acid" "house" "knobs"
+length 3:05.81
+
+requires flyback.easy
+
+panel Pump = 0.6666667
+panel Echo_knob = 0.5, label: "Echo"
+panel Swing = 0.15
+
+group "Arrangement" {
+  # A chord every two bars, A minor, D minor, A minor, E minor: the root the bass line
+  # is moved by in semitones from A, the stab's three voices close together, and the
+  # picture's hue, gliding across each chord toward the next one's.
+  let chords = arrangement(rate: 0.25833333) [
+      0 5 0 -5 |
+      57 57 57 55 |
+      60 62 60 59 |
+      64 65 64 64 |
+      >0.72 >0.6 >0.5 >0.6 ]
+  let clock = time()
+  # The sections: intro, intro with the bass, build, two of the first drop, breakdown,
+  # build, two of the last drop, stripped back, and out. Each drum's velocity in each
+  # section (kick, clap, closed hat, open hat, cowbell, tom), and which sections are
+  # builds.
+  let drum_parts = arrangement(rate: 0.06458333) [
+      1 1 1 1 1 0 1 1 1 1 1 1 |
+      0 0.8 0.8 0.8 0.8 0 0.8 0.8 0.8 0.8 0.8 0 |
+      0.27 0.31 0.35 0.41 0.42 0.26 0.36 0.45 0.45 0.33 0.31 0.27 |
+      0 0 0.45 0.45 0.45 0 0.45 0.45 0.45 0 0 0 |
+      0 0 0.3 0.3 0.3 0 0.3 0.3 0.3 0 0 0 |
+      0 0.6 0.6 0.6 0.6 0 0.6 0.6 0.6 0.6 0.6 0 |
+      0 0 1 0 0 0 1 0 0 0 0 0 ]
+  # The picture in each section: how many wedges it is folded into, how far the fold
+  # turns each bar in radians, how hard the clouds bend the rings, how bright it is,
+  # how many rings, its energy (the kick's punch and the trails' pull) and how far the
+  # color is turned warm.
+  let picture_parts = arrangement(rate: 0.06458333) [
+      3 4 5 6 8 3 5 7 12 6 4 3 |
+      0 0.1 0.2 0.3 -0.3 0 0.25 0.4 -0.4 0.2 0.1 0 |
+      0.5 0.8 1 1.4 2 2.5 1.2 1.6 2.2 1 0.7 0.5 |
+      0.3 0.39 0.48 0.61 0.63 0.27 0.5 0.7 0.7 0.43 0.39 0.3 |
+      2.4 3.2 4 5.2 5.4 2.2 4.2 6 6 3.6 3.2 2.4 |
+      0.1 0.3 0.5 0.8 0.85 0.05 0.55 1 1 0.4 0.3 0.1 |
+      0 0 0 0 0 0 0 0.4 0.4 0 0 0 ]
+  # A build's second half, climbing from nothing to one.
+  let snare_roll = drum_parts.part_7
+    |> expression(a: _, b: drum_parts.progress, formula: "a * smoothstep(0.5, 1, b)")
+  # The bass, the stab, the pad the stab becomes in the breakdown, the hook (growing
+  # through the second build), its octave and brightness, and how far the bass's pluck
+  # opens.
+  let music_parts = arrangement(rate: 0.06458333) [
+      0 0.75 0.75 0.75 0.75 0.75 0.75 0.75 0.75 0.75 0.75 0 |
+      0 0 0 1 1 1 0 1 1 0 0 0 |
+      0 0 0 0 0 1 0 0 0 0 0 0 |
+      0 0 0 0 1 0.6 >1 1 1 0 0 0 |
+      0 0 0 0 0 0 0 1 1 1 0 0 |
+      0.4 0.4 0.4 0.4 0.75 0.4 0.4 0.75 0.75 0.4 0.4 0.4 |
+      0.1 0.12 0.18 0.25 0.28 0.2 0.3 0.35 0.35 0.25 0.15 0.1 ]
+  let bass_open = music_parts.part_7 |> slew(rise: 3.981072s, fall: 1.9952624s)
+  # The knobs are slewed, so a knob turned while it plays glides rather than steps.
+  let echo = slew(in: Echo_knob(0..0.6), rise: 30.19952ms, fall: 30.19952ms)
+  # What happens to the hook in each section: how much of it is thrown into its echo,
+  # how much goes into the room, how hard it is driven, and where the noise washes
+  # down.
+  let hook_parts = arrangement(rate: 0.06458333) [
+      0 0 0 0 0.5 1 0.8 0.4 0.6 0 0 0 |
+      0 0 0 0 0.25 0.7 0.45 0.2 0.3 0 0 0 |
+      0 0 0 0 0.15 0 0.1 0.35 0.45 0 0 0 |
+      0 0 0 1 0 1 0 1 0 0 0 0 ]
+  let swing = slew(in: Swing(0..1), rise: 30.19952ms, fall: 30.19952ms)
+}
+
+group "Picture" {
+  # Each section has its own fold, bend and turn. The fold's center drifts, the kick
+  # punches the zoom, and on every bar the fold turns a notch, eased in on the
+  # downbeat.
+  let drift = translate(
+      dx: sin(clock * 0.13) * 0.25,
+      dy: sin(clock * 0.089 + 1) * 0.18)
+  let turn = clock
+    |> expression(
+        a: _,
+        b: picture_parts.progress,
+        c: picture_parts.part_2,
+        formula: "a * 0.03 + (floor(b * 8) + smoothstep(0, 0.2, fract(b * 8))) * c")
+}
+
+group "Drums" {
+  # The kick sits out a build's last bar, so the drop lands on it; the tom fills each
+  # section's last bar.
+  let kick = drummer(
+      bpm: 124,
+      velocity: drum_parts * (
+          1 - drum_parts.part_7 * step(0.875, drum_parts.progress)),
+      drive: 0.4)
+  let cowbell = drummer(
+      bpm: 124,
+      swing: swing,
+      velocity: drum_parts.part_5,
+      pan: 0.5,
+      sound: "cowbell",
+      rhythm: "clave")
+  let roll = drummer(
+      bpm: 124,
+      swing: swing,
+      velocity: snare_roll * 0.7,
+      tone: 0.7,
+      pan: -0.15,
+      sound: "snare",
+      rhythm: "sixteenths")
+  let tom = drummer(
+      bpm: 124,
+      swing: swing,
+      velocity: drum_parts.part_6 * step(0.875, drum_parts.progress),
+      pan: 0.2,
+      sound: "tom",
+      rhythm: "tresillo")
+  let clap = drummer(bpm: 124, velocity: drum_parts.part_2, sound: "clap")
+  let closed_hat = drummer(
+      bpm: 124,
+      swing: swing,
+      velocity: drum_parts.part_3,
+      pan: -0.3,
+      sound: "closed hat",
+      rhythm: "sixteenths")
+  let open_hat = drummer(
+      bpm: 124,
+      velocity: drum_parts.part_4,
+      decay: 0.3,
+      pan: 0.3,
+      sound: "open hat")
+}
+
+group "Picture" {
+  let punched = drift
+    |> scale(
+        scale: 1.3 + sin(clock * 0.11) * 0.25 - kick.env * picture_parts.part_6 * 0.15)
+  let turned = punched |> rotate(angle: turn)
+  let folded = turned |> kaleidoscope(segments: picture_parts)
+  let clouds = folded |> clouds(z: clock * 0.08, scale: 1.8)
+  let rings = folded
+    |> rings(
+        freq: picture_parts.part_5,
+        offset: clock * 0.51666665 + clouds * picture_parts.part_3 + kick.env * 0.1)
+  # The hue follows the chords and creeps round the wheel over the song; each ring
+  # takes its own shade.
+  let hue = chords.part_5 + clouds * 0.15 + clock * 0.003 + rings * 0.12
+  let ring_light = (rings * 0.5 + 0.5) * (0.4 + clouds)
+}
+
+group "Bass" {
+  # Two bars of the bass on A: on the offbeats between the kicks, with a pick-up at
+  # the end of each bar. A square under a sub, round and warm.
+  let bass_line = notes(rate: 8.266666, gate_length: 0.8) [
+      ~ ~ A1 ~ ~ ~ A1 ~ ~ ~ A1 ~ ~ A1 ~ C2 ~ ~ A1 ~ ~ ~ A2 ~ ~ ~ A1 ~ ~ G2 ~ E2 ]
+  let bass = synth(
+      pitch: bass_line + chords,
+      gate: bass_line.gate,
+      velocity: 0.9,
+      sub: 0.5,
+      attack: 1ms,
+      decay: 354.8134ms,
+      sustain: 0.5,
+      release: 63.09573ms,
+      bright: 0.15,
+      resonance: 0.1,
+      sweep: bass_open,
+      drive: 0.45,
+      wave: "square")
+}
+
+group "Chords" {
+  # Two bars of the stab, in eighths. As a pad the stab's gates lengthen and its notes
+  # hold. A dotted eighth of echo on the left and an eighth on the right.
+  let stab_steps = values(rate: 4.133333, gate_length: 0.35 + music_parts.part_3 * 0.55) [
+      ~ 1 ~ ~ ~ 1 ~ 1 ~ 1 ~ ~ ~ 1 ~ 1 ]
+  let stab_sustain = music_parts.part_3 * 0.6
+  let stab_release = -0.8 + music_parts.part_3 * 1.1
+  let (stab_low, stab_middle, stab_high) = for (pitch, pan) in [
+      (chords.part_2, -0.4),
+      (chords.part_3, 0),
+      (chords.part_4, 0.4)] {
+    synth(
+        pitch: pitch,
+        gate: stab_steps.gate,
+        decay: 199.52624ms,
+        sustain: stab_sustain,
+        release: stab_release,
+        bright: 0.6,
+        sweep: 0.5,
+        pan: pan,
+        wave: "supersaw")
+  }
+  let stab = stab_low
+    |> desk(
+        left_1: _,
+        right_1: stab_low.right,
+        level_1: music_parts.part_2,
+        left_2: stab_middle,
+        right_2: stab_middle.right,
+        level_2: music_parts.part_2,
+        left_3: stab_high,
+        right_3: stab_high.right,
+        level_3: music_parts.part_2)
+  let stab_echo_left = stab |> delay(time: 0.36290324, feedback: 0.35, mix: echo)
+  let stab_echo_right = stab.right |> delay(time: 0.24193549, feedback: 0.35, mix: echo)
+  # The hook, four bars of eighths, and two variations on it: one climbing and
+  # answering from the top, one sparse and syncopated. Each ends on B, leading back to
+  # A. A coin for each pass of the hook: heads plays it as written, tails flips again
+  # for which variation. The pass's gate dips for its last few hundredths, which is a
+  # rest in all three. The hook is faded rather than stopped when a section drops it.
+  let hook = notes(rate: 4.133333, gate_length: 0.6) [
+      A4 ~ C5 ~ E5 ~ D5 C5 ~ C5 ~ A4 ~ G4 A4 ~ A4 ~ C5 ~ G5 ~ E5 D5 ~ E5 ~ D5 ~ C5 B4 ~ ]
+  let climbing_hook = notes(rate: 4.133333, gate_length: 0.6) [
+      E5 ~ E5 D5 E5 ~ G5 ~ E5 ~ D5 ~ C5 ~ A4 ~ G5 ~ G5 E5 D5 ~ C5 ~ ~ B4 ~ C5 ~ D5 B4 ~ ]
+  let pass = values(rate: 0.12916666, gate_length: 0.995, shape: 0) [ 1 ]
+  let as_written = pass.gate |> chance(gate: _, seed: 3)
+  let climbing = as_written.else |> chance(gate: _, seed: 7)
+  let hook_or_climbing = hook + (climbing_hook - hook) * climbing
+  let sparse_hook = notes(rate: 4.133333, gate_length: 0.6) [
+      A4 ~ ~ A4 ~ ~ C5 ~ ~ ~ E5 ~ D5 ~ C5 ~ A4 ~ ~ A4 ~ ~ D5 ~ ~ ~ E5 ~ D5 C5 B4 ~ ]
+  let hook_or_climbing_gate = hook.gate + (climbing_hook.gate - hook.gate) * climbing
+  let hook_level = music_parts.part_4 |> slew(rise: 50.11873ms, fall: 3.981072s)
+  let organ = synth(
+      pitch: hook_or_climbing + (sparse_hook - hook) * climbing.else,
+      gate: hook_or_climbing_gate + (sparse_hook.gate - hook.gate) * climbing.else,
+      velocity: hook_level,
+      octave: music_parts.part_5,
+      decay: 301.9952ms,
+      sustain: 0.35,
+      release: 199.52624ms,
+      bright: music_parts.part_6,
+      sweep: 0.3,
+      lfo1_depth: 0.15,
+      drive: hook_parts.part_3,
+      pan: -0.1,
+      wave: "organ")
+}
+
+group "Hook" {
+  # How much of each eighth of the hook is thrown into its wet-only echo: a little
+  # throughout, more on the high notes, and most on the ends of its phrases. A harder
+  # throw also feeds back longer. Slewed, so the send never clicks between eighths.
+  let throws = values(rate: 4.133333) [
+      0.12 0.12 0.12 0.12 0.35 0.2 0.12 0.12 0.12 0.12 0.12 0.12 0.12 0.7 0.7 0.7 0.12
+      0.12 0.12 0.12 0.5 0.2 0.12 0.12 0.12 0.12 0.12 0.12 0.12 0.6 1 1 ]
+  let throw = throws * hook_parts * echo * 3.3 |> slew(rise: 10ms, fall: 10ms)
+  let hook_echo_right = organ.right * throw
+    |> delay(time: 0.7258065, feedback: 0.2 + throws * 0.35, mix: 1)
+  let hook_with_echo = organ * throw
+    |> delay(time: 0.36290324, feedback: 0.25 + throws * 0.35, mix: 1)
+    |> desk(
+        left_1: organ,
+        right_1: organ.right,
+        left_2: _,
+        right_2: hook_echo_right,
+        level_2: 0.8)
+}
+
+group "Mix" {
+  # The bass and the chords are ducked by the kick; the drums go round them on the
+  # bus.
+  let music = bass
+    |> desk(
+        left_1: _,
+        right_1: bass.right,
+        level_1: music_parts,
+        left_2: stab_echo_left,
+        right_2: stab_echo_right,
+        level_2: 0.9,
+        bus_left: hook_with_echo.bus_left,
+        bus_right: hook_with_echo.bus_right)
+  let ducked = music
+    |> duck(
+        left: _,
+        right: music.right,
+        key: kick.env,
+        depth: Pump(0..0.9),
+        release: 181.97008ms)
+}
+
+group "Wash" {
+  # A band of noise falling from a hiss to a rumble over the first two bars of each
+  # drop and of the breakdown, a different noise on each side, into the hook's room.
+  let wash_level = hook_parts.part_4
+    |> expression(
+        a: _,
+        b: hook_parts.progress,
+        formula: "a * (1 - smoothstep(0, 0.25, b)) * (1 - smoothstep(0, 0.25, b))")
+  let wash_cutoff = 150 + wash_level * 7000
+  let wash_left = noise() * wash_level * 0.8 |> filter(cutoff: wash_cutoff, resonance: 0.55)
+  let wash_right = noise(seed: 5) * wash_level * 0.8
+    |> filter(cutoff: wash_cutoff, resonance: 0.55)
+  let room = organ * hook_parts.part_2 + (wash_left.band + wash_right.band) * 0.4
+    |> reverb(size: 0.85, decay: 0.8, mix: 1)
+  let wash = wash_left.band
+    |> desk(
+        left_1: _,
+        right_1: wash_right.band,
+        left_2: room,
+        right_2: room.wide,
+        level_2: 0.6)
+}
+
+group "Mix" {
+  # The wash goes round the duck with the drums.
+  let drums = kick
+    |> desk(
+        left_1: _,
+        right_1: kick.right,
+        left_2: clap,
+        right_2: clap.right,
+        left_3: closed_hat,
+        right_3: closed_hat.right,
+        left_4: open_hat,
+        right_4: open_hat.right,
+        bus_left: wash.bus_left,
+        bus_right: wash.bus_right)
+  let master = ducked
+    |> desk(
+        left_1: _,
+        right_1: ducked.right,
+        left_2: cowbell,
+        right_2: cowbell.right,
+        level_2: 0.3,
+        left_3: roll,
+        right_3: roll.right,
+        left_4: tom,
+        right_4: tom.right,
+        bus_left: drums.bus_left,
+        bus_right: drums.bus_right,
+        trim: 0.8)
+}
+
+group "Picture" {
+  hue + picture_parts.part_7
+    |> color.hsv(
+        hue: _,
+        saturation: 0.85 - clouds * 0.2,
+        value: (
+            picture_parts.part_4 + snare_roll * 0.25) * (0.3 + ring_light * 0.7) + kick.env * 0.1)
+    |> trails(
+        zoom: 0.995 - picture_parts.part_6 * 0.012 - snare_roll * 0.02,
+        angle: picture_parts.part_2 * 0.01)
+    |> out.color
+}
+
+master |> out.left
+master.right |> out.right
