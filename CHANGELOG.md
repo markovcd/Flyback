@@ -6,8 +6,6 @@
 
 ### Presets
 
-- Every shipped preset, the engine's own included, is written in the text language, its modules named for what they do.
-
 ### Assistant
 
 ### Editor
@@ -19,6 +17,16 @@
 ### Installing
 
 ### Performance
+
+### Fixes
+
+## 0.10.1 — 2026-10-21
+
+16 commits since 0.10.0.
+
+### Presets
+
+- Every shipped preset, the engine's own included, is written in the text language, its modules named for what they do.
 
 ### Fixes
 
