@@ -228,6 +228,7 @@ internal static class EditorServices
         services.AddPart<TransportRow>();
         services.AddPart<Toolbar>();
         services.AddPart<StatusBar>();
+        services.AddSingleton<MenuBar>();
         services.AddPart<TakeRecording>();
         services.AddPart<TransportControls>();
         services.AddPart<FullScreenPreview>();

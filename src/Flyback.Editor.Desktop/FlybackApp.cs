@@ -77,6 +77,8 @@ public sealed class FlybackApp : Application
         window.Start();
         desktop.MainWindow = window;
 
+        if (OperatingSystem.IsMacOS()) NativeMenu.SetMenu(window, provider.GetRequiredService<MenuBar>().Menu);
+
         // Once there is a window, so a slow network is never a slow start.
         Updater.CheckInBackground(launch.Updates);
 
