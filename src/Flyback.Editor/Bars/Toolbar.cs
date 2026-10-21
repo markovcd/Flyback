@@ -141,7 +141,7 @@ internal sealed class Toolbar
 
     public const string MeasureTip =
         "Measure: see the numbers each module is producing, shown next to it on the canvas. "
-        + "Select modules to check only those. Press again to hide them, or to measure again after an edit.  (Ctrl+M)";
+        + "Select modules to check only those. Press again to hide them, or to measure again after an edit.  (Ctrl+Shift+M)";
 
     public ToggleButton Assistant { get; } =
         ToolbarButtons.Toggle("assistant", Glyphs.Spark(), "Describe a patch and have one built.");
@@ -436,8 +436,8 @@ internal sealed class Toolbar
 
         ToolTip.SetTip(Measure, notice.Mode switch
         {
-            MeasureMode.Running => "Cancel the measurement  (Ctrl+M)",
-            MeasureMode.Shown => "Hide the measurements  (Ctrl+M)",
+            MeasureMode.Running => "Cancel the measurement  (Ctrl+Shift+M)",
+            MeasureMode.Shown => "Hide the measurements  (Ctrl+Shift+M)",
             _ => MeasureTip,
         });
 

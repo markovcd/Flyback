@@ -44,7 +44,7 @@ internal static class InspectorHelp
             Row("Randomize the knobs", "Throws the die at the end of the panel.", "Ctrl+Shift+K"),
             .. inPage ? [] : new[]
             {
-                Row("Measure", "Runs the patch for a few seconds and pins what each output carries beside it. Again hides them.", "Ctrl+M"),
+                Row("Measure", "Runs the patch for a few seconds and pins what each output carries beside it. Again hides them.", "Ctrl+Shift+M"),
                 Row("Record", "Writes what the patch is doing to a file, knobs and all, as it happens. Starts and stops.", "Ctrl+R"),
             },
         ]),

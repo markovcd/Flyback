@@ -234,7 +234,8 @@ internal sealed class EditorView : Border
                 e.Handled = true;
                 break;
 
-            case Key.M:
+            // With Shift, leaving Command+M to the Mac's Minimize.
+            case Key.M when again:
                 if (!inPage) reactions.Raise(new MeasureAsked());
                 e.Handled = true;
                 break;

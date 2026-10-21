@@ -11,7 +11,7 @@ using Flyback.Editor.Composition;
 namespace Flyback.Editor.Tests.Canvas;
 
 /// <summary>
-/// Measure (Ctrl+M) runs the patch for a few seconds and pins what each output carries
+/// Measure (Ctrl+Shift+M) runs the patch for a few seconds and pins what each output carries
 /// beside it and under its row in the inspector, until an edit makes it out of date.
 /// </summary>
 public class MeasureTests : EditorTest
@@ -37,12 +37,12 @@ public class MeasureTests : EditorTest
 
     private void Measure(MainWindow window)
     {
-        window.KeyPress(Key.M, RawInputModifiers.Control, PhysicalKey.M, "m");
+        window.KeyPress(Key.M, RawInputModifiers.Control | RawInputModifiers.Shift, PhysicalKey.M, "M");
         Pump(() => Service<MeasureLabels>(window).Report is not null && !Service<Measuring>(window).Running, window);
     }
 
     [AvaloniaFact]
-    public void Ctrl_M_pins_every_output_with_nothing_selected()
+    public void Ctrl_Shift_M_pins_every_output_with_nothing_selected()
     {
         var window = Opened(out var lfo, out var coords);
 
@@ -53,6 +53,19 @@ public class MeasureTests : EditorTest
         labels.Of(lfo.Id, 0)!.Sound.Single().Hz!.Value.ShouldBe(3d, 0.05d);
         labels.Of(coords.Id, 0)!.Picture.Single().Across.ShouldBeTrue();
         labels.Stale.ShouldBeFalse();
+    }
+
+    /// <summary>Command+M is the Mac's Minimize, so Measure takes Shift with it everywhere.</summary>
+    [AvaloniaFact]
+    public void Ctrl_M_without_Shift_measures_nothing()
+    {
+        var window = Opened(out _, out _);
+
+        window.KeyPress(Key.M, RawInputModifiers.Control, PhysicalKey.M, "m");
+        Settle(window);
+
+        Service<MeasureLabels>(window).Report.ShouldBeNull();
+        Service<Measuring>(window).Running.ShouldBeFalse();
     }
 
     [AvaloniaFact]
@@ -165,7 +178,7 @@ public class MeasureTests : EditorTest
 
         Measure(window);
 
-        window.KeyPress(Key.M, RawInputModifiers.Control, PhysicalKey.M, "m");
+        window.KeyPress(Key.M, RawInputModifiers.Control | RawInputModifiers.Shift, PhysicalKey.M, "M");
         Settle(window);
 
         labels.Report.ShouldBeNull();
@@ -346,7 +359,7 @@ public class MeasureTests : EditorTest
         Measure(window);
 
         measuring.Mode.ShouldBe(MeasureMode.Shown);
-        ToolTip.GetTip(button).ShouldBe("Hide the measurements  (Ctrl+M)");
+        ToolTip.GetTip(button).ShouldBe("Hide the measurements  (Ctrl+Shift+M)");
 
         var editor = Editor(window);
         editor.History.Patch.Find(lfo.Id)!.InputValues[1] = 5f;

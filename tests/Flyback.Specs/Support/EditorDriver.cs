@@ -1223,10 +1223,10 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     public void PressCtrl(PhysicalKey key, bool shift = false) =>
         Press(key, RawInputModifiers.Control | (shift ? RawInputModifiers.Shift : RawInputModifiers.None));
 
-    /// <summary>Presses Ctrl+M and waits for the measurement to be pinned.</summary>
+    /// <summary>Presses Ctrl+Shift+M and waits for the measurement to be pinned.</summary>
     public void Measure()
     {
-        PressCtrl(PhysicalKey.M);
+        PressCtrl(PhysicalKey.M, shift: true);
 
         Run(async () =>
         {

@@ -68,13 +68,13 @@ internal sealed class MenuBar
             Doing("Back to the Start", () => reactions.Raise(new RewindAsked())),
             new NativeMenuItemSeparator(),
             Pressing("Record", Key.R),
-            Pressing("Measure", Key.M),
+            Pressing("Measure", Key.M, KeyModifiers.Shift),
             new NativeMenuItemSeparator(),
             Pressing("Roll the Panel's Knobs", Key.K, KeyModifiers.Shift),
             Pressing("Roll the Selected Modules' Knobs", Key.D, KeyModifiers.Shift)));
 
         Menu.Add(Titled("Window",
-            Doing("Minimize", () => holder.Window.WindowState = WindowState.Minimized),
+            Doing("Minimize", () => holder.Window.WindowState = WindowState.Minimized, new KeyGesture(Key.M, KeyModifiers.Meta)),
             Doing("Zoom", () => holder.Window.WindowState =
                 holder.Window.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized)));
 
