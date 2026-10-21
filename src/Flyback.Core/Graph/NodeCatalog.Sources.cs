@@ -44,6 +44,7 @@ public partial class NodeCatalog
     /// <summary>The output socket of the position source that carries y.</summary>
     internal const int CoordYPort = 1;
     /// <summary>The output socket of the position source that carries the picture's aspect ratio.</summary>
+    /// <remarks>Named for the code that wires it, tests included, beside its siblings: the text language reaches it as <c>aspect</c>.</remarks>
     internal const int CoordAspectPort = 4;
 
     private static IEnumerable<NodeDef> Sources()

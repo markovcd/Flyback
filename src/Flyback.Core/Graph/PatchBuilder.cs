@@ -54,19 +54,6 @@ internal sealed class PatchBuilder(ModuleCatalog? modules = null)
     }
 
     /// <summary>
-    /// Draws <paramref name="nodes"/> together as one named, collapsed box — the
-    /// same grouping a person makes by hand on the canvas
-    /// (<see cref="Patch.Group"/>), used here to mark out a preset's own logical
-    /// parts as it is built rather than leaving a reader to find them by the
-    /// comments alone.
-    /// </summary>
-    public PatchBuilder Group(string name, params NodeInstance[] nodes)
-    {
-        if (Patch.Group(nodes.Select(n => n.Id)) is { } group) group.Rename(name);
-        return this;
-    }
-
-    /// <summary>
     /// The patch, placed and ready to be shown: the same layered layout the text
     /// language and the Tidy button use (ADR-0044), run once as the patch is handed
     /// over.

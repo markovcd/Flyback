@@ -34,6 +34,7 @@ public sealed record SampleExtra : FileExtra
     internal static string Of(NodeInstance node) => Read(node.StateOf(Name), string.Empty);
 
     /// <summary>Points this instance at a file.</summary>
+    /// <remarks>Kept for code that builds a patch, tests included: the app points one through the inspector or the text.</remarks>
     public static void Set(NodeInstance node, string path) => node.SetState(Name, Write(path));
 
     /// <remarks>

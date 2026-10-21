@@ -167,7 +167,7 @@ public partial class NodeEditorTests
                 last = node;
             }
 
-            builder.Group($"Chain {chain}", [.. made]);
+            builder.Patch.Group(made.Select(node => node.Id))?.Rename($"Chain {chain}");
         }
 
         builder.Wire(last!, 0, sink, NodeCatalog.OutputLeftPort);

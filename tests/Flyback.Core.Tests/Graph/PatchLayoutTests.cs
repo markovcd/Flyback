@@ -287,7 +287,7 @@ public class PatchLayoutTests
                 last = node;
             }
 
-            b.Group($"Chain {chain}", [.. made]);
+            b.Patch.Group(made.Select(node => node.Id))?.Rename($"Chain {chain}");
         }
 
         b.Wire(last!, 0, output, NodeCatalog.OutputLeftPort);
@@ -530,7 +530,7 @@ public class PatchLayoutTests
          .Wire(stranger, 0, tail, 1)
          .Wire(tail, 0, sink, NodeCatalog.OutputLeftPort);
 
-        b.Group("Ends", head, tail);
+        b.Patch.Group([head.Id, tail.Id])?.Rename("Ends");
 
         group = b.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
         group.Collapsed = shut;
