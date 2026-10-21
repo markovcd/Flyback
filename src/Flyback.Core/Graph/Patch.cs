@@ -88,7 +88,7 @@ public sealed class Patch
     /// writes it as a string and a string there has neither: breaks become spaces
     /// and quotes turn typographic.
     /// </remarks>
-    public void Describe(string? to) => Description = Tidied(to);
+    internal void Describe(string? to) => Description = Tidied(to);
 
     /// <summary>What <see cref="Describe"/> would keep of <paramref name="text"/>.</summary>
     internal static string? Tidied(string? text) => Tidied(text, DescriptionLimit);
@@ -190,7 +190,7 @@ public sealed class Patch
     internal PatchControl? Control(Guid id) => Controls?.FirstOrDefault(c => c.Id == id);
 
     /// <summary>Puts a new knob at the end of the panel, and hands it back.</summary>
-    public PatchControl AddControl(string? name = null, float value = 0.5f)
+    internal PatchControl AddControl(string? name = null, float value = 0.5f)
     {
         var control = new PatchControl { Id = Guid.NewGuid(), Name = name ?? NextControlName(), Value = value };
 

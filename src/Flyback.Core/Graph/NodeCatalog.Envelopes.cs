@@ -5,7 +5,7 @@ namespace Flyback.Core.Graph;
 public partial class NodeCatalog
 {
     /// <summary>The type id of the ADSR module.</summary>
-    public const string AdsrTypeId = "env.adsr";
+    internal const string AdsrTypeId = "env.adsr";
 
     /// <summary>
     /// Where the gate counts as open. A gate is a switch rather than a level —

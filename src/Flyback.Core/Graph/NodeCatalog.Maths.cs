@@ -342,7 +342,7 @@ public partial class NodeCatalog
     /// the trim and the rails, and the next Desk adds them in at unity — so only the
     /// last in the chain trims and only the last can clip.
     /// </remarks>
-    public const string DeskTypeId = "math.desk";
+    internal const string DeskTypeId = "math.desk";
 
     private static NodeDef Desk()
     {
@@ -436,7 +436,7 @@ public partial class NodeCatalog
         Any(name, value) with { Help = $"Read as '{name}' in the formula." };
 
     /// <summary>The type id of the Expression module.</summary>
-    public const string ExpressionTypeId = "math.expression";
+    internal const string ExpressionTypeId = "math.expression";
 
     /// <summary>An Expression's formula as typed, and null for any other module.</summary>
     internal static string? FormulaOf(NodeInstance node) =>

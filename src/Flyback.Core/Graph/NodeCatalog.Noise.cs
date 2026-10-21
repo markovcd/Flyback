@@ -5,7 +5,7 @@ namespace Flyback.Core.Graph;
 public partial class NodeCatalog
 {
     /// <summary>The type id of the Noise module.</summary>
-    public const string NoiseTypeId = "audio.noise";
+    internal const string NoiseTypeId = "audio.noise";
 
     /// <summary>White's lattice points per second (2²²), well above the oversampled audio rate.</summary>
     private const float Grain = 4_194_304f;

@@ -20,7 +20,7 @@ public partial class NodeCatalog
     internal const int MaxSections = MaxSteps;
 
     /// <summary>The type id of the Arrangement module.</summary>
-    public const string ArrangementTypeId = "seq.arrangement";
+    internal const string ArrangementTypeId = "seq.arrangement";
 
     /// <summary>Three parts that come in one section after another, so an Arrangement shows what it is for the moment it is dropped.</summary>
     private static readonly PartLevel[][] DefaultParts =

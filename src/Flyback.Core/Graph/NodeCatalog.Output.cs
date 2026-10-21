@@ -9,7 +9,7 @@ public partial class NodeCatalog
     /// The one sink. Screen and speakers are sockets on a single module rather
     /// than two modules, and every patch has exactly one — see ADR-0037.
     /// </summary>
-    public const string OutputTypeId = "output";
+    internal const string OutputTypeId = "output";
 
     /// <summary>
     /// The chart module. Named here because the shell roots the picture at one

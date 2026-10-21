@@ -6,7 +6,7 @@ namespace Flyback.Core.Graph;
 /// that uses a plugin's modules must be handed the catalog containing them,
 /// rather than relying on what happens to be installed.
 /// </param>
-public sealed class PatchBuilder(ModuleCatalog? modules = null)
+internal sealed class PatchBuilder(ModuleCatalog? modules = null)
 {
     private readonly ModuleCatalog catalog = modules ?? NodeCatalog.Current;
 

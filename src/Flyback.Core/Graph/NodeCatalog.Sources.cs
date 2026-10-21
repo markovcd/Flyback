@@ -10,10 +10,10 @@ public partial class NodeCatalog
     /// merely wired to it, and a type id that has to match one written in
     /// another file is worth writing once.
     /// </summary>
-    public const string TimeTypeId = "time";
+    internal const string TimeTypeId = "time";
 
     /// <summary>Where on the screen you are, for the same reason.</summary>
-    public const string CoordTypeId = "coord";
+    internal const string CoordTypeId = "coord";
 
     /// <summary>
     /// The sample player. Named here because it is the one module whose instance
@@ -42,7 +42,7 @@ public partial class NodeCatalog
     /// <summary>The output socket of the position source that carries x.</summary>
     internal const int CoordXPort = 0;
     /// <summary>The output socket of the position source that carries y.</summary>
-    public const int CoordYPort = 1;
+    internal const int CoordYPort = 1;
     /// <summary>The output socket of the position source that carries the picture's aspect ratio.</summary>
     internal const int CoordAspectPort = 4;
 

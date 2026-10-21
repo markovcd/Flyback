@@ -128,8 +128,9 @@ plus whatever plugins added. `NodeCatalog.Install` is called once at startup,
 before any window exists. `ModuleCategories.All` is both the set of curated
 categories and the palette order.
 
-Presets are C# against `PatchBuilder` (`b.Add(typeId, (port, value)…)`, then
-chained `b.Wire(from, port, to, port)`). They declare no coordinates
+Presets are written in the text language: the engine's are `.fbks` files in
+`Graph/Presets/`, a plugin's are embedded and built through `PresetText.Embedded`.
+They declare no coordinates
 ([0070](adr/0070-a-preset-declares-no-coordinates.md)) and arrive with their
 arithmetic folded into Expressions
 ([0108](adr/0108-a-preset-arrives-with-its-arithmetic-folded.md)): `Presets.All`

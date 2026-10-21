@@ -106,7 +106,7 @@ The types live in three namespaces:
 | Namespace | What is in it |
 |---|---|
 | `Flyback.Plugins` | `IFlybackPlugin`, `IPluginRegistry`, `PluginInfo`, `FlybackModuleAttribute`; `Flyback.Plugins.Audio` and `Flyback.Plugins.Midi` hold the backend interfaces |
-| `Flyback.Core.Graph` | `NodeDef`, `PortSpec`, `PortKind`, `EmitFn`, `EmitContext`, `ModuleProvider`, `ModuleSinks`, `ModuleSkin`, `Swatch`, `NodeExtra`, `ExtraField`, `ExtraState`, `NodeCatalog`, `ModuleCatalog`, `PatchBuilder`, `PatchPreset`, `PresetKind`, `PresetFiles`, `Patch` |
+| `Flyback.Core.Graph` | `NodeDef`, `PortSpec`, `PortKind`, `EmitFn`, `EmitContext`, `ModuleProvider`, `ModuleSinks`, `ModuleSkin`, `Swatch`, `NodeExtra`, `ExtraField`, `ExtraState`, `NodeCatalog`, `ModuleCatalog`, `PatchPreset`, `PresetKind`, `PresetFiles`, `Patch` |
 | `Flyback.Core.Compile` | `Emitter`, `Slot`, `OpCode` |
 
 ```csharp
@@ -522,58 +522,53 @@ A preset is how a plugin shows its modules wired up properly. It is a name and a
 
 `new PatchPreset(name, build, description, kind)`:
 
-- The **description** is a line saying what the preset is for. The patch it builds carries it as its own description, unless the patch sets one itself with `patch.Describe(...)`, and that is what the gallery shows under the name.
+- The **description** is a line saying what the preset is for. The patch it builds carries it as its own description, unless the text gives one with a `description` line, and that is what the gallery shows under the name.
 - The **`PresetKind`** says which heading of the preset gallery it belongs under: `Idea` for one idea at one sink, which is the default; `Interplay` where sound and picture are the same thought; `Showcase` for a whole piece. Say which, or yours is filed as an idea whatever it is.
 - **`Tags`**, an init property, are the words the gallery filters by, as a patch's own tags are.
 
+The patch itself is written in the text language ([docs/language.md](language.md)), as a `.fbks` file embedded in your plugin, and `PresetText.Embedded` turns it into the build function. A text that does not build throws with every complaint the first time the preset is picked, so write it with `flyback-cli check` beside you.
+
+```text
+# Pond.fbks
+let field = yours.rings(freq: 6)
+let smooth = field
+  |> scan(rate: 110, radius: 0.35, x: 0.2)
+  |> yours.smooth(cutoff: 3000)
+
+field |> out.color
+smooth |> out.left
+out.volume = 0.25
+```
+
+```xml
+<!-- in the .csproj -->
+<EmbeddedResource Include="*.fbks" LogicalName="%(Filename)%(Extension)" />
+```
+
 ```csharp
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Yours;
 
 public static class YoursPresets
 {
     public static PatchPreset Pond { get; } = new(
-        "Pond", Build, "Rings on the screen, heard through a Scan and smoothed.", PresetKind.Interplay)
+        "Pond",
+        PresetText.Embedded(typeof(YoursPlugin).Assembly, "Pond.fbks"),
+        "Rings on the screen, heard through a Scan and smoothed.",
+        PresetKind.Interplay)
     {
         Tags = ["rings", "scan"],
     };
-
-    private static Patch Build(ModuleCatalog modules)
-    {
-        var b = new PatchBuilder(modules);
-
-        var rings = b.Add(RingsModule.TypeId, (2, 6f));                       // (port, knob)
-        var scan = b.Add(NodeCatalog.ScanTypeId, (2, 110f), (3, 0.35f), (4, 0.2f));
-        var smooth = b.Add("yours.smooth", (1, 3000f));
-        var output = b.Add(NodeCatalog.OutputTypeId, (3, 0.25f));
-
-        b.Wire(rings, 0, output, NodeCatalog.OutputColorPort)
-         .Wire(rings, 0, scan, 0)
-         .Wire(scan, 0, smooth, 0)
-         .Wire(smooth, 0, output, NodeCatalog.OutputLeftPort);
-
-        return b.Build();
-    }
 }
 ```
 
-The Output's sockets are `OutputColorPort` (0, the screen), `OutputLeftPort` (1), `OutputRightPort` (2, carrying left when nothing is patched) and `OutputVolumePort` (3). `flyback-cli modules <type id>` prints any module's sockets by number, which is what the port arguments of `Add` and `Wire` count.
+Your own modules are named in the text as the language names any module: by the short name of their type id, or the whole id where the short one is taken. `flyback-cli modules <type id>` prints a module's sockets by name. `flyback-cli print` writes any patch, the one open in the editor included, as text, which is the quickest way to a first draft.
 
-`b.Add` hands back the `NodeInstance`, which is where a preset sets an extra. Stored state is a JSON object under the extra's key, one property per field:
+Flyback turns every one- and two-input Maths module in your preset into an Expression as it is built, folding chains of them into one formula, and lays the patch out again. The result sounds and looks exactly as you wrote it, so write the arithmetic whichever way reads best.
 
-```csharp
-using System.Text.Json.Nodes;
-
-var glide = b.Add("yours.glider");
-glide.SetState("glide", new JsonObject { ["time"] = 0.3f, ["legato"] = true });
-```
-
-A field left out reads as its default. The engine's own extras have helpers, such as `SampleExtra.Set` below.
-
-Flyback turns every one- and two-input Maths module in your preset into an Expression as it is built, folding chains of them into one formula, and lays the patch out again. The result sounds and looks exactly as you wired it, so wire the arithmetic whichever way reads best in your code.
-
-A preset that plays a sound file or shows a picture carries it inside your plugin. Embed each file under a folder of its own, name it in the patch by its name in that folder, and hand the preset the folder with `PresetFiles.Embedded`. The files open with the preset as a bundle's do, so it plays on a machine that has never had them, and saving it keeps them beside it.
+A preset that plays a sound file or shows a picture carries it inside your plugin. Embed each file under a folder of its own, name it in the text by its name in that folder, and hand the preset the folder with `PresetFiles.Embedded`. The files open with the preset as a bundle's do, so it plays on a machine that has never had them, and saving it keeps them beside it.
 
 ```xml
 <!-- in the .csproj -->
@@ -581,20 +576,22 @@ A preset that plays a sound file or shows a picture carries it inside your plugi
 ```
 
 ```csharp
-new PatchPreset("Speaking", Build)
+new PatchPreset("Speaking", PresetText.Embedded(typeof(YoursPlugin).Assembly, "Speaking.fbks"))
 {
     Files = PresetFiles.Embedded(typeof(YoursPlugin).Assembly, "Speaking"),
 };
-
-// and in Build, a Sample named by the file's name in the folder
-SampleExtra.Set(b.Add(NodeCatalog.SampleTypeId), "hello.wav");
 ```
 
-Nothing in a preset says where a module sits, and nothing should: a preset states what the patch is and what is wired to what, and `b.Build()` puts the coordinates on with the same layout the Tidy button and the text language use, so the patch reaches the canvas already reading left to right. Taking `b.Patch` instead hands over a pile at the origin; the trade is recorded in ADR-0070.
+```text
+# Speaking.fbks: a Sample named by the file's name in the folder
+sample("hello.wav") |> out.left
+```
+
+Nothing in a preset says where a module sits, and nothing should: the text states what the patch is and what is wired to what, and building it puts the coordinates on with the same layout the Tidy button uses, so the patch reaches the canvas already reading left to right (ADR-0070).
 
 Presets are listed under their heading by name, a plugin's among the engine's own, in the same order on the desktop and on the web. Because a patch is keyed by type id, one that uses your modules records what it needs, and opening it somewhere your plugin is absent refuses cleanly rather than loading a broken graph.
 
-A preset that reaches for another plugin's modules is allowed and worth a moment's care: it is built when it is picked, so a missing plugin surfaces there. Check first with `modules.HasProvider(id)` and throw something that names the plugin, or the reader gets a module id they never asked about.
+A preset that reaches for another plugin's modules is allowed and worth a moment's care: it is built when it is picked, so a missing plugin surfaces there, as a text that does not build and names the module it could not find. Say in the preset's description which plugin it needs.
 
 ## 8. Sound and MIDI backends
 

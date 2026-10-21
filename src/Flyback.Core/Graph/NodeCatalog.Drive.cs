@@ -5,7 +5,7 @@ namespace Flyback.Core.Graph;
 public partial class NodeCatalog
 {
     /// <summary>The type id of the Drive module.</summary>
-    public const string DriveTypeId = "audio.drive";
+    internal const string DriveTypeId = "audio.drive";
 
     /// <summary>
     /// The least drive the curve is evaluated at. At zero the normalization is

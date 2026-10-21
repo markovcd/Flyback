@@ -12,7 +12,7 @@ namespace Flyback.Core.Graph;
 /// Kept on the module so copying, pasting and deleting carry the links along. Not a
 /// <see cref="NodeExtra"/>, because any module's sockets can be linked.
 /// </remarks>
-public static class ControlMap
+internal static class ControlMap
 {
     /// <summary>What the links are filed under in <see cref="NodeInstance.State"/>.</summary>
     internal const string StateKey = "controls";

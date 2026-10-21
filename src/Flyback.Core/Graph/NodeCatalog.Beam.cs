@@ -8,7 +8,7 @@ public partial class NodeCatalog
     /// The X-Y oscilloscope: what the speakers played on two inputs, drawn against
     /// each other as the trace a beam leaves on phosphor.
     /// </summary>
-    public const string BeamTypeId = "beam";
+    internal const string BeamTypeId = "beam";
 
     /// <summary>The trace's side in texels, which <c>Compile.Beams</c> draws at.</summary>
     internal const int BeamSize = 512;

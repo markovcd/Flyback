@@ -37,11 +37,9 @@ public class ContractSurfaceTests
         ["Flyback.Core.Graph.KeyboardScale"] = "Patch.Keyboard, saved in the patch file.",
         ["Flyback.Core.Graph.ScaleMode"] = "KeyboardScale.Mode's type.",
         ["Flyback.Core.Graph.StepSpec"] = "The Steps extra's field.",
-        ["Flyback.Core.Graph.PatchBuilder"] = "How a plugin builds a preset in code rather than in text.",
-        ["Flyback.Core.Graph.PatchControl"] = "Patch.AddControl's answer, a panel knob of a preset built in code.",
-        ["Flyback.Core.Graph.ControlMap"] = "How a preset built in code links a panel knob to a socket.",
-        ["Flyback.Core.Graph.ControlLink"] = "ControlMap.Link's answer, saved in a module's state.",
-        ["Flyback.Core.Graph.Step"] = "One step of a sequencer a preset built in code fills in.",
+        ["Flyback.Core.Graph.PatchControl"] = "Patch.Controls, saved in the patch file.",
+        ["Flyback.Core.Graph.ControlLink"] = "A socket's link to a panel knob, saved in its module's state.",
+        ["Flyback.Core.Graph.Step"] = "What StepsExtra.Set fills a sequencer with.",
         ["Flyback.Core.Graph.PartLevel"] = "ArrangementExtra's default, one part's level in one section.",
         ["Flyback.Plugins.Midi.MidiAction"] = "MidiMessage.Action's type, which a MIDI input plugin builds a message with.",
         ["Flyback.Plugins.Decide.IPreparedModel"] = "The only way a decision model that runs here gets its files: the host downloads them, so the plugin never reaches the network (ADR-0186).",
@@ -196,31 +194,7 @@ public class ContractSurfaceTests
     /// </summary>
     private static readonly IReadOnlyDictionary<string, string> PromisedMembers = new Dictionary<string, string>
     {
-        ["Flyback.Core.Graph.NodeCatalog.AdsrTypeId"] = "A built-in module a preset built with PatchBuilder adds.",
-        ["Flyback.Core.Graph.NodeCatalog.ArrangementTypeId"] = "A built-in module a preset built with PatchBuilder adds.",
-        ["Flyback.Core.Graph.NodeCatalog.BeamTypeId"] = "A built-in module a preset built with PatchBuilder adds.",
-        ["Flyback.Core.Graph.NodeCatalog.CloudsTypeId"] = "A built-in module a preset built with PatchBuilder adds.",
-        ["Flyback.Core.Graph.NodeCatalog.CoordTypeId"] = "A built-in module a preset built with PatchBuilder adds.",
-        ["Flyback.Core.Graph.NodeCatalog.DelayTypeId"] = "A built-in module a preset built with PatchBuilder adds.",
-        ["Flyback.Core.Graph.NodeCatalog.DeskTypeId"] = "A built-in module a preset built with PatchBuilder adds.",
-        ["Flyback.Core.Graph.NodeCatalog.DriveTypeId"] = "A built-in module a preset built with PatchBuilder adds.",
-        ["Flyback.Core.Graph.NodeCatalog.ExpressionTypeId"] = "A built-in module a preset built with PatchBuilder adds.",
-        ["Flyback.Core.Graph.NodeCatalog.FilterTypeId"] = "A built-in module a preset built with PatchBuilder adds.",
-        ["Flyback.Core.Graph.NodeCatalog.NoiseTypeId"] = "A built-in module a preset built with PatchBuilder adds.",
-        ["Flyback.Core.Graph.NodeCatalog.OutputTypeId"] = "A built-in module a preset built with PatchBuilder adds.",
-        ["Flyback.Core.Graph.NodeCatalog.ReverbTypeId"] = "A built-in module a preset built with PatchBuilder adds.",
-        ["Flyback.Core.Graph.NodeCatalog.SineTypeId"] = "A built-in module a preset built with PatchBuilder adds.",
-        ["Flyback.Core.Graph.NodeCatalog.SlewTypeId"] = "A built-in module a preset built with PatchBuilder adds.",
-        ["Flyback.Core.Graph.NodeCatalog.TimeTypeId"] = "A built-in module a preset built with PatchBuilder adds.",
-        ["Flyback.Core.Graph.NodeCatalog.TriangleTypeId"] = "A built-in module a preset built with PatchBuilder adds.",
-        ["Flyback.Core.Graph.NodeCatalog.CoordYPort"] = "The Coord socket a preset built with PatchBuilder wires for y.",
-        ["Flyback.Core.Graph.NodeCatalog.OutputColorPort"] = "The Output socket a preset built with PatchBuilder wires the picture to.",
-        ["Flyback.Core.Graph.NodeCatalog.OutputLeftPort"] = "The Output socket a preset built with PatchBuilder wires the left ear to.",
-        ["Flyback.Core.Graph.NodeCatalog.OutputRightPort"] = "The Output socket a preset built with PatchBuilder wires the right ear to.",
-        ["Flyback.Core.Graph.NodeCatalog.OutputVolumePort"] = "The Output socket a preset built with PatchBuilder sets the volume on.",
         ["Flyback.Core.Graph.NodeCatalog.MaxParts"] = "How many parts an ArrangementExtra a plugin declares may have.",
-        ["Flyback.Core.Graph.Patch.AddControl"] = "How a preset built in code puts a knob on its panel.",
-        ["Flyback.Core.Graph.Patch.Describe"] = "How a preset built in code says what it is.",
     };
 
     /// <summary>
@@ -233,7 +207,7 @@ public class ContractSurfaceTests
         ["Flyback.Core.Graph.NodeInstance"] = "Patch.Nodes, saved in the patch file.",
         ["Flyback.Core.Graph.PatchControl"] = "Patch.Controls, saved in the patch file.",
         ["Flyback.Core.Graph.KeyboardScale"] = "Patch.Keyboard, saved in the patch file.",
-        ["Flyback.Core.Graph.ControlLink"] = "Saved in a module's state by ControlMap.",
+        ["Flyback.Core.Graph.ControlLink"] = "Saved in a module's state.",
         ["Flyback.Plugins.Assist.ModelReport"] = "What Survey keeps in the settings file.",
     };
 
