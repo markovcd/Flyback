@@ -77,6 +77,9 @@ internal static class About
         ?? typeof(About).Assembly.GetName().Version?.ToString()
         ?? "unknown";
 
+    /// <summary>Shows the About window over the editor.</summary>
+    public static Task Show(IDialog dialog) => dialog.Show("About", View());
+
     /// <summary>The contents of the About window.</summary>
     public static Control View()
     {

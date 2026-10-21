@@ -193,7 +193,7 @@ internal sealed class Toolbar
         Measure.Click += (_, _) => reactions.Raise(new MeasureAsked());
         Settings.Click += (_, _) => reactions.Raise(new SettingsAsked());
         Plugins.Click += (_, _) => reactions.Raise(new PluginsAsked());
-        About.Click += async (_, _) => await dialog.Show("About", Controls.About.View());
+        About.Click += async (_, _) => await Controls.About.Show(dialog);
         Home.Click += (_, _) => host.Home?.Invoke();
 
         var assistants = plugins.Assistants.Count > 0;

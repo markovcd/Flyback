@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
 using Avalonia.Threading;
+using Flyback.Core;
 using Flyback.Ui;
 
 namespace Flyback.Viewer.Desktop;
@@ -13,8 +14,16 @@ public sealed class ViewerApp : Application
     /// <summary>Set by <c>Program</c> before Avalonia starts, since an application is built with no arguments.</summary>
     internal static ViewerLaunch? Launch { get; set; }
 
+    /// <summary>The name macOS shows in the menu bar.</summary>
+    public const string Title = $"{GlobalConstants.ApplicationName} Viewer";
+
+    private ViewerAbout? about;
+
     public override void Initialize()
     {
+        // Before Avalonia's macOS setup, which reads both into the menu bar.
+        Name = Title;
+        NativeMenu.SetMenu(this, Menu());
         Styles.Add(new FluentTheme());
         RequestedThemeVariant = ThemeVariant.Dark;
     }
@@ -58,5 +67,29 @@ public sealed class ViewerApp : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    /// <summary>The menu under the program's name; Avalonia adds Services, Hide and Quit below it.</summary>
+    private NativeMenu Menu()
+    {
+        var item = new NativeMenuItem($"About {Title}");
+
+        item.Click += (_, _) =>
+        {
+            if (about is null)
+            {
+                about = new ViewerAbout();
+                about.Closed += (_, _) => about = null;
+            }
+
+            about.Show();
+            about.Activate();
+        };
+
+        var menu = new NativeMenu();
+
+        menu.Add(item);
+
+        return menu;
     }
 }

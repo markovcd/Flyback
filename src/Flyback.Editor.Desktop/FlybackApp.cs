@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using Flyback.Editor.Files;
@@ -11,6 +12,7 @@ using Flyback.Core;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Flyback.Editor.Composition;
+using Flyback.Editor.Windows;
 
 namespace Flyback.Editor.Desktop;
 
@@ -18,9 +20,17 @@ public sealed class FlybackApp : Application
 {
     private readonly DesktopLaunch launch;
 
+    private readonly AppMenu menu = new();
+
     internal FlybackApp(DesktopLaunch launch) => this.launch = launch;
 
-    public override void Initialize() => EditorTheme.Apply(this);
+    public override void Initialize()
+    {
+        // Before Avalonia's macOS setup, which reads both into the menu bar.
+        Name = GlobalConstants.ApplicationName;
+        NativeMenu.SetMenu(this, menu.Menu);
+        EditorTheme.Apply(this);
+    }
 
     public override void OnFrameworkInitializationCompleted()
     {
@@ -62,6 +72,7 @@ public sealed class FlybackApp : Application
 
         var setup = ThisMachine.Setup(usage) with { Launch = launch.Editor, Plugins = launch.Plugins };
         var provider = EditorServices.Provider(setup);
+        menu.Serve(provider);
         var window = provider.Window();
         window.Start();
         desktop.MainWindow = window;

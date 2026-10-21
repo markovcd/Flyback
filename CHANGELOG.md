@@ -10,6 +10,8 @@
 
 ### Editor
 
+- macOS menu bar names Flyback, with About Flyback, Settings… (⌘,) and Plugins…; the viewer's names Flyback Viewer.
+
 ### Viewer
 
 ### Command line
