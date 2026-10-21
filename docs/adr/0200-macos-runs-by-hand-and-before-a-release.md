@@ -30,3 +30,14 @@ CoreMIDI and the Keychain, which change rarely.
 
 `OperatingSystemLegTests` holds Build to Windows on every push and macOS behind
 its box, and the Cloud gate's `all` to both.
+
+**Amended 2026-10-21:** when Build runs macOS on `main`, it runs on the user's
+self-hosted Mac (`[self-hosted, macOS, ARM64]`) if `runner.yml` finds it online,
+whether or not the `self-hosted` box is ticked, and on `macos-latest` otherwise.
+An offline Mac is never waited for. Build therefore passes `RUNNER_STATUS_TOKEN`
+to every run on `main`. The Cloud gate stays on GitHub's machines.
+
+**Amended 2026-10-21, user-directed:** while the Mac is online, every push to
+`main` runs macOS on it, since it costs nothing; Build's `machines` adds `macos`
+when `runner.yml` reports `mac-online`. A push made while the Mac is off runs
+Windows only, as before, and `/release` still waits for a green macOS job.

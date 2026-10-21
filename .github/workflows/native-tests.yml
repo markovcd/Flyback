@@ -1,6 +1,7 @@
-# The solution's tests natively on Windows and macOS, on GitHub's machines. Build
-# runs Windows on every push beside the Linux gate and macOS when its box is
-# ticked; the Cloud gate runs either by hand.
+# The solution's tests natively on Windows and macOS. Build runs Windows on every
+# push beside the Linux gate and macOS when its box is ticked, on the self-hosted
+# Mac when runner.yml finds it online; the Cloud gate runs either by hand, always
+# on GitHub's machines.
 #
 # The gate runs in a Linux image, so the tests only Windows can run (the registry,
 # WASAPI, DPAPI, Direct3D, WinIO) or only macOS can (CoreAudio, CoreMIDI, the
@@ -26,6 +27,10 @@ on:
         description: Open CGL on macOS, so its Gpu tests run instead of skipping.
         type: boolean
         default: false
+      macos-runs-on:
+        description: A JSON runs-on value for macOS, from runner.yml.
+        type: string
+        default: '"macos-latest"'
 
 permissions:
   contents: read
@@ -37,7 +42,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ${{ fromJSON(inputs.machines) }}
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os == 'macos' && fromJSON(inputs.macos-runs-on) || format('{0}-latest', matrix.os) }}
     # Restore, build and the suite, cold; the default of six hours is what a hang costs.
     timeout-minutes: 90
     defaults:

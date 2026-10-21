@@ -3,6 +3,11 @@
 # on main was started by hand asking for self-hosted: then the Linux self-hosted
 # runner if it is online, else the Windows one, else GitHub's.
 #
+# The `macos` output is where native-tests.yml runs macOS: the self-hosted Mac
+# whenever it is online on main, asked for or not, since it costs nothing and
+# GitHub's costs ten times Linux (ADR-0200); else GitHub's. `mac-online` says
+# which, so Build can run macOS on every push the Mac is up for.
+#
 # GitHub has no fallback between runners, so this asks the API which are online.
 # That API needs a token with Administration read on the repository, which
 # GITHUB_TOKEN cannot be given: the RUNNER_STATUS_TOKEN secret is a fine-grained
@@ -26,6 +31,12 @@ on:
       runs-on:
         description: A JSON runs-on value for fromJSON.
         value: ${{ jobs.pick.outputs.runs-on }}
+      macos:
+        description: A JSON runs-on value for the macOS native tests.
+        value: ${{ jobs.pick.outputs.macos }}
+      mac-online:
+        description: true when the self-hosted Mac is online and macOS runs on it.
+        value: ${{ jobs.pick.outputs.mac-online }}
     secrets:
       RUNNER_STATUS_TOKEN:
         required: false
@@ -38,33 +49,52 @@ jobs:
     timeout-minutes: 3
     outputs:
       runs-on: ${{ steps.pick.outputs.runs-on }}
+      macos: ${{ steps.pick.outputs.macos }}
+      mac-online: ${{ steps.pick.outputs.mac-online }}
     steps:
-      - name: Pick the first online runner in the order Linux, Windows, GitHub
+      - name: Pick the first online runner in the order Linux, Windows, GitHub, and Mac or GitHub for macOS
         id: pick
         env:
           TOKEN: ${{ secrets.RUNNER_STATUS_TOKEN }}
           REF: ${{ github.ref }}
           SELF_HOSTED: ${{ inputs.self-hosted }}
         run: |
+          macos() {
+            echo "macos=$1" >> "$GITHUB_OUTPUT"
+            echo "macOS runs on $1" >> "$GITHUB_STEP_SUMMARY"
+            echo "macOS runs on $1"
+          }
           pick() {
             echo "runs-on=$1" >> "$GITHUB_OUTPUT"
             echo "Runs on $1" >> "$GITHUB_STEP_SUMMARY"
             echo "Runs on $1"
             exit 0
           }
+          online() {
+            jq --arg os "$1" --arg arch "$2" '[.runners[] | select(.status == "online" and .os == $os
+              and any(.labels[]; .name == "self-hosted") and any(.labels[]; .name == $arch))] | length' <<< "$runners"
+          }
+          runners=""
+          if [ "$REF" = refs/heads/main ] && [ -n "$TOKEN" ]; then
+            runners="$(curl -fsS -m 20 -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runners?per_page=100")" \
+              || echo "::warning::The runners API refused RUNNER_STATUS_TOKEN or did not answer; running on GitHub's."
+          fi
+          # A Mac nobody could see is not waited for: it may be asleep for days.
+          if [ -n "$runners" ] && [ "$(online macOS ARM64)" -gt 0 ]; then
+            macos '["self-hosted","macOS","ARM64"]'
+            echo "mac-online=true" >> "$GITHUB_OUTPUT"
+          else
+            macos '"macos-latest"'
+            echo "mac-online=false" >> "$GITHUB_OUTPUT"
+          fi
           [ "$SELF_HOSTED" = true ] && [ "$REF" = refs/heads/main ] || pick '"ubuntu-latest"'
           if [ -z "$TOKEN" ]; then
             echo "::warning::No RUNNER_STATUS_TOKEN, so this waits for either self-hosted runner instead of falling back to GitHub's."
             pick '["self-hosted","X64"]'
           fi
-          if ! runners="$(curl -fsS -m 20 -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runners?per_page=100")"; then
-            echo "::warning::The runners API refused RUNNER_STATUS_TOKEN or did not answer; running on GitHub's."
-            pick '"ubuntu-latest"'
-          fi
+          [ -n "$runners" ] || pick '"ubuntu-latest"'
           for os in Linux Windows; do
-            online="$(jq --arg os "$os" '[.runners[] | select(.status == "online" and .os == $os
-              and any(.labels[]; .name == "self-hosted") and any(.labels[]; .name == "X64"))] | length' <<< "$runners")"
-            [ "$online" -gt 0 ] && pick "[\"self-hosted\",\"$os\",\"X64\"]"
+            [ "$(online "$os" X64)" -gt 0 ] && pick "[\"self-hosted\",\"$os\",\"X64\"]"
           done
           pick '"ubuntu-latest"'
