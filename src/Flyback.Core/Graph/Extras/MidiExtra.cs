@@ -12,7 +12,7 @@ namespace Flyback.Core.Graph.Extras;
 /// rather than held, because what it lists is what is plugged in right now — the
 /// one thing the fixed kinds never had to do.
 /// </remarks>
-internal sealed record MidiExtra : NodeExtra
+public sealed record MidiExtra : NodeExtra
 {
     /// <summary>The catalog's own; a plugin reaches it through its key.</summary>
     internal MidiExtra() { }

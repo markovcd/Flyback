@@ -3,7 +3,7 @@
 namespace Flyback.Core.Graph.Extras;
 
 /// <summary>The audio file a player reads.</summary>
-internal sealed record SampleExtra : FileExtra
+public sealed record SampleExtra : FileExtra
 {
     /// <summary>The catalog's own; a plugin reaches it through its key.</summary>
     internal SampleExtra() { }

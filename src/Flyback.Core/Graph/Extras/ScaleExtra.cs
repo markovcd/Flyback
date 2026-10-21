@@ -1,7 +1,7 @@
 ﻿namespace Flyback.Core.Graph.Extras;
 
 /// <summary>The notes of the octave a quantiser snaps to.</summary>
-internal sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
+public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
 {
     /// <inheritdoc cref="StepsExtra.Name"/>
     internal const string Name = "scale";

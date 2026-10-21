@@ -37,11 +37,6 @@ public class ContractSurfaceTests
         ["Flyback.Core.Graph.KeyboardScale"] = "Patch.Keyboard, saved in the patch file.",
         ["Flyback.Core.Graph.ScaleMode"] = "KeyboardScale.Mode's type.",
         ["Flyback.Core.Graph.StepSpec"] = "The Steps extra's field.",
-        ["Flyback.Core.Graph.ExtraField+Toggle"] = "One of the field kinds an extra declares its editor with (ADR-0055); the extras in the box need no switch.",
-        ["Flyback.Core.Graph.Extras.MidiClockExtra"] = "A plugin's preset configures a built-in module through its extra.",
-        ["Flyback.Core.Graph.Extras.MidiFileExtra"] = "A plugin's preset configures a built-in module through its extra.",
-        ["Flyback.Core.Graph.Extras.MidiLineExtra"] = "A plugin's preset configures a built-in module through its extra.",
-        ["Flyback.Core.Graph.Extras.PictureExtra"] = "A plugin's preset configures a built-in module through its extra.",
         ["Flyback.Plugins.Midi.MidiAction"] = "MidiMessage.Action's type, which a MIDI input plugin builds a message with.",
         ["Flyback.Plugins.Decide.IPreparedModel"] = "The only way a decision model that runs here gets its files: the host downloads them, so the plugin never reaches the network (ADR-0186).",
         ["Flyback.Plugins.Decide.ModelFile"] = "What IPreparedModel.Needs lists.",
@@ -58,6 +53,7 @@ public class ContractSurfaceTests
 
         var unaccounted = Contract
             .SelectMany(a => a.GetExportedTypes())
+            .Where(t => !DeclaresAnInput(t))
             .Select(t => t.FullName!)
             .Where(name => !named.Contains(name) && !Promised.ContainsKey(name))
             .Order()
@@ -95,7 +91,7 @@ public class ContractSurfaceTests
 
         var unaccounted = Contract
             .SelectMany(a => a.GetExportedTypes())
-            .Where(t => !Promised.ContainsKey(t.FullName!) && !t.IsInterface && !t.IsEnum && !t.IsSubclassOf(typeof(Delegate)))
+            .Where(t => !Promised.ContainsKey(t.FullName!) && !DeclaresAnInput(t) && !t.IsInterface && !t.IsEnum && !t.IsSubclassOf(typeof(Delegate)))
             .SelectMany(Answerable)
             .Where(member => !named.Contains(member) && !PromisedMembers.ContainsKey(member))
             .Distinct()
@@ -106,6 +102,24 @@ public class ContractSurfaceTests
             "No plugin built here names these. Make each internal, or add it to PromisedMembers with the reason a plugin elsewhere needs it:\n  "
             + string.Join("\n  ", unaccounted));
     }
+
+    [Fact]
+    public void Every_extra_in_core_is_public()
+    {
+        typeof(NodeDef).Assembly.GetTypes()
+            .Where(t => DeclaresAnInput(t) && !t.IsVisible)
+            .Select(t => t.FullName!)
+            .Order()
+            .ShouldBeEmpty("An extra or a field kind is how a plugin's module declares an input that is not a knob, so it stays public with all its members, whether or not a plugin built here declares one:");
+    }
+
+    /// <summary>
+    /// An extra or a field kind: what a plugin's module declares its inputs with
+    /// (a scale, a sample, a MIDI channel, a choice), so it and its members are the
+    /// contract even when no plugin built here declares one.
+    /// </summary>
+    private static bool DeclaresAnInput(Type type) =>
+        type.IsSubclassOf(typeof(NodeExtra)) || type.IsSubclassOf(typeof(ExtraField));
 
     /// <summary>
     /// Every contract type the plugins built beside this test name, as reflection
