@@ -48,3 +48,5 @@ the Cloud gate's `macos-gl` box sets, so Build skips its `Gpu` tests.
 hand.
 
 **Amended 2026-10-15:** macOS no longer runs on every push; Build runs it when its `macos` box is ticked, and `/release` waits for it ([0200](0200-macos-runs-by-hand-and-before-a-release.md)).
+
+**Amended 2026-10-21:** `FLYBACK_CGL` stays opt-in. GitHub's Mac has no GPU, and Apple's software renderer draws seven presets unlike the processor; on a real Apple GPU the same seven agree with it to within 1 of 255, apart from 8 pixels on the Probe's saw edges. The `macos-gl` box is for a run on a real Mac.

@@ -1,7 +1,6 @@
 # The whole gate on GitHub's machines, by hand: the Linux gate, the native tests
 # on Windows and macOS (native-tests.yml), and the Android editor on an emulator,
-# which nothing else starts, with the Play listing's screenshots when asked. The plan this serves is
-# docs/handoff/tests-on-github-hosted-runners.md.
+# which nothing else starts, with the Play listing's screenshots when asked (ADR-0195).
 #
 # Every action is pinned to a commit rather than a tag; Dependabot says when a
 # pin should move.
