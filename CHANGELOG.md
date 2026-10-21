@@ -22,6 +22,8 @@
 
 ### Fixes
 
+- On macOS the picture is drawn by the graphics card again, not the processor.
+
 ## 0.10.0 — 2026-10-19
 
 102 commits since 0.9.0.

@@ -13,6 +13,15 @@
           "MicroCom.Runtime": "0.11.6"
         }
       },
+      "Avalonia.Native": {
+        "type": "Direct",
+        "requested": "[12.1.4, )",
+        "resolved": "12.1.4",
+        "contentHash": "to73yCbFWzRNs3gyuBG2QkRsrpjnGrEVwkhtAsJLbPAKFjP/M0YDeb4MPMN3wGlpwCFdz9L8R8iAivyNet5+5g==",
+        "dependencies": {
+          "Avalonia": "12.1.4"
+        }
+      },
       "Avalonia.Win32": {
         "type": "Direct",
         "requested": "[12.1.4, )",

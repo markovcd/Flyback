@@ -13,6 +13,15 @@ public static class GraphicsDrivers
         _ => [Win32RenderingMode.Wgl, Win32RenderingMode.AngleEgl, Win32RenderingMode.Software],
     };
 
+    /// <summary>
+    /// What Avalonia tries on macOS, in order. OpenGL first: Avalonia's own default is Metal,
+    /// under which the picture gets no OpenGL context and is drawn on the processor.
+    /// </summary>
+    public static IReadOnlyList<AvaloniaNativeRenderingMode> MacModes { get; } =
+        [AvaloniaNativeRenderingMode.OpenGl, AvaloniaNativeRenderingMode.Metal, AvaloniaNativeRenderingMode.Software];
+
     public static AppBuilder UseDriver(this AppBuilder builder, GraphicsDriver driver) =>
-        builder.With(new Win32PlatformOptions { RenderingMode = Modes(driver) });
+        builder
+            .With(new Win32PlatformOptions { RenderingMode = Modes(driver) })
+            .With(new AvaloniaNativePlatformOptions { RenderingMode = MacModes });
 }
