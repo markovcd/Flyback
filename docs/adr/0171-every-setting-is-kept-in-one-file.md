@@ -33,7 +33,7 @@ Recording ffmpeg, Files the library. `OutputSettingsUse` and the slices it gathe
 are gone, and the editor starts by asking every tab to put its saved rows in force.
 
 **The old files are not read.** Before 1.0 there is no saved work to keep
-(`saved-data.md`), so the first run with this change starts from the defaults and
+(the `saved-data` skill), so the first run with this change starts from the defaults and
 leaves the six old files where they are.
 
 The window layout, the plugins somebody allowed and the key stay where they were:

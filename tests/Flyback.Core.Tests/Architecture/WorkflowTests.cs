@@ -6,7 +6,7 @@ using Xunit;
 namespace Flyback.Core.Tests.Architecture;
 
 /// <summary>
-/// Every workflow under <c>.github/workflows</c> keeps the rules in <c>docs/agents/rules/pipeline.md</c>:
+/// Every workflow under <c>.github/workflows</c> keeps the rules in <c>.claude/skills/pipeline/SKILL.md</c>:
 /// it says what it does, declares its permissions, pins every action to a commit, times out every job,
 /// leaves no token behind a checkout and keeps expressions out of its scripts.
 /// </summary>

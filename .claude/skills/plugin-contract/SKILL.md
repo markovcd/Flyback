@@ -1,3 +1,8 @@
+---
+name: plugin-contract
+description: Use when adding, changing or removing anything public in Flyback.Core or Flyback.Plugins, editing PublicAPI*.txt, or meeting RS0016 or ContractSurfaceTests - public is only what a plugin may name.
+---
+
 # The plugin contract
 
 ## Public is what a plugin may name

@@ -1,12 +1,12 @@
 # Threat model
 
-Where input or code from outside crosses into Flyback, what stands at the door, and where to read why. The rules are in [security.md](agents/rules/security.md); the systems are in the [C4 model](diagrams/README.md). A new boundary is added here in the commit that opens it.
+Where input or code from outside crosses into Flyback, what stands at the door, and where to read why. The rules are in [security.md](agents/rules/security.md) and the [outside-input skill](../.claude/skills/outside-input/SKILL.md); the systems are in the [C4 model](diagrams/README.md). A new boundary is added here in the commit that opens it.
 
 ## Assets
 
 - **A user's API key.** Lives in the operating system's store (ADR-0034); never in a file.
 - **The release signing key.** Signs `SHA256SUMS` and the preset site's plugins (ADR-0088). Only in the `RELEASE_SIGNING_KEY` secret.
-- **A user's patches and takes.** Cannot be regenerated ([saved-data.md](agents/rules/saved-data.md)).
+- **A user's patches and takes.** Cannot be regenerated ([saved-data](../.claude/skills/saved-data/SKILL.md)).
 - **The user's machine.** Flyback loads code and opens files other people wrote.
 - **The preset site's data.** Presets, plugins, letters and reports in D1 and R2.
 
@@ -15,7 +15,7 @@ Where input or code from outside crosses into Flyback, what stands at the door, 
 | Boundary | Hostile input | What stands at the door | Read |
 |---|---|---|---|
 | Opening a patch, bundle or sample | A crafted file: huge lengths, deep nesting, a path in a bundle's name | Readers cap every length against what the input could hold; parsers report and never throw; a bundle is read into memory and writes no path | `PatchIO`, `PatchBundle`, `PatchPaths` in `Flyback.Engine`; ADR-0020 |
-| Command-line flags | `--size`, `--seconds`, `--fps` large enough to overflow | A ceiling on each, overflow checked | `flyback-cli`; [security.md](agents/rules/security.md) |
+| Command-line flags | `--size`, `--seconds`, `--fps` large enough to overflow | A ceiling on each, overflow checked | `flyback-cli`; [outside-input](../.claude/skills/outside-input/SKILL.md) |
 | Loading a plugin | Code that runs with the user's rights | Loads only if shipped or allowed, and only while every file hashes as it did | `PluginTrust`, `PackageSigner`; ADR-0158 |
 | Loading an ASIO driver | Native code a sound card's installer registered, run in Flyback's process | Only the driver picked on the Sound tab, from those `HKLM\SOFTWARE\ASIO` lists, which only an administrator writes | `AsioDrivers`; ADR-0192 |
 | An assistant plugin | Reads or leaks the key; redirects it to another host | The plugin holds no key; the host puts it on a request for one origin and follows no redirect | ADR-0158 |
@@ -26,7 +26,7 @@ Where input or code from outside crosses into Flyback, what stands at the door, 
 | The preset site's forms | Injection, an oversized upload, one user reaching another's data | Checks at the Worker; parameters, not concatenation; rate limits; uploads unpublished until the admin publishes | `worker/src/checks.ts`, `limits.ts` |
 | The admin page | A request that skips Access | The Worker verifies the Access token itself | `worker/src/access.ts` |
 | A submitted plugin | A package that runs when reviewed | Decompiled and read, never run | `/review-plugin` |
-| CI | A fork's pull request on the self-hosted runner | The self-hosted runners build `main` only, and only when a run is started by hand asking for them (`runner.yml` picks GitHub's otherwise); workflows pinned to SHAs, least permission; secrets reach Release and Site only | [pipeline.md](agents/rules/pipeline.md) |
+| CI | A fork's pull request on the self-hosted runner | The self-hosted runners build `main` only, and only when a run is started by hand asking for them (`runner.yml` picks GitHub's otherwise); workflows pinned to SHAs, least permission; secrets reach Release and Site only | [pipeline](../.claude/skills/pipeline/SKILL.md) |
 | Usage statistics | Identifying a person | Counts what was played and nothing of who; `Usage.cs` is the whole list | ADR-0094 |
 | Dependencies | Code nobody here read | The engine takes none; restores are locked to `packages.lock.json`; a Dependabot update merges unread once Build passes, and the job that writes to its branch runs none of its code | ADR-0019, ADR-0197 |
 

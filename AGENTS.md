@@ -11,40 +11,11 @@ Standing rules for working in this repo are in `docs/agents/rules/`. They apply 
 - @docs/agents/rules/agent-drivability.md — drivability by an agent comes first; a hack needed to get something done is a feature to propose.
 - @docs/agents/rules/propose-refactors.md — code that has gone untidy or ballooned, or one feature's logic written twice, is a refactor to propose, after the task and outside its commit.
 - @docs/agents/rules/honest-tests.md — a failing test is fixed by fixing the code, never by weakening, skipping or special-casing the test.
-- @docs/agents/rules/security.md — keys stay out of everything; outside input is checked where it enters; a check is never loosened to make something work.
+- @docs/agents/rules/security.md — keys stay out of everything; a check is never loosened to make something work.
 - @docs/agents/rules/ci-cd.md — land small and often, a red `main` is fixed before anything else, and `main` is always releasable.
-- @docs/agents/rules/pipeline.md — CI runs the gate itself; workflows pinned, least-permission and timed out; a release is `release.sh`, refuses before moving anything, and ships signed.
-- @docs/agents/rules/saved-data.md — from 1.0.0, what was written stays readable: socket order never changes, and a format change carries its upgrade step and a test that opens the old shape.
-- @docs/agents/rules/plugin-contract.md — public in Core and Plugins is only what a plugin may name; the fix for the analyzer is `internal`, and `ContractSurfaceTests` holds the line.
 
-Task-specific know-how is in `.claude/skills/`, and Claude Code loads each skill's full content when its description matches the task (the name and one-line description below are visible every session regardless):
+Rules that bind only one kind of change are skills in `.claude/skills/`, loaded when their description matches: `pipeline` (workflows, the Dockerfile, a release), `plugin-contract` (public API in Core and Plugins), `saved-data` (anything saved or passed between versions) and `outside-input` (code that reads input from outside). They are as binding as the rules above. Every other skill there is know-how for one task, and its name and description are visible every session.
 
-- `nuget-packages`: check the packages and the SDK before starting anything big; take cheap upgrades, hand off expensive ones.
-- `adrs`: check `docs/adr/` before proposing a refactor; rewrite a day-old ADR in place; number a new ADR from `main` at commit time.
-- `changelog`: what CHANGELOG.md may contain.
-- `tests`: rank a run by duration, treat an unexplained slow test as a defect, and ship every feature with a Gherkin scenario written as a requirement.
-- `website`: a change to anything `site/` describes updates the site in the same commit.
-- `preset-site-defaults`: the preset site's default presets are files, migrated by the change that breaks them.
-- `windows-shell`: PowerShell and Bash-heredoc pitfalls that corrupt files.
-- `looking-at-a-patch`: if only the picture or the sound needs looking at, use `flyback-viewer`, not the editor and not a render.
-- `running-the-app`: before launching the real window, wait for any other Flyback to close, and drive only the process you started.
-- `release-key`: every key is `RELEASE_SIGNING_KEY`, a local test key here, made anew whenever it is missing; `./scripts/release.sh` tries a release.
-- `authoring-presets`: building and measuring a showcase or teaching preset.
-- `played-presets`: presets with MIDI voices and panel knobs.
-- `convenience-modules`: the wrapper modules (Stroke, Fade, Desk, Echo, Hiss and the rest) and porting presets onto them exactly.
-- `site-screenshots`: retaking `site/assets/shots` from the real app.
-- `site-audio-tracks`: rebuilding the website's listening-row MP3s.
-- `build-artifacts`: running `release.sh` when the user asks for a local build, only ever on `main` in the main worktree, so the build is under `dist/`; never unasked, because CI already gates every push.
-- `performance`: where a heavy patch's time goes, the open leads for making it run or export faster, what has been ruled out, how to measure it, and `scripts/bench-compare.sh` for whether a change made anything faster or slower.
-
-`vibe-check`, which finds what the catalog is missing by reading what an unchecked agent reaches for, lives in the [vibe-mode kit](https://github.com/markovcd/vibe-mode) and is installed under `~/.claude/skills/` on this machine.
-
-Commands in `.claude/commands/` are run by name rather than matched:
-
-- `/bughunt`: hunt for bugs, confirm each as a failing test, fix it, and file the test where it belongs.
-- `/mutate`: plant plausible bugs in the lines a commit changed, write a test for each the suite missed, and log the score in `tests/mutation-log.tsv`.
-- `/burn`: spend spare tokens on quality and stability: take the item in its list that ran longest ago (worst hack first), land one whole piece of it, and log it in `docs/agents/burn-log.tsv`.
-- `/release`: check the changelog and the plugin contract, land the release commit on main, and fire the Release workflow.
-- `/review-plugin`: decompile submitted `.fbkp` packages without running them and write the Accept/Reject report the admin publishes from.
+Commands in `.claude/commands/` (`/bughunt`, `/mutate`, `/burn`, `/release`, `/review-plugin`) are run by name rather than matched. `vibe-check` lives in the [vibe-mode kit](https://github.com/markovcd/vibe-mode) and is installed under `~/.claude/skills/` on this machine.
 
 `.claude/settings.json` turns on the `Flyback Vibe` output style (`.claude/output-styles/vibe.md`) for every session in this repo. It governs wording only: what gets checked, weighed and recommended is unchanged.

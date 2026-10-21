@@ -1,3 +1,8 @@
+---
+name: pipeline
+description: Use when editing .github/workflows, the Dockerfile, global.json, dependabot, or scripts the gate and release run, or when releasing - pins, permissions, timeouts, secrets, runners, signing and versions.
+---
+
 # The pipeline
 
 ## One gate, the same everywhere
@@ -6,7 +11,7 @@
 
 **Why:** two descriptions of what a change has to pass drift apart, and the one that drifts is the one nobody runs locally.
 
-The workflows and how they follow one another are drawn in [docs/diagrams/pipeline.md](../../diagrams/pipeline.md).
+The workflows and how they follow one another are drawn in [docs/diagrams/pipeline.md](../../../docs/diagrams/pipeline.md).
 
 ## Workflows are code that holds the keys
 

@@ -1,3 +1,8 @@
+---
+name: saved-data
+description: Use when changing what is saved or passed between versions - PatchIO and patch layouts, a module's sockets or type id, an opcode number, bundles, settings files, the preset site's stores, the plugin contract or --apply-update's arguments.
+---
+
 # Saved data doesn't break
 
 ## What was written stays readable

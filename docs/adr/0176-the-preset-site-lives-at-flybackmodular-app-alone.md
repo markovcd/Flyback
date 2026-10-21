@@ -21,6 +21,6 @@ names it, and GitHub Pages holds only a page that sends its old paths there.
 - An editor from 0.5.1 to 0.7.1 can no longer reach shared presets, shared plugins or
   the letter box. Its other features do not depend on the site. An update (ADR-0088)
   brings the new address.
-- This breaks a published address on purpose, which `saved-data.md` leaves to the user.
+- This breaks a published address on purpose, which the `saved-data` skill leaves to the user.
   Before 1.0.0 no saved work depends on it.
 - The staging copy stays on its own hostname until it is moved too.

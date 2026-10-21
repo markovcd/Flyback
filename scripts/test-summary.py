@@ -9,7 +9,7 @@ LISTED = 50
 TEXT = 4000
 
 # Past this the gate is slow enough to tempt anyone to skip it: time to shard it
-# by project or find what got slow (docs/agents/rules/pipeline.md).
+# by project or find what got slow (the pipeline skill, .claude/skills/pipeline/SKILL.md).
 BUDGET = 600
 
 exit_code = open("test-results/exit-code").read().strip()

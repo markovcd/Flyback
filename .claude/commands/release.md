@@ -5,7 +5,8 @@ description: Check the changelog and the plugin contract, land the release commi
 # Release
 
 Publish a release. The work is the checking; the publishing is one dispatch at
-the end of it.
+the end of it. Load the `pipeline` and `plugin-contract` skills first: their rules
+bind every step below.
 
 `$ARGUMENTS` says which number, and nothing else:
 

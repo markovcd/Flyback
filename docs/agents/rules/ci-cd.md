@@ -1,6 +1,12 @@
 # Continuous integration and delivery
 
-Continuous integration is a practice, not a server: changes land on `main` small and often, every change is verified by the whole suite, and a broken `main` is fixed before anything else. Continuous delivery follows from it: `main` is always releasable, so a release is `/release`, not a project. The pipeline that checks it is in `pipeline.md`; this is the discipline it serves.
+Continuous integration is a practice, not a server: changes land on `main` small and often, every change is verified by the whole suite, and a broken `main` is fixed before anything else. Continuous delivery follows from it: `main` is always releasable, so a release is `/release`, not a project. The pipeline that checks it is the `pipeline` skill; this is the discipline it serves.
+
+## The gate
+
+- `docker build --target gate .` is the gate, and CI runs exactly that (`scripts/gate.sh`). Nothing skips in CI that runs locally.
+- Capture a build's output to a file and filter it afterwards, never in the pipe; a narrow grep drops the `failed <name>` lines. A gate failure is the first sentence of the report, with the failing test's name.
+- A change to `.github/workflows/`, the Dockerfile, the gate or a release loads the `pipeline` skill first.
 
 ## Integrate small and often
 
@@ -25,10 +31,10 @@ Continuous integration is a practice, not a server: changes land on `main` small
 
 - Every commit on `main` could be released as it stands: `/release` may be run on any of them.
 - Unfinished work lands dark: a module not in the catalog, a setting not in the dialog, a command not in `flyback-cli`'s help, until it is whole. Never parked on a long-lived branch, and never visible half-done.
-- What goes with a change lands in the same commit, so a release needs no catch-up: the `## Unreleased` bullet (the `changelog` skill), the site edit (the `website` skill), the migration of the preset site's defaults, `PublicAPI.Unshipped.txt` when the contract moved, and from 1.0.0 the upgrade step for saved patches (`saved-data.md`).
+- What goes with a change lands in the same commit, so a release needs no catch-up: the `## Unreleased` bullet (the `changelog` skill), the site edit (the `website` skill), the migration of the preset site's defaults, `PublicAPI.Unshipped.txt` when the contract moved, and from 1.0.0 the upgrade step for saved patches (the `saved-data` skill).
 
 ## A release is a non-event
 
 - Release on demand, small and often; each release is a minor unless there is a reason.
-- The build that passed is the build that ships (`pipeline.md`, A release is one script).
-- The website deploys on every green push that touches it (`pipeline.md`, Deploys filter on paths), so a site edit lands with the change it describes; no release step catches a stale page.
+- The build that passed is the build that ships (the `pipeline` skill, A release is one script).
+- The website deploys on every green push that touches it (the `pipeline` skill, Deploys filter on paths), so a site edit lands with the change it describes; no release step catches a stale page.
