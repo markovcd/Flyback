@@ -1,0 +1,42 @@
+# Four voices, each with a fader, through one Mixer at each sink. The faders are
+# the shared signal: level three on the chord is level three on the screen, so
+# what fades up in the sound is what fades up in the picture.
+
+description "Four faders that are one signal each, opening a voice and a band together."
+tags "chords" "synthesis" "visualizer"
+
+# An A major triad over two octaves, one voice a note. The band count climbs with
+# the voice, so how many rings are on screen is which note is sounding. The fader
+# rates share no common factor worth the name, so the four never come up together
+# twice.
+let (tones, levels, tints) = for (pitch, bands, hue, rate, phase) in [
+  (A2,  1, 0.00, 0.06, 0.00),
+  (E3,  2, 0.33, 0.09, 0.30),
+  (A3,  3, 0.58, 0.13, 0.60),
+  (C#4, 4, 0.83, 0.17, 0.85),
+] {
+  # The fader. Amp and bias put a sine's -1..1 into 0..1, so it opens and closes
+  # rather than going through zero and coming back the other way up.
+  let level = sine(freq: rate, phase: phase, amp: 0.5, bias: 0.5)
+
+  # Ear: the note, and a sine at it.
+  let tone  = sine(freq: note(pitch))
+
+  # Eye: the same oscillator run over the radius instead of the clock, so it
+  # stands still as bands out from the center rather than traveling as a tone.
+  let tint  = radius |> sine(freq: bands, amp: 0.5, bias: 0.5)
+                     |> hsv(value: _, hue: hue)
+  (tone, level, tint)
+}
+
+let (toneA, toneB, toneC, toneD) = tones
+let (levelA, levelB, levelC, levelD) = levels
+let (tintA, tintB, tintC, tintD) = tints
+
+mixer(toneA, levelA, toneB, levelB, toneC, levelC, toneD, levelD) |> out.left
+
+mixer(tintA, levelA, tintB, levelB, tintC, levelC, tintD, levelD)
+  |> gain(color: _, gain: 0.6)
+  |> out.color
+
+out.volume = 0.25

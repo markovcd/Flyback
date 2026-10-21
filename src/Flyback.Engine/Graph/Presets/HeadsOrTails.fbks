@@ -1,0 +1,20 @@
+# One riff and a coin for every note: heads plays it on the left, tails an octave
+# down on the right, and the odds drift from one side to the other.
+
+description "One riff and a coin for every note: heads plays it on the left, tails an"
+  "octave down on the right, and the odds drift."
+tags "melody" "random" "stereo"
+
+let riff = notes(rate: 8) [ A3 C4 E4 G4 A4 G4 E4 D4 ]
+
+# Heads from nine in ten down to one in ten and back, over a quarter of a minute.
+let coin = riff.gate |> chance(gate: _, chance: sine(freq: 0.07, amp: 0.4, bias: 0.5))
+
+triangle(freq: note(riff))
+  * (coin |> adsr(gate: _, attack: 3.019952ms, decay: 151.35613ms, sustain: 0.1, release: 79.43282ms))
+  |> out.left
+sine(freq: note(riff, octave: -1))
+  * (coin.else |> adsr(gate: _, attack: 3.019952ms, decay: 251.18863ms, sustain: 0.3, release: 120.22644ms))
+  |> out.right
+
+out.volume = 0.5

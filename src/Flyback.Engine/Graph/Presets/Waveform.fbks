@@ -1,0 +1,27 @@
+# The four wave shapes at one pitch, faded one into the next, and a Scope drawing
+# what the speakers actually played: a change of timbre is heard while the change
+# of shape that makes it is on the screen.
+
+description "Sine, triangle, square and saw faded one into the next, on a Scope drawing"
+  "the shape being heard."
+tags "basics" "synthesis" "scope"
+
+let pitch = 110
+
+# Smoothest first, so each shape adds harmonics to the last. A quarter of a turn
+# between one fader's peak and the next, the sine's at the start. Each fader is
+# the top half of a slow sine: a Mixer's level is a multiply, so the bottom half
+# would bring the shape back upside down rather than leave it out.
+let voice = mixer(
+  in_1: sine(freq: pitch),     level_1: max(sine(freq: 0.08, phase: 0.25), 0),
+  in_2: triangle(freq: pitch), level_2: max(sine(freq: 0.08), 0),
+  in_3: square(freq: pitch),   level_3: max(sine(freq: 0.08, phase: 0.75), 0),
+  in_4: saw(freq: pitch),      level_4: max(sine(freq: 0.08, phase: 0.5), 0))
+
+voice |> out.left
+
+# About thirty milliseconds, three cycles and a bit: enough to see the shape
+# repeat. Two faders are up at once and reach 1.4, so scale leaves room for both.
+scope(voice, window: 30.19952ms, scale: 1.5) |> out.color
+
+out.volume = 0.25

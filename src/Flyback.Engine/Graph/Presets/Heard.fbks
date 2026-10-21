@@ -1,0 +1,26 @@
+# A drum with the picture listening to it rather than being told about the beat.
+
+description "A drum the picture listens to rather than being told about, through a"
+  "Meter."
+tags "drums" "visualizer"
+
+# Two beats a second, and a gate short enough that the envelope decides how long
+# the drum is: the length of a kick is the envelope's, never the gate's.
+let voiced = sine(freq: 70)
+               * (pulse(freq: 2, width: 0.08)
+                    |> adsr(gate: _, attack: 2.511887ms, decay: 125.89255ms, sustain: 0, release: 100ms))
+
+# The wire this patch is about: a signal on its way to the speakers, read by
+# something that hands the picture a number for it.
+let heard = meter(voiced, window: 31.62278ms)
+
+voiced |> out.left
+
+# A floor under the reading, so a silent moment is a dim picture, not a black one.
+rings(freq: 5)
+  |> remap(-1..1, 0.1..1)
+  |> mul(a: _, b: heard.peak + 0.18)
+  |> hsv(value: _, hue: heard, saturation: 0.75)
+  |> out.color
+
+out.volume = 0.6

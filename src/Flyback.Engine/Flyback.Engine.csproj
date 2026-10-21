@@ -25,13 +25,9 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Tutorials\*.md" LogicalName="tutorials/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Graph\Presets\*.fbks" LogicalName="presets/%(Filename)%(Extension)" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="Graph\Presets.WholeBand.cs">
-      <DependentUpon>Presets.cs</DependentUpon>
-    </Compile>
-  </ItemGroup>
 
   <ItemGroup>
     <!-- Whatever names Core's internals is shared with the assemblies Core shares them with. -->

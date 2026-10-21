@@ -1,0 +1,21 @@
+# A dot steered round a looping path by two sines, and a Trails keeping where it
+# has been.
+
+description "A dot on a looping path and a Trails keeping where it has been, so a point"
+  "draws a ribbon."
+tags "basics" "feedback" "shapes"
+
+# Three to two, a quarter of a turn apart: a path that crosses itself and takes ten
+# seconds to come round.
+let px = sine(freq: 0.3, amp: 0.5)
+let py = sine(freq: 0.2, phase: 0.25, amp: 0.3)
+
+# The edges the wrong way round, a Smoothstep read backwards: 1 inside the dot and
+# 0 outside it.
+let dot = hypot(x - px, y - py) |> smoothstep(0.09, 0.03)
+
+# zoom under one pushes what is on screen outward and angle turns it, so the path
+# swells into a ribbon rather than fading where it lay.
+hsv(hue: t * 0.08, saturation: 0.85, value: dot)
+  |> trails(zoom: 0.985, angle: 0.015, persist: 0.99)
+  |> out.color

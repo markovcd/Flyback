@@ -1,0 +1,31 @@
+# Everything the video side can do, in one patch: coordinates turned, folded into
+# wedges, bent by a cloud field read from inside the fold, taken as traveling
+# rings, and laid over a trail of its own previous frames.
+
+description "Everything the video side can do, folded, warped and trailing its own"
+  "frames."
+tags "feedback" "pattern" "color"
+
+# One clock read at three speeds, so nothing quite lines up and it does not
+# visibly loop.
+let boil  = t * 0.12
+let pulse = t * 0.2
+
+# The field is read from the folded plane, not the flat one, so it is itself
+# symmetric: warping by anything asymmetric would quietly undo the fold.
+let folded = rotate(angle: t * 0.05) |> kaleidoscope(segments: 8)
+let field  = folded |> clouds(z: boil, scale: 1.4)
+
+# Hue drifts with the field and with time, wrapped back into 0..1. Rings are a
+# sine, so most of the frame is dark and only the crests survive as filaments.
+let shimmer = field + pulse |> fract()
+let fresh = folded
+              |> warp(by: field, amount: 0.5)
+              |> rings(freq: 2.5, offset: pulse)
+              |> smoothstep(0.15, 0.85)
+              |> hsv(value: _, hue: shimmer, saturation: 0.85)
+
+# The previous frame, zoomed out a hair and turned, so what is on screen spirals
+# outward under new filaments. Trails keeps the brighter of the two rather than a
+# blend, which is what makes the streaks read as trails.
+fresh |> trails(zoom: 0.99, angle: 0.015, persist: 0.92) |> out.color

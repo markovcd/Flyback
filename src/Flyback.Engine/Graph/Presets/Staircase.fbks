@@ -1,0 +1,25 @@
+# A Sample & Hold catching a slow slope on every tick of a clock: what comes out is
+# a staircase, and a staircase put through a scale is a tune.
+
+description "A slope caught six times a second by a Sample & Hold, which makes steps,"
+  "and steps are a tune."
+tags "basics" "melody" "sequencer"
+
+# Six ticks a second, and the one clock: it catches the pitch and plucks the note,
+# so a note cannot change pitch while it sounds.
+let clock = pulse(freq: 6)
+
+# Two sines whose rates share nothing, so the staircase climbs and falls without
+# ever quite repeating. Three octaves from A2.
+let slope = sine(freq: 0.11) + sine(freq: 0.37, amp: 0.5)
+let height = slope |> remap(-1.5..1.5, 45..81)
+let stair = hold(in: height, trigger: clock)
+
+# A minor pentatonic. A held value is still any number at all; what makes it a
+# note is this.
+let pitch = tune(in: stair) [ A C D E G ]
+
+triangle(freq: pitch) * (clock |> adsr(gate: _, attack: 3.019952ms, decay: 120.22644ms, sustain: 0.2, release: 60.25595ms))
+  |> out.left
+
+out.volume = 0.5

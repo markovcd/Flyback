@@ -98,11 +98,12 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     /// same name are one step until <see cref="GestureEnded"/>.
     /// </param>
     /// <param name="mark">Opaque caller state handed back when undo reaches this step.</param>
+    /// <param name="always">A step even when the patch is unchanged, for a change of <paramref name="mark"/> that has to be taken back.</param>
     /// <returns>
     /// Whether this made a step: false for no change, a coalesced frame, or the
     /// first patch recorded without opening one.
     /// </returns>
-    public bool Record(Patch patch, string? coalesce = null, object? mark = null)
+    public bool Record(Patch patch, string? coalesce = null, object? mark = null, bool always = false)
     {
         var now = Snapshot(patch);
 
@@ -119,7 +120,7 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
         // An edit that changed nothing is not a step, and the mark still stands
         // for where the history is: a caller whose own state moved without the
         // patch moving has said so, and there is nothing to step back through.
-        if (now == current)
+        if (now == current && !always)
         {
             Mark = mark;
             return false;

@@ -1,0 +1,19 @@
+# A photograph read as a field, and put through the same geometry a generated one
+# goes through.
+
+description "A photograph put through the same geometry a generated field goes through,"
+  "once you choose one."
+tags "starter" "photo"
+
+# Breathing rather than fixed, so the frame is never quite the same twice and the
+# edges of the picture come in and out of view.
+let zoom = sine(freq: 0.05) |> remap(-1..1, 0.85..1.4)
+
+# A little contrast on the way out, so a flat photograph still reads as one being
+# done something to.
+scale(scale: zoom)
+  |> rotate(angle: t * 0.05)
+  |> warp(by: clouds(z: t * 0.15, scale: 1.8), amount: 0.12)
+  |> picture()
+  |> gain(gain: 1.15, bias: -0.05)
+  |> out.color

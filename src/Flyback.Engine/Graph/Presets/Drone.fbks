@@ -1,0 +1,22 @@
+# One patch heard and seen at once. A single slow oscillator sets both the hue of
+# the image and the tremolo on the tone, so the two sinks are visibly and audibly
+# the same signal. "The patch as text" reads it line by line.
+
+description "One slow oscillator setting both the hue of the image and the tremolo on"
+  "the tone."
+tags "basics" "drone" "color"
+
+# The shared control signal, fitted to 0..1 by amp and bias.
+let slow = sine(freq: 0.15, amp: 0.5, bias: 0.5)
+
+# Ear.
+sine(freq: 110) * slow |> out.left
+
+# Eye. Rings swing -1..1 and value takes 0..1, so the whole swing is fitted to it
+# rather than its lower half falling off the bottom as black.
+rings(freq: 3, offset: t)
+  |> autoremap()
+  |> hsv(value: _, hue: slow, saturation: 0.85)
+  |> out.color
+
+out.volume = 0.6

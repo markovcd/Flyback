@@ -16,9 +16,13 @@ namespace Flyback.Editor.Tests.Inspect;
 /// </summary>
 public class InspectorFoldTests : EditorTest
 {
+    /// <summary>Plasma open with one of its sines selected and its name taken off, so the plate says what it is.</summary>
     private MainWindow Selecting(out NodeInstance sine)
     {
-        var window = Open(Presets.Plasma(NodeCatalog.BuiltIn));
+        var plasma = Presets.Plasma(NodeCatalog.BuiltIn);
+        plasma.Nodes.First(n => n.TypeId == "osc.sine").Name = null;
+
+        var window = Open(plasma);
         var editor = Editor(window);
 
         sine = editor.History.Patch.Nodes.First(n => n.TypeId == "osc.sine");

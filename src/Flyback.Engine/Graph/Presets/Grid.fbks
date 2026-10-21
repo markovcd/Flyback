@@ -1,0 +1,22 @@
+# The three coordinate transforms nothing else in the box shows, in a row, so that
+# what each does to the plane can be seen by taking it out.
+
+description "Tile, mirror and polar in a row, so what each one does to the plane is"
+  "separable."
+tags "basics" "pattern" "symmetry"
+
+let plane = translate(dx: sine(freq: 0.06))
+              |> tile(tiles: 3)
+              |> mirror()
+              |> polar()
+
+# The angle as hue, so a spoke is a color rather than only a shape. It arrives in
+# radians and a hue is a turn, so it is remapped rather than multiplied.
+let hue = plane.angle |> remap(-3.15..3.15, 0..1)
+
+# The check is 0 or 1 and a half-black picture reads as a fault, so the dark
+# squares are dim rather than absent.
+plane |> checker(size: 3)
+      |> remap(0..1, 0.14..1)
+      |> hsv(value: _, hue: hue, saturation: 0.7)
+      |> out.color

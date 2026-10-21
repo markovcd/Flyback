@@ -1,0 +1,27 @@
+# A kick and a pad, and a Duck turning the pad down under every hit so the kick
+# has the room to itself. The Scope draws the level the Duck applies, which falls
+# with every hit and climbs back before the next.
+
+description "A pad that gets out of the way each time the kick hits, on a Scope drawing"
+  "how far."
+tags "drums" "mixing" "scope"
+
+# Heard's kick: two beats a second, its length the envelope's.
+let kick = sine(freq: 55)
+             * (pulse(freq: 2, width: 0.08)
+                  |> adsr(gate: _, attack: 2.511887ms, decay: 125.89255ms, sustain: 0, release: 100ms))
+
+# A root and a fifth on two saws, held: nothing moves in the pad but the duck. The
+# Duck is keyed by the kick's sound: down by four fifths of how loud the kick is,
+# and a fifth of a second to come back.
+let pad = saw(freq: 110, amp: 0.25) + saw(freq: 165, amp: 0.2)
+            |> duck(left: _, key: kick, depth: 0.8, release: 199.52624ms)
+
+# The kick added back after the Duck, which never turns down what keys it.
+pad + kick |> out.left
+
+# Two seconds across, which is four hits and the pad coming back after each. The
+# gain never goes below nought, so it sits above the middle line.
+scope(pad.gain, window: 1.9952624s, scale: 1.25) |> out.color
+
+out.volume = 0.5

@@ -1,0 +1,24 @@
+# One field read at three sizes, one reading to each of red, green and blue: a
+# color is three signals, and nothing says they have to agree.
+
+description "One field read three times, a little apart: a color is three signals, and"
+  "here they disagree."
+tags "basics" "color"
+
+# How far apart the three readings are, from not at all to a tenth. At nothing the
+# picture is white lines on black: the colors are made by the disagreement alone.
+let apart = sine(freq: 0.08) |> remap(-1..1, 0..0.1)
+
+# The plane all three read: folded, then pushed off the middle so the rings are
+# centered six times round it rather than once.
+let plane = rotate(angle: t * 0.06) |> kaleidoscope(segments: 6) |> translate(dx: 0.55)
+let flow  = t * 0.15
+
+# Red a little over one, green straight, blue a little under. A scale moves a point
+# further the further out it is, so the fringes open towards the edges as a lens's
+# do. Only the crests, so three lines side by side stay three.
+let red   = plane |> scale(scale: 1 + apart) |> rings(freq: 2.5, offset: flow) |> smoothstep(0.75, 1)
+let green = plane |> rings(freq: 2.5, offset: flow) |> smoothstep(0.75, 1)
+let blue  = plane |> scale(scale: 1 - apart) |> rings(freq: 2.5, offset: flow) |> smoothstep(0.75, 1)
+
+rgb(r: red, g: green, b: blue) |> out.color

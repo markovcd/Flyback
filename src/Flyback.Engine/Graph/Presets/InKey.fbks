@@ -1,0 +1,41 @@
+# A cloud field played as a melody and drawn as the terraces it is being snapped
+# to: one Quantiser, in a pentatonic, feeding both sinks.
+
+description "One cloud field snapped to a pentatonic: heard as a melody, seen as the"
+  "terraces it was cut into."
+tags "melody" "scales" "generative"
+
+# The one module both sinks read. Its x and y need no wire: on the screen they are
+# the pixel's own, and at the speakers there is no pixel and they are zero. z is
+# depth through the noise, so it is the one socket told to move.
+let field = clouds(z: t * 0.3, scale: 2.2)
+
+# One tempo sets both how often a note is plucked and how often the melody may
+# move; 180 a minute is three a second. width is how much of each beat the trigger
+# is shut for, so a small one opens just after the beat.
+let beat  = pulse(freq: tempo(180), width: 0.12)
+
+# Two octaves from A2: a bass line at the bottom, singing at the top. A minor
+# pentatonic, A C D E G (ADR-0051). hold is the difference between a melody and a
+# glide: the beat freezes the note for exactly as long as it sounds.
+let key   = field |> remap(0..1, 45..69) |> quantiser(hold: beat) [ C D E G A ]
+
+# Ear: the snapped note, plucked. Nothing sustained, so a note has decayed well
+# inside its own beat and the next one lands on a note starting.
+let pitch = key |> note(note: _)
+sine(freq: pitch)
+  * (beat |> adsr(gate: _, attack: 3.98107ms, decay: 141.25375ms, sustain: 0, release: 31.62278ms))
+  |> out.left
+
+# Eye: the snapped note as a hue, one turn of the wheel to the octave, so a note is
+# the same color wherever it turns up. Warm to cool over half the wheel, since a
+# full turn reads as a test card.
+let hue   = key * (1 / 12) |> fract() |> remap(0..1, 0.02..0.6)
+
+# The field itself as brightness, unsnapped: the gradient is what arrived and the
+# bands are what the Quantiser made of it, both on screen at once.
+let shade = field |> remap(0..1, 0.22..0.95)
+hsv(hue: hue, saturation: 0.6, value: shade)
+  |> out.color
+
+out.volume = 0.55

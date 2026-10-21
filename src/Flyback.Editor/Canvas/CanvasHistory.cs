@@ -118,11 +118,13 @@ internal sealed class CanvasHistory(NodeGeometry geometry, Reactions reactions)
     /// Shows a patch built from the one that was open rather than opened in its place:
     /// the assistant's work, which is a large edit and not a new document.
     /// </summary>
-    public void Apply(Patch edited)
+    /// <param name="edited">The patch to show.</param>
+    /// <param name="always">A step even where <paramref name="edited"/> is the patch already shown, because <see cref="Mark"/> changed.</param>
+    public void Apply(Patch edited, bool always = false)
     {
         Take(edited);
 
-        var stepped = history.Record(Patch, mark: Mark);
+        var stepped = history.Record(Patch, mark: Mark, always: always);
 
         Replaced?.Invoke(this, Replacement.Applied);
         Announce();

@@ -751,7 +751,10 @@ internal sealed class Document
         editor.History.Mark = Owning();
 
         CarryControls(was, load.Patch);
-        editor.History.Apply(load.Patch);
+
+        // A printing applied as it stood builds the patch already shown, and
+        // the handover is still a step to take back.
+        editor.History.Apply(load.Patch, always: taken);
 
         // And on the text's stack, where the typing that led to it already is:
         // applying is the last thing somebody did, so it is the first thing that

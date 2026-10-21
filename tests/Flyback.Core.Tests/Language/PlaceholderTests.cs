@@ -234,13 +234,21 @@ public class PlaceholderTests
     }
 
     /// <summary>
-    /// Sequence as the C# builds it, with no names: its Note feeds a sine's
-    /// <c>freq</c>, which a printing can only say through a binding.
+    /// A patch built with no names: its Note feeds a sine's <c>freq</c>, which a
+    /// printing can only say through a binding.
     /// </summary>
     [Fact]
     public void A_printing_writes_the_placeholder_and_lifts_what_would_be_an_argument()
     {
-        var patch = Presets.All.Single(p => p.Name == "Sequence").Build(NodeCatalog.BuiltIn);
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var steps = b.Add("seq.notes", (1, 3f));
+        var note = b.Add("audio.note");
+        var tone = b.Add("osc.sine");
+        var output = b.Add(NodeCatalog.OutputTypeId);
+        b.Wire(steps, 0, note, 0)
+         .Wire(note, 0, tone, 1)
+         .Wire(tone, 0, output, NodeCatalog.OutputLeftPort);
+        var patch = b.Build();
 
         var printed = PatchPrinter.Print(patch, NodeCatalog.BuiltIn);
 

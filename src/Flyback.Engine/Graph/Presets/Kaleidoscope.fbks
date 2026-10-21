@@ -1,0 +1,10 @@
+# Rotating wedges filled with clouds that boil over time.
+
+description "Rotating wedges filled with clouds that boil over time."
+tags "pattern" "symmetry" "color"
+
+rotate(angle: t * 0.15)
+  |> kaleidoscope(segments: 6)
+  |> clouds(z: t * 0.3, scale: 2.5)
+  |> hsv(hue: _, saturation: 0.9, value: 1)
+  |> out.color

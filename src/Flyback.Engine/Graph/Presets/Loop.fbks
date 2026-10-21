@@ -1,0 +1,22 @@
+# One wire running backwards, which is a lowpass built by hand out of an add and a
+# multiply, with the one number that is its cutoff swept so it can be heard to be
+# one.
+
+description "A wire running backwards: a lowpass built from an add and a multiply, with"
+  "its one number swept."
+tags "basics" "feedback" "filter"
+
+# How much of the last evaluation is kept, which is the whole of the filter: the
+# nearer one, the lower the cutoff. The useful range is all in the last tenth.
+let keep = sine(freq: 0.1) |> remap(-1..1, 0.92..0.996)
+
+# A square, because its corners are what a lowpass takes off. What is let in is
+# what is not kept, so the loop comes out as loud as it went in.
+let sum  = square(freq: 110) * (1 - keep) |> add(a: _)
+
+# The wire that closes the loop, carrying the evaluation before: what makes this a
+# filter rather than a ring of wires with nothing in it.
+sum.b <- sum * keep
+sum |> out.left
+
+out.volume = 0.2

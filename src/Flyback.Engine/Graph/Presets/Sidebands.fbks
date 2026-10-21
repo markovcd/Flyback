@@ -1,0 +1,29 @@
+# Frequency modulation built by hand: one sine into another's phase, the amount
+# struck and left to fall, and an Analyzer on what comes out.
+
+description "One sine bending another's phase at audio rate, on an Analyzer showing the"
+  "partials that grows."
+tags "synthesis" "fm" "spectrum"
+
+# Every two seconds, and nothing sustained: the note is all decay, which lets the
+# partials be watched leaving.
+let strike = pulse(freq: 0.5, width: 0.1)
+               |> adsr(gate: _, attack: 1.995262ms, decay: 1.49968483s, sustain: 0, release: 301.9952ms)
+
+# How hard the next strike bends the carrier, wandering between a mellow note and a
+# clangorous one so no two strikes are the same bell.
+let depth = sine(freq: 0.07) |> remap(-1..1, 0.2..1.6)
+
+# A modulator three and a half times above A3. Not a whole number, so the partials
+# are not harmonics: the difference between an organ and a bell.
+let root      = note(A3)
+let modulator = sine(freq: root * 3.5)
+
+# The index falls with the strike, so the note starts bright and rings pure: on the
+# chart a comb of peaks closing up into one.
+let voice     = sine(freq: root, phase: modulator * (strike * depth)) * strike
+
+voice |> out.left
+analyzer(voice, window: 50.11873ms, range: 72) |> out.color
+
+out.volume = 0.3

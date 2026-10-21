@@ -1,0 +1,20 @@
+# A Probe and a Scope reading the same wire, one above the other, which is the
+# only arrangement in which the difference between them is visible.
+
+description "A Probe and a Scope on one signal, which is the only way to see how they"
+  "differ."
+tags "basics" "scope" "scan"
+
+# The sweep, and the reason the two charts differ at all.
+let sweep = sine(freq: 0.4) |> remap(-1..1, 90..320)
+let tone = saw(freq: sweep)
+
+tone |> out.left
+
+# 0 below the middle of the frame and 1 above it, which picks between the two
+# charts. The mix takes its second color where t is 1, so the Probe is up.
+let split = y |> step()
+color.mix(scope(tone, window: 25.11886ms), probe(tone, window: 25.11886ms), split)
+  |> out.color
+
+out.volume = 0.3

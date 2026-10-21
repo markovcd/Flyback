@@ -1,0 +1,389 @@
+# A whole song out of nothing but the engine's own modules: a kick, a snare and
+# hats, a bass through a filter, two plucked strings, a pad and a lead, in a room,
+# arranged into twelve phrases of eight bars, with a picture every one of the
+# parts moves.
+#
+# Two Arrangements of one section a phrase say what plays when, a row a part. An
+# Arrangement has no memory, so the picture reads the same rows the sound does,
+# but it never reads a filter or an envelope, which mean something else where
+# there is no evaluation before this one.
+
+description "A whole song from the engine's own modules: seven parts in a room, twelve"
+  "phrases, one picture."
+tags "song" "drums" "bass" "chords"
+length 3:25.71
+
+group "Clock" {
+  # Every part reads the count of beats rather than the clock, so the tempo is
+  # this one knob. The clock is for the picture's drifts.
+  let beat = tempo(112)
+  let clock = time()
+}
+
+group "Song" {
+  # Twelve phrases: an intro of strings and pad, the drums, two verses, a chorus of
+  # two phrases, a verse, a bridge with no drums in it, the chorus again, and a way
+  # out that ends where the intro begins. The pad is most of what there is in the
+  # bridge and least in a verse, and the filters open as the song fills.
+  # drums, snare, bass, second string, pad, how far the filters open
+  let band = beat.beats |> arrangement(rate: 1/32) [
+    0 1 1 1  1 1 1 0  1 1 1 0 |
+    0 0 1 1  1 1 1 0  1 1 0 0 |
+    0 0 1 1  1 1 1 0  1 1 1 0 |
+    0 1 1 1  1 1 1 1  1 1 1 0 |
+    0.9 0.8 0.45 0.5  0.75 0.75 0.5 1  0.8 0.8 0.6 0.9 |
+    0.1 0.3 0.6 0.7  1 1 0.7 0.2  1 1 0.45 0.1
+  ]
+
+  # Which half of the song it is: nought is the verse and one the chorus. The lead
+  # plays from the second verse on, alone over the pad in the bridge, and a phrase
+  # a chorus begins or ends after ends in a fill.
+  # the chorus, the lead, a fill
+  let form = beat.beats |> arrangement(rate: 1/32) [
+    0 0 0 0  1 1 0 0  1 1 0 0 |
+    0 0 0 1  1 1 1 1  1 1 1 0 |
+    0 0 0 1  0 1 0 1  0 1 0 0
+  ]
+
+  # The fill is the last bar of such a phrase, and a ramp across it.
+  let filling = (form.progress |> step(edge: 0.875)) * form.part_3
+  let ramp    = form.progress |> remap(0.875..1, 0.35..1)
+
+  # The harmony, a bar at a time, in semitones from A. The verse falls A minor, G,
+  # F, E and the E is major; the chorus rises F, C, G to A minor, and the second
+  # time round stops on the E that wants the verse.
+  let chorusRoot = beat.beats |> values(rate: 0.25, gate_length: 1, shape: 0) [ -4 3 -2 0  -4 3 -5 -5 ]
+  let verseRoot  = beat.beats |> values(rate: 0.25, gate_length: 1, shape: 0) [ 0 -2 -4 -5 ]
+  let root = math.mix(
+    verseRoot,
+    chorusRoot,
+    form)
+}
+
+# White, which the hats and the snare each take a band of.
+let hiss = noise()
+
+group "Kick" {
+  # One and three and the push before each in the verse, which leaves two and four
+  # to the snare; four on the floor in the chorus. A step's value is how hard it is
+  # hit, held from the moment it is, because the step has moved on long before the
+  # drum has finished.
+  let verseKick = beat.beats |> values(shape: 0.01) [
+    1 ~ ~ ~  ~ ~ 0.75 ~  0.95 ~ ~ ~  ~ ~ 0.6 ~
+  ]
+
+  let chorusKick = beat.beats |> values(shape: 0.01) [
+    1 ~ ~ ~  0.9 ~ ~ ~  0.95 ~ ~ ~  0.9 ~ 0.6 ~
+  ]
+
+  let kickGate = math.mix(verseKick.gate, chorusKick.gate, form) * band
+  let kickHard = math.mix(verseKick, chorusKick, form) |> hold(trigger: kickGate)
+
+  # Two envelopes and a sine, which is the whole of a kick drum: one shapes how
+  # loud it is, the shorter one what pitch it is.
+  let kickLevel = kickGate |> adsr(gate: _, attack: 1.258925ms, decay: 239.8833ms, sustain: 0, release: 79.43282ms)
+  let sweep     = kickGate |> adsr(gate: _, attack: 501.1873us, decay: 44.66836ms, sustain: 0, release: 15.848934ms)
+
+  let kickFreq = sweep |> remap(0..1, 46..200)
+  # Past the rails and held to them, so the top of each cycle is flat: the knock a
+  # sine has not got.
+  let kick = sine(freq: kickFreq) * kickLevel * kickHard * 1.7
+               |> clamp(-1, 1)
+
+  # The sidechain: the kick's level on the bass and the pad, followed at once so
+  # the duck has the envelope's own shape.
+  let duck = duck(key: kickLevel, depth: 0.55, attack: 100us, release: 100us)
+}
+
+group "Hats" {
+  # The pattern is how hard each sixteenth is played and nothing else: the
+  # envelope is what is left of the sixteenth, to the tenth power, which needs no
+  # trigger. An open one on the off-beat, a third as steep, is the chorus. The gate
+  # is not used by the hats at all; the snare's fill is what plays it.
+  let hatSeq = beat.beats |> values(gate_length: 0.4, shape: 0.01) [
+    0.8 0.3 0.55 0.3  0.75 0.3 0.6 0.35  0.8 0.3 0.55 0.3  0.75 0.35 0.65 0.5
+  ]
+
+  let shut = (1 - fract(beat.beats * 4) |> pow(a: _, 10)) * hatSeq * band
+  let open = (1 - fract(beat.beats + 0.5) |> pow(a: _, 3)) * form
+
+  let hatLevel = shut + open * 0.6
+
+  let hats = (hiss |> filter(cutoff: 7000, resonance: 0)).high * hatLevel
+}
+
+group "Snare" {
+  # Two and four, and a ghost before the bar turns over. In a fill it is the hats'
+  # sixteenths instead, as hard as the ramp has got to: both are a Mix used as a
+  # switch, because half way between two patterns is neither.
+  let snareSeq = beat.beats |> values(shape: 0.01) [
+    ~ ~ ~ ~  1 ~ ~ ~  ~ ~ ~ ~  0.95 ~ ~ 0.45
+  ]
+
+  let snareHit = snareSeq.gate * band.part_2
+  let snareGate = math.mix(snareHit, hatSeq.gate, filling)
+  let snareHard = math.mix(snareSeq, ramp, filling) |> hold(trigger: snareGate)
+
+  let snareLevel = snareGate |> adsr(gate: _, attack: 501.1873us, decay: 158.48931ms, sustain: 0, release: 63.09573ms)
+
+  # The wires are the noise with its bottom and its top taken off, and the shell
+  # is a sine under them that is gone sooner: the envelope squared.
+  let wires = (hiss |> filter(cutoff: 1100, resonance: 0)).high |> filter(cutoff: 6500, resonance: 0)
+
+  let shell = sine(freq: 185, amp: 0.6) * (snareLevel * snareLevel)
+  let snare = (wires * 2.2 * snareLevel + shell) * snareHard
+}
+
+group "Bass" {
+  # A bar of each, in semitones over the chord. The verse is uneven and that is the
+  # groove: the dotted eighth into a sixteenth is what stops it walking. The chorus
+  # is straight eighths, which is what makes it run.
+  let verseBass = beat.beats |> values(rate: 2, gate_length: 0.6) [
+    0@1.5 0%0.6@0.5 7%0.85 0%0.7  0@1.5 12%0.7@0.5 0%0.85 7%0.75
+  ]
+
+  let chorusBass = beat.beats |> values(rate: 2, gate_length: 0.7) [
+    0 0%0.7 0%0.85 0%0.7  0 0%0.7 12%0.85 0%0.75
+  ]
+
+  let bassGate = math.mix(verseBass.gate, chorusBass.gate, form) * band.part_3
+  let bassHz   = math.mix(verseBass, chorusBass, form) + root + 33 |> note(note: _)
+
+  # The gate is as high as the note is loud, so smoothed it is the accent, and the
+  # envelope times it opens the filter as well as the note.
+  let accent = bassGate |> slew(rise: 25.1188643ms, fall: 25.1188643ms)
+
+  let pluck = (bassGate |> adsr(gate: _, attack: 1ms, decay: 125.89255ms, sustain: 0.4, release: 63.09573ms)) * accent
+
+  # The filter rings, and its cutoff runs from seventy hertz with the envelope
+  # shut to as far up as the song has got.
+  let cutoffTop = band.part_6 |> remap(0..1, 900..2600)
+  let cutoff = pluck |> remap(in_low: 0, out_low: 70,
+                              out_high: cutoffTop)
+
+  let low = saw(freq: bassHz, amp: 0.8) |> filter(cutoff: cutoff, resonance: 0.8)
+
+  # Driven, and a sine at the same pitch added after it so that it stays a sine.
+  let bass = ((low * pluck |> drive(drive: 3)) + sine(freq: bassHz, amp: 0.75) * pluck) * duck.gain
+}
+
+group "Strings" {
+  # Two plucked strings a sixteenth apart, one on the eighths and one between
+  # them, each playing the chord from a list written once: a Tune adds the root and
+  # snaps what comes of it to the key, so the same figure is minor over A and major
+  # over F. The key is A natural minor and the G sharp the E chord has. A third of
+  # 3.6 is between minor and major, so the snap gives whichever the root calls for.
+  # The second string waits for the drums.
+  let firstArp = beat.beats |> values(rate: 2) [
+    57 64%0.7 69%0.8 64%0.7  72.6%0.9 64%0.7 69%0.8 64%0.7
+  ]
+
+  let secondArp = beat.beats |> add(a: _, b: -0.25) |> values(rate: 2) [
+    69 72.6 76 72.6  69 76 72.6 69
+  ]
+
+  # A pluck is a burst of noise and a String loses very little of its top by
+  # itself, so each goes through a lowpass, which opens as the song fills, from a
+  # nylon string to a steel one, and is made up after it for what it took.
+  let stringTone = band.part_6 |> remap(0..1, 900..2200)
+
+  let firstTuned = firstArp |> tune(transpose: root) [ C D E F G G# A B ]
+  let firstPlucked = string(trigger: firstArp.gate,
+                            freq: firstTuned,
+                            decay: 707.94577ms)
+
+  let secondTuned = secondArp |> tune(transpose: root) [ C D E F G G# A B ]
+  let secondStrike = secondArp.gate * band.part_4
+  let secondPlucked = string(trigger: secondStrike,
+                             freq: secondTuned,
+                             decay: 707.94577ms)
+
+  let firstString  = (firstPlucked |> filter(cutoff: stringTone, resonance: 0)) * 2.2
+  let secondString = (secondPlucked |> filter(cutoff: stringTone, resonance: 0)) * 2.2
+
+  # A side each, and half of both in the middle.
+  let strings  = firstString + secondString
+  let between  = strings * 0.5
+  let stringsL = firstString + between
+  let stringsR = secondString + between
+}
+
+group "Pad" {
+  # The chord itself: three pulses whose widths are swept at three speeds, so each
+  # beats against itself and none of them with another. The root and the fifth are
+  # sums, and only the third needs the key.
+  let padRootFreq = root + 57 |> note(note: _)
+  let padRoot   = pulse(freq: padRootFreq,
+                        width: sine(freq: 0.17, amp: 0.22, bias: 0.5), amp: 0.5)
+  let padMiddle = pulse(freq: tune(in: 60.6, transpose: root) [ C D E F G G# A B ],
+                        width: sine(freq: 0.23, amp: 0.22, bias: 0.5), amp: 0.5)
+  let padFifthFreq = root + 64 |> note(note: _)
+  let padFifth  = pulse(freq: padFifthFreq,
+                        width: sine(freq: 0.29, amp: 0.22, bias: 0.5), amp: 0.5)
+
+  # The third leans left and the fifth right, and the lowpass on each side opens
+  # with the song.
+  let padTone = band.part_6 |> remap(0..1, 700..2400)
+
+  let padToneL = mixer(in_1: padRoot, level_1: 0.8, in_2: padMiddle, level_2: 0.9,
+                       in_3: padFifth, level_3: 0.35)
+                   |> filter(cutoff: padTone, resonance: 0)
+  let padToneR = mixer(in_1: padRoot, level_1: 0.8, in_2: padMiddle, level_2: 0.35,
+                       in_3: padFifth, level_3: 0.9)
+                   |> filter(cutoff: padTone, resonance: 0)
+
+  # A chord that cuts out is a mistake and one that swells is not, so its level
+  # gets where the lane says over a couple of seconds.
+  let padLevel = (band.part_5 |> slew(rise: 2.51188643s, fall: 2.51188643s)) * duck.gain
+  let padL = padToneL * padLevel
+  let padR = padToneR * padLevel
+}
+
+group "Lead" {
+  # The verse's is twenty sixteenths, five beats against the bar's four, so it
+  # never lands on the same chord the same way twice. A rest is a volume rather
+  # than a note, so the pitch stays where it was and the notes either side of it
+  # are one phrase.
+  let hook = beat.beats |> notes(gate_length: 0.62, shape: 0.045) [
+    A4 C5%0.8 E5%0.9 C5%0.6   F5 E5%0.85 E5%0 D5%0.9
+    B4%0.8 D5%0.7 G5 F5%0.85  E5%0.9 D5%0.6 C5%0.95 C5%0
+    B4%0.85 A4 G4%0.7 A4%0.8
+  ]
+
+  # The chorus's is four bars of long notes in eighths, a chord tone at the top of
+  # each bar, ending on the E that belongs to both of its last chords.
+  let melody = beat.beats |> notes(rate: 2, gate_length: 0.85, shape: 0.03) [
+    C5@3 A4%0.8 C5%0.9@2 F5@2   E5@4 D5%0.85@2 C5%0.9@2
+    D5@3 B4%0.8 D5%0.9@2 G5@2   E5@6 E5%0@2
+  ]
+
+  let leadStep = math.mix(hook, melody, form)
+  let leadGate = math.mix(hook.gate, melody.gate, form) * form.part_2
+
+  let tuned = leadStep |> note(note: _)
+  # The twin, off the first Note's note output: the detune goes on after the snap
+  # because cents can sit between two semitones. Swung by a sine, so the beating
+  # rate keeps changing.
+  let wide  = note(tuned.note, cents: sine(freq: 5.4, amp: 9))
+  # A fifth over the tune, on a triangle so it fills rather than competes.
+  let fifthFreq = leadStep + 7 |> note(note: _)
+  let fifth = triangle(freq: fifthFreq, amp: 0.5)
+                * sine(freq: 0.043, amp: 0.5, bias: 0.5)
+
+  # Plucked in the verse and sung in the chorus.
+  let leadEnvSustain = form |> remap(0..1, 0.3..0.7)
+  let leadEnv = leadGate |> adsr(gate: _, attack: 3.162278ms, decay: 112.20185ms,
+                                 sustain: leadEnvSustain, release: 141.25375ms)
+
+  # Left and right differ in which saw they carry and in nothing else, which is
+  # where the width comes from. The envelope opens the lowpass, so a note starts
+  # bright and closes as it is held.
+  let leadTone  = leadEnv |> remap(0..1, 500..5200)
+  let leadToneL = saw(freq: tuned, amp: 0.7) + fifth |> filter(cutoff: leadTone, resonance: 0)
+  let leadToneR = saw(freq: wide,  amp: 0.7) + fifth |> filter(cutoff: leadTone, resonance: 0)
+
+  let leadLevel = leadEnv * (form |> remap(0..1, 0.6..0.9))
+  let leadL = leadToneL * leadLevel
+  let leadR = leadToneR * leadLevel
+}
+
+group "Room" {
+  # What should sound further off than the drums, darkened, into a small room and
+  # nothing of it dry.
+  let room = mixer(in_1: snare, level_1: 0.5, in_2: leadL + leadR, level_2: 0.4,
+                   in_3: strings, level_3: 0.5, in_4: hats, level_4: 0.12)
+               |> filter(cutoff: 2600, resonance: 0)
+               |> reverb(size: 0.3, decay: 0.5, mix: 1)
+}
+
+group "Desk" {
+  # Two Desks of four, chained by their buses into one of eight. The hats lean
+  # right: a Desk has one level for both sides of a channel, so the lean is on the
+  # signal.
+  let drums = desk(left_1: kick, level_1: 0.85,
+                   left_2: snare, level_2: 0.6,
+                   left_3: hats, right_3: hats * 1.45, level_3: 0.4,
+                   left_4: bass, level_4: 0.8)
+
+  # The last in the chain is the master: a trim under unity.
+  let master = desk(left_1: stringsL, right_1: stringsR, level_1: 0.8,
+                    left_2: padL, right_2: padR, level_2: 0.42,
+                    left_3: leadL, right_3: leadR, level_3: 0.6,
+                    left_4: room, right_4: room.wide, level_4: 0.17,
+                    bus_left: drums.bus_left, bus_right: drums.bus_right,
+                    trim: 0.7)
+
+  master.left  |> out.left
+  master.right |> out.right
+}
+
+group "Picture: Geometry" {
+  # The chord moves the frame: it is added to the rotation and is how many wedges
+  # the fold has, so the picture rebuilds itself once a bar. The kick moves the
+  # light, doing three things at once (the zoom here, the brightness and the twist
+  # on the feedback), so the bridge is the picture holding still.
+  let foldSegments = root |> remap(-5..3, 4..10)
+  let foldZoom = kickGate |> remap(0..1, 0.96..1.3)
+  let fold = transform(angle: clock * 0.055 + root * 0.08,
+                       zoom:  foldZoom,
+                       order: "turn")
+               |> kaleidoscope(segments: foldSegments)
+
+  # Geometry alone looks like geometry, so the plane is bent by a field read from
+  # inside the fold, symmetric so it repeats with the wedges. How far is a slow
+  # breath, and a shove from the first string each time it is plucked.
+  let field = fold |> clouds(z: clock * 0.18, scale: 2.1)
+
+  # The lead's gate widens the rings, so a note arrives as a band, and there are
+  # more of them the more song there is. Rings are a sine, so only the crests
+  # survive as filaments.
+  let filamentBands = leadGate |> remap(0..1, 2.2..4.4)
+  let filament = fold
+    |> warp(by: field,
+            amount: sine(freq: 0.071, amp: 0.25, bias: 0.45) + firstArp.gate * 0.15)
+    |> rings(freq: filamentBands + band.part_6 * 1.6, offset: clock * 0.4)
+    |> smoothstep(0.2, 0.95)
+}
+
+group "Picture: Color" {
+  # The kick as brightness, and the hats as a flicker on top of it. Past one on
+  # purpose, with the clamp after it.
+  let freshValue = filament * ((kickGate |> remap(0..1, 0.75..1.7)) + hatLevel * 0.35) |> clamp(0, 1)
+  # The bass's gate takes the color out of the image between its notes, the same
+  # rhythm the ear is getting, and the snare takes most of the rest: a backbeat is
+  # a flash of white.
+  let bassLift = bassGate |> remap(0..1, 0.55..0.95)
+  # The lead moves the hue, a twelfth of the wheel to the semitone, so an octave is
+  # the same color and a tune is a walk round it. The field and the slowest clock
+  # go under it, and the chorus starts from the other side of the wheel. Wrapped,
+  # because a hue is a wheel.
+  let freshHue = leadStep * (1 / 12) + field * 0.9 + (clock * 0.02 + form * 0.45) |> fract()
+  let freshSaturation = bassLift * (snareGate |> remap(0..1, 1..0.3))
+  let fresh = hsv(
+    hue:        freshHue,
+    saturation: freshSaturation,
+    value:      freshValue)
+}
+
+group "Picture: Feedback" {
+  # Two readings of the last frame turning opposite ways, red from one and green
+  # and blue from the other: a chromatic tunnel with no lens anywhere in it.
+  let warmAngle = kickGate |> remap(0..1, 0.012..0.05)
+  let warm = transform(zoom: 1.035, angle: warmAngle)
+               |> feedback()
+               |> color.split()
+
+  let cool = transform(zoom: 0.972, angle: -0.016)
+               |> feedback()
+               |> color.split()
+
+  # How long a trail lasts is how much song there is. Max rather than a blend, so a
+  # trail brighter than the new frame keeps its brightness and reads as a streak.
+  let fade = band.part_6 |> remap(0..1, 0.78..0.9)
+  rgb(warm, cool.g, cool.b)
+    |> gain(gain: fade, bias: 0)
+    |> max(a: _, b: fresh)
+    |> out.color
+}
+
+out.volume = 0.62

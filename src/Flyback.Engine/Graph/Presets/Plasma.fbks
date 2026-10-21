@@ -1,0 +1,22 @@
+# Three drifting sine fields summed and read through a cosine palette: the hello
+# world of video synths.
+
+description "Three drifting sine fields summed and read through a cosine palette — the"
+  "hello world of video synths."
+tags "basics" "pattern" "color"
+
+# A sine along x, one along y and rings out from the middle, each drifting at its
+# own rate so the three never line up the same way twice.
+let across = x |> sine(freq: 0.8, phase: t * 0.11)
+let down   = y |> sine(freq: 0.9, phase: t * -0.07)
+let round  = rings(freq: 1.1, offset: t * -0.13)
+
+# Time added straight onto the field walks it through the palette.
+let field  = across + down + round + t * 0.15
+
+# One sine a channel, a tenth of a turn apart: deep blue through cream to amber.
+let r = field |> sine(freq: 0.2, phase: 0,   amp: 0.42, bias: 0.5)
+let g = field |> sine(freq: 0.2, phase: 0.1, amp: 0.42, bias: 0.5)
+let b = field |> sine(freq: 0.2, phase: 0.2, amp: 0.42, bias: 0.5)
+
+rgb(r: r, g: g, b: b) |> out.color

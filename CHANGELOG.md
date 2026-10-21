@@ -6,7 +6,7 @@
 
 ### Presets
 
-- Thirty-seven presets are written in the text language, their modules named for what they do.
+- Every shipped preset, the engine's own included, is written in the text language, its modules named for what they do.
 
 ### Assistant
 

@@ -1,0 +1,18 @@
+# Two sines, one to each speaker, drawn against each other by a Beam. A fifth is
+# three cycles against two, which is the knot; the right one is a fifth of a hertz
+# sharp, so the knot turns, back to the same shape every two and a half seconds.
+
+description "Two sines a fifth apart, left against right on a Beam: a knot that turns"
+  "because the fifth is a little sharp."
+tags "basics" "stereo" "scope"
+
+let left  = sine(freq: 110, amp: 0.85)
+let right = sine(freq: 165.2, amp: 0.85)
+
+left |> out.left
+right |> out.right
+
+# Thirty milliseconds of phosphor: a few turns of the knot.
+beam(x: left, y: right, persistence: 29.99853ms, intensity: 1.2) |> out.color
+
+out.volume = 0.2

@@ -1,0 +1,29 @@
+# One sequencer, heard and seen at once. The steps are the tune; where the
+# sequence has got to is the color, and the gate that makes a rest silent is the
+# same one that takes the light out of it.
+
+description "One sequencer heard and seen at once: the steps are the tune and the color."
+tags "basics" "sequencer" "melody" "color"
+
+# Three notes a second, with the gate closed for the last third so that two of the
+# same note in a row are two notes.
+let steps = notes(rate: 3, gate_length: 0.66) [ A3 C4 D4 E4 G4 E4 D4 C4 ]
+
+# Ear: the step is a note number, so it goes in where a note goes.
+let pitch = steps |> note(note: _)
+sine(freq: pitch) * steps.gate |> out.left
+
+# Eye: rings whose count is the position in the pattern. Remapped rather than
+# multiplied, since index starts at zero and zero rings is a flat field.
+let bands = steps.index |> remap(0..1, 1.5..9)
+
+# The gate dims the picture where it silences the tone, but only to four tenths:
+# blacking the screen for a third of every step reads as a fault, not a pulse.
+let bright = steps.gate |> remap(0..1, 0.4..1)
+rings(freq: bands)
+  |> remap(-1..1, 0.05..1)
+  |> mul(a: _, b: bright)
+  |> hsv(value: _, hue: steps.index, saturation: 0.8)
+  |> out.color
+
+out.volume = 0.5

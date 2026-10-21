@@ -1,0 +1,20 @@
+# The camera-pointed-at-its-own-monitor patch: each frame is re-read slightly
+# rotated, scaled and dimmed, with fresh rings fed in on top.
+
+description "Each frame re-read slightly rotated, scaled and dimmed, with fresh rings"
+  "on top."
+tags "feedback" "pattern"
+
+let pulse = t * 0.25
+
+let past = rotate(angle: t * 0.08)
+             |> scale(scale: 1.05)
+             |> feedback()
+             |> gain(gain: 0.95, bias: 0)
+
+# Fresh material: bright rings that travel outward.
+let fresh = rings(freq: 1.5, offset: pulse)
+              |> smoothstep(0.8, 1)
+              |> hsv(value: _, hue: pulse, saturation: 1)
+
+past |> max(a: _, b: fresh) |> out.color

@@ -1,0 +1,29 @@
+# The picture played rather than drawn. A circle is swept round a field of rings
+# at audio rate and what it passes over is the waveform, so the tone is not made
+# by an oscillator anywhere: it is the image, read along a line.
+
+description "A loop swept round a field at audio rate, so the picture is the waveform."
+tags "scan" "synthesis" "pattern"
+
+# The field, and the only thing in the patch that makes the waveform. freq is the
+# modulation index rather than a pitch: more rings under the loop is more
+# harmonics, at the same note.
+let bands = rings(freq: 4)
+
+# Where the loop is cut through the field, walked outward and back. Kept clear of
+# zero, because a loop concentric with the rings reads a constant and is silent.
+let where = sine(freq: 0.2) |> remap(-1..1, 0.2..0.75)
+
+# rate is the pitch; radius and x choose which loop through the field is read.
+let loop  = scan(bands, rate: 110, radius: 0.35, x: where, scale: 1)
+
+# Ear: nothing between the picture and the speakers but the loop.
+loop |> out.left
+
+# Eye: the field under the trace, dim enough that the loop reads on top of it.
+bands |> remap(-1..1, 0.05..0.55)
+      |> hsv(value: _, hue: where, saturation: 0.7)
+      |> add(a: _, b: loop.view)
+      |> out.color
+
+out.volume = 0.25

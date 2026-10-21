@@ -1,0 +1,12 @@
+# The sample player, retriggered: played forward on the clock, restarted by a
+# trigger, once a sound file is chosen.
+
+description "A sound file played and retriggered every two seconds, once you choose one."
+tags "starter" "sound-file"
+
+# Every two seconds, and a gate narrow enough that what is heard is the clip
+# rather than the trigger. The clip plays forward at its own speed from wherever
+# the last edge left it.
+sample(level: 0.9, trigger: pulse(freq: 0.5, width: 0.02)) |> out.left
+
+out.volume = 0.7
