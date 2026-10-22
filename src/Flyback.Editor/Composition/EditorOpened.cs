@@ -14,7 +14,8 @@ internal sealed class EditorOpened(
     WorkKeeper keeper,
     WorkRecovery recovery,
     PatchOpening opening,
-    PresetSlot presets) : IStartAt
+    PresetSlot presets,
+    UsageQuestion usageQuestion) : IStartAt
 {
     public StartPhase Phase => StartPhase.Opened;
 
@@ -22,6 +23,8 @@ internal sealed class EditorOpened(
     {
         if (launch.WhatsNew is not null)
             await dialog.Show(WhatsNew.Title(launch.WhatsNew), WhatsNew.View(launch.WhatsNew));
+
+        await usageQuestion.Ask();
 
         keeper.Restore(recovery.Restore);
 

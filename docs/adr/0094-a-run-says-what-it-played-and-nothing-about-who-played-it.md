@@ -148,3 +148,17 @@ The setting is saved as `countUsage`. The old `sendUsageStatistics` key is ignor
 the box was ticked by default and the settings window saves every section on Save,
 so a stored `true` cannot be told from somebody who never looked at it. Everybody
 starts off, and somebody who wants to be counted ticks it again.
+
+## Amendment, 2026-10-22: the first start asks
+
+*User-directed.* A box in the settings is ticked by almost nobody, so the desktop
+editor's first start asks: **Share anonymous usage counts?**, with what is counted
+written out and two answers of equal weight, Share counts and Don't share. Closing
+the question is a no. The answer is kept as `asked` beside `countUsage`, and a
+`countUsage` already ticked counts as answered, so somebody who opted in is not asked.
+
+Until the answer the run keeps its events in memory and sends nothing; a yes sends
+them, so the first start is counted with the rest, and a no forgets them. Only a run
+that could send counts asks. Android, the web editor, and a desktop build that would
+count nothing (no key, or neither a release nor a developer's build) never ask, so
+the Play Store's data-safety answers and the privacy page's Android section stand.

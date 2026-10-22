@@ -198,6 +198,7 @@ internal static class EditorServices
         services.AddPart<DecisionsSection>();
         services.AddPart<UpdatesSection>();
         services.AddPart<UsageSection>();
+        services.AddPart<UsageQuestion>();
         services.AddPart<PrivacySection>();
         services.AddPart<PageSettings>();
 

@@ -30,14 +30,18 @@ public sealed class Usage
     public static Usage Off { get; } = new(null);
 
     private readonly IUsageSink? sink;
+    private readonly HeldSink? held;
     private readonly Launch launch;
     private readonly Func<TimeSpan> running;
 
     /// <param name="sink">Where events go, or null to say nothing at all.</param>
     /// <param name="launch">How this run began. Null is an ordinary start.</param>
     /// <param name="running">How long the run has lasted. Null is the real clock.</param>
-    internal Usage(IUsageSink? sink, Launch? launch = null, Func<TimeSpan>? running = null)
+    /// <param name="hold">Keep every event until <see cref="Answer"/> says whether to send it.</param>
+    internal Usage(IUsageSink? sink, Launch? launch = null, Func<TimeSpan>? running = null, bool hold = false)
     {
+        if (hold && sink is not null) sink = held = new HeldSink(sink);
+
         this.sink = sink;
         this.launch = launch ?? new Launch();
 
@@ -185,7 +189,8 @@ public sealed class Usage
     /// report to: statistics switched off, a build that is neither a release nor
     /// made on a developer's machine, or a build carrying no application key, which
     /// is any fork of this repository. A build made on a developer's machine reports
-    /// as Aptabase's debug, apart from the releases.
+    /// as Aptabase's debug, apart from the releases. Where nobody has answered yet, the
+    /// reporter holds everything until the first-start question is answered.
     /// </summary>
     public static Usage Start(UsageSettings settings, Launch? launch = null) =>
         Start(settings, ReleaseFeed.Running(), launch, LocalBuild());
@@ -199,7 +204,7 @@ public sealed class Usage
     /// <param name="local">The version of a build made on a developer's machine, or null for any other.</param>
     internal static Usage Start(UsageSettings settings, Version? running, Launch? launch = null, string? local = null)
     {
-        if (!settings.CountUsage) return Off;
+        if (settings.Answered && !settings.CountUsage) return Off;
 
         if (running is null && local is null)
         {
@@ -215,7 +220,7 @@ public sealed class Usage
             return Off;
         }
 
-        return new Usage(aptabase, launch);
+        return new Usage(aptabase, launch, hold: !settings.Answered);
     }
 
     /// <summary>
@@ -237,6 +242,29 @@ public sealed class Usage
     /// else is.
     /// </summary>
     public void Stop() => stopped = true;
+
+    /// <summary>
+    /// Whether this run is waiting on the first-start question: nobody has said yes or
+    /// no, and the build has somewhere to send counts. Nothing leaves the machine
+    /// until <see cref="Answer"/>.
+    /// </summary>
+    public bool Asks => held is { Waiting: true };
+
+    /// <summary>
+    /// The person's yes or no. A no stops the run now and forgets what it kept; a yes
+    /// sends what a run that <see cref="Asks"/> kept, and otherwise begins at the next start.
+    /// </summary>
+    public void Answer(bool count)
+    {
+        if (count)
+        {
+            held?.Release();
+            return;
+        }
+
+        Stop();
+        held?.Drop();
+    }
 
     /// <summary>
     /// That Flyback started, and what it started as: the platform this copy was

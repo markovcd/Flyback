@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Flyback.Core;
 using Flyback.Ui;
 
@@ -31,6 +32,13 @@ public sealed class UsageSettings
     /// ticked by default, so it says nothing about what anybody chose and is ignored.
     /// </remarks>
     public bool CountUsage { get; set; }
+
+    /// <summary>Whether the first-start question was answered, either way.</summary>
+    public bool Asked { get; set; }
+
+    /// <summary>Whether the person has said yes or no: at the question, or by ticking the box.</summary>
+    [JsonIgnore]
+    public bool Answered => Asked || CountUsage;
 
     /// <summary>Where these settings are kept in <see cref="SettingsFile"/>.</summary>
     public const string Section = "usage";

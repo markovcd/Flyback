@@ -12,6 +12,7 @@
 
 - macOS menu bar: Flyback's own app menu and File, Edit, View, Play, Window and Help menus; the viewer's is named Flyback Viewer.
 - Measure moves to Ctrl+Shift+M (⇧⌘M on macOS), leaving ⌘M to Minimize.
+- The desktop editor's first start asks whether to share anonymous usage counts.
 
 ### Viewer
 

@@ -48,38 +48,39 @@ internal sealed class UsageSection
 
         View.Children.Add(countUsage);
 
-        View.Children.Add(new TextBlock
-        {
-            Text = "What is counted: this version, the operating system, which of Flyback's own "
-                + "plugins loaded and which sound backend opened; roughly how many cores, how much "
-                + "memory and how tall a screen this machine has; whether this is its first start "
-                + "or the first after an update; how many of each kind of module and how many "
-                + "wires are in a patch when it plays, and which of Flyback's presets it came from; "
-                + "whether an assistant was asked and which provider it was; and when the run "
-                + "ends, how many of each kind of module were picked from the module list, "
-                + "roughly how long it lasted, how often each of the editor's features, like "
-                + "recording, undo, grouping or going full screen, was used, and how fast the "
-                + "picture was drawn. If Flyback "
-                + "crashes, the kind of error and where in Flyback it happened, without its "
-                + "message. Nothing else — no patch, no file, no knob, nothing typed, and no name "
-                + "of a plugin Flyback does not ship.",
-            FontSize = Text.Small,
-            Foreground = Text.Muted,
-            TextWrapping = TextWrapping.Wrap,
-        });
-
-        View.Children.Add(new TextBlock
-        {
-            Text = "Nothing identifies you or this machine, so two runs cannot be told apart from "
-                + "one, and there is nothing to ask to be forgotten. The counts go to Aptabase. "
-                + "Clearing the box stops it straight away.",
-            FontSize = Text.Small,
-            Foreground = Text.Muted,
-            TextWrapping = TextWrapping.Wrap,
-        });
+        View.Children.Add(Muted(WhatIsCounted));
+        View.Children.Add(Muted(Anonymous + " Clearing the box stops it straight away."));
 
         Show();
     }
+
+    /// <summary>The whole of what is counted, for this section and the first-start question.</summary>
+    internal const string WhatIsCounted =
+        "What is counted: this version, the operating system, which of Flyback's own "
+        + "plugins loaded and which sound backend opened; roughly how many cores, how much "
+        + "memory and how tall a screen this machine has; whether this is its first start "
+        + "or the first after an update; how many of each kind of module and how many "
+        + "wires are in a patch when it plays, and which of Flyback's presets it came from; "
+        + "whether an assistant was asked and which provider it was; and when the run "
+        + "ends, how many of each kind of module were picked from the module list, "
+        + "roughly how long it lasted, how often each of the editor's features, like "
+        + "recording, undo, grouping or going full screen, was used, and how fast the "
+        + "picture was drawn. If Flyback "
+        + "crashes, the kind of error and where in Flyback it happened, without its "
+        + "message. Nothing else — no patch, no file, no knob, nothing typed, and no name "
+        + "of a plugin Flyback does not ship.";
+
+    internal const string Anonymous =
+        "Nothing identifies you or this machine, so two runs cannot be told apart from "
+        + "one, and there is nothing to ask to be forgotten. The counts go to Aptabase.";
+
+    internal static TextBlock Muted(string text) => new()
+    {
+        Text = text,
+        FontSize = Text.Small,
+        Foreground = Text.Muted,
+        TextWrapping = TextWrapping.Wrap,
+    };
 
     internal StackPanel View { get; } = new() { Spacing = 10, Width = SettingsSession.SectionWidth };
 
@@ -90,13 +91,24 @@ internal sealed class UsageSection
     /// Switching it off takes effect now rather than at the next start: there is a
     /// run still going, and a box cleared has to mean this one too. Switching it on
     /// waits for the next start, because this run's own "started" has already gone
-    /// unsaid and half a run is worse than none (ADR-0094).
+    /// unsaid and half a run is worse than none (ADR-0094), unless the run is still
+    /// holding its events for the first-start question.
     /// </remarks>
-    internal void Save()
-    {
-        saved = new UsageSettings { CountUsage = countUsage.IsChecked == true };
+    internal void Save() =>
+        Keep(new UsageSettings { CountUsage = countUsage.IsChecked == true, Asked = saved.Asked });
 
-        if (!saved.CountUsage) usage.Stop();
+    /// <summary>The answer to the first-start question, kept as the box would keep it.</summary>
+    internal void Answer(bool count)
+    {
+        Keep(new UsageSettings { CountUsage = count, Asked = true });
+        Show();
+    }
+
+    private void Keep(UsageSettings settings)
+    {
+        saved = settings;
+
+        usage.Answer(saved.CountUsage);
 
         if (path is null) return;
 
