@@ -30,7 +30,7 @@ internal sealed class UsageQuestion(Usage usage, UsageSection section, IDialog d
 
     internal static Control View(Action<bool> answer)
     {
-        var page = new StackPanel { Width = 480, Spacing = 10 };
+        var page = new StackPanel { Width = 480, Spacing = 10, Margin = new Thickness(20, 12, 20, 0) };
 
         page.Children.Add(new TextBlock
         {
@@ -55,7 +55,7 @@ internal sealed class UsageQuestion(Usage usage, UsageSection section, IDialog d
             Orientation = Orientation.Horizontal,
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Right,
-            Margin = new Thickness(0, 14, 0, 0),
+            Margin = new Thickness(20, 16, 20, 20),
             Children = { share, keep },
         };
 

@@ -1,11 +1,14 @@
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Flyback.Editor.Composition;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Statistics;
 using Shouldly;
+using Xunit;
 
 namespace Flyback.Editor.Tests.Statistics;
 
@@ -97,5 +100,25 @@ public sealed class UsageQuestionTests : EditorTest
     public void A_run_already_answered_is_not_asked()
     {
         Question(Open(new Usage(sink))).ShouldBeNull();
+    }
+
+    /// <summary>Draws the window with the question up. Run by hand with SHOT_DIR naming a folder.</summary>
+    [AvaloniaFact]
+    public void Draw_the_question()
+    {
+        var folder = Environment.GetEnvironmentVariable("SHOT_DIR");
+        Assert.SkipWhen(folder is null, "a tool for looking at the question, run with SHOT_DIR naming a folder to draw into");
+
+        var window = Open(new Usage(sink, hold: true));
+
+        window.Width = 1280;
+        window.Height = 800;
+        Settle(window);
+
+        Directory.CreateDirectory(folder);
+
+        using var frame = window.CaptureRenderedFrame() ?? throw new InvalidOperationException("the window rendered nothing");
+
+        frame.Save(Path.Combine(folder, "usage-question.png"), new PngBitmapEncoderOptions());
     }
 }
