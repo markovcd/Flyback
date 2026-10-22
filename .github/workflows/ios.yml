@@ -63,10 +63,10 @@ jobs:
         with:
           global-json-file: global.json
 
-      # The workload set is pinned, as an action is: a newer set can name a manifest
-      # NuGet does not have yet, and the install fails.
+      # The workload set is pinned, as an action is. 10.0.401 is the last whose iOS SDK
+      # (26.5) builds with Xcode 26; 10.0.402's needs Xcode 27, which GitHub's image lacks.
       - name: Install the ios workload
-        run: dotnet workload install ios --version 10.0.402
+        run: dotnet workload install ios --version 10.0.401
 
       - name: Build and play in the simulator
         env:
