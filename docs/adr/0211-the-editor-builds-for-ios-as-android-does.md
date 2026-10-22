@@ -24,9 +24,9 @@ to choose. Line In and MIDI stay macOS-only until something needs them on iOS.
 
 **Ahead of time, with the interpreter behind it.** A device build compiles everything ahead of
 time and keeps Mono's interpreter for what reflection asks for at run time
-(`MtouchInterpreter=-all`). The sound's IL is never built there, so the engine interprets the
-patch, as it does in a browser. The simulator has a JIT, so `--interpreted` is what tries a
-device's path there.
+(`MtouchInterpreter=-all`). The simulator runs on Mono's JIT, without LLVM, so a build takes
+minutes. Neither reports compiled dynamic code, so the sound's IL is never built and the engine
+interprets the patch, as it does in a browser.
 
 **The picture on OpenGL ES.** Avalonia's iOS head starts on EAGL, where `GpuPreviewSurface`
 runs as on Android; Metal is asked for only if it fails.

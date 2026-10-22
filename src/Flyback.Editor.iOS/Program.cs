@@ -1,3 +1,4 @@
+using Foundation;
 using UIKit;
 
 namespace Flyback.Editor.iOS;
@@ -7,7 +8,8 @@ public static class Program
 {
     public static void Main(string[] args)
     {
-        DeviceRequest.Take(args);
+        // Main is handed none of what simctl launch passed; the process info has them.
+        DeviceRequest.Take(NSProcessInfo.ProcessInfo.Arguments);
         UIApplication.Main(args, null, typeof(DeviceLaunch));
     }
 }

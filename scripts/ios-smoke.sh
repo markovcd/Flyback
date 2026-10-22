@@ -5,7 +5,7 @@
 #
 #   ./scripts/ios-smoke.sh                   Sidebands on a booted simulator, or on the first iPad there is
 #   ./scripts/ios-smoke.sh Visualizer        another preset
-#   ./scripts/ios-smoke.sh --interpreted     the sound on the engine's interpreter, as on a device
+#   ./scripts/ios-smoke.sh --interpreted     asks for the engine's interpreter, which iOS runs anyway
 #   ./scripts/ios-smoke.sh --no-build        the app already built
 #
 # Needs a Mac with Xcode and the ios workload. A simulator already booted is used and
@@ -117,8 +117,11 @@ ask() {
 }
 
 # A field of the last answer: a string without its quotes, or a bare number, true, false or null.
+# Two passes rather than sed's t, whose label macOS's sed reads to the end of the line.
 field() {
-  printf '%s' "$state" | sed -n "s/.*\"$1\":\"\([^\"]*\)\".*/\1/p; t; s/.*\"$1\":\([^,}]*\).*/\1/p"
+  local quoted
+  quoted="$(printf '%s' "$state" | sed -n "s/.*\"$1\":\"\([^\"]*\)\".*/\1/p")"
+  if [ -n "$quoted" ]; then printf '%s\n' "$quoted"; else printf '%s' "$state" | sed -n "s/.*\"$1\":\([^,}]*\).*/\1/p"; fi
 }
 
 asked_at=$SECONDS
