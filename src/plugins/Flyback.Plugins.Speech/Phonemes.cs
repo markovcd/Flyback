@@ -1,4 +1,4 @@
-namespace Flyback.Plugins.Voice.Speech;
+namespace Flyback.Plugins.Speech;
 
 /// <summary>
 /// The sounds of English an adult voice makes, with formants after Klatt (1980)

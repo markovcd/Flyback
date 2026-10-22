@@ -1,0 +1,78 @@
+# The chorus of Daisy Bell, the first song a computer sang, sung by a Speak over
+# a waltz, with a Mouth singing it on screen and the words typed out under it.
+#
+# The Speak and the Tempo share one tempo, so the voice and the band count the
+# same beats without a wire between them. A note is written for each syllable,
+# its length in beats after the '@', and the words' lines are the caption's.
+
+description "A voice made of a buzz, a breath and filters sings Daisy Bell over a waltz,"
+  "with a mouth on screen singing along and the words typed out as they are sung."
+tags "song" "voice" "singing" "waltz"
+
+requires flyback.speech
+requires flyback.picture
+
+let beat = tempo(150)
+
+let singer = speak(
+    bpm: 150,
+    size: 0.95,
+    mode: "sing",
+    words: "Daisy, Daisy,|give me your answer, do.|I'm half crazy,|all for the love of you.",
+    notes: "G3@3 E3@3 C3@3 G2@3 A2 B2 C3 A2@2 C3 G2@6 D3@3 G3@3 E3@3 C3@3 A2 B2 C3 D3@2 E3 D3@6")
+
+group "Waltz" {
+  # A chord a bar, in semitones from C: C, F, G and the D that leads back to G.
+  let root = beat.beats |> values(rate: 1/3, gate_length: 1, shape: 0) [
+    0 0 0 0  5 0 -5 -5  -5 -5 0 0  5 2 -5 -5
+  ]
+
+  # Oom on the first beat of the bar, pah pah on the other two.
+  let oom = beat.beats |> values(rate: 1, gate_length: 0.4) [ 1 ~ ~ ]
+  let pah = beat.beats |> values(rate: 1, gate_length: 0.3) [ ~ 0.7 0.6 ]
+
+  let oomLevel = oom.gate |> adsr(gate: _, attack: 2ms, decay: 400ms, sustain: 0.3, release: 200ms)
+  let pahLevel = (pah.gate |> adsr(gate: _, attack: 2ms, decay: 180ms, sustain: 0.2, release: 120ms))
+                   * (pah |> hold(trigger: pah.gate))
+
+  let bassHz = root + 36 |> note(note: _)
+  let bass = (triangle(freq: bassHz) + sine(freq: bassHz, amp: 0.6)) * oomLevel
+
+  # The chord a music box would play it: root, third and fifth, an octave up.
+  let first = root + 60 |> note(note: _)
+  let third = root + 64 |> note(note: _)
+  let fifth = root + 67 |> note(note: _)
+  let chord = (triangle(freq: first) + triangle(freq: third) + triangle(freq: fifth))
+                |> filter(cutoff: 2400, resonance: 0)
+  let pahs = chord * pahLevel * 0.35
+}
+
+group "Room" {
+  let room = mixer(in_1: singer, level_1: 0.35, in_2: pahs, level_2: 0.5)
+               |> reverb(size: 0.45, decay: 0.55, mix: 1)
+
+  let dry = singer * 0.9 + bass * 0.32 + pahs
+  dry + room * 0.35 |> out.left
+  dry + room.wide * 0.35 |> out.right
+}
+
+group "Picture" {
+  # The lines typed out as they are sung, under the mouth.
+  let words = text(
+      y: y + 0.62,
+      size: 0.09,
+      line: singer.line,
+      reveal: singer.reveal,
+      lines: "Daisy, Daisy,|give me your answer, do.|I'm half crazy,|all for the love of you.")
+
+  let face = mouth(y: y - 0.08, size: 0.55, open: singer.open, round: singer.round, caption: words)
+
+  # A dusk that turns with the chords, and a glow behind the mouth that swells
+  # with each bar.
+  let glow = (1 - radius * 0.9) * (0.55 + 0.45 * oomLevel)
+  let dusk = color.hsv(hue: 0.72 + root * 0.01, saturation: 0.55, value: glow * 0.5)
+
+  color.mix(a: dusk, b: face, t: face.mask) |> out.color
+}
+
+out.volume = 0.8

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Flyback.Plugins.Speech</RootNamespace>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+
+    <!-- What the install dialog and the plugins window show. -->
+    <Product>Speech</Product>
+    <Authors>Flyback</Authors>
+    <Description>A voice made from nothing but a buzz, a breath and filters, that says or sings the words typed into it, and a mouth that moves with it. Speak: English text to speech, or lyrics sung to notes at a tempo. Mouth: lips, teeth and a tongue drawn as the voice says each sound, with the words typed out under them.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="Tags" Value="sound; voice; speech; singing; text to speech; lip sync" />
+    <!-- Retaken by PluginPreviewShotTests. -->
+    <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" Condition="Exists('preview.webp')" />
+    <!-- The pictures behind the modules (ADR-0118), read out of the assembly by Art. -->
+    <EmbeddedResource Include="Art\*.svg" LogicalName="art.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="*.fbks" LogicalName="%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Both are host-owned; shipping either would give its types a second identity. -->
+    <ProjectReference Include="../../Flyback.Plugins/Flyback.Plugins.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime"
+                      GlobalPropertiesToRemove="OutDir" />
+    <ProjectReference Include="../../Flyback.Core/Flyback.Core.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime"
+                      GlobalPropertiesToRemove="OutDir" />
+  </ItemGroup>
+
+</Project>

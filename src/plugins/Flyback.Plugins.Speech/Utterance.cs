@@ -1,6 +1,6 @@
 using Flyback.Core.Compile;
 
-namespace Flyback.Plugins.Voice.Speech;
+namespace Flyback.Plugins.Speech;
 
 /// <summary>
 /// What is said, laid out as tracks a frame every five milliseconds: how loud
@@ -21,7 +21,13 @@ internal sealed record Utterance(
     LoadedSample F1,
     LoadedSample F2,
     LoadedSample F3,
-    LoadedSample Pitch)
+    LoadedSample Pitch,
+    LoadedSample Open,
+    LoadedSample Round,
+    LoadedSample Line,
+    LoadedSample Reveal,
+    IReadOnlyList<float> Starts,
+    IReadOnlyList<float> Holds)
 {
     /// <summary>Frames a second.</summary>
     public const int Rate = 200;
@@ -39,9 +45,15 @@ internal sealed record Utterance(
     /// <summary>How long a vowel takes to leave a consonant's locus, and to reach the next one's.</summary>
     private const float Transition = 40f;
 
-    /// <summary>The tracks for <paramref name="sounds"/>.</summary>
-    public static Utterance Of(IReadOnlyList<Spoken> sounds)
+    /// <summary>
+    /// The tracks for <paramref name="sounds"/>, and where each syllable starts and
+    /// where its vowel can be held, in seconds.
+    /// </summary>
+    /// <param name="sung">Whether the words are sung, which leaves out the pauses and draws out nothing.</param>
+    public static Utterance Of(IReadOnlyList<Spoken> sounds, bool sung = false)
     {
+        if (sung) sounds = [.. sounds.Where(s => s.Phoneme is not null)];
+
         var voice = new List<float>();
         var breath = new List<float>();
         var hiss = new List<float>();
@@ -52,26 +64,42 @@ internal sealed record Utterance(
         var lift = new List<float>();
         var pause = new List<bool>();
         var question = new List<bool>();
+        var open = new List<float>();
+        var round = new List<float>();
+        var line = new List<float>();
+        var reveal = new List<float>();
+        var starts = new List<int>();
+        var holds = new List<int>();
+        var syllable = 0;
+
+        var mouthFrom = (Open: 0f, Round: 0f);
+        var mouthTo = mouthFrom;
+        Spoken current = new(null);
 
         (float F1, float F2, float F3) held = (500, 1500, 2500);
 
         for (var s = 0; s < sounds.Count && voice.Count < Longest; s++)
         {
-            var spoken = sounds[s];
+            var spoken = current = sounds[s];
 
             if (spoken.Phoneme is not { } p)
             {
+                mouthFrom = mouthTo = (0f, 0f);
                 Hold(spoken.Pause, 0f, 0f, 0f, 0f, held, held, 0f, spoken.Question, silent: true);
                 continue;
             }
 
             var following = Next(sounds, s)?.From ?? p.To;
 
+            mouthFrom = Visemes.Of(p);
+            mouthTo = Visemes.Of(p, end: true);
+            if (p.Manner == Manner.Aspirate && Next(sounds, s) is { } aspirated) mouthFrom = mouthTo = Visemes.Of(aspirated);
+
             switch (p.Manner)
             {
                 case Manner.Vowel:
                 {
-                    var length = p.Milliseconds * (spoken.Stressed ? 1.15f : 0.8f) * (Final(sounds, s) ? 1.4f : 1f);
+                    var length = p.Milliseconds * (spoken.Stressed ? 1.15f : 0.8f) * (!sung && Final(sounds, s) ? 1.4f : 1f);
                     var stress = spoken.Stressed ? 1f : 0f;
 
                     // Out of a consonant and into the next one, the formants start and end
@@ -80,9 +108,22 @@ internal sealed record Utterance(
                     var after = Next(sounds, s) is { Syllabic: false } d ? Halfway(p.To, d.From) : p.To;
                     var glide = Math.Min(Transition, length / 3f);
 
+                    var (mouthStart, mouthEnd) = (mouthFrom, mouthTo);
+                    mouthTo = mouthFrom;
                     Hold(glide, 1f, 0.03f, 0f, 0f, before, p.From, stress, false);
+
+                    // A sung vowel is held on its first sound, so a diphthong is held early.
+                    var steady = voice.Count;
+                    (mouthFrom, mouthTo) = (mouthStart, mouthEnd);
                     Hold(length - 2f * glide, 1f, 0.03f, 0f, 0f, p.From, p.To, stress, false);
+                    var middle = steady + (voice.Count - steady) * (p.From == p.To ? 0.5f : 0.3f);
+
+                    mouthFrom = mouthEnd;
                     Hold(glide, 1f, 0.03f, 0f, 0f, p.To, after, stress, false);
+
+                    starts.Add(syllable);
+                    holds.Add((int)middle);
+                    syllable = voice.Count;
                     break;
                 }
 
@@ -119,6 +160,8 @@ internal sealed record Utterance(
 
         var pitch = Contour(lift, pause, question, lead, tail);
 
+        float Seconds(int frame) => (lead + frame) / (float)Rate;
+
         return new Utterance(
             Clip(Smooth(Pad(voice, lead, tail, 0f), 3)),
             Clip(Smooth(Pad(breath, lead, tail, 0f), 3)),
@@ -127,7 +170,13 @@ internal sealed record Utterance(
             Clip(Smooth(Pad(f1, lead, tail, 500f, fill: true), 5)),
             Clip(Smooth(Pad(f2, lead, tail, 1500f, fill: true), 5)),
             Clip(Smooth(Pad(f3, lead, tail, 2500f, fill: true), 5)),
-            Clip(pitch));
+            Clip(pitch),
+            Clip(Smooth(Pad(open, lead, tail, 0f), 7)),
+            Clip(Smooth(Pad(round, lead, tail, 0f), 7)),
+            Clip(Pad(line, lead, tail, 0f, fill: true)),
+            Clip(Pad(reveal, lead, tail, 0f)),
+            [.. starts.Select(Seconds)],
+            [.. holds.Select(Seconds)]);
 
         void Hold(
             float milliseconds,
@@ -158,6 +207,10 @@ internal sealed record Utterance(
                 lift.Add(stress);
                 question.Add(asks);
                 pause.Add(silent);
+                open.Add(mouthFrom.Open + (mouthTo.Open - mouthFrom.Open) * t);
+                round.Add(mouthFrom.Round + (mouthTo.Round - mouthFrom.Round) * t);
+                line.Add(current.Line);
+                reveal.Add(current.Shown / (float)current.LineLength);
             }
         }
     }

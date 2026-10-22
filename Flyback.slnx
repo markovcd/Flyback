@@ -49,6 +49,7 @@
     </Project>
     <Project Path="src/plugins/Flyback.Plugins.Dpapi/Flyback.Plugins.Dpapi.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Easy/Flyback.Plugins.Easy.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.Speech/Flyback.Plugins.Speech.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Effects/Flyback.Plugins.Effects.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Drawings/Flyback.Plugins.Drawings.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Figures/Flyback.Plugins.Figures.csproj" />

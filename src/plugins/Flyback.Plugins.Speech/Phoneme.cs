@@ -1,4 +1,4 @@
-namespace Flyback.Plugins.Voice.Speech;
+namespace Flyback.Plugins.Speech;
 
 /// <summary>One speech sound: where its formants sit, how long it lasts and what sounds it.</summary>
 /// <param name="Symbol">Its ARPAbet name in lower case, as typed between brackets.</param>

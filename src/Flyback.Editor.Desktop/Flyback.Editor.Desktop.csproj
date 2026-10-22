@@ -109,6 +109,7 @@
     <PluginProject Include="..\plugins\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" />
     <PluginProject Include="..\plugins\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" FolderName="Fractals" />
     <PluginProject Include="..\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.Speech\Flyback.Plugins.Speech.csproj" FolderName="Speech" />
     <PluginProject Include="..\plugins\Flyback.Plugins.Drawings\Flyback.Plugins.Drawings.csproj" FolderName="Drawings" />
   </ItemGroup>
 

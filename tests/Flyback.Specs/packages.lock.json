@@ -616,6 +616,7 @@
           "Flyback.Plugins.Fractals": "[0.1.0-dev, )",
           "Flyback.Plugins.Mastering": "[0.1.0-dev, )",
           "Flyback.Plugins.Picture": "[0.1.0-dev, )",
+          "Flyback.Plugins.Speech": "[0.1.0-dev, )",
           "Flyback.Plugins.Voice": "[0.1.0-dev, )",
           "Flyback.Site.Client": "[0.1.0-dev, )",
           "System.CommandLine": "[2.0.13, )"
@@ -737,6 +738,13 @@
         }
       },
       "flyback.plugins.picture": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Core": "[0.1.0-dev, )",
+          "Flyback.Plugins": "[0.1.0-dev, )"
+        }
+      },
+      "flyback.plugins.speech": {
         "type": "Project",
         "dependencies": {
           "Flyback.Core": "[0.1.0-dev, )",

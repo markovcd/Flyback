@@ -3,17 +3,25 @@ using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
+using Flyback.Engine.Render;
 using Flyback.Specs.Support;
 using Reqnroll;
 using Shouldly;
 
 namespace Flyback.Specs.Steps;
 
-/// <summary>The Voice plugin's Speak, played for two seconds with its trigger on a wire.</summary>
+/// <summary>
+/// The Speech plugin's Speak, played for two seconds with its trigger on a wire,
+/// and its Mouth, drawn alone.
+/// </summary>
 [Binding]
-public sealed class SpeakSteps
+public sealed class SpeechSteps
 {
-    private const string Speak = "flyback.voice.speak";
+    private const string Speak = "flyback.speech.speak";
+    private const string Mouth = "flyback.speech.mouth";
+
+    private const int Width = 160;
+    private const int Height = 90;
 
     private const int Rate = GlobalConstants.SampleRate;
 
@@ -21,6 +29,7 @@ public sealed class SpeakSteps
 
     private float[]? sound;
     private IReadOnlyList<CompileIssue> issues = [];
+    private Frame? frame;
 
     [Given("a Speak with nothing wired")]
     public void GivenASpeak() => Play(Create());
@@ -30,6 +39,29 @@ public sealed class SpeakSteps
 
     [Given("a Speak saying {string} once, triggered at {float} seconds")]
     public void GivenASpeakTriggered(string words, float at) => Play(Create(words, ("every", 0f)), at);
+
+    [Given("a Speak singing {string} to {string} at {float} beats a minute")]
+    public void GivenASpeakSinging(string words, string notes, float bpm)
+    {
+        var speak = Create(words, ("bpm", bpm));
+        speak.SetState("speak", new JsonObject { ["words"] = words, ["mode"] = "sing", ["notes"] = notes });
+
+        Play(speak);
+    }
+
+    [Given("a Mouth open {float}")]
+    public void GivenAMouth(float open)
+    {
+        var def = Modules.Require(Mouth);
+        var b = new PatchBuilder(Modules);
+
+        var mouth = b.Add(Mouth, (def.Inputs.ToList().FindIndex(p => p.Name == "open"), open), (def.Inputs.ToList().FindIndex(p => p.Name == "size"), 1f));
+        b.Wire(mouth, 0, b.Add(NodeCatalog.OutputTypeId), NodeCatalog.OutputColorPort);
+
+        var buffer = new byte[Width * 4 * Height];
+        new SynthRenderer().Render(b.Build().CompileForVideo(Modules).Program, 0f, Width, Height, buffer, Width * 4);
+        frame = new Frame(buffer, Width, Height);
+    }
 
     [Given("a Speak with every knob turned all the way up")]
     public void GivenASpeakFlatOut()
@@ -55,6 +87,26 @@ public sealed class SpeakSteps
     [Then("building it warns about {string}")]
     public void ThenWarns(string symbol) =>
         issues.ShouldContain(i => i.Severity == IssueSeverity.Warning && i.Message.Contains(symbol));
+
+    [Then("its pitch at {float} seconds is {float} Hz")]
+    public void ThenPitch(float at, float hz) => Pitch(at).ShouldBe(hz, hz * 0.03);
+
+    [Then("the point {float}, {float} of the screen is lip red")]
+    public void ThenLipRed(float x, float y)
+    {
+        var (r, g, b) = At(x, y);
+        (r > 0.5f && r > 2f * g && r > 2f * b).ShouldBeTrue($"{(r, g, b)}");
+    }
+
+    [Then("the point {float}, {float} of the screen is dark red")]
+    public void ThenDarkRed(float x, float y)
+    {
+        var (r, g, b) = At(x, y);
+        (r is > 0.05f and < 0.3f && r > g && r > b).ShouldBeTrue($"{(r, g, b)}");
+    }
+
+    [Then("the point {float}, {float} of the screen is black")]
+    public void ThenBlack(float x, float y) => At(x, y).ShouldBe((0f, 0f, 0f));
 
     [Then("its sound never goes past full scale")]
     public void ThenInsideFullScale()
@@ -102,6 +154,37 @@ public sealed class SpeakSteps
             program.Evaluate(x, 0d, seconds, registers, default, state);
             sound[i] = (float)registers[program.OutputBase];
         }
+    }
+
+    /// <summary>
+    /// The pitch of the 50 ms from <paramref name="at"/>: the shortest shift at which it
+    /// all but matches itself, since every whole number of periods matches as well.
+    /// </summary>
+    private double Pitch(float at)
+    {
+        var span = sound.ShouldNotBeNull().AsSpan((int)(at * Rate), Rate / 20);
+        var matches = new double[Rate / 60];
+
+        for (var lag = Rate / 500; lag < matches.Length; lag++)
+        {
+            for (var i = 0; i + lag < span.Length; i++) matches[lag] += span[i] * (double)span[i + lag];
+            matches[lag] /= span.Length - lag;
+        }
+
+        var best = matches.Max();
+        var first = Array.FindIndex(matches, Rate / 500, m => m >= best * 0.9);
+
+        while (first + 1 < matches.Length && matches[first + 1] > matches[first]) first++;
+
+        return Rate / (double)first;
+    }
+
+    /// <summary>The pixel under a point of the picture, x across and y up, y running -1 to 1.</summary>
+    private (float R, float G, float B) At(float x, float y)
+    {
+        var aspect = (float)Width / Height;
+
+        return frame.ShouldNotBeNull().AtFraction((x + aspect) / (2f * aspect), (1f - y) / 2f);
     }
 
     private double Rms(float from, float to)

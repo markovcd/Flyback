@@ -71,6 +71,8 @@ flyback.picture.star | x, y, radius, points, sharpness | distance
 flyback.picture.text | x, y, size, line, reveal | distance
 flyback.sample.halve | in | out
 flyback.sample.ripple | x, y, freq, offset | out
+flyback.speech.mouth | x, y, size, open, round, caption | color, mask
+flyback.speech.speak | in, pitch, speed, level, trigger, every, size, bpm | out, open, round, line, reveal
 flyback.voice.bell | in, freq, level, ratio, index | out
 flyback.voice.crush | in, bits, rate | out
 flyback.voice.decay | trigger, attack, decay, curve | out
@@ -81,7 +83,6 @@ flyback.voice.fm | in, freq, level, tone, ratio2, ratio3, ratio4, index2, index3
 flyback.voice.fold | in, drive, bias | out
 flyback.voice.hiss | in, level, cutoff, resonance, gain, seed | out
 flyback.voice.osc | in, freq, detune, mix, phase, amp, bias | out, wide
-flyback.voice.speak | in, pitch, speed, level, trigger, every, size | out
 flyback.voice.stroke | in, rate, offset, curve | out, phase
 flyback.voice.wander | in, rate, seed, low, high | out
 math.abs | in | out

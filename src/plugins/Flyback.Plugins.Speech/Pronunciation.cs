@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Flyback.Plugins.Voice.Speech;
+namespace Flyback.Plugins.Speech;
 
 /// <summary>
 /// English text turned into the sounds that say it: a short list of words that
@@ -142,7 +142,9 @@ internal static class Pronunciation
         ["our"] = "aw er",
         ["hour"] = "aw er",
         ["friend"] = "f r eh n d",
-        ["there's"] = "dh eh r z",
+        ["theres"] = "dh eh r z",
+        ["im"] = "ay m",
+        ["bicycle"] = "b ay s ih k ax l",
     };
 
     /// <summary>Words said quickly and without stress.</summary>
@@ -153,16 +155,22 @@ internal static class Pronunciation
         "our", "can", "do", "does", "has", "had", "have", "will", "would", "could", "should",
     ];
 
-    /// <summary>The sounds that say <paramref name="text"/>, and the bracketed words that named a sound there is not.</summary>
+    /// <summary>
+    /// The sounds that say <paramref name="text"/>, each knowing where in its line it
+    /// was written, and the bracketed words that named a sound there is not.
+    /// </summary>
     public static (IReadOnlyList<Spoken> Sounds, IReadOnlyList<string> Unknown) Of(string text)
     {
         var sounds = new List<Spoken>();
         var unknown = new List<string>();
+        var line = 0;
+        var lineStart = 0;
         var i = 0;
 
         while (i < text.Length)
         {
             var c = text[i];
+            var start = i;
 
             if (c == '[')
             {
@@ -172,79 +180,97 @@ internal static class Pronunciation
                 var symbols = text[(i + 1)..close].ToLowerInvariant()
                     .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-                Say(sounds, symbols, light: false, unknown);
-                i = close + 1;
+                i = Math.Min(close + 1, text.Length);
+                Say(symbols, light: false);
             }
             else if (char.IsLetter(c) || c == '\'')
             {
-                var start = i;
                 while (i < text.Length && (char.IsLetter(text[i]) || text[i] == '\'')) i++;
 
                 var word = text[start..i].ToLowerInvariant();
-                Say(sounds, Spell(word).Split(' ', StringSplitOptions.RemoveEmptyEntries), Light.Contains(word), unknown);
+                Say(Spell(word).Split(' ', StringSplitOptions.RemoveEmptyEntries), Light.Contains(word));
             }
             else if (char.IsDigit(c))
             {
-                Say(sounds, Words[Digit(c)].Split(' '), light: false, unknown);
                 i++;
+                Say(Words[Digit(c)].Split(' '), light: false);
             }
             else
             {
+                i++;
+
                 switch (c)
                 {
                     case ',' or ';' or ':' or '-':
-                        Pause(sounds, Comma, question: false);
+                        Pause(Comma, question: false);
                         break;
                     case '.' or '!':
-                        Pause(sounds, Stop, question: false);
+                        Pause(Stop, question: false);
                         break;
                     case '?':
-                        Pause(sounds, Stop, question: true);
+                        Pause(Stop, question: true);
+                        break;
+                    case '\n':
+                        Pause(Stop, question: false);
+                        line++;
+                        lineStart = i;
                         break;
                 }
+            }
 
-                i++;
+            void Say(IReadOnlyList<string> symbols, bool light)
+            {
+                var stressed = !light;
+                var known = symbols.Where(s => Phonemes.Find(s) is not null).ToList();
+                unknown.AddRange(symbols.Where(s => Phonemes.Find(s) is null));
+
+                for (var k = 0; k < known.Count; k++)
+                {
+                    var phoneme = Phonemes.Find(known[k])!;
+
+                    // A word leans on its first full vowel; a schwa never takes it.
+                    var stress = stressed && phoneme.Syllabic && phoneme.Symbol != "ax";
+                    if (stress) stressed = false;
+
+                    // The caption reaches across the word as its sounds are said.
+                    var shown = start - lineStart + (i - start) * (k + 1) / known.Count;
+                    sounds.Add(new Spoken(phoneme, stress) { Line = line, Shown = shown });
+                }
             }
         }
 
+        // Each sound learns how long its line is, so the caption can be a fraction of it,
+        // and the line's last word shows the stop after it.
+        var lengths = text.Split('\n').Select(l => Math.Max(1, l.TrimEnd().Length)).ToArray();
+        var ended = -1;
+        for (var k = sounds.Count - 1; k >= 0; k--)
+        {
+            var length = lengths[Math.Min(sounds[k].Line, lengths.Length - 1)];
+            var last = ended != sounds[k].Line;
+            if (sounds[k].Phoneme is not null) ended = sounds[k].Line;
+            sounds[k] = sounds[k] with { LineLength = length, Shown = last ? length : sounds[k].Shown };
+        }
+
         return (sounds, unknown);
+
+        void Pause(float milliseconds, bool question)
+        {
+            if (sounds.Count == 0) return;
+
+            var last = sounds[^1];
+
+            if (last.Phoneme is null)
+            {
+                sounds[^1] = last with { Pause = Math.Max(last.Pause, milliseconds), Question = last.Question || question };
+                return;
+            }
+
+            sounds.Add(new Spoken(null, Pause: milliseconds, Question: question) { Line = last.Line, Shown = last.Shown });
+        }
     }
 
     private static string Digit(char c) =>
         new[] { "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" }[c - '0'];
-
-    private static void Pause(List<Spoken> sounds, float milliseconds, bool question)
-    {
-        if (sounds.Count == 0) return;
-
-        if (sounds[^1].Phoneme is null)
-        {
-            sounds[^1] = sounds[^1] with { Pause = Math.Max(sounds[^1].Pause, milliseconds), Question = sounds[^1].Question || question };
-            return;
-        }
-
-        sounds.Add(new Spoken(null, Pause: milliseconds, Question: question));
-    }
-
-    private static void Say(List<Spoken> sounds, IEnumerable<string> symbols, bool light, List<string> unknown)
-    {
-        var stressed = !light;
-
-        foreach (var symbol in symbols)
-        {
-            if (Phonemes.Find(symbol) is not { } phoneme)
-            {
-                unknown.Add(symbol);
-                continue;
-            }
-
-            // A word leans on its first full vowel; a schwa never takes it.
-            var stress = stressed && phoneme.Syllabic && phoneme.Symbol != "ax";
-            if (stress) stressed = false;
-
-            sounds.Add(new Spoken(phoneme, stress));
-        }
-    }
 
     /// <summary>A word's sounds by its letters, as ARPAbet separated by spaces.</summary>
     internal static string Spell(string word)

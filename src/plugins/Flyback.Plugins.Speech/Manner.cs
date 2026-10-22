@@ -1,4 +1,4 @@
-namespace Flyback.Plugins.Voice.Speech;
+namespace Flyback.Plugins.Speech;
 
 /// <summary>How a sound is made, which decides how it is laid out in time.</summary>
 internal enum Manner

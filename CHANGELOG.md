@@ -4,7 +4,7 @@
 
 ### Modules
 
-- Speak: says the words typed into it in a synthesized voice, with knobs for pitch, speed and the size of the throat.
+- A Speech plugin on the preset site: Speak says or sings the words typed into it in a voice made from filters, and Mouth draws lips that move with it and the words as they are said, with a Daisy Bell preset that sings.
 
 ### Presets
 

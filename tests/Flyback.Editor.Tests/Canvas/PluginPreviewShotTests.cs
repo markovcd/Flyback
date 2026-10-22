@@ -12,6 +12,7 @@ using Flyback.Plugins.Figures;
 using Flyback.Plugins.Fractals;
 using Flyback.Plugins.Mastering;
 using Flyback.Plugins.Picture;
+using Flyback.Plugins.Speech;
 using Flyback.Plugins.Voice;
 using Xunit;
 
@@ -43,6 +44,7 @@ public class PluginPreviewShotTests : EditorTest
         ("fractals", new FractalsPlugin(), ["mandelbrot", "julia", "orbit"]),
         ("easy", new EasyPlugin(), ["synth", "drummer"]),
         ("drawings", new DrawingsPlugin(), ["path", "rotate3d", "scale3d", "perspective"]),
+        ("speech", new SpeechPlugin(), ["speak", "mouth"]),
     ];
 
     private const double Wide = 2200, Tall = 1100;
