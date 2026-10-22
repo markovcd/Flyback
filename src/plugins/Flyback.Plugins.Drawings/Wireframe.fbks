@@ -6,7 +6,7 @@
 
 description "A cube's edges played as one path at a pitch, turned in perspective as it"
   "plays: a model drawn by its sound."
-tags "stereo" "scope" "3d"
+tags "scope"
 
 requires flyback.drawings
 

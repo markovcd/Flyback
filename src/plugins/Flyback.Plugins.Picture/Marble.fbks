@@ -5,7 +5,7 @@
 # opposite ways and tears the field. There is no sound in it.
 
 description "A fractal bent by a fractal, which is stone."
-tags "fractal" "pattern"
+tags "patterns"
 
 requires flyback.picture
 

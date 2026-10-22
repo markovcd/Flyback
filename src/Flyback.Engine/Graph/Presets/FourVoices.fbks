@@ -3,7 +3,7 @@
 # what fades up in the sound is what fades up in the picture.
 
 description "Four faders that are one signal each, opening a voice and a band together."
-tags "chords" "synthesis" "visualizer"
+tags "melody" "synthesis"
 
 # An A major triad over two octaves, one voice a note. The band count climbs with
 # the voice, so how many rings are on screen is which note is sounding. The fader

@@ -6,7 +6,7 @@
 
 description "Cells as panes: the cell picks a color, the edge is the lead, and jitter"
   "slides grid to scatter."
-tags "pattern" "color"
+tags "patterns"
 
 requires flyback.picture
 

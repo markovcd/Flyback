@@ -7,7 +7,7 @@
 
 description "Four Easy Drums on Auto, a kick, a snare and two hats, each playing the"
   "rhythm that suits it, with the picture pulsing on the kick."
-tags "basics" "drums" "rhythm"
+tags "basics" "drums"
 
 requires flyback.easy
 

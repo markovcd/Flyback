@@ -4,7 +4,7 @@
 
 description "Everything the video side can do, folded, warped and trailing its own"
   "frames."
-tags "feedback" "pattern" "color"
+tags "patterns"
 
 # One clock read at three speeds, so nothing quite lines up and it does not
 # visibly loop.

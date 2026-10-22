@@ -10,7 +10,7 @@
 
 description "Flyback's theme: three minutes of synthwave in A minor, an arp, a pumping"
   "bass and a hook, on a two-channel scope whose beam crosses the screen once a beat."
-tags "song" "synthwave" "bass" "scope"
+tags "song" "scope"
 length 3:00.00
 
 requires flyback.effects, flyback.mastering, flyback.picture, flyback.voice

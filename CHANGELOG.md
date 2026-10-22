@@ -8,6 +8,8 @@
 
 ### Presets
 
+- Every preset is tagged from ten topics, so the gallery's topic row is short: basics, song, playable, drums, melody, ambient, synthesis, effects, scope and patterns. Flyback's own plugins are tagged by what they work on: sound, picture, MIDI, effects, AI or secrets, and their system.
+
 ### Assistant
 
 ### Editor

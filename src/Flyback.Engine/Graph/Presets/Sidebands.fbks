@@ -3,7 +3,7 @@
 
 description "One sine bending another's phase at audio rate, on an Analyzer showing the"
   "partials that grows."
-tags "synthesis" "fm" "spectrum"
+tags "synthesis"
 
 # Every two seconds, and nothing sustained: the note is all decay, which lets the
 # partials be watched leaving.

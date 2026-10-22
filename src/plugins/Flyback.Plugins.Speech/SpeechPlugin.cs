@@ -35,7 +35,7 @@ public sealed class SpeechPlugin : IFlybackPlugin
                 + "with its mouth and the words on the screen.",
                 PresetKind.Interplay)
             {
-                Tags = ["song", "voice", "singing", "waltz"],
+                Tags = ["song", "melody"],
             },
         ]);
     }

@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AssemblyMetadata Include="Tags" Value="fractal; mandelbrot; julia; chaos; picture and sound" />
+    <AssemblyMetadata Include="Tags" Value="sound; picture" />
     <!-- Retaken by PluginPreviewShotTests. -->
     <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" Condition="Exists('preview.webp')" />
     <!-- The pictures behind the modules (ADR-0118), read out of the assembly by Art. -->

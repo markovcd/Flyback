@@ -524,7 +524,7 @@ A preset is how a plugin shows its modules wired up properly. It is a name and a
 
 - The **description** is a line saying what the preset is for. The patch it builds carries it as its own description, unless the text gives one with a `description` line, and that is what the gallery shows under the name.
 - The **`PresetKind`** says which heading of the preset gallery it belongs under: `Idea` for one idea at one sink, which is the default; `Interplay` where sound and picture are the same thought; `Showcase` for a whole piece. Say which, or yours is filed as an idea whatever it is.
-- **`Tags`**, an init property, are the words the gallery filters by, as a patch's own tags are.
+- **`Tags`**, an init property, are the words the gallery filters by, as a patch's own tags are. Flyback's own presets keep to ten: `basics`, `song`, `playable`, `drums`, `melody`, `ambient`, `synthesis`, `effects`, `scope` and `patterns`; reusing them puts yours beside them under the same topic.
 
 The patch itself is written in the text language ([docs/language.md](language.md)), as a `.fbks` file embedded in your plugin, and `PresetText.Embedded` turns it into the build function. A text that does not build throws with every complaint the first time the preset is picked, so write it with `flyback-cli check` beside you.
 
@@ -559,7 +559,7 @@ public static class YoursPresets
         "Rings on the screen, heard through a Scan and smoothed.",
         PresetKind.Interplay)
     {
-        Tags = ["rings", "scan"],
+        Tags = ["synthesis", "patterns"],
     };
 }
 ```
@@ -702,7 +702,7 @@ Given a project, or a folder holding one, `pack-plugin` runs `dotnet publish` on
 The package is a zip with a folder per system (`win`, `osx`, `linux`, or `any` for a build that is the same everywhere, used where there is no folder for the system itself) and nothing else. There is no manifest to write. The dialog reads the plugin assembly's own metadata without running any of it:
 
 - its name, version, author and description, from `<Product>`, `<Version>`, `<Authors>` and `<Description>` in your project;
-- its tags, from an `AssemblyMetadata` item named `Tags`, split at commas and semicolons;
+- its tags, from an `AssemblyMetadata` item named `Tags`, split at commas and semicolons (Flyback's own say what they work on, `sound`, `picture`, `midi`, `effects`, `ai` or `secrets`, and the system they need, if any);
 - its preview, from a PNG or WebP of up to 1 MB embedded as `preview.png` or `preview.webp`, which `flyback-cli render --preset "Pond" --at 1 --size 640x360 -o preview.png` makes from your own preset;
 - what it adds (modules, presets, a sound output, a MIDI input, an assistant, a secret store), from the `IPluginRegistry` methods your code calls;
 - its modules, by name, from its `FlybackModule` declarations;
@@ -717,7 +717,7 @@ The package is a zip with a folder per system (`win`, `osx`, `linux`, or `any` f
 </PropertyGroup>
 
 <ItemGroup>
-  <AssemblyMetadata Include="Tags" Value="texture; feedback, generative" />
+  <AssemblyMetadata Include="Tags" Value="sound; picture, effects" />
   <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" />
 </ItemGroup>
 ```

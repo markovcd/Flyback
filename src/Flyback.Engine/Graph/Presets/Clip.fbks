@@ -2,7 +2,7 @@
 # trigger, once a sound file is chosen.
 
 description "A sound file played and retriggered every two seconds, once you choose one."
-tags "starter" "sound-file"
+tags "basics"
 
 # Every two seconds, and a gate narrow enough that what is heard is the clip
 # rather than the trigger. The clip plays forward at its own speed from wherever

@@ -23,7 +23,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AssemblyMetadata Include="Tags" Value="sound; midi; windows; asio" />
+    <AssemblyMetadata Include="Tags" Value="sound; midi; windows" />
     <InternalsVisibleTo Include="Flyback.Plugins.WinIO.Tests" />
     <InternalsVisibleTo Include="Flyback.Specs" />
     <!-- Retaken by PluginArtShotTests. -->

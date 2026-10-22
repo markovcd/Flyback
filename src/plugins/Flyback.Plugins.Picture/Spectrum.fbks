@@ -5,7 +5,7 @@
 # and the speakers have no pixel.
 
 description "Two crossed sine fields colored out of a palette, then graded."
-tags "pattern" "color"
+tags "patterns"
 
 requires flyback.picture
 

@@ -3,7 +3,7 @@
 # same one that takes the light out of it.
 
 description "One sequencer heard and seen at once: the steps are the tune and the color."
-tags "basics" "sequencer" "melody" "color"
+tags "basics" "melody"
 
 # Three notes a second, with the gate closed for the last third so that two of the
 # same note in a row are two notes.

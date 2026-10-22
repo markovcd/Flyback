@@ -66,21 +66,21 @@ public sealed class VoicePlugin : IFlybackPlugin
                 PresetText.Embedded(typeof(VoicePlugin).Assembly, "Supersaw.fbks"),
                 "Seven detuned saws, wired the way the module is meant to be driven.")
             {
-                Tags = ["synthesis", "chords"],
+                Tags = ["synthesis", "melody"],
             },
             new PatchPreset(
                 "Filter sweep",
                 PresetText.Embedded(typeof(VoicePlugin).Assembly, "FilterSweep.fbks"),
                 "A saw folded and then filtered: make the harmonics first, take them away second.")
             {
-                Tags = ["basics", "synthesis", "filter"],
+                Tags = ["basics", "synthesis"],
             },
             new PatchPreset(
                 "Struck",
                 PresetText.Embedded(typeof(VoicePlugin).Assembly, "Struck.fbks"),
                 "A kick, a hat and a wandering bell: each a Stroke into one module, all counted off one Tempo.")
             {
-                Tags = ["drums", "rhythm"],
+                Tags = ["drums"],
             },
             new PatchPreset(
                 "Euclid kit",
@@ -89,7 +89,7 @@ public sealed class VoicePlugin : IFlybackPlugin
                 + "hand, a ring the kick pushes and a flash on the snare.",
                 PresetKind.Interplay)
             {
-                Tags = ["drums", "rhythm", "bass", "visualizer"],
+                Tags = ["drums"],
             },
         ]);
     }

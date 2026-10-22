@@ -3,7 +3,7 @@
 
 description "One cloud field snapped to a pentatonic: heard as a melody, seen as the"
   "terraces it was cut into."
-tags "melody" "scales" "generative"
+tags "melody" "patterns"
 
 # The one module both sinks read. Its x and y need no wire: on the screen they are
 # the pixel's own, and at the speakers there is no pixel and they are zero. z is

@@ -3,7 +3,7 @@
 
 description "A dot on a looping path and a Trails keeping where it has been, so a point"
   "draws a ribbon."
-tags "basics" "feedback" "shapes"
+tags "basics" "patterns"
 
 # Three to two, a quarter of a turn apart: a path that crosses itself and takes ten
 # seconds to come round.

@@ -7,7 +7,7 @@
 
 description "A sunset composed back to front: a sky, a sun screened over it, a sea"
   "multiplied in, a line inked on top."
-tags "layers" "shapes" "color"
+tags "patterns"
 
 requires flyback.picture
 

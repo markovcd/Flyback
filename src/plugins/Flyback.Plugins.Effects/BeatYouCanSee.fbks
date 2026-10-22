@@ -2,7 +2,7 @@
 # line on one Tempo, and rings the kick lights up.
 
 description "A kick, a hat and a bass line on one tempo, and rings the kick lights up."
-tags "drums" "bass" "visualizer"
+tags "drums" "patterns"
 
 requires flyback.voice
 

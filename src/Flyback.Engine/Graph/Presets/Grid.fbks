@@ -3,7 +3,7 @@
 
 description "Tile, mirror and polar in a row, so what each one does to the plane is"
   "separable."
-tags "basics" "pattern" "symmetry"
+tags "basics" "patterns"
 
 let plane = translate(dx: sine(freq: 0.06))
               |> tile(tiles: 3)

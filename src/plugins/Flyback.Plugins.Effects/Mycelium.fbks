@@ -7,7 +7,7 @@
 description "A whole psybient track: ninety-six bars in six sections, a picture grown"
   "from the same signals, one voice that is the picture heard, and the Caterpillar"
   "asking who you are."
-tags "song" "psybient" "ambient" "voice" "scan"
+tags "song" "ambient"
 length 3:50.40
 
 requires flyback.effects, flyback.picture, flyback.voice

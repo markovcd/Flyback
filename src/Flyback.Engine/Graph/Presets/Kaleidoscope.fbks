@@ -1,7 +1,7 @@
 # Rotating wedges filled with clouds that boil over time.
 
 description "Rotating wedges filled with clouds that boil over time."
-tags "pattern" "symmetry" "color"
+tags "patterns"
 
 rotate(angle: t * 0.15)
   |> kaleidoscope(segments: 6)

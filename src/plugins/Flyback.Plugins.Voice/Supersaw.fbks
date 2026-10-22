@@ -3,7 +3,7 @@
 # is drawn: seven voices beating against each other is a thing for the ear.
 
 description "Seven detuned saws, wired the way the module is meant to be driven."
-tags "synthesis" "chords"
+tags "synthesis" "melody"
 
 requires flyback.voice
 

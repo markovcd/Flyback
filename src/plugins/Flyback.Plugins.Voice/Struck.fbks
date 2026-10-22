@@ -7,7 +7,7 @@
 
 description "A kick, a hat and a wandering bell: each a Stroke into one module, all"
   "counted off one Tempo."
-tags "drums" "rhythm"
+tags "drums"
 
 requires flyback.voice
 

@@ -4,7 +4,7 @@
 
 description "One slow oscillator setting both the hue of the image and the tremolo on"
   "the tone."
-tags "basics" "drone" "color"
+tags "basics" "ambient"
 
 # The shared control signal, fitted to 0..1 by amp and bias.
 let slow = sine(freq: 0.15, amp: 0.5, bias: 0.5)

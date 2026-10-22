@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AssemblyMetadata Include="Tags" Value="sound; synth; drums; beginner; rhythm; filter" />
+    <AssemblyMetadata Include="Tags" Value="sound" />
     <!-- Retaken by PluginPreviewShotTests. -->
     <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" Condition="Exists('preview.webp')" />
     <!-- The pictures behind the module (ADR-0118), read out of the assembly by Art. -->

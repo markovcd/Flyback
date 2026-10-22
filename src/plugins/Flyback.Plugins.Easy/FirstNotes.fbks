@@ -7,7 +7,7 @@
 
 description "A Note Sequencer playing an Easy Synth, its filter swaying, with rings"
   "flashing on each note."
-tags "basics" "melody" "sequencer"
+tags "basics" "melody"
 
 requires flyback.easy
 

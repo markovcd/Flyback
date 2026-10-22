@@ -45,21 +45,21 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 PresetText.Embedded(typeof(EffectsPlugin).Assembly, "EchoChamber.fbks"),
                 "A plucked tone through the delay into the reverb: repeats first, then the room.")
             {
-                Tags = ["effects", "echo", "reverb"],
+                Tags = ["effects"],
             },
             new PatchPreset(
                 "Moving parts",
                 PresetText.Embedded(typeof(EffectsPlugin).Assembly, "MovingParts.fbks"),
                 "Flanger, phaser and chorus in the order a pedalboard would have them.")
             {
-                Tags = ["effects", "modulation"],
+                Tags = ["effects"],
             },
             new PatchPreset(
                 "Played",
                 PresetText.Embedded(typeof(EffectsPlugin).Assembly, "Played.fbks"),
                 "The one preset you have to play: each key plucks a string, with a touch of reverb.")
             {
-                Tags = ["playable", "effects", "reverb"],
+                Tags = ["effects", "playable"],
             },
             new PatchPreset(
                 "Beat you can see",
@@ -67,7 +67,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 "A kick, a hat and a bass line on one tempo, and rings the kick lights up.",
                 PresetKind.Interplay)
             {
-                Tags = ["drums", "bass", "visualizer"],
+                Tags = ["drums", "patterns"],
             },
             new PatchPreset(
                 "Two echoes",
@@ -75,7 +75,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 "One knob, two loops: a pluck through an echo, and a ring that echoes down a tunnel.",
                 PresetKind.Interplay)
             {
-                Tags = ["echo", "feedback", "knobs"],
+                Tags = ["effects", "playable"],
             },
             new PatchPreset(
                 "Visualizer",
@@ -84,7 +84,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "outward and the loudness spreads its colors.",
                 PresetKind.Idea)
             {
-                Tags = ["visualizer", "line-in", "kaleidoscope"],
+                Tags = ["patterns"],
             },
             new PatchPreset(
                 "Wandering tune",
@@ -93,7 +93,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "length, drawn as it plays.",
                 PresetKind.Interplay)
             {
-                Tags = ["generative", "melody", "scales"],
+                Tags = ["melody"],
             },
             new PatchPreset(
                 "Acid",
@@ -103,7 +103,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "bass — three builds, a breakdown, and a second 303 that answers the first.",
                 PresetKind.Showcase)
             {
-                Tags = ["song", "acid", "techno", "bass", "drums"],
+                Tags = ["song", "drums"],
             },
             new PatchPreset(
                 "Mycelium",
@@ -114,7 +114,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 PresetKind.Showcase)
             {
                 Files = PresetFiles.Embedded(typeof(EffectsPlugin).Assembly, "Mycelium"),
-                Tags = ["song", "psybient", "ambient", "voice", "scan"],
+                Tags = ["song", "ambient"],
             },
             new PatchPreset(
                 "Bronze",
@@ -123,7 +123,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "of one melody in a five-note scale, and a mandala with a ring for each tier.",
                 PresetKind.Showcase)
             {
-                Tags = ["song", "gamelan", "scales", "symmetry"],
+                Tags = ["song", "melody"],
             },
             new PatchPreset(
                 "Outrun",
@@ -132,7 +132,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "drawn scene — a slatted sun, a ridge, and a grid that arrives a line to the beat.",
                 PresetKind.Showcase)
             {
-                Tags = ["song", "synthwave", "chords", "drums", "shapes"],
+                Tags = ["song", "patterns"],
             },
             new PatchPreset(
                 "Irrational",
@@ -142,7 +142,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "have one.",
                 PresetKind.Showcase)
             {
-                Tags = ["rhythm", "minimalism", "generative"],
+                Tags = ["drums"],
             },
             new PatchPreset(
                 "Phase",
@@ -151,7 +151,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "through all twelve canons, and a picture of two dials that is the diagram of it.",
                 PresetKind.Showcase)
             {
-                Tags = ["song", "minimalism", "rhythm", "shapes"],
+                Tags = ["song", "patterns"],
             },
             new PatchPreset(
                 "Fracture",
@@ -160,7 +160,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "clock it reads, a Reese bass, and a picture cut into strips by the same list.",
                 PresetKind.Showcase)
             {
-                Tags = ["song", "drum-and-bass", "drums", "bass"],
+                Tags = ["song", "drums"],
             },
             new PatchPreset(
                 "Slow weather",
@@ -171,7 +171,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "echo, chime decay, reverb, warp, color and trails spin — ride on top of it.",
                 PresetKind.Showcase)
             {
-                Tags = ["ambient", "generative", "drone", "feedback", "knobs"],
+                Tags = ["ambient", "playable"],
             },
             new PatchPreset(
                 "No Sense Dub",
@@ -184,7 +184,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 PresetKind.Showcase)
             {
                 Files = PresetFiles.Embedded(typeof(EffectsPlugin).Assembly, "NoSenseDub"),
-                Tags = ["song", "dub", "playable", "knobs", "echo", "voice"],
+                Tags = ["song", "effects", "playable"],
             },
             new PatchPreset(
                 "Overworld",
@@ -194,7 +194,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "under a side-scroller drawn a pixel at a time.",
                 PresetKind.Showcase)
             {
-                Tags = ["song", "chiptune", "pixel-art", "drums"],
+                Tags = ["song"],
             },
             new PatchPreset(
                 "Flyback Theme",
@@ -203,7 +203,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "a hook, on a two-channel scope whose beam crosses the screen once a beat.",
                 PresetKind.Showcase)
             {
-                Tags = ["song", "synthwave", "bass", "scope"],
+                Tags = ["song", "scope"],
             },
         ]);
     }

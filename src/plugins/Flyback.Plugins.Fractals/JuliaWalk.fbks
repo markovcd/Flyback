@@ -12,7 +12,7 @@
 description "One c going slowly round a circle: its Julia set on the screen, and the"
   "orbit of one of its pixels drawn over it and heard, a tone where the orbit settles"
   "and a hiss where it never does."
-tags "fractal" "scan" "synthesis"
+tags "synthesis" "patterns"
 
 requires flyback.fractals
 

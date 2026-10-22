@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AssemblyMetadata Include="Tags" Value="assistant; ai" />
+    <AssemblyMetadata Include="Tags" Value="ai" />
     <!-- Retaken by PluginArtShotTests. -->
     <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" />
   </ItemGroup>

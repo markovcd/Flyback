@@ -4,7 +4,7 @@
 
 description "A pad that gets out of the way each time the kick hits, on a Scope drawing"
   "how far."
-tags "drums" "mixing" "scope"
+tags "drums" "effects" "scope"
 
 # Heard's kick: two beats a second, its length the envelope's.
 let kick = sine(freq: 55)

@@ -18,7 +18,7 @@
 description "A whole synthwave track: four chords, gated pads and a gated-reverb snare,"
   "under a drawn scene — a slatted sun, a ridge, and a grid that arrives a line to the"
   "beat."
-tags "song" "synthwave" "chords" "drums" "shapes"
+tags "song" "patterns"
 length 3:25.71
 
 requires flyback.effects, flyback.picture, flyback.voice

@@ -3,7 +3,7 @@
 
 description "A photograph put through the same geometry a generated field goes through,"
   "once you choose one."
-tags "starter" "photo"
+tags "basics"
 
 # Breathing rather than fixed, so the frame is never quite the same twice and the
 # edges of the picture come in and out of view.

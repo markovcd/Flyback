@@ -4,7 +4,7 @@
 
 description "A wire running backwards: a lowpass built from an add and a multiply, with"
   "its one number swept."
-tags "basics" "feedback" "filter"
+tags "basics" "effects"
 
 # How much of the last evaluation is kept, which is the whole of the filter: the
 # nearer one, the lower the cutoff. The useful range is all in the last tenth.

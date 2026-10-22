@@ -5,7 +5,7 @@
 # letters are the only thing that moves.
 
 description "Lines of text, chosen by the clock and typed out as each one arrives."
-tags "text"
+tags "patterns"
 
 requires flyback.picture
 

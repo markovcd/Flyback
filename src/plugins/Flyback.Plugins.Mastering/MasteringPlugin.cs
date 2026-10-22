@@ -49,7 +49,7 @@ public sealed class MasteringPlugin : IFlybackPlugin
                 "A small mix with an EQ, a Compressor and a Maximizer after it, switched out and in "
                 + "every four bars.")
             {
-                Tags = ["mixing", "mastering", "effects"],
+                Tags = ["effects"],
             },
         ]);
     }

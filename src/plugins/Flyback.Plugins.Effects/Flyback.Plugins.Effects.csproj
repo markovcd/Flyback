@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AssemblyMetadata Include="Tags" Value="sound; effects; delay; modulation" />
+    <AssemblyMetadata Include="Tags" Value="sound; effects" />
     <!-- Retaken by PluginPreviewShotTests. -->
     <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" />
     <!-- Mycelium's words: LibriVox's public-domain reading of Alice, chapter five. -->

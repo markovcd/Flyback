@@ -6,7 +6,7 @@
 
 description "Four Euclidean rhythms playing a noise kit and a gliding bass, drawn as a"
   "clock hand, a ring the kick pushes and a flash on the snare."
-tags "drums" "rhythm" "bass" "visualizer"
+tags "drums"
 
 requires flyback.picture, flyback.voice
 

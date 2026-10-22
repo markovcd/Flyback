@@ -11,7 +11,7 @@
 
 description "A game to play on the keys: walls fall down seven lanes, Z to M, and the"
   "key under each gap is where you have to be when it arrives."
-tags "game" "playable" "shapes"
+tags "playable" "patterns"
 
 requires flyback.picture
 

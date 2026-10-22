@@ -4,7 +4,7 @@
 
 description "Two sines a fifth apart, left against right on a Beam: a knot that turns"
   "because the fifth is a little sharp."
-tags "basics" "stereo" "scope"
+tags "basics" "scope"
 
 let left  = sine(freq: 110, amp: 0.85)
 let right = sine(freq: 165.2, amp: 0.85)

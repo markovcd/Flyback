@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AssemblyMetadata Include="Tags" Value="picture; shapes; color; noise; text" />
+    <AssemblyMetadata Include="Tags" Value="picture" />
     <!-- Retaken by PluginPreviewShotTests. -->
     <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" />
     <EmbeddedResource Include="*.fbks" LogicalName="%(Filename)%(Extension)" />

@@ -53,7 +53,7 @@ public sealed class FiguresPlugin : IFlybackPlugin
                 + "through Overtones, a harmonograph drawing the chords as they swell, and a far bell, rarely.",
                 PresetKind.Interplay)
             {
-                Tags = ["dark-ambient", "ambient", "drone", "shapes", "knobs"],
+                Tags = ["ambient", "playable"],
             },
         ]);
     }

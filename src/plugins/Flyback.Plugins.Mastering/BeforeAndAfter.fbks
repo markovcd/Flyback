@@ -5,7 +5,7 @@
 
 description "A small mix with an EQ, a Compressor and a Maximizer after it, switched"
   "out and in every four bars."
-tags "mixing" "mastering" "effects"
+tags "effects"
 
 requires flyback.mastering
 

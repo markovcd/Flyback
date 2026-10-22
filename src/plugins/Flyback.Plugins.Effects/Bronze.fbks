@@ -16,7 +16,7 @@
 description "A gamelan: sixteen gong cycles on a tempo that breathes, every part"
   "figured out of one melody in a five-note scale, and a mandala with a ring for each"
   "tier."
-tags "song" "gamelan" "scales" "symmetry"
+tags "song" "melody"
 length 2:50.67
 
 requires flyback.picture, flyback.voice

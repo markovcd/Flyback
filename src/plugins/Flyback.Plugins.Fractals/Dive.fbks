@@ -8,7 +8,7 @@
 
 description "A dive into the Mandelbrot set and back out, its colors cycling as it"
   "goes."
-tags "fractal" "color"
+tags "patterns"
 
 requires flyback.fractals
 

@@ -3,7 +3,7 @@
 
 description "Three drifting sine fields summed and read through a cosine palette — the"
   "hello world of video synths."
-tags "basics" "pattern" "color"
+tags "basics" "patterns"
 
 # A sine along x, one along y and rings out from the middle, each drifting at its
 # own rate so the three never line up the same way twice.

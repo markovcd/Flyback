@@ -14,7 +14,7 @@
 description "Drum and bass at a hundred and seventy: a synthesized break chopped by"
   "bending the clock it reads, a Reese bass, and a picture cut into strips by the same"
   "list."
-tags "song" "drum-and-bass" "drums" "bass"
+tags "song" "drums"
 length 3:00.71
 
 requires flyback.effects, flyback.picture, flyback.voice

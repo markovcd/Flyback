@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AssemblyMetadata Include="Tags" Value="sound; mastering; dynamics; eq; loudness" />
+    <AssemblyMetadata Include="Tags" Value="sound; effects" />
     <!-- Retaken by PluginPreviewShotTests. -->
     <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" />
     <EmbeddedResource Include="*.fbks" LogicalName="%(Filename)%(Extension)" />

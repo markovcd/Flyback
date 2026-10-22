@@ -16,7 +16,7 @@
 description "A whole acid techno track: a hundred and twenty-eight bars of a 303 line"
   "in two themes, with accents and slides through a four-pole filter, over a galloping"
   "bass — three builds, a breakdown, and a second 303 that answers the first."
-tags "song" "acid" "techno" "bass" "drums"
+tags "song" "drums"
 length 3:56.31
 
 requires flyback.effects, flyback.picture, flyback.voice

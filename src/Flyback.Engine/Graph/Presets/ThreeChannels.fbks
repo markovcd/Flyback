@@ -3,7 +3,7 @@
 
 description "One field read three times, a little apart: a color is three signals, and"
   "here they disagree."
-tags "basics" "color"
+tags "basics" "patterns"
 
 # How far apart the three readings are, from not at all to a tenth. At nothing the
 # picture is white lines on black: the colors are made by the disagreement alone.

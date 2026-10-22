@@ -21,7 +21,7 @@
 description "A three-minute acid house track on the Easy modules at 124 bpm: builds,"
   "two drops and a breakdown in A minor, a bass line, a chord stab and an organ hook,"
   "and knobs for the kick's pump, the echo and the swing."
-tags "song" "acid" "house" "knobs"
+tags "song" "drums" "playable"
 length 3:05.81
 
 requires flyback.easy

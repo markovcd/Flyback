@@ -49,7 +49,7 @@ public sealed class FractalsPlugin : IFlybackPlugin
                 PresetText.Embedded(typeof(FractalsPlugin).Assembly, "Dive.fbks"),
                 "A dive into the Mandelbrot set and back out, its colors cycling as it goes.")
             {
-                Tags = ["fractal", "color"],
+                Tags = ["patterns"],
             },
             new PatchPreset(
                 "Julia walk",
@@ -59,7 +59,7 @@ public sealed class FractalsPlugin : IFlybackPlugin
                 + "where it never does.",
                 PresetKind.Interplay)
             {
-                Tags = ["fractal", "scan", "synthesis"],
+                Tags = ["synthesis", "patterns"],
             },
         ]);
     }

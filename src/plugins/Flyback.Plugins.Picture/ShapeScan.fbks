@@ -8,7 +8,7 @@
 
 description "A star's points heard as bumps in a waveform, by sweeping a loop through"
   "its field."
-tags "shapes" "scan" "synthesis"
+tags "synthesis" "patterns"
 
 requires flyback.picture
 

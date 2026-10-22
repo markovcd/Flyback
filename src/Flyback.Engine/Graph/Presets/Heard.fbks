@@ -2,7 +2,7 @@
 
 description "A drum the picture listens to rather than being told about, through a"
   "Meter."
-tags "drums" "visualizer"
+tags "drums" "patterns"
 
 # Two beats a second, and a gate short enough that the envelope decides how long
 # the drum is: the length of a kick is the envelope's, never the gate's.

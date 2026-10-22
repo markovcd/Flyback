@@ -49,7 +49,7 @@ public sealed class DrawingsPlugin : IFlybackPlugin
                 PresetKind.Interplay)
             {
                 Files = PresetFiles.Embedded(typeof(DrawingsPlugin).Assembly, "Wireframe"),
-                Tags = ["stereo", "scope", "3d"],
+                Tags = ["scope"],
             },
         ]);
     }

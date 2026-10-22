@@ -7,7 +7,7 @@
 
 description "A voice made of a buzz, a breath and filters sings Daisy Bell over a waltz,"
   "with a mouth on screen singing along and the words typed out as they are sung."
-tags "song" "voice" "singing" "waltz"
+tags "song" "melody"
 
 requires flyback.speech
 requires flyback.picture

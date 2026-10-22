@@ -6,7 +6,7 @@
 
 description "A saw folded and then filtered: make the harmonics first, take them away"
   "second."
-tags "basics" "synthesis" "filter"
+tags "basics" "synthesis"
 
 requires flyback.voice
 

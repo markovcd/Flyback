@@ -6,7 +6,7 @@
 
 description "A melody nobody wrote: a wandering value snapped to a pentatonic, each"
   "note its own length, drawn as it plays."
-tags "generative" "melody" "scales"
+tags "melody"
 
 requires flyback.effects, flyback.picture, flyback.voice
 

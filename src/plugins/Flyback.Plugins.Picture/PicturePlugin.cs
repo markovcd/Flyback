@@ -85,7 +85,7 @@ public sealed class PicturePlugin : IFlybackPlugin
                 PresetText.Embedded(typeof(PicturePlugin).Assembly, "FourForms.fbks"),
                 "Four forms on a turning ring round a slowly filling arc, with the seam between them opening and closing.")
             {
-                Tags = ["shapes", "color"],
+                Tags = ["patterns"],
             },
             new PatchPreset(
                 "Shape scan",
@@ -93,42 +93,42 @@ public sealed class PicturePlugin : IFlybackPlugin
                 "A star's points heard as bumps in a waveform, by sweeping a loop through its field.",
                 PresetKind.Interplay)
             {
-                Tags = ["shapes", "scan", "synthesis"],
+                Tags = ["synthesis", "patterns"],
             },
             new PatchPreset(
                 "Captions",
                 PresetText.Embedded(typeof(PicturePlugin).Assembly, "Captions.fbks"),
                 "Lines of text, chosen by the clock and typed out as each one arrives.")
             {
-                Tags = ["text"],
+                Tags = ["patterns"],
             },
             new PatchPreset(
                 "Spectrum",
                 PresetText.Embedded(typeof(PicturePlugin).Assembly, "Spectrum.fbks"),
                 "Two crossed sine fields colored out of a palette, then graded.")
             {
-                Tags = ["pattern", "color"],
+                Tags = ["patterns"],
             },
             new PatchPreset(
                 "Marble",
                 PresetText.Embedded(typeof(PicturePlugin).Assembly, "Marble.fbks"),
                 "A fractal bent by a fractal, which is stone.")
             {
-                Tags = ["fractal", "pattern"],
+                Tags = ["patterns"],
             },
             new PatchPreset(
                 "Stained glass",
                 PresetText.Embedded(typeof(PicturePlugin).Assembly, "StainedGlass.fbks"),
                 "Cells as panes: the cell picks a color, the edge is the lead, and jitter slides grid to scatter.")
             {
-                Tags = ["pattern", "color"],
+                Tags = ["patterns"],
             },
             new PatchPreset(
                 "Layers",
                 PresetText.Embedded(typeof(PicturePlugin).Assembly, "Layers.fbks"),
                 "A sunset composed back to front: a sky, a sun screened over it, a sea multiplied in, a line inked on top.")
             {
-                Tags = ["layers", "shapes", "color"],
+                Tags = ["patterns"],
             },
             new PatchPreset(
                 "Dodge",
@@ -137,7 +137,7 @@ public sealed class PicturePlugin : IFlybackPlugin
                 + "each gap is where you have to be when it arrives.",
                 PresetKind.Showcase)
             {
-                Tags = ["game", "playable", "shapes"],
+                Tags = ["playable", "patterns"],
             },
         ]);
     }

@@ -35,7 +35,7 @@ public sealed class EasyPlugin : IFlybackPlugin
                 "A Note Sequencer playing an Easy Synth, its filter swaying, with rings flashing on each note.",
                 PresetKind.Interplay)
             {
-                Tags = ["basics", "melody", "sequencer"],
+                Tags = ["basics", "melody"],
             },
             new PatchPreset(
                 "First beat",
@@ -44,7 +44,7 @@ public sealed class EasyPlugin : IFlybackPlugin
                 + "suits it, with the picture pulsing on the kick.",
                 PresetKind.Interplay)
             {
-                Tags = ["basics", "drums", "rhythm"],
+                Tags = ["basics", "drums"],
             },
             new PatchPreset(
                 "Warehouse",
@@ -54,7 +54,7 @@ public sealed class EasyPlugin : IFlybackPlugin
                 + "kick's pump, the echo and the swing.",
                 PresetKind.Showcase)
             {
-                Tags = ["song", "acid", "house", "knobs"],
+                Tags = ["song", "drums", "playable"],
             },
         ]);
     }

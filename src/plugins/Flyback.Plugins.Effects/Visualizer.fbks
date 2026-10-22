@@ -5,7 +5,7 @@
 
 description "Any music through the Line In, folded into a turning kaleidoscope: the"
   "kick flashes it outward and the loudness spreads its colors."
-tags "visualizer" "line-in" "kaleidoscope"
+tags "patterns"
 
 requires flyback.picture
 

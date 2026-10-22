@@ -3,7 +3,7 @@
 
 description "A Probe and a Scope on one signal, which is the only way to see how they"
   "differ."
-tags "basics" "scope" "scan"
+tags "basics" "scope"
 
 # The sweep, and the reason the two charts differ at all.
 let sweep = sine(freq: 0.4) |> remap(-1..1, 90..320)

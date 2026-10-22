@@ -19,7 +19,7 @@ description "Dark ambient in D phrygian dominant on the three Figures. The drone
   "harmonograph draws the chords D, E♭, A and A♭ as they swell, and a plate far off in"
   "the hall is a bell, rarely. 'fog' thickens the mist and the timbre with it, 'glow'"
   "opens the drone, 'drive' roughens it, 'twist' bends the drawings, and 'wind'"
-tags "dark-ambient" "ambient" "drone" "shapes" "knobs"
+tags "ambient" "playable"
 length 5:20.00
 
 requires flyback.figures

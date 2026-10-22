@@ -2,7 +2,7 @@
 # side.
 
 description "Stereo from one voice: left and right fed differently rather than panned."
-tags "basics" "stereo"
+tags "basics"
 
 # The twin takes the root's snapped note rather than its own, so the two cannot
 # drift apart by an edit.

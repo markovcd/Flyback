@@ -3,7 +3,7 @@
 
 description "A plucked tone through the delay into the reverb: repeats first, then the"
   "room."
-tags "effects" "echo" "reverb"
+tags "effects"
 
 # A saw falling from 1 to 0 twice a second is the pluck's envelope: a sharp attack,
 # and a tail for the delay and the reverb.

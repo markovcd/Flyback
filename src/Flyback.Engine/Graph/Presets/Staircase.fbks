@@ -3,7 +3,7 @@
 
 description "A slope caught six times a second by a Sample & Hold, which makes steps,"
   "and steps are a tune."
-tags "basics" "melody" "sequencer"
+tags "basics" "melody"
 
 # Six ticks a second, and the one clock: it catches the pitch and plucks the note,
 # so a note cannot change pitch while it sounds.

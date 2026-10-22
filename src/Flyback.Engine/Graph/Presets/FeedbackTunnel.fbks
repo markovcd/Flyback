@@ -3,7 +3,7 @@
 
 description "Each frame re-read slightly rotated, scaled and dimmed, with fresh rings"
   "on top."
-tags "feedback" "pattern"
+tags "patterns"
 
 let pulse = t * 0.25
 

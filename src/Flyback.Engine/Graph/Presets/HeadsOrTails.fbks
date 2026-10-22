@@ -3,7 +3,7 @@
 
 description "One riff and a coin for every note: heads plays it on the left, tails an"
   "octave down on the right, and the odds drift."
-tags "melody" "random" "stereo"
+tags "melody"
 
 let riff = notes(rate: 8) [ A3 C4 E4 G4 A4 G4 E4 D4 ]
 

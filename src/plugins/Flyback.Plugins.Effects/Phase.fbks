@@ -15,7 +15,7 @@
 description "Phase music, after Steve Reich: two players on one pattern, the second"
   "pulling ahead through all twelve canons, and a picture of two dials that is the"
   "diagram of it."
-tags "song" "minimalism" "rhythm" "shapes"
+tags "song" "patterns"
 length 3:56.31
 
 requires flyback.picture, flyback.voice

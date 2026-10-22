@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AssemblyMetadata Include="Tags" Value="decision model; ai" />
+    <AssemblyMetadata Include="Tags" Value="ai" />
   </ItemGroup>
 
   <ItemGroup>

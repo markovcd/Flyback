@@ -7,7 +7,7 @@
 
 description "Four forms on a turning ring round a slowly filling arc, with the seam"
   "between them opening and closing."
-tags "shapes" "color"
+tags "patterns"
 
 requires flyback.picture
 

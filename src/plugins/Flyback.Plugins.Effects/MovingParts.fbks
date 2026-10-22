@@ -5,7 +5,7 @@
 # picture side.
 
 description "Flanger, phaser and chorus in the order a pedalboard would have them."
-tags "effects" "modulation"
+tags "effects"
 
 requires flyback.effects
 

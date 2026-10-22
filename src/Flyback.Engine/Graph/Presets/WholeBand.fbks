@@ -10,7 +10,7 @@
 
 description "A whole song from the engine's own modules: seven parts in a room, twelve"
   "phrases, one picture."
-tags "song" "drums" "bass" "chords"
+tags "song" "drums"
 length 3:25.71
 
 group "Clock" {

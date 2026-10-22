@@ -3,7 +3,7 @@
 # by an oscillator anywhere: it is the image, read along a line.
 
 description "A loop swept round a field at audio rate, so the picture is the waveform."
-tags "scan" "synthesis" "pattern"
+tags "synthesis" "patterns"
 
 # The field, and the only thing in the patch that makes the waveform. freq is the
 # modulation index rather than a pitch: more rings under the loop is more

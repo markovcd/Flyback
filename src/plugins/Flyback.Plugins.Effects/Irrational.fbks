@@ -14,7 +14,7 @@
 description "Two pulses whose rates are a ratio of the square root of two: they pass"
   "close, flare, and never once land together — a piece with no loop, because it cannot"
   "have one."
-tags "rhythm" "minimalism" "generative"
+tags "drums"
 
 requires flyback.effects, flyback.picture, flyback.voice
 

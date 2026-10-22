@@ -5,7 +5,7 @@
 
 description "One knob, two loops: a pluck through an echo, and a ring that echoes down"
   "a tunnel."
-tags "echo" "feedback" "knobs"
+tags "effects" "playable"
 
 requires flyback.effects, flyback.picture, flyback.voice
 
