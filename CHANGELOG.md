@@ -4,6 +4,8 @@
 
 ### Modules
 
+- Speak: says the words typed into it in a synthesized voice, with knobs for pitch, speed and the size of the throat.
+
 ### Presets
 
 ### Assistant

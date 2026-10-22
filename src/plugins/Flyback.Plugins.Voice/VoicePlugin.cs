@@ -15,6 +15,7 @@ using Flyback.Plugins.Voice;
 [assembly: FlybackModule(BellModule.TypeId, "Bell")]
 [assembly: FlybackModule(FmModule.TypeId, "FM")]
 [assembly: FlybackModule(HissModule.TypeId, "Hiss")]
+[assembly: FlybackModule(SpeakModule.TypeId, "Speak")]
 
 namespace Flyback.Plugins.Voice;
 
@@ -36,8 +37,8 @@ public sealed class VoicePlugin : IFlybackPlugin
     public PluginInfo Info { get; } = new(
         "flyback.voice",
         "Voice",
-        "A seven-oscillator supersaw, a four-operator FM synth, a drum, a bell, a hiss and a "
-        + "wandering value, a fold and a crush to shape them, struck and counted envelopes with a "
+        "A seven-oscillator supersaw, a four-operator FM synth, a drum, a bell, a hiss, a "
+        + "speaking voice and a wandering value, a fold and a crush to shape them, struck and counted envelopes with a "
         + "Euclidean rhythm to play them, and a fade to arrange them.");
 
     public void Register(IPluginRegistry registry)
@@ -57,6 +58,7 @@ public sealed class VoicePlugin : IFlybackPlugin
                 BellModule.Definition,
                 FmModule.Definition,
                 HissModule.Definition,
+                SpeakModule.Definition,
             ]);
 
         registry.AddPresets(

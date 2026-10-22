@@ -81,6 +81,7 @@ flyback.voice.fm | in, freq, level, tone, ratio2, ratio3, ratio4, index2, index3
 flyback.voice.fold | in, drive, bias | out
 flyback.voice.hiss | in, level, cutoff, resonance, gain, seed | out
 flyback.voice.osc | in, freq, detune, mix, phase, amp, bias | out, wide
+flyback.voice.speak | in, pitch, speed, level, trigger, every, size | out
 flyback.voice.stroke | in, rate, offset, curve | out, phase
 flyback.voice.wander | in, rate, seed, low, high | out
 math.abs | in | out
