@@ -35,7 +35,8 @@ public sealed class CoreAudioOutput : IAudioOutput
     /// </summary>
     public int Priority => 100;
 
-    public bool IsSupported => OperatingSystem.IsMacOS();
+    /// <summary>On iOS too, where the system picks the route and there is no device to choose.</summary>
+    public bool IsSupported => OperatingSystem.IsMacOS() || OperatingSystem.IsIOS();
 
     /// <summary>
     /// One question: which output plays. The list is every device with an output
@@ -48,7 +49,7 @@ public sealed class CoreAudioOutput : IAudioOutput
     /// </remarks>
     public IReadOnlyList<SettingField> Form(SettingValues values)
     {
-        if (!IsSupported) return [];
+        if (!OperatingSystem.IsMacOS()) return [];
 
         var chosen = values.Text(DeviceKey, SystemDefault);
 

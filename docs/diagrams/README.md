@@ -8,7 +8,7 @@ people, software systems, containers, components and stores, each in its own col
 |---|---|---|
 | [`context.md`](context.md) | C1, system context | Who uses Flyback, and what it talks to |
 | [`desktop.md`](desktop.md) | C2, containers | The editor, flyback-viewer and flyback-cli, and the folders they keep |
-| [`web.md`](web.md) | C2, containers | The web editor, the web viewer and the Android editor |
+| [`web.md`](web.md) | C2, containers | The web editor, the web viewer and the Android and iOS editors |
 | [`site.md`](site.md) | C2, containers | The preset site's Worker and stores, and how a submission is checked |
 | [`editor.md`](editor.md) | C3, components | The projects the editor is built from, and the plugin contract between them |
 

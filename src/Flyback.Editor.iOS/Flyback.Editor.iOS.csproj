@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The editor on an iPhone or iPad: Flyback.Editor under Avalonia.iOS, with the module
+    plugins linked in as on Android (ADR-0184). Needs a Mac with Xcode and the ios
+    workload, so Flyback.slnx lists it without building it and it is built by path.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-ios</TargetFramework>
+    <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Flyback.Editor.iOS</RootNamespace>
+    <ApplicationId>app.flybackmodular.editor</ApplicationId>
+    <ApplicationTitle>Flyback</ApplicationTitle>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
+
+    <!--
+      A device runs ahead-of-time code only. The interpreter stays on behind it for what
+      the compiler could not see ahead, such as a generic made by reflection; the sound's
+      IL is never built there, so the engine interprets the patch.
+    -->
+    <MtouchInterpreter>-all</MtouchInterpreter>
+
+    <!-- As on Android: the patch reader deserializes by reflection, so Flyback is not trimmed. -->
+    <TrimMode>partial</TrimMode>
+    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+
+    <!-- As on Android: the packages the workload adds are versioned with it. -->
+    <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.iOS" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flyback.Editor\Flyback.Editor.csproj" />
+  </ItemGroup>
+
+  <!-- The module plugins the page links, and the one that plays the sound. -->
+  <Import Project="..\Flyback.Viewer.Web\LinkedPlugins.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="@(WebPlugin)" LinkedPlugin="true" />
+    <ProjectReference Include="..\plugins\Flyback.Plugins.MacIO\Flyback.Plugins.MacIO.csproj" LinkedPlugin="true" />
+  </ItemGroup>
+
+</Project>

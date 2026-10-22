@@ -42,6 +42,7 @@ flowchart TB
     end
 
     pages["Pages · pages.yml<br/>the redirect stub, when deploy/pages changes"]
+    hand --> ios["iOS · ios.yml<br/>builds the iOS editor and plays it in the simulator"]
 
     bot(["Dependabot's pull request"]) --> d_locks
     subgraph dependabot["Dependabot · dependabot-prs.yml"]

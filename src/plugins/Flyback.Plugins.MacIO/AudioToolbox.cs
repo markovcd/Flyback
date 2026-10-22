@@ -28,6 +28,7 @@ internal static partial class AudioToolbox
     public const uint OutputComponentType = 0x6175_6F75;   // 'auou'
     public const uint DefaultOutputSubType = 0x6465_6620;  // 'def '
     public const uint HalOutputSubType = 0x6168_616C;      // 'ahal'
+    public const uint RemoteIoSubType = 0x7269_6F63;       // 'rioc'
     public const uint AppleManufacturer = 0x6170_706C;     // 'appl'
     public const uint LinearPcmFormat = 0x6C70_636D;       // 'lpcm'
     public const uint BufferFrameSizeProperty = 0x6673_697A; // 'fsiz'

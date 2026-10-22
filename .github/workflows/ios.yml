@@ -1,0 +1,82 @@
+# Builds the iOS editor and runs it in the simulator: it boots on a preset, plays,
+# and answers its state notification (scripts/ios-smoke.sh), leaving a screenshot.
+#
+# By hand only, from Run workflow: a macOS minute costs ten times a Linux one
+# (ADR-0200), and the iOS editor is not released. Like the Android editor it is
+# outside the gate, since the ios workload and Xcode need a Mac; Flyback.slnx lists
+# the project without building it.
+#
+# `machine` picks GitHub's Mac or the user's self-hosted one, the second for main
+# only: the repo is public, and a fork's workflow must never reach that machine.
+# GitHub's image carries several Xcodes, and the workload needs the newest.
+#
+# Every action is pinned to a commit rather than a tag; Dependabot says when a
+# pin should move.
+
+name: iOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      machine:
+        description: Where it runs.
+        type: choice
+        options: [github, self-hosted]
+        default: github
+      preset:
+        description: The preset the simulator plays.
+        type: string
+        default: Sidebands
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulator:
+    if: inputs.machine == 'github' || github.ref == 'refs/heads/main'
+    runs-on: ${{ inputs.machine == 'self-hosted' && fromJSON('["self-hosted","macOS","ARM64"]') || 'macos-26' }}
+    # A cold workload install, restore, AOT build and a simulator boot; the default of six hours is what a hang costs.
+    timeout-minutes: 60
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+      PRESET: ${{ inputs.preset }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Use the newest Xcode (GitHub's Mac)
+        if: inputs.machine == 'github'
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -n 1)"
+
+      - name: Say which Xcode and simulators
+        run: |
+          xcodebuild -version
+          xcrun simctl list runtimes
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      # The workload set is pinned, as an action is: a newer set can name a manifest
+      # NuGet does not have yet, and the install fails.
+      - name: Install the ios workload
+        run: dotnet workload install ios --version 10.0.402
+
+      - name: Build and play in the simulator
+        env:
+          SMOKE_SHOTS: ios-shots
+        run: ./scripts/ios-smoke.sh "$PRESET"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: ios-simulator
+          path: ios-shots
+          if-no-files-found: ignore
+          retention-days: 14

@@ -42,6 +42,9 @@
     <Project Path="src/Flyback.Editor.Android/Flyback.Editor.Android.csproj">
       <Build Project="false" />
     </Project>
+    <Project Path="src/Flyback.Editor.iOS/Flyback.Editor.iOS.csproj">
+      <Build Project="false" />
+    </Project>
   </Folder>
   <Folder Name="/src/plugins/">
     <Project Path="src/plugins/Flyback.Plugins.AndroidIO/Flyback.Plugins.AndroidIO.csproj">

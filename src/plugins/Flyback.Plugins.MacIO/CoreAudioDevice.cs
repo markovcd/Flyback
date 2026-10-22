@@ -132,7 +132,9 @@ public sealed unsafe class CoreAudioDevice(AudioFormat format, string? uid = nul
         var description = new AudioToolbox.AudioComponentDescription
         {
             ComponentType = AudioToolbox.OutputComponentType,
-            ComponentSubType = chosen is null ? AudioToolbox.DefaultOutputSubType : AudioToolbox.HalOutputSubType,
+            ComponentSubType = OperatingSystem.IsIOS() ? AudioToolbox.RemoteIoSubType
+                : chosen is null ? AudioToolbox.DefaultOutputSubType
+                : AudioToolbox.HalOutputSubType,
             ComponentManufacturer = AudioToolbox.AppleManufacturer,
         };
 

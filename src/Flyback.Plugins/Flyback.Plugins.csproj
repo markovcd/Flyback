@@ -53,6 +53,7 @@
     <InternalsVisibleTo Include="Flyback.Viewer.Web" />
     <InternalsVisibleTo Include="Flyback.Editor.Web" />
     <InternalsVisibleTo Include="Flyback.Editor.Android" />
+    <InternalsVisibleTo Include="Flyback.Editor.iOS" />
   </ItemGroup>
 
   <ItemGroup>
