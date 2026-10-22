@@ -6,8 +6,9 @@
 # outside the gate, since the ios workload and Xcode need a Mac; Flyback.slnx lists
 # the project without building it.
 #
-# `machine` picks GitHub's Mac or the user's self-hosted one, the second for main
-# only: the repo is public, and a fork's workflow must never reach that machine.
+# `machine` picks the user's self-hosted Mac, which costs nothing, or GitHub's. The
+# self-hosted one is for main only: the repo is public, and a fork's workflow must
+# never reach that machine.
 # GitHub's image carries several Xcodes; the newest is picked and, not being the
 # image's default, set up with -runFirstLaunch, or its tools cannot be found.
 #
@@ -22,8 +23,8 @@ on:
       machine:
         description: Where it runs.
         type: choice
-        options: [github, self-hosted]
-        default: github
+        options: [self-hosted, github]
+        default: self-hosted
       preset:
         description: The preset the simulator plays.
         type: string
