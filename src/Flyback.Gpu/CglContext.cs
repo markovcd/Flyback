@@ -8,8 +8,12 @@ namespace Flyback.Gpu;
 /// and on Apple's software renderer where there is not. Every frame goes to a
 /// framebuffer of the renderer's own.
 /// </summary>
+/// <remarks>
+/// CGL is bound from the loaded framework rather than imported, so an iOS build, which
+/// links every framework an import names and has no OpenGL.framework, links.
+/// </remarks>
 [SupportedOSPlatform("macos")]
-internal sealed unsafe partial class CglContext : HeadlessContext
+internal sealed unsafe class CglContext : HeadlessContext
 {
     private const string OpenGl = "/System/Library/Frameworks/OpenGL.framework/OpenGL";
 
@@ -18,6 +22,13 @@ internal sealed unsafe partial class CglContext : HeadlessContext
     private const int AlphaSize = 11;
     private const int Profile = 99;
     private const int Version32Core = 0x3200;
+
+    private static delegate* unmanaged<int*, IntPtr*, int*, int> CGLChoosePixelFormat;
+    private static delegate* unmanaged<IntPtr, int> CGLDestroyPixelFormat;
+    private static delegate* unmanaged<IntPtr, IntPtr, IntPtr*, int> CGLCreateContext;
+    private static delegate* unmanaged<IntPtr, int> CGLDestroyContext;
+    private static delegate* unmanaged<IntPtr, int> CGLSetCurrentContext;
+    private static delegate* unmanaged<IntPtr> CGLGetCurrentContext;
 
     private readonly IntPtr context;
     private readonly IntPtr openGl;
@@ -35,6 +46,12 @@ internal sealed unsafe partial class CglContext : HeadlessContext
         if (!NativeLibrary.TryLoad(OpenGl, out var openGl))
         {
             why = "OpenGL.framework would not load.";
+            return null;
+        }
+
+        if (!Bind(openGl))
+        {
+            why = "OpenGL.framework has no CGL.";
             return null;
         }
 
@@ -88,21 +105,22 @@ internal sealed unsafe partial class CglContext : HeadlessContext
         _ = CGLDestroyContext(context);
     }
 
-    [LibraryImport(OpenGl)]
-    private static partial int CGLChoosePixelFormat(int* attributes, IntPtr* format, int* count);
+    private static bool Bind(IntPtr openGl)
+    {
+        if (!NativeLibrary.TryGetExport(openGl, nameof(CGLChoosePixelFormat), out var choose)
+            || !NativeLibrary.TryGetExport(openGl, nameof(CGLDestroyPixelFormat), out var destroyFormat)
+            || !NativeLibrary.TryGetExport(openGl, nameof(CGLCreateContext), out var create)
+            || !NativeLibrary.TryGetExport(openGl, nameof(CGLDestroyContext), out var destroy)
+            || !NativeLibrary.TryGetExport(openGl, nameof(CGLSetCurrentContext), out var setCurrent)
+            || !NativeLibrary.TryGetExport(openGl, nameof(CGLGetCurrentContext), out var getCurrent))
+            return false;
 
-    [LibraryImport(OpenGl)]
-    private static partial int CGLDestroyPixelFormat(IntPtr format);
-
-    [LibraryImport(OpenGl)]
-    private static partial int CGLCreateContext(IntPtr format, IntPtr share, IntPtr* context);
-
-    [LibraryImport(OpenGl)]
-    private static partial int CGLDestroyContext(IntPtr context);
-
-    [LibraryImport(OpenGl)]
-    private static partial int CGLSetCurrentContext(IntPtr context);
-
-    [LibraryImport(OpenGl)]
-    private static partial IntPtr CGLGetCurrentContext();
+        CGLChoosePixelFormat = (delegate* unmanaged<int*, IntPtr*, int*, int>)choose;
+        CGLDestroyPixelFormat = (delegate* unmanaged<IntPtr, int>)destroyFormat;
+        CGLCreateContext = (delegate* unmanaged<IntPtr, IntPtr, IntPtr*, int>)create;
+        CGLDestroyContext = (delegate* unmanaged<IntPtr, int>)destroy;
+        CGLSetCurrentContext = (delegate* unmanaged<IntPtr, int>)setCurrent;
+        CGLGetCurrentContext = (delegate* unmanaged<IntPtr>)getCurrent;
+        return true;
+    }
 }

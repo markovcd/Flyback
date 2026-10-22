@@ -16,12 +16,18 @@
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
 
+    <!-- The simulator unless a device is named, set here so it never flows into the projects referenced. -->
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">iossimulator-arm64</RuntimeIdentifier>
+
     <!--
       A device runs ahead-of-time code only. The interpreter stays on behind it for what
       the compiler could not see ahead, such as a generic made by reflection; the sound's
       IL is never built there, so the engine interprets the patch.
     -->
-    <MtouchInterpreter>-all</MtouchInterpreter>
+    <MtouchInterpreter Condition="$(RuntimeIdentifier.StartsWith('ios-'))">-all</MtouchInterpreter>
+
+    <!-- The simulator runs on Mono's JIT: compiling ahead with LLVM takes forty minutes there. -->
+    <MtouchUseLlvm Condition="$(RuntimeIdentifier.StartsWith('iossimulator-'))">false</MtouchUseLlvm>
 
     <!-- As on Android: the patch reader deserializes by reflection, so Flyback is not trimmed. -->
     <TrimMode>partial</TrimMode>
