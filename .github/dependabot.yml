@@ -54,3 +54,9 @@ updates:
       interval: weekly
     labels: []
     open-pull-requests-limit: 5
+
+    # @cloudflare/vitest-pool-workers takes vitest ^4.1 as a peer, so npm ci
+    # refuses vitest 5. Lift this when a release of the pool takes 5.
+    ignore:
+      - dependency-name: vitest
+        update-types: ["version-update:semver-major"]
