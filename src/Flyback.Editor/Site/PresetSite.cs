@@ -21,7 +21,7 @@ internal sealed class PresetSite(HttpClient http, Uri root)
     /// <paramref name="search"/>. Throws where the site cannot be reached or answers with
     /// something else.
     /// </summary>
-    public async Task<SitePresetPage> SearchAsync(string? search, int page, CancellationToken cancel)
+    public async Task<SitePage<SitePreset>> SearchAsync(string? search, int page, CancellationToken cancel)
     {
         var query = $"api/v1/presets?page={page.ToString(CultureInfo.InvariantCulture)}";
 
@@ -85,7 +85,7 @@ internal sealed class PresetSite(HttpClient http, Uri root)
     }
 
     /// <summary>The listing, read. A preset missing its id, name or file is left out.</summary>
-    internal static SitePresetPage Read(JsonElement found, Uri root)
+    internal static SitePage<SitePreset> Read(JsonElement found, Uri root)
     {
         var items = new List<SitePreset>();
 
@@ -97,7 +97,7 @@ internal sealed class PresetSite(HttpClient http, Uri root)
             }
         }
 
-        return new SitePresetPage(items, Number(found, "total"), Math.Max(1, Number(found, "page")), Math.Max(1, Number(found, "pageSize")));
+        return new SitePage<SitePreset>(items, Number(found, "total"), Math.Max(1, Number(found, "page")), Math.Max(1, Number(found, "pageSize")));
     }
 
     /// <summary>One listed preset, or null where it is missing its id, name or file.</summary>

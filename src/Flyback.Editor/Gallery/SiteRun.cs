@@ -25,8 +25,6 @@ namespace Flyback.Editor.Gallery;
 /// </remarks>
 internal sealed class SiteRun : IDisposable
 {
-    private static readonly TimeSpan Typing = TimeSpan.FromMilliseconds(250);
-
     private readonly PresetSite site;
     private readonly KeptSharedPresets kept;
     private readonly TextBox box;
@@ -35,9 +33,7 @@ internal sealed class SiteRun : IDisposable
     private readonly WrapPanel tiles = new() { Name = "site-presets", ItemSpacing = 8, LineSpacing = 8 };
     private readonly TextBlock status = new() { Name = "site-status", FontSize = Text.Body, Foreground = Text.Muted, TextWrapping = TextWrapping.Wrap };
     private readonly Button more = new() { Name = "more-presets", Content = "More", FontSize = Text.Body, IsVisible = false, Margin = new Thickness(0, 8, 0, 0) };
-
-    private int page;
-    private CancellationTokenSource? asking;
+    private readonly SiteSearch<SitePreset> search;
 
     public SiteRun(PresetSite site, KeptSharedPresets kept, TextBox box, IDialog dialog, Action<IPreset> open, bool inPage)
     {
@@ -46,6 +42,14 @@ internal sealed class SiteRun : IDisposable
         this.box = box;
         this.dialog = dialog;
         this.inPage = inPage;
+
+        search = new SiteSearch<SitePreset>((page, cancel) => site.SearchAsync(box.Text, page, cancel), status, more, $"The preset site at {site.Root} did not answer.")
+        {
+            Show = (found, fresh, cancel) => Show(found, fresh, open, cancel),
+            Empty = () => tiles.Children.Count == 0,
+            Nothing = () => box.Text is { Length: > 0 } typed ? $"Nothing on the preset site matches “{typed.Trim()}”." : "Nothing is shared on the preset site yet.",
+            Failed = (fresh, cancel) => { if (fresh) ShowKept(open, cancel); },
+        };
 
         View = new StackPanel
         {
@@ -65,7 +69,7 @@ internal sealed class SiteRun : IDisposable
                             FontWeight = FontWeight.SemiBold,
                             Foreground = new SolidColorBrush(Colors.Note),
                         },
-                        Link("Open", site.Root),
+                        SiteLink.To("Open", site.Root),
                     },
                 },
                 status,
@@ -74,77 +78,28 @@ internal sealed class SiteRun : IDisposable
             },
         };
 
-        box.TextChanged += (_, _) => _ = AskAsync(fresh: true, open, after: Typing);
-        more.Click += (_, _) => _ = AskAsync(fresh: false, open);
+        box.TextChanged += (_, _) => _ = search.AskAsync(fresh: true, after: SiteSearch<SitePreset>.Typing);
+        more.Click += (_, _) => _ = search.AskAsync(fresh: false);
 
         // Asked while the gallery is up and not a moment after.
-        View.AttachedToVisualTree += (_, _) => _ = AskAsync(fresh: true, open);
+        View.AttachedToVisualTree += (_, _) => _ = search.AskAsync(fresh: true);
         View.DetachedFromVisualTree += (_, _) => Dispose();
     }
 
     public StackPanel View { get; }
 
     /// <summary>Stops asking the site, which is the end of the gallery.</summary>
-    public void Dispose() => Stop();
+    public void Dispose() => search.Dispose();
 
-    private void Stop()
+    private void Show(IReadOnlyList<SitePreset> found, bool fresh, Action<IPreset> open, CancellationToken cancel)
     {
-        asking?.Cancel();
-        asking?.Dispose();
-        asking = null;
-    }
-
-    private async Task AskAsync(bool fresh, Action<IPreset> open, TimeSpan after = default)
-    {
-        Stop();
-
-        var cancel = (asking = new CancellationTokenSource()).Token;
-        var wanted = fresh ? 1 : page + 1;
-
-        if (fresh) status.Text = "Looking…";
-
-        status.IsVisible = fresh;
-        more.IsEnabled = false;
-
-        SitePresetPage found;
-
-        try
-        {
-            if (after > TimeSpan.Zero) await Task.Delay(after, cancel);
-
-            found = await site.SearchAsync(box.Text, wanted, cancel);
-        }
-        catch (OperationCanceledException) when (cancel.IsCancellationRequested)
-        {
-            return;
-        }
-        catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or System.Text.Json.JsonException)
-        {
-            status.Text = $"The preset site at {site.Root} did not answer.";
-            status.IsVisible = true;
-            more.IsEnabled = true;
-
-            if (fresh) ShowKept(open, cancel);
-
-            return;
-        }
-
-        if (cancel.IsCancellationRequested) return;
-
-        page = found.Page;
-
         if (fresh) tiles.Children.Clear();
 
-        foreach (var preset in found.Items)
+        foreach (var preset in found)
         {
             kept.Refresh(site.Root, preset);
             tiles.Children.Add(SiteTile(preset, () => open(preset), token => StillAsync(preset, token), reportable: true, cancel));
         }
-
-        status.Text = box.Text is { Length: > 0 } typed ? $"Nothing on the preset site matches “{typed.Trim()}”." : "Nothing is shared on the preset site yet.";
-        status.IsVisible = tiles.Children.Count == 0;
-        more.IsVisible = found.More;
-        more.IsEnabled = true;
     }
 
     /// <summary>A listed preset's still: the one kept with it where it was opened before, and otherwise the site's.</summary>
@@ -286,26 +241,5 @@ internal sealed class SiteRun : IDisposable
         catch (Exception ex) when (ex is OperationCanceledException or ArgumentException or InvalidOperationException or IOException or NotSupportedException)
         {
         }
-    }
-
-    /// <summary>A line of text that opens <paramref name="uri"/> in the system browser.</summary>
-    private static TextBlock Link(string text, Uri uri)
-    {
-        var link = new TextBlock
-        {
-            Text = text,
-            FontSize = Text.Caption,
-            Foreground = new SolidColorBrush(Colors.Attention),
-            TextDecorations = TextDecorations.Underline,
-            Cursor = new Cursor(StandardCursorType.Hand),
-        };
-
-        link.PointerPressed += async (_, _) =>
-        {
-            if (TopLevel.GetTopLevel(link)?.Launcher is { } launcher)
-                await launcher.LaunchUriAsync(uri);
-        };
-
-        return link;
     }
 }

@@ -70,13 +70,9 @@ internal sealed class PluginHub : IDisposable
 
     private readonly WrapPanel filters = new() { ItemSpacing = 6, Margin = new Thickness(16, 2, 16, 4) };
 
-    /// <summary>How long typing has to stop for before the site is asked.</summary>
-    private static readonly TimeSpan Typing = TimeSpan.FromMilliseconds(250);
-
     private IReadOnlyList<HubInstalled> installed = [];
     private string? tag;
-    private int page;
-    private CancellationTokenSource? asking;
+    private readonly SiteSearch<SitePlugin>? search;
 
     /// <param name="install">
     /// Downloads and installs a site plugin, asking first, and says how that went, or
@@ -107,6 +103,24 @@ internal sealed class PluginHub : IDisposable
         this.show = show;
         this.needed = needed ?? [];
 
+        if (site is not null)
+        {
+            search = new SiteSearch<SitePlugin>((page, cancel) => site.SearchAsync(Search.Text, tag, page, cancel), siteStatus, more, $"The plugin site at {site.Root} did not answer.")
+            {
+                // The section above holds what the patch needs, so the site's own list is left
+                // as the site gave it and a plugin may honestly appear in both.
+                Show = (found, fresh, _) =>
+                {
+                    if (fresh) listed.Clear();
+
+                    foreach (var plugin in found) listed.Add(plugin);
+                },
+                Empty = () => listed.Count == 0,
+                Nothing = () => "Nothing on the plugin site matches.",
+                Failed = (fresh, _) => { if (fresh) listed.Clear(); },
+            };
+        }
+
         var siteRows = new ItemsControl
         {
             Name = "sitePlugins",
@@ -119,7 +133,7 @@ internal sealed class PluginHub : IDisposable
         Search.TextChanged += (_, _) =>
         {
             ShowInstalled();
-            _ = AskAsync(fresh: true, after: Typing);
+            _ = AskAsync(fresh: true, after: SiteSearch<SitePlugin>.Typing);
         };
 
         Search.KeyDown += (_, e) =>
@@ -165,9 +179,7 @@ internal sealed class PluginHub : IDisposable
     /// <summary>Stops asking the site, which is the end of the window.</summary>
     public void Dispose()
     {
-        asking?.Cancel();
-        asking?.Dispose();
-        asking = null;
+        search?.Dispose();
         closing.Cancel();
         closing.Dispose();
     }
@@ -236,66 +248,14 @@ internal sealed class PluginHub : IDisposable
         installedStatus.IsVisible = shown.Count == 0;
     }
 
-    /// <summary>
-    /// Asks the site for the first page again, or for the page after the last, once
-    /// <paramref name="after"/> has passed without another question.
-    /// </summary>
-    private async Task AskAsync(bool fresh, TimeSpan after = default)
+    private Task AskAsync(bool fresh, TimeSpan after = default)
     {
-        if (site is null)
-        {
-            siteStatus.Text = "This window has no plugin site.";
-            siteStatus.IsVisible = true;
-            return;
-        }
+        if (search is not null) return search.AskAsync(fresh, after);
 
-        asking?.Cancel();
-        asking?.Dispose();
+        siteStatus.Text = "This window has no plugin site.";
+        siteStatus.IsVisible = true;
 
-        var cancel = (asking = new CancellationTokenSource()).Token;
-        var wanted = fresh ? 1 : page + 1;
-
-        if (fresh) siteStatus.Text = "Looking…";
-
-        siteStatus.IsVisible = fresh;
-        more.IsEnabled = false;
-
-        SitePage found;
-
-        try
-        {
-            if (after > TimeSpan.Zero) await Task.Delay(after, cancel);
-
-            found = await site.SearchAsync(Search.Text, tag, wanted, cancel);
-        }
-        catch (OperationCanceledException) when (cancel.IsCancellationRequested)
-        {
-            return;
-        }
-        catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or System.Text.Json.JsonException)
-        {
-            if (fresh) listed.Clear();
-
-            siteStatus.Text = $"The plugin site at {site.Root} did not answer.";
-            siteStatus.IsVisible = true;
-            more.IsEnabled = true;
-            return;
-        }
-
-        if (cancel.IsCancellationRequested) return;
-
-        page = found.Page;
-
-        if (fresh) listed.Clear();
-
-        // The section above holds what the patch needs, so the site's own list is left
-        // as the site gave it and a plugin may honestly appear in both.
-        foreach (var plugin in found.Items) listed.Add(plugin);
-
-        siteStatus.Text = "Nothing on the plugin site matches.";
-        siteStatus.IsVisible = listed.Count == 0;
-        more.IsVisible = found.More;
-        more.IsEnabled = true;
+        return Task.CompletedTask;
     }
 
     /// <summary>A site plugin's row, built as it is scrolled to.</summary>
@@ -770,29 +730,8 @@ internal sealed class PluginHub : IDisposable
             Orientation = Orientation.Horizontal,
             Spacing = 8,
             Margin = new Thickness(0, 10, 0, 2),
-            Children = { heading, Link("Open", site) },
+            Children = { heading, SiteLink.To("Open", site) },
         };
-    }
-
-    /// <summary>A line of text that opens <paramref name="uri"/> in the system browser.</summary>
-    private static TextBlock Link(string text, Uri uri)
-    {
-        var link = new TextBlock
-        {
-            Text = text,
-            FontSize = Text.Caption,
-            Foreground = new SolidColorBrush(Colors.Attention),
-            TextDecorations = TextDecorations.Underline,
-            Cursor = new Cursor(StandardCursorType.Hand),
-        };
-
-        link.PointerPressed += async (_, _) =>
-        {
-            if (TopLevel.GetTopLevel(link)?.Launcher is { } launcher)
-                await launcher.LaunchUriAsync(uri);
-        };
-
-        return link;
     }
 
     private static TextBlock Status(string name)

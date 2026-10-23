@@ -26,7 +26,7 @@ internal sealed class PluginSite(HttpClient http, Uri root)
     /// This is how a patch finds the plugin it names: an id matches one plugin or none,
     /// where words match whatever reads alike.
     /// </param>
-    public async Task<SitePage> SearchAsync(string? search, string? tag, int page, CancellationToken cancel, string? module = null)
+    public async Task<SitePage<SitePlugin>> SearchAsync(string? search, string? tag, int page, CancellationToken cancel, string? module = null)
     {
         var query = new List<string> { $"page={page.ToString(CultureInfo.InvariantCulture)}" };
 
@@ -78,7 +78,7 @@ internal sealed class PluginSite(HttpClient http, Uri root)
     }
 
     /// <summary>The listing, read. A plugin missing its id, name or hash is left out.</summary>
-    internal static SitePage Read(JsonElement found, Uri root)
+    internal static SitePage<SitePlugin> Read(JsonElement found, Uri root)
     {
         var items = new List<SitePlugin>();
 
@@ -117,7 +117,7 @@ internal sealed class PluginSite(HttpClient http, Uri root)
             }
         }
 
-        return new SitePage(items, (int)Number(found, "total"), Math.Max(1, (int)Number(found, "page")), Math.Max(1, (int)Number(found, "pageSize")));
+        return new SitePage<SitePlugin>(items, (int)Number(found, "total"), Math.Max(1, (int)Number(found, "page")), Math.Max(1, (int)Number(found, "pageSize")));
     }
 
     private static string? Text(JsonElement item, string name) =>
