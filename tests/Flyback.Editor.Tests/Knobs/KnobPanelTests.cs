@@ -517,7 +517,7 @@ public class KnobPanelTests : EditorTest
     [AvaloniaFact]
     public void The_knob_menu_plays_a_knob_as_a_switch_that_rests_on_or_off()
     {
-        var (patch, value) = Board();
+        var (patch, _) = Board();
         var knob = patch.AddControl(value: 0.7f);
         var window = Open(patch);
 

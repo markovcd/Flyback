@@ -44,7 +44,6 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
     }
 
     private readonly IDialog dialog;
-    private readonly NodeEditor editor;
     private readonly PreviewHost preview;
     private readonly Usage usage;
     private readonly IFocus focus;
@@ -76,14 +75,13 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
 
     private readonly Playback playback;
 
-    public StatusBar(NodeEditor editor, PluginCatalog plugins, ReportLine report, Usage usage, PreviewHost preview, SiteAccess site, Playback playback, IDialog dialog, IFocus focus, Reactions reactions)
+    public StatusBar(PluginCatalog plugins, ReportLine report, Usage usage, PreviewHost preview, SiteAccess site, Playback playback, IDialog dialog, IFocus focus, Reactions reactions)
     {
         this.dialog = dialog;
         this.playback = playback;
         this.focus = focus;
         this.plugins = plugins;
         this.report = report;
-        this.editor = editor;
         this.preview = preview;
         this.usage = usage;
 

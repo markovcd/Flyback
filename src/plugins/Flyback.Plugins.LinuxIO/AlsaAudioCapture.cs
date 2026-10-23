@@ -49,7 +49,7 @@ public sealed class AlsaAudioCapture(AudioFormat format, string? device = null) 
 
         // A chosen device that will not open — unplugged, or taken exclusively by another
         // program — listens to the default instead, as the output does.
-        var opened = IntPtr.Zero;
+        IntPtr opened;
 
         if (device is null
             || LibAsound.Open(out opened, device, LibAsound.CaptureStream, LibAsound.Blocking) < 0)

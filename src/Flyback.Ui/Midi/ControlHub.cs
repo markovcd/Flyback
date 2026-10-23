@@ -408,7 +408,7 @@ internal sealed class ControlHub
     /// <summary>A note was struck. On the driver's thread.</summary>
     private void Strike(string device, MidiMessage message)
     {
-        var fired = false;
+        bool fired;
         var turned = new List<(Guid, float)>();
 
         lock (gate)

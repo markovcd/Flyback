@@ -134,7 +134,7 @@ internal sealed class AssistantSession(ITranscript transcript, string? logFolder
             yield return happened;
         }
 
-        if (reading is not null && decisions?.Chosen is not null && ReferenceEquals(Run, run) && run.Proposal is { } proposal
+        if (reading is not null && decisions?.Chosen is not null && ReferenceEquals(Run, run) && run.Proposal is not null
             && await reading.Does(message, run.ProposalSummary, cancel).ConfigureAwait(true) is { } does
             && does < TurnReading.Doubted)
         {

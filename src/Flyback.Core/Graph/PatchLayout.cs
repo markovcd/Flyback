@@ -278,7 +278,7 @@ internal static class PatchLayout
             ? of.GetValueOrDefault(output.Id, -1)
             : -1;
 
-        Lay(blocks, Links(patch, defs, blocks, of), sink, size);
+        Lay(blocks, Links(patch, blocks, of), sink, size);
 
         if (Settle(blocks, middle)) return new Pass(true, null);
 
@@ -488,7 +488,7 @@ internal static class PatchLayout
         }
 
         // No sink to pin: Patch.Group leaves the Output out of every group.
-        Lay(blocks, Links(patch, defs, blocks, of), sink: -1, size);
+        Lay(blocks, Links(patch, blocks, of), sink: -1, size);
 
         foreach (var block in blocks) block.Put();
     }
@@ -507,7 +507,6 @@ internal static class PatchLayout
     /// </remarks>
     private static List<Link> Links(
         Patch patch,
-        Dictionary<Guid, NodeDef> defs,
         List<Block> blocks,
         Dictionary<Guid, int> of)
     {

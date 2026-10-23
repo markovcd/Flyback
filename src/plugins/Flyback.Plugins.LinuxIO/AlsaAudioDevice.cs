@@ -63,7 +63,7 @@ public sealed class AlsaAudioDevice(AudioFormat format, string? device = null) :
         // A chosen device that will not open — unplugged, or taken exclusively by
         // another program — plays the default instead, because sound through the
         // wrong speakers is easier to notice and fix than no sound at all.
-        var opened = IntPtr.Zero;
+        IntPtr opened;
 
         if (device is null
             || LibAsound.Open(out opened, device, LibAsound.PlaybackStream, LibAsound.Blocking) < 0)

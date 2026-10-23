@@ -231,7 +231,7 @@ internal static class SvgStrokes
         while (tokens.Command(out var command))
         {
             var relative = char.IsLower(command);
-            var origin = relative ? at : Vector2.Zero;
+            Vector2 origin;
             var kind = char.ToUpperInvariant(command);
             var first = true;
 
@@ -317,7 +317,6 @@ internal static class SvgStrokes
                         if (current.Count > 0 && at != start) To(start);
                         Lift();
                         at = start;
-                        previous = 'Z';
                         goto next;
 
                     default:

@@ -70,7 +70,7 @@ public class CheckTriageTests
         public string? Unavailable(DecisionConfig config) => null;
 
         public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel) =>
-            Task.FromResult(new Decision("blamer", request.Questions.ToDictionary(q => q.Key, q =>
+            Task.FromResult(new Decision("blamer", request.Questions.ToDictionary(q => q.Key, _ =>
             {
                 return (Answer)new Answer.YesNo(request.State.Contains(word, StringComparison.Ordinal) ? 1 : 0);
             }), DecisionUsage.None));

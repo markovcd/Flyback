@@ -65,12 +65,6 @@ internal sealed partial class AssistantPanel : UserControl
 
     private readonly AssistantSettingRepository settingsRepository;
 
-    /// <summary>
-    /// Where <see cref="settings"/> is read from and written back to, and the priority
-    /// list beside it. Null keeps them in memory only.
-    /// </summary>
-    private readonly string? logFolder;
-
     private readonly TextBox instruction = new()
     {
         AcceptsReturn = true,
@@ -213,7 +207,7 @@ internal sealed partial class AssistantPanel : UserControl
     /// canvas to mark. Empty with no provider chosen: nobody is being told
     /// anything, so nothing is being left out of it.
     /// </summary>
-    public IReadOnlySet<string> Undescribed { get; private set; } = new HashSet<string>();
+    public IReadOnlySet<string> Undescribed { get; private set; }
 
     /// <summary>The conversation going, its log, and what the transcript is told of it.</summary>
     private readonly AssistantSession session;
@@ -280,8 +274,7 @@ internal sealed partial class AssistantPanel : UserControl
         this.conversation = conversation;
         this.runs = runs;
         this.usage = usage;
-        logFolder = folders.ConversationLogFolder;
-        session = new AssistantSession(transcript, logFolder, decisions);
+        session = new AssistantSession(transcript, folders.ConversationLogFolder, decisions);
         this.settingsRepository = settingsRepository;
         conversation.Opened += Opened;
         conversation.Saved += (_, _) => this.reactions.Raise(new ConversationChanged());

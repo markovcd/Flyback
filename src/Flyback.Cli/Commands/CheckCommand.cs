@@ -98,7 +98,7 @@ internal static class CheckCommand
                         shipped.Opened.Samples,
                         shipped.Opened.Pictures,
                         result.GetValue(strict),
-                        rank: result.GetValue(triage) ? Ranked(plugins, shipped.Opened.Patch, error, result.GetValue(settings)) : null);
+                        rank: result.GetValue(triage) ? Ranked(plugins, error, result.GetValue(settings)) : null);
             }
 
             var read = Patches.Sourced(file) && file.Exists ? PatchLanguage.Build(File.ReadAllText(file.FullName)) : null;
@@ -128,14 +128,14 @@ internal static class CheckCommand
                     opened.Pictures,
                     result.GetValue(strict),
                     read?.Issues,
-                    result.GetValue(triage) ? Ranked(plugins, opened.Patch, result.InvocationConfiguration.Error, result.GetValue(settings)) : null);
+                    result.GetValue(triage) ? Ranked(plugins, result.InvocationConfiguration.Error, result.GetValue(settings)) : null);
         });
 
         return command;
     }
 
     /// <summary>What the decision model the settings choose makes of a patch's complaints, as <c>--triage</c> asks.</summary>
-    private static Func<IReadOnlyList<Complaint>, IReadOnlyList<double>?> Ranked(PluginRegistry plugins, Patch patch, TextWriter error, string? settingsPath) =>
+    private static Func<IReadOnlyList<Complaint>, IReadOnlyList<double>?> Ranked(PluginRegistry plugins, TextWriter error, string? settingsPath) =>
         complaints =>
         {
             var decisions = new Decisions(

@@ -48,8 +48,6 @@ internal sealed class PluginHub : IDisposable
     /// <summary>What the site has listed so far, of which only the rows scrolled to are built.</summary>
     private readonly ObservableCollection<SitePlugin> listed = [];
 
-    private readonly ItemsControl siteRows;
-
     /// <summary>The site's rows built now, which a reread tells what is installed.</summary>
     private readonly HashSet<Grid> realized = [];
 
@@ -109,7 +107,7 @@ internal sealed class PluginHub : IDisposable
         this.show = show;
         this.needed = needed ?? [];
 
-        siteRows = new ItemsControl
+        var siteRows = new ItemsControl
         {
             Name = "sitePlugins",
             ItemsSource = listed,

@@ -46,9 +46,6 @@ public sealed class Binder
     /// <summary>The line each top-level name is bound on, for saying so where one is read above it.</summary>
     private readonly Dictionary<string, int> boundOn = [];
 
-    /// <summary>How many loop bodies are being stamped out, one inside another.</summary>
-    private int looping;
-
     /// <summary>Every pass the patch's loops have stamped out so far, against <see cref="MostPasses"/>.</summary>
     private int passes;
 
@@ -1224,8 +1221,6 @@ public sealed class Binder
         var outer = identity.Enter(identity.Stamping("for"));
         var results = new List<Value>(items.Count);
 
-        looping++;
-
         try
         {
             for (var i = 0; i < items.Count; i++)
@@ -1263,7 +1258,6 @@ public sealed class Binder
         }
         finally
         {
-            looping--;
             identity.Leave(outer);
         }
     }

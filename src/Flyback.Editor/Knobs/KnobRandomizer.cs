@@ -30,7 +30,6 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
     private readonly NodeEditor editor;
     private readonly TextWriteBack writeBack;
     private readonly OutputSettingRepository settings;
-    private readonly EditorFolders folders;
     private readonly ReportLine report;
     private readonly Usage usage;
 
@@ -57,7 +56,6 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
         NodeEditor editor,
         TextWriteBack writeBack,
         OutputSettingRepository settings,
-        EditorFolders folders,
         MidiHub midi,
         ReportLine report,
         Usage usage)
@@ -67,7 +65,6 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
         this.editor = editor;
         this.writeBack = writeBack;
         this.settings = settings;
-        this.folders = folders;
         learning = new MidiLearn(midi, report);
         this.report = report;
         this.usage = usage;

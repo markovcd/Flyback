@@ -1091,7 +1091,7 @@ public class CommandTests
             .Concat(document.RootElement.GetProperty("outputs").EnumerateArray())
             .ToDictionary(port => port.GetProperty("name").GetString()!, port => port.GetProperty("help").GetString());
 
-        foreach (var (port, input) in filter.Inputs.Select(p => (p, true)).Concat(filter.Outputs.Select(p => (p, false))))
+        foreach (var (port, _) in filter.Inputs.Select(p => (p, true)).Concat(filter.Outputs.Select(p => (p, false))))
         {
             var help = port.Help;
 

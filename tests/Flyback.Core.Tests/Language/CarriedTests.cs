@@ -41,7 +41,7 @@ public class CarriedTests
         "test.carried.dials", "Dials", "Test",
         [new PortSpec("in")],
         [new PortSpec("out")],
-        (em, node) => [node[0]])
+        (_, node) => [node[0]])
     {
         Extras = [new DialsExtra()],
     };

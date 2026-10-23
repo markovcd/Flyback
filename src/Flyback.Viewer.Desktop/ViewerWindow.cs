@@ -35,7 +35,6 @@ internal sealed class ViewerWindow : Window
     private static readonly TimeSpan Follow = TimeSpan.FromMilliseconds(100);
 
     private readonly PreviewHost? preview;
-    private readonly Border previewBox;
 
     /// <summary>What the window was before it went full screen, for a maximized one does not return to normal.</summary>
     private WindowState stateBefore = WindowState.Normal;
@@ -77,7 +76,7 @@ internal sealed class ViewerWindow : Window
         this.preview = preview;
         Player = player;
 
-        previewBox = new Border { Background = Brushes.Black, Child = preview };
+        var previewBox = new Border { Background = Brushes.Black, Child = preview };
 
         // Double-click the picture or press F11 and it takes the screen; either
         // again, or Escape, puts it back. The editor does the same with its own

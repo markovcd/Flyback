@@ -103,7 +103,7 @@ public class MeasureTests : EditorTest
         var sink = b.Add(NodeCatalog.OutputTypeId, 800, 0);
         b.Wire(inner, 0, edge, 1).Wire(edge, 0, sink, NodeCatalog.OutputLeftPort);
 
-        var group = b.Patch.Group([inner.Id, edge.Id]).ShouldNotBeNull();
+        b.Patch.Group([inner.Id, edge.Id]).ShouldNotBeNull();
 
         var window = NewMainWindow();
         window.Show();

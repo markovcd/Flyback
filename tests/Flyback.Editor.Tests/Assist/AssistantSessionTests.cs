@@ -74,7 +74,7 @@ public sealed class AssistantSessionTests
     {
         using var session = Begun();
 
-        await foreach (var happened in session.Ask("hello", TestContext.Current.CancellationToken))
+        await foreach (var _ in session.Ask("hello", TestContext.Current.CancellationToken))
             session.End();
 
         transcript.Said.Select(spoken => spoken.Kind).ShouldBe(["briefing", "you", "said"]);

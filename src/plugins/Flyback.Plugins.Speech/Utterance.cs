@@ -73,8 +73,8 @@ internal sealed record Utterance(
         var syllable = 0;
 
         var mouthFrom = (Open: 0f, Round: 0f);
-        var mouthTo = mouthFrom;
-        Spoken current = new(null);
+        (float Open, float Round) mouthTo;
+        Spoken current;
 
         (float F1, float F2, float F3) held = (500, 1500, 2500);
 

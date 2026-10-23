@@ -44,6 +44,8 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
     /// <summary>What the driver says its output latency is, or one block where it says nothing.</summary>
     public TimeSpan Latency { get; private set; }
 
+    // Volatile, so read without the lock.
+    // ReSharper disable once InconsistentlySynchronizedField
     public bool IsRunning => running;
 
     /// <summary>A device at the rate asked for where the driver can be set to it, and at the driver's own where it cannot.</summary>
@@ -261,6 +263,8 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
     }
 
     /// <summary>Renders one block into the half of the double buffer the driver is about to play.</summary>
+    /// <remarks>The driver's thread never takes the lock: Start sets the buffers before <c>running</c> is raised.</remarks>
+    // ReSharper disable InconsistentlySynchronizedField
     private void Cycle(int half)
     {
         var chunk = block.AsSpan(0, frames * 2);
@@ -283,6 +287,7 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
 
         if (tellReady) _ = driver?.OutputReady();
     }
+    // ReSharper restore InconsistentlySynchronizedField
 
     /// <summary>Writes one channel of an interleaved stereo block into a driver buffer, in the driver's sample type.</summary>
     internal static void Write(IntPtr buffer, int type, ReadOnlySpan<float> stereo, int channel)

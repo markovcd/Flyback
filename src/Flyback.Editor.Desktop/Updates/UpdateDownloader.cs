@@ -58,7 +58,7 @@ internal sealed class UpdateDownloader(HttpClient http, ECDsa key, UpdateFolder 
                 throw new InvalidDataException(
                     $"{release.PackageName} does not match its signed checksum, so it was not installed.");
 
-            ZipFile.ExtractToDirectory(package, unpacked);
+            await ZipFile.ExtractToDirectoryAsync(package, unpacked, cancel);
 
             Prepare(here, here.PayloadIn(unpacked));
 

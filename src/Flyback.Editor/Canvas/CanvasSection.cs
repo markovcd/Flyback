@@ -61,7 +61,7 @@ internal sealed class CanvasSection : ISettingsSection
     };
 
     /// <summary>What the section was last saved as, and so what closing without Save puts it back to.</summary>
-    private CanvasSettings saved = new();
+    private CanvasSettings saved;
 
     /// <summary>Where <see cref="saved"/> is kept, or null to keep it nowhere.</summary>
     private readonly string? path;

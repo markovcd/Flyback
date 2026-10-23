@@ -95,7 +95,7 @@ public sealed class SitePresetTests : EditorTest
     public void More_brings_the_next_page_of_shared_presets()
     {
         using var site = new FakePresetSite(new Posted("a", "Aurora"), new Posted("b", "Breakers")) { PageSize = 1 };
-        var (window, parts, tiles) = Gallery(site);
+        var (window, _, tiles) = Gallery(site);
 
         var more = All<Button>(tiles).Single(b => b.Name == "more-presets");
 

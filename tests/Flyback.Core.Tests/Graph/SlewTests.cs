@@ -96,7 +96,7 @@ public class SlewTests
     [Fact]
     public void On_the_picture_it_is_a_wire()
     {
-        var patch = Wired(out var sink, NodeCatalog.OutputColorPort, (Rise, 0f));
+        var patch = Wired(out _, NodeCatalog.OutputColorPort, (Rise, 0f));
         var program = patch.CompileForVideo(Modules).Program;
         var registers = program.AllocateRegisters();
 

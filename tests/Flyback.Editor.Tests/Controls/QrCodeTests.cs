@@ -176,7 +176,7 @@ public class QrCodeTests : EditorTest
     {
         var size = modules.GetLength(0);
         var mask = Mask(modules, size);
-        var reserved = Reserved(modules, size);
+        var reserved = Reserved(size);
         var bits = new List<bool>();
         var upwards = true;
 
@@ -236,7 +236,7 @@ public class QrCodeTests : EditorTest
     /// their separators, the timing patterns, the alignment pattern and the format
     /// bits. The same places the encoder keeps clear, derived the same way.
     /// </summary>
-    private static bool[,] Reserved(bool[,] modules, int size)
+    private static bool[,] Reserved(int size)
     {
         var reserved = new bool[size, size];
 

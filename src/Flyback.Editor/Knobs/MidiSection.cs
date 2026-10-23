@@ -20,7 +20,6 @@ internal sealed class MidiSection : ISettingsSection
     private readonly OutputSettingRepository settings;
     private readonly PanelKnobs knobs;
     private readonly ControlHub hub;
-    private readonly InstrumentLibrary instruments;
 
     public string Name => "MIDI";
 
@@ -77,7 +76,6 @@ internal sealed class MidiSection : ISettingsSection
         this.settings = settings;
         this.knobs = knobs;
         this.hub = hub;
-        this.instruments = instruments;
 
         ToolTip.SetTip(takeover,
             "When a controller's knob is not where the knob on screen is: jump straight to the controller, "

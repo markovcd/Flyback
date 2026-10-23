@@ -57,6 +57,8 @@ public sealed unsafe class CoreAudioCapture(AudioFormat format, string? uid = nu
 
     public int Channels => Stereo;
 
+    // Volatile, so read without the lock.
+    // ReSharper disable once InconsistentlySynchronizedField
     public bool IsRunning => listening;
 
     public void Start(AudioCaptureCallback deliver)

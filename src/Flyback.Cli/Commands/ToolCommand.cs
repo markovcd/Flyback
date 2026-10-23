@@ -71,9 +71,9 @@ internal static class ToolCommand
             + "assistant does. For driving Flyback from a coding assistant you run yourself.")
         {
             name, patch, list, briefing, skill, arguments, picture, sound, json,
-            Step("undo", "Take back the last edit a tool made to the patch.", plugins, json, Undo, to: true),
-            Step("redo", "Make again the last edit undo took back.", plugins, json, Redo, to: false),
-            Step("history", "List the edits tools have made to the patch, oldest first.", plugins, json, History, to: false),
+            Step("undo", "Take back the last edit a tool made to the patch.", json, Undo, to: true),
+            Step("redo", "Make again the last edit undo took back.", json, Redo, to: false),
+            Step("history", "List the edits tools have made to the patch, oldest first.", json, History, to: false),
         };
 
         command.SetAction(async (result, cancel) =>
@@ -124,7 +124,7 @@ internal static class ToolCommand
 
     private delegate int Stepper(ToolHistory history, FileInfo file, int? to, bool json, TextWriter output, TextWriter error);
 
-    private static Command Step(string verb, string description, PluginRegistry plugins, Option<bool> json, Stepper run, bool to)
+    private static Command Step(string verb, string description, Option<bool> json, Stepper run, bool to)
     {
         var patch = PatchArgument();
         patch.Arity = ArgumentArity.ExactlyOne;
@@ -299,7 +299,7 @@ internal static class ToolCommand
         if (AskCommand.Open(plugins, file, null, null, error) is not { } about) return null;
 
         var modules = plugins.Modules;
-        var current = file.Exists ? File.ReadAllBytes(file.FullName) : null;
+        var current = file.Exists ? await File.ReadAllBytesAsync(file.FullName, cancel).ConfigureAwait(false) : null;
         var kept = history.Find(file.FullName);
         var log = kept is not null && kept.Matches(current)
             ? kept
@@ -323,7 +323,7 @@ internal static class ToolCommand
         try
         {
             bytes = Bytes(patch, about, modules, bench.Text);
-            File.WriteAllBytes(file.FullName, bytes);
+            await File.WriteAllBytesAsync(file.FullName, bytes, CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
         {

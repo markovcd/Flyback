@@ -115,14 +115,14 @@ public sealed class HelpSteps
     /// reads the name twice.
     /// </summary>
     [Then("no socket's help opens with the socket's own name")]
-    public void ThenNoHelpOpensWithItsName() => EachSocket((port, input) =>
+    public void ThenNoHelpOpensWithItsName() => EachSocket((port, _) =>
         new[] { $"'{port.Name}'", $"{port.Name} is ", $"{port.Name} are ", $"{port.Name}:" }
             .Any(opening => port.Help.StartsWith(opening, StringComparison.OrdinalIgnoreCase))
             ? "opens with its own name"
             : null);
 
     [Then("every socket's help is written in sentences")]
-    public void ThenHelpIsSentences() => EachSocket((port, input) => port.Help switch
+    public void ThenHelpIsSentences() => EachSocket((port, _) => port.Help switch
     {
         "" => null,
         var help when !char.IsLower(help[0]) && help.TrimEnd().EndsWith('.') => null,

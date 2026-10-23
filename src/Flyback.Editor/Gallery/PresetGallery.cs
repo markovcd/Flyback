@@ -311,7 +311,7 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
 
         // Escape here backs out of the name rather than out of the gallery, and
         // Enter saves, as it does in every other box that names something.
-        name.KeyDown += (_, e) =>
+        name.KeyDown += (sender, e) =>
         {
             switch (e.Key)
             {

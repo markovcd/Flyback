@@ -324,7 +324,7 @@ internal static class Pronunciation
         var n = word.Length;
         if (n < 4 || word[^1] != 'e') return -1;
         if (IsVowel(word[^2]) || word[^2] is 'r' or 'w') return -1;
-        if (!IsVowel(word[^3]) || (n > 3 && IsVowel(word[^4]))) return -1;
+        if (!IsVowel(word[^3]) || IsVowel(word[^4])) return -1;
 
         return n - 3;
     }

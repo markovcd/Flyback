@@ -224,7 +224,7 @@ public class StepListTests : EditorTest
     [AvaloniaFact]
     public void A_finger_tapping_along_a_volume_sets_that_level()
     {
-        var window = Showing(out var node);
+        var window = Showing(out _);
         var bar = Rows(window)[0].Children.OfType<LevelBar>().Single();
         var at = bar.TranslatePoint(new Point(bar.Bounds.Width * 0.25, bar.Bounds.Height / 2), window)!.Value;
 

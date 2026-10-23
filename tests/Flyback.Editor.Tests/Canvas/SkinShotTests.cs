@@ -46,7 +46,7 @@ public class SkinShotTests : EditorTest
             "shot.clear", "Clear", ModuleCategories.Maths,
             [new PortSpec("in", PortKind.Any)],
             [new PortSpec("out", PortKind.Any)],
-            (em, i) => [i[0]])
+            (_, i) => [i[0]])
         { Skin = new ModuleSkin.Artwork(empty) };
 
         var added = was.With(new ModuleProvider("shot", "Shot"), [def]);

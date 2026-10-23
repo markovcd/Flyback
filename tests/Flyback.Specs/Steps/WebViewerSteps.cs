@@ -184,9 +184,9 @@ public sealed class WebViewerSteps(Session session, PatchContext context, IUnitT
 
         var modules = Installed.Value.Modules;
         var speakers = new AudioRenderer { Aspect = SynthRenderer.AspectOf(Width, Height) };
-        CompiledPatch program = CompiledPatch.Silent;
+        CompiledPatch program;
         DelayState? memory = null;
-        var live = LiveValues.None;
+        LiveValues live;
 
         void Take(string text)
         {

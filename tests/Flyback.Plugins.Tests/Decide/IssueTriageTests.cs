@@ -73,7 +73,7 @@ public class IssueTriageTests
         {
             lock (Asked) Asked.Add(request);
 
-            return Task.FromResult(new Decision("blaming", request.Questions.ToDictionary(q => q.Key, q =>
+            return Task.FromResult(new Decision("blaming", request.Questions.ToDictionary(q => q.Key, _ =>
             {
                 return (Answer)new Answer.YesNo(request.State.Contains(word, StringComparison.OrdinalIgnoreCase) ? 1 : 0);
             }), DecisionUsage.None));

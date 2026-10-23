@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -142,7 +143,7 @@ internal sealed class PartGrid
         var map = new Grid
         {
             ColumnDefinitions = new ColumnDefinitions(
-                string.Join(',', [NameWidth.ToString(), .. Enumerable.Repeat("*", Sections), RemoveWidth.ToString()])),
+                string.Join(',', [NameWidth.ToString(CultureInfo.InvariantCulture), .. Enumerable.Repeat("*", Sections), RemoveWidth.ToString(CultureInfo.InvariantCulture)])),
             RowDefinitions = new RowDefinitions(string.Join(',', Enumerable.Repeat("Auto", parts.Count))),
         };
 

@@ -88,7 +88,7 @@ internal static class StillsCommand
             output.WriteLine($"{preset.Name}: {Said(entry.Still)}");
         }
 
-        File.WriteAllText(Path.Combine(folder.FullName, StillIndex.FileName), new StillIndex(StillIndex.ThisBuild, entries).Write());
+        await File.WriteAllTextAsync(Path.Combine(folder.FullName, StillIndex.FileName), new StillIndex(StillIndex.ThisBuild, entries).Write(), cancellation);
 
         return Exit.Ok;
     }
