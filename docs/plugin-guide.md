@@ -518,18 +518,17 @@ Note the cost: two seconds at the oversampled audio rate is about 1.5 MB per lin
 
 ## 7. Shipping a patch
 
-A preset is how a plugin shows its modules wired up properly. It is a name and a function, and the function is handed the catalog when the preset is picked, not when it is registered, so it can freely use the modules the same plugin just added.
+A preset is how a plugin shows its modules wired up properly. It is a patch written in the text language ([docs/language.md](language.md)), as a `.fbks` file embedded in your plugin, and `PresetText.Preset(assembly, name, resource, kind)` offers it under a name. The patch is built when the preset is picked, not when it is registered, so it can freely use the modules the same plugin just added. A text that does not build throws with every complaint the first time the preset is picked, so write it with `flyback-cli check` beside you.
 
-`new PatchPreset(name, build, description, kind)`:
-
-- The **description** is a line saying what the preset is for. The patch it builds carries it as its own description, unless the text gives one with a `description` line, and that is what the gallery shows under the name.
+- The file's **`description`** line says what the preset is for; the gallery shows it under the name, and the patch carries it as its own.
+- The file's **`tags`** line gives the words the gallery filters by. Flyback's own presets keep to ten: `basics`, `song`, `playable`, `drums`, `melody`, `ambient`, `synthesis`, `effects`, `scope` and `patterns`; reusing them puts yours beside them under the same topic.
 - The **`PresetKind`** says which heading of the preset gallery it belongs under: `Idea` for one idea at one sink, which is the default; `Interplay` where sound and picture are the same thought; `Showcase` for a whole piece. Say which, or yours is filed as an idea whatever it is.
-- **`Tags`**, an init property, are the words the gallery filters by, as a patch's own tags are. Flyback's own presets keep to ten: `basics`, `song`, `playable`, `drums`, `melody`, `ambient`, `synthesis`, `effects`, `scope` and `patterns`; reusing them puts yours beside them under the same topic.
-
-The patch itself is written in the text language ([docs/language.md](language.md)), as a `.fbks` file embedded in your plugin, and `PresetText.Embedded` turns it into the build function. A text that does not build throws with every complaint the first time the preset is picked, so write it with `flyback-cli check` beside you.
 
 ```text
 # Pond.fbks
+description "Rings on the screen, heard through a Scan and smoothed."
+tags "synthesis" "patterns"
+
 let field = yours.rings(freq: 6)
 let smooth = field
   |> scan(rate: 110, radius: 0.35, x: 0.2)
@@ -553,14 +552,8 @@ namespace Flyback.Plugins.Yours;
 
 public static class YoursPresets
 {
-    public static PatchPreset Pond { get; } = new(
-        "Pond",
-        PresetText.Embedded(typeof(YoursPlugin).Assembly, "Pond.fbks"),
-        "Rings on the screen, heard through a Scan and smoothed.",
-        PresetKind.Interplay)
-    {
-        Tags = ["synthesis", "patterns"],
-    };
+    public static PatchPreset Pond { get; } =
+        PresetText.Preset(typeof(YoursPlugin).Assembly, "Pond", "Pond.fbks", PresetKind.Interplay);
 }
 ```
 
@@ -576,7 +569,7 @@ A preset that plays a sound file or shows a picture carries it inside your plugi
 ```
 
 ```csharp
-new PatchPreset("Speaking", PresetText.Embedded(typeof(YoursPlugin).Assembly, "Speaking.fbks"))
+PresetText.Preset(typeof(YoursPlugin).Assembly, "Speaking", "Speaking.fbks") with
 {
     Files = PresetFiles.Embedded(typeof(YoursPlugin).Assembly, "Speaking"),
 };

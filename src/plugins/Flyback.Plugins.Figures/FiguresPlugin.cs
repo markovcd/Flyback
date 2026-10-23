@@ -46,15 +46,7 @@ public sealed class FiguresPlugin : IFlybackPlugin
 
         registry.AddPresets(
         [
-            new PatchPreset(
-                "Vigil",
-                PresetText.Embedded(typeof(FiguresPlugin).Assembly, "Vigil.fbks"),
-                "Dark ambient in D phrygian dominant: a drone of four voices that is the fog heard "
-                + "through Overtones, a harmonograph drawing the chords as they swell, and a far bell, rarely.",
-                PresetKind.Interplay)
-            {
-                Tags = ["ambient", "playable"],
-            },
+            PresetText.Preset(typeof(FiguresPlugin).Assembly, "Vigil", "Vigil.fbks", PresetKind.Interplay),
         ]);
     }
 }

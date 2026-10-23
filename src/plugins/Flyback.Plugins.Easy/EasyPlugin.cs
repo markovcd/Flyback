@@ -29,33 +29,9 @@ public sealed class EasyPlugin : IFlybackPlugin
 
         registry.AddPresets(
         [
-            new PatchPreset(
-                "First notes",
-                PresetText.Embedded(typeof(EasyPlugin).Assembly, "FirstNotes.fbks"),
-                "A Note Sequencer playing an Easy Synth, its filter swaying, with rings flashing on each note.",
-                PresetKind.Interplay)
-            {
-                Tags = ["basics", "melody"],
-            },
-            new PatchPreset(
-                "First beat",
-                PresetText.Embedded(typeof(EasyPlugin).Assembly, "FirstBeat.fbks"),
-                "Four Easy Drums on Auto, a kick, a snare and two hats, each playing the rhythm that "
-                + "suits it, with the picture pulsing on the kick.",
-                PresetKind.Interplay)
-            {
-                Tags = ["basics", "drums"],
-            },
-            new PatchPreset(
-                "Warehouse",
-                PresetText.Embedded(typeof(EasyPlugin).Assembly, "Warehouse.fbks"),
-                "A three-minute acid house track on the Easy modules at 124 bpm: builds, two drops and "
-                + "a breakdown in A minor, a bass line, a chord stab and an organ hook, and knobs for the "
-                + "kick's pump, the echo and the swing.",
-                PresetKind.Showcase)
-            {
-                Tags = ["song", "drums", "playable"],
-            },
+            PresetText.Preset(typeof(EasyPlugin).Assembly, "First notes", "FirstNotes.fbks", PresetKind.Interplay),
+            PresetText.Preset(typeof(EasyPlugin).Assembly, "First beat", "FirstBeat.fbks", PresetKind.Interplay),
+            PresetText.Preset(typeof(EasyPlugin).Assembly, "Warehouse", "Warehouse.fbks", PresetKind.Showcase),
         ]);
     }
 }

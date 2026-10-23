@@ -22,7 +22,7 @@ public sealed record PatchPreset(
     public Func<IReadOnlyDictionary<string, byte[]>>? Files { get; init; }
 
     /// <summary>Words to find the preset by, written into the patch it builds where that patch has none.</summary>
-    public IReadOnlyList<string>? Tags { get; init; }
+    internal IReadOnlyList<string>? Tags { get; init; }
 
     /// <summary>Builds the patch, carrying <see cref="Description"/> and <see cref="Tags"/> unless it has its own.</summary>
     public Func<ModuleCatalog, Patch> Build

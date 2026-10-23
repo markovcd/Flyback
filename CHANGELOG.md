@@ -8,6 +8,7 @@
 
 ### Presets
 
+- A preset's card shows the description and tags written in its file; a plugin registers one with `PresetText.Preset`, in place of `PresetText.Embedded`.
 - Every preset is tagged from ten topics, so the gallery's topic row is short: basics, song, playable, drums, melody, ambient, synthesis, effects, scope and patterns. Flyback's own plugins are tagged by what they work on: sound, picture, MIDI, effects, AI or secrets, and their system.
 
 ### Assistant
@@ -27,6 +28,8 @@
 ### Performance
 
 ### Fixes
+
+- Vigil's and No Sense Dub's descriptions are no longer cut off.
 
 ## 0.10.1 — 2026-10-21
 

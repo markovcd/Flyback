@@ -14,11 +14,12 @@
 # the rows they read and draws their waves along them, and tints the fog by the
 # chord. Engine modules only besides the three.
 
-description "Dark ambient in D phrygian dominant on the three Figures. The drone is"
-  "four voices reading the fog through Overtones, so its timbre is the mist drifting; a"
-  "harmonograph draws the chords D, E♭, A and A♭ as they swell, and a plate far off in"
-  "the hall is a bell, rarely. 'fog' thickens the mist and the timbre with it, 'glow'"
-  "opens the drone, 'drive' roughens it, 'twist' bends the drawings, and 'wind'"
+description "Dark ambient in D phrygian dominant on the three Figures. Four voices"
+  "read the fog through Overtones, so the drone's timbre is the mist"
+  "drifting; a harmonograph draws the chords as they swell, and a far plate"
+  "is a bell, rarely. 'fog' thickens the mist, 'glow' opens the drone,"
+  "'drive' roughens it, 'twist' bends the drawings, and 'wind' and 'hall'"
+  "are the mix."
 tags "ambient" "playable"
 length 5:20.00
 

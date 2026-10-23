@@ -40,6 +40,7 @@ public class ContractSurfaceTests
         ["Flyback.Core.Graph.PatchControl"] = "Patch.Controls, saved in the patch file.",
         ["Flyback.Core.Graph.ControlLink"] = "A socket's link to a panel knob, saved in its module's state.",
         ["Flyback.Core.Graph.Step"] = "What StepsExtra.Set fills a sequencer with.",
+        ["Flyback.Core.Graph.ModuleCatalog"] = "PatchPreset.Build's parameter: a positional record's shape is public as one piece, and a plugin hands its presets over as PatchPresets.",
         ["Flyback.Core.Graph.PartLevel"] = "ArrangementExtra's default, one part's level in one section.",
         ["Flyback.Plugins.Midi.MidiAction"] = "MidiMessage.Action's type, which a MIDI input plugin builds a message with.",
         ["Flyback.Plugins.Decide.IPreparedModel"] = "The only way a decision model that runs here gets its files: the host downloads them, so the plugin never reaches the network (ADR-0186).",

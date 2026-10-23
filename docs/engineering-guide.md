@@ -129,7 +129,7 @@ before any window exists. `ModuleCategories.All` is both the set of curated
 categories and the palette order.
 
 Presets are written in the text language: the engine's are `.fbks` files in
-`Graph/Presets/`, a plugin's are embedded and built through `PresetText.Embedded`.
+`Graph/Presets/`, a plugin's are embedded and offered through `PresetText.Preset`, which reads their description and tags from the file.
 They declare no coordinates
 ([0070](adr/0070-a-preset-declares-no-coordinates.md)) and arrive with their
 arithmetic folded into Expressions

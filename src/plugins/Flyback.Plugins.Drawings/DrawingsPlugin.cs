@@ -42,14 +42,9 @@ public sealed class DrawingsPlugin : IFlybackPlugin
 
         registry.AddPresets(
         [
-            new PatchPreset(
-                "Wireframe",
-                PresetText.Embedded(typeof(DrawingsPlugin).Assembly, "Wireframe.fbks"),
-                "A cube's edges played as one path at a pitch, turned in perspective as it plays: a model drawn by its sound.",
-                PresetKind.Interplay)
+            PresetText.Preset(typeof(DrawingsPlugin).Assembly, "Wireframe", "Wireframe.fbks", PresetKind.Interplay) with
             {
                 Files = PresetFiles.Embedded(typeof(DrawingsPlugin).Assembly, "Wireframe"),
-                Tags = ["scope"],
             },
         ]);
     }

@@ -8,28 +8,38 @@ namespace Flyback.Plugins;
 public static class PresetText
 {
     /// <summary>
-    /// Builds the <c>.fbks</c> resource <paramref name="name"/> of <paramref name="assembly"/>
-    /// against the catalog the preset is opened with.
+    /// The <c>.fbks</c> resource <paramref name="resource"/> of <paramref name="assembly"/>,
+    /// offered as <paramref name="name"/>, with the description and tags its own
+    /// <c>description</c> and <c>tags</c> lines give.
     /// </summary>
     /// <remarks>
     /// Embed the file with <c>LogicalName="name.fbks"</c>, outside the folder
     /// <see cref="PresetFiles.Embedded"/> reads. A text that does not build throws with
     /// every complaint, since a shipped preset that fails is a bug in the plugin.
     /// </remarks>
-    public static Func<ModuleCatalog, Patch> Embedded(Assembly assembly, string name)
+    public static PatchPreset Preset(Assembly assembly, string name, string resource, PresetKind kind = PresetKind.Idea)
     {
         ArgumentNullException.ThrowIfNull(assembly);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(resource);
 
-        return modules =>
+        using var stream = assembly.GetManifestResourceStream(resource)
+            ?? throw new InvalidOperationException($"{assembly.GetName().Name} carries no resource '{resource}'.");
+        using var reader = new StreamReader(stream);
+
+        var source = reader.ReadToEnd();
+        var header = SourceHeader.Read(source);
+
+        return new PatchPreset(name, modules => Build(source, resource, modules), header.Description, kind)
         {
-            using var stream = assembly.GetManifestResourceStream(name)
-                ?? throw new InvalidOperationException($"{assembly.GetName().Name} carries no resource '{name}'.");
-            using var reader = new StreamReader(stream);
-
-            var load = PatchLanguage.Build(reader.ReadToEnd(), modules);
-
-            return load.Ok ? load.Patch : throw new InvalidOperationException($"{name} does not build:{Environment.NewLine}{load.Report}");
+            Tags = header.Tags,
         };
+    }
+
+    private static Patch Build(string source, string resource, ModuleCatalog modules)
+    {
+        var load = PatchLanguage.Build(source, modules);
+
+        return load.Ok ? load.Patch : throw new InvalidOperationException($"{resource} does not build:{Environment.NewLine}{load.Report}");
     }
 }

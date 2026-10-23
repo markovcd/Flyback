@@ -28,97 +28,50 @@ internal static class Presets
     };
 
     /// <summary>The presets as written, before <see cref="Fused"/>.</summary>
-    internal static IReadOnlyList<PatchPreset> Shipped =>
+    internal static IReadOnlyList<PatchPreset> Shipped { get; } =
     [
         // --- nothing yet -------------------------------------------------------
 
-        new("Empty", Empty,
-            "The Output, with everything still to plug into it.",
-            PresetKind.Blank) { Tags = ["basics"] },
-        new("Picture in", PictureIn,
-            "A photograph put through the same geometry a generated field goes through, once you choose one.",
-            PresetKind.Blank) { Tags = ["basics"] },
-        new("Clip", Clip,
-            "A sound file played and retriggered every two seconds, once you choose one.",
-            PresetKind.Blank) { Tags = ["basics"] },
+        // Its text says nothing, so a patch started from it has no description of its own.
+        Offered("Empty", Empty, PresetKind.Blank) with
+        {
+            Description = "The Output, with everything still to plug into it.",
+            Tags = ["basics"],
+        },
+        Offered("Picture in", PictureIn, PresetKind.Blank),
+        Offered("Clip", Clip, PresetKind.Blank),
 
         // --- one idea, one sink ------------------------------------------------
 
-        new("Plasma", Plasma,
-            "Three drifting sine fields summed and read through a cosine palette — the hello world of video synths.")
-            { Tags = ["basics", "patterns"] },
-        new("Kaleidoscope", Kaleidoscope,
-            "Rotating wedges filled with clouds that boil over time.")
-            { Tags = ["patterns"] },
-        new("Grid", Grid,
-            "Tile, mirror and polar in a row, so what each one does to the plane is separable.")
-            { Tags = ["basics", "patterns"] },
-        new("Three channels", ThreeChannels,
-            "One field read three times, a little apart: a color is three signals, and here they disagree.")
-            { Tags = ["basics", "patterns"] },
-        new("Feedback tunnel", FeedbackTunnel,
-            "Each frame re-read slightly rotated, scaled and dimmed, with fresh rings on top.")
-            { Tags = ["patterns"] },
-        new("Trails", Trails,
-            "A dot on a looping path and a Trails keeping where it has been, so a point draws a ribbon.")
-            { Tags = ["basics", "patterns"] },
-        new("Loop", Loop,
-            "A wire running backwards: a lowpass built from an add and a multiply, with its one number swept.")
-            { Tags = ["basics", "effects"] },
-        new("Two channels", TwoChannels,
-            "Stereo from one voice: left and right fed differently rather than panned.")
-            { Tags = ["basics"] },
-        new("Staircase", Staircase,
-            "A slope caught six times a second by a Sample & Hold, which makes steps, and steps are a tune.")
-            { Tags = ["basics", "melody"] },
-        new("Heads or tails", HeadsOrTails,
-            "One riff and a coin for every note: heads plays it on the left, tails an octave down on the right, and the odds drift.")
-            { Tags = ["melody"] },
-        new("Nebula", Nebula,
-            "Everything the video side can do, folded, warped and trailing its own frames.")
-            { Tags = ["patterns"] },
+        Offered("Plasma", Plasma),
+        Offered("Kaleidoscope", Kaleidoscope),
+        Offered("Grid", Grid),
+        Offered("Three channels", ThreeChannels),
+        Offered("Feedback tunnel", FeedbackTunnel),
+        Offered("Trails", Trails),
+        Offered("Loop", Loop),
+        Offered("Two channels", TwoChannels),
+        Offered("Staircase", Staircase),
+        Offered("Heads or tails", HeadsOrTails),
+        Offered("Nebula", Nebula),
 
         // --- the two sinks meeting ---------------------------------------------
 
-        new("Drone", Drone,
-            "One slow oscillator setting both the hue of the image and the tremolo on the tone.",
-            PresetKind.Interplay) { Tags = ["basics", "ambient"] },
-        new("Sequence", Sequence,
-            "One sequencer heard and seen at once: the steps are the tune and the color.",
-            PresetKind.Interplay) { Tags = ["basics", "melody"] },
-        new("Four voices", FourVoices,
-            "Four faders that are one signal each, opening a voice and a band together.",
-            PresetKind.Interplay) { Tags = ["melody", "synthesis"] },
-        new("Heard", Heard,
-            "A drum the picture listens to rather than being told about, through a Meter.",
-            PresetKind.Interplay) { Tags = ["drums", "patterns"] },
-        new("Duck", Duck,
-            "A pad that gets out of the way each time the kick hits, on a Scope drawing how far.",
-            PresetKind.Interplay) { Tags = ["drums", "effects", "scope"] },
-        new("Waveform", Waveform,
-            "Sine, triangle, square and saw faded one into the next, on a Scope drawing the shape being heard.",
-            PresetKind.Interplay) { Tags = ["basics", "synthesis", "scope"] },
-        new("Sidebands", Sidebands,
-            "One sine bending another's phase at audio rate, on an Analyzer showing the partials that grows.",
-            PresetKind.Interplay) { Tags = ["synthesis"] },
-        new("Ahead and behind", AheadAndBehind,
-            "A Probe and a Scope on one signal, which is the only way to see how they differ.",
-            PresetKind.Interplay) { Tags = ["basics", "scope"] },
-        new("Lissajous", Lissajous,
-            "Two sines a fifth apart, left against right on a Beam: a knot that turns because the fifth is a little sharp.",
-            PresetKind.Interplay) { Tags = ["basics", "scope"] },
-        new("In key", InKey,
-            "One cloud field snapped to a pentatonic: heard as a melody, seen as the terraces it was cut into.",
-            PresetKind.Interplay) { Tags = ["melody", "patterns"] },
-        new("Ring scan", RingScan,
-            "A loop swept round a field at audio rate, so the picture is the waveform.",
-            PresetKind.Interplay) { Tags = ["synthesis", "patterns"] },
+        Offered("Drone", Drone, PresetKind.Interplay),
+        Offered("Sequence", Sequence, PresetKind.Interplay),
+        Offered("Four voices", FourVoices, PresetKind.Interplay),
+        Offered("Heard", Heard, PresetKind.Interplay),
+        Offered("Duck", Duck, PresetKind.Interplay),
+        Offered("Waveform", Waveform, PresetKind.Interplay),
+        Offered("Sidebands", Sidebands, PresetKind.Interplay),
+        Offered("Ahead and behind", AheadAndBehind, PresetKind.Interplay),
+        Offered("Lissajous", Lissajous, PresetKind.Interplay),
+        Offered("In key", InKey, PresetKind.Interplay),
+        Offered("Ring scan", RingScan, PresetKind.Interplay),
 
         // --- what one patch can be ---------------------------------------------
 
-        new("Whole band", WholeBand,
-            "A whole song from the engine's own modules: seven parts in a room, twelve phrases, one picture.",
-            PresetKind.Showcase) { Tags = ["song", "drums"] },
+        Offered("Whole band", WholeBand, PresetKind.Showcase),
     ];
 
     /// <summary>Just the Output, with everything still to plug into it.</summary>
@@ -282,16 +235,32 @@ internal static class Presets
     /// </summary>
     public static Patch WholeBand(ModuleCatalog modules) => Text("WholeBand.fbks", modules);
 
+    /// <summary>
+    /// <paramref name="build"/>, offered as <paramref name="name"/> with the description
+    /// and tags of the text it builds, which is named for it.
+    /// </summary>
+    private static PatchPreset Offered(string name, Func<ModuleCatalog, Patch> build, PresetKind kind = PresetKind.Idea)
+    {
+        var header = SourceHeader.Read(Source(build.Method.Name + ".fbks"));
+
+        return new PatchPreset(name, build, header.Description, kind) { Tags = header.Tags };
+    }
+
     /// <summary>Builds the embedded <c>presets/</c> text <paramref name="name"/> against <paramref name="modules"/>.</summary>
     /// <remarks>A shipped text that does not build throws with every complaint, since that is a bug here.</remarks>
     private static Patch Text(string name, ModuleCatalog modules)
+    {
+        var load = PatchLanguage.Build(Source(name), modules);
+
+        return load.Ok ? load.Patch : throw new InvalidOperationException($"{name} does not build:{Environment.NewLine}{load.Report}");
+    }
+
+    private static string Source(string name)
     {
         using var stream = typeof(Presets).Assembly.GetManifestResourceStream("presets/" + name)
             ?? throw new InvalidOperationException($"No preset text '{name}' is embedded.");
         using var reader = new StreamReader(stream);
 
-        var load = PatchLanguage.Build(reader.ReadToEnd(), modules);
-
-        return load.Ok ? load.Patch : throw new InvalidOperationException($"{name} does not build:{Environment.NewLine}{load.Report}");
+        return reader.ReadToEnd();
     }
 }

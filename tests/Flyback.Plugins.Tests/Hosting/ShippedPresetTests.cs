@@ -59,6 +59,20 @@ public class ShippedPresetTests
         patch.Length.ShouldBe(Lengths.TryGetValue(name, out var seconds) ? seconds : null, name);
     }
 
+    /// <summary>The gallery's card says what the patch says once it is open: both come from the file.</summary>
+    [Theory]
+    [MemberData(nameof(Every))]
+    public void Every_preset_is_offered_with_what_its_patch_says(string name)
+    {
+        var loaded = ShippedPlugins.Loaded;
+        var preset = loaded.Presets.Single(p => p.Name == name);
+        var patch = preset.Build(loaded.Modules);
+
+        preset.Description.ShouldNotBeNullOrWhiteSpace();
+        preset.Description.ShouldBe(patch.Description);
+        preset.Tags.ShouldBe(patch.Tags);
+    }
+
     /// <summary>Every preset in the picker builds and compiles for both sinks, against what it carries.</summary>
     [Theory]
     [MemberData(nameof(Every))]

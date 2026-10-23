@@ -28,15 +28,7 @@ public sealed class SpeechPlugin : IFlybackPlugin
 
         registry.AddPresets(
         [
-            new PatchPreset(
-                "Daisy Bell",
-                PresetText.Embedded(typeof(SpeechPlugin).Assembly, "DaisyBell.fbks"),
-                "The song a computer first sang, sung again by a voice made of filters over a waltz, "
-                + "with its mouth and the words on the screen.",
-                PresetKind.Interplay)
-            {
-                Tags = ["song", "melody"],
-            },
+            PresetText.Preset(typeof(SpeechPlugin).Assembly, "Daisy Bell", "DaisyBell.fbks", PresetKind.Interplay),
         ]);
     }
 }

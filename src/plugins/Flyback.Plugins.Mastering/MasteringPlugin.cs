@@ -43,14 +43,7 @@ public sealed class MasteringPlugin : IFlybackPlugin
 
         registry.AddPresets(
         [
-            new PatchPreset(
-                "Before and after",
-                PresetText.Embedded(typeof(MasteringPlugin).Assembly, "BeforeAndAfter.fbks"),
-                "A small mix with an EQ, a Compressor and a Maximizer after it, switched out and in "
-                + "every four bars.")
-            {
-                Tags = ["effects"],
-            },
+            PresetText.Preset(typeof(MasteringPlugin).Assembly, "Before and after", "BeforeAndAfter.fbks"),
         ]);
     }
 }

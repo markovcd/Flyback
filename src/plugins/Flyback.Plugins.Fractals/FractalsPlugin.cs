@@ -44,23 +44,8 @@ public sealed class FractalsPlugin : IFlybackPlugin
 
         registry.AddPresets(
         [
-            new PatchPreset(
-                "Dive",
-                PresetText.Embedded(typeof(FractalsPlugin).Assembly, "Dive.fbks"),
-                "A dive into the Mandelbrot set and back out, its colors cycling as it goes.")
-            {
-                Tags = ["patterns"],
-            },
-            new PatchPreset(
-                "Julia walk",
-                PresetText.Embedded(typeof(FractalsPlugin).Assembly, "JuliaWalk.fbks"),
-                "One c going slowly round a circle: its Julia set on the screen, and the orbit of one "
-                + "of its pixels drawn over it and heard, a tone where the orbit settles and a hiss "
-                + "where it never does.",
-                PresetKind.Interplay)
-            {
-                Tags = ["synthesis", "patterns"],
-            },
+            PresetText.Preset(typeof(FractalsPlugin).Assembly, "Dive", "Dive.fbks"),
+            PresetText.Preset(typeof(FractalsPlugin).Assembly, "Julia walk", "JuliaWalk.fbks", PresetKind.Interplay),
         ]);
     }
 }

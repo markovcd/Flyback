@@ -61,36 +61,10 @@ public sealed class VoicePlugin : IFlybackPlugin
 
         registry.AddPresets(
         [
-            new PatchPreset(
-                "Supersaw",
-                PresetText.Embedded(typeof(VoicePlugin).Assembly, "Supersaw.fbks"),
-                "Seven detuned saws, wired the way the module is meant to be driven.")
-            {
-                Tags = ["synthesis", "melody"],
-            },
-            new PatchPreset(
-                "Filter sweep",
-                PresetText.Embedded(typeof(VoicePlugin).Assembly, "FilterSweep.fbks"),
-                "A saw folded and then filtered: make the harmonics first, take them away second.")
-            {
-                Tags = ["basics", "synthesis"],
-            },
-            new PatchPreset(
-                "Struck",
-                PresetText.Embedded(typeof(VoicePlugin).Assembly, "Struck.fbks"),
-                "A kick, a hat and a wandering bell: each a Stroke into one module, all counted off one Tempo.")
-            {
-                Tags = ["drums"],
-            },
-            new PatchPreset(
-                "Euclid kit",
-                PresetText.Embedded(typeof(VoicePlugin).Assembly, "EuclidKit.fbks"),
-                "Four Euclidean rhythms playing a noise kit and a gliding bass, drawn as a clock "
-                + "hand, a ring the kick pushes and a flash on the snare.",
-                PresetKind.Interplay)
-            {
-                Tags = ["drums"],
-            },
+            PresetText.Preset(typeof(VoicePlugin).Assembly, "Supersaw", "Supersaw.fbks"),
+            PresetText.Preset(typeof(VoicePlugin).Assembly, "Filter sweep", "FilterSweep.fbks"),
+            PresetText.Preset(typeof(VoicePlugin).Assembly, "Struck", "Struck.fbks"),
+            PresetText.Preset(typeof(VoicePlugin).Assembly, "Euclid kit", "EuclidKit.fbks", PresetKind.Interplay),
         ]);
     }
 }
