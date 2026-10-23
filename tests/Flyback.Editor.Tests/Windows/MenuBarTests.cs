@@ -28,6 +28,8 @@ public sealed class MenuBarTests : EditorTest
     private static NativeMenu Menu(MenuBar menu, string title) =>
         menu.Menu.Items.OfType<NativeMenuItem>().Single(i => i.Header == title).Menu!;
 
+    // The way the platform's menu exporter clicks an item; NativeMenuItem has no other.
+    // ReSharper disable once CSharpWarnings::CS0618
     private static void Choose(NativeMenuItem item) =>
         ((INativeMenuItemExporterEventsImplBridge)item).RaiseClicked();
 

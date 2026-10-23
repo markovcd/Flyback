@@ -21,6 +21,8 @@ public sealed class AppMenuTests : EditorTest
     private static IEnumerable<NativeMenuItem> Items(AppMenu menu) =>
         menu.Menu.Items.OfType<NativeMenuItem>().Where(i => i is not NativeMenuItemSeparator);
 
+    // The way the platform's menu exporter clicks an item; NativeMenuItem has no other.
+    // ReSharper disable once CSharpWarnings::CS0618
     private static void Choose(AppMenu menu, string header) =>
         ((INativeMenuItemExporterEventsImplBridge)Item(menu, header)).RaiseClicked();
 
