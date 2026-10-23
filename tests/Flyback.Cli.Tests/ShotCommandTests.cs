@@ -17,7 +17,7 @@ public sealed class ShotCommandTests : IDisposable
 
     public void Dispose() => folder.Delete(recursive: true);
 
-    private string At(string name) => System.IO.Path.Combine(folder.FullName, name);
+    private string At(string name) => Path.Combine(folder.FullName, name);
 
     /// <summary>The editor it is told to use, which is nowhere, so a request that gets that far says so.</summary>
     private string Nowhere => At("no-editor");
@@ -35,16 +35,16 @@ public sealed class ShotCommandTests : IDisposable
     }
 
     [Theory]
-    [InlineData(new string[] { "--out", "{0}a.png" }, "give a patch or --preset, and not both.")]
-    [InlineData(new string[] { "{0}tone.fbk", "--preset", "Plasma", "--out", "{0}a.png" }, "give a patch or --preset, and not both.")]
-    [InlineData(new string[] { "--preset", "Plasma", "--out", "{0}a.jpg" }, "a shot is a PNG.")]
-    [InlineData(new string[] { "--preset", "Plasma", "--out", "{0}a.png", "--at", "Infinity" }, "--at is a second of the patch, from 0 to 10800.")]
-    [InlineData(new string[] { "--preset", "Plasma", "--out", "{0}a.png", "--at", "1e309" }, "--at is a second of the patch, from 0 to 10800.")]
-    [InlineData(new string[] { "--preset", "Plasma", "--out", "{0}a.png", "--at", "NaN" }, "--at is a second of the patch, from 0 to 10800.")]
-    [InlineData(new string[] { "--preset", "Plasma", "--out", "{0}a.png", "--at", "-1" }, "--at is a second of the patch, from 0 to 10800.")]
+    [InlineData(new[] { "--out", "{0}a.png" }, "give a patch or --preset, and not both.")]
+    [InlineData(new[] { "{0}tone.fbk", "--preset", "Plasma", "--out", "{0}a.png" }, "give a patch or --preset, and not both.")]
+    [InlineData(new[] { "--preset", "Plasma", "--out", "{0}a.jpg" }, "a shot is a PNG.")]
+    [InlineData(new[] { "--preset", "Plasma", "--out", "{0}a.png", "--at", "Infinity" }, "--at is a second of the patch, from 0 to 10800.")]
+    [InlineData(new[] { "--preset", "Plasma", "--out", "{0}a.png", "--at", "1e309" }, "--at is a second of the patch, from 0 to 10800.")]
+    [InlineData(new[] { "--preset", "Plasma", "--out", "{0}a.png", "--at", "NaN" }, "--at is a second of the patch, from 0 to 10800.")]
+    [InlineData(new[] { "--preset", "Plasma", "--out", "{0}a.png", "--at", "-1" }, "--at is a second of the patch, from 0 to 10800.")]
     public void A_request_that_does_not_make_sense_is_refused_before_the_editor_is_looked_for(string[] args, string why)
     {
-        var (code, said) = Run([.. args.Select(arg => arg.Replace("{0}", folder.FullName + System.IO.Path.DirectorySeparatorChar))]);
+        var (code, said) = Run([.. args.Select(arg => arg.Replace("{0}", folder.FullName + Path.DirectorySeparatorChar))]);
 
         code.ShouldBe(Exit.Failed, said);
         said.ShouldContain(why);

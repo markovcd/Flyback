@@ -36,8 +36,8 @@ public sealed class SiteTransportTests
             var got = await client.GetByteArrayAsync(new Uri($"http://127.0.0.1:{port}/api/v1/presets/x/file"), TestContext.Current.CancellationToken);
 
             got.ShouldBe(file);
-            (await request).ShouldContain("Accept-Encoding", Case.Insensitive);
-            (await request).ShouldContain("br", Case.Insensitive);
+            (await request).ShouldContain("Accept-Encoding");
+            (await request).ShouldContain("br");
         }
         finally
         {

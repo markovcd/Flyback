@@ -100,7 +100,7 @@ public sealed class BrowserSteps(PatchContext context, IUnitTestRuntimeProvider 
     public void WhenAFingerDrags()
     {
         var (x, y) = Middle("screen");
-        Page.Touch(x - 60, y, 120, 0);
+        Page.Touch(x - 60, y, 120);
     }
 
     [When("a mouse drags across the web viewer's picture")]

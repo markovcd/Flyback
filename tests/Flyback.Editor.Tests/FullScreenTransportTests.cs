@@ -183,7 +183,7 @@ public sealed class FullScreenTransportTests : EditorTest
         Settle(window);
         var on = (Ink() as ISolidColorBrush).ShouldNotBeNull().Color;
 
-        on.ShouldBe(Flyback.Ui.Controls.Colors.Attention);
+        on.ShouldBe(Ui.Controls.Colors.Attention);
         off.ShouldNotBe(on);
     }
 

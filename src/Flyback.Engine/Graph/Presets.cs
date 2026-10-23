@@ -4,7 +4,7 @@ using Flyback.Engine.Language;
 namespace Flyback.Engine.Graph;
 
 /// <summary>Patches that ship with the synth, so it never opens on a blank canvas.</summary>
-internal static partial class Presets
+internal static class Presets
 {
     /// <summary>
     /// Everything the engine ships, in the order the picker shows it: the blank

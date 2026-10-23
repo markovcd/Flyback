@@ -212,7 +212,7 @@ public sealed class PatchSteps(PatchContext context)
         context.Add("brighter", "math.max");
         context.Wire("dimmed", "color", "brighter", "a");
         context.Wire("flash", "out", "brighter", "b");
-        Show("brighter", "out");
+        Show("brighter");
     }
 
     [Given("feedback brightened each frame by {float} plus one divided by zero")]

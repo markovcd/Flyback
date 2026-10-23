@@ -225,7 +225,7 @@ public class AbortGestureTests : EditorTest
 
         window.AddHandler(
             InputElement.KeyDownEvent,
-            (object? _, KeyEventArgs e) => handled = e.Handled,
+            (_, e) => handled = e.Handled,
             RoutingStrategies.Bubble,
             handledEventsToo: true);
 

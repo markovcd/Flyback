@@ -31,9 +31,6 @@ public class LanguageTests
 
     private static LanguageLoad Try(string source) => PatchLanguage.Build(source, NodeCatalog.BuiltIn);
 
-    private static IEnumerable<(OpCode, int, int, int, int, float)> Fingerprint(CompiledPatch program) =>
-        program.Ops.Select(o => (o.Code, o.Out, o.A, o.B, o.C, o.K));
-
     /// <summary>
     /// The same instrument, whichever way it was written. Both programs, because
     /// a preset built for the ear and one built for the eye each prove only half

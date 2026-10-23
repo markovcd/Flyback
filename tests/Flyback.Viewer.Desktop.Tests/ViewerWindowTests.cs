@@ -108,7 +108,7 @@ public class ViewerWindowTests : UiTest
 
         public bool IsRunning { get; private set; }
 
-        public IAudioCapture Create(AudioFormat format, Flyback.Plugins.Settings.SettingValues settings) => this;
+        public IAudioCapture Create(AudioFormat format, Plugins.Settings.SettingValues settings) => this;
 
         public void Start(AudioCaptureCallback deliver) => IsRunning = true;
 
@@ -768,9 +768,9 @@ public class ViewerWindowTests : UiTest
     [AvaloniaFact]
     public void The_curve_is_a_floor_a_ceiling_and_a_square_between()
     {
-        TransportOverlay.Proximity(1000).ShouldBe(0.06, 1e-9);
-        TransportOverlay.Proximity(0).ShouldBe(1.0, 1e-9);
-        TransportOverlay.Proximity(150).ShouldBeLessThan(0.5);
+        TuckedAway.Proximity(1000).ShouldBe(0.06, 1e-9);
+        TuckedAway.Proximity(0).ShouldBe(1.0, 1e-9);
+        TuckedAway.Proximity(150).ShouldBeLessThan(0.5);
     }
 
     [AvaloniaFact]

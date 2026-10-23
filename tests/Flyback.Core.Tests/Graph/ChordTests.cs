@@ -150,7 +150,7 @@ public class ChordTests
         Heard(b =>
         {
             var chord = b.Add(NodeCatalog.AutoChordTypeId, (0, tonic), (1, root), (2, note));
-            b.Wire(b.Add("value", (0, (float)note)), 0, chord, 2);
+            b.Wire(b.Add("value", (0, note)), 0, chord, 2);
             Scaled(chord, scale);
             return chord;
         }, 0).ShouldBe(notes.Select(n => (double)Hertz.Of(n)).ToArray(), 1e-3);

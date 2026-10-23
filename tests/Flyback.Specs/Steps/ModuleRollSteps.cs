@@ -23,7 +23,7 @@ public sealed class ModuleRollSteps(PatchContext context, EditorDriver editor)
     [Given("the sine's {string} on a panel knob")]
     public void GivenOnAPanelKnob(string input)
     {
-        var knob = context.Patch.AddControl(input, 0.5f);
+        var knob = context.Patch.AddControl(input);
 
         ControlMap.Link(context.Node("sine"), Port(input), new ControlLink(knob.Id, 0f, 2f));
     }

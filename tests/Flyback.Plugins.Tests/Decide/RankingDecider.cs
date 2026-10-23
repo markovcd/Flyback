@@ -31,7 +31,7 @@ internal sealed class RankingDecider(params (string Label, double P)[] favored) 
         var answers = request.Questions.ToDictionary(q => q.Key, q => q.Value switch
         {
             Question.Choice choice => Chosen(q.Key, choice),
-            _ => (Answer)new Answer.YesNo(0),
+            _ => new Answer.YesNo(0),
         });
 
         return Task.FromResult(new Decision("ranking", answers, DecisionUsage.None));

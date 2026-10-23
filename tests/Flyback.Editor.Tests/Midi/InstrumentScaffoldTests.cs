@@ -106,7 +106,7 @@ public class InstrumentScaffoldTests
         var patch = new PatchBuilder(NodeCatalog.BuiltIn);
         var output = patch.Add(NodeCatalog.OutputTypeId, 400, 0);
 
-        PatchClipboard.Paste(patch.Patch, fragment, 0, 0);
+        PatchClipboard.Paste(patch.Patch, fragment);
 
         var track = patch.Patch.Nodes.Single(node => node.Name == "Track 1");
         patch.Patch.Connect(track.Id, 1, output.Id, NodeCatalog.OutputLeftPort);

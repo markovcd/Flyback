@@ -187,7 +187,7 @@ public sealed class PresetThumbnailsTests : IDisposable
             patch.Connect(image.Id, 0, output.Id, NodeCatalog.OutputColorPort);
 
             return patch;
-        }, "");
+        });
 
         var drawn = await new PresetThumbnails(PluginCatalog.Empty, folders: new() { ThumbnailFolder = folder }).Of(preset, TestContext.Current.CancellationToken);
 

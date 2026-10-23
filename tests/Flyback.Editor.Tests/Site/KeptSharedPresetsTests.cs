@@ -73,7 +73,7 @@ public sealed class KeptSharedPresetsTests : IDisposable
     {
         var kept = new KeptSharedPresets(folder);
 
-        kept.Keep(FakePresetSite.Root, Nebula(4.5, 2), [1, 2, 3], [9]);
+        kept.Keep(FakePresetSite.Root, Nebula(), [1, 2, 3], [9]);
         var opened = kept.Find(FakePresetSite.Root, "n1").ShouldNotBeNull().Opened;
 
         kept.Refresh(FakePresetSite.Root, Nebula(3, 5));

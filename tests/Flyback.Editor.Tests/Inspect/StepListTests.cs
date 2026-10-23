@@ -239,7 +239,7 @@ public class StepListTests : EditorTest
         var window = Showing(out var node);
         var before = StepsExtra.Of(node).ToList();
         var row = Rows(window)[2];
-        var handle = row.Children.OfType<Control>().Single(c => c.Name == "grip");
+        var handle = row.Children.Single(c => c.Name == "grip");
         var finger = new Pointer(Pointer.GetNextFreeId(), PointerType.Touch, true);
         var start = Center(handle, window);
 
@@ -329,7 +329,7 @@ public class StepListTests : EditorTest
 
     private static void DragBy(Window window, int from, double dy)
     {
-        var handle = Rows(window)[from].Children.OfType<Control>().Single(c => c.Name == "grip");
+        var handle = Rows(window)[from].Children.Single(c => c.Name == "grip");
         var start = Center(handle, window);
         var end = start + new Vector(0, dy);
 

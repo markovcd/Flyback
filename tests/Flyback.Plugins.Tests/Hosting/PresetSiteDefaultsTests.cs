@@ -40,7 +40,7 @@ public class PresetSiteDefaultsTests
     [Fact]
     public void Every_default_the_site_starts_with_is_here()
     {
-        var shipped = Directory.EnumerateFiles(Repository.Path("worker", "defaults")).Select(Path.GetFileName).Order();
+        var shipped = Directory.EnumerateFiles(Repository.Path("worker", "defaults")).Select(Path.GetFileName).Order().ToList();
 
         shipped.ShouldNotBeEmpty();
         Directory.EnumerateFiles(Folder).Select(Path.GetFileName).Order().ShouldBe(shipped);

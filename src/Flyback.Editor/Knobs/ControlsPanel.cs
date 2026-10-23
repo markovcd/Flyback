@@ -8,7 +8,6 @@ using Avalonia.Media.Immutable;
 using Avalonia.Threading;
 using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
-using Flyback.Ui;
 using Colors = Flyback.Ui.Controls.Colors;
 using Flyback.Host;
 
@@ -578,7 +577,6 @@ internal sealed class ControlsPanel : Border
             {
                 DropMark.After => new Thickness(0, 0, 2, 0),
                 DropMark.Before => new Thickness(2, 0, 0, 0),
-                DropMark.Swap => new Thickness(2, 0),
                 _ => new Thickness(2, 0),
             };
         }

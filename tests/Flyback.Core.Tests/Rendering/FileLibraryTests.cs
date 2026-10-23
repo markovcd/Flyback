@@ -28,13 +28,13 @@ public sealed class FileLibraryTests : IDisposable
         var library = new SampleLibrary { Beside = folder };
         var name = Write("shape.svg", [1, 2, 3]);
 
-        var first = ((ISampleLibrary)library).FindFile(name).ShouldNotBeNull();
+        var first = library.FindFile(name).ShouldNotBeNull();
 
         first.ShouldBe([1, 2, 3]);
-        ((ISampleLibrary)library).FindFile(name).ShouldBeSameAs(first);
+        library.FindFile(name).ShouldBeSameAs(first);
 
         library.Forget(name);
-        ((ISampleLibrary)library).FindFile(name).ShouldNotBeSameAs(first);
+        library.FindFile(name).ShouldNotBeSameAs(first);
     }
 
     /// <summary>A sound read ahead, off the thread that compiles, is the one the compile finds.</summary>

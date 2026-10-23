@@ -29,7 +29,7 @@ public sealed class StatusBarSteps(EditorDriver editor) : IDisposable
         var deadline = DateTime.UtcNow.AddSeconds(10);
 
         while (editor.SoundSpeed <= 0 && DateTime.UtcNow < deadline)
-            for (var i = 0; i < 8; i++) speakers.Pump(Frames);
+            for (var i = 0; i < 8; i++) speakers.Pump();
 
         editor.SoundSpeed.ShouldBeGreaterThan(0, "the sound was never timed");
     }
@@ -40,7 +40,7 @@ public sealed class StatusBarSteps(EditorDriver editor) : IDisposable
         var deadline = DateTime.UtcNow.AddSeconds(10);
 
         while (editor.Readout["soundRunsOn"] is null && DateTime.UtcNow < deadline)
-            if (speakers.IsRunning) speakers.Pump(Frames);
+            if (speakers.IsRunning) speakers.Pump();
 
         editor.Readout["soundRunsOn"].ShouldNotBeNull("the sound's program never arrived");
     }
@@ -52,7 +52,7 @@ public sealed class StatusBarSteps(EditorDriver editor) : IDisposable
 
         // A patch with no sound starts no device, and the scenario is about what is then said.
         for (var at = 0; at < seconds * GlobalConstants.SampleRate; at += Frames)
-            if (speakers.IsRunning) speakers.Pump(Frames);
+            if (speakers.IsRunning) speakers.Pump();
     }
 
     [Then("the status bar says how many times real time the sound renders at")]

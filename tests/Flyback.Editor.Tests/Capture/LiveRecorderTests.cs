@@ -124,8 +124,8 @@ public class LiveRecorderTests : IDisposable
             frames.ShouldBeGreaterThanOrEqualTo(8);
         }
 
-        ((long)Decoded.Pictures(Encoder!, file)).ShouldBe(frames);
-        Decoded.Sound(Encoder!, file, SampleRate).ShouldBeGreaterThan(0);
+        ((long)Decoded.Pictures(Encoder, file)).ShouldBe(frames);
+        Decoded.Sound(Encoder, file, SampleRate).ShouldBeGreaterThan(0);
 
         // Both halves of the sound pass are gone: on a long take each is as big
         // as everything recorded.

@@ -20,7 +20,7 @@ public sealed class TurnReadingTests
         var decisions = new Decisions([reader], new DecisionSettings(), new Credentials(null), new ModelStore(null));
         var session = new AssistantSession(transcript, decisions: decisions);
 
-        session.Begin(new AssistantRun(assistant, AssistantConfig.Unset, NodeCatalog.BuiltIn, new Patch(), AssistantRun.ContextLimit), assistant, AssistantConfig.Unset, new AssistantSettings(), resumed: false, null);
+        session.Begin(new AssistantRun(assistant, AssistantConfig.Unset, NodeCatalog.BuiltIn, new Patch()), assistant, AssistantConfig.Unset, new AssistantSettings(), resumed: false, null);
 
         return session;
     }
@@ -107,7 +107,7 @@ public sealed class TurnReadingTests
     public async Task Without_a_model_nothing_is_read_and_the_message_goes_as_typed()
     {
         var session = new AssistantSession(transcript, decisions: Decisions.None);
-        session.Begin(new AssistantRun(assistant, AssistantConfig.Unset, NodeCatalog.BuiltIn, new Patch(), AssistantRun.ContextLimit), assistant, AssistantConfig.Unset, new AssistantSettings(), resumed: false, null);
+        session.Begin(new AssistantRun(assistant, AssistantConfig.Unset, NodeCatalog.BuiltIn, new Patch()), assistant, AssistantConfig.Unset, new AssistantSettings(), resumed: false, null);
 
         await Drain(session, "why is it so quiet?");
 
@@ -157,7 +157,7 @@ public sealed class TurnReadingTests
 
         public AssistantCredential Credential => new("FLYBACK_ECHOING_KEY", "No key is needed.");
 
-        public Uri? Endpoint(SettingValues values) => new("https://assistant.test/");
+        public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 

@@ -297,7 +297,7 @@ internal sealed record AssemblyFacts(
     {
         public static readonly StringsOnly Instance = new();
 
-        public object? GetPrimitiveType(PrimitiveTypeCode typeCode) => typeCode;
+        public object GetPrimitiveType(PrimitiveTypeCode typeCode) => typeCode;
         public object? GetSystemType() => null;
         public object? GetSZArrayType(object? elementType) => null;
         public object? GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind) => null;

@@ -155,7 +155,7 @@ public sealed class AssistantSessionTests
 
         public AssistantCredential Credential => new("FLYBACK_TALKING_KEY", "No key is needed.");
 
-        public Uri? Endpoint(SettingValues values) => new("https://assistant.test/");
+        public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 

@@ -453,7 +453,7 @@ public class CredentialsTests
 
         public AssistantCredential Credential { get; } = new(variable, "");
 
-        public Uri? Endpoint(SettingValues values) => new(values.Text(AssistantSchema.EndpointKey, ""));
+        public Uri Endpoint(SettingValues values) => new(values.Text(AssistantSchema.EndpointKey));
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 

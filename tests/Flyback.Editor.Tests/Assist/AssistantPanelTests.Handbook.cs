@@ -200,7 +200,7 @@ public partial class AssistantPanelTests
 
         public AssistantCredential Credential => Schema.Credential;
 
-        public Uri? Endpoint(SettingValues values) => new("https://assistant.test/");
+        public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 
         // Through Surveyed, as both shipped adapters declare themselves: a
         // survey of the endpoint replaces the written-down models, and a fake

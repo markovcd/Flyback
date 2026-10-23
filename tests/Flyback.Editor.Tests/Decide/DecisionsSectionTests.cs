@@ -233,7 +233,7 @@ public sealed class DecisionsSectionTests : EditorTest
 
         public AssistantCredential? Credential { get; } = new("HOSTED_DECISION_KEY_NOT_SET", "Get one somewhere.");
 
-        public Uri? Endpoint(SettingValues values) => new("https://hosted.test/v1/systemone");
+        public Uri Endpoint(SettingValues values) => new("https://hosted.test/v1/systemone");
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 

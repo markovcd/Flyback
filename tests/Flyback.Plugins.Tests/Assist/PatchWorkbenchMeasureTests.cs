@@ -9,7 +9,7 @@ namespace Flyback.Plugins.Tests.Assist;
 /// <summary><c>measure</c> tells the assistant what an output carries, in numbers, wired or not.</summary>
 public class PatchWorkbenchMeasureTests
 {
-    private static PatchWorkbench Bench() => new(NodeCatalog.BuiltIn, new Patch(), vision: false, Listener.None);
+    private static PatchWorkbench Bench() => new(NodeCatalog.BuiltIn, new Patch(), vision: false);
 
     private static Task<ToolOutcome> Call(PatchWorkbench bench, string tool, string arguments = "{}") =>
         bench.InvokeAsync(tool, JsonSerializer.Deserialize<JsonElement>(arguments), CancellationToken.None);

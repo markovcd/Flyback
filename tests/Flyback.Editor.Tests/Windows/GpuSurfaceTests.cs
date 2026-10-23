@@ -87,7 +87,7 @@ public class GpuSurfaceTests : EditorTest
     {
         public event Action<string>? Failed;
 
-        public string? Api => "WebGL";
+        public string Api => "WebGL";
 
         public bool ProcessorStandsIn => processorStandsIn;
 

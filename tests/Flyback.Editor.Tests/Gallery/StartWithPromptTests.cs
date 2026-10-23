@@ -46,7 +46,7 @@ public class StartWithPromptTests : EditorTest
 
         public AssistantCredential Credential => Schema.Credential;
 
-        public Uri? Endpoint(SettingValues values) => new("https://assistant.test/");
+        public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => Schema.Form(values);
 

@@ -95,7 +95,7 @@ public sealed class AssistantKeySteps : IDisposable
 
         public AssistantCredential Credential { get; } = new(variable, "");
 
-        public Uri? Endpoint(SettingValues values) => new(origin + "/v1");
+        public Uri Endpoint(SettingValues values) => new(origin + "/v1");
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 

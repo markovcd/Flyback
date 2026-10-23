@@ -28,7 +28,7 @@ internal sealed class McpServer(PluginCatalog plugins, IToolTarget target, strin
     private static readonly JsonDocumentOptions Strict = new() { AllowDuplicateProperties = false };
 
     private readonly Lazy<Flyback.Plugins.Assist.PatchWorkbench> blank = new(() =>
-        ToolCommand.Bench(plugins, Flyback.Engine.Graph.Presets.Empty(plugins.Modules), settingsPath));
+        ToolCommand.Bench(plugins, Engine.Graph.Presets.Empty(plugins.Modules), settingsPath));
 
     /// <summary>Answers each message on <paramref name="input"/> until it ends.</summary>
     public async Task Serve(TextReader input, TextWriter output, CancellationToken cancel)

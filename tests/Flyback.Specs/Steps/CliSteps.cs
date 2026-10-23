@@ -396,7 +396,7 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     public void ThenOpensAsPreset(string saved, string name)
     {
         var preset = ShippedPlugins.Loaded.Presets.Single(p => p.Name == name).Build(ShippedPlugins.Loaded.Modules);
-        var opened = PatchFile.Open(new FileInfo(Path(saved)), null).Patch.ShouldNotBeNull().Patch;
+        var opened = PatchFile.Open(new FileInfo(Path(saved))).Patch.ShouldNotBeNull().Patch;
 
         opened.CompileForAudio(ShippedPlugins.Loaded.Modules).Program.Ops
             .ShouldBe(preset.CompileForAudio(ShippedPlugins.Loaded.Modules).Program.Ops);

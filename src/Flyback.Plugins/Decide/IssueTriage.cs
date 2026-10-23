@@ -32,7 +32,7 @@ internal sealed class IssueTriage(Decisions decisions)
 
         var decided = await Task.WhenAll(issues
             .Take(MostAsked)
-            .Select(issue => decisions.Ask(DecisionUse.Issues, DecisionRequest.One(issue, "why", new Decide.Question.YesNo(Question)), cancel)))
+            .Select(issue => decisions.Ask(DecisionUse.Issues, DecisionRequest.One(issue, "why", new Question.YesNo(Question)), cancel)))
             .ConfigureAwait(false);
 
         if (decided.All(d => d is null)) return null;

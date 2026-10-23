@@ -125,7 +125,7 @@ public sealed class StillsCommandTests : IDisposable
 
         var folder = new DirectoryInfo(Path.Combine(root.FullName, "drawn"));
 
-        var (code, said, complaint) = Run(folder, ffmpeg!, new PatchPreset("Ramp", _ => Drawn()));
+        var (code, said, complaint) = Run(folder, ffmpeg, new PatchPreset("Ramp", _ => Drawn()));
 
         code.ShouldBe(Exit.Ok, complaint);
         said.Trim().ShouldBe("Ramp: drawn");

@@ -85,7 +85,7 @@ public partial class OutputSettingsTests
         CloseSettings(window, dialog);
 
         var kept = OutputSettings.Load(settingsPath);
-        kept.SoundInOf("two").Text("device", "").ShouldBe("rear");
+        kept.SoundInOf("two").Text("device").ShouldBe("rear");
         kept.SoundOf("two").All.ShouldBeEmpty();
     }
 
@@ -125,7 +125,7 @@ public partial class OutputSettingsTests
 
         var kept = OutputSettings.Load(settingsPath);
         kept.SoundOutput.ShouldBe("asio");
-        kept.SoundOf("asio").Text("device", "").ShouldBe("asio-second");
+        kept.SoundOf("asio").Text("device").ShouldBe("asio-second");
         kept.SoundOf("wasapi").All.ShouldBeEmpty();
 
         Named<ComboBox>(OpenSettings(Open(settingsPath, plugins), SoundTab), "soundOutput").SelectedIndex.ShouldBe(1);

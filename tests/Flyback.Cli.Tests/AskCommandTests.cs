@@ -441,7 +441,7 @@ public sealed class AskCommandTests : IDisposable
 
         public AssistantCredential Credential => new("FLYBACK_SCRIPTED_KEY", "No key is needed.");
 
-        public Uri? Endpoint(SettingValues values) => new("https://assistant.test/");
+        public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 
@@ -456,7 +456,7 @@ public sealed class AskCommandTests : IDisposable
             return new Session(this, workbench, []);
         }
 
-        public IPatchSession? Resume(PatchWorkbench workbench, AssistantConfig config, string saved)
+        public IPatchSession Resume(PatchWorkbench workbench, AssistantConfig config, string saved)
         {
             Resumed.Add(saved);
             Values = config.Values;
@@ -505,7 +505,7 @@ public sealed class AskCommandTests : IDisposable
                 yield return new PatchEvent.Proposed(workbench.Snapshot(), workbench.ProposalSummary);
             }
 
-            public string? Save() => JsonSerializer.Serialize(history);
+            public string Save() => JsonSerializer.Serialize(history);
 
             public void Dispose()
             {

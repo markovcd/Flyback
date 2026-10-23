@@ -191,22 +191,22 @@ internal sealed class Formula
             foreach (var argument in call.Arguments) Count(argument);
         }
 
-        Graph.Infix.Part? Spell(Term term, bool summing)
+        Infix.Part? Spell(Term term, bool summing)
         {
             switch (term)
             {
                 case Literal literal:
-                    return new Graph.Infix.Number(literal.Value, number(literal.Value));
+                    return new Infix.Number(literal.Value, number(literal.Value));
 
                 case Socket read:
                     reads.Add(read.Index);
-                    return new Graph.Infix.Leaf(socket(read.Index));
+                    return new Infix.Leaf(socket(read.Index));
 
                 case Call { Module.TypeId: "math.neg", Arguments: [var operand] } when operand is not Literal:
                 {
                     if (!summing) reads.Add(-1);
 
-                    return Spell(operand, summing: true) is { } inner ? new Graph.Infix.Negation(inner) : null;
+                    return Spell(operand, summing: true) is { } inner ? new Infix.Negation(inner) : null;
                 }
 
                 case Call { Arguments: [var left, var right] } call
@@ -217,7 +217,7 @@ internal sealed class Formula
                     if (!summing) reads.Add(-1);
                     if (Spell(right, summing: true) is not { } r) return null;
 
-                    return new Graph.Infix.Operation(sign, l, r);
+                    return new Infix.Operation(sign, l, r);
                 }
 
                 case Call call when !Operators.ContainsKey(call.Module.TypeId) && function(call.Module) is { } name:
@@ -228,7 +228,7 @@ internal sealed class Formula
 
                     // Every argument, since one left off would read back as the
                     // knob it rests on and be written in the next time round.
-                    var arguments = new List<Graph.Infix.Part>();
+                    var arguments = new List<Infix.Part>();
 
                     foreach (var argument in call.Arguments.Concat(call.Module.Inputs.Skip(call.Arguments.Count).Select(port => (Term)new Literal(port.Default))))
                     {

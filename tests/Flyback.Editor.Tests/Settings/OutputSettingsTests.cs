@@ -83,10 +83,6 @@ public partial class OutputSettingsTests : EditorTest
         window.UpdateLayout();
     }
 
-    /// <summary>What every button in the window is labeled, in tree order.</summary>
-    private static IEnumerable<string?> Buttons(MainWindow window) =>
-        All<Button>(window).Select(b => b.Content as string);
-
     /// <summary>
     /// The settings are on screen exactly when the size picker is in the tree,
     /// which is only ever inside the settings window.

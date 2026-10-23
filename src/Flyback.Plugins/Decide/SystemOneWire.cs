@@ -73,15 +73,15 @@ public static class SystemOneWire
         {
             answers[id] = answer switch
             {
-                Decide.Answer.YesNo yes => new JsonObject { ["type"] = YesNoType, [YesNoType] = yes.Probability },
-                Decide.Answer.Chosen chosen => new JsonObject
+                Answer.YesNo yes => new JsonObject { ["type"] = YesNoType, [YesNoType] = yes.Probability },
+                Answer.Chosen chosen => new JsonObject
                 {
                     ["type"] = ChoiceType,
                     [ChoiceType] = chosen.Option,
                     ["probabilities"] = Map(chosen.Probabilities),
                     ["confidence"] = chosen.Confidence,
                 },
-                Decide.Answer.Scored scored => new JsonObject
+                Answer.Scored scored => new JsonObject
                 {
                     ["type"] = ScoreType,
                     [ScoreType] = scored.Score,
@@ -158,7 +158,7 @@ public static class SystemOneWire
         {
             Answer? answer = node is not JsonObject spelled ? null : Text(spelled["type"]) switch
             {
-                YesNoType => Number(spelled[YesNoType]) is { } p ? new Decide.Answer.YesNo(p) : null,
+                YesNoType => Number(spelled[YesNoType]) is { } p ? new Answer.YesNo(p) : null,
                 ChoiceType => ReadChosen(spelled),
                 ScoreType => ReadScored(spelled),
                 _ => null,

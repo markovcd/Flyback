@@ -75,7 +75,7 @@ public sealed class RenderPresetsTests : IDisposable
 
         var code = Program.Run(
             ["render-presets", "--server", "http://127.0.0.1:9/", "--media", media, flag, minutes],
-            new Flyback.Cli.Plugins(() => PluginCatalog.Empty, "nowhere", null),
+            new Plugins(() => PluginCatalog.Empty, "nowhere", null),
             new InvocationConfiguration { Output = TextWriter.Null, Error = error });
 
         code.ShouldBe(Exit.Failed);

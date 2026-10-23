@@ -83,7 +83,7 @@ public class PluginGlyphsTests : EditorTest
 
             mark.ShouldNotBeNull($"'{def.TypeId}''s glyph does not parse: {glyph}");
 
-            var bounds = mark!.GetRenderBounds(new Pen(Brushes.White, ModuleGlyphs.Thickness));
+            var bounds = mark.GetRenderBounds(new Pen(Brushes.White, ModuleGlyphs.Thickness));
 
             bounds.Width.ShouldBeGreaterThan(ModuleGlyphs.Box / 3, $"'{def.TypeId}' is barely a shape at all");
             bounds.Height.ShouldBeGreaterThan(ModuleGlyphs.Box / 3, $"'{def.TypeId}' is barely a shape at all");

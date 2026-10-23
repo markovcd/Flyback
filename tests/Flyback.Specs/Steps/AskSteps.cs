@@ -286,7 +286,7 @@ public sealed class AskSteps : IDisposable
                 yield return new PatchEvent.Proposed(workbench.Snapshot(), workbench.ProposalSummary);
             }
 
-            public string? Save() => JsonSerializer.Serialize(history);
+            public string Save() => JsonSerializer.Serialize(history);
 
             public void Dispose()
             {

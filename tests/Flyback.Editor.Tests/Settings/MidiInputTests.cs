@@ -616,7 +616,7 @@ public class MidiInputTests : EditorTest
 
         public bool IsSupported => true;
 
-        public IReadOnlyList<Flyback.Plugins.Midi.MidiPortInfo> Ports => Flyback.Plugins.Midi.MidiPorts.Named([name]);
+        public IReadOnlyList<Flyback.Plugins.Midi.MidiPortInfo> Ports => Plugins.Midi.MidiPorts.Named([name]);
 
         public Flyback.Plugins.Midi.IMidiPort Open(string port, Flyback.Plugins.Midi.MidiCallback deliver) =>
             throw new InvalidOperationException("this test plays nothing.");

@@ -194,7 +194,7 @@ public class TouchButtonsTests : EditorTest
     {
         var window = Open();
 
-        All<Avalonia.Controls.Primitives.ToggleButton>(window).Single(b => b.Name == "code").IsChecked = true;
+        All<ToggleButton>(window).Single(b => b.Name == "code").IsChecked = true;
         Settle(window);
 
         var source = All<SourceView>(window).Single();

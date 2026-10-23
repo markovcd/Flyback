@@ -37,16 +37,6 @@ public class FullScreenPreviewTests : EditorTest
     private static List<double> Widths(Grid grid) =>
         [.. grid.ColumnDefinitions.Select(c => c.ActualWidth)];
 
-    /// <summary>The middle of the preview, in window coordinates.</summary>
-    private static Point Middle(MainWindow window)
-    {
-        var preview = Preview(window);
-        var center = new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 2);
-
-        return preview.TranslatePoint(center, window)
-            ?? throw new InvalidOperationException("the preview is not in this window");
-    }
-
     private static void DoubleClick(MainWindow window) => DoubleClickPicture(window);
 
     private static void PressEscape(MainWindow window)

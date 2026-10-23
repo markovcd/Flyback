@@ -173,7 +173,7 @@ public class PluginArtShotTests : EditorTest
         dc.FillRectangle(new SolidColorBrush(Colors.Canvas), new Rect(0, 0, Wide, Tall));
 
         var minor = new Pen(new SolidColorBrush(Colors.Grid), 0.75);
-        var major = new Pen(new SolidColorBrush(Colors.GridMajor), 1);
+        var major = new Pen(new SolidColorBrush(Colors.GridMajor));
 
         for (var x = 0; x <= Wide; x += 20) dc.DrawLine(x % 100 == 0 ? major : minor, new Point(x, 0), new Point(x, Tall));
         for (var y = 0; y <= Tall; y += 20) dc.DrawLine(y % 100 == 0 ? major : minor, new Point(0, y), new Point(Wide, y));
@@ -272,7 +272,7 @@ public class PluginArtShotTests : EditorTest
 
         using (var c = hole.Open())
         {
-            c.BeginFigure(new Point(center.X - 6, center.Y + 16), true);
+            c.BeginFigure(new Point(center.X - 6, center.Y + 16));
             c.LineTo(new Point(center.X - 11, center.Y + 52));
             c.LineTo(new Point(center.X + 11, center.Y + 52));
             c.LineTo(new Point(center.X + 6, center.Y + 16));
@@ -292,7 +292,7 @@ public class PluginArtShotTests : EditorTest
 
         using (var c = tail.Open())
         {
-            c.BeginFigure(new Point(bubble.X + 34, bubble.Bottom - 2), true);
+            c.BeginFigure(new Point(bubble.X + 34, bubble.Bottom - 2));
             c.LineTo(new Point(bubble.X + 26, bubble.Bottom + 30));
             c.LineTo(new Point(bubble.X + 72, bubble.Bottom - 2));
             c.EndFigure(true);
@@ -348,7 +348,7 @@ public class PluginArtShotTests : EditorTest
                 var radius = i % 2 == 0 ? 16 : 5;
                 var point = new Point(center.X + radius * Math.Cos(angle), center.Y + radius * Math.Sin(angle));
 
-                if (i == 0) c.BeginFigure(point, true);
+                if (i == 0) c.BeginFigure(point);
                 else c.LineTo(point);
             }
 
@@ -365,7 +365,7 @@ public class PluginArtShotTests : EditorTest
 
         using (var c = lid.Open())
         {
-            c.BeginFigure(new Point(center.X - 26, center.Y), true);
+            c.BeginFigure(new Point(center.X - 26, center.Y));
             c.QuadraticBezierTo(new Point(center.X, center.Y - 30), new Point(center.X + 26, center.Y));
             c.QuadraticBezierTo(new Point(center.X, center.Y + 30), new Point(center.X - 26, center.Y));
             c.EndFigure(true);

@@ -880,7 +880,7 @@ public class AssistantRunTests
 
         public string? Unavailable(AssistantConfig config) => null;
 
-        public Uri? Endpoint(SettingValues values) => new("https://assistant.test/");
+        public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 
         public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => new Session(workbench);
 
@@ -953,7 +953,7 @@ public class AssistantRunTests
             return this;
         }
 
-        public string? Save() => Remembered;
+        public string Save() => Remembered;
 
         public static ScriptedAssistant Throwing(string message) =>
             new() { throwsAfterStarting = message };
@@ -985,7 +985,7 @@ public class AssistantRunTests
 
         public AssistantCredential Credential => Schema.Credential;
 
-        public Uri? Endpoint(SettingValues values) => new("https://assistant.test/");
+        public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => Schema.Form(values);
 

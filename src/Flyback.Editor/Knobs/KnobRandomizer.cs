@@ -5,7 +5,6 @@ using Flyback.Editor.Canvas;
 using Flyback.Editor.Hubs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
-using Flyback.Editor.Shell;
 using Flyback.Editor.Statistics;
 using Flyback.Host;
 using Flyback.Ui.Midi;

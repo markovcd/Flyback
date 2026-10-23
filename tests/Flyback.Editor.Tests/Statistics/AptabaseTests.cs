@@ -76,7 +76,7 @@ public sealed class AptabaseTests
         var read = Aptabase.EmbeddedKey();
 
         read.ShouldNotBeNull();
-        read!.Value.Key.ShouldStartWith("A-EU-");
+        read.Value.Key.ShouldStartWith("A-EU-");
         read.Value.Host.AbsoluteUri.ShouldBe("https://eu.aptabase.com/");
     }
 

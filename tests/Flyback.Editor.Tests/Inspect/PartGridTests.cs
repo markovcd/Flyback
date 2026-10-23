@@ -212,7 +212,7 @@ public class PartGridTests : EditorTest
         var middle = cell.TranslatePoint(new Point(cell.Bounds.Width / 2, cell.Bounds.Height / 2), window)!.Value;
         var upright = cell.Cursor;
 
-        window.MouseDown(middle, MouseButton.Left, RawInputModifiers.None);
+        window.MouseDown(middle, MouseButton.Left);
 
         // Four strokes of 40 px up, the pointer put back after each: 160 px in all.
         for (var stroke = 0; stroke < 4; stroke++)
@@ -223,7 +223,7 @@ public class PartGridTests : EditorTest
 
         cell.Cursor.ShouldNotBeSameAs(upright);
 
-        window.MouseUp(middle, MouseButton.Left, RawInputModifiers.None);
+        window.MouseUp(middle, MouseButton.Left);
 
         ArrangementExtra.Of(node)[0][0].Value.ShouldBe(1f, 0.02f);
         anchor.Disposed.ShouldBeTrue();
@@ -282,10 +282,10 @@ public class PartGridTests : EditorTest
         var cell = All<Border>(window).Where(b => Equals(b.Tag, PartGrid.CellTag)).ElementAt(index);
         var from = cell.TranslatePoint(new Point(cell.Bounds.Width / 2, cell.Bounds.Height / 2), window)!.Value;
 
-        window.MouseDown(from, MouseButton.Left, RawInputModifiers.None);
+        window.MouseDown(from, MouseButton.Left);
         for (var step = 1; step <= 10; step++)
             window.MouseMove(from + new Point(0, by * step / 10), RawInputModifiers.LeftMouseButton);
-        window.MouseUp(from + new Point(0, by), MouseButton.Left, RawInputModifiers.None);
+        window.MouseUp(from + new Point(0, by), MouseButton.Left);
     }
 
     /// <summary>The <paramref name="index"/>th cell of the map, counted across then down, clicked in its middle.</summary>
@@ -294,8 +294,8 @@ public class PartGridTests : EditorTest
         var cell = All<Border>(window).Where(b => Equals(b.Tag, PartGrid.CellTag)).ElementAt(index);
         var middle = cell.TranslatePoint(new Point(cell.Bounds.Width / 2, cell.Bounds.Height / 2), window)!.Value;
 
-        window.MouseDown(middle, MouseButton.Left, RawInputModifiers.None);
-        window.MouseUp(middle, MouseButton.Left, RawInputModifiers.None);
+        window.MouseDown(middle, MouseButton.Left);
+        window.MouseUp(middle, MouseButton.Left);
     }
 
     private static Border CellAt(Window window, int index) =>

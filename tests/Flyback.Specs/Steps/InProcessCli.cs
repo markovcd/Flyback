@@ -12,6 +12,6 @@ internal static class InProcessCli
 
     public static int Run(string[] args, Flyback.Cli.Plugins plugins, InvocationConfiguration configuration)
     {
-        lock (Gate) return Flyback.Cli.Program.Run(args, plugins, configuration);
+        lock (Gate) return Cli.Program.Run(args, plugins, configuration);
     }
 }

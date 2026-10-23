@@ -60,7 +60,7 @@ public class WireLiftTests : EditorTest
         NodeInstance Fed,
         NodeInstance Spare)
     {
-        public NodeEditor Editor => WireLiftTests.Editor(Window);
+        public NodeEditor Editor => EditorTest.Editor(Window);
 
         public Patch Patch => Editor.History.Patch;
 

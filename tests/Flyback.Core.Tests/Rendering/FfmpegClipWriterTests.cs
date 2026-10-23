@@ -164,7 +164,7 @@ public class FfmpegClipWriterTests : IDisposable
         var format = ClipFormats.ById(id)!;
         var path = Write(format, $"both{format.Extension}");
 
-        Decoded.Pictures(Encoder!, path).ShouldBe(5);
+        Decoded.Pictures(Encoder, path).ShouldBe(5);
         Heard(path).ShouldBe(5 / Rate, Padding);
     }
 
@@ -193,7 +193,7 @@ public class FfmpegClipWriterTests : IDisposable
 
         var path = Write(ClipFormats.H264Mp4, "silent.mp4", sound: false);
 
-        Decoded.Pictures(Encoder!, path).ShouldBe(5);
+        Decoded.Pictures(Encoder, path).ShouldBe(5);
         Directory.GetFiles(folder).ShouldBe([path]);
     }
 
@@ -234,7 +234,7 @@ public class FfmpegClipWriterTests : IDisposable
             clip.FrameCount.ShouldBe(10);
         }
 
-        Decoded.Pictures(Encoder!, path).ShouldBe(10);
+        Decoded.Pictures(Encoder, path).ShouldBe(10);
     }
 
     /// <summary>
@@ -260,7 +260,7 @@ public class FfmpegClipWriterTests : IDisposable
             for (var frame = 0; frame < 4; frame++) clip.WriteFrame(pixels, stride);
         }
 
-        Decoded.Pictures(Encoder!, path).ShouldBe(4);
+        Decoded.Pictures(Encoder, path).ShouldBe(4);
     }
 
     /// <summary>
@@ -283,7 +283,7 @@ public class FfmpegClipWriterTests : IDisposable
             for (var frame = 0; frame < 4; frame++) clip.WriteFrame(new byte[stride * 49], stride);
         }
 
-        Decoded.Pictures(Encoder!, path).ShouldBe(4);
+        Decoded.Pictures(Encoder, path).ShouldBe(4);
     }
 
     /// <summary>

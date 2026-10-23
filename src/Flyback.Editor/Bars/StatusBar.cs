@@ -5,7 +5,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
-using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Hubs;
 using Flyback.Editor.Notices;

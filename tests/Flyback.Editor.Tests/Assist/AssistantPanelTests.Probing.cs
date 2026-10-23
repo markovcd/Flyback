@@ -360,6 +360,6 @@ public partial class AssistantPanelTests
 
         public override string Name => "Wants a key";
 
-        public override string? Unavailable(AssistantConfig config) => Excuse;
+        public override string Unavailable(AssistantConfig config) => Excuse;
     }
 }

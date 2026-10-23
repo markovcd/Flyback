@@ -34,7 +34,7 @@ public sealed class PluginSummaryTests
     {
         var tape = Path.Combine(Plugins, "Tape");
         var (run, troubles) = PluginSummary.Run(
-            Catalog(new PluginProblem("Tape.dll", "needs rebuilding.") { Folder = tape }), Plugins, new AudioSetup(new SilentAudioDevice(), Wasapi, null));
+            Catalog(new PluginProblem("Tape.dll", "needs rebuilding.") { Folder = tape }), Plugins, new AudioSetup(new SilentAudioDevice(), Wasapi));
 
         troubles[PluginSummary.Folder(tape)].ShouldBe("Tape.dll: needs rebuilding.");
         run.Problems.ShouldBeEmpty();

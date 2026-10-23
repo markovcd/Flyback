@@ -10,7 +10,7 @@ namespace Flyback.Specs.Steps;
 [Binding]
 public sealed class AssistantMeasureSteps
 {
-    private readonly PatchWorkbench bench = new(NodeCatalog.BuiltIn, new Patch(), vision: false, Listener.None);
+    private readonly PatchWorkbench bench = new(NodeCatalog.BuiltIn, new Patch(), vision: false);
     private ToolOutcome? answered;
 
     [Given("the assistant has added an LFO turning {int} times a second")]
