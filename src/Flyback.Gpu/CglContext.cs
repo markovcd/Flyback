@@ -1,6 +1,9 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
+// Names follow the native API they bind.
+// ReSharper disable InconsistentNaming
+
 namespace Flyback.Gpu;
 
 /// <summary>

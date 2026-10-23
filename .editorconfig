@@ -24,6 +24,19 @@ resharper_csharp_naming_rule.private_static_fields = aaBb
 # The compiler checks crefs (GenerateDocumentationFile); a member may document some parameters and not others.
 resharper_invalid_xml_doc_comment_highlighting = none
 
+# Plugins, commands and the container's services are made by reflection, and JSON
+# reads and writes the records, so "unused" and "could be private" misfire here.
+resharper_member_can_be_private_global_highlighting = hint
+resharper_unused_member_global_highlighting = hint
+resharper_class_never_instantiated_global_highlighting = hint
+resharper_unused_type_global_highlighting = hint
+resharper_not_accessed_positional_property_global_highlighting = hint
+resharper_property_can_be_made_init_only_global_highlighting = hint
+resharper_unused_method_return_value_global_highlighting = hint
+resharper_unused_auto_property_accessor_global_highlighting = hint
+# Sample and knob values are compared exactly on purpose.
+resharper_compare_of_floats_by_equality_operator_highlighting = hint
+
 [tests/**.cs]
 # Test names are sentences.
 dotnet_diagnostic.CA1707.severity = none

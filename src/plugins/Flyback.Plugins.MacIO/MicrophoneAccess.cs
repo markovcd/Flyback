@@ -1,5 +1,8 @@
 using System.Runtime.InteropServices;
 
+// Names follow the native API they bind.
+// ReSharper disable InconsistentNaming
+
 namespace Flyback.Plugins.MacIO;
 
 /// <summary>
