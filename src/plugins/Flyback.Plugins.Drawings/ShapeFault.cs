@@ -2,7 +2,7 @@ namespace Flyback.Plugins.Drawings;
 
 /// <summary>
 /// Why a file could not be read as a drawing, or <see cref="None"/> where it could.
-/// A value rather than an exception, for the reason <see cref="SoundFault"/> is one.
+/// A value rather than an exception, for the reason <c>SoundFault</c> is one.
 /// </summary>
 internal enum ShapeFault
 {

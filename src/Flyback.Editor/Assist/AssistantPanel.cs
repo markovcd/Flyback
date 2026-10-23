@@ -259,7 +259,6 @@ internal sealed partial class AssistantPanel : UserControl
     private int pulse;
 
     /// <param name="folders">Its <see cref="EditorFolders.ConversationLogFolder"/> is where conversations are logged; none keeps no log.</param>
-    /// <param name="saved">The settings to open on in place of the ones kept, for a test.</param>
     public AssistantPanel(
         ChosenAssistant chosenAssistant,
         PluginCatalog plugins,

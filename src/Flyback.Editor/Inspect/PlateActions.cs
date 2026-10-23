@@ -37,7 +37,7 @@ internal static class PlateActions
             .Select(row => (IReadOnlyList<Button>)[.. row.Children.OfType<Button>().Where(b => Of(b.Name) is not null)])
             .Where(row => row.Count > 0)];
 
-    /// <summary>The plate's button called <paramref name="name"/>, if it has one.</summary>
+    /// <summary>The plate's first button called any of <paramref name="names"/>, if it has one.</summary>
     public static Button? Find(ModulePlate plate, params string[] names) =>
         Rows(plate).SelectMany(row => row).FirstOrDefault(b => names.Contains(b.Name));
 

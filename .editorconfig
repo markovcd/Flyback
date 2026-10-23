@@ -21,6 +21,9 @@ dotnet_diagnostic.CA1720.severity = none
 resharper_csharp_naming_rule.private_instance_fields = aaBb
 resharper_csharp_naming_rule.private_static_fields = aaBb
 
+# The compiler checks crefs (GenerateDocumentationFile); a member may document some parameters and not others.
+resharper_invalid_xml_doc_comment_highlighting = none
+
 [tests/**.cs]
 # Test names are sentences.
 dotnet_diagnostic.CA1707.severity = none

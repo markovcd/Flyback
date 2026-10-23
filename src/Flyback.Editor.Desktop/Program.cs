@@ -101,7 +101,7 @@ internal static class Program
     }
 
     /// <remarks>
-    /// <see cref="AppBuilder.LogToTrace"/> is what makes the listener above
+    /// <c>LogToTrace</c> is what makes the listener above
     /// worth adding: Avalonia's own complaints — a control that would not
     /// template, a renderer that would not start — go to <see cref="Trace"/>,
     /// which without a listener reaches a debugger and nothing else. With one

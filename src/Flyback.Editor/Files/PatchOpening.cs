@@ -63,7 +63,7 @@ internal sealed class PatchOpening(
     /// which on macOS is how "open this file" arrives at all: Finder delivers
     /// it as an activation rather than as a command-line argument, whether
     /// that launches the program or lands on its Dock icon while it is
-    /// already running. See <see cref="FlybackApp.OnFrameworkInitializationCompleted"/>.
+    /// already running. See <c>FlybackApp.OnFrameworkInitializationCompleted</c>.
     /// </summary>
     /// <remarks>
     /// Not while a dialog is up. A dialog stops the pointer and the keyboard and

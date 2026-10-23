@@ -22,7 +22,7 @@ internal sealed partial class PageSound : UnplayedSound
     private float aspect = 1f;
     private float gain = 1f;
 
-    /// <summary>What the worker was last told each value in <see cref="Live"/> is; NaN for never.</summary>
+    /// <summary>What the worker was last told each value in <c>Live</c> is; NaN for never.</summary>
     private float[] told = [];
 
     /// <summary>The files last handed over, so an edit hands them again only when the patch names others.</summary>
@@ -125,7 +125,7 @@ internal sealed partial class PageSound : UnplayedSound
         }
     }
 
-    /// <summary>Hands the worker every value in <see cref="Live"/> that has changed since it was last told.</summary>
+    /// <summary>Hands the worker every value in <c>Live</c> that has changed since it was last told.</summary>
     private void Tell()
     {
         var keys = Live.Keys;

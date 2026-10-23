@@ -11,7 +11,7 @@ namespace Flyback.Editor.Statistics;
 /// </summary>
 /// <remarks>
 /// A section of its own rather than a field on <see cref="Updates.UpdateSettings"/> or
-/// <see cref="OutputSettings"/>: this is about what Flyback says about itself, not
+/// <see cref="Host.OutputSettings"/>: this is about what Flyback says about itself, not
 /// about what it installs or what comes out of it. Not load-bearing (ADR-0034): an
 /// unreadable section means the defaults, and the default is off (ADR-0094).
 /// </remarks>

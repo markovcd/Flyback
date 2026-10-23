@@ -14,7 +14,6 @@ namespace Flyback.Plugins.LinuxIO;
 /// it is connected, so the client is opened when the device is made; no port exists and
 /// nothing is called until <see cref="Start"/>.
 /// </remarks>
-/// <param name="connectToSystem">Whether to patch the ports into the first two physical playback ports.</param>
 public sealed unsafe class JackAudioDevice : IAudioDevice
 {
     private readonly bool connectToSystem;

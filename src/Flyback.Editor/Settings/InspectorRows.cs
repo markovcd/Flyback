@@ -64,13 +64,6 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
         def.Extras.Any(extra => extra.Fields
             .Any(field => field is ExtraField.Number number && Named(number.Spec)));
 
-    /// <summary>A knob's row: the slider, the reading if it has one, and its number.</summary>
-    /// <remarks>
-    /// <paramref name="reading"/> reserves the column for the whole panel rather
-    /// than this row, so every slider on a module is the same width and no row
-    /// reserves it when nothing on the module has a reading. 60 fits the widest
-    /// there is: a duration just under a second, as "999.9 ms".
-    /// </remarks>
     /// <summary>
     /// A socket's or a setting's row with its help as its tip, over the whole row
     /// rather than the name alone. A row with no help is handed back as it was.
@@ -88,6 +81,13 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
         return row;
     }
 
+    /// <summary>A knob's row: the slider, the reading if it has one, and its number.</summary>
+    /// <remarks>
+    /// <paramref name="reading"/> reserves the column for the whole panel rather
+    /// than this row, so every slider on a module is the same width and no row
+    /// reserves it when nothing on the module has a reading. 60 fits the widest
+    /// there is: a duration just under a second, as "999.9 ms".
+    /// </remarks>
     internal static Grid KnobRow(bool reading) => Row(reading ? "*,60,84" : "*,84");
 
     /// <summary>A labeled row in the settings window, on the gutter its declared rows use too.</summary>

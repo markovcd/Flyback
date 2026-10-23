@@ -20,7 +20,7 @@ namespace Flyback.Editor.Tests.Canvas;
 /// <remarks>
 /// Each test draws the same one-node patch twice, changes one thing about it,
 /// and reads the rendered pixels back rather than asserting only that painting
-/// did not throw — the same reason <see cref="QrCodeTests"/> decodes what it
+/// did not throw — the same reason <see cref="Controls.QrCodeTests"/> decodes what it
 /// drew instead of trusting the encoder.
 /// </remarks>
 public class ModuleStateShotTests : EditorTest

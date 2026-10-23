@@ -20,7 +20,7 @@ namespace Flyback.Editor.Knobs;
 /// </summary>
 /// <remarks>
 /// The knob panel is shown and hidden by the window, which owns the row it stands
-/// in; this asks for it with <see cref="Wanted"/> when a knob needs to be seen.
+/// in; this asks for it with <see cref="KnobsWanted"/> when a knob needs to be seen.
 /// </remarks>
 internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArrived>
 {

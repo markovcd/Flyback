@@ -10,7 +10,7 @@ namespace Flyback.Plugins.Tests.Effects;
 
 /// <summary>
 /// Mycelium's words: the recordings it carries, and where in the song they are heard.
-/// Building and compiling are covered for every preset in <see cref="ShippedPresetTests"/>.
+/// Building and compiling are covered for every preset in <see cref="Hosting.ShippedPresetTests"/>.
 /// </summary>
 public class MyceliumPresetTests
 {

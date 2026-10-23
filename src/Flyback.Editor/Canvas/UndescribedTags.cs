@@ -35,7 +35,7 @@ internal sealed class UndescribedTags(CanvasSelection selection, Repaint repaint
 
     /// <summary>
     /// Type ids whose descriptions the assistant's briefing leaves out (see
-    /// <see cref="AssistantPanel.Undescribed"/>). Each module of one is tagged.
+    /// <see cref="Assist.AssistantPanel.Undescribed"/>). Each module of one is tagged.
     /// </summary>
     public IReadOnlySet<string> Types
     {

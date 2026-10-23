@@ -16,7 +16,7 @@ internal sealed class ChannelClient : IAsyncDisposable
         lines = new ChannelLines(pipe);
     }
 
-    /// <summary>A client greeted by the editor, or null with why not in <paramref name="why"/>.</summary>
+    /// <summary>A client greeted by the editor, or null with why not in <c>Why</c>.</summary>
     public static async Task<(ChannelClient? Client, string Why)> Connect(string name, string client, TimeSpan wait, CancellationToken cancel)
     {
         const string Closed = "no editor is open with \"Let a program on this computer edit the open patch\" on.";

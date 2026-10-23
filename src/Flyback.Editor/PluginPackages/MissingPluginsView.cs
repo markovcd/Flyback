@@ -22,7 +22,6 @@ internal static class MissingPluginsView
     public const string Title = "Plugins this patch needs";
 
     /// <param name="found">The site's plugin for each one missing, in the order the patch names them.</param>
-    /// <param name="action"></param>
     public static Control View(IReadOnlyList<SitePlugin> found, Action<bool> answer)
     {
         var page = new StackPanel { Width = 460, Spacing = 8 };

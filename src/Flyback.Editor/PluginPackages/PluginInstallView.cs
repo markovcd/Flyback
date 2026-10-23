@@ -38,7 +38,6 @@ internal static class PluginInstallView
     ///     How many more plugins the patch that asked for this one is still short of, which
     ///     is said here because it is why no restart is offered yet.
     /// </param>
-    /// <param name="action"></param>
     public static Control View(PluginPackage package,
         string platform,
         string? refusal,

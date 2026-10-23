@@ -13,7 +13,7 @@ namespace Flyback.Plugins.Tests.Effects;
 /// <summary>
 /// The No Sense Dub preset: a backing that runs on its own, four played voices over it, and a
 /// panel of knobs. Building, compiling and layout are covered for every preset in
-/// <see cref="ShippedPresetTests"/>; this checks that it can be played and ridden.
+/// <see cref="Hosting.ShippedPresetTests"/>; this checks that it can be played and ridden.
 /// </summary>
 public class NoSenseDubPresetTests
 {

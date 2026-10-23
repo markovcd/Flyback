@@ -11,7 +11,7 @@ namespace Flyback.Editor.Canvas;
 /// window.
 /// </summary>
 /// <remarks>
-/// A section of its own rather than fields on <see cref="OutputSettings"/>: this is
+/// A section of its own rather than fields on <see cref="Host.OutputSettings"/>: this is
 /// about the editor rather than about what comes out of the program. Not
 /// load-bearing (ADR-0034): an unreadable section means the defaults, and both
 /// defaults are what a plugin author asked for.

@@ -74,7 +74,6 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
     /// <summary>The bar itself.</summary>
     public Control View { get; }
 
-    /// <param name="site">Where the letter at the end of the bar is sent.</param>
     private readonly Playback playback;
 
     public StatusBar(NodeEditor editor, PluginCatalog plugins, ReportLine report, Usage usage, PreviewHost preview, SiteAccess site, Playback playback, IDialog dialog, IFocus focus, Reactions reactions)

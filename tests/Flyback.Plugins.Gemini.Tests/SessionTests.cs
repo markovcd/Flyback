@@ -618,6 +618,4 @@ public class SessionTests
 
         return body.ToJsonString();
     }
-
-    /// <summary>One canned answer, with whatever the endpoint would have said around it.</summary>
 }

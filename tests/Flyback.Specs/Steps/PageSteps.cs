@@ -9,7 +9,7 @@ using Shouldly;
 
 namespace Flyback.Specs.Steps;
 
-/// <summary>The editor as a browser page holds it: <see cref="App.EditorHost.InPage"/>.</summary>
+/// <summary>The editor as a browser page holds it: <c>EditorHost.InPage</c>.</summary>
 [Binding]
 public sealed class PageSteps(EditorDriver editor, PatchContext context, HandedViewer viewer)
 {

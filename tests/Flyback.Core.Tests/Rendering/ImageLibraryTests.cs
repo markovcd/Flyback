@@ -8,7 +8,7 @@ namespace Flyback.Core.Tests.Rendering;
 /// as opposed to the stub the module tests hand the compiler.
 /// </summary>
 /// <remarks>
-/// What this class is for is not decoding, which is <see cref="PngReader"/>'s, but
+/// What this class is for is not decoding, which is <see cref="Engine.Render.PngReader"/>'s, but
 /// holding: every edit recompiles the whole patch, so a library that opened a file
 /// would open it on every knob turn. The tests that matter show a second look never
 /// reaches the disk, and that emptying the cache empties exactly as much as it says.

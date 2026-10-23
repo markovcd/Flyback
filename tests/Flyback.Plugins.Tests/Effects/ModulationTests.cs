@@ -12,7 +12,7 @@ namespace Flyback.Plugins.Tests.Effects;
 /// </summary>
 /// <remarks>
 /// Signals go in through the Coordinates module's x and the clock through t, the
-/// way <see cref="SpaceTests"/> and <see cref="TimbreTests"/> both do it. What is
+/// way <see cref="SpaceTests"/> and <see cref="Voice.TimbreTests"/> both do it. What is
 /// mostly being pinned here is movement, which means measuring the same patch at
 /// two different moments rather than measuring one number.
 /// </remarks>

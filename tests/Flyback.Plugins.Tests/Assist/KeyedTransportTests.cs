@@ -224,7 +224,7 @@ public sealed class KeyedTransportTests
     private static Type Unwrapped(Type type) =>
         type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Task<>) ? type.GetGenericArguments()[0] : type;
 
-    /// <summary>A server on a loopback port of its own, answering each request with what <paramref name="answer"/> writes.</summary>
+    /// <summary>A server on a loopback port of its own, answering each request with what its <c>answer</c> writes.</summary>
     private sealed class Loopback : IDisposable
     {
         private readonly TcpListener listener = new(IPAddress.Loopback, 0);

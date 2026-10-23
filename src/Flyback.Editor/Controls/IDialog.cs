@@ -34,7 +34,7 @@ internal interface IDialog
 
     /// <summary>
     /// Puts <paramref name="content"/> over the window and waits for it to be
-    /// answered — by <see cref="Close{TResult}"/>, or by the two ways out the
+    /// answered — by the close it is handed, or by the two ways out the
     /// frame provides: the cross on it, and Escape.
     /// </summary>
     /// <remarks>

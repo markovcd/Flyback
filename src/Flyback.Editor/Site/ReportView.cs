@@ -12,7 +12,7 @@ namespace Flyback.Editor.Site;
 internal static class ReportView
 {
     /// <summary>
-    /// Asks over <paramref name="from"/>'s window what is wrong with <paramref name="name"/>
+    /// Asks over <paramref name="dialog"/> what is wrong with <paramref name="name"/>
     /// and hands the answer to <paramref name="send"/>.
     /// </summary>
     /// <returns>What became of it, or null where nothing was sent.</returns>

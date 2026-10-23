@@ -17,6 +17,16 @@
     <AnalysisLevel>latest-recommended</AnalysisLevel>
 
     <!--
+      The compiler checks every doc comment's crefs and XML. A member need not
+      be documented (CS1591), nor every parameter once one is (CS1573). The
+      .xml file stays in obj/, out of the build output and every package.
+    -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
+    <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
+    <PublishDocumentationFile>false</PublishDocumentationFile>
+
+    <!--
       A packages.lock.json beside each project, holding the whole resolved
       graph. Directory.Packages.props pins what this repository asks for; the
       lock file pins what those packages in turn ask for, which nothing else

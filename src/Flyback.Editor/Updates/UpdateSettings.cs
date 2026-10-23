@@ -9,7 +9,7 @@ namespace Flyback.Editor.Updates;
 /// the settings window.
 /// </summary>
 /// <remarks>
-/// A section of its own rather than a field on <see cref="OutputSettings"/>, which is
+/// A section of its own rather than a field on <see cref="Host.OutputSettings"/>, which is
 /// what comes out of the instrument; this is about the program. Not load-bearing
 /// (ADR-0034): an unreadable section means the defaults, and the default is on
 /// (ADR-0088).

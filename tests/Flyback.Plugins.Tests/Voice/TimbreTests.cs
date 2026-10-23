@@ -12,7 +12,7 @@ namespace Flyback.Plugins.Tests.Voice;
 /// Filter.
 /// </summary>
 /// <remarks>
-/// Signals go in through Coordinates' x, the way <see cref="SpaceTests"/> does it.
+/// Signals go in through Coordinates' x, the way <see cref="Effects.SpaceTests"/> does it.
 /// </remarks>
 public class TimbreTests
 {

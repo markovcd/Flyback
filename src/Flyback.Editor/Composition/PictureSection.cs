@@ -35,7 +35,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         + "while it does; Direct3D is for a machine whose OpenGL misbehaves, is used anyway where "
         + "OpenGL will not start, and either takes over from the next time Flyback starts.";
 
-    /// <summary>What <see cref="Renderer"/> offers: the graphics card's APIs in the order of <see cref="GraphicsDriver"/>, then the CPU.</summary>
+    /// <summary>What the Renderer box offers: the graphics card's APIs in the order of <see cref="GraphicsDriver"/>, then the CPU.</summary>
     private static readonly string[] Renderers = OperatingSystem.IsWindows()
         ? ["OpenGL", "Direct3D", GraphicsApi.Processor]
         : ["OpenGL", GraphicsApi.Processor];

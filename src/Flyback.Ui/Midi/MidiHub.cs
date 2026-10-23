@@ -253,7 +253,7 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
     /// <summary>
     /// Lays the computer keyboard out as a piano, or as <paramref name="scale"/>
     /// along each row. Everything already down is let go first when that changes
-    /// what a key plays, for the reason <see cref="Shift"/> does.
+    /// what a key plays, for the reason <see cref="Shift(int)"/> does.
     /// </summary>
     /// <remarks>
     /// Asked on every recompile, so a layout that is the same as before is left

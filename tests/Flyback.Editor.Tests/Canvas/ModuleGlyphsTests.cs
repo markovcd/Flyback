@@ -15,7 +15,7 @@ namespace Flyback.Editor.Tests.Canvas;
 public class ModuleGlyphsTests : EditorTest
 {
     /// <summary>
-    /// The same promise <see cref="ColorsTests"/> makes about the accents: a
+    /// The same promise <c>ColorsTests</c> makes about the accents: a
     /// category the engine ships draws as itself rather than as nothing.
     /// </summary>
     [AvaloniaFact]

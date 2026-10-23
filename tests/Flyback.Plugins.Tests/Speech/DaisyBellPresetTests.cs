@@ -7,7 +7,7 @@ namespace Flyback.Plugins.Tests.Speech;
 
 /// <summary>
 /// The Daisy Bell preset, a sung Speak with a Mouth. Building and layout are covered
-/// for every preset in <see cref="ShippedPresetTests"/>; this checks it holds what it is for.
+/// for every preset in <see cref="Hosting.ShippedPresetTests"/>; this checks it holds what it is for.
 /// </summary>
 public class DaisyBellPresetTests
 {
