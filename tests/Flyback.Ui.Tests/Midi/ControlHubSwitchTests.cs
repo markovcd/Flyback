@@ -6,7 +6,6 @@ using Flyback.Ui.Midi;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
-using Flyback.Host;
 
 namespace Flyback.Ui.Tests.Midi;
 

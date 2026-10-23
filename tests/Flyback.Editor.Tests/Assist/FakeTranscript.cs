@@ -1,5 +1,4 @@
 using Flyback.Assist;
-using Flyback.Plugins.Assist;
 
 namespace Flyback.Editor.Tests.Assist;
 

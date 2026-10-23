@@ -2,7 +2,6 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Flyback.Tests;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.Core.Tests.Architecture;
 

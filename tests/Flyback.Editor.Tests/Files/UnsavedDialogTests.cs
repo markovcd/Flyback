@@ -6,17 +6,17 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using Flyback.Editor.Assist;
-using Flyback.Editor.Canvas;
-using Flyback.Editor.Controls;
-using Flyback.Editor.Files;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
+using Flyback.Editor.Assist;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Composition;
+using Flyback.Editor.Controls;
+using Flyback.Editor.Files;
+using Flyback.Editor.Hubs;
 using Flyback.Engine.Render;
 using Shouldly;
 using Xunit;
-using Flyback.Editor.Hubs;
-using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Files;
 

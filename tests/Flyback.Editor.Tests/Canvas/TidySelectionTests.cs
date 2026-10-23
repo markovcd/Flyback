@@ -4,11 +4,11 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Threading;
-using Flyback.Editor.Canvas;
-using Flyback.Editor.Notices;
 using Flyback.Core.Graph;
-using Shouldly;
+using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
+using Flyback.Editor.Notices;
+using Shouldly;
 
 namespace Flyback.Editor.Tests.Canvas;
 

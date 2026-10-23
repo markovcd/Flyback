@@ -4,21 +4,21 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
 using Flyback.Editor.Assist;
-using Flyback.Editor.Shell;
-using Flyback.Ui.Audio;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
-using Flyback.Ui.Controls;
+using Flyback.Editor.Hubs;
 using Flyback.Editor.Inspect;
 using Flyback.Editor.Keys;
 using Flyback.Editor.Knobs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Statistics;
 using Flyback.Editor.Tutorials;
 using Flyback.Editor.Windows;
+using Flyback.Ui.Audio;
+using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
-using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Composition;
 

@@ -1,5 +1,5 @@
-using Flyback.Core;
 using System.Reflection;
+using Flyback.Core;
 
 namespace Flyback.Plugins.Hosting;
 

@@ -1,14 +1,13 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using Flyback.Editor.Composition;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Files;
-using Flyback.Editor.Shell;
-using Flyback.Ui;
-using Shouldly;
-using Flyback.Host;
 using Flyback.Editor.Hubs;
-using Flyback.Editor.Composition;
+using Flyback.Editor.Shell;
+using Flyback.Host;
+using Shouldly;
 
 namespace Flyback.Editor.Tests.Files;
 

@@ -1,12 +1,12 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Flyback.Core.Graph;
-using Flyback.Editor.Bars;
 using Flyback.Editor.Assist;
-using Flyback.Editor.Notices;
-using Flyback.Editor.Tutorials;
+using Flyback.Editor.Bars;
 using Flyback.Editor.Composition;
+using Flyback.Editor.Notices;
 using Flyback.Editor.Shell;
+using Flyback.Editor.Tutorials;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
 using Flyback.Engine.Tutorials;

@@ -3,15 +3,14 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Flyback.Core.Graph;
-using Flyback.Core.Graph.Extras;
 using Flyback.Editor.Canvas;
+using Flyback.Editor.Hubs;
+using Flyback.Editor.Midi;
 using Flyback.Editor.Notices;
+using Flyback.Editor.Settings;
 using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
 using Flyback.Ui.Midi;
-using Flyback.Editor.Midi;
-using Flyback.Editor.Hubs;
-using Flyback.Editor.Settings;
 
 namespace Flyback.Editor.Inspect;
 

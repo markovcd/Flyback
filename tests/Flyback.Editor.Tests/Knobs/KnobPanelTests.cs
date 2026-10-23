@@ -4,12 +4,12 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.VisualTree;
-using Flyback.Editor.Canvas;
-using Flyback.Ui.Controls;
-using Flyback.Editor.Knobs;
 using Flyback.Core.Graph;
-using Shouldly;
+using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
+using Flyback.Editor.Knobs;
+using Flyback.Ui.Controls;
+using Shouldly;
 
 namespace Flyback.Editor.Tests.Knobs;
 

@@ -1,10 +1,10 @@
 using System.Text.RegularExpressions;
 using Flyback.Engine.Compile;
-using Reqnroll;
-using Shouldly;
-using Flyback.Ui.Midi;
 using Flyback.Plugins.Midi;
 using Flyback.Specs.Support;
+using Flyback.Ui.Midi;
+using Reqnroll;
+using Shouldly;
 
 namespace Flyback.Specs.Steps;
 

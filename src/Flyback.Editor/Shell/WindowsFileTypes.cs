@@ -1,7 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Microsoft.Win32;
-using Flyback.Editor.Files;
 
 namespace Flyback.Editor.Shell;
 

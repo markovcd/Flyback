@@ -1,9 +1,8 @@
 using Flyback.Core.Graph;
+using Flyback.Editor.Shell;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
-using Flyback.Editor.Files;
-using Flyback.Editor.Shell;
 using Shouldly;
 using Xunit;
 

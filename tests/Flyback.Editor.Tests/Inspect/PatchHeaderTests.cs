@@ -1,8 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Flyback.Core.Graph;
-using Shouldly;
 using Flyback.Editor.Hubs;
+using Shouldly;
 
 namespace Flyback.Editor.Tests.Inspect;
 

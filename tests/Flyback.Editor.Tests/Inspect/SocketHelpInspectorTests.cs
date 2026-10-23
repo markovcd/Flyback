@@ -4,8 +4,8 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
-using Shouldly;
 using Flyback.Editor.Composition;
+using Shouldly;
 
 namespace Flyback.Editor.Tests.Inspect;
 

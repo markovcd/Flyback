@@ -6,11 +6,11 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
-using Flyback.Ui.Controls;
+using Flyback.Editor.Composition;
 using Flyback.Editor.Windows;
+using Flyback.Ui.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
-using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests;
 

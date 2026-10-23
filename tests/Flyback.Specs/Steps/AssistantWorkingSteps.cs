@@ -3,9 +3,9 @@ using Avalonia.LogicalTree;
 using Flyback.Assist;
 using Flyback.Editor.Assist;
 using Flyback.Specs.Support;
+using Flyback.Ui.Testing;
 using Reqnroll;
 using Shouldly;
-using Flyback.Ui.Testing;
 
 namespace Flyback.Specs.Steps;
 

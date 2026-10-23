@@ -5,8 +5,8 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Platform;
-using Flyback.Editor.Canvas;
 using Flyback.Core.Graph;
+using Flyback.Editor.Canvas;
 using Shouldly;
 using Colors = Flyback.Ui.Controls.Colors;
 

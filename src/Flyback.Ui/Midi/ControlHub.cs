@@ -1,7 +1,7 @@
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
-using Flyback.Plugins.Midi;
 using Flyback.Host;
+using Flyback.Plugins.Midi;
 
 namespace Flyback.Ui.Midi;
 
@@ -40,7 +40,7 @@ internal sealed class ControlHub
     /// <summary>The switches whose controller's button was last heard down, so a press flips one once.</summary>
     private readonly HashSet<Guid> buttonsDown = [];
 
-    /// <summary>The knobs a controller has caught up with, under <see cref="Takeover.PickUp"/>.</summary>
+    /// <summary>The knobs a controller has caught up with, under <see cref="Host.Takeover.PickUp"/>.</summary>
     private readonly HashSet<Guid> caught = [];
 
     /// <summary>Where each binding's controller last sat, for telling that it passed the knob.</summary>

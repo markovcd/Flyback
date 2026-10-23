@@ -1,15 +1,15 @@
 using Avalonia;
 using Avalonia.Controls;
+using Flyback.Core.Graph;
 using Flyback.Editor.Midi;
 using Flyback.Editor.Notices;
-using Flyback.Editor.Shell;
-using Flyback.Ui.Midi;
 using Flyback.Editor.Settings;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Statistics;
-using Flyback.Core.Graph;
+using Flyback.Host;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
-using Flyback.Host;
+using Flyback.Ui.Midi;
 
 namespace Flyback.Editor.Canvas;
 

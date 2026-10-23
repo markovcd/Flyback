@@ -1,34 +1,9 @@
-using Flyback.Core;
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
-using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
-using Avalonia.Input;
-using Avalonia.Media;
-using Avalonia.Threading;
-using Avalonia.VisualTree;
-using Flyback.Editor.Assist;
-using Flyback.Editor.Canvas;
-using Flyback.Editor.Capture;
-using Flyback.Editor.Controls;
-using Flyback.Engine.Graph;
-using Flyback.Ui.Controls;
-using Flyback.Editor.Knobs;
-using Flyback.Editor.Notices;
-using Flyback.Editor.Settings;
-using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
-using Flyback.Engine.Render;
-using Flyback.Plugins;
-using Flyback.Plugins.Audio;
-using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Settings;
-using Shouldly;
-using Xunit;
-using Flyback.Ui;
-using Flyback.Host;
 using Flyback.Editor.Composition;
+using Flyback.Engine.Graph;
+using Shouldly;
 
 namespace Flyback.Editor.Tests.Settings;
 

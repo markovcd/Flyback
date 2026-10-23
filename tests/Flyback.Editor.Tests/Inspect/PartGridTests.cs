@@ -3,10 +3,10 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Flyback.Ui.Controls;
-using Flyback.Editor.Inspect;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
+using Flyback.Editor.Inspect;
+using Flyback.Ui.Controls;
 using Shouldly;
 
 namespace Flyback.Editor.Tests.Inspect;

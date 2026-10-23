@@ -1,16 +1,16 @@
 ﻿using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
-using Flyback.Editor.Canvas;
-using Flyback.Editor.Files;
-using Flyback.Editor.Shell;
 using Flyback.Core;
 using Flyback.Core.Graph;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Composition;
+using Flyback.Editor.Files;
+using Flyback.Editor.Hubs;
+using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
-using Flyback.Editor.Hubs;
-using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Files;
 

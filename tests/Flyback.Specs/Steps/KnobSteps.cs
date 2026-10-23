@@ -1,6 +1,6 @@
+using Flyback.Core.Graph;
 using Reqnroll;
 using Shouldly;
-using Flyback.Core.Graph;
 
 namespace Flyback.Specs.Steps;
 

@@ -1,5 +1,5 @@
-using Flyback.Core.Compile;
 using Flyback.Core;
+using Flyback.Core.Compile;
 
 namespace Flyback.Engine.Compile;
 

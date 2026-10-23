@@ -1,15 +1,12 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
-using Flyback.Ui.Audio;
-using Flyback.Editor.Bars;
-using Flyback.Core;
 using Flyback.Core.Graph;
-using Flyback.Plugins.Audio;
-using Flyback.Plugins.Settings;
+using Flyback.Editor.Bars;
+using Flyback.Plugins.Testing;
+using Flyback.Ui.Audio;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
-using Flyback.Plugins.Testing;
 
 namespace Flyback.Editor.Tests.Bars;
 

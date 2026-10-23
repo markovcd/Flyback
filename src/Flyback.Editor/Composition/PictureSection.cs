@@ -1,19 +1,18 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
-using Flyback.Editor.Shell;
-using Flyback.Ui.Audio;
 using Flyback.Editor.Bars;
-using Flyback.Editor.Hubs;
 using Flyback.Editor.Controls;
-using Flyback.Ui.Controls;
+using Flyback.Editor.Hubs;
 using Flyback.Editor.Knobs;
 using Flyback.Editor.Notices;
-using Flyback.Engine.Render;
-using Flyback.Ui;
-using Flyback.Host;
 using Flyback.Editor.Settings;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Windows;
+using Flyback.Engine.Render;
+using Flyback.Host;
+using Flyback.Ui.Audio;
+using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Composition;
 

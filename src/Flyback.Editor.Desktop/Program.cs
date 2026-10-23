@@ -1,12 +1,12 @@
 using System.Diagnostics;
 using Avalonia;
+using Flyback.Core;
 using Flyback.Editor.Desktop.Shots;
 using Flyback.Editor.Desktop.Updates;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Updates;
-using Flyback.Core;
-using Flyback.Ui;
 using Flyback.Host;
+using Flyback.Ui;
 
 namespace Flyback.Editor.Desktop;
 

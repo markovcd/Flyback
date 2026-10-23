@@ -1,10 +1,10 @@
-using Flyback.Ui.Audio;
-using Flyback.Editor.PluginPackages;
 using Flyback.Core.Graph;
+using Flyback.Editor.PluginPackages;
 using Flyback.Plugins;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
+using Flyback.Ui.Audio;
 using Shouldly;
 using Xunit;
 

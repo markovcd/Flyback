@@ -1,5 +1,5 @@
-using Flyback.Editor.Updates;
 using System.Globalization;
+using Flyback.Editor.Updates;
 
 namespace Flyback.Editor.Desktop.Updates;
 

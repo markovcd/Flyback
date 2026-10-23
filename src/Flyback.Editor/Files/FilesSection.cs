@@ -5,14 +5,13 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Flyback.Editor.Controls;
-using Flyback.Editor.Shell;
-using Flyback.Ui.Controls;
+using Flyback.Editor.Hubs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
-using Flyback.Plugins.Hosting;
-using Flyback.Ui;
+using Flyback.Editor.Shell;
 using Flyback.Host;
-using Flyback.Editor.Hubs;
+using Flyback.Plugins.Hosting;
+using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Files;
 

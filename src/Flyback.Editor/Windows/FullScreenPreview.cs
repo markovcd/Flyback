@@ -3,15 +3,15 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform;
-using Flyback.Ui.Audio;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
-using Flyback.Ui.Controls;
+using Flyback.Editor.Hubs;
 using Flyback.Editor.Keys;
 using Flyback.Editor.Knobs;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Statistics;
-using Flyback.Editor.Hubs;
+using Flyback.Ui.Audio;
+using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Windows;
 

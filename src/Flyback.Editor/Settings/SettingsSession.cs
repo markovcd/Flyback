@@ -2,13 +2,13 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.Editor.Controls;
-using Flyback.Editor.Shell;
-using Flyback.Ui.Controls;
-using Flyback.Editor.Notices;
-using Flyback.Editor.Statistics;
-using Colors = Flyback.Ui.Controls.Colors;
 using Flyback.Editor.Composition;
+using Flyback.Editor.Controls;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Shell;
+using Flyback.Editor.Statistics;
+using Flyback.Ui.Controls;
+using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Settings;
 

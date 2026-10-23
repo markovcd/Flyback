@@ -1,9 +1,9 @@
 using System.Reflection;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Tests.Assist;
 using Shouldly;
 using Xunit;
-using Flyback.Plugins.Tests.Assist;
 
 namespace Flyback.Plugins.Tests.Hosting;
 

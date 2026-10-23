@@ -2,9 +2,9 @@ using System.Net;
 using System.Text.Json.Nodes;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Testing;
 using Shouldly;
 using Xunit;
-using Flyback.Plugins.Testing;
 
 namespace Flyback.Plugins.OpenAi.Tests;
 

@@ -1,11 +1,11 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using Flyback.Editor.Composition;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Updates;
 using Shouldly;
-using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Updates;
 

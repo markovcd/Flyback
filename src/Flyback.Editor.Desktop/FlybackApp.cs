@@ -3,16 +3,16 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
+using Flyback.Core;
+using Flyback.Editor.Composition;
+using Flyback.Editor.Desktop.Updates;
 using Flyback.Editor.Files;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Statistics;
-using Flyback.Editor.Desktop.Updates;
-using Flyback.Ui;
-using Flyback.Core;
-using Flyback.Plugins.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Flyback.Editor.Composition;
 using Flyback.Editor.Windows;
+using Flyback.Plugins.Hosting;
+using Flyback.Ui;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Flyback.Editor.Desktop;
 

@@ -1,16 +1,14 @@
 using Avalonia.Headless.XUnit;
 using Avalonia.Platform.Storage;
-using Flyback.Editor.Shell;
-using Flyback.Ui.Audio;
-using Flyback.Editor.Notices;
 using Flyback.Editor.Canvas;
-using Flyback.Core;
-using Flyback.Plugins.Audio;
-using Microsoft.Extensions.DependencyInjection;
-using Shouldly;
-using Flyback.Plugins.Testing;
 using Flyback.Editor.Composition;
 using Flyback.Editor.Hubs;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Shell;
+using Flyback.Plugins.Testing;
+using Flyback.Ui.Audio;
+using Microsoft.Extensions.DependencyInjection;
+using Shouldly;
 
 namespace Flyback.Editor.Tests;
 

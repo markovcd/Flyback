@@ -1,6 +1,6 @@
+using Flyback.Plugins.Assist;
 using Reqnroll;
 using Shouldly;
-using Flyback.Plugins.Assist;
 
 namespace Flyback.Specs.Steps;
 

@@ -4,8 +4,8 @@ using Avalonia.Media;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
-using Flyback.Ui.Controls;
 using Flyback.Editor.Updates;
+using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Composition;
 

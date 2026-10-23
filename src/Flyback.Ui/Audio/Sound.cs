@@ -1,7 +1,7 @@
 using Flyback.Core.Graph;
+using Flyback.Host;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
-using Flyback.Host;
 
 namespace Flyback.Ui.Audio;
 

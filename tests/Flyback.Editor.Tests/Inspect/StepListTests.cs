@@ -1,14 +1,14 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
-using Flyback.Ui.Controls;
+using Avalonia.Input;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
+using Flyback.Editor.Inspect;
+using Flyback.Ui.Controls;
 using Shouldly;
 using Xunit;
-using Flyback.Editor.Inspect;
-using Flyback.Core.Graph.Extras;
 
 namespace Flyback.Editor.Tests.Inspect;
 

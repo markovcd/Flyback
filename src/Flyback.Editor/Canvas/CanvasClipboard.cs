@@ -1,8 +1,8 @@
 using Avalonia.Input.Platform;
 using Flyback.Core.Graph;
+using Flyback.Editor.Statistics;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
-using Flyback.Editor.Statistics;
 
 namespace Flyback.Editor.Canvas;
 

@@ -1,5 +1,3 @@
-using Flyback.Editor.Updates;
-
 namespace Flyback.Editor.Shell;
 
 /// <summary>What the editor is running in, and what it may reach outside itself.</summary>

@@ -7,7 +7,6 @@ using Avalonia.Media;
 using Avalonia.VisualTree;
 using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
-using Flyback.Editor.Canvas;
 
 namespace Flyback.Editor.Controls;
 

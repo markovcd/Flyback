@@ -1,8 +1,8 @@
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
+using Flyback.Editor.Midi;
 using Shouldly;
 using Xunit;
-using Flyback.Editor.Midi;
 
 namespace Flyback.Editor.Tests.Midi;
 

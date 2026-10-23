@@ -1,6 +1,6 @@
+using Flyback.Editor.Composition;
 using Flyback.Editor.Site;
 using Flyback.Editor.Statistics;
-using Flyback.Editor.Composition;
 using Shouldly;
 using Xunit;
 

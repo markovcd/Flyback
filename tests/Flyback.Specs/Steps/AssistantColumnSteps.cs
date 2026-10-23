@@ -1,17 +1,16 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
-using Avalonia.Media;
 using Avalonia.LogicalTree;
+using Avalonia.Media;
 using Flyback.Assist;
 using Flyback.Editor.Assist;
+using Flyback.Editor.Controls;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Settings;
 using Flyback.Specs.Support;
+using Flyback.Ui.Testing;
 using Reqnroll;
 using Shouldly;
-using Flyback.Editor.Controls;
-using Flyback.Ui.Controls;
-using Flyback.Ui.Testing;
 
 namespace Flyback.Specs.Steps;
 

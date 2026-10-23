@@ -1,12 +1,12 @@
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
+using Flyback.Host;
 using Flyback.Plugins.Midi;
 using Flyback.Ui.Audio;
 using Flyback.Ui.Midi;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
-using Flyback.Host;
 
 namespace Flyback.Ui.Tests.Midi;
 

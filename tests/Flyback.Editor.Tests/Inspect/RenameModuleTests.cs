@@ -3,14 +3,14 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Headless;
-using Avalonia.Input;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.Core.Graph;
-using Shouldly;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
+using Shouldly;
 
 namespace Flyback.Editor.Tests.Inspect;
 

@@ -4,12 +4,11 @@ using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.VisualTree;
 using Flyback.Engine.Graph;
-using Flyback.Ui;
-using Flyback.Ui.Controls;
+using Flyback.Host;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
+using Flyback.Ui.Controls;
 using Flyback.Viewer.Desktop;
-using Flyback.Host;
 
 namespace Flyback.Specs.Support;
 

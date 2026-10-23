@@ -3,12 +3,11 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.Editor.Controls;
-using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
-using Flyback.Ui;
-using Colors = Flyback.Ui.Controls.Colors;
+using Flyback.Editor.Controls;
 using Flyback.Host;
+using Flyback.Ui.Controls;
+using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Knobs;
 

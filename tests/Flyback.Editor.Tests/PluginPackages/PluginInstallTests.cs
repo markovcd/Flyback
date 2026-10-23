@@ -3,14 +3,12 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
+using Flyback.Editor.Composition;
 using Flyback.Editor.Controls;
 using Flyback.Editor.PluginPackages;
 using Flyback.Editor.Shell;
 using Flyback.Plugins.Hosting;
-using Flyback.Editor.Tests.PluginPackages;
-using Flyback.Editor.Windows;
 using Shouldly;
-using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.PluginPackages;
 

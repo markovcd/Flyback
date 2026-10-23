@@ -4,14 +4,14 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Flyback.Editor.Canvas;
-using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Composition;
+using Flyback.Ui.Controls;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
-using Microsoft.Extensions.DependencyInjection;
-using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Settings;
 

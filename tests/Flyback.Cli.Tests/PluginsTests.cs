@@ -2,7 +2,6 @@ using System.CommandLine;
 using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
-
 using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Tests;

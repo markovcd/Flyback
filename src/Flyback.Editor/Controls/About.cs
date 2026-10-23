@@ -5,7 +5,6 @@ using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.Editor.Gallery;
 using Flyback.Core;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Language;

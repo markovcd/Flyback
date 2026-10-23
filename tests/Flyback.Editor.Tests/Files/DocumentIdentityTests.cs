@@ -2,13 +2,13 @@
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Flyback.Core.Graph;
+using Flyback.Editor.Composition;
+using Flyback.Editor.Hubs;
 using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
 using Flyback.Plugins.Hosting;
 using Shouldly;
-using Flyback.Editor.Hubs;
-using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Files;
 

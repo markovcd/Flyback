@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-using System.Text.Json;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Settings;
 

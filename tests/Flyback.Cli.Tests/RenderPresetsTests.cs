@@ -2,6 +2,9 @@ using System.CommandLine;
 using System.Net;
 using System.Text;
 using System.Text.Json.Nodes;
+using Flyback.Cli.Commands;
+using Flyback.Cli.Common;
+using Flyback.Cli.Rendering;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Flyback.Engine.Graph;
@@ -9,10 +12,6 @@ using Flyback.Engine.Render;
 using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
-using Flyback.Cli.Commands;
-using Flyback.Cli.Common;
-using Flyback.Cli.Models;
-using Flyback.Cli.Rendering;
 
 namespace Flyback.Cli.Tests;
 

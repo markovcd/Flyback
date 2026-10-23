@@ -1,10 +1,10 @@
 using System.Text;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
-using Flyback.Editor.Canvas;
-using Flyback.Ui.Controls;
-using Flyback.Editor.Inspect;
 using Flyback.Core.Graph;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Inspect;
+using Flyback.Ui.Controls;
 using Shouldly;
 using Xunit;
 using Colors = Flyback.Ui.Controls.Colors;

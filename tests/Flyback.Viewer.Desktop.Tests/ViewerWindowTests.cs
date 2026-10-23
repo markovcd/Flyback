@@ -1,24 +1,23 @@
-using Flyback.Ui.Testing;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.VisualTree;
-using Flyback.Engine.Compile;
-using Flyback.Engine.Graph;
-using Flyback.Ui.Controls;
 using Flyback.Core;
 using Flyback.Core.Graph;
+using Flyback.Engine.Compile;
+using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
 using Flyback.Engine.Render;
+using Flyback.Host;
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Testing;
+using Flyback.Ui.Controls;
+using Flyback.Ui.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
-using Flyback.Ui;
-using Flyback.Host;
-using Flyback.Plugins.Testing;
 
 namespace Flyback.Viewer.Desktop.Tests;
 

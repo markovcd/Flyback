@@ -1,6 +1,6 @@
 using System.Text;
-using Flyback.Editor.Canvas;
 using Flyback.Core.Graph;
+using Flyback.Editor.Canvas;
 
 namespace Flyback.Editor.Inspect;
 

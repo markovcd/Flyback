@@ -3,12 +3,11 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Midi;
+using Flyback.Editor.Settings;
+using Flyback.Host;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui.Controls;
 using Flyback.Ui.Midi;
-using Flyback.Ui;
-using Flyback.Host;
-using Flyback.Editor.Settings;
 
 namespace Flyback.Editor.Knobs;
 

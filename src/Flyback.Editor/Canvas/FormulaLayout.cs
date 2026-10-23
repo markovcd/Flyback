@@ -2,8 +2,8 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using Avalonia;
 using Avalonia.Media;
-using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
+using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Canvas;
 

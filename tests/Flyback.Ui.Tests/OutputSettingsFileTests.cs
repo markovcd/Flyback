@@ -1,9 +1,9 @@
 using Flyback.Core;
 using Flyback.Engine.Render;
+using Flyback.Host;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
-using Flyback.Host;
 
 namespace Flyback.Ui.Tests;
 

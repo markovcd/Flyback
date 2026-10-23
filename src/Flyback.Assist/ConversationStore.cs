@@ -4,7 +4,6 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Flyback.Core;
 
-
 namespace Flyback.Assist;
 
 /// <summary>

@@ -1,12 +1,11 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Flyback.Editor.Composition;
+using Flyback.Editor.Hubs;
 using Flyback.Ui.Controls;
 using Shouldly;
-using Flyback.Editor.Hubs;
-using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Bars;
 

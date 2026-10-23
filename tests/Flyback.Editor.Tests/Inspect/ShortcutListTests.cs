@@ -1,9 +1,9 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Flyback.Core.Graph;
+using Flyback.Editor.Composition;
 using Flyback.Editor.Inspect;
 using Shouldly;
-using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Inspect;
 

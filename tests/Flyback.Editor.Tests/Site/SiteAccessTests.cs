@@ -1,10 +1,10 @@
+using Flyback.Editor.Composition;
+using Flyback.Editor.PluginPackages;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Site;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
-using Flyback.Editor.Composition;
-using Flyback.Editor.PluginPackages;
 
 namespace Flyback.Editor.Tests.Site;
 

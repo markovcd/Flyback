@@ -4,7 +4,9 @@ using Avalonia.Headless;
 using Avalonia.Input;
 using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
+using Flyback.Editor.Composition;
 using Flyback.Editor.Controls;
+using Flyback.Editor.Hubs;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Site;
 using Flyback.Editor.Tests;
@@ -17,8 +19,6 @@ using Shouldly;
 using Xunit;
 using Xunit.Sdk;
 using Xunit.v3;
-using Flyback.Editor.Composition;
-using Flyback.Editor.Hubs;
 
 // Every [AvaloniaFact] and [AvaloniaTheory] in this assembly runs against this
 // application, on a UI thread the session owns. Declared once, at the assembly.

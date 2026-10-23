@@ -2,9 +2,9 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.Threading;
-using Flyback.Ui.Controls;
 using Flyback.Editor.Settings;
 using Flyback.Plugins.Assist;
+using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Assist;

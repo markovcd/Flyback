@@ -4,15 +4,12 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Threading;
-using Flyback.Editor.Canvas;
-using Flyback.Editor.Shell;
-using Flyback.Ui.Midi;
-using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
-using Shouldly;
-using Flyback.Ui;
-using Flyback.Host;
+using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
+using Flyback.Editor.Shell;
+using Flyback.Host;
+using Shouldly;
 
 namespace Flyback.Editor.Tests.Settings;
 

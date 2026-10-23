@@ -3,8 +3,8 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Svg.Skia;
-using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
+using Flyback.Ui.Controls;
 using SkiaSharp;
 using Colors = Flyback.Ui.Controls.Colors;
 

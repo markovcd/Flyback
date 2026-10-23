@@ -1,8 +1,8 @@
 using System.Runtime.Versioning;
+using Flyback.Editor.Shell;
 using Microsoft.Win32;
 using Shouldly;
 using Xunit;
-using Flyback.Editor.Shell;
 
 namespace Flyback.Editor.Tests.Files;
 

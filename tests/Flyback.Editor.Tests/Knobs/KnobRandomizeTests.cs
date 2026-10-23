@@ -3,13 +3,12 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Flyback.Core.Graph;
+using Flyback.Editor.Composition;
 using Flyback.Editor.Knobs;
 using Flyback.Editor.Settings;
-using Flyback.Core.Graph;
-using Shouldly;
-using Flyback.Ui;
 using Flyback.Host;
-using Flyback.Editor.Composition;
+using Shouldly;
 
 namespace Flyback.Editor.Tests.Knobs;
 

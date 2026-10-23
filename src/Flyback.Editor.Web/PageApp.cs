@@ -2,16 +2,16 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Flyback.Editor.Bars;
-using Flyback.Editor.Shell;
-using Flyback.Ui.Audio;
+using Flyback.Editor.Composition;
 using Flyback.Editor.Controls;
-using Flyback.Ui.Controls;
 using Flyback.Editor.Gallery;
 using Flyback.Editor.Settings;
+using Flyback.Editor.Shell;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
+using Flyback.Ui.Audio;
+using Flyback.Ui.Controls;
 using Microsoft.Extensions.DependencyInjection;
-using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Web;
 

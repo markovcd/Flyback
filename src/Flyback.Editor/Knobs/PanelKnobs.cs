@@ -1,16 +1,15 @@
 using Avalonia.Threading;
-using Flyback.Ui.Audio;
+using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
-using Flyback.Ui.Controls;
-using Flyback.Ui.Midi;
+using Flyback.Editor.Hubs;
+using Flyback.Editor.Midi;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Statistics;
-using Flyback.Core.Graph;
-using Flyback.Ui;
-using Flyback.Host;
-using Flyback.Editor.Midi;
-using Flyback.Editor.Hubs;
 using Flyback.Engine.Language;
+using Flyback.Host;
+using Flyback.Ui.Audio;
+using Flyback.Ui.Controls;
+using Flyback.Ui.Midi;
 
 namespace Flyback.Editor.Knobs;
 

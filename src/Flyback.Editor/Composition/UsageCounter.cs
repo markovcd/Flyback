@@ -1,8 +1,8 @@
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Gallery;
 using Flyback.Editor.Notices;
-using Flyback.Ui.Midi;
 using Flyback.Editor.Statistics;
+using Flyback.Ui.Midi;
 
 namespace Flyback.Editor.Composition;
 

@@ -1,6 +1,4 @@
-﻿using Flyback.Engine.Language.Ast.Statements;
-
-namespace Flyback.Engine.Language.Ast.Expressions;
+﻿namespace Flyback.Engine.Language.Ast.Expressions;
 
 /// <summary>
 /// <c>for name in list { body }</c>: the body stamped out once per item, worth the

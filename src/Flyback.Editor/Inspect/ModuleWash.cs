@@ -3,9 +3,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
 using Flyback.Ui.Controls;
-using Flyback.Core.Graph;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Inspect;

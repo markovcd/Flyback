@@ -3,10 +3,10 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Flyback.Ui.Controls;
-using Flyback.Plugins.Hosting;
-using Colors = Flyback.Ui.Controls.Colors;
 using Flyback.Editor.Controls;
+using Flyback.Plugins.Hosting;
+using Flyback.Ui.Controls;
+using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.PluginPackages;
 

@@ -6,11 +6,11 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using Flyback.Editor.Gallery;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
 using Flyback.Ui.Audio;
-using Flyback.Editor.Gallery;
 
 namespace Flyback.Editor.Controls;
 

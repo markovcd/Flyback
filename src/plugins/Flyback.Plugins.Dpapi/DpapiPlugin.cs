@@ -1,5 +1,3 @@
-using Flyback.Plugins.Secrets;
-
 namespace Flyback.Plugins.Dpapi;
 
 /// <summary>

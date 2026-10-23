@@ -1,7 +1,7 @@
-using Flyback.Engine.Graph;
-using Flyback.Plugins.Hosting;
 using Flyback.Editor.Updates;
+using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
+using Flyback.Plugins.Hosting;
 
 namespace Flyback.Editor.Shell;
 

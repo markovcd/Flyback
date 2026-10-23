@@ -1,10 +1,10 @@
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using Flyback.Editor.Composition;
 using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
-using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.PluginPackages;
 

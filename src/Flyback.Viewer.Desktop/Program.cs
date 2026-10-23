@@ -1,11 +1,11 @@
 using System.Diagnostics;
 using System.Text;
 using Avalonia;
+using Flyback.Core;
+using Flyback.Host;
+using Flyback.Plugins.Hosting;
 using Flyback.Ui;
 using Flyback.Ui.Audio;
-using Flyback.Core;
-using Flyback.Plugins.Hosting;
-using Flyback.Host;
 
 namespace Flyback.Viewer.Desktop;
 

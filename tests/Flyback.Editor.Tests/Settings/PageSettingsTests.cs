@@ -2,13 +2,13 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
+using Flyback.Editor.Composition;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Shell;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
-using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.Settings;
 

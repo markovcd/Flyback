@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Flyback.Editor.Updates;
 using Flyback.Editor.Settings;
 
 namespace Flyback.Editor.Composition;

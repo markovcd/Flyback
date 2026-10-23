@@ -5,9 +5,9 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.Core.Graph;
+using Flyback.Editor.Hubs;
 using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
-using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Inspect;
 

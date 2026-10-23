@@ -4,15 +4,13 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.VisualTree;
+using Flyback.Editor.Composition;
 using Flyback.Editor.Controls;
 using Flyback.Editor.PluginPackages;
 using Flyback.Editor.Shell;
-using Flyback.Editor.Tests.PluginPackages;
-using Flyback.Editor.Windows;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
-using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Tests.PluginPackages;
 

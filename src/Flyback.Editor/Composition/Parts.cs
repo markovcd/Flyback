@@ -1,6 +1,6 @@
+using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
 using Microsoft.Extensions.DependencyInjection;
-using Flyback.Editor.Notices;
 
 namespace Flyback.Editor.Composition;
 

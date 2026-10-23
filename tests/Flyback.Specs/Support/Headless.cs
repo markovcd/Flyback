@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Headless;
 
 namespace Flyback.Specs.Support;

@@ -1,10 +1,10 @@
-using Flyback.Ui.Testing;
 using Avalonia;
 using Avalonia.Headless.XUnit;
-using Flyback.Engine.Graph;
-using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
+using Flyback.Ui.Controls;
+using Flyback.Ui.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 

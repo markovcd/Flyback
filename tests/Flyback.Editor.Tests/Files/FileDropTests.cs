@@ -5,13 +5,13 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
-using Flyback.Editor.Controls;
-using Flyback.Engine.Graph;
 using Flyback.Core;
 using Flyback.Core.Graph;
-using Shouldly;
-using Flyback.Editor.Hubs;
 using Flyback.Editor.Composition;
+using Flyback.Editor.Controls;
+using Flyback.Editor.Hubs;
+using Flyback.Engine.Graph;
+using Shouldly;
 
 namespace Flyback.Editor.Tests.Files;
 

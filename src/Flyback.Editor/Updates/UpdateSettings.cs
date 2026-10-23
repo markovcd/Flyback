@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Flyback.Core;
-using Flyback.Ui;
 
 namespace Flyback.Editor.Updates;
 

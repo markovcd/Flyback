@@ -6,9 +6,9 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using Flyback.Editor.Inspect;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
+using Flyback.Editor.Inspect;
 using Shouldly;
 
 namespace Flyback.Editor.Tests.Inspect;

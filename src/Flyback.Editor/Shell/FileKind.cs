@@ -1,5 +1,3 @@
-using Flyback.Editor.Files;
-
 namespace Flyback.Editor.Shell;
 
 /// <summary>One of the kinds of file Flyback opens, as the operating system is told about it.</summary>

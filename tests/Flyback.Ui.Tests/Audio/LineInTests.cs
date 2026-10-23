@@ -1,15 +1,15 @@
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
+using Flyback.Host;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
+using Flyback.Plugins.Testing;
 using Flyback.Ui.Audio;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
-using Flyback.Host;
-using Flyback.Plugins.Testing;
 
 namespace Flyback.Ui.Tests.Audio;
 

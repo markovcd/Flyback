@@ -7,15 +7,15 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
-using Flyback.Editor.Shell;
-using Flyback.Ui.Controls;
+using Flyback.Editor.Hubs;
 using Flyback.Editor.Notices;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Site;
 using Flyback.Editor.Statistics;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui;
+using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
-using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Bars;
 

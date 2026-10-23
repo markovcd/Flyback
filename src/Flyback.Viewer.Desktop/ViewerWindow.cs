@@ -4,9 +4,8 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
-using Flyback.Ui;
-using Flyback.Ui.Controls;
 using Flyback.Host;
+using Flyback.Ui.Controls;
 
 namespace Flyback.Viewer.Desktop;
 

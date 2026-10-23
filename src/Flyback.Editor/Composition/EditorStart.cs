@@ -2,6 +2,8 @@ using Avalonia.Controls;
 using Flyback.Core.Graph;
 using Flyback.Editor.Files;
 using Flyback.Editor.Gallery;
+using Flyback.Editor.Hubs;
+using Flyback.Editor.Midi;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
@@ -9,8 +11,6 @@ using Flyback.Editor.Statistics;
 using Flyback.Editor.Windows;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui.Midi;
-using Flyback.Editor.Midi;
-using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Composition;
 

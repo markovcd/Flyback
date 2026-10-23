@@ -5,10 +5,9 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Flyback.Core.Graph;
-using Flyback.Editor.Windows;
-using Shouldly;
-using Flyback.Editor.Hubs;
 using Flyback.Editor.Composition;
+using Flyback.Editor.Hubs;
+using Shouldly;
 
 namespace Flyback.Editor.Tests.Bars;
 

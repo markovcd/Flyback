@@ -1,8 +1,8 @@
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
-using Flyback.Editor.Notices;
 using Flyback.Core.Graph;
+using Flyback.Editor.Notices;
 
 namespace Flyback.Editor.Canvas;
 

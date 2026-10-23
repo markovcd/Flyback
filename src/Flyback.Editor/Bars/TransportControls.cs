@@ -2,13 +2,13 @@ using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Flyback.Editor.Capture;
-using Flyback.Ui.Midi;
-using Flyback.Ui.Controls;
+using Flyback.Editor.Hubs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Statistics;
 using Flyback.Plugins.Midi;
-using Flyback.Editor.Hubs;
+using Flyback.Ui.Controls;
+using Flyback.Ui.Midi;
 
 namespace Flyback.Editor.Bars;
 

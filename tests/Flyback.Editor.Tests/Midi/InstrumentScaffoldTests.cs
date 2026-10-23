@@ -1,12 +1,12 @@
-using Flyback.Editor.Canvas;
-using Flyback.Engine.Compile;
-using Flyback.Engine.Graph;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Midi;
+using Flyback.Engine.Compile;
+using Flyback.Engine.Graph;
 using Shouldly;
 using Xunit;
-using Flyback.Editor.Midi;
 
 namespace Flyback.Editor.Tests.Midi;
 

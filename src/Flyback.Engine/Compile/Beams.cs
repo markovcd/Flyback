@@ -1,6 +1,6 @@
 using System.Buffers;
-using Flyback.Core.Graph;
 using Flyback.Core.Compile;
+using Flyback.Core.Graph;
 
 namespace Flyback.Engine.Compile;
 

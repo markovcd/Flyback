@@ -1,5 +1,4 @@
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -9,7 +8,6 @@ using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
-using Flyback.Engine.Render;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using PluginRegistry = Flyback.Cli.Plugins;

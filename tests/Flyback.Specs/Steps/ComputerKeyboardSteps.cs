@@ -1,8 +1,8 @@
 using System.Globalization;
 using Avalonia.Input;
+using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Ui.Midi;
-using Flyback.Core.Graph;
 using Reqnroll;
 using Shouldly;
 

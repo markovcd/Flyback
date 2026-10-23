@@ -2,9 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
-using Flyback.Ui.Controls;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Notices;
+using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Canvas;
 

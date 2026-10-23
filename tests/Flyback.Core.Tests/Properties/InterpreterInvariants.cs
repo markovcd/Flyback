@@ -1,7 +1,7 @@
 using CsCheck;
+using Flyback.Core.Compile;
 using Flyback.Engine.Compile;
 using Shouldly;
-using Flyback.Core.Compile;
 
 namespace Flyback.Core.Tests.Properties;
 

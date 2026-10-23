@@ -1,12 +1,11 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using Flyback.Cli.Commands;
+using Flyback.Cli.Common;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Sample;
 using Shouldly;
 using Xunit;
-
-using Flyback.Cli.Commands;
-using Flyback.Cli.Common;
 
 namespace Flyback.Cli.Tests;
 

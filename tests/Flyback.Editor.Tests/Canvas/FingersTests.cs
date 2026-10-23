@@ -2,10 +2,10 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Flyback.Core.Graph;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
 using Flyback.Ui.Controls;
-using Flyback.Core.Graph;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 

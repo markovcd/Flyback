@@ -3,11 +3,10 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Interactivity;
-using Flyback.Editor.Canvas;
 using Flyback.Core.Graph;
-using Shouldly;
+using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
+using Shouldly;
 
 namespace Flyback.Editor.Tests.Canvas;
 

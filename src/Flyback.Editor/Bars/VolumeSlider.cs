@@ -4,10 +4,10 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.Editor.Canvas;
-using Flyback.Ui.Controls;
-using Flyback.Editor.Notices;
 using Flyback.Core.Graph;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Notices;
+using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Bars;
 

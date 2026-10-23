@@ -4,10 +4,10 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Flyback.Editor.Controls;
-using Flyback.Ui.Controls;
-using Flyback.Editor.Site;
 using Flyback.Core.Graph;
+using Flyback.Editor.Controls;
+using Flyback.Editor.Site;
+using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Gallery;

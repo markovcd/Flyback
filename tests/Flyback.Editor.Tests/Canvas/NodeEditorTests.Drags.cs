@@ -1,18 +1,12 @@
-using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
-using Avalonia.Platform;
-using Flyback.Editor.Canvas;
-using Flyback.Editor.Notices;
 using Flyback.Core.Graph;
-using Flyback.Engine.Compile;
-using Flyback.Engine.Graph;
+using Flyback.Editor.Canvas;
 using Shouldly;
-using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Tests.Canvas;
 

@@ -1,8 +1,8 @@
 using System.Net;
 using Flyback.Site.Commands;
+using Flyback.Site.Reading;
 using Shouldly;
 using Xunit;
-using Flyback.Site.Reading;
 
 namespace Flyback.Site.Tests;
 

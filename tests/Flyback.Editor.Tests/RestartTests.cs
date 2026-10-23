@@ -1,6 +1,6 @@
+using Flyback.Editor.Updates;
 using Shouldly;
 using Xunit;
-using Flyback.Editor.Updates;
 
 namespace Flyback.Editor.Tests;
 

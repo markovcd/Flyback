@@ -1,10 +1,9 @@
+using Flyback.Host;
+using Flyback.Plugins.Midi;
+using Flyback.Specs.Support;
 using Microsoft.Extensions.DependencyInjection;
 using Reqnroll;
 using Shouldly;
-using Flyback.Ui;
-using Flyback.Plugins.Midi;
-using Flyback.Specs.Support;
-using Flyback.Host;
 
 namespace Flyback.Specs.Steps;
 

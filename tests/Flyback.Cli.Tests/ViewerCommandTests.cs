@@ -1,7 +1,7 @@
-using Shouldly;
-using Xunit;
 using Flyback.Cli.Commands;
 using Flyback.Cli.Common;
+using Shouldly;
+using Xunit;
 
 namespace Flyback.Cli.Tests;
 

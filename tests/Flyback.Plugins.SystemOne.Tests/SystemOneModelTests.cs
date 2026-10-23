@@ -3,9 +3,9 @@ using System.Text.Json.Nodes;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Settings;
+using Flyback.Plugins.Testing;
 using Shouldly;
 using Xunit;
-using Flyback.Plugins.Testing;
 
 namespace Flyback.Plugins.SystemOne.Tests;
 

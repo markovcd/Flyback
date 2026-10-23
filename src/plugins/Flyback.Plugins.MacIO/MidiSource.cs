@@ -1,5 +1,3 @@
-using Flyback.Plugins.Midi;
-
 namespace Flyback.Plugins.MacIO;
 
 /// <summary>

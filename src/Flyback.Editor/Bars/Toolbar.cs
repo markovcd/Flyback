@@ -6,12 +6,12 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Editor.Controls;
-using Flyback.Editor.Shell;
-using Flyback.Ui.Controls;
 using Flyback.Editor.Gallery;
 using Flyback.Editor.Hubs;
 using Flyback.Editor.Notices;
+using Flyback.Editor.Shell;
 using Flyback.Plugins.Hosting;
+using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Bars;

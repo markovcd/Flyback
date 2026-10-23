@@ -3,12 +3,12 @@ using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Media.Immutable;
 using Avalonia.Media.Imaging;
-using Flyback.Editor.Controls;
-using Flyback.Ui.Controls;
+using Avalonia.Media.Immutable;
 using Flyback.Assist;
+using Flyback.Editor.Controls;
 using Flyback.Plugins.Assist;
+using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Assist;

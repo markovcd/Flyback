@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.Media;
-using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
+using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Canvas;

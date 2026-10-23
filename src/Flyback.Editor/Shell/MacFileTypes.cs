@@ -1,7 +1,3 @@
-using Flyback.Editor.Files;
-
-
-
 namespace Flyback.Editor.Shell;
 
 /// <summary>

@@ -2,10 +2,10 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Flyback.Editor.Bars;
-using Flyback.Ui.Controls;
-using Flyback.Editor.Windows;
-using Shouldly;
 using Flyback.Editor.Composition;
+using Flyback.Editor.Windows;
+using Flyback.Ui.Controls;
+using Shouldly;
 
 namespace Flyback.Editor.Tests.Bars;
 

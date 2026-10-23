@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Input;
+using Flyback.Core.Graph;
+using Flyback.Editor.Canvas;
+using Flyback.Specs.Support;
 using Reqnroll;
 using Shouldly;
-using Flyback.Editor.Canvas;
-using Flyback.Core.Graph;
-using Flyback.Specs.Support;
 
 namespace Flyback.Specs.Steps;
 

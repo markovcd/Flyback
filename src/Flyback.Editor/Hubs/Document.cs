@@ -1,8 +1,8 @@
+using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Statistics;
-using Flyback.Core.Graph;
 using Flyback.Engine.Language;
 
 namespace Flyback.Editor.Hubs;

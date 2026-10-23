@@ -1,18 +1,17 @@
 using Avalonia;
-using Avalonia.Headless;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
-using Flyback.Editor.Controls;
 using Flyback.Core.Graph;
-using Shouldly;
 using Flyback.Editor.Canvas;
-using Flyback.Editor.Gallery;
 using Flyback.Editor.Composition;
+using Flyback.Editor.Controls;
+using Flyback.Editor.Gallery;
+using Shouldly;
 
 namespace Flyback.Editor.Tests.Gallery;
 

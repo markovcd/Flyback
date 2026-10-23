@@ -5,8 +5,8 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.LogicalTree;
-using Flyback.Ui.Controls;
 using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Bars;
 

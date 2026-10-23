@@ -6,8 +6,8 @@ using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Notices;
-using Flyback.Ui.Controls;
 using Flyback.Editor.Settings;
+using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Inspect;
 

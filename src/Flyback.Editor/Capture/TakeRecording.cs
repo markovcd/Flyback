@@ -1,17 +1,17 @@
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Flyback.Core.Graph;
-using Flyback.Editor.Shell;
-using Flyback.Engine.Render;
 using Flyback.Editor.Canvas;
+using Flyback.Editor.Hubs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Statistics;
+using Flyback.Engine.Render;
+using Flyback.Host;
+using Flyback.Ui;
 using Flyback.Ui.Audio;
 using Flyback.Ui.Controls;
-using Flyback.Ui;
-using Flyback.Host;
-using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Capture;
 

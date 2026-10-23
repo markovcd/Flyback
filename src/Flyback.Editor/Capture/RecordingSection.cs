@@ -3,14 +3,13 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
-using Flyback.Editor.Settings;
 using Flyback.Editor.Controls;
-using Flyback.Editor.Shell;
-using Flyback.Ui.Controls;
-using Flyback.Engine.Render;
-using Flyback.Ui;
-using Flyback.Host;
 using Flyback.Editor.Hubs;
+using Flyback.Editor.Settings;
+using Flyback.Editor.Shell;
+using Flyback.Engine.Render;
+using Flyback.Host;
+using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Capture;
 

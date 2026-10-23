@@ -1,3 +1,6 @@
+using Flyback.Cli.Commands;
+using Flyback.Cli.Common;
+using Flyback.Cli.Models;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Assist;
@@ -5,9 +8,6 @@ using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
-using Flyback.Cli.Commands;
-using Flyback.Cli.Common;
-using Flyback.Cli.Models;
 
 namespace Flyback.Cli.Tests;
 

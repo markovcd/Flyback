@@ -1,6 +1,5 @@
 using Flyback.Tests;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.Core.Tests.Architecture;
 

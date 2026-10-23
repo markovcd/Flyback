@@ -1,8 +1,8 @@
 using System.Text.Json.Nodes;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
-using Flyback.Editor.Canvas;
 using Flyback.Core.Graph;
+using Flyback.Editor.Canvas;
 using Shouldly;
 using Xunit;
 

@@ -2,18 +2,17 @@ using System.Text.Json;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
-using Flyback.Editor.Canvas;
-using Flyback.Editor.Controls;
-using Flyback.Editor.Shell;
-using Flyback.Engine.Graph;
-using Flyback.Editor.Gallery;
-using Flyback.Editor.Site;
 using Flyback.Core;
 using Flyback.Core.Graph;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Controls;
+using Flyback.Editor.Gallery;
+using Flyback.Editor.Shell;
+using Flyback.Editor.Site;
+using Flyback.Engine.Graph;
+using Flyback.Tests;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
-using Xunit;
-using Flyback.Tests;
 
 namespace Flyback.Editor.Tests.Site;
 

@@ -3,7 +3,6 @@ using System.CommandLine.Completions;
 using System.Text;
 using Flyback.Cli.Commands;
 using Flyback.Cli.Common;
-using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Host;
 using Flyback.Plugins.Hosting;

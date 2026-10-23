@@ -1,11 +1,7 @@
 // Lists non-private src members that nothing in src uses and only tests do.
 // Usage: dotnet run --project tools/TestOnlyMembers -- [Flyback.slnx] [out.tsv]
 // Columns: project, kind, accessibility, member, container, declared at, test uses, test files.
-using Microsoft.Build.Locator;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.MSBuild;
+
 using System.Collections.Concurrent;
 
 MSBuildLocator.RegisterDefaults();

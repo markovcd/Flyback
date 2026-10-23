@@ -1,6 +1,6 @@
-using Flyback.Editor.Updates;
 using System.IO.Compression;
 using System.Security.Cryptography;
+using Flyback.Editor.Updates;
 
 namespace Flyback.Editor.Desktop.Updates;
 

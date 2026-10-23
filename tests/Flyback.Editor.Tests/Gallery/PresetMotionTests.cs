@@ -3,12 +3,12 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
-using Flyback.Editor.Gallery;
 using Flyback.Core.Graph;
+using Flyback.Editor.Controls;
+using Flyback.Editor.Gallery;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
 using Shouldly;
-using Flyback.Editor.Controls;
 
 namespace Flyback.Editor.Tests.Gallery;
 

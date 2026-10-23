@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Text;
-using Flyback.Editor.Files;
 
 namespace Flyback.Editor.Shell;
 

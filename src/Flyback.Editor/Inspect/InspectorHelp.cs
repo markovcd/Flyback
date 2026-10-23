@@ -1,7 +1,5 @@
 using Flyback.Editor.Hubs;
 
-
-
 namespace Flyback.Editor.Inspect;
 
 /// <summary>What the inspector says with nothing selected, on each kind of canvas.</summary>

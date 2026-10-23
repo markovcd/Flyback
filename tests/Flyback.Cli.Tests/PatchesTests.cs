@@ -1,10 +1,9 @@
+using Flyback.Cli.Common;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
 using Shouldly;
 using Xunit;
-
-using Flyback.Cli.Common;
 
 namespace Flyback.Cli.Tests;
 

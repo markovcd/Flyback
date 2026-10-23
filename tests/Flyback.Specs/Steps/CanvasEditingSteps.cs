@@ -1,8 +1,8 @@
 using Avalonia.Input;
-using Reqnroll;
-using Shouldly;
 using Flyback.Core.Graph;
 using Flyback.Specs.Support;
+using Reqnroll;
+using Shouldly;
 
 namespace Flyback.Specs.Steps;
 

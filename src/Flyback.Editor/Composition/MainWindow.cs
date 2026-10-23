@@ -2,12 +2,12 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Flyback.Core;
 using Flyback.Editor.Capture;
-using Flyback.Editor.Hubs;
 using Flyback.Editor.Files;
+using Flyback.Editor.Hubs;
 using Flyback.Editor.Settings;
+using Flyback.Editor.Windows;
 using Flyback.Ui.Midi;
 using Colors = Flyback.Ui.Controls.Colors;
-using Flyback.Editor.Windows;
 
 namespace Flyback.Editor.Composition;
 
