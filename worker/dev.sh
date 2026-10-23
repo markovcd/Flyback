@@ -6,5 +6,5 @@ set -euo pipefail
 cd "$(dirname "$0")"
 mkdir -p public
 exec docker run --rm --init -u "$(id -u):$(id -g)" -e HOME=/tmp -e WRANGLER_SEND_METRICS=false -e CI=true \
-  -p 8787:8787 -v "$PWD":/w -w /w node:26.11.1-bookworm-slim@sha256:86f07bc9c5dce4578cf37e5a418b7bfc7f817cda25cde66e2b66e95ed86c4567 \
+  -p 8787:8787 -v "$PWD":/w -w /w "$(../scripts/base-image.sh worker)" \
   sh -c 'npx wrangler d1 migrations apply flyback-site --local && npx wrangler dev --ip 0.0.0.0 --port 8787'

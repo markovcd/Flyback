@@ -7,7 +7,7 @@ namespace Flyback.Core.Tests.Architecture;
 
 /// <summary>
 /// Every image the Dockerfile starts from is pinned by digest, where Dependabot moves it, and a
-/// workflow or a script that runs the SDK or Node names it exactly as the Dockerfile does.
+/// workflow or a script that runs the SDK or Node reads it from there with scripts/base-image.sh.
 /// </summary>
 [TestCategory(TestCategory.Unmeasured)]
 public partial class BaseImageTests
@@ -32,15 +32,28 @@ public partial class BaseImageTests
 
     [Theory]
     [MemberData(nameof(Runners))]
-    public void Every_SDK_or_Node_image_a_workflow_or_script_runs_is_the_Dockerfiles(string file)
+    public void A_workflow_or_script_reads_the_SDK_or_Node_image_from_the_Dockerfile(string file)
     {
-        var images = Images();
+        var named = Run().Matches(File.ReadAllText(Repository.Path(file))).Select(match => match.Value);
 
-        var strays = Run().Matches(File.ReadAllText(Repository.Path(file)))
-            .Select(match => match.Value)
-            .Where(image => !images.Contains(image));
+        named.ShouldBeEmpty($"{file} names an image Dependabot moves only in the Dockerfile; run \"$(scripts/base-image.sh <stage>)\"");
+    }
 
-        strays.ShouldBeEmpty($"{file} runs an image the Dockerfile does not pin, so Dependabot never moves it");
+    [Theory]
+    [MemberData(nameof(Runners))]
+    public void Every_stage_base_image_sh_is_asked_for_starts_from_a_pinned_image(string file)
+    {
+        var stages = File.ReadAllLines(Repository.Path("Dockerfile"))
+            .Select(line => From().Match(line))
+            .Where(from => from.Success && from.Groups["image"].Value.Contains(':'))
+            .Select(from => from.Groups["stage"].Value)
+            .ToList();
+
+        var unknown = Asked().Matches(File.ReadAllText(Repository.Path(file)))
+            .Select(match => match.Groups["stage"].Value)
+            .Where(stage => !stages.Contains(stage));
+
+        unknown.ShouldBeEmpty($"{file} asks base-image.sh for a stage the Dockerfile does not start from an image");
     }
 
     /// <summary>The images the Dockerfile's FROM lines name; a stage's own name has no tag.</summary>
@@ -52,7 +65,7 @@ public partial class BaseImageTests
             .Select(from => from.Groups["image"].Value)
     ];
 
-    [GeneratedRegex(@"^FROM\s+(?<image>\S+)")]
+    [GeneratedRegex(@"^FROM\s+(?<image>\S+)(\s+AS\s+(?<stage>\S+))?")]
     private static partial Regex From();
 
     [GeneratedRegex(@"@sha256:[0-9a-f]{64}$")]
@@ -60,4 +73,7 @@ public partial class BaseImageTests
 
     [GeneratedRegex(@"(mcr\.microsoft\.com/dotnet/[\w.-]+|\bnode):[\w.-]+(@sha256:[0-9a-f]{64})?")]
     private static partial Regex Run();
+
+    [GeneratedRegex(@"base-image\.sh\s+(?<stage>[\w-]+)")]
+    private static partial Regex Asked();
 }

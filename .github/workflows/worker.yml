@@ -147,7 +147,7 @@ jobs:
           rm -rf worker/public
           cp -r out/public worker/public
           docker run --rm -e CLOUDFLARE_API_TOKEN -e CLOUDFLARE_ACCOUNT_ID -e WORKER_ENVIRONMENT -e CI=true -e WRANGLER_SEND_METRICS=false \
-            -v "$PWD/worker":/w -w /w node:26.11.1-bookworm-slim@sha256:86f07bc9c5dce4578cf37e5a418b7bfc7f817cda25cde66e2b66e95ed86c4567 \
+            -v "$PWD/worker":/w -w /w "$(scripts/base-image.sh worker)" \
             sh -c 'npm ci --no-audit --no-fund && npx wrangler d1 migrations apply DB --remote --env "$WORKER_ENVIRONMENT" && npx wrangler deploy --env "$WORKER_ENVIRONMENT"'
 
       # A hostname the deploy has just taken takes a minute to resolve.
@@ -180,6 +180,6 @@ jobs:
           FLYBACK_ACCESS_SECRET: ${{ secrets.FLYBACK_ACCESS_SECRET }}
         run: |
           docker run --rm -e PRESET_SITE_URL -e FLYBACK_ACCESS_ID -e FLYBACK_ACCESS_SECRET -v "$PWD/out":/out \
-            mcr.microsoft.com/dotnet/sdk:10.0.402@sha256:747cbade5bfd918a175ac32f8f1d931edec2c7d0d5397a3de72eaef1ac1f66d2 \
+            "$(scripts/base-image.sh sdk)" \
             sh -c 'dotnet /out/flyback-site/flyback-site.dll push-defaults --server "$PRESET_SITE_URL" /out/defaults/* \
               && dotnet /out/flyback-site/flyback-site.dll validate-submissions --server "$PRESET_SITE_URL" --lacks'

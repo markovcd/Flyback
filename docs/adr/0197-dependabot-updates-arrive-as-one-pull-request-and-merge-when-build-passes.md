@@ -35,8 +35,9 @@ as it treats a push (its own concurrency group, never cancelled), and Android an
 Worker follow a passing run started by hand on `main` as they follow a push.
 
 **GitHub Actions bumps are merged by hand.** `GITHUB_TOKEN` cannot change a
-workflow file. Docker bumps merge too, and fail Build until the scripts that
-name the same image move with them (`BaseImageTests`).
+workflow file. Docker bumps merge too: the Dockerfile's `FROM` is the one place
+an image is named, and every workflow or script that runs one reads it from there
+with `scripts/base-image.sh` (`BaseImageTests`).
 
 ## Consequences
 
