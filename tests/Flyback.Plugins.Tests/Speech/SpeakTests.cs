@@ -80,6 +80,36 @@ public class SpeakTests
     }
 
     [Fact]
+    public void Sung_a_rest_is_silent_and_takes_no_syllable()
+    {
+        // Half a second each at 120 a minute: A3, a rest, then E4 on the second syllable.
+        var sung = Sung("la la", "A3 ~ E4", 120f);
+
+        Pitch(sung, 0.2f).ShouldBe(220d, 220d * 0.03);
+        Rms(sung, 0.6f, 0.95f).ShouldBeLessThan(1e-4);
+        Pitch(sung, 1.2f).ShouldBe(329.6d, 329.6d * 0.03);
+    }
+
+    [Fact]
+    public void Sung_rests_after_the_last_note_lengthen_the_tune()
+    {
+        // A beat of A3 and three of rest at 120 a minute: two seconds round.
+        var sung = Sung("la", "A3 ~@3", 120f, seconds: 3);
+
+        Rms(sung, 0.7f, 1.95f).ShouldBeLessThan(1e-4);
+        Rms(sung, 2.05f, 2.4f).ShouldBeGreaterThan(0.02);
+    }
+
+    [Fact]
+    public void Sung_its_mouth_shuts_on_a_rest()
+    {
+        var open = Played(new JsonObject { ["words"] = "[aa aa]", ["mode"] = "sing", ["notes"] = "A3 ~" }, 1, 2, ("bpm", 120f));
+
+        open[(int)(0.3 * Rate)].ShouldBeGreaterThan(0.5);
+        open[(int)(0.8 * Rate)].ShouldBe(0d, 1e-6);
+    }
+
+    [Fact]
     public void Its_mouth_opens_on_a_vowel_and_shuts_on_an_m()
     {
         var open = Said("[m aa aa m]", 1, ("every", 0f));

@@ -5,11 +5,11 @@ using Flyback.Core.Compile;
 namespace Flyback.Plugins.Speech;
 
 /// <summary>
-/// The notes a sung Speak gives its syllables, one each, laid out as clips read
-/// by syllable: where each begins in beats, how high it is, and where in the
-/// words it starts and is held.
+/// The notes a sung Speak gives its syllables, one each, and the rests between
+/// them, laid out as clips read by slot: where each begins in beats, how high it
+/// is, where in the words it starts and is held, and whether it is heard.
 /// </summary>
-/// <param name="Count">How many syllables there are.</param>
+/// <param name="Count">How many slots there are: a syllable or a rest each.</param>
 /// <param name="Beats">How long the whole tune is, in beats.</param>
 internal sealed partial record Tune(
     int Count,
@@ -18,21 +18,27 @@ internal sealed partial record Tune(
     LoadedSample BeginAt,
     LoadedSample Hz,
     LoadedSample Starts,
-    LoadedSample Holds)
+    LoadedSample Holds,
+    LoadedSample Heard)
 {
+    /// <summary>The most rests a tune keeps, so a pasted run of them cannot grow the program.</summary>
+    private const int MostRests = 512;
+
     /// <summary>
     /// The tune for <paramref name="said"/>'s syllables sung to <paramref name="notes"/>,
-    /// written as a Note Sequencer's are: <c>G3@3 E3@3 C3</c>, a number of beats after the '@'.
+    /// written as a Note Sequencer's are: <c>G3@3 E3@3 C3</c>, a number of beats after the '@',
+    /// and <c>~</c> or <c>~@2</c> a rest.
     /// </summary>
     /// <remarks>
-    /// Notes are taken in turn, round again if there are fewer than the syllables.
-    /// With none, each syllable takes a beat at the pitch knob, which a nought in
-    /// <see cref="Hz"/> says.
+    /// Notes are taken in turn, round again if there are fewer than the syllables;
+    /// a rest takes no syllable, and the rests straight after the last syllable's note
+    /// end the tune. With no notes, each syllable takes a beat at the pitch knob,
+    /// which a nought in <see cref="Hz"/> says.
     /// </remarks>
     public static (Tune Tune, IReadOnlyList<string> Unread) Of(Utterance said, string notes)
     {
-        var count = Math.Max(1, said.Starts.Count);
-        var read = new List<(float Hz, float Beats)>();
+        var syllables = Math.Max(1, said.Starts.Count);
+        var read = new List<(float Hz, float Beats, bool Silent)>();
         var unread = new List<string>();
 
         foreach (var word in notes.Split((char[])[' ', '\t', '\n', '|'], StringSplitOptions.RemoveEmptyEntries))
@@ -41,39 +47,86 @@ internal sealed partial record Tune(
             else unread.Add(word);
         }
 
-        if (read.Count == 0) read.Add((0f, 1f));
+        if (!read.Exists(n => !n.Silent)) read = [(0f, 1f, false)];
 
-        var begins = new float[count];
-        var hz = new float[count];
+        var restsWritten = 0;
+        read.RemoveAll(n => n.Silent && ++restsWritten > MostRests);
+
+        var begins = new List<float>();
+        var hz = new List<float>();
+        var starts = new List<float>();
+        var holds = new List<float>();
+        var heard = new List<float>();
+        var firstHz = read.First(n => !n.Silent).Hz;
+        var lastHz = firstHz;
         var beat = 0f;
+        var sung = 0;
+        var rests = 0;
 
-        for (var n = 0; n < count; n++)
+        for (var i = 0; sung < syllables || (i % read.Count != 0 && read[i % read.Count].Silent); i++)
         {
-            var (pitch, beats) = read[n % read.Count];
+            var (pitch, beats, rest) = read[i % read.Count];
 
-            begins[n] = beat;
-            hz[n] = pitch;
+            if (rest)
+            {
+                if (rests++ >= MostRests) continue;
+
+                // A rest stays where the syllable before it was held, or before
+                // any, where the first one starts.
+                var kept = sung > 0 ? Track(said.Holds, sung - 1) : Track(said.Starts, 0);
+
+                begins.Add(beat);
+                hz.Add(lastHz);
+                starts.Add(kept);
+                holds.Add(kept);
+                heard.Add(0f);
+            }
+            else
+            {
+                begins.Add(beat);
+                hz.Add(pitch);
+                starts.Add(Track(said.Starts, sung));
+                holds.Add(Track(said.Holds, sung));
+                heard.Add(1f);
+                lastHz = pitch;
+                sung++;
+            }
+
             beat += beats;
         }
 
-        var starts = said.Starts.Count > 0 ? said.Starts.ToArray() : [0f];
-        var holds = said.Holds.Count > 0 ? said.Holds.ToArray() : [0f];
+        // A rest before the first note is held at that note's pitch.
+        for (var n = 0; n < hz.Count && heard[n] == 0f; n++) hz[n] = firstHz;
 
-        return (new Tune(count, beat, begins, Clip(begins), Clip(hz), Clip(starts), Clip(holds)), unread);
+        return (new Tune(
+            begins.Count,
+            beat,
+            begins,
+            Clip(begins),
+            Clip(hz),
+            Clip(starts),
+            Clip(holds),
+            Clip(heard)), unread);
     }
 
-    // One sample a syllable, so a whole syllable number reads its own exactly.
-    private static LoadedSample Clip(float[] values) => new(values, 1);
+    private static float Track(IReadOnlyList<float> track, int n) => n < track.Count ? track[n] : 0f;
 
-    /// <summary>A note name or number and its length in beats, or null.</summary>
-    private static (float Hz, float Beats)? Note(string word)
+    // One sample a slot, so a whole slot number reads its own exactly.
+    private static LoadedSample Clip(List<float> values) => new([.. values], 1);
+
+    /// <summary>A note name or number, or a rest, and its length in beats, or null.</summary>
+    private static (float Hz, float Beats, bool Silent)? Note(string word)
     {
         var match = Written().Match(word);
         if (!match.Success) return null;
 
         float midi;
 
-        if (match.Groups["number"].Success)
+        if (match.Groups["rest"].Success)
+        {
+            midi = 0f;
+        }
+        else if (match.Groups["number"].Success)
         {
             midi = float.Parse(match.Groups["number"].Value, CultureInfo.InvariantCulture);
         }
@@ -93,9 +146,9 @@ internal sealed partial record Tune(
 
         if (midi is < 0f or > 127f || !(beats > 0f) || beats > 64f) return null;
 
-        return (440f * MathF.Pow(2f, (midi - 69f) / 12f), beats);
+        return (440f * MathF.Pow(2f, (midi - 69f) / 12f), beats, match.Groups["rest"].Success);
     }
 
-    [GeneratedRegex(@"^(?:(?<letter>[A-Ga-g])(?<accidental>[#b]?)(?<octave>-?\d)|(?<number>\d+(?:\.\d+)?))(?:@(?<beats>\d+(?:\.\d+)?))?$")]
+    [GeneratedRegex(@"^(?:(?<rest>~)|(?<letter>[A-Ga-g])(?<accidental>[#b]?)(?<octave>-?\d)|(?<number>\d+(?:\.\d+)?))(?:@(?<beats>\d+(?:\.\d+)?))?$")]
     private static partial Regex Written();
 }

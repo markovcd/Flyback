@@ -37,7 +37,8 @@ internal sealed record SpeechExtra : NodeExtra
         new ExtraField.Text(NotesKey, "notes")
         {
             Help = "In Sing, a note for each syllable, written as a Note Sequencer's are, with its length "
-                + "in beats after an '@': G3@3 E3@3 C3. Round again if there are fewer than the syllables.",
+                + "in beats after an '@': G3@3 E3@3 C3. A '~' is a rest, '~@2' a longer one. Round again if "
+                + "there are fewer than the syllables.",
         },
     ];
 

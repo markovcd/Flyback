@@ -33,6 +33,12 @@ Feature: Speech: words said or sung in a synthesized voice, and a mouth that say
     Then its pitch at 0.5 seconds is 220 Hz
     And its pitch at 1.5 seconds is 330 Hz
 
+  # Half a second a step: A3, a rest, then E4 on the second syllable.
+  Scenario: Sung, a rest is silent and takes no syllable
+    Given a Speak singing "la la" to "A3 ~ E4" at 120 beats a minute
+    Then it is silent from 0.6 second to 0.95
+    And its pitch at 1.2 seconds is 330 Hz
+
   Scenario: A note it cannot read is skipped with a warning
     Given a Speak singing "la la" to "A3 Q9" at 120 beats a minute
     Then building it warns about 'Q9'

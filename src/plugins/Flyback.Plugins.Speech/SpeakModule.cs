@@ -35,6 +35,9 @@ internal static class SpeakModule
     /// <summary>How long a sung note takes to slide up or down from the last.</summary>
     private const float Glide = 0.07f;
 
+    /// <summary>How long the voice takes to fade out into a rest, or back in after one.</summary>
+    private const float Fade = 0.02f;
+
     private const float Tau = 6.283185307179586f;
 
     public static NodeDef Definition { get; } = new(
@@ -103,7 +106,7 @@ internal static class SpeakModule
         var now = node[0];
         var size = node[6];
 
-        var (at, f0) = saying.Tune is { } tune ? Sung(tune) : Spoken();
+        var (at, f0, level) = saying.Tune is { } tune ? Sung(tune) : Spoken();
 
         var voice = em.Table(at, said.Voice);
         var breath = em.Table(at, said.Breath);
@@ -138,12 +141,12 @@ internal static class SpeakModule
         teeth = NodeCatalog.FilterResponses(em, teeth, hissHz, hissWidth)[1];
 
         // The picture has no memory to filter with, and hears nothing.
-        var heard = em.Mul(em.Mul(em.Mul(em.Add(tract, teeth), Gain), node[3]), em.HasMemory());
+        var heard = em.Mul(em.Mul(em.Mul(em.Mul(em.Add(tract, teeth), Gain), node[3]), level), em.HasMemory());
 
         return
         [
             heard,
-            em.Table(at, said.Open),
+            em.Mul(em.Table(at, said.Open), level),
             em.Table(at, said.Round),
             em.Unary(OpCode.Floor, em.Add(em.Table(at, said.Line), 0.5f)),
             em.Table(at, said.Reveal),
@@ -151,7 +154,7 @@ internal static class SpeakModule
 
         // Seconds since the last trigger, wrapped at 'every', with the sentence's
         // own rise and fall on the pitch.
-        (Slot At, Slot Hz) Spoken()
+        (Slot At, Slot Hz, Slot Level) Spoken()
         {
             var startCell = em.AllocateUnitSlot();
             var triggerCell = em.AllocateUnitSlot();
@@ -167,27 +170,29 @@ internal static class SpeakModule
             var spokenAt = em.Mul(wrapped, node[2]);
 
             var vibrato = em.Add(em.Mul(em.Unary(OpCode.Sin, em.Mul(now, Tau * 5.2f)), 0.006f), 1f);
-            return (spokenAt, em.Mul(em.Mul(node[1], em.Table(spokenAt, said.Pitch)), vibrato));
+            return (spokenAt, em.Mul(em.Mul(node[1], em.Table(spokenAt, said.Pitch)), vibrato), one);
         }
 
-        // The syllable the beat is in, and how far into its note: the consonants
-        // before its vowel are said from the note's start, and the vowel is held.
-        (Slot At, Slot Hz) Sung(Tune tune)
+        // The slot the beat is in, a syllable or a rest, and how far into its note:
+        // the consonants before its vowel are said from the note's start, and the
+        // vowel is held.
+        (Slot At, Slot Hz, Slot Level) Sung(Tune tune)
         {
             var bpm = em.Binary(OpCode.Max, node[7], em.Constant(1f));
             var beat = em.Binary(OpCode.Mod, em.Mul(now, em.Mul(bpm, 1f / 60f)), em.Constant(tune.Beats));
 
-            var syllable = zero;
+            var slot = zero;
             for (var n = 1; n < tune.Count; n++)
-                syllable = em.Add(syllable, em.Binary(OpCode.Step, em.Constant(tune.Begins[n]), beat));
+                slot = em.Add(slot, em.Binary(OpCode.Step, em.Constant(tune.Begins[n]), beat));
 
-            var into = em.Binary(OpCode.Div, em.Mul(em.Sub(beat, em.Table(syllable, tune.BeginAt)), 60f), bpm);
-            var start = em.Table(syllable, tune.Starts);
-            var held = em.Sub(em.Table(syllable, tune.Holds), start);
+            var into = em.Binary(OpCode.Div, em.Mul(em.Sub(beat, em.Table(slot, tune.BeginAt)), 60f), bpm);
+            var start = em.Table(slot, tune.Starts);
+            var held = em.Sub(em.Table(slot, tune.Holds), start);
             var sungAt = em.Add(start, em.Binary(OpCode.Min, em.Mul(into, node[2]), held));
 
-            var note = em.Table(syllable, tune.Hz);
-            var before = em.Table(em.Binary(OpCode.Mod, em.Add(syllable, tune.Count - 1f), em.Constant(tune.Count)), tune.Hz);
+            var note = em.Table(slot, tune.Hz);
+            var last = em.Binary(OpCode.Mod, em.Add(slot, tune.Count - 1f), em.Constant(tune.Count));
+            var before = em.Table(last, tune.Hz);
             var slid = em.Ternary(OpCode.Mix, before, note, em.Ternary(OpCode.Clamp, em.Mul(into, 1f / Glide), zero, one));
             var written = em.Mul(slid, em.Mul(node[1], 1f / Low));
 
@@ -198,7 +203,11 @@ internal static class SpeakModule
             var depth = em.Add(em.Mul(em.Ternary(OpCode.Clamp, em.Mul(em.Add(into, -0.25f), 3f), zero, one), 0.012f), 0.003f);
             var vibrato = em.Add(em.Mul(em.Unary(OpCode.Sin, em.Mul(now, Tau * 5.5f)), depth), 1f);
 
-            return (sungAt, em.Mul(hz, vibrato));
+            // A rest fades the voice out, and the note after it fades it back in.
+            var level = em.Ternary(OpCode.Mix, em.Table(last, tune.Heard), em.Table(slot, tune.Heard),
+                em.Ternary(OpCode.Clamp, em.Mul(into, 1f / Fade), zero, one));
+
+            return (sungAt, em.Mul(hz, vibrato), level);
         }
 
         // A formant as a lowpass that rings at its corner: the cascade Klatt used, a
