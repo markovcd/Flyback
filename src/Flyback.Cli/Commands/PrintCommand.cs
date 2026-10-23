@@ -35,23 +35,9 @@ internal static class PrintCommand
     /// </summary>
     public static Command Build(PluginRegistry plugins)
     {
-        var patch = new Argument<FileInfo?>("patch")
-        {
-            Description = "The patch to read: a document, a bundle, or one written as text. "
-                + $"The extension decides which — .{PatchIO.FileExtension}, "
-                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}.",
-            Arity = ArgumentArity.ZeroOrOne,
-        };
-
-        var preset = new Option<string>("--preset")
-        {
-            Description = "A shipped preset, by name, in place of a file.",
-        };
-
-        var presets = new Option<bool>("--presets")
-        {
-            Description = "List what --preset would accept, and stop.",
-        };
+        var given = new PatchInput("print", patch: "The patch to read: a document, a bundle, or one written as text. "
+            + $"The extension decides which — .{PatchIO.FileExtension}, "
+            + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}.");
 
         var output = new Option<FileInfo>("--out", "-o")
         {
@@ -66,7 +52,7 @@ internal static class PrintCommand
 
         var command = new Command("print", "Write a patch out as text, in the language.")
         {
-            patch, preset, presets, output, check,
+            given.Patch, given.Preset, given.Presets, output, check,
         };
 
         command.SetAction(result =>
@@ -87,22 +73,9 @@ internal static class PrintCommand
 
             plugins.Ready();
 
-            if (result.GetValue(presets))
-            {
-                ShippedPresets.List(plugins.Catalog, result.InvocationConfiguration.Output);
+            if (given.Listed(result, plugins)) return Exit.Ok;
 
-                return Exit.Ok;
-            }
-
-            var file = result.GetValue(patch);
-            var named = result.GetValue(preset);
-
-            if ((file is null) == (named is null))
-            {
-                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to print: a patch, or --preset and its name.");
-
-                return Exit.Failed;
-            }
+            if (!given.Chosen(result, out var file, out var named)) return Exit.Failed;
 
             if (file is null)
             {

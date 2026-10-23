@@ -27,23 +27,7 @@ internal static class SaveCommand
     /// </summary>
     public static Command Build(PluginRegistry plugins)
     {
-        var patch = new Argument<FileInfo?>("patch")
-        {
-            Description = "The patch to read: a document, a bundle, or one written as text. "
-                + $"The extension decides which — .{PatchIO.FileExtension}, "
-                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}. Left out, give --preset instead.",
-            Arity = ArgumentArity.ZeroOrOne,
-        };
-
-        var preset = new Option<string>("--preset")
-        {
-            Description = "A shipped preset, by name, in place of a file.",
-        };
-
-        var presets = new Option<bool>("--presets")
-        {
-            Description = "List what --preset would accept, and stop.",
-        };
+        var given = new PatchInput("save");
 
         var output = new Option<FileInfo>("--out", "-o")
         {
@@ -54,7 +38,7 @@ internal static class SaveCommand
             "save",
             "Save a patch or a shipped preset as a patch file, a bundle or text, by the extension it is saved to.")
         {
-            patch, preset, presets, output,
+            given.Patch, given.Preset, given.Presets, output,
         };
 
         command.SetAction(result =>
@@ -64,22 +48,9 @@ internal static class SaveCommand
 
             plugins.Ready();
 
-            if (result.GetValue(presets))
-            {
-                ShippedPresets.List(plugins.Catalog, writer);
+            if (given.Listed(result, plugins)) return Exit.Ok;
 
-                return Exit.Ok;
-            }
-
-            var file = result.GetValue(patch);
-            var named = result.GetValue(preset);
-
-            if ((file is null) == (named is null))
-            {
-                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to save: a patch, or --preset and its name.");
-
-                return Exit.Failed;
-            }
+            if (!given.Chosen(result, out var file, out var named)) return Exit.Failed;
 
             if (result.GetValue(output) is not { } into)
             {

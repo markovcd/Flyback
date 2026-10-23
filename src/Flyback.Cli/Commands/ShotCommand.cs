@@ -24,21 +24,11 @@ internal static class ShotCommand
 
     public static Command Build(PluginRegistry plugins)
     {
-        var patch = new Argument<FileInfo?>("patch")
-        {
-            Description = "The patch to open, as the editor would. Left out, give --preset instead.",
-            Arity = ArgumentArity.ZeroOrOne,
-        };
-
-        var preset = new Option<string>("--preset")
-        {
-            Description = "A shipped preset, by name, in place of a file.",
-        };
+        var given = new PatchInput("draw", patch: "The patch to open, as the editor would. Left out, give --preset instead.");
 
         var output = new Option<FileInfo>("--out", "-o")
         {
             Description = "The PNG to write.",
-            Required = true,
         };
 
         var at = new Option<double>("--at")
@@ -85,22 +75,23 @@ internal static class ShotCommand
 
         var command = new Command("shot", "Draw the editor's window with a patch open, at a chosen second, into a PNG.")
         {
-            patch, preset, output, at, size, select, canvas, crop, measure, assistant, editor,
+            given.Patch, given.Preset, given.Presets, output, at, size, select, canvas, crop, measure, assistant, editor,
         };
 
         command.SetAction(result =>
         {
             var error = result.InvocationConfiguration.Error;
-            var file = result.GetValue(patch);
-            var named = result.GetValue(preset);
-            var into = result.GetRequiredValue(output);
             var (width, height) = result.GetValue(size);
 
             plugins.Ready();
 
-            if ((file is null) == (named is null))
+            if (given.Listed(result, plugins)) return Exit.Ok;
+
+            if (!given.Chosen(result, out var file, out var named)) return Exit.Failed;
+
+            if (result.GetValue(output) is not { } into)
             {
-                error.WriteLine($"{GlobalConstants.ApplicationName}: give a patch or --preset, and not both.");
+                error.WriteLine($"{GlobalConstants.ApplicationName}: --out says where to write the PNG.");
                 return Exit.Failed;
             }
 

@@ -23,6 +23,8 @@
 
 ### Command line
 
+- `ask`, `measure` and `shot` list the shipped presets with `--presets`, as the other commands that take `--preset` do.
+
 ### Installing
 
 ### Performance

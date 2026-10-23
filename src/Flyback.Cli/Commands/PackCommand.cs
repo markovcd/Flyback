@@ -32,23 +32,7 @@ internal static class PackCommand
     /// </summary>
     public static Command Build(PluginRegistry plugins, Option<bool> json)
     {
-        var patch = new Argument<FileInfo?>("patch")
-        {
-            Description = "The patch to read: a document, a bundle, or one written as text. "
-                + $"The extension decides which — .{PatchIO.FileExtension}, "
-                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}. Left out, give --preset instead.",
-            Arity = ArgumentArity.ZeroOrOne,
-        };
-
-        var preset = new Option<string>("--preset")
-        {
-            Description = "A shipped preset, by name, in place of a file. The bundle carries the files it ships with.",
-        };
-
-        var presets = new Option<bool>("--presets")
-        {
-            Description = "List what --preset would accept, and stop.",
-        };
+        var given = new PatchInput("pack", preset: "A shipped preset, by name, in place of a file. The bundle carries the files it ships with.");
 
         var output = new Option<FileInfo>("--out", "-o")
         {
@@ -59,7 +43,7 @@ internal static class PackCommand
             "pack",
             "Put a patch and every file it names into one bundle.")
         {
-            patch, preset, presets, output, json,
+            given.Patch, given.Preset, given.Presets, output, json,
         };
 
         command.SetAction(result =>
@@ -69,22 +53,9 @@ internal static class PackCommand
 
             plugins.Ready();
 
-            if (result.GetValue(presets))
-            {
-                ShippedPresets.List(plugins.Catalog, writer, result.GetValue(json));
+            if (given.Listed(result, plugins, result.GetValue(json))) return Exit.Ok;
 
-                return Exit.Ok;
-            }
-
-            var file = result.GetValue(patch);
-            var named = result.GetValue(preset);
-
-            if ((file is null) == (named is null))
-            {
-                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to pack: a patch, or --preset and its name.");
-
-                return Exit.Failed;
-            }
+            if (!given.Chosen(result, out var file, out var named)) return Exit.Failed;
 
             if (result.GetValue(output) is not { } into)
             {

@@ -32,23 +32,7 @@ internal static class RenderCommand
 {
     public static Command Build(PluginRegistry plugins, OutputSettings defaults)
     {
-        var patch = new Argument<FileInfo?>("patch")
-        {
-            Description = "The patch to read: a document, a bundle, or one written as text. "
-                + $"The extension decides which — .{PatchIO.FileExtension}, "
-                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}. Left out, give --preset instead.",
-            Arity = ArgumentArity.ZeroOrOne,
-        };
-
-        var preset = new Option<string>("--preset")
-        {
-            Description = "A shipped preset, by name, in place of a file.",
-        };
-
-        var presets = new Option<bool>("--presets")
-        {
-            Description = "List what --preset would accept, and stop.",
-        };
+        var given = new PatchInput("render");
 
         var output = new Option<FileInfo>("--out", "-o")
         {
@@ -174,7 +158,7 @@ internal static class RenderCommand
             "Write a patch to a picture, a sound, or a clip of both. The size, rate, quality, format "
             + "and ffmpeg left out are the editor's: its preview size and Settings → Recording.")
         {
-            patch, preset, presets, output, size, at, seconds, from, fps, quality, format, ffmpeg, loudness, interpreted, gpu,
+            given.Patch, given.Preset, given.Presets, output, size, at, seconds, from, fps, quality, format, ffmpeg, loudness, interpreted, gpu,
             processor, settings, oversample, input, mute, solo,
         };
 
@@ -184,22 +168,9 @@ internal static class RenderCommand
 
             plugins.Ready();
 
-            if (result.GetValue(presets))
-            {
-                ShippedPresets.List(plugins.Catalog, result.InvocationConfiguration.Output);
+            if (given.Listed(result, plugins)) return Task.FromResult(Exit.Ok);
 
-                return Task.FromResult(Exit.Ok);
-            }
-
-            var file = result.GetValue(patch);
-            var named = result.GetValue(preset);
-
-            if ((file is null) == (named is null))
-            {
-                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to render: a patch, or --preset and its name.");
-
-                return Task.FromResult(Exit.Failed);
-            }
+            if (!given.Chosen(result, out var file, out var named)) return Task.FromResult(Exit.Failed);
 
             if (result.GetValue(gpu) && result.GetValue(processor))
             {

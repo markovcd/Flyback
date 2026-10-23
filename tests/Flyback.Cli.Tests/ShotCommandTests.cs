@@ -35,8 +35,8 @@ public sealed class ShotCommandTests : IDisposable
     }
 
     [Theory]
-    [InlineData(new[] { "--out", "{0}a.png" }, "give a patch or --preset, and not both.")]
-    [InlineData(new[] { "{0}tone.fbk", "--preset", "Plasma", "--out", "{0}a.png" }, "give a patch or --preset, and not both.")]
+    [InlineData(new[] { "--out", "{0}a.png" }, "say what to draw: a patch, or --preset and its name.")]
+    [InlineData(new[] { "{0}tone.fbk", "--preset", "Plasma", "--out", "{0}a.png" }, "say what to draw: a patch, or --preset and its name.")]
     [InlineData(new[] { "--preset", "Plasma", "--out", "{0}a.jpg" }, "a shot is a PNG.")]
     [InlineData(new[] { "--preset", "Plasma", "--out", "{0}a.png", "--at", "Infinity" }, "--at is a second of the patch, from 0 to 10800.")]
     [InlineData(new[] { "--preset", "Plasma", "--out", "{0}a.png", "--at", "1e309" }, "--at is a second of the patch, from 0 to 10800.")]

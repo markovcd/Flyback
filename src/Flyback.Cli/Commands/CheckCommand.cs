@@ -27,23 +27,7 @@ internal static class CheckCommand
 {
     public static Command Build(PluginRegistry plugins, Option<bool> json)
     {
-        var patch = new Argument<FileInfo?>("patch")
-        {
-            Description = "The patch to read: a document, a bundle, or one written as text. "
-                + $"The extension decides which — .{PatchIO.FileExtension}, "
-                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}. Left out, give --preset instead.",
-            Arity = ArgumentArity.ZeroOrOne,
-        };
-
-        var preset = new Option<string>("--preset")
-        {
-            Description = "A shipped preset, by name, in place of a file.",
-        };
-
-        var presets = new Option<bool>("--presets")
-        {
-            Description = "List what --preset would accept, and stop.",
-        };
+        var given = new PatchInput("check");
 
         var strict = new Option<bool>("--strict")
         {
@@ -59,7 +43,7 @@ internal static class CheckCommand
 
         var command = new Command("check", "Compile a patch and report what is wrong with it.")
         {
-            patch, preset, presets, json, strict, triage, settings,
+            given.Patch, given.Preset, given.Presets, json, strict, triage, settings,
         };
 
         command.SetAction(result =>
@@ -68,22 +52,9 @@ internal static class CheckCommand
 
             plugins.Ready();
 
-            if (result.GetValue(presets))
-            {
-                ShippedPresets.List(plugins.Catalog, result.InvocationConfiguration.Output, result.GetValue(json));
+            if (given.Listed(result, plugins, result.GetValue(json))) return Exit.Ok;
 
-                return Exit.Ok;
-            }
-
-            var file = result.GetValue(patch);
-            var named = result.GetValue(preset);
-
-            if ((file is null) == (named is null))
-            {
-                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to check: a patch, or --preset and its name.");
-
-                return Exit.Failed;
-            }
+            if (!given.Chosen(result, out var file, out var named)) return Exit.Failed;
 
             if (file is null)
             {

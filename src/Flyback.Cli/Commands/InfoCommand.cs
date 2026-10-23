@@ -26,23 +26,7 @@ internal static class InfoCommand
 {
     public static Command Build(PluginRegistry plugins, Option<bool> json)
     {
-        var patch = new Argument<FileInfo?>("patch")
-        {
-            Description = "The patch to read: a document, a bundle, or one written as text. "
-                + $"The extension decides which — .{PatchIO.FileExtension}, "
-                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}. Left out, give --preset instead.",
-            Arity = ArgumentArity.ZeroOrOne,
-        };
-
-        var preset = new Option<string>("--preset")
-        {
-            Description = "A shipped preset, by name, in place of a file.",
-        };
-
-        var presets = new Option<bool>("--presets")
-        {
-            Description = "List what --preset would accept, and stop.",
-        };
+        var given = new PatchInput("describe");
 
         var byGroup = new Option<bool>("--by-group")
         {
@@ -51,7 +35,7 @@ internal static class InfoCommand
 
         var command = new Command("info", "Say what a patch is made of and what each half of it costs.")
         {
-            patch, preset, presets, byGroup, json,
+            given.Patch, given.Preset, given.Presets, byGroup, json,
         };
 
         command.SetAction(result =>
@@ -61,22 +45,9 @@ internal static class InfoCommand
 
             plugins.Ready();
 
-            if (result.GetValue(presets))
-            {
-                ShippedPresets.List(plugins.Catalog, output, result.GetValue(json));
+            if (given.Listed(result, plugins, result.GetValue(json))) return Exit.Ok;
 
-                return Exit.Ok;
-            }
-
-            var file = result.GetValue(patch);
-            var named = result.GetValue(preset);
-
-            if ((file is null) == (named is null))
-            {
-                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to describe: a patch, or --preset and its name.");
-
-                return Exit.Failed;
-            }
+            if (!given.Chosen(result, out var file, out var named)) return Exit.Failed;
 
             Opened? opened;
             string name;

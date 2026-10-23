@@ -33,10 +33,7 @@ internal static class MeasureCommand
             Arity = ArgumentArity.ZeroOrMore,
         };
 
-        var preset = new Option<string>("--preset")
-        {
-            Description = "A shipped preset, by name, in place of a file.",
-        };
+        var given = new PatchInput("measure");
 
         var seconds = new Option<double>("--seconds")
         {
@@ -54,18 +51,20 @@ internal static class MeasureCommand
             "Run a patch offline and say what every output carries, to the speakers and to the screen: "
             + "its value, or its range and how fast it changes.")
         {
-            patch, outputs, preset, seconds, from, json,
+            patch, outputs, given.Preset, given.Presets, seconds, from, json,
         };
 
         command.SetAction((result, cancellation) =>
         {
             plugins.Ready();
 
+            if (given.Listed(result, plugins, result.GetValue(json))) return Task.FromResult(Exit.Ok);
+
             var output = result.InvocationConfiguration.Output;
             var error = result.InvocationConfiguration.Error;
             var first = result.GetValue(patch);
             var named = result.GetValue(outputs) ?? [];
-            var shipped = result.GetValue(preset);
+            var shipped = result.GetValue(given.Preset);
 
             Opened? opened;
 

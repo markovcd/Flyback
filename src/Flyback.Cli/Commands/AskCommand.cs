@@ -28,23 +28,18 @@ internal static class AskCommand
     /// <summary>Asks the assistant the editor is set to about a patch, and writes its answer back.</summary>
     public static Command Build(PluginRegistry plugins, Option<bool> json)
     {
-        var patch = new Argument<FileInfo?>("patch")
-        {
-            Description = "The patch to talk about, written back with each answer: "
+        var given = new PatchInput(
+            "ask about",
+            patch: "The patch to talk about, written back with each answer: "
                 + $"{AskedPatch.Formats}. One that does not exist yet starts empty.",
-            Arity = ArgumentArity.ZeroOrOne,
-        };
+            preset: "Start from a shipped preset, by name, in place of a file. Needs --out.");
+        var patch = given.Patch;
 
         var message = new Argument<string[]>("message")
         {
             Description = "What to ask. Left out, it is read from standard input, "
                 + "or asked for line by line at a terminal. One that starts with a dash goes after --.",
             Arity = ArgumentArity.ZeroOrMore,
-        };
-
-        var preset = new Option<string>("--preset")
-        {
-            Description = "Start from a shipped preset, by name, in place of a file. Needs --out.",
         };
 
         var output = new Option<FileInfo>("--out", "-o")
@@ -101,7 +96,7 @@ internal static class AskCommand
             "Ask the assistant to change a patch, the way the editor's assistant column does, and write "
             + "the patch back with the conversation, so the next ask, or the editor, carries it on.")
         {
-            patch, message, preset, output, provider, model, set, fresh, seen, briefing, context, expand, json,
+            patch, message, given.Preset, given.Presets, output, provider, model, set, fresh, seen, briefing, context, expand, json,
         };
 
         command.SetAction((result, cancellation) =>
@@ -118,8 +113,10 @@ internal static class AskCommand
 
             plugins.Ready();
 
+            if (given.Listed(result, plugins, result.GetValue(json))) return Task.FromResult(Exit.Ok);
+
             var file = result.GetValue(patch);
-            var named = result.GetValue(preset);
+            var named = result.GetValue(given.Preset);
             var words = result.GetValue(message) ?? [];
 
             // With --preset there is no patch, so the first word of the message
