@@ -56,7 +56,7 @@
 
   <!-- The command line, the preset site, and the two platform plugins that need something. -->
   <ItemGroup>
-    <PackageVersion Include="NAudio.Wasapi" Version="3.1.0" />
+    <PackageVersion Include="NAudio.Wasapi" Version="3.3.0" />
     <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.13" />
     <PackageVersion Include="System.CommandLine" Version="2.0.13" />
   </ItemGroup>
@@ -75,7 +75,7 @@
     <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.5.1" />
     <PackageVersion Include="Reqnroll.xunit.v3" Version="3.3.4" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
-    <PackageVersion Include="Verify.XunitV3" Version="33.3.3" />
+    <PackageVersion Include="Verify.XunitV3" Version="33.3.4" />
     <PackageVersion Include="xunit.v3" Version="4.0.2" />
     <PackageVersion Include="xunit.v3.extensibility.core" Version="4.0.2" />
   </ItemGroup>
