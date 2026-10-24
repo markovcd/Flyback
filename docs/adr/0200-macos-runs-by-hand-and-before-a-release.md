@@ -1,6 +1,6 @@
 # ADR-0200: macOS runs by hand and before a release, not on every push
 
-**Status:** Accepted · 2026-10-15 · *user-directed* · amends [0195](0195-ci-runs-on-githubs-runners-on-every-os-self-hosted-by-hand.md)
+**Status:** Superseded by [0212](0212-macos-runs-on-every-push-the-device-and-measuring-runs-daily.md) · 2026-10-15 · *user-directed* · amends [0195](0195-ci-runs-on-githubs-runners-on-every-os-self-hosted-by-hand.md)
 
 ## Context
 

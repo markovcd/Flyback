@@ -1,4 +1,4 @@
-# The members of src/ that only tests call, listed weekly against the baseline.
+# The members of src/ that only tests call, listed daily against the baseline.
 #
 # A member only a test calls is a test of nothing real (engineering guide, "A
 # member that only tests call"). tools/TestOnlyMembers lists them by reading
@@ -9,14 +9,14 @@
 # baseline can shrink.
 #
 # A scheduled run that fails opens an issue, or comments on the one still open,
-# since nobody watches Tuesday.
+# since nobody watches a scheduled run.
 
 name: Test-only members
 
 on:
   schedule:
-    # Tuesday, early.
-    - cron: "17 5 * * 2"
+    # Daily, early.
+    - cron: "47 5 * * *"
   workflow_dispatch:
 
 permissions:
@@ -82,4 +82,4 @@ jobs:
     uses: ./.github/workflows/tell.yml
     with:
       title: A member only tests call is not in the baseline
-      why: The weekly test-only members run found a member of src/ that only tests call and the baseline does not list.
+      why: The daily test-only members run found a member of src/ that only tests call and the baseline does not list.

@@ -667,7 +667,7 @@ out into `test-results/`, writes `summary.md` there with the counts per project,
 each failing test's message and stack and each skipped test's reason, and on GitHub makes it the run's summary, then exits with
 that exit code, which is all `gate` adds to `tested`. A failed run keeps
 `test-results/`, hang dumps included, as the Build run's artifact. `measured` builds on `gate` too and runs the tests again under
-coverage, weekly rather than per change, one project at a time, without the
+coverage, daily rather than per change, one project at a time, without the
 tests filed under `unmeasured`; nothing else reads it. `coverage.sh` builds it and writes the table, the specs' figure apart
 from the sum of the rest, for the Coverage workflow and locally alike, as
 `release.sh` is the whole release for the Release workflow. The gate's
@@ -903,7 +903,7 @@ it, and `Bug3` does not.
 
 ### Nothing in `src/` exists only for tests
 
-A member that only tests call is a test of nothing real: either the app should use it or it should not be there. Where a test-only member has to stay (a shipped plugin contract, a seam that reads a result back), its doc comment says so and why. `dotnet run --project tools/TestOnlyMembers -- Flyback.slnx` lists the non-private members of `src/` that no `src/` code uses and tests do, one tab-separated row each; run it after a refactor and clear what it finds. `tools/TestOnlyMembers/baseline.tsv` holds the rows that stand, and the weekly `test-only-members.yml` fails on a row not in it.
+A member that only tests call is a test of nothing real: either the app should use it or it should not be there. Where a test-only member has to stay (a shipped plugin contract, a seam that reads a result back), its doc comment says so and why. `dotnet run --project tools/TestOnlyMembers -- Flyback.slnx` lists the non-private members of `src/` that no `src/` code uses and tests do, one tab-separated row each; run it after a refactor and clear what it finds. `tools/TestOnlyMembers/baseline.tsv` holds the rows that stand, and the daily `test-only-members.yml` fails on a row not in it.
 
 ### An engine test
 

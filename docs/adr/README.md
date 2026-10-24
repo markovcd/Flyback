@@ -30,7 +30,7 @@ context, decision, consequences.
 | [0183](0183-the-binder-is-one-walk-and-what-it-asks-for-is-handed-nothing-back.md) | The binder is one walk, and what it asks for is handed nothing back *(user-directed)* |
 | [0187](0187-the-plate-scrolls-with-the-reading-and-folds-into-a-pinned-header.md) | The plate scrolls with the reading and folds into a pinned header *(user-directed; supersedes [0122](0122-the-panel-wears-the-block-it-is-about.md)'s pinned plate and right-hand name)* |
 | [0184](0184-the-editor-runs-on-android-with-its-plugins-linked-in.md) | The editor runs on Android, with its plugins linked in *(user-directed)* |
-| [0211](0211-the-editor-builds-for-ios-as-android-does.md) | The editor builds for iOS as it does for Android *(user-directed)* |
+| [0211](0211-the-editor-builds-for-ios-as-android-does.md) | The editor builds for iOS as it does for Android *(user-directed; its simulator run made daily by [0212](0212-macos-runs-on-every-push-the-device-and-measuring-runs-daily.md))* |
 | [0189](0189-the-architecture-is-a-c4-model-in-structurizr-dsl.md) | The architecture is a C4 model in Structurizr DSL *(user-directed; superseded by [0204](0204-the-c4-views-are-mermaid-flowcharts.md))* |
 | [0204](0204-the-c4-views-are-mermaid-flowcharts.md) | The C4 views are Mermaid flowcharts *(user-directed)* |
 
@@ -210,11 +210,12 @@ context, decision, consequences.
 | [0127](0127-the-person-chooses-what-opens-a-flyback-file.md) | The person chooses what opens a Flyback file *(user-directed)* |
 | [0120](0120-every-change-passes-the-gate-a-release-passes.md) | Every change passes the gate a release passes |
 | [0193](0193-the-pages-are-checked-in-a-headless-chromium-the-gate-carries.md) | The pages are checked in a headless Chromium the gate carries |
-| [0195](0195-ci-runs-on-githubs-runners-on-every-os-self-hosted-by-hand.md) | CI runs on GitHub's runners on every OS; the self-hosted ones are by hand *(user-directed; macOS taken off every push by [0200](0200-macos-runs-by-hand-and-before-a-release.md))* |
+| [0195](0195-ci-runs-on-githubs-runners-on-every-os-self-hosted-by-hand.md) | CI runs on GitHub's runners on every OS; the self-hosted ones are by hand *(user-directed; macOS taken off every push by [0200](0200-macos-runs-by-hand-and-before-a-release.md) and put back by [0212](0212-macos-runs-on-every-push-the-device-and-measuring-runs-daily.md))* |
 | [0198](0198-a-release-ships-the-android-editor-as-an-apk-signed-with-the-release-key.md) | A release ships the Android editor as an APK signed with the release key *(user-directed)* |
 | [0197](0197-dependabot-updates-arrive-as-one-pull-request-and-merge-when-build-passes.md) | Dependabot's updates arrive as one pull request and merge when Build passes *(user-directed)* |
 | [0199](0199-the-microsoft-store-gets-an-msix-the-store-signs-and-updates.md) | The Microsoft Store gets an MSIX the Store signs and updates *(user-directed)* |
-| [0200](0200-macos-runs-by-hand-and-before-a-release.md) | macOS runs by hand and before a release, not on every push *(user-directed; amended: every push while the self-hosted Mac is online)* |
+| [0200](0200-macos-runs-by-hand-and-before-a-release.md) | macOS runs by hand and before a release, not on every push *(user-directed; superseded by [0212](0212-macos-runs-on-every-push-the-device-and-measuring-runs-daily.md))* |
+| [0212](0212-macos-runs-on-every-push-the-device-and-measuring-runs-daily.md) | macOS runs on every push; the device runs and the measuring run daily *(user-directed)* |
 | [0196](0196-a-tutorial-step-is-a-patch-the-editor-checks-against.md) | A tutorial step is a patch the editor checks against |
 | [0094](0094-a-run-says-what-it-played-and-nothing-about-who-played-it.md) | A run says what it played, and nothing about who played it *(user-directed; two more events and a wait at the end added by [0103](0103-a-run-says-how-it-ended-in-bands.md))* |
 | [0103](0103-a-run-says-how-it-ended-in-bands.md) | A run says how it ended, in bands *(user-directed; the modules picked and more of the editor added 2026-09-28)* |

@@ -106,7 +106,7 @@ To restore, compile and run the whole test suite without publishing anything, wh
 docker build --target gate .
 ```
 
-To measure how much of the code the tests run, into `coverage/` with a table per assembly in `coverage/summary.md` and the specs' figure beside it rather than in the sum, the same way the weekly Coverage workflow does:
+To measure how much of the code the tests run, into `coverage/` with a table per assembly in `coverage/summary.md` and the specs' figure beside it rather than in the sum, the same way the daily Coverage workflow does:
 
 ```bash
 ./scripts/coverage.sh

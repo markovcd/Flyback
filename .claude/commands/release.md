@@ -77,9 +77,8 @@ Each of these ends the run, says which one and why, and changes no file.
   One `success` passes.
 
 - **macOS has not passed on this commit.** Build runs the native tests on macOS
-  when the self-hosted Mac is online or its `macos` box is ticked (ADR-0200), so a
-  push made while the Mac was off has none. Same rule:
-  a red job refuses, and so does no run. Start Build on `main` with `macos`, or
+  on every push (ADR-0212). Same rule:
+  a red job refuses, and so does no run. Start Build on `main`, or
   Cloud gate with `macos` (or `all`), and wait:
 
   ```bash

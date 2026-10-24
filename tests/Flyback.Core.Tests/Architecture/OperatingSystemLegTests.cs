@@ -6,8 +6,8 @@ namespace Flyback.Core.Tests.Architecture;
 
 /// <summary>
 /// A test that only Windows or only macOS can run is run there: its project is in the solution
-/// both native legs test, Build starts Windows on every push and macOS when the self-hosted Mac is online or by hand, the Cloud gate's all
-/// runs both, and the test is not filed under a category the legs leave out.
+/// both native legs test, Build starts Windows and macOS on every push, the Cloud gate's all runs both,
+/// and the test is not filed under a category the legs leave out.
 /// </summary>
 /// <remarks>A test that skips everywhere CI runs it passes without ever having run.</remarks>
 [TestCategory(TestCategory.Unmeasured)]
@@ -31,19 +31,14 @@ public partial class OperatingSystemLegTests
     }
 
     [Fact]
-    public void Build_runs_windows_on_every_push_and_macos_when_the_mac_is_online_or_its_box_is_ticked()
+    public void Build_runs_windows_and_macos_on_every_push()
     {
         var build = File.ReadAllLines(Repository.Path(".github", "workflows", "ci.yml")).ToList();
         var call = build.FindIndex(line => line.Trim() == "uses: ./.github/workflows/native-tests.yml");
 
         call.ShouldBeGreaterThan(0, "ci.yml starts native-tests.yml");
         build.Skip(call + 1).TakeWhile(line => line.StartsWith("    ", StringComparison.Ordinal)).Select(line => line.Trim())
-            .ShouldContain("machines: ${{ (inputs.macos || needs.runner.outputs.mac-online == 'true') && '[\"windows\",\"macos\"]' || '[\"windows\"]' }}");
-
-        var dispatch = build.SkipWhile(line => line.Trim() != "workflow_dispatch:").TakeWhile(line => line.Trim() != "permissions:").ToList();
-        var macos = dispatch.FindIndex(line => line.Trim() == "macos:");
-        macos.ShouldBeGreaterThan(0, "Build has a macos box under Run workflow");
-        dispatch.Skip(macos + 1).Take(3).ShouldContain(line => line.Trim() == "type: boolean");
+            .ShouldContain("machines: '[\"windows\",\"macos\"]'");
     }
 
     [Fact]

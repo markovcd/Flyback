@@ -1,8 +1,7 @@
 # The gate, on every change: restore, compile, and every test in the solution,
-# in the Linux image and natively on Windows (native-tests.yml). macOS runs on
-# the self-hosted Mac whenever it is online, and on GitHub's only when the
-# `macos` box is ticked, since its minutes cost ten times Linux's (ADR-0200);
-# /release refuses a commit it has not passed on.
+# in the Linux image and natively on Windows and macOS (native-tests.yml). macOS
+# runs on the self-hosted Mac when it is online on main, and on GitHub's
+# otherwise (ADR-0212).
 #
 # The same image the release is built from, stopped at the tests — `--target
 # gate` stops before the publishes, so what runs here is what runs before a
@@ -24,10 +23,6 @@ on:
     inputs:
       self-hosted:
         description: Run on the self-hosted runners (main only), Linux before Windows.
-        type: boolean
-        default: false
-      macos:
-        description: Run the native tests on macOS too, on GitHub's if the self-hosted Mac is offline.
         type: boolean
         default: false
 
@@ -123,5 +118,5 @@ jobs:
     needs: runner
     uses: ./.github/workflows/native-tests.yml
     with:
-      machines: ${{ (inputs.macos || needs.runner.outputs.mac-online == 'true') && '["windows","macos"]' || '["windows"]' }}
+      machines: '["windows","macos"]'
       macos-runs-on: ${{ needs.runner.outputs.macos }}

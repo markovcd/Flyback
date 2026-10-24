@@ -4,9 +4,7 @@
 # runner if it is online, else the Windows one, else GitHub's.
 #
 # The `macos` output is where native-tests.yml runs macOS: the self-hosted Mac
-# whenever it is online on main, asked for or not, since it costs nothing and
-# GitHub's costs ten times Linux (ADR-0200); else GitHub's. `mac-online` says
-# which, so Build can run macOS on every push the Mac is up for.
+# whenever it is online on main, asked for or not (ADR-0212); else GitHub's.
 #
 # GitHub has no fallback between runners, so this asks the API which are online.
 # That API needs a token with Administration read on the repository, which
@@ -34,9 +32,6 @@ on:
       macos:
         description: A JSON runs-on value for the macOS native tests.
         value: ${{ jobs.pick.outputs.macos }}
-      mac-online:
-        description: true when the self-hosted Mac is online and macOS runs on it.
-        value: ${{ jobs.pick.outputs.mac-online }}
     secrets:
       RUNNER_STATUS_TOKEN:
         required: false
@@ -50,7 +45,6 @@ jobs:
     outputs:
       runs-on: ${{ steps.pick.outputs.runs-on }}
       macos: ${{ steps.pick.outputs.macos }}
-      mac-online: ${{ steps.pick.outputs.mac-online }}
     steps:
       - name: Pick the first online runner in the order Linux, Windows, GitHub, and Mac or GitHub for macOS
         id: pick
@@ -83,10 +77,8 @@ jobs:
           # A Mac nobody could see is not waited for: it may be asleep for days.
           if [ -n "$runners" ] && [ "$(online macOS ARM64)" -gt 0 ]; then
             macos '["self-hosted","macOS","ARM64"]'
-            echo "mac-online=true" >> "$GITHUB_OUTPUT"
           else
             macos '"macos-latest"'
-            echo "mac-online=false" >> "$GITHUB_OUTPUT"
           fi
           [ "$SELF_HOSTED" = true ] && [ "$REF" = refs/heads/main ] || pick '"ubuntu-latest"'
           if [ -z "$TOKEN" ]; then

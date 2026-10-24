@@ -1,15 +1,20 @@
 # The whole gate on GitHub's machines, by hand: the Linux gate, the native tests
 # on Windows and macOS (native-tests.yml), and the Android editor on an emulator,
-# which nothing else starts, with the Play listing's screenshots when asked (ADR-0195).
+# with the Play listing's screenshots when asked (ADR-0195). The emulator also runs
+# daily on main, which is all the schedule starts, and a failure opens an issue
+# (ADR-0212).
 #
 # Every action is pinned to a commit rather than a tag; Dependabot says when a
 # pin should move.
 
 name: Cloud gate
 
-run-name: Cloud gate on ${{ inputs.os }} at ${{ github.sha }}
+run-name: Cloud gate on ${{ inputs.os || 'android, daily,' }} at ${{ github.sha }}
 
 on:
+  schedule:
+    # Daily, early.
+    - cron: "17 4 * * *"
   workflow_dispatch:
     inputs:
       os:
@@ -74,7 +79,7 @@ jobs:
   # against. /release refuses a commit this job has not passed on. GitHub's Linux
   # runners give a container KVM once its device is opened to the runner's user.
   android:
-    if: inputs.os == 'all' || inputs.os == 'android'
+    if: github.event_name == 'schedule' || inputs.os == 'all' || inputs.os == 'android'
     runs-on: ubuntu-latest
     # The workload, the system image, the boot and the build; the default of six hours is what a hang costs.
     timeout-minutes: 60
@@ -130,3 +135,14 @@ jobs:
           path: play-shots
           if-no-files-found: ignore
           retention-days: 14
+
+  # The only job that may write issues.
+  tell:
+    needs: android
+    if: failure() && github.event_name == 'schedule'
+    permissions:
+      issues: write
+    uses: ./.github/workflows/tell.yml
+    with:
+      title: The daily Android emulator run failed
+      why: The Android editor did not start, play or answer on the emulator (scripts/android-smoke.sh).

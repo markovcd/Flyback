@@ -1,8 +1,8 @@
-# How much of the code the tests run, measured weekly and never judged.
+# How much of the code the tests run, measured daily and never judged.
 #
 # Not part of the gate, on purpose. Measuring roughly doubles what the tests
 # take, and a number nothing is allowed to fail on should not be charged to
-# every push, so it is charged to Monday instead.
+# every push, so it is charged to a daily run instead.
 #
 # The report is an artifact and a table in the run summary, both written by
 # coverage.sh, which runs the same locally. There is no
@@ -10,14 +10,14 @@
 # something stopped being covered.
 #
 # A scheduled run that fails opens an issue, or comments on the one still open,
-# since nobody watches a Monday run.
+# since nobody watches a scheduled run.
 
 name: Coverage
 
 on:
   schedule:
-    # Monday, early.
-    - cron: "17 5 * * 1"
+    # Daily, early.
+    - cron: "17 5 * * *"
   workflow_dispatch:
     inputs:
       self-hosted:
@@ -94,5 +94,5 @@ jobs:
       issues: write
     uses: ./.github/workflows/tell.yml
     with:
-      title: The weekly coverage run failed
+      title: The daily coverage run failed
       why: "${{ needs.measure.outputs.why || 'The run ended without saying why: the runner stopped or the job timed out.' }}"
