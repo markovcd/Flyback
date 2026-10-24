@@ -55,10 +55,13 @@ jobs:
         with:
           persist-credentials: false
 
+      # The image links Xcode_26.6.0.app to Xcode_26.6.app; the iOS SDK cannot find
+      # clang through the link, so the real folder is selected.
       - name: Use the newest Xcode (GitHub's Mac)
         if: inputs.machine != 'self-hosted'
         run: |
-          sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -n 1)"
+          xcode="$(ls -d /Applications/Xcode_*.app | sort -V | tail -n 1)"
+          sudo xcode-select -s "$(cd -P "$xcode" && pwd)"
           sudo xcodebuild -runFirstLaunch
 
       - name: Say which Xcode and simulators
