@@ -1,17 +1,15 @@
 import { dispatchValidate } from "./dispatch";
 import type { Env } from "./env";
-import { badRequest, body, field, flag, json, noContent, notFound, refused, whole } from "./http";
+import { badRequest, body, field, json, notFound, refused } from "./http";
 import { pluginFile, pluginPreview } from "./keys";
 import { limited } from "./limits";
-import { download, formOf } from "./presets";
-import { forgetRatings, NO_RATING, type Rating, ratingOf, ratingsOf } from "./ratings";
-import { forgetReports } from "./reports";
-import { anywhere, baseName, extension, folded, joined, newId, now, PAIR, sha256, split, words } from "./text";
+import { NO_RATING, type Rating, ratingOf } from "./ratings";
+import { fileOf, find, forget, formOf, one, page, remove, shown, type Store, visible } from "./store";
+import { baseName, extension, folded, joined, newId, now, PAIR, sha256, split } from "./text";
 
 /** Half what the editor accepts, as the .NET site held a package to. */
 export const PACKAGE_LIMIT = 64 * 1024 * 1024;
 
-const PAGE_SIZE = 24;
 const PLATFORMS = ["win", "osx", "linux"];
 
 export interface PluginRow {
@@ -40,9 +38,6 @@ export interface PluginRow {
   reason: string | null;
   versions: number;
 }
-
-/** A package arrives unpublished and is seen by nobody but the admin until it is published. */
-const visible = (admin: boolean): string => (admin ? "p.status = 'checked'" : "p.status = 'checked' AND p.published = 1");
 
 /** How many published versions the plugin's assembly has, itself included. */
 const VERSIONS = `(SELECT count(*) FROM plugins v WHERE v.published = 1 AND v.status = 'checked'
@@ -91,11 +86,18 @@ export function pluginView(row: PluginRow, rating: Rating) {
   };
 }
 
-export const findPlugin = (env: Env, id: string, where = "1 = 1"): Promise<PluginRow | null> =>
-  env.DB.prepare(`SELECT p.*, ${VERSIONS} FROM plugins p WHERE p.id = ? AND ${where}`).bind(id).first<PluginRow>();
+const PLUGINS: Store<PluginRow> = {
+  kind: "plugin",
+  table: "plugins",
+  columns: `p.*, ${VERSIONS}`,
+  view: pluginView,
+  file: pluginFile,
+  owned: (id) => [pluginFile(id), pluginPreview(id)],
+};
 
-export const pluginShown = async (env: Env, id: string): Promise<boolean> =>
-  (await findPlugin(env, id, visible(false))) !== null;
+export const findPlugin = (env: Env, id: string, where?: string): Promise<PluginRow | null> => find(PLUGINS, env, id, where);
+
+export const pluginShown = (env: Env, id: string): Promise<boolean> => shown(PLUGINS, env, id);
 
 /**
  * GET /plugins: newest first, matching all of q's words, tagged tag, with a build that
@@ -103,14 +105,10 @@ export const pluginShown = async (env: Env, id: string): Promise<boolean> =>
  * each assembly once, at its newest published package; assembly lists every version of one.
  */
 export async function listPlugins(env: Env, url: URL, admin: boolean): Promise<Response> {
-  const page = whole(url, "page");
-  if (page === "bad") return badRequest("A page is a whole number.");
-
   const platform = url.searchParams.get("platform");
   if (platform && !PLATFORMS.includes(platform)) return badRequest(`A platform is one of ${PLATFORMS.join(", ")}.`);
 
-  const at = Math.max(1, page ?? 1);
-  const where = [visible(admin)];
+  const where: string[] = [];
   const values: unknown[] = [];
 
   const assembly = url.searchParams.get("assembly")?.trim();
@@ -118,11 +116,6 @@ export async function listPlugins(env: Env, url: URL, admin: boolean): Promise<R
     where.push("p.assembly = ? COLLATE NOCASE");
     values.push(assembly);
   } else if (!admin) where.push(NEWEST);
-
-  for (const word of words(url.searchParams.get("q"))) {
-    where.push("p.search LIKE ? ESCAPE '\\'");
-    values.push(anywhere(word));
-  }
 
   const tag = url.searchParams.get("tag")?.trim();
   if (tag) {
@@ -143,48 +136,14 @@ export async function listPlugins(env: Env, url: URL, admin: boolean): Promise<R
     values.push(platform);
   }
 
-  const filter = "WHERE " + where.join(" AND ");
-  const [counted, listed] = await env.DB.batch<{ n: number } | PluginRow>([
-    env.DB.prepare(`SELECT count(*) AS n FROM plugins p ${filter}`).bind(...values),
-    env.DB.prepare(`SELECT p.*, ${VERSIONS} FROM plugins p ${filter} ORDER BY p.submitted_at DESC, p.id DESC LIMIT ? OFFSET ?`).bind(
-      ...values,
-      PAGE_SIZE,
-      (at - 1) * PAGE_SIZE,
-    ),
-  ]);
-
-  const rows = listed!.results as PluginRow[];
-  const rated = await ratingsOf(env, "plugin", rows.map((r) => r.id));
-
-  return json({
-    items: rows.map((r) => pluginView(r, rated.get(r.id) ?? NO_RATING)),
-    total: (counted!.results[0] as { n: number }).n,
-    page: at,
-    pageSize: PAGE_SIZE,
-  });
+  return page(PLUGINS, env, url, admin, where, values);
 }
 
 /** GET /plugins/{id}; one still being checked, or refused, is answered to whoever has its id. */
-export async function getPlugin(env: Env, id: string, admin: boolean): Promise<Response> {
-  const row = await findPlugin(env, id);
-  if (row === null || (row.status === "checked" && row.published === 0 && !admin)) return notFound();
-  return json(pluginView(row, await ratingOf(env, "plugin", id)));
-}
+export const getPlugin = (env: Env, id: string, admin: boolean): Promise<Response> => one(PLUGINS, env, id, admin);
 
-export async function pluginFileOf(env: Env, url: URL, id: string, admin: boolean): Promise<Response> {
-  const count = flag(url, "count");
-  if (count === "bad") return badRequest("count is true or false.");
-
-  const row = await findPlugin(env, id, visible(admin));
-  if (row === null) return notFound();
-
-  const file = await env.FILES.get(pluginFile(id));
-  if (file === null) return notFound();
-
-  if (count !== false) await env.DB.prepare("UPDATE plugins SET downloads = downloads + 1 WHERE id = ?").bind(id).run();
-
-  return download(file, row.file_name);
-}
+export const pluginFileOf = (env: Env, url: URL, id: string, admin: boolean): Promise<Response> =>
+  fileOf(PLUGINS, env, url, id, admin);
 
 export async function pluginPreviewOf(env: Env, id: string, admin: boolean): Promise<Response> {
   const row = await findPlugin(env, id, visible(admin) + " AND p.preview_type IS NOT NULL");
@@ -277,21 +236,9 @@ export async function changePlugin(env: Env, request: Request, id: string): Prom
   return row === null ? notFound() : json(pluginView(row, await ratingOf(env, "plugin", id)));
 }
 
-export async function deletePlugin(env: Env, id: string): Promise<Response> {
-  if (!(await forgetPlugin(env, id))) return notFound();
-  return noContent();
-}
+export const deletePlugin = (env: Env, id: string): Promise<Response> => remove(PLUGINS, env, id);
 
-export async function forgetPlugin(env: Env, id: string): Promise<boolean> {
-  const { meta } = await env.DB.prepare("DELETE FROM plugins WHERE id = ?").bind(id).run();
-  if (meta.changes === 0) return false;
-
-  await env.FILES.delete([pluginFile(id), pluginPreview(id)]);
-  await forgetReports(env, "plugin", id);
-  await forgetRatings(env, "plugin", id);
-
-  return true;
-}
+export const forgetPlugin = (env: Env, id: string): Promise<boolean> => forget(PLUGINS, env, id);
 
 /** What Validate or the defaults say a package is. */
 export interface CheckedPlugin {

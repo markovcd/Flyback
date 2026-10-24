@@ -3,7 +3,8 @@ import type { Env } from "./env";
 import { badRequest, json } from "./http";
 import { pluginFile, presetFile } from "./keys";
 import { describePlugin, forgetPlugin, PACKAGE_LIMIT } from "./plugins";
-import { describePreset, formOf, PRESET_LIMIT } from "./presets";
+import { describePreset, PRESET_LIMIT } from "./presets";
+import { formOf } from "./store";
 import { extension, newId, now, sha256 } from "./text";
 
 /**

@@ -9,7 +9,8 @@ import {
   takenByAnother,
   takenMessage,
 } from "./plugins";
-import { type CheckedPreset, describePreset, download, findPreset, presetView } from "./presets";
+import { type CheckedPreset, describePreset, findPreset, presetView } from "./presets";
+import { download } from "./store";
 import { NO_RATING } from "./ratings";
 import { now } from "./text";
 
