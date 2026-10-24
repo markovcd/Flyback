@@ -1,14 +1,11 @@
 # Builds the iOS editor and runs it in the simulator: it boots on a preset, plays,
 # and answers its state notification (scripts/ios-smoke.sh), leaving a screenshot.
 #
-# Daily on GitHub's Mac, and by hand from Run workflow; a scheduled failure opens
+# On GitHub's Mac, daily and by hand from Run workflow; a scheduled failure opens
 # an issue (ADR-0212). Nothing waits on it, since the iOS editor is not released.
 # Like the Android editor it is outside the gate, since the ios workload and Xcode
 # need a Mac; Flyback.slnx lists the project without building it.
 #
-# `machine` picks the user's self-hosted Mac or GitHub's. The self-hosted one is
-# for main only: the repo is public, and a fork's workflow must never reach that
-# machine.
 # GitHub's image carries several Xcodes; the newest is picked and, not being the
 # image's default, set up with -runFirstLaunch, or its tools cannot be found.
 #
@@ -23,11 +20,6 @@ on:
     - cron: "47 4 * * *"
   workflow_dispatch:
     inputs:
-      machine:
-        description: Where it runs.
-        type: choice
-        options: [self-hosted, github]
-        default: self-hosted
       preset:
         description: The preset the simulator plays.
         type: string
@@ -42,8 +34,7 @@ concurrency:
 
 jobs:
   simulator:
-    if: inputs.machine == 'github' || github.ref == 'refs/heads/main'
-    runs-on: ${{ inputs.machine == 'self-hosted' && fromJSON('["self-hosted","macOS","ARM64"]') || 'macos-26' }}
+    runs-on: macos-26
     # A cold workload install, restore, AOT build and a simulator boot; the default of six hours is what a hang costs.
     timeout-minutes: 60
     env:
@@ -57,8 +48,7 @@ jobs:
 
       # The image links Xcode_26.6.0.app to Xcode_26.6.app; the iOS SDK cannot find
       # clang through the link, so the real folder is selected.
-      - name: Use the newest Xcode (GitHub's Mac)
-        if: inputs.machine != 'self-hosted'
+      - name: Use the newest Xcode
         run: |
           xcode="$(ls -d /Applications/Xcode_*.app | sort -V | tail -n 1)"
           sudo xcode-select -s "$(cd -P "$xcode" && pwd)"

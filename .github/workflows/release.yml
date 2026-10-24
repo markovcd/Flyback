@@ -32,36 +32,22 @@ on:
         description: "Version to release, e.g. 1.4.0. Leave blank to bump the minor version automatically."
         required: false
         type: string
-      self-hosted:
-        description: Build on the self-hosted runners, Linux before Windows.
-        type: boolean
-        default: false
 
 permissions:
   contents: read
 
 jobs:
-  # GitHub's, or the self-hosted runners when asked (runner.yml).
-  runner:
-    if: github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/runner.yml
-    with:
-      self-hosted: ${{ inputs.self-hosted }}
-    secrets:
-      RUNNER_STATUS_TOKEN: ${{ inputs.self-hosted && secrets.RUNNER_STATUS_TOKEN || '' }}
-
   release:
     # Only from main. release.sh runs the gate again and publishes from that same
-    # build; each runner keeps a cache of its own, so on another machine from
-    # ci.yml's run that gate is a rebuild and a retest. The key is the secret
-    # below, held in this step's environment and never written to a file.
-    needs: runner
-    runs-on: ${{ fromJSON(needs.runner.outputs.runs-on) }}
-    # About six minutes on a warm self-hosted cache, several times that cold on
-    # GitHub's; the default of six hours is what a hang costs.
+    # build, a rebuild and a retest of ci.yml's. The key is the secret below, held
+    # in this step's environment and never written to a file.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Several times the gate's eleven minutes cold; the default of six hours is
+    # what a hang costs.
     timeout-minutes: 60
     outputs:
-      tag: ${{ steps.linux.outputs.tag || steps.version.outputs.tag }}
+      tag: ${{ steps.build.outputs.tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -69,12 +55,10 @@ jobs:
           persist-credentials: false
 
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-        if: runner.environment == 'github-hosted'
 
       # buildx drops a gha cache silently unless the cache service's address and
       # token are in the environment, and only an action's process is given them.
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        if: runner.environment == 'github-hosted'
         with:
           script: |
             for (const name of ['ACTIONS_CACHE_URL', 'ACTIONS_CACHE_SERVICE_V2', 'ACTIONS_RESULTS_URL', 'ACTIONS_RUNTIME_TOKEN'])
@@ -82,26 +66,13 @@ jobs:
 
       # Checks the key and the changelog before building, then builds, tests,
       # packs and signs into dist/. The input reaches the script as a variable,
-      # never as text spliced into it. One step per OS, because `shell` takes no
-      # expression; whichever is skipped leaves its outputs empty.
+      # never as text spliced into it.
       - name: Build the release
-        if: runner.os != 'Windows'
-        id: linux
+        id: build
         env:
           RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
           VERSION: ${{ inputs.version }}
         shell: bash --noprofile --norc -e -o pipefail {0}
-        run: bash scripts/release.sh "$VERSION"
-
-      - name: Build the release (Windows)
-        if: runner.os == 'Windows'
-        id: version
-        env:
-          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
-          VERSION: ${{ inputs.version }}
-        # Git's bash by path: a bare bash on this runner is WSL's launcher, and the
-        # runner splits the shell on spaces, hence the 8.3 name.
-        shell: C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}
         run: bash scripts/release.sh "$VERSION"
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

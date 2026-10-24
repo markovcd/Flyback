@@ -5,9 +5,8 @@
 # under load and fires this one hours apart, so a lost start waits hours.
 #
 # Off until the repository variable PRESET_SITE_URL names the site, so nothing runs
-# before the site does. It runs on GitHub's machines and never the self-hosted
-# runner: what it reads is a stranger's file. flyback-site reads a package and never
-# runs it, and the render, which does run a patch, holds no token.
+# before the site does. What it reads is a stranger's file: flyback-site reads a
+# package and never runs it, and the render, which does run a patch, holds no token.
 
 name: Validate
 

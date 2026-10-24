@@ -1,7 +1,6 @@
 # The gate, on every change: restore, compile, and every test in the solution,
-# in the Linux image and natively on Windows and macOS (native-tests.yml). macOS
-# runs on the self-hosted Mac when it is online on main, and on GitHub's
-# otherwise (ADR-0212).
+# in the Linux image and natively on Windows and macOS (native-tests.yml), all on
+# GitHub's standard runners (ADR-0212).
 #
 # The same image the release is built from, stopped at the tests — `--target
 # gate` stops before the publishes, so what runs here is what runs before a
@@ -20,11 +19,6 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
-    inputs:
-      self-hosted:
-        description: Run on the self-hosted runners (main only), Linux before Windows.
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -39,21 +33,9 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  # GitHub's, or by hand on main the self-hosted runners (runner.yml). Either
-  # self-hosted runner needs Docker with buildx. The token goes to every run on
-  # main, so macOS finds the self-hosted Mac.
-  runner:
-    uses: ./.github/workflows/runner.yml
-    with:
-      self-hosted: ${{ inputs.self-hosted == true }}
-    secrets:
-      RUNNER_STATUS_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.RUNNER_STATUS_TOKEN || '' }}
-
   build:
-    needs: runner
-    runs-on: ${{ fromJSON(needs.runner.outputs.runs-on) }}
-    # About seven minutes on a self-hosted runner and eleven on GitHub's; the
-    # default of six hours is what a hang costs.
+    runs-on: ubuntu-latest
+    # About eleven minutes; the default of six hours is what a hang costs.
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -61,38 +43,21 @@ jobs:
           persist-credentials: false
 
       # GitHub's runners keep nothing between jobs, so they build on a fresh
-      # builder with GitHub's layer cache; a self-hosted one uses the capped
-      # builder scripts/builder.sh keeps.
+      # builder with GitHub's layer cache.
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-        if: runner.environment == 'github-hosted'
 
       # buildx drops a gha cache silently unless the cache service's address and
       # token are in the environment, and only an action's process is given them.
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        if: runner.environment == 'github-hosted'
         with:
           script: |
             for (const name of ['ACTIONS_CACHE_URL', 'ACTIONS_CACHE_SERVICE_V2', 'ACTIONS_RESULTS_URL', 'ACTIONS_RUNTIME_TOKEN'])
               if (process.env[name]) core.exportVariable(name, process.env[name]);
 
-      # On a self-hosted runner the layer cache makes the apt packages and the
-      # restore a lookup; on GitHub's only the base and tools layers are (ADR-0120).
-      #
-      # On a self-hosted runner a commit that changes nothing in the build context
-      # hits the cache all the way through and runs no tests. The workflows are in
-      # the context, since a test reads them. A green check here is about the
-      # context, not about the run.
-      #
-      # gate.sh writes the run's summary: the test counts and each failing test.
+      # Only the base and tools layers come from the cache (ADR-0120). gate.sh
+      # writes the run's summary: the test counts and each failing test.
       - name: Build and test
-        if: runner.os != 'Windows'
         run: bash scripts/gate.sh
-
-      # A bare `bash` on the Windows runner is WSL's, which cannot read the
-      # runner's script paths; Git's is the one wanted.
-      - name: Build and test (Windows)
-        if: runner.os == 'Windows'
-        run: '& "C:/Program Files/Git/bin/bash.exe" scripts/gate.sh'
 
       # A failed run's JUnit reports and any hang or crash dump, which name the
       # test a hung host was in.
@@ -115,8 +80,6 @@ jobs:
 
   # What only Windows or only macOS can run, beside the Linux gate.
   native:
-    needs: runner
     uses: ./.github/workflows/native-tests.yml
     with:
       machines: '["windows","macos"]'
-      macos-runs-on: ${{ needs.runner.outputs.macos }}

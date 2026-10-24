@@ -1,7 +1,8 @@
 # ADR-0212: macOS runs on every push; the device runs and the measuring run daily
 
 **Status:** Accepted · 2026-10-24 · *user-directed* · supersedes
-[0200](0200-macos-runs-by-hand-and-before-a-release.md)
+[0200](0200-macos-runs-by-hand-and-before-a-release.md) and
+[0195](0195-ci-runs-on-githubs-runners-on-every-os-self-hosted-by-hand.md)
 
 ## Context
 
@@ -13,9 +14,13 @@ simulator run, Coverage and Test-only members.
 
 ## Decision
 
-**Every push runs the native tests on Windows and macOS.** Build hands `native-tests.yml` both
-machines, with no box to tick. macOS runs on the self-hosted Mac when `runner.yml` finds it
-online on `main`, and on `macos-latest` otherwise.
+**Every job runs on GitHub's standard runners, and none on a self-hosted one.** The user's
+machines are no longer runners: `runner.yml`, the `self-hosted` inputs of Build, Coverage and
+Release, `ios.yml`'s `machine` choice and the `RUNNER_STATUS_TOKEN` secret are gone, and with
+them the gate's Windows path and the rule that kept forks off the user's machines.
+
+**Every push runs the native tests on Windows and macOS**, on `windows-latest` and
+`macos-latest`, with no box to tick.
 
 **The device runs are daily.** The Cloud gate's Android emulator job and `ios.yml`'s simulator
 run are scheduled once a day on `main`, on GitHub's machines, as well as by hand. Neither goes on
@@ -33,4 +38,5 @@ every push: the emulator is slow and has been flaky, and the iOS editor is not r
   satisfies it when nothing has landed since.
 - An iOS break is found within a day rather than when someone thinks to run it.
 - The gate stays one Linux job; sharding it is a separate decision, not taken here.
+- A run waits for GitHub's queue, never for a machine of the user's to wake.
 - If the repository went private, macOS and the daily runs would be billed again.

@@ -19,11 +19,6 @@ on:
     # Daily, early.
     - cron: "17 5 * * *"
   workflow_dispatch:
-    inputs:
-      self-hosted:
-        description: Run on the self-hosted runners (main only), Linux before Windows.
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -33,21 +28,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # GitHub's, or by hand on main the self-hosted runners (runner.yml).
-  runner:
-    uses: ./.github/workflows/runner.yml
-    with:
-      self-hosted: ${{ inputs.self-hosted == true }}
-    secrets:
-      RUNNER_STATUS_TOKEN: ${{ inputs.self-hosted && github.ref == 'refs/heads/main' && secrets.RUNNER_STATUS_TOKEN || '' }}
-
   measure:
-    needs: runner
     outputs:
-      why: ${{ steps.linux.outputs.why || steps.windows.outputs.why }}
-    runs-on: ${{ fromJSON(needs.runner.outputs.runs-on) }}
-    # About ten minutes on a warm self-hosted cache, longer cold on GitHub's; the
-    # default of six hours is what a hang costs.
+      why: ${{ steps.measure.outputs.why }}
+    runs-on: ubuntu-latest
+    # About twenty minutes cold; the default of six hours is what a hang costs.
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -55,12 +40,10 @@ jobs:
           persist-credentials: false
 
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-        if: runner.environment == 'github-hosted'
 
       # buildx drops a gha cache silently unless the cache service's address and
       # token are in the environment, and only an action's process is given them.
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        if: runner.environment == 'github-hosted'
         with:
           script: |
             for (const name of ['ACTIONS_CACHE_URL', 'ACTIONS_CACHE_SERVICE_V2', 'ACTIONS_RESULTS_URL', 'ACTIONS_RUNTIME_TOKEN'])
@@ -69,16 +52,8 @@ jobs:
       # Measures into coverage/ and writes the table into the run summary.
       # coverage.sh is the whole of it, and runs the same on a developer's machine.
       - name: Measure
-        id: linux
-        if: runner.os != 'Windows'
+        id: measure
         run: bash scripts/coverage.sh
-
-      # A bare `bash` on the Windows runner is WSL's, which cannot read the
-      # runner's script paths; Git's is the one wanted.
-      - name: Measure (Windows)
-        id: windows
-        if: runner.os == 'Windows'
-        run: '& "C:/Program Files/Git/bin/bash.exe" scripts/coverage.sh'
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

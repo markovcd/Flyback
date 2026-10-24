@@ -1,6 +1,6 @@
 # The whole gate on GitHub's machines, by hand: the Linux gate, the native tests
 # on Windows and macOS (native-tests.yml), and the Android editor on an emulator,
-# with the Play listing's screenshots when asked (ADR-0195). The emulator also runs
+# with the Play listing's screenshots when asked. The emulator also runs
 # daily on main, which is all the schedule starts, and a failure opens an issue
 # (ADR-0212).
 #

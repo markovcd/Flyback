@@ -1,7 +1,7 @@
 # Sourced by the scripts that build the Dockerfile, from the repo root. Sets
 # `builder` and `cache` for `docker buildx build`.
 #
-# A self-hosted machine (and a developer's) builds on one named builder whose
+# A developer's machine builds on one named builder whose
 # layer cache is capped (buildkitd.toml), so disk use is bounded and every build
 # warms the next. GitHub's own runners keep nothing between jobs, so there the
 # builder is the one setup-buildx-action made, and it reads the base and tools

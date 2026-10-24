@@ -1,6 +1,6 @@
 # ADR-0195: CI runs on GitHub's runners on every OS; the self-hosted ones are by hand
 
-**Status:** Accepted · 2026-10-12 · *user-directed*
+**Status:** Superseded by [0212](0212-macos-runs-on-every-push-the-device-and-measuring-runs-daily.md) · 2026-10-12 · *user-directed*
 
 ## Context
 

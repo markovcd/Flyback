@@ -2,7 +2,7 @@
 
 What runs on GitHub Actions, by the name each workflow has in the Actions tab and the
 file it is in. The rules it keeps are in [pipeline.md](../agents/rules/pipeline.md);
-why it runs where it does is ADR-0195. `PipelineDiagramTests` fails when a workflow is
+why it runs where it does is ADR-0212. `PipelineDiagramTests` fails when a workflow is
 added, renamed or removed and this page does not say so.
 
 ```mermaid
@@ -12,9 +12,9 @@ flowchart TB
     daily(["Daily on main"]) --> c_android
 
     subgraph build["Build · ci.yml"]
-        b_pick["runner / pick<br/>Runner · runner.yml"] --> b_gate["build<br/>Docker gate on ubuntu-latest"]
+        b_gate["build<br/>Docker gate on ubuntu-latest"]
         b_win["native / test (windows)<br/>Native tests · native-tests.yml"]
-        b_mac["native / test (macos)<br/>the self-hosted Mac when online, else GitHub's"]
+        b_mac["native / test (macos)"]
     end
 
     subgraph cloud["Cloud gate · cloud-gate.yml"]
@@ -31,7 +31,7 @@ flowchart TB
     b_mac -- "green on the commit" --> release
 
     subgraph release["Release · release.yml"]
-        r_pick["runner<br/>started by /release"] --> r_release["release<br/>release.sh"] --> r_publish["publish<br/>tags and publishes"] --> r_install["install"]
+        r_release["release<br/>release.sh, started by /release"] --> r_publish["publish<br/>tags and publishes"] --> r_install["install"]
         r_android["android<br/>the signed arm64 APK"] --> r_publish
         r_publish --> r_store["store<br/>Store package · store.yml<br/>packs, installs and attaches the MSIX"]
     end
@@ -58,9 +58,6 @@ flowchart TB
     build -- "green on a Dependabot branch" --> d_merge
 ```
 
-Build, Coverage and Release each have a `self-hosted` box under Run workflow. Ticked
-on `main`, `runner.yml` puts the Docker gate on the Linux self-hosted runner if it is
-online, else the Windows one, else GitHub's. Nothing a push or a pull request starts
-runs on a self-hosted machine.
+Every job runs on GitHub's standard runners; nothing runs on a self-hosted machine.
 
 Every push runs macOS; the Android emulator and the iOS simulator run daily (ADR-0212).

@@ -10,9 +10,7 @@
 # not built. The run is named for the built commit, which is how /release finds
 # it: a workflow_run run belongs to the branch's tip, not the commit it built.
 #
-# It runs on GitHub's machines for every ref, `main` included: the self-hosted
-# runner builds in Docker, and a workload install would leave state on it. It
-# builds only: an emulator run is slow and flaky, so scripts/android-smoke.sh runs
+# It builds only: an emulator run is slow and flaky, so scripts/android-smoke.sh runs
 # in the Cloud gate daily and before a release, not on every push (ADR-0212).
 #
 # Every action is pinned to a commit rather than a tag; Dependabot says when a
