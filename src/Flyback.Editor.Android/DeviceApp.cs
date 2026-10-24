@@ -1,18 +1,10 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using Flyback.Editor.Gallery;
-using Flyback.Editor.Shell;
-using Flyback.Plugins.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Android;
 
-/// <summary>
-/// The editor on a device (ADR-0184): the linked plugins that make modules, and what it
-/// keeps in the app's private folder.
-/// </summary>
+/// <summary>The editor in the Android app (ADR-0184), in the app's private folder.</summary>
 public sealed class DeviceApp : Avalonia.Application
 {
     public override void Initialize() => EditorTheme.Apply(this);
@@ -26,53 +18,14 @@ public sealed class DeviceApp : Avalonia.Application
         var host = new Decorator();
         host.AttachedToVisualTree += (_, _) =>
         {
-            if (host.Child is null) host.Child = Editor();
+            if (host.Child is not null) return;
+
+            var request = DeviceRequest.Current;
+            host.Child = DeviceEditor.Build(typeof(DeviceApp).Assembly, DeviceFolders.Private(), request.Preset, request.Interpreted, provider => DeviceState.Provider = provider);
         };
 
         device.MainView = host;
 
         base.OnFrameworkInitializationCompleted();
-    }
-
-    private static EditorView Editor()
-    {
-        var request = DeviceRequest.Current;
-        var plugins = PluginHost.LoadLinked(typeof(DeviceApp).Assembly).Install();
-
-        var provider = EditorServices.Provider(new EditorSetup
-        {
-            Plugins = plugins,
-            Folders = DeviceFolders.Private(),
-            Host = new() { PresetSite = Site.PresetSite.Built },
-            Launch = new() { Interpreted = request.Interpreted },
-        }, services =>
-        {
-            services.AddSingleton<ITitle, DeviceTitle>();
-            services.AddSingleton<IFocus, DeviceFocus>();
-            services.AddSingleton<IClose, DeviceClose>();
-        });
-
-        // Every press on a device is a finger's, its keys the on-screen keyboard's.
-        provider.GetRequiredService<LastPress>().OnlyFingers();
-        DeviceState.Provider = provider;
-
-        var view = provider.View();
-        var opened = false;
-
-        view.AttachedToVisualTree += async (_, _) =>
-        {
-            if (opened || TopLevel.GetTopLevel(view) is not { } top) return;
-
-            opened = true;
-            view.Hold(top);
-            view.Start();
-
-            await view.OpenedAsync();
-
-            if (request.Preset is { } preset)
-                provider.GetRequiredService<PresetSlot>().StartOn(preset);
-        };
-
-        return view;
     }
 }

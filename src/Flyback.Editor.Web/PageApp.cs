@@ -57,19 +57,7 @@ internal sealed class PageApp : Application
         });
 
         var view = provider.View();
-        var opened = false;
-
-        // The page is a top level only once the view is in it.
-        view.AttachedToVisualTree += async (_, e) =>
-        {
-            if (opened || TopLevel.GetTopLevel(view) is not { } top) return;
-
-            opened = true;
-            view.Hold(top);
-            view.Start();
-
-            await view.OpenedAsync();
-        };
+        view.StartWhenShown();
 
         page.MainView = view;
         PageExports.Provider = provider;

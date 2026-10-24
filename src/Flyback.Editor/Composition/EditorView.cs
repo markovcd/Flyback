@@ -128,6 +128,28 @@ internal sealed class EditorView : Border
     public Task OpenedAsync() => starting.RunAsync(StartPhase.Opened);
 
     /// <summary>
+    /// Holds, starts and opens the editor the first time it is in a top level, which a
+    /// page or a device's single view becomes only once the view is in it; then <paramref name="opened"/>.
+    /// </summary>
+    public void StartWhenShown(Action? opened = null)
+    {
+        var shown = false;
+
+        AttachedToVisualTree += async (_, _) =>
+        {
+            if (shown || TopLevel.GetTopLevel(this) is not { } top) return;
+
+            shown = true;
+            Hold(top);
+            Start();
+
+            await OpenedAsync();
+
+            opened?.Invoke();
+        };
+    }
+
+    /// <summary>
     /// Takes the selection off the preset list, for a document that arrived by some
     /// other route — a patch, a bundle, or a source file.
     /// </summary>
