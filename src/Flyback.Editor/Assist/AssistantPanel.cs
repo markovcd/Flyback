@@ -2,9 +2,6 @@ using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
-using Avalonia.Controls.Shapes;
-using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
@@ -35,22 +32,13 @@ namespace Flyback.Editor.Assist;
 /// <see cref="AssistantRun"/>'s copy.
 /// </remarks>
 [SuppressMessage("Design", "CA1001", Justification = "The session ends with its conversation, in SetAside.")]
-internal sealed partial class AssistantPanel : UserControl
+internal sealed class AssistantPanel : UserControl
 {
-    private static readonly IBrush Amber = new ImmutableSolidColorBrush(Colors.Attention);
-
     /// <summary>The middle of <see cref="LogoMark"/>'s sweep, borrowed for the one thing here that is alive.</summary>
     private static readonly IBrush Live = new ImmutableSolidColorBrush(Colors.Feedback);
 
-    private static readonly IBrush LiveInk = new ImmutableSolidColorBrush(Colors.Blend(Colors.Feedback, Avalonia.Media.Colors.White, 0.3));
-    private static readonly IBrush LiveGround = new ImmutableSolidColorBrush(Colors.Faded(Colors.Feedback, 0.13));
-    private static readonly IBrush Idle = new ImmutableSolidColorBrush(Colors.Node);
-    private static readonly IBrush Ink = new ImmutableSolidColorBrush(Colors.Label);
     private static readonly IBrush Chrome = new ImmutableSolidColorBrush(Colors.Panel);
     private static readonly IBrush Rule = new ImmutableSolidColorBrush(Colors.Edge);
-
-    /// <summary>The class the message box and the send button are styled by; see <see cref="Dress"/>.</summary>
-    private const string Composing = "composing";
 
     private readonly PluginCatalog plugins;
     private readonly ChosenAssistant chosenAssistant;
@@ -65,29 +53,9 @@ internal sealed partial class AssistantPanel : UserControl
 
     private readonly AssistantSettingRepository settingsRepository;
 
-    private readonly TextBox instruction = new()
-    {
-        AcceptsReturn = true,
-        TextWrapping = TextWrapping.Wrap,
-        PlaceholderText = "Describe the patch you want",
-        Name = "instruction",
-        FontSize = Text.Body,
-        MinHeight = 40,
-        MaxHeight = 240,
-        Padding = new Thickness(0, 2),
-        Classes = { Composing },
-    };
+    private readonly AssistantComposer composer = new();
 
     private readonly TranscriptView transcript = new();
-
-    private readonly TextBlock footer = new()
-    {
-        FontSize = Text.Small,
-        Foreground = Text.Muted,
-        TextWrapping = TextWrapping.Wrap,
-        Margin = new Thickness(2, 0, 2, 8),
-        Name = "footer",
-    };
 
     /// <summary>How full the context is and what this conversation has cost, under the header.</summary>
     private readonly ContextStrip spent = new();
@@ -102,67 +70,12 @@ internal sealed partial class AssistantPanel : UserControl
         TextTrimming = TextTrimming.CharacterEllipsis,
     };
 
-    /// <summary>
-    /// Proof that something is still happening.
-    /// </summary>
-    /// <remarks>
-    /// A turn is minutes and most of it is spent waiting on a provider with
-    /// nothing to show, so without this the panel cannot be told from one that has
-    /// died. A beacon that moves says it in a way a label could not, since a label
-    /// can as easily be stale.
-    /// </remarks>
-    private readonly Ellipse beacon = new()
-    {
-        Width = 7,
-        Height = 7,
-        Fill = Live,
-        VerticalAlignment = VerticalAlignment.Center,
-    };
-
-    private readonly TextBlock progress = new()
-    {
-        Name = "progress",
-        FontSize = Text.Small,
-        FontWeight = FontWeight.Medium,
-        VerticalAlignment = VerticalAlignment.Center,
-    };
-
-    /// <summary>The pill in the header holding the beacon: working, ready, or not set up.</summary>
-    private readonly Border status = new()
-    {
-        Name = "status",
-        CornerRadius = new CornerRadius(99),
-        Padding = new Thickness(9, 4),
-        VerticalAlignment = VerticalAlignment.Center,
-    };
+    private readonly AssistantStatus status = new();
 
     private readonly DispatcherTimer heartbeat = new() { Interval = TimeSpan.FromMilliseconds(200) };
 
-    /// <summary>What the one button shows in each of its two jobs.</summary>
     /// <summary>The Assistant page of the settings window, whose form says whether a message can be sent at all.</summary>
     private readonly AssistantSettingsPage settings;
-
-    private readonly Control sendMark = Glyphs.Send();
-
-    private readonly Control stopMark = Glyphs.Stop();
-
-    /// <summary>
-    /// Send and stop, which are one button because they are never both offered: a
-    /// turn is either wanted or under way, and the way to interrupt a run belongs
-    /// where the hand that started it last was.
-    /// </summary>
-    private readonly Button send = new()
-    {
-        Name = "send",
-        Width = 34,
-        Height = 34,
-        Padding = new Thickness(0),
-        CornerRadius = new CornerRadius(8),
-        HorizontalContentAlignment = HorizontalAlignment.Center,
-        VerticalContentAlignment = VerticalAlignment.Center,
-        IsEnabled = false,
-        Classes = { Composing },
-    };
 
     /// <summary>
     /// Sets the conversation aside for an empty one about the same patch.
@@ -184,22 +97,6 @@ internal sealed partial class AssistantPanel : UserControl
         VerticalAlignment = VerticalAlignment.Center,
         IsEnabled = false,
         Name = "fresh",
-    };
-
-    /// <summary>
-    /// Has the assistant write the box out in full, in the box: as a change to the
-    /// patch on the canvas, or as a new patch's brief when the canvas is empty.
-    /// </summary>
-    private readonly Button expand = new()
-    {
-        Content = "Expand",
-        FontSize = Text.Small,
-        Foreground = Text.Muted,
-        Background = Brushes.Transparent,
-        Padding = new Thickness(8, 4),
-        VerticalAlignment = VerticalAlignment.Center,
-        IsEnabled = false,
-        Name = "expand-message",
     };
 
     /// <summary>
@@ -249,8 +146,12 @@ internal sealed partial class AssistantPanel : UserControl
     /// answer comes from the credential store.
     /// </summary>
     private string? blocked;
-    private DateTime startedAt;
-    private int pulse;
+
+    /// <summary>The program driving the editor (ADR-0202), or null.</summary>
+    private string? driver;
+
+    /// <summary>Whether the last thing the driving program did was say something, so the next thing it says starts a paragraph.</summary>
+    private bool lastSaid;
 
     /// <param name="folders">Its <see cref="EditorFolders.ConversationLogFolder"/> is where conversations are logged; none keeps no log.</param>
     public AssistantPanel(
@@ -415,14 +316,14 @@ internal sealed partial class AssistantPanel : UserControl
     /// <summary>Writes what is in the box out in full, over the patch on the canvas, for the person to edit before sending.</summary>
     private async Task ExpandMessageAsync()
     {
-        var typed = instruction.Text ?? string.Empty;
+        var typed = composer.Message;
 
         if (asking || string.IsNullOrWhiteSpace(typed)) return;
 
         using var stop = new CancellationTokenSource();
 
         expanding = stop;
-        instruction.IsReadOnly = true;
+        composer.Locked = true;
         StartWorking();
         ShowSendState();
 
@@ -440,15 +341,14 @@ internal sealed partial class AssistantPanel : UserControl
         finally
         {
             expanding = null;
-            instruction.IsReadOnly = false;
+            composer.Locked = false;
             StopWorking();
             ShowSendState();
         }
 
         if (answer.Brief is { } brief)
         {
-            instruction.Text = brief;
-            instruction.CaretIndex = brief.Length;
+            composer.Put(brief);
         }
         else
         {
@@ -504,7 +404,7 @@ internal sealed partial class AssistantPanel : UserControl
     {
         await turn;
 
-        instruction.Text = text;
+        composer.Message = text;
         turn = AskAsync();
     }
 
@@ -512,13 +412,9 @@ internal sealed partial class AssistantPanel : UserControl
 
     private Control Build()
     {
-        // Tunnelling, and both halves of the gesture answered here: the box would
-        // otherwise take Enter for itself on the way back up, and what it does
-        // with a modifier held is its business rather than something to bet the
-        // one way of sending a message on.
-        instruction.AddHandler(KeyDownEvent, Typed, RoutingStrategies.Tunnel);
+        composer.Asked += () => turn = AskAsync();
 
-        send.Click += (_, _) =>
+        composer.Pressed += () =>
         {
             if (!asking)
             {
@@ -543,15 +439,12 @@ internal sealed partial class AssistantPanel : UserControl
         // Whether there is anything to send changes on every keystroke, and
         // asking the whole of Refresh that often would go to the credential
         // store for an answer it already has.
-        instruction.PropertyChanged += (_, e) =>
-        {
-            if (e.Property == TextBox.TextProperty) ShowSendState();
-        };
+        composer.Edited += ShowSendState;
+        composer.Expanding += async () => await ExpandMessageAsync();
 
         heartbeat.Tick += (_, _) => Beat();
 
         fresh.Click += (_, _) => StartOver();
-        expand.Click += async (_, _) => await ExpandMessageAsync();
 
         Dress();
 
@@ -562,7 +455,7 @@ internal sealed partial class AssistantPanel : UserControl
         top.Children.Add(spent);
 
         var head = new Border { Child = top, Background = Chrome, BorderBrush = Rule, BorderThickness = new Thickness(0, 0, 0, 1) };
-        var bottom = composing = Composer();
+        var bottom = composer.View;
 
         DockPanel.SetDock(head, Dock.Top);
         DockPanel.SetDock(bottom, Dock.Bottom);
@@ -600,11 +493,6 @@ internal sealed partial class AssistantPanel : UserControl
         name.Children.Add(new TextBlock { Text = "Assistant", FontSize = Text.Emphasis, FontWeight = FontWeight.SemiBold, Foreground = Brushes.White });
         name.Children.Add(model);
 
-        var pill = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
-        pill.Children.Add(beacon);
-        pill.Children.Add(progress);
-        status.Child = pill;
-
         var header = new Grid
         {
             ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"),
@@ -614,101 +502,23 @@ internal sealed partial class AssistantPanel : UserControl
 
         header.Children.Add(mark);
         header.Children.Add(name);
-        header.Children.Add(status);
+        header.Children.Add(status.View);
         header.Children.Add(fresh);
         Grid.SetColumn(name, 1);
-        Grid.SetColumn(status, 2);
+        Grid.SetColumn(status.View, 2);
         Grid.SetColumn(fresh, 3);
 
         return header;
     }
 
-    /// <summary>
-    /// The box a message is written in, with the keys that send it, Expand and the
-    /// send button along its foot, and above it whatever is stopping a send.
-    /// </summary>
-    private Control Composer()
-    {
-        var keys = Text.Quiet("Enter to ask · Ctrl+Enter for a new line", Text.Caption);
-        keys.VerticalAlignment = VerticalAlignment.Center;
-        keys.TextTrimming = TextTrimming.CharacterEllipsis;
-
-        var foot = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 6 };
-        foot.Children.Add(keys);
-        foot.Children.Add(expand);
-        foot.Children.Add(send);
-        Grid.SetColumn(expand, 1);
-        Grid.SetColumn(send, 2);
-
-        var writing = new StackPanel { Spacing = 4 };
-        writing.Children.Add(instruction);
-        writing.Children.Add(foot);
-
-        var field = new Border
-        {
-            Name = "composer",
-            Background = new SolidColorBrush(Colors.Toolbar),
-            BorderBrush = new SolidColorBrush(Colors.Separator),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(10),
-            Padding = new Thickness(12, 8, 6, 6),
-            Child = writing,
-        };
-
-        // A click anywhere in the field is a click in the box.
-        field.PointerPressed += (_, _) => instruction.Focus();
-
-        var column = new StackPanel { Margin = new Thickness(10, 10, 10, 10) };
-        column.Children.Add(footer);
-        column.Children.Add(field);
-
-        return new Border
-        {
-            Background = Chrome,
-            BorderBrush = Rule,
-            BorderThickness = new Thickness(0, 1, 0, 0),
-            Child = column,
-        };
-    }
-
-    /// <summary>
-    /// Undresses the message box, which sits in a field of its own, and fills the
-    /// send button. The theme sets both inside their templates, which only a style
-    /// reaching the same part can override.
-    /// </summary>
+    /// <summary>The quiet buttons stay quiet when they cannot be pressed: the glyph dims, no gray box.</summary>
     private void Dress()
     {
-        var box = new Style(x => x.OfType<TextBox>().Class(Composing).Template().OfType<Border>().Name("PART_BorderElement"));
-        box.Setters.Add(new Setter(Border.BackgroundProperty, Brushes.Transparent));
-        box.Setters.Add(new Setter(Border.BorderThicknessProperty, new Thickness(0)));
-        Styles.Add(box);
-
-        // The quiet buttons stay quiet when they cannot be pressed: the glyph dims, no gray box.
-        var off = new Style(x => x.OfType<Button>().Not(y => y.Class(Composing)).Class(":disabled")
+        var off = new Style(x => x.OfType<Button>().Not(y => y.Class(AssistantComposer.Composing)).Class(":disabled")
             .Template().OfType<ContentPresenter>().Name("PART_ContentPresenter"));
         off.Setters.Add(new Setter(ContentPresenter.BackgroundProperty, Brushes.Transparent));
         off.Setters.Add(new Setter(ContentPresenter.ForegroundProperty, new ImmutableSolidColorBrush(Colors.Inactive)));
         Styles.Add(off);
-
-        foreach (var (state, ground, ink) in new[]
-                 {
-                     (null, Colors.Label, Colors.Window),
-                     (":pointerover", Colors.BeamCore, Colors.Window),
-                     (":pressed", Colors.Value, Colors.Window),
-                     (":disabled", Colors.Node, Colors.Inactive),
-                 })
-        {
-            var style = new Style(x =>
-            {
-                var button = x.OfType<Button>().Class(Composing);
-                if (state is not null) button = button.Class(state);
-                return button.Template().OfType<ContentPresenter>().Name("PART_ContentPresenter");
-            });
-
-            style.Setters.Add(new Setter(ContentPresenter.BackgroundProperty, new ImmutableSolidColorBrush(ground)));
-            style.Setters.Add(new Setter(ContentPresenter.ForegroundProperty, new ImmutableSolidColorBrush(ink)));
-            Styles.Add(style);
-        }
     }
 
     /// <summary>This panel's page of the settings window, lent to the window that is opening.</summary>
@@ -769,35 +579,6 @@ internal sealed partial class AssistantPanel : UserControl
         : settingsRepository.GetProsePolicy().Undescribed(plugins.Modules);
 
     /// <summary>
-    /// Enter asks; Ctrl+Enter — and Shift+Enter, which every other message box
-    /// accepts — breaks the line. The break is put in by hand, because whether a
-    /// <see cref="TextBox"/> types a newline for a gesture with a modifier held is
-    /// Avalonia's own business.
-    /// </summary>
-    private void Typed(object? sender, KeyEventArgs e)
-    {
-        if (e.Key != Key.Enter) return;
-
-        e.Handled = true;
-
-        var breaking = e.KeyModifiers.HasFlag(KeyModifiers.Control)
-            || e.KeyModifiers.HasFlag(KeyModifiers.Shift);
-
-        if (!breaking)
-        {
-            turn = AskAsync();
-            return;
-        }
-
-        var text = instruction.Text ?? string.Empty;
-        var from = Math.Clamp(Math.Min(instruction.SelectionStart, instruction.SelectionEnd), 0, text.Length);
-        var to = Math.Clamp(Math.Max(instruction.SelectionStart, instruction.SelectionEnd), from, text.Length);
-
-        instruction.Text = string.Concat(text.AsSpan(0, from), "\n", text.AsSpan(to));
-        instruction.CaretIndex = from + 1;
-    }
-
-    /// <summary>
     /// Reworks what the buttons and the footer say. The footer speaks only when
     /// there is an excuse to give — no plugin, no key, or whatever else is
     /// blocking a send — and stays out of the way otherwise.
@@ -814,22 +595,13 @@ internal sealed partial class AssistantPanel : UserControl
         blocked = excuse;
         ShowSendState();
 
-        // On the box, since the box is what sending is done from now. The footer
-        // says the same thing in amber a few pixels below, so nothing is lost to
-        // anybody who never hovers.
-        ToolTip.SetTip(instruction, excuse);
+        // On the box, since the box is what sending is done from now, and in amber
+        // a few pixels below it, so nothing is lost to anybody who never hovers.
+        // The standing disclosure of what gets sent and where the key came from
+        // lives in the status bar; this speaks up only for something actionable.
+        composer.Excuse(excuse);
         settings.ShowState();
 
-        // The standing disclosure of what gets sent and where the key came from
-        // lives in the status bar; the footer here only ever speaks up for
-        // something actionable, so it disappears once there is nothing to excuse.
-        footer.IsVisible = excuse is not null;
-
-        if (excuse is not null)
-        {
-            footer.Text = excuse;
-            footer.Foreground = Amber;
-        }
         ShowSpent();
     }
 
@@ -850,31 +622,17 @@ internal sealed partial class AssistantPanel : UserControl
     }
 
     /// <summary>
-    /// The one button, in whichever of its two jobs applies. Reads and does not
-    /// ask, because it runs on every keystroke. Dead until there is something to
-    /// send, which says what the panel knew and never showed: an empty box or a
-    /// missing key is why Enter appeared to do nothing.
+    /// The send button, Expand and New conversation as things stand. Reads and does
+    /// not ask, because it runs on every keystroke.
     /// </summary>
     private void ShowSendState()
     {
-        send.Content = asking ? stopMark : sendMark;
-
-        send.IsEnabled = asking
-            || (blocked is null && !string.IsNullOrWhiteSpace(instruction.Text));
-
-        expand.IsEnabled = !asking && blocked is null && !string.IsNullOrWhiteSpace(instruction.Text);
-
-        ToolTip.SetTip(expand, "Have the assistant write this out in full, here, for you to edit before sending: "
-            + "as a change to the patch on the canvas, or as a new patch's brief when the canvas is empty.");
+        composer.Show(asking, blocked);
 
         fresh.IsEnabled = !asking && (transcript.Lines.Count > 0 || session.Run is not null || conversation.Waiting is not null);
 
         ToolTip.SetTip(fresh, "Start a new conversation about this patch. The one set aside stays saved "
             + "with the patch until the patch is saved again.");
-
-        ToolTip.SetTip(send, asking
-            ? "Stop — it ends at the next thing the assistant does"
-            : blocked ?? "Ask  (Enter)");
 
         ShowStatus();
     }
@@ -884,18 +642,47 @@ internal sealed partial class AssistantPanel : UserControl
     {
         if (asking) return;
 
-        if (driver is not null)
-        {
-            ShowDriven();
-            return;
-        }
+        if (driver is { } program) status.Driven(program);
+        else status.Ready(blocked);
+    }
 
-        beacon.Opacity = 1;
-        beacon.Fill = blocked is null ? Text.Muted : Amber;
-        progress.Text = blocked is null ? "Ready" : "Not set up";
-        progress.Foreground = Ink;
-        status.Background = Idle;
-        ToolTip.SetTip(status, blocked);
+    // --- a program driving the editor ---------------------------------------
+
+    private void Follow(DrivenEditor driven)
+    {
+        driven.Held = () => asking ? "the assistant in Flyback's own column is in the middle of a turn; call again once it finishes." : null;
+        driven.Driving += Driven;
+        driven.Happened += Shown;
+        driven.Released += Undriven;
+    }
+
+    /// <summary>Its calls show as steps and what it says as the reply, with no box to type in.</summary>
+    private void Driven(string program)
+    {
+        driver = program;
+        lastSaid = false;
+        composer.View.IsVisible = false;
+        transcript.Put(Voice.Note, $"{program} is driving the editor. Its calls show here, and each edit undoes on the canvas.");
+        ShowSendState();
+        ShowSpent();
+    }
+
+    private void Shown(PatchEvent happened)
+    {
+        if (happened is PatchEvent.Said said && lastSaid) happened = new PatchEvent.Said("\n\n" + said.Text);
+
+        lastSaid = happened is PatchEvent.Said;
+        transcript.Put(Spoken.Of(happened));
+        ShowSendState();
+    }
+
+    private void Undriven(string program)
+    {
+        driver = null;
+        composer.View.IsVisible = true;
+        transcript.Put(Voice.Note, $"{program} stopped driving the editor.");
+        ShowSendState();
+        ShowSpent();
     }
 
     // --- showing that it is working -----------------------------------------
@@ -908,24 +695,13 @@ internal sealed partial class AssistantPanel : UserControl
     {
         if (!asking) return;
 
-        // A cosine rather than a blink: something that fades is obviously alive
-        // and does not compete with the transcript for attention, which a thing
-        // switching on and off twice a second would.
-        pulse++;
-        beacon.Opacity = 0.25d + 0.75d * ((Math.Cos(pulse * Math.PI / 5d) + 1d) / 2d);
-
-        var elapsed = DateTime.UtcNow - startedAt;
         var bench = session.Run?.Workbench;
 
         var done = bench is null || bench.ToolCalls == 0
             ? string.Empty
             : $" · {TranscriptView.Tally(bench.ToolCalls, "tool call")}, {TranscriptView.Tally(bench.Edits, "edit")}";
 
-        progress.Text = $"{(stopping ? "Stopping" : "Working")} · {Spell(elapsed)}";
-
-        ToolTip.SetTip(status, stopping
-            ? $"Stopping — it ends at the next thing the assistant does · {Spell(elapsed)}"
-            : $"Working · {Spell(elapsed)}{done}");
+        var pulse = status.Beat(stopping, done);
 
         // Every third tick, so the dots are read as a rhythm rather than as a
         // flicker. Three of them, then none again.
@@ -937,12 +713,7 @@ internal sealed partial class AssistantPanel : UserControl
         asking = true;
         conversation.Working = true;
         stopping = false;
-        startedAt = DateTime.UtcNow;
-        pulse = 0;
-
-        beacon.Fill = Live;
-        progress.Foreground = LiveInk;
-        status.Background = LiveGround;
+        status.Start();
         transcript.Thinking.IsVisible = true;
         heartbeat.Start();
         Beat();
@@ -958,10 +729,6 @@ internal sealed partial class AssistantPanel : UserControl
         transcript.Thinking.IsVisible = false;
         ShowStatus();
     }
-
-    private static string Spell(TimeSpan elapsed) => elapsed.TotalSeconds < 60d
-        ? $"{elapsed.TotalSeconds:0}s"
-        : $"{(int)elapsed.TotalMinutes}m {elapsed.Seconds:00}s";
 
     // --- asking -------------------------------------------------------------
 
@@ -1049,7 +816,7 @@ internal sealed partial class AssistantPanel : UserControl
         if (asking || chosenAssistant.Value is null) return;
         if (settings.Configured() is not { } config || AssistantRun.Unready(chosenAssistant.Value, config) is not null) return;
 
-        var wanted = instruction.Text ?? string.Empty;
+        var wanted = composer.Message;
         if (string.IsNullOrWhiteSpace(wanted)) return;
 
         var conversation = Conversation(chosenAssistant.Value, config);
@@ -1061,7 +828,7 @@ internal sealed partial class AssistantPanel : UserControl
 
         usage.Assistant(chosenAssistant.Value.Id);
 
-        instruction.Text = string.Empty;
+        composer.Message = string.Empty;
 
         StartWorking();
         Refresh();
