@@ -40,6 +40,8 @@ flowchart TB
         members["Test-only members · test-only-members.yml<br/>Tuesdays"]
         validate["Validate · validate.yml<br/>the preset site, every ten minutes"]
     end
+    coverage -- "failed" --> tell["Tell · tell.yml<br/>opens or comments on an issue"]
+    members -- "failed" --> tell
 
     pages["Pages · pages.yml<br/>the redirect stub, when deploy/pages changes"]
     hand --> ios["iOS · ios.yml<br/>builds the iOS editor and plays it in the simulator"]

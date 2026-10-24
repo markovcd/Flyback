@@ -73,27 +73,13 @@ jobs:
           path: test-only-members.tsv
           retention-days: 30
 
-  # On GitHub's runner, and the only job that may write issues.
+  # The only job that may write issues.
   tell:
     needs: list
     if: failure() && github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
     permissions:
       issues: write
-    steps:
-      - name: Open or comment on the issue
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          title="A member only tests call is not in the baseline"
-          body="$(printf 'The weekly test-only members run found a member of src/ that only tests call and the baseline does not list.\n\nCommit %s, run %s.' "$GITHUB_SHA" "$RUN")"
-          open="$(gh issue list --state open --search "in:title \"$title\"" --json number,title \
-            --jq "map(select(.title == \"$title\"))[0].number // empty")"
-          if [ -n "$open" ]; then
-            gh issue comment "$open" --body "$body"
-          else
-            gh issue create --title "$title" --body "$body"
-          fi
+    uses: ./.github/workflows/tell.yml
+    with:
+      title: A member only tests call is not in the baseline
+      why: The weekly test-only members run found a member of src/ that only tests call and the baseline does not list.
