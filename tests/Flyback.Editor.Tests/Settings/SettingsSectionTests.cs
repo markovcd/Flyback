@@ -84,6 +84,30 @@ public sealed class SettingsSectionTests : EditorTest
         CloseSettings(next, again, "cancel");
     }
 
+    /// <summary>
+    /// In the shortest window a section longer than its tab scrolls with the tab's own
+    /// bar, and no bar beside it.
+    /// </summary>
+    [AvaloniaTheory]
+    [MemberData(nameof(Tabs))]
+    public void The_shortest_window_scrolls_every_tab_with_one_bar(string tab)
+    {
+        var window = Open();
+
+        window.Height = 360;
+        Settle(window);
+
+        var dialog = OpenSettings(window, tab);
+
+        var scrolling = All<ScrollViewer>(dialog)
+            .Where(s => s.IsEffectivelyVisible && s.Extent.Height > s.Viewport.Height + 1)
+            .ToList();
+
+        scrolling.Count.ShouldBeLessThanOrEqualTo(1, tab);
+
+        CloseSettings(window, dialog, "cancel");
+    }
+
     private MainWindow Open(string? path = null)
     {
         var window = NewMainWindow(new EditorSetup { Folders = new() { SettingsPath = path } });

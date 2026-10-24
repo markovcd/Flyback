@@ -32,6 +32,7 @@
 ### Fixes
 
 - Vigil's and No Sense Dub's descriptions are no longer cut off.
+- The Settings window scrolls a long tab with one scroll bar instead of two.
 
 ## 0.10.1 — 2026-10-21
 

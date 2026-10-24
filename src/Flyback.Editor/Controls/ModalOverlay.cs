@@ -243,7 +243,8 @@ internal sealed class ModalOverlay : Border
             inside.Children.Add(scroller);
         }
 
-        scroller.VerticalScrollBarVisibility = wide ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto;
+        if (content is not DialogBody { Fits: true })
+            scroller.VerticalScrollBarVisibility = wide ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto;
 
         parts = header is null ? [bar, .. shown] : [bar, header, .. shown];
 

@@ -112,11 +112,12 @@ public class DialogTests : EditorTest
     }
 
     /// <summary>
-    /// A window too short for the settings scrolls the tabs and keeps Save and Cancel
-    /// in view below them, so the dialog can always be answered.
+    /// The shortest window still has room for the list of settings tabs and Save and
+    /// Cancel under it, so the dialog itself never scrolls; a long section scrolls
+    /// inside its own tab instead.
     /// </summary>
     [AvaloniaFact]
-    public void A_short_window_scrolls_the_settings_and_keeps_their_buttons_in_view()
+    public void The_shortest_window_shows_the_settings_tabs_and_their_buttons_without_scrolling()
     {
         var window = Open();
 
@@ -126,21 +127,15 @@ public class DialogTests : EditorTest
         var dialog = Show(window, "settings");
         var scroller = All<ScrollViewer>(All<Border>(dialog).Single(b => b.Name == "dialog")).First();
 
-        scroller.Extent.Height.ShouldBeGreaterThan(scroller.Viewport.Height, "the window should be too short for the tabs");
+        scroller.Extent.Height.ShouldBeLessThanOrEqualTo(scroller.Viewport.Height, "the dialog should not need a bar of its own");
 
-        foreach (var end in new[] { 0, scroller.Extent.Height })
+        foreach (var name in new[] { "save", "cancel" })
         {
-            scroller.Offset = new Vector(0, end);
-            Settle(window);
+            var button = All<Button>(dialog).Single(b => b.Name == name);
+            var top = button.TranslatePoint(default, window)!.Value.Y;
 
-            foreach (var name in new[] { "save", "cancel" })
-            {
-                var button = All<Button>(dialog).Single(b => b.Name == name);
-                var top = button.TranslatePoint(default, window)!.Value.Y;
-
-                top.ShouldBeGreaterThanOrEqualTo(0, $"{name}, scrolled to {end}");
-                (top + button.Bounds.Height).ShouldBeLessThanOrEqualTo(window.Bounds.Height, $"{name}, scrolled to {end}");
-            }
+            top.ShouldBeGreaterThanOrEqualTo(0, name);
+            (top + button.Bounds.Height).ShouldBeLessThanOrEqualTo(window.Bounds.Height, name);
         }
     }
 

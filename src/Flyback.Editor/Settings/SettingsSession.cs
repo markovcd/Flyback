@@ -60,12 +60,19 @@ internal sealed class SettingsSession(
     /// <summary>
     /// The tabs' size, list and section together: wide enough for the list beside
     /// a section with room for its scroll bar, and tall enough for every tab in one
-    /// column and an assistant's usual form without a scroll bar.
+    /// column and an assistant's usual form without a scroll bar. A window too short
+    /// for that height gets the tabs as tall as it has room for, down to the list's.
     /// </summary>
     private const double Width = SectionWidth + 200;
 
     /// <inheritdoc cref="Width"/>
     private const double Height = 460;
+
+    /// <summary>How tall one tab's row in the list is.</summary>
+    private const double TabHeight = 40;
+
+    /// <summary>The room above the list's first row.</summary>
+    private const double ListTop = 6;
 
     private Control Content(Action<bool> answer)
     {
@@ -78,17 +85,15 @@ internal sealed class SettingsSession(
         // click rather than a scroll, listed down the left so a section added
         // later is one more row rather than a strip running out of width. A
         // fixed size, so the window does not jump as the sections are flicked
-        // through; a section taller than that scrolls inside its own tab. Save
+        // through; a section taller than that scrolls inside its own tab, and
+        // the dialog scrolls only a window too short for the list. Save
         // sits under them all and never scrolls away, because it saves them all —
         // not only the tab showing.
         var tabs = new TabControl
         {
             Name = "settingsTabs",
             TabStripPlacement = Dock.Left,
-            Width = Width,
-            Height = Height,
-            Padding = new Thickness(4, 6, 0, 0),
-            Margin = new Thickness(18, 4, 18, 0),
+            Padding = new Thickness(4, ListTop, 0, 0),
         };
 
         foreach (var section in sections) tabs.Items.Add(Tab(section));
@@ -116,13 +121,20 @@ internal sealed class SettingsSession(
         var divider = new Border { Height = 1, Background = new SolidColorBrush(Colors.Separator) };
 
         return new DialogBody(
-            tabs,
+            new HeightUpTo(Height)
+            {
+                Child = tabs,
+                Width = Width,
+                MinHeight = tabs.ItemCount * TabHeight + ListTop,
+                Margin = new Thickness(18, 4, 18, 0),
+            },
             new StackPanel
             {
                 Spacing = 12,
                 Margin = new Thickness(18, 12, 18, 18),
                 Children = { divider, buttons },
-            });
+            },
+            fits: true);
     }
 
     /// <summary>
@@ -150,7 +162,8 @@ internal sealed class SettingsSession(
                 },
             },
             Padding = new Thickness(4, 6, 12, 6),
-            Height = 46,
+            Height = TabHeight,
+            MinHeight = 0,
             Width = 120,
         };
     }
