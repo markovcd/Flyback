@@ -2,6 +2,7 @@
 
 Work the user has asked for and nobody has started. Take an item off when it lands on `main`.
 
+- **Take apart the types still split into partial files.** `NodeCatalog` (25 `NodeCatalog.*.cs`), `AssistantPanel`, `GeminiAssistant`, `BitmapFont`, and the test classes `PatchWorkbenchTests`, `SourceViewTests`, `NodeEditorTests`, `OutputSettingsTests` and `AssistantPanelTests`. The rule is in `docs/agents/rules/one-type-per-file.md`; until each is done, a change that touches one takes it apart.
 - **Shared sounds and pictures on the preset site.** A third store on the Worker, beside presets and plugins: WAV and PNG only, unchecked and then unpublished until the admin publishes it, a license from a short list, kept as an R2 object by id. The free plan's 10 ms of CPU a request has not been checked against real traffic; take the paid plan if submissions are cut off.
 
 - figure how to accept legacy currencies - we need a donation button other than bitcoin

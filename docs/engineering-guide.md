@@ -743,8 +743,7 @@ indistinguishable from the file it lands in.
   boundary and almost nowhere else. A shell calls the engine's concrete types.
 - **Split a big class by region, not by pattern.** A region that owns its own
   state becomes a class of its own (`MainWindow`'s, ADR-0148; `NodeEditor`'s,
-  ADR-0017); a file per concern of one partial class is for what cannot be pulled
-  apart (`NodeCatalog`).
+  ADR-0017). A type is never cut into partial files (`one-type-per-file.md`).
 
 ### Drivable by an agent
 

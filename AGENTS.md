@@ -5,7 +5,7 @@ Flyback is a patchable synthesiser for .NET 10: one module graph generates both 
 Standing rules for working in this repo are in `docs/agents/rules/`. They apply to nearly every task, not one kind of it, so read all of them before starting; Claude Code imports them through the paths below:
 
 - @docs/agents/rules/git-workflow.md — commit straight to `main`, and isolate from other sessions' uncommitted work.
-- @docs/agents/rules/one-type-per-file.md — one top-level type per file, named for it; split a file that holds several whenever a change touches it.
+- @docs/agents/rules/one-type-per-file.md — one top-level type per file, named for it, and never a type cut into partial files; split a file that holds several, or a type spread over several, whenever a change touches it.
 - @docs/agents/rules/prose-style.md — American spelling; succinct comments that never narrate history.
 - @docs/agents/rules/terminology.md — when the user says a word the glossary rules out (*agent* for the assistant), correct it in one line at the top of the reply.
 - @docs/agents/rules/agent-drivability.md — drivability by an agent comes first; a hack needed to get something done is a feature to propose.
