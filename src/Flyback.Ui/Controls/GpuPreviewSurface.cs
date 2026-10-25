@@ -22,7 +22,7 @@ namespace Flyback.Ui.Controls;
 /// everything crossing between them goes through <see cref="gate"/> apart from the
 /// frame count, which keeps a lock of its own.
 /// </remarks>
-public sealed class GpuPreviewSurface : OpenGlControlBase, IGpuPreview
+public sealed class GpuPreviewSurface : OpenGlControlBase, IGpuPreview, ICapturedPreview
 {
     /// <summary>
     /// How long to wait for a graphics context before giving up on one. Avalonia
@@ -154,6 +154,10 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IGpuPreview
     internal string? CaptureUnavailable => renderer is { } active
         ? active.CaptureUnavailable
         : "The graphics context is not up yet.";
+
+    IFrameSink? ICapturedPreview.Capture { get => Capture; set => Capture = value; }
+
+    string? ICapturedPreview.CaptureUnavailable => CaptureUnavailable;
 
     public PixelSize Resolution
     {

@@ -37,9 +37,13 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// <inheritdoc cref="IGpuPreview.ProcessorStandsIn"/>
     private readonly bool processorStandsIn;
 
-    public PreviewHost() : this(() => new GpuPreviewSurface())
+    /// <summary>A host on this machine's own graphics: Metal on Apple's (ADR-0214), OpenGL elsewhere.</summary>
+    public PreviewHost() : this(Native)
     {
     }
+
+    private static IGpuPreview Native() =>
+        OperatingSystem.IsMacOS() || OperatingSystem.IsIOS() ? new MetalPreviewSurface() : new GpuPreviewSurface();
 
     /// <param name="gpu">Builds the surface the GPU draws on, for a host with no OpenGL control: a page.</param>
     public PreviewHost(Func<IGpuPreview> gpu)
@@ -161,7 +165,7 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// </remarks>
     internal string? BeginCapture(IFrameSink sink)
     {
-        if (active is not GpuPreviewSurface gpu)
+        if (active is not ICapturedPreview gpu)
             return "The picture is being drawn on the processor, which is too slow to record from.";
 
         if (gpu.CaptureUnavailable is { } why) return why;
@@ -177,7 +181,7 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     {
         capturing = null;
 
-        if (active is GpuPreviewSurface gpu) gpu.Capture = null;
+        if (active is ICapturedPreview gpu) gpu.Capture = null;
     }
 
     /// <summary>Switches renderer, or does nothing if that one is already running.</summary>
@@ -284,7 +288,7 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
         // Better to say the picture has gone than to fill a file with it.
         if (capturing is null) return;
 
-        if (surface is GpuPreviewSurface incoming)
+        if (surface is ICapturedPreview incoming)
         {
             incoming.Capture = capturing;
         }

@@ -22,9 +22,11 @@ namespace Flyback.Ui.Controls;
 /// batch that paint waits on can never be committed.
 /// </remarks>
 [SuppressMessage("Design", "CA1001", Justification = "The bitmap goes when the control leaves the visual tree.")]
-public sealed class PreviewSurface : Control, IPreviewSurface
+public class PreviewSurface : Control, IPreviewSurface
 {
-    private readonly SynthRenderer renderer = new();
+    private readonly IFrameRenderer renderer;
+    private readonly Action reset;
+    private readonly string step;
     private readonly DispatcherTimer timer;
     private readonly Stopwatch frameClock = Stopwatch.StartNew();
 
@@ -63,8 +65,23 @@ public sealed class PreviewSurface : Control, IPreviewSurface
     /// </remarks>
     private const double RestFraction = 0.5;
 
-    public PreviewSurface()
+    public PreviewSurface() : this(new SynthRenderer(), "CPU frame")
     {
+    }
+
+    private PreviewSurface(SynthRenderer renderer, string step) : this(renderer, renderer.Reset, step)
+    {
+    }
+
+    /// <param name="renderer">Draws a frame into memory, on a thread of the pool.</param>
+    /// <param name="reset">Clears the renderer's feedback history.</param>
+    /// <param name="step">What a frame is called in a stall trace.</param>
+    private protected PreviewSurface(IFrameRenderer renderer, Action reset, string step)
+    {
+        this.renderer = renderer;
+        this.reset = reset;
+        this.step = step;
+
         timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = UncappedInterval };
         timer.Tick += OnTick;
     }
@@ -145,7 +162,7 @@ public sealed class PreviewSurface : Control, IPreviewSurface
     public void Rewind()
     {
         Time = 0;
-        renderer.Reset();
+        reset();
         dirty = true;
     }
 
@@ -160,10 +177,42 @@ public sealed class PreviewSurface : Control, IPreviewSurface
         timer.Stop();
         bitmap?.Dispose();
         bitmap = null;
+        detached = true;
+
+        if (!rendering) Retire();
+
         base.OnDetachedFromVisualTree(e);
     }
 
-    private async void OnTick(object? sender, EventArgs e)
+    /// <summary>Whether the control has left the tree, after which it never draws again.</summary>
+    private bool detached;
+
+    /// <summary>
+    /// Hands back what the renderer holds, once the control has left the tree and no
+    /// frame is in flight.
+    /// </summary>
+    private protected virtual void Retire()
+    {
+    }
+
+    /// <summary>A frame that threw. The processor's renderer says so on the trace and draws the next.</summary>
+    private protected virtual void OnFrameFailed(Exception ex) =>
+        // Trace rather than Debug: a preview that will not render is worth
+        // knowing about in a build somebody is using, and Debug is compiled
+        // out of exactly those. Program.Main puts this on the terminal.
+        Trace.WriteLine($"Preview render failed: {ex}");
+
+    /// <summary>Stops drawing for good, as when the renderer has failed.</summary>
+    private protected void Stop() => timer.Stop();
+
+    private async void OnTick(object? sender, EventArgs e) => await Tick();
+
+    /// <summary>
+    /// What the timer does each time it fires: draws the next frame, unless one is in
+    /// flight or the last asks for a rest. A test calls it rather than waiting on a
+    /// timer the headless platform need not fire.
+    /// </summary>
+    internal async Task Tick()
     {
         // A frame still in flight means we're not keeping up; skip rather than queue.
         if (rendering) return;
@@ -206,14 +255,14 @@ public sealed class PreviewSurface : Control, IPreviewSurface
         }
         catch (Exception ex)
         {
-            // Trace rather than Debug: a preview that will not render is worth
-            // knowing about in a build somebody is using, and Debug is compiled
-            // out of exactly those. Program.Main puts this on the terminal.
-            Trace.WriteLine($"Preview render failed: {ex}");
+            OnFrameFailed(ex);
         }
         finally
         {
             rendering = false;
+
+            if (detached) Retire();
+
             restUntil = frameClock.Elapsed + TimeSpan.FromMilliseconds(FrameMilliseconds * RestFraction);
         }
     }
@@ -243,7 +292,7 @@ public sealed class PreviewSurface : Control, IPreviewSurface
         var started = frameClock.Elapsed;
         await Task.Run(() =>
         {
-            using var traced = StallTrace.Step("CPU frame");
+            using var traced = StallTrace.Step(step);
 
             renderer.Render(program, time, size.Width, size.Height, buffer, stride, played);
         });

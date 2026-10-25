@@ -41,9 +41,14 @@ platform, and the macOS and iOS workloads' bindings would split it.
 same bounds. GitHub's macOS runners have Apple's paravirtual GPU, so the picture is
 checked on a GPU on every push, where OpenGL there is off (0195's amendment).
 
-**Then the preview.** The editor's preview draws through Metal on iOS, and then on the
-Mac, compiling off the UI thread and handing finished frames to the window. OpenGL
-stays everywhere else, and where Metal fails to open.
+**The preview reads its frames back.** `MetalPreviewSurface` draws on a thread of the
+pool, as the processor's preview does, and shows the frame as a bitmap: a library compiles
+in the frame that first draws it, and a slow one holds the last frame rather than the
+window. Reading a frame back is a copy, small on unified memory, and a recording takes the
+frame from there. A Metal layer composited by Avalonia would save the copy and is left
+until the copy costs something measurable. `PreviewHost` builds this surface on
+macOS and iOS, for the editor and the viewer; OpenGL stays everywhere else, and the
+processor takes over where Metal will not open.
 
 ## Consequences
 
@@ -51,5 +56,5 @@ stays everywhere else, and where Metal fails to open.
   both, and a declaration added to one emitter must be added to the other.
 - The binding covers only what the picture calls. A new Metal call is a new signature
   in `MetalDevice`, checked by `MetalRenderTests` on a Mac.
-- Until the preview lands, Metal draws only in tests and in what calls the headless
-  renderer.
+- In the iPad Simulator, Mycelium's picture draws at 14 frames a second with the UI thread
+  idle, where OpenGL ES held the UI thread for minutes.
