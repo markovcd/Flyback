@@ -21,6 +21,7 @@ internal sealed unsafe class MetalDevice : IDisposable
 
     public const nuint R32Float = 55;
     public const nuint Rgba8Unorm = 70;
+    public const nuint Bgra8Unorm = 80;
     public const nuint Rgba16Float = 115;
     public const nuint Rgba32Float = 125;
 

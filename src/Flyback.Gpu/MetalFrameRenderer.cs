@@ -11,14 +11,15 @@ namespace Flyback.Gpu;
 /// </summary>
 /// <remarks>
 /// The history is a pair of half-float textures and the planes a pair of float ones,
-/// ping-ponged as on OpenGL, and stored bottom row first as OpenGL stores them. A
-/// library compiles in well under a second where OpenGL ES took minutes, and on any
+/// ping-ponged as on OpenGL, and stored bottom row first as OpenGL stores them. A frame
+/// is read back after the GPU blits it to eight-bit BGRA top row first, so the processor
+/// only copies it. A library compiles in well under a second where OpenGL ES took minutes, and on any
 /// thread, so nothing here waits on another thread's link. Methods return an error
 /// string rather than throw, as the OpenGL renderer's do.
 /// </remarks>
 internal sealed unsafe class MetalFrameRenderer(MetalDevice device) : IDisposable
 {
-    private const int HistoryBytes = 8;
+    private const int ResolvedBytes = 4;
     private const int Remembered = 8;
 
     private IntPtr pipeline;
@@ -56,12 +57,27 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device) : IDisposabl
     private IntPtr readback;
     private int readbackLength;
 
+    /// <summary>The patch last set, whose library is the one on the card: a frame of the same patch emits nothing.</summary>
+    private CompiledPatch? set;
+
+    /// <summary>
+    /// The blit, drawing the history into <see cref="resolved"/> as the bytes a frame is
+    /// read back as: eight bits, BGRA, top row first, converted by the GPU.
+    /// </summary>
+    private IntPtr resolve;
+    private IntPtr resolved;
+
     /// <summary>
     /// Points the renderer at a program, compiling a library for it if the text has
     /// changed. Null on success, including when there was nothing to do.
     /// </summary>
     public string? SetPatch(CompiledPatch patch)
     {
+        // The preview hands the same patch every frame until it is edited.
+        if (ReferenceEquals(patch, set)) return null;
+
+        set = patch;
+
         var shaders = MetalEmitter.Emit(patch);
 
         if (shaders.Library == refusedSource) return null;
@@ -284,12 +300,15 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device) : IDisposabl
         try
         {
             if (Resize(resolution) is { } failure) return failure;
+            if (Resolver() is { } missing) return missing;
 
             var commands = device.Commands();
 
             Draw(commands, resolution, time, live);
+            Resolve(commands);
 
-            var bytes = resolution.Width * resolution.Height * HistoryBytes;
+            var row = resolution.Width * ResolvedBytes;
+            var bytes = row * resolution.Height;
 
             if (readbackLength != bytes)
             {
@@ -298,11 +317,17 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device) : IDisposabl
                 readbackLength = bytes;
             }
 
-            MetalDevice.Copy(commands, history[read], resolution.Width, resolution.Height, HistoryBytes, readback);
+            MetalDevice.Copy(commands, resolved, resolution.Width, resolution.Height, ResolvedBytes, readback);
 
             if (MetalDevice.Finish(commands) is { } error) return error;
 
-            Convert(new ReadOnlySpan<Half>((void*)MetalDevice.Contents(readback), bytes / sizeof(ushort)), resolution, destination, stride);
+            var frame = new ReadOnlySpan<byte>((void*)MetalDevice.Contents(readback), bytes);
+
+            if (stride == row) frame.CopyTo(destination);
+            else
+                for (var y = 0; y < resolution.Height; y++)
+                    frame.Slice(y * row, row).CopyTo(destination.Slice(y * stride, row));
+
             return null;
         }
         finally
@@ -311,28 +336,35 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device) : IDisposabl
         }
     }
 
-    /// <summary>
-    /// Half floats stored bottom row first, as RGBA, to bytes top row first, as BGRA:
-    /// what OpenGL's eight-bit resolve and the headless renderer's swizzle make of them.
-    /// </summary>
-    private static void Convert(ReadOnlySpan<Half> rgba, SurfaceSize resolution, Span<byte> destination, int stride)
+    /// <summary>The blit pipeline, built once. Null when it is there.</summary>
+    private string? Resolver()
     {
-        for (var y = 0; y < resolution.Height; y++)
-        {
-            var from = rgba.Slice((resolution.Height - 1 - y) * resolution.Width * 4, resolution.Width * 4);
-            var to = destination.Slice(y * stride, resolution.Width * 4);
+        if (resolve != 0) return null;
 
-            for (var x = 0; x < resolution.Width; x++)
-            {
-                to[x * 4 + 0] = Unorm(from[x * 4 + 2]);
-                to[x * 4 + 1] = Unorm(from[x * 4 + 1]);
-                to[x * 4 + 2] = Unorm(from[x * 4 + 0]);
-                to[x * 4 + 3] = 255;
-            }
-        }
+        var library = device.Library(MetalEmitter.Emit(CompiledPatch.Black).Library, out var error);
+        if (library == 0) return $"The blit would not compile for Metal. {error}";
+
+        resolve = device.Pipeline(library, MetalEmitter.BlitVertex, MetalEmitter.BlitFragment, [MetalDevice.Bgra8Unorm], out error);
+        ObjC.Release(library);
+
+        return resolve == 0 ? $"The blit would not build for Metal. {error}" : null;
     }
 
-    private static byte Unorm(Half value) => (byte)Math.Clamp((int)((float)value * 255f + 0.5f), 0, 255);
+    /// <summary>
+    /// Draws the frame just drawn into <see cref="resolved"/>, unscaled: the blit samples
+    /// texel centers, so each byte is the GPU's rounding of its half float.
+    /// </summary>
+    private void Resolve(IntPtr commands)
+    {
+        var encoder = MetalDevice.Pass(commands, [resolved], clear: false, alpha: 1);
+        var scale = stackalloc float[] { 1f, 1f };
+
+        MetalDevice.Use(encoder, resolve);
+        MetalDevice.VertexBytes(encoder, scale, 2 * sizeof(float), MetalEmitter.BlitBuffer);
+        MetalDevice.FragmentTexture(encoder, history[read], 0);
+        MetalDevice.DrawQuad(encoder);
+        MetalDevice.End(encoder);
+    }
 
     /// <summary>Makes the history pair, and the planes' beside it, for <paramref name="resolution"/>.</summary>
     private string? Resize(SurfaceSize resolution)
@@ -355,7 +387,9 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device) : IDisposabl
                     planeFormat, resolution.Width, resolution.Height, MetalDevice.RenderTarget | MetalDevice.ShaderRead, written: false);
         }
 
-        return history[0] == 0 || history[1] == 0 || planes.Any(pair => pair.Contains(0))
+        resolved = device.Texture(MetalDevice.Bgra8Unorm, resolution.Width, resolution.Height, MetalDevice.RenderTarget, written: false);
+
+        return history[0] == 0 || history[1] == 0 || resolved == 0 || planes.Any(pair => pair.Contains(0))
             ? "This GPU will not make the textures a frame is drawn into."
             : null;
     }
@@ -482,6 +516,9 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device) : IDisposabl
 
     private void ReleaseTargets()
     {
+        ObjC.Release(resolved);
+        resolved = 0;
+
         for (var i = 0; i < 2; i++)
         {
             ObjC.Release(history[i]);
@@ -501,10 +538,12 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device) : IDisposabl
         foreach (var (_, old, _) in kept) ObjC.Release(old);
 
         ObjC.Release(pipeline);
+        ObjC.Release(resolve);
         ObjC.Release(constantBuffer);
         ObjC.Release(readback);
 
         pipeline = 0;
+        resolve = 0;
         constantBuffer = 0;
         readback = 0;
         pictures = [];
