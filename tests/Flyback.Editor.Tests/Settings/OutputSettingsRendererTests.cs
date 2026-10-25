@@ -8,7 +8,7 @@ using Shouldly;
 
 namespace Flyback.Editor.Tests.Settings;
 
-public partial class OutputSettingsTests
+public class OutputSettingsRendererTests : OutputSettingsTest
 {
     // --- the render switch and the interpreter -----------------------------------
 

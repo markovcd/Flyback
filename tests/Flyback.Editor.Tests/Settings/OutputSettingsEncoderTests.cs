@@ -14,7 +14,7 @@ using Xunit;
 
 namespace Flyback.Editor.Tests.Settings;
 
-public partial class OutputSettingsTests
+public class OutputSettingsEncoderTests : OutputSettingsTest
 {
     // --- which encoder a take goes through (ADR-0089) ------------------------
 

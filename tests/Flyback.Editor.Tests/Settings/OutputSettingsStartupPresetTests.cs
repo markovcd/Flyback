@@ -18,7 +18,7 @@ using Xunit;
 
 namespace Flyback.Editor.Tests.Settings;
 
-public partial class OutputSettingsTests
+public class OutputSettingsStartupPresetTests : OutputSettingsTest
 {
     // --- which preset the window opens on next (ADR-0093) --------------------
 

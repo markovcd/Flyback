@@ -24,82 +24,8 @@ namespace Flyback.Editor.Tests.Settings;
 /// parent. Opening it twice is the sequence that throws if the window ever stops
 /// being taken apart first.
 /// </remarks>
-public partial class OutputSettingsTests : EditorTest
+public class OutputSettingsTests : OutputSettingsTest
 {
-    /// <summary>Where a window under test keeps its settings, so none land in the machine's own.</summary>
-    private readonly string settingsPath = Path.Combine(
-        Path.GetTempPath(),
-        "flyback-output-settings-" + Guid.NewGuid().ToString("N"),
-        "settings.json");
-
-    public override void Dispose()
-    {
-        base.Dispose();
-
-        var folder = Path.GetDirectoryName(settingsPath);
-
-        if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
-
-        GC.SuppressFinalize(this);
-    }
-
-    /// <summary>
-    /// The real window, on the preset it opens with. Nothing is stubbed: with no
-    /// plugins loaded the catalog is empty and the audio device is silent,
-    /// which is the same path a machine with no sound backend takes.
-    /// </summary>
-    private MainWindow Open(string? settingsPath = null, PluginCatalog? plugins = null)
-    {
-        var window = NewMainWindow(new EditorSetup
-        {
-            Folders = new() { SettingsPath = settingsPath },
-            Plugins = plugins ?? PluginCatalog.Empty,
-        });
-
-        window.Show();
-        window.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-        window.UpdateLayout();
-
-        return window;
-    }
-
-    private static void Select(MainWindow window, NodeInstance node)
-    {
-        var editor = Editor(window);
-
-        var body = new Point(
-            node.X + NodeGeometry.Width / 2,
-            node.Y + NodeGeometry.HeaderHeight / 2);
-
-        var at = editor.TranslatePoint(editor.GraphToScreen.Transform(body), window)
-            ?? throw new InvalidOperationException("the editor is not in this window");
-
-        window.MouseDown(at, MouseButton.Left);
-        window.MouseUp(at, MouseButton.Left);
-
-        window.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-        window.UpdateLayout();
-    }
-
-    /// <summary>
-    /// The settings are on screen exactly when the size picker is in the tree,
-    /// which is only ever inside the settings window.
-    /// </summary>
-    private static bool ShowingSettings(Visual within) =>
-        All<ComboBox>(within).Any(c => c.ItemsSource is IEnumerable<string> items && items.Any(i => i.Contains(" x ")));
-
-    private static ComboBox Size(Visual within) =>
-        All<ComboBox>(within).Single(c => c.ItemsSource is IEnumerable<string> items && items.Any(i => i.Contains(" x ")));
-
-    private static TabControl Tabs(Visual within) => All<TabControl>(within).Single(t => t.Name == "settingsTabs");
-
-    private const string PictureTab = "Picture", RecordingTab = "Recording", SoundTab = "Sound", MidiTab = "MIDI", FilesTab = "Files";
-
-    /// <summary>The name of the frame's cross, which answers as Cancel does.</summary>
-    private const string Cross = "dismiss";
-
     [AvaloniaFact]
     public void Nothing_selected_shows_no_settings()
     {

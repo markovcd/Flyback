@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Flyback.Editor.Tests.Settings;
 
-public partial class OutputSettingsTests
+public class OutputSettingsCountInTests : OutputSettingsTest
 {
     // --- the count-in --------------------------------------------------------
 

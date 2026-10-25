@@ -8,12 +8,9 @@ using Shouldly;
 
 namespace Flyback.Editor.Tests.Settings;
 
-public partial class OutputSettingsTests
+public class OutputSettingsPreviewRateTests : OutputSettingsTest
 {
     // --- the preview's own frame rate ------------------------------------
-
-    private static ComboBox PreviewFrameRate(Visual within) =>
-        All<ComboBox>(within).Single(c => c.Name == "previewFrameRate");
 
     /// <summary>Nothing has ever asked for a cap, so the preview starts uncapped.</summary>
     [AvaloniaFact]

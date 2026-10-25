@@ -13,20 +13,13 @@ using Shouldly;
 
 namespace Flyback.Editor.Tests.Settings;
 
-public partial class OutputSettingsTests
+public class OutputSettingsRecordingAndSoundTests : OutputSettingsTest
 {
     // --- the recording and sound sections ------------------------------------
 
     private static ComboBox FrameRate(Visual within) => All<ComboBox>(within).Single(c => c.Name == "frameRate");
 
-    private static NumericUpDown Quality(Visual within) => All<NumericUpDown>(within).Single(c => c.Name == "jpegQuality");
-
     private static ComboBox Latency(Visual within) => All<ComboBox>(within).Single(c => c.Name == "latency");
-
-    private static ComboBox CountIn(Visual within) => All<ComboBox>(within).Single(c => c.Name == "countIn");
-
-    private static CheckBox RewindFirst(Visual within) =>
-        All<CheckBox>(within).Single(c => c.Name == "rewindBeforeTake");
 
     /// <summary>
     /// Both device tabs say where the device comes from, because everything

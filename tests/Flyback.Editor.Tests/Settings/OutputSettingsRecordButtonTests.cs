@@ -5,15 +5,9 @@ using Shouldly;
 
 namespace Flyback.Editor.Tests.Settings;
 
-public partial class OutputSettingsTests
+public class OutputSettingsRecordButtonTests : OutputSettingsTest
 {
     // --- the record button ---------------------------------------------------
-
-    /// <summary>
-    /// Named rather than found by content: it lives on the toolbar now and a
-    /// glyph, unlike the label it replaced, has nothing a test can read.
-    /// </summary>
-    private static Button Record(MainWindow window) => Named<Button>(window, "record");
 
     /// <summary>
     /// On the toolbar, so it is reachable with nothing selected — unlike the

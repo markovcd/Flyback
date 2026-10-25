@@ -7,7 +7,7 @@ using Shouldly;
 
 namespace Flyback.Editor.Tests.Settings;
 
-public partial class OutputSettingsTests
+public class OutputSettingsRewindButtonTests : OutputSettingsTest
 {
     // --- the rewind button -----------------------------------------------
 
