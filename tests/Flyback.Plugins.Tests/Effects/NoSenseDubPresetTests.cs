@@ -273,14 +273,25 @@ public class NoSenseDubPresetTests
     // --- harness -----------------------------------------------------------------
 
     /// <summary>
+    /// The sound's program, compiled once and lowered to IL as the editor plays it. The
+    /// interpreter takes half a second for each second of this patch, and the class plays
+    /// nearly thirty; that the two agree is <see cref="Hosting.PluginPresetIlTests"/>'s to show.
+    /// </summary>
+    private static readonly Lazy<(Patch Patch, CompiledPatch Program, IlProgram Il)> Compiled = new(() =>
+    {
+        var patch = Patch();
+        var program = patch.CompileForAudio(Loaded.Modules, Carried, played: true).Program;
+        return (patch, program, IlProgram.Compile(program, IlParts.Whole));
+    });
+
+    /// <summary>
     /// The left channel from <paramref name="from"/> seconds into the piece, with
     /// <paramref name="chord"/> struck a tenth of a second in and held.
     /// </summary>
     private static float[] Play(
         int length, float[]? chord = null, (string Name, float Value)[]? knobs = null, double from = 0)
     {
-        var patch = Patch();
-        var program = patch.CompileForAudio(Loaded.Modules, Carried, played: true).Program;
+        var (patch, program, il) = Compiled.Value;
         var registers = program.AllocateRegisters();
         var state = new DelayState(program.DelayLengths, Rate, program.PhaseCount, program.UnitCount);
         var live = new LiveValues(program.LiveInputs);
@@ -303,7 +314,7 @@ public class NoSenseDubPresetTests
                     live.Set(Key(voice, MidiSignal.Strikes), 1f);
                 }
 
-            program.Evaluate(0, 0, from + i / (double)Rate, registers, default, state, live: live);
+            il.Evaluate(0, 0, from + i / (double)Rate, registers, default, state, live: live);
             left[i] = (float)registers[program.OutputBase];
         }
 
