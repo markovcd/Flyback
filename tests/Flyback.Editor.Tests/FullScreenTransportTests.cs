@@ -122,14 +122,13 @@ public sealed class FullScreenTransportTests : EditorTest
     }
 
     /// <summary>The strip opens under the dots, and a click aimed at them is not a seek.</summary>
+    /// <remarks>Paused, as the editor opens, so the clock moves only if the click seeks.</remarks>
     [AvaloniaFact]
     public void A_click_on_the_dots_opens_the_bar_and_moves_nothing()
     {
         var window = Open();
 
         FullScreen(window);
-        window.KeyPressQwerty(PhysicalKey.P, RawInputModifiers.Control);
-        Settle(window);
 
         var before = Preview(window).Time;
         var at = Dots(window, Overlay(window));
