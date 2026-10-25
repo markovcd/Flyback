@@ -25,7 +25,8 @@ public class MetalEmitterTests
         var program = Presets.All.Single(p => p.Name == name).Build(NodeCatalog.BuiltIn).CompileForVideo(NodeCatalog.BuiltIn).Program;
 
         var glsl = GlslEmitter.Emit(program, GlslDialect.GlslEs300).PatchFragment;
-        var main = glsl[(glsl.IndexOf("void main()\n{\n", StringComparison.Ordinal) + "void main()\n{\n".Length)..glsl.LastIndexOf('}')];
+        var opening = $"void main(){Environment.NewLine}{{{Environment.NewLine}";
+        var main = glsl[(glsl.IndexOf(opening, StringComparison.Ordinal) + opening.Length)..glsl.LastIndexOf('}')];
 
         MetalEmitter.Emit(program).Library.ShouldContain(main);
     }
