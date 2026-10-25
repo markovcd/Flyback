@@ -1,0 +1,655 @@
+using System.Text;
+using Flyback.Core.Compile;
+
+namespace Flyback.Engine.Compile;
+
+/// <summary>
+/// The parts of a patch's fragment shader that read the same in GLSL and in the
+/// Metal Shading Language: the helpers transcribing the interpreter, the reads of
+/// pictures, tables and the previous frame, and one line per op.
+/// </summary>
+/// <remarks>
+/// Written in GLSL's words. Metal's emitter names its types after GLSL's and
+/// supplies the few builtins Metal lacks, so a fix to one backend is a fix to both.
+/// Declarations are each language's own: a uniform in GLSL is a member in Metal.
+/// </remarks>
+internal static class ShaderText
+{
+
+
+    /// <summary>
+    /// Every guard in <see cref="CompiledPatch"/>, transcribed once as a function
+    /// rather than repeated at each of the several hundred sites that need it.
+    /// ADR-0013 chose total arithmetic over propagating NaN, and a backend that
+    /// quietly dropped that choice would diverge from the picture on the CPU in
+    /// exactly the places a patch is most likely to wander into.
+    /// </summary>
+    public const string Helpers =
+        """
+        bool  fin(float v)          { return v == v && abs(v) < BIG; }
+        float gd (float v)          { return fin(v) ? v : 0.0; }
+        float fr (float v)          { float f = v - floor(v); return f < 1.0 ? f : JUST_BELOW_ONE; }
+        float dv (float a, float b) { return b == 0.0 ? 0.0 : gd(a / b); }
+        float md (float a, float b) { return b == 0.0 ? 0.0 : gd(a - b * floor(a / b)); }
+        float sq (float a)          { return a <= 0.0 ? 0.0 : sqrt(a); }
+        float lg (float a)          { return a <= 0.0 ? 0.0 : log(a); }
+        float sat(float v)          { return fin(v) ? clamp(v, 0.0, 1.0) : 0.0; }
+
+        // GLSL leaves sign undefined at a NaN, where the interpreter answers zero.
+        // Written out rather than guarding the input, which would read an infinity
+        // as nought and disagree about its sign.
+        float sg (float v)          { return v > 0.0 ? 1.0 : v < 0.0 ? -1.0 : 0.0; }
+
+        // GLSL leaves atan undefined at the origin, where Math.Atan2 answers zero.
+        float at2(float y, float x) { return (x == 0.0 && y == 0.0) ? 0.0 : atan(y, x); }
+
+        // GLSL leaves pow undefined for a negative base, where Math.Pow(-2, 3) is -8.
+        // The cases that are NaN or infinite on the CPU are the ones Guard turns to
+        // zero, so they are answered directly here.
+        float pw(float a, float b)
+        {
+            if (a > 0.0)       return gd(pow(a, b));
+            if (a == 0.0)      return b == 0.0 ? 1.0 : 0.0;
+            if (b != floor(b)) return 0.0;
+
+            float m = gd(pow(-a, b));
+            return mod(abs(b), 2.0) == 1.0 ? -m : m;
+        }
+
+        // GLSL's smoothstep divides by zero when the edges meet; the interpreter
+        // answers a step there.
+        float sm(float e0, float e1, float x)
+        {
+            if (e0 == e1) return x < e0 ? 0.0 : 1.0;
+
+            float t = clamp((x - e0) / (e1 - e0), 0.0, 1.0);
+            return t * t * (3.0 - 2.0 * t);
+        }
+
+        // Noise, transcribed from Noise.cs. Converting a negative int to uint keeps
+        // the bit pattern in both languages, so the hash agrees exactly, which is
+        // what stops a noisy patch looking like a different patch on the GPU.
+        float hsh(int x, int y, int z)
+        {
+            uint h = uint(x) * 374761393u + uint(y) * 668265263u + uint(z) * 1274126177u;
+            h = (h ^ (h >> 13)) * 1274126177u;
+            h ^= h >> 16;
+            return float(h & 0xFFFFFFu) * (1.0 / 16777215.0);
+        }
+
+        float fade(float t) { return t * t * (3.0 - 2.0 * t); }
+        float lrp (float a, float b, float t) { return a + (b - a) * t; }
+
+        float nz(float x, float y, float z)
+        {
+            if (!(fin(x) && fin(y) && fin(z))) return 0.0;
+
+            int xi = int(floor(x)), yi = int(floor(y)), zi = int(floor(z));
+            float u = fade(x - float(xi)), v = fade(y - float(yi)), w = fade(z - float(zi));
+
+            float z0 = lrp(lrp(hsh(xi, yi,     zi), hsh(xi + 1, yi,     zi), u),
+                           lrp(hsh(xi, yi + 1, zi), hsh(xi + 1, yi + 1, zi), u), v);
+            float z1 = lrp(lrp(hsh(xi, yi,     zi + 1), hsh(xi + 1, yi,     zi + 1), u),
+                           lrp(hsh(xi, yi + 1, zi + 1), hsh(xi + 1, yi + 1, zi + 1), u), v);
+
+            return lrp(z0, z1, w);
+        }
+
+        // Two floats standing for one number, hi + lo, for whatever the clock feeds:
+        // a float alone steps by a quarter of a millisecond an hour in and by two
+        // seconds a year in. Multiplying by uOne, which is 1, stops a compiler folding
+        // (a + b) - a into b, which is the whole of what these helpers compute.
+        vec2 qts(float a, float b) { float s = (a + b) * uOne; return vec2(s, b - (s - a) * uOne); }
+
+        vec2 tws(float a, float b)
+        {
+            float s = (a + b) * uOne;
+            float v = (s - a) * uOne;
+            return vec2(s, (a - (s - v)) * uOne + (b - v));
+        }
+
+        vec2 spl(float a)
+        {
+            float t = a * 4097.0;
+            float h = t * uOne - (t - a);
+            return vec2(h, a * uOne - h);
+        }
+
+        vec2 twp(float a, float b)
+        {
+            float p = a * b;
+            vec2 x = spl(a), y = spl(b);
+            return vec2(p, ((x.x * y.x - p) + x.x * y.y + x.y * y.x) + x.y * y.y);
+        }
+
+        vec2 dad(vec2 a, vec2 b) { vec2 s = tws(a.x, b.x); return qts(s.x, s.y + a.y + b.y); }
+        vec2 dml(vec2 a, vec2 b) { vec2 p = twp(a.x, b.x); return qts(p.x, p.y + a.x * b.y + a.y * b.x); }
+
+        vec2 ddv(vec2 a, vec2 b)
+        {
+            if (b.x == 0.0) return vec2(0.0);
+
+            float q = a.x / b.x;
+            if (!fin(q)) return vec2(0.0);
+
+            vec2 r = dad(a, -dml(vec2(q, 0.0), b));
+            return tws(q, (r.x + r.y) / b.x);
+        }
+
+        vec2 dfl(vec2 a) { float h = floor(a.x); return tws(h, floor((a.x - h) + a.y)); }
+        float dfr(vec2 a) { float h = a.x - floor(a.x); return fr(h + a.y); }
+
+        float dmd(vec2 a, vec2 b)
+        {
+            if (b.x == 0.0) return 0.0;
+
+            vec2 r = dad(a, -dml(dfl(ddv(a, b)), b));
+            return gd(r.x + r.y);
+        }
+
+        // Whole turns taken off before the one float a sine needs, against 2π in two
+        // floats of its own.
+        float dtr(vec2 a)
+        {
+            float k = floor((a.x + a.y) * 0.15915494);
+            vec2 r = dad(a, -dml(vec2(k, 0.0), vec2(6.2831855, -1.7484555e-7)));
+            return r.x + r.y;
+        }
+
+        // A whole number wrapped to 32 bits the way Noise.Lattice wraps it, in steps
+        // a float holds exactly, since converting one past an int is undefined.
+        uint wrp(float v)
+        {
+            float q = floor(v / 65536.0);
+            float m = q - 65536.0 * floor(q / 65536.0);
+            return (uint(m) << 16) + uint(v - q * 65536.0);
+        }
+
+        int lat(vec2 n) { return int(wrp(n.x) + wrp(n.y)); }
+
+        float nzw(vec2 x, vec2 y, vec2 z)
+        {
+            if (!(fin(x.x) && fin(y.x) && fin(z.x))) return 0.0;
+
+            vec2 xf = dfl(x), yf = dfl(y), zf = dfl(z);
+            int xi = lat(xf), yi = lat(yf), zi = lat(zf);
+
+            vec2 fx = dad(x, -xf), fy = dad(y, -yf), fz = dad(z, -zf);
+            float u = fade(fx.x + fx.y), v = fade(fy.x + fy.y), w = fade(fz.x + fz.y);
+
+            float z0 = lrp(lrp(hsh(xi, yi,     zi), hsh(xi + 1, yi,     zi), u),
+                           lrp(hsh(xi, yi + 1, zi), hsh(xi + 1, yi + 1, zi), u), v);
+            float z1 = lrp(lrp(hsh(xi, yi,     zi + 1), hsh(xi + 1, yi,     zi + 1), u),
+                           lrp(hsh(xi, yi + 1, zi + 1), hsh(xi + 1, yi + 1, zi + 1), u), v);
+
+            return lrp(z0, z1, w);
+        }
+
+        vec3 hsv(float h, float s, float v)
+        {
+            h = fr(h) * 6.0;
+            s = clamp(s, 0.0, 1.0);
+
+            int sector = int(h);
+            float f = h - float(sector);
+            float p = v * (1.0 - s);
+            float q = v * (1.0 - s * f);
+            float w = v * (1.0 - s * (1.0 - f));
+
+            if (sector == 0) return vec3(v, w, p);
+            if (sector == 1) return vec3(q, v, p);
+            if (sector == 2) return vec3(p, v, w);
+            if (sector == 3) return vec3(p, q, v);
+            if (sector == 4) return vec3(w, p, v);
+            return vec3(v, p, q);
+        }
+
+        """;
+
+    /// <summary>
+    /// The bound a value takes on its way into a plane, which is
+    /// <c>Arithmetic.Bounded</c> and <c>DelayState.WritePlane</c> written a
+    /// third time. A cycle drawn as wires has no gain of its own, so a loop above
+    /// unity is easy to draw and this is where it stops.
+    /// </summary>
+    public const string Plane =
+        """
+        float bd(float v) { return fin(v) ? clamp(v, -16.0, 16.0) : 0.0; }
+
+        """;
+
+    /// <summary>
+    /// The previous frame, read the way Arithmetic.Sample reads it. The scales
+    /// carry the whole mapping — patch coordinates to texel centers, and the y
+    /// flip between a picture indexed downwards and a texture stored upwards — so
+    /// the shader needs no width or height of its own.
+    /// </summary>
+    /// <remarks>
+    /// The substitutions for a non-finite coordinate are the values that land on
+    /// index zero, which is where Sample puts one.
+    /// </remarks>
+    public const string Feedback =
+        """
+        vec3 fb(float u, float v)
+        {
+            u = fin(u) ? u : -uAspect;
+            v = fin(v) ? v :  1.0;
+
+            return texture(uPrevious, vec2(u * uFeedbackScaleX + 0.5, v * uFeedbackScaleY + 0.5)).rgb;
+        }
+
+        """;
+
+    /// <summary>
+    /// How many samplers the shader declares, counted off the ops that name one
+    /// rather than off the list of pictures beside them.
+    /// </summary>
+    /// <remarks>
+    /// The two agree for anything the compiler produced. Counting the ops is what
+    /// makes the text answerable on its own: a program assembled by hand would
+    /// otherwise call a function that had not been declared.
+    /// </remarks>
+    public static int Textures(CompiledPatch patch)
+    {
+        var most = patch.Pictures.Count;
+
+        foreach (var op in patch.Ops)
+            if (op.Code == OpCode.SamplePicture)
+                most = Math.Max(most, (int)op.K + 1);
+
+        return most;
+    }
+
+    /// <summary>
+    /// One picture: the texture it was uploaded into, the shape it is drawn at,
+    /// and the read that has to agree with <see cref="LoadedImage.At"/> down to
+    /// what happens off the edges.
+    /// </summary>
+    /// <remarks>
+    /// The aspect is a uniform rather than a folded constant, because it belongs
+    /// to the file rather than the patch: the same program draws whatever picture
+    /// is bound to it. Black outside is written out rather than left to the
+    /// sampler's wrapping, since clamping to the edge is what a linear filter
+    /// needs at the last row — and testing the extent here is the one arrangement
+    /// that agrees with the processor at all four edges.
+    /// </remarks>
+    public static string Picture(int index) =>
+        $$"""
+
+        vec3 pic{{index}}(float x, float y)
+        {
+            if (!(fin(x) && fin(y))) return vec3(0.0);
+
+            float u = (x / uPictureAspect{{index}} + 1.0) * 0.5;
+            float v = (1.0 - y) * 0.5;
+
+            if (u < 0.0 || u > 1.0 || v < 0.0 || v > 1.0) return vec3(0.0);
+
+            return texture(uPicture{{index}}, vec2(u, v)).rgb;
+        }
+
+        """;
+
+    /// <summary>How many tables the shader declares, counted off the ops as <see cref="Textures"/> counts pictures.</summary>
+    public static int Tables(CompiledPatch patch)
+    {
+        var most = patch.Tables.Count;
+
+        foreach (var op in patch.Ops)
+            if (op.Code == OpCode.Table)
+                most = Math.Max(most, (int)op.K + 1);
+
+        return most;
+    }
+
+    /// <summary>
+    /// One table, a clip or a chart's buffer, in rows of <see cref="GlslEmitter.TableRow"/>
+    /// floats, and the read that has to agree with <see cref="LoadedSample.At"/>:
+    /// silence off either end, and the last sample leaning towards nothing.
+    /// </summary>
+    public static string Table(int index) =>
+        $$"""
+        float tab{{index}}(float seconds)
+        {
+            if (!fin(seconds)) return 0.0;
+
+            float at = seconds * uTableRate{{index}};
+            if (at < 0.0 || at >= uTableLength{{index}}) return 0.0;
+
+            float whole = floor(at);
+            int first = int(whole);
+            int second = first + 1;
+
+            float a = texelFetch(uTable{{index}}, ivec2(first % {{GlslEmitter.TableRow}}, first / {{GlslEmitter.TableRow}}), 0).r;
+            float b = whole + 1.0 < uTableLength{{index}}
+                ? texelFetch(uTable{{index}}, ivec2(second % {{GlslEmitter.TableRow}}, second / {{GlslEmitter.TableRow}}), 0).r
+                : 0.0;
+
+            return a + (b - a) * (at - whole);
+        }
+
+        """;
+
+    /// <summary>
+    /// The statements of the fragment's entry, the same in every language: the
+    /// pixel's coordinates, its planes, one line per op, and what it writes.
+    /// </summary>
+    /// <remarks>
+    /// Reads <c>vUv</c>, <c>gl_FragCoord</c> and <c>uAspect</c>, and assigns
+    /// <c>fragColor</c> and one <c>outPlane</c> per target, which each language
+    /// declares in its own way.
+    /// </remarks>
+    public static void Main(CompiledPatch patch, StringBuilder text)
+    {
+        var targets = GlslEmitter.PlaneTargets(patch);
+
+        // The same two lines SynthRenderer computes per pixel, against a vUv the
+        // rasteriser has already centered.
+        text.AppendLine("    float px = (vUv.x * 2.0 - 1.0) * uAspect;");
+        text.AppendLine("    float py = vUv.y * 2.0 - 1.0;");
+
+        // What this pixel left in each plane, taken by texel rather than by
+        // sample: a plane is the pixel's own and a filtered read would blend its
+        // neighbours into it. Held in a variable apiece so that a plane nothing
+        // writes this pass carries on holding what it held, which is what a cell
+        // the interpreter never writes does.
+        if (patch.PlaneCount > 0)
+        {
+            text.AppendLine();
+
+            for (var target = 0; target < targets; target++)
+                text.AppendLine($"    vec4 pv{target} = texelFetch(uPlane{target}, ivec2(gl_FragCoord.xy), 0);");
+
+            for (var plane = 0; plane < patch.PlaneCount; plane++)
+                text.AppendLine($"    float pl{plane} = pv{plane / 4}[{plane % 4}];");
+        }
+
+        text.AppendLine();
+
+        var written = Body(patch, text);
+
+        text.AppendLine();
+        text.AppendLine(
+            $"    fragColor = vec4({Output(patch, written, 0)}, " +
+            $"{Output(patch, written, 1)}, {Output(patch, written, 2)}, 1.0);");
+
+        for (var target = 0; target < targets; target++)
+            text.AppendLine($"    outPlane{target} = vec4({Carried(patch, target)});");
+
+    }
+
+    /// <summary>
+    /// The four channels one target writes back, and zero for a channel beyond
+    /// the last plane — a target holds four whether or not the patch drew four
+    /// loops.
+    /// </summary>
+    private static string Carried(CompiledPatch patch, int target) =>
+        string.Join(
+            ", ",
+            Enumerable.Range(0, 4).Select(channel =>
+            {
+                var plane = target * 4 + channel;
+
+                return plane < patch.PlaneCount ? $"pl{plane}" : "0.0";
+            }));
+
+    /// <summary>
+    /// Saturating here rather than at the end of the blit is deliberate: the
+    /// offscreen target holds half floats and would happily store a value above
+    /// one, and the clamp on the way into the frame history is what stops a
+    /// feedback loop with any gain in it running away (ADR-0012).
+    /// </summary>
+    private static string Output(CompiledPatch patch, bool[] written, int channel)
+    {
+        var register = patch.OutputBase + channel;
+
+        return channel < patch.OutputWidth && register < written.Length && written[register]
+            ? $"sat(r{register})"
+            : "0.0";
+    }
+
+    /// <summary>
+    /// Which registers are carried in two floats: the clock, the arithmetic that keeps
+    /// its size, and the arithmetic feeding either, since a rate rounded to one float
+    /// is a beat out after a few months of multiplying by the clock.
+    /// </summary>
+    private static bool[] Widths(CompiledPatch patch, int registers)
+    {
+        var wide = new bool[registers];
+        var arithmetic = new bool[registers];
+
+        bool Wide(int register) => register >= 0 && register < registers && wide[register];
+
+        foreach (var op in patch.Ops)
+        {
+            if (op.Out < 0 || op.Out >= registers || !Carries(op.Code)) continue;
+
+            arithmetic[op.Out] = true;
+            wide[op.Out] = op.Code is OpCode.LoadT || Carried(op).Any(Wide);
+        }
+
+        for (var i = patch.Ops.Length - 1; i >= 0; i--)
+        {
+            var op = patch.Ops[i];
+
+            IEnumerable<int> fed =
+                op.Code is OpCode.Mod && Wide(op.A) ? [op.B]
+                : Wide(op.Out) && Carries(op.Code) ? Carried(op)
+                : [];
+
+            foreach (var register in fed)
+                if (register >= 0 && register < registers && arithmetic[register])
+                    wide[register] = true;
+        }
+
+        return wide;
+
+        static bool Carries(OpCode code) => code is OpCode.LoadT
+            or OpCode.Copy or OpCode.Delay or OpCode.Allpass or OpCode.Neg or OpCode.Abs
+            or OpCode.Floor or OpCode.Ceil or OpCode.Add or OpCode.Sub or OpCode.Mul
+            or OpCode.Div or OpCode.Phase;
+
+        // A delay's time and an allpass's gain decide nothing about the size of what passes.
+        static int[] Carried(Op op) => op.Code switch
+        {
+            OpCode.Add or OpCode.Sub or OpCode.Mul or OpCode.Div => [op.A, op.B],
+            OpCode.Phase => [op.A, op.B, op.C],
+            OpCode.LoadT => [],
+            _ => [op.A],
+        };
+    }
+
+    /// <summary>Emits one line per op, and reports which registers ended up declared.</summary>
+    private static bool[] Body(CompiledPatch patch, StringBuilder text)
+    {
+        // A register read before anything wrote it reads as zero, which is what an
+        // interpreter walking a freshly allocated register file would have found.
+        var written = new bool[Math.Max(patch.RegisterCount, patch.OutputBase + patch.OutputWidth)];
+        var wide = Widths(patch, written.Length);
+
+        var constant = 0;
+
+        foreach (var op in patch.Ops)
+        {
+            // The ops with no result, and so the ops with no line: there is no
+            // state on this path for any of them to write to, and a declaration of
+            // r-1 would not compile. What they fed is left as dead code for the
+            // driver to drop.
+            //
+            // A tap never reaches here — only the speakers' program has one — but
+            // it is in the list because an op that fell through to the switch
+            // would take the backend down rather than draw a wrong picture.
+            if (op.Code is OpCode.UnitWrite or OpCode.ClockWrite or OpCode.Tap) continue;
+
+            // The other op with no register to write: what it writes is a plane,
+            // which the next frame reads and this one hands to its target at the
+            // end of main.
+            if (op.Code is OpCode.PlaneWrite)
+            {
+                text.AppendLine($"    pl{(int)op.K} = bd({Read(op.A)});");
+                continue;
+            }
+
+            string a = Read(op.A), b = Read(op.B), c = Read(op.C);
+
+            if (IsWide(op.Out))
+            {
+                text.AppendLine($"    vec2 w{op.Out} = {Widened(op)}; float r{op.Out} = w{op.Out}.x + w{op.Out}.y;");
+                written[op.Out] = true;
+                continue;
+            }
+
+            var expression = Reduced(op) ?? op.Code switch
+            {
+                OpCode.Const => $"uK[{constant++}]",
+                OpCode.LoadX => "px",
+                OpCode.LoadY => "py",
+                OpCode.LoadAspect => "uAspect",
+                OpCode.LoadFeedbackAge => "uFeedbackAge",
+
+                // The one load whose value the shader is handed per frame rather
+                // than per program. A picture drawn while a key is down is drawn
+                // with the key down: the uniform is uploaded before the draw, so
+                // every pixel of one frame sees the same moment — which is what
+                // a frame is.
+                OpCode.LoadLive => $"uLive[{(int)op.K}]",
+                OpCode.Copy => a,
+
+                OpCode.Neg => $"-{a}",
+                OpCode.Abs => $"abs({a})",
+                OpCode.Sin => $"sin({a})",
+                OpCode.Cos => $"cos({a})",
+                OpCode.Tan => $"gd(tan({a}))",
+                OpCode.Sqrt => $"sq({a})",
+                OpCode.Floor => $"floor({a})",
+                OpCode.Ceil => $"ceil({a})",
+                OpCode.Fract => $"fr({a})",
+
+                OpCode.Sign => $"sg({a})",
+
+                OpCode.Exp => $"gd(exp({a}))",
+                OpCode.Log => $"lg({a})",
+
+                OpCode.Add => $"{a} + {b}",
+                OpCode.Sub => $"{a} - {b}",
+                OpCode.Mul => $"{a} * {b}",
+                OpCode.Div => $"dv({a}, {b})",
+                OpCode.Mod => $"md({a}, {b})",
+                OpCode.Pow => $"pw({a}, {b})",
+                OpCode.Min => $"min({a}, {b})",
+                OpCode.Max => $"max({a}, {b})",
+                OpCode.Atan2 => $"at2({a}, {b})",
+
+                // The one op that maps straight onto its builtin: GLSL's
+                // step(edge, x) is x < edge ? 0 : 1, which is what the interpreter
+                // does with A as the edge.
+                OpCode.Step => $"step({a}, {b})",
+
+                OpCode.Hypot => $"sqrt({a} * {a} + {b} * {b})",
+
+                // The tolerance for an inverted range lives in the max, exactly as
+                // it does in the interpreter.
+                OpCode.Clamp => $"clamp({a}, {b}, max({b}, {c}))",
+
+                // Not mix(), which drivers are free to contract into a fused
+                // multiply-add and which then disagrees at the endpoints.
+                OpCode.Mix => $"{a} + ({b} - {a}) * {c}",
+
+                OpCode.Smoothstep => $"sm({a}, {b}, {c})",
+                OpCode.Noise3 => $"nz({a}, {b}, {c})",
+
+                // The stateful three, in the shape they take when there is no
+                // state to carry. A picture is one evaluation per pixel in
+                // whatever order the rasteriser likes, so this is the same branch
+                // the interpreter takes on the video path — not a simplification.
+                OpCode.Delay => a,
+
+                OpCode.Table => $"tab{(int)op.K}({a})",
+                OpCode.Allpass => a,
+                OpCode.Phase => $"{a} * {b} + {c}",
+
+                // A cell with nothing behind it reads as nothing, which leaves
+                // whatever asked for it open rather than closed — again what the
+                // interpreter does when it is handed no state. A cycle is not one
+                // of these: it takes a plane, which this path does keep.
+                OpCode.UnitRead => "0.0",
+
+                // Fetched into pl{K} at the top of main, before any write can
+                // have moved it, so a read is the frame before's however the
+                // program is ordered.
+                OpCode.PlaneRead => $"pl{(int)op.K}",
+
+                OpCode.HsvToRgb => $"hsv({a}, {b}, {c})",
+                OpCode.SampleFeedback => $"fb({a}, {b})",
+                OpCode.SamplePicture => $"pic{(int)op.K}({a}, {b})",
+
+                _ => throw new NotSupportedException(
+                    $"{op.Code} has no GLSL lowering. Every opcode needs one, or the GPU " +
+                    "backend renders a different patch from the one the interpreter does."),
+            };
+
+            if (op.Code is OpCode.HsvToRgb or OpCode.SampleFeedback or OpCode.SamplePicture)
+            {
+                text.AppendLine($"    vec3 t{op.Out} = {expression};");
+                text.AppendLine(
+                    $"    float r{op.Out} = t{op.Out}.x; " +
+                    $"float r{op.Out + 1} = t{op.Out}.y; " +
+                    $"float r{op.Out + 2} = t{op.Out}.z;");
+
+                for (var i = 0; i < 3; i++)
+                    written[op.Out + i] = true;
+            }
+            else
+            {
+                text.AppendLine($"    float r{op.Out} = {expression};");
+                written[op.Out] = true;
+            }
+        }
+
+        return written;
+
+        // An operand of -1 means the op does not use that slot — Triple leaves C
+        // unset for SampleFeedback — and reads as zero for the same reason.
+        string Read(int register) =>
+            register >= 0 && register < written.Length && written[register] ? $"r{register}" : "0.0";
+
+        bool IsWide(int register) => register >= 0 && register < wide.Length && wide[register];
+
+        string Pair(int register) => IsWide(register) ? $"w{register}" : $"vec2({Read(register)}, 0.0)";
+
+        string Widened(Op op)
+        {
+            string a = Pair(op.A), b = Pair(op.B), c = Pair(op.C);
+
+            return op.Code switch
+            {
+                OpCode.LoadT => "vec2(uTime, uTimeLo)",
+                OpCode.Copy or OpCode.Delay or OpCode.Allpass => a,
+                OpCode.Neg => $"-{a}",
+                OpCode.Abs => $"({a}.x < 0.0 ? -{a} : {a})",
+                OpCode.Add => $"dad({a}, {b})",
+                OpCode.Sub => $"dad({a}, -{b})",
+                OpCode.Mul => $"dml({a}, {b})",
+                OpCode.Div => $"ddv({a}, {b})",
+                OpCode.Phase => $"dad(dml({a}, {b}), {c})",
+                OpCode.Floor => $"dfl({a})",
+                OpCode.Ceil => $"-dfl(-{a})",
+                _ => throw new InvalidOperationException($"{op.Code} is never carried in two floats."),
+            };
+        }
+
+        // The ops that take the size away, done in two floats so that what is left
+        // is exact. Everything else reads the pair as the one float it rounds to.
+        string? Reduced(Op op) => op.Code switch
+        {
+            OpCode.Fract when IsWide(op.A) => $"dfr({Pair(op.A)})",
+            OpCode.Mod when IsWide(op.A) => $"dmd({Pair(op.A)}, {Pair(op.B)})",
+            OpCode.Sin when IsWide(op.A) => $"sin(dtr({Pair(op.A)}))",
+            OpCode.Cos when IsWide(op.A) => $"cos(dtr({Pair(op.A)}))",
+            OpCode.Tan when IsWide(op.A) => $"gd(tan(dtr({Pair(op.A)})))",
+            OpCode.Noise3 when IsWide(op.A) || IsWide(op.B) || IsWide(op.C) =>
+                $"nzw({Pair(op.A)}, {Pair(op.B)}, {Pair(op.C)})",
+            _ => null,
+        };
+    }
+}
