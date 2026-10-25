@@ -7,7 +7,7 @@
     <!-- What the install dialog and the plugins window show. -->
     <Product>Picture</Product>
     <Authors>Flyback</Authors>
-    <Description>Shapes, lines and text to fill and combine, palettes, grading and layers, and the two fractal noises.</Description>
+    <Description>Shapes, lines and text to fill and combine, palettes, grading and layers, the two fractal noises, and a 3D scene to fly through.</Description>
   </PropertyGroup>
 
   <ItemGroup>

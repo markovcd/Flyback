@@ -5,6 +5,7 @@
 ### Modules
 
 - A Speech plugin on the preset site: Speak says or sings the words typed into it in a voice made from filters, with `~` for a rest between sung notes, and Mouth draws lips that move with it and the words as they are said, with a Daisy Bell preset that sings.
+- Raymarch, in the Picture plugin: a lattice, a tunnel or a gyroid in 3D for the camera to fly through, drawn by marching a ray from every pixel, with Flythrough, a techno track flying through a lattice that pulses with the kick.
 
 ### Presets
 

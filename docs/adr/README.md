@@ -68,6 +68,7 @@ context, decision, consequences.
 | [0058](0058-the-picture-is-told-how-loud-the-sound-is.md) | The picture is told how loud the sound is *(user-directed)* |
 | [0073](0073-an-analyzer-is-a-scope-filled-with-a-spectrum.md) | An Analyzer is a Scope filled with a spectrum *(user-directed)* |
 | [0203](0203-a-plot-draws-a-pitch-function-as-a-curve-in-the-picture.md) | A Plot draws a pitch function as a curve in the picture *(user-directed)* |
+| [0213](0213-a-raymarch-is-its-scene-written-out-once-a-step.md) | A Raymarch is its scene written out once a step *(user-directed)* |
 | [0181](0181-a-beam-draws-two-taps-against-each-other-on-phosphor.md) | A Beam draws two taps against each other on phosphor *(user-directed)* |
 | [0185](0185-a-drawing-is-played-by-a-plugin-as-three-tables-gone-round-once-a-cycle.md) | A drawing is played by a plugin as three tables gone round once a cycle *(user-directed)* |
 | [0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md) | What a module carries is a part, not a subtype *(user-directed)* |

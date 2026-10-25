@@ -20,12 +20,13 @@ using Flyback.Plugins.Picture;
 [assembly: FlybackModule(LayerModule.TypeId, "Layer")]
 [assembly: FlybackModule(FractalModule.TypeId, "Fractal")]
 [assembly: FlybackModule(CellsModule.TypeId, "Cells")]
+[assembly: FlybackModule(RaymarchModule.TypeId, "Raymarch")]
 
 namespace Flyback.Plugins.Picture;
 
 /// <summary>
 /// Everything the eye needs that the engine does not ship: shapes with edges,
-/// colors chosen rather than swept, and the two famous noises.
+/// colors chosen rather than swept, the two famous noises, and a scene in depth.
 /// </summary>
 /// <remarks>
 /// Every module here is arithmetic over ops the engine already has — none
@@ -52,7 +53,7 @@ public sealed class PicturePlugin : IFlybackPlugin
         "flyback.picture",
         "Picture",
         "Shapes, arcs, lines and text to fill and combine, pitch plotted across beats, palettes, grading "
-        + "and layers, and the two fractal noises.");
+        + "and layers, the two fractal noises, and a 3D scene to fly through.");
 
     public void Register(IPluginRegistry registry)
     {
@@ -76,6 +77,7 @@ public sealed class PicturePlugin : IFlybackPlugin
                 LayerModule.Definition,
                 FractalModule.Definition,
                 CellsModule.Definition,
+                RaymarchModule.Definition,
             ]);
 
         registry.AddPresets(
@@ -88,6 +90,7 @@ public sealed class PicturePlugin : IFlybackPlugin
             PresetText.Preset(typeof(PicturePlugin).Assembly, "Stained glass", "StainedGlass.fbks"),
             PresetText.Preset(typeof(PicturePlugin).Assembly, "Layers", "Layers.fbks"),
             PresetText.Preset(typeof(PicturePlugin).Assembly, "Dodge", "Dodge.fbks", PresetKind.Showcase),
+            PresetText.Preset(typeof(PicturePlugin).Assembly, "Flythrough", "Flythrough.fbks", PresetKind.Showcase),
         ]);
     }
 }

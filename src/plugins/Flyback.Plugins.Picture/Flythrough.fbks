@@ -1,0 +1,102 @@
+# A flight through a lattice of spheres that turn to boxes and back, drawn by a
+# Raymarch: every pixel follows its own ray into the scene, sixty-four steps of the
+# whole distance function each. The kick swells the shapes and lurches the camera
+# forward, the hats light a halo round every edge, and each eight bars reshapes and
+# recolors the space while a techno track plays.
+
+description "A flight through a lattice that pulses with the kick, drawn by marching a"
+  "ray from every pixel, while a techno track plays."
+tags "song" "patterns"
+length 2:03.87
+
+requires flyback.picture, flyback.voice, flyback.effects
+
+# A hundred and twenty-four a minute; a phrase is eight bars, and the track is eight.
+group "Clock" {
+  let tempo = tempo(bpm: 124)
+  let sixteenths = tempo * 4
+  let bars = tempo * 0.25
+  let phrases = tempo * 0.03125
+}
+
+# A row a part: kick, bass, hats, pad, lead. The picture's own rows fade in over a
+# quarter of the section, so the space reshapes rather than jumps: how boxy the
+# shapes are, and where the colors sit.
+group "Arrangement" {
+  let parts = arrangement(rate: phrases) [
+      0 1 1 1 0 1 1 0 |
+      0 0 1 1 0 0.6 1 0 |
+      0 1 1 1 0 1 1 0.4 |
+      1 0.6 0.7 0.7 1 0.6 0.7 1 |
+      0 0 0 1 0.7 0 1 0 ]
+  let looks = arrangement(rate: phrases, fade: 0.25) [
+      0 0 0.25 0.6 1 0.8 0.2 0 |
+      0.05 0.1 0.15 0.2 0.45 0.5 0.25 0.12 ]
+  let root = notes(rate: bars) [ D2 D2 A#1 C2 ]
+  let shift = root - 38
+}
+
+group "Drums" {
+  let kick = tempo.beats |> stroke(curve: 4)
+  let thump = kick * parts
+  let kick_out = drum(level: thump, pitch: 46, sweep: 150, drive: 1.5)
+  let duck = duck(key: thump, depth: 0.6, attack: 100us, release: 120ms)
+  let hats = euclid(rate: sixteenths, steps: 16, hits: 7, rotate: 2, gate_length: 0.3, curve: 8)
+  let hat_level = hats.stroke * parts.part_3
+  let hat_out = hiss(level: hat_level, cutoff: 8000, seed: 5)
+}
+
+# Off the beat, where the kick is not, and an octave up on the last sixteenth.
+group "Bass" {
+  let bass_seq = notes(rate: sixteenths, gate_length: 0.55) [
+      D2%0 D2%0 D2 D2%0.6 D2%0 D2%0 D2 D2%0 D2%0 D2%0 D2 D2%0.6 D2%0 D2%0 D2 D3%0.8 ]
+  let bass_hz = bass_seq + shift |> note(note: _)
+  let bass_out = saw(freq: bass_hz, amp: 0.7) + sine(freq: bass_hz * 0.5, amp: 0.5)
+    |> filter(cutoff: bass_seq.gate * 1400 + 120, resonance: 0.4)
+    |> mul(a: _, b: bass_seq.gate * parts.part_2)
+}
+
+# Root, minor third and fifth, opened slowly.
+group "Pad" {
+  let pad_hz = root + 12 |> note(note: _)
+  let pad_tone = osc(freq: pad_hz, detune: 0.3, mix: 0.8, amp: 0.4)
+    + triangle(freq: pad_hz * 1.189207, amp: 0.3)
+    + sine(freq: pad_hz * 1.498307, amp: 0.25)
+    |> filter(cutoff: sine(freq: 0.05, amp: 500, bias: 1100), resonance: 0.2)
+  let pad_out = pad_tone * parts.part_4 |> chorus(rate: 0.2, depth: 0.6, mix: 0.5)
+}
+
+# A bell arpeggio up the chord, echoed on the dotted eighth.
+group "Lead" {
+  let lead_seq = notes(rate: sixteenths, gate_length: 0.5) [
+      D4 F4 A4 D5 A4 F4 C5 A4 D4 F4 A4 E5 D5 C5 A4 F4 ]
+  let lead_hz = lead_seq + shift |> note(note: _)
+  let lead_ring = lead_seq.gate |> decay(trigger: _, attack: 1ms, decay: 260ms, curve: 0.6)
+  let lead_out = bell(freq: lead_hz, level: lead_ring, ratio: 3.5, index: 1.4) * parts.part_5
+    |> delay(time: 0.3629, feedback: 0.4, mix: 0.35)
+}
+
+group "Mix" {
+  let room = pad_out * 0.3 + lead_out * 0.22 |> reverb(size: 0.8, decay: 0.7, mix: 0.3)
+  kick_out * 0.8 + hat_out * 0.2 + (bass_out * 0.45 + room) * duck.gain |> out.left
+}
+
+# The camera flies steadily and is shoved by every kick; the lattice corkscrews
+# slowly, the kick swells it, and the hats light the edges.
+group "Picture" {
+  raymarch(
+      travel: t * 1.5 + thump * 0.35,
+      roll: t * 0.008,
+      twist: sine(freq: 0.031, amp: 0.2),
+      pulse: thump,
+      morph: looks,
+      spacing: 3,
+      glow: hat_level * 0.7 + 0.25,
+      fog: 0.45,
+      hue: looks.part_2 + t * 0.002,
+      scene: "lattice",
+      steps: "64")
+    |> out.color
+}
+
+out.volume = 0.6

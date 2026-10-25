@@ -67,6 +67,7 @@ flyback.picture.palette | t, cycles, spread, brightness, contrast | color
 flyback.picture.plot | x, y, under, in, bpm, span, page, ahead, future, low, high, left, right, bottom, top, color, width, glow, dot, level, grid | out, ink
 flyback.picture.polygon | x, y, radius, sides | distance
 flyback.picture.posterise | color, levels | color
+flyback.picture.raymarch | x, y, travel, roll, twist, pulse, morph, spacing, glow, fog, hue | color, depth, hit, glow, shade
 flyback.picture.star | x, y, radius, points, sharpness | distance
 flyback.picture.text | x, y, size, line, reveal | distance
 flyback.sample.halve | in | out

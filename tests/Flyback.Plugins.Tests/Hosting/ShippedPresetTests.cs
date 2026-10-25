@@ -43,6 +43,7 @@ public class ShippedPresetTests
         ["Overworld"] = 166.4,
         ["Flyback Theme"] = 180,
         ["Vigil"] = 320,
+        ["Flythrough"] = 123.87,
     };
 
     /// <summary>
