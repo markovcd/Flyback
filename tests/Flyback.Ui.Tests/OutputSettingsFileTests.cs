@@ -117,6 +117,26 @@ public class OutputSettingsFileTests : IDisposable
     }
 
     [Fact]
+    public void No_file_draws_a_Mac_through_Metal() => OutputSettings.Load(File).AppleDriver.ShouldBe(AppleDriver.Metal);
+
+    [Fact]
+    public void A_Mac_drawing_through_OpenGL_comes_back()
+    {
+        new OutputSettings { AppleDriver = AppleDriver.OpenGl }.Save(File);
+
+        OutputSettings.Load(File).AppleDriver.ShouldBe(AppleDriver.OpenGl);
+    }
+
+    [Fact]
+    public void A_Mac_driver_this_build_does_not_have_is_Metal()
+    {
+        Directory.CreateDirectory(folder);
+        SettingsFile.Write(File, OutputSettings.Section, """{ "appleDriver": 42 }""");
+
+        OutputSettings.Load(File).AppleDriver.ShouldBe(AppleDriver.Metal);
+    }
+
+    [Fact]
     public void How_a_controller_takes_over_a_knob_comes_back()
     {
         new OutputSettings { Takeover = Takeover.PickUp }.Save(File);

@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Flyback.Engine.Compile;
 using Flyback.Gpu;
+using Flyback.Host;
 
 namespace Flyback.Ui.Controls;
 
@@ -32,18 +33,26 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     private IPreviewSurface active;
 
     /// <summary>Builds the GPU's surface, which must be a control.</summary>
-    private readonly Func<IGpuPreview> gpu;
+    private Func<IGpuPreview> gpu;
+
+    /// <summary>Whether this host picks the machine's own surface, which a Mac may change; a page's is its own.</summary>
+    private readonly bool native;
+
+    /// <summary>Whether the machine's own surface is Metal's rather than OpenGL's.</summary>
+    private bool metal = OperatingSystem.IsMacOS() || OperatingSystem.IsIOS();
 
     /// <inheritdoc cref="IGpuPreview.ProcessorStandsIn"/>
     private readonly bool processorStandsIn;
 
     /// <summary>A host on this machine's own graphics: Metal on Apple's (ADR-0214), OpenGL elsewhere.</summary>
-    public PreviewHost() : this(Native)
-    {
-    }
+    public PreviewHost() : this(Native(OperatingSystem.IsMacOS() || OperatingSystem.IsIOS())) => native = true;
 
-    private static IGpuPreview Native() =>
-        OperatingSystem.IsMacOS() || OperatingSystem.IsIOS() ? new MetalPreviewSurface() : new GpuPreviewSurface();
+    private static Func<IGpuPreview> Native(bool metal) =>
+        () => metal ? Surface(AppleDriver.Metal) : new GpuPreviewSurface();
+
+    /// <summary>The surface an Apple machine draws the picture on for <paramref name="driver"/>.</summary>
+    internal static IGpuPreview Surface(AppleDriver driver) =>
+        driver == AppleDriver.Metal ? new MetalPreviewSurface() : new GpuPreviewSurface();
 
     /// <param name="gpu">Builds the surface the GPU draws on, for a host with no OpenGL control: a page.</param>
     public PreviewHost(Func<IGpuPreview> gpu)
@@ -182,6 +191,29 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
         capturing = null;
 
         if (active is ICapturedPreview gpu) gpu.Capture = null;
+    }
+
+    /// <summary>
+    /// Draws the picture through Metal or OpenGL on a Mac, at once, and does nothing
+    /// anywhere else or on a host given its surface. A GPU that failed is offered again
+    /// under the other API, which is not the one that failed.
+    /// </summary>
+    public void Draw(AppleDriver driver)
+    {
+        if (!native || !OperatingSystem.IsMacOS()) return;
+
+        var wanted = driver == AppleDriver.Metal;
+        if (wanted == metal) return;
+
+        metal = wanted;
+        gpu = () => Surface(driver);
+        GpuAvailable = true;
+        GpuRefusal = null;
+
+        if (Wanted != PreviewBackend.Gpu) return;
+
+        Switch(PreviewBackend.Gpu);
+        BackendChanged?.Invoke(string.Empty);
     }
 
     /// <summary>Switches renderer, or does nothing if that one is already running.</summary>

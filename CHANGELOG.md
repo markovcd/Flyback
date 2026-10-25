@@ -30,6 +30,8 @@
 
 ### Performance
 
+- On a Mac, an iPhone or an iPad the picture draws through Metal, and a large patch no longer holds the window while its shader builds; on a Mac the Renderer box picks Metal or OpenGL.
+
 ### Fixes
 
 - Vigil's and No Sense Dub's descriptions are no longer cut off.

@@ -2,9 +2,12 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using Flyback.Editor.Composition;
 using Flyback.Editor.Shell;
+using Flyback.Host;
 using Flyback.Ui.Controls;
 using Shouldly;
+using Xunit;
 
 namespace Flyback.Editor.Tests.Settings;
 
@@ -19,9 +22,43 @@ public class OutputSettingsRendererTests : OutputSettingsTest
         var window = Open();
         var render = All<ComboBox>(OpenSettings(window)).Single(b => b.Name == "render");
 
-        render.ItemsSource.ShouldBe(OperatingSystem.IsWindows()
-            ? new[] { "OpenGL", "Direct3D", "CPU" }
+        render.ItemsSource.ShouldBe(
+            OperatingSystem.IsWindows() ? new[] { "OpenGL", "Direct3D", "CPU" }
+            : OperatingSystem.IsMacOS() ? new[] { "Metal", "OpenGL", "CPU" }
             : new[] { "OpenGL", "CPU" });
+    }
+
+    /// <summary>On a Mac either API takes over the moment the settings are saved, and the choice is kept.</summary>
+    [AvaloniaFact]
+    public void On_a_Mac_the_render_box_switches_between_Metal_and_OpenGL_at_once()
+    {
+        Assert.SkipUnless(OperatingSystem.IsMacOS(), "Only a Mac chooses between Metal and OpenGL.");
+
+        var window = Open(settingsPath);
+        var preview = All<PreviewHost>(window).Single();
+
+        preview.Child.ShouldBeOfType<MetalPreviewSurface>();
+
+        Choose(window, "OpenGL");
+
+        preview.Child.ShouldBeOfType<GpuPreviewSurface>();
+        preview.Backend.ShouldBe(PreviewBackend.Gpu);
+        OutputSettings.Load(settingsPath).AppleDriver.ShouldBe(AppleDriver.OpenGl);
+
+        Choose(window, "Metal");
+
+        preview.Child.ShouldBeOfType<MetalPreviewSurface>();
+        OutputSettings.Load(settingsPath).AppleDriver.ShouldBe(AppleDriver.Metal);
+    }
+
+    private static void Choose(MainWindow window, string renderer)
+    {
+        var dialog = OpenSettings(window);
+
+        All<ComboBox>(dialog).Single(b => b.Name == "render").SelectedItem = renderer;
+        Dispatcher.UIThread.RunJobs();
+
+        CloseSettings(window, dialog);
     }
 
     /// <summary>

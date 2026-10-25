@@ -32,11 +32,15 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         + "compare the two, or if a long session starts to look stepped. On Windows, OpenGL builds "
         + "a large patch's shader in a second where Direct3D can take several and hold the window "
         + "while it does; Direct3D is for a machine whose OpenGL misbehaves, is used anyway where "
-        + "OpenGL will not start, and either takes over from the next time Flyback starts.";
+        + "OpenGL will not start, and either takes over from the next time Flyback starts. On a "
+        + "Mac, Metal builds a patch's shader without holding the window, and OpenGL is there to "
+        + "compare it with; either takes over at once.";
 
     /// <summary>What the Renderer box offers: the graphics card's APIs in the order of <see cref="GraphicsDriver"/>, then the CPU.</summary>
-    private static readonly string[] Renderers = OperatingSystem.IsWindows()
-        ? ["OpenGL", "Direct3D", GraphicsApi.Processor]
+    private static readonly string[] Renderers =
+        OperatingSystem.IsWindows() ? ["OpenGL", "Direct3D", GraphicsApi.Processor]
+        : OperatingSystem.IsMacOS() ? [GraphicsApi.Metal, "OpenGL", GraphicsApi.Processor]
+        : OperatingSystem.IsIOS() ? [GraphicsApi.Metal, GraphicsApi.Processor]
         : ["OpenGL", GraphicsApi.Processor];
 
     private static int ProcessorRow => Renderers.Length - 1;
@@ -155,8 +159,9 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         preview.BackendChanged += message =>
         {
             // Keeps showing what was asked for when the renderer falls back, and stays
-            // enabled: the other driver, from the next start, is the way out.
-            renderer.SelectedIndex = RendererRow(preview.Wanted == PreviewBackend.Gpu, settings.Current.Driver);
+            // enabled: the other driver is the way out, at once on a Mac and from the
+            // next start on Windows.
+            renderer.SelectedIndex = RendererRow(preview.Wanted == PreviewBackend.Gpu, settings.Current);
             ToolTip.SetTip(renderer, preview.GpuAvailable ? RendererTip : message);
             report.Say(message);
         };
@@ -235,7 +240,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
     private void Show(OutputSettings current)
     {
         resolution.SelectedIndex = SizeRow(current);
-        renderer.SelectedIndex = RendererRow(current.Gpu, current.Driver);
+        renderer.SelectedIndex = RendererRow(current.Gpu, current);
         transportEdge.SelectedIndex = current.Transport == TransportEdge.Bottom ? 1 : 0;
         previewFrameRate.SelectedIndex = SettingRows.Nearest(PreviewFrameRates, current.PreviewFrameRate);
     }
@@ -262,6 +267,9 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         if (row != ProcessorRow && OperatingSystem.IsWindows())
             into.Driver = row == 1 ? GraphicsDriver.Direct3D : GraphicsDriver.OpenGl;
 
+        if (row != ProcessorRow && OperatingSystem.IsMacOS())
+            into.AppleDriver = row == 1 ? AppleDriver.OpenGl : AppleDriver.Metal;
+
         into.FullScreen = fullScreen.On;
         into.FullScreenMonitor = fullScreen.Monitor;
         into.Transport = transportEdge.SelectedIndex == 1 ? TransportEdge.Bottom : TransportEdge.Top;
@@ -275,6 +283,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         var size = SizeOf(now);
 
         preview.Resolution = size;
+        preview.Draw(now.AppleDriver);
         preview.Use(now.Gpu ? PreviewBackend.Gpu : PreviewBackend.Cpu);
         preview.FrameRate = now.PreviewFrameRate;
 
@@ -286,14 +295,20 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         if (fullScreen.Away is { } picture)
             TransportOverlay.Lay(now.Transport, picture.Transport, picture.Knobs);
 
-        // One box picks both, and only the CPU takes effect at once.
+        // One box picks both. On Windows only the CPU takes effect at once; a Mac switches either.
         if (before is not null && now.Driver != before.Driver)
             report.Say($"{(now.Driver == GraphicsDriver.Direct3D ? "Direct3D" : "OpenGL")} draws from the next time Flyback starts.");
+
+        if (before is not null && now.AppleDriver != before.AppleDriver && OperatingSystem.IsMacOS())
+            report.Say($"{(now.AppleDriver == AppleDriver.Metal ? GraphicsApi.Metal : "OpenGL")} draws the picture.");
     }
 
-    /// <summary>The row of <see cref="renderer"/> that says <paramref name="gpu"/> and <paramref name="driver"/>.</summary>
-    private static int RendererRow(bool gpu, GraphicsDriver driver) =>
-        !gpu ? ProcessorRow : driver == GraphicsDriver.Direct3D && OperatingSystem.IsWindows() ? 1 : 0;
+    /// <summary>The row of <see cref="renderer"/> that says <paramref name="gpu"/> and the driver <paramref name="current"/> names.</summary>
+    private static int RendererRow(bool gpu, OutputSettings current) =>
+        !gpu ? ProcessorRow
+        : OperatingSystem.IsWindows() && current.Driver == GraphicsDriver.Direct3D ? 1
+        : OperatingSystem.IsMacOS() && current.AppleDriver == AppleDriver.OpenGl ? 1
+        : 0;
 
     /// <summary>The row of the size list a saved size is, or the default for one the list no longer offers.</summary>
     private static int SizeRow(OutputSettings settings)

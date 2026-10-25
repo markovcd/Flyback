@@ -191,6 +191,9 @@ public sealed class OutputSettings
     /// <summary>What draws on Windows — the Picture section. Read once, as the program starts.</summary>
     public GraphicsDriver Driver { get; set; }
 
+    /// <summary>What draws the picture on a Mac — the Picture section. Switched at once.</summary>
+    public AppleDriver AppleDriver { get; set; }
+
     /// <summary>How the knob panel randomizes, set on the panel itself.</summary>
     public RandomizeSettings Randomize { get; set; } = new();
 
@@ -328,6 +331,7 @@ public sealed class OutputSettings
             if (!Enum.IsDefined(settings.FullScreen)) settings.FullScreen = FullScreenOn.SameMonitor;
             if (!Enum.IsDefined(settings.Transport)) settings.Transport = TransportEdge.Top;
             if (!Enum.IsDefined(settings.Driver)) settings.Driver = GraphicsDriver.OpenGl;
+            if (!Enum.IsDefined(settings.AppleDriver)) settings.AppleDriver = AppleDriver.Metal;
 
             settings.Randomize ??= new();
             settings.Randomize.Clamp();

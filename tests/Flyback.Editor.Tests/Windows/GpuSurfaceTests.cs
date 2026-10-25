@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Flyback.Engine.Compile;
+using Flyback.Host;
 using Flyback.Ui.Controls;
 using Shouldly;
 
@@ -79,6 +80,19 @@ public class GpuSurfaceTests : EditorTest
         host.Use(PreviewBackend.Cpu);
 
         host.Backend.ShouldBe(PreviewBackend.Gpu);
+        host.Child.ShouldBeSameAs(surface);
+    }
+
+    /// <summary>A page's surface is its own, whatever API a Mac's settings ask for.</summary>
+    [AvaloniaFact]
+    public void A_given_surface_stays_whatever_driver_is_asked_for()
+    {
+        var surface = new Surface();
+        var host = new PreviewHost(() => surface);
+
+        host.Draw(AppleDriver.OpenGl);
+        host.Draw(AppleDriver.Metal);
+
         host.Child.ShouldBeSameAs(surface);
     }
 
