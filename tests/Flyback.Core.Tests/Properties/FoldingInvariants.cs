@@ -20,6 +20,7 @@ namespace Flyback.Core.Tests.Properties;
 /// </remarks>
 public class FoldingInvariants
 {
+    /// <summary>Enough to meet the rare graph that breaks a rule; the printing test reads each back twice and takes about three seconds.</summary>
     private const int Graphs = 1000;
 
     private static readonly string[] Folded =

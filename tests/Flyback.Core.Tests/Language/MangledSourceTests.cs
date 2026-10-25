@@ -41,6 +41,8 @@ public class MangledSourceTests
 
         foreach (var source in Sources)
         {
+            // Twenty thousand builds at about a seventh of a millisecond each: the edit that
+            // crashes the reader is rare, and only the count finds it.
             for (var i = 0; i < 4000; i++)
             {
                 var mangled = Mangle(source, random);

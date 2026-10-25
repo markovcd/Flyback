@@ -360,7 +360,8 @@ public class QuantiserTests
     /// <remarks>
     /// The audio program and not a probe, which is rooted at the screen: half of what
     /// this preset does about pitch is a Sample &amp; Hold, and a Hold on the video
-    /// path is a wire, so a probe would show the melody the picture draws.
+    /// path is a wire, so a probe would show the melody the picture draws. Lowered to
+    /// IL as the editor plays it, because the tests step it for tens of seconds.
     /// </remarks>
     private static CompiledPatch Audible(string typeId)
     {
@@ -371,7 +372,10 @@ public class QuantiserTests
         sink.InputValues[NodeCatalog.OutputVolumePort] = 1f;
         patch.Connect(node.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
 
-        return patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
+        var program = patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
+        program.Attach(IlProgram.Compile(program, IlParts.Whole));
+
+        return program;
     }
 
     /// <summary>
@@ -397,7 +401,7 @@ public class QuantiserTests
         // Stepped in order, because the Hold in front of it remembers.
         for (var i = 0; i < rate * 30; i++)
         {
-            program.Evaluate(0f, 0f, (float)(i / (double)rate), registers, default, memory);
+            program.Il!.Evaluate(0f, 0f, (float)(i / (double)rate), registers, default, memory);
             played.Add((float)registers[program.OutputBase]);
         }
 
@@ -457,9 +461,9 @@ public class QuantiserTests
         {
             var t = (float)(i / (double)rate);
 
-            gate.Evaluate(0f, 0f, t, gateRegisters, default, gateMemory);
-            level.Evaluate(0f, 0f, t, levelRegisters, default, levelMemory);
-            pitch.Evaluate(0f, 0f, t, pitchRegisters, default, pitchMemory);
+            gate.Il!.Evaluate(0f, 0f, t, gateRegisters, default, gateMemory);
+            level.Il!.Evaluate(0f, 0f, t, levelRegisters, default, levelMemory);
+            pitch.Il!.Evaluate(0f, 0f, t, pitchRegisters, default, pitchMemory);
 
             var note = pitchRegisters[pitch.OutputBase];
             var open = gateRegisters[gate.OutputBase] >= 0.5;

@@ -193,13 +193,15 @@ public class MixerTests
     /// </summary>
     /// <remarks>
     /// Twelve seconds because the faders are the slow part — the quickest is a sixth
-    /// of a hertz, so anything shorter never sees the four near the top together.
+    /// of a hertz, so anything shorter never sees the four near the top together. Played
+    /// through IL, as the editor plays it, which is four times quicker than the interpreter.
     /// </remarks>
     [Fact]
     public void The_preset_that_demonstrates_it_stays_inside_what_the_speakers_carry()
     {
         var patch = Presets.All.Single(p => p.Name == "Four voices").Build(NodeCatalog.BuiltIn);
         var program = patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
+        program.Attach(IlProgram.Compile(program, IlParts.Whole));
 
         var buffer = new float[GlobalConstants.SampleRate * 12 * NodeCatalog.AudioChannels];
         new AudioRenderer().Render(program, buffer);

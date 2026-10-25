@@ -160,7 +160,7 @@ public class SpeakTests
 
         b.Wire(speak, output, sink, NodeCatalog.OutputLeftPort);
 
-        return Interpreted.Run(b.Patch, new float[Rate * seconds]);
+        return Interpreted.Run(b.Patch, new float[Rate * seconds], lowered: true);
     }
 
     /// <summary>

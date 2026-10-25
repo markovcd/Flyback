@@ -20,6 +20,17 @@ namespace Flyback.Editor.Tests.Decide;
 /// <summary>The module list finds a module by what a phrase means, when what it spells finds nothing.</summary>
 public sealed class PaletteByMeaningTests : EditorTest
 {
+    private readonly TimeSpan pause = ModulePalette.Pause;
+
+    /// <summary>A short pause before asking: waiting for typing to stop is not what these check.</summary>
+    public PaletteByMeaningTests() => ModulePalette.Pause = TimeSpan.FromMilliseconds(20);
+
+    public override void Dispose()
+    {
+        ModulePalette.Pause = pause;
+        base.Dispose();
+    }
+
     private MainWindow Opened(IDecisionModel? model) => Open(setup: new EditorSetup
     {
         Plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, [], decisionModels: model is null ? [] : [model]),
