@@ -70,7 +70,7 @@ public sealed class Binder
         lines = new PatchLines(patch, this.issues);
         boxes = new Boxes(patch, this.issues, sourceSites);
 
-        moduleNames = new ModuleNames(modules);
+        moduleNames = ModuleNames.For(modules);
     }
 
     /// <summary>

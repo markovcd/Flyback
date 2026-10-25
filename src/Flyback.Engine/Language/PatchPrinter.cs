@@ -50,8 +50,12 @@ public static class PatchPrinter
     public static string Print(
         Patch patch,
         ModuleCatalog? against = null,
-        IReadOnlyDictionary<Guid, string>? called = null) =>
-        Written(patch, against, called).Source;
+        IReadOnlyDictionary<Guid, string>? called = null)
+    {
+        var modules = against ?? NodeCatalog.Current;
+
+        return new Writer(patch, modules, PatchPrintPlan.Create(patch, modules, called)).Run().Source;
+    }
 
     /// <summary>The same, with where in the text each module ended up.</summary>
     public static Printing Written(
@@ -267,7 +271,7 @@ public static class PatchPrinter
     {
         var word = Usable(label) ? label : Spelled(label);
 
-        return new ModuleNames(against ?? NodeCatalog.Current).Knows(word) ? word + "_knob" : word;
+        return ModuleNames.For(against ?? NodeCatalog.Current).Knows(word) ? word + "_knob" : word;
     }
 
     /// <summary>
@@ -316,7 +320,7 @@ public static class PatchPrinter
     /// </summary>
     private sealed class Writer(Patch patch, ModuleCatalog modules, PatchPrintPlan plan)
     {
-        private readonly ModuleNames names = new(modules);
+        private readonly ModuleNames names = ModuleNames.For(modules);
 
         private readonly List<Part> statements = [];
         private readonly HashSet<Guid> done = [];

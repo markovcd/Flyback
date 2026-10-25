@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Flyback.Core.Graph;
 
 namespace Flyback.Engine.Language;
@@ -8,11 +9,16 @@ namespace Flyback.Engine.Language;
 /// </summary>
 internal sealed class ModuleNames
 {
+    private static readonly ConditionalWeakTable<ModuleCatalog, ModuleNames> Known = new();
+
     private readonly ModuleCatalog modules;
     private readonly Dictionary<string, NodeDef> byShortName = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> ambiguous = new(StringComparer.OrdinalIgnoreCase);
 
-    public ModuleNames(ModuleCatalog modules)
+    /// <summary>The names for <paramref name="modules"/>, worked out once per catalog, which never changes.</summary>
+    public static ModuleNames For(ModuleCatalog modules) => Known.GetValue(modules, catalog => new ModuleNames(catalog));
+
+    private ModuleNames(ModuleCatalog modules)
     {
         this.modules = modules;
 

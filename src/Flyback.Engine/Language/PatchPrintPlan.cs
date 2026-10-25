@@ -33,7 +33,7 @@ internal sealed class PatchPrintPlan(
         // Panel words win collisions, because modules following those knobs
         // need to use the same word.
         var panel = new Dictionary<Guid, string>();
-        var moduleNames = new ModuleNames(modules);
+        var moduleNames = ModuleNames.For(modules);
 
         foreach (var control in patch.Controls ?? [])
         {
