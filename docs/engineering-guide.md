@@ -261,7 +261,8 @@ The plugins' presets are the larger shapes, and `Flyback.Plugins.Tests` holds th
 to the same: `PluginPresetIlTests`, `PluginPresetGlslTests` and
 `PluginPresetScriptTests` run `IlParity` and `ScriptRun`, which it compiles in from
 `Flyback.Core.Tests/Compile`. `Cli.Tests/GpuRenderTests` draws every engine preset
-on the GPU against the processor.
+on the GPU against the processor, and `MetalRenderTests` draws the same through Metal
+on a Mac (ADR-0214). `PluginPresetMetalTests` lowers every plugin preset to Metal.
 
 A new opcode fails all of these until it exists everywhere.
 

@@ -12,7 +12,7 @@ namespace Flyback.Gpu;
 /// <remarks>
 /// Every call must come from the thread that opened it, where the context is current.
 /// </remarks>
-internal sealed class HeadlessRenderer : IFrameRenderer, IDisposable
+internal sealed class HeadlessRenderer : IHeadlessRenderer
 {
     private readonly HeadlessContext context;
     private readonly GpuFrameRenderer renderer;

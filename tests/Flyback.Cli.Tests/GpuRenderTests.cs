@@ -126,12 +126,15 @@ public class GpuRenderTests
         }
     }
 
-    private static void Agrees(Patch patch) => Agrees(patch.CompileForVideo(NodeCatalog.BuiltIn).Program);
+    /// <summary>The renderer under test, or null with <paramref name="why"/> saying what this machine lacks.</summary>
+    private protected virtual IHeadlessRenderer? Open(out string? why) => HeadlessRenderer.Open(out why);
+
+    private void Agrees(Patch patch) => Agrees(patch.CompileForVideo(NodeCatalog.BuiltIn).Program);
 
     /// <summary>Four frames a thirtieth apart on each, so a loop has three frames behind it to disagree about.</summary>
-    private static void Agrees(CompiledPatch program)
+    private void Agrees(CompiledPatch program)
     {
-        using var gpu = HeadlessRenderer.Open(out var why);
+        using var gpu = Open(out var why);
         TestCategory.Gpu.Require(gpu is not null, $"No GPU here. {why}");
 
         IlCompiler.CompileOnce(program, IlParts.Staged);
