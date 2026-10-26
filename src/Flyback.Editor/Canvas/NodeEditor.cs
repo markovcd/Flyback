@@ -136,6 +136,17 @@ internal sealed class NodeEditor
     /// <summary>The graph-to-control matrix, for a test asking where a socket ended up on the control.</summary>
     internal Matrix GraphToScreen => View.GraphToScreen;
 
+    /// <summary>Whether the patch is drawn over the picture, for live patching.</summary>
+    internal bool SeeThrough
+    {
+        get => painter.SeeThrough;
+        set
+        {
+            painter.SeeThrough = value;
+            InvalidateVisual();
+        }
+    }
+
     public override void Render(DrawingContext context) => painter.Render(context);
 
     protected override void OnSizeChanged(SizeChangedEventArgs e)

@@ -41,17 +41,32 @@ internal sealed class CanvasPainter(
 
     private Patch Patch => history.Patch;
 
+    /// <summary>How opaque the patch is drawn while it stands over the picture.</summary>
+    internal const double GlassOpacity = 0.78;
+
+    /// <summary>Whether the patch is drawn over the picture: no ground, no grid, and the rest see-through.</summary>
+    internal bool SeeThrough { get; set; }
+
     public void Render(DrawingContext context)
     {
         // Two grounds: the canvas is a sheet of finite size, and past it is whatever
         // the bounded pan lets you see a little of, which is what makes the edge an
         // edge rather than a stop to walk into.
-        context.FillRectangle(Beyond, new Rect(view.Size));
-        context.FillRectangle(Background, view.OnScreen(Viewport.CanvasBounds));
+        if (!SeeThrough)
+        {
+            context.FillRectangle(Beyond, new Rect(view.Size));
+            context.FillRectangle(Background, view.OnScreen(Viewport.CanvasBounds));
+        }
+        else
+        {
+            // Clear, but there: an empty patch of picture still pans and draws a marquee.
+            context.FillRectangle(Brushes.Transparent, new Rect(view.Size));
+        }
 
+        using (context.PushOpacity(SeeThrough ? GlassOpacity : 1))
         using (context.PushTransform(view.GraphToScreen))
         {
-            DrawGrid(context);
+            if (!SeeThrough) DrawGrid(context);
 
             // The wires of modules being dragged are drawn after the modules, so
             // nothing the block is pulled across hides where it is still patched.
@@ -97,7 +112,7 @@ internal sealed class CanvasPainter(
 
         // Outside the transform, so a hairline stays a hairline and the dashes keep
         // their spacing at any zoom. Neither is part of the patch.
-        DrawEdge(context);
+        if (!SeeThrough) DrawEdge(context);
         gestures.DrawMarquee(context);
 
         KeepMoving();

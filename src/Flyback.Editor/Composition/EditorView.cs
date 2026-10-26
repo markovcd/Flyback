@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Flyback.Editor.Bars;
@@ -37,6 +38,7 @@ internal sealed class EditorView : Border
     private readonly Starting starting;
     private readonly MidiHub midi;
     private readonly FullScreenPreview fullScreen;
+    private readonly LivePatching live;
     private readonly TransportControls transport;
     private readonly Reactions reactions;
     private readonly WindowHolder holder;
@@ -57,6 +59,7 @@ internal sealed class EditorView : Border
         Reactions reactions,
         Starting starting,
         FullScreenPreview fullScreen,
+        LivePatching live,
         TransportControls transport,
         ShellLayout shell,
         IDialog dialog,
@@ -75,6 +78,7 @@ internal sealed class EditorView : Border
         this.randomizer = randomizer;
         this.presets = presets;
         this.fullScreen = fullScreen;
+        this.live = live;
         this.transport = transport;
         this.dialog = dialog;
         this.reactions = reactions;
@@ -106,6 +110,9 @@ internal sealed class EditorView : Border
         // On the top level, so a key reaches them whatever has the focus, or nothing does.
         top.AddHandler(KeyDownEvent, OnKeyDown);
         top.AddHandler(KeyUpEvent, OnKeyUp);
+
+        // Tunneling, since moving the focus claims Tab on the way back up.
+        top.AddHandler(KeyDownEvent, OnTab, RoutingStrategies.Tunnel);
 
         touchTips.Attach(top);
 
@@ -176,6 +183,14 @@ internal sealed class EditorView : Border
         // A dialog lets the keys typed into its own boxes through unhandled, so
         // whatever it is over must not act on them.
         if (e.Handled || dialog.IsShowing) return;
+
+        // Shift+F11 goes straight to the modules over the picture, where F11 alone gives the picture the window.
+        if (e is { Key: Key.F11, KeyModifiers: KeyModifiers.Shift })
+        {
+            live.Toggle();
+            e.Handled = true;
+            return;
+        }
 
         // Before the modifier check, because Escape carries none. Only while the
         // picture is away: everywhere else Escape belongs to the module filter,
@@ -293,6 +308,14 @@ internal sealed class EditorView : Border
         }
     }
 
+    /// <summary>Tab over a full-screen picture puts the modules over it or takes them off.</summary>
+    private void OnTab(object? sender, KeyEventArgs e)
+    {
+        if (e.Handled || e.Key != Key.Tab || dialog.IsShowing || (e.KeyModifiers & ~KeyModifiers.Shift) != 0) return;
+
+        if (live.ToggleModules()) e.Handled = true;
+    }
+
     /// <summary>Does what a stage key asks of the picture while it is away, and says whether it did.</summary>
     /// <remarks>
     /// Space pauses only while the picture has the whole window: with it on another
@@ -304,6 +327,10 @@ internal sealed class EditorView : Border
         {
             case StageKey.Leave or StageKey.FullScreen when fullScreen.IsAway:
                 fullScreen.Leave();
+                return true;
+
+            case StageKey.FullScreen:
+                fullScreen.Toggle();
                 return true;
 
             case StageKey.Stats when fullScreen.IsAway:

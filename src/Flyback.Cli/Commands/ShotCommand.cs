@@ -68,6 +68,11 @@ internal static class ShotCommand
             Description = "Open the assistant's column, showing the conversation the patch carries.",
         };
 
+        var live = new Option<bool>("--live")
+        {
+            Description = "Give the picture the window with the modules over it, as live patching (Shift+F11) shows them.",
+        };
+
         var editor = new Option<FileInfo>("--editor")
         {
             Description = "The editor program to draw with, in place of the one beside this program. A dev build keeps it in src/Flyback.Editor.Desktop/bin.",
@@ -75,7 +80,7 @@ internal static class ShotCommand
 
         var command = new Command("shot", "Draw the editor's window with a patch open, at a chosen second, into a PNG.")
         {
-            given.Patch, given.Preset, given.Presets, output, at, size, select, canvas, crop, measure, assistant, editor,
+            given.Patch, given.Preset, given.Presets, output, at, size, select, canvas, crop, measure, assistant, live, editor,
         };
 
         command.SetAction(result =>
@@ -123,6 +128,7 @@ internal static class ShotCommand
             if (result.GetValue(crop)) arguments.Add("--crop");
             if (result.GetValue(measure)) arguments.Add("--measure");
             if (result.GetValue(assistant)) arguments.Add("--assistant");
+            if (result.GetValue(live)) arguments.Add("--live");
 
             arguments.AddRange(file is not null ? [file.FullName] : ["--preset", named!]);
 

@@ -1177,6 +1177,15 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     /// <summary>Whether the picture has the whole window.</summary>
     public bool PictureFullScreen => ReadWindow(_ => Service<FullScreenPreview>().IsFullScreen);
 
+    /// <summary>Whether the modules stand over the full-screen picture, drawn so the picture shows through.</summary>
+    public bool ModulesOverPicture => ReadWindow(open =>
+        Service<LivePatching>().IsOn && open.GetVisualDescendants().OfType<NodeEditor>().Single() is { IsEffectivelyVisible: true, SeeThrough: true });
+
+    /// <summary>Whether the canvas is showing in its own pane, drawn on its own ground.</summary>
+    public bool CanvasInItsPane => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<NodeEditor>().Single() is { IsEffectivelyVisible: true, SeeThrough: false } canvas
+        && canvas.GetVisualParent() != Service<FullScreenPreview>().Columns);
+
     /// <summary>Double-clicks the picture, which gives it the whole window.</summary>
     /// <remarks>
     /// The tap and the double tap a double-click is recognized as, raised on the picture.

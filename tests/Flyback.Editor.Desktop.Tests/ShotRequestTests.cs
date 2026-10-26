@@ -22,6 +22,13 @@ public sealed class ShotRequestTests
         (request.Width, request.Height).ShouldBe((640, 360));
     }
 
+    [Fact]
+    public void A_shot_can_ask_for_the_modules_over_the_picture()
+    {
+        Parse("--at", "1", "--size", "640x360").Request.ShouldNotBeNull().Live.ShouldBeFalse();
+        Parse("--at", "1", "--size", "640x360", "--live").Request.ShouldNotBeNull().Live.ShouldBeTrue();
+    }
+
     /// <summary>A second that never comes would leave the run-up waiting a minute for nothing.</summary>
     [Theory]
     [InlineData("Infinity")]

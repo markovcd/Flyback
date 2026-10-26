@@ -40,6 +40,8 @@ internal static class InspectorHelp
             Row("Pause / play", "Pauses the patch, and plays it on.", "Ctrl+P"),
             Row("Knob panel", "Shows the knobs under the canvas, and hides them again.", "Ctrl+K"),
             Row("Randomize the knobs", "Throws the die at the end of the panel.", "Ctrl+Shift+K"),
+            Row("Full-screen picture", "Also a double-click on the picture. Esc gives the window back.", "F11"),
+            Row("Live patching", "The modules over the full-screen picture, fading while untouched. Tab over a full-screen picture puts them on or off.", "Shift+F11"),
             .. inPage ? [] : new[]
             {
                 Row("Measure", "Runs the patch for a few seconds and pins what each output carries beside it. Again hides them.", "Ctrl+Shift+M"),

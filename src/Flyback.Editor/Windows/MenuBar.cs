@@ -51,7 +51,7 @@ internal sealed class MenuBar
     /// <summary>The bar along the top of the window on Windows and Linux.</summary>
     public NativeMenuBar Bar { get; } = new() { Name = "menuBar", IsVisible = false };
 
-    public MenuBar(Toolbar toolbar, StatusBar status, FullScreenPreview fullScreen, Reactions reactions, WindowHolder holder, IDialog dialog, CanvasSection settings)
+    public MenuBar(Toolbar toolbar, StatusBar status, FullScreenPreview fullScreen, LivePatching live, Reactions reactions, WindowHolder holder, IDialog dialog, CanvasSection settings)
     {
         this.holder = holder;
         this.dialog = dialog;
@@ -102,7 +102,8 @@ internal sealed class MenuBar
             Following(toolbar.Assistant, Toggling("Assistant", toolbar.Assistant)),
             new NativeMenuItemSeparator(),
             Pressing("Bring the Whole Patch into View", Key.F),
-            Doing("Full-Screen Picture", fullScreen.Toggle, Mac ? new KeyGesture(Key.F, KeyModifiers.Meta | KeyModifiers.Control) : null)));
+            Doing("Full-Screen Picture", fullScreen.Toggle, Mac ? new KeyGesture(Key.F, KeyModifiers.Meta | KeyModifiers.Control) : null),
+            Doing("Live Patching", live.Toggle)));
 
         Menu.Add(Titled("Play",
             Pressing("Pause or Play", Key.P),

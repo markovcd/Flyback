@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -13,6 +14,7 @@ using Flyback.Editor.Hubs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
+using Flyback.Editor.Windows;
 using Flyback.Host;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
@@ -103,6 +105,8 @@ internal static class Shot
             var playback = provider.GetRequiredService<Playback>();
             await Until(() => !playback.Starting, "the patch to compile", window);
 
+            if (request.Live) GoLive(provider, window, request);
+
             var canvas = provider.GetRequiredService<NodeEditor>();
             canvas.View.FrameAll();
             Settle(window);
@@ -137,6 +141,20 @@ internal static class Shot
         {
             window.CloseWithoutAsking();
         }
+    }
+
+    /// <summary>
+    /// Puts the modules over the picture, at the size asked for rather than the screen's:
+    /// live patching takes the screen, which a shot leaves alone.
+    /// </summary>
+    private static void GoLive(ServiceProvider provider, MainWindow window, ShotRequest request)
+    {
+        provider.GetRequiredService<LivePatching>().Toggle();
+
+        window.WindowState = WindowState.Normal;
+        window.Width = request.Width;
+        window.Height = request.Height;
+        Settle(window);
     }
 
     /// <summary>

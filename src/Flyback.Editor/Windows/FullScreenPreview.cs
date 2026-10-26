@@ -79,6 +79,9 @@ internal sealed class FullScreenPreview(
     /// <summary>Whether the preview currently has the window.</summary>
     public bool IsFullScreen { get; private set; }
 
+    /// <summary>Raised as the preview gives the window back, before the shell is put back round it.</summary>
+    public event Action? Leaving;
+
     /// <summary>
     /// A track of no width at all, for the columns and rows the preview is not in.
     /// </summary>
@@ -190,6 +193,8 @@ internal sealed class FullScreenPreview(
 
         // A page has no window state to change: the preview takes the page.
         var owner = holder.Instance as Window;
+
+        if (!full) Leaving?.Invoke();
 
         IsFullScreen = full;
         knobs.OverPicture = full;

@@ -140,4 +140,7 @@ public enum Used
 
     /// <summary>The knobs of the selected modules were rolled.</summary>
     RolledModule,
+
+    /// <summary>The modules were put over a full-screen picture, to patch live.</summary>
+    LivePatching,
 }
