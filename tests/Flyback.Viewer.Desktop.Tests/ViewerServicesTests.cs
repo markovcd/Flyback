@@ -3,10 +3,12 @@ using Avalonia.Headless.XUnit;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
+using Flyback.Host;
 using Flyback.Ui.Controls;
 using Flyback.Ui.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using Xunit;
 
 namespace Flyback.Viewer.Desktop.Tests;
 
@@ -45,6 +47,21 @@ public class ViewerServicesTests : UiTest
 
         window.Player.ShouldBeSameAs(provider.GetRequiredService<ViewerPlayer>());
         window.Preview.ShouldNotBeNull().ShouldBeSameAs(provider.GetService<PreviewHost>());
+    }
+
+    /// <summary>On a Mac the viewer draws through the driver the editor's settings chose, as the editor does.</summary>
+    [AvaloniaTheory]
+    [InlineData(GraphicsDriver.OpenGl, typeof(GpuPreviewSurface))]
+    [InlineData(GraphicsDriver.Metal, typeof(MetalPreviewSurface))]
+    public void On_a_Mac_the_surface_is_the_settings_driver(GraphicsDriver driver, Type surface)
+    {
+        Assert.SkipUnless(OperatingSystem.IsMacOS(), "Only a Mac chooses between Metal and OpenGL.");
+
+        var launch = Launch(Options()) with { Settings = new OutputSettings { Graphics = driver } };
+
+        new ServiceCollection().AddViewer(launch).BuildServiceProvider()
+            .GetRequiredService<PreviewHost>()
+            .Child.ShouldBeOfType(surface);
     }
 
     [AvaloniaFact]

@@ -70,7 +70,10 @@ public sealed class MetalPreviewSurface : PreviewSurface, IGpuPreview, ICaptured
             set => Volatile.Write(ref field, value);
         }
 
-        public bool Opened => Volatile.Read(ref renderer) is not null;
+        /// <summary>Whether a device has opened, which stays said once the surface is retired, for a report written after.</summary>
+        public bool Opened => Volatile.Read(ref opened);
+
+        private bool opened;
 
         /// <summary>Asked from the UI thread; done by the next frame, on the thread that draws it.</summary>
         public void Rewind() => rewind = true;
@@ -89,10 +92,11 @@ public sealed class MetalPreviewSurface : PreviewSurface, IGpuPreview, ICaptured
             if (renderer is null)
             {
                 // A frame late, so the GPU draws the next while the window shows this one.
-                var opened = MetalHeadlessRenderer.Open(out var why, overlapped: true)
+                var device = MetalHeadlessRenderer.Open(out var why, overlapped: true)
                     ?? throw new InvalidOperationException(why ?? "Metal would not open.");
 
-                Volatile.Write(ref renderer, opened);
+                renderer = device;
+                Volatile.Write(ref opened, true);
             }
 
             if (rewind)

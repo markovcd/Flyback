@@ -1,6 +1,7 @@
 using Flyback.Engine.Compile;
 using Flyback.Plugins.Audio;
 using Flyback.Ui.Audio;
+using Flyback.Host;
 using Flyback.Ui.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -55,7 +56,7 @@ internal static class ViewerServices
         services.AddSingleton(launch.Device is { } device ? new AudioSetup(device, launch.Output) : new AudioSetup(new SilentAudioDevice()));
 
         // A surface only for a picture there is a window to show, since one in the tree renders on a timer.
-        services.AddSingleton(_ => launch.Pictured ? new PreviewHost() : null!);
+        services.AddSingleton(_ => launch.Pictured ? Preview(launch.Settings.DriverHere) : null!);
 
         services.AddTransport();
 
@@ -78,5 +79,14 @@ internal static class ViewerServices
         replace?.Invoke(services);
 
         return services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
+    }
+
+    /// <summary>A preview drawing through the driver the editor's settings chose, as the editor's does.</summary>
+    private static PreviewHost Preview(GraphicsDriver driver)
+    {
+        var preview = new PreviewHost();
+        preview.Draw(driver);
+
+        return preview;
     }
 }
