@@ -114,6 +114,15 @@ internal sealed class EditorView : Border
         // Tunneling, since moving the focus claims Tab on the way back up.
         top.AddHandler(KeyDownEvent, OnLiveKey, RoutingStrategies.Tunnel);
 
+        // A phone's Back gives the window back from the full-screen picture, rather than closing the app.
+        top.BackRequested += (_, e) =>
+        {
+            if (!fullScreen.IsAway) return;
+
+            fullScreen.Leave();
+            e.Handled = true;
+        };
+
         touchTips.Attach(top);
 
         // Live from here rather than from Loaded: a drop arriving before the

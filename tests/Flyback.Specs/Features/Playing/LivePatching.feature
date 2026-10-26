@@ -4,7 +4,9 @@ Feature: A patch can be played live with itself over the picture
   them, and fade away while nobody touches them, or F2 puts the patch's text there to
   be live-coded, which fades the same way. Settings → Picture says how solid each is
   and how long it waits. Tab over a full-screen picture puts the modules on or takes them off,
-  Shift+F11 goes straight there, and Escape gives the editor back as it was.
+  Shift+F11 goes straight there, and Escape gives the editor back as it was. With no
+  keyboard, the transport row's Live button goes there, and buttons on the transport over the
+  picture swap the modules for the text and give the editor back.
 
   Scenario: Shift+F11 puts the modules over a picture with the whole window
     Given a rainbow across the screen
@@ -58,6 +60,16 @@ Feature: A patch can be played live with itself over the picture
     Then the patch over the picture has faded
     When a key is typed in the text
     Then the patch over the picture is back
+
+  Scenario: Live patching is played with no keyboard
+    Given a rainbow across the screen
+    And the patch is open in the editor
+    When the Live button is pressed
+    Then the modules stand over the picture
+    When the text button over the picture is pressed
+    Then the patch's text stands over the picture
+    When the leave button over the picture is pressed
+    Then the picture does not have the whole window
 
   Scenario: Over the picture a module's fill lets it through until one of its values is in hand
     Given a sine on its own

@@ -45,7 +45,8 @@ internal sealed class ShellLayout(
     WindowLayoutKeeper layoutKeeper,
     EditorHost host,
     LastPress lastPress,
-    PictureAside aside)
+    PictureAside aside,
+    LivePatching live)
     : IReactTo<PatchCompiled>,
         IReactTo<GestureFinished>,
         IReactTo<KnobsWanted>,
@@ -484,6 +485,7 @@ internal sealed class ShellLayout(
         overlay.RewindClicked += playback.RewindPressed;
         var stats = new StatsOverlay(preview, audio, () => playback.HasSound);
         transport.Register(overlay, stats);
+        live.Attach(overlay);
         row.Seek.Drive(overlay);
         TransportOverlay.Lay(settings.Current.Transport, overlay, knobs.Stage);
         grid.Children.Add(previewBox);

@@ -27,8 +27,8 @@ public sealed class TransportOverlay : TuckedAway
     /// <summary>How wide the strip is over a picture with room for it.</summary>
     private const double Wide = 360;
 
-    /// <summary>What the buttons beside the strip take.</summary>
-    private const double Beside = 4 * ToolSize + 4 * Gap + 12;
+    /// <summary>What the buttons beside the strip take: the four of the transport, and the live ones when shown.</summary>
+    private double Beside => (4 + (Live ? 3 : 0)) * (ToolSize + Gap) + 12;
 
     /// <summary>A switch that is on, in the color the knobs' travel and the toolbar's strip are.</summary>
     private static readonly IBrush On = new ImmutableSolidColorBrush(Colors.Attention);
@@ -39,6 +39,9 @@ public sealed class TransportOverlay : TuckedAway
     private readonly Button pauseButton;
     private readonly Button muteButton;
     private readonly Button loopButton;
+    private readonly Button patchButton;
+    private readonly Button textButton;
+    private readonly Button leaveButton;
 
     public TransportOverlay()
         : this(new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gap })
@@ -56,6 +59,13 @@ public sealed class TransportOverlay : TuckedAway
         var rewind = Tool(Glyphs.Rewind(), "Back to the start", () => RewindClicked?.Invoke());
         loopButton = Tool(Glyphs.Loop(), "Play the patch's length round and round", () => LoopClicked?.Invoke());
         muteButton = Tool(Glyphs.Speaker(), "Sound on or off", () => MuteClicked?.Invoke());
+        patchButton = Tool(Glyphs.Live(), "The patch over the picture, or the picture alone  (Tab)", () => PatchClicked?.Invoke());
+        textButton = Tool(Glyphs.Code(), "The patch as modules or as text  (F2). Text is best with a keyboard.", () => TextClicked?.Invoke());
+        leaveButton = Tool(Glyphs.Cross(), "Give the window back  (Esc)", () => LeaveClicked?.Invoke());
+        patchButton.Name = "livePatch";
+        textButton.Name = "liveText";
+        leaveButton.Name = "liveLeave";
+        patchButton.IsVisible = textButton.IsVisible = leaveButton.IsVisible = false;
 
         // After the base's hover and press styles, so a switch that is on stays lit under the pointer.
         var engaged = new Style(x => x
@@ -77,6 +87,9 @@ public sealed class TransportOverlay : TuckedAway
         row.Children.Add(Track);
         row.Children.Add(loopButton);
         row.Children.Add(muteButton);
+        row.Children.Add(patchButton);
+        row.Children.Add(textButton);
+        row.Children.Add(leaveButton);
 
         Margin = new Thickness(Inset);
 
@@ -107,6 +120,40 @@ public sealed class TransportOverlay : TuckedAway
 
     /// <summary>Raised when the pause button is pressed; the owner flips <see cref="Paused"/>.</summary>
     public event Action? PauseClicked;
+
+    /// <summary>The patch button was pressed: the patch over the picture, or taken off it.</summary>
+    public event Action? PatchClicked;
+
+    /// <summary>The text button was pressed: the patch as text, or as modules again.</summary>
+    public event Action? TextClicked;
+
+    /// <summary>The leave button was pressed: the window given back.</summary>
+    public event Action? LeaveClicked;
+
+    /// <summary>Whether the live patching buttons are on the strip, for a picture with a patch to put over it.</summary>
+    public bool Live
+    {
+        get => leaveButton.IsVisible;
+        set
+        {
+            patchButton.IsVisible = textButton.IsVisible = leaveButton.IsVisible = value;
+            InvalidateMeasure();
+        }
+    }
+
+    /// <summary>Whether the patch is over the picture, which lights the patch button.</summary>
+    public bool PatchOver
+    {
+        get => patchButton.Classes.Contains(Engaged);
+        set => patchButton.Classes.Set(Engaged, value);
+    }
+
+    /// <summary>Whether the patch is shown as text, which lights the text button.</summary>
+    public bool Coding
+    {
+        get => textButton.Classes.Contains(Engaged);
+        set => textButton.Classes.Set(Engaged, value);
+    }
 
     /// <summary>Raised when the rewind button is pressed.</summary>
     public event Action? RewindClicked;

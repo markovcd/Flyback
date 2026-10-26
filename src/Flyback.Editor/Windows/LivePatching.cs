@@ -1,10 +1,16 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Hubs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Statistics;
 using Flyback.Host;
+using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Windows;
 
@@ -19,7 +25,7 @@ namespace Flyback.Editor.Windows;
 /// free. The transport and the knobs over the picture stay above it. F2 swaps the view
 /// that is lifted, as it swaps the views in their pane.
 /// </remarks>
-internal sealed class LivePatching : IReactTo<ViewChanged>
+internal sealed class LivePatching : IReactTo<ViewChanged>, IReactTo<LiveAsked>
 {
     private readonly FullScreenPreview fullScreen;
     private readonly NodeEditor editor;
@@ -27,6 +33,24 @@ internal sealed class LivePatching : IReactTo<ViewChanged>
     private readonly Document document;
     private readonly Usage usage;
     private readonly IdleFade fade;
+
+    private readonly Border keyboardHint = new()
+    {
+        Name = "keyboardHint",
+        IsVisible = false,
+        IsHitTestVisible = false,
+        HorizontalAlignment = HorizontalAlignment.Center,
+        VerticalAlignment = VerticalAlignment.Center,
+        Padding = new Thickness(14, 8),
+        CornerRadius = new CornerRadius(6),
+        Background = new SolidColorBrush(Avalonia.Media.Colors.Black, 0.7),
+        Child = new TextBlock { Text = "Text is best with a keyboard connected.", Foreground = Brushes.White, FontSize = 15 },
+    };
+
+    private static readonly TimeSpan HintFor = TimeSpan.FromSeconds(4);
+
+    private TransportOverlay? overlay;
+    private bool keySeen;
 
     private Control? lifted;
     private Panel? home;
@@ -50,6 +74,45 @@ internal sealed class LivePatching : IReactTo<ViewChanged>
 
     /// <summary>Whether it is the patch's text that is over the picture, which takes the keys typed.</summary>
     public bool Coding => lifted == source;
+
+    /// <summary>Whether the line saying text wants a keyboard is showing: text over the picture, and no key pressed yet.</summary>
+    internal bool KeyboardHinted => keyboardHint.IsVisible;
+
+    /// <summary>
+    /// Puts the live buttons on the transport over the window's picture, which is how
+    /// live patching is driven with no keyboard, and listens for the first key pressed.
+    /// </summary>
+    public void Attach(TransportOverlay transport)
+    {
+        overlay = transport;
+        transport.Live = true;
+        transport.PatchClicked += () => ShowPatch(!IsOn);
+        transport.TextClicked += () =>
+        {
+            document.ShowCode(!document.ShowingCode);
+            ShowPatch(true);
+        };
+        transport.LeaveClicked += fullScreen.Leave;
+        transport.AttachedToVisualTree += (_, _) =>
+            TopLevel.GetTopLevel(transport)?.AddHandler(InputElement.KeyDownEvent, KeyPressed, RoutingStrategies.Tunnel, handledEventsToo: true);
+
+        Sync();
+    }
+
+    private void KeyPressed(object? sender, KeyEventArgs e)
+    {
+        keySeen = true;
+        keyboardHint.IsVisible = false;
+    }
+
+    /// <summary>Lights the live buttons as the patch is shown.</summary>
+    private void Sync()
+    {
+        if (overlay is null) return;
+
+        overlay.PatchOver = IsOn;
+        overlay.Coding = Coding;
+    }
 
     /// <summary>The fading of the patch while nothing touches it.</summary>
     internal IdleFade Fade => fade;
@@ -97,6 +160,12 @@ internal sealed class LivePatching : IReactTo<ViewChanged>
 
         ShowPatch(!IsOn);
         return true;
+    }
+
+    public Task On(LiveAsked notice)
+    {
+        Toggle();
+        return Task.CompletedTask;
     }
 
     public Task On(ViewChanged notice)
@@ -157,8 +226,21 @@ internal sealed class LivePatching : IReactTo<ViewChanged>
             source.SeeThrough = true;
         }
 
+        if (view == source && !keySeen)
+        {
+            Grid.SetColumn(keyboardHint, Grid.GetColumn(picture));
+            Grid.SetRow(keyboardHint, Grid.GetRow(picture));
+            Grid.SetRowSpan(keyboardHint, Grid.GetRowSpan(picture));
+            columns.Children.Insert(columns.Children.IndexOf(view) + 1, keyboardHint);
+            keyboardHint.IsVisible = true;
+
+            // A hint, not a wall: gone after a few seconds even with no keyboard to press.
+            DispatcherTimer.RunOnce(() => keyboardHint.IsVisible = false, HintFor);
+        }
+
         StartFade(view);
         view.Focus();
+        Sync();
     }
 
     private void StartFade(Control view)
@@ -185,5 +267,9 @@ internal sealed class LivePatching : IReactTo<ViewChanged>
 
         lifted = null;
         home = null;
+
+        keyboardHint.IsVisible = false;
+        (keyboardHint.Parent as Panel)?.Children.Remove(keyboardHint);
+        Sync();
     }
 }

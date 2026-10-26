@@ -308,6 +308,10 @@ internal static class Glyphs
     /// <summary>A box with an arrow leaving it: the patch taken to the viewer, in a tab of its own.</summary>
     public static Control Viewer() => Stroked("M9,2.5 L13.5,2.5 L13.5,7 M13.5,2.5 L7.5,8.5 M12,9.5 L12,13.5 L2.5,13.5 L2.5,4 L6.5,4");
 
+    /// <summary>A screen with two modules wired inside it: the patch played over the picture.</summary>
+    public static Control Live() => Stroked(
+        "M2,3 L14,3 L14,13 L2,13 Z M4.5,5.5 L7,5.5 L7,8 L4.5,8 Z M9,8 L11.5,8 L11.5,10.5 L9,10.5 Z M7,6.75 L9,9.25");
+
     /// <summary>A bookmark — a group put by, to be added again later.</summary>
     public static Control Keep() => Stroked("M4.5,2.5 L11.5,2.5 L11.5,13.5 L8,10.5 L4.5,13.5 Z");
 

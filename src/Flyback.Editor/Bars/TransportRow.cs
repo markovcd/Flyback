@@ -12,7 +12,7 @@ namespace Flyback.Editor.Bars;
 
 /// <summary>
 /// The row along the foot of the window that plays the patch: pause, rewind, where the
-/// clock is, the seek bar the width of the window, the length, loop and Volume.
+/// clock is, the seek bar the width of the window, the length, loop and Volume, and live patching.
 /// Every target in it is <see cref="Reach"/> square, for a finger as much as a mouse.
 /// </summary>
 /// <remarks>
@@ -33,6 +33,8 @@ internal sealed class TransportRow
     public const string PlayTip = "Play the patch on from where it stopped.  (Ctrl+P)";
 
     public const string RewindTip = "Take the patch back to zero seconds, in the picture and in the sound.";
+
+    public const string LiveTip = "Live patching: play the patch over the full-screen picture.  (Shift+F11)";
 
     public const string MoreTip = "The patch's length, the loop switch and the Volume.";
 
@@ -59,7 +61,10 @@ internal sealed class TransportRow
         AutomationProperties.SetName(seek.Length, "Length");
         AutomationProperties.SetName(volume.Slider, "Volume");
 
+        Live = Button("live", "Live patching", Glyphs.Live(), LiveTip);
+
         Pause.Click += (_, _) => reactions.Raise(new PauseAsked());
+        Live.Click += (_, _) => reactions.Raise(new LiveAsked());
         Rewind.Click += (_, _) => reactions.Raise(new RewindAsked());
 
         // Named beside each, since the glyphs that say what they are stay in the row.
@@ -83,7 +88,7 @@ internal sealed class TransportRow
 
         row = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("Auto,Auto,Auto,*,Auto,Auto,Auto,Auto"),
+            ColumnDefinitions = new ColumnDefinitions("Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto"),
             ColumnSpacing = 4,
             Margin = new Thickness(8, 0),
             Height = Reach,
@@ -101,6 +106,7 @@ internal sealed class TransportRow
             Place(control, column);
         }
         Place(More, 7);
+        Place(Live, 8);
 
         seek.Position.Margin = new Thickness(4, 0, 6, 0);
 
@@ -123,6 +129,9 @@ internal sealed class TransportRow
     public Button Pause { get; }
 
     public Button Rewind { get; }
+
+    /// <summary>The patch over the full-screen picture, as Shift+F11 does: the way in where there is no keyboard.</summary>
+    public Button Live { get; }
 
     /// <summary>What the row cannot fit while narrow, behind one button.</summary>
     public Button More { get; }

@@ -18,6 +18,15 @@ public sealed class LivePatchingSteps(PatchContext context, EditorDriver editor)
     [When("Shift+F11 is pressed")]
     public void WhenShiftF11() => editor.Press(PhysicalKey.F11, RawInputModifiers.Shift);
 
+    [When("the Live button is pressed")]
+    public void WhenLiveButton() => editor.PressPanelButton("live");
+
+    [When("the text button over the picture is pressed")]
+    public void WhenTextButton() => editor.PressPanelButton("liveText");
+
+    [When("the leave button over the picture is pressed")]
+    public void WhenLeaveButton() => editor.PressPanelButton("liveLeave");
+
     [When("Tab is pressed over the picture")]
     public void WhenTab() => editor.Press(PhysicalKey.Tab);
 
