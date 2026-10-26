@@ -1,0 +1,15 @@
+{
+  "name": "Flyback",
+  "short_name": "Flyback",
+  "description": "A patchable synthesizer where one patch makes both a picture and a sound.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["fullscreen", "standalone"],
+  "background_color": "#16181c",
+  "theme_color": "#16181c",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "../assets/logo.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
