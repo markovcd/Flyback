@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Avalonia;
 using Flyback.Host;
 using Flyback.Specs.Support;
@@ -20,7 +21,7 @@ public sealed class MacDriverSteps(DriverSteps settings)
     private string? drawnThrough;
 
     [Given("the settings ask the Mac for OpenGL")]
-    public void GivenOpenGl() => new OutputSettings { AppleDriver = AppleDriver.OpenGl }.Save(settings.Path);
+    public void GivenOpenGl() => new OutputSettings { Graphics = GraphicsDriver.OpenGl }.Save(settings.Path);
 
     [When("Flyback starts on macOS")]
     public void WhenStarted() => tried = GraphicsDrivers.MacModes;
@@ -28,7 +29,7 @@ public sealed class MacDriverSteps(DriverSteps settings)
     /// <summary>The surface the Picture section asks the preview for, from the setting it reads.</summary>
     [When("a Mac draws the picture")]
     public void WhenDrawn() => Headless.Run(() =>
-        drawnThrough = PreviewHost.Surface(OutputSettings.Load(settings.Path).AppleDriver) switch
+        drawnThrough = PreviewHost.Surface(OutputSettings.Load(settings.Path).DriverOf(OutputSettings.DriversOn(OSPlatform.OSX))) switch
         {
             MetalPreviewSurface => GraphicsApi.Metal,
             GpuPreviewSurface => "OpenGL",

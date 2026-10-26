@@ -90,8 +90,8 @@ public class GpuSurfaceTests : EditorTest
         var surface = new Surface();
         var host = new PreviewHost(() => surface);
 
-        host.Draw(AppleDriver.OpenGl);
-        host.Draw(AppleDriver.Metal);
+        host.Draw(GraphicsDriver.OpenGl);
+        host.Draw(GraphicsDriver.Metal);
 
         host.Child.ShouldBeSameAs(surface);
     }

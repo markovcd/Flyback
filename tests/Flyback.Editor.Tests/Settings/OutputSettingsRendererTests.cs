@@ -43,12 +43,12 @@ public class OutputSettingsRendererTests : OutputSettingsTest
 
         preview.Child.ShouldBeOfType<GpuPreviewSurface>();
         preview.Backend.ShouldBe(PreviewBackend.Gpu);
-        OutputSettings.Load(settingsPath).AppleDriver.ShouldBe(AppleDriver.OpenGl);
+        OutputSettings.Load(settingsPath).Graphics.ShouldBe(GraphicsDriver.OpenGl);
 
         Choose(window, "Metal");
 
         preview.Child.ShouldBeOfType<MetalPreviewSurface>();
-        OutputSettings.Load(settingsPath).AppleDriver.ShouldBe(AppleDriver.Metal);
+        OutputSettings.Load(settingsPath).Graphics.ShouldBe(GraphicsDriver.Metal);
     }
 
     private static void Choose(MainWindow window, string renderer)

@@ -97,43 +97,57 @@ public class OutputSettingsFileTests : IDisposable
     }
 
     [Fact]
-    public void No_file_draws_through_OpenGL() => OutputSettings.Load(File).Driver.ShouldBe(GraphicsDriver.OpenGl);
-
-    [Fact]
-    public void The_driver_comes_back()
+    public void No_file_draws_through_the_machines_own_driver()
     {
-        new OutputSettings { Driver = GraphicsDriver.Direct3D }.Save(File);
+        var settings = OutputSettings.Load(File);
 
-        OutputSettings.Load(File).Driver.ShouldBe(GraphicsDriver.Direct3D);
+        settings.Graphics.ShouldBeNull();
+        settings.DriverHere.ShouldBe(OutputSettings.DriversHere[0]);
+    }
+
+    [Theory]
+    [InlineData(GraphicsDriver.Direct3D)]
+    [InlineData(GraphicsDriver.Metal)]
+    [InlineData(GraphicsDriver.OpenGl)]
+    public void The_driver_comes_back(GraphicsDriver driver)
+    {
+        new OutputSettings { Graphics = driver }.Save(File);
+
+        OutputSettings.Load(File).Graphics.ShouldBe(driver);
     }
 
     [Fact]
-    public void A_driver_this_build_does_not_have_is_OpenGL()
+    public void A_driver_this_build_does_not_have_is_the_machines_own()
     {
         Directory.CreateDirectory(folder);
-        SettingsFile.Write(File, OutputSettings.Section, """{ "driver": 42 }""");
+        SettingsFile.Write(File, OutputSettings.Section, """{ "graphics": 42 }""");
 
-        OutputSettings.Load(File).Driver.ShouldBe(GraphicsDriver.OpenGl);
+        OutputSettings.Load(File).Graphics.ShouldBeNull();
     }
 
+    /// <summary>A driver this machine does not have, Direct3D on a Mac, draws through its own.</summary>
     [Fact]
-    public void No_file_draws_a_Mac_through_Metal() => OutputSettings.Load(File).AppleDriver.ShouldBe(AppleDriver.Metal);
-
-    [Fact]
-    public void A_Mac_drawing_through_OpenGL_comes_back()
+    public void A_driver_another_machine_chose_draws_through_this_ones_own()
     {
-        new OutputSettings { AppleDriver = AppleDriver.OpenGl }.Save(File);
+        var elsewhere = Enum.GetValues<GraphicsDriver>().First(d => !OutputSettings.DriversHere.Contains(d));
 
-        OutputSettings.Load(File).AppleDriver.ShouldBe(AppleDriver.OpenGl);
+        new OutputSettings { Graphics = elsewhere }.DriverHere.ShouldBe(OutputSettings.DriversHere[0]);
     }
 
-    [Fact]
-    public void A_Mac_driver_this_build_does_not_have_is_Metal()
+    /// <summary>0.10 kept Windows' choice as "driver", and OpenGL there for every machine that chose nothing.</summary>
+    [Theory]
+    [InlineData(1, GraphicsDriver.Direct3D)]
+    [InlineData(0, null)]
+    public void An_earlier_files_driver_is_read_once(int driver, GraphicsDriver? graphics)
     {
         Directory.CreateDirectory(folder);
-        SettingsFile.Write(File, OutputSettings.Section, """{ "appleDriver": 42 }""");
+        SettingsFile.Write(File, OutputSettings.Section, $$"""{ "driver": {{driver}} }""");
 
-        OutputSettings.Load(File).AppleDriver.ShouldBe(AppleDriver.Metal);
+        var loaded = OutputSettings.Load(File);
+        loaded.Graphics.ShouldBe(graphics);
+
+        loaded.Save(File);
+        System.IO.File.ReadAllText(File).ShouldNotContain("\"driver\"");
     }
 
     [Fact]

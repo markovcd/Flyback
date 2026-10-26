@@ -48,11 +48,11 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     public PreviewHost() : this(Native(OperatingSystem.IsMacOS() || OperatingSystem.IsIOS())) => native = true;
 
     private static Func<IGpuPreview> Native(bool metal) =>
-        () => metal ? Surface(AppleDriver.Metal) : new GpuPreviewSurface();
+        () => Surface(metal ? GraphicsDriver.Metal : GraphicsDriver.OpenGl);
 
-    /// <summary>The surface an Apple machine draws the picture on for <paramref name="driver"/>.</summary>
-    internal static IGpuPreview Surface(AppleDriver driver) =>
-        driver == AppleDriver.Metal ? new MetalPreviewSurface() : new GpuPreviewSurface();
+    /// <summary>The surface the picture is drawn on for <paramref name="driver"/>: Direct3D's is OpenGL's, which ANGLE translates.</summary>
+    internal static IGpuPreview Surface(GraphicsDriver driver) =>
+        driver == GraphicsDriver.Metal ? new MetalPreviewSurface() : new GpuPreviewSurface();
 
     /// <param name="gpu">Builds the surface the GPU draws on, for a host with no OpenGL control: a page.</param>
     public PreviewHost(Func<IGpuPreview> gpu)
@@ -198,11 +198,11 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// anywhere else or on a host given its surface. A GPU that failed is offered again
     /// under the other API, which is not the one that failed.
     /// </summary>
-    public void Draw(AppleDriver driver)
+    public void Draw(GraphicsDriver driver)
     {
         if (!native || !OperatingSystem.IsMacOS()) return;
 
-        var wanted = driver == AppleDriver.Metal;
+        var wanted = driver == GraphicsDriver.Metal;
         if (wanted == metal) return;
 
         metal = wanted;

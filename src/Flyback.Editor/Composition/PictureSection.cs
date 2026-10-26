@@ -36,12 +36,8 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         + "Mac, Metal builds a patch's shader without holding the window, and OpenGL is there to "
         + "compare it with; either takes over at once.";
 
-    /// <summary>What the Renderer box offers: the graphics card's APIs in the order of <see cref="GraphicsDriver"/>, then the CPU.</summary>
-    private static readonly string[] Renderers =
-        OperatingSystem.IsWindows() ? ["OpenGL", "Direct3D", GraphicsApi.Processor]
-        : OperatingSystem.IsMacOS() ? [GraphicsApi.Metal, "OpenGL", GraphicsApi.Processor]
-        : OperatingSystem.IsIOS() ? [GraphicsApi.Metal, GraphicsApi.Processor]
-        : ["OpenGL", GraphicsApi.Processor];
+    /// <summary>What the Renderer box offers: the drivers this machine has, its own first, then the CPU.</summary>
+    private static readonly string[] Renderers = [.. OutputSettings.DriversHere.Select(Said), GraphicsApi.Processor];
 
     private static int ProcessorRow => Renderers.Length - 1;
 
@@ -264,11 +260,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         // The CPU says nothing about which driver draws the window, so that is kept.
         into.Gpu = row != ProcessorRow;
 
-        if (row != ProcessorRow && OperatingSystem.IsWindows())
-            into.Driver = row == 1 ? GraphicsDriver.Direct3D : GraphicsDriver.OpenGl;
-
-        if (row != ProcessorRow && OperatingSystem.IsMacOS())
-            into.AppleDriver = row == 1 ? AppleDriver.OpenGl : AppleDriver.Metal;
+        if (row != ProcessorRow) into.Graphics = OutputSettings.DriversHere[row];
 
         into.FullScreen = fullScreen.On;
         into.FullScreenMonitor = fullScreen.Monitor;
@@ -283,7 +275,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         var size = SizeOf(now);
 
         preview.Resolution = size;
-        preview.Draw(now.AppleDriver);
+        preview.Draw(now.DriverHere);
         preview.Use(now.Gpu ? PreviewBackend.Gpu : PreviewBackend.Cpu);
         preview.FrameRate = now.PreviewFrameRate;
 
@@ -296,19 +288,23 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
             TransportOverlay.Lay(now.Transport, picture.Transport, picture.Knobs);
 
         // One box picks both. On Windows only the CPU takes effect at once; a Mac switches either.
-        if (before is not null && now.Driver != before.Driver)
-            report.Say($"{(now.Driver == GraphicsDriver.Direct3D ? "Direct3D" : "OpenGL")} draws from the next time Flyback starts.");
-
-        if (before is not null && now.AppleDriver != before.AppleDriver && OperatingSystem.IsMacOS())
-            report.Say($"{(now.AppleDriver == AppleDriver.Metal ? GraphicsApi.Metal : "OpenGL")} draws the picture.");
+        if (before is not null && now.DriverHere != before.DriverHere)
+            report.Say(OperatingSystem.IsWindows()
+                ? $"{Said(now.DriverHere)} draws from the next time Flyback starts."
+                : $"{Said(now.DriverHere)} draws the picture.");
     }
 
     /// <summary>The row of <see cref="renderer"/> that says <paramref name="gpu"/> and the driver <paramref name="current"/> names.</summary>
     private static int RendererRow(bool gpu, OutputSettings current) =>
-        !gpu ? ProcessorRow
-        : OperatingSystem.IsWindows() && current.Driver == GraphicsDriver.Direct3D ? 1
-        : OperatingSystem.IsMacOS() && current.AppleDriver == AppleDriver.OpenGl ? 1
-        : 0;
+        gpu ? Math.Max(0, OutputSettings.DriversHere.ToList().IndexOf(current.DriverHere)) : ProcessorRow;
+
+    /// <summary>A driver as the Renderer box and the status line say it.</summary>
+    private static string Said(GraphicsDriver driver) => driver switch
+    {
+        GraphicsDriver.Direct3D => "Direct3D",
+        GraphicsDriver.Metal => GraphicsApi.Metal,
+        _ => "OpenGL",
+    };
 
     /// <summary>The row of the size list a saved size is, or the default for one the list no longer offers.</summary>
     private static int SizeRow(OutputSettings settings)

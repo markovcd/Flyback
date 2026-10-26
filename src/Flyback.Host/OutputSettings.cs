@@ -1,4 +1,6 @@
+using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Flyback.Core;
 using Flyback.Engine.Render;
 using Flyback.Plugins.Audio;
@@ -188,11 +190,44 @@ public sealed class OutputSettings
     /// <summary>Which edge of a full-screen picture the transport waits at — the Picture section.</summary>
     public TransportEdge Transport { get; set; }
 
-    /// <summary>What draws on Windows — the Picture section. Read once, as the program starts.</summary>
-    public GraphicsDriver Driver { get; set; }
+    /// <summary>
+    /// What draws the picture — the Picture section — or null for this machine's own:
+    /// <see cref="DriverHere"/> says which that is. Read once on Windows, as the program
+    /// starts, and switched at once on a Mac.
+    /// </summary>
+    public GraphicsDriver? Graphics { get; set; }
 
-    /// <summary>What draws the picture on a Mac — the Picture section. Switched at once.</summary>
-    public AppleDriver AppleDriver { get; set; }
+    /// <summary>
+    /// Where 0.10 and earlier kept Windows' driver, read into <see cref="Graphics"/> as the file
+    /// loads and never written again. It held OpenGL for every machine that chose nothing, so
+    /// only Direct3D is a choice.
+    /// </summary>
+    [JsonInclude]
+    [JsonPropertyName("driver")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    internal GraphicsDriver? EarlierDriver { get; set; }
+
+    /// <summary>The drivers this machine offers, its own first.</summary>
+    public static IReadOnlyList<GraphicsDriver> DriversHere { get; } = DriversOn(
+        OperatingSystem.IsWindows() ? OSPlatform.Windows
+        : OperatingSystem.IsMacOS() ? OSPlatform.OSX
+        : OperatingSystem.IsIOS() ? OSPlatform.Create("IOS")
+        : OSPlatform.Linux);
+
+    /// <summary>The drivers <paramref name="platform"/> offers, its own first.</summary>
+    internal static IReadOnlyList<GraphicsDriver> DriversOn(OSPlatform platform) =>
+        platform == OSPlatform.Windows ? [GraphicsDriver.OpenGl, GraphicsDriver.Direct3D]
+        : platform == OSPlatform.OSX ? [GraphicsDriver.Metal, GraphicsDriver.OpenGl]
+        : platform == OSPlatform.Create("IOS") ? [GraphicsDriver.Metal]
+        : [GraphicsDriver.OpenGl];
+
+    /// <summary>What draws the picture here: <see cref="Graphics"/> where this machine offers it, and its own driver otherwise.</summary>
+    [JsonIgnore]
+    public GraphicsDriver DriverHere => DriverOf(DriversHere);
+
+    /// <summary>What draws the picture on a machine offering <paramref name="offered"/>.</summary>
+    internal GraphicsDriver DriverOf(IReadOnlyList<GraphicsDriver> offered) =>
+        Graphics is { } chosen && offered.Contains(chosen) ? chosen : offered[0];
 
     /// <summary>How the knob panel randomizes, set on the panel itself.</summary>
     public RandomizeSettings Randomize { get; set; } = new();
@@ -330,8 +365,9 @@ public sealed class OutputSettings
             if (!Enum.IsDefined(settings.Keyboard)) settings.Keyboard = KeyboardLayout.Piano;
             if (!Enum.IsDefined(settings.FullScreen)) settings.FullScreen = FullScreenOn.SameMonitor;
             if (!Enum.IsDefined(settings.Transport)) settings.Transport = TransportEdge.Top;
-            if (!Enum.IsDefined(settings.Driver)) settings.Driver = GraphicsDriver.OpenGl;
-            if (!Enum.IsDefined(settings.AppleDriver)) settings.AppleDriver = AppleDriver.Metal;
+            if (settings.Graphics is null && settings.EarlierDriver == GraphicsDriver.Direct3D) settings.Graphics = GraphicsDriver.Direct3D;
+            if (settings.Graphics is { } driver && !Enum.IsDefined(driver)) settings.Graphics = null;
+            settings.EarlierDriver = null;
 
             settings.Randomize ??= new();
             settings.Randomize.Clamp();

@@ -195,7 +195,7 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
         render.SelectedItem = "Direct3D";
         CloseSettings(window, dialog);
 
-        OutputSettings.Load(settingsPath).Driver.ShouldBe(GraphicsDriver.Direct3D);
+        OutputSettings.Load(settingsPath).Graphics.ShouldBe(GraphicsDriver.Direct3D);
         OutputSettings.Load(settingsPath).Gpu.ShouldBeTrue();
         All<ReportLine>(window).Single().History.ShouldContain("Direct3D draws from the next time Flyback starts.");
         All<ComboBox>(OpenSettings(Open(settingsPath))).Single(c => c.Name == "render").SelectedItem.ShouldBe("Direct3D");
@@ -205,7 +205,7 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
     [AvaloniaFact]
     public void Picking_the_cpu_keeps_the_driver()
     {
-        new OutputSettings { Driver = GraphicsDriver.Direct3D }.Save(settingsPath);
+        new OutputSettings { Graphics = GraphicsDriver.Direct3D }.Save(settingsPath);
 
         var window = Open(settingsPath);
         var dialog = OpenSettings(window);
@@ -214,7 +214,7 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
         CloseSettings(window, dialog);
 
         OutputSettings.Load(settingsPath).Gpu.ShouldBeFalse();
-        OutputSettings.Load(settingsPath).Driver.ShouldBe(GraphicsDriver.Direct3D);
+        OutputSettings.Load(settingsPath).Graphics.ShouldBe(GraphicsDriver.Direct3D);
     }
 
     [AvaloniaFact]

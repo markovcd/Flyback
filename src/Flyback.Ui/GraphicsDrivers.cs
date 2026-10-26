@@ -3,7 +3,7 @@ using Flyback.Host;
 
 namespace Flyback.Ui;
 
-/// <summary>Hands Avalonia the driver <see cref="OutputSettings.Driver"/> asks for, before it opens a window (ADR-0155).</summary>
+/// <summary>Hands Avalonia the driver <see cref="OutputSettings.Graphics"/> asks for, before it opens a window (ADR-0155).</summary>
 public static class GraphicsDrivers
 {
     /// <summary>What Avalonia tries on Windows, in order, for <paramref name="driver"/>.</summary>

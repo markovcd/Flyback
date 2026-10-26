@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Avalonia;
 using Flyback.Host;
 using Flyback.Ui;
@@ -21,11 +22,11 @@ public sealed class DriverSteps : IDisposable
     public void GivenNoSettings() => File.Exists(Path).ShouldBeFalse();
 
     [Given("the settings ask for Direct3D")]
-    public void GivenDirect3D() => new OutputSettings { Driver = GraphicsDriver.Direct3D }.Save(Path);
+    public void GivenDirect3D() => new OutputSettings { Graphics = GraphicsDriver.Direct3D }.Save(Path);
 
     /// <summary>What both programs' <c>Main</c> reads and hands Avalonia before it opens a window.</summary>
     [When("Flyback starts on Windows")]
-    public void WhenStarted() => tried = GraphicsDrivers.Modes(OutputSettings.Load(Path).Driver);
+    public void WhenStarted() => tried = GraphicsDrivers.Modes(OutputSettings.Load(Path).DriverOf(OutputSettings.DriversOn(OSPlatform.Windows)));
 
     [Then("it draws through OpenGL")]
     public void ThenOpenGl() => tried[0].ShouldBe(Win32RenderingMode.Wgl);

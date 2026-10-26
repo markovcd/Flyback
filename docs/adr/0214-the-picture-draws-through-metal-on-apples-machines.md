@@ -50,7 +50,9 @@ until the copy costs something measurable. `PreviewHost` builds this surface on
 macOS and iOS, for the editor and the viewer; OpenGL stays everywhere else, and the
 processor takes over where Metal will not open. On a Mac the Renderer box offers Metal,
 OpenGL and the CPU, and a change takes over at once, since both are surfaces the host
-already swaps; the choice is saved as `AppleDriver`, Metal unless the settings say otherwise.
+already swaps. One setting, `Graphics`, holds the driver on every machine: Metal joins
+`GraphicsDriver`, and a setting left empty is the machine's own, OpenGL on Windows and
+Metal on a Mac.
 
 ## Consequences
 

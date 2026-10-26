@@ -91,7 +91,7 @@ internal static class Program
         try
         {
             return BuildAvaloniaApp(launch)
-                .UseDriver(OutputSettings.Load(SettingsFile.Path).Driver)
+                .UseDriver(OutputSettings.Load(SettingsFile.Path).DriverHere)
                 .StartWithClassicDesktopLifetime(TraceFlag.Taken(args).Without);
         }
         finally

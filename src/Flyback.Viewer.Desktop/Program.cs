@@ -116,7 +116,7 @@ internal static class Program
                 .UsePlatformDetect()
                 // No native menu to export; on a desktop without a global menu the attempt only logs.
                 .With(new X11PlatformOptions { UseDBusMenu = false })
-                .UseDriver(settings.Driver)
+                .UseDriver(settings.DriverHere)
                 .WithInterFont()
                 .LogToTrace()
                 .StartWithClassicDesktopLifetime([]);
