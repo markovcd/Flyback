@@ -95,6 +95,32 @@ public class LivePatchingSettingsTests : OutputSettingsTest
     }
 
     [AvaloniaFact]
+    public void Keys_only_faded_text_takes_no_pointer()
+    {
+        var window = Open(settingsPath);
+        var live = Service<LivePatching>(window);
+
+        Set(window, dialog => All<ComboBox>(dialog).Single(c => c.Name == "textWakes").SelectedIndex = 1);
+
+        window.KeyPress(Avalonia.Input.Key.F2, Avalonia.Input.RawInputModifiers.None, Avalonia.Input.PhysicalKey.F2, null);
+        live.Toggle();
+        Settle(window);
+
+        var area = All<AvaloniaEdit.Editing.TextArea>(window).Single();
+        area.Document.TextLength.ShouldBeGreaterThan(0);
+        var from = area.TranslatePoint(new Point(4, 6), window)!.Value;
+
+        live.Fade.Fade();
+        window.MouseDown(from, Avalonia.Input.MouseButton.Left);
+        window.MouseMove(from + new Point(200, 40));
+        window.MouseUp(from + new Point(200, 40), Avalonia.Input.MouseButton.Left);
+        Settle(window);
+
+        area.Selection.IsEmpty.ShouldBeTrue("faded text can't be selected with the pointer");
+        live.Fade.IsFaded.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
     public void A_wait_of_nought_never_fades_the_modules()
     {
         var window = Open(settingsPath);

@@ -19,6 +19,7 @@ internal sealed class IdleFade(Func<bool> busy)
     private DispatcherTimer? timer;
     private Control? faded;
     private Transitions? transitionsBefore;
+    private bool wakesOnPointer;
 
     /// <summary>Whether the control is faded out, or fading.</summary>
     public bool IsFaded { get; private set; }
@@ -35,6 +36,7 @@ internal sealed class IdleFade(Func<bool> busy)
         if (wait <= TimeSpan.Zero) return;
 
         faded = control;
+        wakesOnPointer = pointer;
         transitionsBefore = control.Transitions;
         control.Transitions = [new DoubleTransition { Property = Visual.OpacityProperty, Duration = Fading }];
 
@@ -65,6 +67,7 @@ internal sealed class IdleFade(Func<bool> busy)
         control.RemoveHandler(InputElement.KeyDownEvent, Woken);
         control.Transitions = transitionsBefore;
         control.Opacity = 1;
+        control.IsHitTestVisible = true;
         IsFaded = false;
 
         faded = null;
@@ -77,6 +80,7 @@ internal sealed class IdleFade(Func<bool> busy)
         if (faded is null || timer is null) return;
 
         faded.Opacity = 1;
+        faded.IsHitTestVisible = true;
         IsFaded = false;
         timer.Stop();
         timer.Start();
@@ -96,6 +100,9 @@ internal sealed class IdleFade(Func<bool> busy)
         }
 
         faded.Opacity = 0;
+
+        // Hidden from a pointer that can't wake it, so nothing unseen is selected or dragged.
+        faded.IsHitTestVisible = wakesOnPointer;
         IsFaded = true;
     }
 
