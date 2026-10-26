@@ -28,9 +28,9 @@ internal sealed unsafe class MetalDevice : IDisposable
     public const nuint ShaderRead = 1;
     public const nuint RenderTarget = 4;
 
-    private const nuint StorageShared = 0;
-    private const nuint StorageManaged = 1;
-    private const nuint StoragePrivate = 2;
+    public const nuint StorageShared = 0;
+    public const nuint StorageManaged = 1;
+    public const nuint StoragePrivate = 2;
 
     private const nuint LoadDontCare = 0;
     private const nuint LoadClear = 2;
@@ -203,10 +203,20 @@ internal sealed unsafe class MetalDevice : IDisposable
             0);
 
         ObjC.Call(descriptor, "setUsage:", usage);
-        ObjC.Call(descriptor, "setStorageMode:", written ? (Unified ? StorageShared : StorageManaged) : StoragePrivate);
+        ObjC.Call(descriptor, "setStorageMode:", Storage(written, Unified, OperatingSystem.IsMacOS() || OperatingSystem.IsMacCatalyst()));
 
         return ObjC.Send(device, "newTextureWithDescriptor:", descriptor);
     }
+
+    /// <summary>
+    /// Where a texture is kept: shared when the processor writes it and the memory is one,
+    /// managed when it is not, and the GPU's own otherwise. Managed exists only on a Mac,
+    /// so iOS, whose simulator says its memory is not unified, always shares.
+    /// </summary>
+    public static nuint Storage(bool written, bool unified, bool mac) =>
+        !written ? StoragePrivate
+        : unified || !mac ? StorageShared
+        : StorageManaged;
 
     /// <summary>Writes rows from <paramref name="bytes"/> into a texture the processor writes.</summary>
     public static void Upload(IntPtr texture, int width, int height, void* bytes, int bytesPerRow)
