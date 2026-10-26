@@ -126,7 +126,7 @@ internal sealed class CanvasGestures
     public bool Tapped(Point screen, int taps)
     {
         if (history.Locked || drag != Drag.None || choice.For is not null || bar.ButtonAt(screen) is not null) return false;
-        if (!selection.Scene.HitWell(view.ToGraph(screen), out var node, out var port)) return false;
+        if (!selection.Scene.HitWell(view.ToGraph(screen), Math.Min(Fingers.Reach / view.Zoom, Fingers.MostReach), out var node, out var port)) return false;
 
         if (!selection.Contains(node)) selection.Select(node);
 

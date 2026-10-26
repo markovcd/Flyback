@@ -271,14 +271,14 @@ internal sealed class Fingers
 
         phase = Phase.Right;
 
-        var at = Socket(firstFrom);
+        var at = Aim(firstFrom);
         grip = at - firstFrom;
         gestures.Pressed(canvas, first, at, MouseButton.Right, KeyModifiers.None, 1);
     }
 
     private void Tap(Control on, IPointer pointer, ulong time)
     {
-        var at = Socket(firstFrom);
+        var at = Aim(firstFrom);
 
         var clicks = lastTap is { } last && time >= last.Time && time - last.Time <= DoubleTapTime && Distance(last.At, at) <= DoubleTapDistance ? 2 : 1;
         lastTap = clicks == 2 ? null : (at, time);
@@ -309,6 +309,18 @@ internal sealed class Fingers
         if (span > 1 && now > 1) view.ZoomAt(Middle(), Math.Log(now / span) / Math.Log(1.12));
 
         span = now;
+    }
+
+    /// <summary>A point on the screen moved onto the middle of the well within reach of it, or else onto the socket within reach.</summary>
+    private Point Aim(Point screen)
+    {
+        var scene = selection.Scene;
+
+        if (scene.HitWell(view.ToGraph(screen), Math.Min(Reach / view.Zoom, MostReach), out var node, out var port)
+            && scene.RowOf(node, port) is var (bounds, center))
+            return view.GraphToScreen.Transform(ValueWell.At(bounds, center).Center);
+
+        return Socket(screen);
     }
 
     /// <summary>

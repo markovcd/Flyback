@@ -174,4 +174,32 @@ public class TouchWellTests : EditorTest
         editor.History.Undo().ShouldBeTrue();
         editor.History.Patch.Find(sine.Id)!.InputValues[freq].ShouldBe(was);
     }
+
+    /// <summary>A finger lands less exactly than a pointer: just beside the well, or at its row's edge, still has it.</summary>
+    [AvaloniaFact]
+    public void A_held_finger_just_off_the_well_turns_it_and_leaves_the_module_playing()
+    {
+        var (editor, sine, freq) = Board();
+        var finger = Finger();
+        var at = Well(editor, sine, freq) + new Vector(-ValueWell.Width / 2 - 6, ValueWell.Height / 2 + 0.5) * editor.View.Zoom;
+        var was = sine.InputValues[freq];
+
+        editor.Fingers.Down(editor, finger, at, 1_000);
+        editor.Fingers.Held();
+        editor.Fingers.Move(editor, finger, at - new Vector(0, 30));
+        editor.Fingers.Up(editor, finger, at - new Vector(0, 30), 2_000);
+
+        sine.InputValues[freq].ShouldBeGreaterThan(was);
+        editor.History.Patch.Find(sine.Id)!.Off.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void A_tap_just_off_the_well_picks_it()
+    {
+        var (editor, sine, freq) = Board();
+
+        Tap(editor, Well(editor, sine, freq) + new Vector(-ValueWell.Width / 2 - 6, ValueWell.Height / 2 + 0.5) * editor.View.Zoom);
+
+        editor.WellFocus.Focused.ShouldBe(new SocketPick(sine.Id, freq));
+    }
 }

@@ -342,11 +342,17 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
     }
 
     /// <summary>The input whose well is under <paramref name="graph"/>, on a module or a shut box drawn at full size.</summary>
-    public bool HitWell(Point graph, out Guid nodeId, out int portIndex)
+    public bool HitWell(Point graph, out Guid nodeId, out int portIndex) => HitWell(graph, 0, out nodeId, out portIndex);
+
+    /// <summary>
+    /// The same with <paramref name="slack"/> either side of the well and its row's whole
+    /// height, for a finger, which lands less exactly than a pointer.
+    /// </summary>
+    public bool HitWell(Point graph, double slack, out Guid nodeId, out int portIndex)
     {
         var shown = patch;
 
-        return HitRow(graph, (node, def, port) => ValueWell.Has(shown, node, def, port), out nodeId, out portIndex);
+        return HitRow(graph, (node, def, port) => ValueWell.Has(shown, node, def, port), out nodeId, out portIndex, slack);
     }
 
     /// <summary>The linked input whose knob chip is under <paramref name="graph"/>, on a module or a shut box drawn at full size.</summary>
@@ -375,8 +381,12 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
     }
 
     /// <summary>The input whose well area is under <paramref name="graph"/> and which <paramref name="wants"/>, boxes first as they are drawn over modules.</summary>
-    private bool HitRow(Point graph, Func<NodeInstance, NodeDef, int, bool> wants, out Guid nodeId, out int portIndex)
+    private bool HitRow(Point graph, Func<NodeInstance, NodeDef, int, bool> wants, out Guid nodeId, out int portIndex, double slack = 0)
     {
+        Rect Well(Rect bounds, Point center) => slack > 0
+            ? ValueWell.At(bounds, center).Inflate(new Thickness(slack, (NodeGeometry.RowHeight - ValueWell.Height) / 2))
+            : ValueWell.At(bounds, center);
+
         (nodeId, portIndex) = (Guid.Empty, -1);
 
         if (geometry.Compact) return false;
@@ -389,7 +399,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
             {
                 var socket = sockets.Inputs[row];
 
-                if (!ValueWell.At(bounds, geometry.GroupInputPort(bounds, sockets, row)).Contains(graph)) continue;
+                if (!Well(bounds, geometry.GroupInputPort(bounds, sockets, row)).Contains(graph)) continue;
                 if (patch.Find(socket.Node) is not { } inside || NodeCatalog.Get(inside.TypeId) is not { } within) continue;
                 if (!wants(inside, within, socket.Port)) continue;
 
@@ -406,7 +416,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
 
         for (var p = 0; p < def.Inputs.Count; p++)
         {
-            if (!ValueWell.At(at, geometry.InputPort(node, def, p)).Contains(graph) || !wants(node, def, p)) continue;
+            if (!Well(at, geometry.InputPort(node, def, p)).Contains(graph) || !wants(node, def, p)) continue;
 
             (nodeId, portIndex) = (node.Id, p);
             return true;
