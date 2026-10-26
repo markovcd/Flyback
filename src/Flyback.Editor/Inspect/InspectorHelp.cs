@@ -53,6 +53,8 @@ internal static class InspectorHelp
             Row("Patch a wire", "Drag from a socket into another, or onto bare canvas to add a module already plugged in.", "Drag"),
             Row("Unplug", "Drag a connected input to take the wire somewhere else.", "Drag"),
             Row("Re-route an output", "Feeds one of its wires from somewhere else instead. Put it back and the next one takes the next wire.", "Ctrl+Drag"),
+            Row("Turn a value", "Drag an unplugged input's value up or down, or right-drag its socket. Shift is finer.", "Drag"),
+            Row("Reset a value", "Puts an unplugged input back to the value a new module starts with.", "Alt+Click"),
             Row("Cancel a drag", "Puts back whatever it had moved.", "Esc"),
             Row("Switch a module off", "Passes what is patched into it straight through. Again switches it on.", "Ctrl+B"),
         ]),

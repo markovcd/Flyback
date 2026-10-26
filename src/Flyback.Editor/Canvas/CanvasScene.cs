@@ -341,6 +341,26 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
         return null;
     }
 
+    /// <summary>Which input's value well is under the pointer, on a module drawn with its values in its rows.</summary>
+    public bool HitWell(Point graph, out Guid nodeId, out int portIndex)
+    {
+        (nodeId, portIndex) = (Guid.Empty, -1);
+
+        if (geometry.Compact || HitNode(graph) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return false;
+
+        var bounds = geometry.Bounds(node, def);
+
+        for (var p = 0; p < def.Inputs.Count; p++)
+        {
+            if (!ValueWell.At(bounds, geometry.InputPort(node, def, p)).Contains(graph) || !ValueWell.Has(patch, node, def, p)) continue;
+
+            (nodeId, portIndex) = (node.Id, p);
+            return true;
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Which port is under the pointer, whether it is drawn on a module or on the box
     /// standing in front of one.

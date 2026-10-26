@@ -200,7 +200,7 @@ internal sealed class NodeEditor
     {
         base.OnPointerExited(e);
 
-        Tips.Down(this);
+        Gestures.Exited(this);
     }
 
     protected override void OnKeyDown(KeyEventArgs e)

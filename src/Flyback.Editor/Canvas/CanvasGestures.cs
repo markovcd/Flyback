@@ -31,6 +31,7 @@ internal sealed class CanvasGestures
     private static readonly Cursor ArrowCursor = new(StandardCursorType.Arrow);
     private static readonly Cursor PortCursor = new(StandardCursorType.Cross);
     private static readonly Cursor NodeCursor = new(StandardCursorType.SizeAll);
+    private static readonly Cursor WellCursor = new(StandardCursorType.SizeNorthSouth);
 
     /// <summary>
     /// While a button is dragging the view. A hand rather than the four-way
@@ -266,6 +267,22 @@ internal sealed class CanvasGestures
             return true;
         }
 
+        // A value's well turns it with the left button, as the right does on the socket.
+        // A finger holds first, through Fingers, so a swipe across a module still moves it.
+        if (!history.Locked && pointer?.Type != PointerType.Touch && drag == Drag.None
+            && scene.HitWell(graph, out var wellNode, out var wellPort))
+        {
+            if (!selection.Contains(wellNode)) selection.Select(wellNode);
+
+            if ((modifiers & KeyModifiers.Alt) != 0) return dial.Reset(wellNode, wellPort);
+
+            if (!dial.Start(canvas, wellNode, wellPort, screen)) return false;
+
+            tips.Down(canvas);
+            pointer?.Capture(canvas);
+            return true;
+        }
+
         // A socket on a locked canvas is not a handle, so the press falls through to
         // the module under it.
         if (!history.Locked && scene.HitPort(graph, out var portNode, out var portIndex, out var isOutput))
@@ -432,12 +449,20 @@ internal sealed class CanvasGestures
                 canvas.Cursor = CursorOver(graph);
                 tips.Over(canvas, graph);
                 marks.Hover(graph);
+                dial.Hover(graph);
                 return;
         }
     }
 
     /// <summary>A lifted finger hovers over nothing, so what it brought up comes down.</summary>
     public void Lifted(Control canvas) => tips.Down(canvas);
+
+    /// <summary>The pointer went off the canvas, taking its hover with it.</summary>
+    public void Exited(Control canvas)
+    {
+        tips.Down(canvas);
+        dial.Unhover();
+    }
 
     public void Released(Control canvas, PointerReleasedEventArgs e) =>
         Released(canvas, e.Pointer, e.GetPosition(canvas), e.InitialPressMouseButton, e.KeyModifiers);
@@ -466,6 +491,12 @@ internal sealed class CanvasGestures
                 if (click && !history.Locked) MenuRequested?.Invoke(this, at);
             }
 
+            return;
+        }
+
+        if (button == MouseButton.Left && EndTurn(canvas))
+        {
+            pointer?.Capture(null);
             return;
         }
 
@@ -645,6 +676,8 @@ internal sealed class CanvasGestures
         var scene = selection.Scene;
 
         if (scene.HitPort(graph, out _, out _, out _)) return PortCursor;
+
+        if (!history.Locked && scene.HitWell(graph, out _, out _)) return WellCursor;
 
         var draggable = scene.HitNode(graph) is not null
             || scene.HitBox(graph) is not null

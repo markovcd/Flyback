@@ -43,6 +43,7 @@ has patched a hardware synthesizer should already know most of them.
 | **Output** | The one module every patch has. Its `color` goes to the screen; its `left`, `right` and `volume` go to the speakers. Capitalized, because it is a module's name. | type id `output` | output block, master, sink (see [sink](#picture-and-sound)) |
 | **wire** | Joins an output socket to an input socket. | `Connection` | connection, cable, edge, link, patch cord |
 | **knob** | The value an input socket holds when nothing is wired into it, dialed on the canvas and in the inspector. | `InputValues`; its starting value is `PortSpec.Default` | parameter, param, setting, value alone |
+| **well** | The box at the right of an unwired input's row that holds its knob's value over a level line, dragged up or down to turn it. | `ValueWell` | slider, field, value box |
 | **normalled** | An input with no wire that still carries a signal: from a hidden module such as `time`, or from an earlier input, as the Output's `right` carries `left`. | `NormalledTo`, `NormalledFrom` | normaled, default-connected |
 | **switched off** | A module that passes its first input straight through, as if it were a wire. | `Off` | bypassed, muted, disabled |
 | **group** | A named set of modules drawn as one box. | `NodeGroup` | subgraph, macro |

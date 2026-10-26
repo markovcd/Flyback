@@ -248,6 +248,35 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
             open.MouseUp(end, button);
         });
 
+    /// <summary>Drags the well of an input's value up by <paramref name="up"/> pixels with the left button, in a few moves.</summary>
+    public void DragWell(Guid node, int port, double up) =>
+        DoWindow((open, canvas) =>
+        {
+            var from = OnWindow(open, canvas, Well(canvas, node, port));
+
+            open.MouseDown(from, MouseButton.Left);
+            for (var i = 1; i <= 4; i++) open.MouseMove(from - new Point(0, up * i / 4));
+            open.MouseUp(from - new Point(0, up), MouseButton.Left);
+        });
+
+    /// <summary>Clicks the well of an input's value with Alt held.</summary>
+    public void AltClickWell(Guid node, int port) =>
+        DoWindow((open, canvas) =>
+        {
+            var at = OnWindow(open, canvas, Well(canvas, node, port));
+
+            open.MouseDown(at, MouseButton.Left, RawInputModifiers.Alt);
+            open.MouseUp(at, MouseButton.Left, RawInputModifiers.Alt);
+        });
+
+    private static Point Well(NodeEditor canvas, Guid node, int port)
+    {
+        var found = canvas.History.Patch.Find(node)!;
+        var def = NodeCatalog.BuiltIn.Require(found.TypeId);
+
+        return ValueWell.At(canvas.Geometry.Bounds(found, def), canvas.Geometry.InputPort(found, def, port)).Center;
+    }
+
     /// <summary>Right-clicks a point of the patch, which over bare canvas or an open group opens the list of modules.</summary>
     public void RightClick(Point at) =>
         DoWindow((open, canvas) =>

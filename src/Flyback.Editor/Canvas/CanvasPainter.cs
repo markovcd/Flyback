@@ -658,14 +658,19 @@ internal sealed class CanvasPainter(
                 continue;
             }
 
+            var well = !connected && ValueWell.Has(Patch, node, def, i) ? dial.StateOf(node.Id, i) : (WellState?)null;
+
+            if (well is { } lit) ValueWell.DrawRow(context, bounds, center, lit);
+
             DrawLinkWash(context, node, port, i, bounds, center, connected);
 
             var label = CanvasText.Text(port.Name, CanvasText.RowSize, Ink(center.Y, RowInk, 0, CanvasText.LabelBrush), bounds.Width * 0.55, true);
             context.DrawText(label, LabelAt(bounds, center, label, output: false));
 
-            if (!connected) DrawInputValue(context, node, port, i, bounds, center, follow, formula, spans, Ink);
+            if (!connected) DrawInputValue(context, node, port, i, bounds, center, follow, formula, spans, well, Ink);
 
-            NodeSkin.DrawPort(context, center, port.Kind);
+            if (well is { } state) ValueWell.DrawSocket(context, center, port.Kind, state);
+            else NodeSkin.DrawPort(context, center, port.Kind);
         }
 
         if (FormulaLayout.FormulaBlock(Patch, node, def, bounds, geometry.Compact, y => Ink(y, RowInk, ValueFade, CanvasText.ValueBrush)) is var (text, at, _, _))
@@ -682,9 +687,10 @@ internal sealed class CanvasPainter(
     /// formula never reads has a knob that turns nothing, so an Expression shows
     /// the values of the ones it does and no more.
     /// </remarks>
+    /// <param name="well">How the value's well is drawn, or null for an input that has none.</param>
     private static bool DrawResting(
         DrawingContext context, NodeInstance node, PortSpec port, int i, Rect bounds, Point center,
-        string? formula, RemapSpans? spans, Func<double, double, double, IBrush, IBrush> ink)
+        string? formula, RemapSpans? spans, WellState? well, Func<double, double, double, IBrush, IBrush> ink)
     {
         if (NodeCatalog.Normalled(port) is { } source)
         {
@@ -698,6 +704,20 @@ internal sealed class CanvasPainter(
         if (i >= node.InputValues.Length || (formula is not null && !FormulaLayout.Reads(formula, i))) return false;
 
         var (said, flagged) = SocketTips.RemapValue(spans, i, node.InputValues[i]) ?? (port.Format(node.InputValues[i]), false);
+
+        if (well is { } state && !flagged)
+        {
+            ValueWell.Draw(
+                context,
+                ValueWell.At(bounds, center),
+                said,
+                Share(port, node.InputValues[i]),
+                port.Stepped ? (int)(port.Max - port.Min) + 1 : 0,
+                state,
+                ink(center.Y, RowInk, 0, ValueWell.Ink));
+            return true;
+        }
+
         var value = CanvasText.Text(
             said,
             CanvasText.RowSize,
@@ -712,6 +732,15 @@ internal sealed class CanvasPainter(
             context.DrawRectangle(null, FlagPen, new Rect(spot.X - 3, spot.Y - 1, value.Width + 6, value.Height + 2), 3, 3);
 
         return true;
+    }
+
+    /// <summary>Where a value sits along its socket's range, which a value outside it widens.</summary>
+    private static double Share(PortSpec port, float value)
+    {
+        var min = Math.Min(port.Min, value);
+        var max = Math.Max(port.Max, value);
+
+        return max > min ? port.Travel(value, min, max) : 0;
     }
 
     private static readonly IImmutableBrush FlagBrush = new ImmutableSolidColorBrush(Colors.Attention);
@@ -905,7 +934,7 @@ internal sealed class CanvasPainter(
         var formula = NodeCatalog.FormulaOf(node);
         var spans = node.TypeId == NodeCatalog.AutoRemapTypeId ? AutoRemap.Of(Patch, node) : null;
 
-        return DrawInputValue(context, node, spec, port, bounds, center, follow: false, formula, spans, Plain);
+        return DrawInputValue(context, node, spec, port, bounds, center, follow: false, formula, spans, well: null, Plain);
     }
 
     /// <summary>Where a socket's name is drawn: inside the module, against the side its socket is on.</summary>
@@ -1015,9 +1044,9 @@ internal sealed class CanvasPainter(
     /// </param>
     private bool DrawInputValue(
         DrawingContext context, NodeInstance node, PortSpec port, int index, Rect bounds, Point center,
-        bool follow, string? formula, RemapSpans? spans, Func<double, double, double, IBrush, IBrush> ink) =>
+        bool follow, string? formula, RemapSpans? spans, WellState? well, Func<double, double, double, IBrush, IBrush> ink) =>
         DrawLinkedValue(context, node, port, index, bounds, center, follow, ink)
-        || DrawResting(context, node, port, index, bounds, center, formula, spans, ink);
+        || DrawResting(context, node, port, index, bounds, center, formula, spans, well, ink);
 
     /// <summary>Tints an input's row while linking: its half of a shared row on a compact module.</summary>
     private void DrawLinkWash(

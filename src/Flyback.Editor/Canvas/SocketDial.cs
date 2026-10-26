@@ -12,9 +12,9 @@ using Colors = Flyback.Ui.Controls.Colors;
 namespace Flyback.Editor.Canvas;
 
 /// <summary>
-/// An unpatched input turned by dragging up and down with the right button held on
-/// it, across the socket's range. While it turns the socket is a pie of where the
-/// value sits in that range.
+/// An unpatched input turned by dragging up and down, with the left button on its
+/// value's well or the right button anywhere on its socket, across the socket's range.
+/// While it turns the socket is a pie of where the value sits in that range.
 /// </summary>
 /// <remarks>
 /// An edit like the inspector's slider, filed under the same name, so a turn here and
@@ -49,11 +49,48 @@ internal sealed class SocketDial(
 
     public bool Turning => dialed is not null;
 
+    /// <summary>Whether the turn under way is the fine one, Shift held.</summary>
+    public bool Fine { get; private set; }
+
+    /// <summary>The input whose well the pointer is over, if any.</summary>
+    public SocketPick? Hovered { get; private set; }
+
+    /// <summary>How the well of <paramref name="port"/> on <paramref name="node"/> is drawn now.</summary>
+    public WellState StateOf(Guid node, int port) =>
+        dialed is { } d && d.Node == node && d.Port == port ? Fine ? WellState.Fine : WellState.Turn
+        : dialed is null && Hovered is { } over && over.Node == node && over.Port == port ? WellState.Hover
+        : WellState.Rest;
+
+    /// <summary>Notes the well under <paramref name="graph"/>, and repaints when it is a different one.</summary>
+    public void Hover(Point graph)
+    {
+        SocketPick? now = selection.Scene.HitWell(graph, out var node, out var port) ? new SocketPick(node, port) : null;
+
+        if (now == Hovered) return;
+
+        Hovered = now;
+        repaint.Request();
+    }
+
+    /// <summary>Forgets the well under the pointer, which has left the canvas.</summary>
+    public void Unhover()
+    {
+        if (Hovered is null) return;
+
+        Hovered = null;
+        repaint.Request();
+    }
+
     /// <summary>Starts turning the input under <paramref name="graph"/>, and says whether there was one to turn.</summary>
     /// <param name="anchored">Whether the pointer is held where the turn began, which a finger cannot be.</param>
-    public bool Start(Control canvas, Point graph, Point screen, bool anchored = true)
+    public bool Start(Control canvas, Point graph, Point screen, bool anchored = true) =>
+        selection.Scene.HitPort(graph, out var nodeId, out var port, out var isOutput)
+        && !isOutput
+        && Start(canvas, nodeId, port, screen, anchored);
+
+    /// <summary>Starts turning one input, and says whether it can be turned.</summary>
+    public bool Start(Control canvas, Guid nodeId, int port, Point screen, bool anchored = true)
     {
-        if (!selection.Scene.HitPort(graph, out var nodeId, out var port, out var isOutput) || isOutput) return false;
         if (!Dialable(nodeId, port, out var node, out var spec)) return false;
 
         var value = node.InputValues[port];
@@ -79,7 +116,8 @@ internal sealed class SocketDial(
         // The warp's own echo, which would otherwise turn it back.
         if (dialAnchor is not null && screen == dialHome) return;
 
-        var fine = (modifiers & KeyModifiers.Shift) != 0 ? 5d : 1d;
+        Fine = (modifiers & KeyModifiers.Shift) != 0;
+        var fine = Fine ? 5d : 1d;
 
         dialAt = Math.Clamp(dialAt + (dialLast.Y - screen.Y) / (DialTravel * fine), 0d, 1d);
 
@@ -107,10 +145,21 @@ internal sealed class SocketDial(
         if (restore) Set(d.Node, d.Port, d.Was);
 
         dialed = null;
+        Fine = false;
         DropAnchor(canvas);
 
         repaint.Request();
         reactions.Raise(new InputLetGo(new SocketPick(d.Node, d.Port)));
+        return true;
+    }
+
+    /// <summary>Puts an input back to the value it has when a module is new, as one step.</summary>
+    public bool Reset(Guid nodeId, int port)
+    {
+        if (!Dialable(nodeId, port, out _, out var spec)) return false;
+
+        Set(nodeId, port, spec.Default);
+        reactions.Raise(new InputLetGo(new SocketPick(nodeId, port)));
         return true;
     }
 
