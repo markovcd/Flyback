@@ -50,6 +50,12 @@ runtime.setModuleImports('page', {
   },
   attachGl: box => gl.attach(box.firstChild, () => runtime.localHeapViewU8()),
   hasFocus: () => document.hasFocus(),
+  // Not every browser lets a page have the screen (an iPhone's does not), so a refusal is ignored.
+  wholeScreen: whole => {
+    const root = document.documentElement;
+    if (whole && !document.fullscreenElement) root.requestFullscreen?.().catch(() => { });
+    else if (!whole && document.fullscreenElement) document.exitFullscreen?.().catch(() => { });
+  },
   // A browser that keeps nothing (a private window, storage blocked) forgets the settings rather than failing.
   readSetting: section => {
     try { return localStorage.getItem(`flyback.editor.${section}`); } catch { return null; }
@@ -101,6 +107,11 @@ async function openUrl(url, fileName, title) {
   const file = fileName ?? url.split('/').pop().split('?')[0];
   return await exports.Shared(title ?? file.replace(/\.[^.]+$/, ''), file, new Uint8Array(await response.arrayBuffer()));
 }
+
+// The browser's Escape ends its full screen before the editor hears the key, so the picture follows.
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement) exports.ScreenLeft();
+});
 
 // The browser's own question, since nothing may wait on the editor's while the page unloads.
 addEventListener('beforeunload', event => {

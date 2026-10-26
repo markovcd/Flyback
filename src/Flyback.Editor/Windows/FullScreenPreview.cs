@@ -9,6 +9,7 @@ using Flyback.Editor.Hubs;
 using Flyback.Editor.Keys;
 using Flyback.Editor.Knobs;
 using Flyback.Editor.Settings;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Statistics;
 using Flyback.Ui.Audio;
 using Flyback.Ui.Controls;
@@ -40,7 +41,8 @@ internal sealed class FullScreenPreview(
     TextWriteBack writeBack,
     Usage usage,
     OutputSettingRepository settings,
-    TransportControls transport)
+    TransportControls transport,
+    EditorHost host)
 {
     /// <summary>The grid the shell stands in, or null before the layout is built.</summary>
     public Grid? Columns { get; set; }
@@ -284,7 +286,8 @@ internal sealed class FullScreenPreview(
                 row.Height = i == keepRow ? Everything : None;
             }
 
-            if (owner is not null) owner.WindowState = WindowState.FullScreen;
+            if (host.WholeScreen is { } whole) whole(true);
+            else if (owner is not null) owner.WindowState = WindowState.FullScreen;
         }
 
         void Restore()
@@ -307,7 +310,8 @@ internal sealed class FullScreenPreview(
                 }
             }
 
-            if (owner is not null) owner.WindowState = StateBefore;
+            if (host.WholeScreen is { } whole) whole(false);
+            else if (owner is not null) owner.WindowState = StateBefore;
         }
     }
 }

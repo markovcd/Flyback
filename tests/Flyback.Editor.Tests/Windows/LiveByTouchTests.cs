@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Composition;
 using Flyback.Editor.Hubs;
+using Flyback.Editor.Shell;
 using Flyback.Editor.Windows;
 using Flyback.Ui.Controls;
 using Shouldly;
@@ -111,6 +112,20 @@ public class LiveByTouchTests : EditorTest
 
         back.Handled.ShouldBeTrue("the app is not closed under the picture");
         Service<FullScreenPreview>(window).IsFullScreen.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void In_a_page_live_patching_asks_for_the_whole_screen_and_gives_it_back()
+    {
+        var asked = new List<bool>();
+        var window = NewMainWindow(new EditorSetup { Host = new() { InPage = true, WholeScreen = asked.Add } });
+        window.Show();
+        Settle(window);
+
+        GoLive(window);
+        Click(window, Tool(window, "liveLeave"));
+
+        asked.ShouldBe([true, false]);
     }
 
     [AvaloniaFact]

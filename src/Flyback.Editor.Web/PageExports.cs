@@ -5,6 +5,7 @@ using Flyback.Editor.Files;
 using Flyback.Editor.Gallery;
 using Flyback.Editor.Hubs;
 using Flyback.Editor.Notices;
+using Flyback.Editor.Windows;
 using Flyback.Ui.Controls;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -62,6 +63,13 @@ internal static partial class PageExports
         Get<Reactions>().Raise(new ViewAsked());
 
         return Get<PageViewer>().Opened;
+    }
+
+    /// <summary>The browser left full screen on its own, by its Escape, so the picture gives the page back too.</summary>
+    [JSExport]
+    public static void ScreenLeft()
+    {
+        if (Provider is not null && Get<FullScreenPreview>() is { IsFullScreen: true } fullScreen) fullScreen.Leave();
     }
 
     /// <summary>The open patch as text in the language.</summary>

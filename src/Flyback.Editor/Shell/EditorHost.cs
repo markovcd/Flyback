@@ -23,6 +23,12 @@ public sealed record EditorHost
     /// </summary>
     public Action<Reopen?>? Relaunch { get; init; }
 
+    /// <summary>
+    /// Gives the whole screen to the editor, or takes it back, as the picture goes full screen,
+    /// for a host whose screen is not the window's to change. Null changes the window's state instead.
+    /// </summary>
+    public Action<bool>? WholeScreen { get; init; }
+
     /// <summary>Leaves the editor for the front page of the site it is served from. Null puts no mark on the toolbar.</summary>
     public Action? Home { get; init; }
 }
