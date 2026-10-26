@@ -37,6 +37,7 @@ public sealed class CompiledPatch
         Taps = taps ?? [];
         RegisterCount = Vouch(ops, registerCount);
         Plan = FramePlan.For(ops, registerCount);
+        Sound = SoundPlan.For(ops, registerCount);
         OutputBase = outputBase;
         OutputWidth = outputWidth;
         DelayLengths =
@@ -200,6 +201,13 @@ public sealed class CompiledPatch
     /// </summary>
     public FramePlan? Plan { get; }
 
+    /// <summary>
+    /// The same ops split into those that follow from the constants and the rest, for the
+    /// interpreter playing this as a sound, or null for a program that cannot be split.
+    /// See <see cref="SoundPlan"/>.
+    /// </summary>
+    public SoundPlan? Sound { get; }
+
     /// <summary>First of the <see cref="OutputWidth"/> registers holding the result.</summary>
     public int OutputBase { get; }
 
@@ -296,6 +304,33 @@ public sealed class CompiledPatch
         LiveValues? live = null,
         Span<float> planes = default) =>
         Interpreter.Run(this, Ops, 0, Ops.Length, x, y, t, registers, feedback, delays, aspect, live, planes);
+
+    /// <summary>
+    /// Runs the sound's fixed ops into <paramref name="registers"/>, once a buffer: what
+    /// follows from the constants alone. Nothing where there is no <see cref="Sound"/> plan.
+    /// </summary>
+    internal void EvaluateFixed(Span<double> registers, double aspect = 1d)
+    {
+        if (Sound is { } plan)
+            Interpreter.Run(this, plan.Fixed, 0, plan.Fixed.Length, 0d, 0d, 0d, registers, default, null, aspect, null, default);
+    }
+
+    /// <summary>
+    /// Runs the rest of the sound, every sample, after <see cref="EvaluateFixed"/> has run
+    /// into the same <paramref name="registers"/> this buffer; the whole program where there
+    /// is no plan. Together the two do what one <see cref="Evaluate"/> does.
+    /// </summary>
+    internal void EvaluateVarying(
+        double t,
+        Span<double> registers,
+        DelayState? delays,
+        double aspect = 1d,
+        LiveValues? live = null)
+    {
+        var ops = Sound?.Varying ?? Ops;
+
+        Interpreter.Run(this, ops, 0, ops.Length, 0d, 0d, t, registers, default, delays, aspect, live, default);
+    }
 
     /// <summary>
     /// Runs only the ops of <paramref name="stage"/>, for a caller drawing a

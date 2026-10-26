@@ -17,8 +17,10 @@ internal static class Interpreter
     /// without a second copy of the switch.
     /// </summary>
     /// <remarks>
-    /// Only a whole run may pass <paramref name="delays"/>: which line or cell a
-    /// stateful op uses is counted from the start of the program. A staged run
+    /// Only a run that keeps every stateful op in its place may pass
+    /// <paramref name="delays"/>: which line or cell one uses is counted from the start
+    /// of the program. That is a whole run, or a sound's varying ops (see
+    /// <see cref="SoundPlan"/>), which drop only stateless ones. A staged picture run
     /// passes none, which is also what lets its ops be reordered at all.
     /// <para>
     /// <paramref name="planes"/> is the exception, and can be passed to either,

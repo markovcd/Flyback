@@ -48,7 +48,7 @@ About 10 ms a 1080p frame for Whole band in `flyback-cli render`, readback, swiz
 
 Measured on Tranquility's sound, once IL chunking landed (ADR-0076, amendment of 2026-09-23):
 
-- **A per-buffer stage for the sound** (ops reading only constants and live values, run once per buffer): 232 of 3,108 non-constant ops, 7.5%. Not worth the code.
+- **A per-buffer stage for the IL sound** (ops reading only constants and live values, run once per buffer): 232 of 3,108 non-constant ops, 7.5%. Not worth the code: the JIT folds constants for nothing. The interpreter is another matter: `SoundPlan` runs what follows from the constants once a buffer, 15-22% of a large sound's ops, and Flythrough, Mycelium and Acid play 40-51% faster interpreted, as on iOS.
 - **Control rate for slow signals, and threads:** the sound runs at 2.27x real time on one core, roughly 7,000 ops before it chokes. Control rate breaks the bit-for-bit match with the interpreter and needs an ADR; threads are a large job. Reopen either only for a patch past that ceiling.
 - **Chunk size:** 128, 256 and 512 ops per method measured the same; 1,024 fell to 1.13x. Keep 256.
 - **What is left of the gap after an edit:** emit 3 ms, compile 4-6 ms, the check against the interpreter 1 ms; none is worth more code.

@@ -65,6 +65,9 @@ public sealed class AudioRenderer
     /// <summary>Internal rate multiplier. 1 disables both oversampling and the decimation filter.</summary>
     public int Oversample { get; }
 
+    /// <summary>Whether the interpreter runs the fixed part of a sound once a buffer. Off, it runs every op every sample, for a test to compare against.</summary>
+    internal bool Staged { get; init; } = true;
+
     /// <summary>Sample-accurate position on the timeline. Audio cannot be advanced by wall-clock deltas.</summary>
     public double Time { get; private set; }
 
@@ -199,6 +202,10 @@ public sealed class AudioRenderer
         // change nothing that can be heard, but a buffer is the natural grain.
         var il = program.Il;
 
+        // The interpreter works out what follows from the constants once a buffer rather
+        // than every sample; IL has the JIT, which folds them for nothing.
+        if (il is null && Staged) program.EvaluateFixed(registers, Aspect);
+
         var left = program.OutputBase;
         var right = program.OutputWidth > 1 ? program.OutputBase + 1 : program.OutputBase;
 
@@ -240,8 +247,9 @@ public sealed class AudioRenderer
                 // far its input moved would be handed a staircase. The ear is at no
                 // pixel, so x and y are the origin — a Scan is what moves them, for
                 // the branch it reads.
-                if (il is null) program.Evaluate(0d, 0d, t, registers, default, lines, Aspect, live);
-                else il.Evaluate(0d, 0d, t, registers, default, lines, Aspect, live);
+                if (il is not null) il.Evaluate(0d, 0d, t, registers, default, lines, Aspect, live);
+                else if (Staged) program.EvaluateVarying(t, registers, lines, Aspect, live);
+                else program.Evaluate(0d, 0d, t, registers, default, lines, Aspect, live);
 
                 Hold((float)registers[left], (float)registers[right]);
             }

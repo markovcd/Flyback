@@ -35,6 +35,7 @@
 
 ### Performance
 
+- The sound on an iPhone or iPad plays about 40% faster.
 - On a Mac, an iPhone or an iPad the picture draws through Metal, and a large patch no longer holds the window while its shader builds; on a Mac the Renderer box picks Metal or OpenGL.
 
 ### Fixes
