@@ -62,3 +62,10 @@ Metal on a Mac.
   in `MetalDevice`, checked by `MetalRenderTests` on a Mac.
 - In the iPad Simulator, Mycelium's picture draws at 14 frames a second with the UI thread
   idle, where OpenGL ES held the UI thread for minutes.
+
+## Amendment, 2026-10-26: the builtins at the GPU's precision
+
+Arithmetic stays exact, but sin, cos, pow and the other builtins compile at the GPU's own
+precision, as OpenGL's do. With precise builtins Flythrough drew at about 37 frames a second
+in the viewer against OpenGL's 47; at the GPU's precision it draws at 46. `MetalRenderTests`
+holds the picture to the same bounds against the processor either way.

@@ -38,9 +38,15 @@ internal sealed unsafe class MetalDevice : IDisposable
     private const nuint TriangleStrip = 4;
     private const nuint CommandBufferError = 5;
 
-    /// <summary>Exactness over speed: no reassociation, no flushing a NaN to a number.</summary>
+    /// <summary>Exactness over speed in arithmetic: no reassociation, no flushing a NaN to a number.</summary>
     private const nuint MathModeSafe = 0;
-    private const nuint FloatingPointFunctionsPrecise = 1;
+
+    /// <summary>
+    /// The builtins (sin, cos, pow) at the GPU's own precision, as OpenGL computes them: the
+    /// precise ones made a raymarch a fifth slower, and the picture stays within the bounds
+    /// the processor's is held to.
+    /// </summary>
+    private const nuint FloatingPointFunctionsFast = 0;
 
     /// <summary>The most <c>setFragmentBytes</c> takes; anything longer goes in a buffer.</summary>
     public const int InlineBytes = 4096;
@@ -105,8 +111,9 @@ internal sealed unsafe class MetalDevice : IDisposable
     }
 
     /// <summary>
-    /// Fast math off, which the shaders need (see <c>MetalEmitter</c>): through the math
-    /// mode where the system has one, and the older switch where it does not.
+    /// Fast arithmetic off, which the shaders need (see <c>MetalEmitter</c>), through the math
+    /// mode where the system has one and the older switch where it does not; the builtins at
+    /// the GPU's own precision where the system can say so.
     /// </summary>
     private static IntPtr CompileOptions()
     {
@@ -116,7 +123,7 @@ internal sealed unsafe class MetalDevice : IDisposable
         else ObjC.Call(options, "setFastMathEnabled:", false);
 
         if (ObjC.RespondsTo(options, "setMathFloatingPointFunctions:"))
-            ObjC.Call(options, "setMathFloatingPointFunctions:", FloatingPointFunctionsPrecise);
+            ObjC.Call(options, "setMathFloatingPointFunctions:", FloatingPointFunctionsFast);
 
         return options;
     }
