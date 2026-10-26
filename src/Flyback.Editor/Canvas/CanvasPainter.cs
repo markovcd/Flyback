@@ -47,8 +47,17 @@ internal sealed class CanvasPainter(
     /// <summary>How opaque the patch is drawn while it stands over the picture.</summary>
     internal const double GlassOpacity = 0.78;
 
-    /// <summary>Whether the patch is drawn over the picture: no ground, no grid, and the rest see-through.</summary>
+    /// <summary>Whether the patch is drawn over the picture: no ground, no grid, and the fills and wires see-through.</summary>
     internal bool SeeThrough { get; set; }
+
+    /// <summary>Lets the picture through what is drawn next, while the patch stands over it.</summary>
+    private DrawingContext.PushedState Glass(DrawingContext context) => context.PushOpacity(SeeThrough ? GlassOpacity : 1);
+
+    /// <summary>
+    /// Lets the picture through a module's fill, but not one whose value is in hand,
+    /// whose fill stays solid so its text reads against it.
+    /// </summary>
+    internal double FillOpacity(Guid node) => SeeThrough && dial.Dialed?.Node != node && focus.Focused?.Node != node ? GlassOpacity : 1;
 
     public void Render(DrawingContext context)
     {
@@ -66,7 +75,6 @@ internal sealed class CanvasPainter(
             context.FillRectangle(Brushes.Transparent, new Rect(view.Size));
         }
 
-        using (context.PushOpacity(SeeThrough ? GlassOpacity : 1))
         using (context.PushTransform(view.GraphToScreen))
         {
             if (!SeeThrough) DrawGrid(context);
@@ -77,9 +85,9 @@ internal sealed class CanvasPainter(
             var scene = selection.Scene;
 
             // Under the modules and the wires both: the ground a group stands on.
-            DrawOpenGroups(context, scene);
+            using (Glass(context)) DrawOpenGroups(context, scene);
 
-            DrawConnections(context, lifted, theirs: false, peeked: false);
+            using (Glass(context)) DrawConnections(context, lifted, theirs: false, peeked: false);
 
             if (!gestures.Gesturing) marks.Draw(context);
 
@@ -88,11 +96,14 @@ internal sealed class CanvasPainter(
                     DrawNode(context, node, def);
 
             // A box being carried is drawn last of them, so it passes over the others.
-            foreach (var (group, sockets, bounds) in scene.Boxes())
-                if (!lift.Raised(group)) DrawBox(context, group, sockets, bounds);
+            using (Glass(context))
+            {
+                foreach (var (group, sockets, bounds) in scene.Boxes())
+                    if (!lift.Raised(group)) DrawBox(context, group, sockets, bounds);
 
-            foreach (var (group, sockets, bounds) in scene.Boxes())
-                if (lift.Raised(group)) DrawBox(context, group, sockets, bounds);
+                foreach (var (group, sockets, bounds) in scene.Boxes())
+                    if (lift.Raised(group)) DrawBox(context, group, sockets, bounds);
+            }
 
             // Held up over the boxes as well, so one carried across a shut box
             // is not hidden by it.
@@ -100,13 +111,13 @@ internal sealed class CanvasPainter(
                 if (!scene.Shut(node.Id) && !scene.InPeek(node.Id) && lift.Raised(node.Id) && NodeCatalog.Get(node.TypeId) is { } def)
                     DrawNode(context, node, def);
 
-            DrawConnections(context, lifted, theirs: true, peeked: false);
+            using (Glass(context)) DrawConnections(context, lifted, theirs: true, peeked: false);
 
             if (!gestures.Gesturing) measured.Draw(context, peeked: false);
 
-            DrawPeek(context, scene, lifted);
+            using (Glass(context)) DrawPeek(context, scene, lifted);
 
-            DrawBusLinks(context);
+            using (Glass(context)) DrawBusLinks(context);
 
             gestures.DrawPendingWire(context);
 
@@ -604,29 +615,11 @@ internal sealed class CanvasPainter(
                 new Point(at.X + title.Width, at.Y + title.Height / 2));
     }
 
-    private void DrawModule(DrawingContext context, NodeInstance node, NodeDef def)
+    /// <summary>A module's body, artwork, mark and title band: everything under its text.</summary>
+    private void DrawFill(
+        DrawingContext context, NodeDef def, RoundedRect body, Rect bounds, Rect header, Color accent, Color floor,
+        bool isSelected, ModuleBackdrop backdrop, IPen border)
     {
-        var bounds = geometry.Bounds(node, def);
-        var isSelected = selection.Contains(node.Id);
-        var (accent, floor) = Colors.Palette(def);
-        var backdrop = ModuleBackdrop.Of(def, isSelected);
-
-        // A module given a background of its own was given one the shell cannot
-        // judge white against, so where its author asked, every line of text on
-        // it is colored from the background that line covers instead.
-        var follow = ModuleSkins.Of(def) is { ContrastText: true };
-
-        IBrush Ink(double center, double height, double fade, IBrush plain) => follow
-            ? NodeSkin.Ink(
-                backdrop.At(bounds, center - height / 2),
-                backdrop.At(bounds, center + height / 2),
-                backdrop.Lift(bounds, center),
-                fade)
-            : plain;
-
-        var body = new RoundedRect(bounds, NodeGeometry.CornerRadius);
-        var border = BorderFor(isSelected, selection.Focus == node.Id);
-
         if (backdrop.Picture is { } picture)
         {
             // A picture rarely covers the body edge to edge, and ADR-0118 counts
@@ -654,12 +647,38 @@ internal sealed class CanvasPainter(
         // Header band, square at the bottom so it reads as a title bar. A picture
         // runs under it instead: it is the background, and the band is the one
         // part of the block that is not.
-        var header = HeaderOf(bounds);
-
         if (backdrop.Picture is null)
             context.DrawRectangle(NodeSkin.Header(accent, floor, isSelected), null, HeaderShape(header));
 
         NodeSkin.Relief(context, header);
+    }
+
+    private void DrawModule(DrawingContext context, NodeInstance node, NodeDef def)
+    {
+        var bounds = geometry.Bounds(node, def);
+        var isSelected = selection.Contains(node.Id);
+        var (accent, floor) = Colors.Palette(def);
+        var backdrop = ModuleBackdrop.Of(def, isSelected);
+
+        // A module given a background of its own was given one the shell cannot
+        // judge white against, so where its author asked, every line of text on
+        // it is colored from the background that line covers instead.
+        var follow = ModuleSkins.Of(def) is { ContrastText: true };
+
+        IBrush Ink(double center, double height, double fade, IBrush plain) => follow
+            ? NodeSkin.Ink(
+                backdrop.At(bounds, center - height / 2),
+                backdrop.At(bounds, center + height / 2),
+                backdrop.Lift(bounds, center),
+                fade)
+            : plain;
+
+        var body = new RoundedRect(bounds, NodeGeometry.CornerRadius);
+        var border = BorderFor(isSelected, selection.Focus == node.Id);
+        var header = HeaderOf(bounds);
+
+        using (context.PushOpacity(FillOpacity(node.Id)))
+            DrawFill(context, def, body, bounds, header, accent, floor, isSelected, backdrop, border);
 
         var titleAt = TitleAt(bounds);
 
@@ -729,7 +748,7 @@ internal sealed class CanvasPainter(
     /// the values of the ones it does and no more.
     /// </remarks>
     /// <param name="well">How the value's well is drawn, or null for an input that has none.</param>
-    private static bool DrawResting(
+    private bool DrawResting(
         DrawingContext context, NodeInstance node, PortSpec port, int i, Rect bounds, Point center,
         string? formula, RemapSpans? spans, WellState? well, Func<double, double, double, IBrush, IBrush> ink)
     {
@@ -755,7 +774,8 @@ internal sealed class CanvasPainter(
                 Share(port, node.InputValues[i]),
                 port.Stepped ? (int)(port.Max - port.Min) + 1 : 0,
                 state,
-                ink(center.Y, RowInk, 0, ValueWell.Ink));
+                ink(center.Y, RowInk, 0, SeeThrough ? ValueWell.GlassInk : ValueWell.Ink),
+                SeeThrough);
             return true;
         }
 
@@ -1110,7 +1130,7 @@ internal sealed class CanvasPainter(
     {
         if (KnobChip.Of(Patch, node, index) is not var (place, control, found)) return false;
 
-        var brush = follow ? ink(center.Y, RowInk, ValueFade, CanvasText.ValueBrush) : ink(center.Y, RowInk, 0, ValueWell.Ink);
+        var brush = follow ? ink(center.Y, RowInk, ValueFade, CanvasText.ValueBrush) : ink(center.Y, RowInk, 0, SeeThrough ? ValueWell.GlassInk : ValueWell.Ink);
 
         KnobChip.Draw(context, bounds, center, port.Format(found.At(control.Value)), KnobChoice.Tag(place), brush);
         return true;

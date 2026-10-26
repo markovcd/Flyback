@@ -7,8 +7,14 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>The modules over a full-screen picture, for playing a patch live.</summary>
 [Binding]
-public sealed class LivePatchingSteps(EditorDriver editor)
+public sealed class LivePatchingSteps(PatchContext context, EditorDriver editor)
 {
+    [Then("the sine's fill lets the picture through")]
+    public void ThenSeeThrough() => editor.FillOpacity(context.Node("sine").Id).ShouldBeLessThan(1);
+
+    [Then("the sine's fill is solid")]
+    public void ThenSolid() => editor.FillOpacity(context.Node("sine").Id).ShouldBe(1);
+
     [When("Shift+F11 is pressed")]
     public void WhenShiftF11() => editor.Press(PhysicalKey.F11, RawInputModifiers.Shift);
 

@@ -280,6 +280,9 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     public (Guid Node, string Name)? TurnCard => Read(canvas =>
         canvas.Dial.Reading is var (pick, turn) ? (pick.Node, turn.Name) : ((Guid, string)?)null);
 
+    /// <summary>How opaque a module's fill is drawn, which over the picture lets it through.</summary>
+    public double FillOpacity(Guid node) => Read(canvas => canvas.FillOpacity(node));
+
     /// <summary>The lines of the list of knobs dropped from a socket, or none while it is shut.</summary>
     public IReadOnlyList<string> KnobList => Read(canvas => canvas.KnobChoice.Rows.Select(row => row.Text).ToList());
 

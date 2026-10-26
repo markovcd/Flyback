@@ -59,7 +59,8 @@ internal static class ValueWell
     /// <param name="share">Where the value sits along its range, 0 to 1.</param>
     /// <param name="steps">How many values a stepped input can take, or 0 for a smooth one.</param>
     /// <param name="ink">What the number is written in at rest.</param>
-    public static void Draw(DrawingContext context, Rect well, string text, double share, int steps, WellState state, IBrush ink)
+    /// <param name="glass">Whether the well stands over the picture, where a number at rest is lighter and shadowed.</param>
+    public static void Draw(DrawingContext context, Rect well, string text, double share, int steps, WellState state, IBrush ink, bool glass = false)
     {
         var hot = state is WellState.Turn or WellState.Fine;
         var editing = state == WellState.Edit;
@@ -95,7 +96,16 @@ internal static class ValueWell
         number.MaxLineCount = 1;
         number.Trimming = TextTrimming.CharacterEllipsis;
 
-        context.DrawText(number, new Point(well.Right - Padding - number.Width, well.Y + (well.Height - 2 - number.Height) / 2));
+        var at = new Point(well.Right - Padding - number.Width, well.Y + (well.Height - 2 - number.Height) / 2);
+
+        if (glass && !lit)
+        {
+            number.SetForegroundBrush(Shadow);
+            context.DrawText(number, at + new Vector(0, 1));
+            number.SetForegroundBrush(ink);
+        }
+
+        context.DrawText(number, at);
 
         if (chevrons) DrawChevrons(context, new Point(well.X + Padding + 3, well.Center.Y - 1), hot ? Attention : HoverInk);
 
@@ -176,6 +186,10 @@ internal static class ValueWell
 
     private static readonly Typeface Numbers = new(Text.Mono);
 
+    /// <summary>What a number at rest is written in over the picture.</summary>
+    public static readonly IBrush GlassInk = new ImmutableSolidColorBrush(Color.FromRgb(0xC8, 0xCC, 0xD4));
+
+    private static readonly IBrush Shadow = new ImmutableSolidColorBrush(Avalonia.Media.Colors.Black, 0.7);
     private static readonly IImmutableBrush Attention = new ImmutableSolidColorBrush(Colors.Attention);
     private static readonly IImmutableBrush HoverInk = new ImmutableSolidColorBrush(Color.FromRgb(0xE8, 0xEA, 0xF0));
     private static readonly IBrush HoverFill = new ImmutableSolidColorBrush(Color.FromRgb(0x1F, 0x22, 0x27));

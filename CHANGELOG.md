@@ -24,6 +24,7 @@
 - An unwired input's value sits in a well with a level line under it; drag it up or down to turn it, Shift for finer, Alt-click for its default, and a card over the module reads it out large with its range and where it started. Its socket is a ring in its kind's color. A click picks a well: the arrows and the wheel nudge it, Backspace resets it, Tab moves on, and Enter or a double-click opens it for an exact value, typed as a number, a note name or a time.
 - Alt+L on a picked value links it to a panel knob, new or one already there; a linked socket is a filled diamond with the knob's chip in its well, and the chip picks another knob or unlinks. A socket that only a wire can set is a hollow diamond.
 - On a touch screen a tap on a value shows buttons under its module to step it, make the steps fine or type it; a held finger slides it with a ring and a tether where it began, and a second finger makes the slide fine.
+- Over a live picture only the modules' fills and the wires let it through: their text stays at full strength, values at rest are lighter with a shadow, and a module whose value is in hand keeps a solid fill.
 
 ### Viewer
 

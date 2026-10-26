@@ -152,6 +152,9 @@ internal sealed class NodeEditor
     internal Matrix GraphToScreen => View.GraphToScreen;
 
     /// <summary>Whether the patch is drawn over the picture, for live patching.</summary>
+    /// <summary>How opaque a module's fill is drawn: see-through over the picture, unless its value is in hand.</summary>
+    internal double FillOpacity(Guid node) => painter.FillOpacity(node);
+
     internal bool SeeThrough
     {
         get => painter.SeeThrough;

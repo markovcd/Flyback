@@ -37,3 +37,11 @@ Feature: A patch can be played live with itself over the picture
     Then the patch's text stands over the picture
     When F2 is pressed over the picture
     Then the modules stand over the picture
+
+  Scenario: Over the picture a module's fill lets it through until one of its values is in hand
+    Given a sine on its own
+    And the patch is open in the editor
+    When Shift+F11 is pressed
+    Then the sine's fill lets the picture through
+    When the sine's freq well is clicked
+    Then the sine's fill is solid
