@@ -41,6 +41,7 @@ internal static class CanvasServices
         services.AddSingleton<HeldModules>();
         services.AddSingleton<SocketDial>();
         services.AddSingleton<SocketFocus>();
+        services.AddSingleton<KnobChoice>();
         services.AddSingleton<CanvasTips>();
         services.AddSingleton<ModuleDrag>();
         services.AddSingleton<WireDrag>();

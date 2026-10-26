@@ -48,6 +48,7 @@ internal sealed class CanvasGestures
     private readonly CanvasEdits edits;
     private readonly SocketDial dial;
     private readonly SocketFocus focus;
+    private readonly KnobChoice choice;
     private readonly HeldModules held;
     private readonly KnobLinking linking;
     private readonly RemapMarks marks;
@@ -78,6 +79,7 @@ internal sealed class CanvasGestures
         CanvasEdits edits,
         SocketDial dial,
         SocketFocus focus,
+        KnobChoice choice,
         HeldModules held,
         KnobLinking linking,
         RemapMarks marks,
@@ -95,6 +97,7 @@ internal sealed class CanvasGestures
         this.edits = edits;
         this.dial = dial;
         this.focus = focus;
+        this.choice = choice;
         this.held = held;
         this.linking = linking;
         this.marks = marks;
@@ -108,6 +111,7 @@ internal sealed class CanvasGestures
         {
             End();
             focus.Clear();
+            choice.Close();
         };
         wire.Dropped += (_, drop) => WireDropped?.Invoke(this, drop);
     }
@@ -212,6 +216,18 @@ internal sealed class CanvasGestures
         // After the pan, which leaves the grip of a carry it puts on hold where it was.
         module.Grip(graph);
 
+        // The list of knobs takes a click on one of its lines, and shuts at any other press.
+        if (choice.For is not null)
+        {
+            if (button == MouseButton.Left && choice.RowAt(screen) is { } line)
+            {
+                choice.Choose(line);
+                return true;
+            }
+
+            choice.Close();
+        }
+
         // A press anywhere takes the keys back from a well; one on a well gives them again.
         focus.Clear();
 
@@ -297,6 +313,15 @@ internal sealed class CanvasGestures
 
             tips.Down(canvas);
             pointer?.Capture(canvas);
+            return true;
+        }
+
+        // A linked socket's chip drops the list of knobs, to pick another or unlink.
+        if (!history.Locked && drag == Drag.None && scene.HitChip(graph, out var chipNode, out var chipPort))
+        {
+            if (!selection.Contains(chipNode)) selection.Select(chipNode);
+
+            choice.Open(new SocketPick(chipNode, chipPort));
             return true;
         }
 
@@ -706,6 +731,7 @@ internal sealed class CanvasGestures
         if (scene.HitPort(graph, out _, out _, out _)) return PortCursor;
 
         if (!history.Locked && scene.HitWell(graph, out _, out _)) return WellCursor;
+        if (!history.Locked && scene.HitChip(graph, out _, out _)) return PanCursor;
 
         var draggable = scene.HitNode(graph) is not null
             || scene.HitBox(graph) is not null

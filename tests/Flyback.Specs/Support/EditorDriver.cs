@@ -280,6 +280,29 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     public (Guid Node, string Name)? TurnCard => Read(canvas =>
         canvas.Dial.Reading is var (pick, turn) ? (pick.Node, turn.Name) : ((Guid, string)?)null);
 
+    /// <summary>The lines of the list of knobs dropped from a socket, or none while it is shut.</summary>
+    public IReadOnlyList<string> KnobList => Read(canvas => canvas.KnobChoice.Rows.Select(row => row.Text).ToList());
+
+    /// <summary>Picks the line of the list of knobs that reads <paramref name="text"/>, with the arrows and Enter.</summary>
+    public void PickFromKnobList(string text)
+    {
+        var index = KnobList.ToList().FindIndex(line => line.Contains(text, StringComparison.Ordinal));
+        if (index < 0) throw new InvalidOperationException($"no line of the list of knobs reads '{text}'");
+
+        while (Read(canvas => canvas.KnobChoice.Index) != index) Press(PhysicalKey.ArrowDown);
+        Press(PhysicalKey.Enter);
+    }
+
+    /// <summary>The name of the panel knob an input follows, or null where it follows none.</summary>
+    public string? KnobOf(Guid node, int port) => Read(canvas =>
+        ControlMap.Of(canvas.History.Patch.Find(node)!, port) is { } link ? canvas.History.Patch.Control(link.Control)?.Name : null);
+
+    /// <summary>The value the panel knob an input follows gives it, or null where it follows none.</summary>
+    public float? KnobReading(Guid node, int port) => Read(canvas =>
+        ControlMap.Of(canvas.History.Patch.Find(node)!, port) is { } link && canvas.History.Patch.Control(link.Control) is { } knob
+            ? link.At(knob.Value)
+            : (float?)null);
+
     /// <summary>Clicks the well of an input's value, which gives it the keys.</summary>
     public void ClickWell(Guid node, int port) =>
         DoWindow((open, canvas) =>

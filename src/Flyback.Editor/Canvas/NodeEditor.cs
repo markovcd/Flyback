@@ -40,6 +40,7 @@ internal sealed class NodeEditor
         CanvasTips tips,
         SocketDial dial,
         SocketFocus focus,
+        KnobChoice choice,
         KnobLinking linking,
         UndescribedTags tags,
         CanvasPainter painter,
@@ -61,6 +62,7 @@ internal sealed class NodeEditor
         Tips = tips;
         Dial = dial;
         WellFocus = focus;
+        KnobChoice = choice;
         Linking = linking;
         Tags = tags;
 
@@ -127,6 +129,9 @@ internal sealed class NodeEditor
 
     /// <summary>The input whose well has the keys, and what is being typed into it.</summary>
     internal SocketFocus WellFocus { get; }
+
+    /// <summary>The list of panel knobs that drops from a socket.</summary>
+    internal KnobChoice KnobChoice { get; }
 
     internal KnobLinking Linking { get; }
 

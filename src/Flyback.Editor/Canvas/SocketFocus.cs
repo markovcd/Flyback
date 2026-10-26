@@ -7,14 +7,15 @@ namespace Flyback.Editor.Canvas;
 /// <summary>
 /// The input whose well was clicked, which then takes keys: arrows nudge it, Home and
 /// End send it to the ends of its range, Backspace resets it, Tab moves to the next
-/// well on the module, and Enter opens it for an exact value to be typed.
+/// well on the module, Enter opens it for an exact value to be typed, and Alt+L
+/// drops the list of panel knobs to link it to.
 /// </summary>
 /// <remarks>
 /// No bare key starts the typing, so the computer keyboard still plays notes. What is
 /// typed is drawn on the readout rather than in a text box, and the patch follows
 /// every keystroke that reads as a value.
 /// </remarks>
-internal sealed class SocketFocus(SocketDial dial, CanvasHistory history, Repaint repaint, Reactions reactions)
+internal sealed class SocketFocus(SocketDial dial, KnobChoice choice, CanvasHistory history, Repaint repaint, Reactions reactions)
 {
     /// <summary>How far one nudge moves a value along its travel, and the fine and coarse ones.</summary>
     private const double Nudge = 0.01, FineNudge = 0.002, CoarseNudge = 0.1;
@@ -113,6 +114,8 @@ internal sealed class SocketFocus(SocketDial dial, CanvasHistory history, Repain
     /// <summary>Answers a key while an input has the focus, and says whether it was its.</summary>
     public bool Key(Key key, KeyModifiers modifiers)
     {
+        if (choice.Key(key, modifiers)) return true;
+
         if (Focused is null || dial.Turning) return false;
 
         var command = (modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
@@ -120,6 +123,12 @@ internal sealed class SocketFocus(SocketDial dial, CanvasHistory history, Repain
         if (Typed is not null) return !command && TypingKey(key, modifiers);
 
         if (command) return false;
+
+        if (key == Avalonia.Input.Key.L && (modifiers & KeyModifiers.Alt) != 0 && Focused is { } linking)
+        {
+            choice.Open(linking);
+            return true;
+        }
 
         var shift = (modifiers & KeyModifiers.Shift) != 0;
 

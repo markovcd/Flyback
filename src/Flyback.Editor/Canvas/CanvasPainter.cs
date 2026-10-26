@@ -25,6 +25,7 @@ internal sealed class CanvasPainter(
     CanvasGestures gestures,
     SocketDial dial,
     SocketFocus focus,
+    KnobChoice choice,
     RemapMarks marks,
     MeasureLabels measured,
     KnobLinking linking,
@@ -115,7 +116,7 @@ internal sealed class CanvasPainter(
         // their spacing at any zoom. Neither is part of the patch.
         if (!SeeThrough) DrawEdge(context);
         gestures.DrawMarquee(context);
-        DrawReadout(context);
+        DrawOverlays(context);
 
         KeepMoving();
     }
@@ -134,6 +135,13 @@ internal sealed class CanvasPainter(
         var (card, above) = TurnReadout.Place(view.OnScreen(bounds), view.OnScreen(well), view.Size);
 
         TurnReadout.Draw(context, card, above, view.OnScreen(well).Center.X, turn);
+    }
+
+    /// <summary>The card, then the list of knobs over it.</summary>
+    private void DrawOverlays(DrawingContext context)
+    {
+        DrawReadout(context);
+        choice.Draw(context);
     }
 
     private static readonly IBrush Background = new ImmutableSolidColorBrush(Colors.Canvas);
@@ -688,6 +696,7 @@ internal sealed class CanvasPainter(
             if (!connected) DrawInputValue(context, node, port, i, bounds, center, follow, formula, spans, well, Ink);
 
             if (well is { } state) ValueWell.DrawSocket(context, center, port.Kind, state);
+            else if (KnobChip.Of(Patch, node, i) is not null) KnobChip.DrawSocket(context, center, port.Kind);
             else NodeSkin.DrawPort(context, center, port.Kind);
         }
 
@@ -1045,7 +1054,8 @@ internal sealed class CanvasPainter(
         else if (!connected && i < node.InputValues.Length && SocketTips.RemapValue(spans, i, node.InputValues[i]) is (_, true))
             context.DrawRectangle(null, FlagPen, new Rect(at.X - 3, at.Y - 1, label.Width + 6, label.Height + 2), 3, 3);
 
-        NodeSkin.DrawPort(context, center, port.Kind);
+        if (KnobChip.Of(Patch, node, i) is not null) KnobChip.DrawSocket(context, center, port.Kind);
+        else NodeSkin.DrawPort(context, center, port.Kind);
     }
 
 
@@ -1083,16 +1093,11 @@ internal sealed class CanvasPainter(
         DrawingContext context, NodeInstance node, PortSpec port, int index, Rect bounds, Point center,
         bool follow, Func<double, double, double, IBrush, IBrush> ink)
     {
-        if (ControlMap.Of(node, index) is not { } found || Patch.Control(found.Control) is not { } control) return false;
+        if (KnobChip.Of(Patch, node, index) is not var (place, control, found)) return false;
 
-        var brush = follow ? ink(center.Y, RowInk, ValueFade, CanvasText.ValueBrush) : LinkedBrush;
+        var brush = follow ? ink(center.Y, RowInk, ValueFade, CanvasText.ValueBrush) : ink(center.Y, RowInk, 0, ValueWell.Ink);
 
-        var value = CanvasText.Text(port.Format(found.At(control.Value)), CanvasText.RowSize, brush, bounds.Width * 0.4, true);
-        var right = bounds.Right - 12;
-
-        context.DrawText(value, new Point(right - value.Width, center.Y - value.Height / 2));
-        context.DrawEllipse(brush, null, new Point(right - value.Width - 6, center.Y), 2.5, 2.5);
-
+        KnobChip.Draw(context, bounds, center, port.Format(found.At(control.Value)), KnobChoice.Tag(place), brush);
         return true;
     }
 }

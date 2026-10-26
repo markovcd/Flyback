@@ -174,7 +174,7 @@ internal static class TurnReadout
     {
         { Hot: true } => "drag ↕ · ⇧ fine · esc cancel",
         { Typed: not null } => "↵ apply · esc cancel · tab next",
-        _ => "↑↓ nudge · ↵ type · ⌫ reset",
+        _ => "↑↓ nudge · ↵ type · alt L link",
     };
 
     /// <summary>Where the turn began, and by how much it has moved where the number is a plain number.</summary>

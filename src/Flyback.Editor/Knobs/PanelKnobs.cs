@@ -21,7 +21,7 @@ namespace Flyback.Editor.Knobs;
 /// The knob panel is shown and hidden by the window, which owns the row it stands
 /// in; this asks for it with <see cref="KnobsWanted"/> when a knob needs to be seen.
 /// </remarks>
-internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArrived>
+internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArrived>, IReactTo<KnobChosen>
 {
     private readonly NodeEditor editor;
     private readonly TextWriteBack writeBack;
@@ -353,8 +353,57 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
     private void PickSocket(SocketPick pick)
     {
         if (editor.Linking.Control is not { } id || editor.History.Patch.Control(id) is not { } knob) return;
-        if (editor.History.Patch.Find(pick.Node) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return;
-        if (pick.Port >= def.Inputs.Count) return;
+
+        if (ControlMap.Of(editor.History.Patch.Find(pick.Node)!, pick.Port) is { } existing && existing.Control == id)
+            LetGo(pick, knob, existing);
+        else if (Follow(pick, knob) is { } said)
+            report.Say($"{said} Esc when done.");
+    }
+
+    /// <summary>A knob picked from the list that drops from a socket on the canvas.</summary>
+    public Task On(KnobChosen notice)
+    {
+        var patch = editor.History.Patch;
+
+        if (patch.Find(notice.Pick.Node) is not { } node) return Task.CompletedTask;
+
+        if (notice.Unlink)
+        {
+            if (notice.Control is { } id && patch.Control(id) is { } linked && ControlMap.Of(node, notice.Pick.Port) is { } link)
+                LetGo(notice.Pick, linked, link);
+
+            return Task.CompletedTask;
+        }
+
+        // The knob it already follows was picked, which changes nothing.
+        if (notice.Control is { } same && ControlMap.Of(node, notice.Pick.Port)?.Control == same) return Task.CompletedTask;
+
+        var added = notice.Control is null;
+        var knob = notice.Control is { } chosen ? patch.Control(chosen) : patch.AddControl();
+
+        if (knob is null) return Task.CompletedTask;
+
+        if (added) usage.Count(Used.Knob);
+
+        if (Follow(notice.Pick, knob) is { } said)
+        {
+            report.Say(said);
+            reactions.Raise(new KnobsWanted());
+            if (added) writeBack.PanelEdited();
+        }
+        else if (added)
+        {
+            patch.RemoveControl(knob.Id);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Links a socket to a knob as one step to undo, and says so; null where it cannot follow one.</summary>
+    private string? Follow(SocketPick pick, PatchControl knob)
+    {
+        if (editor.History.Patch.Find(pick.Node) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return null;
+        if (pick.Port >= def.Inputs.Count) return null;
 
         var spec = def.Inputs[pick.Port];
         var socket = $"{node.Title(def)} › {spec.Name}";
@@ -362,34 +411,38 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
         if (editor.History.Patch.IncomingTo(node.Id, pick.Port) is not null || !KnobLinking.Linkable(spec))
         {
             report.Say($"'{socket}' cannot follow a knob: only a socket resting on its own knob can.");
-            return;
-        }
-
-        if (ControlMap.Of(node, pick.Port) is { } existing && existing.Control == id)
-        {
-            if (pick.Port < node.InputValues.Length) node.InputValues[pick.Port] = existing.At(knob.Value);
-
-            ControlMap.Unlink(node, pick.Port);
-            editor.History.Record();
-            report.Say($"'{socket}' no longer follows '{knob.Name}'.");
-            return;
+            return null;
         }
 
         var resting = pick.Port < node.InputValues.Length ? node.InputValues[pick.Port] : spec.Default;
-        var link = knob.Kind == ControlKind.Knob ? ControlLink.For(id, spec, resting) : ControlLink.Flipping(id, spec, resting);
+        var link = knob.Kind == ControlKind.Knob ? ControlLink.For(knob.Id, spec, resting) : ControlLink.Flipping(knob.Id, spec, resting);
 
         // A knob linked for the first time is turned to where the socket already is,
         // so linking changes nothing that is heard or seen.
-        if (!ControlMap.Following(editor.History.Patch, id).Any())
+        if (!ControlMap.Following(editor.History.Patch, knob.Id).Any())
         {
             knob.Value = link.Inverse(resting);
-            hub.Set(id, knob.Value);
+            hub.Set(knob.Id, knob.Value);
         }
 
         ControlMap.Link(node, pick.Port, link);
         editor.History.Record();
         usage.Count(Used.Linked);
-        report.Say($"'{socket}' follows '{knob.Name}' from {spec.Format(link.Min)} to {spec.Format(link.Max)}. Esc when done.");
+        return $"'{socket}' follows '{knob.Name}' from {spec.Format(link.Min)} to {spec.Format(link.Max)}.";
+    }
+
+    /// <summary>Lets a socket go of its knob, leaving it at the value the knob gave it.</summary>
+    private void LetGo(SocketPick pick, PatchControl knob, ControlLink link)
+    {
+        if (editor.History.Patch.Find(pick.Node) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return;
+
+        if (pick.Port < node.InputValues.Length) node.InputValues[pick.Port] = link.At(knob.Value);
+
+        ControlMap.Unlink(node, pick.Port);
+        editor.History.Record();
+
+        var name = pick.Port < def.Inputs.Count ? def.Inputs[pick.Port].Name : "?";
+        report.Say($"'{node.Title(def)} › {name}' no longer follows '{knob.Name}'.");
     }
 
     /// <summary>

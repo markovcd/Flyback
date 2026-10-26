@@ -57,6 +57,7 @@ internal static class InspectorHelp
             Row("Reset a value", "Puts an unplugged input back to the value a new module starts with.", "Alt+Click"),
             Row("Pick a value", "Click a value's well; then the arrows nudge it, Shift finer, PgUp and PgDn further, and the wheel nudges it too.", "Click"),
             Row("Type a value", "Opens a picked value for an exact number, a note name like A3, or a time like 10 ms. Enter applies, Esc cancels, Tab moves on.", "Enter"),
+            Row("Link a value to a knob", "Drops the panel's knobs under a picked value, with a new one last. A linked value shows its knob's chip; click it to pick another or unlink.", "Alt+L"),
             Row("Cancel a drag", "Puts back whatever it had moved.", "Esc"),
             Row("Switch a module off", "Passes what is patched into it straight through. Again switches it on.", "Ctrl+B"),
         ]),

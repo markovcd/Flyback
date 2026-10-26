@@ -59,16 +59,6 @@ public class SocketFocusTests : EditorTest
         Settle(window);
     }
 
-    /// <summary>Saves the window as drawn when SHOT_DIR names a folder, to look at by eye.</summary>
-    private static void Shoot(Window window, string name)
-    {
-        if (Environment.GetEnvironmentVariable("SHOT_DIR") is not { } dir) return;
-
-        using var frame = window.CaptureRenderedFrame() ?? throw new InvalidOperationException("nothing rendered");
-        using var file = File.Create(Path.Combine(dir, name));
-        frame.Save(file, new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
-    }
-
     private static void Type(Window window, string text)
     {
         window.KeyTextInput(text);

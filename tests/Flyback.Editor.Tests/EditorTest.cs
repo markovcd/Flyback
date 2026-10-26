@@ -131,6 +131,16 @@ public class EditorTest : UiTest
         Settle(window);
     }
 
+    /// <summary>Saves a window as drawn when SHOT_DIR names a folder, to look at by eye.</summary>
+    internal static void Shoot(TopLevel window, string name)
+    {
+        if (Environment.GetEnvironmentVariable("SHOT_DIR") is not { } dir) return;
+
+        using var frame = window.CaptureRenderedFrame() ?? throw new InvalidOperationException("nothing rendered");
+        using var file = File.Create(Path.Combine(dir, name));
+        frame.Save(file, new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+    }
+
     /// <summary>The canvas in an editor's window.</summary>
     internal static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
