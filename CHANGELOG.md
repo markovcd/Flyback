@@ -25,6 +25,7 @@
 ### Command line
 
 - `ask`, `measure` and `shot` list the shipped presets with `--presets`, as the other commands that take `--preset` do.
+- `render` smooths the picture's jagged edges at four samples a pixel; `--smooth fast` takes a quick pass over each frame instead, and `--smooth off` draws it as before.
 
 ### Installing
 

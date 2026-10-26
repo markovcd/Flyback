@@ -129,6 +129,15 @@ internal static class RenderCommand
 
         oversample.AcceptOnlyFromAmong([.. AudioRenderer.Oversamples.Select(factor => factor.ToString(CultureInfo.InvariantCulture))]);
 
+        var smooth = new Option<string>("--smooth")
+        {
+            Description = "How the picture's jagged edges are smoothed: off, fast (a pass over each frame, as the preview does) "
+                + "or best (four samples a pixel, four times the drawing).",
+            DefaultValueFactory = _ => "best",
+        };
+
+        smooth.AcceptOnlyFromAmong("off", "fast", "best");
+
         var input = new Option<FileInfo?>("--input")
         {
             HelpName = "file",
@@ -159,7 +168,7 @@ internal static class RenderCommand
             + "and ffmpeg left out are the editor's: its preview size and Settings → Recording.")
         {
             given.Patch, given.Preset, given.Presets, output, size, at, seconds, from, fps, quality, format, ffmpeg, loudness, interpreted, gpu,
-            processor, settings, oversample, input, mute, solo,
+            processor, settings, oversample, smooth, input, mute, solo,
         };
 
         command.SetAction((result, cancellation) =>
@@ -230,7 +239,8 @@ internal static class RenderCommand
                 : PictureBackend.Any,
                 result.GetValue(oversample),
                 result.GetValue(input),
-                result.GetValue(from));
+                result.GetValue(from),
+                Enum.Parse<Smoothing>(result.GetRequiredValue(smooth), ignoreCase: true));
 
             return Task.FromResult(
                 Run(
@@ -375,7 +385,7 @@ internal static class RenderCommand
 
         if (refused) return Exit.Failed;
 
-        IFrameRenderer frames = gpu is null ? new SynthRenderer() : gpu;
+        IFrameRenderer frames = new SmoothedFrames(gpu is null ? new SynthRenderer() : gpu, options.Smoothing);
 
         if (!options.Interpreted)
         {

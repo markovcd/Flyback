@@ -607,7 +607,7 @@ public class CommandTests
 
         RenderCommand.Run(
                 Preset("Trails"),
-                new RenderOptions(still, width, height, At: at, Fps: fps, Backend: PictureBackend.Processor),
+                new RenderOptions(still, width, height, At: at, Fps: fps, Backend: PictureBackend.Processor, Smoothing: Smoothing.Off),
                 TextWriter.Null,
                 cancellation: TestContext.Current.CancellationToken)
             .ShouldBe(Exit.Ok);
@@ -619,6 +619,34 @@ public class CommandTests
         StillFrame.Remembers(program).ShouldBeTrue();
         for (var frame = 0; frame < at * fps; frame++) frames.Render(program, frame / (double)fps, width, height, pixels, width * 4);
         frames.Render(program, at, width, height, pixels, width * 4);
+        PngWriter.WriteBgra(drawn.FullName, pixels, width, height, width * 4);
+
+        File.ReadAllBytes(still.FullName).ShouldBe(File.ReadAllBytes(drawn.FullName));
+    }
+
+    /// <summary>A render smooths at four samples a pixel unless asked otherwise: the still drawn twice as large, averaged in fours.</summary>
+    [Fact]
+    public void A_still_is_drawn_twice_as_large_and_averaged_down()
+    {
+        const int width = 64, height = 36;
+
+        using var directory = new Scratch();
+        var still = directory.File("still.png");
+        var drawn = directory.File("drawn.png");
+
+        RenderCommand.Run(
+                Preset("Nebula"),
+                new RenderOptions(still, width, height, At: 2d, Backend: PictureBackend.Processor),
+                TextWriter.Null,
+                cancellation: TestContext.Current.CancellationToken)
+            .ShouldBe(Exit.Ok);
+
+        var program = Preset("Nebula").CompileForVideo(NodeCatalog.BuiltIn).Program;
+        var large = new byte[width * 8 * height * 2];
+        var pixels = new byte[width * 4 * height];
+
+        StillFrame.Draw(new SynthRenderer(), program, 2d, MovieRenderer.DefaultFrameRate, width * 2, height * 2, large, width * 8);
+        SmoothedFrames.Halve(large, width * 8, width, height, pixels, width * 4);
         PngWriter.WriteBgra(drawn.FullName, pixels, width, height, width * 4);
 
         File.ReadAllBytes(still.FullName).ShouldBe(File.ReadAllBytes(drawn.FullName));
