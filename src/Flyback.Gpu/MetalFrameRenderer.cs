@@ -17,7 +17,12 @@ namespace Flyback.Gpu;
 /// thread, so nothing here waits on another thread's link. Methods return an error
 /// string rather than throw, as the OpenGL renderer's do.
 /// </remarks>
-internal sealed unsafe class MetalFrameRenderer(MetalDevice device) : IDisposable
+/// <param name="overlapped">
+/// Whether a frame hands back the one drawn before it while the GPU draws it: a frame
+/// late, as the preview can afford, for the GPU and the window to work at once. A render
+/// and the tests want the frame they asked for.
+/// </param>
+internal sealed unsafe class MetalFrameRenderer(MetalDevice device, bool overlapped = false) : IDisposable
 {
     private const int ResolvedBytes = 4;
     private const int Remembered = 8;
@@ -54,8 +59,13 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device) : IDisposabl
     private bool clearPending = true;
     private double drawnAt = double.NaN;
 
-    private IntPtr readback;
+    /// <summary>Where a frame is read back to, two so one can be read while the GPU writes the other.</summary>
+    private readonly IntPtr[] readbacks = [0, 0];
     private int readbackLength;
+    private int writing;
+
+    /// <summary>The frame sent and not yet read back, with its readback and its size.</summary>
+    private (IntPtr Commands, int Readback, SurfaceSize Size)? sent;
 
     /// <summary>The patch last set, whose library is the one on the card: a frame of the same patch emits nothing.</summary>
     private CompiledPatch? set;
@@ -312,28 +322,69 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device) : IDisposabl
 
             if (readbackLength != bytes)
             {
-                ObjC.Release(readback);
-                readback = device.Buffer(bytes);
+                Settle();
+
+                for (var k = 0; k < 2; k++)
+                {
+                    ObjC.Release(readbacks[k]);
+                    readbacks[k] = device.Buffer(bytes);
+                }
+
                 readbackLength = bytes;
             }
 
-            MetalDevice.Copy(commands, resolved, resolution.Width, resolution.Height, ResolvedBytes, readback);
+            MetalDevice.Copy(commands, resolved, resolution.Width, resolution.Height, ResolvedBytes, readbacks[writing]);
 
-            if (MetalDevice.Finish(commands) is { } error) return error;
+            var now = (Commands: MetalDevice.Send(commands), Readback: writing, Size: resolution);
+            writing = 1 - writing;
 
-            var frame = new ReadOnlySpan<byte>((void*)MetalDevice.Contents(readback), bytes);
+            // Overlapped, the frame before where there is one of this size, and this one is
+            // kept for the next call; otherwise this one, waited for. The first overlapped
+            // frame is shown twice, which is what starts the overlap.
+            var late = overlapped && sent is { } before && before.Size == resolution;
 
-            if (stride == row) frame.CopyTo(destination);
+            if (!late) Settle();
+
+            var shown = late ? sent!.Value : now;
+            var error = MetalDevice.Wait(shown.Commands);
+            var frame = new ReadOnlySpan<byte>((void*)MetalDevice.Contents(readbacks[shown.Readback]), bytes);
+
+            if (error is null)
+            {
+                if (stride == row) frame.CopyTo(destination);
+                else
+                    for (var y = 0; y < resolution.Height; y++)
+                        frame.Slice(y * row, row).CopyTo(destination.Slice(y * stride, row));
+            }
+
+            if (late) ObjC.Release(shown.Commands);
+
+            if (overlapped)
+            {
+                sent = now;
+            }
             else
-                for (var y = 0; y < resolution.Height; y++)
-                    frame.Slice(y * row, row).CopyTo(destination.Slice(y * stride, row));
+            {
+                ObjC.Release(now.Commands);
+                sent = null;
+            }
 
-            return null;
+            return error;
         }
         finally
         {
             ObjC.Pop(pool);
         }
+    }
+
+    /// <summary>Waits out a frame sent and not read back, and lets it go.</summary>
+    private void Settle()
+    {
+        if (sent is not { } waiting) return;
+
+        MetalDevice.Wait(waiting.Commands);
+        ObjC.Release(waiting.Commands);
+        sent = null;
     }
 
     /// <summary>The blit pipeline, built once. Null when it is there.</summary>
@@ -539,13 +590,15 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device) : IDisposabl
 
         ObjC.Release(pipeline);
         ObjC.Release(resolve);
+        Settle();
+
         ObjC.Release(constantBuffer);
-        ObjC.Release(readback);
+        foreach (var buffer in readbacks) ObjC.Release(buffer);
 
         pipeline = 0;
         resolve = 0;
         constantBuffer = 0;
-        readback = 0;
+        readbacks[0] = readbacks[1] = 0;
         pictures = [];
         tables = [];
         kept.Clear();

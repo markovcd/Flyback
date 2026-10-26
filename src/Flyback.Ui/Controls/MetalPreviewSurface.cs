@@ -88,7 +88,8 @@ public sealed class MetalPreviewSurface : PreviewSurface, IGpuPreview, ICaptured
 
             if (renderer is null)
             {
-                var opened = MetalHeadlessRenderer.Open(out var why)
+                // A frame late, so the GPU draws the next while the window shows this one.
+                var opened = MetalHeadlessRenderer.Open(out var why, overlapped: true)
                     ?? throw new InvalidOperationException(why ?? "Metal would not open.");
 
                 Volatile.Write(ref renderer, opened);

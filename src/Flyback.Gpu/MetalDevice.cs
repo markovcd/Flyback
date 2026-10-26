@@ -298,6 +298,25 @@ internal sealed unsafe class MetalDevice : IDisposable
     public static string? Finish(IntPtr commands)
     {
         ObjC.Call(commands, "commit");
+
+        return Wait(commands);
+    }
+
+    /// <summary>
+    /// Sends the work without waiting for it, keeping the command buffer past the frame's
+    /// pool for <see cref="Wait"/>; the caller releases it after.
+    /// </summary>
+    public static IntPtr Send(IntPtr commands)
+    {
+        ObjC.Send(commands, "retain");
+        ObjC.Call(commands, "commit");
+
+        return commands;
+    }
+
+    /// <summary>Waits for work already sent. Null on success.</summary>
+    public static string? Wait(IntPtr commands)
+    {
         ObjC.Call(commands, "waitUntilCompleted");
 
         return (nuint)ObjC.Send(commands, "status") == CommandBufferError

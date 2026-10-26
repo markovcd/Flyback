@@ -13,21 +13,22 @@ internal sealed class MetalHeadlessRenderer : IHeadlessRenderer
     private readonly MetalDevice device;
     private readonly MetalFrameRenderer renderer;
 
-    private MetalHeadlessRenderer(MetalDevice device)
+    private MetalHeadlessRenderer(MetalDevice device, bool overlapped)
     {
         this.device = device;
-        renderer = new MetalFrameRenderer(device);
+        renderer = new MetalFrameRenderer(device, overlapped);
     }
 
     /// <summary>What drew it, for saying so.</summary>
     public string Description => $"Metal on {device.Name}";
 
     /// <summary>A renderer on this machine's Metal device, or null with <paramref name="why"/> saying what stood in the way.</summary>
-    public static MetalHeadlessRenderer? Open(out string? why)
+    /// <param name="overlapped">Whether each frame hands back the one before it, for a preview (see <see cref="MetalFrameRenderer"/>).</param>
+    public static MetalHeadlessRenderer? Open(out string? why, bool overlapped = false)
     {
         var device = MetalDevice.Open(out why);
 
-        return device is null ? null : new MetalHeadlessRenderer(device);
+        return device is null ? null : new MetalHeadlessRenderer(device, overlapped);
     }
 
     /// <summary>Builds the patch's library, so a patch Metal cannot draw is known before any frame. Null on success.</summary>
