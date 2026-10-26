@@ -969,6 +969,8 @@ internal sealed class CanvasPainter(
     {
         var connected = Patch.IncomingTo(node.Id, index) is not null;
 
+        using var idle = Idle(formula, index) ? context.PushOpacity(IdleOpacity) : (IDisposable?)null;
+
         if (geometry.Compact)
         {
             DrawCompactInput(context, node, port, index, name, bounds, center, connected, follow, spans, ink);
@@ -992,6 +994,11 @@ internal sealed class CanvasPainter(
         else if (!connected && !KnobLinking.Linkable(port)) SocketDiamond.DrawWireOnly(context, center, port.Kind);
         else NodeSkin.DrawPort(context, center, port.Kind);
     }
+
+    private const double IdleOpacity = 0.35;
+
+    /// <summary>Whether an input is one its module's formula never reads, so nothing set on it does anything.</summary>
+    internal static bool Idle(string? formula, int port) => formula is not null && !FormulaLayout.Reads(formula, port);
 
     /// <summary>Where a socket's name is drawn: inside the module, against the side its socket is on.</summary>
     private static Point LabelAt(Rect bounds, Point center, FormattedText label, bool output) =>

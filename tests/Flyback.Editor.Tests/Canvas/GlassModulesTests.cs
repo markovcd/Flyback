@@ -1,10 +1,7 @@
-using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
-using Avalonia.Platform;
 using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
 using Shouldly;
@@ -29,30 +26,6 @@ public class GlassModulesTests : EditorTest
         Settle(window);
 
         return (editor, window, sine);
-    }
-
-    /// <summary>Every pixel of a rectangle of the patch as the window draws it now.</summary>
-    private static List<Color> Pixels(NodeEditor editor, Window window, Rect graph)
-    {
-        var screen = graph.TransformToAABB(editor.GraphToScreen);
-
-        using var frame = window.CaptureRenderedFrame() ?? throw new InvalidOperationException("nothing rendered");
-        using var locked = frame.Lock();
-
-        var scaleX = locked.Size.Width / window.Bounds.Width;
-        var scaleY = locked.Size.Height / window.Bounds.Height;
-        var pixels = new List<Color>();
-        var bytes = new byte[4];
-        var blue = locked.Format == PixelFormat.Bgra8888 ? 0 : 2;
-
-        for (var y = (int)(screen.Y * scaleY); y < (int)(screen.Bottom * scaleY); y++)
-            for (var x = (int)(screen.X * scaleX); x < (int)(screen.Right * scaleX); x++)
-            {
-                Marshal.Copy(locked.Address + y * locked.RowBytes + x * 4, bytes, 0, 4);
-                pixels.Add(Color.FromRgb(bytes[2 - blue], bytes[1], bytes[blue]));
-            }
-
-        return pixels;
     }
 
     private static Rect Title(NodeInstance node) => new(node.X + 4, node.Y + 2, NodeGeometry.Width / 2, NodeGeometry.HeaderHeight - 4);

@@ -141,6 +141,30 @@ public class EditorTest : UiTest
         frame.Save(file, new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
     }
 
+    /// <summary>Every pixel of a rectangle of the patch as the window draws it now.</summary>
+    internal static List<Avalonia.Media.Color> Pixels(NodeEditor editor, Window window, Rect graph)
+    {
+        var screen = graph.TransformToAABB(editor.GraphToScreen);
+
+        using var frame = window.CaptureRenderedFrame() ?? throw new InvalidOperationException("nothing rendered");
+        using var locked = frame.Lock();
+
+        var scaleX = locked.Size.Width / window.Bounds.Width;
+        var scaleY = locked.Size.Height / window.Bounds.Height;
+        var pixels = new List<Avalonia.Media.Color>();
+        var bytes = new byte[4];
+        var blue = locked.Format == Avalonia.Platform.PixelFormat.Bgra8888 ? 0 : 2;
+
+        for (var y = (int)(screen.Y * scaleY); y < (int)(screen.Bottom * scaleY); y++)
+            for (var x = (int)(screen.X * scaleX); x < (int)(screen.Right * scaleX); x++)
+            {
+                System.Runtime.InteropServices.Marshal.Copy(locked.Address + y * locked.RowBytes + x * 4, bytes, 0, 4);
+                pixels.Add(Avalonia.Media.Color.FromRgb(bytes[2 - blue], bytes[1], bytes[blue]));
+            }
+
+        return pixels;
+    }
+
     /// <summary>The canvas in an editor's window.</summary>
     internal static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 

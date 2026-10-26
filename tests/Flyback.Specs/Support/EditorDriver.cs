@@ -283,6 +283,15 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     /// <summary>How opaque a module's fill is drawn, which over the picture lets it through.</summary>
     public double FillOpacity(Guid node) => Read(canvas => canvas.FillOpacity(node));
 
+    /// <summary>Whether an input is drawn faint, as one its module's formula never reads.</summary>
+    public bool InputIdle(Guid node, int port) =>
+        Read(canvas => canvas.History.Patch.Find(node) is { } found && CanvasPainter.Idle(NodeCatalog.FormulaOf(found), port));
+
+    /// <summary>Whether an input's value sits in a well on the canvas.</summary>
+    public bool HasWell(Guid node, int port) =>
+        Read(canvas => canvas.History.Patch.Find(node) is { } found
+            && ValueWell.Has(canvas.History.Patch, found, NodeCatalog.BuiltIn.Require(found.TypeId), port));
+
     /// <summary>The lines of the list of knobs dropped from a socket, or none while it is shut.</summary>
     public IReadOnlyList<string> KnobList => Read(canvas => canvas.KnobChoice.Rows.Select(row => row.Text).ToList());
 
