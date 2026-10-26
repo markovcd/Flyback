@@ -9,7 +9,7 @@ namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// What stands in a linked socket's well: the value the panel knob gives it and a
-/// chip naming the knob, with the socket drawn as a filled diamond. A click on the
+/// chip naming the knob, with the socket drawn as a filled <see cref="SocketDiamond"/>. A click on the
 /// chip drops the list of knobs, to pick another or unlink.
 /// </summary>
 internal static class KnobChip
@@ -45,25 +45,6 @@ internal static class KnobChip
         context.DrawText(name, new Point(chip.Left + ChipPadding, chip.Center.Y - name.Height / 2));
     }
 
-    /// <summary>A linked socket: a diamond filled in its kind's color.</summary>
-    public static void DrawSocket(DrawingContext context, Point center, PortKind kind)
-    {
-        const double reach = 5.5;
-
-        var diamond = new StreamGeometry();
-
-        using (var sink = diamond.Open())
-        {
-            sink.BeginFigure(new Point(center.X, center.Y - reach), true);
-            sink.LineTo(new Point(center.X + reach, center.Y));
-            sink.LineTo(new Point(center.X, center.Y + reach));
-            sink.LineTo(new Point(center.X - reach, center.Y));
-            sink.EndFigure(true);
-        }
-
-        context.DrawGeometry(new ImmutableSolidColorBrush(Colors.PortColor(kind)), Outline, diamond);
-    }
-
     private static FormattedText Text(string text, Typeface face, double size, IBrush brush) =>
         new(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, face, size, brush);
 
@@ -71,5 +52,4 @@ internal static class KnobChip
     private static readonly Typeface MonoBold = new(Flyback.Ui.Controls.Text.Mono, weight: FontWeight.SemiBold);
     private static readonly IBrush ChipFill = new ImmutableSolidColorBrush(Color.FromRgb(0x3A, 0x3E, 0x46));
     private static readonly IBrush Light = new ImmutableSolidColorBrush(Color.FromRgb(0xE8, 0xEA, 0xF0));
-    private static readonly IPen Outline = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Outline), 1.2);
 }

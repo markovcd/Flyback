@@ -696,7 +696,8 @@ internal sealed class CanvasPainter(
             if (!connected) DrawInputValue(context, node, port, i, bounds, center, follow, formula, spans, well, Ink);
 
             if (well is { } state) ValueWell.DrawSocket(context, center, port.Kind, state);
-            else if (KnobChip.Of(Patch, node, i) is not null) KnobChip.DrawSocket(context, center, port.Kind);
+            else if (KnobChip.Of(Patch, node, i) is not null) SocketDiamond.DrawLinked(context, center, port.Kind);
+            else if (!connected && !KnobLinking.Linkable(port)) SocketDiamond.DrawWireOnly(context, center, port.Kind);
             else NodeSkin.DrawPort(context, center, port.Kind);
         }
 
@@ -1054,7 +1055,8 @@ internal sealed class CanvasPainter(
         else if (!connected && i < node.InputValues.Length && SocketTips.RemapValue(spans, i, node.InputValues[i]) is (_, true))
             context.DrawRectangle(null, FlagPen, new Rect(at.X - 3, at.Y - 1, label.Width + 6, label.Height + 2), 3, 3);
 
-        if (KnobChip.Of(Patch, node, i) is not null) KnobChip.DrawSocket(context, center, port.Kind);
+        if (KnobChip.Of(Patch, node, i) is not null) SocketDiamond.DrawLinked(context, center, port.Kind);
+        else if (!connected && !KnobLinking.Linkable(port)) SocketDiamond.DrawWireOnly(context, center, port.Kind);
         else NodeSkin.DrawPort(context, center, port.Kind);
     }
 
