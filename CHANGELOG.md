@@ -21,7 +21,7 @@
 - The desktop editor's first start asks whether to share anonymous usage counts.
 - Settings → Picture → Smoothing smooths the picture's jagged edges with a quick pass over each frame, on OpenGL, Direct3D, Metal, the web and the processor alike, and a take records it; on by default, Off for the raw pixels.
 - Live patching: Shift+F11, or Tab over a full-screen picture, puts the patch over the picture to edit while it plays, as modules that fade while nobody touches them or as text with F2; F11 gives the picture the whole window.
-- An unwired input's value sits in a well with a level line under it; drag it up or down to turn it, Shift for finer, Alt-click for its default. Its socket is a ring in its kind's color.
+- An unwired input's value sits in a well with a level line under it; drag it up or down to turn it, Shift for finer, Alt-click for its default, and a card over the module reads it out large with its range and where it started. Its socket is a ring in its kind's color.
 
 ### Viewer
 

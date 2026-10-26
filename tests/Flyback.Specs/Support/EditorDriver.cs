@@ -259,6 +259,27 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
             open.MouseUp(from - new Point(0, up), MouseButton.Left);
         });
 
+    /// <summary>Presses the well of an input's value and drags it up, keeping the button down.</summary>
+    public void HoldWell(Guid node, int port, double up) =>
+        DoWindow((open, canvas) =>
+        {
+            var from = OnWindow(open, canvas, Well(canvas, node, port));
+
+            heldAt = from - new Point(0, up);
+            open.MouseDown(from, MouseButton.Left);
+            open.MouseMove(heldAt.Value);
+        });
+
+    /// <summary>Lets go of a well held by <see cref="HoldWell"/>.</summary>
+    public void LetGoOfWell() =>
+        DoWindow((open, _) => open.MouseUp(heldAt ?? throw new InvalidOperationException("no well is held"), MouseButton.Left));
+
+    private Point? heldAt;
+
+    /// <summary>The input whose turn the card over the canvas is showing, and its name; null with no card up.</summary>
+    public (Guid Node, string Name)? TurnCard => Read(canvas =>
+        canvas.Dial.Reading is var (pick, turn) ? (pick.Node, turn.Name) : ((Guid, string)?)null);
+
     /// <summary>Clicks the well of an input's value with Alt held.</summary>
     public void AltClickWell(Guid node, int port) =>
         DoWindow((open, canvas) =>

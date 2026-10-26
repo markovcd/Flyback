@@ -35,6 +35,18 @@ public sealed class TurningSteps(PatchContext context, EditorDriver editor)
         editor.DragWell(Sine.Id, Freq, 40);
     }
 
+    [When("the sine's freq well is held and dragged up")]
+    public void WhenHeld() => editor.HoldWell(Sine.Id, Freq, 30);
+
+    [When("the well is let go")]
+    public void WhenLetGo() => editor.LetGoOfWell();
+
+    [Then("a card over the canvas reads out the sine's freq")]
+    public void ThenCard() => editor.TurnCard.ShouldBe((Sine.Id, "freq"));
+
+    [Then("the card is gone")]
+    public void ThenNoCard() => editor.TurnCard.ShouldBeNull();
+
     [When("the sine's freq well is Alt-clicked")]
     public void WhenAltClicked() => editor.AltClickWell(Sine.Id, Freq);
 

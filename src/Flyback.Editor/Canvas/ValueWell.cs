@@ -73,16 +73,19 @@ internal static class ValueWell
             FlowDirection.LeftToRight,
             Numbers,
             CanvasText.RowSize,
-            hot ? Brushes.White : lit ? HoverInk : ink)
-        {
-            MaxTextWidth = well.Width - Padding * 2 - (lit ? ChevronRoom : 0),
-            MaxLineCount = 1,
-            Trimming = TextTrimming.CharacterEllipsis,
-        };
+            hot ? Brushes.White : lit ? HoverInk : ink);
+
+        // The chevrons give way to a number that needs their room.
+        var room = well.Width - Padding * 2;
+        var chevrons = lit && number.Width <= room - ChevronRoom;
+
+        number.MaxTextWidth = room;
+        number.MaxLineCount = 1;
+        number.Trimming = TextTrimming.CharacterEllipsis;
 
         context.DrawText(number, new Point(well.Right - Padding - number.Width, well.Y + (well.Height - 2 - number.Height) / 2));
 
-        if (lit) DrawChevrons(context, new Point(well.X + Padding + 3, well.Center.Y - 1), hot ? Attention : HoverInk);
+        if (chevrons) DrawChevrons(context, new Point(well.X + Padding + 3, well.Center.Y - 1), hot ? Attention : HoverInk);
 
         var fill = hot ? Attention : lit ? HoverLevel : RestLevel;
         var track = new Rect(well.X + Padding, well.Bottom - 4, well.Width - Padding * 2, 2);

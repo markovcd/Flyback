@@ -153,6 +153,22 @@ internal sealed class SocketDial(
         return true;
     }
 
+    /// <summary>What the readout over the turn shows, and which input it is about; null while nothing turns.</summary>
+    public (SocketPick Pick, TurnReadout.Turn Turn)? Reading
+    {
+        get
+        {
+            if (dialed is not { } d
+                || history.Patch.Find(d.Node) is not { } node
+                || NodeCatalog.Get(node.TypeId) is not { } def
+                || d.Port >= node.InputValues.Length)
+                return null;
+
+            return (new SocketPick(d.Node, d.Port),
+                new TurnReadout.Turn(def.Inputs[d.Port].Name, node.Title(def), d.Spec, node.InputValues[d.Port], d.Was, d.Min, d.Max, Fine));
+        }
+    }
+
     /// <summary>Puts an input back to the value it has when a module is new, as one step.</summary>
     public bool Reset(Guid nodeId, int port)
     {

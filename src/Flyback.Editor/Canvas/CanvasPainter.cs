@@ -114,8 +114,25 @@ internal sealed class CanvasPainter(
         // their spacing at any zoom. Neither is part of the patch.
         if (!SeeThrough) DrawEdge(context);
         gestures.DrawMarquee(context);
+        DrawReadout(context);
 
         KeepMoving();
+    }
+
+    /// <summary>The card over a value being turned, at full strength even over the picture.</summary>
+    private void DrawReadout(DrawingContext context)
+    {
+        if (dial.Reading is not var (pick, turn)
+            || Patch.Find(pick.Node) is not { } node
+            || NodeCatalog.Get(node.TypeId) is not { } def)
+            return;
+
+        var bounds = geometry.Bounds(node, def);
+        var socket = geometry.InputPort(node, def, pick.Port);
+        var well = geometry.Compact ? new Rect(socket, socket) : ValueWell.At(bounds, socket);
+        var (card, above) = TurnReadout.Place(view.OnScreen(bounds), view.OnScreen(well), view.Size);
+
+        TurnReadout.Draw(context, card, above, view.OnScreen(well).Center.X, turn);
     }
 
     private static readonly IBrush Background = new ImmutableSolidColorBrush(Colors.Canvas);
