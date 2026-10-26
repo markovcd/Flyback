@@ -50,6 +50,9 @@ public sealed class MetalPreviewSurface : PreviewSurface, IGpuPreview, ICaptured
 
     private protected override void Retire() => picture.Dispose();
 
+    /// <summary>No rest: the frame's cost is the graphics card's, and the processor waited it out idle.</summary>
+    private protected override double Rest => 0;
+
     /// <summary>
     /// The Metal renderer, opened by the first frame and so on the pool rather than the
     /// UI thread, and rewound there before the next frame is drawn.

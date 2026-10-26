@@ -65,6 +65,13 @@ public class PreviewSurface : Control, IPreviewSurface
     /// </remarks>
     private const double RestFraction = 0.5;
 
+    /// <summary>
+    /// The fraction of a frame's cost to rest for afterwards: <see cref="RestFraction"/>
+    /// for a frame the processor draws, and none for one the graphics card draws, which
+    /// leaves the processor free while it waits.
+    /// </summary>
+    private protected virtual double Rest => RestFraction;
+
     public PreviewSurface() : this(new SynthRenderer(), "CPU frame")
     {
     }
@@ -263,7 +270,12 @@ public class PreviewSurface : Control, IPreviewSurface
 
             if (detached) Retire();
 
-            restUntil = frameClock.Elapsed + TimeSpan.FromMilliseconds(FrameMilliseconds * RestFraction);
+            restUntil = frameClock.Elapsed + TimeSpan.FromMilliseconds(FrameMilliseconds * Rest);
+
+            // A frame that outlasted a tick starts the next one now, rather than at the
+            // tick after it: a 21 ms frame would otherwise wait for the 32 ms tick.
+            if (!detached && Rest == 0 && frameClock.Elapsed - lastTick >= timer.Interval)
+                Dispatcher.UIThread.Post(() => _ = Tick(), DispatcherPriority.Background);
         }
     }
 
