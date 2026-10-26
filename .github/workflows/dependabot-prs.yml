@@ -52,6 +52,7 @@ jobs:
         id: restore
         run: |
           dotnet restore Flyback.slnx --force-evaluate
+          dotnet restore tools/TestOnlyMembers --force-evaluate
           git diff --binary -- '*packages.lock.json' > "$RUNNER_TEMP/locks.patch"
           if [ -s "$RUNNER_TEMP/locks.patch" ]; then
             git diff --stat -- '*packages.lock.json'

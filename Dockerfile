@@ -178,6 +178,7 @@ RUN if [ -n "${RELEASE_PUBLIC_KEY}" ]; then \
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet restore Flyback.slnx --locked-mode \
     && dotnet build Flyback.slnx -c ${CONFIGURATION} --no-restore \
+    && dotnet build tools/TestOnlyMembers -c ${CONFIGURATION} -p:RestoreLockedMode=true \
     && dotnet format whitespace Flyback.slnx --verify-no-changes --no-restore \
     && dotnet format style Flyback.slnx --diagnostics IDE0161 --severity warn --verify-no-changes --no-restore
 
