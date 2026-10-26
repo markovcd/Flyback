@@ -12,12 +12,14 @@
 # left running; one this script boots is shut down after. Each answer is printed as it
 # comes; the last one is the whole JSON on stdout. Exit 0 when every check holds, 1
 # naming the first that did not, with the app's output after it, and 2 for a usage error.
-# With SMOKE_SHOTS naming a folder, the screen is left there, and on a failure the app's output too.
+# With SMOKE_SHOTS naming a folder, the screen is left there, and on a failure the app's
+# output, its log and any crash report too. A crash says so, with the crashed thread.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 bundle=app.flybackmodular.editor
+executable=Flyback.Editor.iOS
 preset=Sidebands
 interpreted=false
 build=true
@@ -49,13 +51,49 @@ shot() {
   xcrun simctl io "$device" screenshot "$SMOKE_SHOTS/$1.png" >/dev/null 2>&1 || true
 }
 
+# The app's process, which the simulator's launchd lists while it runs.
+running() {
+  xcrun simctl spawn "$device" launchctl list 2>/dev/null | grep -q "UIKitApplication:$bundle"
+}
+
 fail() {
   echo "FAIL: $*" >&2
   shot failed
-  if [ -n "${SMOKE_SHOTS:-}" ]; then cp "$logs"/* "$SMOKE_SHOTS"/ 2>/dev/null || true; fi
+  if [ -f "$logs/launched" ]; then
+    running || echo "the app is not running: it crashed or quit" >&2
+    xcrun simctl spawn "$device" log show --style compact --start "$(cat "$logs/launched")" \
+      --predicate "process == \"$executable\"" > "$logs/log.txt" 2>/dev/null || true
+    find "$HOME/Library/Logs/DiagnosticReports" -name "$executable*" -newer "$logs/launched" \
+      -exec cp {} "$logs"/ \; 2>/dev/null || true
+  fi
+  if [ -n "${SMOKE_SHOTS:-}" ]; then mkdir -p "$SMOKE_SHOTS"; cp "$logs"/* "$SMOKE_SHOTS"/ 2>/dev/null || true; fi
   echo "--- the app's output" >&2
   tail -n 80 "$logs/stdout.txt" "$logs/stderr.txt" >&2 2>/dev/null || true
+  echo "--- the app's log" >&2
+  tail -n 80 "$logs/log.txt" >&2 2>/dev/null || true
+  for report in "$logs"/*.ips; do
+    [ -f "$report" ] || continue
+    echo "--- $(basename "$report")" >&2
+    crashed "$report" >&2 || true
+  done
   exit 1
+}
+
+# The exception and the crashed thread's frames of an .ips crash report: a line of JSON, then the report.
+crashed() {
+  python3 -c '
+import json, sys
+text = open(sys.argv[1]).read()
+report = json.loads(text[text.index("\n") + 1:])
+images = report.get("usedImages", [])
+print(json.dumps(report.get("exception", {})), json.dumps(report.get("termination", {})))
+for thread in report.get("threads", []):
+    if not thread.get("triggered"):
+        continue
+    for frame in thread.get("frames", [])[:40]:
+        index = frame.get("imageIndex", -1)
+        image = images[index].get("name", "?") if 0 <= index < len(images) else "?"
+        print("  " + image + "  " + frame.get("symbol", hex(frame.get("imageOffset", 0))))' "$1"
 }
 
 # Waits up to $1 seconds for the command in the rest of the arguments to succeed.
@@ -101,6 +139,7 @@ container="$(xcrun simctl get_app_container "$device" "$bundle" data)"
 readout="$container/Library/Application Support/readout.json"
 rm -f "$readout"
 
+date "+%Y-%m-%d %H:%M:%S" > "$logs/launched"
 args=(--preset "$preset")
 $interpreted && args+=(--interpreted)
 xcrun simctl launch --stdout="$logs/stdout.txt" --stderr="$logs/stderr.txt" "$device" "$bundle" "${args[@]}" >/dev/null \
