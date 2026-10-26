@@ -19,8 +19,11 @@
 - macOS menu bar: Flyback's own app menu and File, Edit, View, Play, Window and Help menus; the viewer's is named Flyback Viewer.
 - Measure moves to Ctrl+Shift+M (⇧⌘M on macOS), leaving ⌘M to Minimize.
 - The desktop editor's first start asks whether to share anonymous usage counts.
+- Settings → Picture → Smoothing smooths the picture's jagged edges with a quick pass over each frame, on OpenGL, Direct3D, Metal, the web and the processor alike, and a take records it; on by default, Off for the raw pixels.
 
 ### Viewer
+
+- `--smooth fast` or `--smooth off` overrides the editor's Smoothing setting.
 
 ### Command line
 

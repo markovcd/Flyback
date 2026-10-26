@@ -1,5 +1,6 @@
 using Avalonia;
 using Flyback.Engine.Compile;
+using Flyback.Engine.Render;
 
 namespace Flyback.Ui.Controls;
 
@@ -48,6 +49,9 @@ public interface IPreviewSurface
     double FrameRate { get; set; }
 
     PixelSize Resolution { get; set; }
+
+    /// <summary>How the picture's edges are smoothed, Best drawn as Fast: four samples a pixel is a render's (ADR-0215).</summary>
+    Smoothing Smoothing { get; set; }
 
     CompiledPatch Program { get; set; }
 

@@ -280,6 +280,12 @@ internal static class RenderCommand
             return Exit.Failed;
         }
 
+        if (options.Smoothing == Smoothing.Best && !SmoothedFrames.FitsBest(options.Width, options.Height))
+        {
+            error.WriteLine($"{GlobalConstants.ApplicationName}: warning: {options.Width}x{options.Height} is too large to draw at four samples a pixel, so it is smoothed fast.");
+            options = options with { Smoothing = Smoothing.Fast };
+        }
+
         if (still && options.From > 0d)
         {
             error.WriteLine($"{GlobalConstants.ApplicationName}: --from starts a clip or a sound; --at picks a still's moment.");

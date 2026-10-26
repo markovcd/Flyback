@@ -27,6 +27,9 @@ internal sealed record ViewerOptions : IIlCompilerSetup
     /// <summary>Preview frames a second; 0 draws as fast as the renderer allows.</summary>
     public double FrameRate { get; init; }
 
+    /// <summary>How the picture's edges are smoothed, the editor's Settings → Picture unless <c>--smooth</c> says.</summary>
+    public Smoothing Smoothing { get; init; } = Smoothing.Fast;
+
     public bool Gpu { get; init; } = true;
 
     /// <summary>No picture is compiled and none drawn.</summary>

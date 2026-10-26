@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Flyback.Engine.Compile;
+using Flyback.Engine.Render;
 using Flyback.Host;
 using Flyback.Ui.Controls;
 using Shouldly;
@@ -118,6 +119,9 @@ public class GpuSurfaceTests : EditorTest
         public long Frames => 0;
 
         public double FrameRate { get; set; }
+
+
+        public Smoothing Smoothing { get; set; }
 
         public PixelSize Resolution { get; set; }
 

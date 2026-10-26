@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Flyback.Engine.Compile;
+using Flyback.Engine.Render;
 using Flyback.Ui.Controls;
 
 namespace Flyback.Specs.Support;
@@ -27,6 +28,9 @@ public sealed class StandInSurface(bool processorStandsIn) : Border, IGpuPreview
     public long Frames => 0;
 
     public double FrameRate { get; set; }
+
+
+    public Smoothing Smoothing { get; set; }
 
     public PixelSize Resolution { get; set; }
 

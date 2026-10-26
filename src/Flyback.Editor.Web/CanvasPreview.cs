@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Windows;
 using Flyback.Engine.Compile;
+using Flyback.Engine.Render;
 using Flyback.Gpu;
 using Flyback.Ui.Controls;
 
@@ -95,6 +96,8 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
             timer.Interval = value > 0 ? TimeSpan.FromSeconds(1d / value) : UncappedInterval;
         }
     }
+
+    public Smoothing Smoothing { get; set; }
 
     public PixelSize Resolution
     {
@@ -281,6 +284,8 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
         if (!linking) GivePart();
 
         var started = frameClock.Elapsed;
+
+        renderer.Smoothing = Smoothing;
 
         if (renderer.Render(
                 gl,

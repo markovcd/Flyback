@@ -77,6 +77,15 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
+    /// <summary>Whether the preview smooths the picture's edges.</summary>
+    private readonly ComboBox smoothing = new Picker
+    {
+        Name = "smoothing",
+        ItemsSource = new[] { "Off", "Fast" },
+        SelectedIndex = 1,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
     private readonly ComboBox previewFrameRate = new Picker
     {
         Name = "previewFrameRate",
@@ -141,6 +150,11 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
 
         rows.Children.Add(InspectorRows.Field("Size", resolution));
         rows.Children.Add(InspectorRows.Field("Preview rate", previewFrameRate));
+
+        ToolTip.SetTip(smoothing,
+            "Smooths the jagged edges of the picture, 3D above all, with a quick pass over each frame. "
+            + "A take records it too. flyback-cli render draws four samples a pixel unless told --smooth fast or off.");
+        rows.Children.Add(InspectorRows.Field("Smoothing", smoothing));
 
         // A page draws on WebGL alone, so it has no renderer to pick.
         if (!host.InPage)
@@ -239,6 +253,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         renderer.SelectedIndex = RendererRow(current.Gpu, current);
         transportEdge.SelectedIndex = current.Transport == TransportEdge.Bottom ? 1 : 0;
         previewFrameRate.SelectedIndex = SettingRows.Nearest(PreviewFrameRates, current.PreviewFrameRate);
+        smoothing.SelectedIndex = current.Smoothing == Smoothing.Off ? 0 : 1;
     }
 
     /// <summary>Writes what the controls hold into <paramref name="into"/>, leaving what a control cannot say as it was.</summary>
@@ -267,6 +282,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         into.Transport = transportEdge.SelectedIndex == 1 ? TransportEdge.Bottom : TransportEdge.Top;
 
         into.PreviewFrameRate = PreviewFrameRates[Math.Max(previewFrameRate.SelectedIndex, 0)];
+        into.Smoothing = smoothing.SelectedIndex == 0 ? Smoothing.Off : Smoothing.Fast;
     }
 
     /// <param name="before">What was in force until now, or null as the editor starts.</param>
@@ -278,6 +294,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         preview.Draw(now.DriverHere);
         preview.Use(now.Gpu ? PreviewBackend.Gpu : PreviewBackend.Cpu);
         preview.FrameRate = now.PreviewFrameRate;
+        preview.Smoothing = now.Smoothing;
 
         // A live Scan uses Coordinates' aspect (ADR-0077), so keep it in step
         // with the preview now that sizes are not all the same shape.

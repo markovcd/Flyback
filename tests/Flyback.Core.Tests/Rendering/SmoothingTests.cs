@@ -55,6 +55,17 @@ public class SmoothingTests
         halved[..4].ShouldBe(Average(large, 0, 0));
     }
 
+    /// <summary>A frame four times the largest has no room, so the largest sizes cannot be drawn at Best.</summary>
+    [Theory]
+    [InlineData(3840, 2160, true)]
+    [InlineData(4096, 4096, true)]
+    [InlineData(4097, 4096, false)]
+    [InlineData(8192, 8192, false)]
+    public void Best_fits_up_to_a_quarter_of_the_largest_frame(int width, int height, bool fits)
+    {
+        SmoothedFrames.FitsBest(width, height).ShouldBe(fits);
+    }
+
     /// <summary>The pass reads a texture's way, so a pixel past the border is the border's.</summary>
     [Fact]
     public void The_pass_leaves_the_frame_opaque_and_its_size()

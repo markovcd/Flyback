@@ -2,6 +2,7 @@ using System.CommandLine;
 using Avalonia;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
+using Flyback.Engine.Render;
 using Flyback.Host;
 using Flyback.Plugins.Hosting;
 using Shouldly;
@@ -54,6 +55,22 @@ public class ViewerOptionsTests
         ran.Error.ShouldBeEmpty();
 
         return ran.Options ?? throw new InvalidOperationException("the command never ran");
+    }
+
+    [Fact]
+    public void Smoothing_follows_the_settings_until_a_flag_says_otherwise()
+    {
+        Settled(Machine).Smoothing.ShouldBe(Smoothing.Fast);
+        Settled(new OutputSettings { Smoothing = Smoothing.Off }).Smoothing.ShouldBe(Smoothing.Off);
+        Settled(Machine, "--smooth", "off").Smoothing.ShouldBe(Smoothing.Off);
+        Settled(new OutputSettings { Smoothing = Smoothing.Off }, "--smooth", "fast").Smoothing.ShouldBe(Smoothing.Fast);
+    }
+
+    /// <summary>Four samples a pixel is a render's, not a window's.</summary>
+    [Fact]
+    public void The_viewer_does_not_take_best()
+    {
+        Run(Machine, "--smooth", "best").ParseErrors.ShouldBeGreaterThan(0);
     }
 
     /// <summary>NaN compares false with everything, so a range check alone lets it through.</summary>

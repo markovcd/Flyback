@@ -90,6 +90,7 @@ internal sealed class ViewerPlayer : IDisposable
             surface.Resolution = options.Size;
             surface.Use(options.Gpu ? PreviewBackend.Gpu : PreviewBackend.Cpu);
             surface.FrameRate = options.FrameRate;
+            surface.Smoothing = options.Smoothing;
 
             using var traced = StallTrace.Step("CompileForVideo");
 

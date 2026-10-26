@@ -127,6 +127,8 @@ public class PreviewSurface : Control, IPreviewSurface
         }
     }
 
+    public virtual Smoothing Smoothing { get; set; }
+
     public PixelSize Resolution
     {
         get => resolution;
@@ -291,6 +293,7 @@ public class PreviewSurface : Control, IPreviewSurface
         // rows run, and a note landing mid-frame shows up in the next one rather
         // than halfway down this one.
         var played = live;
+        var smoothing = Smoothing;
 
         if (bufferSize != size)
         {
@@ -307,6 +310,7 @@ public class PreviewSurface : Control, IPreviewSurface
             using var traced = StallTrace.Step(step);
 
             renderer.Render(program, time, size.Width, size.Height, buffer, stride, played);
+            Smooth(smoothing, buffer, size, stride);
         });
         FrameMilliseconds = (frameClock.Elapsed - started).TotalMilliseconds;
 
@@ -322,6 +326,12 @@ public class PreviewSurface : Control, IPreviewSurface
         Blit(buffer, stride, size);
         InvalidateVisual();
         meter.Mark(FrameMilliseconds);
+    }
+
+    /// <summary>Smooths the frame just drawn, on the thread that drew it.</summary>
+    private protected virtual void Smooth(Smoothing smoothing, byte[] buffer, PixelSize size, int stride)
+    {
+        if (smoothing != Smoothing.Off) Fxaa.Apply(buffer, size.Width, size.Height, stride);
     }
 
     /// <summary>Copies the finished frame into the bitmap. Cheap enough to keep on the UI thread.</summary>

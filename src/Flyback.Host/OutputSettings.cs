@@ -51,6 +51,12 @@ public sealed class OutputSettings
     /// </summary>
     public double PreviewFrameRate { get; set; }
 
+    /// <summary>
+    /// How the preview, and so a recorded take, smooths the picture's edges — the
+    /// Picture section (ADR-0215). Off or Fast; a render takes its own from <c>--smooth</c>.
+    /// </summary>
+    public Smoothing Smoothing { get; set; } = Smoothing.Fast;
+
     /// <summary>How a recorded take's frames are compressed, from 1 to 100 — the Recording section.</summary>
     /// <remarks>
     /// Named for the encoder it was written for, and kept that way so a file
@@ -365,6 +371,7 @@ public sealed class OutputSettings
             if (!Enum.IsDefined(settings.Keyboard)) settings.Keyboard = KeyboardLayout.Piano;
             if (!Enum.IsDefined(settings.FullScreen)) settings.FullScreen = FullScreenOn.SameMonitor;
             if (!Enum.IsDefined(settings.Transport)) settings.Transport = TransportEdge.Top;
+            if (settings.Smoothing is not (Smoothing.Off or Smoothing.Fast)) settings.Smoothing = Smoothing.Fast;
             if (settings.Graphics is null && settings.EarlierDriver == GraphicsDriver.Direct3D) settings.Graphics = GraphicsDriver.Direct3D;
             if (settings.Graphics is { } driver && !Enum.IsDefined(driver)) settings.Graphics = null;
             settings.EarlierDriver = null;

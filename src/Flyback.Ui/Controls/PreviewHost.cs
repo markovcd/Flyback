@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
 using Flyback.Engine.Compile;
+using Flyback.Engine.Render;
 using Flyback.Gpu;
 using Flyback.Host;
 
@@ -96,6 +97,12 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     {
         get => active.FrameRate;
         set => active.FrameRate = value;
+    }
+
+    public Smoothing Smoothing
+    {
+        get => active.Smoothing;
+        set => active.Smoothing = value;
     }
 
     public double Time
@@ -308,6 +315,7 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
             surface.Time = active.Time;
             surface.Clock = active.Clock;
             surface.FrameRate = active.FrameRate;
+            surface.Smoothing = active.Smoothing;
 
             if (active is IGpuPreview outgoing) outgoing.Failed -= OnGpuFailed;
         }

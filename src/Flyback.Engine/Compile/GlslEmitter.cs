@@ -198,6 +198,9 @@ public static class GlslEmitter
             float least = min(m, min(min(nw, ne), min(sw, se)));
             float most = max(m, max(max(nw, ne), max(sw, se)));
 
+            // Most of a picture is no edge at all, and is left as it was drawn.
+            if (most - least < max(1.0 / 32.0, most * (1.0 / 8.0))) { fragColor = vec4(middle, 1.0); return; }
+
             // Upward rows, so along is the processor's with y turned over.
             vec2 along = vec2(-((nw + ne) - (sw + se)), (ne + se) - (nw + sw));
             float reduce = max((nw + ne + sw + se) * 0.25 * (1.0 / 8.0), 1.0 / 128.0);

@@ -70,6 +70,15 @@ internal static class ViewerArguments
                 result.AddError($"--fps is 0, or {OutputSettings.SlowestFrameRate:0} or more.");
         });
 
+        var smooth = new Option<string>("--smooth")
+        {
+            Description = "Smooth the picture's jagged edges with a quick pass over each frame: fast or off. "
+                + "Left out, the editor's Settings → Picture.",
+            DefaultValueFactory = _ => settings.Smoothing == Smoothing.Off ? "off" : "fast",
+        };
+
+        smooth.AcceptOnlyFromAmong("off", "fast");
+
         var gpu = new Option<bool>("--gpu")
         {
             Description = "Draw the picture on the graphics card" + (settings.Gpu ? " (the settings' choice)." : "."),
@@ -249,7 +258,7 @@ internal static class ViewerArguments
             + "Space, or Ctrl+P, pauses it, F11 gives it the whole screen, and F3 says how it is drawn.")
         {
             patch, preset, presets,
-            size, fps, gpu, cpu, noVideo, window, maximized, fullScreen,
+            size, fps, smooth, gpu, cpu, noVideo, window, maximized, fullScreen,
             noAudio, volume, mute, latency, oversample,
             from, paused, duration, loop,
             background, hidden, noOverlay, transport, knobGrid, stats, report, trace, title, top, interpreted, file,
@@ -273,6 +282,7 @@ internal static class ViewerArguments
                 ListPresets = result.GetValue(presets),
                 Size = Sized(result.GetValue(size)!) ?? new PixelSize(settings.Width, settings.Height),
                 FrameRate = result.GetValue(fps),
+                Smoothing = result.GetValue(smooth) == "off" ? Smoothing.Off : Smoothing.Fast,
                 Gpu = result.GetValue(gpu) || (!result.GetValue(cpu) && settings.Gpu),
                 NoVideo = result.GetValue(noVideo),
                 Window = result.GetResult(window) is not null ? Sized(result.GetValue(window)!) : null,

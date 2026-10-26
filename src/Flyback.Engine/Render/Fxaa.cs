@@ -23,54 +23,76 @@ internal static class Fxaa
     /// <summary>The farthest a blend reaches along an edge, in pixels.</summary>
     public const float SpanMax = 8f;
 
+    /// <summary>The least contrast between a pixel and its corners that counts as an edge.</summary>
+    public const float EdgeMin = 1f / 32f;
+
+    /// <summary>The share of the brightest corner that contrast must also reach, so a bright area needs a stronger edge.</summary>
+    public const float EdgeMul = 1f / 8f;
+
+    /// <summary>The frame as colors and as light, kept for the next frame the preview's thread smooths.</summary>
+    [ThreadStatic]
+    private static Vector3[]? colors;
+
+    [ThreadStatic]
+    private static float[]? lights;
+
     /// <summary>Smooths <paramref name="frame"/> in place, BGRA, top row first.</summary>
-    public static void Apply(Span<byte> frame, int width, int height, int stride)
+    public static unsafe void Apply(Span<byte> frame, int width, int height, int stride)
     {
         if (width <= 0 || height <= 0) return;
 
-        var source = new Vector3[width * height];
+        if (colors is null || colors.Length != width * height) (colors, lights) = (new Vector3[width * height], new float[width * height]);
 
-        for (var y = 0; y < height; y++)
+        var (source, light) = (colors, lights!);
+
+        fixed (byte* pinned = frame)
         {
-            var row = frame.Slice(y * stride, width * 4);
+            var origin = (nint)pinned;
 
-            for (var x = 0; x < width; x++)
-                source[y * width + x] = new Vector3(row[x * 4 + 2], row[x * 4 + 1], row[x * 4]) / 255f;
-        }
-
-        var target = new Vector3[width * height];
-
-        Parallel.For(0, height, y =>
-        {
-            for (var x = 0; x < width; x++)
-                target[y * width + x] = At(source, width, height, x + 0.5f, y + 0.5f);
-        });
-
-        for (var y = 0; y < height; y++)
-        {
-            var row = frame.Slice(y * stride, width * 4);
-
-            for (var x = 0; x < width; x++)
+            Parallel.For(0, height, y =>
             {
-                var color = target[y * width + x];
-                row[x * 4 + 0] = ToByte(color.Z);
-                row[x * 4 + 1] = ToByte(color.Y);
-                row[x * 4 + 2] = ToByte(color.X);
-                row[x * 4 + 3] = 255;
-            }
+                var row = (byte*)origin + (nint)y * stride;
+
+                for (var x = 0; x < width; x++)
+                {
+                    var color = new Vector3(row[x * 4 + 2], row[x * 4 + 1], row[x * 4]) / 255f;
+                    source[y * width + x] = color;
+                    light[y * width + x] = Luma(color);
+                }
+            });
+
+            Parallel.For(0, height, y =>
+            {
+                var row = (byte*)origin + (nint)y * stride;
+                var (up, down) = (Math.Max(y - 1, 0) * width, Math.Min(y + 1, height - 1) * width);
+
+                for (var x = 0; x < width; x++)
+                {
+                    var (left, right) = (Math.Max(x - 1, 0), Math.Min(x + 1, width - 1));
+                    var corners = (NW: light[up + left], NE: light[up + right], SW: light[down + left], SE: light[down + right]);
+                    var m = light[y * width + x];
+
+                    var least = MathF.Min(m, MathF.Min(MathF.Min(corners.NW, corners.NE), MathF.Min(corners.SW, corners.SE)));
+                    var most = MathF.Max(m, MathF.Max(MathF.Max(corners.NW, corners.NE), MathF.Max(corners.SW, corners.SE)));
+
+                    // Most of a picture is no edge at all, and is left as it was drawn.
+                    if (most - least < MathF.Max(EdgeMin, most * EdgeMul)) continue;
+
+                    var color = Along(source, width, height, x + 0.5f, y + 0.5f, corners, least, most);
+                    row[x * 4 + 0] = ToByte(color.Z);
+                    row[x * 4 + 1] = ToByte(color.Y);
+                    row[x * 4 + 2] = ToByte(color.X);
+                    row[x * 4 + 3] = 255;
+                }
+            });
         }
     }
 
-    /// <summary>The smoothed color at a pixel's center, in pixels from the top left.</summary>
-    private static Vector3 At(Vector3[] source, int width, int height, float x, float y)
+    /// <summary>The color blended along the edge at a pixel's center, in pixels from the top left.</summary>
+    private static Vector3 Along(
+        Vector3[] source, int width, int height, float x, float y, (float NW, float NE, float SW, float SE) corners, float least, float most)
     {
-        var middle = Sample(source, width, height, x, y);
-        var (nw, ne) = (Luma(Sample(source, width, height, x - 1f, y - 1f)), Luma(Sample(source, width, height, x + 1f, y - 1f)));
-        var (sw, se) = (Luma(Sample(source, width, height, x - 1f, y + 1f)), Luma(Sample(source, width, height, x + 1f, y + 1f)));
-        var m = Luma(middle);
-
-        var least = MathF.Min(m, MathF.Min(MathF.Min(nw, ne), MathF.Min(sw, se)));
-        var most = MathF.Max(m, MathF.Max(MathF.Max(nw, ne), MathF.Max(sw, se)));
+        var (nw, ne, sw, se) = corners;
 
         // Across the edge is where the light changes; along it is at right angles.
         var dx = -(nw + ne - (sw + se));

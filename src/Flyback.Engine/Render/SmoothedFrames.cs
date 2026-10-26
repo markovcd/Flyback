@@ -45,6 +45,9 @@ internal sealed class SmoothedFrames(IFrameRenderer frames, Smoothing smoothing)
         }
     }
 
+    /// <summary>Whether a frame this size has room to be drawn at twice its width and height.</summary>
+    public static bool FitsBest(int width, int height) => 4L * width * height <= SynthRenderer.MostPixels;
+
     /// <summary>Averages each two-by-two block of <paramref name="source"/> into one pixel of <paramref name="destination"/>.</summary>
     internal static void Halve(ReadOnlySpan<byte> source, int sourceStride, int width, int height, Span<byte> destination, int stride)
     {

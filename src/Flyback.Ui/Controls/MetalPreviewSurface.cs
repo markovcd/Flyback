@@ -1,3 +1,4 @@
+using Avalonia;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Render;
 using Flyback.Gpu;
@@ -50,6 +51,17 @@ public sealed class MetalPreviewSurface : PreviewSurface, IGpuPreview, ICaptured
 
     private protected override void Retire() => picture.Dispose();
 
+    /// <summary>Handed to Metal, which smooths the frame as it resolves it.</summary>
+    public override Smoothing Smoothing
+    {
+        get => picture.Smoothing;
+        set => picture.Smoothing = value;
+    }
+
+    private protected override void Smooth(Smoothing smoothing, byte[] buffer, PixelSize size, int stride)
+    {
+    }
+
     /// <summary>No rest: the frame's cost is the graphics card's, and the processor waited it out idle.</summary>
     private protected override double Rest => 0;
 
@@ -69,6 +81,9 @@ public sealed class MetalPreviewSurface : PreviewSurface, IGpuPreview, ICaptured
             get => Volatile.Read(ref field);
             set => Volatile.Write(ref field, value);
         }
+
+        /// <summary>Set from the UI thread, read by the next frame.</summary>
+        public Smoothing Smoothing { get; set; }
 
         /// <summary>Whether a device has opened, which stays said once the surface is retired, for a report written after.</summary>
         public bool Opened => Volatile.Read(ref opened);
@@ -105,6 +120,7 @@ public sealed class MetalPreviewSurface : PreviewSurface, IGpuPreview, ICaptured
                 renderer.Reset();
             }
 
+            renderer.Smoothing = Smoothing;
             renderer.Render(patch, time, width, height, destination, stride, live);
 
             if (Capture is { } sink) Hand(sink, destination, width, height, stride);

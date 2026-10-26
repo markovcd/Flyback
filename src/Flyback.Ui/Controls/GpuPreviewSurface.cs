@@ -5,6 +5,7 @@ using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
 using Avalonia.Threading;
 using Flyback.Engine.Compile;
+using Flyback.Engine.Render;
 using Flyback.Gpu;
 
 namespace Flyback.Ui.Controls;
@@ -131,6 +132,9 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IGpuPreview, ICapture
             timer.Interval = value > 0 ? TimeSpan.FromSeconds(1d / value) : UncappedInterval;
         }
     }
+
+    /// <summary>Set from the UI thread and handed to the renderer with each frame.</summary>
+    public Smoothing Smoothing { get; set; }
 
     /// <summary>
     /// Who wants the frames, while a recording lasts. Set from the UI thread and
@@ -431,6 +435,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IGpuPreview, ICapture
 
         using (StallTrace.Step("GPU frame"))
         {
+            active.Smoothing = Smoothing;
             renderError = active.Render(
                 bound,
                 fb,
