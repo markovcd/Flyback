@@ -360,6 +360,33 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
                 Dispatcher.UIThread.RunJobs();
         });
 
+    /// <summary>The menus along the top of the window, or nothing while it has no menu bar.</summary>
+    public IReadOnlyList<string> MenuBar => ReadWindow(open =>
+    {
+        var bar = open.GetVisualDescendants().OfType<NativeMenuBar>().Single();
+
+        return bar.IsEffectivelyVisible
+            ? bar.GetVisualDescendants().OfType<MenuItem>().Select(item => item.Header as string ?? string.Empty).ToList()
+            : [];
+    });
+
+    /// <summary>Opens the menu so titled on the window's menu bar and clicks the item so labeled.</summary>
+    public void ChooseFromMenuBar(string menu, string label) =>
+        DoWindow((open, _) =>
+        {
+            var title = open.GetVisualDescendants().OfType<NativeMenuBar>().Single()
+                .GetVisualDescendants().OfType<MenuItem>().Single(item => item.Header as string == menu);
+
+            title.Open();
+            Dispatcher.UIThread.RunJobs();
+
+            var item = Enumerable.Range(0, title.ItemCount).Select(title.ContainerFromIndex).OfType<MenuItem>()
+                           .SingleOrDefault(item => item.Header as string == label)
+                       ?? throw new InvalidOperationException($"the {menu} menu has no {label}");
+
+            item.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        });
+
     /// <summary>Whether the settings are up over the window.</summary>
     public bool SettingsUp => ReadWindow(open =>
         open.GetVisualDescendants().OfType<TabControl>().Any(tabs => tabs.Name == "settingsTabs"));

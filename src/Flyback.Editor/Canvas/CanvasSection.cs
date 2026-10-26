@@ -9,8 +9,9 @@ using Flyback.Ui.Controls;
 namespace Flyback.Editor.Canvas;
 
 /// <summary>
-/// The Canvas section of the settings window: how modules are laid out, and how
-/// much of a plugin's own module background the canvas draws (ADR-0118).
+/// The Canvas section of the settings window: how modules are laid out, how much of
+/// a plugin's own module background the canvas draws (ADR-0118), and whether the
+/// window has a menu bar.
 /// </summary>
 internal sealed class CanvasSection : ISettingsSection
 {
@@ -44,6 +45,15 @@ internal sealed class CanvasSection : ISettingsSection
         Content = "Play animated module backgrounds",
         FontSize = Text.Body,
         VerticalAlignment = VerticalAlignment.Center,
+    };
+
+    private readonly CheckBox menuBar = new()
+    {
+        Name = "showMenuBar",
+        Content = "Show a menu bar",
+        FontSize = Text.Body,
+        VerticalAlignment = VerticalAlignment.Center,
+        IsVisible = false,
     };
 
     private readonly ComboBox measureWindow = new Picker
@@ -101,6 +111,10 @@ internal sealed class CanvasSection : ISettingsSection
             "A module whose background is an animated GIF plays it. Clear this to hold every "
             + "one at its first frame — the canvas then redraws only when the patch changes.");
 
+        ToolTip.SetTip(menuBar,
+            "File, Edit, View, Play and Help along the top of the window, the menus a Mac shows in its menu bar.");
+
+        View.Children.Add(menuBar);
         View.Children.Add(compactModules);
 
         View.Children.Add(new TextBlock
@@ -168,12 +182,26 @@ internal sealed class CanvasSection : ISettingsSection
 
     Control ISettingsSection.View => View;
 
+    /// <summary>Whether the menu bar is offered, which it is only where a window can show one.</summary>
+    internal bool MenuBarOffered
+    {
+        get => menuBar.IsVisible;
+        set => menuBar.IsVisible = value;
+    }
+
+    /// <summary>Whether the window has a menu bar, as last saved.</summary>
+    internal bool MenuBar => saved.MenuBar;
+
+    /// <summary>Raised with <see cref="MenuBar"/> whenever what was saved is put in force.</summary>
+    internal event Action<bool>? MenuBarShown;
+
     /// <summary>
     /// Puts what was last saved on the controls and on the canvas both, since what
     /// the canvas draws is read from <see cref="ModuleSkins"/> and its <see cref="NodeGeometry"/> rather than from here.
     /// </summary>
     public void Show()
     {
+        menuBar.IsChecked = saved.MenuBar;
         compactModules.IsChecked = saved.CompactModules;
         dragToPan.IsChecked = saved.DragToPan;
         pluginSkins.IsChecked = saved.PluginSkins;
@@ -183,6 +211,7 @@ internal sealed class CanvasSection : ISettingsSection
         measurePicture.SelectedIndex = (int)saved.MeasurePicture;
 
         canvas.Geometry.Compact = saved.CompactModules;
+        MenuBarShown?.Invoke(saved.MenuBar);
 
         // The empty inspector names the gestures, so it is told when they change.
         if (canvas.Gestures.DragToPan != saved.DragToPan)
@@ -242,6 +271,7 @@ internal sealed class CanvasSection : ISettingsSection
     {
         saved = new CanvasSettings
         {
+            MenuBar = menuBar.IsChecked == true,
             CompactModules = compactModules.IsChecked == true,
             DragToPan = dragToPan.IsChecked == true,
             PluginSkins = pluginSkins.IsChecked == true,

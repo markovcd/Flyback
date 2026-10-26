@@ -36,7 +36,8 @@ internal sealed class MainWindow : Window
         WorkKeeper keeper,
         WindowLayoutKeeper layoutKeeper,
         ShellLayout shell,
-        SettingsSession settingsSession)
+        SettingsSession settingsSession,
+        MenuBar menuBar)
     {
         this.view = view;
         this.unsaved = unsaved;
@@ -71,7 +72,18 @@ internal sealed class MainWindow : Window
         layoutKeeper.Track(this);
 
         view.Hold(this);
-        Content = view;
+
+        if (OperatingSystem.IsMacOS())
+        {
+            Content = view;
+        }
+        else
+        {
+            DockPanel.SetDock(menuBar.Bar, Dock.Top);
+            Content = new DockPanel { Children = { menuBar.Bar, view } };
+        }
+
+        menuBar.Hang(this);
 
         // Dialogs and the storage provider are ready only once the window is open.
         Opened += async (_, _) => await view.OpenedAsync();

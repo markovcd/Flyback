@@ -16,7 +16,7 @@
 
 ### Editor
 
-- macOS menu bar: Flyback's own app menu and File, Edit, View, Play, Window and Help menus; the viewer's is named Flyback Viewer.
+- macOS menu bar: Flyback's own app menu and File, Edit, View, Play, Window and Help menus; the viewer's is named Flyback Viewer. On Windows and Linux, Settings → Canvas → Show a menu bar puts the same menus along the top of the window.
 - Measure moves to Ctrl+Shift+M (⇧⌘M on macOS), leaving ⌘M to Minimize.
 - The desktop editor's first start asks whether to share anonymous usage counts.
 - Settings → Picture → Smoothing smooths the picture's jagged edges with a quick pass over each frame, on OpenGL, Direct3D, Metal, the web and the processor alike, and a take records it; on by default, Off for the raw pixels.
