@@ -3,6 +3,11 @@
 // Columns: project, kind, accessibility, member, container, declared at, test uses, test files.
 
 using System.Collections.Concurrent;
+using Microsoft.Build.Locator;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.MSBuild;
 
 MSBuildLocator.RegisterDefaults();
 await Run(args.Length > 0 ? args[0] : "Flyback.slnx", args.Length > 1 ? args[1] : "test-only-members.tsv");
