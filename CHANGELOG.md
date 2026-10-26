@@ -28,7 +28,7 @@
 - Over a live picture only the modules' fills and the wires let it through: their text stays at full strength, values at rest are lighter with a shadow, and a module whose value is in hand keeps a solid fill.
 - A shut box's input rows have the wells, knob chips and diamonds of the modules inside, and turn, pick and link the same way.
 - An Expression's inputs that its formula doesn't read are drawn faint.
-- On a phone the web editor fits under the browser's address bar, and added to the home screen it opens full screen.
+- On a phone the web editor's transport and status bars stay on screen, under the browser's address bar or held sideways, and added to the home screen it opens full screen.
 
 ### Viewer
 

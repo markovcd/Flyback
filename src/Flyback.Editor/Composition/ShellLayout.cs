@@ -191,6 +191,8 @@ internal sealed class ShellLayout(
         columns = new Grid
         {
             Name = "columns",
+            // Its rows' least heights outgrow a short page, a phone held sideways.
+            ClipToBounds = true,
             ColumnDefinitions =
             [
                 new ColumnDefinition(assistantShare),
@@ -255,6 +257,9 @@ internal sealed class ShellLayout(
         root.Children.Add(row.View);
         root.Children.Add(keys.View);
         root.Children.Add(columns);
+
+        // Above the panels, which hit-test past their clip where a short page cuts them off.
+        foreach (var bar in new Control[] { toolbar.View, statusBar.View, row.View, keys.View }) bar.ZIndex = 1;
         fullScreen.ShowPreview = ShowPreview;
         return root;
     }
