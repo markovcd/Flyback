@@ -6,7 +6,12 @@ namespace Flyback.Engine.Render;
 /// Fast approximate anti-aliasing over a finished BGRA frame: where the light
 /// changes sharply, the pixel is blended along the edge rather than across it.
 /// </summary>
-/// <remarks>Reads bilinear and clamped at the border, as a texture is read (ADR-0215).</remarks>
+/// <remarks>
+/// The same steps as the shaders' pass (<see cref="Compile.GlslEmitter.Smoothing"/>,
+/// <see cref="Compile.MetalEmitter.SmoothingFragment"/>), reading bilinear and clamped
+/// at the border as a texture is read, so a frame is smoothed alike wherever it is
+/// drawn (ADR-0215).
+/// </remarks>
 internal static class Fxaa
 {
     /// <summary>The least a blend reaches across an edge, so a faint one is still followed.</summary>

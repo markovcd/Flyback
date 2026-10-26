@@ -37,6 +37,12 @@ internal sealed class MetalHeadlessRenderer : IHeadlessRenderer
     /// <summary>Clears the feedback history, so the next frame starts from black.</summary>
     public void Reset() => renderer.Rewind();
 
+    public Smoothing Smoothing
+    {
+        get => renderer.Smoothing;
+        set => renderer.Smoothing = value;
+    }
+
     public void Render(
         CompiledPatch patch,
         double time,

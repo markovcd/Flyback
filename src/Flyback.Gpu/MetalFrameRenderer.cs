@@ -77,6 +77,15 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device, bool overlap
     private IntPtr resolve;
     private IntPtr resolved;
 
+    /// <summary>The blit's pipeline with the smoothing pass in place of a plain copy.</summary>
+    private IntPtr smoothed;
+
+    /// <summary>
+    /// How the frame's edges are smoothed as it is resolved. Best is drawn as Fast
+    /// here: four samples a pixel is a render's, not a window's.
+    /// </summary>
+    public Smoothing Smoothing { get; set; }
+
     /// <summary>
     /// Points the renderer at a program, compiling a library for it if the text has
     /// changed. Null on success, including when there was nothing to do.
@@ -315,7 +324,7 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device, bool overlap
             var commands = device.Commands();
 
             Draw(commands, resolution, time, live);
-            Resolve(commands);
+            Resolve(commands, resolution);
 
             var row = resolution.Width * ResolvedBytes;
             var bytes = row * resolution.Height;
@@ -396,7 +405,14 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device, bool overlap
         if (library == 0) return $"The blit would not compile for Metal. {error}";
 
         resolve = device.Pipeline(library, MetalEmitter.BlitVertex, MetalEmitter.BlitFragment, [MetalDevice.Bgra8Unorm], out error);
+        smoothed = resolve == 0 ? 0 : device.Pipeline(library, MetalEmitter.BlitVertex, MetalEmitter.SmoothingFragment, [MetalDevice.Bgra8Unorm], out error);
         ObjC.Release(library);
+
+        if (resolve != 0 && smoothed == 0)
+        {
+            ObjC.Release(resolve);
+            resolve = 0;
+        }
 
         return resolve == 0 ? $"The blit would not build for Metal. {error}" : null;
     }
@@ -405,13 +421,15 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device, bool overlap
     /// Draws the frame just drawn into <see cref="resolved"/>, unscaled: the blit samples
     /// texel centers, so each byte is the GPU's rounding of its half float.
     /// </summary>
-    private void Resolve(IntPtr commands)
+    private void Resolve(IntPtr commands, SurfaceSize resolution)
     {
         var encoder = MetalDevice.Pass(commands, [resolved], clear: false, alpha: 1);
         var scale = stackalloc float[] { 1f, 1f };
+        var texel = stackalloc float[] { 1f / resolution.Width, 1f / resolution.Height };
 
-        MetalDevice.Use(encoder, resolve);
+        MetalDevice.Use(encoder, Smoothing == Smoothing.Off ? resolve : smoothed);
         MetalDevice.VertexBytes(encoder, scale, 2 * sizeof(float), MetalEmitter.BlitBuffer);
+        if (Smoothing != Smoothing.Off) MetalDevice.FragmentBytes(encoder, texel, 2 * sizeof(float), MetalEmitter.SmoothingBuffer);
         MetalDevice.FragmentTexture(encoder, history[read], 0);
         MetalDevice.DrawQuad(encoder);
         MetalDevice.End(encoder);
@@ -590,6 +608,7 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device, bool overlap
 
         ObjC.Release(pipeline);
         ObjC.Release(resolve);
+        ObjC.Release(smoothed);
         Settle();
 
         ObjC.Release(constantBuffer);
@@ -597,6 +616,7 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device, bool overlap
 
         pipeline = 0;
         resolve = 0;
+        smoothed = 0;
         constantBuffer = 0;
         readbacks[0] = readbacks[1] = 0;
         pictures = [];

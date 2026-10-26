@@ -33,6 +33,12 @@ public class GpuRenderTests
     public void The_GPU_draws_a_preset_as_the_processor_does(string name) =>
         Agrees(Presets.All.Single(p => p.Name == name).Build(NodeCatalog.BuiltIn));
 
+    /// <summary>The smoothing pass on the GPU against the processor's, over every preset's edges.</summary>
+    [Theory]
+    [MemberData(nameof(Drawn))]
+    public void The_GPU_smooths_a_preset_as_the_processor_does(string name) =>
+        Agrees(Presets.All.Single(p => p.Name == name).Build(NodeCatalog.BuiltIn).CompileForVideo(NodeCatalog.BuiltIn).Program, Smoothing.Fast);
+
     /// <summary>A value carried round per pixel, which on the GPU is a float target ping-ponged beside the history.</summary>
     [Fact]
     public void The_GPU_carries_a_plane_as_the_processor_does()
@@ -132,7 +138,7 @@ public class GpuRenderTests
     private void Agrees(Patch patch) => Agrees(patch.CompileForVideo(NodeCatalog.BuiltIn).Program);
 
     /// <summary>Four frames a thirtieth apart on each, so a loop has three frames behind it to disagree about.</summary>
-    private void Agrees(CompiledPatch program)
+    private void Agrees(CompiledPatch program, Smoothing smoothing = Smoothing.Off)
     {
         using var gpu = Open(out var why);
         TestCategory.Gpu.Require(gpu is not null, $"No GPU here. {why}");
@@ -140,8 +146,9 @@ public class GpuRenderTests
         IlCompiler.CompileOnce(program, IlParts.Staged);
 
         gpu.Prepare(program).ShouldBeNull();
+        gpu.Smoothing = smoothing;
 
-        IFrameRenderer processor = new SynthRenderer();
+        IFrameRenderer processor = new SmoothedFrames(new SynthRenderer(), smoothing);
         var drawn = new byte[Width * Height * 4];
         var expected = new byte[Width * Height * 4];
 
@@ -154,17 +161,24 @@ public class GpuRenderTests
 
         long sum = 0;
         var worst = 0;
+        var outliers = 0;
 
         for (var i = 0; i < drawn.Length; i++)
         {
             var difference = Math.Abs(drawn[i] - expected[i]);
             sum += difference;
             worst = Math.Max(worst, difference);
+            if (difference > 8) outliers++;
         }
 
         var mean = sum / (double)drawn.Length;
 
-        worst.ShouldBeLessThanOrEqualTo(8, $"on {gpu.Description}");
+        // The smoothing pass picks a narrow or a wide blend by comparing lights, so a
+        // last-bit difference can flip the pick at a pixel: a few may differ by more,
+        // where an edge followed the wrong way differs at hundreds.
+        if (smoothing == Smoothing.Off) worst.ShouldBeLessThanOrEqualTo(8, $"on {gpu.Description}");
+        else outliers.ShouldBeLessThanOrEqualTo(drawn.Length / 1000, $"on {gpu.Description}");
+
         mean.ShouldBeLessThanOrEqualTo(0.5d, $"on {gpu.Description}");
     }
 }

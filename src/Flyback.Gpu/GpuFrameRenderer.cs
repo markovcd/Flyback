@@ -146,6 +146,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
 
     private int[] patchPlanes = [];
     private readonly GpuReadback readback = new();
+    private readonly SmoothingPass smoothing = new();
     private SurfaceSize size;
     private int read;
     private bool clearPending = true;
@@ -156,6 +157,12 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     /// recording that starts one frame late is not a thing anyone can perceive.
     /// </summary>
     public IFrameSink? Capture { get; set; }
+
+    /// <summary>
+    /// How the frame's edges are smoothed before it is shown or read back. Best is
+    /// drawn as Fast here: four samples a pixel is a render's, not a window's.
+    /// </summary>
+    public Smoothing Smoothing { get; set; }
 
     /// <summary>Why frames cannot be read back here, or null when they can.</summary>
     public string? CaptureUnavailable => readback.Unavailable;
@@ -196,6 +203,8 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
         blitTexture = gl.GetUniformLocation(blit, "uTexture");
         blitScaleX = gl.GetUniformLocation(blit, "uScaleX");
         blitScaleY = gl.GetUniformLocation(blit, "uScaleY");
+
+        if (smoothing.Initialise(gl, dialect) is { } unsmoothed) return unsmoothed;
 
         parallel = backgroundLinks
             && (gl.Supports("GL_KHR_parallel_shader_compile") || gl.Supports("GL_ARB_parallel_shader_compile"));
@@ -478,13 +487,14 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
         if (resolution.Width <= 0 || resolution.Height <= 0) return null;
 
         if (Draw(gl, resolution, time, live) is { } failure) return failure;
+        if (Smooth(gl, resolution, out var shown) is { } unsmoothed) return unsmoothed;
 
         // Before the blit, while the frame is still the whole picture rather than
         // a letterboxed corner of a control. A recording wants what the patch
         // drew, not what the window happened to be shaped like.
-        if (Capture is { } sink) readback.Capture(gl, framebuffers[read], resolution, EightBitFeedback, sink);
+        if (Capture is { } sink) readback.Capture(gl, shown.Framebuffer, resolution, shown.EightBit, sink);
 
-        DrawBlit(gl, framebuffer, control, resolution);
+        DrawBlit(gl, framebuffer, control, resolution, shown.Texture);
 
         // The framebuffer especially: Avalonia hands us one and expects it back.
         Restore(gl, framebuffer);
@@ -503,12 +513,28 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
         if (building is not null) return "The patch's shader is still being built.";
         if (patchProgram == 0) return "There is no patch to draw.";
 
-        var failure = Draw(gl, resolution, time, live)
-            ?? readback.Read(gl, framebuffers[read], resolution, EightBitFeedback, rgba);
+        var failure = Draw(gl, resolution, time, live);
+
+        if (failure is null)
+            failure = Smooth(gl, resolution, out var shown)
+                ?? readback.Read(gl, shown.Framebuffer, resolution, shown.EightBit, rgba);
 
         Restore(gl, 0);
 
         return failure;
+    }
+
+    /// <summary>The frame to show and read back: the history as drawn, or that smoothed. Null on success.</summary>
+    private string? Smooth(IGl gl, SurfaceSize resolution, out (int Framebuffer, int Texture, bool EightBit) shown)
+    {
+        shown = (framebuffers[read], textures[read], EightBitFeedback);
+
+        if (Smoothing == Smoothing.Off) return null;
+        if (smoothing.Draw(gl, textures[read], resolution) is { } failure) return failure;
+
+        shown = (smoothing.Framebuffer, smoothing.Texture, true);
+
+        return null;
     }
 
     /// <summary>Leaves the context as it was found, apart from the tests <see cref="Draw"/> turns off.</summary>
@@ -668,7 +694,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
         }
     }
 
-    private void DrawBlit(IGl gl, int framebuffer, SurfaceSize control, SurfaceSize resolution)
+    private void DrawBlit(IGl gl, int framebuffer, SurfaceSize control, SurfaceSize resolution, int texture)
     {
         gl.BindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         gl.Viewport(0, 0, control.Width, control.Height);
@@ -680,7 +706,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
 
         gl.UseProgram(blitProgram);
         gl.ActiveTexture(GL_TEXTURE0);
-        gl.BindTexture(GL_TEXTURE_2D, textures[read]);
+        gl.BindTexture(GL_TEXTURE_2D, texture);
 
         if (blitTexture >= 0) gl.Uniform1i(blitTexture, 0);
 
@@ -873,7 +899,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
         }
     }
 
-    private static int? Link(
+    internal static int? Link(
         IGl gl,
         string vertex,
         string fragment,
@@ -1047,6 +1073,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
         // Unconditionally, because it owns unmanaged memory as well as GL names
         // and that has to go back whether or not there is still a context.
         readback.Release(gl);
+        smoothing.Dispose(gl);
 
         if (gl is not null)
         {

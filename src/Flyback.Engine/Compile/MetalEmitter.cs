@@ -32,6 +32,12 @@ public static class MetalEmitter
     public const string BlitVertex = "blitVertex";
     public const string BlitFragment = "blitFragment";
 
+    /// <summary>The pass that smooths a finished frame's edges, drawn with <see cref="BlitVertex"/> (ADR-0215).</summary>
+    public const string SmoothingFragment = "smoothingFragment";
+
+    /// <summary>Where the smoothing pass's texel size is bound.</summary>
+    public const int SmoothingBuffer = 0;
+
     /// <summary>Where <c>Frame</c> is bound: the clock, the aspect and the feedback's scales.</summary>
     public const int FrameBuffer = 0;
 
@@ -328,6 +334,44 @@ public static class MetalEmitter
         fragment float4 blitFragment(BlitVaryings in [[stage_in]], texture2d<float> frame [[texture(0)]])
         {
             return float4(texture(frame, in.vUv).rgb, 1.0);
+        }
+
+        static float3 smoothingAt(texture2d<float> frame, float2 uv)
+        {
+            constexpr sampler bilinear(filter::linear, address::clamp_to_edge);
+            return frame.sample(bilinear, uv).rgb;
+        }
+
+        // GLSL's smoothing pass, step for step: rows run upward here too.
+        fragment float4 smoothingFragment(
+            BlitVaryings in [[stage_in]],
+            texture2d<float> frame [[texture(0)]],
+            constant float2& texel [[buffer(0)]])
+        {
+            const float3 luma = float3(0.299, 0.587, 0.114);
+            float2 uv = in.vUv;
+
+            float3 middle = smoothingAt(frame, uv);
+            float nw = dot(smoothingAt(frame, uv + float2(-1.0, 1.0) * texel), luma);
+            float ne = dot(smoothingAt(frame, uv + float2(1.0, 1.0) * texel), luma);
+            float sw = dot(smoothingAt(frame, uv + float2(-1.0, -1.0) * texel), luma);
+            float se = dot(smoothingAt(frame, uv + float2(1.0, -1.0) * texel), luma);
+            float m = dot(middle, luma);
+
+            float least = min(m, min(min(nw, ne), min(sw, se)));
+            float most = max(m, max(max(nw, ne), max(sw, se)));
+
+            float2 along = float2(-((nw + ne) - (sw + se)), (ne + se) - (nw + sw));
+            float reduce = max((nw + ne + sw + se) * 0.25 * (1.0 / 8.0), 1.0 / 128.0);
+            along = clamp(along / (min(abs(along.x), abs(along.y)) + reduce), float2(-8.0), float2(8.0));
+
+            float3 inner = 0.5 * (smoothingAt(frame, uv + along * (1.0 / 3.0 - 0.5) * texel)
+                + smoothingAt(frame, uv + along * (2.0 / 3.0 - 0.5) * texel));
+            float3 outer = inner * 0.5 + 0.25 * (smoothingAt(frame, uv - along * 0.5 * texel)
+                + smoothingAt(frame, uv + along * 0.5 * texel));
+            float lumaOuter = dot(outer, luma);
+
+            return float4(lumaOuter < least || lumaOuter > most ? inner : outer, 1.0);
         }
 
         """;

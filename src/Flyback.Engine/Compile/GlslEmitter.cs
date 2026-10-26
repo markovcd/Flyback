@@ -67,6 +67,10 @@ public static class GlslEmitter
             TableCount: ShaderText.Tables(patch));
     }
 
+    /// <summary>The pass that smooths a finished frame's edges, drawn over the whole of its target (ADR-0215).</summary>
+    public static (string Vertex, string Fragment) Smoothing(GlslDialect dialect) =>
+        (Header(dialect, fragment: false) + PatchVertexBody, Header(dialect, fragment: true) + SmoothingFragmentBody);
+
     // --- headers -----------------------------------------------------------------
 
     /// <summary>
@@ -160,6 +164,50 @@ public static class GlslEmitter
         void main()
         {
             fragColor = vec4(texture(uTexture, vUv).rgb, 1.0);
+        }
+
+        """;
+
+    /// <summary>
+    /// FXAA, step for step as <c>Fxaa</c> takes it on the processor: the light at
+    /// four diagonal neighbors says which way the edge runs, and the pixel is
+    /// blended along it, narrower where a wider blend would cross another edge.
+    /// </summary>
+    private const string SmoothingFragmentBody =
+        """
+        uniform sampler2D uTexture;
+        uniform float uTexelX;
+        uniform float uTexelY;
+
+        in vec2 vUv;
+        out vec4 fragColor;
+
+        const vec3 kLuma = vec3(0.299, 0.587, 0.114);
+
+        vec3 at(vec2 offset) { return texture(uTexture, vUv + offset * vec2(uTexelX, uTexelY)).rgb; }
+
+        void main()
+        {
+            vec3 middle = at(vec2(0.0));
+            float nw = dot(at(vec2(-1.0, 1.0)), kLuma);
+            float ne = dot(at(vec2(1.0, 1.0)), kLuma);
+            float sw = dot(at(vec2(-1.0, -1.0)), kLuma);
+            float se = dot(at(vec2(1.0, -1.0)), kLuma);
+            float m = dot(middle, kLuma);
+
+            float least = min(m, min(min(nw, ne), min(sw, se)));
+            float most = max(m, max(max(nw, ne), max(sw, se)));
+
+            // Upward rows, so along is the processor's with y turned over.
+            vec2 along = vec2(-((nw + ne) - (sw + se)), (ne + se) - (nw + sw));
+            float reduce = max((nw + ne + sw + se) * 0.25 * (1.0 / 8.0), 1.0 / 128.0);
+            along = clamp(along / (min(abs(along.x), abs(along.y)) + reduce), -8.0, 8.0);
+
+            vec3 inner = 0.5 * (at(along * (1.0 / 3.0 - 0.5)) + at(along * (2.0 / 3.0 - 0.5)));
+            vec3 outer = inner * 0.5 + 0.25 * (at(along * -0.5) + at(along * 0.5));
+            float lumaOuter = dot(outer, kLuma);
+
+            fragColor = vec4(lumaOuter < least || lumaOuter > most ? inner : outer, 1.0);
         }
 
         """;
