@@ -45,7 +45,7 @@ internal static class CanvasText
     {
         var dot = label.LastIndexOf('.');
 
-        if (!Overflows(label, RowSize, width) || dot <= 0) return label;
+        if (dot <= 0 || !Overflows(label, RowSize, width)) return label;
 
         var (head, port) = (label[..dot], label[dot..]);
         var (fits, over) = (0, head.Length);

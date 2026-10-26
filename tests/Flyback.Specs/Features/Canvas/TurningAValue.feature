@@ -4,7 +4,8 @@ Feature: A value is turned by dragging its well
   button turns the value, as one step to undo, with a card over the module reading
   it out while it turns. Alt-click puts it back to the value a new module starts with.
   A click gives the well the keys: the arrows nudge it, and Enter opens it for an
-  exact value, which no bare key does, so the keyboard still plays notes.
+  exact value, which no bare key does, so the keyboard still plays notes. A shut
+  box's edge carries the same well for the module inside.
 
   Background:
     Given a sine on its own
@@ -42,4 +43,10 @@ Feature: A value is turned by dragging its well
   Scenario: A finger taps a well and steps it up with the button under the module
     When a finger taps the sine's freq well
     And a finger taps "+ step" under the sine
+    Then the sine's freq is higher than it was
+
+  Scenario: A shut box's well turns the value of the module inside it
+    Given the sine is drawn in one box with a Multiply it feeds
+    And the sine's "freq" is put on the box's edge
+    When the sine's freq well is dragged up
     Then the sine's freq is higher than it was

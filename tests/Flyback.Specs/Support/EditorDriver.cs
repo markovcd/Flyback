@@ -329,13 +329,11 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
             open.MouseUp(at, MouseButton.Left, RawInputModifiers.Alt);
         });
 
-    private static Point Well(NodeEditor canvas, Guid node, int port)
-    {
-        var found = canvas.History.Patch.Find(node)!;
-        var def = NodeCatalog.BuiltIn.Require(found.TypeId);
-
-        return ValueWell.At(canvas.Geometry.Bounds(found, def), canvas.Geometry.InputPort(found, def, port)).Center;
-    }
+    /// <summary>The middle of an input's well, on its module or on the edge of the shut box it is in.</summary>
+    private static Point Well(NodeEditor canvas, Guid node, int port) =>
+        canvas.Selection.Scene.RowOf(node, port) is var (bounds, socket)
+            ? ValueWell.At(bounds, socket).Center
+            : throw new InvalidOperationException("that input has no row on the canvas");
 
     /// <summary>Right-clicks a point of the patch, which over bare canvas or an open group opens the list of modules.</summary>
     public void RightClick(Point at) =>

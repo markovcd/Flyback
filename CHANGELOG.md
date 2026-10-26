@@ -25,6 +25,7 @@
 - Alt+L on a picked value links it to a panel knob, new or one already there; a linked socket is a filled diamond with the knob's chip in its well, and the chip picks another knob or unlinks. A socket that only a wire can set is a hollow diamond.
 - On a touch screen a tap on a value shows buttons under its module to step it, make the steps fine or type it; a held finger slides it with a ring and a tether where it began, and a second finger makes the slide fine.
 - Over a live picture only the modules' fills and the wires let it through: their text stays at full strength, values at rest are lighter with a shadow, and a module whose value is in hand keeps a solid fill.
+- A shut box's input rows have the wells, knob chips and diamonds of the modules inside, and turn, pick and link the same way.
 
 ### Viewer
 

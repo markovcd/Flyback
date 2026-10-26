@@ -13,7 +13,7 @@ namespace Flyback.Editor.Canvas;
 /// socket's knob chip: the arrows and Enter or a click pick one, New knob adds one,
 /// and Unlink lets a linked socket go.
 /// </summary>
-internal sealed class KnobChoice(CanvasHistory history, NodeGeometry geometry, Viewport view, Repaint repaint, Reactions reactions)
+internal sealed class KnobChoice(CanvasHistory history, CanvasSelection selection, NodeGeometry geometry, Viewport view, Repaint repaint, Reactions reactions)
 {
     public const double Width = 240, RowHeight = 32, Padding = 6;
 
@@ -129,10 +129,8 @@ internal sealed class KnobChoice(CanvasHistory history, NodeGeometry geometry, V
     {
         get
         {
-            if (For is not { } pick || history.Patch.Find(pick.Node) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return null;
+            if (For is not { } pick || selection.Scene.RowOf(pick.Node, pick.Port) is not var (bounds, socket)) return null;
 
-            var bounds = geometry.Bounds(node, def);
-            var socket = geometry.InputPort(node, def, pick.Port);
             var well = view.OnScreen(geometry.Compact ? new Rect(socket, socket) : ValueWell.At(bounds, socket));
             var (_, above) = TurnReadout.Place(view.OnScreen(bounds), well, view.Size);
             var height = Rows.Count * RowHeight + 2 * Padding;

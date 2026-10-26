@@ -62,6 +62,13 @@ public sealed class EditorSteps(PatchContext context, EditorDriver editor)
         editor.PressInRow(port, "exposeSocket");
     }
 
+    [Given("the sine's {string} is put on the box's edge")]
+    public void WhenTheSinesSocketIsExposed(string port)
+    {
+        editor.Select(context.Node("Sine").Id);
+        editor.PressInRow(port, "exposeSocket");
+    }
+
     [Then("the Multiply's {string} cannot be put on the box's edge")]
     public void ThenTheMultiplysSocketIsNotExposable(string port)
     {

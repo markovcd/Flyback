@@ -2,7 +2,6 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
-using Flyback.Core.Graph;
 
 namespace Flyback.Editor.Canvas;
 
@@ -11,7 +10,7 @@ namespace Flyback.Editor.Canvas;
 /// latches each step to a fine one, Type, and a step up. For a hand that would rather
 /// press than drag.
 /// </summary>
-internal sealed class StepBar(SocketFocus focus, CanvasHistory history, NodeGeometry geometry, Viewport view)
+internal sealed class StepBar(SocketFocus focus, CanvasSelection selection, Viewport view)
 {
     public const double Height = 64, Gap = 8;
 
@@ -25,10 +24,10 @@ internal sealed class StepBar(SocketFocus focus, CanvasHistory history, NodeGeom
         get
         {
             if (!focus.Bar || focus.Typed is not null || focus.Focused is not { } pick
-                || history.Patch.Find(pick.Node) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def)
+                || selection.Scene.RowOf(pick.Node, pick.Port) is not var (bounds, _))
                 return null;
 
-            var module = view.OnScreen(geometry.Bounds(node, def));
+            var module = view.OnScreen(bounds);
             var width = Math.Max(module.Width, Labels.Length * ButtonWidth + (Labels.Length - 1) * Gap);
             var x = Math.Clamp(module.Left, Margin, Math.Max(Margin, view.Size.Width - width - Margin));
             var y = module.Bottom + Below + Height <= view.Size.Height - Margin ? module.Bottom + Below : module.Top - Below - Height;

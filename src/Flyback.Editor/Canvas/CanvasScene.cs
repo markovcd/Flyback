@@ -341,38 +341,72 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
         return null;
     }
 
-    /// <summary>Which input's value well is under the pointer, on a module drawn with its values in its rows.</summary>
+    /// <summary>The input whose well is under <paramref name="graph"/>, on a module or a shut box drawn at full size.</summary>
     public bool HitWell(Point graph, out Guid nodeId, out int portIndex)
     {
-        (nodeId, portIndex) = (Guid.Empty, -1);
+        var shown = patch;
 
-        if (geometry.Compact || HitNode(graph) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return false;
-
-        var bounds = geometry.Bounds(node, def);
-
-        for (var p = 0; p < def.Inputs.Count; p++)
-        {
-            if (!ValueWell.At(bounds, geometry.InputPort(node, def, p)).Contains(graph) || !ValueWell.Has(patch, node, def, p)) continue;
-
-            (nodeId, portIndex) = (node.Id, p);
-            return true;
-        }
-
-        return false;
+        return HitRow(graph, (node, def, port) => ValueWell.Has(shown, node, def, port), out nodeId, out portIndex);
     }
 
-    /// <summary>The linked input whose knob chip is under <paramref name="graph"/>, on a module drawn at full size.</summary>
+    /// <summary>The linked input whose knob chip is under <paramref name="graph"/>, on a module or a shut box drawn at full size.</summary>
     public bool HitChip(Point graph, out Guid nodeId, out int portIndex)
+    {
+        var shown = patch;
+
+        return HitRow(graph, (node, _, port) => KnobChip.Of(shown, node, port) is not null, out nodeId, out portIndex);
+    }
+
+    /// <summary>Where an input's row is drawn: on its module, or on the edge of the shut box it is behind; null where it is not drawn.</summary>
+    public (Rect Bounds, Point Center)? RowOf(Guid nodeId, int port)
+    {
+        if (patch.Find(nodeId) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return null;
+
+        if (ShutGroupOf(nodeId) is not { } group) return (geometry.Bounds(node, def), geometry.InputPort(node, def, port));
+
+        var sockets = patch.SocketsOf(group);
+        var row = sockets.IndexOfInput(new GroupSocket(nodeId, port, IsOutput: false));
+
+        if (row < 0) return null;
+
+        var bounds = geometry.GroupBounds(patch, group, sockets);
+
+        return (bounds, geometry.GroupInputPort(bounds, sockets, row));
+    }
+
+    /// <summary>The input whose well area is under <paramref name="graph"/> and which <paramref name="wants"/>, boxes first as they are drawn over modules.</summary>
+    private bool HitRow(Point graph, Func<NodeInstance, NodeDef, int, bool> wants, out Guid nodeId, out int portIndex)
     {
         (nodeId, portIndex) = (Guid.Empty, -1);
 
-        if (geometry.Compact || HitNode(graph) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return false;
+        if (geometry.Compact) return false;
 
-        var bounds = geometry.Bounds(node, def);
+        foreach (var (_, sockets, bounds) in Boxes())
+        {
+            if (!bounds.Contains(graph)) continue;
+
+            for (var row = 0; row < sockets.Inputs.Count; row++)
+            {
+                var socket = sockets.Inputs[row];
+
+                if (!ValueWell.At(bounds, geometry.GroupInputPort(bounds, sockets, row)).Contains(graph)) continue;
+                if (patch.Find(socket.Node) is not { } inside || NodeCatalog.Get(inside.TypeId) is not { } within) continue;
+                if (!wants(inside, within, socket.Port)) continue;
+
+                (nodeId, portIndex) = (socket.Node, socket.Port);
+                return true;
+            }
+
+            return false;
+        }
+
+        if (HitNode(graph) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return false;
+
+        var at = geometry.Bounds(node, def);
 
         for (var p = 0; p < def.Inputs.Count; p++)
         {
-            if (!ValueWell.At(bounds, geometry.InputPort(node, def, p)).Contains(graph) || KnobChip.Of(patch, node, p) is null) continue;
+            if (!ValueWell.At(at, geometry.InputPort(node, def, p)).Contains(graph) || !wants(node, def, p)) continue;
 
             (nodeId, portIndex) = (node.Id, p);
             return true;

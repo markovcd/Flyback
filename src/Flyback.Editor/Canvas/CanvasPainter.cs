@@ -136,13 +136,8 @@ internal sealed class CanvasPainter(
     /// <summary>The card over a value being turned or typed, at full strength even over the picture.</summary>
     private void DrawReadout(DrawingContext context)
     {
-        if (focus.Reading is not var (pick, turn)
-            || Patch.Find(pick.Node) is not { } node
-            || NodeCatalog.Get(node.TypeId) is not { } def)
-            return;
+        if (focus.Reading is not var (pick, turn) || selection.Scene.RowOf(pick.Node, pick.Port) is not var (bounds, socket)) return;
 
-        var bounds = geometry.Bounds(node, def);
-        var socket = geometry.InputPort(node, def, pick.Port);
         var well = geometry.Compact ? new Rect(socket, socket) : ValueWell.At(bounds, socket);
         var (card, above) = TurnReadout.Place(view.OnScreen(bounds), view.OnScreen(well), view.Size);
 
@@ -705,33 +700,7 @@ internal sealed class CanvasPainter(
         }
 
         for (var i = 0; i < def.Inputs.Count; i++)
-        {
-            var port = def.Inputs[i];
-            var center = geometry.InputPort(node, def, i);
-            var connected = Patch.IncomingTo(node.Id, i) is not null;
-
-            if (geometry.Compact)
-            {
-                DrawCompactInput(context, node, port, i, bounds, center, connected, follow, spans, Ink);
-                continue;
-            }
-
-            var well = !connected && ValueWell.Has(Patch, node, def, i) ? focus.StateOf(node.Id, i) : (WellState?)null;
-
-            if (well is { } lit) ValueWell.DrawRow(context, bounds, center, lit);
-
-            DrawLinkWash(context, node, port, i, bounds, center, connected);
-
-            var label = CanvasText.Text(port.Name, CanvasText.RowSize, Ink(center.Y, RowInk, 0, CanvasText.LabelBrush), bounds.Width * 0.55, true);
-            context.DrawText(label, LabelAt(bounds, center, label, output: false));
-
-            if (!connected) DrawInputValue(context, node, port, i, bounds, center, follow, formula, spans, well, Ink);
-
-            if (well is { } state) ValueWell.DrawSocket(context, center, port.Kind, state);
-            else if (KnobChip.Of(Patch, node, i) is not null) SocketDiamond.DrawLinked(context, center, port.Kind);
-            else if (!connected && !KnobLinking.Linkable(port)) SocketDiamond.DrawWireOnly(context, center, port.Kind);
-            else NodeSkin.DrawPort(context, center, port.Kind);
-        }
+            DrawInputRow(context, node, def, def.Inputs[i], i, def.Inputs[i].Name, bounds, geometry.InputPort(node, def, i), follow, formula, spans, Ink);
 
         if (FormulaLayout.FormulaBlock(Patch, node, def, bounds, geometry.Compact, y => Ink(y, RowInk, ValueFade, CanvasText.ValueBrush)) is var (text, at, _, _))
             context.DrawText(text, at);
@@ -972,30 +941,56 @@ internal sealed class CanvasPainter(
     {
         if (selection.Scene.Named(socket) is not var (label, spec)) return;
 
-        // An unwired input shows what it rests at, as the module's own row does.
-        var resting = !geometry.Compact
-            && !socket.IsOutput
-            && Patch.IncomingTo(socket.Node, socket.Port) is null
-            && Patch.Find(socket.Node) is { } node
-            && DrawRestingOf(context, node, spec, socket.Port, bounds, center);
+        if (!socket.IsOutput && Patch.Find(socket.Node) is { } node && NodeCatalog.Get(node.TypeId) is { } def)
+        {
+            static IBrush Plain(double center, double height, double fade, IBrush plain) => plain;
 
-        var width = BoxLabelRoom(bounds, resting, geometry.Compact);
+            var spans = node.TypeId == NodeCatalog.AutoRemapTypeId ? AutoRemap.Of(Patch, node) : null;
+
+            DrawInputRow(context, node, def, spec, socket.Port, label, bounds, center, follow: false, NodeCatalog.FormulaOf(node), spans, Plain);
+            return;
+        }
+
+        var width = BoxLabelRoom(bounds, resting: false, geometry.Compact);
         var text = CanvasText.Text(CanvasText.Fit(label, width), CanvasText.RowSize, CanvasText.LabelBrush, width, true);
 
         context.DrawText(text, LabelAt(bounds, center, text, socket.IsOutput));
-
         NodeSkin.DrawPort(context, center, spec.Kind);
     }
 
-    /// <summary>A box's unwired input, valued the way the module's row values it; whether anything was drawn.</summary>
-    private bool DrawRestingOf(DrawingContext context, NodeInstance node, PortSpec spec, int port, Rect bounds, Point center)
+    /// <summary>
+    /// An input's row, on its module or on a shut box standing for it: the well, the
+    /// link wash, the name, the value and the socket's mark. Both draw it through here,
+    /// so a mark added for one is on the other too.
+    /// </summary>
+    private void DrawInputRow(
+        DrawingContext context, NodeInstance node, NodeDef def, PortSpec port, int index, string name, Rect bounds, Point center,
+        bool follow, string? formula, RemapSpans? spans, Func<double, double, double, IBrush, IBrush> ink)
     {
-        static IBrush Plain(double center, double height, double fade, IBrush plain) => plain;
+        var connected = Patch.IncomingTo(node.Id, index) is not null;
 
-        var formula = NodeCatalog.FormulaOf(node);
-        var spans = node.TypeId == NodeCatalog.AutoRemapTypeId ? AutoRemap.Of(Patch, node) : null;
+        if (geometry.Compact)
+        {
+            DrawCompactInput(context, node, port, index, name, bounds, center, connected, follow, spans, ink);
+            return;
+        }
 
-        return DrawInputValue(context, node, spec, port, bounds, center, follow: false, formula, spans, well: null, Plain);
+        var well = !connected && ValueWell.Has(Patch, node, def, index) ? focus.StateOf(node.Id, index) : (WellState?)null;
+
+        if (well is { } lit) ValueWell.DrawRow(context, bounds, center, lit);
+
+        DrawLinkWash(context, node, port, index, bounds, center, connected);
+
+        var valued = !connected && DrawInputValue(context, node, port, index, bounds, center, follow, formula, spans, well, ink);
+        var width = BoxLabelRoom(bounds, valued, compact: false);
+        var label = CanvasText.Text(CanvasText.Fit(name, width), CanvasText.RowSize, ink(center.Y, RowInk, 0, CanvasText.LabelBrush), width, true);
+
+        context.DrawText(label, LabelAt(bounds, center, label, output: false));
+
+        if (well is { } state) ValueWell.DrawSocket(context, center, port.Kind, state);
+        else if (KnobChip.Of(Patch, node, index) is not null) SocketDiamond.DrawLinked(context, center, port.Kind);
+        else if (!connected && !KnobLinking.Linkable(port)) SocketDiamond.DrawWireOnly(context, center, port.Kind);
+        else NodeSkin.DrawPort(context, center, port.Kind);
     }
 
     /// <summary>Where a socket's name is drawn: inside the module, against the side its socket is on.</summary>
@@ -1072,13 +1067,13 @@ internal sealed class CanvasPainter(
     /// flag where an Auto remap's range has nothing at the far end to take from.
     /// </summary>
     private void DrawCompactInput(
-        DrawingContext context, NodeInstance node, PortSpec port, int i, Rect bounds, Point center,
+        DrawingContext context, NodeInstance node, PortSpec port, int i, string name, Rect bounds, Point center,
         bool connected, bool follow, RemapSpans? spans, Func<double, double, double, IBrush, IBrush> ink)
     {
         DrawLinkWash(context, node, port, i, bounds, center, connected);
 
         var brush = ink(center.Y, RowInk, 0, CanvasText.LabelBrush);
-        var label = CanvasText.Text(port.Name, CanvasText.RowSize, brush, HalfRow(bounds), true);
+        var label = CanvasText.Text(CanvasText.Fit(name, HalfRow(bounds)), CanvasText.RowSize, brush, HalfRow(bounds), true);
         var at = LabelAt(bounds, center, label, output: false);
 
         context.DrawText(label, at);
