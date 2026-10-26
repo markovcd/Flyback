@@ -20,7 +20,7 @@
 - Measure moves to Ctrl+Shift+M (⇧⌘M on macOS), leaving ⌘M to Minimize.
 - The desktop editor's first start asks whether to share anonymous usage counts.
 - Settings → Picture → Smoothing smooths the picture's jagged edges with a quick pass over each frame, on OpenGL, Direct3D, Metal, the web and the processor alike, and a take records it; on by default, Off for the raw pixels.
-- Live patching: Shift+F11, or Tab over a full-screen picture, puts the modules over the picture to edit while it plays, fading while nobody touches them; F11 gives the picture the whole window.
+- Live patching: Shift+F11, or Tab over a full-screen picture, puts the patch over the picture to edit while it plays, as modules that fade while nobody touches them or as text with F2; F11 gives the picture the whole window.
 
 ### Viewer
 

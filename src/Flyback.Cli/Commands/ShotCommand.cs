@@ -70,7 +70,7 @@ internal static class ShotCommand
 
         var live = new Option<bool>("--live")
         {
-            Description = "Give the picture the window with the modules over it, as live patching (Shift+F11) shows them.",
+            Description = "Give the picture the window with the patch over it, as live patching (Shift+F11) shows it: the modules, or the text for a patch whose text is the document.",
         };
 
         var editor = new Option<FileInfo>("--editor")

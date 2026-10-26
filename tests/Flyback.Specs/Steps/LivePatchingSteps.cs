@@ -15,6 +15,12 @@ public sealed class LivePatchingSteps(EditorDriver editor)
     [When("Tab is pressed over the picture")]
     public void WhenTab() => editor.Press(PhysicalKey.Tab);
 
+    [When("F2 is pressed over the picture")]
+    public void WhenF2() => editor.Press(PhysicalKey.F2);
+
+    [Then("the patch's text stands over the picture")]
+    public void ThenTextOver() => editor.TextOverPicture.ShouldBeTrue();
+
     [When("Escape is pressed over the picture")]
     public void WhenEscape() => editor.Press(PhysicalKey.Escape);
 

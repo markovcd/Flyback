@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.Editor.Composition;
+using Flyback.Editor.Hubs;
 using Flyback.Editor.Windows;
 using Flyback.Ui.Controls;
 using Shouldly;
@@ -153,22 +154,83 @@ public class LivePatchingTests : EditorTest
         editor.GetVisualParent().ShouldBeSameAs(pane);
     }
 
-    /// <summary>The text view keeps its place: it comes back showing if it was showing.</summary>
+    private static SourceView Source(MainWindow window) => All<SourceView>(window).Single();
+
+    private static void PressF2(MainWindow window) => Press(window, Key.F2, RawInputModifiers.None, PhysicalKey.F2);
+
     [AvaloniaFact]
-    public void A_patch_showing_as_text_comes_back_as_text()
+    public void A_patch_showing_as_text_goes_live_as_text()
+    {
+        var window = Open();
+        var source = Source(window);
+        var pane = source.GetVisualParent();
+
+        PressF2(window);
+        GoLive(window);
+
+        source.IsEffectivelyVisible.ShouldBeTrue("the text stands over the picture");
+        source.SeeThrough.ShouldBeTrue("with no ground, so the picture shows between the lines");
+        source.GetVisualParent().ShouldBeSameAs(Columns(window));
+        Editor(window).IsEffectivelyVisible.ShouldBeFalse("the modules stay put away");
+        Service<LivePatching>(window).Coding.ShouldBeTrue();
+
+        PressEscape(window);
+
+        source.GetVisualParent().ShouldBeSameAs(pane);
+        source.SeeThrough.ShouldBeFalse();
+        source.IsVisible.ShouldBeTrue("and the text is back in front of the canvas");
+        Editor(window).IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void F2_over_the_picture_swaps_the_modules_for_the_text_and_back()
     {
         var window = Open();
         var editor = Editor(window);
-
-        window.KeyPress(Key.F2, RawInputModifiers.None, PhysicalKey.F2, null);
-        Settle(window);
-        editor.IsVisible.ShouldBeFalse("the text stands in the canvas's place");
+        var source = Source(window);
 
         GoLive(window);
-        editor.IsEffectivelyVisible.ShouldBeTrue("the modules are what stands over the picture");
+        editor.IsEffectivelyVisible.ShouldBeTrue();
 
-        PressEscape(window);
-        editor.IsVisible.ShouldBeFalse("and the text is back in front");
+        PressF2(window);
+        source.IsEffectivelyVisible.ShouldBeTrue("the text takes the modules' place over the picture");
+        source.SeeThrough.ShouldBeTrue();
+        editor.IsEffectivelyVisible.ShouldBeFalse();
+        editor.SeeThrough.ShouldBeFalse();
+        Service<FullScreenPreview>(window).IsFullScreen.ShouldBeTrue("still over the picture");
+
+        PressF2(window);
+        editor.IsEffectivelyVisible.ShouldBeTrue();
+        editor.SeeThrough.ShouldBeTrue();
+        source.IsEffectivelyVisible.ShouldBeFalse();
+        source.SeeThrough.ShouldBeFalse();
+    }
+
+    /// <summary>Over the text Tab indents, so it is Escape or Shift+F11 that leaves.</summary>
+    [AvaloniaFact]
+    public void Tab_over_the_text_is_the_text_s_own()
+    {
+        var window = Open();
+
+        PressF2(window);
+        GoLive(window);
+        PressTab(window);
+
+        Service<LivePatching>(window).IsOn.ShouldBeTrue();
+        Source(window).IsEffectivelyVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void Space_over_the_text_does_not_pause()
+    {
+        var window = Open();
+        Play(window);
+
+        PressF2(window);
+        GoLive(window);
+        Press(window, Key.Space, RawInputModifiers.None, PhysicalKey.Space);
+
+        Service<Playback>(window).Paused.ShouldBeFalse("a space typed into the text is a space");
     }
 
     [AvaloniaFact]

@@ -15,7 +15,7 @@ namespace Flyback.Editor.Desktop.Shots;
 /// <param name="Crop">Whether only the canvas around the modules is written.</param>
 /// <param name="Measure">Whether the outputs are measured from <paramref name="At"/> and pinned before the picture is taken.</param>
 /// <param name="Assistant">Whether the assistant's column is open, showing the conversation the patch carries.</param>
-/// <param name="Live">Whether the picture has the window with the modules over it, as live patching shows them.</param>
+/// <param name="Live">Whether the picture has the window with the patch over it, as live patching shows it.</param>
 internal sealed record ShotRequest(
     string Out, string? Patch, string? Preset, double At, int Width, int Height, string? Select, bool Canvas = false, bool Crop = false, bool Measure = false,
     bool Assistant = false, bool Live = false)

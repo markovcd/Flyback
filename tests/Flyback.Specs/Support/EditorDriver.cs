@@ -1181,6 +1181,10 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     public bool ModulesOverPicture => ReadWindow(open =>
         Service<LivePatching>().IsOn && open.GetVisualDescendants().OfType<NodeEditor>().Single() is { IsEffectivelyVisible: true, SeeThrough: true });
 
+    /// <summary>Whether the patch's text stands over the full-screen picture, drawn so the picture shows through.</summary>
+    public bool TextOverPicture => ReadWindow(open =>
+        Service<LivePatching>().Coding && open.GetVisualDescendants().OfType<SourceView>().Single() is { IsEffectivelyVisible: true, SeeThrough: true });
+
     /// <summary>Whether the canvas is showing in its own pane, drawn on its own ground.</summary>
     public bool CanvasInItsPane => ReadWindow(open =>
         open.GetVisualDescendants().OfType<NodeEditor>().Single() is { IsEffectivelyVisible: true, SeeThrough: false } canvas

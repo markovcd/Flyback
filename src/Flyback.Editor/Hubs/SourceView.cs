@@ -64,6 +64,17 @@ internal sealed class SourceView : UserControl
     /// <summary>The lines a build complained about, drawn behind the text.</summary>
     private readonly Complaints marked = new();
 
+    /// <summary>A dark band behind each written line, which keeps the text readable over a picture.</summary>
+    private readonly LineBacking backing = new();
+
+    private readonly Grid rows = new()
+    {
+        RowDefinitions = new RowDefinitions("Auto,*,Auto,Auto"),
+        Background = new SolidColorBrush(Colors.Canvas),
+    };
+
+    private readonly Grid bottom = new() { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto") };
+
     /// <summary>
     /// What the shell has to say about who owns this text, shown above it — the
     /// one place a person is told that what they are looking at is a reading
@@ -129,6 +140,7 @@ internal sealed class SourceView : UserControl
 
         complaintsScroll.Content = complaints;
 
+        text.TextArea.TextView.BackgroundRenderers.Add(backing);
         text.TextArea.TextView.BackgroundRenderers.Add(marked);
         text.TextArea.TextView.LinkTextForegroundBrush = new SolidColorBrush(Colors.Feedback);
 
@@ -212,8 +224,6 @@ internal sealed class SourceView : UserControl
 
         hand.Click += (_, _) => HandBackRequested?.Invoke(this, EventArgs.Empty);
 
-        var bottom = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto") };
-
         var sizes = SizeButtons();
 
         Grid.SetColumn(footer, 0);
@@ -224,12 +234,6 @@ internal sealed class SourceView : UserControl
         bottom.Children.Add(sizes);
         bottom.Children.Add(hand);
         bottom.Children.Add(apply);
-
-        var rows = new Grid
-        {
-            RowDefinitions = new RowDefinitions("Auto,*,Auto,Auto"),
-            Background = new SolidColorBrush(Colors.Canvas),
-        };
 
         Grid.SetRow(notice, 0);
         Grid.SetRow(text, 1);
@@ -243,6 +247,27 @@ internal sealed class SourceView : UserControl
 
         Content = rows;
         Say(null);
+    }
+
+    /// <summary>
+    /// Whether the text is drawn over the picture, for live patching: no ground and no line
+    /// numbers, and a dark band behind each written line.
+    /// </summary>
+    public bool SeeThrough
+    {
+        get => backing.On;
+        set
+        {
+            if (value == backing.On) return;
+
+            backing.On = value;
+            text.LineNumbersForeground = value ? Brushes.Transparent : new SolidColorBrush(Colors.Inactive);
+            rows.Background = value ? Brushes.Transparent : new SolidColorBrush(Colors.Canvas);
+            text.Background = value ? Brushes.Transparent : new SolidColorBrush(Colors.Canvas);
+            bottom.Background = value ? new SolidColorBrush(Colors.Window, LineBacking.Opacity) : null;
+            text.TextArea.TextView.CurrentLineBackground = new SolidColorBrush(Colors.Node, value ? LineBacking.Opacity : 1);
+            text.TextArea.TextView.InvalidateLayer(KnownLayer.Background);
+        }
     }
 
     /// <summary>
@@ -760,6 +785,37 @@ internal sealed class SourceView : UserControl
     /// and what follows is a run of complaints about names it was going to make.
     /// The column is still in the list underneath.
     /// </remarks>
+    private sealed class LineBacking : IBackgroundRenderer
+    {
+        /// <summary>How dark the band is: enough to read over white, little enough to see the picture move.</summary>
+        internal const double Opacity = 0.72;
+
+        private const double Margin = 6;
+
+        private readonly IBrush band = new SolidColorBrush(Colors.Edge, Opacity);
+
+        public bool On { get; set; }
+
+        public KnownLayer Layer => KnownLayer.Background;
+
+        public void Draw(TextView view, DrawingContext context)
+        {
+            if (!On || view.Document is null) return;
+
+            view.EnsureVisualLines();
+
+            foreach (var line in view.VisualLines)
+            {
+                var written = line.FirstDocumentLine;
+
+                if (string.IsNullOrWhiteSpace(view.Document.GetText(written))) continue;
+
+                foreach (var piece in BackgroundGeometryBuilder.GetRectsForSegment(view, written))
+                    context.FillRectangle(band, new Rect(piece.X - Margin, piece.Y, piece.Width + 2 * Margin, piece.Height));
+            }
+        }
+    }
+
     private sealed class Complaints : IBackgroundRenderer
     {
         private readonly IBrush wash = new SolidColorBrush(Colors.Sink, 0.16);

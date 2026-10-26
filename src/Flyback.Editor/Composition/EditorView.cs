@@ -184,7 +184,7 @@ internal sealed class EditorView : Border
         // whatever it is over must not act on them.
         if (e.Handled || dialog.IsShowing) return;
 
-        // Shift+F11 goes straight to the modules over the picture, where F11 alone gives the picture the window.
+        // Shift+F11 goes straight to the patch over the picture, where F11 alone gives the picture the window.
         if (e is { Key: Key.F11, KeyModifiers: KeyModifiers.Shift })
         {
             live.Toggle();
@@ -308,12 +308,12 @@ internal sealed class EditorView : Border
         }
     }
 
-    /// <summary>Tab over a full-screen picture puts the modules over it or takes them off.</summary>
+    /// <summary>Tab over a full-screen picture puts the patch over it or takes it off.</summary>
     private void OnTab(object? sender, KeyEventArgs e)
     {
         if (e.Handled || e.Key != Key.Tab || dialog.IsShowing || (e.KeyModifiers & ~KeyModifiers.Shift) != 0) return;
 
-        if (live.ToggleModules()) e.Handled = true;
+        if (live.ToggleOverPicture()) e.Handled = true;
     }
 
     /// <summary>Does what a stage key asks of the picture while it is away, and says whether it did.</summary>
@@ -337,7 +337,8 @@ internal sealed class EditorView : Border
                 transport.ToggleStats(fullScreen.IsFullScreen);
                 return true;
 
-            case StageKey.Pause when fullScreen.IsFullScreen:
+            // Over the patch's text, Space is a space.
+            case StageKey.Pause when fullScreen.IsFullScreen && !live.Coding:
                 reactions.Raise(new PauseAsked());
                 return true;
 

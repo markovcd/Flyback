@@ -144,7 +144,7 @@ internal static class Shot
     }
 
     /// <summary>
-    /// Puts the modules over the picture, at the size asked for rather than the screen's:
+    /// Puts the patch over the picture, at the size asked for rather than the screen's:
     /// live patching takes the screen, which a shot leaves alone.
     /// </summary>
     private static void GoLive(ServiceProvider provider, MainWindow window, ShotRequest request)

@@ -231,7 +231,7 @@ internal static class EditorServices
         services.AddPart<TakeRecording>();
         services.AddPart<TransportControls>();
         services.AddPart<FullScreenPreview>();
-        services.AddSingleton<LivePatching>();
+        services.AddPart<LivePatching>();
         services.AddPart<ShellLayout>();
         services.AddSingleton<EditorReadout>();
 
