@@ -49,6 +49,15 @@ internal sealed class SocketDial(
 
     public bool Turning => dialed is not null;
 
+    /// <summary>Whether the turn under way is a finger's, which nothing holds in place.</summary>
+    private bool fingered;
+
+    /// <summary>
+    /// Where a finger's turn began and where the finger is now, in screen space, for a
+    /// ring and a tether to stand in for the pointer a mouse turn hides.
+    /// </summary>
+    public (Point Home, Point Finger)? Tether => dialed is not null && fingered ? (dialHome, dialLast) : null;
+
     /// <summary>Whether the turn under way is the fine one, Shift held.</summary>
     public bool Fine { get; private set; }
 
@@ -84,8 +93,8 @@ internal sealed class SocketDial(
     /// <summary>Starts turning the input under <paramref name="graph"/>, and says whether there was one to turn.</summary>
     /// <param name="anchored">Whether the pointer is held where the turn began, which a finger cannot be.</param>
     public bool Start(Control canvas, Point graph, Point screen, bool anchored = true) =>
-        selection.Scene.HitPort(graph, out var nodeId, out var port, out var isOutput)
-        && !isOutput
+        ((selection.Scene.HitPort(graph, out var nodeId, out var port, out var isOutput) && !isOutput)
+            || selection.Scene.HitWell(graph, out nodeId, out port))
         && Start(canvas, nodeId, port, screen, anchored);
 
     /// <summary>Starts turning one input, and says whether it can be turned.</summary>
@@ -103,6 +112,7 @@ internal sealed class SocketDial(
         dialLast = dialHome = screen;
 
         dialAnchor = anchored ? anchors.Take(canvas) : null;
+        fingered = !anchored;
         canvas.Cursor = dialAnchor is null ? DialCursor : HiddenCursor;
 
         usage.Count(Used.Dialed);
@@ -169,7 +179,7 @@ internal sealed class SocketDial(
                 return null;
 
             return (new SocketPick(d.Node, d.Port),
-                new TurnReadout.Turn(def.Inputs[d.Port].Name, node.Title(def), d.Spec, node.InputValues[d.Port], d.Was, d.Min, d.Max, Fine ? WellState.Fine : WellState.Turn));
+                new TurnReadout.Turn(def.Inputs[d.Port].Name, node.Title(def), d.Spec, node.InputValues[d.Port], d.Was, d.Min, d.Max, Fine ? WellState.Fine : WellState.Turn, Finger: fingered));
         }
     }
 

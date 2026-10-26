@@ -38,3 +38,8 @@ Feature: A value is turned by dragging its well
     When the sine's freq well is clicked
     And Up is pressed
     Then the sine's freq is higher than it was
+
+  Scenario: A finger taps a well and steps it up with the button under the module
+    When a finger taps the sine's freq well
+    And a finger taps "+ step" under the sine
+    Then the sine's freq is higher than it was

@@ -55,6 +55,16 @@ public sealed class TurningSteps(PatchContext context, EditorDriver editor)
         editor.ClickWell(Sine.Id, Freq);
     }
 
+    [When("a finger taps the sine's freq well")]
+    public void WhenTapped()
+    {
+        was = editor.InputOf(Sine.Id, Freq);
+        editor.TapWell(Sine.Id, Freq);
+    }
+
+    [When("a finger taps {string} under the sine")]
+    public void WhenTapsStep(string label) => editor.TapStepButton(label);
+
     [When("Up is pressed")]
     public void WhenUp() => editor.Press(PhysicalKey.ArrowUp);
 

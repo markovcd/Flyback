@@ -26,6 +26,7 @@ internal sealed class CanvasPainter(
     SocketDial dial,
     SocketFocus focus,
     KnobChoice choice,
+    StepBar bar,
     RemapMarks marks,
     MeasureLabels measured,
     KnobLinking linking,
@@ -137,12 +138,24 @@ internal sealed class CanvasPainter(
         TurnReadout.Draw(context, card, above, view.OnScreen(well).Center.X, turn);
     }
 
-    /// <summary>The card, then the list of knobs over it.</summary>
+    /// <summary>A finger's tether, the card, the step bar and the list of knobs, over everything.</summary>
     private void DrawOverlays(DrawingContext context)
     {
+        if (dial.Tether is var (home, finger))
+        {
+            context.DrawLine(TetherPen, home, finger);
+            context.DrawEllipse(null, AnchorPen, home, 20, 20);
+        }
+
         DrawReadout(context);
+        bar.Draw(context);
         choice.Draw(context);
     }
+
+    private static readonly IPen TetherPen = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Attention), 2);
+
+    private static readonly IPen AnchorPen = new ImmutablePen(
+        new ImmutableSolidColorBrush(Color.FromRgb(0xF2, 0xF4, 0xF8)), 2, new ImmutableDashStyle([3, 2], 0));
 
     private static readonly IBrush Background = new ImmutableSolidColorBrush(Colors.Canvas);
     private static readonly IBrush NormalBrush = new ImmutableSolidColorBrush(Colors.Normalled);

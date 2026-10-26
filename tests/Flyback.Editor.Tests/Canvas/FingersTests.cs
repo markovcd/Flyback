@@ -325,28 +325,23 @@ public class FingersTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void A_second_finger_on_a_held_one_pinches_and_puts_the_turned_input_back()
+    public void A_second_finger_on_a_module_held_still_pinches_and_leaves_it_alone()
     {
         var (editor, _) = Editing(Pair(out _, out var sine));
-        var def = NodeCatalog.Get(sine.TypeId)!;
-        var port = Enumerable.Range(0, def.Inputs.Count).First(i => KnobLinking.Linkable(def.Inputs[i]));
-        var was = sine.InputValues[port];
         var held = Finger();
         var second = Finger();
-        var at = On(editor, Geometry.InputPort(sine, def, port));
+        var at = On(editor, Body(sine));
 
         editor.Fingers.Down(editor, held, at, 1_000);
         editor.Fingers.Held();
-        editor.Fingers.Move(editor, held, at - new Vector(0, 5));
         editor.Fingers.Down(editor, second, at + new Vector(0, 60), 1_600);
 
         var zoomWas = editor.View.Zoom;
         editor.Fingers.Move(editor, second, at + new Vector(0, 160));
         editor.Fingers.Up(editor, second, at + new Vector(0, 160), 1_700);
-        editor.Fingers.Up(editor, held, at - new Vector(0, 5), 1_710);
+        editor.Fingers.Up(editor, held, at, 1_710);
 
         editor.View.Zoom.ShouldBeGreaterThan(zoomWas);
-        sine.InputValues[port].ShouldBe(was);
         editor.History.CanUndo.ShouldBeFalse();
     }
 

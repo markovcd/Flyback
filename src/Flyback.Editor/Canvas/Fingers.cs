@@ -82,6 +82,9 @@ internal sealed class Fingers
 
     private (Point At, ulong Time)? lastTap;
 
+    /// <summary>Whether a second finger rests beside the one turning a value, which makes the turn fine.</summary>
+    private bool fine;
+
     private bool seen;
 
     public Fingers(CanvasGestures gestures, Viewport view, CanvasSelection selection, Reactions reactions, LastPress lastPress)
@@ -147,6 +150,11 @@ internal sealed class Fingers
                 gestures.Pressed(on, null, Middle(), MouseButton.Middle, KeyModifiers.None, 1);
                 break;
 
+            // A second finger on a value being turned makes the turn a fine one.
+            case Phase.Right when gestures.Turning:
+                fine = true;
+                break;
+
             // A held finger is the right button held still, which a pinch takes back.
             case Phase.Right:
                 gestures.Abort(on);
@@ -180,7 +188,7 @@ internal sealed class Fingers
                 return;
 
             case Phase.Left or Phase.Right when pointer.Id == first?.Id:
-                gestures.Moved(on, phase == Phase.Left ? Wiring(screen) : screen + grip, KeyModifiers.None, middleDown: false);
+                gestures.Moved(on, phase == Phase.Left ? Wiring(screen) : screen + grip, fine ? KeyModifiers.Shift : KeyModifiers.None, middleDown: false);
                 return;
 
             case Phase.Pinch:
@@ -218,6 +226,10 @@ internal sealed class Fingers
             case Phase.Right when isFirst:
                 gestures.Released(on, pointer, screen, MouseButton.Right, KeyModifiers.None);
                 phase = Phase.Spent;
+                break;
+
+            case Phase.Right:
+                fine = false;
                 break;
 
             // The finger left down goes on moving the view, and one put back pinches again.
@@ -271,6 +283,8 @@ internal sealed class Fingers
         var clicks = lastTap is { } last && time >= last.Time && time - last.Time <= DoubleTapTime && Distance(last.At, at) <= DoubleTapDistance ? 2 : 1;
         lastTap = clicks == 2 ? null : (at, time);
 
+        if (gestures.Tapped(firstFrom, clicks)) return;
+
         gestures.Pressed(on, pointer, at, MouseButton.Left, KeyModifiers.None, clicks);
         gestures.Released(on, pointer, at, MouseButton.Left, KeyModifiers.None);
     }
@@ -280,6 +294,7 @@ internal sealed class Fingers
     {
         phase = Phase.None;
         first = null;
+        fine = false;
         panning = false;
         holdTimer.Stop();
         gestures.Lifted(on);

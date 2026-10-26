@@ -397,6 +397,20 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
             canvas.Fingers.Up(canvas, finger, at, 1_050);
         });
 
+    /// <summary>Taps a finger on the well of an input's value, which shows the step bar.</summary>
+    public void TapWell(Guid node, int port) => TapFinger(Read(canvas => Well(canvas, node, port)));
+
+    /// <summary>Taps a finger on the step bar's button labeled <paramref name="label"/>.</summary>
+    public void TapStepButton(string label) =>
+        DoWindow((_, canvas) =>
+        {
+            var finger = new Pointer(Pointer.GetNextFreeId(), PointerType.Touch, true);
+            var at = canvas.StepBar.Center(label) ?? throw new InvalidOperationException($"no step bar shows '{label}'");
+
+            canvas.Fingers.Down(canvas, finger, at, 5_000);
+            canvas.Fingers.Up(canvas, finger, at, 5_050);
+        });
+
     /// <summary>Zooms the view as far out as it goes, about the middle of the canvas.</summary>
     public void ZoomAllTheWayOut() =>
         Do(canvas => canvas.View.ZoomAt(new Point(canvas.Bounds.Width / 2, canvas.Bounds.Height / 2), -100));

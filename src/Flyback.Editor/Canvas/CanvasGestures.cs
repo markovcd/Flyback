@@ -49,6 +49,7 @@ internal sealed class CanvasGestures
     private readonly SocketDial dial;
     private readonly SocketFocus focus;
     private readonly KnobChoice choice;
+    private readonly StepBar bar;
     private readonly HeldModules held;
     private readonly KnobLinking linking;
     private readonly RemapMarks marks;
@@ -80,6 +81,7 @@ internal sealed class CanvasGestures
         SocketDial dial,
         SocketFocus focus,
         KnobChoice choice,
+        StepBar bar,
         HeldModules held,
         KnobLinking linking,
         RemapMarks marks,
@@ -98,6 +100,7 @@ internal sealed class CanvasGestures
         this.dial = dial;
         this.focus = focus;
         this.choice = choice;
+        this.bar = bar;
         this.held = held;
         this.linking = linking;
         this.marks = marks;
@@ -117,6 +120,23 @@ internal sealed class CanvasGestures
     }
 
     /// <summary>
+    /// A finger's tap on a value's well, which gives it the keys and shows the step bar;
+    /// a second tap opens it for typing. Whether the tap was the well's.
+    /// </summary>
+    public bool Tapped(Point screen, int taps)
+    {
+        if (history.Locked || drag != Drag.None || choice.For is not null || bar.ButtonAt(screen) is not null) return false;
+        if (!selection.Scene.HitWell(view.ToGraph(screen), out var node, out var port)) return false;
+
+        if (!selection.Contains(node)) selection.Select(node);
+
+        focus.Pick(new SocketPick(node, port), tapped: true);
+        if (taps == 2) focus.BeginTyping();
+
+        return true;
+    }
+
+    /// <summary>
     /// Raised by a right-click on empty canvas, or Space, carrying the point in graph
     /// space: what is picked from the palette belongs there.
     /// </summary>
@@ -127,6 +147,9 @@ internal sealed class CanvasGestures
     /// narrowed to what could take the wire.
     /// </summary>
     public event EventHandler<WireDrop>? WireDropped;
+
+    /// <summary>Whether a value is being turned.</summary>
+    public bool Turning => dial.Turning;
 
     /// <summary>
     /// Whether a module is being moved, a wire drawn, the view panned or a band drawn
@@ -226,6 +249,12 @@ internal sealed class CanvasGestures
             }
 
             choice.Close();
+        }
+
+        if (button == MouseButton.Left && bar.ButtonAt(screen) is { } stepped)
+        {
+            bar.Press(stepped);
+            return true;
         }
 
         // A press anywhere takes the keys back from a well; one on a well gives them again.

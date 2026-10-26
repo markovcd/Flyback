@@ -111,7 +111,8 @@ internal static class InspectorHelp
         [
             Row("Patch a wire", "Drag from a socket into another, or onto bare canvas to add a module already plugged in. A fingertip beside a socket lands on it."),
             Row("Unplug", "Drag a connected input to take the wire somewhere else."),
-            Row("Turn a value", "Hold a finger on an unplugged input, then slide it up or down."),
+            Row("Turn a value", "Hold a finger on an unplugged input's value, then slide it up or down. A second finger anywhere makes it finer."),
+            Row("Step a value", "Tap a value for buttons under its module that step it down or up, make the steps fine, or type a number."),
         ]),
         new("Selecting and moving",
         [

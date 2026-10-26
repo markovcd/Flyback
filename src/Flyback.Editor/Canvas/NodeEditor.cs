@@ -41,6 +41,7 @@ internal sealed class NodeEditor
         SocketDial dial,
         SocketFocus focus,
         KnobChoice choice,
+        StepBar stepBar,
         KnobLinking linking,
         UndescribedTags tags,
         CanvasPainter painter,
@@ -63,6 +64,7 @@ internal sealed class NodeEditor
         Dial = dial;
         WellFocus = focus;
         KnobChoice = choice;
+        StepBar = stepBar;
         Linking = linking;
         Tags = tags;
 
@@ -132,6 +134,9 @@ internal sealed class NodeEditor
 
     /// <summary>The list of panel knobs that drops from a socket.</summary>
     internal KnobChoice KnobChoice { get; }
+
+    /// <summary>The buttons under a module whose well a finger tapped.</summary>
+    internal StepBar StepBar { get; }
 
     internal KnobLinking Linking { get; }
 

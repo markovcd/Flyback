@@ -28,6 +28,12 @@ internal sealed class SocketFocus(SocketDial dial, KnobChoice choice, CanvasHist
     /// <summary>The input the keys go to, if it is still one that can be turned.</summary>
     public SocketPick? Focused => picked is { } pick && dial.Dialable(pick.Node, pick.Port, out _, out _) ? pick : null;
 
+    /// <summary>Whether the well was given the keys by a tap, which shows the step bar for a finger.</summary>
+    public bool Bar { get; private set; }
+
+    /// <summary>Whether the step bar's Fine is latched, making each step a fine one.</summary>
+    public bool FineLatched { get; set; }
+
     /// <summary>What has been typed so far, or null while nothing is being typed.</summary>
     public string? Typed { get; private set; }
 
@@ -66,19 +72,23 @@ internal sealed class SocketFocus(SocketDial dial, KnobChoice choice, CanvasHist
                 Math.Min(spec.Min, value),
                 Math.Max(spec.Max, value),
                 Typed is null ? WellState.Focus : WellState.Edit,
-                Typed));
+                Typed,
+                Bar));
         }
     }
 
-    /// <summary>Gives the keys to one input.</summary>
-    public void Pick(SocketPick pick)
+    /// <summary>Gives the keys to one input, with the step bar when a finger tapped it.</summary>
+    public void Pick(SocketPick pick, bool tapped = false)
     {
-        if (picked == pick) return;
+        if (picked != pick) Clear();
 
-        Clear();
         picked = pick;
+        Bar = tapped;
         repaint.Request();
     }
+
+    /// <summary>Nudges the input with the focus one step up or down, finely while Fine is latched.</summary>
+    public bool Step(int sign) => Move(FineLatched ? FineNudge : Nudge, sign);
 
     /// <summary>Takes the keys back, keeping whatever was typed that read as a value.</summary>
     public void Clear()
@@ -88,6 +98,8 @@ internal sealed class SocketFocus(SocketDial dial, KnobChoice choice, CanvasHist
         if (Typed is not null) Commit(evenUnread: true);
 
         picked = null;
+        Bar = false;
+        FineLatched = false;
         repaint.Request();
     }
 

@@ -38,7 +38,7 @@ internal static class TurnReadout
     /// <param name="Max">The top of it.</param>
     /// <param name="State">Turning, finely or not, selected, or being typed into.</param>
     /// <param name="Typed">What has been typed, while it is being.</param>
-    public readonly record struct Turn(string Name, string Owner, PortSpec Port, float Value, float Was, float Min, float Max, WellState State, string? Typed = null)
+    public readonly record struct Turn(string Name, string Owner, PortSpec Port, float Value, float Was, float Min, float Max, WellState State, string? Typed = null, bool Finger = false)
     {
         public bool Hot => State is WellState.Turn or WellState.Fine;
 
@@ -172,7 +172,9 @@ internal static class TurnReadout
     /// <summary>The keys and gestures the card's state answers to.</summary>
     internal static string Hint(Turn turn) => turn switch
     {
+        { Hot: true, Finger: true } => "slide ↕ · second finger fine",
         { Hot: true } => "drag ↕ · ⇧ fine · esc cancel",
+        { Typed: null, Finger: true } => "hold and slide ↕ · or the buttons",
         { Typed: not null } => "↵ apply · esc cancel · tab next",
         _ => "↑↓ nudge · ↵ type · alt L link",
     };
