@@ -32,6 +32,9 @@ internal sealed record ViewerOptions : IIlCompilerSetup
 
     public bool Gpu { get; init; } = true;
 
+    /// <summary>What draws the picture on the graphics card, the editor's Settings → Picture unless <c>--driver</c> says.</summary>
+    public GraphicsDriver Driver { get; init; } = OutputSettings.DriversHere[0];
+
     /// <summary>No picture is compiled and none drawn.</summary>
     public bool NoVideo { get; init; }
 

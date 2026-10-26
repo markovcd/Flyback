@@ -21,7 +21,12 @@ namespace Flyback.Viewer.Desktop;
 /// </remarks>
 internal static class ViewerArguments
 {
-    public static RootCommand Build(OutputSettings settings, Func<ViewerOptions, int> run, TextWriter error)
+    public static RootCommand Build(OutputSettings settings, Func<ViewerOptions, int> run, TextWriter error) =>
+        Build(settings, OutputSettings.DriversHere, run, error);
+
+    /// <summary>The command line on a machine offering <paramref name="offered"/> drivers.</summary>
+    internal static RootCommand Build(
+        OutputSettings settings, IReadOnlyList<GraphicsDriver> offered, Func<ViewerOptions, int> run, TextWriter error)
     {
         var patch = new Argument<string>("patch")
         {
@@ -88,6 +93,15 @@ internal static class ViewerArguments
         {
             Description = "Draw the picture on the processor" + (settings.Gpu ? "." : " (the settings' choice)."),
         };
+
+        var driver = new Option<string>("--driver")
+        {
+            HelpName = string.Join('|', offered.Select(Named)),
+            Description = "What draws the picture on the graphics card. Left out, the editor's Settings → Picture.",
+            DefaultValueFactory = _ => Named(settings.DriverOf(offered)),
+        };
+
+        driver.AcceptOnlyFromAmong([.. offered.Select(Named)]);
 
         var noVideo = new Option<bool>("--no-video")
         {
@@ -258,7 +272,7 @@ internal static class ViewerArguments
             + "Space, or Ctrl+P, pauses it, F11 gives it the whole screen, and F3 says how it is drawn.")
         {
             patch, preset, presets,
-            size, fps, smooth, gpu, cpu, noVideo, window, maximized, fullScreen,
+            size, fps, smooth, gpu, cpu, driver, noVideo, window, maximized, fullScreen,
             noAudio, volume, mute, latency, oversample,
             from, paused, duration, loop,
             background, hidden, noOverlay, transport, knobGrid, stats, report, trace, title, top, interpreted, file,
@@ -284,6 +298,7 @@ internal static class ViewerArguments
                 FrameRate = result.GetValue(fps),
                 Smoothing = result.GetValue(smooth) == "off" ? Smoothing.Off : Smoothing.Fast,
                 Gpu = result.GetValue(gpu) || (!result.GetValue(cpu) && settings.Gpu),
+                Driver = offered.First(offer => Named(offer) == result.GetValue(driver)),
                 NoVideo = result.GetValue(noVideo),
                 Window = result.GetResult(window) is not null ? Sized(result.GetValue(window)!) : null,
                 Maximized = result.GetValue(maximized),
@@ -332,6 +347,9 @@ internal static class ViewerArguments
         : options.NoOverlay ? "--no-overlay"
         : options.Stats ? "--stats"
         : null;
+
+    /// <summary>A driver as it is typed.</summary>
+    internal static string Named(GraphicsDriver driver) => driver.ToString().ToLowerInvariant();
 
     /// <summary>A size as it is typed: a short name or a row's label, or WIDTHxHEIGHT.</summary>
     internal static PixelSize? Sized(string text)

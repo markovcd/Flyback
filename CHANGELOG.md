@@ -24,6 +24,7 @@
 ### Viewer
 
 - `--smooth fast` or `--smooth off` overrides the editor's Smoothing setting.
+- `--driver` picks what draws the picture for one run (`metal` or `opengl` on a Mac, `opengl` or `direct3d` on Windows), overriding Settings → Picture.
 
 ### Command line
 

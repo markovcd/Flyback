@@ -66,6 +66,45 @@ public class ViewerOptionsTests
         Settled(new OutputSettings { Smoothing = Smoothing.Off }, "--smooth", "fast").Smoothing.ShouldBe(Smoothing.Fast);
     }
 
+    private static readonly GraphicsDriver[] Mac = [GraphicsDriver.Metal, GraphicsDriver.OpenGl];
+
+    private static ViewerOptions OnMac(OutputSettings settings, params string[] args)
+    {
+        ViewerOptions? seen = null;
+        var error = new StringWriter();
+
+        var parsed = ViewerArguments.Build(settings, Mac, options =>
+        {
+            seen = options;
+
+            return Exit.Ok;
+        }, error).Parse(args);
+
+        parsed.Invoke(new InvocationConfiguration { Output = new StringWriter(), Error = error });
+        error.ToString().ShouldBeEmpty();
+
+        return seen ?? throw new InvalidOperationException("the command never ran");
+    }
+
+    [Fact]
+    public void The_driver_follows_the_settings_until_a_flag_says_otherwise()
+    {
+        OnMac(Machine).Driver.ShouldBe(GraphicsDriver.Metal);
+        OnMac(new OutputSettings { Graphics = GraphicsDriver.OpenGl }).Driver.ShouldBe(GraphicsDriver.OpenGl);
+        OnMac(Machine, "--driver", "opengl").Driver.ShouldBe(GraphicsDriver.OpenGl);
+        OnMac(new OutputSettings { Graphics = GraphicsDriver.OpenGl }, "--driver", "metal").Driver.ShouldBe(GraphicsDriver.Metal);
+    }
+
+    /// <summary>A driver this machine does not offer is refused, not quietly swapped for its own.</summary>
+    [Fact]
+    public void A_driver_the_machine_lacks_is_refused()
+    {
+        var ran = Run(Machine, "--driver", OutputSettings.DriversHere.Contains(GraphicsDriver.Direct3D) ? "metal" : "direct3d");
+
+        ran.ParseErrors.ShouldBeGreaterThan(0);
+        ran.Options.ShouldBeNull();
+    }
+
     /// <summary>Four samples a pixel is a render's, not a window's.</summary>
     [Fact]
     public void The_viewer_does_not_take_best()

@@ -81,6 +81,7 @@ internal static class Program
             return Exit.Failed;
 
         settings.LatencyMilliseconds = options.LatencyMilliseconds;
+        settings.Graphics = options.Driver;
 
         if (options.Trace is { } trace)
         {
