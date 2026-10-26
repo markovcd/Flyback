@@ -130,11 +130,11 @@ public class ValueWellTests : EditorTest
 
         window.MouseMove(at);
         Settle(window);
-        editor.Dial.StateOf(osc.Id, port).ShouldBe(WellState.Hover);
+        editor.WellFocus.StateOf(osc.Id, port).ShouldBe(WellState.Hover);
 
         window.MouseMove(at + new Point(0, 400));
         Settle(window);
-        editor.Dial.StateOf(osc.Id, port).ShouldBe(WellState.Rest);
+        editor.WellFocus.StateOf(osc.Id, port).ShouldBe(WellState.Rest);
     }
 
     [AvaloniaFact]
@@ -147,10 +147,10 @@ public class ValueWellTests : EditorTest
 
         window.MouseDown(at, MouseButton.Left);
         window.MouseMove(at - new Point(0, 10));
-        editor.Dial.StateOf(osc.Id, port).ShouldBe(WellState.Turn);
+        editor.WellFocus.StateOf(osc.Id, port).ShouldBe(WellState.Turn);
 
         window.MouseMove(at - new Point(0, 20), RawInputModifiers.Shift);
-        editor.Dial.StateOf(osc.Id, port).ShouldBe(WellState.Fine);
+        editor.WellFocus.StateOf(osc.Id, port).ShouldBe(WellState.Fine);
 
         window.MouseUp(at - new Point(0, 20), MouseButton.Left);
         Settle(window);

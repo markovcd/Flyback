@@ -38,18 +38,21 @@ internal static class ValueWell
         && SocketDial.HasOwnKnob(patch, node, port, def.Inputs[port])
         && (NodeCatalog.FormulaOf(node) is not { } formula || FormulaLayout.Reads(formula, port));
 
-    /// <summary>The tint across a row whose well is hovered or turning.</summary>
+    /// <summary>The tint across a row whose well is hovered, turning or typed into, and the ring round one that has the keys.</summary>
     public static void DrawRow(DrawingContext context, Rect bounds, Point center, WellState state)
     {
+        var row = new Rect(bounds.X, center.Y - NodeGeometry.RowHeight / 2, bounds.Width, NodeGeometry.RowHeight);
+
         var tint = state switch
         {
-            WellState.Hover => HoverRow,
+            WellState.Hover or WellState.Edit => HoverRow,
             WellState.Turn or WellState.Fine => TurnRow,
             _ => null,
         };
 
-        if (tint is not null)
-            context.FillRectangle(tint, new Rect(bounds.X, center.Y - NodeGeometry.RowHeight / 2, bounds.Width, NodeGeometry.RowHeight));
+        if (tint is not null) context.FillRectangle(tint, row);
+
+        if (state == WellState.Focus) context.DrawRectangle(null, FocusRing, row.Deflate(0.75));
     }
 
     /// <summary>The well, the value in it and the level line under it.</summary>
@@ -59,13 +62,22 @@ internal static class ValueWell
     public static void Draw(DrawingContext context, Rect well, string text, double share, int steps, WellState state, IBrush ink)
     {
         var hot = state is WellState.Turn or WellState.Fine;
-        var lit = state == WellState.Hover || hot;
+        var editing = state == WellState.Edit;
+        var lit = state != WellState.Rest;
 
         if (state == WellState.Fine)
             context.DrawRectangle(null, FineHalo, well.Inflate(2.5), Corner + 2.5, Corner + 2.5);
 
+        if (editing)
+            context.DrawRectangle(null, EditHalo, well.Inflate(1.5), Corner + 1.5, Corner + 1.5);
+
         if (lit)
-            context.DrawRectangle(hot ? TurnFill : HoverFill, hot ? TurnEdge : HoverEdge, well.Deflate(0.5), Corner, Corner);
+            context.DrawRectangle(
+                hot ? TurnFill : editing ? EditFill : HoverFill,
+                hot ? TurnEdge : editing ? EditEdge : HoverEdge,
+                well.Deflate(0.5),
+                Corner,
+                Corner);
 
         var number = new FormattedText(
             text,
@@ -73,11 +85,11 @@ internal static class ValueWell
             FlowDirection.LeftToRight,
             Numbers,
             CanvasText.RowSize,
-            hot ? Brushes.White : lit ? HoverInk : ink);
+            hot || editing ? Brushes.White : lit ? HoverInk : ink);
 
         // The chevrons give way to a number that needs their room.
         var room = well.Width - Padding * 2;
-        var chevrons = lit && number.Width <= room - ChevronRoom;
+        var chevrons = lit && !editing && number.Width <= room - ChevronRoom;
 
         number.MaxTextWidth = room;
         number.MaxLineCount = 1;
@@ -87,7 +99,7 @@ internal static class ValueWell
 
         if (chevrons) DrawChevrons(context, new Point(well.X + Padding + 3, well.Center.Y - 1), hot ? Attention : HoverInk);
 
-        var fill = hot ? Attention : lit ? HoverLevel : RestLevel;
+        var fill = hot ? Attention : editing ? EditLevel : lit ? HoverLevel : RestLevel;
         var track = new Rect(well.X + Padding, well.Bottom - 4, well.Width - Padding * 2, 2);
         share = Math.Clamp(share, 0, 1);
 
@@ -180,6 +192,11 @@ internal static class ValueWell
     private static readonly IBrush TurnRow = new ImmutableSolidColorBrush(Colors.Attention, 0.13);
     private static readonly IBrush Hollow = new ImmutableSolidColorBrush(Colors.Canvas);
     private static readonly IPen Outline = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Outline), 1.2);
+    private static readonly IPen FocusRing = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromRgb(0xE8, 0xEA, 0xF0)), 1.5);
+    private static readonly IBrush EditFill = new ImmutableSolidColorBrush(Color.FromRgb(0x0B, 0x0C, 0x0E));
+    private static readonly IPen EditEdge = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromRgb(0xF2, 0xF4, 0xF8)));
+    private static readonly IPen EditHalo = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromRgb(0xF2, 0xF4, 0xF8), 0.28), 2);
+    private static readonly IBrush EditLevel = new ImmutableSolidColorBrush(Color.FromRgb(0xF2, 0xF4, 0xF8));
     private static readonly IPen LitRing = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromRgb(0xF2, 0xF4, 0xF8)), 2);
 
     /// <summary>What the number is written in at rest, lighter than other values so it reads as something to take hold of.</summary>

@@ -100,6 +100,53 @@ public readonly record struct PortSpec(
         };
     }
 
+    /// <summary>
+    /// What a value typed for this socket means: any form <see cref="Format"/> writes,
+    /// or a plain number; null when it reads as neither.
+    /// </summary>
+    /// <remarks>A plain number is the value itself, except on a duration, where it is seconds.</remarks>
+    internal float? Read(string typed)
+    {
+        var text = typed.Trim().Replace('−', '-');
+
+        if (text.Length == 0) return null;
+
+        float? read = Display switch
+        {
+            PortDisplay.Note => Number(text) ?? Pitch.Read(text),
+            PortDisplay.Duration => Seconds(text) is > 0f and var seconds ? MathF.Log10(seconds) : null,
+            PortDisplay.Chord => Number(text) ?? ChordNamed(text),
+            PortDisplay.Integer => Number(text) is { } whole ? MathF.Round(whole) : null,
+            _ => Number(text),
+        };
+
+        return read is { } value && float.IsFinite(value) ? value : null;
+    }
+
+    private static float? Number(string text) =>
+        float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? value : null;
+
+    /// <summary>A time in seconds, from a number with µs, ms or s after it, or none.</summary>
+    private static float? Seconds(string text)
+    {
+        foreach (var (unit, scale) in TimeUnits)
+            if (text.EndsWith(unit, StringComparison.OrdinalIgnoreCase))
+                return Number(text[..^unit.Length].TrimEnd()) * scale;
+
+        return Number(text);
+    }
+
+    private static readonly (string Unit, float Scale)[] TimeUnits = [("µs", 1e-6f), ("us", 1e-6f), ("ms", 1e-3f), ("s", 1f)];
+
+    private static float? ChordNamed(string text)
+    {
+        for (var i = 0; i < Chords.All.Count; i++)
+            if (string.Equals(Chords.All[i].Name, text, StringComparison.OrdinalIgnoreCase))
+                return i;
+
+        return null;
+    }
+
     /// <summary>Whether the editor should let this value rest only on whole numbers.</summary>
     internal bool Stepped => Display is PortDisplay.Note or PortDisplay.Integer or PortDisplay.Chord;
 

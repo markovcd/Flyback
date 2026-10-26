@@ -1,3 +1,4 @@
+using Avalonia.Input;
 using Flyback.Core.Graph;
 using Flyback.Specs.Support;
 using Reqnroll;
@@ -46,6 +47,25 @@ public sealed class TurningSteps(PatchContext context, EditorDriver editor)
 
     [Then("the card is gone")]
     public void ThenNoCard() => editor.TurnCard.ShouldBeNull();
+
+    [When("the sine's freq well is clicked")]
+    public void WhenClicked()
+    {
+        was = editor.InputOf(Sine.Id, Freq);
+        editor.ClickWell(Sine.Id, Freq);
+    }
+
+    [When("Up is pressed")]
+    public void WhenUp() => editor.Press(PhysicalKey.ArrowUp);
+
+    [When("Enter is pressed")]
+    public void WhenEnter() => editor.Press(PhysicalKey.Enter);
+
+    [When("{string} is typed")]
+    public void WhenTyped(string text) => editor.TypeOnCanvas(text);
+
+    [Then("the sine's freq is {float}")]
+    public void ThenIs(float value) => editor.InputOf(Sine.Id, Freq).ShouldBe(value);
 
     [When("the sine's freq well is Alt-clicked")]
     public void WhenAltClicked() => editor.AltClickWell(Sine.Id, Freq);

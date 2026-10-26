@@ -90,4 +90,31 @@ internal static class Pitch
             CultureInfo.InvariantCulture,
             $"{Names[step]}{octave}");
     }
+
+    /// <summary>The note number a written name stands for, "A3" for 57, sharp or flat; null for anything else.</summary>
+    public static float? Read(string name)
+    {
+        if (name.Length < 2) return null;
+
+        var letter = "CDEFGAB".IndexOf(char.ToUpperInvariant(name[0]));
+
+        if (letter < 0) return null;
+
+        var at = 1;
+        var bend = name[at] switch
+        {
+            '#' => 1,
+            'b' => -1,
+            _ => 0,
+        };
+
+        if (bend != 0) at++;
+
+        if (!int.TryParse(name.AsSpan(at), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var octave)) return null;
+
+        return (octave + 1) * Classes + Letters[letter] + bend;
+    }
+
+    /// <summary>Where each of C D E F G A B sits in the octave.</summary>
+    private static readonly int[] Letters = [0, 2, 4, 5, 7, 9, 11];
 }

@@ -280,6 +280,19 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     public (Guid Node, string Name)? TurnCard => Read(canvas =>
         canvas.Dial.Reading is var (pick, turn) ? (pick.Node, turn.Name) : ((Guid, string)?)null);
 
+    /// <summary>Clicks the well of an input's value, which gives it the keys.</summary>
+    public void ClickWell(Guid node, int port) =>
+        DoWindow((open, canvas) =>
+        {
+            var at = OnWindow(open, canvas, Well(canvas, node, port));
+
+            open.MouseDown(at, MouseButton.Left);
+            open.MouseUp(at, MouseButton.Left);
+        });
+
+    /// <summary>Types text into whatever on the canvas is taking it.</summary>
+    public void TypeOnCanvas(string text) => DoWindow((open, _) => open.KeyTextInput(text));
+
     /// <summary>Clicks the well of an input's value with Alt held.</summary>
     public void AltClickWell(Guid node, int port) =>
         DoWindow((open, canvas) =>

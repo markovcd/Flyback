@@ -39,6 +39,7 @@ internal sealed class NodeEditor
         Fingers fingers,
         CanvasTips tips,
         SocketDial dial,
+        SocketFocus focus,
         KnobLinking linking,
         UndescribedTags tags,
         CanvasPainter painter,
@@ -59,6 +60,7 @@ internal sealed class NodeEditor
         Fingers = fingers;
         Tips = tips;
         Dial = dial;
+        WellFocus = focus;
         Linking = linking;
         Tags = tags;
 
@@ -122,6 +124,9 @@ internal sealed class NodeEditor
     internal CanvasTips Tips { get; }
 
     internal SocketDial Dial { get; }
+
+    /// <summary>The input whose well has the keys, and what is being typed into it.</summary>
+    internal SocketFocus WellFocus { get; }
 
     internal KnobLinking Linking { get; }
 
@@ -209,6 +214,13 @@ internal sealed class NodeEditor
 
         if (e.Key is Key.LeftShift or Key.RightShift) Gestures.ModifiersChanged(e.KeyModifiers | KeyModifiers.Shift);
 
+        // A well with the keys answers first: its arrows, Enter and Escape, and every key while typing.
+        if (WellFocus.Key(e.Key, e.KeyModifiers))
+        {
+            e.Handled = true;
+            return;
+        }
+
         // Backing out of the gesture under way, as Escape does everywhere else here.
         // Before the modifier check, because the hand may still hold the Ctrl that
         // began it; unhandled with nothing under way, so the window still gets it.
@@ -278,6 +290,16 @@ internal sealed class NodeEditor
     {
         usage.Count(Used.Framed);
         View.FrameAll();
+    }
+
+    protected override void OnTextInput(TextInputEventArgs e)
+    {
+        base.OnTextInput(e);
+
+        if (WellFocus.Typed is null || string.IsNullOrEmpty(e.Text)) return;
+
+        WellFocus.Type(e.Text);
+        e.Handled = true;
     }
 
     protected override void OnKeyUp(KeyEventArgs e)

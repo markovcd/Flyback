@@ -40,6 +40,7 @@ internal static class CanvasServices
         services.AddPart<MeasureLabels>();
         services.AddSingleton<HeldModules>();
         services.AddSingleton<SocketDial>();
+        services.AddSingleton<SocketFocus>();
         services.AddSingleton<CanvasTips>();
         services.AddSingleton<ModuleDrag>();
         services.AddSingleton<WireDrag>();

@@ -3,6 +3,8 @@ Feature: A value is turned by dragging its well
   its row with a level line under it. Dragging the well up or down with the left
   button turns the value, as one step to undo, with a card over the module reading
   it out while it turns. Alt-click puts it back to the value a new module starts with.
+  A click gives the well the keys: the arrows nudge it, and Enter opens it for an
+  exact value, which no bare key does, so the keyboard still plays notes.
 
   Background:
     Given a sine on its own
@@ -24,3 +26,15 @@ Feature: A value is turned by dragging its well
     Then a card over the canvas reads out the sine's freq
     When the well is let go
     Then the card is gone
+
+  Scenario: A clicked well takes an exact value typed after Enter
+    When the sine's freq well is clicked
+    And Enter is pressed
+    And "0.9" is typed
+    And Enter is pressed
+    Then the sine's freq is 0.9
+
+  Scenario: Up nudges a clicked well
+    When the sine's freq well is clicked
+    And Up is pressed
+    Then the sine's freq is higher than it was

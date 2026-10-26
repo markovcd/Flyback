@@ -55,6 +55,8 @@ internal static class InspectorHelp
             Row("Re-route an output", "Feeds one of its wires from somewhere else instead. Put it back and the next one takes the next wire.", "Ctrl+Drag"),
             Row("Turn a value", "Drag an unplugged input's value up or down, or right-drag its socket. Shift is finer.", "Drag"),
             Row("Reset a value", "Puts an unplugged input back to the value a new module starts with.", "Alt+Click"),
+            Row("Pick a value", "Click a value's well; then the arrows nudge it, Shift finer, PgUp and PgDn further, and the wheel nudges it too.", "Click"),
+            Row("Type a value", "Opens a picked value for an exact number, a note name like A3, or a time like 10 ms. Enter applies, Esc cancels, Tab moves on.", "Enter"),
             Row("Cancel a drag", "Puts back whatever it had moved.", "Esc"),
             Row("Switch a module off", "Passes what is patched into it straight through. Again switches it on.", "Ctrl+B"),
         ]),

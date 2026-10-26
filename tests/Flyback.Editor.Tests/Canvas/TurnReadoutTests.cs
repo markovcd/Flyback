@@ -99,8 +99,8 @@ public class TurnReadoutTests : EditorTest
     {
         var number = new PortSpec("freq", PortKind.Scalar);
 
-        TurnReadout.Change(new TurnReadout.Turn("freq", "Sine", number, 1.46f, 0.8f, -4, 4, false)).ShouldBe("was 0.8 · +0.66");
-        TurnReadout.Change(new TurnReadout.Turn("freq", "Sine", number, 0.5f, 0.8f, -4, 4, false)).ShouldBe("was 0.8 · −0.3");
+        TurnReadout.Change(new TurnReadout.Turn("freq", "Sine", number, 1.46f, 0.8f, -4, 4, WellState.Turn)).ShouldBe("was 0.8 · +0.66");
+        TurnReadout.Change(new TurnReadout.Turn("freq", "Sine", number, 0.5f, 0.8f, -4, 4, WellState.Turn)).ShouldBe("was 0.8 · −0.3");
     }
 
     private static void Save(Window window, string path)

@@ -55,11 +55,11 @@ internal sealed class SocketDial(
     /// <summary>The input whose well the pointer is over, if any.</summary>
     public SocketPick? Hovered { get; private set; }
 
-    /// <summary>How the well of <paramref name="port"/> on <paramref name="node"/> is drawn now.</summary>
-    public WellState StateOf(Guid node, int port) =>
-        dialed is { } d && d.Node == node && d.Port == port ? Fine ? WellState.Fine : WellState.Turn
-        : dialed is null && Hovered is { } over && over.Node == node && over.Port == port ? WellState.Hover
-        : WellState.Rest;
+    /// <summary>The input being turned, if one is.</summary>
+    public SocketPick? Dialed => dialed is { } d ? new SocketPick(d.Node, d.Port) : null;
+
+    /// <summary>Whether the turn under way has moved at all, which a click on a well does not.</summary>
+    public bool Moved { get; private set; }
 
     /// <summary>Notes the well under <paramref name="graph"/>, and repaints when it is a different one.</summary>
     public void Hover(Point graph)
@@ -99,6 +99,7 @@ internal sealed class SocketDial(
 
         dialed = (nodeId, port, min, max, value, spec);
         dialAt = spec.Travel(value, min, max);
+        Moved = false;
         dialLast = dialHome = screen;
 
         dialAnchor = anchored ? anchors.Take(canvas) : null;
@@ -119,7 +120,10 @@ internal sealed class SocketDial(
         Fine = (modifiers & KeyModifiers.Shift) != 0;
         var fine = Fine ? 5d : 1d;
 
+        var was = dialAt;
         dialAt = Math.Clamp(dialAt + (dialLast.Y - screen.Y) / (DialTravel * fine), 0d, 1d);
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
+        Moved |= dialAt != was;
 
         if (dialAnchor?.Return() == true)
         {
@@ -165,7 +169,7 @@ internal sealed class SocketDial(
                 return null;
 
             return (new SocketPick(d.Node, d.Port),
-                new TurnReadout.Turn(def.Inputs[d.Port].Name, node.Title(def), d.Spec, node.InputValues[d.Port], d.Was, d.Min, d.Max, Fine));
+                new TurnReadout.Turn(def.Inputs[d.Port].Name, node.Title(def), d.Spec, node.InputValues[d.Port], d.Was, d.Min, d.Max, Fine ? WellState.Fine : WellState.Turn));
         }
     }
 
@@ -192,8 +196,8 @@ internal sealed class SocketDial(
         NodeSkin.DrawPort(context, scene.InputAnchor(node, def, d.Port), def.Inputs[d.Port].Kind, share, DialedBrush);
     }
 
-    /// <summary>Whether a press on this input can turn its value: unpatched, and resting on a knob of its own.</summary>
-    private bool Dialable(Guid nodeId, int port, out NodeInstance node, out PortSpec spec)
+    /// <summary>Whether this input's value can be turned: unpatched, and resting on a knob of its own.</summary>
+    public bool Dialable(Guid nodeId, int port, out NodeInstance node, out PortSpec spec)
     {
         node = null!;
         spec = default;
@@ -214,7 +218,8 @@ internal sealed class SocketDial(
         && patch.IncomingTo(node.Id, port) is null
         && !(ControlMap.Of(node, port) is { } link && patch.Control(link.Control) is not null);
 
-    private void Set(Guid nodeId, int port, float value)
+    /// <summary>Gives an input a value, filed under the same step as the turns of it next to it.</summary>
+    public void Set(Guid nodeId, int port, float value)
     {
         if (history.Patch.Find(nodeId) is not { } node || port >= node.InputValues.Length) return;
 

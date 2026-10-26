@@ -24,6 +24,7 @@ internal sealed class CanvasPainter(
     Viewport view,
     CanvasGestures gestures,
     SocketDial dial,
+    SocketFocus focus,
     RemapMarks marks,
     MeasureLabels measured,
     KnobLinking linking,
@@ -119,10 +120,10 @@ internal sealed class CanvasPainter(
         KeepMoving();
     }
 
-    /// <summary>The card over a value being turned, at full strength even over the picture.</summary>
+    /// <summary>The card over a value being turned or typed, at full strength even over the picture.</summary>
     private void DrawReadout(DrawingContext context)
     {
-        if (dial.Reading is not var (pick, turn)
+        if (focus.Reading is not var (pick, turn)
             || Patch.Find(pick.Node) is not { } node
             || NodeCatalog.Get(node.TypeId) is not { } def)
             return;
@@ -675,7 +676,7 @@ internal sealed class CanvasPainter(
                 continue;
             }
 
-            var well = !connected && ValueWell.Has(Patch, node, def, i) ? dial.StateOf(node.Id, i) : (WellState?)null;
+            var well = !connected && ValueWell.Has(Patch, node, def, i) ? focus.StateOf(node.Id, i) : (WellState?)null;
 
             if (well is { } lit) ValueWell.DrawRow(context, bounds, center, lit);
 

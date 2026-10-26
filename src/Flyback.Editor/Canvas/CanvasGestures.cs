@@ -47,6 +47,7 @@ internal sealed class CanvasGestures
     private readonly Viewport view;
     private readonly CanvasEdits edits;
     private readonly SocketDial dial;
+    private readonly SocketFocus focus;
     private readonly HeldModules held;
     private readonly KnobLinking linking;
     private readonly RemapMarks marks;
@@ -76,6 +77,7 @@ internal sealed class CanvasGestures
         Viewport view,
         CanvasEdits edits,
         SocketDial dial,
+        SocketFocus focus,
         HeldModules held,
         KnobLinking linking,
         RemapMarks marks,
@@ -92,6 +94,7 @@ internal sealed class CanvasGestures
         this.view = view;
         this.edits = edits;
         this.dial = dial;
+        this.focus = focus;
         this.held = held;
         this.linking = linking;
         this.marks = marks;
@@ -101,7 +104,11 @@ internal sealed class CanvasGestures
         this.wire = wire;
         this.band = band;
 
-        history.Replaced += (_, _) => End();
+        history.Replaced += (_, _) =>
+        {
+            End();
+            focus.Clear();
+        };
         wire.Dropped += (_, drop) => WireDropped?.Invoke(this, drop);
     }
 
@@ -205,6 +212,9 @@ internal sealed class CanvasGestures
         // After the pan, which leaves the grip of a carry it puts on hold where it was.
         module.Grip(graph);
 
+        // A press anywhere takes the keys back from a well; one on a well gives them again.
+        focus.Clear();
+
         // Over a module Ctrl adds to the selection; over an output it lifts a wire off.
         var ctrl = (modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
 
@@ -275,6 +285,13 @@ internal sealed class CanvasGestures
             if (!selection.Contains(wellNode)) selection.Select(wellNode);
 
             if ((modifiers & KeyModifiers.Alt) != 0) return dial.Reset(wellNode, wellPort);
+
+            // A double-click opens it for typing, the first click having given it the keys.
+            if (clickCount == 2)
+            {
+                focus.Pick(new SocketPick(wellNode, wellPort));
+                return focus.BeginTyping();
+            }
 
             if (!dial.Start(canvas, wellNode, wellPort, screen)) return false;
 
@@ -494,9 +511,15 @@ internal sealed class CanvasGestures
             return;
         }
 
-        if (button == MouseButton.Left && EndTurn(canvas))
+        // A press on a well that let go without turning it was a click, which gives it the keys.
+        if (button == MouseButton.Left && dial.Dialed is { } dialed)
         {
+            var clicked = !dial.Moved;
+
+            EndTurn(canvas);
             pointer?.Capture(null);
+
+            if (clicked) focus.Pick(dialed);
             return;
         }
 
@@ -567,7 +590,12 @@ internal sealed class CanvasGestures
 
     public void Wheel(Control canvas, PointerWheelEventArgs e)
     {
-        view.ZoomAt(e.GetPosition(canvas), e.Delta.Y);
+        // Over the well with the keys the wheel nudges it; over anything else it zooms.
+        var over = selection.Scene.HitWell(view.ToGraph(e.GetPosition(canvas)), out var node, out var port);
+
+        if (!(over && focus.Focused == new SocketPick(node, port) && focus.Wheel(e.Delta.Y)))
+            view.ZoomAt(e.GetPosition(canvas), e.Delta.Y);
+
         e.Handled = true;
     }
 
