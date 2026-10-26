@@ -241,6 +241,9 @@ public sealed class OutputSettings
     /// <summary>Whether the panel knobs stand in a fixed grid — the MIDI section.</summary>
     public KnobGrid KnobGrid { get; set; } = new();
 
+    /// <summary>How the patch looks over a full-screen picture while it is played live — the Live patching section.</summary>
+    public LivePatchingLook Live { get; set; } = new();
+
     /// <summary>
     /// The saved picture or sound format whose extension <paramref name="path"/> has,
     /// or null where it is neither's: <c>.mp4</c> is H.265 to someone who chose H.265,
@@ -381,6 +384,9 @@ public sealed class OutputSettings
 
             settings.KnobGrid ??= new();
             settings.KnobGrid.Clamp();
+
+            settings.Live ??= new();
+            settings.Live.Clamp();
 
             return settings;
         }

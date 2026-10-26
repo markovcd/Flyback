@@ -1287,6 +1287,12 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     /// <summary>Whether the picture has the whole window.</summary>
     public bool PictureFullScreen => ReadWindow(_ => Service<FullScreenPreview>().IsFullScreen);
 
+    /// <summary>Fades the patch over the picture as its wait running out would.</summary>
+    public void LeaveLivePatchAlone() => DoWindow((_, _) => Service<LivePatching>().Fade.Fade());
+
+    /// <summary>Whether the patch over the picture has faded away.</summary>
+    public bool LivePatchFaded => ReadWindow(_ => Service<LivePatching>().Fade.IsFaded);
+
     /// <summary>Puts the caret in the text view, as a click on its text would.</summary>
     public void ClickIntoText() => DoWindow((open, _) => Source(open).TextArea.Focus());
 

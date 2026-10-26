@@ -27,6 +27,18 @@ public sealed class LivePatchingSteps(PatchContext context, EditorDriver editor)
     [Then("the patch's text stands over the picture")]
     public void ThenTextOver() => editor.TextOverPicture.ShouldBeTrue();
 
+    [When("the patch over the picture is left alone")]
+    public void WhenLeftAlone() => editor.LeaveLivePatchAlone();
+
+    [Then("the patch over the picture has faded")]
+    public void ThenFaded() => editor.LivePatchFaded.ShouldBeTrue();
+
+    [Then("the patch over the picture is back")]
+    public void ThenNotFaded() => editor.LivePatchFaded.ShouldBeFalse();
+
+    [When("a key is typed in the text")]
+    public void WhenKeyTyped() => editor.Press(PhysicalKey.ArrowRight);
+
     [When("the caret is put in the text")]
     public void WhenCaretInText() => editor.ClickIntoText();
 

@@ -2,7 +2,8 @@ Feature: A patch can be played live with itself over the picture
   Somebody playing a patch in front of people gives the picture the whole screen and
   keeps patching on top of it: the modules stand over the picture, which shows through
   them, and fade away while nobody touches them, or F2 puts the patch's text there to
-  be live-coded. Tab over a full-screen picture puts the modules on or takes them off,
+  be live-coded, which fades the same way. Settings → Picture says how solid each is
+  and how long it waits. Tab over a full-screen picture puts the modules on or takes them off,
   Shift+F11 goes straight there, and Escape gives the editor back as it was.
 
   Scenario: Shift+F11 puts the modules over a picture with the whole window
@@ -46,6 +47,17 @@ Feature: A patch can be played live with itself over the picture
     And the caret is put in the text
     And Escape is pressed over the picture
     Then the picture does not have the whole window
+
+  Scenario: The text over the picture fades when left alone and a key brings it back
+    Given a rainbow across the screen
+    And the patch is open in the editor
+    When Shift+F11 is pressed
+    And F2 is pressed over the picture
+    And the caret is put in the text
+    And the patch over the picture is left alone
+    Then the patch over the picture has faded
+    When a key is typed in the text
+    Then the patch over the picture is back
 
   Scenario: Over the picture a module's fill lets it through until one of its values is in hand
     Given a sine on its own

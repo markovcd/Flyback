@@ -270,6 +270,17 @@ internal sealed class SourceView : UserControl
         }
     }
 
+    /// <summary>How dark the band behind each written line is over the picture.</summary>
+    public double BandOpacity
+    {
+        get => backing.Opacity;
+        set
+        {
+            backing.Opacity = value;
+            text.TextArea.TextView.InvalidateLayer(KnownLayer.Background);
+        }
+    }
+
     /// <summary>
     /// A character is on its way in: it joins the step the character before it
     /// made, or begins one of its own. A word is the unit and the space that ends
@@ -787,14 +798,18 @@ internal sealed class SourceView : UserControl
     /// </remarks>
     private sealed class LineBacking : IBackgroundRenderer
     {
-        /// <summary>How dark the band is: enough to read over white, little enough to see the picture move.</summary>
-        internal const double Opacity = 0.72;
-
         private const double Margin = 6;
 
-        private readonly IBrush band = new SolidColorBrush(Colors.Edge, Opacity);
+        private IBrush band = new SolidColorBrush(Colors.Edge, 0.72);
 
         public bool On { get; set; }
+
+        /// <summary>How dark the band is: enough to read over white, little enough to see the picture move.</summary>
+        public double Opacity
+        {
+            get => band.Opacity;
+            set => band = new SolidColorBrush(Colors.Edge, value);
+        }
 
         public KnownLayer Layer => KnownLayer.Background;
 

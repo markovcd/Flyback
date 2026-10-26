@@ -44,8 +44,8 @@ internal sealed class CanvasPainter(
 
     private Patch Patch => history.Patch;
 
-    /// <summary>How opaque the patch is drawn while it stands over the picture.</summary>
-    internal const double GlassOpacity = 0.78;
+    /// <summary>How opaque the fills, boxes and wires are drawn while the patch stands over the picture.</summary>
+    internal double GlassOpacity { get; set; } = 0.78;
 
     /// <summary>Whether the patch is drawn over the picture: no ground, no grid, and the fills and wires see-through.</summary>
     internal bool SeeThrough { get; set; }

@@ -4,6 +4,7 @@ using Flyback.Editor.Canvas;
 using Flyback.Editor.Hubs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Statistics;
+using Flyback.Host;
 
 namespace Flyback.Editor.Windows;
 
@@ -25,7 +26,7 @@ internal sealed class LivePatching : IReactTo<ViewChanged>
     private readonly SourceView source;
     private readonly Document document;
     private readonly Usage usage;
-    private readonly ModulesFade fade;
+    private readonly IdleFade fade;
 
     private Control? lifted;
     private Panel? home;
@@ -39,7 +40,7 @@ internal sealed class LivePatching : IReactTo<ViewChanged>
         this.source = source;
         this.document = document;
         this.usage = usage;
-        fade = new ModulesFade(() => editor.Gestures.Gesturing);
+        fade = new IdleFade(() => lifted == editor && editor.Gestures.Gesturing);
 
         fullScreen.Leaving += () => ShowPatch(false);
     }
@@ -50,8 +51,25 @@ internal sealed class LivePatching : IReactTo<ViewChanged>
     /// <summary>Whether it is the patch's text that is over the picture, which takes the keys typed.</summary>
     public bool Coding => lifted == source;
 
-    /// <summary>The fading of the modules while nothing touches them.</summary>
-    internal ModulesFade Fade => fade;
+    /// <summary>The fading of the patch while nothing touches it.</summary>
+    internal IdleFade Fade => fade;
+
+    /// <summary>How the patch looks over the picture, and when it fades.</summary>
+    public LivePatchingLook Look
+    {
+        get => look;
+        set
+        {
+            look = value;
+            editor.GlassOpacity = value.ModuleOpacity / 100.0;
+            source.BandOpacity = value.TextOpacity / 100.0;
+
+            // A fade under way restarts with the new wait.
+            if (lifted is { } view) StartFade(view);
+        }
+    }
+
+    private LivePatchingLook look = new();
 
     /// <summary>Gives the picture the window with the patch over it, or gives the window back.</summary>
     public void Toggle()
@@ -130,7 +148,6 @@ internal sealed class LivePatching : IReactTo<ViewChanged>
         if (view == editor)
         {
             editor.SeeThrough = true;
-            fade.Start(editor);
 
             // Once the canvas has the window's size, so the patch is framed in all of it.
             Dispatcher.UIThread.Post(editor.View.FrameAll, DispatcherPriority.Background);
@@ -140,7 +157,14 @@ internal sealed class LivePatching : IReactTo<ViewChanged>
             source.SeeThrough = true;
         }
 
+        StartFade(view);
         view.Focus();
+    }
+
+    private void StartFade(Control view)
+    {
+        if (view == editor) fade.Start(editor, TimeSpan.FromSeconds(look.ModuleFadeSeconds));
+        else fade.Start(source, TimeSpan.FromSeconds(look.TextFadeSeconds), look.TextWakesOnPointer);
     }
 
     private void PutBack()

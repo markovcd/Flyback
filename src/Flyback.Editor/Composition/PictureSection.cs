@@ -16,7 +16,7 @@ using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Composition;
 
-/// <summary>The Picture section of the settings window: size, preview rate, renderer and full screen.</summary>
+/// <summary>The Picture section of the settings window: size, preview rate, renderer, full screen and live patching.</summary>
 internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
 {
     /// <summary>
@@ -50,6 +50,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
     private readonly FullScreenPreview fullScreen;
     private readonly PanelKnobs knobs;
     private readonly RecordingState recording;
+    private readonly LivePatchingRows live;
 
     public string Name => "Picture";
 
@@ -123,7 +124,8 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         TransportControls transport,
         FullScreenPreview fullScreen,
         PanelKnobs knobs,
-        RecordingState recording)
+        RecordingState recording,
+        LivePatchingRows live)
     {
         this.settings = settings;
         this.monitors = monitors;
@@ -134,6 +136,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         this.fullScreen = fullScreen;
         this.knobs = knobs;
         this.recording = recording;
+        this.live = live;
 
         ToolTip.SetTip(previewFrameRate,
             "How often the preview redraws itself. Lower to see it near what a recording will "
@@ -165,6 +168,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
 
         rows.Children.Add(InspectorRows.Field("Full screen", fullScreenOn));
         rows.Children.Add(InspectorRows.Field("Transport", transportEdge));
+        rows.Children.Add(live.View);
 
         preview.BackendChanged += message =>
         {
@@ -254,6 +258,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         transportEdge.SelectedIndex = current.Transport == TransportEdge.Bottom ? 1 : 0;
         previewFrameRate.SelectedIndex = SettingRows.Nearest(PreviewFrameRates, current.PreviewFrameRate);
         smoothing.SelectedIndex = current.Smoothing == Smoothing.Off ? 0 : 1;
+        live.Show(current);
     }
 
     /// <summary>Writes what the controls hold into <paramref name="into"/>, leaving what a control cannot say as it was.</summary>
@@ -283,6 +288,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
 
         into.PreviewFrameRate = PreviewFrameRates[Math.Max(previewFrameRate.SelectedIndex, 0)];
         into.Smoothing = smoothing.SelectedIndex == 0 ? Smoothing.Off : Smoothing.Fast;
+        live.Read(into);
     }
 
     /// <param name="before">What was in force until now, or null as the editor starts.</param>
@@ -295,6 +301,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         preview.Use(now.Gpu ? PreviewBackend.Gpu : PreviewBackend.Cpu);
         preview.FrameRate = now.PreviewFrameRate;
         preview.Smoothing = now.Smoothing;
+        live.Apply(now);
 
         // A live Scan uses Coordinates' aspect (ADR-0077), so keep it in step
         // with the preview now that sizes are not all the same shape.

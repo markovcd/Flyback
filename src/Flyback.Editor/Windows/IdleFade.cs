@@ -8,15 +8,12 @@ using Avalonia.Threading;
 namespace Flyback.Editor.Windows;
 
 /// <summary>
-/// Fades a control out once the pointer and the keys have left it alone for a while, and
-/// brings it back at the next move or press: the modules over a live picture.
+/// Fades a control out once it has been left alone for a while, and brings it back at
+/// the next key, or move or press of the pointer: the patch over a live picture.
 /// </summary>
 /// <param name="busy">Whether something is under way that the fade must wait for, such as a drag.</param>
-internal sealed class ModulesFade(Func<bool> busy)
+internal sealed class IdleFade(Func<bool> busy)
 {
-    /// <summary>How long the control is left alone before it fades.</summary>
-    internal static readonly TimeSpan Idle = TimeSpan.FromSeconds(3);
-
     private static readonly TimeSpan Fading = TimeSpan.FromMilliseconds(400);
 
     private DispatcherTimer? timer;
@@ -26,19 +23,30 @@ internal sealed class ModulesFade(Func<bool> busy)
     /// <summary>Whether the control is faded out, or fading.</summary>
     public bool IsFaded { get; private set; }
 
-    /// <summary>Starts watching <paramref name="control"/>, shown.</summary>
-    public void Start(Control control)
+    /// <summary>
+    /// Starts watching <paramref name="control"/>, shown, to fade it once left alone for
+    /// <paramref name="wait"/>; a wait of zero never fades it.
+    /// </summary>
+    /// <param name="pointer">Whether the pointer brings it back as well as the keys.</param>
+    public void Start(Control control, TimeSpan wait, bool pointer = true)
     {
         Stop();
+
+        if (wait <= TimeSpan.Zero) return;
 
         faded = control;
         transitionsBefore = control.Transitions;
         control.Transitions = [new DoubleTransition { Property = Visual.OpacityProperty, Duration = Fading }];
-        control.AddHandler(InputElement.PointerMovedEvent, Woken, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
-        control.AddHandler(InputElement.PointerPressedEvent, Woken, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+
+        if (pointer)
+        {
+            control.AddHandler(InputElement.PointerMovedEvent, Woken, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+            control.AddHandler(InputElement.PointerPressedEvent, Woken, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+        }
+
         control.AddHandler(InputElement.KeyDownEvent, Woken, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
 
-        timer = new DispatcherTimer { Interval = Idle };
+        timer = new DispatcherTimer { Interval = wait };
         timer.Tick += (_, _) => Fade();
 
         Wake();
