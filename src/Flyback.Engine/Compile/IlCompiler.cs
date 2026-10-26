@@ -51,6 +51,9 @@ public sealed class IlCompiler : IDisposable
     private readonly bool enabled;
     private bool disposed;
 
+    /// <summary>Whether this compiler builds IL at all; off where it was asked not to and where the runtime cannot, as on iOS.</summary>
+    public bool Builds => enabled;
+
     public IlCompiler(IIlCompilerSetup? setup = null)
     {
         // A runtime that cannot compile code, as in a browser, has no thread to build it on either.

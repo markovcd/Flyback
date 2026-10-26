@@ -117,6 +117,26 @@ public class AudioEngineTests
         engine.Time.ShouldBe(at + BufferFrames / (double)GlobalConstants.SampleRate, 1e-9);
     }
 
+    /// <summary>Where no IL is ever built, as on iOS or when asked, the interpreter is the sound, and its speed is measured.</summary>
+    [Fact]
+    public void An_interpreted_sound_says_its_speed()
+    {
+        using var device = new LoopbackDevice();
+        using var compiler = new IlCompiler(new OnlyInterpreted());
+        using var engine = new AudioEngine(new AudioSetup(device), compiler);
+        engine.Update(Tone(220f));
+
+        engine.Start();
+        for (var i = 0; i < 20; i++) device.Pump();
+
+        engine.Speed.ShouldBeGreaterThan(1, "a lone sine renders far faster than it plays, interpreted or not");
+    }
+
+    private sealed class OnlyInterpreted : IIlCompilerSetup
+    {
+        public bool Interpreted => true;
+    }
+
     /// <summary>A sound that has played says how many times real time it renders at, and one stopped says nothing.</summary>
     [Fact]
     public void Its_speed_is_measured_while_it_plays()

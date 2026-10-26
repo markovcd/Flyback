@@ -453,8 +453,9 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
             Lead(state.Live);
             state.Renderer.Render(state.Program, buffer, state.Memory, state.Live);
 
-            // The interpreter an edit plays on until its IL arrives is slow by design, and says nothing of the machine.
-            if (compiler is null || state.Program.Il is not null)
+            // The interpreter an edit plays on until its IL arrives is slow by design, and says nothing
+            // of the machine. Where no IL is ever built, as on iOS, the interpreter is the sound.
+            if (compiler is not { Builds: true } || state.Program.Il is not null)
             {
                 Interlocked.Increment(ref timed);
 
