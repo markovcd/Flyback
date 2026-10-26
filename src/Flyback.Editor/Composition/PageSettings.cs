@@ -6,7 +6,10 @@ using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Notices;
+using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
+using Flyback.Editor.Windows;
+using Flyback.Host;
 using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 
@@ -18,7 +21,7 @@ namespace Flyback.Editor.Composition;
 /// </summary>
 internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
 {
-    private const double PanelWidth = 320;
+    private const double PanelWidth = 340;
 
     private readonly EditorHost host;
     private readonly Toolbar toolbar;
@@ -30,7 +33,7 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
     /// <summary>Drag to pan and its note, which a finger has no use for.</summary>
     private readonly Border panRow;
 
-    public PageSettings(EditorHost host, Toolbar toolbar, CanvasSection canvas)
+    public PageSettings(EditorHost host, Toolbar toolbar, CanvasSection canvas, LivePatchingRows live, OutputSettingRepository settings, IBrowserStore browser)
     {
         this.host = host;
         this.toolbar = toolbar;
@@ -68,18 +71,42 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
         var compactRow = Row(compactModules, "Puts each input beside an output on one row.");
         compactRow.Margin = new Thickness(8, 4, 8, 4);
 
-        Flyout.Content = new StackPanel
+        var liveTitle = new TextBlock
         {
-            Name = "pageSettings",
-            Width = PanelWidth,
-            Spacing = 6,
-            Children = { header, panRow, compactRow },
+            Text = "Live patching",
+            FontSize = Text.Emphasis,
+            FontWeight = FontWeight.SemiBold,
+            Margin = new Thickness(8, 8, 8, 0),
+        };
+
+        live.View.Margin = new Thickness(8, 0, 8, 4);
+
+        // Taking effect as it is changed and kept in the browser, as the switches are.
+        live.Changed += () =>
+        {
+            if (!Flyout.IsOpen) return;
+
+            live.Read(settings.Current);
+            live.Apply(settings.Current);
+            browser.Write(LivePatchingLook.Section, settings.Current.Live.Json());
+        };
+
+        Flyout.Content = new ScrollViewer
+        {
+            Content = new StackPanel
+            {
+                Name = "pageSettings",
+                Width = PanelWidth,
+                Spacing = 6,
+                Children = { header, panRow, compactRow, liveTitle, live.View },
+            },
         };
 
         // Opening sets the boxes to what is saved, so the handlers below hear only a hand.
         Flyout.Opening += (_, _) =>
         {
             dragToPan.IsChecked = canvas.DragToPan;
+            live.Show(settings.Current);
             compactModules.IsChecked = canvas.CompactModules;
         };
 

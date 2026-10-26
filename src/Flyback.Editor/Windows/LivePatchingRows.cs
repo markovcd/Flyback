@@ -50,12 +50,19 @@ internal sealed class LivePatchingRows
         ToolTip.SetTip(textWakes,
             "What brings faded text back. Keys only leaves it hidden while the mouse moves over the picture.");
 
+        foreach (var number in new[] { moduleOpacity, textOpacity, moduleFade, textFade })
+            number.ValueChanged += (_, _) => Changed?.Invoke();
+        textWakes.SelectionChanged += (_, _) => Changed?.Invoke();
+
         rows.Children.Add(InspectorRows.Field("Live modules, % solid", moduleOpacity));
         rows.Children.Add(InspectorRows.Field("Live modules fade, s", moduleFade));
         rows.Children.Add(InspectorRows.Field("Live text band, % solid", textOpacity));
         rows.Children.Add(InspectorRows.Field("Live text fades, s", textFade));
         rows.Children.Add(InspectorRows.Field("Live text wakes on", textWakes));
     }
+
+    /// <summary>A control was changed, by a hand or by <see cref="Show"/>.</summary>
+    public event Action? Changed;
 
     public void Show(OutputSettings current)
     {

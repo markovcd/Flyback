@@ -106,6 +106,24 @@ public sealed class PageSettingsTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void The_live_patching_look_applies_at_once_and_is_kept_for_the_next_visit()
+    {
+        var window = Open();
+        PressGear(window);
+
+        ((Control)Panel(window).Flyout.Content!).GetLogicalDescendants().OfType<NumericUpDown>()
+            .Single(n => n.Name == "moduleOpacity").Value = 40;
+        Settle(window);
+
+        Shoot(window, "page-live-settings.png");
+        Editor(window).GlassOpacity.ShouldBe(0.4, 1e-9);
+        Flyback.Host.LivePatchingLook.Parse(browser.Kept[Flyback.Host.LivePatchingLook.Section]).ModuleOpacity.ShouldBe(40);
+
+        var next = Open();
+        Editor(next).GlassOpacity.ShouldBe(0.4, 1e-9);
+    }
+
+    [AvaloniaFact]
     public void A_browser_that_kept_nothing_opens_with_the_defaults()
     {
         var window = Open();

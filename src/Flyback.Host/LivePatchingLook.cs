@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace Flyback.Host;
 
 /// <summary>
@@ -8,6 +10,11 @@ namespace Flyback.Host;
 public sealed class LivePatchingLook
 {
     public const int Clear = 0, Faintest = 10, Solid = 100;
+
+    /// <summary>The section a browser keeps it under, for the web editor, which has no settings file.</summary>
+    public const string Section = "live";
+
+    private static readonly JsonSerializerOptions Options = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     /// <summary>The longest wait before a fade, in seconds.</summary>
     public const double LongestWait = 600;
@@ -26,6 +33,23 @@ public sealed class LivePatchingLook
 
     /// <summary>Whether the pointer brings faded text back, as well as the keys.</summary>
     public bool TextWakesOnPointer { get; set; } = true;
+
+    /// <summary>Never throws: what cannot be read is the defaults, and what is out of range is brought into it.</summary>
+    public static LivePatchingLook Parse(string? json)
+    {
+        try
+        {
+            var look = json is not null ? JsonSerializer.Deserialize<LivePatchingLook>(json, Options) ?? new() : new();
+            look.Clamp();
+            return look;
+        }
+        catch (JsonException)
+        {
+            return new();
+        }
+    }
+
+    public string Json() => JsonSerializer.Serialize(this, Options);
 
     /// <summary>Brings a hand-edited file's numbers into range.</summary>
     public void Clamp()

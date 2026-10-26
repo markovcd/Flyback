@@ -12,14 +12,14 @@ internal sealed class OutputSettingRepository
     private readonly string? path;
     private readonly ReportLine report;
 
-    public OutputSettingRepository(EditorFolders folders, EditorHost host, ReportLine report)
+    public OutputSettingRepository(EditorFolders folders, EditorHost host, ReportLine report, IBrowserStore browser)
     {
         path = folders.SettingsPath;
         this.report = report;
 
-        // A page's picture never leaves its box, so it is drawn small.
+        // A page's picture is drawn small, and of the rest the browser keeps only how a live patch looks.
         Current = path is not null ? OutputSettings.Load(path)
-            : host.InPage ? new OutputSettings { Width = 480, Height = 270 }
+            : host.InPage ? new OutputSettings { Width = 480, Height = 270, Live = LivePatchingLook.Parse(browser.Read(LivePatchingLook.Section)) }
             : new OutputSettings();
     }
 

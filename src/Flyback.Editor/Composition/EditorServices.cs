@@ -186,7 +186,7 @@ internal static class EditorServices
         services.AddPart<EditorOpened>();
         services.AddPart<UsageCounter>();
 
-        services.AddSingleton<LivePatchingRows>();
+        services.AddTransient<LivePatchingRows>();
         services.AddPart<PictureSection>();
         services.AddPart<SoundSection>();
         services.AddPart<MidiSection>();
