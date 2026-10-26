@@ -112,7 +112,7 @@ internal sealed class EditorView : Border
         top.AddHandler(KeyUpEvent, OnKeyUp);
 
         // Tunneling, since moving the focus claims Tab on the way back up.
-        top.AddHandler(KeyDownEvent, OnTab, RoutingStrategies.Tunnel);
+        top.AddHandler(KeyDownEvent, OnLiveKey, RoutingStrategies.Tunnel);
 
         touchTips.Attach(top);
 
@@ -308,10 +308,22 @@ internal sealed class EditorView : Border
         }
     }
 
-    /// <summary>Tab over a full-screen picture puts the patch over it or takes it off.</summary>
-    private void OnTab(object? sender, KeyEventArgs e)
+    /// <summary>
+    /// Tab over a full-screen picture puts the patch over it or takes it off, and Escape
+    /// leaves the patch's text over it, which would otherwise take the key for itself.
+    /// </summary>
+    private void OnLiveKey(object? sender, KeyEventArgs e)
     {
-        if (e.Handled || e.Key != Key.Tab || dialog.IsShowing || (e.KeyModifiers & ~KeyModifiers.Shift) != 0) return;
+        if (e.Handled || dialog.IsShowing) return;
+
+        if (e is { Key: Key.Escape, KeyModifiers: KeyModifiers.None } && live.Coding)
+        {
+            fullScreen.Leave();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key != Key.Tab || (e.KeyModifiers & ~KeyModifiers.Shift) != 0) return;
 
         if (live.ToggleOverPicture()) e.Handled = true;
     }

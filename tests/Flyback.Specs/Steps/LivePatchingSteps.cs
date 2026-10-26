@@ -27,6 +27,9 @@ public sealed class LivePatchingSteps(PatchContext context, EditorDriver editor)
     [Then("the patch's text stands over the picture")]
     public void ThenTextOver() => editor.TextOverPicture.ShouldBeTrue();
 
+    [When("the caret is put in the text")]
+    public void WhenCaretInText() => editor.ClickIntoText();
+
     [When("Escape is pressed over the picture")]
     public void WhenEscape() => editor.Press(PhysicalKey.Escape);
 

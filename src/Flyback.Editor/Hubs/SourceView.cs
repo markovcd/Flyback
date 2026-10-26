@@ -250,8 +250,8 @@ internal sealed class SourceView : UserControl
     }
 
     /// <summary>
-    /// Whether the text is drawn over the picture, for live patching: no ground and no line
-    /// numbers, and a dark band behind each written line.
+    /// Whether the text is drawn over the picture, for live patching: no ground, no line
+    /// numbers and no row of buttons, and a dark band behind the text of each written line.
     /// </summary>
     public bool SeeThrough
     {
@@ -264,8 +264,8 @@ internal sealed class SourceView : UserControl
             text.LineNumbersForeground = value ? Brushes.Transparent : new SolidColorBrush(Colors.Inactive);
             rows.Background = value ? Brushes.Transparent : new SolidColorBrush(Colors.Canvas);
             text.Background = value ? Brushes.Transparent : new SolidColorBrush(Colors.Canvas);
-            bottom.Background = value ? new SolidColorBrush(Colors.Window, LineBacking.Opacity) : null;
-            text.TextArea.TextView.CurrentLineBackground = new SolidColorBrush(Colors.Node, value ? LineBacking.Opacity : 1);
+            bottom.IsVisible = !value;
+            text.Options.HighlightCurrentLine = !value;
             text.TextArea.TextView.InvalidateLayer(KnownLayer.Background);
         }
     }

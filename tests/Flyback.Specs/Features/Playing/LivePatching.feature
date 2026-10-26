@@ -38,6 +38,15 @@ Feature: A patch can be played live with itself over the picture
     When F2 is pressed over the picture
     Then the modules stand over the picture
 
+  Scenario: Escape leaves the text over the picture with the caret in it
+    Given a rainbow across the screen
+    And the patch is open in the editor
+    When Shift+F11 is pressed
+    And F2 is pressed over the picture
+    And the caret is put in the text
+    And Escape is pressed over the picture
+    Then the picture does not have the whole window
+
   Scenario: Over the picture a module's fill lets it through until one of its values is in hand
     Given a sine on its own
     And the patch is open in the editor

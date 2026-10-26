@@ -220,6 +220,40 @@ public class LivePatchingTests : EditorTest
         Source(window).IsEffectivelyVisible.ShouldBeTrue();
     }
 
+    /// <summary>The text area takes Escape for itself, so leaving has to be answered before it gets there.</summary>
+    [AvaloniaFact]
+    public void Escape_with_the_caret_in_the_text_leaves_the_picture()
+    {
+        var window = Open();
+
+        PressF2(window);
+        GoLive(window);
+        All<AvaloniaEdit.Editing.TextArea>(window).Single().Focus();
+        PressEscape(window);
+
+        Service<LivePatching>(window).IsOn.ShouldBeFalse();
+        Service<FullScreenPreview>(window).IsFullScreen.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Over_the_picture_the_text_has_no_row_of_buttons_and_no_band_across_the_caret_s_line()
+    {
+        var window = Open();
+
+        PressF2(window);
+        var editor = All<AvaloniaEdit.TextEditor>(window).Single();
+        var apply = All<Button>(window).Single(button => button.Name == "apply");
+        GoLive(window);
+
+        apply.IsEffectivelyVisible.ShouldBeFalse("Ctrl+Enter applies, and the row would hide the picture");
+        editor.Options.HighlightCurrentLine.ShouldBeFalse("the caret's line is banded behind its text like the rest");
+
+        PressEscape(window);
+
+        apply.IsEffectivelyVisible.ShouldBeTrue();
+        editor.Options.HighlightCurrentLine.ShouldBeTrue();
+    }
+
     [AvaloniaFact]
     public void Space_over_the_text_does_not_pause()
     {

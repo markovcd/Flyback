@@ -1287,6 +1287,9 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     /// <summary>Whether the picture has the whole window.</summary>
     public bool PictureFullScreen => ReadWindow(_ => Service<FullScreenPreview>().IsFullScreen);
 
+    /// <summary>Puts the caret in the text view, as a click on its text would.</summary>
+    public void ClickIntoText() => DoWindow((open, _) => Source(open).TextArea.Focus());
+
     /// <summary>Whether the modules stand over the full-screen picture, drawn so the picture shows through.</summary>
     public bool ModulesOverPicture => ReadWindow(open =>
         Service<LivePatching>().IsOn && open.GetVisualDescendants().OfType<NodeEditor>().Single() is { IsEffectivelyVisible: true, SeeThrough: true });
