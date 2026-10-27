@@ -560,8 +560,6 @@ Flyback.Core.Graph.PatchPreset.Kind.init -> void
 Flyback.Core.Graph.PatchPreset.Name.get -> string!
 Flyback.Core.Graph.PatchPreset.Name.init -> void
 Flyback.Core.Graph.PatchPreset.PatchPreset(string! Name, System.Func<Flyback.Core.Graph.ModuleCatalog!, Flyback.Core.Graph.Patch!>! Build, string! Description = "", Flyback.Core.Graph.PresetKind Kind = Flyback.Core.Graph.PresetKind.Idea) -> void
-Flyback.Core.Graph.PatchPreset.Tags.get -> System.Collections.Generic.IReadOnlyList<string!>?
-Flyback.Core.Graph.PatchPreset.Tags.init -> void
 Flyback.Core.Graph.PortDisplay
 Flyback.Core.Graph.PortDisplay.Chord = 4 -> Flyback.Core.Graph.PortDisplay
 Flyback.Core.Graph.PortDisplay.Duration = 2 -> Flyback.Core.Graph.PortDisplay

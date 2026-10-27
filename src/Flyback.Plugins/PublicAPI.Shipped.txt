@@ -828,7 +828,7 @@ static Flyback.Plugins.Midi.MidiPortInfo.operator ==(Flyback.Plugins.Midi.MidiPo
 static Flyback.Plugins.Midi.MidiPorts.Named(System.Collections.Generic.IEnumerable<string!>! names) -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Midi.MidiPortInfo>!
 static Flyback.Plugins.PluginInfo.operator !=(Flyback.Plugins.PluginInfo? left, Flyback.Plugins.PluginInfo? right) -> bool
 static Flyback.Plugins.PluginInfo.operator ==(Flyback.Plugins.PluginInfo? left, Flyback.Plugins.PluginInfo? right) -> bool
-static Flyback.Plugins.PresetText.Embedded(System.Reflection.Assembly! assembly, string! name) -> System.Func<Flyback.Core.Graph.ModuleCatalog!, Flyback.Core.Graph.Patch!>!
+static Flyback.Plugins.PresetText.Preset(System.Reflection.Assembly! assembly, string! name, string! resource, Flyback.Core.Graph.PresetKind kind = Flyback.Core.Graph.PresetKind.Idea) -> Flyback.Core.Graph.PatchPreset!
 static Flyback.Plugins.Settings.SettingField.Pick.operator !=(Flyback.Plugins.Settings.SettingField.Pick? left, Flyback.Plugins.Settings.SettingField.Pick? right) -> bool
 static Flyback.Plugins.Settings.SettingField.Pick.operator ==(Flyback.Plugins.Settings.SettingField.Pick? left, Flyback.Plugins.Settings.SettingField.Pick? right) -> bool
 static Flyback.Plugins.Settings.SettingField.Switch.Spell(bool on) -> string!

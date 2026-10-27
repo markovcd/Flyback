@@ -4,50 +4,53 @@
 
 ### Modules
 
-- A Speech plugin on the preset site: Speak says or sings the words typed into it in a voice made from filters, with `~` for a rest between sung notes, and Mouth draws lips that move with it and the words as they are said, with a Daisy Bell preset that sings.
-- Raymarch, in the Picture plugin: a lattice, a tunnel or a gyroid in 3D for the camera to fly through, drawn by marching a ray from every pixel, with Flythrough, a techno track flying through a lattice that pulses with the kick.
-
 ### Presets
-
-- A preset's card shows the description and tags written in its file; a plugin registers one with `PresetText.Preset`, in place of `PresetText.Embedded`.
-- Every preset is tagged from ten topics, so the gallery's topic row is short: basics, song, playable, drums, melody, ambient, synthesis, effects, scope and patterns. Flyback's own plugins are tagged by what they work on: sound, picture, MIDI, effects, AI or secrets, and their system.
 
 ### Assistant
 
 ### Editor
 
-- macOS menu bar: Flyback's own app menu and File, Edit, View, Play, Window and Help menus; the viewer's is named Flyback Viewer. On Windows and Linux, Settings → Canvas → Show a menu bar puts the same menus along the top of the window.
-- Measure moves to Ctrl+Shift+M (⇧⌘M on macOS), leaving ⌘M to Minimize.
-- The desktop editor's first start asks whether to share anonymous usage counts.
-- Settings → Picture → Smoothing smooths the picture's jagged edges with a quick pass over each frame, on OpenGL, Direct3D, Metal, the web and the processor alike, and a take records it; on by default, Off for the raw pixels.
-- Live patching: Shift+F11, or Tab over a full-screen picture, puts the patch over the picture to edit while it plays, as modules that fade while nobody touches them or as text with F2; F11 gives the picture the whole window.
-- Live patching needs no keyboard: the transport row's Live button goes there, the transport over the picture shows or hides the patch, swaps the modules for the text (best with a keyboard, it says) and leaves, a phone's Back gives the window back, and the web editor takes the browser's whole screen for it and has the live settings in its settings panel.
-- Over a live picture, modules have a dark line outside their edge and a light one inside, and wires a dark casing, so they stand out against a picture of any color.
-- Settings → Picture says how solid the modules and the band behind the text are over a live picture, how long each is left alone before it fades (0 for never), and whether the pointer brings faded text back as well as the keys.
-- An unwired input's value sits in a well with a level line under it; drag it up or down to turn it, Shift for finer, Alt-click for its default, and a card over the module reads it out large with its range and where it started. Its socket is a ring in its kind's color. A click picks a well: the arrows and the wheel nudge it, Backspace resets it, Tab moves on, and Enter or a double-click opens it for an exact value, typed as a number, a note name or a time.
-- Alt+L on a picked value links it to a panel knob, new or one already there; a linked socket is a filled diamond with the knob's chip in its well, and the chip picks another knob or unlinks. A socket that only a wire can set is a hollow diamond.
-- On a touch screen a tap on a value shows buttons under its module to step it, make the steps fine or type it; a held finger slides it with a ring and a tether where it began, and a second finger makes the slide fine.
-- Over a live picture only the modules' fills and the wires let it through: their text stays at full strength, values at rest are lighter with a shadow, and a module whose value is in hand keeps a solid fill.
-- A shut box's input rows have the wells, knob chips and diamonds of the modules inside, and turn, pick and link the same way.
-- An Expression's inputs that its formula doesn't read are drawn faint.
-- On a phone the web editor's transport and status bars stay on screen, under the browser's address bar or held sideways, and added to the home screen it opens full screen.
-
 ### Viewer
 
-- `--smooth fast` or `--smooth off` overrides the editor's Smoothing setting.
-- `--driver` picks what draws the picture for one run (`metal` or `opengl` on a Mac, `opengl` or `direct3d` on Windows), overriding Settings → Picture.
-
 ### Command line
-
-- `ask`, `measure` and `shot` list the shipped presets with `--presets`, as the other commands that take `--preset` do.
-- `render` smooths the picture's jagged edges at four samples a pixel; `--smooth fast` takes a quick pass over each frame instead, and `--smooth off` draws it as before.
 
 ### Installing
 
 ### Performance
 
+### Fixes
+
+## 0.11.0 — 2026-10-27
+
+100 commits since 0.10.1.
+
+### Modules
+
+- A Speech plugin on the preset site: Speak says or sings the words typed into it in a voice made from filters, with `~` for a rest between sung notes, and Mouth draws lips that move with it and the words as they are said, with a Daisy Bell preset that sings.
+- Raymarch, in the Picture plugin: a lattice, a tunnel or a gyroid in 3D for the camera to fly through, drawn by marching a ray from every pixel, with Flythrough, a techno track flying through a lattice that pulses with the kick.
+
+### Presets
+
+- Every preset is tagged from ten topics, so the gallery's topic row is short: basics, song, playable, drums, melody, ambient, synthesis, effects, scope and patterns; a preset's card shows the description and tags written in its file, and a plugin registers one with `PresetText.Preset` in place of `PresetText.Embedded`.
+
+### Editor
+
+- Live patching: Shift+F11, the transport row's Live button, or Tab over a full-screen picture puts the patch over the picture to edit while it plays, as modules that fade while nobody touches them or as text with F2, outlined to stand out against a picture of any color, with no keyboard needed and its look set in Settings → Picture.
+- An unwired input's value sits in a well to drag, pick, nudge, reset or type, with a card over the module reading it out; Alt+L links it to a panel knob; on a touch screen a tap gives buttons to step it and a held finger slides it; a shut box's inputs work the same.
+- macOS menu bar: Flyback's own app menu and File, Edit, View, Play, Window and Help menus, with Measure moved to Ctrl+Shift+M (⇧⌘M); on Windows and Linux, Settings → Canvas → Show a menu bar puts the same menus along the top of the window.
+- Settings → Picture → Smoothing smooths the picture's jagged edges on every renderer, on by default; `render` smooths at four samples a pixel, and `--smooth fast` or `--smooth off` overrides it for one run.
+- The desktop editor's first start asks whether to share anonymous usage counts.
+- An Expression's inputs that its formula doesn't read are drawn faint.
+- On a phone the web editor's transport and status bars stay on screen, and added to the home screen it opens full screen.
+
+### Command line
+
+- `ask`, `measure` and `shot` list the shipped presets with `--presets`, as the other commands that take `--preset` do.
+
+### Performance
+
 - The sound on an iPhone or iPad plays about 40% faster.
-- On a Mac, an iPhone or an iPad the picture draws through Metal, and a large patch no longer holds the window while its shader builds; on a Mac the Renderer box picks Metal or OpenGL.
+- On a Mac, an iPhone or an iPad the picture draws through Metal, and a large patch no longer holds the window while its shader builds; Settings → Picture's Renderer box, or the viewer's `--driver` for one run, picks Metal or OpenGL on a Mac and OpenGL or Direct3D on Windows.
 
 ### Fixes
 

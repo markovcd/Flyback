@@ -1,3 +1,1 @@
 #nullable enable
-*REMOVED*Flyback.Core.Graph.PatchPreset.Tags.get -> System.Collections.Generic.IReadOnlyList<string!>?
-*REMOVED*Flyback.Core.Graph.PatchPreset.Tags.init -> void
