@@ -50,6 +50,14 @@ runtime.setModuleImports('page', {
   },
   attachGl: box => gl.attach(box.firstChild, () => runtime.localHeapViewU8()),
   hasFocus: () => document.hasFocus(),
+  // The native controls' layer, which holds the picture's canvas, goes under Avalonia's own canvas.
+  pictureBehind: behind => {
+    for (const layer of document.querySelectorAll('.avalonia-native-host')) {
+      // Isolated, so under Avalonia's canvas is still above the page's own ground.
+      layer.parentElement.style.isolation = 'isolate';
+      layer.style.zIndex = behind ? '-1' : '';
+    }
+  },
   // Not every browser lets a page have the screen (an iPhone's does not), so a refusal is ignored.
   wholeScreen: whole => {
     const root = document.documentElement;

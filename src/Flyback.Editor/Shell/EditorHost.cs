@@ -29,6 +29,12 @@ public sealed record EditorHost
     /// </summary>
     public Action<bool>? WholeScreen { get; init; }
 
+    /// <summary>
+    /// Moves the picture behind the editor's surface, or back above it, for a host that draws
+    /// the picture itself above that surface, a page's canvas. Null where the editor draws it.
+    /// </summary>
+    public Action<bool>? PictureBehind { get; init; }
+
     /// <summary>Leaves the editor for the front page of the site it is served from. Null puts no mark on the toolbar.</summary>
     public Action? Home { get; init; }
 }

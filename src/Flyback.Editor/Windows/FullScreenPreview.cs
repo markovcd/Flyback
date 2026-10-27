@@ -44,6 +44,8 @@ internal sealed class FullScreenPreview(
     TransportControls transport,
     EditorHost host)
 {
+    private readonly PictureBehind? behind = host.PictureBehind is { } move ? new(move) : null;
+
     /// <summary>The grid the shell stands in, or null before the layout is built.</summary>
     public Grid? Columns { get; set; }
 
@@ -235,6 +237,9 @@ internal sealed class FullScreenPreview(
 
         if (transport.Stats is not null) Over(transport.Stats);
         transport.SyncStats(IsFullScreen);
+
+        // A picture the host draws above everything goes behind, so what stands over it shows.
+        behind?.Put(previewBox, full);
 
         // The keyboard goes with what is showing: the canvas it was on is put away.
         if (full) previewBox.Focus();

@@ -128,6 +128,32 @@ public class LiveByTouchTests : EditorTest
         asked.ShouldBe([true, false]);
     }
 
+    /// <summary>A page's picture is the browser's, drawn above the editor, so it goes under it and nothing between hides it.</summary>
+    [AvaloniaFact]
+    public void A_picture_the_host_draws_goes_behind_the_editor_with_nothing_opaque_over_it()
+    {
+        var moved = new List<bool>();
+        var window = NewMainWindow(new EditorSetup { Host = new() { InPage = true, PictureBehind = moved.Add } });
+        window.Show();
+        Settle(window);
+
+        var box = Service<FullScreenPreview>(window).PreviewBox!;
+
+        GoLive(window);
+
+        moved.ShouldBe([true]);
+        for (Avalonia.Visual? at = box; at is not null; at = Avalonia.VisualTree.VisualExtensions.GetVisualParent(at))
+        {
+            var ground = at switch { Panel p => p.Background, Border b => b.Background, Avalonia.Controls.Primitives.TemplatedControl t => t.Background, _ => null };
+            (ground is null || ground == Avalonia.Media.Brushes.Transparent).ShouldBeTrue($"{at.GetType().Name} hides the picture");
+        }
+
+        Click(window, Tool(window, "liveLeave"));
+
+        moved.ShouldBe([true, false]);
+        box.Background.ShouldBe(Avalonia.Media.Brushes.Black, "the picture's box has its ground back");
+    }
+
     [AvaloniaFact]
     public void Text_over_the_picture_says_it_wants_a_keyboard_until_a_key_is_pressed()
     {

@@ -23,7 +23,8 @@ namespace Flyback.Editor.Web;
 /// rather than handed to a render thread. The canvas is the browser's, drawn above
 /// Avalonia's own, so nothing of Avalonia's can overlay it: while a dialog is up it
 /// is hidden, and the black box it sits in shows instead, and wherever a popup lies
-/// over it a hole is cut for the popup to show through. A shader that will not build
+/// over it a hole is cut for the popup to show through. While the picture has the screen
+/// it goes behind Avalonia's canvas instead, so the patch can stand over it. A shader that will not build
 /// or a context that fails is said over the black box, never handed to the processor.
 /// </remarks>
 internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
