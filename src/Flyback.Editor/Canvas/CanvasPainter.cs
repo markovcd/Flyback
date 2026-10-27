@@ -189,6 +189,15 @@ internal sealed class CanvasPainter(
     /// <summary>The line through the name of a module that is switched off.</summary>
     private static readonly IPen OffStrike = new ImmutablePen(HeaderTextBrush, 1.5);
 
+    /// <summary>Over a live picture, the dark line outside a module's edge.</summary>
+    private static readonly IPen GlassEdgeDark = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromArgb(220, 0, 0, 0)), 1.5);
+
+    /// <summary>Over a live picture, the light line inside a module's edge.</summary>
+    private static readonly IPen GlassEdgeLight = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromArgb(150, 255, 255, 255)), 1);
+
+    /// <summary>Over a live picture, the dark casing under a wire.</summary>
+    private static readonly IBrush GlassCasing = new ImmutableSolidColorBrush(Color.FromArgb(200, 0, 0, 0));
+
     /// <summary>
     /// The dashed ring round a group that is open — see OpenGroup.
     /// </summary>
@@ -486,6 +495,8 @@ internal sealed class CanvasPainter(
             var pen = new Pen(ink, thickness, dashes);
             var count = voices.GetValueOrDefault(connection.SourceNode, 1);
 
+            if (SeeThrough) Route(new Pen(GlassCasing, thickness + 2.5, dashes));
+
             if (count > 1)
             {
                 Route(new Pen(new SolidColorBrush(color, opacity * VoicesBandOpacity), thickness * VoicesBand, dashes));
@@ -675,6 +686,8 @@ internal sealed class CanvasPainter(
         using (context.PushOpacity(FillOpacity(node.Id)))
             DrawFill(context, def, body, bounds, header, accent, floor, isSelected, backdrop, border);
 
+        DrawGlassEdge(context, bounds);
+
         var titleAt = TitleAt(bounds);
 
         var titleBrush = Ink(titleAt.Y + TitleInk / 2, TitleInk, fade: 0, HeaderTextBrush);
@@ -787,6 +800,18 @@ internal sealed class CanvasPainter(
     /// way of the work. The strip is left bare, because filling it makes a header,
     /// and a header is what a group wears when it is shut.
     /// </remarks>
+    /// <summary>
+    /// Over a live picture, a dark line just outside <paramref name="bounds"/> and a light one
+    /// just inside, so a module stands out against a picture of any color, its own too.
+    /// </summary>
+    private void DrawGlassEdge(DrawingContext context, Rect bounds)
+    {
+        if (!SeeThrough) return;
+
+        context.DrawRectangle(null, GlassEdgeDark, new RoundedRect(bounds.Inflate(1), NodeGeometry.CornerRadius + 1));
+        context.DrawRectangle(null, GlassEdgeLight, new RoundedRect(bounds.Deflate(1), Math.Max(0, NodeGeometry.CornerRadius - 1)));
+    }
+
     private void DrawOpenGroups(DrawingContext context, CanvasScene scene)
     {
         if (Patch.Groups is null) return;
@@ -911,6 +936,8 @@ internal sealed class CanvasPainter(
         context.DrawRectangle(NodeSkin.Box(isSelected), BorderFor(isSelected, isFocused), body);
 
         NodeSkin.DrawMark(context, body, ModuleGlyphs.Group, NodeSkin.BoxMark);
+
+        DrawGlassEdge(context, bounds);
 
         var header = HeaderOf(bounds);
 
