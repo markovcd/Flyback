@@ -70,7 +70,7 @@ meant.
 | **the screen**, **the speakers** | Where the picture and the sound go: the two ends a patch is compiled for. | — | display, monitor (those are hardware the window sits on) |
 | **sink** | The screen or the speakers, from the compiler's side. An engineering word; the UI never says it. | — | output, destination |
 | **preview** | The live picture in the editor's window. | `PreviewHost`, `IPreviewSurface` | viewer, monitor, canvas |
-| **live patching** | The patch drawn over a full-screen picture, as modules or as text, and edited there, for playing it in front of people. | `LivePatching` | performance mode, overlay |
+| **live patching** | The patch drawn over a full-screen picture, as whichever of modules or text owns it, and edited there, for playing it in front of people. | `LivePatching` | performance mode, overlay |
 | **Scope**, **Analyzer** | The two meters: what the speakers played over time, and its spectrum. | type ids `ScopeTypeId`, `AnalyzerTypeId` | oscilloscope, spectrum view |
 | **Beam** | The X-Y display: what the speakers played on two inputs, drawn against each other as a beam on phosphor. | `BeamTypeId` | oscilloscope, XY scope, vectorscope |
 | **Path**, **drawing** | The Drawings plugin's module that plays a drawing as sound, and the SVG, OBJ or PNG it plays, read as one closed path. | `PathModule`, `DrawingExtra`, `LoadedShape` | vector, model (for an SVG or a PNG) |

@@ -86,7 +86,6 @@ public sealed class FullScreenTransportTests : EditorTest
             "Play the patch's length round and round",
             "Sound on or off",
             "The patch over the picture, or the picture alone  (Tab)",
-            "The patch as modules or as text  (F2). Text is best with a keyboard.",
             "Give the window back  (Esc)",
         ]);
     }

@@ -10,6 +10,8 @@
 
 ### Editor
 
+- Live patching shows only the view that owns the patch: its text when the text is the document, its modules otherwise. F2 no longer swaps them over the picture, and the transport over the picture has no text button.
+
 ### Viewer
 
 ### Command line

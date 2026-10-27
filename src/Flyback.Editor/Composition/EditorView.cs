@@ -222,7 +222,10 @@ internal sealed class EditorView : Border
         // for the shell in a way no letter is any more.
         if (e.Key == Key.F2)
         {
-            reactions.Raise(new CodeAsked(!document.ShowingCode));
+            // Live, the view over the picture is the one that owns the patch.
+            if (live.IsOn) report.Say(document.Owned ? "Live, the text owns this patch." : "Live, the modules own this patch.");
+            else reactions.Raise(new CodeAsked(!document.ShowingCode));
+
             e.Handled = true;
             return;
         }

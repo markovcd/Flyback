@@ -53,24 +53,6 @@ public class LiveByTouchTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void The_text_button_swaps_the_modules_for_the_text_and_back()
-    {
-        var window = Open();
-        var live = Service<LivePatching>(window);
-
-        GoLive(window);
-        Click(window, Tool(window, "liveText"));
-
-        live.Coding.ShouldBeTrue();
-        Service<TransportControls>(window).Overlay!.Coding.ShouldBeTrue();
-
-        Click(window, Tool(window, "liveText"));
-
-        live.IsOn.ShouldBeTrue();
-        live.Coding.ShouldBeFalse();
-    }
-
-    [AvaloniaFact]
     public void The_patch_button_takes_the_patch_off_the_picture_and_puts_it_back()
     {
         var window = Open();
@@ -160,8 +142,9 @@ public class LiveByTouchTests : EditorTest
         var window = Open();
         var live = Service<LivePatching>(window);
 
+        var document = Service<Document>(window);
+        document.TakeSource(document.AsText());
         GoLive(window);
-        Click(window, Tool(window, "liveText"));
 
         live.KeyboardHinted.ShouldBeTrue();
 
@@ -170,8 +153,8 @@ public class LiveByTouchTests : EditorTest
 
         live.KeyboardHinted.ShouldBeFalse();
 
-        Click(window, Tool(window, "liveText"));
-        Click(window, Tool(window, "liveText"));
+        Click(window, Tool(window, "livePatch"));
+        Click(window, Tool(window, "livePatch"));
 
         live.KeyboardHinted.ShouldBeFalse("once a keyboard has been used, it is not asked for again");
     }

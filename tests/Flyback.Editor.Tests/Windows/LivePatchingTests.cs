@@ -158,14 +158,21 @@ public class LivePatchingTests : EditorTest
 
     private static void PressF2(MainWindow window) => Press(window, Key.F2, RawInputModifiers.None, PhysicalKey.F2);
 
+    private void TextOwns(MainWindow window)
+    {
+        var document = Service<Document>(window);
+        document.TakeSource(document.AsText());
+        Settle(window);
+    }
+
     [AvaloniaFact]
-    public void A_patch_showing_as_text_goes_live_as_text()
+    public void A_patch_its_text_owns_goes_live_as_text()
     {
         var window = Open();
         var source = Source(window);
         var pane = source.GetVisualParent();
 
-        PressF2(window);
+        TextOwns(window);
         GoLive(window);
 
         source.IsEffectivelyVisible.ShouldBeTrue("the text stands over the picture");
@@ -183,27 +190,36 @@ public class LivePatchingTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void F2_over_the_picture_swaps_the_modules_for_the_text_and_back()
+    public void A_patch_the_modules_own_goes_live_as_modules_even_from_the_text_view()
     {
         var window = Open();
-        var editor = Editor(window);
-        var source = Source(window);
+        var live = Service<LivePatching>(window);
 
+        PressF2(window);
         GoLive(window);
-        editor.IsEffectivelyVisible.ShouldBeTrue();
+
+        live.Coding.ShouldBeFalse("only the view that owns the patch goes over the picture");
+        Editor(window).GetVisualParent().ShouldBeSameAs(Columns(window));
+        Source(window).IsEffectivelyVisible.ShouldBeFalse();
 
         PressF2(window);
-        source.IsEffectivelyVisible.ShouldBeTrue("the text takes the modules' place over the picture");
-        source.SeeThrough.ShouldBeTrue();
-        editor.IsEffectivelyVisible.ShouldBeFalse();
-        editor.SeeThrough.ShouldBeFalse();
-        Service<FullScreenPreview>(window).IsFullScreen.ShouldBeTrue("still over the picture");
 
+        live.Coding.ShouldBeFalse("F2 does not swap the view over the picture");
+        Editor(window).IsEffectivelyVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void F2_over_the_text_live_leaves_the_text_there()
+    {
+        var window = Open();
+        var live = Service<LivePatching>(window);
+
+        TextOwns(window);
+        GoLive(window);
         PressF2(window);
-        editor.IsEffectivelyVisible.ShouldBeTrue();
-        editor.SeeThrough.ShouldBeTrue();
-        source.IsEffectivelyVisible.ShouldBeFalse();
-        source.SeeThrough.ShouldBeFalse();
+
+        live.Coding.ShouldBeTrue();
+        Source(window).IsEffectivelyVisible.ShouldBeTrue();
     }
 
     /// <summary>Over the text Tab indents, so it is Escape or Shift+F11 that leaves.</summary>
@@ -212,7 +228,7 @@ public class LivePatchingTests : EditorTest
     {
         var window = Open();
 
-        PressF2(window);
+        TextOwns(window);
         GoLive(window);
         PressTab(window);
 
@@ -226,7 +242,7 @@ public class LivePatchingTests : EditorTest
     {
         var window = Open();
 
-        PressF2(window);
+        TextOwns(window);
         GoLive(window);
         All<AvaloniaEdit.Editing.TextArea>(window).Single().Focus();
         PressEscape(window);
@@ -240,7 +256,7 @@ public class LivePatchingTests : EditorTest
     {
         var window = Open();
 
-        PressF2(window);
+        TextOwns(window);
         var editor = All<AvaloniaEdit.TextEditor>(window).Single();
         var apply = All<Button>(window).Single(button => button.Name == "apply");
         GoLive(window);
@@ -260,7 +276,7 @@ public class LivePatchingTests : EditorTest
         var window = Open();
         Play(window);
 
-        PressF2(window);
+        TextOwns(window);
         GoLive(window);
         Press(window, Key.Space, RawInputModifiers.None, PhysicalKey.Space);
 

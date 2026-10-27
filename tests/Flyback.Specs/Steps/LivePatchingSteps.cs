@@ -21,8 +21,8 @@ public sealed class LivePatchingSteps(PatchContext context, EditorDriver editor)
     [When("the Live button is pressed")]
     public void WhenLiveButton() => editor.PressPanelButton("live");
 
-    [When("the text button over the picture is pressed")]
-    public void WhenTextButton() => editor.PressPanelButton("liveText");
+    [Given("its text is the document")]
+    public void GivenTextOwns() => editor.TakeTextAsDocument();
 
     [When("the leave button over the picture is pressed")]
     public void WhenLeaveButton() => editor.PressPanelButton("liveLeave");
@@ -31,6 +31,7 @@ public sealed class LivePatchingSteps(PatchContext context, EditorDriver editor)
     public void WhenTab() => editor.Press(PhysicalKey.Tab);
 
     [When("F2 is pressed over the picture")]
+    [When("F2 is pressed")]
     public void WhenF2() => editor.Press(PhysicalKey.F2);
 
     [Then("the patch's text stands over the picture")]

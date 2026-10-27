@@ -40,7 +40,6 @@ public sealed class TransportOverlay : TuckedAway
     private readonly Button muteButton;
     private readonly Button loopButton;
     private readonly Button patchButton;
-    private readonly Button textButton;
     private readonly Button leaveButton;
 
     public TransportOverlay()
@@ -60,12 +59,10 @@ public sealed class TransportOverlay : TuckedAway
         loopButton = Tool(Glyphs.Loop(), "Play the patch's length round and round", () => LoopClicked?.Invoke());
         muteButton = Tool(Glyphs.Speaker(), "Sound on or off", () => MuteClicked?.Invoke());
         patchButton = Tool(Glyphs.Live(), "The patch over the picture, or the picture alone  (Tab)", () => PatchClicked?.Invoke());
-        textButton = Tool(Glyphs.Code(), "The patch as modules or as text  (F2). Text is best with a keyboard.", () => TextClicked?.Invoke());
         leaveButton = Tool(Glyphs.Cross(), "Give the window back  (Esc)", () => LeaveClicked?.Invoke());
         patchButton.Name = "livePatch";
-        textButton.Name = "liveText";
         leaveButton.Name = "liveLeave";
-        patchButton.IsVisible = textButton.IsVisible = leaveButton.IsVisible = false;
+        patchButton.IsVisible = leaveButton.IsVisible = false;
 
         // After the base's hover and press styles, so a switch that is on stays lit under the pointer.
         var engaged = new Style(x => x
@@ -88,7 +85,6 @@ public sealed class TransportOverlay : TuckedAway
         row.Children.Add(loopButton);
         row.Children.Add(muteButton);
         row.Children.Add(patchButton);
-        row.Children.Add(textButton);
         row.Children.Add(leaveButton);
 
         Margin = new Thickness(Inset);
@@ -124,9 +120,6 @@ public sealed class TransportOverlay : TuckedAway
     /// <summary>The patch button was pressed: the patch over the picture, or taken off it.</summary>
     public event Action? PatchClicked;
 
-    /// <summary>The text button was pressed: the patch as text, or as modules again.</summary>
-    public event Action? TextClicked;
-
     /// <summary>The leave button was pressed: the window given back.</summary>
     public event Action? LeaveClicked;
 
@@ -136,7 +129,7 @@ public sealed class TransportOverlay : TuckedAway
         get => leaveButton.IsVisible;
         set
         {
-            patchButton.IsVisible = textButton.IsVisible = leaveButton.IsVisible = value;
+            patchButton.IsVisible = leaveButton.IsVisible = value;
             InvalidateMeasure();
         }
     }
@@ -146,13 +139,6 @@ public sealed class TransportOverlay : TuckedAway
     {
         get => patchButton.Classes.Contains(Engaged);
         set => patchButton.Classes.Set(Engaged, value);
-    }
-
-    /// <summary>Whether the patch is shown as text, which lights the text button.</summary>
-    public bool Coding
-    {
-        get => textButton.Classes.Contains(Engaged);
-        set => textButton.Classes.Set(Engaged, value);
     }
 
     /// <summary>Raised when the rewind button is pressed.</summary>

@@ -59,7 +59,8 @@ public class LivePatchingSettingsTests : OutputSettingsTest
         var window = Open(settingsPath);
         var live = Service<LivePatching>(window);
 
-        window.KeyPress(Avalonia.Input.Key.F2, Avalonia.Input.RawInputModifiers.None, Avalonia.Input.PhysicalKey.F2, null);
+        var document = Service<Flyback.Editor.Hubs.Document>(window);
+        document.TakeSource(document.AsText());
         live.Toggle();
         Settle(window);
         live.Coding.ShouldBeTrue();
@@ -82,7 +83,8 @@ public class LivePatchingSettingsTests : OutputSettingsTest
 
         Set(window, dialog => All<ComboBox>(dialog).Single(c => c.Name == "textWakes").SelectedIndex = 1);
 
-        window.KeyPress(Avalonia.Input.Key.F2, Avalonia.Input.RawInputModifiers.None, Avalonia.Input.PhysicalKey.F2, null);
+        var document = Service<Flyback.Editor.Hubs.Document>(window);
+        document.TakeSource(document.AsText());
         live.Toggle();
         Settle(window);
 
@@ -102,7 +104,8 @@ public class LivePatchingSettingsTests : OutputSettingsTest
 
         Set(window, dialog => All<ComboBox>(dialog).Single(c => c.Name == "textWakes").SelectedIndex = 1);
 
-        window.KeyPress(Avalonia.Input.Key.F2, Avalonia.Input.RawInputModifiers.None, Avalonia.Input.PhysicalKey.F2, null);
+        var document = Service<Flyback.Editor.Hubs.Document>(window);
+        document.TakeSource(document.AsText());
         live.Toggle();
         Settle(window);
 

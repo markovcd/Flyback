@@ -1287,6 +1287,13 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     /// <summary>Whether the picture has the whole window.</summary>
     public bool PictureFullScreen => ReadWindow(_ => Service<FullScreenPreview>().IsFullScreen);
 
+    /// <summary>Makes the open patch's own text the document, as opening it from a <c>.fbks</c> would.</summary>
+    public void TakeTextAsDocument() => DoWindow((_, _) =>
+    {
+        var document = Service<Flyback.Editor.Hubs.Document>();
+        document.TakeSource(document.AsText());
+    });
+
     /// <summary>Fades the patch over the picture as its wait running out would.</summary>
     public void LeaveLivePatchAlone() => DoWindow((_, _) => Service<LivePatching>().Fade.Fade());
 

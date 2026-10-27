@@ -15,17 +15,17 @@ using Flyback.Ui.Controls;
 namespace Flyback.Editor.Windows;
 
 /// <summary>
-/// The patch drawn over a full-screen picture and edited there, as modules or as text,
-/// for playing a patch live in front of people.
+/// The patch drawn over a full-screen picture and edited there, for playing a patch live
+/// in front of people: as text when the text owns the patch, as modules otherwise.
 /// </summary>
 /// <remarks>
-/// Whichever view the patch is showing, the canvas or the text, is lifted out of its pane
-/// into the preview's cell, just above the picture, rather than the picture being moved:
-/// the preview is a GPU surface that rebuilds when reparented, and the views move for
-/// free. The transport and the knobs over the picture stay above it. F2 swaps the view
-/// that is lifted, as it swaps the views in their pane.
+/// Only the view that owns the patch goes over the picture, since it is the one that
+/// edits it (ADR-0068). It is lifted out of its pane into the preview's cell, just above
+/// the picture, rather than the picture being moved: the preview is a GPU surface that
+/// rebuilds when reparented, and the views move for free. The transport and the knobs
+/// over the picture stay above it.
 /// </remarks>
-internal sealed class LivePatching : IReactTo<ViewChanged>, IReactTo<LiveAsked>
+internal sealed class LivePatching : IReactTo<ViewChanged>, IReactTo<OwnershipChanged>, IReactTo<LiveAsked>
 {
     private readonly FullScreenPreview fullScreen;
     private readonly NodeEditor editor;
@@ -87,11 +87,6 @@ internal sealed class LivePatching : IReactTo<ViewChanged>, IReactTo<LiveAsked>
         overlay = transport;
         transport.Live = true;
         transport.PatchClicked += () => ShowPatch(!IsOn);
-        transport.TextClicked += () =>
-        {
-            document.ShowCode(!document.ShowingCode);
-            ShowPatch(true);
-        };
         transport.LeaveClicked += fullScreen.Leave;
         transport.AttachedToVisualTree += (_, _) =>
             TopLevel.GetTopLevel(transport)?.AddHandler(InputElement.KeyDownEvent, KeyPressed, RoutingStrategies.Tunnel, handledEventsToo: true);
@@ -111,7 +106,6 @@ internal sealed class LivePatching : IReactTo<ViewChanged>, IReactTo<LiveAsked>
         if (overlay is null) return;
 
         overlay.PatchOver = IsOn;
-        overlay.Coding = Coding;
     }
 
     /// <summary>The fading of the patch while nothing touches it.</summary>
@@ -168,6 +162,21 @@ internal sealed class LivePatching : IReactTo<ViewChanged>, IReactTo<LiveAsked>
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// A patch whose owner changed while live, such as one opened over it, shows its
+    /// new owner once the change is whole.
+    /// </summary>
+    public Task On(OwnershipChanged notice)
+    {
+        if (IsOn) Dispatcher.UIThread.Post(ShowOwner);
+        return Task.CompletedTask;
+    }
+
+    private void ShowOwner()
+    {
+        if (IsOn && document.ShowingCode != document.Owned) document.ShowCode(document.Owned);
+    }
+
     public Task On(ViewChanged notice)
     {
         if (IsOn)
@@ -198,6 +207,8 @@ internal sealed class LivePatching : IReactTo<ViewChanged>, IReactTo<LiveAsked>
     private void Lift()
     {
         if (fullScreen.Columns is not { } columns || fullScreen.PreviewBox is not { } picture) return;
+
+        if (document.ShowingCode != document.Owned) document.ShowCode(document.Owned);
 
         Control view = document.ShowingCode ? source : editor;
 
