@@ -48,6 +48,8 @@ internal sealed class IdleFade(Func<bool> busy)
 
         control.AddHandler(InputElement.KeyDownEvent, Woken, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
 
+        foreach (var swallowed in Swallowed) control.AddHandler(swallowed, Swallow, RoutingStrategies.Tunnel);
+
         timer = new DispatcherTimer { Interval = wait };
         timer.Tick += (_, _) => Fade();
 
@@ -65,9 +67,9 @@ internal sealed class IdleFade(Func<bool> busy)
         control.RemoveHandler(InputElement.PointerMovedEvent, Woken);
         control.RemoveHandler(InputElement.PointerPressedEvent, Woken);
         control.RemoveHandler(InputElement.KeyDownEvent, Woken);
+        foreach (var swallowed in Swallowed) control.RemoveHandler(swallowed, Swallow);
         control.Transitions = transitionsBefore;
         control.Opacity = 1;
-        control.IsHitTestVisible = true;
         IsFaded = false;
 
         faded = null;
@@ -80,7 +82,6 @@ internal sealed class IdleFade(Func<bool> busy)
         if (faded is null || timer is null) return;
 
         faded.Opacity = 1;
-        faded.IsHitTestVisible = true;
         IsFaded = false;
         timer.Stop();
         timer.Start();
@@ -100,11 +101,23 @@ internal sealed class IdleFade(Func<bool> busy)
         }
 
         faded.Opacity = 0;
-
-        // Hidden from a pointer that can't wake it, so nothing unseen is selected or dragged.
-        faded.IsHitTestVisible = wakesOnPointer;
         IsFaded = true;
     }
 
+    private static readonly RoutedEvent[] Swallowed =
+    [
+        InputElement.PointerPressedEvent, InputElement.PointerReleasedEvent, InputElement.PointerMovedEvent,
+        InputElement.PointerWheelChangedEvent, InputElement.TappedEvent, InputElement.DoubleTappedEvent,
+    ];
+
     private void Woken(object? sender, RoutedEventArgs e) => Wake();
+
+    /// <summary>
+    /// A pointer that can't wake the faded control lands on it and goes no further: nothing
+    /// unseen is selected or dragged, and the picture under it is not clicked.
+    /// </summary>
+    private void Swallow(object? sender, RoutedEventArgs e)
+    {
+        if (IsFaded && !wakesOnPointer) e.Handled = true;
+    }
 }

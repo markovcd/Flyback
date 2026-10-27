@@ -124,7 +124,7 @@ public class LivePatchingSettingsTests : OutputSettingsTest
     }
 
     [AvaloniaFact]
-    public void Keys_only_faded_text_comes_back_at_a_key_after_a_click_went_through_it()
+    public void Keys_only_faded_text_keeps_clicks_off_the_picture_and_comes_back_at_a_key()
     {
         var window = Open(settingsPath);
         var live = Service<LivePatching>(window);
@@ -133,6 +133,7 @@ public class LivePatchingSettingsTests : OutputSettingsTest
 
         var document = Service<Flyback.Editor.Hubs.Document>(window);
         document.TakeSource(document.AsText());
+        Play(window);
         live.Toggle();
         Settle(window);
 
@@ -140,16 +141,50 @@ public class LivePatchingSettingsTests : OutputSettingsTest
         var at = area.TranslatePoint(new Point(40, 40), window)!.Value;
 
         live.Fade.Fade();
-        window.MouseDown(at, Avalonia.Input.MouseButton.Left);
-        window.MouseUp(at, Avalonia.Input.MouseButton.Left);
-        Settle(window);
-        area.IsKeyboardFocusWithin.ShouldBeFalse("the click went through to the picture");
+        for (var i = 0; i < 2; i++)
+        {
+            window.MouseDown(at, Avalonia.Input.MouseButton.Left);
+            window.MouseUp(at, Avalonia.Input.MouseButton.Left);
+        }
 
+        Settle(window);
+
+        Service<Playback>(window).Paused.ShouldBeFalse("a click on the faded text does not reach the picture");
+        live.IsOn.ShouldBeTrue("nor does a double click");
+        live.Fade.IsFaded.ShouldBeTrue();
+
+        Service<FullScreenPreview>(window).PreviewBox!.Focus();
         window.KeyPress(Avalonia.Input.Key.Right, Avalonia.Input.RawInputModifiers.None, Avalonia.Input.PhysicalKey.ArrowRight, null);
         Settle(window);
 
         live.Fade.IsFaded.ShouldBeFalse("a key brings the text back wherever the keys had gone");
         area.IsKeyboardFocusWithin.ShouldBeTrue("and the next key types into it");
+    }
+
+    [AvaloniaFact]
+    public void Clicks_on_faded_modules_do_not_reach_the_picture()
+    {
+        var window = Open(settingsPath);
+        var live = Service<LivePatching>(window);
+
+        Play(window);
+        live.Toggle();
+        Settle(window);
+
+        var editor = Editor(window);
+        var at = editor.TranslatePoint(new Point(editor.Bounds.Width / 2, editor.Bounds.Height - 30), window)!.Value;
+
+        live.Fade.Fade();
+        for (var i = 0; i < 2; i++)
+        {
+            window.MouseDown(at, Avalonia.Input.MouseButton.Left);
+            window.MouseUp(at, Avalonia.Input.MouseButton.Left);
+        }
+
+        Settle(window);
+
+        Service<Playback>(window).Paused.ShouldBeFalse("a click on the modules does not reach the picture");
+        live.IsOn.ShouldBeTrue("nor does a double click");
     }
 
     [AvaloniaFact]
