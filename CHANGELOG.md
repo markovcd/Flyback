@@ -22,6 +22,8 @@
 
 ### Fixes
 
+- Live text set to wake on keys only comes back at a key even after a click went through it onto the picture.
+
 - macOS: an update no longer fails to sign the app when a plugin from the preset site is installed. Installed plugins now live in `~/.config/Flyback/plugins` rather than inside `Flyback.app`, and the ones already inside it are moved there. An update whose signing fails says it is installed rather than that it will try again.
 
 ## 0.11.0 — 2026-10-27

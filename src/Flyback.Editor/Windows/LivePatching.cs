@@ -98,6 +98,16 @@ internal sealed class LivePatching : IReactTo<ViewChanged>, IReactTo<OwnershipCh
     {
         keySeen = true;
         keyboardHint.IsVisible = false;
+
+        // Faded text that lost the keys, to a click through it onto the picture, takes them
+        // back at the next one, which only wakes it. Escape and the function keys keep their own.
+        if (lifted == source && fade.IsFaded && !source.IsKeyboardFocusWithin
+            && e.Key is not (Key.Escape or (>= Key.F1 and <= Key.F24)))
+        {
+            fade.Wake();
+            source.Focus();
+            e.Handled = true;
+        }
     }
 
     /// <summary>Lights the live buttons as the patch is shown.</summary>

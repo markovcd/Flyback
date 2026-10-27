@@ -124,6 +124,35 @@ public class LivePatchingSettingsTests : OutputSettingsTest
     }
 
     [AvaloniaFact]
+    public void Keys_only_faded_text_comes_back_at_a_key_after_a_click_went_through_it()
+    {
+        var window = Open(settingsPath);
+        var live = Service<LivePatching>(window);
+
+        Set(window, dialog => All<ComboBox>(dialog).Single(c => c.Name == "textWakes").SelectedIndex = 1);
+
+        var document = Service<Flyback.Editor.Hubs.Document>(window);
+        document.TakeSource(document.AsText());
+        live.Toggle();
+        Settle(window);
+
+        var area = All<AvaloniaEdit.Editing.TextArea>(window).Single();
+        var at = area.TranslatePoint(new Point(40, 40), window)!.Value;
+
+        live.Fade.Fade();
+        window.MouseDown(at, Avalonia.Input.MouseButton.Left);
+        window.MouseUp(at, Avalonia.Input.MouseButton.Left);
+        Settle(window);
+        area.IsKeyboardFocusWithin.ShouldBeFalse("the click went through to the picture");
+
+        window.KeyPress(Avalonia.Input.Key.Right, Avalonia.Input.RawInputModifiers.None, Avalonia.Input.PhysicalKey.ArrowRight, null);
+        Settle(window);
+
+        live.Fade.IsFaded.ShouldBeFalse("a key brings the text back wherever the keys had gone");
+        area.IsKeyboardFocusWithin.ShouldBeTrue("and the next key types into it");
+    }
+
+    [AvaloniaFact]
     public void A_wait_of_nought_never_fades_the_modules()
     {
         var window = Open(settingsPath);
