@@ -57,6 +57,7 @@ context, decision, consequences.
 | [0157](0157-flyback-cli-render-draws-on-the-gpu.md) | flyback-cli render draws on the GPU *(user-directed)* |
 | [0214](0214-the-picture-draws-through-metal-on-apples-machines.md) | The picture draws through Metal on Apple's machines *(user-directed)* |
 | [0215](0215-a-picture-is-smoothed-fast-live-and-best-on-export.md) | A picture is smoothed fast live and best on export *(user-directed)* |
+| [0216](0216-a-macs-installed-plugins-live-outside-the-bundle.md) | A Mac's installed plugins live outside the bundle |
 | [0167](0167-the-shader-reads-a-table-as-a-float-texture.md) | The shader reads a table as a float texture *(user-directed)* |
 | [0040](0040-a-probe-is-a-second-compile-root.md) | A probe is a second compile root, not a second machine *(user-directed; what a sweep shares amended by [0143](0143-a-module-a-sweep-reads-is-lowered-once-wherever-it-reads-the-same.md))* |
 | [0043](0043-a-scan-is-a-probe-read-backwards.md) | A Scan is a Probe read backwards *(user-directed; its Output knob superseded by [0077](0077-the-picture-is-heard-only-through-a-scan.md))* |

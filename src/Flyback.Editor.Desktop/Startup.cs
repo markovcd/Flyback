@@ -45,11 +45,15 @@ internal static class Startup
 
         var (updateNote, replaced) = Updater.Folder.Tidy(running);
 
-        var updated = running is not null && updateNote == Updater.Installed(running);
+        var updated = running is not null && updateNote?.StartsWith(Updater.Installed(running), StringComparison.Ordinal) == true;
 
         var whatsNew = updated && Changelog() is { } changelog ? ReleaseNotes.Of(running!, replaced, changelog) : null;
 
         if (updateNote is not null) Trace.WriteLine($"updates: {updateNote}");
+
+        if (BundlePlugins.Running)
+            foreach (var problem in BundlePlugins.MoveOut(PluginHost.ShippedDirectory, PluginHost.DataDirectory, new PluginAllowances(PluginAllowances.DefaultFile)))
+                Trace.WriteLine($"plugins: {problem}");
 
         // Before the scan, which is the first moment nothing has a plugin open.
         var (installed, removed, refused) = PluginInstaller.Finish(PluginHost.DefaultDirectory);

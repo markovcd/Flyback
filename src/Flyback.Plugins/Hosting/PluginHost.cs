@@ -22,12 +22,16 @@ internal static class PluginHost
     /// <summary>The <c>plugins</c> folder beside the executable, holding the plugins this copy was built with.</summary>
     public static string ShippedDirectory => Path.Combine(AppContext.BaseDirectory, DirectoryName);
 
+    /// <summary>The <c>plugins</c> folder under the data folder, for a copy whose own folder is not written to.</summary>
+    public static string DataDirectory => Path.Combine(GlobalConstants.DataFolder, DirectoryName);
+
     /// <summary>
-    /// Where plugins are installed: <see cref="ShippedDirectory"/>, or for a
-    /// <see cref="StoreCopy"/>, whose own folder is read-only, a folder under the data folder.
+    /// Where plugins are installed: <see cref="ShippedDirectory"/>, or <see cref="DataDirectory"/>
+    /// for a <see cref="StoreCopy"/>, whose own folder is read-only, and for a macOS bundle
+    /// (<see cref="BundlePlugins"/>).
     /// </summary>
-    public static string DefaultDirectory => StoreCopy.Running
-        ? Path.Combine(GlobalConstants.DataFolder, DirectoryName)
+    public static string DefaultDirectory => StoreCopy.Running || BundlePlugins.Running
+        ? DataDirectory
         : ShippedDirectory;
 
     public static PluginCatalog Load() => DefaultDirectory == ShippedDirectory

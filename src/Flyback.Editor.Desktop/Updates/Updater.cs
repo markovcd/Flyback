@@ -140,11 +140,8 @@ internal static class Updater
 
             Installer.Install(self.Root, target.Root);
 
-            // The new files are not what the bundle was signed with, and the
-            // bundle may hold plugins nobody signed at all.
-            if (target.Bundle) Sign(target.Root);
-
-            folder.Note(Installed(version), replaced);
+            // Installed whatever happens next, so a failure from here on is not a failed install.
+            folder.Note(target.Bundle && Resign(target) is { } unsigned ? $"{Installed(version)} {unsigned}" : Installed(version), replaced);
         }
         catch (Exception ex)
         {
@@ -241,6 +238,28 @@ internal static class Updater
         http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Flyback", running.ToString(3)));
 
         return http;
+    }
+
+    /// <summary>
+    /// Signs an updated bundle again, its new files not being what it was signed with, after
+    /// moving out the plugins an older version installed into it. Says why where it could not.
+    /// </summary>
+    private static string? Resign(Installation target)
+    {
+        var plugins = Path.Combine(target.Root, Path.GetDirectoryName(target.Executable) ?? "", PluginHost.DirectoryName);
+
+        foreach (var problem in BundlePlugins.MoveOut(plugins, PluginHost.DataDirectory, new PluginAllowances(PluginAllowances.DefaultFile)))
+            Trace.WriteLine($"updates: {problem}");
+
+        try
+        {
+            Sign(target.Root);
+            return null;
+        }
+        catch (Exception ex) when (ex is IOException or System.ComponentModel.Win32Exception)
+        {
+            return $"It could not be signed again, so macOS may refuse to start it: {ex.Message}";
+        }
     }
 
     /// <summary>

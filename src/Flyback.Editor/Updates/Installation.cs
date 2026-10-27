@@ -32,14 +32,8 @@ internal sealed record Installation(string Root, string Executable, string Rid, 
         if (!OperatingSystem.IsMacOS())
             return new Installation(directory, Path.GetRelativePath(directory, process), rid, Bundle: false);
 
-        // Contents/MacOS inside something.app — nothing else on a Mac is a copy
-        // that could be replaced as a whole.
-        var contents = Path.GetDirectoryName(directory);
-        var bundle = contents is null ? null : Path.GetDirectoryName(contents);
-
-        if (Path.GetFileName(directory) != "MacOS" || Path.GetFileName(contents) != "Contents"
-            || bundle is null || !bundle.EndsWith(".app", StringComparison.OrdinalIgnoreCase))
-            return null;
+        // Nothing else on a Mac is a copy that could be replaced as a whole.
+        if (BundlePlugins.Around(directory) is not { } bundle) return null;
 
         return new Installation(bundle, Path.GetRelativePath(bundle, process), rid, Bundle: true);
     }

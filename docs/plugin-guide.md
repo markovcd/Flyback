@@ -645,7 +645,7 @@ public sealed class JackMidiInput : IMidiInput
 
 ## 9. Building and installing
 
-Drop your build output into a folder under `plugins/` beside the executable (assembly, dependencies and `.deps.json` together) and allow it. A folder copied in by hand is a stranger's code until somebody says yes to it, so a Release build loads it only once allowed, and only while its files are as they were then; a Debug build loads every folder. Allow it once per build.
+Drop your build output into a folder under `plugins/` beside the executable (on macOS and in a Store copy, under the data folder's `plugins/` instead, since the app's own folder is signed or read-only) (assembly, dependencies and `.deps.json` together) and allow it. A folder copied in by hand is a stranger's code until somebody says yes to it, so a Release build loads it only once allowed, and only while its files are as they were then; a Debug build loads every folder. Allow it once per build.
 
 `flyback-cli` sits in the install folder beside the executable, and is not on the path unless you put it there. Below, `$FLYBACK` is that folder:
 

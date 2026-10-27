@@ -231,6 +231,16 @@ cp -R "$payload/." "$dest/"
 if [ "$os" = osx ]; then
   xattr -cr "$dest" 2>/dev/null || true
   chmod +x "$programs/Flyback" "$programs/flyback-cli" "$programs/flyback-viewer"
+
+  # A plugin installed into the bundle breaks its signature, and codesign refuses its
+  # dotted folder name; the editor keeps installed plugins in its data folder instead.
+  installed=${XDG_CONFIG_HOME:-$HOME/.config}/Flyback/plugins
+  while IFS= read -r plugin; do
+    name=$(basename "$plugin")
+    [ -d "$payload/$plugins/$name" ] && continue
+    mkdir -p "$installed"
+    if [ -d "$installed/$name" ]; then rm -rf "$plugin"; else mv "$plugin" "$installed/$name"; fi
+  done < <(find "$dest/$plugins" -mindepth 1 -maxdepth 1 -type d 2>/dev/null)
   codesign --force --deep --sign - "$dest" >/dev/null 2>&1 || die "could not sign $dest; run: codesign --force --deep --sign - \"$dest\""
 fi
 
