@@ -42,8 +42,15 @@ internal static class Noise
     /// A lattice index wrapped to 32 bits rather than saturated, so noise read off
     /// a fast clock is still noise days in. Inside an int's range it is the plain cast.
     /// </summary>
+    /// <remarks>
+    /// Past a long the cast saturates, so there the remainder is taken in doubles,
+    /// which is exact for a whole number; the shader and the script wrap the same way.
+    /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int Lattice(double floored) => unchecked((int)(long)floored);
+    private static int Lattice(double floored) =>
+        Math.Abs(floored) < 9.2e18
+            ? unchecked((int)(long)floored)
+            : unchecked((int)(uint)(floored - 4294967296d * Math.Floor(floored / 4294967296d)));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static double Fade(double t) => t * t * (3d - 2d * t);

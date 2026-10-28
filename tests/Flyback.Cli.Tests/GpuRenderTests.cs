@@ -39,6 +39,14 @@ public class GpuRenderTests
     public void The_GPU_smooths_a_preset_as_the_processor_does(string name) =>
         Agrees(Presets.All.Single(p => p.Name == name).Build(NodeCatalog.BuiltIn).CompileForVideo(NodeCatalog.BuiltIn).Program, Smoothing.Fast);
 
+    /// <summary>Noise read past an int's range, where converting a float to an int is the shader's to wrap.</summary>
+    [Theory]
+    [InlineData("3000000000")]
+    [InlineData("-3000000000")]
+    [InlineData("100000000000000000000")]
+    public void The_GPU_draws_noise_far_out_as_the_processor_does(string z) =>
+        Agrees(Engine.Language.PatchLanguage.Build($"clouds(z: {z}, scale: 1.4) |> out.color", NodeCatalog.BuiltIn).Patch!);
+
     /// <summary>A value carried round per pixel, which on the GPU is a float target ping-ponged beside the history.</summary>
     [Fact]
     public void The_GPU_carries_a_plane_as_the_processor_does()

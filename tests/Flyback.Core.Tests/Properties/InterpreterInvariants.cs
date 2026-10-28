@@ -138,6 +138,23 @@ public class InterpreterInvariants
     }
 
     /// <summary>
+    /// The lattice wraps to 32 bits however far out it is read, as the shader's and
+    /// the script's do, so a coordinate a whole multiple of 2³² away is the same noise.
+    /// </summary>
+    [Theory]
+    [InlineData(18446744073709551616f)]
+    [InlineData(-18446744073709551616f)]
+    [InlineData(1.1805916e21f)]
+    public void Value_noise_past_a_long_is_the_noise_it_wraps_to(float far)
+    {
+        var machine = Machine.Ternary(OpCode.Noise3);
+
+        machine.Run(far, 0.3f, 0.7f).ShouldBe(machine.Run(0f, 0.3f, 0.7f));
+        machine.Run(0.3f, far, 0.7f).ShouldBe(machine.Run(0.3f, 0f, 0.7f));
+        machine.Run(0.3f, 0.7f, far).ShouldBe(machine.Run(0.3f, 0.7f, 0f));
+    }
+
+    /// <summary>
     /// ADR-0007: a scalar broadcasts across all three components, so scaling a
     /// color by 1.0 must be the identity rather than a narrowing.
     /// </summary>

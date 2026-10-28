@@ -25,6 +25,8 @@
 - Live text set to wake on keys only keeps clicks to itself while faded, so they no longer pause the picture or leave full screen, and it comes back at a key wherever the keys had gone.
 
 - macOS: an update no longer fails to sign the app when a plugin from the preset site is installed. Installed plugins now live in `~/.config/Flyback/plugins` rather than inside `Flyback.app`, and the ones already inside it are moved there. An update whose signing fails says it is installed rather than that it will try again.
+- Noise read past about two billion draws the same on the graphics card, on the processor and in the browser.
+- `render --quality` refuses a number outside 1 to 100 instead of quietly clamping it.
 
 ## 0.11.0 — 2026-10-27
 

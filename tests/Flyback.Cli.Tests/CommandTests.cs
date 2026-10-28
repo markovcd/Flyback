@@ -414,6 +414,25 @@ public class CommandTests
         file.Exists.ShouldBeFalse();
     }
 
+    /// <summary>A quality outside 1 to 100 is refused, as the help says, rather than quietly clamped.</summary>
+    [Theory]
+    [InlineData("out.avi", 0)]
+    [InlineData("out.avi", 101)]
+    [InlineData("out.mp4", -5)]
+    public void A_quality_outside_its_range_is_refused_before_anything_is_written(string name, int quality)
+    {
+        using var directory = new Scratch();
+        var file = directory.File(name);
+
+        var (code, _, error) = Run((_, e) => RenderCommand.Run(
+            Preset("Drone"), new RenderOptions(file, 64, 36, Seconds: 0.1, Quality: quality), e));
+
+        code.ShouldBe(Exit.Failed);
+        error.ShouldContain("--quality");
+        file.Refresh();
+        file.Exists.ShouldBeFalse();
+    }
+
     /// <summary>
     /// A file made of stand-ins looks exactly like a real one, so it is not
     /// written at all.

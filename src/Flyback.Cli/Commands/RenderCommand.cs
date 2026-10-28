@@ -538,6 +538,8 @@ internal static class RenderCommand
         if (!still && !(options.Seconds > 0d && options.Seconds <= most)) return $"--seconds runs above 0 and up to {most:0}.";
         if (!(options.Fps >= RenderOptions.LeastFps && options.Fps <= RenderOptions.MostFps))
             return $"--fps runs from {RenderOptions.LeastFps:0} up to {RenderOptions.MostFps:0}.";
+        if (options.Quality is < OutputSettings.LowestQuality or > OutputSettings.HighestQuality)
+            return $"--quality runs from {OutputSettings.LowestQuality} up to {OutputSettings.HighestQuality}.";
 
         return null;
     }

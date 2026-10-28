@@ -56,6 +56,18 @@ float sm(float e0, float e1, float x)
     return t * t * (3.0 - 2.0 * t);
 }
 
+// A whole number wrapped to 32 bits the way Noise.Lattice wraps it, in steps
+// a float holds exactly, since converting one past an int is undefined.
+uint wrp(float v)
+{
+    float q = floor(v / 65536.0);
+    float m = q - 65536.0 * floor(q / 65536.0);
+    return (uint(m) << 16) + uint(v - q * 65536.0);
+}
+
+// One float's lattice index: the plain conversion inside an int's range, wrapped past it.
+int lnt(float f) { return abs(f) < 2147483648.0 ? int(f) : int(wrp(f)); }
+
 // Noise, transcribed from Noise.cs. Converting a negative int to uint keeps
 // the bit pattern in both languages, so the hash agrees exactly, which is
 // what stops a noisy patch looking like a different patch on the GPU.
@@ -74,8 +86,9 @@ float nz(float x, float y, float z)
 {
     if (!(fin(x) && fin(y) && fin(z))) return 0.0;
 
-    int xi = int(floor(x)), yi = int(floor(y)), zi = int(floor(z));
-    float u = fade(x - float(xi)), v = fade(y - float(yi)), w = fade(z - float(zi));
+    float xf = floor(x), yf = floor(y), zf = floor(z);
+    int xi = lnt(xf), yi = lnt(yf), zi = lnt(zf);
+    float u = fade(x - xf), v = fade(y - yf), w = fade(z - zf);
 
     float z0 = lrp(lrp(hsh(xi, yi,     zi), hsh(xi + 1, yi,     zi), u),
                    lrp(hsh(xi, yi + 1, zi), hsh(xi + 1, yi + 1, zi), u), v);
@@ -144,15 +157,6 @@ float dtr(vec2 a)
     float k = floor((a.x + a.y) * 0.15915494);
     vec2 r = dad(a, -dml(vec2(k, 0.0), vec2(6.2831855, -1.7484555e-7)));
     return r.x + r.y;
-}
-
-// A whole number wrapped to 32 bits the way Noise.Lattice wraps it, in steps
-// a float holds exactly, since converting one past an int is undefined.
-uint wrp(float v)
-{
-    float q = floor(v / 65536.0);
-    float m = q - 65536.0 * floor(q / 65536.0);
-    return (uint(m) << 16) + uint(v - q * 65536.0);
 }
 
 int lat(vec2 n) { return int(wrp(n.x) + wrp(n.y)); }
