@@ -1,4 +1,3 @@
-using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -49,7 +48,7 @@ public sealed class PluginInstallTests : EditorTest
     private static ModalOverlay Dropped(MainWindow window, string path)
     {
         var transfer = new DataTransfer();
-        transfer.Add(DataTransferItem.CreateFile(RealStorageFile(path)));
+        transfer.Add(DataTransferItem.CreateFile(StorageFiles.OnDisk(path)));
 
         window.RaiseEvent(new DragEventArgs(DragDrop.DropEvent, transfer, window, default, KeyModifiers.None));
 
@@ -57,15 +56,6 @@ public sealed class PluginInstallTests : EditorTest
         Settle(window);
 
         return All<ModalOverlay>(window).ShouldHaveSingleItem();
-    }
-
-    /// <summary>The platform's own file-backed <see cref="IStorageFile"/>; see <c>FileDropTests</c>.</summary>
-    private static IStorageFile RealStorageFile(string path)
-    {
-        var type = typeof(IStorageFile).Assembly.GetType("Avalonia.Platform.Storage.FileIO.BclStorageFile", throwOnError: true)!;
-        var ctor = type.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)[0];
-
-        return (IStorageFile)ctor.Invoke([new FileInfo(path)]);
     }
 
     private static Button Named(Control dialog, string name) => All<Button>(dialog).Single(b => b.Name == name);
@@ -217,7 +207,7 @@ public sealed class PluginInstallTests : EditorTest
         var window = Open();
 
         var transfer = new DataTransfer();
-        transfer.Add(DataTransferItem.CreateFile(RealStorageFile(Write(Packages.With("../evil.dll")))));
+        transfer.Add(DataTransferItem.CreateFile(StorageFiles.OnDisk(Write(Packages.With("../evil.dll")))));
         window.RaiseEvent(new DragEventArgs(DragDrop.DropEvent, transfer, window, default, KeyModifiers.None));
 
         Pump(() => All<ReportLine>(window).Single().History.Any(h => h.Contains("ripple.fbkp")));

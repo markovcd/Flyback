@@ -5,7 +5,7 @@ using Shouldly;
 
 namespace Flyback.Editor.Tests.Controls;
 
-public partial class SourceViewTests
+public class SourceViewShowingTests : SourceViewTest
 {
     // --- showing it ---------------------------------------------------------
 
@@ -47,12 +47,6 @@ public partial class SourceViewTests
 
         Notice(window).ShouldNotBeNull().ShouldContain("still the document");
     }
-
-    /// <summary>What the printing says for itself, or null when there is nothing shown.</summary>
-    private static string? Notice(MainWindow window) => All<TextBlock>(window)
-        .Where(block => block.IsVisible && block.Text is { } said && said.Contains("Printed from"))
-        .Select(block => block.Text)
-        .FirstOrDefault();
 
     /// <summary>
     /// Typing is not thrown away by a second look at the canvas. Somebody who

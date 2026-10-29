@@ -1,7 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
-using Avalonia.Platform.Storage;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Editor.Composition;
@@ -174,7 +173,7 @@ public sealed class WindowTitleTests : EditorTest
 
         Directory.CreateDirectory(folder);
 
-        (await Service<UnsavedWork>(window).SaveToAsync(RealStorageFile(Path.Combine(folder, "saved.fbks")))).ShouldBeTrue();
+        (await Service<UnsavedWork>(window).SaveToAsync(StorageFiles.OnDisk(Path.Combine(folder, "saved.fbks")))).ShouldBeTrue();
         Settle(window);
 
         window.Title.ShouldNotBeNull().ShouldNotEndWith("•");
@@ -197,18 +196,5 @@ public sealed class WindowTitleTests : EditorTest
     {
         Press(All<Button>(window).Single(b => b.Name == named));
         Settle(window);
-    }
-
-    /// <summary>The platform's own file-backed storage file — see <c>FileDropTests</c>.</summary>
-    private static IStorageFile RealStorageFile(string path)
-    {
-        var type = typeof(IStorageFile).Assembly.GetType(
-            "Avalonia.Platform.Storage.FileIO.BclStorageFile", throwOnError: true)!;
-
-        var flags = System.Reflection.BindingFlags.Public
-            | System.Reflection.BindingFlags.NonPublic
-            | System.Reflection.BindingFlags.Instance;
-
-        return (IStorageFile)type.GetConstructors(flags)[0].Invoke([new FileInfo(path)]);
     }
 }

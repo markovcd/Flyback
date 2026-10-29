@@ -6,7 +6,7 @@ using Shouldly;
 
 namespace Flyback.Editor.Tests.Controls;
 
-public partial class SourceViewTests
+public class SourceViewLockedTests : SourceViewTest
 {
     // --- a locked canvas, and a box on it --------------------------------------
 

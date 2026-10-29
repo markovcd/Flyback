@@ -12,43 +12,9 @@ using Shouldly;
 
 namespace Flyback.Editor.Tests.Controls;
 
-public partial class SourceViewTests
+public class SourceViewKnobsTests : SourceViewTest
 {
     // --- and a knob turned in it reaches the text ---------------------------
-
-    /// <summary>A patch whose first module has knobs to turn.</summary>
-    private static Patch Plasma() => Engine.Graph.Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn);
-
-    /// <summary>Turns the first knob the panel is showing, and lets go of it.</summary>
-    private static void Turn(MainWindow window, double to)
-    {
-        var slider = Knobs(window).First();
-
-        // The first knob's slider, which on a socket with a knee is travel rather than value.
-        var node = Editor(window).Selection.Focused.ShouldNotBeNull();
-        var spec = NodeCatalog.Require(node.TypeId).Inputs.First(p => NodeCatalog.Normalled(p) is null && !p.NeedsAWire);
-
-        slider.Value = spec.Knee > 0f ? spec.Travel((float)to, spec.Min, spec.Max) : to;
-        Settle(window);
-
-        Release(slider);
-        Settle(window);
-    }
-
-    /// <summary>Lets go of the pointer over a control, which is what ends a gesture.</summary>
-    private static void Release(Control over) =>
-        over.RaiseEvent(new PointerReleasedEventArgs(
-            over,
-            new Pointer(0, PointerType.Mouse, true),
-            over,
-            default,
-            0,
-            default,
-            KeyModifiers.None,
-            MouseButton.Left)
-        {
-            RoutedEvent = InputElement.PointerReleasedEvent,
-        });
 
     /// <summary>
     /// The number is changed where the text already says it. Saying it a second

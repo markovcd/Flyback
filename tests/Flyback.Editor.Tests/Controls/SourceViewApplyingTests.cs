@@ -8,7 +8,7 @@ using Shouldly;
 
 namespace Flyback.Editor.Tests.Controls;
 
-public partial class SourceViewTests
+public class SourceViewApplyingTests : SourceViewTest
 {
     // --- applying it --------------------------------------------------------
 
@@ -76,32 +76,6 @@ public partial class SourceViewTests
 
         Inspector(window).IsEnabled
             .ShouldBeTrue("a knob turned on a locked canvas is written back into the text");
-    }
-
-    private static Button Hand(MainWindow window) =>
-        All<Button>(window).Single(b => b.Name == "hand");
-
-    /// <summary>Pumps until the question about the text has arrived.</summary>
-    private static ModalOverlay Asking(MainWindow window)
-    {
-        for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
-            Dispatcher.UIThread.RunJobs();
-
-        Settle(window);
-
-        return All<ModalOverlay>(window).SingleOrDefault()
-            ?? throw new InvalidOperationException("emptying unsaved text should have asked first");
-    }
-
-    /// <summary>Hands the patch back, answering the question that fronts it.</summary>
-    private static void HandBack(MainWindow window, string answer = "Discard changes")
-    {
-        Press(Hand(window));
-        Press(All<Button>(Asking(window)).Single(b => b.Content as string == answer));
-
-        Settle(window);
-        Dispatcher.UIThread.RunJobs();
-        Settle(window);
     }
 
     /// <summary>

@@ -4,7 +4,7 @@ using Shouldly;
 
 namespace Flyback.Editor.Tests.Controls;
 
-public partial class SourceViewTests
+public class SourceViewUndoViewTests : SourceViewTest
 {
     // --- which view a press of undo belongs to ------------------------------
 

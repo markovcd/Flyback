@@ -6,7 +6,7 @@ using Shouldly;
 
 namespace Flyback.Editor.Tests.Controls;
 
-public partial class SourceViewTests
+public class SourceViewCanvasViewTests : SourceViewTest
 {
     // --- the canvas as a view -----------------------------------------------
 

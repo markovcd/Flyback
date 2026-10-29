@@ -3,7 +3,7 @@ using Shouldly;
 
 namespace Flyback.Editor.Tests.Controls;
 
-public partial class SourceViewTests
+public class SourceViewOverflowTests : SourceViewTest
 {
     // --- a number no box can hold -------------------------------------------
 

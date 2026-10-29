@@ -1,5 +1,4 @@
 using System.IO.Compression;
-using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -52,23 +51,6 @@ public sealed class FileDropTests : EditorTest
         File.WriteAllText(path, PatchIO.ToJson(patch));
 
         return path;
-    }
-
-    /// <summary>
-    /// A real <see cref="IStorageFile"/> over a file on disk, which is what a drop
-    /// actually hands the window — <c>IStorageFile</c> itself may not be
-    /// implemented outside Avalonia, so this is the platform's own file-backed
-    /// implementation, reached by reflection because the type it lives on is
-    /// internal.
-    /// </summary>
-    private static IStorageFile RealStorageFile(string path)
-    {
-        var type = typeof(IStorageFile).Assembly.GetType(
-            "Avalonia.Platform.Storage.FileIO.BclStorageFile", throwOnError: true)!;
-
-        var ctor = type.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)[0];
-
-        return (IStorageFile)ctor.Invoke([new FileInfo(path)]);
     }
 
     private static DataTransfer Carrying(IStorageItem file)
@@ -134,7 +116,7 @@ public sealed class FileDropTests : EditorTest
         var named = window.Title;
         var path = WritePatch("nebula");
 
-        Drop(window, Carrying(RealStorageFile(path)));
+        Drop(window, Carrying(StorageFiles.OnDisk(path)));
         WaitForTitleChange(window, named);
 
         window.Title.ShouldBe($"nebula — {Program}");
@@ -163,7 +145,7 @@ public sealed class FileDropTests : EditorTest
         var window = Open();
         var path = WritePatch("nebula");
 
-        DragOver(window, Carrying(RealStorageFile(path))).ShouldBe(DragDropEffects.Copy);
+        DragOver(window, Carrying(StorageFiles.OnDisk(path))).ShouldBe(DragDropEffects.Copy);
     }
 
     [AvaloniaFact]
@@ -191,7 +173,7 @@ public sealed class FileDropTests : EditorTest
         var named = window.Title;
         var path = WritePatch("nebula");
 
-        Drop(window, Carrying(RealStorageFile(path)));
+        Drop(window, Carrying(StorageFiles.OnDisk(path)));
 
         var dialog = Asking(window);
 
@@ -213,7 +195,7 @@ public sealed class FileDropTests : EditorTest
 
         var path = WritePatch("nebula");
 
-        Drop(window, Carrying(RealStorageFile(path)));
+        Drop(window, Carrying(StorageFiles.OnDisk(path)));
 
         var dialog = Asking(window);
 
@@ -254,7 +236,7 @@ public sealed class FileDropTests : EditorTest
 
         modules.ShouldBeGreaterThan(1, "the window opens on a preset");
 
-        Drop(window, Carrying(RealStorageFile(path)));
+        Drop(window, Carrying(StorageFiles.OnDisk(path)));
         WaitForReport(window, "Not opened.");
 
         Service<PatchFiles>(window).IsBundle.ShouldBeFalse("a bundle this build cannot read has not become the document");
@@ -273,7 +255,7 @@ public sealed class FileDropTests : EditorTest
 
         var window = Open();
 
-        Drop(window, Carrying(RealStorageFile(path)));
+        Drop(window, Carrying(StorageFiles.OnDisk(path)));
         WaitForReport(window, "Not opened. broken.fbks does not read.");
 
         All<ReportLine>(window).Single().History
@@ -309,7 +291,7 @@ public sealed class FileDropTests : EditorTest
 
         All<ModalOverlay>(window).ShouldNotBeEmpty("Settings is up");
 
-        Drop(window, Carrying(RealStorageFile(path)));
+        Drop(window, Carrying(StorageFiles.OnDisk(path)));
         WaitForReport(window, "dropped.fbks was not opened");
 
         window.Title.ShouldBe(title, "the document behind a dialog is not replaced while the dialog is up");
@@ -341,13 +323,13 @@ public sealed class FileDropTests : EditorTest
         File.WriteAllText(loud, PatchIO.ToJson(patch));
 
         var named = window.Title;
-        Drop(window, Carrying(RealStorageFile(quiet)));
+        Drop(window, Carrying(StorageFiles.OnDisk(quiet)));
         WaitForTitleChange(window, named);
 
         Editor(window).History.Patch.Control(knob.Id).ShouldNotBeNull().Value.ShouldBe(0.2f);
 
         named = window.Title;
-        Drop(window, Carrying(RealStorageFile(loud)));
+        Drop(window, Carrying(StorageFiles.OnDisk(loud)));
         WaitForTitleChange(window, named);
 
         Editor(window).History.Patch.Control(knob.Id).ShouldNotBeNull().Value.ShouldBe(0.8f);

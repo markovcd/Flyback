@@ -4,18 +4,9 @@ using Shouldly;
 
 namespace Flyback.Editor.Tests.Controls;
 
-public partial class SourceViewTests
+public class SourceViewCaretTests : SourceViewTest
 {
     // --- the caret points the panel -----------------------------------------
-
-    /// <summary>Puts the caret where a word is, as a click in the text would.</summary>
-    private static void Click(MainWindow window, string word)
-    {
-        var text = Text(window);
-
-        text.CaretOffset = text.Text.IndexOf(word, StringComparison.Ordinal) + 1;
-        Settle(window);
-    }
 
     /// <summary>
     /// On a group's header, or anywhere in its block that is about no module, the

@@ -7,28 +7,15 @@ using Shouldly;
 
 namespace Flyback.Editor.Tests.Controls;
 
-public partial class SourceViewTests
+public class SourceViewAssistantTests : SourceViewTest
 {
-    // --- an assistant's patch, and the text ---------------------------------
-
     /// <summary>
-    /// What the window handed the assistant panel to put a patch on the canvas with,
+    /// The editor the window's assistant panel puts a patch on the canvas with,
     /// which is the one thing the end of a turn does to the shell.
     /// </summary>
-    /// <remarks>
-    /// By reflection: the window takes its plugins from a static no test can put a
-    /// provider into, so no turn can be run against a real window.
-    /// </remarks>
-    private static Action<Patch, string?> AssistantApplies(MainWindow window) => Assistant(window).Apply;
+    private IAssistantEditor Assistant(MainWindow window) => Service<IAssistantEditor>(window);
 
-    private static IAssistantEditor Assistant(MainWindow window)
-    {
-        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
-
-        return (IAssistantEditor)typeof(AssistantPanel)
-            .GetField("editor", flags)!
-            .GetValue(All<AssistantPanel>(window).Single())!;
-    }
+    private Action<Patch, string?> AssistantApplies(MainWindow window) => Assistant(window).Apply;
 
     /// <summary>Two oscillators mixed into the left speaker: a patch no text here describes.</summary>
     private static Patch Drone()

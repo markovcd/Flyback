@@ -10,15 +10,12 @@ using Shouldly;
 
 namespace Flyback.Editor.Tests.Controls;
 
-public partial class SourceViewTests
+public class SourceViewUndoTests : SourceViewTest
 {
     // --- taking it back, and laying it out ----------------------------------
 
     private static Button Tidy(MainWindow window) =>
         All<Button>(window).Single(b => b.Name == "tidy");
-
-    private static Button Undo(MainWindow window) =>
-        All<Button>(window).Single(b => b.Name == "undo");
 
     private static Button Redo(MainWindow window) =>
         All<Button>(window).Single(b => b.Name == "redo");
@@ -541,10 +538,6 @@ public partial class SourceViewTests
             PatchPrinter.Print(Editor(window).History.Patch),
             "nothing was typed, so the text is a printing of what is on the canvas");
     }
-
-    /// <summary>Everything the panel is saying, for the states where it says something.</summary>
-    private static string Panel(MainWindow window) =>
-        string.Join(" ", All<TextBlock>(Inspector(window)).Select(block => block.Text));
 
     /// <summary>
     /// The panel says why it has nothing, for a caret on a module the patch has moved

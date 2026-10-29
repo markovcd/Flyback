@@ -420,19 +420,6 @@ public sealed class UnsavedDialogTests : EditorTest
 
     // --- saving a text document as something else ------------------------------
 
-    /// <summary>The platform's own file-backed storage file — see <c>FileDropTests</c>.</summary>
-    private static Avalonia.Platform.Storage.IStorageFile RealStorageFile(string path)
-    {
-        var type = typeof(Avalonia.Platform.Storage.IStorageFile).Assembly.GetType(
-            "Avalonia.Platform.Storage.FileIO.BclStorageFile", throwOnError: true)!;
-
-        var flags = System.Reflection.BindingFlags.Public
-            | System.Reflection.BindingFlags.NonPublic
-            | System.Reflection.BindingFlags.Instance;
-
-        return (Avalonia.Platform.Storage.IStorageFile)type.GetConstructors(flags)[0].Invoke([new FileInfo(path)]);
-    }
-
     /// <summary>A window whose document is text that has been applied and written nowhere.</summary>
     private MainWindow OpenOnUnsavedText()
     {
@@ -486,7 +473,7 @@ public sealed class UnsavedDialogTests : EditorTest
 
         Directory.CreateDirectory(folder);
 
-        var saving = Service<UnsavedWork>(window).SaveToAsync(RealStorageFile(path));
+        var saving = Service<UnsavedWork>(window).SaveToAsync(StorageFiles.OnDisk(path));
         var dialog = Asking(window);
 
         Words(dialog).ShouldContain("Unsaved text");
@@ -511,7 +498,7 @@ public sealed class UnsavedDialogTests : EditorTest
 
         Directory.CreateDirectory(folder);
 
-        var saving = Service<UnsavedWork>(window).SaveToAsync(RealStorageFile(path));
+        var saving = Service<UnsavedWork>(window).SaveToAsync(StorageFiles.OnDisk(path));
 
         Press(Named<Button>(Asking(window), "discard"));
         Dispatcher.UIThread.RunJobs();
@@ -531,7 +518,7 @@ public sealed class UnsavedDialogTests : EditorTest
 
         Directory.CreateDirectory(folder);
 
-        Finished(Service<UnsavedWork>(window).SaveToAsync(RealStorageFile(path))).ShouldBeTrue();
+        Finished(Service<UnsavedWork>(window).SaveToAsync(StorageFiles.OnDisk(path))).ShouldBeTrue();
 
         All<ModalOverlay>(window).ShouldBeEmpty();
         File.ReadAllText(path).ShouldContain("a note about it");
@@ -558,7 +545,7 @@ public sealed class UnsavedDialogTests : EditorTest
 
         Directory.CreateDirectory(folder);
 
-        var went = Finished(Service<UnsavedWork>(window).SaveToAsync(RealStorageFile(Path.Combine(folder, "copy.fbks"))));
+        var went = Finished(Service<UnsavedWork>(window).SaveToAsync(StorageFiles.OnDisk(Path.Combine(folder, "copy.fbks"))));
         Settle(window);
 
         editor.History.IsModified.ShouldBeTrue("a printing is a copy, and the patch is as unsaved as it was");
@@ -612,7 +599,7 @@ public sealed class UnsavedDialogTests : EditorTest
 
         var saved = Path.Combine(folder, "nebula.fbks");
 
-        Finished(Service<UnsavedWork>(window).SaveToAsync(RealStorageFile(saved))).ShouldBeTrue();
+        Finished(Service<UnsavedWork>(window).SaveToAsync(StorageFiles.OnDisk(saved))).ShouldBeTrue();
         Settle(window);
 
         File.ReadAllText(saved).ShouldContain("kick.wav", customMessage: "the text names the file");
