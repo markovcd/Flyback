@@ -11,8 +11,16 @@ namespace Flyback.Editor.Canvas;
 /// The shelf over each band an open box holds: a chip naming the level, on a thin rule
 /// across the band. Pressing a chip selects every module in that level.
 /// </summary>
-internal sealed class LevelShelves(NodeGeometry geometry)
+internal sealed class LevelShelves
 {
+    private readonly NodeGeometry geometry;
+
+    public LevelShelves(NodeGeometry geometry)
+    {
+        this.geometry = geometry;
+        geometry.Rise = Rise;
+    }
+
     private const double ChipPadding = 6;
 
     private static readonly IBrush ChipFill = new ImmutableSolidColorBrush(Colors.Separator, 0.35);
@@ -37,12 +45,12 @@ internal sealed class LevelShelves(NodeGeometry geometry)
             if (scene.OpenGroup(group) is not var (outline, _)) continue;
             if (LayoutBand.Matching(bands, group.Members) is not { } box) continue;
 
-            foreach (var shelf in Inside(patch, box.Inside, group.Members.ToHashSet(), outline.Right - NodeGeometry.GroupPadding / 2))
+            foreach (var shelf in Inside(patch, box.Inside, group.Members.ToHashSet()))
                 yield return shelf;
         }
     }
 
-    private List<Shelf> Inside(Patch patch, IReadOnlyList<LayoutBand> bands, IReadOnlySet<Guid> box, double right)
+    private List<Shelf> Inside(Patch patch, IReadOnlyList<LayoutBand> bands, IReadOnlySet<Guid> box)
     {
         var size = geometry.Metrics;
         var shelves = new List<Shelf>();
@@ -58,8 +66,9 @@ internal sealed class LevelShelves(NodeGeometry geometry)
             if (drawn.Count == 0) continue;
 
             // The shelves of the bands inside stand within this band, so its own sits over them.
-            var inner = Inside(patch, band.Inside, box, right);
+            var inner = Inside(patch, band.Inside, box);
             var left = drawn.Min(r => r.X);
+            var right = drawn.Max(r => r.Right);
             var top = inner.Select(shelf => shelf.Chip.Y).Append(drawn.Min(r => r.Y)).Min();
 
             var label = CanvasText.Text(band.Label, CanvasText.RowSize, CanvasText.LabelBrush, right - left, true);
@@ -71,6 +80,22 @@ internal sealed class LevelShelves(NodeGeometry geometry)
         }
 
         return shelves;
+    }
+
+    /// <summary>How far the shelves in <paramref name="group"/> stand above its highest module.</summary>
+    private double Rise(Patch patch, NodeGroup group)
+    {
+        var bands = Bands();
+
+        if (bands.Count == 0 || LayoutBand.Matching(bands, group.Members) is not { Inside.Count: > 0 } box) return 0;
+
+        var shelves = Inside(patch, box.Inside, group.Members.ToHashSet());
+
+        if (shelves.Count == 0) return 0;
+
+        var top = group.Members.Select(id => patch.Find(id)).OfType<NodeInstance>().Min(node => node.Y);
+
+        return Math.Max(0, top - shelves.Min(shelf => shelf.Chip.Y));
     }
 
     /// <summary>The shelf whose chip is under <paramref name="graph"/>, or null.</summary>

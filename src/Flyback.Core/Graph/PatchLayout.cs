@@ -63,9 +63,6 @@ internal static class PatchLayout
         /// <summary>The strip above a band inside a box, which its rule and shelf chip are drawn on.</summary>
         public double ShelfHeight => GroupHandleHeight + 4;
 
-        /// <summary>How far a band sits in from the band or box around it.</summary>
-        public double BandIndent => GroupPadding / 2;
-
         public double Height(NodeDef def) =>
             HeaderHeight + Rows(def.Inputs.Count, def.Outputs.Count) * RowHeight + FooterPadding;
 
@@ -255,7 +252,7 @@ internal static class PatchLayout
         // the first thing that changes that.
         var was = groups.ToDictionary(g => g.Id, g => g.Members.Min(id => nodes[id].Y));
 
-        foreach (var group in groups) Inside(patch, nodes, defs, group, size, bands);
+        var rises = groups.ToDictionary(g => g.Id, g => Inside(patch, nodes, defs, g, size, bands));
 
         var blocks = new List<Block>();
         var of = new Dictionary<Guid, int>();
@@ -275,7 +272,7 @@ internal static class PatchLayout
             if (patch.GroupOf(node.Id) is { } group && kept.Contains(group))
             {
                 foreach (var id in group.Members) of[id] = blocks.Count;
-                blocks.Add(Boxed(patch, nodes, defs, group, size, was[group.Id], i));
+                blocks.Add(Boxed(patch, nodes, defs, group, size, was[group.Id], i, rises[group.Id]));
 
                 if (!group.Collapsed) open.Add((group, blocks.Count - 1));
             }
@@ -483,7 +480,8 @@ internal static class PatchLayout
     /// (ADR-0070), so a group that skipped this would arrive as a pile at the
     /// origin.
     /// </summary>
-    private static void Inside(
+    /// <returns>How far the shelves inside the box stand above its highest module.</returns>
+    private static double Inside(
         Patch patch,
         Dictionary<Guid, NodeInstance> nodes,
         Dictionary<Guid, NodeDef> defs,
@@ -497,10 +495,13 @@ internal static class PatchLayout
             var inner = band.Inside.SelectMany(b => b.All).ToHashSet();
 
             Banded(patch, nodes, defs, [.. group.Members.Where(id => !inner.Contains(id))], band.Inside, members, size);
-            return;
+
+            return group.Members.Min(id => nodes[id].Y);
         }
 
         Flat(patch, nodes, defs, group.Members, size, fromOrigin: false);
+
+        return 0;
     }
 
     /// <summary>Lays <paramref name="members"/> out among themselves and says how big they came to.</summary>
@@ -544,8 +545,9 @@ internal static class PatchLayout
     }
 
     /// <summary>
-    /// Lays out the modules a level placed itself, then each level inside it as a band
-    /// below them, indented under a shelf, in the order the text opened them.
+    /// Lays out the modules a level placed itself and each level inside it, each of those a
+    /// block of its own under a shelf for its chip, left to right as the wires between them run.
+    /// Leaves them starting at the origin and says how big they came to.
     /// </summary>
     private static (double Width, double Height) Banded(
         Patch patch,
@@ -556,7 +558,14 @@ internal static class PatchLayout
         IReadOnlySet<Guid> box,
         Metrics size)
     {
-        var (width, height) = Flat(patch, nodes, defs, own, size);
+        var blocks = new List<Block>();
+        var of = new Dictionary<Guid, int>();
+
+        foreach (var id in own)
+        {
+            of[id] = blocks.Count;
+            blocks.Add(Lone(nodes[id], defs[id], size, blocks.Count));
+        }
 
         foreach (var band in inside)
         {
@@ -565,19 +574,43 @@ internal static class PatchLayout
 
             if (placed.Count == 0) continue;
 
-            var (w, h) = band.Inside.Count == 0
+            var (width, height) = band.Inside.Count == 0
                 ? Flat(patch, nodes, defs, mine, size)
                 : Banded(patch, nodes, defs, mine, band.Inside, box, size);
 
-            var top = (height > 0 ? height + size.RowGap / 2 : 0) + size.ShelfHeight;
+            var shelf = size.ShelfHeight;
+            var at = placed.ToDictionary(id => id, id => (nodes[id].X, Y: nodes[id].Y + shelf));
 
-            foreach (var id in placed) (nodes[id].X, nodes[id].Y) = (nodes[id].X + size.BandIndent, nodes[id].Y + top);
+            foreach (var id in placed) of[id] = blocks.Count;
 
-            width = Math.Max(width, w + size.BandIndent);
-            height = top + h;
+            blocks.Add(new Block
+            {
+                Holds = [.. placed.Select(id => (nodes[id], at[id].X, at[id].Y))],
+                Width = width,
+                Height = height + shelf,
+                Meets = (node, port, isOutput) => at[node].Y + (isOutput
+                    ? size.OutputPort(Held(port, defs[node].Outputs.Count))
+                    : size.InputPort(defs[node], Held(port, defs[node].Inputs.Count))),
+                Was = placed.Min(id => nodes[id].Y),
+                Index = blocks.Count,
+            });
         }
 
-        return (width, height);
+        if (blocks.Count == 0) return (0, 0);
+
+        Lay(blocks, Links(patch, blocks, of), sink: -1, size);
+
+        // Moved before they are put, since a module clamps a position off the canvas.
+        var left = blocks.Min(block => block.X);
+        var top = blocks.Min(block => block.Y);
+
+        foreach (var block in blocks)
+        {
+            (block.X, block.Y) = (block.X - left, block.Y - top);
+            block.Put();
+        }
+
+        return (blocks.Max(block => block.X + block.Width), blocks.Max(block => block.Y + block.Height));
     }
 
     /// <summary>
@@ -648,7 +681,8 @@ internal static class PatchLayout
         NodeGroup group,
         Metrics size,
         double was,
-        int index)
+        int index,
+        double rise = 0)
     {
         var left = group.Members.Min(id => nodes[id].X);
         var top = group.Members.Min(id => nodes[id].Y);
@@ -682,7 +716,7 @@ internal static class PatchLayout
         var bottom = group.Members.Max(id => nodes[id].Y + size.Height(defs[id]));
 
         var inset = size.GroupPadding;
-        var below = size.GroupPadding + size.GroupHandleHeight;
+        var below = size.GroupPadding + size.GroupHandleHeight + rise;
 
         return new Block
         {

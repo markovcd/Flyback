@@ -108,6 +108,9 @@ internal sealed class NodeGeometry
     /// <summary>The strip above that ring, which the group's name is written on.</summary>
     public const double GroupHandleHeight = 20;
 
+    /// <summary>How far an open group's ring rises above its modules for the shelves inside it.</summary>
+    public Func<Patch, NodeGroup, double> Rise { get; set; } = (_, _) => 0;
+
     /// <summary>
     /// These same numbers, in the shape the layout wants them — plus how much room to
     /// leave between the nodes, which is the only part the editor decides rather than

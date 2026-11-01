@@ -32,26 +32,22 @@ public class LevelBandTests
     private static NodeInstance Only(Patch patch, string type, float? drive = null) =>
         patch.Nodes.Single(n => n.TypeId == type && (drive is null || n.InputValues[1] == drive));
 
-    private static double Bottom(Patch patch, params NodeInstance[] nodes) =>
-        nodes.Max(n => n.Y + PatchLayout.Metrics.Default.Height(NodeCatalog.BuiltIn.Get(n.TypeId)!));
-
     [Fact]
-    public void A_level_inside_a_box_is_a_band_under_the_box_own_modules_set_in_and_shelved()
+    public void A_level_inside_a_box_is_a_block_under_its_shelf_laid_left_to_right_as_its_wires_run()
     {
         var patch = Built(Nested, bands: true);
         var size = PatchLayout.Metrics.Default;
 
-        var saw = Only(patch, "osc.saw");
         var sine = Only(patch, "osc.sine");
-        var outerDrive = Only(patch, "audio.drive", 3);
-        var innerDrive = Only(patch, "audio.drive", 4);
+        var shaped = Only(patch, "audio.drive", 2);
+        var bass = Only(patch, "audio.drive", 4);
 
-        var bandTop = Math.Min(sine.Y, innerDrive.Y);
-        bandTop.ShouldBeGreaterThanOrEqualTo(Bottom(patch, saw, outerDrive) + size.ShelfHeight);
-        Math.Min(sine.X, innerDrive.X).ShouldBe(Math.Min(saw.X, outerDrive.X) + size.BandIndent, 0.001);
+        // voice feeds bass, so B's own module stands right of the voice band.
+        bass.X.ShouldBeGreaterThan(Math.Max(sine.X, shaped.X) + size.Width);
 
-        // The call inside B is a band of its own inside B's.
-        Math.Min(sine.Y, Only(patch, "audio.drive", 2).Y).ShouldBeGreaterThan(innerDrive.Y);
+        // shaped is called inside voice, after its Sine: beside it, not under it.
+        shaped.X.ShouldBeGreaterThan(sine.X + size.Width);
+        patch.Groups.ShouldNotBeNull().ShouldAllBe(group => !group.Collapsed);
     }
 
     [Fact]
@@ -60,7 +56,7 @@ public class LevelBandTests
             .ShouldBe(PatchLanguage.Build(Nested, NodeCatalog.BuiltIn).Patch.Nodes.Select(n => (n.TypeId, n.X, n.Y)));
 
     [Fact]
-    public void A_patch_with_no_level_inside_a_box_is_laid_out_the_same_with_bands()
+    public void A_patch_with_no_level_inside_a_box_is_laid_out_as_it_is_with_its_boxes_open()
     {
         const string source =
             """
@@ -71,8 +67,12 @@ public class LevelBandTests
             a + voice(3) |> out.left
             """;
 
+        var open = Built(source, bands: false);
+        foreach (var group in open.Groups!) group.Collapsed = false;
+        PatchLayout.Arrange(open, NodeCatalog.BuiltIn);
+
         Built(source, bands: true).Nodes.Select(n => (n.TypeId, n.X, n.Y))
-            .ShouldBe(Built(source, bands: false).Nodes.Select(n => (n.TypeId, n.X, n.Y)));
+            .ShouldBe(open.Nodes.Select(n => (n.TypeId, n.X, n.Y)));
     }
 
     [Fact]

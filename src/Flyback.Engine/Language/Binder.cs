@@ -126,6 +126,12 @@ public sealed class Binder
 
         // Positions are not in the language, so they are worked out afterwards
         // by the same layout the editor uses on a pasted fragment (ADR-0044).
+        // With bands the boxes are laid out open, so opening one moves nothing; the
+        // layout shuts any it must to fit.
+        if (Bands)
+            foreach (var group in patch.Groups ?? [])
+                group.Collapsed = false;
+
         PatchLayout.Arrange(patch, modules, bands: Bands ? Level.Bands(levels.Tree) : null);
 
         return patch;

@@ -241,7 +241,8 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
         // ReSharper disable once CompareOfFloatsByEqualityOperator
         if (x == double.MaxValue) return null;
 
-        var outline = new Rect(x, y, right - x, bottom - y).Inflate(NodeGeometry.GroupPadding);
+        var rise = geometry.Rise(patch, group);
+        var outline = new Rect(x, y - rise, right - x, bottom - y + rise).Inflate(NodeGeometry.GroupPadding);
 
         var handle = new Rect(
             outline.X,
