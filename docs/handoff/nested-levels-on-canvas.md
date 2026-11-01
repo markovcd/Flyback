@@ -4,7 +4,7 @@ Planned on 2026-10-13, chosen on 2026-11-01 on `main` at `b2e4e24`. It is on TOD
 it off there, and delete this file, in the commit that lands the last step.
 
 - **Kind:** Plan
-- **Status:** Open; design chosen, nothing built
+- **Status:** Open; steps 1 and 2 built
 
 ## What is wanted
 
@@ -53,7 +53,10 @@ Arek's Claude Design canvas: https://claude.ai/artifact/EYooZ2cSuPtx6XxTUidWnZ.
    recorded by `LevelTrail` in the binder and remapped after fusion. Kept on the load, not
    the patch, so a save or a print loses them; the canvas reads them from the text.
    `flyback-cli levels <patch>` prints the tree, `--of <module>` its path, with `--json`.
-2. **The inspector's path**, and selecting a level from it. No layout change.
+2. **The inspector's path**, and selecting a level from it. Done: `LevelPath` at the top of a
+   module's panel, from `PatchLevels`, which reads the text while it owns the patch. A
+   selected level is shown by its button in bold; the panel for the level itself (its
+   arguments, sockets leaving it, other calls of its def) is not built yet.
 3. **The banded layout** in `PatchLayout`, with the shelf chips, behind the setting. Wires
    between levels cross the rules. Decide what a module dragged out of its band does.
 4. **Shut boxes, live patching and zoomed far out.**

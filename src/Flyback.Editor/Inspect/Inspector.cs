@@ -45,6 +45,8 @@ internal sealed class Inspector
     /// <summary>The panel a group gets instead of a module's.</summary>
     private readonly GroupInspector groups;
 
+    private readonly PatchLevels levels;
+
     private readonly Renamer renamer;
 
     /// <summary>The shortcut groups left unfolded, kept across rebuilds so a selection does not shut them.</summary>
@@ -69,7 +71,8 @@ internal sealed class Inspector
         FileRows files,
         FieldRows fieldRows,
         KeyboardSection keyboard,
-        GroupInspector groups)
+        GroupInspector groups,
+        PatchLevels levels)
     {
         this.editor = editor;
         this.writeBack = writeBack;
@@ -81,6 +84,7 @@ internal sealed class Inspector
         this.fieldRows = fieldRows;
         this.keyboard = keyboard;
         this.groups = groups;
+        this.levels = levels;
         inPage = host.InPage;
         Panel = surface.Panel;
         Wash = surface.Wash;
@@ -292,6 +296,8 @@ internal sealed class Inspector
             {
                 if (plate.Title is { } title) BeginRename(node, def, plate, title);
             };
+
+        if (LevelPath.Of(editor, levels, node.Id, fingers) is { } path) Panel.Children.Add(path);
 
         if (!string.IsNullOrEmpty(def.Description))
             Panel.Children.Add(new TextBlock
