@@ -67,3 +67,13 @@ Arek's Claude Design canvas: https://claude.ai/artifact/EYooZ2cSuPtx6XxTUidWnZ.
 - The command is `flyback-cli levels`, and modules are named by their `let` names.
 - A pass's box is named "Pad 1" in the patch, so the `1/3` badge needs the pass number and
   count kept, not read back out of the name.
+
+## Found along the way
+
+- **One double-click helper for headless tests.** Headless clicks are stamped when injected,
+  so on a loaded runner two clicks can land past the double-click time and read as two
+  single clicks (Build went red on macOS for this, fixed in `907d90d`). The editor's
+  `EditorTest.DoubleClickPicture` and the specs' `ViewerRun.TapPicture(2)` each raise the tap
+  and the double tap by hand, the same code twice. Move it into `tests/Flyback.Ui.Testing`,
+  which both projects already reference, as one `DoubleClick(Control)` both call. Its own
+  commit; not part of any step above.
