@@ -39,7 +39,6 @@ public class IssueCodeTests
     [InlineData("length 0:00", IssueCode.BadLength)]
     [InlineData("group \"K\" {\n  panel level = 0.5\n}", IssueCode.PanelInGroup)]
     [InlineData("group \"K\" {\n  requires flyback.picture\n}", IssueCode.RequiresInGroup)]
-    [InlineData("group \"A\" {\n  group \"B\" {\n    let s = sine()\n  }\n}", IssueCode.GroupInGroup)]
     [InlineData("def f(a) = a\nf(b: 1) |> out.left", IssueCode.UnknownParameter)]
     [InlineData("def f(a = 1, b) = a * b", IssueCode.DefaultBeforeRequired)]
     [InlineData("def f(a = sine()) = a", IssueCode.DefaultNotAValue)]
@@ -74,7 +73,6 @@ public class IssueCodeTests
     [InlineData("panel rate = 2\nsine(freq: rate(0..4), amp: rate) |> out.left")]
     [InlineData("let (a, b) = sine()\na |> out.left\nb |> out.right")]
     [InlineData("group \"K\" {\n  panel level = 0.5\n}\nsine(amp: level) |> out.left")]
-    [InlineData("group \"A\" {\n  group \"B\" {\n    let s = sine()\n  }\n}\ns |> out.left")]
     [InlineData("// --- CLOCK & TIMING / 2 ---\nsine() |> out.left")]
     [InlineData("sine() |> out.left // the tone & its level")]
     public void A_refused_statement_is_the_one_complaint(string source)

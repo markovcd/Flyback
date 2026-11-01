@@ -163,7 +163,6 @@ public static class IssueCode
     // --- groups ----------------------------------------------------------------
 
     public const string RequiresInGroup = "requires-in-group";
-    public const string GroupInGroup = "group-in-group";
     public const string GroupTooSmall = "group-too-small";
     public const string PanelNotASignal = "panel-not-a-signal";
     public const string UnknownSetting = "unknown-setting";

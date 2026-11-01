@@ -28,8 +28,7 @@ public sealed class Binder
     private readonly NodeIdentity identity;
 
     private readonly ModuleNames moduleNames;
-    private readonly Dictionary<string, DefStatement> defs = new(StringComparer.Ordinal);
-    private readonly HashSet<string> expanding = new(StringComparer.Ordinal);
+    private readonly HashSet<DefStatement> expanding = new(ReferenceEqualityComparer.Instance);
 
     /// <summary>Whether a group block is open, whose box holds whatever a def call inside it makes.</summary>
     private bool inBlock;
@@ -100,7 +99,7 @@ public sealed class Binder
 
         // Each line for itself rather than its group's, so a name read above
         // its binding is pointed at the line that binds it.
-        foreach (var statement in statements.SelectMany(s => s is GroupStatement group ? group.Body : [s]))
+        foreach (var statement in Lines(statements))
             foreach (var name in statement.Binds) boundOn.TryAdd(name, statement.Line);
 
         foreach (var statement in statements) Run(statement, scope);
@@ -119,6 +118,10 @@ public sealed class Binder
 
         return patch;
     }
+
+    /// <summary>The statements, with each group's taken out of it, however deep.</summary>
+    private static IEnumerable<Statement> Lines(IEnumerable<Statement> statements) =>
+        statements.SelectMany(s => s is GroupStatement group ? Lines(group.Body) : [s]);
 
     private void Unknown(NameExpr expr)
     {
@@ -202,8 +205,12 @@ public sealed class Binder
         switch (statement)
         {
             case DefStatement def:
-                if (!defs.TryAdd(def.Name, def))
+                // A def is in sight in the body it is written in and every body inside that,
+                // and a name means one def wherever it is read.
+                if (scope.Def(def.Name) is not null)
                     issues.Complain(IssueCode.DefTwice, def.Line, def.Column, $"'{def.Name}' is already the name of a def.");
+                else
+                    scope.Declare(def);
 
                 for (var i = 0; i < def.Parameters.Count; i++)
                 {
@@ -501,7 +508,7 @@ public sealed class Binder
 
         // A knob given a range is written like a call, so it cannot share a
         // module's name or a def's.
-        if (Known(statement.Name))
+        if (Known(statement.Name, scope))
         {
             issues.Complain(IssueCode.ReservedName, line, column,
                 $"'{statement.Name}' is already a module's name, and a knob is called like one. "
@@ -569,6 +576,10 @@ public sealed class Binder
         return dial with { Low = low, High = high, Knee = knee };
     }
 
+    /// <summary>
+    /// A group block. One inside another group's block draws no box of its own: its
+    /// modules are in the outermost block's box.
+    /// </summary>
     private void Box(GroupStatement statement, Scope scope)
     {
         var before = patch.Nodes.Select(n => n.Id).ToHashSet();
@@ -584,12 +595,6 @@ public sealed class Binder
             {
                 // A box is drawn round modules, and each of these is about the
                 // whole patch or the panel, which no box holds.
-                case GroupStatement nested:
-                    issues.Complain(IssueCode.GroupInGroup, nested.Line, nested.Column,
-                        "a group cannot hold another group. Close this one first.");
-                    Unmade(nested.Binds, scope, nested.Line);
-                    break;
-
                 case PanelStatement panel:
                     issues.Complain(IssueCode.PanelInGroup, panel.Line, panel.Column,
                         "a panel knob belongs to the whole patch, so it is declared outside a group.");
@@ -609,6 +614,16 @@ public sealed class Binder
 
         inBlock = outerBlock;
 
+        // A group is a box on the canvas and nothing more, so the names and defs
+        // it made go on being visible after it — which is what lets one group
+        // wire into the next, as the largest preset does throughout.
+        foreach (var name in statement.Binds)
+            if (inner.Entry(name) is { } item) scope.Set(name, item.Value, item.Line);
+
+        inner.LiftDefs(scope);
+
+        if (outerBlock) return;
+
         // Everything placed while the block was open, which is what "declared
         // inside it" means once a def has been expanded in there too. The clock
         // and the coordinates a bare word reaches for are the whole patch's, so
@@ -618,12 +633,6 @@ public sealed class Binder
             .Select(n => n.Id);
 
         boxes.Block(statement.Name, new Site(statement.Line, statement.Column), made, troubled: issues.Count > said);
-
-        // A group is a box on the canvas and nothing more, so the names it made
-        // go on being visible after it — which is what lets one group wire into
-        // the next, as the largest preset does throughout.
-        foreach (var name in statement.Body.Where(child => child is not GroupStatement).SelectMany(child => child.Binds))
-            if (inner.Entry(name) is { } item) scope.Set(name, item.Value, item.Line);
     }
 
     // --- expressions ---------------------------------------------------------
@@ -884,7 +893,7 @@ public sealed class Binder
             // and taking nothing but what is arriving — the obvious way to write
             // it in a language made of pipes. Refusing it cost a whole run, since
             // every binding after the complaint went unread.
-            if (socket.Port is null && scope.Find(socket.Name) is null && Known(socket.Name))
+            if (socket.Port is null && scope.Find(socket.Name) is null && Known(socket.Name, scope))
                 return Call(new CallExpr(socket.Name, [], null, socket.Line, socket.Column), scope, value);
 
             if (socket.Port is null)
@@ -913,7 +922,7 @@ public sealed class Binder
     {
         if (scope.Find(expr.Target) is Failed) return null;
         if (scope.Find(expr.Target) is Dial dial) return Ranged(dial, expr, scope, piped);
-        if (defs.TryGetValue(expr.Target, out var macro)) return Expand(macro, expr, scope, piped);
+        if (scope.Def(expr.Target) is var (macro, declared)) return Expand(macro, declared, expr, scope, piped);
         if (expr.Target == SumWord && scope.Find(SumWord) is null && !moduleNames.Knows(SumWord)) return Summed(expr, scope, piped);
 
         if (Module(expr.Target, expr.Line, expr.Column) is not { } def) return null;
@@ -1333,8 +1342,6 @@ public sealed class Binder
         {
             var refusal = statement switch
             {
-                DefStatement => "a def is written once, outside the loop, and called inside it.",
-                GroupStatement => "a group is drawn round what is inside it, so put the loop inside the group.",
                 PanelStatement => "a panel knob belongs to the whole patch, so it is declared outside the loop and read inside it.",
                 RequiresStatement or KeyboardStatement or LengthStatement or DescriptionStatement or AuthorStatement or TagsStatement
                     => "this is said once about the whole patch, so it is written outside the loop.",
@@ -1449,9 +1456,10 @@ public sealed class Binder
 
     // --- defs -----------------------------------------------------------------
 
-    private Value? Expand(DefStatement macro, CallExpr call, Scope scope, Value? piped)
+    /// <param name="declared">The scope the def was written in, whose defs its body sees.</param>
+    private Value? Expand(DefStatement macro, Scope declared, CallExpr call, Scope scope, Value? piped)
     {
-        if (!expanding.Add(macro.Name))
+        if (!expanding.Add(macro))
         {
             return Refuse(IssueCode.DefCallsItself, call.Line, call.Column,
                 $"'{macro.Name}' calls itself, and a def is stamped out rather than run.");
@@ -1472,11 +1480,11 @@ public sealed class Binder
             // above another in the same statement renames both.
             outer = identity.Enter(identity.Stamping(macro.Name));
 
-            // A fresh scope off the top, not off the caller's: a def sees its
-            // parameters and the defs, and nothing of wherever it was called
-            // from. Every call stamps out its own copy of the body, so two calls
-            // share no module — a value that should be shared is passed in.
-            var inner = new Scope(null);
+            // A fresh scope, not off the caller's: a def sees its parameters and
+            // the defs in sight where it is written, and nothing of wherever it
+            // was called from. Every call stamps out its own copy of the body, so
+            // two calls share no module — a value that should be shared is passed in.
+            var inner = new Scope(null, declared);
 
             for (var i = 0; i < macro.Parameters.Count; i++) inner.Set(macro.Parameters[i].Name, arguments[i], macro.Line);
 
@@ -1516,7 +1524,7 @@ public sealed class Binder
         }
         finally
         {
-            expanding.Remove(macro.Name);
+            expanding.Remove(macro);
 
             if (outer is { } saved) identity.Leave(saved);
         }
@@ -1674,7 +1682,7 @@ public sealed class Binder
     /// <summary>
     /// Whether a name is a module or a def, asked without complaining about it.
     /// </summary>
-    private bool Known(string name) => defs.ContainsKey(name) || moduleNames.Knows(name);
+    private bool Known(string name, Scope scope) => scope.Def(name) is not null || moduleNames.Knows(name);
 
     private NodeDef? Module(string name, int line, int column)
     {

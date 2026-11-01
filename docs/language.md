@@ -673,6 +673,11 @@ The body is a block. Its result is the final expression, which may be a tuple,
 and `let (a, b) = f(...)` takes one apart. A single-expression body needs no
 braces.
 
+**A def may be written inside another def's body**, or a loop's. It is in sight
+in that body and every body inside it, and nowhere else, and it takes no name a
+def in sight already has. Like any def it sees the defs around it and none of
+the names: what it needs is passed in.
+
 ### Arguments
 
 A call gives a def its arguments the way it gives a module its sockets:
@@ -747,9 +752,10 @@ sum(voices) |> out.left
 - **A text bound to a name names a file** as the literal does, so
   `for file in ["kick.wav", "snare.wav"] { sample(file) }` plays both.
 
-A def, a group, a panel knob and the lines about the whole patch (`requires`,
-`keyboard`, `description`, `author`, `tags`, `length`) are written outside a
-loop. One patch's loops stamp out at most 4096 passes between them. A printing
+A panel knob and the lines about the whole patch (`requires`, `keyboard`,
+`description`, `author`, `tags`, `length`) are written outside a loop. A def
+written in a loop's body is that body's. A group in it draws a box a pass, and a
+named one gathers every pass into the one box its name says. One patch's loops stamp out at most 4096 passes between them. A printing
 writes a loop out unrolled.
 
 ---
@@ -770,8 +776,11 @@ group "Bass" {
 
 Members are the nodes declared inside the block. A group built from text is
 shut, and the sockets on its edge are the ones its wires cross. A group with no
-name is `group { … }`. A group holds modules and nothing else: another group, a
-`panel` knob or a `requires` line inside one is refused. A group of fewer than
+name is `group { … }`. A `panel` knob or a `requires` line inside a group is
+refused. A def written in a group is in sight after it, as its names are.
+
+**A group may hold another group.** Only the outermost draws a box, and the inner
+group's modules are in it; a printing writes them in the outer block. A group of fewer than
 two modules, which the canvas never draws, is left out with a warning, and its
 module is built all the same. The clock and the
 coordinates `t` and `x` reach for belong to the whole patch and are in no group,
@@ -865,7 +874,7 @@ each paying only for what it reaches
 | which modules are switched off | — |
 | the panel's knobs, what each follows, and every socket following one | — |
 | which plugins the patch needs, as its `requires` line | — |
-| groups, their names and what is in each | — |
+| groups, their names and what is in each | a group inside another, folded into the outermost |
 | the patch's length, in minutes and seconds | — |
 
 A knob or a field still holding what a fresh module holds is written nowhere. A

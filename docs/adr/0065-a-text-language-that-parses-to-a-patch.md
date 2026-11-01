@@ -262,3 +262,19 @@ outermost call is boxed, since a group holds modules and never another group; a
 call inside a `group` block is in the block's box, and a call that places fewer
 than two modules draws none. Printing writes each box as a `group` block, so a
 printed def comes back boxed but no longer a def.
+
+## Amendment, 2026-11-01: blocks nest
+
+A def may be written inside a def's or a loop's body, a group inside a group or a
+loop, as the grammar always allowed. A def is in sight in the scope it is written
+in and every scope inside it, and a name means one def wherever it is read, so an
+inner def cannot take an outer one's name. Its body still sees only its parameters
+and the defs in sight, never the names around it, for the reason a top-level def
+does not. A def written in a group stays in sight after it, as the group's names
+do.
+
+The canvas still draws no box inside a box: a group inside a group is folded into
+the outermost group's box, and a printing writes it there. A group in a loop draws
+a box a pass, or one box where it is named, since blocks with one name are one
+group. Showing the inner structure is the open question of
+`docs/handoff/nested-def-boxes.md`.

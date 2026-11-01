@@ -209,7 +209,6 @@ public class LoopTests
     [InlineData("for k in 1..100000 { sine(freq: k) }", IssueCode.TooManyPasses)]
     [InlineData("for (a, b) in [1, 2] { sine(freq: a) }", IssueCode.TupleMismatch)]
     [InlineData("for k in 1..2 {\n  panel level = 0.5\n}", IssueCode.NotInLoop)]
-    [InlineData("for k in 1..2 {\n  def f(a) = a\n}", IssueCode.NotInLoop)]
     [InlineData("for t in 1..2 { sine(freq: t) }", IssueCode.ReservedName)]
     [InlineData("mixer(...sine()) |> out.left", IssueCode.NotAList)]
     [InlineData("sum(sine()) |> out.left", IssueCode.NotAList)]

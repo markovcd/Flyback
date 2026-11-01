@@ -150,6 +150,25 @@ Feature: A patch can be written as text
     And the patch has a shut group "voice" of 2 modules
     And the speakers are not silent
 
+  Scenario: Blocks written inside one another build as if written out flat
+    Given the text:
+      """
+      def voice(freq) = {
+        def shaped(in) = in |> drive(drive: 2)
+        sine(freq: freq) |> shaped()
+      }
+      group "Voices" {
+        group "Bass" {
+          let bass = voice(110)
+        }
+        let lead = voice(220)
+      }
+      bass + lead |> out.left
+      """
+    Then it reads without complaint
+    And the patch has a shut group "Voices" of 4 modules
+    And the speakers are not silent
+
   # Specified by ADR-0208.
   Scenario: A loop stamps out its body for each item of a list
     Given the text:
