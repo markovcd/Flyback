@@ -4,7 +4,7 @@ Planned on 2026-10-13, chosen on 2026-11-01 on `main` at `b2e4e24`. It is on TOD
 it off there, and delete this file, in the commit that lands the last step.
 
 - **Kind:** Plan
-- **Status:** Open; steps 1 to 4 built; the level's own panel and dragging out of a band are left
+- **Status:** Open; steps 1 to 4 built; the level's own panel is left
 
 ## What is wanted
 
@@ -62,8 +62,9 @@ Arek's Claude Design canvas: https://claude.ai/artifact/EYooZ2cSuPtx6XxTUidWnZ.
    level inside it as a block under a shelf, left to right as the wires run
    (`PatchLayout.Banded`); the ring rises to hold the shelves. `LevelShelves` draws the
    chips and takes a press on one as selecting the level. A level that placed nothing and
-   holds one level shares its chip (`1/2 pitch = 220 › voice`). Open: what a module dragged
-   out of its band does is not decided. Shots are in `/mnt/project-files/nesting/`
+   holds one level shares its chip (`1/2 pitch = 220 › voice`). Nothing can be dragged out
+   of a band: bands exist only while the text owns the patch, and then the canvas is locked
+   (ADR-0068). Shots are in `/mnt/project-files/nesting/`
    (bands-left-to-right.png; bands-on.png is the earlier stacked try).
 4. **Shut boxes, live patching and zoomed far out.** Done: a shut box has a strip along its
    foot listing the levels it came through (a pass, `1/3 pitch = 110`) and the first levels
