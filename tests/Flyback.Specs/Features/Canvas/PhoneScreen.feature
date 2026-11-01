@@ -63,3 +63,17 @@ Feature: The editor fits a window as narrow as a phone held upright
     And the module panel's "strip-delete-modules" button is pressed
     And the preset "Plasma" is picked
     Then the question offers "Discard changes, Cancel", each on the screen
+
+  Scenario: Zoomed out past reading, modules show their names, and a double tap brings one up to read
+    Given the patch is open in the editor
+    When the view is zoomed all the way out
+    Then the modules show their names alone
+    When a finger double taps the sine
+    Then the sine's rows can be read in the middle of the canvas
+
+  Scenario: A double tap on bare canvas looks at the whole patch again
+    Given the patch is open in the editor
+    When the view is zoomed all the way out
+    And a finger double taps the sine
+    And a finger double taps bare canvas
+    Then every module is in view

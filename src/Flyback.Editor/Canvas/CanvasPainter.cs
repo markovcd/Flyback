@@ -688,6 +688,19 @@ internal sealed class CanvasPainter(
 
         DrawGlassEdge(context, bounds);
 
+        if (ModuleOverview.At(view.Zoom))
+        {
+            ModuleOverview.DrawName(context, bounds, Heading(node, def), view.Zoom, HeaderTextBrush, node.Off);
+
+            for (var i = 0; i < def.Outputs.Count; i++)
+                NodeSkin.DrawPort(context, NodeGeometry.OutputPort(node, i), def.Outputs[i].Kind);
+
+            for (var i = 0; i < def.Inputs.Count; i++)
+                NodeSkin.DrawPort(context, geometry.InputPort(node, def, i), def.Inputs[i].Kind);
+
+            return;
+        }
+
         var titleAt = TitleAt(bounds);
 
         var titleBrush = Ink(titleAt.Y + TitleInk / 2, TitleInk, fade: 0, HeaderTextBrush);
@@ -946,6 +959,21 @@ internal sealed class CanvasPainter(
         if (DropsInto(group)) context.DrawRectangle(DropHeader, null, HeaderShape(header));
 
         NodeSkin.Relief(context, header);
+
+        if (ModuleOverview.At(view.Zoom))
+        {
+            ModuleOverview.DrawName(context, bounds, group.Title(), view.Zoom, HeaderTextBrush, off);
+
+            for (var i = 0; i < sockets.Outputs.Count; i++)
+                if (selection.Scene.Named(sockets.Outputs[i]) is var (_, spec))
+                    NodeSkin.DrawPort(context, NodeGeometry.GroupOutputPort(bounds, i), spec.Kind);
+
+            for (var i = 0; i < sockets.Inputs.Count; i++)
+                if (selection.Scene.Named(sockets.Inputs[i]) is var (_, spec))
+                    NodeSkin.DrawPort(context, geometry.GroupInputPort(bounds, sockets, i), spec.Kind);
+
+            return;
+        }
 
         var title = CanvasText.Text(group.Title(), HeaderSize, HeaderTextBrush, bounds.Width - 16, true);
 

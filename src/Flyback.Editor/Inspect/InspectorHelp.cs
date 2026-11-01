@@ -68,7 +68,7 @@ internal static class InspectorHelp
             Row("Zoom", keys: "Wheel"),
             Row("Add to selection", keys: "Ctrl+Click"),
             Row("Select all", keys: "Ctrl+A"),
-            Row("Frame the patch", keys: "Ctrl+F"),
+            Row("Frame the patch", "Or double-click the background. Zoomed out, double-click a module to bring it up to read.", "Ctrl+F"),
             Row("Delete", "Removes what is selected.", "Delete"),
         ]),
         new("Copying and arranging",
@@ -140,7 +140,8 @@ internal static class InspectorHelp
         + "it is written — to edit it here. Its knobs, its tune, its file: letting go "
         + "writes the new value into the code, where the code already says it.\n\n"
         + (fingers
-            ? "Drag bare canvas to select. Two fingers drag the view, and spread or pinch to zoom."
+            ? "Drag bare canvas to select. Two fingers drag the view, and spread or pinch to zoom. "
+            + "Zoomed out, a double tap on a module brings it up to read; one on bare canvas shows the whole patch."
             : (dragToPan
                   ? "Right-drag the background to select, drag it to pan, wheel to zoom.\n"
                   : "Drag the background to select, middle-drag to pan, wheel to zoom.\n")

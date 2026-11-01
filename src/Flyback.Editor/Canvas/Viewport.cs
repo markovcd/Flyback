@@ -163,6 +163,38 @@ internal sealed class Viewport
         repaint.Request();
     }
 
+    /// <summary>Whether modules are drawn as their names alone, their rows too small to read.</summary>
+    public bool Overview => ModuleOverview.At(Zoom);
+
+    /// <summary>
+    /// Brings <paramref name="graph"/> to the middle of the view at a zoom its rows read at: as
+    /// near the full size as the view's width and height allow, and never into the overview.
+    /// </summary>
+    public void FrameOn(Rect graph)
+    {
+        const double margin = 16;
+
+        if (Size.Width < 1 || Size.Height < 1) return;
+
+        fitted = false;
+        framePending = false;
+
+        var fits = Math.Min(
+            (Size.Width - margin * 2) / graph.Width,
+            (Size.Height - margin * 2) / graph.Height);
+
+        Zoom = Math.Clamp(Math.Min(1, fits), ModuleOverview.Below, MaxFrameZoom);
+
+        // Too tall to fit at the least zoom that reads, it shows its top, which holds its name.
+        var top = graph.Height * Zoom > Size.Height - margin * 2
+            ? margin - graph.Top * Zoom
+            : (Size.Height - graph.Height * Zoom) / 2 - graph.Top * Zoom;
+
+        PanTo(new Point((Size.Width - graph.Width * Zoom) / 2 - graph.Left * Zoom, top));
+
+        repaint.Request();
+    }
+
     /// <summary>Zooms by <paramref name="notches"/> of the wheel, keeping the point under <paramref name="screen"/> where it is.</summary>
     public void ZoomAt(Point screen, double notches)
     {

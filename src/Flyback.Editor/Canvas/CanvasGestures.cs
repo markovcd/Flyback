@@ -126,7 +126,7 @@ internal sealed class CanvasGestures
     public bool Tapped(Point screen, int taps)
     {
         if (history.Locked || drag != Drag.None || choice.For is not null || bar.ButtonAt(screen) is not null) return false;
-        if (!selection.Scene.HitWell(view.ToGraph(screen), Math.Min(Fingers.Reach / view.Zoom, Fingers.MostReach), out var node, out var port)) return false;
+        if (view.Overview || !selection.Scene.HitWell(view.ToGraph(screen), Math.Min(Fingers.Reach / view.Zoom, Fingers.MostReach), out var node, out var port)) return false;
 
         if (!selection.Contains(node)) selection.Select(node);
 
@@ -324,7 +324,7 @@ internal sealed class CanvasGestures
 
         // A value's well turns it with the left button, as the right does on the socket.
         // A finger holds first, through Fingers, so a swipe across a module still moves it.
-        if (!history.Locked && pointer?.Type != PointerType.Touch && drag == Drag.None
+        if (!history.Locked && pointer?.Type != PointerType.Touch && drag == Drag.None && !view.Overview
             && scene.HitWell(graph, out var wellNode, out var wellPort))
         {
             if (!selection.Contains(wellNode)) selection.Select(wellNode);
@@ -346,7 +346,7 @@ internal sealed class CanvasGestures
         }
 
         // A linked socket's chip drops the list of knobs, to pick another or unlink.
-        if (!history.Locked && drag == Drag.None && scene.HitChip(graph, out var chipNode, out var chipPort))
+        if (!history.Locked && drag == Drag.None && !view.Overview && scene.HitChip(graph, out var chipNode, out var chipPort))
         {
             if (!selection.Contains(chipNode)) selection.Select(chipNode);
 
@@ -376,6 +376,13 @@ internal sealed class CanvasGestures
         // A box before a module, because that is the order they are painted in.
         if (scene.HitBox(graph) is null && scene.HitNode(graph) is { } node)
         {
+            // Zoomed out past reading, a double-click brings the module up to a size that reads.
+            if (clickCount == 2 && view.Overview)
+            {
+                view.FrameOn(scene.Footprint(node));
+                return true;
+            }
+
             // Shift on one member of a group selected whole means that one: it is about
             // to be carried out, and the whole group would ride along as itself.
             if ((modifiers & KeyModifiers.Shift) != 0 && selection.Group is { } whole && whole.Members.Contains(node.Id))
@@ -413,6 +420,9 @@ internal sealed class CanvasGestures
             repaint.Request();
             return false;
         }
+
+        // A double-click on empty canvas looks at the whole patch again, and is still a click there.
+        if (clickCount == 2) view.FrameAll();
 
         if (dragToPan)
         {

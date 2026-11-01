@@ -407,6 +407,30 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
             canvas.Fingers.Up(canvas, finger, at, 1_050);
         });
 
+    /// <summary>Taps a finger twice in quick succession on a point of the patch.</summary>
+    public void DoubleTapFinger(Point graph) =>
+        DoWindow((_, canvas) =>
+        {
+            var at = canvas.GraphToScreen.Transform(graph);
+
+            foreach (var time in (ulong[])[3_000, 3_200])
+            {
+                var finger = new Pointer(Pointer.GetNextFreeId(), PointerType.Touch, true);
+
+                canvas.Fingers.Down(canvas, finger, at, time);
+                canvas.Fingers.Up(canvas, finger, at, time + 50);
+            }
+        });
+
+    /// <summary>Whether the canvas shows modules as their names alone, zoomed out past reading their rows.</summary>
+    public bool Overview => Read(canvas => canvas.View.Overview);
+
+    /// <summary>Where the middle of a module is on the canvas, in the canvas's own pixels.</summary>
+    public Point OnScreen(NodeInstance node) => Read(canvas => canvas.View.OnScreen(canvas.Selection.Scene.Footprint(node)).Center);
+
+    /// <summary>The size of the canvas, in its own pixels.</summary>
+    public Size CanvasSize => Read(canvas => canvas.Bounds.Size);
+
     /// <summary>Taps a finger on the well of an input's value, which shows the step bar.</summary>
     public void TapWell(Guid node, int port) => TapFinger(Read(canvas => Well(canvas, node, port)));
 

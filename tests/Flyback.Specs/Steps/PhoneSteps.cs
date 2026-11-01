@@ -32,6 +32,46 @@ public sealed class PhoneSteps(PatchContext context, EditorDriver editor)
         editor.TapFinger(new Point(sine.X + NodeGeometry.Width / 2, sine.Y + NodeGeometry.HeaderHeight / 2));
     }
 
+    [When("a finger double taps the sine")]
+    public void WhenTheSineIsDoubleTapped()
+    {
+        var sine = context.Node("sine");
+
+        editor.DoubleTapFinger(new Point(sine.X + NodeGeometry.Width / 2, sine.Y + NodeGeometry.HeaderHeight * 2));
+    }
+
+    [When("a finger double taps bare canvas")]
+    public void WhenBareCanvasIsDoubleTapped()
+    {
+        var sine = context.Node("sine");
+
+        editor.DoubleTapFinger(new Point(sine.X + NodeGeometry.Width / 2, sine.Y + 300));
+    }
+
+    [Then("the modules show their names alone")]
+    public void ThenNamesAlone() => editor.Overview.ShouldBeTrue();
+
+    [Then("the sine's rows can be read in the middle of the canvas")]
+    public void ThenTheSineReads()
+    {
+        editor.Overview.ShouldBeFalse();
+        editor.OnScreen(context.Node("sine")).X.ShouldBe(editor.CanvasSize.Width / 2, tolerance: 1);
+    }
+
+    [Then("every module is in view")]
+    public void ThenEveryModuleInView()
+    {
+        var size = editor.CanvasSize;
+
+        foreach (var name in (string[])["clock", "sine"])
+        {
+            var at = editor.OnScreen(context.Node(name));
+
+            at.X.ShouldBeInRange(0, size.Width, name);
+            at.Y.ShouldBeInRange(0, size.Height, name);
+        }
+    }
+
     [When("the side button is pressed in")]
     public void WhenSideIn() => editor.Toggle("side", true);
 

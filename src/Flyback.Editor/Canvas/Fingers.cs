@@ -316,7 +316,7 @@ internal sealed class Fingers
     {
         var scene = selection.Scene;
 
-        if (scene.HitWell(view.ToGraph(screen), Math.Min(Reach / view.Zoom, MostReach), out var node, out var port)
+        if (!view.Overview && scene.HitWell(view.ToGraph(screen), Math.Min(Reach / view.Zoom, MostReach), out var node, out var port)
             && scene.RowOf(node, port) is var (bounds, center))
             return view.GraphToScreen.Transform(ValueWell.At(bounds, center).Center);
 
