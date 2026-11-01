@@ -84,7 +84,7 @@ internal sealed class CanvasSection : ISettingsSection
     private readonly Action<string, string?> report;
 
     /// <param name="canvas">The canvas, redrawn whenever what it draws changes.</param>
-    public CanvasSection(EditorFolders folders, NodeEditor canvas, ReportLine report, IBrowserStore browser)
+    public CanvasSection(EditorFolders folders, NodeEditor canvas, ReportLine report, IBrowserStore browser, EditorHost host)
     {
         path = folders.SettingsPath;
         this.canvas = canvas;
@@ -94,6 +94,7 @@ internal sealed class CanvasSection : ISettingsSection
         saved = path is not null ? CanvasSettings.Load(path) : CanvasSettings.Parse(browser.Read(CanvasSettings.Section));
 
         canvas.Gestures.DragToPan = saved.DragToPan;
+        canvas.Gestures.ScrollPans = host.ScrollPans;
 
         ToolTip.SetTip(compactModules,
             "Put each input beside an output on one row, and show a knob's value when "

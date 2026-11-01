@@ -50,6 +50,7 @@ runtime.setModuleImports('page', {
   },
   attachGl: box => gl.attach(box.firstChild, () => runtime.localHeapViewU8()),
   hasFocus: () => document.hasFocus(),
+  onMac: () => /^mac/i.test(navigator.userAgentData?.platform ?? navigator.platform ?? ''),
   // The native controls' layer, which holds the picture's canvas, goes under Avalonia's own canvas.
   pictureBehind: behind => {
     for (const layer of document.querySelectorAll('.avalonia-native-host')) {

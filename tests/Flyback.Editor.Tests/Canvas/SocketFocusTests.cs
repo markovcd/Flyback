@@ -232,6 +232,39 @@ public class SocketFocusTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void A_trackpad_nudges_the_well_once_its_scroll_adds_up_to_a_notch()
+    {
+        // The up arrow's nudge, on a second canvas, is what one notch should come to.
+        var (_, keyed, keyedSine, _) = Clicked();
+        Press(keyed, Key.Up);
+        var oneNudge = keyedSine.InputValues[freq(keyedSine)];
+        Press(keyed, Key.Up);
+        var twoNudges = keyedSine.InputValues[freq(keyedSine)];
+
+        var (editor, window, sine, pick) = Clicked();
+        var at = Well(editor, window, sine, pick.Port);
+        var was = sine.InputValues[pick.Port];
+
+        window.MouseWheel(at, new Vector(0, 0.4));
+        window.MouseWheel(at, new Vector(0, 0.4));
+        Settle(window);
+
+        sine.InputValues[pick.Port].ShouldBe(was, "two fifths of a notch twice is not yet a notch");
+
+        window.MouseWheel(at, new Vector(0, 0.4));
+        Settle(window);
+
+        sine.InputValues[pick.Port].ShouldBe(oneNudge);
+
+        window.MouseWheel(at, new Vector(0, 1));
+        Settle(window);
+
+        sine.InputValues[pick.Port].ShouldBe(twoNudges, "a whole notch is one nudge, as a mouse's always was");
+
+        static int freq(NodeInstance node) => Port(node, "freq");
+    }
+
+    [AvaloniaFact]
     public void A_press_elsewhere_takes_the_keys_back()
     {
         var (editor, window, _, _) = Clicked();

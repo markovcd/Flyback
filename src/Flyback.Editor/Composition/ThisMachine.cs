@@ -47,5 +47,6 @@ internal static class ThisMachine
         PresetSite = PresetSite.Built,
         FileTypes = FileTypes.ForThisCopy(),
         Relaunch = Restart.Launch,
+        ScrollPans = OperatingSystem.IsMacOS(),
     };
 }

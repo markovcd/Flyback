@@ -663,15 +663,38 @@ internal sealed class CanvasGestures
         repaint.Request();
     }
 
+    /// <summary>
+    /// Whether a scroll with neither Ctrl nor Cmd held pans the view rather than zooming it:
+    /// a Mac's convention, where the wheel is usually two fingers on a trackpad and a pinch zooms.
+    /// </summary>
+    public bool ScrollPans { get; set; }
+
+    /// <summary>How many screen pixels a notch of the wheel pans, the step a scroll viewer takes.</summary>
+    internal const double PanPerNotch = 50;
+
     public void Wheel(Control canvas, PointerWheelEventArgs e)
     {
-        // Over the well with the keys the wheel nudges it; over anything else it zooms.
-        var over = selection.Scene.HitWell(view.ToGraph(e.GetPosition(canvas)), out var node, out var port);
-
-        if (!(over && focus.Focused == new SocketPick(node, port) && focus.Wheel(e.Delta.Y)))
-            view.ZoomAt(e.GetPosition(canvas), e.Delta.Y);
-
         e.Handled = true;
+
+        // Over the well with the keys the wheel nudges it; over anything else it pans or zooms.
+        var at = e.GetPosition(canvas);
+        var over = selection.Scene.HitWell(view.ToGraph(at), out var node, out var port);
+
+        if (over && focus.Focused == new SocketPick(node, port) && focus.Wheel(e.Delta.Y)) return;
+
+        if (ScrollPans && (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) == 0)
+            view.PanBy(e.Delta * PanPerNotch);
+        else
+            view.ZoomAt(at, e.Delta.Y);
+    }
+
+    /// <summary>A pinch on a touchpad, which zooms about the pointer by as much as the fingers spread.</summary>
+    public void Magnify(Control canvas, PointerDeltaEventArgs e)
+    {
+        e.Handled = true;
+
+        // A magnification of -1 or less would be a zoom to nothing.
+        if (e.Delta.X > -0.9) view.ZoomBy(e.GetPosition(canvas), 1 + e.Delta.X);
     }
 
     /// <summary>

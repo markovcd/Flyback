@@ -10,6 +10,7 @@
 
 ### Editor
 
+- On a Mac, two fingers scrolling on the trackpad move the canvas and a pinch zooms it, as in other Mac programs; Cmd with the wheel zooms, for a mouse. A scroll over a picked value adds up to whole nudges instead of one per tiny step. Elsewhere the wheel zooms as before.
 - Three more tutorials: knobs you can play, a song in sections brought in and out by an Arrangement, and text that builds itself with a def and a loop.
 - Zoomed out too far for a module's rows to be read, as a patch framed on a phone is, each module and box shows its name large across its middle instead; a double tap or double-click on one brings it up to a size that reads, and one on bare canvas looks at the whole patch again.
 - The text lets blocks nest: a def inside a def, a group or a loop, in sight only inside that block and reading what it sees, and a group inside a group or a loop. A group inside a group is drawn as part of the outer one, and a named group in a loop is a box a pass, "Voice 1", "Voice 2".

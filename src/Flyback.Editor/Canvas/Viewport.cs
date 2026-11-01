@@ -196,12 +196,15 @@ internal sealed class Viewport
     }
 
     /// <summary>Zooms by <paramref name="notches"/> of the wheel, keeping the point under <paramref name="screen"/> where it is.</summary>
-    public void ZoomAt(Point screen, double notches)
+    public void ZoomAt(Point screen, double notches) => ZoomBy(screen, Math.Pow(1.12, notches));
+
+    /// <summary>Zooms by <paramref name="factor"/>, keeping the point under <paramref name="screen"/> where it is.</summary>
+    public void ZoomBy(Point screen, double factor)
     {
         var anchor = ToGraph(screen);
 
         fitted = false;
-        Zoom = Math.Clamp(Zoom * Math.Pow(1.12, notches), MinZoom, MaxZoom);
+        Zoom = Math.Clamp(Zoom * factor, MinZoom, MaxZoom);
 
         // As far as the edge of the canvas allows, since zooming out in a corner
         // walks the view outwards as surely as dragging it does.

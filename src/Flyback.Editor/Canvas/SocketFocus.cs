@@ -22,6 +22,9 @@ internal sealed class SocketFocus(SocketDial dial, KnobChoice choice, CanvasHist
 
     private SocketPick? picked;
 
+    /// <summary>Wheel travel toward the next nudge, short of a whole notch.</summary>
+    private double wheelCarry;
+
     /// <summary>The value when the typing began, which Escape puts back.</summary>
     private float typingFrom;
 
@@ -165,7 +168,21 @@ internal sealed class SocketFocus(SocketDial dial, KnobChoice choice, CanvasHist
     }
 
     /// <summary>Nudges the input with the focus by notches of the wheel.</summary>
-    public bool Wheel(double notches) => Move(Nudge, Math.Sign(notches));
+    public bool Wheel(double notches)
+    {
+        if (Focused is null) return false;
+
+        // A trackpad scrolls in fractions of a notch, many to a stroke, so the nudge waits for a whole one.
+        if (Math.Sign(notches) != Math.Sign(wheelCarry)) wheelCarry = 0;
+        wheelCarry += notches;
+
+        var whole = (int)Math.Truncate(wheelCarry);
+        wheelCarry -= whole;
+
+        for (var i = 0; i < Math.Abs(whole); i++) Move(Nudge, Math.Sign(whole));
+
+        return true;
+    }
 
     /// <summary>The keys while typing: every key is the box's, so none of them plays a note.</summary>
     private bool TypingKey(Key key, KeyModifiers modifiers)

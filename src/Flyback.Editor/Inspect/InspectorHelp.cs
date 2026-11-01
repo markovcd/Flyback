@@ -11,16 +11,17 @@ internal static class InspectorHelp
     /// has no keys.
     /// </summary>
     /// <param name="dragToPan">Whether the left button pans and the right one selects (ADR-0182).</param>
-    internal static IReadOnlyList<HelpGroup> Shortcuts(bool inPage, bool fingers, bool dragToPan = false)
+    /// <param name="scrollPans">Whether a scroll pans and a pinch zooms, as on a Mac (ADR-0217).</param>
+    internal static IReadOnlyList<HelpGroup> Shortcuts(bool inPage, bool fingers, bool dragToPan = false, bool scrollPans = false)
     {
-        List<HelpGroup> groups = fingers ? FingerGroups(inPage) : KeyGroups(inPage, dragToPan);
+        List<HelpGroup> groups = fingers ? FingerGroups(inPage) : KeyGroups(inPage, dragToPan, scrollPans);
         groups.RemoveAll(g => g.Rows.Count == 0);
         return groups;
     }
 
     private static HelpRow Row(string title, string detail = "", string keys = "") => new(title, detail, keys);
 
-    private static List<HelpGroup> KeyGroups(bool inPage, bool dragToPan) =>
+    private static List<HelpGroup> KeyGroups(bool inPage, bool dragToPan, bool scrollPans) =>
     [
         new("Getting started",
         [
@@ -64,8 +65,14 @@ internal static class InspectorHelp
         new("Selecting and moving",
         [
             dragToPan ? Row("Select", "Right-drag the background.", "Right-drag") : Row("Select", "Drag the background.", "Drag"),
-            dragToPan ? Row("Pan", "Drag the background.", "Drag") : Row("Pan", keys: "Middle-drag"),
-            Row("Zoom", keys: "Wheel"),
+            (dragToPan, scrollPans) switch
+            {
+                (true, true) => Row("Pan", "Drag the background, or scroll with two fingers on a trackpad.", "Drag"),
+                (true, false) => Row("Pan", "Drag the background.", "Drag"),
+                (false, true) => Row("Pan", "Two fingers on a trackpad, or middle-drag.", "Scroll"),
+                _ => Row("Pan", keys: "Middle-drag"),
+            },
+            scrollPans ? Row("Zoom", "Pinch on a trackpad.", "Ctrl+Scroll") : Row("Zoom", keys: "Wheel"),
             Row("Add to selection", keys: "Ctrl+Click"),
             Row("Select all", keys: "Ctrl+A"),
             Row("Frame the patch", "Or double-click the background. Zoomed out, double-click a module to bring it up to read.", "Ctrl+F"),
@@ -130,7 +137,7 @@ internal static class InspectorHelp
     /// that writes is gone; naming the gestures that are switched off would leave
     /// somebody concluding the program was broken.
     /// </summary>
-    internal static string Locked(bool fingers, bool dragToPan = false) =>
+    internal static string Locked(bool fingers, bool dragToPan = false, bool scrollPans = false) =>
         "The text is the document, and this is a view of what it builds. "
         + (fingers ? "Tap the code button, on the toolbar," : "Press F2")
         + " to go back to it — modules and wires are added and removed there, "
@@ -142,9 +149,8 @@ internal static class InspectorHelp
         + (fingers
             ? "Drag bare canvas to select. Two fingers drag the view, and spread or pinch to zoom. "
             + "Zoomed out, a double tap on a module brings it up to read; one on bare canvas shows the whole patch."
-            : (dragToPan
-                  ? "Right-drag the background to select, drag it to pan, wheel to zoom.\n"
-                  : "Drag the background to select, middle-drag to pan, wheel to zoom.\n")
+            : (dragToPan ? "Right-drag the background to select, drag it" : "Drag the background to select, middle-drag")
+              + (scrollPans ? " or scroll to pan, pinch to zoom.\n" : " to pan, wheel to zoom.\n")
               + "Ctrl+click adds to a selection, Ctrl+A takes everything.\n"
               + "Ctrl+C copies what is selected, Ctrl+F frames the patch.");
 

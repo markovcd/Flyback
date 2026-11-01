@@ -248,6 +248,21 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
             open.MouseUp(end, button);
         });
 
+    /// <summary>Turns the wheel, or scrolls two fingers on a trackpad, over a point of the patch.</summary>
+    public void Scroll(Point graph, Vector notches, RawInputModifiers held = RawInputModifiers.None) =>
+        DoWindow((open, canvas) => open.MouseWheel(OnWindow(open, canvas, graph), notches, held));
+
+    /// <summary>Spreads two fingers on a trackpad over a point of the patch, or pinches them for less than 0.</summary>
+    public void Pinch(Point graph, double magnification) =>
+        DoWindow((open, canvas) =>
+        {
+            var pointer = new Pointer(Pointer.GetNextFreeId(), PointerType.Mouse, isPrimary: true);
+            var properties = new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.Other);
+
+            canvas.RaiseEvent(new PointerDeltaEventArgs(
+                InputElement.PointerTouchPadGestureMagnifyEvent, canvas, pointer, open, OnWindow(open, canvas, graph), 1_000, properties, KeyModifiers.None, new Vector(magnification, magnification)));
+        });
+
     /// <summary>Drags the well of an input's value up by <paramref name="up"/> pixels with the left button, in a few moves.</summary>
     public void DragWell(Guid node, int port, double up) =>
         DoWindow((open, canvas) =>

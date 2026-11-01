@@ -35,6 +35,12 @@ public sealed record EditorHost
     /// </summary>
     public Action<bool>? PictureBehind { get; init; }
 
+    /// <summary>
+    /// A scroll pans the canvas and a pinch or Ctrl/Cmd and the wheel zooms it, as on a Mac, where
+    /// the wheel is two fingers on a trackpad. Unset, the wheel zooms.
+    /// </summary>
+    public bool ScrollPans { get; init; }
+
     /// <summary>Leaves the editor for the front page of the site it is served from. Null puts no mark on the toolbar.</summary>
     public Action? Home { get; init; }
 }

@@ -76,6 +76,7 @@ internal sealed class NodeEditor
         ClipToBounds = true;
 
         repaint.Requested += InvalidateVisual;
+        PointerTouchPadGestureMagnify += (_, e) => Gestures.Magnify(this, e);
     }
 
     /// <summary>The notices the canvas raises and reacts to, shared with the editor around it.</summary>
