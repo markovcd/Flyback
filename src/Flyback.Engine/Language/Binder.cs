@@ -48,6 +48,9 @@ public sealed class Binder
     /// <summary>Every pass the patch's loops have stamped out so far, against <see cref="MostPasses"/>.</summary>
     private int passes;
 
+    /// <summary>The pass each open loop is on, counted from one, outermost first.</summary>
+    private readonly List<int> onPass = [];
+
     /// <summary>
     /// The most passes one patch's loops may stamp out between them. Text is outside
     /// input, and a loop over a million items would place a million modules.
@@ -632,7 +635,10 @@ public sealed class Binder
             .Where(n => !before.Contains(n.Id) && !wiring.IsShared(n.Id))
             .Select(n => n.Id);
 
-        boxes.Block(statement.Name, new Site(statement.Line, statement.Column), made, troubled: issues.Count > said);
+        // A named group in a loop is a box a pass, numbered for the pass: "Voice 1", "Voice 2".
+        var boxName = statement.Name is null || onPass.Count == 0 ? statement.Name : $"{statement.Name} {string.Join('.', onPass)}";
+
+        boxes.Block(boxName, new Site(statement.Line, statement.Column), made, troubled: issues.Count > said);
     }
 
     // --- expressions ---------------------------------------------------------
@@ -1235,6 +1241,7 @@ public sealed class Binder
             for (var i = 0; i < items.Count; i++)
             {
                 var pass = identity.Enter(i.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                onPass.Add(i + 1);
                 var said = issues.Count;
 
                 try
@@ -1257,6 +1264,7 @@ public sealed class Binder
                 finally
                 {
                     identity.Leave(pass);
+                    onPass.RemoveAt(onPass.Count - 1);
                 }
 
                 // A mistake in the body is the same mistake on every pass, and once is enough to say it.

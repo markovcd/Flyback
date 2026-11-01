@@ -275,6 +275,6 @@ do.
 
 The canvas still draws no box inside a box: a group inside a group is folded into
 the outermost group's box, and a printing writes it there. A group in a loop draws
-a box a pass, or one box where it is named, since blocks with one name are one
-group. Showing the inner structure is the open question of
+a box a pass, a named one numbered for its pass ("Voice 1", "Voice 2"), so a
+printing writes each pass's box by a name of its own. Showing the inner structure is the open question of
 `docs/handoff/nested-def-boxes.md`.

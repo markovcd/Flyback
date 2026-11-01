@@ -755,7 +755,8 @@ sum(voices) |> out.left
 A panel knob and the lines about the whole patch (`requires`, `keyboard`,
 `description`, `author`, `tags`, `length`) are written outside a loop. A def
 written in a loop's body is that body's. A group in it draws a box a pass, and a
-named one gathers every pass into the one box its name says. One patch's loops stamp out at most 4096 passes between them. A printing
+named one is numbered for its pass: `group "Voice"` is "Voice 1", "Voice 2" and
+on, and "Voice 2.3" in a loop inside a loop. One patch's loops stamp out at most 4096 passes between them. A printing
 writes a loop out unrolled.
 
 ---

@@ -150,6 +150,26 @@ public class NestedBlockTests
             """);
 
     [Fact]
+    public void A_named_group_in_loops_inside_loops_is_numbered_for_every_pass()
+    {
+        var patch = Built(
+            """
+            let v = for k in 1..2 {
+              let w = for j in 1..2 {
+                group "Cell" {
+                  let s = sine(freq: k * j) |> drive(drive: 2)
+                }
+                s
+              }
+              sum(w)
+            }
+            sum(v) |> out.left
+            """);
+
+        patch.Groups.ShouldNotBeNull().Select(g => g.Name).ShouldBe(["Cell 1.1", "Cell 1.2", "Cell 2.1", "Cell 2.2"], ignoreOrder: true);
+    }
+
+    [Fact]
     public void A_group_inside_a_group_is_in_the_outer_box_and_its_names_stay_in_sight()
     {
         var patch = Built(
@@ -182,7 +202,7 @@ public class NestedBlockTests
             """);
 
     [Fact]
-    public void A_group_inside_a_loop_draws_a_box_a_pass_and_a_named_one_gathers_them()
+    public void A_group_inside_a_loop_draws_a_box_a_pass_and_a_named_one_is_numbered_for_its_pass()
     {
         var unnamed = Built(
             """
@@ -208,6 +228,7 @@ public class NestedBlockTests
             sum(v) |> out.left
             """);
 
-        named.Groups.ShouldNotBeNull().ShouldHaveSingleItem().Members.Count.ShouldBe(6);
+        named.Groups.ShouldNotBeNull().Select(g => g.Name).ShouldBe(["Voices 1", "Voices 2", "Voices 3"], ignoreOrder: true);
+        named.Groups.ShouldAllBe(g => g.Members.Count == 2);
     }
 }
