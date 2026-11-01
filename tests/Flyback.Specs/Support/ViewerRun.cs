@@ -79,17 +79,37 @@ public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : Headles
         });
 
     /// <summary>Taps the picture once, or twice for a double-click.</summary>
+    /// <remarks>
+    /// A double-click is raised as the tap and the double tap it is recognized as. Headless clicks
+    /// are stamped when they are injected, so on a loaded runner the second can land past the
+    /// double-click time and be read as another single click.
+    /// </remarks>
     public void TapPicture(int times = 1) =>
         Run(() =>
         {
             var open = Playing;
             var preview = open.GetVisualDescendants().OfType<PreviewHost>().Single();
-            var at = preview.TranslatePoint(new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 2), open)!.Value;
 
-            for (var tap = 0; tap < times; tap++)
+            if (times == 2)
             {
-                open.MouseDown(at, MouseButton.Left);
-                open.MouseUp(at, MouseButton.Left);
+                var middle = new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 2);
+                var pointer = new Pointer(Pointer.GetNextFreeId(), PointerType.Mouse, isPrimary: true);
+                var released = new PointerEventArgs(
+                    InputElement.PointerReleasedEvent, preview, pointer, preview, middle, 0,
+                    new PointerPointProperties(), KeyModifiers.None);
+
+                preview.RaiseEvent(new TappedEventArgs(InputElement.TappedEvent, released));
+                preview.RaiseEvent(new TappedEventArgs(InputElement.DoubleTappedEvent, released));
+            }
+            else
+            {
+                var at = preview.TranslatePoint(new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 2), open)!.Value;
+
+                for (var tap = 0; tap < times; tap++)
+                {
+                    open.MouseDown(at, MouseButton.Left);
+                    open.MouseUp(at, MouseButton.Left);
+                }
             }
 
             Settle();
