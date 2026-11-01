@@ -190,6 +190,10 @@ public sealed class EditingSteps(PatchContext context, Session session, EditorDr
     public void ThenTheGroup(string name, int count) =>
         context.Patch.Groups.ShouldNotBeNull().ShouldContain(group => group.Name == name && group.Collapsed && group.Members.Count == count);
 
+    [Then("the patch has an open group {string} of {int} modules")]
+    public void ThenTheOpenGroup(string name, int count) =>
+        context.Patch.Groups.ShouldNotBeNull().ShouldContain(group => group.Name == name && !group.Collapsed && group.Members.Count == count);
+
     // --- undo -----------------------------------------------------------------
 
     [Given("the level is deleted")]

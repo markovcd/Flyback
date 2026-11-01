@@ -184,12 +184,6 @@ public sealed class OutputSettings
     /// </summary>
     public KeyboardLayout Keyboard { get; set; }
 
-    /// <summary>
-    /// Whether each level the text opens inside a box is laid out as a band of its own,
-    /// with a shelf chip. In no section while it is being built.
-    /// </summary>
-    public bool LevelBands { get; set; }
-
     /// <summary>Which monitor double-clicking the preview fills — the Picture section.</summary>
     public FullScreenOn FullScreen { get; set; }
 

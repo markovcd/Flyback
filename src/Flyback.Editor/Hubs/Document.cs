@@ -2,7 +2,6 @@ using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Notices;
-using Flyback.Editor.Settings;
 using Flyback.Editor.Statistics;
 using Flyback.Engine.Language;
 
@@ -36,7 +35,6 @@ internal sealed class Document
     private readonly Reactions reactions;
     private readonly LastPress lastPress;
     private readonly CaretFollow caret;
-    private readonly OutputSettingRepository settings;
 
     public Document(
         NodeEditor editor,
@@ -45,10 +43,8 @@ internal sealed class Document
         Usage usage,
         Reactions reactions,
         LastPress lastPress,
-        CaretFollow caret,
-        OutputSettingRepository settings)
+        CaretFollow caret)
     {
-        this.settings = settings;
         this.editor = editor;
         this.source = source;
         this.report = report;
@@ -122,8 +118,6 @@ internal sealed class Document
     /// <summary>Whether the text is the document.</summary>
     public bool Owned => sourceOwned;
 
-    /// <summary>The patch <paramref name="text"/> describes, laid out as the settings ask.</summary>
-    public LanguageLoad Build(string text) => PatchLanguage.Build(text, bands: settings.Current.LevelBands);
 
     /// <summary>Whether the text view is the one showing.</summary>
     public bool ShowingCode => showingCode;
@@ -290,7 +284,7 @@ internal sealed class Document
             {
                 // The patch this text describes, which is not always the patch
                 // on the canvas — see CaretFollow.
-                var load = Build(text);
+                var load = PatchLanguage.Build(text);
 
                 map = load.Map;
                 means = load.Patch;
@@ -729,7 +723,7 @@ internal sealed class Document
     /// <returns>What the text built, which changed something only where it is <see cref="LanguageLoad.Ok"/>.</returns>
     private LanguageLoad Evaluate(string? applied = null)
     {
-        var load = Build(source.Source);
+        var load = PatchLanguage.Build(source.Source);
 
         if (!load.Ok)
         {

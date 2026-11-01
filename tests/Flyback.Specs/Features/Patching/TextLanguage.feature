@@ -166,7 +166,7 @@ Feature: A patch can be written as text
       bass + lead |> out.left
       """
     Then it reads without complaint
-    And the patch has a shut group "Voices" of 4 modules
+    And the patch has an open group "Voices" of 4 modules
     And the speakers are not silent
 
   # Specified by ADR-0208.

@@ -20,9 +20,9 @@ public class LevelBandTests
         a + b |> out.left
         """;
 
-    private static Patch Built(string source, bool bands)
+    private static Patch Built(string source)
     {
-        var load = PatchLanguage.Build(source, NodeCatalog.BuiltIn, bands);
+        var load = PatchLanguage.Build(source, NodeCatalog.BuiltIn);
 
         load.Issues.ShouldBeEmpty(load.Report);
 
@@ -35,7 +35,7 @@ public class LevelBandTests
     [Fact]
     public void A_level_inside_a_box_is_a_block_under_its_shelf_laid_left_to_right_as_its_wires_run()
     {
-        var patch = Built(Nested, bands: true);
+        var patch = Built(Nested);
         var size = PatchLayout.Metrics.Default;
 
         var sine = Only(patch, "osc.sine");
@@ -51,12 +51,7 @@ public class LevelBandTests
     }
 
     [Fact]
-    public void Without_bands_the_box_is_laid_out_flat_as_before() =>
-        Built(Nested, bands: false).Nodes.Select(n => (n.TypeId, n.X, n.Y))
-            .ShouldBe(PatchLanguage.Build(Nested, NodeCatalog.BuiltIn).Patch.Nodes.Select(n => (n.TypeId, n.X, n.Y)));
-
-    [Fact]
-    public void A_patch_with_no_level_inside_a_box_is_laid_out_as_it_is_with_its_boxes_open()
+    public void A_box_with_no_level_inside_it_is_laid_out_shut_as_before()
     {
         const string source =
             """
@@ -67,12 +62,7 @@ public class LevelBandTests
             a + voice(3) |> out.left
             """;
 
-        var open = Built(source, bands: false);
-        foreach (var group in open.Groups!) group.Collapsed = false;
-        PatchLayout.Arrange(open, NodeCatalog.BuiltIn);
-
-        Built(source, bands: true).Nodes.Select(n => (n.TypeId, n.X, n.Y))
-            .ShouldBe(open.Nodes.Select(n => (n.TypeId, n.X, n.Y)));
+        Built(source).Groups.ShouldNotBeNull().ShouldAllBe(group => group.Collapsed);
     }
 
     [Fact]

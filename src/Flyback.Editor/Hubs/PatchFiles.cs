@@ -557,7 +557,7 @@ internal sealed class PatchFiles
             using var reader = new StreamReader(stream);
 
             var text = await reader.ReadToEndAsync();
-            var load = document.Build(text);
+            var load = PatchLanguage.Build(text);
 
             if (!load.Ok)
             {

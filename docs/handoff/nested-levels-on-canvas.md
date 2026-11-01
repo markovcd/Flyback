@@ -4,7 +4,7 @@ Planned on 2026-10-13, chosen on 2026-11-01 on `main` at `b2e4e24`. It is on TOD
 it off there, and delete this file, in the commit that lands the last step.
 
 - **Kind:** Plan
-- **Status:** Open; steps 1 and 2 built, step 3 built dark
+- **Status:** Open; steps 1 to 3 built
 
 ## What is wanted
 
@@ -57,9 +57,8 @@ Arek's Claude Design canvas: https://claude.ai/artifact/EYooZ2cSuPtx6XxTUidWnZ.
    module's panel, from `PatchLevels`, which reads the text while it owns the patch. A
    selected level is shown by its button in bold; the panel for the level itself (its
    arguments, sockets leaving it, other calls of its def) is not built yet.
-3. **The banded layout** in `PatchLayout`, with the shelf chips, behind the setting. Built,
-   dark: `OutputSettings.LevelBands` (in no section) or `flyback-cli shot --open --levels`.
-   With it the binder lays the boxes out open, and inside each, its own modules and each
+3. **The banded layout** in `PatchLayout`, with the shelf chips. Done, the only layout: a
+   box holding a level is laid out open, a box with none shut as before, and inside each, its own modules and each
    level inside it as a block under a shelf, left to right as the wires run
    (`PatchLayout.Banded`); the ring rises to hold the shelves. `LevelShelves` draws the
    chips and takes a press on one as selecting the level. A level that placed nothing and

@@ -83,7 +83,7 @@ internal static class Shot
             services.AddSingleton(new AudioSetup(new SilentAudioDevice(), plugins.PreferredAudioOutput));
             services.AddSingleton(sp => new OutputSettingRepository(sp.GetRequiredService<EditorFolders>(), sp.GetRequiredService<EditorHost>(), sp.GetRequiredService<ReportLine>(), sp.GetRequiredService<IBrowserStore>())
             {
-                Current = new OutputSettings { Gpu = false, DefaultPreset = preset?.Name ?? string.Empty, LevelBands = request.Levels },
+                Current = new OutputSettings { Gpu = false, DefaultPreset = preset?.Name ?? string.Empty },
             });
         });
 

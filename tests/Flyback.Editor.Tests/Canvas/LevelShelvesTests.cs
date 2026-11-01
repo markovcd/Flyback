@@ -6,13 +6,12 @@ using Avalonia.Threading;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
 using Flyback.Editor.Hubs;
-using Flyback.Editor.Settings;
 using Shouldly;
 using Xunit;
 
 namespace Flyback.Editor.Tests.Canvas;
 
-/// <summary>The shelf chips over the bands an open box holds, while the levels are laid out as bands.</summary>
+/// <summary>The shelf chips over the bands an open box holds.</summary>
 public class LevelShelvesTests : EditorTest
 {
     private const string Text =
@@ -27,7 +26,15 @@ public class LevelShelvesTests : EditorTest
         lead + bass |> out.left
         """;
 
-    private MainWindow Opened(bool bands)
+    private const string Flat =
+        """
+        group "Band" {
+          let lead = saw(freq: 2) |> drive(drive: 3)
+        }
+        lead |> out.left
+        """;
+
+    private MainWindow Opened(string text = Text)
     {
         var window = NewMainWindow();
 
@@ -35,8 +42,7 @@ public class LevelShelvesTests : EditorTest
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
-        Service<OutputSettingRepository>(window).Current.LevelBands = bands;
-        Service<Document>(window).Apply(Text).ShouldBeNull();
+        Service<Document>(window).Apply(text).ShouldBeNull();
 
         var editor = Editor(window);
         foreach (var group in editor.History.Patch.Groups!) group.Collapsed = false;
@@ -54,16 +60,16 @@ public class LevelShelvesTests : EditorTest
 
     [AvaloniaFact]
     public void Each_level_inside_an_open_box_has_a_shelf_named_as_the_text_opened_it() =>
-        Shelves(Opened(bands: true)).Select(shelf => shelf.Band.Label).ShouldBe(["Bass", "voice"]);
+        Shelves(Opened()).Select(shelf => shelf.Band.Label).ShouldBe(["Bass", "voice"]);
 
     [AvaloniaFact]
-    public void Without_bands_there_are_no_shelves() =>
-        Shelves(Opened(bands: false)).ShouldBeEmpty();
+    public void A_box_with_no_level_inside_it_has_no_shelves() =>
+        Shelves(Opened(Flat)).ShouldBeEmpty();
 
     [AvaloniaFact]
     public void Pressing_a_chip_selects_every_module_in_its_level()
     {
-        var window = Opened(bands: true);
+        var window = Opened();
         var editor = Editor(window);
         var voice = Shelves(window).Single(shelf => shelf.Band.Label == "voice");
 
