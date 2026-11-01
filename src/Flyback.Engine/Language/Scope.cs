@@ -27,10 +27,4 @@ internal sealed class Scope(Scope? parent, Scope? declaredIn = null)
     /// <summary>The def a name calls, and the scope it was written in, which its body sees the defs of.</summary>
     public (DefStatement Def, Scope Where)? Def(string name) =>
         defs.TryGetValue(name, out var found) ? found : (parent ?? declaredIn)?.Def(name);
-
-    /// <summary>Hands the defs declared here to <paramref name="outer"/>, for a group, whose defs stay in sight after it.</summary>
-    public void LiftDefs(Scope outer)
-    {
-        foreach (var (name, (def, _)) in defs) outer.defs[name] = (def, outer);
-    }
 }

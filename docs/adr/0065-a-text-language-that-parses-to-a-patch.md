@@ -270,8 +270,9 @@ loop, as the grammar always allowed. A def is in sight in the scope it is writte
 in and every scope inside it, and a name means one def wherever it is read, so an
 inner def cannot take an outer one's name. Its body still sees only its parameters
 and the defs in sight, never the names around it, for the reason a top-level def
-does not. A def written in a group stays in sight after it, as the group's names
-do.
+does not. Every block is a namespace for its defs: one written in a group is out
+of sight after it, though the group's names stay in sight so groups can wire into
+each other.
 
 The canvas still draws no box inside a box: a group inside a group is folded into
 the outermost group's box, and a printing writes it there. A group in a loop draws

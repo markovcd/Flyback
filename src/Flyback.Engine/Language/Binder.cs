@@ -617,13 +617,11 @@ public sealed class Binder
 
         inBlock = outerBlock;
 
-        // A group is a box on the canvas and nothing more, so the names and defs
-        // it made go on being visible after it — which is what lets one group
-        // wire into the next, as the largest preset does throughout.
+        // The names a group made go on being visible after it, which is what lets
+        // one group wire into the next, as the largest preset does throughout. Its
+        // defs are its own.
         foreach (var name in statement.Binds)
             if (inner.Entry(name) is { } item) scope.Set(name, item.Value, item.Line);
-
-        inner.LiftDefs(scope);
 
         if (outerBlock) return;
 

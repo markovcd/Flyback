@@ -673,8 +673,8 @@ The body is a block. Its result is the final expression, which may be a tuple,
 and `let (a, b) = f(...)` takes one apart. A single-expression body needs no
 braces.
 
-**A def may be written inside another def's body**, or a loop's. It is in sight
-in that body and every body inside it, and nowhere else, and it takes no name a
+**A def may be written inside another def's body**, a loop's or a group's. It is
+in sight in that block and every block inside it, and nowhere else, and it takes no name a
 def in sight already has. Like any def it sees the defs around it and none of
 the names: what it needs is passed in.
 
@@ -778,7 +778,8 @@ group "Bass" {
 Members are the nodes declared inside the block. A group built from text is
 shut, and the sockets on its edge are the ones its wires cross. A group with no
 name is `group { … }`. A `panel` knob or a `requires` line inside a group is
-refused. A def written in a group is in sight after it, as its names are.
+refused. A def written in a group is in sight only inside it, though its names
+stay in sight after it.
 
 **A group may hold another group.** Only the outermost draws a box, and the inner
 group's modules are in it; a printing writes them in the outer block. A group of fewer than

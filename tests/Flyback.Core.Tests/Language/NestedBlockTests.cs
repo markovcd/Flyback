@@ -189,17 +189,29 @@ public class NestedBlockTests
     }
 
     [Fact]
-    public void A_def_written_in_a_nested_group_is_in_sight_after_both() =>
+    public void A_def_written_in_a_group_is_in_sight_inside_it_and_nowhere_else()
+    {
         Built(
             """
             group "A" {
+              def tone(f) = sine(freq: f)
               group "B" {
-                def tone(f) = sine(freq: f)
+                let low = tone(110) |> drive(drive: 2)
               }
+              let high = tone(220) |> drive(drive: 3)
+            }
+            low + high |> out.left
+            """);
+
+        Try(
+            """
+            group "A" {
+              def tone(f) = sine(freq: f)
               let low = tone(110) |> drive(drive: 2)
             }
             tone(220) + low |> out.left
-            """);
+            """).Issues.ShouldContain(issue => issue.Code == IssueCode.UnknownModule);
+    }
 
     [Fact]
     public void A_group_inside_a_loop_draws_a_box_a_pass_and_a_named_one_is_numbered_for_its_pass()
