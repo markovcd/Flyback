@@ -109,9 +109,9 @@ internal static class Shot
 
             var canvas = provider.GetRequiredService<NodeEditor>();
 
-            if (request.Open)
+            if (request.Open || request.Shut)
                 foreach (var group in canvas.History.Patch.Groups ?? [])
-                    group.Collapsed = false;
+                    group.Collapsed = request.Shut;
 
             canvas.View.FrameAll();
             Settle(window);

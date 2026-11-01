@@ -88,7 +88,7 @@ internal sealed class NodeGeometry
         // ReSharper disable once CompareOfFloatsByEqualityOperator
         if (x == double.MaxValue) return default;
 
-        return new Rect(x, y, Width, GroupHeight(sockets));
+        return new Rect(x, y, Width, GroupHeight(sockets) + Strip(patch, group));
     }
 
     public static Point GroupOutputPort(Rect bounds, int index) => new(bounds.Right, bounds.Y + Row(index));
@@ -110,6 +110,9 @@ internal sealed class NodeGeometry
 
     /// <summary>How far an open group's ring rises above its modules for the shelves inside it.</summary>
     public Func<Patch, NodeGroup, double> Rise { get; set; } = (_, _) => 0;
+
+    /// <summary>How much taller a shut box is drawn for the strip of chips along its foot.</summary>
+    public Func<Patch, NodeGroup, double> Strip { get; set; } = (_, _) => 0;
 
     /// <summary>
     /// These same numbers, in the shape the layout wants them — plus how much room to

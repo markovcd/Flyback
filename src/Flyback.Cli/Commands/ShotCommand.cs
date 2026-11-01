@@ -78,6 +78,11 @@ internal static class ShotCommand
             Description = "Draw every box open, its modules showing.",
         };
 
+        var shut = new Option<bool>("--shut")
+        {
+            Description = "Draw every box shut.",
+        };
+
         var editor = new Option<FileInfo>("--editor")
         {
             Description = "The editor program to draw with, in place of the one beside this program. A dev build keeps it in src/Flyback.Editor.Desktop/bin.",
@@ -85,7 +90,7 @@ internal static class ShotCommand
 
         var command = new Command("shot", "Draw the editor's window with a patch open, at a chosen second, into a PNG.")
         {
-            given.Patch, given.Preset, given.Presets, output, at, size, select, canvas, crop, measure, assistant, live, open, editor,
+            given.Patch, given.Preset, given.Presets, output, at, size, select, canvas, crop, measure, assistant, live, open, shut, editor,
         };
 
         command.SetAction(result =>
@@ -135,6 +140,7 @@ internal static class ShotCommand
             if (result.GetValue(assistant)) arguments.Add("--assistant");
             if (result.GetValue(live)) arguments.Add("--live");
             if (result.GetValue(open)) arguments.Add("--open");
+            if (result.GetValue(shut)) arguments.Add("--shut");
 
             arguments.AddRange(file is not null ? [file.FullName] : ["--preset", named!]);
 

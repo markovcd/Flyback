@@ -14,6 +14,7 @@
 - Zoomed out too far for a module's rows to be read, as a patch framed on a phone is, each module and box shows its name large across its middle instead; a double tap or double-click on one brings it up to a size that reads, and one on bare canvas looks at the whole patch again.
 - The text lets blocks nest: a def inside a def, a group or a loop, in sight only inside that block and reading what it sees, and a group inside a group or a loop. A group inside a group is drawn as part of the outer one, and a named group in a loop is a box a pass, "Voice 1", "Voice 2".
 - A box the text filled with groups, def calls or loop passes opens with each laid out as a band under a chip naming it, left to right as the wires run; pressing a chip selects every module in it.
+- A shut box lists the levels inside it as chips along its foot, and a loop pass's box the pass it is, `1/3 pitch = 110`. Zoomed far out, only each box's outermost chips show, large enough to read.
 - A module the text placed inside a group, a def call or a loop shows those levels at the top of the inspector, `Bass › voice`; pressing one selects every module in it.
 - Live patching shows only the view that owns the patch: its text when the text is the document, its modules otherwise. F2 no longer swaps them over the picture, and the transport over the picture has no text button.
 
@@ -22,6 +23,7 @@
 ### Command line
 
 - `flyback-cli levels` lists the groups, def calls and loop passes a text patch opens, inside one another, with their modules; `--of` names the ones a module sits in.
+- `flyback-cli shot --shut` draws every box shut, as `--open` draws every one open.
 - `flyback-cli shot --open` draws every box open, its modules showing.
 
 ### Installing

@@ -52,7 +52,7 @@ public sealed record Level(
             var inner = Bands(level.Inside, level.Kind == LevelKind.Loop ? level : null);
 
             return level.Members.Count == 0 && inner is [var only]
-                ? only with { Label = $"{level.Chip(loop)} › {only.Label}" }
+                ? only with { Label = $"{level.Chip(loop)} › {only.Label}", Above = [level.Chip(loop), .. only.Above] }
                 : new LayoutBand(level.Chip(loop), level.Members, inner);
         })];
 

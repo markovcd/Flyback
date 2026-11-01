@@ -4,7 +4,7 @@ Planned on 2026-10-13, chosen on 2026-11-01 on `main` at `b2e4e24`. It is on TOD
 it off there, and delete this file, in the commit that lands the last step.
 
 - **Kind:** Plan
-- **Status:** Open; steps 1 to 3 built
+- **Status:** Open; steps 1 to 4 built; the level's own panel and dragging out of a band are left
 
 ## What is wanted
 
@@ -65,11 +65,19 @@ Arek's Claude Design canvas: https://claude.ai/artifact/EYooZ2cSuPtx6XxTUidWnZ.
    holds one level shares its chip (`1/2 pitch = 220 › voice`). Open: what a module dragged
    out of its band does is not decided. Shots are in `/mnt/project-files/nesting/`
    (bands-left-to-right.png; bands-on.png is the earlier stacked try).
-4. **Shut boxes, live patching and zoomed far out.**
+4. **Shut boxes, live patching and zoomed far out.** Done: a shut box has a strip along its
+   foot listing the levels it came through (a pass, `1/3 pitch = 110`) and the first levels
+   inside it, the rest as `+N`; the layout gives it the room (`Metrics.ChipStrip`). Zoomed
+   far out (`ModuleOverview`) only each open box's outermost chips show, at a size that reads.
+   `flyback-cli shot --shut` draws every box shut.
 
 ## Corrections to the design
 
 - Chips are drawn 20 px tall; on touch each needs a 44 px tap area.
+- A shut box's chips run along its foot, not under its header, so its sockets stay on the
+  rows the layout and every wire already use. A pass's place shows as a chip, not a badge.
+- Live patching draws no chips: it shows only the view that owns the patch, and a patch
+  that has levels is owned by its text, so the text is what is over the picture.
 - The command is `flyback-cli levels`, and modules are named by their `let` names.
 - A pass's box is named "Pad 1" in the patch, so the `1/3` badge needs the pass number and
   count kept, not read back out of the name.

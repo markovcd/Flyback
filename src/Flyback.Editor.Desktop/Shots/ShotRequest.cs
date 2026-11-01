@@ -17,9 +17,10 @@ namespace Flyback.Editor.Desktop.Shots;
 /// <param name="Assistant">Whether the assistant's column is open, showing the conversation the patch carries.</param>
 /// <param name="Live">Whether the picture has the window with the patch over it, as live patching shows it.</param>
 /// <param name="Open">Whether every box is drawn open.</param>
+/// <param name="Shut">Whether every box is drawn shut.</param>
 internal sealed record ShotRequest(
     string Out, string? Patch, string? Preset, double At, int Width, int Height, string? Select, bool Canvas = false, bool Crop = false, bool Measure = false,
-    bool Assistant = false, bool Live = false, bool Open = false)
+    bool Assistant = false, bool Live = false, bool Open = false, bool Shut = false)
 {
     public const string Flag = "--shot";
 
@@ -27,7 +28,7 @@ internal sealed record ShotRequest(
     public static bool Claims(string[] args) => args.Length > 0 && args[0] == Flag;
 
     /// <summary>
-    /// Reads <c>--shot OUT --at SECONDS --size WxH [--select NAME] [--canvas] [--crop] [--measure] [--assistant] [--live] [--open] (--preset NAME | PATCH)</c>,
+    /// Reads <c>--shot OUT --at SECONDS --size WxH [--select NAME] [--canvas] [--crop] [--measure] [--assistant] [--live] [--open | --shut] (--preset NAME | PATCH)</c>,
     /// or says on <paramref name="error"/> what is wrong with it.
     /// </summary>
     public static ShotRequest? Parse(string[] args, TextWriter error)
@@ -36,7 +37,7 @@ internal sealed record ShotRequest(
 
         var output = args[1];
         string? patch = null, preset = null, select = null;
-        bool canvas = false, crop = false, measure = false, assistant = false, live = false, open = false;
+        bool canvas = false, crop = false, measure = false, assistant = false, live = false, open = false, shut = false;
         var at = 0d;
         var (width, height) = (0, 0);
 
@@ -74,6 +75,12 @@ internal sealed record ShotRequest(
                 continue;
             }
 
+            if (flag == "--shut")
+            {
+                shut = true;
+                continue;
+            }
+
             if (flag == "--canvas" || flag == "--crop")
             {
                 canvas = true;
@@ -107,8 +114,9 @@ internal sealed record ShotRequest(
 
         if ((patch is null) == (preset is null)) return Refuse("give a patch or --preset, and not both.");
         if (width == 0) return Refuse("give --size as WIDTHxHEIGHT.");
+        if (open && shut) return Refuse("give --open or --shut, and not both.");
 
-        return new ShotRequest(output, patch, preset, at, width, height, select, canvas, crop, measure, assistant, live, open);
+        return new ShotRequest(output, patch, preset, at, width, height, select, canvas, crop, measure, assistant, live, open, shut);
 
         ShotRequest? Refuse(string why)
         {

@@ -29,6 +29,17 @@ public sealed class ShotRequestTests
         Parse("--at", "1", "--size", "640x360", "--live").Request.ShouldNotBeNull().Live.ShouldBeTrue();
     }
 
+    [Fact]
+    public void A_shot_can_draw_every_box_shut_or_open_but_not_both()
+    {
+        Parse("--size", "640x360", "--shut").Request.ShouldNotBeNull().Shut.ShouldBeTrue();
+
+        var (request, said) = Parse("--size", "640x360", "--open", "--shut");
+
+        request.ShouldBeNull();
+        said.ShouldContain("--open or --shut");
+    }
+
     /// <summary>A second that never comes would leave the run-up waiting a minute for nothing.</summary>
     [Theory]
     [InlineData("Infinity")]

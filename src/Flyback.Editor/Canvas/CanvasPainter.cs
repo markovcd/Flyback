@@ -88,7 +88,7 @@ internal sealed class CanvasPainter(
             // Under the modules and the wires both: the ground a group stands on.
             using (Glass(context)) DrawOpenGroups(context, scene);
 
-            shelves.Draw(context, Patch, scene, selection);
+            shelves.Draw(context, Patch, scene, selection, onBoxes: false);
 
             using (Glass(context)) DrawConnections(context, lifted, theirs: false, peeked: false);
 
@@ -107,6 +107,8 @@ internal sealed class CanvasPainter(
                 foreach (var (group, sockets, bounds) in scene.Boxes())
                     if (lift.Raised(group)) DrawBox(context, group, sockets, bounds);
             }
+
+            shelves.Draw(context, Patch, scene, selection, onBoxes: true);
 
             // Held up over the boxes as well, so one carried across a shut box
             // is not hidden by it.

@@ -7,6 +7,12 @@ namespace Flyback.Core.Graph;
 /// <param name="Label">What its shelf chip reads.</param>
 internal sealed record LayoutBand(string Label, IReadOnlyList<Guid> Members, IReadOnlyList<LayoutBand> Inside)
 {
+    /// <summary>The chips of the levels that hold only this one, outermost first, which its label already reads.</summary>
+    public IReadOnlyList<string> Above { get; init; } = [];
+
+    /// <summary>Whether a shut box of this band lists chips: the levels it came through, or the levels inside it.</summary>
+    public bool Listed => Above.Count > 0 || Inside.Count > 0;
+
     /// <summary>Every module in this band and in the bands inside it.</summary>
     public IEnumerable<Guid> All => Members.Concat(Inside.SelectMany(band => band.All));
 

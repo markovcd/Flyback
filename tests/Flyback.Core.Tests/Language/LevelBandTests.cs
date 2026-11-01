@@ -83,4 +83,34 @@ public class LevelBandTests
         Level.Bands(load.Levels).ShouldHaveSingleItem().Inside
             .Select(band => band.Label).ShouldBe(["1/2 pitch = 220 › voice", "2/2 pitch = 330 › voice"]);
     }
+
+    [Fact]
+    public void A_box_a_loop_pass_made_lists_the_pass_it_came_through_and_stands_taller_for_it()
+    {
+        var load = PatchLanguage.Build(
+            """
+            let pads = for pitch in [110, 220] {
+              group "Pad" {
+                let p = sine(freq: pitch) |> drive(drive: 2)
+              }
+              p
+            }
+            sum(pads) |> out.left
+            """,
+            NodeCatalog.BuiltIn);
+
+        load.Issues.ShouldBeEmpty(load.Report);
+
+        var bands = Level.Bands(load.Levels);
+        var first = load.Patch.Groups.ShouldNotBeNull().Single(group => group.Name == "Pad 1");
+
+        first.Collapsed.ShouldBeTrue();
+        LayoutBand.Matching(bands, first.Members).ShouldNotBeNull().Above.ShouldBe(["1/2 pitch = 110"]);
+
+        var size = PatchLayout.Metrics.Default;
+        var second = load.Patch.Groups!.Single(group => group.Name == "Pad 2");
+        var gap = second.Members.Min(id => load.Patch.Find(id)!.Y) - first.Members.Min(id => load.Patch.Find(id)!.Y);
+
+        gap.ShouldBeGreaterThanOrEqualTo(size.GroupHeight(load.Patch.SocketsOf(first)) + size.ChipStrip + size.RowGap);
+    }
 }

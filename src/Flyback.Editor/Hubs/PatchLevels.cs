@@ -18,11 +18,12 @@ internal sealed class PatchLevels
         this.document = document;
         this.editor = editor;
 
-        shelves.Bands = () => Level.Bands(Levels);
+        shelves.Bands = () => Bands;
     }
 
     private string? read;
     private IReadOnlyList<Level> levels = [];
+    private IReadOnlyList<LayoutBand> bands = [];
 
     /// <summary>The levels, outermost first, read again only when the text has changed.</summary>
     public IReadOnlyList<Level> Levels
@@ -38,13 +39,20 @@ internal sealed class PatchLevels
             var load = PatchLanguage.Build(text);
 
             // Text that does not read leaves the patch as it was, and so its levels.
-            if (load.Ok) levels = load.Levels;
+            if (load.Ok)
+            {
+                levels = load.Levels;
+                bands = Level.Bands(levels);
+            }
 
             read = text;
 
             return levels;
         }
     }
+
+    /// <summary>The levels as the canvas lays them out in bands.</summary>
+    private IReadOnlyList<LayoutBand> Bands => Levels.Count == 0 ? [] : bands;
 
     /// <summary>The levels from the outermost down to the one that placed <paramref name="module"/>; empty for one at the top.</summary>
     public IReadOnlyList<Level> PathTo(Guid module) => Level.PathTo(Levels, module) ?? [];

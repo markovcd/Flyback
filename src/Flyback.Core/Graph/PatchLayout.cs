@@ -63,6 +63,9 @@ internal static class PatchLayout
         /// <summary>The strip above a band inside a box, which its rule and shelf chip are drawn on.</summary>
         public double ShelfHeight => GroupHandleHeight + 4;
 
+        /// <summary>The strip along the foot of a shut box that lists the levels inside it.</summary>
+        public double ChipStrip => ShelfHeight;
+
         public double Height(NodeDef def) =>
             HeaderHeight + Rows(def.Inputs.Count, def.Outputs.Count) * RowHeight + FooterPadding;
 
@@ -199,7 +202,7 @@ internal static class PatchLayout
 
         // Where the drawing goes. Read before the first pass, because a pass moves
         // the very modules it would be measured from.
-        var middle = only is null ? default : Middle(patch, Placed(patch, catalog, only), size);
+        var middle = only is null ? default : Middle(patch, Placed(patch, catalog, only), size, bands);
 
         // Where everything was, to put back if it turns out there is no drawing to
         // be had. Taken before the first pass rather than inside one, because a
@@ -272,7 +275,7 @@ internal static class PatchLayout
             if (patch.GroupOf(node.Id) is { } group && kept.Contains(group))
             {
                 foreach (var id in group.Members) of[id] = blocks.Count;
-                blocks.Add(Boxed(patch, nodes, defs, group, size, was[group.Id], i, rises[group.Id]));
+                blocks.Add(Boxed(patch, nodes, defs, group, size, was[group.Id], i, rises[group.Id], Strip(bands, group, size)));
 
                 if (!group.Collapsed) open.Add((group, blocks.Count - 1));
             }
@@ -334,7 +337,7 @@ internal static class PatchLayout
     /// shut one as the one block at its corner — so a drawing already laid out
     /// goes back exactly where it is.
     /// </remarks>
-    private static (double X, double Y) Middle(Patch patch, Dictionary<Guid, NodeDef> defs, Metrics size)
+    private static (double X, double Y) Middle(Patch patch, Dictionary<Guid, NodeDef> defs, Metrics size, IReadOnlyList<LayoutBand>? bands)
     {
         double left = double.MaxValue, top = double.MaxValue;
         double right = double.MinValue, bottom = double.MinValue;
@@ -354,7 +357,7 @@ internal static class PatchLayout
 
             if (group.Collapsed)
             {
-                Take(x, y, x + size.Width, y + size.GroupHeight(patch.SocketsOf(group)));
+                Take(x, y, x + size.Width, y + size.GroupHeight(patch.SocketsOf(group)) + Strip(bands, group, size));
                 continue;
             }
 
@@ -663,6 +666,10 @@ internal static class PatchLayout
         Index = index,
     };
 
+    /// <summary>How much taller a shut box is drawn for the strip listing the levels inside it.</summary>
+    private static double Strip(IReadOnlyList<LayoutBand>? bands, NodeGroup group, Metrics size) =>
+        bands is not null && LayoutBand.Matching(bands, group.Members) is { Listed: true } ? size.ChipStrip : 0;
+
     /// <summary>
     /// A group, sized as it is drawn rather than as it is made of.
     /// </summary>
@@ -682,7 +689,8 @@ internal static class PatchLayout
         Metrics size,
         double was,
         int index,
-        double rise = 0)
+        double rise = 0,
+        double strip = 0)
     {
         var left = group.Members.Min(id => nodes[id].X);
         var top = group.Members.Min(id => nodes[id].Y);
@@ -695,7 +703,7 @@ internal static class PatchLayout
             {
                 Holds = [.. group.Members.Select(id => (nodes[id], nodes[id].X - left, nodes[id].Y - top))],
                 Width = size.Width,
-                Height = size.GroupHeight(sockets),
+                Height = size.GroupHeight(sockets) + strip,
                 Meets = (node, port, isOutput) =>
                 {
                     var socket = new GroupSocket(node, port, isOutput);
