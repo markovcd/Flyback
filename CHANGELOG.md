@@ -10,6 +10,7 @@
 
 ### Editor
 
+- Three more tutorials: knobs you can play, a song in sections brought in and out by an Arrangement, and text that builds itself with a def and a loop.
 - Live patching shows only the view that owns the patch: its text when the text is the document, its modules otherwise. F2 no longer swaps them over the picture, and the transport over the picture has no text button.
 
 ### Viewer
