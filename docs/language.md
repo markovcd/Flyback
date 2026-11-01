@@ -675,8 +675,9 @@ braces.
 
 **A def may be written inside another def's body**, a loop's or a group's. It is
 in sight in that block and every block inside it, and nowhere else, and it takes no name a
-def in sight already has. Like any def it sees the defs around it and none of
-the names: what it needs is passed in.
+def in sight already has. It reads what its block sees: the outer def's
+parameters, the loop's names for the pass, the lets above it. A def at the top of
+the patch reads only its parameters and the defs, so what it needs is passed in.
 
 ### Arguments
 

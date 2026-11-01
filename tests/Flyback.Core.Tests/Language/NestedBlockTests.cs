@@ -68,27 +68,62 @@ public class NestedBlockTests
     }
 
     [Fact]
-    public void A_def_inside_a_def_sees_the_defs_around_it_and_none_of_its_names()
-    {
-        Built(
+    public void A_def_inside_a_def_reads_the_outer_parameters_and_the_defs_around_it() =>
+        SameSound(
             """
             def warm(in) = in |> drive(drive: 2)
             def voice(freq) = {
-              def tone(f) = sine(freq: f) |> warm()
-              tone(freq)
+              def tone(f) = sine(freq: f * freq) |> warm()
+              tone(1) + tone(2)
+            }
+            voice(220) |> out.left
+            """,
+            """
+            def warm(in) = in |> drive(drive: 2)
+            def voice(freq) = {
+              def tone(f, base) = sine(freq: f * base) |> warm()
+              tone(1, freq) + tone(2, freq)
             }
             voice(220) |> out.left
             """);
 
+    [Fact]
+    public void A_def_at_the_top_reads_none_of_the_names_around_it() =>
         Try(
             """
-            def voice(freq) = {
-              def tone() = sine(freq: freq)
-              tone()
-            }
-            voice(220) |> out.left
+            let base = 220
+            def tone(f) = sine(freq: f * base)
+            tone(1) |> out.left
             """).Issues.ShouldContain(issue => issue.Code == IssueCode.UnknownName);
+
+    [Fact]
+    public void A_def_inside_a_loop_reads_the_pass()
+    {
+        var patch = Built(
+            """
+            let v = for pitch in [110, 220] {
+              def tone(f) = sine(freq: f * pitch)
+              tone(1) + tone(2)
+            }
+            sum(v) |> out.left
+            """);
+
+        patch.Nodes.Where(n => n.TypeId == "osc.sine").Select(n => n.InputValues[1])
+            .ShouldBe([110f, 220f, 220f, 440f], ignoreOrder: true);
     }
+
+    [Fact]
+    public void A_def_inside_a_group_reads_what_the_group_sees() =>
+        Built(
+            """
+            let base = 110
+            group "Voice" {
+              let lfo = sine(freq: 0.2)
+              def tone(f) = sine(freq: f * base, amp: lfo)
+              let pair = tone(1) + tone(2)
+            }
+            pair |> out.left
+            """);
 
     [Fact]
     public void A_def_inside_a_def_may_not_take_the_name_of_one_in_sight() =>

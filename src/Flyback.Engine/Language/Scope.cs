@@ -13,6 +13,9 @@ internal sealed class Scope(Scope? parent, Scope? declaredIn = null)
     private readonly Dictionary<string, (Value Value, int Line)> names = new(StringComparer.Ordinal);
     private readonly Dictionary<string, (DefStatement Def, Scope Where)> defs = new(StringComparer.Ordinal);
 
+    /// <summary>Whether this is the patch's own scope, outside every block.</summary>
+    public bool Top => parent is null && declaredIn is null;
+
     /// <param name="line">Where the name is bound, for a second binding to point back at.</param>
     public void Set(string name, Value value, int line) => names[name] = (value, line);
 

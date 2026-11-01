@@ -268,9 +268,11 @@ printed def comes back boxed but no longer a def.
 A def may be written inside a def's or a loop's body, a group inside a group or a
 loop, as the grammar always allowed. A def is in sight in the scope it is written
 in and every scope inside it, and a name means one def wherever it is read, so an
-inner def cannot take an outer one's name. Its body still sees only its parameters
-and the defs in sight, never the names around it, for the reason a top-level def
-does not. Every block is a namespace for its defs: one written in a group is out
+inner def cannot take an outer one's name. A def written inside a block reads the
+names that block sees, the outer def's parameters or a loop's pass among them, so
+a helper needs no argument for what is already in sight. A def at the top of the
+patch still reads only its parameters and the defs, and a value it shares is
+passed in. Each call stamps out its own modules either way. Every block is a namespace for its defs: one written in a group is out
 of sight after it, though the group's names stay in sight so groups can wire into
 each other.
 

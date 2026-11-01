@@ -1486,11 +1486,11 @@ public sealed class Binder
             // above another in the same statement renames both.
             outer = identity.Enter(identity.Stamping(macro.Name));
 
-            // A fresh scope, not off the caller's: a def sees its parameters and
-            // the defs in sight where it is written, and nothing of wherever it
-            // was called from. Every call stamps out its own copy of the body, so
-            // two calls share no module — a value that should be shared is passed in.
-            var inner = new Scope(null, declared);
+            // Off the scope the def is written in, never the caller's. A def written
+            // inside a block reads what that block sees; one at the top of the patch
+            // sees only its parameters and the defs, and a value it should share is
+            // passed in. Every call stamps out its own copy of the body either way.
+            var inner = declared.Top ? new Scope(null, declared) : new Scope(declared);
 
             for (var i = 0; i < macro.Parameters.Count; i++) inner.Set(macro.Parameters[i].Name, arguments[i], macro.Line);
 
