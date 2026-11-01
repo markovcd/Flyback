@@ -66,7 +66,7 @@ public sealed class LevelsCommandTests : IDisposable
               pass  pass 2/2  330  line 5
                 group Pad 2  line 6  [Saw, p]
 
-            """);
+            """.ReplaceLineEndings("\n"));
     }
 
     [Fact]
