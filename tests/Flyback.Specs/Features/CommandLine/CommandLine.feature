@@ -2,7 +2,8 @@ Feature: The command line says whether a patch works, and whether two are the sa
   Somebody with no window, a script or an agent, asks flyback-cli about a patch
   file. The exit code is the answer, and what is wrong is said by its line.
   flyback-cli check compiles it, flyback-cli info says what it is,
-  flyback-cli measure what its outputs carry and flyback-cli compare whether two
+  flyback-cli measure what its outputs carry, flyback-cli levels which groups,
+  def calls and loop passes its text opens, and flyback-cli compare whether two
   are the same instrument; flyback-cli print, flyback-cli pack and
   flyback-cli save write it out, and flyback-cli shot draws the editor around it.
 
@@ -27,6 +28,21 @@ Feature: The command line says whether a patch works, and whether two are the sa
     When flyback-cli measures "lfo.fbks"
     Then the command succeeds
     And it says "lfo.out" swings from -1 to 1, 2 times a second
+
+  Scenario: The levels a module sits in are listed from the outermost down
+    Given the text saved as "pads.fbks":
+      """
+      let pads = for pitch in [220, 330] {
+        group "Pad" {
+          let p = saw(freq: pitch) |> drive(drive: 3)
+        }
+        p
+      }
+      sum(pads) |> out.left
+      """
+    When flyback-cli lists the levels of "pads.fbks" around "Saw"
+    Then the command succeeds
+    And it names "pads = for pitch ×2 › pass 1/2 › Pad 1"
 
   Scenario: A shipped preset is described by its name, with no file saved first
     When flyback-cli describes the preset "Plasma"

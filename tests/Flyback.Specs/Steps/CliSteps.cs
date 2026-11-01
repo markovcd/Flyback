@@ -376,6 +376,9 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
         ((double)sound["hz"]!).ShouldBe(hz, 0.01);
     }
 
+    [When("flyback-cli lists the levels of {string} around {string}")]
+    public void WhenLevelsListed(string name, string module) => Run("levels", Path(name), "--of", module);
+
     [When("flyback-cli describes the preset {string}")]
     public void WhenDescribed(string name) => Run("info", "--preset", name);
 

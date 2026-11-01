@@ -36,6 +36,7 @@ public static class PatchLanguage
         {
             Source = source,
             Map = binder.Map(source),
+            Levels = binder.Levels,
         };
     }
 }

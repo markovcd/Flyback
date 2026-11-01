@@ -38,6 +38,7 @@ public sealed class Binder
     private readonly PatchLines lines;
 
     private readonly Boxes boxes;
+    private readonly LevelTrail levels;
 
     /// <summary>Plugins a <c>requires</c> line named that this build does not have.</summary>
     private readonly List<string> missing = [];
@@ -71,6 +72,7 @@ public sealed class Binder
         carrying = new Carrying(modules, wiring, this.issues);
         lines = new PatchLines(patch, this.issues);
         boxes = new Boxes(patch, this.issues, sourceSites);
+        levels = new LevelTrail(patch, wiring.IsShared);
 
         moduleNames = ModuleNames.For(modules);
     }
@@ -81,6 +83,9 @@ public sealed class Binder
     /// say this: a patch carries nothing about the file it came from.
     /// </summary>
     public SourceMap Map(string source) => sourceSites.Map(source);
+
+    /// <summary>The groups, def calls, loops and passes the text opened, outermost first, once <see cref="Build"/> has run.</summary>
+    public IReadOnlyList<Level> Levels => levels.Tree;
 
     /// <summary>The patch these statements describe, laid out and ready to compile.</summary>
     public Patch Build(IReadOnlyList<Statement> statements)
@@ -114,6 +119,7 @@ public sealed class Binder
         var into = new Dictionary<Guid, Guid>();
         ExpressionFusion.Fuse(patch, modules, into);
         sourceSites.Folded(into);
+        levels.Folded(into);
 
         // Positions are not in the language, so they are worked out afterwards
         // by the same layout the editor uses on a pasted fragment (ADR-0044).
@@ -245,6 +251,7 @@ public sealed class Binder
                 {
                     Label(value, let.Name);
                     boxes.Name(value, let.Name);
+                    levels.Name(value, let.Name);
                     scope.Set(let.Name, value, let.Line);
                     Owns(value);
 
@@ -585,6 +592,9 @@ public sealed class Binder
     /// </summary>
     private void Box(GroupStatement statement, Scope scope)
     {
+        // A named group in a loop is a box a pass, numbered for the pass: "Voice 1", "Voice 2".
+        var boxName = statement.Name is null || onPass.Count == 0 ? statement.Name : $"{statement.Name} {string.Join('.', onPass)}";
+        var level = levels.Enter(LevelKind.Group, boxName, statement.Line, statement.Column);
         var before = patch.Nodes.Select(n => n.Id).ToHashSet();
         var said = issues.Count;
         var inner = new Scope(scope);
@@ -623,6 +633,8 @@ public sealed class Binder
         foreach (var name in statement.Binds)
             if (inner.Entry(name) is { } item) scope.Set(name, item.Value, item.Line);
 
+        levels.Leave(level);
+
         if (outerBlock) return;
 
         // Everything placed while the block was open, which is what "declared
@@ -632,9 +644,6 @@ public sealed class Binder
         var made = patch.Nodes
             .Where(n => !before.Contains(n.Id) && !wiring.IsShared(n.Id))
             .Select(n => n.Id);
-
-        // A named group in a loop is a box a pass, numbered for the pass: "Voice 1", "Voice 2".
-        var boxName = statement.Name is null || onPass.Count == 0 ? statement.Name : $"{statement.Name} {string.Join('.', onPass)}";
 
         boxes.Block(boxName, new Site(statement.Line, statement.Column), made, troubled: issues.Count > said);
     }
@@ -1233,12 +1242,16 @@ public sealed class Binder
         var body = Loopable(loop.Body);
         var outer = identity.Enter(identity.Stamping("for"));
         var results = new List<Value>(items.Count);
+        var names = loop.Tupled ? "(" + string.Join(", ", loop.Names) + ")" : loop.Names[0];
+        var looped = levels.Enter(LevelKind.Loop, "for " + names, loop.Line, loop.Column, passes: items.Count);
+        Several? done = null;
 
         try
         {
             for (var i = 0; i < items.Count; i++)
             {
                 var pass = identity.Enter(i.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                var passed = levels.Enter(LevelKind.Pass, null, loop.Line, loop.Column, i + 1, items.Count, levels.Written(items[i]));
                 onPass.Add(i + 1);
                 var said = issues.Count;
 
@@ -1263,17 +1276,19 @@ public sealed class Binder
                 {
                     identity.Leave(pass);
                     onPass.RemoveAt(onPass.Count - 1);
+                    levels.Leave(passed);
                 }
 
                 // A mistake in the body is the same mistake on every pass, and once is enough to say it.
                 if (issues.Count > said) return null;
             }
 
-            return new Several(results) { Listed = true };
+            return done = new Several(results) { Listed = true };
         }
         finally
         {
             identity.Leave(outer);
+            levels.Leave(looped, done);
         }
     }
 
@@ -1474,6 +1489,8 @@ public sealed class Binder
         // Set once the arguments are bound, because those belong to the caller's
         // statement rather than to the def — see NodeIdentity.Stamping.
         NodeIdentity.Position? outer = null;
+        LevelTrail.Opened? called = null;
+        Value? handed = null;
 
         try
         {
@@ -1485,6 +1502,7 @@ public sealed class Binder
             // has nothing else to be known by — which is why moving one call
             // above another in the same statement renames both.
             outer = identity.Enter(identity.Stamping(macro.Name));
+            called = levels.Enter(LevelKind.Call, macro.Name, call.Line, call.Column);
 
             // Off the scope the def is written in, never the caller's. A def written
             // inside a block reads what that block sees; one at the top of the patch
@@ -1526,11 +1544,13 @@ public sealed class Binder
                 boxes.Call(macro.Name, NodeIdentity.FromName("def " + where), made, value);
             }
 
-            return value;
+            return handed = value;
         }
         finally
         {
             expanding.Remove(macro);
+
+            if (called is not null) levels.Leave(called, handed);
 
             if (outer is { } saved) identity.Leave(saved);
         }

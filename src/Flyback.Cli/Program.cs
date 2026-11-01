@@ -84,6 +84,7 @@ internal static class Program
         {
             RenderCommand.Build(plugins, settings),
             CheckCommand.Build(plugins, json),
+            LevelsCommand.Build(plugins, json),
             InfoCommand.Build(plugins, json),
             PrintCommand.Build(plugins),
             PackCommand.Build(plugins, json),

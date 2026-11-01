@@ -48,12 +48,11 @@ Arek's Claude Design canvas: https://claude.ai/artifact/EYooZ2cSuPtx6XxTUidWnZ.
 
 ## Steps, each useful alone
 
-1. **Record the levels.** The binder keeps each level's kind, name, path, members and, for a
-   pass, its index, count and item. It knows them in `Binder.Expand`, `Box` and `Loop`, but
-   only the outermost reaches `Boxes`. Where they are kept decides whether they survive a
-   save; printing loses them either way. A pass's item prints plainly for a number, a note
-   or a text, and needs a shape for a signal or a tuple. `flyback-cli levels <patch>` prints
-   the tree with each level's modules, and `--of <module>` its path, with `--json`.
+1. **Record the levels.** Done: `LanguageLoad.Levels`, a tree of `Level` (kind, name, the
+   `let` holding a call or loop, line, members and, for a pass, its number, count and item),
+   recorded by `LevelTrail` in the binder and remapped after fusion. Kept on the load, not
+   the patch, so a save or a print loses them; the canvas reads them from the text.
+   `flyback-cli levels <patch>` prints the tree, `--of <module>` its path, with `--json`.
 2. **The inspector's path**, and selecting a level from it. No layout change.
 3. **The banded layout** in `PatchLayout`, with the shelf chips, behind the setting. Wires
    between levels cross the rules. Decide what a module dragged out of its band does.

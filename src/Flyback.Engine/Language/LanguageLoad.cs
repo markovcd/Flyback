@@ -27,6 +27,10 @@ public sealed record LanguageLoad(Patch Patch, IReadOnlyList<LanguageIssue> Issu
     /// </remarks>
     public SourceMap Map { get; init; } = SourceMap.Empty;
 
+    /// <summary>The groups, def calls, loops and passes the text opened, outermost first.</summary>
+    /// <remarks>Only text has them: a patch keeps none, so a saved or printed patch comes back without.</remarks>
+    public IReadOnlyList<Level> Levels { get; init; } = [];
+
     /// <summary>Whether the text built, warnings or not.</summary>
     public bool Ok => Errors == 0;
 
