@@ -23,8 +23,13 @@ internal static class LevelPath
     {
         var path = levels.PathTo(module);
 
-        if (path.Count == 0) return null;
+        return path.Count == 0 ? null : Row(editor, levels, path, module, fingers);
+    }
 
+    /// <summary>The levels of <paramref name="path"/> as buttons, outermost first.</summary>
+    /// <param name="focus">The module the inspector stays on after a press, or null for the first in the level.</param>
+    public static WrapPanel Row(NodeEditor editor, PatchLevels levels, IReadOnlyList<Level> path, Guid? focus, bool fingers)
+    {
         var row = new WrapPanel
         {
             Name = Name,
@@ -44,21 +49,23 @@ internal static class LevelPath
                     Margin = new Thickness(2, 0),
                 });
 
-            row.Children.Add(Step(editor, levels, path[i], i, module, fingers));
+            row.Children.Add(Button(editor, levels, path[i], $"level-{i}", focus, fingers));
         }
 
         return row;
     }
 
-    private static Button Step(NodeEditor editor, PatchLevels levels, Level level, int depth, Guid module, bool fingers)
+    /// <summary>A button naming <paramref name="level"/> that selects every module in it, in bold while they are the selection.</summary>
+    /// <param name="label">What it reads, where not the level's own label.</param>
+    public static Button Button(NodeEditor editor, PatchLevels levels, Level level, string name, Guid? focus, bool fingers, string? label = null)
     {
         var members = levels.Present(level);
         var chosen = members.Count > 1 && editor.Selection.Count == members.Count && members.All(editor.Selection.Contains);
 
         var button = new Button
         {
-            Name = $"level-{depth}",
-            Content = level.Item is { } item && level.Kind == LevelKind.Pass ? $"{level.Label}  {item}" : level.Label,
+            Name = name,
+            Content = label ?? (level.Item is { } item && level.Kind == LevelKind.Pass ? $"{level.Label}  {item}" : level.Label),
             FontSize = Text.Small,
             FontWeight = chosen ? FontWeight.SemiBold : FontWeight.Normal,
             Padding = new Thickness(6, 0),
@@ -72,7 +79,7 @@ internal static class LevelPath
 
         button.Click += (_, _) =>
         {
-            editor.Selection.Take(members, module);
+            editor.Selection.Take(members, focus is { } kept && members.Contains(kept) ? kept : null);
             editor.Selection.Announce();
         };
 

@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
+using Flyback.Editor.Hubs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
 using Flyback.Ui.Controls;
@@ -28,7 +29,8 @@ internal sealed class GroupInspector(
     Renamer renamer,
     Palette palette,
     SocketRows socketRows,
-    MeasuredRows measured)
+    MeasuredRows measured,
+    PatchLevels levels)
 {
     /// <summary>What a box is, said at the head of its panel.</summary>
     private const string BoxDescription =
@@ -38,9 +40,14 @@ internal sealed class GroupInspector(
     /// <summary>A module's gutter fits a socket's name, and an edge row's caption is a module's as well.</summary>
     private const double SocketGutter = 140;
 
-    public void Build(NodeGroup group)
+    /// <param name="fingers">Whether a finger is in use, which wants each button 44 tall.</param>
+    public void Build(NodeGroup group, bool fingers)
     {
         var (plate, above) = Plate(group);
+
+        // The levels the text opened around it, as a module's panel shows them: a loop pass's box names its pass.
+        if (levels.Matching([.. group.Members]) is { } level && levels.PathTo(level) is { Count: > 1 } path)
+            surface.Panel.Children.Insert(0, LevelPath.Row(editor, levels, path, null, fingers));
 
         Edges(group);
 

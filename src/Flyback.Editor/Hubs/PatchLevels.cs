@@ -57,6 +57,19 @@ internal sealed class PatchLevels
     /// <summary>The levels from the outermost down to the one that placed <paramref name="module"/>; empty for one at the top.</summary>
     public IReadOnlyList<Level> PathTo(Guid module) => Level.PathTo(Levels, module) ?? [];
 
+    /// <summary>The levels from the outermost down to <paramref name="level"/> itself.</summary>
+    public IReadOnlyList<Level> PathTo(Level level) => Level.PathTo(Levels, level) ?? [];
+
+    /// <summary>The innermost level of more than one module whose modules are exactly <paramref name="selected"/>, or null.</summary>
+    public Level? Matching(IReadOnlyCollection<Guid> selected) =>
+        selected.Count < 2
+            ? null
+            : Level.Every(Levels).LastOrDefault(level => Present(level) is var members && members.Count == selected.Count && members.All(selected.Contains));
+
+    /// <summary>Every call of the def <paramref name="name"/>, in the order the text made them.</summary>
+    public IReadOnlyList<Level> CallsOf(string name) =>
+        [.. Level.Every(Levels).Where(level => level.Kind == LevelKind.Call && level.Name == name)];
+
     /// <summary>The modules of <paramref name="level"/> that are on the canvas.</summary>
     public IReadOnlyList<Guid> Present(Level level) =>
         [.. level.All.Where(id => editor.History.Patch.Find(id) is not null)];

@@ -306,6 +306,23 @@ internal sealed class Document
         }
     }
 
+    /// <summary>Shows the text with the caret at <paramref name="line"/> and <paramref name="column"/>, both counted from one.</summary>
+    public void ShowLine(int line, int column)
+    {
+        var text = source.Source;
+        var at = 0;
+
+        for (var counted = 1; counted < line; counted++)
+        {
+            var end = text.IndexOf('\n', at);
+            if (end < 0) break;
+            at = end + 1;
+        }
+
+        ShowCode(true);
+        source.Caret = Math.Clamp(at + column - 1, 0, text.Length);
+    }
+
     /// <summary>Points the inspector at the module the caret is standing in, while the text is showing.</summary>
     private void PointAt(int at)
     {

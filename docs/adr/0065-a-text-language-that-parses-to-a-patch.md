@@ -279,5 +279,5 @@ each other.
 The canvas still draws no box inside a box: a group inside a group is folded into
 the outermost group's box, and a printing writes it there. A group in a loop draws
 a box a pass, a named one numbered for its pass ("Voice 1", "Voice 2"), so a
-printing writes each pass's box by a name of its own. Showing the inner structure is the open question of
-`docs/handoff/nested-levels-on-canvas.md`.
+printing writes each pass's box by a name of its own. The inner structure is shown as
+bands inside the box ([0218](0218-the-levels-the-text-opens-are-bands-inside-their-box.md)).

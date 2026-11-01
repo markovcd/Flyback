@@ -44,6 +44,7 @@ internal sealed class Inspector
 
     /// <summary>The panel a group gets instead of a module's.</summary>
     private readonly GroupInspector groups;
+    private readonly LevelInspector levelPanel;
 
     private readonly PatchLevels levels;
 
@@ -72,6 +73,7 @@ internal sealed class Inspector
         FieldRows fieldRows,
         KeyboardSection keyboard,
         GroupInspector groups,
+        LevelInspector levelPanel,
         PatchLevels levels)
     {
         this.editor = editor;
@@ -84,6 +86,7 @@ internal sealed class Inspector
         this.fieldRows = fieldRows;
         this.keyboard = keyboard;
         this.groups = groups;
+        this.levelPanel = levelPanel;
         this.levels = levels;
         inPage = host.InPage;
         Panel = surface.Panel;
@@ -251,7 +254,14 @@ internal sealed class Inspector
         // description and no category — what it has is an edge.
         if (editor.Selection.Group is { } group)
         {
-            groups.Build(group);
+            groups.Build(group, fingers);
+            return;
+        }
+
+        // Likewise a selection that is exactly a level the text opened, as a chip selects.
+        if (levels.Matching(editor.Selection.Ids) is { } level)
+        {
+            levelPanel.Build(level, fingers);
             return;
         }
 

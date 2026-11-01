@@ -219,6 +219,7 @@ internal static class EditorServices
         services.AddSingleton<FieldRows>();
         services.AddSingleton<KeyboardSection>();
         services.AddSingleton<GroupInspector>();
+        services.AddSingleton<LevelInspector>();
         services.AddSingleton<PatchLevels>();
         services.AddPart<PluginInstalls>();
         services.AddPart<SoundFailureReport>();

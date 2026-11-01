@@ -114,9 +114,11 @@ internal static class LevelsCommand
         pass = level.Pass,
         passes = level.Passes,
         item = level.Item,
+        args = level.Arguments.Select(argument => argument.ToString()).ToArray(),
         line = level.Line,
         column = level.Column,
         modules = level.Members.Select(id => Named(patch, id)).ToArray(),
+        leaving = level.Leaving(patch).Select(wire => Wire(patch, wire)).ToArray(),
         inside = inside ? level.Inside.Select(inner => Shown(patch, inner, inside: true)).ToArray() : null,
     };
 
@@ -127,6 +129,17 @@ internal static class LevelsCommand
         LevelKind.Loop => "loop",
         _ => "pass",
     };
+
+    private static string Wire(Patch patch, Connection wire) =>
+        $"{Socket(patch, wire.SourceNode, wire.SourcePort, output: true)} → {Socket(patch, wire.TargetNode, wire.TargetPort, output: false)}";
+
+    private static string Socket(Patch patch, Guid id, int port, bool output)
+    {
+        var def = patch.Find(id) is { } node ? NodeCatalog.Get(node.TypeId) : null;
+        var ports = output ? def?.Outputs : def?.Inputs;
+
+        return $"{Named(patch, id)}.{(ports is not null && port < ports.Count ? ports[port].Name : port.ToString(System.Globalization.CultureInfo.InvariantCulture))}";
+    }
 
     private static string Named(Patch patch, Guid id) =>
         patch.Find(id) is { } node ? NodeCatalog.Get(node.TypeId) is { } def ? node.Title(def) : node.TypeId : id.ToString();

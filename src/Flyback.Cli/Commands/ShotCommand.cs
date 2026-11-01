@@ -45,7 +45,7 @@ internal static class ShotCommand
 
         var select = new Option<string>("--select")
         {
-            Description = "A box or module to select, by name, so the inspector shows it.",
+            Description = "A box, module or level to select, by name (a level by the label `levels` prints), so the inspector shows it.",
         };
 
         var canvas = new Option<bool>("--canvas")

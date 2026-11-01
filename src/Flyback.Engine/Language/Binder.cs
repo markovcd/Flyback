@@ -1511,6 +1511,7 @@ public sealed class Binder
             // above another in the same statement renames both.
             outer = identity.Enter(identity.Stamping(macro.Name));
             called = levels.Enter(LevelKind.Call, macro.Name, call.Line, call.Column);
+            called.Arguments = [.. arguments.Select((value, i) => new LevelArgument(macro.Parameters[i].Name, levels.Written(value)))];
 
             // Off the scope the def is written in, never the caller's. A def written
             // inside a block reads what that block sees; one at the top of the patch

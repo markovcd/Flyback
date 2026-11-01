@@ -17,6 +17,7 @@ internal sealed class LevelTrail(Patch patch, Func<Guid, bool> shared)
         public int? Pass;
         public int? Passes;
         public string? Item;
+        public IReadOnlyList<LevelArgument> Arguments = [];
     }
 
     private readonly List<Level> top = [];
@@ -56,6 +57,7 @@ internal sealed class LevelTrail(Patch patch, Func<Guid, bool> shared)
             Pass = level.Pass,
             Passes = passes ?? level.Passes,
             Item = level.Item,
+            Arguments = level.Arguments,
         };
 
         var siblings = open.Count > 0 ? open.Peek().Inside : top;

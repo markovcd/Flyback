@@ -15,6 +15,7 @@ using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Windows;
+using Flyback.Engine.Language;
 using Flyback.Host;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
@@ -116,7 +117,7 @@ internal static class Shot
             canvas.View.FrameAll();
             Settle(window);
 
-            if (request.Select is { } name && !Select(canvas, name, error)) return Failed;
+            if (request.Select is { } name && !Select(canvas, provider.GetRequiredService<PatchLevels>(), name, error)) return Failed;
 
             if (playback.HasPicture) await RunUpTo(request.At, provider.GetRequiredService<PreviewHost>(), sound, playback, window);
             else playback.SeekTo(request.At);
@@ -199,7 +200,7 @@ internal static class Shot
     }
 
     /// <summary>Selects the box called <paramref name="name"/>, or else the module, as a click on it would.</summary>
-    private static bool Select(NodeEditor canvas, string name, TextWriter error)
+    private static bool Select(NodeEditor canvas, PatchLevels levels, string name, TextWriter error)
     {
         var patch = canvas.History.Patch;
         var groups = patch.Groups ?? [];
@@ -216,7 +217,15 @@ internal static class Shot
             return true;
         }
 
-        error.WriteLine($"Flyback {ShotRequest.Flag}: no box or module is called '{name}'. The boxes are:");
+        // A level the text opened, by the label `flyback-cli levels` prints.
+        if (Level.Every(levels.Levels).FirstOrDefault(level => Named(level.Label, name)) is { } opened)
+        {
+            canvas.Selection.Take(levels.Present(opened));
+            canvas.Selection.Announce();
+            return true;
+        }
+
+        error.WriteLine($"Flyback {ShotRequest.Flag}: no box, module or level is called '{name}'. The boxes are:");
 
         foreach (var box in groups) error.WriteLine($"    {box.Title()}");
 

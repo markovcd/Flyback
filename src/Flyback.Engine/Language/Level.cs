@@ -28,6 +28,9 @@ public sealed record Level(
     /// <summary>What a pass's names were bound to, as the text would write it.</summary>
     public string? Item { get; init; }
 
+    /// <summary>A call's arguments as the text would write them, each named for its parameter.</summary>
+    public IReadOnlyList<LevelArgument> Arguments { get; init; } = [];
+
     /// <summary>Every module in this level and in the levels inside it.</summary>
     public IEnumerable<Guid> All => Members.Concat(Inside.SelectMany(level => level.All));
 
@@ -61,6 +64,30 @@ public sealed record Level(
         Kind == LevelKind.Pass
             ? $"{Pass}/{Passes}" + (Item is null || loop?.Name is not { } names ? "" : $" {names["for ".Length..]} = {Item}")
             : Label;
+
+    /// <summary>The wires from a module in this level to one outside it.</summary>
+    public IEnumerable<Connection> Leaving(Patch patch)
+    {
+        var inside = All.ToHashSet();
+
+        return patch.Connections.Where(wire => inside.Contains(wire.SourceNode) && !inside.Contains(wire.TargetNode));
+    }
+
+    /// <summary>Every level, each before the levels inside it.</summary>
+    public static IEnumerable<Level> Every(IReadOnlyList<Level> levels) =>
+        levels.SelectMany(level => Every(level.Inside).Prepend(level));
+
+    /// <summary>The levels from the outermost down to <paramref name="target"/> itself, or null where it is not among them.</summary>
+    public static IReadOnlyList<Level>? PathTo(IReadOnlyList<Level> levels, Level target)
+    {
+        foreach (var level in levels)
+        {
+            if (ReferenceEquals(level, target)) return [level];
+            if (PathTo(level.Inside, target) is { } deeper) return [level, .. deeper];
+        }
+
+        return null;
+    }
 
     /// <summary>The levels from the outermost down to the one that placed <paramref name="module"/>, or null where none did.</summary>
     public static IReadOnlyList<Level>? PathTo(IReadOnlyList<Level> levels, Guid module)

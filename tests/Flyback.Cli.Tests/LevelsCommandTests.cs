@@ -96,6 +96,20 @@ public sealed class LevelsCommandTests : IDisposable
         pass.GetProperty("inside")[0].GetProperty("label").GetString().ShouldBe("Pad 2");
     }
 
+    [Fact]
+    public void The_json_gives_a_calls_arguments_and_the_wires_leaving_each_level()
+    {
+        var (code, output, error) = Run("levels", Written("song.fbks", Patch), "--json");
+
+        code.ShouldBe(Exit.Ok, error);
+
+        var bass = JsonDocument.Parse(output).RootElement[0];
+        var call = bass.GetProperty("inside")[0];
+
+        call.GetProperty("args").EnumerateArray().Select(a => a.GetString()).ShouldBe(["freq = 55"]);
+        bass.GetProperty("leaving").EnumerateArray().Select(w => w.GetString()).ShouldHaveSingleItem().ShouldStartWith("bass.out → ");
+    }
+
     [Theory]
     [InlineData("song.fbk", "{}", "is not written as text")]
     [InlineData("song.fbks", "sine(freq: 220) |> out.left", "no module is called 'nothing'")]
