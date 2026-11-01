@@ -32,7 +32,8 @@ internal sealed class CanvasPainter(
     KnobLinking linking,
     UndescribedTags tags,
     Repaint repaint,
-    NodeGeometry geometry)
+    NodeGeometry geometry,
+    LevelShelves shelves)
 {
     /// <summary>How large a module's title is drawn.</summary>
     internal const double HeaderSize = 12.5;
@@ -86,6 +87,8 @@ internal sealed class CanvasPainter(
 
             // Under the modules and the wires both: the ground a group stands on.
             using (Glass(context)) DrawOpenGroups(context, scene);
+
+            shelves.Draw(context, Patch, scene, selection);
 
             using (Glass(context)) DrawConnections(context, lifted, theirs: false, peeked: false);
 

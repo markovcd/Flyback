@@ -1,5 +1,7 @@
 using Flyback.Editor.Canvas;
+using Flyback.Core.Graph;
 using Flyback.Engine.Language;
+using Flyback.Editor.Settings;
 
 namespace Flyback.Editor.Hubs;
 
@@ -7,8 +9,19 @@ namespace Flyback.Editor.Hubs;
 /// The groups, def calls and loop passes the document's text opens, while the text owns
 /// the patch; none for a patch the canvas owns.
 /// </summary>
-internal sealed class PatchLevels(Document document, NodeEditor editor)
+internal sealed class PatchLevels
 {
+    private readonly Document document;
+    private readonly NodeEditor editor;
+
+    public PatchLevels(Document document, NodeEditor editor, LevelShelves shelves, OutputSettingRepository settings)
+    {
+        this.document = document;
+        this.editor = editor;
+
+        shelves.Bands = () => settings.Current.LevelBands ? Level.Bands(Levels) : [];
+    }
+
     private string? read;
     private IReadOnlyList<Level> levels = [];
 
@@ -23,7 +36,7 @@ internal sealed class PatchLevels(Document document, NodeEditor editor)
 
             if (text == read) return levels;
 
-            var load = PatchLanguage.Build(text);
+            var load = document.Build(text);
 
             // Text that does not read leaves the patch as it was, and so its levels.
             if (load.Ok) levels = load.Levels;

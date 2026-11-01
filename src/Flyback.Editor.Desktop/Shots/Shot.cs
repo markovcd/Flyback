@@ -83,7 +83,7 @@ internal static class Shot
             services.AddSingleton(new AudioSetup(new SilentAudioDevice(), plugins.PreferredAudioOutput));
             services.AddSingleton(sp => new OutputSettingRepository(sp.GetRequiredService<EditorFolders>(), sp.GetRequiredService<EditorHost>(), sp.GetRequiredService<ReportLine>(), sp.GetRequiredService<IBrowserStore>())
             {
-                Current = new OutputSettings { Gpu = false, DefaultPreset = preset?.Name ?? string.Empty },
+                Current = new OutputSettings { Gpu = false, DefaultPreset = preset?.Name ?? string.Empty, LevelBands = request.Levels },
             });
         });
 
@@ -108,6 +108,11 @@ internal static class Shot
             if (request.Live) GoLive(provider, window, request);
 
             var canvas = provider.GetRequiredService<NodeEditor>();
+
+            if (request.Open)
+                foreach (var group in canvas.History.Patch.Groups ?? [])
+                    group.Collapsed = false;
+
             canvas.View.FrameAll();
             Settle(window);
 

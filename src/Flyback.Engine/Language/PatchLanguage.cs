@@ -22,14 +22,15 @@ public static class PatchLanguage
     /// a source file can be wrong is a <see cref="LanguageIssue"/> with a line and a
     /// column, because the thing reading it is usually an editor.
     /// </summary>
-    public static LanguageLoad Build(string source, ModuleCatalog? against = null)
+    /// <param name="bands">Whether each level opened inside a box is laid out as a band of its own.</param>
+    public static LanguageLoad Build(string source, ModuleCatalog? against = null, bool bands = false)
     {
         var modules = against ?? NodeCatalog.Current;
         var issues = new List<LanguageIssue>();
 
         var tokens = StatementTokens.ForParsing(Lexer.Scan(source, issues));
         var statements = new Parser(tokens, issues).Parse();
-        var binder = new Binder(modules, issues);
+        var binder = new Binder(modules, issues) { Bands = bands };
         var patch = binder.Build(statements);
 
         return new LanguageLoad(patch, [.. issues.OrderBy(i => i.Line).ThenBy(i => i.Column)])

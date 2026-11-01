@@ -4,7 +4,7 @@ Planned on 2026-10-13, chosen on 2026-11-01 on `main` at `b2e4e24`. It is on TOD
 it off there, and delete this file, in the commit that lands the last step.
 
 - **Kind:** Plan
-- **Status:** Open; steps 1 and 2 built
+- **Status:** Open; steps 1 and 2 built, step 3 built dark
 
 ## What is wanted
 
@@ -57,8 +57,15 @@ Arek's Claude Design canvas: https://claude.ai/artifact/EYooZ2cSuPtx6XxTUidWnZ.
    module's panel, from `PatchLevels`, which reads the text while it owns the patch. A
    selected level is shown by its button in bold; the panel for the level itself (its
    arguments, sockets leaving it, other calls of its def) is not built yet.
-3. **The banded layout** in `PatchLayout`, with the shelf chips, behind the setting. Wires
-   between levels cross the rules. Decide what a module dragged out of its band does.
+3. **The banded layout** in `PatchLayout`, with the shelf chips, behind the setting. Built,
+   dark: `OutputSettings.LevelBands` (in no section) or `flyback-cli shot --open --levels`.
+   The binder lays a box's own modules out first and each level inside it as a band below,
+   indented under a shelf (`PatchLayout.Banded`); `LevelShelves` draws the chips and takes a
+   press on one as selecting the level. A level that placed nothing and holds one level
+   shares its chip (`1/2 pitch = 220 › voice`). Open: a band of a chain is one module wide,
+   so a nested call stacks tall; wires between bands cross the rules; what a module dragged
+   out of its band does is not decided. Shots of the example are in
+   `/mnt/project-files/nesting/` (bands-on.png, bands-off.png).
 4. **Shut boxes, live patching and zoomed far out.**
 
 ## Corrections to the design

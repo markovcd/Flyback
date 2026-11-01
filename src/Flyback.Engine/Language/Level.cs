@@ -1,3 +1,5 @@
+using Flyback.Core.Graph;
+
 namespace Flyback.Engine.Language;
 
 /// <summary>
@@ -39,6 +41,26 @@ public sealed record Level(
     };
 
     private string Named => Kind == LevelKind.Loop ? $"{Name} ×{Passes}" : Name ?? "";
+
+    /// <summary>
+    /// The levels as the layout takes them, each labeled as its shelf chip reads. A level
+    /// that placed nothing itself and holds one level shares that level's band and chip.
+    /// </summary>
+    internal static IReadOnlyList<LayoutBand> Bands(IReadOnlyList<Level> levels, Level? loop = null) =>
+        [.. levels.Select(level =>
+        {
+            var inner = Bands(level.Inside, level.Kind == LevelKind.Loop ? level : null);
+
+            return level.Members.Count == 0 && inner is [var only]
+                ? only with { Label = $"{level.Chip(loop)} › {only.Label}" }
+                : new LayoutBand(level.Chip(loop), level.Members, inner);
+        })];
+
+    /// <summary>What a level's shelf chip reads: its label, or for a pass its place and what it took, <c>1/3 pitch = 220</c>.</summary>
+    internal string Chip(Level? loop) =>
+        Kind == LevelKind.Pass
+            ? $"{Pass}/{Passes}" + (Item is null || loop?.Name is not { } names ? "" : $" {names["for ".Length..]} = {Item}")
+            : Label;
 
     /// <summary>The levels from the outermost down to the one that placed <paramref name="module"/>, or null where none did.</summary>
     public static IReadOnlyList<Level>? PathTo(IReadOnlyList<Level> levels, Guid module)

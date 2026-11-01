@@ -61,6 +61,9 @@ public sealed class Binder
     /// <summary>The word that adds a list up, where nothing else is called it.</summary>
     private const string SumWord = "sum";
 
+    /// <summary>Whether each level opened inside a box is laid out as a band of its own.</summary>
+    public bool Bands { get; init; }
+
     public Binder(ModuleCatalog modules, List<LanguageIssue> issues)
     {
         this.modules = modules;
@@ -123,7 +126,7 @@ public sealed class Binder
 
         // Positions are not in the language, so they are worked out afterwards
         // by the same layout the editor uses on a pasted fragment (ADR-0044).
-        PatchLayout.Arrange(patch, modules);
+        PatchLayout.Arrange(patch, modules, bands: Bands ? Level.Bands(levels.Tree) : null);
 
         return patch;
     }

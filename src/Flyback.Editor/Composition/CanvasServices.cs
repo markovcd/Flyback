@@ -27,6 +27,7 @@ internal static class CanvasServices
         services.TryAddSingleton(Usage.Off);
 
         services.AddSingleton<NodeGeometry>();
+        services.AddSingleton<LevelShelves>();
         services.AddSingleton<Repaint>();
         services.AddSingleton<CanvasReport>();
         services.AddSingleton<CanvasHistory>();

@@ -73,6 +73,19 @@ internal static class ShotCommand
             Description = "Give the picture the window with the patch over it, as live patching (Shift+F11) shows it: the modules, or the text for a patch whose text is the document.",
         };
 
+        var open = new Option<bool>("--open")
+        {
+            Description = "Draw every box open, its modules showing.",
+        };
+
+        var levels = new Option<bool>("--levels")
+        {
+            Description = "Lay each group, def call and loop pass the text opens inside a box out as a band of its own, with a chip naming it.",
+
+            // Out of the help until the banded layout is finished.
+            Hidden = true,
+        };
+
         var editor = new Option<FileInfo>("--editor")
         {
             Description = "The editor program to draw with, in place of the one beside this program. A dev build keeps it in src/Flyback.Editor.Desktop/bin.",
@@ -80,7 +93,7 @@ internal static class ShotCommand
 
         var command = new Command("shot", "Draw the editor's window with a patch open, at a chosen second, into a PNG.")
         {
-            given.Patch, given.Preset, given.Presets, output, at, size, select, canvas, crop, measure, assistant, live, editor,
+            given.Patch, given.Preset, given.Presets, output, at, size, select, canvas, crop, measure, assistant, live, open, levels, editor,
         };
 
         command.SetAction(result =>
@@ -129,6 +142,8 @@ internal static class ShotCommand
             if (result.GetValue(measure)) arguments.Add("--measure");
             if (result.GetValue(assistant)) arguments.Add("--assistant");
             if (result.GetValue(live)) arguments.Add("--live");
+            if (result.GetValue(open)) arguments.Add("--open");
+            if (result.GetValue(levels)) arguments.Add("--levels");
 
             arguments.AddRange(file is not null ? [file.FullName] : ["--preset", named!]);
 

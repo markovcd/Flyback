@@ -21,6 +21,7 @@
 ### Command line
 
 - `flyback-cli levels` lists the groups, def calls and loop passes a text patch opens, inside one another, with their modules; `--of` names the ones a module sits in.
+- `flyback-cli shot --open` draws every box open, its modules showing.
 
 ### Installing
 

@@ -58,6 +58,7 @@ internal sealed class CanvasGestures
     private readonly ModuleDrag module;
     private readonly WireDrag wire;
     private readonly RubberBand band;
+    private readonly LevelShelves shelves;
 
     private Drag drag;
 
@@ -90,8 +91,10 @@ internal sealed class CanvasGestures
         ModuleDrag module,
         WireDrag wire,
         RubberBand band,
+        LevelShelves shelves,
         Reactions reactions)
     {
+        this.shelves = shelves;
         this.history = history;
         this.reactions = reactions;
         this.selection = selection;
@@ -394,6 +397,14 @@ internal sealed class CanvasGestures
 
             pointer?.Capture(canvas);
             repaint.Request();
+            return false;
+        }
+
+        // A shelf's chip selects the level it names, as the inspector's path does.
+        if (shelves.Hit(history.Patch, scene, graph) is { } shelf)
+        {
+            selection.Take(shelf.Members);
+            selection.Announce();
             return false;
         }
 

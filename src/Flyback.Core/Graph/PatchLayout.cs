@@ -60,6 +60,12 @@ internal static class PatchLayout
         /// </summary>
         public static Metrics Default => new(196d, 26d, 20d, 8d, 108d, 40d, 24d, 20d);
 
+        /// <summary>The strip above a band inside a box, which its rule and shelf chip are drawn on.</summary>
+        public double ShelfHeight => GroupHandleHeight + 4;
+
+        /// <summary>How far a band sits in from the band or box around it.</summary>
+        public double BandIndent => GroupPadding / 2;
+
         public double Height(NodeDef def) =>
             HeaderHeight + Rows(def.Inputs.Count, def.Outputs.Count) * RowHeight + FooterPadding;
 
@@ -173,6 +179,10 @@ internal static class PatchLayout
     /// the drawing centers on where those few were; a box holding any module
     /// outside the set is left whole (ADR-0110).
     /// </param>
+    /// <param name="bands">
+    /// The levels the text opened, or null to lay each box out flat. Inside an open box,
+    /// each level inside it is laid out as a band of its own, under a shelf for its chip.
+    /// </param>
     /// <remarks>
     /// A drawing wider than the canvas is narrowed by shutting the fewest boxes
     /// <see cref="Worst"/> picks, since an open group has no slack to squeeze
@@ -184,7 +194,8 @@ internal static class PatchLayout
         Patch patch,
         ModuleCatalog? modules = null,
         Metrics? metrics = null,
-        IReadOnlySet<Guid>? only = null)
+        IReadOnlySet<Guid>? only = null,
+        IReadOnlyList<LayoutBand>? bands = null)
     {
         var catalog = modules ?? NodeCatalog.Current;
         var size = metrics ?? Metrics.Default;
@@ -201,7 +212,7 @@ internal static class PatchLayout
 
         while (true)
         {
-            var pass = Once(patch, catalog, size, only, middle);
+            var pass = Once(patch, catalog, size, only, middle, bands);
 
             if (pass.Fitted) return new Arrangement(true, shut);
 
@@ -226,7 +237,8 @@ internal static class PatchLayout
         ModuleCatalog catalog,
         Metrics size,
         IReadOnlySet<Guid>? only,
-        (double X, double Y) middle)
+        (double X, double Y) middle,
+        IReadOnlyList<LayoutBand>? bands)
     {
         var defs = Placed(patch, catalog, only);
 
@@ -243,7 +255,7 @@ internal static class PatchLayout
         // the first thing that changes that.
         var was = groups.ToDictionary(g => g.Id, g => g.Members.Min(id => nodes[id].Y));
 
-        foreach (var group in groups) Inside(patch, nodes, defs, group, size);
+        foreach (var group in groups) Inside(patch, nodes, defs, group, size, bands);
 
         var blocks = new List<Block>();
         var of = new Dictionary<Guid, int>();
@@ -476,21 +488,96 @@ internal static class PatchLayout
         Dictionary<Guid, NodeInstance> nodes,
         Dictionary<Guid, NodeDef> defs,
         NodeGroup group,
-        Metrics size)
+        Metrics size,
+        IReadOnlyList<LayoutBand>? bands)
     {
+        if (bands is not null && LayoutBand.Matching(bands, group.Members) is { Inside.Count: > 0 } band)
+        {
+            var members = group.Members.ToHashSet();
+            var inner = band.Inside.SelectMany(b => b.All).ToHashSet();
+
+            Banded(patch, nodes, defs, [.. group.Members.Where(id => !inner.Contains(id))], band.Inside, members, size);
+            return;
+        }
+
+        Flat(patch, nodes, defs, group.Members, size, fromOrigin: false);
+    }
+
+    /// <summary>Lays <paramref name="members"/> out among themselves and says how big they came to.</summary>
+    /// <param name="fromOrigin">Whether they are moved to start at the origin, for a band to be placed by its corner.</param>
+    private static (double Width, double Height) Flat(
+        Patch patch,
+        Dictionary<Guid, NodeInstance> nodes,
+        Dictionary<Guid, NodeDef> defs,
+        IReadOnlyList<Guid> members,
+        Metrics size,
+        bool fromOrigin = true)
+    {
+        if (members.Count == 0) return (0, 0);
+
         var blocks = new List<Block>();
         var of = new Dictionary<Guid, int>();
 
-        for (var i = 0; i < group.Members.Count; i++)
+        for (var i = 0; i < members.Count; i++)
         {
-            of[group.Members[i]] = i;
-            blocks.Add(Lone(nodes[group.Members[i]], defs[group.Members[i]], size, i));
+            of[members[i]] = i;
+            blocks.Add(Lone(nodes[members[i]], defs[members[i]], size, i));
         }
 
         // No sink to pin: Patch.Group leaves the Output out of every group.
         Lay(blocks, Links(patch, blocks, of), sink: -1, size);
 
+        // Moved before they are put, since a module clamps a position off the canvas.
+        if (fromOrigin)
+        {
+            var left = blocks.Min(block => block.X);
+            var top = blocks.Min(block => block.Y);
+
+            foreach (var block in blocks) (block.X, block.Y) = (block.X - left, block.Y - top);
+        }
+
         foreach (var block in blocks) block.Put();
+
+        if (!fromOrigin) return (0, 0);
+
+        return (members.Max(id => nodes[id].X + size.Width), members.Max(id => nodes[id].Y + size.Height(defs[id])));
+    }
+
+    /// <summary>
+    /// Lays out the modules a level placed itself, then each level inside it as a band
+    /// below them, indented under a shelf, in the order the text opened them.
+    /// </summary>
+    private static (double Width, double Height) Banded(
+        Patch patch,
+        Dictionary<Guid, NodeInstance> nodes,
+        Dictionary<Guid, NodeDef> defs,
+        IReadOnlyList<Guid> own,
+        IReadOnlyList<LayoutBand> inside,
+        IReadOnlySet<Guid> box,
+        Metrics size)
+    {
+        var (width, height) = Flat(patch, nodes, defs, own, size);
+
+        foreach (var band in inside)
+        {
+            var mine = band.Members.Where(box.Contains).ToList();
+            var placed = mine.Concat(band.Inside.SelectMany(b => b.All).Where(box.Contains)).ToList();
+
+            if (placed.Count == 0) continue;
+
+            var (w, h) = band.Inside.Count == 0
+                ? Flat(patch, nodes, defs, mine, size)
+                : Banded(patch, nodes, defs, mine, band.Inside, box, size);
+
+            var top = (height > 0 ? height + size.RowGap / 2 : 0) + size.ShelfHeight;
+
+            foreach (var id in placed) (nodes[id].X, nodes[id].Y) = (nodes[id].X + size.BandIndent, nodes[id].Y + top);
+
+            width = Math.Max(width, w + size.BandIndent);
+            height = top + h;
+        }
+
+        return (width, height);
     }
 
     /// <summary>
