@@ -22,6 +22,7 @@
 - A value being turned can move to another input on the same module without letting go: Tab or Shift+Tab, or the wheel, with a mouse or trackpad; a second finger tapped below or above the turning one by touch. A finger held anywhere on a module turns the input on the row beside it rather than switching the module off while held (Bypass in the inspector does that); zoomed out past the rows, a right-drag or a held finger anywhere on a module turns its first input, and the input turning is ringed and named beside its socket, and its card points at it.
 - Live patching shows only the view that owns the patch: its text when the text is the document, its modules otherwise. F2 no longer swaps them over the picture, and the transport over the picture has no text button.
 - The text view offers what may be typed where the caret is, as you type or on Ctrl+Space: a module's sockets inside its brackets, its outputs after a dot, the names in sight and the modules there are. Inside a call its sockets stand above the caret with the one being filled in bold, and resting the pointer on a word says what it is.
+- The editor's toggles, sliders and focus take Flyback's own amber instead of the system blue, its controls have square corners, and toolbar buttons show no fill until pointed at or switched on.
 
 ### Viewer
 

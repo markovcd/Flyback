@@ -21,6 +21,9 @@ internal static class ToolbarButtons
         VerticalAlignment = VerticalAlignment.Center,
     };
 
+    /// <summary>The style class that takes a button's fill away at rest.</summary>
+    internal const string Tool = "tool";
+
     /// <summary>
     /// A toolbar button that is a drawn symbol rather than a word.
     /// </summary>
@@ -40,6 +43,7 @@ internal static class ToolbarButtons
         where T : ContentControl
     {
         button.Name = name;
+        button.Classes.Add(Tool);
         button.Content = content;
         button.Width = 34;
         button.Height = 30;
