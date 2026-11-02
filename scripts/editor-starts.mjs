@@ -59,16 +59,28 @@ const chrome = spawn(process.env.FLYBACK_CHROMIUM ?? 'chrome-headless-shell', [
   '--window-size=1280,800', `--user-data-dir=${profile}`, 'about:blank',
 ], { stdio: ['ignore', 'ignore', 'ignore', 'pipe', 'pipe'] });
 
+let verdict = null;
+
+/** Says the verdict once, then exits with it when Chrome is gone and its profile can be removed. */
 function finish(code, said) {
+  if (verdict !== null) return;
+  verdict = code;
   (code === 0 ? console.log : console.error)(said);
-  chrome.kill('SIGKILL');
   server.close();
-  rmSync(profile, { recursive: true, force: true });
-  process.exit(code);
+  if (chrome.exitCode === null && chrome.signalCode === null) chrome.kill('SIGKILL');
+  else gone();
+}
+
+function gone() {
+  rmSync(profile, { recursive: true, force: true, maxRetries: 5 });
+  process.exit(verdict);
 }
 
 setTimeout(() => finish(1, `The web editor did not start in ${STARTING_MS / 1000} s.`), STARTING_MS).unref();
-chrome.on('exit', code => finish(1, `Chrome quit with ${code} before the web editor started.`));
+chrome.on('exit', code => {
+  if (verdict === null) finish(1, `Chrome quit with ${code} before the web editor started.`);
+  gone();
+});
 
 let next = 0;
 const waiting = new Map();
