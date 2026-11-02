@@ -15,6 +15,8 @@
   -->
   <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
     <SelfContained>true</SelfContained>
+    <!-- Shares a folder with the editor, whose PublishReadyToRun says why; a plain copy of a shared assembly would replace its compiled one. -->
+    <PublishReadyToRun>true</PublishReadyToRun>
   </PropertyGroup>
 
   <ItemGroup>

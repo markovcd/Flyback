@@ -38,6 +38,8 @@
 
 ### Performance
 
+- The desktop editor opens its window about a second sooner, its code compiled ahead of time; the web editor shows its logo and a loading bar while it downloads, and the iPhone and iPad editor opens on its logo in its own colors rather than a white screen.
+
 ### Fixes
 
 - Live text set to wake on keys only keeps clicks to itself while faded, so they no longer pause the picture or leave full screen, and it comes back at a key wherever the keys had gone.

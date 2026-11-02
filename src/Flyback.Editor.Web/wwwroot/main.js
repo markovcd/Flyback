@@ -7,7 +7,30 @@ import * as gl from '../viewer/gl.js';
 import { onTap } from '../viewer/tap.js';
 import * as speakers from './speakers.js';
 
-const runtime = await dotnet.create();
+/** The loading screen over the page, its bar and its line of text. */
+const loading = document.getElementById('loading');
+const loadingFill = loading.querySelector('.fill');
+const loadingSaid = loading.querySelector('.said');
+
+let loadedShare = 0;
+
+/**
+ * Fills the bar by files downloaded; once they all are, what is left is the runtime starting.
+ * The total grows as the runtime finds more files, so the bar only ever moves forward.
+ */
+function downloaded(done, total) {
+  loadedShare = Math.max(loadedShare, done / Math.max(total, 1));
+  loadingFill.style.width = `${Math.round(100 * loadedShare)}%`;
+  if (done >= total) loadingSaid.textContent = 'Starting';
+}
+
+const runtime = await dotnet
+  .withModuleConfig({ onDownloadResourceProgress: downloaded })
+  .create()
+  .catch(failure => {
+    loadingSaid.textContent = `Flyback could not start: ${failure.message ?? failure}`;
+    throw failure;
+  });
 
 /** The viewer's tab, by name, so View it again replaces what it shows rather than opening another. */
 const VIEWER_TAB = 'flyback-viewer';
@@ -146,6 +169,12 @@ globalThis.flyback = {
 };
 
 await runtime.runMain(name, []);
+
+// Gone once the editor's first frame is on the page beneath it.
+requestAnimationFrame(() => requestAnimationFrame(() => {
+  loading.classList.add('gone');
+  loading.addEventListener('transitionend', () => loading.remove(), { once: true });
+}));
 
 // ?preset=<name> opens a shipped preset, and ?file=<url> a shared one, as the presets page asks.
 const params = new URLSearchParams(location.search);
