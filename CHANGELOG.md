@@ -10,6 +10,7 @@
 
 ### Editor
 
+- The web editor says why when it cannot start, rather than staying on Starting.
 - Settings, Canvas, Colors offers Paper, a light scheme of ballpoint blue on cream. A scheme of your own can be light too, with `"light": true` in its file: the controls turn light, module, socket, wire and syntax colors darken just enough to read on the pale ground, and titles on module bands turn black.
 - In the letter to the author and the preset report, the send button is filled with the scheme's accent so it stands apart from Cancel.
 - Endless, in Settings → Playing and a page's settings: a patch with no length plays on until paused rather than stopping at three minutes, with the seek bar and loop set aside, pause, rewind, the clock and the length box left on the transport row, and a length typed there bringing the bar back.

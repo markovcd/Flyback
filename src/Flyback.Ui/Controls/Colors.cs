@@ -275,10 +275,7 @@ internal static class Colors
     /// Mixed here rather than drawn as a translucent second rectangle: what these
     /// make are gradient stops and cached brushes, and a stop has one color.
     /// </remarks>
-    public static Color Blend(Color ground, Color over, double amount) => Color.FromRgb(
-        Part(ground.R, over.R, amount),
-        Part(ground.G, over.G, amount),
-        Part(ground.B, over.B, amount));
+    public static Color Blend(Color ground, Color over, double amount) => ColorMix.Blend(ground, over, amount);
 
     /// <summary>The same color with the light taken out of it.</summary>
     public static Color Shade(Color color, double by) => Color.FromArgb(
@@ -288,8 +285,7 @@ internal static class Colors
     public static Color Faded(Color color, double alpha) =>
         Color.FromArgb(Part(0, 255, alpha), color.R, color.G, color.B);
 
-    private static byte Part(byte from, byte to, double amount) =>
-        (byte)Math.Clamp(Math.Round(from + (to - from) * amount), 0, 255);
+    private static byte Part(byte from, byte to, double amount) => ColorMix.Part(from, to, amount);
 
     // --- on a light ground --------------------------------------------------
 

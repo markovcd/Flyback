@@ -14,6 +14,29 @@ const loadingSaid = loading.querySelector('.said');
 
 let loadedShare = 0;
 
+/** How long starting may take once every file is in before the page says it is taking too long. */
+const STARTING_TOO_LONG_MS = 60_000;
+
+/**
+ * Says on the loading screen why the editor did not start, so a failure never looks like a long start,
+ * and marks the page for a script to read: <html data-editor> is "started" or "failed".
+ */
+function failed(failure) {
+  if (document.documentElement.dataset.editor) return;
+  document.documentElement.dataset.editor = 'failed';
+  loadingSaid.textContent = `Flyback could not start: ${failure?.message ?? failure}`;
+  console.error('Flyback could not start', failure);
+}
+
+/** The last error the page saw while starting, which a start that takes too long is put down to. */
+let startingError = null;
+const sawError = event => { startingError = event.error ?? event.message; };
+const sawRejection = event => { startingError = event.reason; };
+addEventListener('error', sawError);
+addEventListener('unhandledrejection', sawRejection);
+
+let tooLong = null;
+
 /**
  * Fills the bar by files downloaded; once they all are, what is left is the runtime starting.
  * The total grows as the runtime finds more files, so the bar only ever moves forward.
@@ -21,14 +44,20 @@ let loadedShare = 0;
 function downloaded(done, total) {
   loadedShare = Math.max(loadedShare, done / Math.max(total, 1));
   loadingFill.style.width = `${Math.round(100 * loadedShare)}%`;
-  if (done >= total) loadingSaid.textContent = 'Starting';
+  if (done >= total && !document.documentElement.dataset.editor) {
+    loadingSaid.textContent = 'Starting';
+    tooLong ??= setTimeout(() => {
+      if (startingError !== null) failed(startingError);
+      else if (!document.documentElement.dataset.editor) loadingSaid.textContent = 'Flyback is taking too long to start. Reloading the page may help.';
+    }, STARTING_TOO_LONG_MS);
+  }
 }
 
 const runtime = await dotnet
   .withModuleConfig({ onDownloadResourceProgress: downloaded })
   .create()
   .catch(failure => {
-    loadingSaid.textContent = `Flyback could not start: ${failure.message ?? failure}`;
+    failed(failure);
     throw failure;
   });
 
@@ -129,7 +158,8 @@ runtime.setModuleImports('page', {
 });
 
 const name = runtime.getConfig().mainAssemblyName;
-const exports = (await runtime.getAssemblyExports(name)).Flyback.Editor.Web.PageExports;
+const exports = (await runtime.getAssemblyExports(name).catch(failure => { failed(failure); throw failure; }))
+  .Flyback.Editor.Web.PageExports;
 
 /** Fetches a shared preset's file and opens it; null once open, or why it was not. */
 async function openUrl(url, fileName, title) {
@@ -168,7 +198,15 @@ globalThis.flyback = {
   view: () => exports.View(),
 };
 
-await runtime.runMain(name, []);
+await runtime.runMain(name, []).catch(failure => {
+  failed(failure);
+  throw failure;
+});
+
+document.documentElement.dataset.editor = 'started';
+clearTimeout(tooLong);
+removeEventListener('error', sawError);
+removeEventListener('unhandledrejection', sawRejection);
 
 // Gone once the editor's first frame is on the page beneath it.
 requestAnimationFrame(() => requestAnimationFrame(() => {

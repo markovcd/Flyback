@@ -1,7 +1,8 @@
 # Deploys the preset site's Worker (worker/) with the pages, the viewer and the
-# editor, puts the framework files too large to be assets in R2, then gives the site
-# the presets and plugins it starts with and says again what the web pages lack for
-# every preset (deploy/cloudflare/README.md). Runs when Build passes on a push to
+# editor once that editor has started in a headless Chrome, puts the framework
+# files too large to be assets in R2, then gives the site the presets and plugins
+# it starts with and says again what the web pages lack for every preset
+# (deploy/cloudflare/README.md). Runs when Build passes on a push to
 # main that touches what the site is built from, however late Build finishes, and
 # by hand.
 #
@@ -78,7 +79,7 @@ jobs:
               | src/Flyback.Host/* | src/Flyback.Gpu/* | src/Flyback.Assist/* \
               | src/Flyback.Engine/* | src/Flyback.Core/* | src/Flyback.Plugins/* | src/plugins/* \
               | .editorconfig | Directory.Build.props | Directory.Build.targets \
-              | Directory.Packages.props | global.json | scripts/stills.sh | Dockerfile \
+              | Directory.Packages.props | global.json | scripts/stills.sh | scripts/editor-starts.mjs | Dockerfile \
               | .github/workflows/worker.yml)
                 touched=true
                 echo "$file"
@@ -138,6 +139,13 @@ jobs:
           --cache-from type=gha,scope=site
           --cache-to type=gha,scope=site,mode=max
           --secret id=release-key,env=RELEASE_SIGNING_KEY --output type=local,dest=out .
+
+      # The specs open the interpreted editor; this opens the ahead-of-time one about to
+      # be deployed, so one that builds but cannot start never reaches the site.
+      - name: Open the web editor about to be deployed
+        env:
+          FLYBACK_CHROMIUM: google-chrome
+        run: node scripts/editor-starts.mjs out/public out/large
 
       - name: Migrate the database and deploy
         env:

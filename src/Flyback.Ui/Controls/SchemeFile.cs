@@ -142,7 +142,7 @@ internal static class SchemeFile
         var light = Flag(root, "light", problems);
 
         var bright = Optional(root, "text", "bright", problems)
-            ?? Controls.Colors.Blend(colors[11], light ? Avalonia.Media.Colors.Black : Avalonia.Media.Colors.White, BrightUnless);
+            ?? ColorMix.Blend(colors[11], light ? Avalonia.Media.Colors.Black : Avalonia.Media.Colors.White, BrightUnless);
 
         return new Scheme(
             name,
