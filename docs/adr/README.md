@@ -139,7 +139,8 @@ context, decision, consequences.
 | [0093](0093-a-startup-preset-is-a-graphics-setting.md) | A startup preset is a Graphics setting *(user-directed; its row moved to Files by an amendment)* |
 | [0103](0103-unsaved-work-outlives-a-crash.md) | Unsaved work outlives a crash *(user-directed)* |
 | [0111](0111-the-panels-actions-are-a-row-of-glyphs.md) | The panel's actions are a row of glyphs *(user-directed)* |
-| [0116](0116-a-module-is-drawn-as-its-category-and-a-standout-as-itself.md) | A module is drawn as its category, and a standout as itself *(user-directed)* |
+| [0116](0116-a-module-is-drawn-as-its-category-and-a-standout-as-itself.md) | A module is drawn as its category, and a standout as itself *(user-directed; the wash and the mark superseded by [0219](0219-the-editor-looks-like-an-instrument-on-the-bench.md))* |
+| [0219](0219-the-editor-looks-like-an-instrument-on-the-bench.md) | The editor looks like an instrument on the bench *(user-directed)* |
 | [0117](0117-a-module-switched-off-is-a-wire.md) | A module switched off is a wire *(user-directed)* |
 | [0118](0118-a-plugin-paints-its-own-module-background.md) | A plugin paints its own module's background *(user-directed)* |
 | [0121](0121-the-window-is-left-as-it-was-left.md) | The window is left as it was left *(user-directed)* |

@@ -98,7 +98,7 @@ internal sealed class GroupPainter(
     /// How round a region's corners are. Softer than a module's, because it is a
     /// region and not a thing.
     /// </summary>
-    private const double GroupCornerRadius = 10;
+    private const double GroupCornerRadius = 3;
 
     private Patch Patch => history.Patch;
 
@@ -236,8 +236,6 @@ internal sealed class GroupPainter(
 
         context.DrawRectangle(NodeSkin.Box(isSelected), ModuleFace.BorderFor(isSelected, isFocused), body);
 
-        NodeSkin.DrawMark(context, body, ModuleGlyphs.Group, NodeSkin.BoxMark);
-
         glass.DrawEdge(context, bounds);
 
         var header = ModuleFace.HeaderOf(bounds);
@@ -246,7 +244,7 @@ internal sealed class GroupPainter(
 
         if (DropsInto(group)) context.DrawRectangle(DropHeader, null, ModuleFace.HeaderShape(header));
 
-        NodeSkin.Relief(context, header);
+        NodeSkin.Relief(context, header, Colors.Separator);
 
         if (ModuleOverview.At(view.Zoom))
         {

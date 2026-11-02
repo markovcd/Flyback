@@ -20,7 +20,7 @@ internal sealed class NodeGeometry
     public const double FooterPadding = 8;
     public const double PortRadius = 5.5;
     public const double HitPadding = 5;
-    public const double CornerRadius = 6;
+    public const double CornerRadius = 2;
 
     /// <summary>
     /// Whether modules are drawn compact: an input and the output of the same index

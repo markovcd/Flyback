@@ -127,7 +127,7 @@ internal sealed class ModulePainter(
         if (picture.Paint(context, body, Clock.Elapsed.TotalMilliseconds)) moving = true;
     }
 
-    /// <summary>A module's body, artwork, mark and title band: everything under its text.</summary>
+    /// <summary>A module's body, artwork and title band: everything under its text.</summary>
     private void DrawFill(
         DrawingContext context, NodeDef def, RoundedRect body, Rect bounds, Rect header, Color accent, Color floor,
         bool isSelected, ModuleBackdrop backdrop, IPen border)
@@ -143,26 +143,25 @@ internal sealed class ModulePainter(
         }
         else
         {
-            context.DrawRectangle(NodeSkin.Body(accent, floor, isSelected), border, body);
+            // The body stops where the band starts, so a module drawn faint shows
+            // the canvas through its band rather than its body.
+            var radius = NodeGeometry.CornerRadius;
+            var under = new RoundedRect(
+                new Rect(bounds.X, header.Bottom, bounds.Width, Math.Max(0, bounds.Bottom - header.Bottom)), 0, 0, radius, radius);
 
-            // Over the wash and under the mark, because it is the surface the
-            // mark is set into rather than a second thing on the body.
+            context.DrawRectangle(NodeSkin.Body(accent, floor, isSelected), null, under);
+
             if (ModuleSkins.Of(def) is ModuleSkin.Grain { Cut: var cut })
-                using (context.PushClip(body))
+                using (context.PushClip(under))
                     context.FillRectangle(
                         NodeSkin.Cut(cut, NodeSkin.BodyTop(accent, isSelected)),
                         bounds);
 
-            NodeSkin.DrawMark(context, body, ModuleGlyphs.For(def), NodeSkin.Mark(accent));
+            context.DrawRectangle(NodeSkin.Header(accent, floor, isSelected), null, ModuleFace.HeaderShape(header));
+            context.DrawRectangle(null, border, body);
         }
 
-        // Header band, square at the bottom so it reads as a title bar. A picture
-        // runs under it instead: it is the background, and the band is the one
-        // part of the block that is not.
-        if (backdrop.Picture is null)
-            context.DrawRectangle(NodeSkin.Header(accent, floor, isSelected), null, ModuleFace.HeaderShape(header));
-
-        NodeSkin.Relief(context, header);
+        NodeSkin.Relief(context, header, accent);
     }
 
     private void DrawModule(DrawingContext context, NodeInstance node, NodeDef def)

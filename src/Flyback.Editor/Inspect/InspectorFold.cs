@@ -132,7 +132,6 @@ internal sealed class InspectorFold
             header.IsVisible = false;
             header.Show(null);
             wash.BandHeight = 0;
-            wash.Below = 0;
             return;
         }
 
@@ -149,7 +148,6 @@ internal sealed class InspectorFold
         {
             header.IsVisible = false;
             wash.BandHeight = band;
-            wash.Below = tall;
             return;
         }
 
@@ -159,7 +157,6 @@ internal sealed class InspectorFold
         header.IsVisible = pinnedIn;
 
         wash.BandHeight = pinnedIn ? InspectorHeader.Depth : band - offset;
-        wash.Below = compact ? InspectorHeader.Depth : Math.Max(pinnedIn ? InspectorHeader.Depth : 0, tall - offset);
     }
 
     private void Lay(ModulePlate? plate)

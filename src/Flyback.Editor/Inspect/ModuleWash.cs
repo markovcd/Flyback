@@ -13,7 +13,7 @@ namespace Flyback.Editor.Inspect;
 /// <summary>
 /// The selected block's face behind the whole panel: the band its name stands on,
 /// the wash under that, the grain cut across it or the picture its author hung
-/// there, and its mark set large in the middle — all fading out together.
+/// there, all fading out together.
 /// </summary>
 /// <remarks>
 /// Behind everything rather than under the plate alone, because a fill that stopped
@@ -30,16 +30,6 @@ internal sealed class ModuleWash : Control
     }
 
     /// <summary>
-    /// How big the mark is drawn, against the twenty-four units it is laid out on.
-    /// Far larger than the canvas draws one: there is one block on the panel where
-    /// a patch has forty, and this is the whole of what says which at a glance.
-    /// </summary>
-    private const double MarkSize = 288;
-
-    /// <summary>How far the mark keeps off the panel's edges.</summary>
-    private const double MarkInset = 12;
-
-    /// <summary>
     /// How faint the whole face is drawn for a module that is switched off —
     /// the same fade the canvas draws the block itself at (ADR-0117).
     /// </summary>
@@ -52,26 +42,11 @@ internal sealed class ModuleWash : Control
     private static readonly Stopwatch Clock = Stopwatch.StartNew();
 
     private IBrush? wash, band, grain;
+
+    /// <summary>The color of the rule along the band's top.</summary>
+    private Color rule = Colors.Separator;
     private ModuleArtwork? picture;
-    private Geometry? glyph;
-    private IPen? mark;
     private bool moving, ticking;
-
-    /// <summary>
-    /// How far down the panel the plate reaches, less what has scrolled, so the mark starts
-    /// under it rather than behind the name.
-    /// </summary>
-    public double Below
-    {
-        get;
-        set
-        {
-            if (Math.Abs(field - value) < 0.5) return;
-
-            field = value;
-            InvalidateVisual();
-        }
-    }
 
     /// <summary>
     /// How deep the band behind the name runs — <see cref="ModulePlate.Band"/> less what has
@@ -117,14 +92,13 @@ internal sealed class ModuleWash : Control
 
         var (accent, floor) = Colors.Palette(def);
         var skin = ModuleSkins.Of(def);
+        rule = accent;
 
         wash = NodeSkin.Body(accent, floor, selected: false);
         grain = skin is ModuleSkin.Grain { Cut: var cut }
             ? NodeSkin.Cut(cut, NodeSkin.BodyTop(accent, selected: false))
             : null;
         picture = skin is ModuleSkin.Artwork artwork ? ModuleArtwork.Of(artwork, panel: true) : null;
-        glyph = ModuleGlyphs.For(def);
-        mark = NodeSkin.Mark(accent);
 
         // A picture is the background, so no band is laid over it: the name stands
         // on what the plugin hung there.
@@ -138,10 +112,9 @@ internal sealed class ModuleWash : Control
     {
         wash = NodeSkin.Box(selected: false);
         band = NodeSkin.BoxHeader;
+        rule = Colors.Separator;
         grain = null;
         picture = null;
-        glyph = ModuleGlyphs.Group;
-        mark = NodeSkin.BoxMark;
 
         InvalidateVisual();
     }
@@ -152,8 +125,6 @@ internal sealed class ModuleWash : Control
         band = null;
         grain = null;
         picture = null;
-        glyph = null;
-        mark = null;
         Off = false;
 
         InvalidateVisual();
@@ -187,10 +158,6 @@ internal sealed class ModuleWash : Control
 
                 DrawBand(context, bounds);
             }
-
-            // Outside the mask: the mark stands where the fill has already gone, and it
-            // is the one thing here that has to be there at any panel height.
-            DrawMark(context, bounds);
         }
 
         KeepMoving();
@@ -210,7 +177,7 @@ internal sealed class ModuleWash : Control
 
         if (band is not null) context.FillRectangle(band, top);
 
-        NodeSkin.Relief(context, top);
+        NodeSkin.Relief(context, top, rule);
     }
 
     /// <summary>
@@ -236,33 +203,5 @@ internal sealed class ModuleWash : Control
                 if (IsEffectivelyVisible) InvalidateVisual();
             },
             TimeSpan.FromMilliseconds(Tick));
-    }
-
-    /// <summary>
-    /// The mark, against the right-hand edge and under the plate — always drawn,
-    /// however little of the panel is left, because it is what the panel is about.
-    /// </summary>
-    /// <remarks>
-    /// Except behind a picture, which is what the canvas does: the background is
-    /// the author's there, and a category's mark laid over it would be the shell
-    /// drawing on somebody else's artwork.
-    /// </remarks>
-    private void DrawMark(DrawingContext context, Rect bounds)
-    {
-        if (glyph is null || mark is null || picture is not null) return;
-
-        var size = Math.Min(MarkSize, bounds.Width - MarkInset * 2);
-
-        if (size <= 0) return;
-
-        var scale = size / ModuleGlyphs.Box;
-        var at = new Point(bounds.Right - MarkInset - size, Below + MarkInset);
-
-        using (context.PushClip(bounds))
-        using (context.PushTransform(
-            Matrix.CreateScale(scale, scale) * Matrix.CreateTranslation(at.X, at.Y)))
-        {
-            context.DrawGeometry(null, mark, glyph);
-        }
     }
 }

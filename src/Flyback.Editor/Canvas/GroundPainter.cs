@@ -10,7 +10,6 @@ internal sealed class GroundPainter(Viewport view)
 {
     internal static readonly IBrush Background = new ImmutableSolidColorBrush(Colors.Canvas);
     private static readonly IBrush Beyond = new ImmutableSolidColorBrush(Colors.Edge);
-    private static readonly IPen GridPen = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Grid));
     private static readonly IPen GridPenMajor = new ImmutablePen(new ImmutableSolidColorBrush(Colors.GridMajor));
 
     /// <summary>
@@ -66,19 +65,46 @@ internal sealed class GroundPainter(Viewport view)
         // Rounded up rather than down: a line started just short of the canvas
         // would land off the control and invisible, rather than ruling the
         // ground past the edge.
-        var firstX = Math.Ceiling(visible.X / spacing) * spacing;
-        var firstY = Math.Ceiling(visible.Y / spacing) * spacing;
+        // Ruled like a scope's graticule: a line every fifth division, and the
+        // divisions between as ticks across those lines.
+        const double major = spacing * 5, tick = 4;
 
-        for (var x = firstX; x <= visible.Right; x += spacing)
+        var ticks = new StreamGeometry();
+
+        using (var sink = ticks.Open())
         {
-            var pen = Math.Abs(x % (spacing * 5)) < 0.5 ? GridPenMajor : GridPen;
-            context.DrawLine(pen, new Point(x, visible.Y), new Point(x, visible.Bottom));
+            for (var x = Math.Ceiling(visible.X / spacing) * spacing; x <= visible.Right; x += spacing)
+            {
+                if (OnMajor(x)) continue;
+
+                for (var y = Math.Ceiling(visible.Y / major) * major; y <= visible.Bottom; y += major)
+                    Line(sink, new Point(x, y - tick), new Point(x, y + tick));
+            }
+
+            for (var y = Math.Ceiling(visible.Y / spacing) * spacing; y <= visible.Bottom; y += spacing)
+            {
+                if (OnMajor(y)) continue;
+
+                for (var x = Math.Ceiling(visible.X / major) * major; x <= visible.Right; x += major)
+                    Line(sink, new Point(x - tick, y), new Point(x + tick, y));
+            }
         }
 
-        for (var y = firstY; y <= visible.Bottom; y += spacing)
-        {
-            var pen = Math.Abs(y % (spacing * 5)) < 0.5 ? GridPenMajor : GridPen;
-            context.DrawLine(pen, new Point(visible.X, y), new Point(visible.Right, y));
-        }
+        context.DrawGeometry(null, GridPenMajor, ticks);
+
+        for (var x = Math.Ceiling(visible.X / major) * major; x <= visible.Right; x += major)
+            context.DrawLine(GridPenMajor, new Point(x, visible.Y), new Point(x, visible.Bottom));
+
+        for (var y = Math.Ceiling(visible.Y / major) * major; y <= visible.Bottom; y += major)
+            context.DrawLine(GridPenMajor, new Point(visible.X, y), new Point(visible.Right, y));
+
+        static bool OnMajor(double at) => Math.Abs(at % major) < 0.5;
+    }
+
+    private static void Line(StreamGeometryContext sink, Point from, Point to)
+    {
+        sink.BeginFigure(from, false);
+        sink.LineTo(to);
+        sink.EndFigure(false);
     }
 }

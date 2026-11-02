@@ -62,6 +62,7 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
             Name = "seekPosition",
             Text = StatusClock.Text(0),
             FontSize = Text.Body,
+            FontFamily = Text.Mono,
             FontFeatures = [FontFeature.Parse("tnum")],
             MinWidth = 52,
             TextAlignment = TextAlignment.Right,
@@ -77,6 +78,7 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
             PlaceholderText = PatchLength.Say(Patch.DefaultLength),
             Width = 76,
             FontSize = Text.Body,
+            FontFamily = Text.Mono,
             VerticalAlignment = VerticalAlignment.Center,
         };
 

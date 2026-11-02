@@ -6,6 +6,7 @@ using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
 using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor;
@@ -39,6 +40,11 @@ internal static class EditorTheme
 
         application.Styles.Add(Bare(x => x.OfType<Button>().Class(ToolbarButtons.Tool)));
         application.Styles.Add(Bare(x => x.OfType<ToggleButton>().Class(ToolbarButtons.Tool)));
+        // A number box holds a reading, so it is set like one.
+        var numbers = new Style(x => x.OfType<NumericUpDown>());
+        numbers.Setters.Add(new Setter(TemplatedControl.FontFamilyProperty, Text.Mono));
+        application.Styles.Add(numbers);
+
         application.Styles.Add(new StyleInclude(new Uri("avares://Flyback.Editor/"))
         {
             Source = new Uri("avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml"),

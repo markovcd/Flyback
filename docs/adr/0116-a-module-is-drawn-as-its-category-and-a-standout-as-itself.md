@@ -1,6 +1,6 @@
 # ADR-0116: A module is drawn as its category, and a standout as itself
 
-**Status:** Accepted · 2026-09-20 · *user-directed*
+**Status:** Superseded in part · 2026-09-20 · *user-directed* · the wash, the mark and the lit header superseded by [0219](0219-the-editor-looks-like-an-instrument-on-the-bench.md), where a module is a flat panel with a rule in its accent along its title band and no mark
 
 ## Context
 

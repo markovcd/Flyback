@@ -8,7 +8,7 @@ namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// What a module is painted with, worked out from one accent: the wash down its
-/// body, the band across its header, the color its mark is drawn in, and — for a
+/// body, the band across its header and the rule along it, and — for a
 /// module that asked for it — the ink its text is written in.
 /// </summary>
 /// <remarks>
@@ -16,29 +16,23 @@ namespace Flyback.Editor.Canvas;
 /// per frame and a gradient brush is not free to make. The canvas is one control
 /// on one thread (ADR-0017), so the caches need no guard.
 /// <para>
-/// The tint is deliberately slight. A body in the accent at full strength is a
-/// patch of fourteen colored rectangles with the labels lost in them; what is
-/// wanted is the difference being legible at a glance and at a zoom where no
-/// label is, which a few percent of hue over the node gray gives.
+/// The body is flat and the tint slight, so a patch reads as panels of one
+/// instrument; the rule along each header is what tells the kinds apart.
 /// </para>
 /// </remarks>
 internal static class NodeSkin
 {
-    /// <summary>How much accent is in the body, under the header and at the floor.</summary>
-    private const double TopTint = 0.24, FloorTint = 0.06;
+    /// <summary>How much accent is in the body.</summary>
+    private const double BodyTint = 0.09;
 
-    /// <summary>How much of the header band is accent, the rest being the body under it.</summary>
-    private const double HeaderStrength = 0.95;
-
-    /// <summary>How much light the band has left by the time it meets the body.</summary>
-    private const double HeaderFall = 0.72;
+    /// <summary>How much accent is in the header band; the rule along its top carries the rest.</summary>
+    private const double HeaderStrength = 0.14;
 
     private static readonly Dictionary<(Color Accent, Color Floor, bool Selected), IBrush> Bodies = [];
     private static readonly Dictionary<(Color Accent, Color Floor, bool Selected), IBrush> Headers = [];
-    private static readonly Dictionary<Color, IPen> Marks = [];
     private static readonly Dictionary<(Color From, Color To, bool Lift, int Fade), IBrush> Inks = [];
 
-    /// <summary>The wash down a module's body, tinted by what the module does.</summary>
+    /// <summary>A module's body, tinted by what the module does.</summary>
     public static IBrush Body(Color accent, Color floor, bool selected)
     {
         if (Bodies.TryGetValue((accent, floor, selected), out var kept)) return kept;
@@ -50,7 +44,7 @@ internal static class NodeSkin
         return made;
     }
 
-    /// <summary>The header band. Lit at the top and falling away, so it has a face.</summary>
+    /// <summary>The header band behind a module's title.</summary>
     public static IBrush Header(Color accent, Color floor, bool selected)
     {
         if (Headers.TryGetValue((accent, floor, selected), out var kept)) return kept;
@@ -63,19 +57,16 @@ internal static class NodeSkin
     }
 
     public static Color BodyTop(Color accent, bool selected) =>
-        Colors.Blend(Ground(selected), accent, TopTint);
+        Colors.Blend(Ground(selected), accent, BodyTint);
 
     public static Color BodyFloor(Color accent, bool selected) =>
-        Colors.Blend(Ground(selected), accent, FloorTint);
+        Colors.Blend(Ground(selected), accent, BodyTint);
 
-    /// <summary>
-    /// The lit edge of the band — the accent, with the body showing through the
-    /// last few percent of it.
-    /// </summary>
+    /// <summary>The band behind a module's title: dark, with only enough of the accent to tie it to its rule.</summary>
     public static Color HeaderTop(Color accent, bool selected) =>
-        Colors.Blend(BodyTop(accent, selected), accent, HeaderStrength);
+        Colors.Blend(selected ? Colors.Outline : Colors.Edge, accent, HeaderStrength);
 
-    public static Color HeaderFloor(Color accent) => Colors.Shade(accent, HeaderFall);
+    public static Color HeaderFloor(Color accent) => Colors.Blend(Colors.Edge, accent, HeaderStrength);
 
     private static Color Ground(bool selected) => selected ? Colors.NodeSelected : Colors.Node;
 
@@ -87,32 +78,6 @@ internal static class NodeSkin
 
     private static readonly IBrush PlainGround = new ImmutableSolidColorBrush(Colors.Node);
     private static readonly IBrush SelectedGround = new ImmutableSolidColorBrush(Colors.NodeSelected);
-
-    /// <summary>
-    /// What the mark across the body is stroked with — see <see cref="ModuleGlyphs"/>.
-    /// Thickness in the glyph's own units, so it grows with whatever the mark is
-    /// scaled to.
-    /// </summary>
-    public static IPen Mark(Color accent)
-    {
-        if (Marks.TryGetValue(accent, out var kept)) return kept;
-
-        var made = new ImmutablePen(
-            new ImmutableSolidColorBrush(accent, MarkOpacity),
-            ModuleGlyphs.Thickness,
-            lineCap: PenLineCap.Round,
-            lineJoin: PenLineJoin.Round);
-
-        Marks[accent] = made;
-
-        return made;
-    }
-
-    /// <summary>
-    /// How strongly the mark shows. Far enough under the labels drawn over it
-    /// that reading one is never a matter of looking past the other.
-    /// </summary>
-    private const double MarkOpacity = 0.17;
 
     /// <summary>
     /// Text colored from the background it covers: the readable opposite of what
@@ -212,9 +177,8 @@ internal static class NodeSkin
     private const double CutWidth = 1;
 
     /// <summary>
-    /// How strongly a cut shows. Under the mark, because a texture covers the
-    /// whole body where a mark is one shape in the corner of it: at the mark's
-    /// own weight the labels would be read over hatching everywhere.
+    /// How strongly a cut shows: faint, because it covers the whole body and the
+    /// labels are read over it.
     /// </summary>
     private const double CutOpacity = 0.10;
 
@@ -258,36 +222,17 @@ internal static class NodeSkin
     private static readonly IBrush SelectedBoxHeader =
         Down(Colors.Blend(Colors.Outline, Colors.Attention, 0.55), Colors.Outline);
 
-    /// <summary>
-    /// The mark across a box, which is the same picture the toolbar's group button
-    /// carries — modules inside a frame.
-    /// </summary>
-    public static IPen BoxMark { get; } = new ImmutablePen(
-        new ImmutableSolidColorBrush(Colors.Separator, 0.5),
-        ModuleGlyphs.Thickness,
-        lineCap: PenLineCap.Round,
-        lineJoin: PenLineJoin.Round);
-
     // --- the face of a header band ------------------------------------------
 
     /// <summary>
-    /// The two lines that give a header band a face: light along its top edge, and a
-    /// seam where it meets the body.
+    /// The rule along the top of a header in its category's accent, and the seam
+    /// where the band meets the body. The rule is what tells one kind of module
+    /// from another at a glance.
     /// </summary>
-    /// <remarks>
-    /// The light is held off the corners, where a straight line across a rounded one
-    /// reads as an overhang rather than as an edge catching the light. Both are white
-    /// and black rather than palette colors, because what they are is a light and a
-    /// shadow on whatever color the band happens to be.
-    /// </remarks>
-    public static void Relief(DrawingContext context, Rect header)
+    public static void Relief(DrawingContext context, Rect header, Color rule)
     {
-        var inset = NodeGeometry.CornerRadius;
-
-        context.DrawLine(
-            Gloss,
-            new Point(header.X + inset, header.Y + 0.75),
-            new Point(header.Right - inset, header.Y + 0.75));
+        context.FillRectangle(Rules.TryGetValue(rule, out var kept) ? kept : Rules[rule] = new ImmutableSolidColorBrush(rule),
+            new Rect(header.X, header.Y, header.Width, RuleHeight));
 
         context.DrawLine(
             Seam,
@@ -295,13 +240,15 @@ internal static class NodeSkin
             new Point(header.Right, header.Bottom - 0.5));
     }
 
-    private static readonly IPen Gloss = new ImmutablePen(
-        new ImmutableSolidColorBrush(Avalonia.Media.Colors.White, 0.16), 1.2);
+    /// <summary>How thick the accent rule along a header's top is.</summary>
+    private const double RuleHeight = 3;
+
+    private static readonly Dictionary<Color, IBrush> Rules = [];
 
     private static readonly IPen Seam = new ImmutablePen(
         new ImmutableSolidColorBrush(Avalonia.Media.Colors.Black, 0.3));
 
-    // --- sockets and marks ---------------------------------------------------
+    // --- sockets ---------------------------------------------------------
 
     public static void DrawPort(DrawingContext context, Point center, PortKind kind) =>
         context.DrawEllipse(
@@ -366,49 +313,9 @@ internal static class NodeSkin
     private static readonly IPen PortOutline = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Outline), 1.2);
 
     /// <summary>
-    /// Sets a module's mark in the body, right of the labels and under the
-    /// header, which is drawn after it.
-    /// </summary>
-    /// <remarks>
-    /// Sized to the body rather than fixed, so a module of one row gets a small
-    /// whole mark instead of the bottom third of a large one, and capped so a
-    /// tall module's does not become the module. Drawn under the text on purpose
-    /// and held faint enough that nothing has to be read past it.
-    /// </remarks>
-    public static void DrawMark(DrawingContext context, RoundedRect body, Geometry? glyph, IPen pen)
-    {
-        if (glyph is null) return;
-
-        var bounds = body.Rect;
-        var room = bounds.Height - NodeGeometry.HeaderHeight;
-
-        // Too little room for a mark to be anything but a smudge.
-        if (room - MarkInset * 2 < MarkLeast) return;
-
-        var size = Math.Min(room - MarkInset * 2, MarkMost);
-        var scale = size / ModuleGlyphs.Box;
-
-        var at = new Point(
-            bounds.Right - MarkInset - size,
-            bounds.Y + NodeGeometry.HeaderHeight + (room - size) / 2);
-
-        using (context.PushTransform(
-            Matrix.CreateScale(scale, scale) * Matrix.CreateTranslation(at.X, at.Y)))
-        {
-            context.DrawGeometry(null, pen, glyph);
-        }
-    }
-
-    /// <summary>How far a mark keeps off the sides of the body it is set in.</summary>
-    private const double MarkInset = 4;
-
-    /// <summary>The sizes a mark is held between — see <see cref="DrawMark"/>.</summary>
-    private const double MarkLeast = 18, MarkMost = 52;
-
-    /// <summary>
     /// How a block's background gives way on the panel: full strength in the top
     /// right corner and gone by about the middle of it, as an opacity mask so a
-    /// wash, a grain, a picture and a mark all disappear the same way.
+    /// wash, a grain and a picture all disappear the same way.
     /// </summary>
     /// <remarks>
     /// The panel is not a canvas: what ends the face is the reading running on
