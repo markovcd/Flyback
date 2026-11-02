@@ -91,6 +91,9 @@ public sealed class TransportSteps(EditorDriver editor) : IDisposable
     [When("the seek bar has had time to look")]
     public void WhenTheBarHasLooked() => editor.Idle(TimeSpan.FromSeconds(0.5));
 
+    [Then("the transport row shows the seek bar again")]
+    public void ThenShowsSeekBar() => editor.ShowsSeekBar.ShouldBeTrue();
+
     [Then("the transport row says Endless where the seek bar was")]
     public void ThenSaysEndless() => editor.SaysEndless.ShouldBeTrue();
 

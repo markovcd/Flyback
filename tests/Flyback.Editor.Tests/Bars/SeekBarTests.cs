@@ -373,14 +373,15 @@ public sealed class SeekBarTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void An_endless_patch_has_no_strip_length_or_loop_and_says_endless()
+    public void An_endless_patch_has_no_strip_or_loop_and_says_endless_with_its_length_box_left()
     {
         var (window, bar) = WithBar();
 
         Endless(window, bar);
 
         Track(window).IsVisible.ShouldBeFalse();
-        Length(window).IsVisible.ShouldBeFalse();
+        Length(window).IsVisible.ShouldBeTrue();
+        Length(window).PlaceholderText.ShouldBe(SeekBar.NoEnd);
         bar.Loop.IsVisible.ShouldBeFalse();
         bar.Note.IsVisible.ShouldBeTrue();
         Service<TransportRow>(window).Pause.IsVisible.ShouldBeTrue();
@@ -443,6 +444,23 @@ public sealed class SeekBarTests : EditorTest
 
         overlay.Track.IsVisible.ShouldBeFalse();
         overlay.Looped.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void A_length_typed_beside_an_endless_patch_brings_the_bar_back()
+    {
+        var (window, bar) = WithBar();
+
+        Endless(window, bar);
+        TypeLength(window, "1:00");
+        bar.Update();
+        Settle(window);
+
+        bar.Endless.ShouldBeFalse();
+        Track(window).IsVisible.ShouldBeTrue();
+        Track(window).Maximum.ShouldBe(60);
+        bar.Note.IsVisible.ShouldBeFalse();
+        Length(window).PlaceholderText.ShouldBe("3:00.00");
     }
 
     [AvaloniaFact]

@@ -20,7 +20,7 @@ namespace Flyback.Editor.Bars;
 /// anywhere from zero to the patch's length, typed in the box beside it. At the end
 /// the patch stops, or comes round to zero where the loop switch is on. An empty box
 /// is no length, which the editor plays as <see cref="Patch.DefaultLength"/>, or
-/// plays on with no strip, length or loop where the Endless setting is on.
+/// plays on with no strip or loop where the Endless setting is on.
 /// </summary>
 /// <remarks>
 /// The length is the patch's, an edit like any other; the switch is the editor's, kept
@@ -29,6 +29,9 @@ namespace Flyback.Editor.Bars;
 /// </remarks>
 internal sealed class SeekBar : IReactTo<PatchCompiled>
 {
+    /// <summary>What the empty length box says while the patch plays on.</summary>
+    public const string NoEnd = "no end";
+
     /// <summary>How often the thumb follows the clock.</summary>
     private static readonly TimeSpan Follow = TimeSpan.FromMilliseconds(100);
 
@@ -85,7 +88,7 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        ToolTip.SetTip(Note, "This patch has no length and Endless is on in the settings, so it plays on until paused. Give it a length to bring the seek bar back.");
+        ToolTip.SetTip(Note, "This patch has no length and Endless is on in the settings, so it plays on until paused. Type a length beside it to bring the seek bar back.");
 
         Length = new TextBox
         {
@@ -202,7 +205,8 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
 
         var endless = Endless;
 
-        Track.IsVisible = Length.IsVisible = Loop.IsVisible = !endless;
+        Track.IsVisible = Loop.IsVisible = !endless;
+        Length.PlaceholderText = endless ? NoEnd : PatchLength.Say(Patch.DefaultLength);
         Note.IsVisible = endless;
         Line.IsVisible = !RowShown && !endless;
 

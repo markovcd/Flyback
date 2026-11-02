@@ -67,3 +67,12 @@ Feature: The patch's clock can be moved anywhere along the seek bar
     Then the patch is playing
     And the patch's clock is at about 240 seconds
     And the transport row says Endless where the seek bar was
+
+  Scenario: Typing a length beside an endless patch brings the seek bar back
+    Given the settings play a patch with no length on
+    And the patch is open in the editor
+    Then the transport row says Endless where the seek bar was
+    When the seek bar's length is set to "1:00"
+    Then the transport row shows the seek bar again
+    And the seek bar reaches 60 seconds
+    And the patch plays for 60 seconds

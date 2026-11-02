@@ -1107,11 +1107,13 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
         return true;
     });
 
-    /// <summary>Whether the transport row says Endless where the seek bar, length and loop were.</summary>
+    /// <summary>Whether the transport row shows the seek bar rather than saying Endless.</summary>
+    public bool ShowsSeekBar => ReadWindow(open => SeekBar(open).IsVisible && !Named<TextBlock>(open, "seekEndless").IsVisible);
+
+    /// <summary>Whether the transport row says Endless where the seek bar and loop were.</summary>
     public bool SaysEndless => ReadWindow(open =>
         Named<TextBlock>(open, "seekEndless").IsVisible
         && !SeekBar(open).IsVisible
-        && !Named<TextBox>(open, "seekLength").IsVisible
         && !Named<ToggleButton>(open, "seekLoop").IsVisible);
 
     /// <summary>Switches the seek bar's loop on, as a click on it does.</summary>
