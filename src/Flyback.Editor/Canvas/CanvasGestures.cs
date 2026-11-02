@@ -270,8 +270,13 @@ internal sealed class CanvasGestures
 
         if (button == MouseButton.Right)
         {
-            // Over an unpatched input, the button held down is a knob for its value.
-            if (drag == Drag.None && dial.Start(canvas, graph, screen, anchored: pointer?.Type != PointerType.Touch))
+            // Over an unpatched input, the button held down is a knob for its value. Zoomed
+            // out, anywhere on a module is, for its first input; Tab or a second finger moves on.
+            var anchored = pointer?.Type != PointerType.Touch;
+
+            if (drag == Drag.None
+                && (dial.Start(canvas, graph, screen, anchored)
+                    || (view.Overview && !scene.HitPort(graph, out _, out _, out _) && dial.StartOnBody(canvas, graph, screen, anchored))))
             {
                 tips.Down(canvas);
                 pointer?.Capture(canvas);

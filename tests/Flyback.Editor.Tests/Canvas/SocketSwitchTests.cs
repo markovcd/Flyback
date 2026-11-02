@@ -193,6 +193,51 @@ public class SocketSwitchTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void Zoomed_out_a_right_drag_anywhere_on_a_module_turns_its_first_input()
+    {
+        var (editor, window, sine) = Board(412, 700);
+        ZoomOut(editor, window);
+        var turnable = Turnable(editor, sine);
+        var middle = editor.View.OnScreen(editor.Selection.Scene.Footprint(sine)).Center;
+
+        window.MouseDown(middle, MouseButton.Right);
+        Settle(window);
+
+        editor.Dial.Dialed.ShouldBe(new SocketPick(sine.Id, turnable[0]));
+        editor.History.Patch.Find(sine.Id)!.Off.ShouldBeFalse();
+        window.MouseUp(middle, MouseButton.Right);
+    }
+
+    [AvaloniaFact]
+    public void Zoomed_out_a_finger_held_anywhere_on_a_module_turns_its_first_input()
+    {
+        var (editor, window, sine) = Board(412, 700);
+        ZoomOut(editor, window);
+        var turnable = Turnable(editor, sine);
+        var middle = editor.View.OnScreen(editor.Selection.Scene.Footprint(sine)).Center;
+        var finger = Finger();
+
+        editor.Fingers.Down(editor, finger, middle, 1_000);
+        editor.Fingers.Held();
+
+        editor.Dial.Dialed.ShouldBe(new SocketPick(sine.Id, turnable[0]));
+        editor.Fingers.Up(editor, finger, middle, 2_000);
+    }
+
+    [AvaloniaFact]
+    public void Close_enough_to_read_a_right_drag_on_a_module_body_turns_nothing()
+    {
+        var (editor, window, sine) = Board();
+        var middle = editor.View.OnScreen(editor.Selection.Scene.Footprint(sine)).Center;
+
+        window.MouseDown(middle, MouseButton.Right);
+        Settle(window);
+
+        editor.Dial.Turning.ShouldBeFalse();
+        window.MouseUp(middle, MouseButton.Right);
+    }
+
+    [AvaloniaFact]
     public void Zoomed_out_the_input_turning_is_ringed_beside_its_socket()
     {
         var (editor, window, sine) = Board(412, 700);

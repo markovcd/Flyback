@@ -100,6 +100,19 @@ internal sealed class SocketDial(
             || selection.Scene.HitWell(graph, out nodeId, out port))
         && Start(canvas, nodeId, port, screen, anchored);
 
+    /// <summary>
+    /// Starts turning the first input that turns on the module or shut box under
+    /// <paramref name="graph"/>, for a view zoomed out too far for its sockets to be aimed at.
+    /// </summary>
+    public bool StartOnBody(Control canvas, Point graph, Point screen, bool anchored = true)
+    {
+        foreach (var pick in selection.Scene.InputsUnder(graph))
+            if (Dialable(pick.Node, pick.Port, out _, out _))
+                return Start(canvas, pick.Node, pick.Port, screen, anchored);
+
+        return false;
+    }
+
     /// <summary>Starts turning one input, and says whether it can be turned.</summary>
     public bool Start(Control canvas, Guid nodeId, int port, Point screen, bool anchored = true)
     {

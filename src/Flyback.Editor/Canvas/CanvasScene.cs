@@ -382,6 +382,17 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
         return (bounds, geometry.GroupInputPort(bounds, sockets, row));
     }
 
+    /// <summary>The inputs of the shut box or module under <paramref name="graph"/>, top to bottom; none over bare canvas.</summary>
+    public List<SocketPick> InputsUnder(Point graph)
+    {
+        if (HitBox(graph) is { } box)
+            return [.. patch.SocketsOf(box).Inputs.Select(socket => new SocketPick(socket.Node, socket.Port))];
+
+        if (HitNode(graph) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return [];
+
+        return [.. Enumerable.Range(0, def.Inputs.Count).Select(port => new SocketPick(node.Id, port))];
+    }
+
     /// <summary>The inputs drawn on the same body as <paramref name="pick"/>, top to bottom: its module's, or the shut box's it is behind.</summary>
     public List<SocketPick> InputsBeside(SocketPick pick)
     {
