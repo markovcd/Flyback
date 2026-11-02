@@ -30,7 +30,7 @@ internal static class LetterView
             TextWrapping = TextWrapping.Wrap,
         });
 
-        var sendButton = new Button { Name = "send", Content = "Send letter", MinWidth = 96, IsEnabled = false };
+        var sendButton = new Button { Name = "send", Content = "Send letter", MinWidth = 96, IsEnabled = false, Classes = { "accent" } };
         var cancel = new Button { Name = "cancel", Content = "Cancel", MinWidth = 96 };
         string? mood = null;
 

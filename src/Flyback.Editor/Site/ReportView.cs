@@ -31,7 +31,7 @@ internal static class ReportView
             TextWrapping = TextWrapping.Wrap,
         });
 
-        var sendButton = new Button { Name = "send", Content = "Send report", MinWidth = 96, IsEnabled = false };
+        var sendButton = new Button { Name = "send", Content = "Send report", MinWidth = 96, IsEnabled = false, Classes = { "accent" } };
         var cancel = new Button { Name = "cancel", Content = "Cancel", MinWidth = 96 };
         string? reason = null;
 

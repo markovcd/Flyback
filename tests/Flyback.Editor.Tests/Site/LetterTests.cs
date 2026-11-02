@@ -1,6 +1,8 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Site;
 using Shouldly;
@@ -40,6 +42,11 @@ public sealed class LetterTests : EditorTest
     private static void Choose(Control page, string mood) =>
         All<RadioButton>(page).Single(r => (string?)r.Tag == mood).IsChecked = true;
 
+    /// <summary>The color a button is filled with as its template draws it.</summary>
+    private static Color? Face(Button button) =>
+        (button.GetVisualDescendants().OfType<ContentPresenter>().First(p => p.Name == "PART_ContentPresenter").Background
+            as ISolidColorBrush)?.Color;
+
     [AvaloniaFact]
     public void A_letter_carries_what_was_typed_and_what_this_copy_is()
     {
@@ -56,6 +63,25 @@ public sealed class LetterTests : EditorTest
         sends[0].Mood.ShouldBe("bad");
         sends[0].Message.ShouldBe("The delay clicks when I turn it.");
         sends[0].Contact.ShouldBe("ada@example.org");
+    }
+
+    [AvaloniaFact]
+    public void Sending_is_drawn_apart_from_cancelling()
+    {
+        var (window, page, _) = Letter();
+
+        Choose(page, "good");
+        Box(page, "message").Text = "The canvas is lovely.";
+        Settle(window);
+        Shoot(window, "letter.png");
+
+        var send = Button(page, "send");
+        var cancel = Button(page, "cancel");
+
+        send.IsEnabled.ShouldBeTrue();
+        send.Classes.ShouldContain("accent");
+        cancel.Classes.ShouldNotContain("accent");
+        Face(send).ShouldNotBe(Face(cancel));
     }
 
     [AvaloniaFact]
