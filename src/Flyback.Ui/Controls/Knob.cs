@@ -27,11 +27,24 @@ internal class Knob : Control, ITurnable
 
     protected const double Sweep = 270;
 
-    private static readonly IPen Track = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Separator), 3.5, lineCap: PenLineCap.Round);
-    private static readonly IPen Arc = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Attention), 3.5, lineCap: PenLineCap.Round);
+    /// <summary>The dots the ring is drawn in, end to end.</summary>
+    private const int Dots = 15;
+
+    /// <summary>How quickly the trail behind the lit end fades, as a phosphor's afterglow does.</summary>
+    private const double Afterglow = 4.5;
+
+    /// <summary>The faintest a dot behind the lit end gets.</summary>
+    private const double Embers = 0.22;
+
     private static readonly IPen Pointer = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Label), 2, lineCap: PenLineCap.Round);
+    private static readonly IPen LitPointer = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Bright), 2, lineCap: PenLineCap.Round);
     private static readonly IBrush Face = new ImmutableSolidColorBrush(Colors.Node);
-    private static readonly IBrush LitFace = new ImmutableSolidColorBrush(Colors.Attention, 0.18);
+    private static readonly IBrush Unlit = new ImmutableSolidColorBrush(Colors.Inactive);
+    private static readonly IBrush Halo = new ImmutableSolidColorBrush(Colors.Attention, 0.25);
+
+    /// <summary>The ring's lit dots, brightest at the head, one brush per step of the trail.</summary>
+    private static readonly IBrush[] Trail = [.. Enumerable.Range(0, Dots).Select(behind =>
+        (IBrush)new ImmutableSolidColorBrush(Colors.Attention, Math.Max(Embers, Math.Exp(-Afterglow * behind / (Dots - 1.0)))))];
 
     private static readonly Cursor Upright = new(StandardCursorType.SizeNorthSouth);
     private static readonly Cursor Hidden = new(StandardCursorType.None);
@@ -87,16 +100,27 @@ internal class Knob : Control, ITurnable
         var center = new Point(Bounds.Width / 2, Bounds.Height / 2);
         var radius = size / 2 - 3;
 
-        context.DrawEllipse(Lit ? LitFace : Face, null, center, radius - 5, radius - 5);
-        context.DrawGeometry(null, Track, ArcGeometry(center, radius, Start, Sweep));
+        context.DrawEllipse(Face, null, center, radius - 6, radius - 6);
 
-        if (Value > 0.001) context.DrawGeometry(null, Arc, ArcGeometry(center, radius, Start, Sweep * Value));
+        // A ring of dots like a sampled trace: lit up to the value, its trail fading behind the lit end.
+        var head = (int)Math.Round(Value * (Dots - 1));
+
+        for (var i = 0; i < Dots; i++)
+        {
+            var dot = Along(center, radius, Radians(Start + Sweep * i / (Dots - 1)));
+
+            if (i <= head) context.DrawEllipse(Trail[head - i], null, dot, 1.7, 1.7);
+            else context.DrawEllipse(Unlit, null, dot, 1, 1);
+        }
+
+        context.DrawEllipse(Halo, null, Along(center, radius, Radians(Start + Sweep * head / (Dots - 1))), 3.5, 3.5);
 
         var angle = Radians(Start + Sweep * Value);
+
         context.DrawLine(
-            Pointer,
-            Along(center, radius * 0.25, angle),
-            Along(center, radius - 6, angle));
+            Lit ? LitPointer : Pointer,
+            Along(center, (radius - 6) * 0.35, angle),
+            Along(center, radius - 9, angle));
     }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)

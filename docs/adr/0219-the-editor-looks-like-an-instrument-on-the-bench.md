@@ -50,6 +50,11 @@ The editor is drawn as an instrument, with a scope on the bench as the reference
   so it never reads as a module. `SchemeColorTests` fails on a color written out in the
   editor's code or a family color used outside the canvas; shadows, glints and the logo
   are exempt.
+- **A panel knob is a beam ring.** The filled arc on a track was the generic knob,
+  the one Arek's other Claude-built app draws too. Arek picked, from three drawn from
+  instruments, a ring of dots like a sampled trace, lit to the value, its lit end
+  glowing and the trail behind fading as phosphor does. The panel prints no value
+  under a knob; its tip says it.
 - **The controls are Flyback's.** Fluent takes `Colors.Attention` as its accent and
   2 px corners; toolbar and panel glyph buttons have no fill until pointed at or
   switched on. Number boxes and the clock are set in the mono face.

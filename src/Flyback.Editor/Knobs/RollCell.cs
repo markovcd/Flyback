@@ -19,8 +19,6 @@ internal sealed class RollCell
 {
     private readonly Knob amount = new() { Width = 30, Height = 30, Name = "roll-amount" };
     private readonly Knob glide = new() { Width = 30, Height = 30, Name = "roll-glide" };
-    private readonly TextBlock amountReading = Reading();
-    private readonly TextBlock glideReading = Reading();
     private readonly Button back;
     private readonly MenuItem learn = new();
     private readonly MenuItem forget = new();
@@ -41,9 +39,6 @@ internal sealed class RollCell
         forget.Click += (_, _) => LearnRequested?.Invoke(false);
         dice.ContextMenu = new ContextMenu { Items = { learn, forget } };
 
-        ToolTip.SetTip(amount, "How far a randomize moves each knob from where it is. All the way round is anywhere.");
-        ToolTip.SetTip(glide, "How long the knobs take to get there. All the way down jumps.");
-
         amount.Turned += _ => Tune();
         glide.Turned += _ => Tune();
         amount.Released += () => TuneEnded?.Invoke();
@@ -58,8 +53,8 @@ internal sealed class RollCell
             Children =
             {
                 new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center, Children = { dice, back } },
-                Labeled("amount", amount, amountReading),
-                Labeled("glide", glide, glideReading),
+                Labeled("amount", amount),
+                Labeled("glide", glide),
             },
         };
 
@@ -108,20 +103,15 @@ internal sealed class RollCell
 
     private void Read()
     {
-        amountReading.Text = (amount.Value * 100).ToString("0", CultureInfo.InvariantCulture) + "%";
+        ToolTip.SetTip(amount, "How far a randomize moves each knob from where it is, now "
+            + (amount.Value * 100).ToString("0", CultureInfo.InvariantCulture) + "%. All the way round is anywhere.");
 
         var seconds = Seconds(glide.Value);
-        glideReading.Text = seconds < 0.01 ? "jump" : seconds.ToString(seconds < 1 ? "0.00" : "0.0", CultureInfo.InvariantCulture) + " s";
+        ToolTip.SetTip(glide, "How long the knobs take to get there, now "
+            + (seconds < 0.01 ? "a jump" : seconds.ToString(seconds < 1 ? "0.00" : "0.0", CultureInfo.InvariantCulture) + " s") + ". All the way down jumps.");
     }
 
-    private static TextBlock Reading() => new()
-    {
-        FontSize = Text.Caption,
-        Foreground = new SolidColorBrush(Colors.Value),
-        HorizontalAlignment = HorizontalAlignment.Center,
-    };
-
-    private static StackPanel Labeled(string label, Knob knob, TextBlock reading) => new()
+    private static StackPanel Labeled(string label, Knob knob) => new()
     {
         Spacing = 1,
         VerticalAlignment = VerticalAlignment.Center,
@@ -129,7 +119,6 @@ internal sealed class RollCell
         {
             new TextBlock { Text = label, FontSize = Text.Small, Foreground = new SolidColorBrush(Colors.Label), HorizontalAlignment = HorizontalAlignment.Center },
             knob,
-            reading,
         },
     };
 }

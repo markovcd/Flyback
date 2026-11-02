@@ -8,3 +8,4 @@ Shots in `site/assets/shots` that no longer match the app and need the real wind
 - flyback-theme, assistant, presets-list (index.html): the toolbar's symbols are panel marks with their names under them, and the bar is 10 px taller, which moves knob-panel's crop down too. 2026-11-02.
 - patch-plasma, patch-syntakt-bass, patch-syntakt-box, whole-band, euclid-kit, nebula and the plugin-guide skin shots: module titles now sit centered in their band, a couple of pixels lower. 2026-11-02.
 - Every editor shot except plasma, plasma-inspector and plasma-code: selection, toggles, sliders and readings are P31 green #77EA9A, not amber, and oscillators are a darker sea green. 2026-11-02.
+- knob-panel (index.html): knobs are a ring of dots rather than a filled arc, with no value under them; the alt text still says "each with its value under it" until the retake. 2026-11-02.

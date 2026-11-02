@@ -12,8 +12,8 @@ using Colors = Flyback.Ui.Controls.Colors;
 namespace Flyback.Editor.Knobs;
 
 /// <summary>
-/// One knob on the knob panel: its name, the knob or switch it is played with, its
-/// reading, the controller it follows and its menu.
+/// One knob on the knob panel: its name, the knob or switch it is played with, the
+/// controller it follows and its menu. Its reading is in the knob's tip, not under it.
 /// </summary>
 internal sealed class KnobCell
 {
@@ -35,7 +35,6 @@ internal sealed class KnobCell
     private bool dragging;
     private readonly TextBlock name;
     private readonly TextBox renaming;
-    private readonly TextBlock value;
     private readonly TextBlock midi;
     private readonly Border dot;
     private readonly DispatcherTimer fade;
@@ -76,14 +75,6 @@ internal sealed class KnobCell
                 Value = control.Value,
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
-
-        value = new TextBlock
-        {
-            FontSize = Text.Caption,
-            Foreground = new SolidColorBrush(Colors.Value),
-            HorizontalAlignment = HorizontalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        };
 
         dot = new Border
         {
@@ -135,7 +126,6 @@ internal sealed class KnobCell
             {
                 new Panel { Children = { name, renaming } },
                 Played,
-                value,
                 footer,
             },
         };
@@ -285,7 +275,7 @@ internal sealed class KnobCell
     public void Show(float at, string? reading)
     {
         Knob.Value = at;
-        value.Text = reading ?? StageKnobs.Position(control.Kind, at);
+        ToolTip.SetTip(Played, reading ?? StageKnobs.Position(control.Kind, at));
     }
 
     public void Footer(bool learning)
