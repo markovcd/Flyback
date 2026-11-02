@@ -147,7 +147,8 @@ internal sealed class CanvasSection : ISettingsSection
 
         ToolTip.SetTip(colorScheme,
             "Phosphor is the green of the Beam module's trace on blue-gray. Amber is amber on "
-            + "teal-black, Graphite orange on charcoal, Midnight orange on violet-black. A scheme "
+            + "teal-black, Graphite orange on charcoal, Midnight orange on violet-black, Paper "
+            + "ballpoint blue on cream. A scheme "
             + "of your own is a .json file in the schemes folder beside the settings.");
 
         Schemes(report: false);

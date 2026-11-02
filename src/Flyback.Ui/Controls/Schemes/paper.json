@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "name": "Paper",
+  "light": true,
+  "grounds": {
+    "edge": "#D9D3C4",
+    "outline": "#B9B2A2",
+    "window": "#EAE5D8",
+    "canvas": "#F2EEE3",
+    "panel": "#EDE8DC",
+    "toolbar": "#E4DECF",
+    "grid": "#E6E1D4",
+    "gridMajor": "#D8D1C1",
+    "module": "#FBF9F3",
+    "moduleSelected": "#FFFFFF",
+    "separator": "#C9C2B1"
+  },
+  "text": {
+    "label": "#1E1B16",
+    "value": "#4A4438",
+    "normalled": "#6E6656",
+    "muted": "#5E5748",
+    "inactive": "#A39B8A"
+  },
+  "accent": "#1F4BA5"
+}

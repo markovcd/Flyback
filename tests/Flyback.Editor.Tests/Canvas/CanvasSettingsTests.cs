@@ -102,7 +102,7 @@ public sealed class CanvasSettingsTests : EditorTest
 
         var picker = SchemePicker(OpenSettings(window, CanvasTab));
 
-        picker.Items.Cast<string>().ShouldBe(["Phosphor", "Amber", "Graphite", "Midnight", "Sodium"]);
+        picker.Items.Cast<string>().ShouldBe(["Phosphor", "Amber", "Graphite", "Midnight", "Paper", "Sodium"]);
     }
 
     [AvaloniaTheory]

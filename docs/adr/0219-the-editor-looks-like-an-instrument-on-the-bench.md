@@ -44,6 +44,11 @@ The editor is drawn as an instrument, with a scope on the bench as the reference
   variant and turns the editor's relief around: `Colors.Lift` (a hover wash, a glint, an
   edge) is white on a dark scheme and black on a light one, and `Colors.Press` (a
   shadow, a seam, the scrim) keeps black but at half strength on a light one.
+  On a light scheme `Colors.Deepened` darkens every family, socket, wire and syntax color,
+  hue kept, until it stands 3:1 against the canvas, and a title on a band takes
+  `Colors.InkOn`, white or black. Paper, cream with ballpoint-blue #1F4BA5, is the shipped
+  light scheme; Arek picked both from references on paper, and P31 green stays Phosphor's
+  alone.
 - **The interface is drawn only in the scheme.** A module family's color stands for a
   module and nothing else: the assistant, links and a finished tutorial step take the
   accent. A fault is one fixed red, `Colors.Fault`, kept apart from the Output family's

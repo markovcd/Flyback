@@ -76,7 +76,7 @@ public sealed class ShotRequestTests
         var (request, said) = Parse("--size", "640x360", "--colors", colors);
 
         request.ShouldBeNull();
-        said.ShouldContain("Phosphor, Amber, Graphite, Midnight");
+        said.ShouldContain("Phosphor, Amber, Graphite, Midnight, Paper");
     }
 
     /// <summary>A second that never comes would leave the run-up waiting a minute for nothing.</summary>

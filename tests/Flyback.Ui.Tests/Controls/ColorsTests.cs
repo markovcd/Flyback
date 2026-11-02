@@ -79,6 +79,7 @@ public class ColorsTests
     [InlineData("Amber")]
     [InlineData("Graphite")]
     [InlineData("Midnight")]
+    [InlineData("Paper")]
     public void Every_shipped_scheme_can_be_read(string name)
     {
         var scheme = SchemeLibrary.Shipped.Single(shipped => shipped.Name == name);
@@ -88,6 +89,30 @@ public class ColorsTests
         Contrast(scheme.Muted, scheme.Panel).ShouldBeGreaterThanOrEqualTo(3);
         Contrast(scheme.Attention, scheme.Window).ShouldBeGreaterThanOrEqualTo(3);
     }
+
+    /// <summary>Every family, socket and wire color, as the scheme draws it, holds WCAG's 3:1 for graphics on its canvas.</summary>
+    [Theory]
+    [InlineData("Phosphor")]
+    [InlineData("Amber")]
+    [InlineData("Graphite")]
+    [InlineData("Midnight")]
+    [InlineData("Paper")]
+    public void Every_family_color_stands_out_on_every_shipped_canvas(string name)
+    {
+        var scheme = SchemeLibrary.Shipped.Single(shipped => shipped.Name == name);
+        var families = NodeCatalog.BuiltIn.Categories.Select(Colors.Accent)
+            .Concat(Enum.GetValues<PortKind>().Select(Colors.PortColor));
+
+        foreach (var family in families)
+        {
+            var drawn = scheme.Light ? Colors.Deepened(family, scheme.Canvas) : family;
+
+            Contrast(drawn, scheme.Canvas).ShouldBeGreaterThanOrEqualTo(Colors.ColorOnGround, $"{family} on {name}");
+        }
+    }
+
+    [Fact]
+    public void A_light_scheme_is_shipped() => SchemeLibrary.Shipped.ShouldContain(scheme => scheme.Light);
 
     [Fact]
     public void Each_shipped_scheme_has_an_accent_of_its_own() =>
