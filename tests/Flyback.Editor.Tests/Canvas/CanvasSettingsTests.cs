@@ -12,6 +12,7 @@ using Flyback.Editor.Controls;
 using Flyback.Editor.Shell;
 using Flyback.Ui.Controls;
 using Shouldly;
+using Xunit;
 
 namespace Flyback.Editor.Tests.Canvas;
 
@@ -65,6 +66,34 @@ public sealed class CanvasSettingsTests : EditorTest
 
     private static CheckBox Compact(ModalOverlay dialog) =>
         All<CheckBox>(dialog).Single(c => c.Name == "compactModules");
+
+    private static ComboBox SchemePicker(ModalOverlay dialog) =>
+        All<ComboBox>(dialog).Single(c => c.Name == "colorScheme");
+
+    /// <summary>
+    /// Brushes made from the colors are cached for the run, so a scheme waits for the
+    /// next start rather than repainting half of this one.
+    /// </summary>
+    [AvaloniaFact]
+    public void Colors_chosen_are_kept_for_the_next_start_and_this_run_keeps_its_own()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window, CanvasTab);
+
+        SchemePicker(dialog).SelectedItem.ShouldBe("Phosphor");
+        SchemePicker(dialog).SelectedItem = "Amber";
+        CloseSettings(window, dialog);
+
+        CanvasSettings.Load(settingsPath).ColorScheme.ShouldBe(ColorScheme.Amber);
+        Colors.Current.ShouldBe(Scheme.Phosphor);
+        SchemePicker(OpenSettings(Open(settingsPath), CanvasTab)).SelectedItem.ShouldBe("Amber");
+    }
+
+    [AvaloniaTheory]
+    [InlineData("""{ "colorScheme": 9 }""")]
+    [InlineData("""{ "colorScheme": "Teal" }""")]
+    public void Colors_this_build_does_not_know_are_phosphor(string json) =>
+        CanvasSettings.Parse(json).ColorScheme.ShouldBe(ColorScheme.Phosphor);
 
     [AvaloniaFact]
     public void A_plugin_paints_its_own_modules_until_switched_off()

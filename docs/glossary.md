@@ -110,6 +110,7 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | **block** | A module as it is drawn: its face, header and mark. Only for the drawing. | `ModulePlate`, `ModuleWash` | block for the module in any other sense |
 | **standout** | A module drawn as itself rather than as its category. | — | — |
 | **skin** | A plugin's own drawing of its module. | `ModuleSkin` | theme |
+| **color scheme** | The grounds, text and accent the editor is drawn in, chosen in Settings, Canvas, Colors. | `ColorScheme`, `Scheme` | theme, skin, palette |
 | **inspector** | The panel that shows and edits what is selected. | `Inspector` | properties, sidebar |
 | **palette** | The module list that opens on right-click or Space. | `ModulePalette` | module list, menu, browser |
 | **tutorial** | A lesson in the editor's left column: a preset to start on and steps, each checked against the patch as it is edited. The videos on the site are tutorials too. | `Tutorial`, `TutorialPanel` | lesson, walkthrough, guide, onboarding |

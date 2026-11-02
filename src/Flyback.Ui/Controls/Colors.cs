@@ -15,24 +15,34 @@ namespace Flyback.Ui.Controls;
 /// </remarks>
 internal static class Colors
 {
+    /// <summary>The scheme the grounds, the text and the accent are read from.</summary>
+    /// <remarks>
+    /// Set once, before the first window: brushes made from these colors are cached
+    /// for the life of the program, so a scheme chosen later takes effect at the next start.
+    /// </remarks>
+    public static Scheme Current { get; private set; } = Scheme.Phosphor;
+
+    /// <summary>Draws everything built from here on in <paramref name="scheme"/>.</summary>
+    public static void Use(Scheme scheme) => Current = scheme;
+
     // --- surfaces, darkest first --------------------------------------------
 
     /// <summary>Between one region and the next, and around a node.</summary>
-    public static Color Edge { get; } = Color.FromRgb(0x10, 0x11, 0x14);
+    public static Color Edge => Current.Edge;
 
     /// <summary>The line around a node and around a socket.</summary>
-    public static Color Outline { get; } = Color.FromRgb(0x14, 0x15, 0x18);
+    public static Color Outline => Current.Outline;
 
     /// <summary>The window behind everything.</summary>
-    public static Color Window { get; } = Color.FromRgb(0x16, 0x18, 0x1B);
+    public static Color Window => Current.Window;
 
     /// <summary>The patch canvas.</summary>
-    public static Color Canvas { get; } = Color.FromRgb(0x1A, 0x1C, 0x20);
+    public static Color Canvas => Current.Canvas;
 
     /// <summary>The inspector, the status bar and the assistant.</summary>
-    public static Color Panel { get; } = Color.FromRgb(0x1C, 0x1E, 0x22);
+    public static Color Panel => Current.Panel;
 
-    public static Color Toolbar { get; } = Color.FromRgb(0x22, 0x25, 0x2A);
+    public static Color Toolbar => Current.Toolbar;
 
     /// <summary>
     /// Over the whole window while a dialog is up, and the only thing that says the
@@ -50,25 +60,25 @@ internal static class Colors
     public static Color DialogShadow { get; } = Color.FromArgb(0xE6, 0x00, 0x00, 0x00);
 
     /// <summary>The canvas grid, and the brighter line every tenth of it.</summary>
-    public static Color Grid { get; } = Color.FromRgb(0x24, 0x27, 0x2C);
+    public static Color Grid => Current.Grid;
 
     /// <summary>Also the groove a level sits in — the same recess, drawn twice.</summary>
-    public static Color GridMajor { get; } = Color.FromRgb(0x2C, 0x30, 0x36);
+    public static Color GridMajor => Current.GridMajor;
 
-    public static Color Node { get; } = Color.FromRgb(0x2A, 0x2D, 0x34);
+    public static Color Node => Current.Node;
 
-    public static Color NodeSelected { get; } = Color.FromRgb(0x32, 0x36, 0x3E);
+    public static Color NodeSelected => Current.NodeSelected;
 
     /// <summary>The rule between groups of toolbar buttons.</summary>
-    public static Color Separator { get; } = Color.FromRgb(0x3A, 0x3E, 0x46);
+    public static Color Separator => Current.Separator;
 
     // --- text ---------------------------------------------------------------
 
     /// <summary>A socket's name on a node.</summary>
-    public static Color Label { get; } = Color.FromRgb(0xC8, 0xCC, 0xD4);
+    public static Color Label => Current.Label;
 
     /// <summary>The number beside it, quieter than the name it belongs to.</summary>
-    public static Color Value { get; } = Color.FromRgb(0x8A, 0x92, 0xA0);
+    public static Color Value => Current.Value;
 
     /// <summary>
     /// The module driving a socket nothing is patched into, where the number
@@ -77,16 +87,16 @@ internal static class Colors
     /// module name at the weight of a value would read as one more thing to
     /// check down a column of them.
     /// </summary>
-    public static Color Normalled { get; } = Color.FromRgb(0x6C, 0x74, 0x82);
+    public static Color Normalled => Current.Normalled;
 
     /// <summary>
     /// Text that is there to be read once and then ignored — a drag handle, a
     /// line of provenance.
     /// </summary>
-    public static Color Muted { get; } = Color.FromRgb(0x8A, 0x90, 0x9A);
+    public static Color Muted => Current.Muted;
 
     /// <summary>A level turned all the way down, which still has to be visible.</summary>
-    public static Color Inactive { get; } = Color.FromRgb(0x5A, 0x60, 0x6A);
+    public static Color Inactive => Current.Inactive;
 
     // --- the one color that means "look here" ------------------------------
 
@@ -95,10 +105,10 @@ internal static class Colors
     /// say. One color for all three on purpose: they are the same request.
     /// </summary>
     /// <remarks>
-    /// P31 green, as the Beam module draws its trace at its default hue, taken where
-    /// the trace begins to whiten (ADR-0219).
+    /// In <see cref="Scheme.Phosphor"/>, P31 green, as the Beam module draws its trace at
+    /// its default hue, taken where the trace begins to whiten (ADR-0219).
     /// </remarks>
-    public static Color Attention { get; } = Color.FromRgb(0x77, 0xEA, 0x9A);
+    public static Color Attention => Current.Attention;
 
     // --- module accents -----------------------------------------------------
 

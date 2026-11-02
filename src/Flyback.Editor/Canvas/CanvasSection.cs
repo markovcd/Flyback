@@ -11,7 +11,8 @@ namespace Flyback.Editor.Canvas;
 /// <summary>
 /// The Canvas section of the settings window: how modules are laid out, how much of
 /// a plugin's own module background the canvas draws (ADR-0118), whether the
-/// window has a menu bar, and whether the toolbar's buttons are labeled.
+/// window has a menu bar, whether the toolbar's buttons are labeled, and the colors
+/// the editor is drawn in.
 /// </summary>
 internal sealed class CanvasSection : ISettingsSection
 {
@@ -71,6 +72,13 @@ internal sealed class CanvasSection : ISettingsSection
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
+    private readonly ComboBox colorScheme = new Picker
+    {
+        Name = "colorScheme",
+        ItemsSource = Enum.GetNames<ColorScheme>().ToList(),
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
     private readonly ComboBox measurePicture = new Picker
     {
         Name = "measurePicture",
@@ -126,6 +134,20 @@ internal sealed class CanvasSection : ISettingsSection
         ToolTip.SetTip(toolbarLabels,
             "Print each toolbar button's name under its symbol. Cleared, the bar is lower "
             + "and a button says what it does when the pointer rests on it.");
+
+        ToolTip.SetTip(colorScheme,
+            "Phosphor is the green of the Beam module's trace on blue-gray. Amber is amber on "
+            + "teal-black, Graphite orange on charcoal, Midnight orange on violet-black.");
+
+        View.Children.Add(InspectorRows.Field("Colors", colorScheme));
+
+        View.Children.Add(new TextBlock
+        {
+            Text = "The editor is drawn in the new colors the next time it starts.",
+            FontSize = Text.Small,
+            Foreground = Text.Muted,
+            TextWrapping = TextWrapping.Wrap,
+        });
 
         View.Children.Add(menuBar);
         View.Children.Add(toolbarLabels);
@@ -230,6 +252,7 @@ internal sealed class CanvasSection : ISettingsSection
         measureWindow.SelectedIndex = Math.Max(0, CanvasSettings.MeasureWindows.ToList().IndexOf(saved.MeasureSeconds));
 
         measurePicture.SelectedIndex = (int)saved.MeasurePicture;
+        colorScheme.SelectedIndex = (int)saved.ColorScheme;
 
         canvas.Geometry.Compact = saved.CompactModules;
         MenuBarShown?.Invoke(saved.MenuBar);
@@ -273,6 +296,9 @@ internal sealed class CanvasSection : ISettingsSection
         Write();
     }
 
+    /// <summary>The colors the editor starts in next time, as last saved.</summary>
+    internal ColorScheme ColorScheme => saved.ColorScheme;
+
     /// <summary>How long Measure runs the patch for, as last saved.</summary>
     internal double MeasureSeconds => saved.MeasureSeconds;
 
@@ -314,6 +340,7 @@ internal sealed class CanvasSection : ISettingsSection
             Endless = saved.Endless,
             MeasureSeconds = CanvasSettings.MeasureWindows[Math.Max(measureWindow.SelectedIndex, 0)],
             MeasurePicture = (MeasurePictureSize)Math.Max(measurePicture.SelectedIndex, 0),
+            ColorScheme = (ColorScheme)Math.Max(colorScheme.SelectedIndex, 0),
         };
 
         Show();

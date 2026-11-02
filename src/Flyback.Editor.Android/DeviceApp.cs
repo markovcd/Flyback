@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.Android;
@@ -7,7 +8,8 @@ namespace Flyback.Editor.Android;
 /// <summary>The editor in the Android app (ADR-0184), in the app's private folder.</summary>
 public sealed class DeviceApp : Avalonia.Application
 {
-    public override void Initialize() => EditorTheme.Apply(this);
+    public override void Initialize() =>
+        EditorTheme.Apply(this, CanvasSettings.Load(DeviceFolders.Private().SettingsPath!).ColorScheme);
 
     public override void OnFrameworkInitializationCompleted()
     {

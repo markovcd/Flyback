@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using Flyback.Core;
+using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
 using Flyback.Editor.Desktop.Updates;
 using Flyback.Editor.Files;
@@ -29,7 +30,7 @@ public sealed class FlybackApp : Application
         // Before Avalonia's macOS setup, which reads both into the menu bar.
         Name = GlobalConstants.ApplicationName;
         NativeMenu.SetMenu(this, menu.Menu);
-        EditorTheme.Apply(this);
+        EditorTheme.Apply(this, CanvasSettings.Load(SettingsFile.Path).ColorScheme);
     }
 
     public override void OnFrameworkInitializationCompleted()

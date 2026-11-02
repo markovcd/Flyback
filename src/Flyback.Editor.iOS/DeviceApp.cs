@@ -1,4 +1,5 @@
 using Avalonia.Controls.ApplicationLifetimes;
+using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
 
 namespace Flyback.Editor.iOS;
@@ -6,7 +7,8 @@ namespace Flyback.Editor.iOS;
 /// <summary>The editor on an iPhone or iPad, in the app's Application Support folder.</summary>
 public sealed class DeviceApp : Avalonia.Application
 {
-    public override void Initialize() => EditorTheme.Apply(this);
+    public override void Initialize() =>
+        EditorTheme.Apply(this, CanvasSettings.Load(DeviceFolders.Private().SettingsPath!).ColorScheme);
 
     public override void OnFrameworkInitializationCompleted()
     {

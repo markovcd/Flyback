@@ -83,6 +83,11 @@ internal static class ShotCommand
             Description = "Draw every box shut.",
         };
 
+        var colors = new Option<string>("--colors")
+        {
+            Description = "The color scheme to draw in, as Settings, Canvas, Colors names it: Phosphor unless given.",
+        };
+
         var editor = new Option<FileInfo>("--editor")
         {
             Description = "The editor program to draw with, in place of the one beside this program. A dev build keeps it in src/Flyback.Editor.Desktop/bin.",
@@ -90,7 +95,7 @@ internal static class ShotCommand
 
         var command = new Command("shot", "Draw the editor's window with a patch open, at a chosen second, into a PNG.")
         {
-            given.Patch, given.Preset, given.Presets, output, at, size, select, canvas, crop, measure, assistant, live, open, shut, editor,
+            given.Patch, given.Preset, given.Presets, output, at, size, select, canvas, crop, measure, assistant, live, open, shut, colors, editor,
         };
 
         command.SetAction(result =>
@@ -141,6 +146,7 @@ internal static class ShotCommand
             if (result.GetValue(live)) arguments.Add("--live");
             if (result.GetValue(open)) arguments.Add("--open");
             if (result.GetValue(shut)) arguments.Add("--shut");
+            if (result.GetValue(colors) is { } scheme) arguments.AddRange(["--colors", scheme]);
 
             arguments.AddRange(file is not null ? [file.FullName] : ["--preset", named!]);
 

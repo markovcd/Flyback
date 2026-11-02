@@ -14,14 +14,17 @@ namespace Flyback.Editor;
 /// <summary>What the editor looks like, for every program that shows it and the tests that build one.</summary>
 internal static class EditorTheme
 {
-    /// <summary>Fluent, dark, in Flyback's own accent and corners, and the code editor's own styles.</summary>
+    /// <summary>Fluent, dark, in the colors of <paramref name="scheme"/> and Flyback's own corners, and the code editor's own styles.</summary>
     /// <remarks>
+    /// The scheme is put in force first, before anything has made a brush from it.
     /// The code editor's styles come out of its package, loaded in C# rather than
     /// declared in markup (ADR-0016). A new one each time: a style belongs to exactly
     /// one collection, and the headless session builds a fresh application per test.
     /// </remarks>
-    public static void Apply(Application application)
+    public static void Apply(Application application, ColorScheme scheme = ColorScheme.Phosphor)
     {
+        Colors.Use(Scheme.Of(scheme));
+
         var fluent = new FluentTheme();
         fluent.Palettes[ThemeVariant.Dark] = new ColorPaletteResources { Accent = Colors.Attention };
         application.Styles.Add(fluent);

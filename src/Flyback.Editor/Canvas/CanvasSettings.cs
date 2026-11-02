@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Flyback.Core;
 using Flyback.Engine.Measure;
+using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Canvas;
 
@@ -92,6 +93,10 @@ public sealed class CanvasSettings
         _ => (128, 72),
     };
 
+    /// <summary>The grounds, text and accent the editor is drawn in, from its next start.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public ColorScheme ColorScheme { get; set; } = ColorScheme.Phosphor;
+
     /// <summary>Where these settings are kept in <see cref="SettingsFile"/>.</summary>
     public const string Section = "canvas";
 
@@ -124,6 +129,8 @@ public sealed class CanvasSettings
             if (!MeasureWindows.Contains(loaded.MeasureSeconds)) loaded.MeasureSeconds = MeasureOptions.DefaultSeconds;
 
             if (!Enum.IsDefined(loaded.MeasurePicture)) loaded.MeasurePicture = MeasurePictureSize.Small;
+
+            if (!Enum.IsDefined(loaded.ColorScheme)) loaded.ColorScheme = ColorScheme.Phosphor;
 
             return loaded;
         }

@@ -1,4 +1,5 @@
 using Flyback.Editor.Desktop.Shots;
+using Flyback.Ui.Controls;
 using Shouldly;
 using Xunit;
 
@@ -38,6 +39,24 @@ public sealed class ShotRequestTests
 
         request.ShouldBeNull();
         said.ShouldContain("--open or --shut");
+    }
+
+    [Fact]
+    public void A_shot_is_drawn_in_the_color_scheme_it_names()
+    {
+        Parse("--size", "640x360").Request.ShouldNotBeNull().ColorScheme.ShouldBe(ColorScheme.Phosphor);
+        Parse("--size", "640x360", "--colors", "graphite").Request.ShouldNotBeNull().ColorScheme.ShouldBe(ColorScheme.Graphite);
+    }
+
+    [Theory]
+    [InlineData("Teal")]
+    [InlineData("7")]
+    public void A_scheme_there_is_none_of_is_refused_with_the_ones_there_are(string colors)
+    {
+        var (request, said) = Parse("--size", "640x360", "--colors", colors);
+
+        request.ShouldBeNull();
+        said.ShouldContain("Phosphor, Amber, Graphite, Midnight");
     }
 
     /// <summary>A second that never comes would leave the run-up waiting a minute for nothing.</summary>

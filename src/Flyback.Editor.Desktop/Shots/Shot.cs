@@ -55,6 +55,8 @@ internal static class Shot
 
         var plugins = PluginHost.Load().Install();
 
+        ShotApp.Scheme = request.ColorScheme;
+
         using var session = HeadlessUnitTestSession.StartNew(typeof(ShotApp), AvaloniaTestIsolationLevel.PerAssembly);
 
         return session.Dispatch(() => TakeAsync(request, plugins, error), CancellationToken.None).GetAwaiter().GetResult();

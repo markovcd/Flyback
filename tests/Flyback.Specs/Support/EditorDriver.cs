@@ -994,6 +994,13 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
             tabs.SelectedItem = tabs.Items.OfType<TabItem>().Single(item => (item.Header as TextBlock)?.Text == tab);
         });
 
+    /// <summary>Picks the row so worded in the list so named, on the settings window that is up.</summary>
+    public void PickSetting(string name, string row) =>
+        DoWindow((open, _) => Named<ComboBox>(open, name).SelectedItem = row);
+
+    /// <summary>The colors the editor starts in next time, as the Canvas settings last saved them.</summary>
+    public Flyback.Ui.Controls.ColorScheme NextColorScheme => Run(() => Service<CanvasSection>().ColorScheme);
+
     /// <summary>Points the Decisions tab's For picker at the use so worded, on the settings window that is up.</summary>
     public void PickDecisionUse(string wording) =>
         DoWindow((open, _) => Named<ComboBox>(open, "decisionUse").SelectedItem = wording);

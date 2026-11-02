@@ -20,10 +20,18 @@ The editor is drawn as an instrument, with a scope on the bench as the reference
 
 - **The accent is P31 green, #77EA9A.** It is the Beam module's own trace at its default
   hue, taken where the trace begins to whiten, so it comes from Flyback rather than from
-  taste. Amber was tried first and dropped: Arek's other app, also built with Claude,
-  had landed on near-black and an amber a few units away, which is the generated
-  default this decision exists to avoid. Oscillators moved to a darker sea green so a
-  selected one still shows its ring.
+  taste. Amber was tried first as the default and dropped: Arek's other app, also built
+  with Claude, had landed on near-black and an amber a few units away, which is the
+  generated default this decision exists to avoid. Oscillators moved to a darker sea
+  green so a selected one still shows its ring.
+- **Three more color schemes stand beside it**, in Settings, Canvas, Colors. Arek picked
+  them from palettes a generator gave with nothing locked: Amber (teal-black grounds,
+  cream text, #D1AC00), Graphite (charcoal, sage text, #FF7F11) and Midnight
+  (violet-black, warm grays, #F46036). Phosphor stays the default. A scheme changes
+  the grounds, the text and the accent, never a module's category color, and takes
+  effect at the next start: brushes made from the colors are cached for the run, and
+  repainting every one of them live is not worth what it would cost.
+  `flyback-cli shot --colors` draws the window in any of them.
 - **The controls are Flyback's.** Fluent takes `Colors.Attention` as its accent and
   2 px corners; toolbar and panel glyph buttons have no fill until pointed at or
   switched on. Number boxes and the clock are set in the mono face.

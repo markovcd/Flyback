@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Headless;
+using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Desktop.Shots;
 
@@ -12,5 +13,8 @@ internal sealed class ShotApp : Application
         .WithInterFont()
         .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false });
 
-    public override void Initialize() => EditorTheme.Apply(this);
+    /// <summary>The colors the next session's window is drawn in.</summary>
+    public static ColorScheme Scheme { get; set; } = ColorScheme.Phosphor;
+
+    public override void Initialize() => EditorTheme.Apply(this, Scheme);
 }

@@ -59,6 +59,20 @@ public sealed class CanvasSteps(PatchContext context, EditorDriver editor)
         editor.Tip.ShouldBe($"{value}\n{Filter.Inputs[Cutoff].Help}");
     }
 
+    [When("{word} is chosen as the editor's colors")]
+    public void WhenColorsAreChosen(string scheme)
+    {
+        editor.OpenSettings("Canvas");
+        editor.PickSetting("colorScheme", scheme);
+        editor.Answer("Save");
+    }
+
+    [Then("the editor starts in {word} the next time")]
+    public void ThenTheEditorStartsIn(string scheme) => editor.NextColorScheme.ToString().ShouldBe(scheme);
+
+    [Then("the editor is drawn in Phosphor until then")]
+    public static void ThenStillPhosphor() => Ui.Controls.Colors.Current.ShouldBe(Ui.Controls.Scheme.Phosphor);
+
     private Point originBefore;
 
     [Given("drag to pan is switched on")]
