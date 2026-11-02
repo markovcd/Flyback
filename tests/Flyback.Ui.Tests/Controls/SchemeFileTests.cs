@@ -66,6 +66,30 @@ public sealed class SchemeFileTests
             .ShouldContain("text.bright is not a #RRGGBB color, so it is worked out from the others.");
     }
 
+    [Fact]
+    public void A_scheme_is_dark_unless_its_file_says_light()
+    {
+        Read(Sodium).Scheme.ShouldNotBeNull().Light.ShouldBeFalse();
+        Read("""{ "format": 1, "name": "X", "light": true }""").Scheme.ShouldNotBeNull().Light.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void A_light_flag_that_is_not_true_or_false_is_taken_as_false_and_said()
+    {
+        var (scheme, problems) = Read("""{ "format": 1, "name": "X", "light": "yes" }""");
+
+        scheme.ShouldNotBeNull().Light.ShouldBeFalse();
+        problems.ShouldContain("light is not true or false, so it is taken as false.");
+    }
+
+    [Fact]
+    public void Bright_text_a_light_file_leaves_out_is_taken_toward_black()
+    {
+        var scheme = Read("""{ "format": 1, "name": "X", "light": true, "text": { "label": "#303030" } }""").Scheme.ShouldNotBeNull();
+
+        scheme.Bright.ShouldBe(Flyback.Ui.Controls.Colors.Blend(Color.FromRgb(0x30, 0x30, 0x30), Avalonia.Media.Colors.Black, SchemeFile.BrightUnless));
+    }
+
     [Theory]
     [InlineData("#FFF")]
     [InlineData("#FF9A1F80")]

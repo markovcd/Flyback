@@ -28,6 +28,9 @@ internal sealed class CanvasGlass(SocketDial dial, SocketFocus focus)
     /// <summary>Over a live picture, the dark casing under a wire.</summary>
     internal static readonly IBrush Casing = new ImmutableSolidColorBrush(Color.FromArgb(200, 0, 0, 0));
 
+    /// <summary>Over a live picture, the shadow under a number written straight on it.</summary>
+    internal static readonly IBrush TextShadow = new ImmutableSolidColorBrush(Color.FromArgb(178, 0, 0, 0));
+
     /// <summary>Over a live picture, the dark line outside a module's edge.</summary>
     private static readonly IPen EdgeDark = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromArgb(220, 0, 0, 0)), 1.5);
 

@@ -246,7 +246,7 @@ internal static class NodeSkin
     private static readonly Dictionary<Color, IBrush> Rules = [];
 
     private static readonly IPen Seam = new ImmutablePen(
-        new ImmutableSolidColorBrush(Avalonia.Media.Colors.Black, 0.3));
+        new ImmutableSolidColorBrush(Colors.Press(0.3)));
 
     // --- sockets ---------------------------------------------------------
 
@@ -338,10 +338,11 @@ internal static class NodeSkin
 
         var from = new Point(bounds.Right, bounds.Y);
 
+        // A mask: only the alpha of its stops counts.
         var made = new ImmutableLinearGradientBrush(
             [
-                new ImmutableGradientStop(0, Avalonia.Media.Colors.White),
-                new ImmutableGradientStop(1, Color.FromArgb(0, 255, 255, 255)),
+                new ImmutableGradientStop(0, Colors.Edge),
+                new ImmutableGradientStop(1, Colors.Faded(Colors.Edge, 0)),
             ],
             startPoint: new RelativePoint(from, RelativeUnit.Absolute),
             endPoint: new RelativePoint(from + reach, RelativeUnit.Absolute));

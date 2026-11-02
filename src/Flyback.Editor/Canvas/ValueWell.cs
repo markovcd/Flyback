@@ -100,7 +100,7 @@ internal static class ValueWell
 
         if (glass && !lit)
         {
-            number.SetForegroundBrush(Shadow);
+            number.SetForegroundBrush(CanvasGlass.TextShadow);
             context.DrawText(number, at + new Vector(0, 1));
             number.SetForegroundBrush(ink);
         }
@@ -189,7 +189,6 @@ internal static class ValueWell
     /// <summary>What a number at rest is written in over the picture.</summary>
     public static readonly IBrush GlassInk = new ImmutableSolidColorBrush(Colors.Label);
 
-    private static readonly IBrush Shadow = new ImmutableSolidColorBrush(Avalonia.Media.Colors.Black, 0.7);
     private static readonly IImmutableBrush Attention = new ImmutableSolidColorBrush(Colors.Attention);
     private static readonly IImmutableBrush HoverInk = new ImmutableSolidColorBrush(Colors.Bright);
     private static readonly IBrush HoverFill = new ImmutableSolidColorBrush(Colors.Blend(Colors.Panel, Colors.Toolbar, 0.5));
@@ -202,7 +201,7 @@ internal static class ValueWell
     private static readonly IBrush Tick = LitTrack;
     private static readonly IBrush RestLevel = new ImmutableSolidColorBrush(Colors.Blend(Colors.Value, Colors.Label, 0.3));
     private static readonly IBrush HoverLevel = new ImmutableSolidColorBrush(Colors.Label);
-    private static readonly IBrush HoverRow = new ImmutableSolidColorBrush(Avalonia.Media.Colors.White, 0.06);
+    private static readonly IBrush HoverRow = new ImmutableSolidColorBrush(Colors.Lift(0.06));
     private static readonly IBrush TurnRow = new ImmutableSolidColorBrush(Colors.Attention, 0.13);
     private static readonly IBrush Hollow = new ImmutableSolidColorBrush(Colors.Canvas);
     private static readonly IPen Outline = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Outline), 1.2);

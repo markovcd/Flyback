@@ -39,7 +39,11 @@ The editor is drawn as an instrument, with a scope on the bench as the reference
   older reader would get a file wrong; a file from a newer Flyback is skipped whole, and
   a color a file lacks or gets wrong is Phosphor's, with the report bar saying which.
   `text.bright`, for a value being turned or typed, a heading and a selection's outline,
-  may be left out and is then the label taken most of the way to white.
+  may be left out and is then the label taken most of the way to white, or to black in a
+  scheme whose file sets `light` true. That flag puts Fluent's controls in their light
+  variant and turns the editor's relief around: `Colors.Lift` (a hover wash, a glint, an
+  edge) is white on a dark scheme and black on a light one, and `Colors.Press` (a
+  shadow, a seam, the scrim) keeps black but at half strength on a light one.
 - **The interface is drawn only in the scheme.** A module family's color stands for a
   module and nothing else: the assistant, links and a finished tutorial step take the
   accent. A fault is one fixed red, `Colors.Fault`, kept apart from the Output family's

@@ -259,7 +259,7 @@ internal static class TurnReadout
     private static readonly Typeface SansBold = new(Typeface.Default.FontFamily, weight: FontWeight.SemiBold);
 
     private static readonly IBrush Ground = new ImmutableSolidColorBrush(Colors.Edge, 0.96);
-    private static readonly IPen Edge = new ImmutablePen(new ImmutableSolidColorBrush(Avalonia.Media.Colors.White, 0.30));
+    private static readonly IPen Edge = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Lift(0.30)));
     private static readonly IBrush Track = new ImmutableSolidColorBrush(Colors.Blend(Colors.Separator, Colors.Inactive, 0.5));
     private static readonly IImmutableBrush Attention = new ImmutableSolidColorBrush(Colors.Attention);
     private static readonly IBrush TickInk = new ImmutableSolidColorBrush(Colors.Value);

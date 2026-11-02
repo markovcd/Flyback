@@ -40,7 +40,7 @@ internal sealed class InspectorHeader : Border
         Height = Depth;
         VerticalAlignment = VerticalAlignment.Top;
         Background = Brushes.Transparent;
-        BoxShadow = new BoxShadows(new BoxShadow { OffsetY = 1, Color = Color.FromArgb(0x73, 0, 0, 0) });
+        BoxShadow = new BoxShadows(new BoxShadow { OffsetY = 1, Color = Flyback.Ui.Controls.Colors.Press(0.45) });
         IsVisible = false;
         Child = line;
     }

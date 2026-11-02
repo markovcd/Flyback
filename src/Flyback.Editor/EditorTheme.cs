@@ -14,7 +14,7 @@ namespace Flyback.Editor;
 /// <summary>What the editor looks like, for every program that shows it and the tests that build one.</summary>
 internal static class EditorTheme
 {
-    /// <summary>Fluent, dark, in the colors of <paramref name="scheme"/> and Flyback's own corners, and the code editor's own styles.</summary>
+    /// <summary>Fluent, dark or light as <paramref name="scheme"/> is, in its colors and Flyback's own corners, and the code editor's own styles.</summary>
     /// <remarks>
     /// The scheme is put in force first, before anything has made a brush from it.
     /// The code editor's styles come out of its package, loaded in C# rather than
@@ -26,7 +26,8 @@ internal static class EditorTheme
         Colors.Use(scheme ?? Scheme.Phosphor);
 
         var fluent = new FluentTheme();
-        fluent.Palettes[ThemeVariant.Dark] = new ColorPaletteResources { Accent = Colors.Attention };
+        var variant = Colors.LightGrounds ? ThemeVariant.Light : ThemeVariant.Dark;
+        fluent.Palettes[variant] = new ColorPaletteResources { Accent = Colors.Attention };
         application.Styles.Add(fluent);
 
         var resources = application.Resources;
@@ -35,7 +36,7 @@ internal static class EditorTheme
         resources["ButtonBackgroundDisabled"] = Brushes.Transparent;
         resources["ToggleButtonBackgroundDisabled"] = Brushes.Transparent;
 
-        // Dark ink on the accent of a toggle that is down; white on it fails contrast.
+        // The window's own ground as ink on the accent of a toggle that is down; the opposite pole fails contrast.
         var ink = new SolidColorBrush(Colors.Window);
         resources["ToggleButtonForegroundChecked"] = ink;
         resources["ToggleButtonForegroundCheckedPointerOver"] = ink;
@@ -52,7 +53,7 @@ internal static class EditorTheme
         {
             Source = new Uri("avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml"),
         });
-        application.RequestedThemeVariant = ThemeVariant.Dark;
+        application.RequestedThemeVariant = variant;
     }
 
     /// <summary>No fill at rest, so a row of tool buttons reads as one bar; hover and a toggle that is down still show one.</summary>

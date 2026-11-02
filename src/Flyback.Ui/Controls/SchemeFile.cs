@@ -6,7 +6,8 @@ namespace Flyback.Ui.Controls;
 
 /// <summary>
 /// A color scheme written as JSON: a <c>format</c>, a <c>name</c>, the <c>grounds</c> and
-/// the <c>text</c> by role, and the <c>accent</c>, each color <c>#RRGGBB</c>.
+/// the <c>text</c> by role, and the <c>accent</c>, each color <c>#RRGGBB</c>, and
+/// <c>light</c> set true where the grounds are pale.
 /// </summary>
 /// <remarks>
 /// <c>format</c> rises only when an older reader would get a file wrong: a key renamed or
@@ -23,7 +24,7 @@ internal static class SchemeFile
 
     public const int LongestName = 40;
 
-    /// <summary>How far toward white a file's label is taken for the bright text it does not name.</summary>
+    /// <summary>How far from the ground a file's label is taken for the bright text it does not name.</summary>
     public const double BrightUnless = 0.7;
 
     private static readonly JsonDocumentOptions Reading = new()
@@ -138,14 +139,27 @@ internal static class SchemeFile
             colors[i] = standIns[i];
         }
 
+        var light = Flag(root, "light", problems);
+
         var bright = Optional(root, "text", "bright", problems)
-            ?? Controls.Colors.Blend(colors[11], Avalonia.Media.Colors.White, BrightUnless);
+            ?? Controls.Colors.Blend(colors[11], light ? Avalonia.Media.Colors.Black : Avalonia.Media.Colors.White, BrightUnless);
 
         return new Scheme(
             name,
             colors[0], colors[1], colors[2], colors[3], colors[4], colors[5], colors[6], colors[7],
             colors[8], colors[9], colors[10], colors[11], colors[12], colors[13], colors[14], colors[15],
-            colors[16], bright);
+            colors[16], bright, light);
+    }
+
+    /// <summary>A yes or no a file may leave out, meaning no; one it gets wrong is said.</summary>
+    private static bool Flag(JsonElement root, string key, ICollection<string> problems)
+    {
+        if (!root.TryGetProperty(key, out var value)) return false;
+
+        if (value.ValueKind is JsonValueKind.True or JsonValueKind.False) return value.GetBoolean();
+
+        problems.Add($"{key} is not true or false, so it is taken as false.");
+        return false;
     }
 
     /// <summary>A color a file may leave out, worked out from the others when it does; one it gets wrong is said.</summary>

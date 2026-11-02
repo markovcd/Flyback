@@ -5,7 +5,8 @@ namespace Flyback.Ui.Controls;
 /// <summary>
 /// A color scheme: every ground and every text color in <see cref="Colors"/>, and the
 /// accent, under the name the settings save it by. Module accents are the same in all of
-/// them, since they say what a module is.
+/// them, since they say what a module is. <see cref="Light"/> says the grounds are pale and
+/// the text dark.
 /// </summary>
 /// <remarks>Read from a <see cref="SchemeFile"/>, shipped or the user's (<see cref="SchemeLibrary"/>).</remarks>
 internal sealed record Scheme(
@@ -27,7 +28,8 @@ internal sealed record Scheme(
     Color Muted,
     Color Inactive,
     Color Attention,
-    Color Bright)
+    Color Bright,
+    bool Light)
 {
     /// <summary>The default: blue-gray grounds and the P31 green of the Beam module's trace (ADR-0219).</summary>
     public static Scheme Phosphor { get; } = SchemeLibrary.Shipped[0];

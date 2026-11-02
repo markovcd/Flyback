@@ -25,6 +25,26 @@ internal static class Colors
     /// <summary>Draws everything built from here on in <paramref name="scheme"/>.</summary>
     public static void Use(Scheme scheme) => Current = scheme;
 
+    /// <summary>Whether the scheme is dark text on pale grounds.</summary>
+    public static bool LightGrounds => Current.Light;
+
+    // --- relief -------------------------------------------------------------
+
+    /// <summary>
+    /// A wash, glint or edge that raises something off its ground, at <paramref name="alpha"/>:
+    /// white on a dark scheme, black on a light one.
+    /// </summary>
+    public static Color Lift(double alpha) => Faded(Current.Light ? Black : White, alpha);
+
+    /// <summary>
+    /// A shadow or seam that sinks something into its ground, at <paramref name="alpha"/>:
+    /// black, and softer on a light scheme, where a full-strength one reads as a smudge.
+    /// </summary>
+    public static Color Press(double alpha) => Faded(Black, Current.Light ? alpha * LightPress : alpha);
+
+    /// <summary>How much of a shadow's strength a light scheme keeps.</summary>
+    private const double LightPress = 0.5;
+
     // --- surfaces, darkest first --------------------------------------------
 
     /// <summary>Between one region and the next, and around a node.</summary>
@@ -51,13 +71,13 @@ internal static class Colors
     /// that the patch is still there behind the question. Dark rather than merely
     /// translucent: over a dark window a pale scrim reads as a fault in the display.
     /// </summary>
-    public static Color Scrim { get; } = Color.FromArgb(0xAA, 0x0A, 0x0B, 0x0D);
+    public static Color Scrim => Color.FromArgb(Current.Light ? (byte)0x66 : (byte)0xAA, 0x0A, 0x0B, 0x0D);
 
     /// <summary>
     /// The shadow a dialog casts on the scrim. Nearly black and nearly opaque,
     /// because the scrim is already dark: anything lighter would not show on it.
     /// </summary>
-    public static Color DialogShadow { get; } = Color.FromArgb(0xE6, 0x00, 0x00, 0x00);
+    public static Color DialogShadow => Press(0.9);
 
     /// <summary>The canvas grid, and the brighter line every tenth of it.</summary>
     public static Color Grid => Current.Grid;

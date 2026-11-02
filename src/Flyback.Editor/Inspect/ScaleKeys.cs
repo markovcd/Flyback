@@ -43,10 +43,10 @@ internal sealed class ScaleKeys
     private static readonly int[] Naturals = [0, 2, 4, 5, 7, 9, 11];
 
     private static readonly IBrush Off = new ImmutableSolidColorBrush(Colors.Node);
-    private static readonly IBrush OnText = Brushes.Black;
+    private static readonly IBrush OnText = new ImmutableSolidColorBrush(Colors.Window);
     private static readonly IBrush OffText = new ImmutableSolidColorBrush(Colors.Value);
     private static readonly IPen Edge = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Outline));
-    private static readonly IBrush Ring = Brushes.White;
+    private static readonly IBrush Ring = new ImmutableSolidColorBrush(Colors.Bright);
 
     private const string LitClass = "lit";
     private const string OffClass = "off";
