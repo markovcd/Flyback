@@ -34,6 +34,8 @@ internal sealed class SoundSection : ISettingsSection
 
     public string Name => "Sound";
 
+    public string Group => SettingsGroups.Output;
+
     public Control View => rows;
 
     private readonly StackPanel rows = new() { Spacing = 8, Width = SettingsSession.SectionWidth };
@@ -138,6 +140,7 @@ internal sealed class SoundSection : ISettingsSection
         // question people come to this tab with. Nothing here knows what the
         // backend will ask (ADR-0085).
         rows.Children.Add(soundNote);
+        rows.Children.Add(SettingRows.Heading("Output"));
 
         if (playable.Count > 1) rows.Children.Add(InspectorRows.Field("Play through", through));
 
@@ -145,30 +148,32 @@ internal sealed class SoundSection : ISettingsSection
 
         rows.Children.Add(InspectorRows.Field("Latency", latency));
 
+        // A page lowers its oversampling itself as the sound needs, so it has none to pick.
+        if (!host.InPage)
+        {
+            ToolTip.SetTip(oversample,
+                "How many times the output rate the sound is worked out at before it is filtered down. "
+                + "Higher is cleaner on bright raw saws and costs more; 2× is clean enough for nearly "
+                + "every patch. A take, flyback-cli render and the viewer use it too.");
+
+            ToolTip.SetTip(stepDown,
+                "When the sound keeps falling behind while it plays, work it out a step lower, 4× to 2× to 1×, "
+                + "rather than let it stutter. Not while a take is recorded, which is written whole whatever the "
+                + "speakers do; a render keeps the setting above too.");
+
+            rows.Children.Add(SettingRows.Heading("Quality"));
+            rows.Children.Add(InspectorRows.Field("Oversampling", oversample));
+            rows.Children.Add(stepDown);
+        }
+
         // A page has no microphone to offer, and a machine with no input plugin says nothing.
         if (!host.InPage && plugins.PreferredAudioInput is { } input)
         {
             inputNote.Text = SettingRows.Attributed($"Heard by {input.Name}, for a Line In", plugins.Provider(input));
+            rows.Children.Add(SettingRows.Heading("Line In"));
             rows.Children.Add(inputNote);
             rows.Children.Add(inputForm);
         }
-
-        // A page lowers its oversampling itself as the sound needs, so it has none to pick.
-        if (host.InPage) return;
-
-        ToolTip.SetTip(oversample,
-            "How many times the output rate the sound is worked out at before it is filtered down. "
-            + "Higher is cleaner on bright raw saws and costs more; 2× is clean enough for nearly "
-            + "every patch. A take, flyback-cli render and the viewer use it too.");
-
-        rows.Children.Add(InspectorRows.Field("Oversampling", oversample));
-
-        ToolTip.SetTip(stepDown,
-            "When the sound keeps falling behind while it plays, work it out a step lower, 4× to 2× to 1×, "
-            + "rather than let it stutter. Not while a take is recorded, which is written whole whatever the "
-            + "speakers do; a render keeps the setting above too.");
-
-        rows.Children.Add(stepDown);
     }
 
     public void Start()

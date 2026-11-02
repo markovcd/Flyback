@@ -8,7 +8,7 @@ using Flyback.Ui.Controls;
 namespace Flyback.Editor.Windows;
 
 /// <summary>
-/// The Picture section's rows for live patching: how much of the picture shows through
+/// The Full screen section's rows for live patching: how much of the picture shows through
 /// the modules and behind the text, and when each fades while left alone.
 /// </summary>
 internal sealed class LivePatchingRows
@@ -54,11 +54,11 @@ internal sealed class LivePatchingRows
             number.ValueChanged += (_, _) => Changed?.Invoke();
         textWakes.SelectionChanged += (_, _) => Changed?.Invoke();
 
-        rows.Children.Add(InspectorRows.Field("Live modules, % solid", moduleOpacity));
-        rows.Children.Add(InspectorRows.Field("Live modules fade, s", moduleFade));
-        rows.Children.Add(InspectorRows.Field("Live text band, % solid", textOpacity));
-        rows.Children.Add(InspectorRows.Field("Live text fades, s", textFade));
-        rows.Children.Add(InspectorRows.Field("Live text wakes on", textWakes));
+        rows.Children.Add(InspectorRows.Field("Modules, % solid", moduleOpacity));
+        rows.Children.Add(InspectorRows.Field("Modules fade after, s", moduleFade));
+        rows.Children.Add(InspectorRows.Field("Text band, % solid", textOpacity));
+        rows.Children.Add(InspectorRows.Field("Text fades after, s", textFade));
+        rows.Children.Add(InspectorRows.Field("Text wakes on", textWakes));
     }
 
     /// <summary>A control was changed, by a hand or by <see cref="Show"/>.</summary>

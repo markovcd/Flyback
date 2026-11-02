@@ -64,7 +64,7 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
     public void Giving_the_knobs_the_top_moves_the_transport_to_the_bottom_and_is_kept()
     {
         var window = Open(settingsPath);
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, FullScreenTab);
 
         All<ComboBox>(dialog).Single(c => c.Name == "transportEdge").SelectedIndex = 1;
         CloseSettings(window, dialog);
@@ -78,7 +78,7 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
     public void A_knob_grid_set_in_the_settings_holds_the_panel_and_is_kept()
     {
         var window = Open(settingsPath);
-        var dialog = OpenSettings(window, MidiTab);
+        var dialog = OpenSettings(window, PlayingTab);
 
         All<CheckBox>(dialog).Single(c => c.Name == "knobGrid").IsChecked = true;
         All<NumericUpDown>(dialog).Single(c => c.Name == "knobColumns").Value = 3;
@@ -105,7 +105,7 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
     public void Columns_and_rows_sit_indented_under_the_knob_grid_switch()
     {
         var window = Open(settingsPath);
-        var dialog = OpenSettings(window, MidiTab);
+        var dialog = OpenSettings(window, PlayingTab);
 
         var grid = All<CheckBox>(dialog).Single(c => c.Name == "knobGrid");
 
@@ -128,7 +128,12 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
         var dialog = OpenSettings(window);
         var clipped = new List<string>();
 
-        foreach (var tab in Tabs(dialog).Items.OfType<TabItem>().ToList())
+        foreach (var group in Tabs(dialog).Items.OfType<TabItem>().Where(t => !t.IsEnabled).Select(t => (t.Header as Border)?.Child).OfType<TextBlock>())
+        {
+            if (Natural(group.FontFamily, group.FontSize, group.FontWeight, group.Text!) > group.Bounds.Width + 0.5) clipped.Add($"group \"{group.Text}\"");
+        }
+
+        foreach (var tab in Tabs(dialog).Items.OfType<TabItem>().Where(t => t.IsEnabled).ToList())
         {
             var name = ((TextBlock)tab.Header!).Text;
 

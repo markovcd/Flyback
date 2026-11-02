@@ -1,7 +1,7 @@
 Feature: A drum machine plays and pauses the patch
   A drum machine or sequencer the patch listens to drives the editor's transport:
   its Start plays the patch from the top, its Stop pauses it, and its Continue
-  plays on from where it paused. The MIDI settings can turn this off.
+  plays on from where it paused. The Playing settings can turn this off.
 
   Background:
     Given the beats of a drum machine's clock on the speakers

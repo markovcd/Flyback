@@ -56,9 +56,11 @@ public class OutputSettingsTests : OutputSettingsTest
         var dialog = OpenSettings(window, tab: PictureTab);
         var tabs = Tabs(dialog);
 
-        tabs.Items.Cast<TabItem>().Select(t => (t.Header as TextBlock)?.Text)
-            .ShouldBe(["Picture", "Sound", "MIDI", "Recording", "Canvas", "Files", "Assistant", "Decisions", "Privacy"]);
-        tabs.SelectedIndex.ShouldBe(0);
+        tabs.Items.Cast<TabItem>().Where(t => t.IsEnabled).Select(t => (t.Header as TextBlock)?.Text)
+            .ShouldBe(["Picture", "Full screen", "Sound", "Recording", "Playing", "Canvas", "Files", "Assistant", "Decisions", "Privacy"]);
+        tabs.Items.Cast<TabItem>().Where(t => !t.IsEnabled).Select(t => ((t.Header as Border)?.Child as TextBlock)?.Text)
+            .ShouldBe(["PICTURE AND SOUND", "PLAYING AND EDITING", "HELPERS", null], "the tabs are listed in groups, Privacy under a plain line");
+        ((tabs.SelectedItem as TabItem)?.Header as TextBlock)?.Text.ShouldBe("Picture");
         tabs.TabStripPlacement.ShouldBe(Dock.Left, "the sections are a list down the left");
         tabs.Items.Cast<TabItem>().Select(t => t.Bounds.X).Distinct().Count()
             .ShouldBe(1, "every tab fits in the one column");
@@ -73,6 +75,7 @@ public class OutputSettingsTests : OutputSettingsTest
             Settle(window);
 
             frame.Bounds.Size.ShouldBe(size, $"tab {tab}: the window keeps its size whichever section is showing");
+            Shoot(window, $"settings-{tab:00}.png");
         }
 
         All<Button>(dialog).Count(b => b.Content as string == "Save").ShouldBe(1, "one Save for every section");

@@ -188,9 +188,10 @@ internal static class EditorServices
 
         services.AddTransient<LivePatchingRows>();
         services.AddPart<PictureSection>();
+        services.AddPart<FullScreenSection>();
         services.AddPart<SoundSection>();
-        services.AddPart<MidiSection>();
         services.AddPart<RecordingSection>();
+        services.AddPart<PlayingSection>();
         services.AddPart<CanvasSection>();
         services.AddPart<FilesSection>();
         services.AddPart<AssistantSection>();

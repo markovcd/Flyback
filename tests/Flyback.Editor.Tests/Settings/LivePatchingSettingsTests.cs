@@ -22,7 +22,7 @@ namespace Flyback.Editor.Tests.Settings;
 /// </summary>
 public class LivePatchingSettingsTests : OutputSettingsTest
 {
-    private const string Tab = PictureTab;
+    private const string Tab = FullScreenTab;
 
     private static NumericUpDown Number(Visual within, string name) => All<NumericUpDown>(within).Single(c => c.Name == name);
 

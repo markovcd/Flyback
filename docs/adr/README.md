@@ -130,6 +130,7 @@ context, decision, consequences.
 | [0081](0081-rewind-moves-to-the-toolbar-beside-record.md) | Rewind moves to the toolbar, beside Record *(user-directed; every take does it first by [0090](0090-a-take-is-counted-in-and-starts-at-zero.md))* |
 | [0164](0164-volume-is-on-the-toolbar-too.md) | Volume is on the toolbar too *(user-directed)* |
 | [0082](0082-the-output-settings-move-to-the-settings-window.md) | The Output settings move to the settings window, and are kept *(user-directed; its next-launch latency made immediate by [0085](0085-a-sound-backend-declares-its-own-settings.md); kept in one file with every other setting by [0171](0171-every-setting-is-kept-in-one-file.md))* |
+| [0220](0220-settings-tabs-are-grouped-by-what-they-change.md) | Settings tabs are grouped by what they change *(user-directed)* |
 | [0171](0171-every-setting-is-kept-in-one-file.md) | Every setting is kept in one file *(user-directed)* |
 | [0087](0087-the-assistant-moves-to-a-column-beside-the-patch.md) | The assistant moves to a column, beside the patch *(user-directed)* |
 | [0090](0090-a-take-is-counted-in-and-starts-at-zero.md) | A take is counted in, and starts at zero *(user-directed; its fixed three seconds and unconditional rewind made settings by [0091](0091-how-a-take-begins-is-two-settings.md))* |

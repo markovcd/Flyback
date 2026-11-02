@@ -613,7 +613,7 @@ public sealed class JackOutput : IAudioOutput
 
 `Form` is how a backend gets settings without the application knowing what they are. It declares fields in the same vocabulary an assistant uses (`Text`, `Pick` and `Switch`), and the settings window draws them on the Sound tab, keeps the answers in `settings.json` under your backend's id, and hands them to `Create` at launch and again on every Save that changes them, so the new device plays at once. Open nothing until `Start`, which is what lets Save swap devices in place. Leave `Form` out and the tab shows only latency. The shipped backends use it for the output device, ASIO's driver, and where JACK connects.
 
-The tab says whose rows those are: *Played by WASAPI (shared mode), from the Windows sound and MIDI plugin (win.io)*, taken from the `Name` and `Id` of your `PluginInfo`. The MIDI tab says the same of whatever is hearing the keyboard, so name a plugin as you would want it read there.
+The tab says whose rows those are: *Played by WASAPI (shared mode), from the Windows sound and MIDI plugin (win.io)*, taken from the `Name` and `Id` of your `PluginInfo`. The Playing tab says the same of whatever is hearing the keyboard, so name a plugin as you would want it read there.
 
 `IAudioDevice.Start` is handed a callback that fills an interleaved stereo buffer on the audio thread. It must not block, allocate or throw. If you cannot honor the requested format exactly, open the nearest thing you can and report the truth through `SampleRate`. Report how long a sample takes from the callback to the speaker through `Latency`, which a Clock In runs ahead by; left out, it is nought.
 

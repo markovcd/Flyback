@@ -172,19 +172,19 @@ public sealed class OutputSettings
     /// </summary>
     public Dictionary<string, Dictionary<string, string>> SoundIn { get; set; } = new(StringComparer.Ordinal);
 
-    /// <summary>What a MIDI controller does to a knob sitting somewhere else — the MIDI section.</summary>
+    /// <summary>What a MIDI controller does to a knob sitting somewhere else — the Playing section.</summary>
     public Takeover Takeover { get; set; }
 
-    /// <summary>Whether an instrument's Start and Stop play and pause the patch — the MIDI section.</summary>
+    /// <summary>Whether an instrument's Start and Stop play and pause the patch — the Playing section.</summary>
     public bool FollowTransport { get; set; } = true;
 
     /// <summary>
     /// How the computer keyboard is laid out on a patch when its first MIDI In is
-    /// added — the MIDI section. A patch that already has one, or has none, is not touched.
+    /// added — the Playing section. A patch that already has one, or has none, is not touched.
     /// </summary>
     public KeyboardLayout Keyboard { get; set; }
 
-    /// <summary>Which monitor double-clicking the preview fills — the Picture section.</summary>
+    /// <summary>Which monitor double-clicking the preview fills — the Full screen section.</summary>
     public FullScreenOn FullScreen { get; set; }
 
     /// <summary>
@@ -193,7 +193,7 @@ public sealed class OutputSettings
     /// </summary>
     public MonitorSpot? FullScreenMonitor { get; set; }
 
-    /// <summary>Which edge of a full-screen picture the transport waits at — the Picture section.</summary>
+    /// <summary>Which edge of a full-screen picture the transport waits at — the Full screen section.</summary>
     public TransportEdge Transport { get; set; }
 
     /// <summary>
@@ -238,7 +238,7 @@ public sealed class OutputSettings
     /// <summary>How the knob panel randomizes, set on the panel itself.</summary>
     public RandomizeSettings Randomize { get; set; } = new();
 
-    /// <summary>Whether the panel knobs stand in a fixed grid — the MIDI section.</summary>
+    /// <summary>Whether the panel knobs stand in a fixed grid — the Playing section.</summary>
     public KnobGrid KnobGrid { get; set; } = new();
 
     /// <summary>How the patch looks over a full-screen picture while it is played live — the Live patching section.</summary>

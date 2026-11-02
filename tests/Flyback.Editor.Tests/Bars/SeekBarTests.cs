@@ -349,7 +349,7 @@ public sealed class SeekBarTests : EditorTest
         Editor(window).IsFocused.ShouldBeTrue();
     }
 
-    /// <summary>Turns Endless on, as the Picture section's box does.</summary>
+    /// <summary>Turns Endless on, as the Playing section's box does.</summary>
     private void Endless(MainWindow window, SeekBar bar)
     {
         Service<CanvasSection>(window).SaveEndless(true);

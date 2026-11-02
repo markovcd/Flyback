@@ -95,7 +95,7 @@ public abstract class OutputSettingsTest : EditorTest
 
     private protected static TabControl Tabs(Visual within) => All<TabControl>(within).Single(t => t.Name == "settingsTabs");
 
-    private protected const string PictureTab = "Picture", RecordingTab = "Recording", SoundTab = "Sound", MidiTab = "MIDI", FilesTab = "Files";
+    private protected const string PictureTab = "Picture", RecordingTab = "Recording", SoundTab = "Sound", PlayingTab = "Playing", FullScreenTab = "Full screen", FilesTab = "Files";
 
     /// <summary>The name of the frame's cross, which answers as Cancel does.</summary>
     private protected const string Cross = "dismiss";

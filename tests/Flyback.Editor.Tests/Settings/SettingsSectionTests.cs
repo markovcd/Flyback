@@ -22,7 +22,7 @@ public sealed class SettingsSectionTests : EditorTest
 
     /// <summary>The tabs the settings window has, in its order; a new section is added here.</summary>
     public static TheoryData<string> Tabs =>
-        ["Picture", "Sound", "MIDI", "Recording", "Canvas", "Files", "Assistant", "Decisions", "Privacy"];
+        ["Picture", "Full screen", "Sound", "Recording", "Playing", "Canvas", "Files", "Assistant", "Decisions", "Privacy"];
 
     public override void Dispose()
     {
@@ -128,7 +128,7 @@ public sealed class SettingsSectionTests : EditorTest
     private static TabControl TabsOf(ModalOverlay dialog) => Named<TabControl>(dialog, "settingsTabs");
 
     private static IEnumerable<string> Headers(ModalOverlay dialog) =>
-        TabsOf(dialog).Items.OfType<TabItem>().Select(item => ((TextBlock)item.Header!).Text!);
+        TabsOf(dialog).Items.OfType<TabItem>().Where(item => item.IsEnabled).Select(item => ((TextBlock)item.Header!).Text!);
 
     /// <summary>The section's controls, as the tab shows them.</summary>
     private static Control Shown(ModalOverlay dialog) => (Control)((TabItem)TabsOf(dialog).SelectedItem!).Content!;

@@ -63,16 +63,28 @@ internal sealed class SettingsSession(
     /// column and an assistant's usual form without a scroll bar. A window too short
     /// for that height gets the tabs as tall as it has room for, down to the list's.
     /// </summary>
-    private const double Width = SectionWidth + 200;
+    private const double Width = SectionWidth + 220;
 
     /// <inheritdoc cref="Width"/>
-    private const double Height = 460;
+    private const double Height = 470;
 
     /// <summary>How tall one tab's row in the list is.</summary>
-    private const double TabHeight = 40;
+    private const double TabHeight = 30;
+
+    /// <summary>How wide the list of tabs is: room for the longest group's name.</summary>
+    private const double TabWidth = 140;
+
+    /// <summary>How tall a group's name over its tabs is.</summary>
+    private const double GroupHeight = 18;
+
+    /// <summary>How tall the plain line over the ungrouped tabs at the foot is.</summary>
+    private const double RuleHeight = 6;
 
     /// <summary>The room above the list's first row.</summary>
-    private const double ListTop = 6;
+    internal const double ListTop = 6;
+
+    /// <summary>How narrow the sheet may be drawn, on a phone, before the dialog scrolls sideways.</summary>
+    private const double Narrowest = 260;
 
     private Control Content(Action<bool> answer)
     {
@@ -96,7 +108,17 @@ internal sealed class SettingsSession(
             Padding = new Thickness(4, ListTop, 0, 0),
         };
 
-        foreach (var section in sections) tabs.Items.Add(Tab(section));
+        string? group = null;
+
+        foreach (var section in sections)
+        {
+            if (section.Group != group) tabs.Items.Add(Group(section.Group));
+
+            group = section.Group;
+            tabs.Items.Add(Tab(section));
+        }
+
+        tabs.SelectedItem = tabs.Items.Cast<TabItem>().First(item => item.IsEnabled);
 
         var save = new Button { Name = "save", Content = "Save", Width = 84, Classes = { "accent" } };
 
@@ -123,9 +145,10 @@ internal sealed class SettingsSession(
         return new DialogBody(
             new HeightUpTo(Height)
             {
-                Child = tabs,
-                Width = Width,
-                MinHeight = tabs.ItemCount * TabHeight + ListTop,
+                Child = new SettingsSheet(tabs, Width, [.. sections.Select(section => section.View)]),
+                MinWidth = Narrowest,
+                MaxWidth = Width,
+                MinHeight = tabs.Items.Cast<TabItem>().Sum(item => item.Height) + ListTop,
                 Margin = new Thickness(18, 4, 18, 0),
             },
             new StackPanel
@@ -164,7 +187,35 @@ internal sealed class SettingsSession(
             Padding = new Thickness(4, 6, 12, 6),
             Height = TabHeight,
             MinHeight = 0,
-            Width = 120,
+            Width = TabWidth,
         };
     }
+
+    /// <summary>
+    /// A group's name over its tabs, or a plain line for <see cref="SettingsGroups.None"/>:
+    /// a row of the list that cannot be picked, so the tabs read as a few groups.
+    /// </summary>
+    private static TabItem Group(string name) => new()
+    {
+        Name = "settingsGroup",
+        IsEnabled = false,
+        Focusable = false,
+        IsTabStop = false,
+        Padding = new Thickness(6, 0, 0, 0),
+        Height = name.Length == 0 ? RuleHeight : GroupHeight,
+        MinHeight = 0,
+        Width = TabWidth,
+        VerticalContentAlignment = VerticalAlignment.Bottom,
+        Header = name.Length == 0
+            ? new Border { Height = 1, Width = TabWidth - 12, Background = new SolidColorBrush(Colors.Separator) }
+            : new Border
+            {
+                Child = new TextBlock
+                {
+                    Text = name.ToUpperInvariant(),
+                    FontSize = Text.Caption,
+                    Foreground = Text.Muted,
+                },
+            },
+    };
 }

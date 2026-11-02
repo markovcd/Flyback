@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Midi;
 using Flyback.Editor.Settings;
@@ -12,16 +13,20 @@ using Flyback.Ui.Midi;
 namespace Flyback.Editor.Knobs;
 
 /// <summary>
-/// The MIDI section of the settings window: which plugin hears an instrument, what
-/// a controller does to a knob that sits elsewhere, and how the panel knobs stand.
+/// The Playing section of the settings window: how a patch plays, what a controller
+/// does to a knob that sits elsewhere, how the panel knobs stand and how the
+/// computer keyboard plays.
 /// </summary>
-internal sealed class MidiSection : ISettingsSection
+internal sealed class PlayingSection : ISettingsSection
 {
     private readonly OutputSettingRepository settings;
     private readonly PanelKnobs knobs;
     private readonly ControlHub hub;
+    private readonly CanvasSection canvas;
 
-    public string Name => "MIDI";
+    public string Name => "Playing";
+
+    public string Group => SettingsGroups.Making;
 
     public Control View => rows;
 
@@ -36,11 +41,20 @@ internal sealed class MidiSection : ISettingsSection
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
+    /// <summary>Whether a patch with no length plays on, with no seek bar.</summary>
+    private readonly CheckBox endless = new()
+    {
+        Name = "endless",
+        Content = "Endless: a patch with no length plays on",
+        FontSize = Text.Body,
+    };
+
     /// <summary>Whether an instrument's Start and Stop play and pause the patch.</summary>
     private readonly CheckBox followTransport = new()
     {
         Name = "followTransport",
         Content = "Play and pause with an instrument's Start and Stop",
+        FontSize = Text.Body,
     };
 
     /// <summary>How a new patch lays out the computer's keyboard.</summary>
@@ -57,6 +71,7 @@ internal sealed class MidiSection : ISettingsSection
     {
         Name = "knobGrid",
         Content = "Keep the knobs in a fixed grid",
+        FontSize = Text.Body,
     };
 
     /// <summary>How many knobs across the grid is.</summary>
@@ -66,16 +81,23 @@ internal sealed class MidiSection : ISettingsSection
     private readonly NumericUpDown knobRows = GridSide("knobRows");
 
     /// <param name="instruments">The instruments the section lists.</param>
-    public MidiSection(
+    public PlayingSection(
         PluginCatalog plugins,
         PanelKnobs knobs,
         ControlHub hub,
         InstrumentLibrary instruments,
-        OutputSettingRepository settings)
+        OutputSettingRepository settings,
+        CanvasSection canvas)
     {
         this.settings = settings;
         this.knobs = knobs;
         this.hub = hub;
+        this.canvas = canvas;
+
+        ToolTip.SetTip(endless,
+            "A patch whose length box is empty plays on until paused, as it does in the viewer, rather than "
+            + "stopping at three minutes. The seek bar, length and loop step aside while it does; pause and "
+            + "rewind stay.");
 
         ToolTip.SetTip(takeover,
             "When a controller's knob is not where the knob on screen is: jump straight to the controller, "
@@ -102,10 +124,11 @@ internal sealed class MidiSection : ISettingsSection
                 : "No MIDI plugin is installed, so the only instrument is the computer's own keyboard.",
         };
 
-        rows.Children.Add(midiNote);
-        rows.Children.Add(InspectorRows.Field("Knobs", takeover));
+        rows.Children.Add(SettingRows.Heading("Transport"));
+        rows.Children.Add(endless);
         rows.Children.Add(followTransport);
-        rows.Children.Add(InspectorRows.Field("Computer keys", keyboardLayout));
+        rows.Children.Add(SettingRows.Heading("Knobs"));
+        rows.Children.Add(InspectorRows.Field("Controller", takeover));
 
         ToolTip.SetTip(knobGridOn,
             "Stand the panel knobs in fixed columns and rows, so each keeps the row and column of the knob "
@@ -120,6 +143,10 @@ internal sealed class MidiSection : ISettingsSection
         rows.Children.Add(knobGridOn);
         rows.Children.Add(InspectorRows.Field("Columns", knobColumns, indent: 20));
         rows.Children.Add(InspectorRows.Field("Rows", knobRows, indent: 20));
+        rows.Children.Add(SettingRows.Heading("Keys"));
+        rows.Children.Add(InspectorRows.Field("Computer keys", keyboardLayout));
+        rows.Children.Add(SettingRows.Heading("Instruments"));
+        rows.Children.Add(midiNote);
 
         var known = string.Join(", ", instruments.Profiles.Select(profile => profile.Name));
         var instrumentsNote = new TextBlock
@@ -146,6 +173,9 @@ internal sealed class MidiSection : ISettingsSection
     public void Save()
     {
         settings.Change(Read);
+
+        if (canvas.Endless != (endless.IsChecked == true)) canvas.SaveEndless(endless.IsChecked == true);
+
         Apply();
     }
 
@@ -159,6 +189,7 @@ internal sealed class MidiSection : ISettingsSection
     {
         takeover.SelectedIndex = current.Takeover == Takeover.PickUp ? 1 : 0;
         followTransport.IsChecked = current.FollowTransport;
+        endless.IsChecked = canvas.Endless;
         keyboardLayout.SelectedIndex = current.Keyboard == KeyboardLayout.Scale ? 1 : 0;
         knobGridOn.IsChecked = current.KnobGrid.On;
         knobColumns.Value = current.KnobGrid.Columns;

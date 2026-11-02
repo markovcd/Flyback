@@ -38,6 +38,8 @@ internal sealed class RecordingSection : ISettingsSection
 
     public string Name => "Recording";
 
+    public string Group => SettingsGroups.Output;
+
     public Control View => rows;
 
     private readonly StackPanel rows = new() { Spacing = 8, Width = SettingsSession.SectionWidth };
@@ -129,6 +131,7 @@ internal sealed class RecordingSection : ISettingsSection
             "Take the patch back to zero seconds as the recording starts, so a take begins "
             + "where the patch does. Switch it off to record a session as it stands.");
 
+        rows.Children.Add(SettingRows.Heading("Each take"));
         rows.Children.Add(InspectorRows.Field("Count-in", countIn));
         rows.Children.Add(rewindBeforeTake);
 
@@ -301,10 +304,12 @@ internal sealed class RecordingSection : ISettingsSection
         row.Children.Add(ffmpegBox);
         row.Children.Add(browse);
 
+        rows.Children.Add(SettingRows.Heading("Files"));
         rows.Children.Add(InspectorRows.Field("Video format", videoFormat));
         rows.Children.Add(InspectorRows.Field("Frame rate", frameRate));
         rows.Children.Add(InspectorRows.Field("Quality", jpegQuality));
         rows.Children.Add(InspectorRows.Field("Sound format", soundFormat));
+        rows.Children.Add(SettingRows.Heading("Encoder"));
         rows.Children.Add(row);
         rows.Children.Add(ffmpegNote);
     }

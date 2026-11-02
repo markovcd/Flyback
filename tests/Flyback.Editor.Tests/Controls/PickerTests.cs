@@ -189,7 +189,7 @@ public class PickerTests : EditorTest
         Press(All<Button>(window).Single(button => button.Name == "settings"));
         Settle(window);
 
-        All<TabControl>(window).Single(tabs => tabs.Name == "settingsTabs").SelectedIndex = 0;
+        All<TabControl>(window).Single(tabs => tabs.Name == "settingsTabs").SelectedIndex = 1;
         Settle(window);
 
         Named(window, "960 x 540").ShouldBeOfType<Picker>();

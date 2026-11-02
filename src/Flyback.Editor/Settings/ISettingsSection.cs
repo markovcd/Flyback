@@ -8,6 +8,9 @@ internal interface ISettingsSection
     /// <summary>The tab's heading.</summary>
     string Name { get; }
 
+    /// <summary>Which of <see cref="SettingsGroups"/> the tab is listed under.</summary>
+    string Group { get; }
+
     /// <summary>The controls, lent to the window and kept between openings.</summary>
     Control View { get; }
 

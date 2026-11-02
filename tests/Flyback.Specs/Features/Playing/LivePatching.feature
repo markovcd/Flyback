@@ -3,7 +3,7 @@ Feature: A patch can be played live with itself over the picture
   keeps patching on top of it: the modules stand over the picture, which shows through
   them, and fade away while nobody touches them. A patch whose text is the document puts
   its text there instead, to be live-coded, which fades the same way: only the view that
-  owns the patch goes over the picture, and F2 does not swap it. Settings → Picture says how solid each is
+  owns the patch goes over the picture, and F2 does not swap it. Settings → Full screen says how solid each is
   and how long it waits. Tab over a full-screen picture puts the modules on or takes them off,
   Shift+F11 goes straight there, and Escape gives the editor back as it was. With no
   keyboard, the transport row's Live button goes there, and buttons on the transport over the

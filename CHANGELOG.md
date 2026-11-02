@@ -10,7 +10,7 @@
 
 ### Editor
 
-- Endless, in Settings → Picture and a page's settings: a patch with no length plays on until paused rather than stopping at three minutes, with the seek bar, length and loop set aside and pause, rewind and the clock left on the transport row.
+- Endless, in Settings → Playing and a page's settings: a patch with no length plays on until paused rather than stopping at three minutes, with the seek bar, length and loop set aside and pause, rewind and the clock left on the transport row.
 - A module's buttons under its name stand in one row while the inspector has room for them, and wrap onto a second only when it does not.
 - On a Mac, two fingers scrolling on the trackpad move the canvas and a pinch zooms it, as in other Mac programs; Cmd with the wheel zooms, for a mouse. A scroll over a picked value adds up to whole nudges instead of one per tiny step. Elsewhere the wheel zooms as before.
 - Three more tutorials: knobs you can play, a song in sections brought in and out by an Arrangement, and text that builds itself with a def and a loop.
@@ -28,6 +28,7 @@
 - The toolbar's symbols are drawn like the marks printed on a hardware panel, each with its name in small capitals under it. Settings, Canvas, "Label the toolbar buttons" turns the names off for a lower bar, and a window too narrow for them drops the names before it folds any button away.
 - The inspector starts with the values: a module's name and family share one line, its buttons stand in one row under it, and its description comes after the outputs. Its rows stand at one height, with thin bar thumbs and each value in amber mono instead of a box.
 - A module's title on the canvas sits centered in its band.
+- Settings is regrouped and quieter: its tabs are listed in groups, full screen and live patching have a tab of their own, MIDI is now Playing and holds Endless, every tab is cut by small headings, and explanations moved from under the switches into their tooltips. On a phone, Settings is a list of its tabs to tap into, each then full width, instead of a sheet wider than the screen.
 - A pinch over the text view, by two fingers on a screen or on a trackpad, makes its text larger or smaller in whole points, the size Ctrl+scroll and the A− and A+ buttons set; Ctrl+0 still puts it back.
 
 ### Viewer

@@ -8,6 +8,8 @@ internal sealed class AssistantSection(AssistantPanel panel) : ISettingsSection
 {
     public string Name => "Assistant";
 
+    public string Group => SettingsGroups.Helpers;
+
     /// <summary>The panel's form, taken back from the window that last borrowed it as the settings open.</summary>
     public Control View { get; private set; } = new Panel();
 

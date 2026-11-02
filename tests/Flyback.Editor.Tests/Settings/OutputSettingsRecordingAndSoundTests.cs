@@ -36,7 +36,7 @@ public class OutputSettingsRecordingAndSoundTests : OutputSettingsTest
         Named<TextBlock>(dialog, "soundNote").Text
             .ShouldBe("No sound plugin is installed, so nothing plays. See About for where plugins are looked for.");
 
-        ShowSettingsTab(dialog, MidiTab);
+        ShowSettingsTab(dialog, PlayingTab);
         Settle(window);
 
         Named<TextBlock>(dialog, "midiNote").Text

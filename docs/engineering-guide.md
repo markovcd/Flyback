@@ -549,7 +549,7 @@ below it. The features stand on it in an order of their own, lowest first, each 
 its region, its controls and its settings section together: `Site`, `Decide`, `Midi`
 (the instruments), `Canvas` (the node editor and the palette), `Hubs` (`Document`,
 `Playback`, `PatchFiles`, and what writes the panel into the text), `Assist`, `Knobs`
-(the knob panel and the MIDI section), `PluginPackages`, `Capture`, `Files`, `Gallery`,
+(the knob panel and the Playing section), `PluginPackages`, `Capture`, `Files`, `Gallery`,
 `Inspect`, `Bars`, `Keys` and `Windows` (the picture window, full screen and the kept
 layout). Each names only the footing and the features below it; what it needs from
 above arrives as a notice (`TakeMarked`, `MeasureModeChanged`) or through an interface

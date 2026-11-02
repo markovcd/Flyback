@@ -120,19 +120,23 @@ internal sealed class CanvasSection : ISettingsSection
 
         ToolTip.SetTip(compactModules,
             "Put each input beside an output on one row, and show a knob's value when "
-            + "its socket is hovered rather than on the row.");
+            + "its socket is hovered rather than on the row. Tidy spaces modules for the size they are drawn at.");
 
         ToolTip.SetTip(dragToPan,
             "Drag empty canvas with the left button to move the view. The right button then "
-            + "selects: drag it across modules, or click it to add one.");
+            + "selects: drag it across modules, or click it to add one. For a mouse or trackpad without a middle "
+            + "button; cleared, the middle button pans and the left one selects.");
 
         ToolTip.SetTip(pluginSkins,
             "A plugin may give its modules a color, a texture or a picture of their own. "
-            + "Clear this to draw every module as its category, the way Flyback's own are drawn.");
+            + "Clear this to draw every module as its category, the way Flyback's own are drawn. Only the "
+            + "background changes: the shape, header, sockets and description stay Flyback's, and a plugin may "
+            + "ask for its text to be worked out from a pale background.");
 
         ToolTip.SetTip(animateSkins,
             "A module whose background is an animated GIF plays it. Clear this to hold every "
-            + "one at its first frame — the canvas then redraws only when the patch changes.");
+            + "one at its first frame — the canvas then redraws only when the patch changes. A module's author "
+            + "may have asked for a still picture already, and clearing this cannot put that back.");
 
         ToolTip.SetTip(menuBar,
             "File, Edit, View, Play and Help along the top of the window, the menus a Mac shows in its menu bar.");
@@ -148,63 +152,19 @@ internal sealed class CanvasSection : ISettingsSection
 
         Schemes(report: false);
 
+        View.Children.Add(SettingRows.Heading("Look"));
         View.Children.Add(InspectorRows.Field("Colors", colorScheme));
-
-        View.Children.Add(new TextBlock
-        {
-            Text = "The editor is drawn in the new colors the next time it starts.",
-            FontSize = Text.Small,
-            Foreground = Text.Muted,
-            TextWrapping = TextWrapping.Wrap,
-        });
-
+        View.Children.Add(Note("The editor is drawn in the new colors the next time it starts."));
         View.Children.Add(menuBar);
         View.Children.Add(toolbarLabels);
         View.Children.Add(compactModules);
-
-        View.Children.Add(new TextBlock
-        {
-            Text = "Tidy spaces modules for the size they are drawn at, so a patch tidied "
-                + "compact may overlap once this is cleared.",
-            FontSize = Text.Small,
-            Foreground = Text.Muted,
-            TextWrapping = TextWrapping.Wrap,
-        });
-
+        View.Children.Add(Note("A patch tidied compact may overlap once this is cleared."));
+        View.Children.Add(SettingRows.Heading("Mouse"));
         View.Children.Add(dragToPan);
-
-        View.Children.Add(new TextBlock
-        {
-            Text = "For a mouse or trackpad without a middle button. Cleared, the middle button "
-                + "pans and the left one selects.",
-            FontSize = Text.Small,
-            Foreground = Text.Muted,
-            TextWrapping = TextWrapping.Wrap,
-        });
-
+        View.Children.Add(SettingRows.Heading("Plugin modules"));
         View.Children.Add(pluginSkins);
-
-        View.Children.Add(new TextBlock
-        {
-            Text = "A module's shape, its header, its sockets and its description are the same "
-                + "whatever a plugin says; only the background behind it changes. A plugin may "
-                + "also ask for the text on its module to be worked out from that background "
-                + "rather than drawn white, which is what keeps a title readable on a pale one.",
-            FontSize = Text.Small,
-            Foreground = Text.Muted,
-            TextWrapping = TextWrapping.Wrap,
-        });
-
         View.Children.Add(animateSkins);
-
-        View.Children.Add(new TextBlock
-        {
-            Text = "A module's author may have asked for a still picture already, and clearing "
-                + "this cannot put that back.",
-            FontSize = Text.Small,
-            Foreground = Text.Muted,
-            TextWrapping = TextWrapping.Wrap,
-        });
+        View.Children.Add(SettingRows.Heading("Measure"));
 
         ToolTip.SetTip(measureWindow,
             "How long Measure runs the patch for, from the playhead. Longer catches a slow LFO's turns "
@@ -216,12 +176,14 @@ internal sealed class CanvasSection : ISettingsSection
             "How finely Measure looks at the picture: Small is a 32 by 18 grid, Medium 64 by 36, "
             + "Large 128 by 72. Larger shows more detail; it only takes longer.");
 
-        View.Children.Add(InspectorRows.Field("Measure grid", measurePicture));
+        View.Children.Add(InspectorRows.Field("Grid", measurePicture));
 
         Show();
     }
 
     public string Name => "Canvas";
+
+    public string Group => SettingsGroups.Making;
 
     internal StackPanel View { get; } = new() { Spacing = 10, Width = SettingsSession.SectionWidth };
 
@@ -392,4 +354,13 @@ internal sealed class CanvasSection : ISettingsSection
             report($"Could not save the canvas settings: {ex.Message}", path);
         }
     }
+
+    /// <summary>A quiet line under a row, for a consequence the row's tip alone would hide.</summary>
+    private static TextBlock Note(string text) => new()
+    {
+        Text = text,
+        FontSize = Text.Small,
+        Foreground = Text.Muted,
+        TextWrapping = TextWrapping.Wrap,
+    };
 }

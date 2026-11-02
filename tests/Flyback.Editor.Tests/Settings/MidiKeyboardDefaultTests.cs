@@ -14,7 +14,7 @@ using Shouldly;
 namespace Flyback.Editor.Tests.Settings;
 
 /// <summary>
-/// The MIDI section's default keyboard layout: applied when a patch gains its
+/// The Playing section's default keyboard layout: applied when a patch gains its
 /// first MIDI In, and to nothing that already exists.
 /// </summary>
 public sealed class MidiKeyboardDefaultTests : EditorTest

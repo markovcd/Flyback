@@ -142,6 +142,8 @@ internal sealed class FilesSection : ISettingsSection
 
     public string Name => "Files";
 
+    public string Group => SettingsGroups.Making;
+
     internal StackPanel View { get; } = new() { Spacing = 10, Width = SettingsSession.SectionWidth };
 
     Control ISettingsSection.View => View;

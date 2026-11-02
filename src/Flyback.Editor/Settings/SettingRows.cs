@@ -1,4 +1,10 @@
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Flyback.Plugins;
+using Flyback.Ui.Controls;
+using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Settings;
 
@@ -23,4 +29,21 @@ internal static class SettingRows
     /// </param>
     public static string Attributed(string what, PluginInfo? plugin) =>
         plugin is null ? $"{what}." : $"{what}, from the {plugin.Name} plugin ({plugin.Id}).";
+
+    /// <summary>A small heading over a few rows of a settings tab, so a tab is read by its headings first.</summary>
+    public static Control Heading(string text) => new Border
+    {
+        BorderBrush = new ImmutableSolidColorBrush(Colors.Separator),
+        BorderThickness = new Thickness(0, 0, 0, 1),
+        Padding = new Thickness(0, 0, 0, 3),
+        Margin = new Thickness(0, 10, 0, 0),
+        Child = new TextBlock
+        {
+            Text = text.ToUpperInvariant(),
+            FontFamily = Text.Mono,
+            FontSize = Text.Small,
+            LetterSpacing = 1,
+            Foreground = new ImmutableSolidColorBrush(Colors.Attention),
+        },
+    };
 }

@@ -75,14 +75,6 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
         var endlessRow = Row(endless, "A patch with no length plays on until paused, with no seek bar.");
         endlessRow.Margin = new Thickness(8, 4, 8, 4);
 
-        var liveTitle = new TextBlock
-        {
-            Text = "Live patching",
-            FontSize = Text.Emphasis,
-            FontWeight = FontWeight.SemiBold,
-            Margin = new Thickness(8, 8, 8, 0),
-        };
-
         live.View.Margin = new Thickness(8, 0, 8, 4);
 
         // Taking effect as it is changed and kept in the browser, as the switches are.
@@ -102,7 +94,17 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
                 Name = "pageSettings",
                 Width = PanelWidth,
                 Spacing = 6,
-                Children = { header, panRow, compactRow, endlessRow, liveTitle, live.View },
+                Children =
+                {
+                    header,
+                    Heading("Canvas"),
+                    panRow,
+                    compactRow,
+                    Heading("Playing"),
+                    endlessRow,
+                    Heading("Live patching"),
+                    live.View,
+                },
             },
         };
 
@@ -168,4 +170,11 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
             },
         },
     };
+
+    private static Control Heading(string text)
+    {
+        var heading = SettingRows.Heading(text);
+        heading.Margin = new Thickness(8, 6, 8, 0);
+        return heading;
+    }
 }

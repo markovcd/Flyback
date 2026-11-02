@@ -11,7 +11,7 @@ public sealed class KnobGridSteps(EditorDriver editor)
     [When("the knobs are kept in a grid of {int} columns and {int} rows")]
     public void WhenGridded(int columns, int rows)
     {
-        editor.OpenSettings("MIDI");
+        editor.OpenSettings("Playing");
         editor.Tick("Keep the knobs in a fixed grid", on: true);
         editor.Type("knobColumns", columns);
         editor.Type("knobRows", rows);

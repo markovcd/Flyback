@@ -24,7 +24,7 @@ internal sealed class TransportControls : IReactTo<TakeMarked>, IReactTo<Transpo
     private readonly Usage usage;
     private readonly OutputSettingRepository settings;
 
-    /// <param name="settings">Whether an instrument's Start, Continue and Stop play and pause the patch: the MIDI section's setting.</param>
+    /// <param name="settings">Whether an instrument's Start, Continue and Stop play and pause the patch: the Playing section's setting.</param>
     public TransportControls(Playback playback, TransportRow row, TakeRecording recording, Usage usage, MidiHub midi, OutputSettingRepository settings)
     {
         this.playback = playback;

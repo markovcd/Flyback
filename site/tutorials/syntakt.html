@@ -136,8 +136,8 @@
     <h2><span class="num">03</span>Check that Flyback hears it</h2>
 
     <ol class="steps">
-      <li>Plug the Syntakt in and open Flyback. Open <strong>Settings → MIDI</strong>. The first line names the
-      plugin doing the hearing, <em>Windows MIDI</em>, <em>CoreMIDI</em> or <em>ALSA MIDI</em>, and the last says
+      <li>Plug the Syntakt in and open Flyback. Open <strong>Settings → Playing</strong>. Under <em>Instruments</em>, the first line names the
+      plugin doing the hearing, <em>Windows MIDI</em>, <em>CoreMIDI</em> or <em>ALSA MIDI</em>, and the next says
       <em>Known by name: Syntakt</em>.</li>
       <li>Press <kbd>Space</kbd> over the canvas to open the module list, and add a <strong>MIDI In</strong> from
       under Sources. Its <strong>listens to</strong> field lists the Syntakt beside the computer keyboard. If it does not, the box is in Overbridge mode or
@@ -263,7 +263,7 @@ out.volume = 0.5</code></pre>
       <li>Change the tempo on the box and the bass follows within a beat. Press [STOP] and it holds; press [PLAY]
       and it starts from the top, with the box.</li>
       <li>[PLAY] and [STOP] drive Flyback's own transport too: [PLAY] plays the patch from the top and [STOP]
-      pauses it. Untick <strong>Play and pause with an instrument's Start and Stop</strong> under Settings → MIDI
+      pauses it. Untick <strong>Play and pause with an instrument's Start and Stop</strong> under Settings → Playing
       to keep the patch running on its own.</li>
       <li>The Clock In's other outputs: <code>bpm</code> is the tempo as a number, <code>running</code> is high
       between [PLAY] and [STOP], and <code>reset</code> pulses on [PLAY], for restarting an envelope or an LFO
@@ -324,7 +324,7 @@ out.volume = 0</code></pre>
       one. The light walks the panel; turn one knob on the box per step, and <kbd>Esc</kbd> when done.</li>
     </ol>
 
-    <p>A bound knob is saved with the patch. <strong>Settings → MIDI</strong> chooses whether a knob jumps to the
+    <p>A bound knob is saved with the patch. <strong>Settings → Playing</strong> chooses whether a knob jumps to the
     box's position or waits to be picked up.</p>
   </section>
 
@@ -344,7 +344,7 @@ out.volume = 0</code></pre>
     <h2><span class="num">10</span>Another box, or a Syntakt set up differently</h2>
 
     <p>What Flyback knows about the Syntakt is a file: its port name, its tracks and their channels, its knobs by
-    page and the control change each sends, and that it conducts. <strong>Settings → MIDI</strong> lists the
+    page and the control change each sends, and that it conducts. <strong>Settings → Playing</strong> lists the
     instruments known and the folder where a file of your own goes, one <code>.json</code> per instrument.</p>
 
     <p>A Syntakt on other channels is the shipped file copied there and edited; a file with the same name replaces

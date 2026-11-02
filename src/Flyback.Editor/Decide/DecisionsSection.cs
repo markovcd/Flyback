@@ -123,6 +123,8 @@ internal sealed class DecisionsSection : ISettingsSection
 
     public string Name => "Decisions";
 
+    public string Group => SettingsGroups.Helpers;
+
     public Control View => rows;
 
     /// <summary>The model on the picker, or null for none.</summary>

@@ -99,7 +99,7 @@ internal sealed class FullScreenPreview(
 
     private static GridLength Everything => new(1, GridUnitType.Star);
 
-    /// <summary>Goes full screen on the monitor the Picture section names, or comes back.</summary>
+    /// <summary>Goes full screen on the monitor the Full screen section names, or comes back.</summary>
     public void Toggle()
     {
         if (IsFullScreen || Away is not null)

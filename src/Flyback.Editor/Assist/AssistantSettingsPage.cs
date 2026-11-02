@@ -223,6 +223,7 @@ internal sealed class AssistantSettingsPage
         // pads the whole of it.
         var fields = new StackPanel { Spacing = 8, Width = SettingsSession.SectionWidth };
 
+        fields.Children.Add(SettingRows.Heading("Provider"));
         fields.Children.Add(InspectorRows.Field("Provider", providerBox));
 
         // The probe goes on what is on the form, so a key typed and not yet
@@ -235,14 +236,12 @@ internal sealed class AssistantSettingsPage
         fields.Children.Add(probeSection);
         ToolTip.SetTip(contextBox, "How many tokens a conversation may grow to before it stops.");
         fields.Children.Add(InspectorRows.Field("Context", contextBox));
-        fields.Children.Add(logBox);
-        fields.Children.Add(briefingBox);
-        fields.Children.Add(lookupsBox);
+        ToolTip.SetTip(proseBox,
+            "How many characters the briefing may run to. Past this, the modules on the priority list keep their "
+            + "descriptions, the rest keep theirs while there is room, and the ones left out are marked on the canvas. "
+            + "The list is read again whenever settings are saved.");
         fields.Children.Add(InspectorRows.Field("Briefing", proseBox));
-        fields.Children.Add(Note(
-            "How many characters the briefing may run to. Past this, the modules on the priority list keep their descriptions, the rest keep "
-            + "theirs while there is room, and the ones left out are marked on the canvas. The "
-            + "list is a file, one type id a line, read again whenever settings are saved:"));
+        fields.Children.Add(Note("The briefing's priority list, one type id a line:"));
 
         // Selectable, so the path can be copied into a file manager or an editor.
         fields.Children.Add(new SelectableTextBlock
@@ -252,6 +251,11 @@ internal sealed class AssistantSettingsPage
             FontSize = Text.Small,
             TextWrapping = TextWrapping.Wrap,
         });
+
+        fields.Children.Add(SettingRows.Heading("What it shows you"));
+        fields.Children.Add(briefingBox);
+        fields.Children.Add(lookupsBox);
+        fields.Children.Add(logBox);
 
         if (DrivenEditor.Possible) Driven(fields);
 
@@ -269,6 +273,7 @@ internal sealed class AssistantSettingsPage
     /// <summary>The switch that lets a program on this computer drive the editor, and the lines that set one up.</summary>
     private void Driven(StackPanel fields)
     {
+        fields.Children.Add(SettingRows.Heading("Other programs"));
         fields.Children.Add(drivenBox);
         fields.Children.Add(new TextBlock
         {

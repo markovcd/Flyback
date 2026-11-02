@@ -44,7 +44,7 @@ internal sealed class Palette
     public GroupLibrary Groups { get; }
 
     /// <summary>
-    /// Lays the computer keyboard out by the MIDI section's default when the first
+    /// Lays the computer keyboard out by the Playing section's default when the first
     /// MIDI In is about to join a patch, so the layout lands in the same edit as the module.
     /// </summary>
     private void LayFirstKeyboard(string typeId)
@@ -61,7 +61,7 @@ internal sealed class Palette
 
     /// <param name="midi">The ports an instrument the list offers is plugged into.</param>
     /// <param name="instruments">What is known of each.</param>
-    /// <param name="repository">How the MIDI section lays out a first keyboard.</param>
+    /// <param name="repository">How the Playing section lays out a first keyboard.</param>
     /// <param name="folders">Where kept groups are read from and written to, or the usual place.</param>
     public Palette(
         NodeEditor editor,
