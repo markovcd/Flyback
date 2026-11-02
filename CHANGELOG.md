@@ -24,7 +24,8 @@
 - The text view offers what may be typed where the caret is, as you type or on Ctrl+Space: a module's sockets inside its brackets, its outputs after a dot, the names in sight and the modules there are. Inside a call its sockets stand above the caret with the one being filled in bold, and resting the pointer on a word says what it is.
 - The editor has a look of its own: Flyback's amber instead of the system blue, square corners, toolbar buttons with no fill until pointed at or switched on, numbers set in a mono face, modules drawn as flat panels with a rule in their family's color along a dark title band and no glyph behind their rows, and the canvas ruled like a scope's graticule.
 - The toolbar's symbols are drawn like the marks printed on a hardware panel, each with its name in small capitals under it. Settings, Canvas, "Label the toolbar buttons" turns the names off for a lower bar, and a window too narrow for them drops the names before it folds any button away.
-- The inspector starts with the values: a module's name and family share one line, its buttons stand in one row under it, and its description comes after the outputs.
+- The inspector starts with the values: a module's name and family share one line, its buttons stand in one row under it, and its description comes after the outputs. Its rows stand at one height, with thin bar thumbs and each value in amber mono instead of a box.
+- A module's title on the canvas sits centered in its band.
 
 ### Viewer
 

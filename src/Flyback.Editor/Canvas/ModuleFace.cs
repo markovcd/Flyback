@@ -52,7 +52,12 @@ internal static class ModuleFace
     internal static RoundedRect HeaderShape(Rect header) =>
         new(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0);
 
-    internal static Point TitleAt(Rect bounds) => new(bounds.X + 9, bounds.Y + 5);
+    /// <summary>Where a title stands: its capitals centered in the band under the rule.</summary>
+    internal static Point TitleAt(Rect bounds, FormattedText title) =>
+        new(bounds.X + 9, bounds.Y + Baseline - title.Baseline);
+
+    /// <summary>The band's middle under its 3 px rule, plus half a capital's height.</summary>
+    private const double Baseline = (3 + NodeGeometry.HeaderHeight) / 2.0 + HeaderSize * 0.36;
 
     /// <summary>Writes a title, struck through with <paramref name="strike"/> where one is given.</summary>
     internal static void DrawTitle(DrawingContext context, FormattedText title, Point at, IPen? strike)

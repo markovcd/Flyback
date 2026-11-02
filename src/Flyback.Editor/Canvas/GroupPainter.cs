@@ -263,7 +263,7 @@ internal sealed class GroupPainter(
 
         var title = CanvasText.Text(group.Title(), ModuleFace.HeaderSize, ModuleFace.HeaderTextBrush, bounds.Width - 16, true);
 
-        ModuleFace.DrawTitle(context, title, ModuleFace.TitleAt(bounds), off ? ModuleFace.OffStrike : null);
+        ModuleFace.DrawTitle(context, title, ModuleFace.TitleAt(bounds, title), off ? ModuleFace.OffStrike : null);
 
         for (var i = 0; i < sockets.Outputs.Count; i++)
             DrawBoxSocket(context, sockets.Outputs[i], NodeGeometry.GroupOutputPort(bounds, i), bounds);

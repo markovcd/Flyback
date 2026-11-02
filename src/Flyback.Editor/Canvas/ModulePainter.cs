@@ -206,14 +206,12 @@ internal sealed class ModulePainter(
             return;
         }
 
-        var titleAt = ModuleFace.TitleAt(bounds);
-
-        var titleBrush = Ink(titleAt.Y + TitleInk / 2, TitleInk, fade: 0, ModuleFace.HeaderTextBrush);
+        var titleBrush = Ink(bounds.Y + (3 + NodeGeometry.HeaderHeight) / 2, TitleInk, fade: 0, ModuleFace.HeaderTextBrush);
 
         var title = CanvasText.Text(
             ModuleFace.Heading(node, def), ModuleFace.HeaderSize, titleBrush, ModuleFace.HeaderWidth(bounds, tags.Tagged(def)), true);
 
-        ModuleFace.DrawTitle(context, title, titleAt, node.Off ? follow ? new Pen(titleBrush, 1.5) : ModuleFace.OffStrike : null);
+        ModuleFace.DrawTitle(context, title, ModuleFace.TitleAt(bounds, title), node.Off ? follow ? new Pen(titleBrush, 1.5) : ModuleFace.OffStrike : null);
 
         if (tags.Tagged(def)) UndescribedTags.Draw(context, bounds, follow ? titleBrush : null);
 

@@ -27,7 +27,7 @@ internal sealed class InspectorSurface
     {
         Name = "inspector",
         Margin = new Thickness(PanelInset),
-        Spacing = 8,
+        Spacing = 4,
     };
 
     /// <summary>
@@ -45,6 +45,8 @@ internal sealed class InspectorSurface
     public InspectorSurface(TextWriteBack writeBack, Renamer renamer)
     {
         Header.Renamer = renamer;
+
+        InspectorLook.Apply(Panel);
 
         // A drag on a slider is one edit, written into the text once the hand is off it.
         Panel.AddHandler(InputElement.PointerReleasedEvent, (_, _) => writeBack.HandCameOff(), RoutingStrategies.Bubble, handledEventsToo: true);
