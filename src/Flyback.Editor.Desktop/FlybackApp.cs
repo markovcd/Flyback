@@ -1,8 +1,10 @@
 using System.Diagnostics;
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Flyback.Core;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
@@ -71,15 +73,7 @@ public sealed class FlybackApp : Application
             usage.Drain(Usage.LongestWait);
         };
 
-        var setup = ThisMachine.Setup(usage) with { Launch = launch.Editor, Plugins = launch.Plugins };
-        var provider = EditorServices.Provider(setup);
-        menu.Serve(provider);
-        var window = provider.Window();
-        window.Start();
-        desktop.MainWindow = window;
-
-        // Once there is a window, so a slow network is never a slow start.
-        Updater.CheckInBackground(launch.Updates);
+        var shown = new TaskCompletionSource<(ServiceProvider Provider, MainWindow Window)>();
 
         // Windows and Linux hand a file to open in through argv, which
         // the launch's OpenPath already carries — see Program.Main. macOS never
@@ -87,12 +81,15 @@ public sealed class FlybackApp : Application
         // whether it is what launches the program or a file dropped on its
         // Dock icon while it is already running, and there is no other way
         // to hear about either. The desktop lifetime does not implement it;
-        // the application hands it out as a feature.
+        // the application hands it out as a feature. Heard from the start and
+        // acted on once the window is up, which a splash puts off.
         if (TryGetFeature(typeof(IActivatableLifetime)) is IActivatableLifetime activatable)
         {
             activatable.Activated += async (_, e) =>
             {
                 if (e is not FileActivatedEventArgs { Files: [IStorageFile file, ..] }) return;
+
+                var (provider, window) = await shown.Task;
 
                 if (OperatingSystem.IsMacOS()
                     && FileTypeSettings.Load(SettingsFile.Path).Opener == FileOpener.Viewer
@@ -106,6 +103,52 @@ public sealed class FlybackApp : Application
                 await provider.GetRequiredService<PatchOpening>().OpenActivatedFileAsync(file);
             };
         }
+
+        var untilReady = SlowStart.SinceLaunch();
+        var lastWindow = SlowStart.Last(SlowStart.File);
+
+        if (!launch.Splash && !SlowStart.Splashes(untilReady, lastWindow))
+        {
+            shown.SetResult(Open(desktop, usage));
+            return;
+        }
+
+        Trace.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"startup: splash, as Avalonia was ready after {untilReady.TotalSeconds:0.00} s and the last window took {lastWindow?.TotalSeconds.ToString("0.00 s", CultureInfo.InvariantCulture) ?? "unknown"}"));
+
+        var splash = new SplashWindow();
+
+        splash.Show();
+
+        // Below the splash's first frame, which then stays up while the window is built.
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                var opened = Open(desktop, usage);
+
+                opened.Window.Opened += (_, _) => splash.Close();
+                opened.Window.Show();
+                shown.SetResult(opened);
+            },
+            DispatcherPriority.Background);
+    }
+
+    /// <summary>Builds the editor's window and makes it the main one; the lifetime shows it, or the caller does once it is running.</summary>
+    private (ServiceProvider Provider, MainWindow Window) Open(IClassicDesktopStyleApplicationLifetime desktop, Usage usage)
+    {
+        var setup = ThisMachine.Setup(usage) with { Launch = launch.Editor, Plugins = launch.Plugins };
+        var provider = EditorServices.Provider(setup);
+        menu.Serve(provider);
+        var window = provider.Window();
+        window.Start();
+        window.Opened += (_, _) => SlowStart.Remember(SlowStart.File, SlowStart.SinceLaunch());
+        desktop.MainWindow = window;
+
+        // Once there is a window, so a slow network is never a slow start.
+        Updater.CheckInBackground(launch.Updates);
+
+        return (provider, window);
     }
 
     /// <summary>

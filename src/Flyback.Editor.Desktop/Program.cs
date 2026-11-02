@@ -15,6 +15,8 @@ internal static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        SlowStart.Begin();
+
         // Only a console somebody is looking at is worth keeping or writing to.
         // Started from a shell, this is where the shell's own window is and
         // where LogToTrace below ends up; started from Explorer it is a window
@@ -65,14 +67,17 @@ internal static class Program
         // a file to open is.
         var (shared, rest) = Restart.Shared(args);
         var (trace, withoutTrace) = TraceFlag.Taken(rest);
+        var (splash, withoutSplash) = SplashFlag.Taken(withoutTrace);
 
-        rest = withoutTrace;
+        rest = withoutSplash;
 
-        var launch = Startup.Load(
+        var loaded = Startup.Load(
             rest.FirstOrDefault(a => !a.StartsWith('-')),
             interpreted: args.Contains(EditorLaunch.InterpretedFlag, StringComparer.OrdinalIgnoreCase),
             updates: updates,
             shared: shared);
+
+        var launch = loaded with { Splash = splash };
 
         if (trace is not null)
         {
@@ -92,7 +97,7 @@ internal static class Program
         {
             return BuildAvaloniaApp(launch)
                 .UseDriver(OutputSettings.Load(SettingsFile.Path).DriverHere)
-                .StartWithClassicDesktopLifetime(TraceFlag.Taken(args).Without);
+                .StartWithClassicDesktopLifetime(SplashFlag.Taken(TraceFlag.Taken(args).Without).Without);
         }
         finally
         {

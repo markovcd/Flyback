@@ -21,4 +21,7 @@ internal sealed record DesktopLaunch
 
     /// <summary>Whether a release Flyback downloaded itself installed just before this launch.</summary>
     public bool Updated { get; init; }
+
+    /// <summary>Whether <see cref="SplashFlag"/> asked for the splash however quick the launch is.</summary>
+    public bool Splash { get; init; }
 }

@@ -33,6 +33,8 @@
 - Settings is regrouped and quieter: its tabs are listed in groups, full screen and live patching have a tab of their own, MIDI is now Playing and holds Endless, every tab is cut by small headings, and explanations moved from under the switches into their tooltips. On a phone, Settings is a list of its tabs to tap into, each then full width with its names above their controls, instead of a sheet wider than the screen.
 - A pinch over the text view, by two fingers on a screen or on a trackpad, makes its text larger or smaller in whole points, the size Ctrl+scroll and the A− and A+ buttons set; Ctrl+0 still puts it back.
 
+- On a desktop, a start that is slow to open its window shows Flyback's mark while it does.
+
 ### Viewer
 
 ### Command line
