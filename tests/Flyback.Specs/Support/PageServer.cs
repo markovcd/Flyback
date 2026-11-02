@@ -28,7 +28,10 @@ internal sealed class PageServer : IDisposable
         [".webp"] = "image/webp",
     };
 
-    private readonly HttpListener listener = new();
+    /// <summary>How many free ports are tried before giving up.</summary>
+    private const int Tries = 5;
+
+    private readonly HttpListener listener;
     private readonly ConcurrentDictionary<string, byte[]> offered = new();
 
     /// <summary>The site's root.</summary>
@@ -36,11 +39,24 @@ internal sealed class PageServer : IDisposable
 
     public PageServer()
     {
-        var port = FreePort();
-        Root = new Uri($"http://127.0.0.1:{port}/");
+        // A free port can be taken by a scenario beside this one before the listener binds it, so another is tried.
+        for (var tried = 1; ; tried++)
+        {
+            Root = new Uri($"http://127.0.0.1:{FreePort()}/");
+            listener = new HttpListener();
+            listener.Prefixes.Add(Root.AbsoluteUri);
 
-        listener.Prefixes.Add(Root.AbsoluteUri);
-        listener.Start();
+            try
+            {
+                listener.Start();
+                break;
+            }
+            catch (HttpListenerException) when (tried < Tries)
+            {
+                listener.Close();
+            }
+        }
+
         _ = Task.Run(Serve);
     }
 
