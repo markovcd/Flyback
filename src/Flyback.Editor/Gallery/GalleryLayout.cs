@@ -532,7 +532,7 @@ internal sealed class GalleryLayout
     private static void PressRow(Button row, bool pressed)
     {
         row.Background = pressed ? new SolidColorBrush(Colors.Node) : Brushes.Transparent;
-        row.Foreground = new SolidColorBrush(pressed ? Colors.BeamCore : Colors.Label);
+        row.Foreground = new SolidColorBrush(pressed ? Colors.Attention : Colors.Label);
         row.Classes.Set("pressed", pressed);
     }
 

@@ -21,8 +21,8 @@ namespace Flyback.Editor.Gallery;
 /// </remarks>
 internal sealed class GalleryChoice
 {
-    /// <summary>The color of what is chosen and of the button that opens it.</summary>
-    public static Color Accent => Colors.Feedback;
+    /// <summary>The color of what is chosen and of the button that opens it: the scheme's accent, as selection is everywhere.</summary>
+    public static Color Accent => Colors.Attention;
 
     private readonly List<(string Section, Control Heading, TextBlock Count, Panel Tiles)> runs = [];
 

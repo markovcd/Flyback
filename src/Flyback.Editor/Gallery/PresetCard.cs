@@ -21,10 +21,10 @@ internal sealed class PresetCard(
     public const double PictureHeight = TileWidth * PresetThumbnails.Height / PresetThumbnails.Width;
 
     /// <summary>The dot of a preset that is heard.</summary>
-    public static Color Heard => Colors.Pattern;
+    public static Color Heard => Colors.Value;
 
-    /// <summary>The dot of a preset that is seen.</summary>
-    public static Color Seen => Colors.Form;
+    /// <summary>The dot of a preset that is seen, brighter than <see cref="Heard"/> so the two tell apart.</summary>
+    public static Color Seen => Colors.Label;
 
     public PatchPreset Preset => preset;
 

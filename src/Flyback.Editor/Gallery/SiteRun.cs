@@ -67,7 +67,7 @@ internal sealed class SiteRun : IDisposable
                             Text = PresetGallery.SiteHeading,
                             FontSize = Text.Caption,
                             FontWeight = FontWeight.SemiBold,
-                            Foreground = new SolidColorBrush(Colors.Note),
+                            Foreground = new SolidColorBrush(Colors.Label),
                         },
                         SiteLink.To("Open", site.Root),
                     },
@@ -164,7 +164,7 @@ internal sealed class SiteRun : IDisposable
             {
                 Text = string.Join(" · ", preset.Tags),
                 FontSize = Text.Caption,
-                Foreground = new SolidColorBrush(Colors.Note),
+                Foreground = new SolidColorBrush(Colors.Value),
                 TextTrimming = TextTrimming.CharacterEllipsis,
             });
 
