@@ -648,6 +648,10 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
         DoWindow((open, _) =>
             UiTest.Press(Named<Button>(open, name)));
 
+    /// <summary>The words a panel button shows, all of them together.</summary>
+    public string PanelButtonText(string name) => ReadWindow(open =>
+        string.Join(" ", Named<Button>(open, name).GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text)));
+
     /// <summary>Makes a randomize reach anywhere and land at once, on a seeded die.</summary>
     public void RandomizeAtOnce() =>
         DoWindow((_, _) =>

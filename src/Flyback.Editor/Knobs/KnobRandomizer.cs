@@ -234,7 +234,7 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
     private string Explain(MidiBinding binding) => knobs.View.Explain?.Invoke(binding) ?? binding.Label;
 
     private void Show() =>
-        knobs.View.ShowRoll(Wanted.Amount, Wanted.GlideSeconds, Wanted.Trigger, before.Count > 0, learning.Active);
+        knobs.View.ShowRoll(Wanted.Amount, Wanted.GlideSeconds, Wanted.Trigger, before.Count, learning.Active);
 
     private void Save() => settings.Save();
 }

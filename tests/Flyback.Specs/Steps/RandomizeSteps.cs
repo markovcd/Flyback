@@ -19,6 +19,9 @@ public sealed class RandomizeSteps(EditorDriver editor)
     [When("the knobs are taken back")]
     public void WhenTakenBack() => editor.PressPanelButton("unroll-knobs");
 
+    [Then("back offers {int} randomize(s) to go back through")]
+    public void ThenBackOffers(int steps) => editor.PanelButtonText("unroll-knobs").ShouldBe(steps.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
     [Then("the knob {string} has moved from {float}")]
     public void ThenMoved(string name, float from) => editor.KnobAt(name).ShouldNotBe(from);
 

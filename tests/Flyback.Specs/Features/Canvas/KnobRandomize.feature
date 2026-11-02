@@ -16,3 +16,15 @@ Feature: The knob panel can be randomized
     And the knob "level" still rests at 0.25
     When the knobs are taken back
     Then the knob "tone" still rests at 0.25
+
+  Scenario: Back says how many randomizes it can go back through
+    Given the text:
+      """
+      panel tone = 0.25
+      saw(freq: 110) |> filter(cutoff: tone(200..4000)) |> out.left
+      """
+    When the knob panel is randomized
+    And the knob panel is randomized
+    Then back offers 2 randomizes to go back through
+    When the knobs are taken back
+    Then back offers 1 randomize to go back through

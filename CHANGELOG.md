@@ -11,6 +11,7 @@
 ### Editor
 
 - The web editor says why when it cannot start, rather than staying on Starting.
+- The knob panel's randomize takes one narrow column: a die ringed as far round as the amount reaches, and under it Back with the number of randomizes it can step through, drawn as a clock rather than the undo arrow. The amount, the glide and the controller button that fires it are in the die's flyout, opened by a right-click or a long press, with their values written beside them.
 - Settings, Canvas, Colors offers Paper, a light scheme of ballpoint blue on cream. A scheme of your own can be light too, with `"light": true` in its file: the controls turn light, module, socket, wire and syntax colors darken just enough to read on the pale ground, and titles on module bands turn black.
 - In the letter to the author and the preset report, the send button is filled with the scheme's accent so it stands apart from Cancel.
 - Endless, in Settings → Playing and a page's settings: a patch with no length plays on until paused rather than stopping at three minutes, with the seek bar and loop set aside, pause, rewind, the clock and the length box left on the transport row, and a length typed there bringing the bar back.

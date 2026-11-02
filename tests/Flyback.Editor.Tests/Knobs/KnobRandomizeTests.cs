@@ -160,4 +160,47 @@ public class KnobRandomizeTests : EditorTest
         landed.ShouldNotBe(0.25f);
         randomizer.Gliding.ShouldBeFalse();
     }
+
+    [AvaloniaFact]
+    public void Back_counts_the_randomizes_it_can_step_through()
+    {
+        var window = Opened(Board(knobs: 1));
+        var back = All<Button>(Panel(window)).Single(b => b.Name == "unroll-knobs");
+
+        Press(window, "roll-knobs");
+        Press(window, "roll-knobs");
+
+        All<TextBlock>(back).Single().Text.ShouldBe("2");
+
+        Press(window, "unroll-knobs");
+
+        All<TextBlock>(back).Single().Text.ShouldBe("1");
+    }
+
+    [AvaloniaFact]
+    public void The_die_rings_the_amount_and_its_flyout_sets_it_and_keeps_it()
+    {
+        var window = Opened(Board(knobs: 1));
+        var repository = Service<OutputSettingRepository>(window);
+        repository.Current.Randomize.Amount = 0.5;
+        Service<KnobRandomizer>(window).Roll();
+        Settle(window);
+
+        var roll = Panel(window).Roll;
+        All<AmountRing>(Panel(window)).Single().Value.ShouldBe(0.5);
+
+        var dice = All<Button>(Panel(window)).Single(b => b.Name == "roll-knobs");
+        roll.Settings.ShowAt(dice);
+        Settle(window);
+
+        var amount = All<Slider>((Control)roll.Settings.Content!).Single(s => s.Name == "roll-amount");
+        amount.Value.ShouldBe(0.5);
+
+        amount.Value = 0.2;
+        roll.Settings.Hide();
+        Settle(window);
+
+        repository.Current.Randomize.Amount.ShouldBe(0.2, 1e-9);
+        All<AmountRing>(Panel(window)).Single().Value.ShouldBe(0.2, 1e-9);
+    }
 }

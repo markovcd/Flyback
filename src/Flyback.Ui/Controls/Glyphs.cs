@@ -309,6 +309,10 @@ internal static class Glyphs
         "M3,2.5 L13,2.5 A0.5,0.5 0 0 1 13.5,3 L13.5,13 A0.5,0.5 0 0 1 13,13.5 L3,13.5 A0.5,0.5 0 0 1 2.5,13 L2.5,3 A0.5,0.5 0 0 1 3,2.5 Z "
         + "M5.5,5.5 L5.5,5.6 M8,8 L8,8.1 M10.5,10.5 L10.5,10.6");
 
+    /// <summary>A clock with its hands and an arrow running back round it: back through the randomizes.</summary>
+    public static Control History() => Stroked(
+        "M2.5,8 A5.5,5.5 0 1 0 4.1,4.1 M4.1,4.1 L4.1,1.8 M4.1,4.1 L1.8,4.1 M8,5 L8,8 L10.5,9.5");
+
     /// <summary>A circle of <paramref name="radius"/> around the middle of the box, as path data.</summary>
     private static string Ring(double radius) => FormattableString.Invariant(
         $"M8,{8 - radius} A{radius},{radius} 0 1 1 8,{8 + radius} A{radius},{radius} 0 1 1 8,{8 - radius} Z");
