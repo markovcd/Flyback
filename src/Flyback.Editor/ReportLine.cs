@@ -292,7 +292,7 @@ internal sealed class ReportLine : UserControl
 
         // Which rows are still on the bar — all of them, when several things
         // were said at once. Only a message that is still up is still true, and
-        // an amber row under a status bar that has gone quiet says the opposite
+        // an accent-colored row under a status bar that has gone quiet says the opposite
         // of what happened. The last of each, because a problem that was fixed
         // and came back is the newer row rather than both.
         var standing = spoken

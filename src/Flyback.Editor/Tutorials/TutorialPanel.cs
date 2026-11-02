@@ -22,7 +22,7 @@ internal sealed class TutorialPanel : UserControl, IReactTo<PatchChanged>
     private static readonly IBrush Chrome = new ImmutableSolidColorBrush(Colors.Panel);
     private static readonly IBrush Rule = new ImmutableSolidColorBrush(Colors.Edge);
     private static readonly IBrush Ink = new ImmutableSolidColorBrush(Colors.Label);
-    private static readonly IBrush Amber = new ImmutableSolidColorBrush(Colors.Attention);
+    private static readonly IBrush Lit = new ImmutableSolidColorBrush(Colors.Attention);
     private static readonly IBrush Met = new ImmutableSolidColorBrush(Colors.Oscillator);
     private static readonly IBrush Current = new ImmutableSolidColorBrush(Colors.NodeSelected);
 
@@ -225,7 +225,7 @@ internal sealed class TutorialPanel : UserControl, IReactTo<PatchChanged>
             lesson.Children.Add(Words(step.Text));
 
             if (Hint is { } hint)
-                lesson.Children.Add(new TextBlock { Name = "tutorial-hint", Text = $"Still to do: {hint}", FontSize = Text.Small, Foreground = Amber, TextWrapping = TextWrapping.Wrap });
+                lesson.Children.Add(new TextBlock { Name = "tutorial-hint", Text = $"Still to do: {hint}", FontSize = Text.Small, Foreground = Lit, TextWrapping = TextWrapping.Wrap });
         }
         else
         {

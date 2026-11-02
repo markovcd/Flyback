@@ -16,7 +16,7 @@ internal static class CategoryAccents
     {
         ModuleCategories.Output => new Swatch(0xE0, 0x5A, 0x5A),
         ModuleCategories.Sources => new Swatch(0x4A, 0x9E, 0xDE),
-        ModuleCategories.Oscillators => new Swatch(0x4F, 0xC3, 0x87),
+        ModuleCategories.Oscillators => new Swatch(0x3A, 0xA1, 0x87),
         ModuleCategories.Timing => new Swatch(0xD8, 0xB0, 0x4A),
         ModuleCategories.Maths => new Swatch(0x7E, 0x86, 0x94),
         ModuleCategories.Geometry => new Swatch(0xB4, 0x84, 0xE0),

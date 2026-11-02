@@ -12,7 +12,7 @@ namespace Flyback.Editor.Assist;
 /// <summary>The pill in the assistant's header holding the beacon: working, ready, not set up, or driven.</summary>
 internal sealed class AssistantStatus
 {
-    private static readonly IBrush Amber = new ImmutableSolidColorBrush(Colors.Attention);
+    private static readonly IBrush Lit = new ImmutableSolidColorBrush(Colors.Attention);
     private static readonly IBrush Live = new ImmutableSolidColorBrush(Colors.Feedback);
     private static readonly IBrush LiveInk = new ImmutableSolidColorBrush(Colors.Blend(Colors.Feedback, Avalonia.Media.Colors.White, 0.3));
     private static readonly IBrush LiveGround = new ImmutableSolidColorBrush(Colors.Faded(Colors.Feedback, 0.13));
@@ -69,7 +69,7 @@ internal sealed class AssistantStatus
     public void Ready(string? blocked)
     {
         beacon.Opacity = 1;
-        beacon.Fill = blocked is null ? Text.Muted : Amber;
+        beacon.Fill = blocked is null ? Text.Muted : Lit;
         progress.Text = blocked is null ? "Ready" : "Not set up";
         progress.Foreground = Ink;
         View.Background = Idle;

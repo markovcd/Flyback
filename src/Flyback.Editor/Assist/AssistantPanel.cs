@@ -595,7 +595,7 @@ internal sealed class AssistantPanel : UserControl
         blocked = excuse;
         ShowSendState();
 
-        // On the box, since the box is what sending is done from now, and in amber
+        // On the box, since the box is what sending is done from now, and in the accent
         // a few pixels below it, so nothing is lost to anybody who never hovers.
         // The standing disclosure of what gets sent and where the key came from
         // lives in the status bar; this speaks up only for something actionable.

@@ -16,7 +16,7 @@ namespace Flyback.Editor.Assist;
 /// <summary>The assistant's conversation as it is drawn, and as it is kept to be saved with the patch.</summary>
 internal sealed class TranscriptView : ScrollViewer, ITranscript
 {
-    private static readonly IBrush Amber = new ImmutableSolidColorBrush(Colors.Attention);
+    private static readonly IBrush Lit = new ImmutableSolidColorBrush(Colors.Attention);
     private static readonly IBrush Ink = new ImmutableSolidColorBrush(Colors.Label);
     private static readonly IBrush Live = new ImmutableSolidColorBrush(Colors.Feedback);
 
@@ -156,7 +156,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
                 break;
 
             case Voice.Failed:
-                Card(text, Colors.Attention, Glyphs.Warning(10, Amber), "Failed", null);
+                Card(text, Colors.Attention, Glyphs.Warning(10, Lit), "Failed", null);
                 break;
 
             // A lookup is a step it took; the briefing comes before any turn.

@@ -94,13 +94,18 @@ internal static class Colors
     /// Selection, the wire being dragged, and whatever the compiler wants to
     /// say. One color for all three on purpose: they are the same request.
     /// </summary>
-    public static Color Attention { get; } = Color.FromRgb(0xFF, 0xB0, 0x40);
+    /// <remarks>
+    /// P31 green, as the Beam module draws its trace at its default hue, taken where
+    /// the trace begins to whiten (ADR-0219).
+    /// </remarks>
+    public static Color Attention { get; } = Color.FromRgb(0x77, 0xEA, 0x9A);
 
     // --- module accents -----------------------------------------------------
 
     public static Color Sink { get; } = Color.FromRgb(0xE0, 0x5A, 0x5A);
     public static Color Source { get; } = Color.FromRgb(0x4A, 0x9E, 0xDE);
-    public static Color Oscillator { get; } = Color.FromRgb(0x4F, 0xC3, 0x87);
+    /// <summary>A dark sea green, kept off the P31 green of <see cref="Attention"/> so a selected oscillator still shows its ring.</summary>
+    public static Color Oscillator { get; } = Color.FromRgb(0x3A, 0xA1, 0x87);
     public static Color Sequencer { get; } = Color.FromRgb(0xD8, 0xB0, 0x4A);
     public static Color Maths { get; } = Color.FromRgb(0x7E, 0x86, 0x94);
     public static Color Space { get; } = Color.FromRgb(0xB4, 0x84, 0xE0);

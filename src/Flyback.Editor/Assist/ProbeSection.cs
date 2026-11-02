@@ -16,7 +16,7 @@ namespace Flyback.Editor.Assist;
 /// </remarks>
 internal sealed class ProbeSection : StackPanel
 {
-    private static readonly IBrush Amber = new ImmutableSolidColorBrush(Colors.Attention);
+    private static readonly IBrush Lit = new ImmutableSolidColorBrush(Colors.Attention);
 
     private readonly Func<IPatchAssistant?> assistant;
 
@@ -35,7 +35,7 @@ internal sealed class ProbeSection : StackPanel
     private readonly Button probe = new() { Name = "probe", FontSize = Text.Body };
 
     /// <summary>
-    /// What a probe costs, said in amber above the button rather than in the gray
+    /// What a probe costs, said in the accent above the button rather than in the gray
     /// paragraph over it.
     /// </summary>
     /// <remarks>
@@ -50,7 +50,7 @@ internal sealed class ProbeSection : StackPanel
         Text = "Every question is a real request on your key: this costs money, "
             + "three requests for the one model.",
         FontSize = Text.Small,
-        Foreground = Amber,
+        Foreground = Lit,
         TextWrapping = TextWrapping.Wrap,
     };
 
@@ -184,13 +184,13 @@ internal sealed class ProbeSection : StackPanel
             // lost, and the answer is already lost either way.
             if (!ReferenceEquals(assistant(), asked))
             {
-                Say($"{asked.Name} answered after the provider changed, so nothing was kept.", amber: true);
+                Say($"{asked.Name} answered after the provider changed, so nothing was kept.", lit: true);
                 return;
             }
 
             if (found.Count == 0)
             {
-                Say("The endpoint did not answer for that model. Nothing was changed.", amber: true);
+                Say("The endpoint did not answer for that model. Nothing was changed.", lit: true);
                 return;
             }
 
@@ -218,7 +218,7 @@ internal sealed class ProbeSection : StackPanel
         {
             // A provider's own failure. The window survives it, and the sentence
             // is the whole of what anybody can act on.
-            Say(ex.Message, amber: true);
+            Say(ex.Message, lit: true);
         }
         finally
         {
@@ -262,11 +262,11 @@ internal sealed class ProbeSection : StackPanel
     }
 
     /// <summary>What the probe has to say, or nothing at all.</summary>
-    private void Say(string line, bool amber = false)
+    private void Say(string line, bool lit = false)
     {
         probeNote.Text = line;
         probeNote.IsVisible = line.Length > 0;
-        probeNote.Foreground = amber ? Amber : Text.Muted;
+        probeNote.Foreground = lit ? Lit : Text.Muted;
     }
 
     /// <summary>

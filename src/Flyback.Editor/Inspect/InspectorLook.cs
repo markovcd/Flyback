@@ -11,7 +11,7 @@ namespace Flyback.Editor.Inspect;
 
 /// <summary>
 /// How the inspector's rows are set: one height for every row, thin bar thumbs on hairline
-/// tracks, and each value a reading in amber mono rather than a box (ADR-0219).
+/// tracks, and each value a reading in the accent's mono rather than a box (ADR-0219).
 /// </summary>
 internal static class InspectorLook
 {

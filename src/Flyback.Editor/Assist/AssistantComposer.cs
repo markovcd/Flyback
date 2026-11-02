@@ -19,7 +19,7 @@ namespace Flyback.Editor.Assist;
 /// </summary>
 internal sealed class AssistantComposer
 {
-    private static readonly IBrush Amber = new ImmutableSolidColorBrush(Colors.Attention);
+    private static readonly IBrush Lit = new ImmutableSolidColorBrush(Colors.Attention);
     private static readonly IBrush Chrome = new ImmutableSolidColorBrush(Colors.Panel);
     private static readonly IBrush Rule = new ImmutableSolidColorBrush(Colors.Edge);
 
@@ -181,7 +181,7 @@ internal sealed class AssistantComposer
     }
 
     /// <summary>
-    /// Says why a message cannot be sent, on the box and in amber above it, or
+    /// Says why a message cannot be sent, on the box and in the accent above it, or
     /// nothing where <paramref name="excuse"/> is null.
     /// </summary>
     public void Excuse(string? excuse)
@@ -193,7 +193,7 @@ internal sealed class AssistantComposer
         if (excuse is null) return;
 
         footer.Text = excuse;
-        footer.Foreground = Amber;
+        footer.Foreground = Lit;
     }
 
     /// <summary>

@@ -298,7 +298,9 @@ public class SocketSwitchTests : EditorTest
         Settle(window);
     }
 
-    private static bool Attention(Avalonia.Media.Color color) => color.R > 0xC0 && color.G > 0x80 && color.B < 0x90;
+    /// <summary>Within a few steps of the turning color, read off <see cref="Colors.Attention"/> rather than written out again.</summary>
+    private static bool Attention(Avalonia.Media.Color color) =>
+        Math.Abs(color.R - Colors.Attention.R) + Math.Abs(color.G - Colors.Attention.G) + Math.Abs(color.B - Colors.Attention.B) < 60;
 
     /// <summary>The bottom of the ring round a socket, below the socket's own dot, as a rectangle of the patch.</summary>
     private static Rect UnderRing(NodeEditor editor, NodeInstance node, int port)

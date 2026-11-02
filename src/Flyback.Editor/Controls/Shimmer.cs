@@ -23,7 +23,7 @@ internal sealed class Shimmer : TextBlock
     /// <summary>How wide the light is, against the word.</summary>
     private const double Reach = 0.35;
 
-    /// <summary>The status line's own amber, with the light taken out of it.</summary>
+    /// <summary>The status line's own accent, with the light taken out of it.</summary>
     private static readonly Color Dim = Colors.Shade(Colors.Attention, 0.5);
 
     private readonly DispatcherTimer timer = new(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(33) };

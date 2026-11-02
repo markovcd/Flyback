@@ -28,7 +28,7 @@
   --normalled: #6C7482;
 
   /* the one color that means "look here" */
-  --attention: #FFB040;
+  --attention: #77EA9A;
 
   /* module families, borrowed to color a heading or a card's edge */
   --sink: #E05A5A;
@@ -128,7 +128,7 @@ strong { color: var(--bright); font-weight: 650; }
   background: var(--node); color: var(--bright);
 }
 .button:hover { background: var(--node-selected); color: var(--bright); }
-.button.primary { background: var(--attention); color: #16181B; border-color: #C98A2E; }
+.button.primary { background: var(--attention); color: #16181B; border-color: #4BB874; }
 .button.primary:hover { background: #FFC266; color: #16181B; }
 .button svg { width: 17px; height: 17px; flex: none; }
 

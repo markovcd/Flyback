@@ -18,6 +18,12 @@ after a CRT's return stroke.
 The editor is drawn as an instrument, with a scope on the bench as the reference
 ("Phosphor"). Arek picked the direction from three drawn on a design page.
 
+- **The accent is P31 green, #77EA9A.** It is the Beam module's own trace at its default
+  hue, taken where the trace begins to whiten, so it comes from Flyback rather than from
+  taste. Amber was tried first and dropped: Arek's other app, also built with Claude,
+  had landed on near-black and an amber a few units away, which is the generated
+  default this decision exists to avoid. Oscillators moved to a darker sea green so a
+  selected one still shows its ring.
 - **The controls are Flyback's.** Fluent takes `Colors.Attention` as its accent and
   2 px corners; toolbar and panel glyph buttons have no fill until pointed at or
   switched on. Number boxes and the clock are set in the mono face.

@@ -32,7 +32,7 @@ internal static class EditorTheme
         resources["ButtonBackgroundDisabled"] = Brushes.Transparent;
         resources["ToggleButtonBackgroundDisabled"] = Brushes.Transparent;
 
-        // Dark ink on the amber of a toggle that is down; white on it fails contrast.
+        // Dark ink on the accent of a toggle that is down; white on it fails contrast.
         var ink = new SolidColorBrush(Colors.Window);
         resources["ToggleButtonForegroundChecked"] = ink;
         resources["ToggleButtonForegroundCheckedPointerOver"] = ink;

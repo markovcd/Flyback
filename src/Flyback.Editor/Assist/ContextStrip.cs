@@ -22,7 +22,7 @@ internal sealed class ContextStrip : StackPanel
     private static readonly IBrush Full = new ImmutableSolidColorBrush(Colors.Attention);
     private static readonly IBrush Ink = new ImmutableSolidColorBrush(Colors.Label);
 
-    /// <summary>Past this much of the limit the bar turns amber: the next message may be the last.</summary>
+    /// <summary>Past this much of the limit the bar turns to the accent: the next message may be the last.</summary>
     private const double Nearly = 0.85;
 
     private readonly Button strip = new()
