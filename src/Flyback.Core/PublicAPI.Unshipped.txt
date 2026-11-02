@@ -1,1 +1,2 @@
 #nullable enable
+*REMOVED*const Flyback.Core.Graph.NodeGroup.Fewest = 2 -> int

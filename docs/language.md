@@ -667,8 +667,8 @@ named after the `let` that binds the call's result, `let bass = voice(A2)`, and
 otherwise after the def. Only the outermost call is boxed: a def called inside
 another def's body is in its caller's box, and one called inside a `group` block
 is in the block's. What the caller passes in, and the clock and coordinates,
-stay outside. A call that places fewer than two modules draws no box and says
-nothing.
+stay outside. A call that places a single module draws no box and says
+nothing; a `group` block round it draws one.
 
 The body is a block. Its result is the final expression, which may be a tuple,
 and `let (a, b) = f(...)` takes one apart. A single-expression body needs no
@@ -784,9 +784,9 @@ refused. A def written in a group is in sight only inside it, though its names
 stay in sight after it.
 
 **A group may hold another group.** Only the outermost draws a box, and the inner
-group's modules are in it; a printing writes them in the outer block. A group of fewer than
-two modules, which the canvas never draws, is left out with a warning, and its
-module is built all the same. The clock and the
+group's modules are in it; a printing writes them in the outer block. A group may
+hold a single module (ADR-0221); one that places none is left out with a warning.
+The clock and the
 coordinates `t` and `x` reach for belong to the whole patch and are in no group,
 however early a block reads them; a group that holds its own is written
 `let time = time()` inside it.

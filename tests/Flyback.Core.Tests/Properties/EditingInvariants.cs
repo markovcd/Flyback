@@ -46,8 +46,8 @@ public class EditingInvariants
                     break;
 
                 case 3:
-                    if (patch.Nodes.Count >= NodeGroup.Fewest)
-                        patch.Group(patch.Nodes.OrderBy(_ => random.Next()).Take(NodeGroup.Fewest).Select(n => n.Id));
+                    if (patch.Nodes.Count > 0)
+                        patch.Group(patch.Nodes.OrderBy(_ => random.Next()).Take(random.Next(1, 3)).Select(n => n.Id));
                     break;
 
                 case 4:

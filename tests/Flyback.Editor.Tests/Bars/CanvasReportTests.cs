@@ -25,6 +25,6 @@ public sealed class CanvasReportTests : EditorTest
         Settle(window);
 
         var report = All<ReportLine>(window).Single();
-        report.History.ShouldContain(message => message.Contains("needs 2 modules"), "the canvas declined the group, and the report line should say so");
+        report.History.ShouldContain(message => message.Contains("Grouped one module"), "the canvas grouped the module, and the report line should say so");
     }
 }

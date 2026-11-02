@@ -119,7 +119,7 @@ public class InspectorFoldTests : EditorTest
         Show(menu);
 
         All<Button>(menu).Select(b => b.Name).ShouldBe(
-            ["menu-switch-modules", "menu-rename", "menu-duplicate-modules", "menu-delete-modules", "menu-copy-modules", "menu-cut-modules"]);
+            ["menu-switch-modules", "menu-rename", "menu-group", "menu-duplicate-modules", "menu-delete-modules", "menu-copy-modules", "menu-cut-modules"]);
 
         Press(Named(menu, "menu-delete-modules"));
         Settle(window);

@@ -268,7 +268,7 @@ internal sealed class GroupInspector(
         Act(
             "delete-group",
             Glyphs.Delete(),
-            $"Delete the box and the {group.Members.Count} modules in it  (Delete)",
+            $"Delete the box and the {group.Counted} in it  (Delete)",
             editor.Edits.DeleteSelected);
 
         plate.Under.Children.Insert(above, actions);

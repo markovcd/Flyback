@@ -102,15 +102,15 @@ public partial class PatchWorkbenchTests
         bench.Snapshot().Nodes.ShouldContain(n => n.TypeId == "value");
     }
 
-    /// <summary>A group round one module costs the box, not the write, and the reply says so.</summary>
+    /// <summary>A group that places no modules costs the box, not the write, and the reply says so.</summary>
     [Fact]
-    public async Task A_group_of_one_module_is_written_with_a_warning()
+    public async Task An_empty_group_is_written_with_a_warning()
     {
         var bench = await Lit(0.25f);
 
         var written = await Call(bench, "write_patch", JsonSerializer.Serialize(new
         {
-            source = "group \"Voice\" {\n  let tone = sine(freq: 220)\n}\ntone |> out.left",
+            source = "group \"Voice\" {\n  let f = 220\n}\nsine(freq: f) |> out.left",
         }));
 
         written.Ok.ShouldBeTrue(written.Text);

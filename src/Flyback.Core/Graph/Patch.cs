@@ -286,9 +286,8 @@ public sealed class Patch
     /// claiming to draw one module is a picture with no meaning.
     /// </summary>
     /// <returns>
-    /// The new group, or null where what was asked for would not be one — an
-    /// empty selection, the sink on its own, or fewer than
-    /// <see cref="NodeGroup.Fewest"/> modules.
+    /// The new group, or null where nothing would be in it: an empty selection
+    /// or the sink on its own.
     /// </returns>
     internal NodeGroup? Group(IEnumerable<Guid> members)
     {
@@ -297,7 +296,7 @@ public sealed class Patch
             .Where(id => Find(id) is { } node && !NodeCatalog.IsSink(node.TypeId))
             .ToList();
 
-        if (inside.Count < NodeGroup.Fewest) return null;
+        if (inside.Count == 0) return null;
 
         foreach (var id in inside) Forget(id);
 
@@ -352,8 +351,7 @@ public sealed class Patch
 
     /// <summary>
     /// Takes <paramref name="members"/> out of whatever groups hold them, and says
-    /// whether any were in one. A group left with fewer than
-    /// <see cref="NodeGroup.Fewest"/> goes.
+    /// whether any were in one. A group left empty goes.
     /// </summary>
     /// <remarks>The wires they leave behind across an edge become sockets on it.</remarks>
     internal bool Leave(IEnumerable<Guid> members)
@@ -419,9 +417,7 @@ public sealed class Patch
     }
 
     /// <summary>
-    /// Takes a module out of whatever group holds it, dropping any group left
-    /// with fewer than <see cref="NodeGroup.Fewest"/> — so the rule against a box
-    /// round one module holds after an edit and not only when one is made.
+    /// Takes a module out of whatever group holds it, dropping any group left empty.
     /// </summary>
     private void Forget(Guid nodeId)
     {
@@ -438,7 +434,7 @@ public sealed class Patch
             group.Exposed.RemoveAll(s => s.Node == nodeId);
         }
 
-        Groups.RemoveAll(g => g.Members.Count < NodeGroup.Fewest);
+        Groups.RemoveAll(g => g.Members.Count == 0);
 
         if (Groups.Count == 0) Groups = null;
     }

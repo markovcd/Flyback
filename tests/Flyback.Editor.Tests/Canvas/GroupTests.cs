@@ -138,38 +138,24 @@ public class GroupTests : EditorTest
         patch.Connections.Count.ShouldBe(3);
     }
 
-    /// <summary>
-    /// Ctrl+G on one module does nothing, and says so. A box round one is the
-    /// module again with a second name — every socket it could show is one that
-    /// module already has, in the same order.
-    /// </summary>
+    /// <summary>Ctrl+G on one module draws a box round it, so a live patch can start a group before it has more.</summary>
     [AvaloniaFact]
-    public void Ctrl_g_on_a_single_module_is_declined()
+    public void Ctrl_g_on_a_single_module_groups_it()
     {
         var patch = Chain(out _, out var first, out _, out _);
         var (editor, window) = Editing(patch);
-
-        var said = string.Empty;
-        editor.Reactions.Add<CanvasSaid>(notice => said = notice.Message);
 
         Click(editor, window, Body(first));
         window.KeyPressQwerty(PhysicalKey.G, RawInputModifiers.Control);
         Settle(window);
 
-        patch.Groups.ShouldBeNull();
-        said.ShouldContain("needs 2 modules");
-
-        // And the selection is left exactly as it was, so the next thing tried
-        // is tried on what was already picked.
+        editor.History.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem().Members.ShouldBe([first.Id]);
         editor.Selection.Nodes.ShouldBe([first]);
     }
 
-    /// <summary>
-    /// Selecting everything and grouping it is the case where the two rules meet:
-    /// the Output is left out, and what is left still has to be enough.
-    /// </summary>
+    /// <summary>The Output is left out of a group, and the one module beside it is grouped.</summary>
     [AvaloniaFact]
-    public void Ctrl_g_on_one_module_and_the_output_is_declined_too()
+    public void Ctrl_g_on_one_module_and_the_output_groups_the_module()
     {
         var patch = Chain(out _, out var first, out _, out var sink);
         var (editor, window) = Editing(patch);
@@ -180,7 +166,7 @@ public class GroupTests : EditorTest
         window.KeyPressQwerty(PhysicalKey.G, RawInputModifiers.Control);
         Settle(window);
 
-        patch.Groups.ShouldBeNull();
+        editor.History.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem().Members.ShouldBe([first.Id]);
     }
 
     /// <summary>Ctrl+G on a box that is already one keeps it.</summary>

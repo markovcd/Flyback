@@ -82,11 +82,14 @@ internal static class ActionRows
         // end of the row rather than the first thing under the pointer.
         //
         // Its tip counts the way delete's does — see NodeEditor.Groupable — and it
-        // is offered on the same terms Ctrl+G is: a button offering to group one
-        // module would offer something the graph refuses. Ungrouping is not here,
+        // is offered on the same terms Ctrl+G is. Ungrouping is not here,
         // because a selection that is exactly a group gets a panel of its own.
-        if (editor.Edits.Groupable >= NodeGroup.Fewest)
-            Act("group", Glyphs.Group(), $"Draw these {editor.Edits.Groupable} modules as one box  (Ctrl+G)", editor.Edits.GroupSelected);
+        if (editor.Edits.Groupable > 0)
+            Act("group", Glyphs.Group(),
+                editor.Edits.Groupable == 1
+                    ? "Draw this module as a box  (Ctrl+G)"
+                    : $"Draw these {editor.Edits.Groupable} modules as one box  (Ctrl+G)",
+                editor.Edits.GroupSelected);
 
         // For a selection that reaches into groups without being one: the group
         // panel above answers only a selection that is exactly one, and a

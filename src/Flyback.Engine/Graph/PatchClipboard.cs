@@ -58,7 +58,7 @@ public static class PatchClipboard
         // fresh. See NodeGroup: a group is a fact about the canvas, so this is
         // the one thing copied here that the compiler will never be told about.
         foreach (var group in patch.Groups ?? [])
-            if (group.Members.Count >= NodeGroup.Fewest && group.Members.All(inside.Contains))
+            if (group.Members.Count > 0 && group.Members.All(inside.Contains))
                 (copy.Groups ??= []).Add(group.Clone());
 
         // Not stamped with a version or a plugin list here: writing it out is
@@ -142,11 +142,9 @@ public static class PatchClipboard
                 .Select(id => renamed[id])
                 .ToList();
 
-            // Worn down past what a group may be by whatever did not arrive —
-            // a sink that was dropped, or a fragment somebody hand-edited. The
-            // rule Patch.Forget keeps after a delete, kept here too rather than
-            // pasting the box round one module that Ctrl+G declines to draw.
-            if (members.Count < NodeGroup.Fewest) continue;
+            // Emptied by whatever did not arrive: a sink that was dropped, or a
+            // fragment somebody hand-edited.
+            if (members.Count == 0) continue;
 
             (into.Groups ??= []).Add(new NodeGroup
             {

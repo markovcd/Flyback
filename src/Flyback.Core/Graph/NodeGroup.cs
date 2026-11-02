@@ -22,15 +22,6 @@ public sealed class NodeGroup
     /// <inheritdoc cref="NodeInstance.NameLimit"/>
     public const int NameLimit = NodeInstance.NameLimit;
 
-    /// <summary>
-    /// The fewest modules a group may hold. A box round one is the module again
-    /// with a second name: every socket it could show is one that module already
-    /// has, in the same order. Held here rather than on the gesture, so it is true
-    /// of a group however it arrived — see <see cref="Patch.Group"/> and
-    /// <see cref="Patch.Remove"/>.
-    /// </summary>
-    public const int Fewest = 2;
-
     /// <summary>Names this group within its patch.</summary>
     public required Guid Id { get; init; }
 

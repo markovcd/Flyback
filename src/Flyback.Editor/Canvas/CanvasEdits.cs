@@ -202,17 +202,7 @@ internal sealed class CanvasEdits(
             return;
         }
 
-        if (Patch.Group(selection.Ids) is not { } made)
-        {
-            // Only where something was selected: a key pressed on an empty canvas is
-            // a key pressed by mistake.
-            if (Groupable > 0)
-                report.Say(
-                    $"A group needs {NodeGroup.Fewest} modules or more — a box round one "
-                    + "would be the module again with a second name.");
-
-            return;
-        }
+        if (Patch.Group(selection.Ids) is not { } made) return;
 
         // What was selected stays selected, so a second Ctrl+G has something to ungroup.
         selection.Take(made.Members);
@@ -220,8 +210,8 @@ internal sealed class CanvasEdits(
         history.Record();
 
         report.Say(
-            $"Grouped {made.Members.Count} modules. "
-            + "Ctrl+Shift+G ungroups them, double-click looks inside.");
+            $"Grouped {Modules(made.Members.Count)}. "
+            + "Ctrl+Shift+G ungroups, double-click looks inside.");
     }
 
     /// <summary>

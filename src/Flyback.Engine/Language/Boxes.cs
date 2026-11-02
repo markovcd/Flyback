@@ -6,7 +6,7 @@ namespace Flyback.Engine.Language;
 /// <summary>
 /// Each group the text opens, and each outermost def call, and the box drawn
 /// round it once every block has been read: a group may be opened more than
-/// once, and its first block may hold fewer modules than a box can be.
+/// once, and its first block may place no modules at all.
 /// </summary>
 internal sealed class Boxes(Patch patch, Issues issues, SourceSites sites)
 {
@@ -70,10 +70,8 @@ internal sealed class Boxes(Patch patch, Issues issues, SourceSites sites)
 
                 var (line, column) = opened.First(open => open.Box == i).Where;
 
-                // A warning, since the modules are built all the same and only the box is missing.
                 issues.Warn(IssueCode.GroupTooSmall, line, column,
-                    $"a group is drawn round {NodeGroup.Fewest} modules or more, and this one has {members.Count}, "
-                    + "so it is left out. Put a lone module outside any group, or in the group it belongs to.");
+                    "this group places no modules, so no box is drawn for it.");
                 continue;
             }
 
@@ -87,12 +85,14 @@ internal sealed class Boxes(Patch patch, Issues issues, SourceSites sites)
         }
 
         // A group block inside the def's body keeps its modules, and a call
-        // that leaves too few for a box is drawn as the modules it made.
+        // that made one module is drawn as that module, since nobody asked for its box.
         var blocked = boxes.SelectMany(box => box.Members).ToHashSet();
 
         foreach (var (name, id, members, _) in calls)
         {
-            if (patch.Group(members.Where(member => !blocked.Contains(member))) is not { } made) continue;
+            var left = members.Where(member => !blocked.Contains(member) && patch.Find(member) is { } node && !NodeCatalog.IsSink(node.TypeId)).ToList();
+
+            if (left.Count < 2 || patch.Group(left) is not { } made) continue;
 
             var group = made.Clone(id);
 

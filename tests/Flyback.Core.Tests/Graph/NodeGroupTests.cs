@@ -366,30 +366,24 @@ public class NodeGroupTests
         patch.Groups.ShouldBeNull();
     }
 
-    /// <summary>
-    /// A box round one module is the module again with a second name: every
-    /// socket it could show is one that module already has, in the same order.
-    /// Refused rather than drawn, and refused here rather than in the gesture, so
-    /// it is refused however it is asked for.
-    /// </summary>
+    /// <summary>A box round one module is a group, so a live patch can start one before it has more.</summary>
     [Fact]
-    public void One_module_is_not_a_group()
+    public void One_module_is_a_group()
     {
         var patch = new Patch();
         var sine = Add(patch, "osc.sine", 0, 0);
 
-        patch.Group([sine.Id]).ShouldBeNull();
-        patch.Groups.ShouldBeNull();
+        patch.Group([sine.Id]).ShouldNotBeNull().Members.ShouldBe([sine.Id]);
 
-        // Including when the rest of what was asked for cannot be grouped.
+        // The sink is left out, and what is left is still a group.
         var sink = patch.EnsureOutput(Catalog);
 
-        patch.Group([sine.Id, sink.Id]).ShouldBeNull();
-        patch.Groups.ShouldBeNull();
+        patch.Group([sine.Id, sink.Id]).ShouldNotBeNull().Members.ShouldBe([sine.Id]);
+        patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
 
-        // And the same module asked for twice is still one module.
-        patch.Group([sine.Id, sine.Id]).ShouldBeNull();
-        patch.Groups.ShouldBeNull();
+        // And the same module asked for twice is one member.
+        patch.Group([sine.Id, sine.Id]).ShouldNotBeNull().Members.ShouldBe([sine.Id]);
+        patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
     }
 
     /// <summary>
@@ -413,13 +407,9 @@ public class NodeGroupTests
         patch.GroupOf(c.Id).ShouldBe(second);
     }
 
-    /// <summary>
-    /// The rule against a box round one module holds after an edit and not only
-    /// when one is made, so a group robbed down to a single member stops being
-    /// one rather than becoming the picture that was refused.
-    /// </summary>
+    /// <summary>A group robbed down to a single member stays a group of one.</summary>
     [Fact]
-    public void A_group_worn_down_to_one_module_stops_existing()
+    public void A_group_worn_down_to_one_module_stays()
     {
         var patch = new Patch();
         var a = Add(patch, "osc.sine", 0, 0);
@@ -429,19 +419,14 @@ public class NodeGroupTests
 
         var first = patch.Group([a.Id, b.Id]).ShouldNotBeNull();
 
-        // Taking b into another group leaves a on its own, which is not a group.
         patch.Group([b.Id, c.Id, d.Id]).ShouldNotBeNull();
 
-        patch.Groups.ShouldNotBeNull().ShouldNotContain(first);
-        patch.Groups.Count.ShouldBe(1);
-        patch.GroupOf(a.Id).ShouldBeNull();
+        patch.Groups.ShouldNotBeNull().Count.ShouldBe(2);
+        patch.GroupOf(a.Id).ShouldBe(first);
+        first.Members.ShouldBe([a.Id]);
     }
 
-    /// <summary>
-    /// A box may not go on claiming to draw a module that is not there, and it
-    /// may not shrink to one either — so deleting takes the group as soon as
-    /// there are too few left to be one.
-    /// </summary>
+    /// <summary>A box may not go on claiming to draw a module that is not there, so deleting the last takes the group.</summary>
     [Fact]
     public void Deleting_the_modules_takes_the_group_with_them()
     {
@@ -455,8 +440,10 @@ public class NodeGroupTests
         patch.Remove(a.Id);
         patch.Groups.ShouldNotBeNull().Single().Members.ShouldBe([b.Id, c.Id]);
 
-        // One more leaves a single module, which is not a group.
         patch.Remove(b.Id);
+        patch.Groups.ShouldNotBeNull().Single().Members.ShouldBe([c.Id]);
+
+        patch.Remove(c.Id);
         patch.Groups.ShouldBeNull();
     }
 
@@ -602,7 +589,7 @@ public class NodeGroupTests
         patch.Join(top, [c.Id, sink.Id]).ShouldBeTrue();
 
         top.Members.ShouldBe([a.Id, b.Id, c.Id]);
-        patch.Groups.ShouldNotBeNull().ShouldNotContain(low, "a group of one is no group");
+        low.Members.ShouldBe([d.Id], "a group of one is still a group");
     }
 
     [Fact]
@@ -648,18 +635,19 @@ public class NodeGroupTests
     }
 
     [Fact]
-    public void Leaving_a_group_of_two_dissolves_it()
+    public void Leaving_a_group_until_it_is_empty_dissolves_it()
     {
         var patch = new Patch();
         var a = Add(patch, "osc.sine", 0, 0);
         var b = Add(patch, "math.mul", 300, 0);
 
-        patch.Group([a.Id, b.Id]).ShouldNotBeNull();
+        var group = patch.Group([a.Id, b.Id]).ShouldNotBeNull();
 
         patch.Leave([b.Id]).ShouldBeTrue();
+        group.Members.ShouldBe([a.Id]);
 
+        patch.Leave([a.Id]).ShouldBeTrue();
         patch.Groups.ShouldBeNull();
-        patch.Leave([a.Id]).ShouldBeFalse();
     }
 
     private static NodeInstance Add(Patch patch, string typeId, double x, double y)

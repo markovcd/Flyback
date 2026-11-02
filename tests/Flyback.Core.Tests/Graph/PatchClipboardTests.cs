@@ -411,13 +411,9 @@ public class PatchClipboardTests
         pasted.Members.Order().ShouldBe(added.Select(n => n.Id).Order());
     }
 
-    /// <summary>
-    /// The rule against a box round one module holds on the way in as well:
-    /// a fragment somebody hand-edited cannot paste the picture Ctrl+G declines
-    /// to draw.
-    /// </summary>
+    /// <summary>A box worn down to one member by a hand-edited fragment is pasted round that member, and one worn to none is not.</summary>
     [Fact]
-    public void A_box_worn_down_to_one_member_is_not_pasted()
+    public void A_box_worn_down_to_one_member_is_pasted_round_it()
     {
         var patch = Chain(out var time, out var osc, out _, out _);
         patch.Group([time.Id, osc.Id]);
@@ -427,8 +423,15 @@ public class PatchClipboardTests
 
         var fresh = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        PatchClipboard.Paste(fresh.Patch, fragment).Count.ShouldBe(1);
-        fresh.Patch.Groups.ShouldBeNull();
+        var added = PatchClipboard.Paste(fresh.Patch, fragment);
+        added.Count.ShouldBe(1);
+        fresh.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem().Members.ShouldBe([added[0].Id]);
+
+        fragment.Nodes.Clear();
+        var empty = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        PatchClipboard.Paste(empty.Patch, fragment).ShouldBeEmpty();
+        empty.Patch.Groups.ShouldBeNull();
     }
 
     /// <summary>

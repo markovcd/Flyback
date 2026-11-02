@@ -46,11 +46,24 @@ public class GroupTextTests
             .ShouldNotContain(type => type == NodeCatalog.TimeTypeId || type == NodeCatalog.CoordTypeId);
     }
 
-    /// <summary>A box round one module is not drawn on the canvas, so the text builds the module and warns of the box.</summary>
     [Fact]
-    public void A_group_of_one_module_is_left_out_with_a_warning()
+    public void A_group_of_one_module_is_drawn()
     {
         var load = PatchLanguage.Build("group \"Lone\" {\n  let s = sine()\n}\ns |> out.left", NodeCatalog.BuiltIn);
+
+        load.Ok.ShouldBeTrue(load.Report);
+        load.Issues.ShouldBeEmpty(load.Report);
+
+        var group = load.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
+        group.Name.ShouldBe("Lone");
+        load.Patch.Find(group.Members.ShouldHaveSingleItem())!.TypeId.ShouldBe("osc.sine");
+    }
+
+    /// <summary>A group that places nothing has no box to draw, so the text warns of it.</summary>
+    [Fact]
+    public void A_group_of_no_modules_is_left_out_with_a_warning()
+    {
+        var load = PatchLanguage.Build("group \"Empty\" {\n  let f = 220\n}\nsine(freq: f) |> out.left", NodeCatalog.BuiltIn);
 
         load.Ok.ShouldBeTrue(load.Report);
 
@@ -59,7 +72,6 @@ public class GroupTextTests
         issue.Severity.ShouldBe(IssueSeverity.Warning);
 
         (load.Patch.Groups?.Count ?? 0).ShouldBe(0);
-        load.Patch.Nodes.ShouldContain(n => n.TypeId == "osc.sine");
     }
 
     [Fact]
