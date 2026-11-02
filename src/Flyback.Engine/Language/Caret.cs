@@ -72,15 +72,10 @@ internal sealed class Caret
         return (stop >= 0 ? text[..(stop + 1)] : text).ReplaceLineEndings(" ").Trim();
     }
 
-    /// <summary>What an input takes and sits at unwired, or what an output gives where that is not a number.</summary>
-    public static string Reads(PortSpec port, bool input) => (input, port.Kind) switch
-    {
-        (_, PortKind.Color) => "a color",
-        (false, _) => string.Empty,
-        _ when port.NeedsAWire => "wired only",
-        _ when port.Ranged => $"{port.Format(port.Min)} to {port.Format(port.Max)}, at {port.Format(port.Default)}",
-        _ => $"at {port.Format(port.Default)}",
-    };
+    /// <summary>What an input takes and sits at unwired, as <c>flyback-cli modules</c> lists it, or what an output gives where that is not a number.</summary>
+    public static string Reads(PortSpec port, bool input) => input
+        ? string.Join(", ", new[] { port.Span, port.NeedsAWire ? port.Unwired : $"at {port.Unwired}" }.Where(s => s.Length > 0))
+        : port.Kind == PortKind.Color ? "color" : string.Empty;
 
     /// <summary>The call whose brackets the place is inside, by its callee and the index of its bracket.</summary>
     public (string Callee, int Open)? Call()

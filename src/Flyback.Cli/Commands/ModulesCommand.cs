@@ -198,7 +198,7 @@ internal static class ModulesCommand
         if (def.Words.Length > 0) output.WriteLine($"  Also: {def.Words}.");
 
         var name = def.Inputs.Select(port => port.Name.Length).DefaultIfEmpty(0).Max();
-        var at = def.Inputs.Select(port => At(port).Length).DefaultIfEmpty(0).Max();
+        var at = def.Inputs.Select(port => port.Unwired.Length).DefaultIfEmpty(0).Max();
 
         output.WriteLine();
         output.WriteLine("inputs");
@@ -207,7 +207,7 @@ internal static class ModulesCommand
 
         for (var i = 0; i < def.Inputs.Count; i++)
         {
-            output.WriteLine($"{(piped.Contains(i) ? "|>" : "  ")}{i,2} {def.Inputs[i].Name.PadRight(name)}  {At(def.Inputs[i]).PadRight(at)}  {Turns(def.Inputs[i])}".TrimEnd());
+            output.WriteLine($"{(piped.Contains(i) ? "|>" : "  ")}{i,2} {def.Inputs[i].Name.PadRight(name)}  {def.Inputs[i].Unwired.PadRight(at)}  {def.Inputs[i].Span}".TrimEnd());
             Helped(def.Inputs[i].Help);
         }
 
@@ -320,18 +320,6 @@ internal static class ModulesCommand
         port.Ranged && port.Knee > 0f ? port.Knee : null,
         port.NeedsAWire,
         port.Help);
-
-    /// <summary>What an input sits at unwired, or that it has nothing to sit at.</summary>
-    private static string At(PortSpec port) => port.NeedsAWire ? "wired only" : port.Format(port.Default);
-
-    /// <summary>How far an input turns, and what it takes where that is not a number.</summary>
-    private static string Turns(PortSpec port) => port.Kind switch
-    {
-        PortKind.Color => "color",
-        PortKind.Any => "scalar or color",
-        _ when port.Ranged && !port.PatchOnly => $"{port.Format(port.Min)} to {port.Format(port.Max)}",
-        _ => string.Empty,
-    };
 
     private static string Reaches(ModuleSinks sinks) => sinks switch
     {

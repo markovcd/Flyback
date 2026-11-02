@@ -63,6 +63,18 @@ public readonly record struct PortSpec(
     /// </summary>
     internal bool NeedsAWire => PatchOnly || Kind == PortKind.Color;
 
+    /// <summary>What an input sits at unwired, or that it has nothing to sit at.</summary>
+    internal string Unwired => NeedsAWire ? "wired only" : Format(Default);
+
+    /// <summary>How far an input turns, or what it takes where that is not a number; empty where neither says anything.</summary>
+    internal string Span => Kind switch
+    {
+        PortKind.Color => "color",
+        PortKind.Any => "scalar or color",
+        _ when Ranged && !PatchOnly => $"{Format(Min)} to {Format(Max)}",
+        _ => string.Empty,
+    };
+
     /// <summary>
     /// The value as it should be shown for this socket. One place, because the
     /// node on the canvas and the row in the inspector have to agree. The case
