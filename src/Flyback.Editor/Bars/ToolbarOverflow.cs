@@ -56,10 +56,22 @@ internal sealed class ToolbarOverflow
     /// <summary>The button the menu hangs from, shown only while something is folded.</summary>
     public Button More { get; }
 
+    /// <summary>Whether the buttons should print their legends when the row has room for them.</summary>
+    public bool LegendsWanted { get; set; }
+
+    /// <summary>Shows or hides every legend on the row.</summary>
+    public Action<bool>? Legends { get; set; }
+
+    /// <summary>Whether the legends show now: wanted, and the row fits with them.</summary>
+    public bool LegendsShown { get; private set; }
+
     /// <summary>The folded buttons, in the toolbar's order.</summary>
     public IEnumerable<Control> Folded => bar.GetLogicalDescendants().OfType<Control>().Where(folded.Contains);
 
-    /// <summary>Folds what does not fit in <paramref name="width"/>, after bringing back all that was folded.</summary>
+    /// <summary>
+    /// Folds what does not fit in <paramref name="width"/>, after bringing back all that was
+    /// folded. The legends go before any button does, so a narrow window keeps every button.
+    /// </summary>
     public void Fit(double width)
     {
         if (width <= 0) return;
@@ -67,6 +79,9 @@ internal sealed class ToolbarOverflow
         foreach (var control in folded) Show(control, true);
         folded.Clear();
         Tidy();
+
+        Legend(LegendsWanted);
+        if (LegendsShown && Wanted() > width) Legend(false);
 
         foreach (var (control, _) in order)
         {
@@ -79,6 +94,16 @@ internal sealed class ToolbarOverflow
         }
 
         menu.ItemsSource = Items();
+    }
+
+    private void Legend(bool shown)
+    {
+        LegendsShown = shown;
+        Legends?.Invoke(shown);
+
+        // A button's new size reaches the row only once every panel between them is measured again.
+        foreach (var part in bar.GetLogicalDescendants().OfType<Layoutable>()) part.InvalidateMeasure();
+        bar.InvalidateMeasure();
     }
 
     /// <summary>

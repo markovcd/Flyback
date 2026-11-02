@@ -32,12 +32,60 @@ internal static class ToolbarButtons
     /// so every one has one and it is a sentence rather than a repeat of the icon's
     /// name. Named as well, so a test can find the button without reading a glyph.
     /// </remarks>
-    internal static Button Drawn(string name, Control icon, string tip) =>
-        Marked(new Button(), name, icon, tip);
+    /// <param name="legend">The word printed under the symbol while the toolbar shows its labels.</param>
+    internal static Button Drawn(string name, Control icon, string tip, string? legend = null) =>
+        Marked(new Button(), name, Labeled(icon, legend), tip);
 
     /// <summary>The same, for a button that stays down.</summary>
-    internal static ToggleButton Toggle(string name, Control icon, string tip) =>
-        Marked(new ToggleButton(), name, icon, tip);
+    internal static ToggleButton Toggle(string name, Control icon, string tip, string? legend = null) =>
+        Marked(new ToggleButton(), name, Labeled(icon, legend), tip);
+
+    /// <summary>The symbol with its legend under it, the legend hidden until <see cref="ShowLegend"/> says otherwise.</summary>
+    private static Control Labeled(Control icon, string? legend) => legend is null
+        ? icon
+        : new StackPanel
+        {
+            Spacing = 3,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Children =
+            {
+                icon,
+                new TextBlock
+                {
+                    Text = legend,
+                    FontSize = LegendSize,
+                    FontWeight = FontWeight.Bold,
+                    LetterSpacing = 0.8,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    IsVisible = false,
+                },
+            },
+        };
+
+    /// <summary>How large a legend is printed.</summary>
+    private const double LegendSize = 8;
+
+    /// <summary>Shows or hides a button's legend, sizing the button for it. A button with no legend is left alone.</summary>
+    internal static void ShowLegend(ContentControl button, bool shown)
+    {
+        if (button.Content is not StackPanel { Children: [_, TextBlock legend] }) return;
+
+        legend.IsVisible = shown;
+        button.Width = shown ? 48 : 34;
+        button.Height = shown ? 42 : 30;
+    }
+
+    /// <summary>The legend a button prints, or null for one that has none.</summary>
+    internal static string? LegendOf(ContentControl button) =>
+        button.Content is StackPanel { Children: [_, TextBlock legend] } ? legend.Text : null;
+
+    /// <summary>Changes a button's symbol, keeping its legend.</summary>
+    internal static void SetIcon(ContentControl button, Control icon)
+    {
+        if (button.Content is StackPanel { Children: [_, TextBlock] } labeled) labeled.Children[0] = icon;
+        else button.Content = icon;
+    }
 
     internal static T Marked<T>(T button, string name, object content, string tip)
         where T : ContentControl

@@ -2,8 +2,10 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
+using Avalonia.LogicalTree;
 using Avalonia.Threading;
 using Flyback.Editor.Assist;
+using Flyback.Editor.Controls;
 using Flyback.Editor.Hubs;
 using Flyback.Editor.Notices;
 using Flyback.Engine.Render;
@@ -233,14 +235,18 @@ public class OutputSettingsEncoderTests : OutputSettingsTest
     public void The_drawn_icons_are_drawn_rather_than_typed(string name)
     {
         var window = Open();
-        var icon = Named<Button>(window, name).Content.ShouldBeOfType<Avalonia.Controls.Shapes.Path>();
+        var button = Named<Button>(window, name);
+        var icon = button.GetLogicalDescendants().OfType<Avalonia.Controls.Shapes.Path>()
+            .FirstOrDefault(path => path.Stroke is not null || path.Fill is not null);
 
+        icon.ShouldNotBeNull("the button should hold a drawn symbol, not a character");
         icon.Data.ShouldNotBeNull();
+        button.GetLogicalDescendants().OfType<TextBlock>().ShouldAllBe(text => text.Text == ToolbarButtons.LegendOf(button));
 
         // Taken from the button rather than set here, so that hovering, pressing
         // and gray-out all reach it. A binding that failed to resolve leaves this
         // null and draws nothing at all.
-        icon.Stroke.ShouldNotBeNull("the stroke follows the button's own foreground");
+        (icon.Stroke ?? icon.Fill).ShouldNotBeNull("the ink follows the button's own foreground");
     }
 
     /// <summary>

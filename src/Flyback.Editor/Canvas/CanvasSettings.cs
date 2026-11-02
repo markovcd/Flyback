@@ -56,6 +56,9 @@ public sealed class CanvasSettings
     /// <summary>Whether the menus macOS shows in its menu bar are along the top of the window on Windows and Linux.</summary>
     public bool MenuBar { get; set; }
 
+    /// <summary>Whether each toolbar button has its name printed under its symbol.</summary>
+    public bool ToolbarLabels { get; set; } = true;
+
     /// <summary>The text editor's font size, set by Ctrl+scroll over it.</summary>
     public double EditorFontSize { get; set; } = DefaultEditorFontSize;
 

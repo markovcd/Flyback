@@ -20,70 +20,58 @@ internal static class Glyphs
 {
     private const double Box = 16;
 
-    /// <summary>A folder, seen from the front, with the tab on the left.</summary>
-    public static Control Open() => Stroked("M2,4.5 L6.5,4.5 L8,6.5 L14,6.5 L14,12.5 L2,12.5 Z");
+    /// <summary>How heavy a line is: square-ended and mitred, like a mark printed on a front panel.</summary>
+    private const double Weight = 1.6;
 
-    /// <summary>
-    /// A three-and-a-half inch disk: the clipped corner, the shutter at the top
-    /// and the label at the bottom.
-    /// </summary>
+    /// <summary>An arrow down into a tray: load.</summary>
+    public static Control Open() => Stroked("M2,9 L2,14 L14,14 L14,9 M8,2 L8,10 M5,7 L8,10 L11,7");
+
+    /// <summary>An arrow up out of a tray: store.</summary>
     public static Control Save(double size = Box, IBrush? ink = null) => Stroked(
-        "M2.5,2.5 L11.5,2.5 L13.5,4.5 L13.5,13.5 L2.5,13.5 Z "
-        + "M5.5,2.5 L10.5,2.5 L10.5,6 L5.5,6 Z "
-        + "M4.5,9.5 L11.5,9.5 L11.5,13.5 L4.5,13.5 Z", size, ink);
+        "M2,9 L2,14 L14,14 L14,9 M8,10 L8,2 M5,5 L8,2 L11,5", size, ink);
 
-    /// <summary>
-    /// A patch in miniature: two modules on the left feeding one on the right,
-    /// which is what the button does to the canvas said in the canvas's own
-    /// terms. Drawn rather than typed for the same reason the other two are —
-    /// no character here means "lay this out", and the ones that come close
-    /// resolve to the emoji font on Windows.
-    /// </summary>
-    public static Control Tidy() => Stroked(
-        "M2,2.5 L6,2.5 L6,6.5 L2,6.5 Z "
-        + "M2,9.5 L6,9.5 L6,13.5 L2,13.5 Z "
-        + "M10,6 L14,6 L14,10 L10,10 Z "
-        + "M6,4.5 L8,4.5 L8,11.5 L6,11.5 "
-        + "M8,8 L10,8");
+    /// <summary>Two modules on the left feeding one on the right: the patch laid out, in the canvas's own terms.</summary>
+    public static Control Tidy() => Inked(
+        "M6.5,4 L8,4 L8,12 L6.5,12 M8,8 L9.5,8",
+        "M1.5,2 L6.5,2 L6.5,6 L1.5,6 Z M1.5,10 L6.5,10 L6.5,14 L1.5,14 Z M9.5,6 L14.5,6 L14.5,10 L9.5,10 Z");
 
-    /// <summary>
-    /// Three rows of a list, the shortest at the bottom — what a preset is:
-    /// one to point at, out of several.
-    /// </summary>
-    public static Control Presets() => Stroked(
-        "M2,4 L14,4 M2,8 L14,8 M2,12 L10,12");
+    /// <summary>Three rows, each with a block at its head: a list of presets to pick from.</summary>
+    public static Control Presets() => Inked(
+        "M6,3.5 L14,3.5 M6,8 L14,8 M6,12.5 L14,12.5",
+        "M2,2.5 L5,2.5 L5,4.5 L2,4.5 Z M2,7 L5,7 L5,9 L2,9 Z M2,11.5 L5,11.5 L5,13.5 L2,13.5 Z");
 
-    /// <summary>A mains plug, prongs up, with its cable trailing down: what a plugin is.</summary>
-    public static Control Plug() => Stroked(
-        "M6,2 L6,5 M10,2 L10,5 "
-        + "M4,5 L12,5 L12,8 Q12,11 8,11 Q4,11 4,8 Z "
-        + "M8,11 L8,14");
+    /// <summary>A patch cable's jack, tip up: what a plugin is plugged into.</summary>
+    public static Control Plug() => Inked(
+        "M6,3 L10,3 L10,6 L6,6 Z M6.5,6 L6.5,10 L9.5,10 L9.5,6 M8,10 L8,15",
+        "M7.2,1 L8.8,1 L8.8,3 L7.2,3 Z");
 
     /// <summary>An envelope, flap down: writing to whoever wrote the program.</summary>
     public static Control Letter() => Stroked(
         "M2,4.5 L14,4.5 L14,11.5 L2,11.5 Z "
         + "M2,4.5 L8,9 L14,4.5");
 
-    /// <summary>A ring with an i in it: what this is, who wrote it.</summary>
-    public static Control About() => Stroked(Ring(5.5) + " M8,7.5 L8,11 M8,5 L8,5.1");
+    /// <summary>An i in a box.</summary>
+    public static Control About() => Inked(
+        "M1.5,1.5 L14.5,1.5 L14.5,14.5 L1.5,14.5 Z M8,7 L8,12",
+        "M7,4 L9,4 L9,5.8 L7,5.8 Z");
 
-    /// <summary>An arrow turning back to the left: take the last edit back.</summary>
-    public static Control Undo() => Stroked("M4,6.5 L10,6.5 A3.5,3.5 0 0 1 10,13.5 L6,13.5 M6.5,4 L4,6.5 L6.5,9");
+    /// <summary>An arrow turned back on itself, squared off.</summary>
+    public static Control Undo() => Stroked("M3,6 L11,6 L13,8 L13,12 L11,14 L7,14 M6,3 L3,6 L6,9");
 
-    /// <summary>The same arrow turning right: put it back.</summary>
-    public static Control Redo() => Stroked("M12,6.5 L6,6.5 A3.5,3.5 0 0 0 6,13.5 L10,13.5 M9.5,4 L12,6.5 L9.5,9");
+    /// <summary>The same arrow, the other way.</summary>
+    public static Control Redo() => Stroked("M13,6 L5,6 L3,8 L3,12 L5,14 L9,14 M10,3 L13,6 L10,9");
 
     /// <summary>An open book: the tutorials.</summary>
     public static Control Lesson() => Stroked(
         "M8,4.5 Q5,3 2,3.5 L2,12.5 Q5,12 8,13.5 Q11,12 14,12.5 L14,3.5 Q11,3 8,4.5 Z M8,4.5 L8,13.5");
 
-    /// <summary>A pair of braces: the patch as text.</summary>
+    /// <summary>A pair of braces, drawn straight: the patch as text.</summary>
     public static Control Code() => Stroked(
-        "M6,2.5 Q4,2.5 4,4.5 L4,6.5 Q4,8 2.5,8 Q4,8 4,9.5 L4,11.5 Q4,13.5 6,13.5 "
-        + "M10,2.5 Q12,2.5 12,4.5 L12,6.5 Q12,8 13.5,8 Q12,8 12,9.5 L12,11.5 Q12,13.5 10,13.5");
+        "M6,2 L4,2 L4,7 L2,8 L4,9 L4,14 L6,14 M10,2 L12,2 L12,7 L14,8 L12,9 L12,14 L10,14");
 
-    /// <summary>A knob seen from the front, its pointer at two o'clock: the knob panel.</summary>
-    public static Control Knob() => Stroked(Ring(5.5) + " M8,8 L10.8,5.2");
+    /// <summary>A knob with its pointer at two o'clock and its scale ticked round it: the knob panel.</summary>
+    public static Control Knob() => Stroked(
+        Ring(4.5) + " M8,8 L10.6,5.4 M1,8 L2,8 M14,8 L15,8 M8,1 L8,2 M3,3 L3.7,3.7 M13,3 L12.3,3.7");
 
     /// <summary>An octave of a piano: four white keys with the black ones over their gaps.</summary>
     public static Control Keys() => Stroked(
@@ -93,8 +81,8 @@ internal static class Glyphs
     /// <summary>A minus, the other half of <see cref="Add"/>.</summary>
     public static Control Minus() => Stroked("M2.5,8 L13.5,8");
 
-    /// <summary>A window with its right-hand column marked off: the column beside the canvas.</summary>
-    public static Control Side() => Stroked("M2,3 L14,3 L14,13 L2,13 Z M10,3 L10,13");
+    /// <summary>A window with its right-hand column filled in: the column beside the canvas.</summary>
+    public static Control Side() => Inked("M1.5,2.5 L14.5,2.5 L14.5,13.5 L1.5,13.5 Z", "M10,2.5 L14.5,2.5 L14.5,13.5 L10,13.5 Z");
 
     /// <summary>The side column with its divider pushed to the top: the panel taking the picture's room.</summary>
     public static Control Spread() => Stroked("M2.5,2.5 L13.5,2.5 L13.5,13.5 L2.5,13.5 Z M2.5,4.5 L13.5,4.5 M8,12 L8,7 M6,9 L8,7 L10,9");
@@ -102,24 +90,23 @@ internal static class Glyphs
     /// <summary>The side column with its divider back in the middle: the picture given its room again.</summary>
     public static Control Gather() => Stroked("M2.5,2.5 L13.5,2.5 L13.5,13.5 L2.5,13.5 Z M2.5,8.5 L13.5,8.5 M8,4 L8,7 M6.5,5.5 L8,7 L9.5,5.5");
 
-    /// <summary>A window with a row marked off along its foot, and the playhead on it: the transport row.</summary>
-    public static Control Transport() => Stroked("M2,3 L14,3 L14,13 L2,13 Z M2,9.5 L14,9.5 M7,9.5 L7,13");
+    /// <summary>A window with a row filled in along its foot: the transport row.</summary>
+    public static Control Transport() => Inked("M1.5,2.5 L14.5,2.5 L14.5,13.5 L1.5,13.5 Z", "M1.5,10 L14.5,10 L14.5,13.5 L1.5,13.5 Z");
 
     /// <summary>Two arrows passing each other: the picture and the canvas trading places.</summary>
     public static Control Swap() => Stroked(SwapPath);
 
     /// <summary>The arrows of <see cref="Swap"/>, for a mark drawn straight onto the canvas.</summary>
-    public const string SwapPath = "M3,5.5 L13,5.5 M10.5,3 L13,5.5 L10.5,8 M13,10.5 L3,10.5 M5.5,8 L3,10.5 L5.5,13";
+    public const string SwapPath = "M2,5 L13,5 M10,2 L13,5 L10,8 M14,11 L3,11 M6,8 L3,11 L6,14";
 
     /// <summary>A four-pointed star, filled: the assistant.</summary>
     public static Control Spark(double size = Box, IBrush? ink = null) => Filled(
-        Geometry.Parse("M8,1.5 Q8.8,7.2 14.5,8 Q8.8,8.8 8,14.5 Q7.2,8.8 1.5,8 Q7.2,7.2 8,1.5 Z"), size, ink);
+        Geometry.Parse("M8,1 L9.4,6.6 L15,8 L9.4,9.4 L8,15 L6.6,9.4 L1,8 L6.6,6.6 Z"), size, ink);
 
-    /// <summary>A cog: a ring with a hub and eight teeth.</summary>
-    public static Control Settings() => Stroked(
-        Ring(4) + " " + Ring(1.6)
-        + " M8,1.5 L8,4 M8,12 L8,14.5 M1.5,8 L4,8 M12,8 L14.5,8"
-        + " M3.4,3.4 L5.2,5.2 M10.8,10.8 L12.6,12.6 M3.4,12.6 L5.2,10.8 M10.8,5.2 L12.6,3.4");
+    /// <summary>Three faders, each at its own level: the settings.</summary>
+    public static Control Settings() => Inked(
+        "M4,2 L4,14 M8,2 L8,14 M12,2 L12,14",
+        "M2.5,9 L5.5,9 L5.5,11.5 L2.5,11.5 Z M6.5,4 L9.5,4 L9.5,6.5 L6.5,6.5 Z M10.5,7 L13.5,7 L13.5,9.5 L10.5,9.5 Z");
 
     /// <summary>A cross: close, remove, or no.</summary>
     public static Control Cross(double size = Box, IBrush? ink = null) =>
@@ -168,11 +155,13 @@ internal static class Glyphs
         return line;
     }
 
-    /// <summary>A plain dot, filled — the record light on every deck and camera.</summary>
-    public static Control Record() => Filled(new EllipseGeometry(new Rect(3, 3, 10, 10)));
+    /// <summary>A dot in a frame, filled — the record button on a deck's panel.</summary>
+    public static Control Record() => Inked(
+        "M1.5,1.5 L14.5,1.5 L14.5,14.5 L1.5,14.5 Z", "M4.5,8 A3.5,3.5 0 1 1 11.5,8 A3.5,3.5 0 1 1 4.5,8 Z");
 
-    /// <summary>A plain square, filled — what the dot becomes once a take is running.</summary>
-    public static Control Stop() => Filled(new RectangleGeometry(new Rect(3.5, 3.5, 9, 9)));
+    /// <summary>A square in the frame — what the record button becomes once a take is running.</summary>
+    public static Control Stop() => Inked(
+        "M1.5,1.5 L14.5,1.5 L14.5,14.5 L1.5,14.5 Z", "M5,5 L11,5 L11,11 L5,11 Z");
 
     /// <summary>A bar and a triangle pointing at it — skip to the start, on every deck.</summary>
     public static Control Rewind() =>
@@ -293,17 +282,17 @@ internal static class Glyphs
         "M2,5 L2,2 L5,2 M11,2 L14,2 L14,5 M14,11 L14,14 L11,14 M5,14 L2,14 L2,11 "
         + "M5.5,6 L10.5,6 L10.5,10 L5.5,10 Z");
 
-    /// <summary>A ruler: what every output carries, measured.</summary>
+    /// <summary>A trace on a scope's screen: every output, measured.</summary>
     public static Control Measure() => Stroked(
-        "M1.5,5.5 L14.5,5.5 L14.5,10.5 L1.5,10.5 Z M4.5,5.5 L4.5,8 M7.5,5.5 L7.5,8.5 M10.5,5.5 L10.5,8 M13,5.5 L13,7");
+        "M1.5,2.5 L14.5,2.5 L14.5,13.5 L1.5,13.5 Z" + " M2,8 Q4.5,3 6.5,8 Q8.5,13 11,8 Q12.5,5 14,7");
 
-    /// <summary>The ruler with a cross at its corner: give up the measurement under way. Not a square, which is the transport's.</summary>
+    /// <summary>The trace with a cross at its corner: give up the measurement under way.</summary>
     public static Control MeasureCancel() => Stroked(
-        "M1.5,8.5 L11.5,8.5 L11.5,13 L1.5,13 Z M4,8.5 L4,10.5 M6.5,8.5 L6.5,11 M9,8.5 L9,10.5 M10,2 L14.5,6.5 M14.5,2 L10,6.5");
+        "M1.5,7.5 L11.5,7.5 L11.5,14 L1.5,14 Z M2,11 Q4,8 6,11 Q8,14 11,11 M10,1.5 L14.5,6 M14.5,1.5 L10,6");
 
-    /// <summary>The ruler struck through: take the measurements down.</summary>
+    /// <summary>The trace struck through: take the measurements down.</summary>
     public static Control MeasureHide() => Stroked(
-        "M1.5,5.5 L14.5,5.5 L14.5,10.5 L1.5,10.5 Z M4.5,5.5 L4.5,8 M7.5,5.5 L7.5,8.5 M10.5,5.5 L10.5,8 M13,5.5 L13,7 M2.5,14 L13.5,2");
+        "M1.5,2.5 L14.5,2.5 L14.5,13.5 L1.5,13.5 Z" + " M2,8 Q4.5,3 6.5,8 Q8.5,13 11,8 Q12.5,5 14,7 M2.5,14 L13.5,2");
 
     /// <summary>A box with an arrow leaving it: the patch taken to the viewer, in a tab of its own.</summary>
     public static Control Viewer() => Stroked("M9,2.5 L13.5,2.5 L13.5,7 M13.5,2.5 L7.5,8.5 M12,9.5 L12,13.5 L2.5,13.5 L2.5,4 L6.5,4");
@@ -335,9 +324,9 @@ internal static class Glyphs
         var path = new Avalonia.Controls.Shapes.Path
         {
             Data = Sized(Geometry.Parse(data), size),
-            StrokeThickness = 1.2,
-            StrokeJoin = PenLineJoin.Round,
-            StrokeLineCap = PenLineCap.Round,
+            StrokeThickness = Weight,
+            StrokeJoin = PenLineJoin.Miter,
+            StrokeLineCap = PenLineCap.Square,
             Width = size,
             Height = size,
             Stretch = Stretch.None,
@@ -352,6 +341,16 @@ internal static class Glyphs
     }
 
     /// <summary>The transport glyphs, which read better solid than outlined at this size.</summary>
+    /// <summary>A mark that is part line and part solid block, as a panel prints one.</summary>
+    private static Control Inked(string stroke, string fill, double size = Box, IBrush? ink = null) => new Panel
+    {
+        Width = size,
+        Height = size,
+        HorizontalAlignment = HorizontalAlignment.Center,
+        VerticalAlignment = VerticalAlignment.Center,
+        Children = { Stroked(stroke, size, ink), Filled(Geometry.Parse(fill), size, ink) },
+    };
+
     private static Control Filled(Geometry geometry, double size = Box, IBrush? ink = null)
     {
         var path = new Avalonia.Controls.Shapes.Path

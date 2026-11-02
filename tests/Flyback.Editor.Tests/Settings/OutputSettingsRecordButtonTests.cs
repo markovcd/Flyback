@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.LogicalTree;
 using Avalonia.Headless.XUnit;
 using Flyback.Editor.Composition;
 using Shouldly;
@@ -26,16 +27,17 @@ public class OutputSettingsRecordButtonTests : OutputSettingsTest
     }
 
     /// <summary>
-    /// Filled rather than outlined, unlike the other drawn icons — a record
-    /// light is a dot, not a stroke, and reads at this size only solid.
+    /// The light inside the frame is filled rather than outlined: a record light
+    /// is a dot, not a stroke, and reads at this size only solid.
     /// </summary>
     [AvaloniaFact]
-    public void The_record_glyph_is_filled_rather_than_stroked()
+    public void The_record_glyph_is_a_filled_dot()
     {
         var window = Open();
-        var icon = Record(window).Content.ShouldBeOfType<Avalonia.Controls.Shapes.Path>();
+        var paths = Record(window).GetLogicalDescendants().OfType<Avalonia.Controls.Shapes.Path>().ToList();
 
-        icon.Data.ShouldNotBeNull();
-        icon.Fill.ShouldNotBeNull("the fill follows the button's own foreground");
+        paths.ShouldContain(
+            path => path.Data != null && path.Fill != null,
+            "the dot is filled, in the button's own foreground");
     }
 }

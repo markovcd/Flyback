@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Gallery;
 using Flyback.Editor.Hubs;
@@ -67,62 +68,62 @@ internal sealed class Toolbar
     public const string NarrowSwapTip =
         "The window is too narrow to swap the preview and the canvas; the side button shows one or the other.";
 
-    public Button Open { get; } = ToolbarButtons.Drawn("open", Glyphs.Open(), "Open a patch (CTRL+O)…");
+    public Button Open { get; } = ToolbarButtons.Drawn("open", Glyphs.Open(), "Open a patch (CTRL+O)…", "OPEN");
 
-    public Button Save { get; } = ToolbarButtons.Drawn("save", Glyphs.Save(), "Save this patch (CTRL+S)…");
+    public Button Save { get; } = ToolbarButtons.Drawn("save", Glyphs.Save(), "Save this patch (CTRL+S)…", "SAVE");
 
-    public Button Undo { get; } = ToolbarButtons.Drawn("undo", Glyphs.Undo(), "Take back the last edit  (Ctrl+Z)");
+    public Button Undo { get; } = ToolbarButtons.Drawn("undo", Glyphs.Undo(), "Take back the last edit  (Ctrl+Z)", "UNDO");
 
-    public Button Redo { get; } = ToolbarButtons.Drawn("redo", Glyphs.Redo(), "Put it back  (Ctrl+Shift+Z)");
+    public Button Redo { get; } = ToolbarButtons.Drawn("redo", Glyphs.Redo(), "Put it back  (Ctrl+Shift+Z)", "REDO");
 
     /// <summary>
     /// What laying out means, and whether it is worth doing at all, depends on
     /// which view is showing, so its tip and whether it is on follow <see cref="OwnershipChanged"/>.
     /// </summary>
-    public Button Tidy { get; } = ToolbarButtons.Drawn("tidy", Glyphs.Tidy(), TidyTip);
+    public Button Tidy { get; } = ToolbarButtons.Drawn("tidy", Glyphs.Tidy(), TidyTip, "TIDY");
 
     /// <summary>The module list, for a hand with no right button and no Space bar. Shown once a finger has touched the canvas.</summary>
-    public Button Add { get; } = ToolbarButtons.Drawn("add", Glyphs.Add(), "Add a module in the middle of the view  (Space, or hold a finger on the canvas)");
+    public Button Add { get; } = ToolbarButtons.Drawn("add", Glyphs.Add(), "Add a module in the middle of the view  (Space, or hold a finger on the canvas)", "ADD");
 
     /// <summary>Framing the whole patch, the other thing a hand has no key for. Shown with <see cref="Add"/>.</summary>
-    public Button Frame { get; } = ToolbarButtons.Drawn("frame", Glyphs.Frame(), "Bring the whole patch into view  (Ctrl+F)");
+    public Button Frame { get; } = ToolbarButtons.Drawn("frame", Glyphs.Frame(), "Bring the whole patch into view  (Ctrl+F)", "FRAME");
 
     /// <summary>Picking every module out, the key a hand with no Ctrl lacks. Shown with <see cref="Add"/>.</summary>
-    public Button SelectAll { get; } = ToolbarButtons.Drawn("select-all", Glyphs.SelectAll(), "Select every module  (Ctrl+A)");
+    public Button SelectAll { get; } = ToolbarButtons.Drawn("select-all", Glyphs.SelectAll(), "Select every module  (Ctrl+A)", "ALL");
 
     /// <summary>Adding what the clipboard holds. Shown with <see cref="Add"/>; Copy and Cut are on the inspector, beside the selection they take.</summary>
-    public Button Paste { get; } = ToolbarButtons.Drawn("paste", Glyphs.Paste(), "Paste the modules on the clipboard into the middle of the view  (Ctrl+V)");
+    public Button Paste { get; } = ToolbarButtons.Drawn("paste", Glyphs.Paste(), "Paste the modules on the clipboard into the middle of the view  (Ctrl+V)", "PASTE");
 
     /// <summary>Plays the patch as it stands in the viewer, in a tab of its own. Only in a page.</summary>
-    public Button Viewer { get; } = ToolbarButtons.Drawn("view-it", Glyphs.Viewer(), "View it: play this patch in the viewer, in a tab of its own. The editor pauses behind it.");
+    public Button Viewer { get; } = ToolbarButtons.Drawn("view-it", Glyphs.Viewer(), "View it: play this patch in the viewer, in a tab of its own. The editor pauses behind it.", "VIEW");
 
-    public ToggleButton Code { get; } = ToolbarButtons.Toggle("code", Glyphs.Code(), "Show the patch as text  (F2)");
+    public ToggleButton Code { get; } = ToolbarButtons.Toggle("code", Glyphs.Code(), "Show the patch as text  (F2)", "TEXT");
 
     public ToggleButton Knobs { get; } =
-        ToolbarButtons.Toggle("controls", Glyphs.Knob(), "Show the knob panel, for turning the patch by hand or from a MIDI controller  (Ctrl+K)");
+        ToolbarButtons.Toggle("controls", Glyphs.Knob(), "Show the knob panel, for turning the patch by hand or from a MIDI controller  (Ctrl+K)", "KNOBS");
 
     /// <summary>Shows the keys along the foot of the window that play a MIDI In, for a finger. On the bar only while one listens.</summary>
     public ToggleButton Keys { get; } =
-        ToolbarButtons.Toggle("keys", Glyphs.Keys(), "Show keys that play the patch's MIDI In, as the computer keyboard does.");
+        ToolbarButtons.Toggle("keys", Glyphs.Keys(), "Show keys that play the patch's MIDI In, as the computer keyboard does.", "KEYS");
 
     /// <summary>
     /// Puts the picture in the wide column and the canvas where the picture was.
     /// Enabled only while there is a picture to put there.
     /// </summary>
-    public ToggleButton Swap { get; } = ToolbarButtons.Toggle("swap", Glyphs.Swap(), NoPictureToSwapTip);
+    public ToggleButton Swap { get; } = ToolbarButtons.Toggle("swap", Glyphs.Swap(), NoPictureToSwapTip, "SWAP");
 
     /// <summary>Puts the column beside the canvas away and gives the canvas its width. Disabled while swapped.</summary>
-    public ToggleButton Side { get; } = ToolbarButtons.Toggle("side", Glyphs.Side(), SideTip);
+    public ToggleButton Side { get; } = ToolbarButtons.Toggle("side", Glyphs.Side(), SideTip, "SIDE");
 
     /// <summary>Shows the transport row along the foot of the window, or gives its height to the canvas.</summary>
     public ToggleButton Transport { get; } =
-        ToolbarButtons.Toggle("transport", Glyphs.Transport(), "Show the row that plays the patch: pause, the seek bar, its length, loop and Volume.");
+        ToolbarButtons.Toggle("transport", Glyphs.Transport(), "Show the row that plays the patch: pause, the seek bar, its length, loop and Volume.", "ROW");
 
     /// <summary>Starts and stops a take (ADR-0080). What it shows follows <see cref="TakeMarked"/>. Only outside a page.</summary>
-    public Button Record { get; } = ToolbarButtons.Drawn("record", Glyphs.Record(), RecordTip);
+    public Button Record { get; } = ToolbarButtons.Drawn("record", Glyphs.Record(), RecordTip, "REC");
 
     /// <summary>Runs the patch for a few seconds from the playhead and pins what each output carries. Only outside a page.</summary>
-    public Button Measure { get; } = ToolbarButtons.Drawn("measure", Glyphs.Measure(), MeasureTip);
+    public Button Measure { get; } = ToolbarButtons.Drawn("measure", Glyphs.Measure(), MeasureTip, "MEASURE");
 
     /// <summary>What the record button offers while there is something to record.</summary>
     public const string RecordTip =
@@ -144,13 +145,13 @@ internal sealed class Toolbar
         + "Select modules to check only those. Press again to hide them, or to measure again after an edit.  (Ctrl+Shift+M)";
 
     public ToggleButton Assistant { get; } =
-        ToolbarButtons.Toggle("assistant", Glyphs.Spark(), "Describe a patch and have one built.");
+        ToolbarButtons.Toggle("assistant", Glyphs.Spark(), "Describe a patch and have one built.", "ASK");
 
-    public Button Settings { get; } = ToolbarButtons.Drawn("settings", Glyphs.Settings(), "Open the settings.");
+    public Button Settings { get; } = ToolbarButtons.Drawn("settings", Glyphs.Settings(), "Open the settings.", "SETUP");
 
-    public Button Plugins { get; } = ToolbarButtons.Drawn("plugins", Glyphs.Plug(), "Find, install and update plugins.");
+    public Button Plugins { get; } = ToolbarButtons.Drawn("plugins", Glyphs.Plug(), "Find, install and update plugins.", "PLUGINS");
 
-    public Button About { get; } = ToolbarButtons.Drawn("about", Glyphs.About(), "What this is, who wrote it, and what it may be done with.");
+    public Button About { get; } = ToolbarButtons.Drawn("about", Glyphs.About(), "What this is, who wrote it, and what it may be done with.", "ABOUT");
 
     /// <summary>The Flyback mark, first on the bar, back to the site's front page. Only where the host has one.</summary>
     public Button Home { get; } = ToolbarButtons.Drawn("home", new LogoMark { Width = 30, Height = 30 }, "Back to the Flyback site.");
@@ -163,7 +164,8 @@ internal sealed class Toolbar
     /// <param name="plugins">Whether any assistant plugin is installed.</param>
     /// <param name="recording">Whether a take is running, which no other patch may be opened under.</param>
     /// <param name="host">Whether the editor is in a page, whose bar has none of what a page cannot do.</param>
-    public Toolbar(Document document, PresetSlot presets, PluginCatalog plugins, Reactions reactions, IDialog dialog, RecordingState recording, EditorHost host)
+    /// <param name="settings">Whether the buttons are labeled.</param>
+    public Toolbar(Document document, PresetSlot presets, PluginCatalog plugins, Reactions reactions, IDialog dialog, RecordingState recording, EditorHost host, CanvasSection settings)
     {
         var full = !host.InPage;
 
@@ -337,6 +339,35 @@ internal sealed class Toolbar
         };
 
         View.SizeChanged += (_, e) => Overflow.Fit(e.NewSize.Width);
+
+        labeled =
+        [
+            presets.Button, Viewer, Open, Save, Add, Frame, SelectAll, Paste, Undo, Redo, Tidy,
+            Assistant, Code, Knobs, Keys, Swap, Side, Transport, Measure, Record, Settings, Plugins, About,
+        ];
+
+        Overflow.Legends = shown =>
+        {
+            foreach (var button in labeled) ToolbarButtons.ShowLegend(button, shown);
+        };
+
+        Label(settings.ToolbarLabels);
+        settings.ToolbarLabelsShown += Label;
+    }
+
+    /// <summary>Every button with a legend under its symbol.</summary>
+    private readonly ContentControl[] labeled;
+
+    /// <summary>Whether the settings ask for legends; the bar drops them while the window is too narrow.</summary>
+    public bool Labeled { get; private set; }
+
+    /// <summary>Shows the legends under the buttons, or hides them for a lower bar.</summary>
+    private void Label(bool shown)
+    {
+        Labeled = shown;
+
+        Overflow.LegendsWanted = shown;
+        Overflow.Fit(View.Bounds.Width);
     }
 
     /// <summary>The menu what does not fit on the bar folds into.</summary>
@@ -409,7 +440,7 @@ internal sealed class Toolbar
         if (stop != recordShowsStop)
         {
             recordShowsStop = stop;
-            Record.Content = stop ? Glyphs.Stop() : Glyphs.Record();
+            ToolbarButtons.SetIcon(Record, stop ? Glyphs.Stop() : Glyphs.Record());
         }
 
         ToolTip.SetTip(Record, notice.Mode switch
@@ -427,12 +458,12 @@ internal sealed class Toolbar
     /// <summary>The Measure button shows what pressing it would do now.</summary>
     public Task On(MeasureModeChanged notice)
     {
-        Measure.Content = notice.Mode switch
+        ToolbarButtons.SetIcon(Measure, notice.Mode switch
         {
             MeasureMode.Running => Glyphs.MeasureCancel(),
             MeasureMode.Shown => Glyphs.MeasureHide(),
             _ => Glyphs.Measure(),
-        };
+        });
 
         ToolTip.SetTip(Measure, notice.Mode switch
         {

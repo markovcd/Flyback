@@ -28,6 +28,10 @@ The editor is drawn as an instrument, with a scope on the bench as the reference
   rows. The small glyph beside a module's name in the inspector stays.
 - **The grid is a graticule.** A line every fifth division, and the divisions between
   as ticks across those lines.
+- **Toolbar symbols are panel marks.** Drawn on a 16-unit box at weight 1.6 with square
+  caps and miter joins, a solid fill where a hardware legend would have one, and the
+  name in small bold capitals under each. The names are a setting, on by default; a
+  window too narrow for them drops the names before folding any button.
 
 A plugin's own background ([0118](0118-a-plugin-paints-its-own-module-background.md))
 is unchanged.

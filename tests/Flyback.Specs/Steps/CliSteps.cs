@@ -499,7 +499,7 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     /// <summary>Whether the column's teal badge sits at its top left, beside the word Assistant.</summary>
     private static bool AssistantBadge(LoadedImage shot)
     {
-        var at = (73 * shot.Width + 26) * 3;
+        var at = (83 * shot.Width + 26) * 3;
         var (r, g, b) = (shot.Pixels[at], shot.Pixels[at + 1], shot.Pixels[at + 2]);
 
         return g - r > 0.3f && b - r > 0.3f;

@@ -145,7 +145,7 @@ internal sealed class PresetSlot
         // gallery, and a tile picked there is a row of the picker chosen, so there
         // is one road to changing the preset and it is the one that asks about
         // unsaved work.
-        button = ToolbarButtons.Drawn("presets-glyph", Glyphs.Presets(), "Start from a preset patch, or save this one as a preset…");
+        button = ToolbarButtons.Drawn("presets-glyph", Glyphs.Presets(), "Start from a preset patch, or save this one as a preset…", "PRESETS");
         button.Click += async (_, _) => await ShowGalleryAsync();
 
         // Stacked in one cell so the toolbar keeps the one slot it had.
@@ -154,6 +154,9 @@ internal sealed class PresetSlot
 
     /// <summary>The slot on the toolbar.</summary>
     public Control View { get; }
+
+    /// <summary>The button that opens the gallery, which the toolbar labels with the rest.</summary>
+    internal Button Button => button;
 
     /// <summary>Whatever preset the list still showed, the patch just took on a file of its own.</summary>
     public Task On(DocumentSaved notice)

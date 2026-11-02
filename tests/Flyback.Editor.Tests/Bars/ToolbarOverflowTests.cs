@@ -80,4 +80,27 @@ public sealed class ToolbarOverflowTests : EditorTest
         Folded(window).ShouldBeEmpty();
         All<Button>(window).Single(b => b.Name == "about").IsEffectivelyVisible.ShouldBeTrue();
     }
+
+    [AvaloniaFact]
+    public void A_wide_window_prints_the_legends_under_the_buttons()
+    {
+        var window = Open();
+
+        Resize(window, 1440);
+
+        Service<Toolbar>(window).Overflow.LegendsShown.ShouldBeTrue();
+        All<TextBlock>(window).ShouldContain(text => text.Text == "SAVE" && text.IsEffectivelyVisible);
+    }
+
+    [AvaloniaFact]
+    public void A_narrowing_window_drops_the_legends_before_folding_a_button()
+    {
+        var window = Open();
+
+        Resize(window, 1440);
+        Resize(window, 900);
+
+        Service<Toolbar>(window).Overflow.LegendsShown.ShouldBeFalse();
+        Folded(window).ShouldBeEmpty();
+    }
 }
