@@ -35,7 +35,7 @@ namespace Flyback.Editor.Assist;
 internal sealed class AssistantPanel : UserControl
 {
     /// <summary>The middle of <see cref="LogoMark"/>'s sweep, borrowed for the one thing here that is alive.</summary>
-    private static readonly IBrush Live = new ImmutableSolidColorBrush(Colors.Feedback);
+    private static readonly IBrush Live = new ImmutableSolidColorBrush(Colors.Attention);
 
     private static readonly IBrush Chrome = new ImmutableSolidColorBrush(Colors.Panel);
     private static readonly IBrush Rule = new ImmutableSolidColorBrush(Colors.Edge);
@@ -484,13 +484,13 @@ internal sealed class AssistantPanel : UserControl
             Width = 28,
             Height = 28,
             CornerRadius = new CornerRadius(7),
-            Background = new SolidColorBrush(Colors.Faded(Colors.Feedback, 0.14)),
+            Background = new SolidColorBrush(Colors.Faded(Colors.Attention, 0.14)),
             Child = Glyphs.Spark(16, Live),
             VerticalAlignment = VerticalAlignment.Center,
         };
 
         var name = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 1 };
-        name.Children.Add(new TextBlock { Text = "Assistant", FontSize = Text.Emphasis, FontWeight = FontWeight.SemiBold, Foreground = Brushes.White });
+        name.Children.Add(new TextBlock { Text = "Assistant", FontSize = Text.Emphasis, FontWeight = FontWeight.SemiBold, Foreground = new ImmutableSolidColorBrush(Colors.Bright) });
         name.Children.Add(model);
 
         var header = new Grid

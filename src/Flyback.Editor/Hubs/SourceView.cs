@@ -154,7 +154,7 @@ internal sealed class SourceView : UserControl
 
         text.TextArea.TextView.BackgroundRenderers.Add(backing);
         text.TextArea.TextView.BackgroundRenderers.Add(marked);
-        text.TextArea.TextView.LinkTextForegroundBrush = new SolidColorBrush(Colors.Feedback);
+        text.TextArea.TextView.LinkTextForegroundBrush = new SolidColorBrush(Colors.Attention);
 
         // The gutter and the line the caret is on, in the shell's own colors
         // rather than the theme's: this sits where the canvas sits and should
@@ -848,7 +848,7 @@ internal sealed class SourceView : UserControl
 
     private sealed class Complaints : IBackgroundRenderer
     {
-        private readonly IBrush wash = new SolidColorBrush(Colors.Sink, 0.16);
+        private readonly IBrush wash = new SolidColorBrush(Colors.Fault, 0.16);
 
         public IReadOnlyList<int> Lines { get; set; } = [];
 

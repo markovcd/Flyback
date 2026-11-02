@@ -2,6 +2,7 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
+using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Canvas;
 
@@ -98,10 +99,10 @@ internal sealed class StepBar(SocketFocus focus, CanvasSelection selection, View
     }
 
     private static readonly Typeface Bold = new(Typeface.Default.FontFamily, weight: FontWeight.SemiBold);
-    private static readonly IBrush Fill = new ImmutableSolidColorBrush(Color.FromRgb(0x2A, 0x2D, 0x34));
-    private static readonly IPen Edge = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromRgb(0x4A, 0x50, 0x5B)));
+    private static readonly IBrush Fill = new ImmutableSolidColorBrush(Colors.Node);
+    private static readonly IPen Edge = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Blend(Colors.Separator, Colors.Inactive, 0.5)));
     private static readonly IImmutableBrush LitFill = new ImmutableSolidColorBrush(Flyback.Ui.Controls.Colors.Attention);
     private static readonly IPen LitEdge = new ImmutablePen(LitFill);
-    private static readonly IBrush Light = new ImmutableSolidColorBrush(Color.FromRgb(0xF2, 0xF4, 0xF8));
-    private static readonly IBrush Dark = new ImmutableSolidColorBrush(Color.FromRgb(0x0E, 0x10, 0x13));
+    private static readonly IBrush Light = new ImmutableSolidColorBrush(Colors.Bright);
+    private static readonly IBrush Dark = new ImmutableSolidColorBrush(Colors.Edge);
 }

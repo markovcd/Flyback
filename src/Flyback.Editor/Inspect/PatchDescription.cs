@@ -106,7 +106,7 @@ internal sealed class PatchDescription(Func<Patch> patch, CaretFollow caret, Act
             VerticalContentAlignment = VerticalAlignment.Center,
             CornerRadius = new CornerRadius(8),
             FontWeight = FontWeight.SemiBold,
-            Background = new SolidColorBrush(Colors.Source),
+            Background = new SolidColorBrush(Colors.Attention),
             Foreground = new SolidColorBrush(Colors.Window),
         };
 

@@ -131,7 +131,7 @@ public class ExpressionInspectorTests : EditorTest
     {
         var window = Open(out _, "sin(");
 
-        Ink(window).ShouldBe(Colors.Sink);
+        Ink(window).ShouldBe(Colors.Fault);
         ToolTip.GetTip(Formula(window)).ShouldBeOfType<string>().ShouldContain("it ends where a value was expected");
     }
 
@@ -144,7 +144,7 @@ public class ExpressionInspectorTests : EditorTest
         Press(window, Key.Enter);
 
         Held(expression).ShouldBe("sin(a)");
-        Ink(window).ShouldNotBe(Colors.Sink);
+        Ink(window).ShouldNotBe(Colors.Fault);
         ToolTip.GetTip(Formula(window)).ShouldBeNull();
     }
 
@@ -160,11 +160,11 @@ public class ExpressionInspectorTests : EditorTest
         Formula(window).Text = "sin(";
         Settle(window);
 
-        Ink(window).ShouldNotBe(Colors.Sink);
+        Ink(window).ShouldNotBe(Colors.Fault);
 
         Press(window, Key.Enter);
 
-        Ink(window).ShouldBe(Colors.Sink);
+        Ink(window).ShouldBe(Colors.Fault);
     }
 
     /// <summary>
@@ -220,9 +220,9 @@ public class ExpressionInspectorTests : EditorTest
 
                 // That color and not merely a warm one: text is drawn a subpixel at
                 // a time, so white letters have fringes redder than this test is.
-                if (Math.Abs(pixel.R - Colors.Sink.R) <= 8
-                    && Math.Abs(pixel.G - Colors.Sink.G) <= 8
-                    && Math.Abs(pixel.B - Colors.Sink.B) <= 8)
+                if (Math.Abs(pixel.R - Colors.Fault.R) <= 8
+                    && Math.Abs(pixel.G - Colors.Fault.G) <= 8
+                    && Math.Abs(pixel.B - Colors.Fault.B) <= 8)
                 {
                     count++;
                 }

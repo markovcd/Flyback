@@ -38,7 +38,7 @@ internal sealed class CanvasPainter(
     private static readonly IPen TetherPen = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Attention), 2);
 
     private static readonly IPen AnchorPen = new ImmutablePen(
-        new ImmutableSolidColorBrush(Color.FromRgb(0xF2, 0xF4, 0xF8)), 2, new ImmutableDashStyle([3, 2], 0));
+        new ImmutableSolidColorBrush(Colors.Bright), 2, new ImmutableDashStyle([3, 2], 0));
 
     private Patch Patch => history.Patch;
 

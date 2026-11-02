@@ -109,14 +109,14 @@ internal sealed class PatchHeader(NodeEditor editor, TextWriteBack writeBack, Ca
             Width = 32,
             Height = 32,
             CornerRadius = new CornerRadius(16),
-            Background = new SolidColorBrush(Colors.Blend(Colors.Panel, Colors.Source, 0.25)),
+            Background = new SolidColorBrush(Colors.Blend(Colors.Panel, Colors.Attention, 0.25)),
             VerticalAlignment = VerticalAlignment.Center,
             Child = new TextBlock
             {
                 Text = author.Trim().Length > 0 ? char.ToUpperInvariant(author.Trim()[0]).ToString() : "?",
                 FontSize = Text.Emphasis,
                 FontWeight = FontWeight.SemiBold,
-                Foreground = new SolidColorBrush(Colors.Source),
+                Foreground = new SolidColorBrush(Colors.Attention),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
             },

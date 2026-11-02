@@ -31,8 +31,8 @@ internal sealed class Keybed : Border
     private const int Span = 4;
 
     // Immutable, since a static is shared across threads and a SolidColorBrush belongs to the one that made it.
-    private static readonly IBrush White = new ImmutableSolidColorBrush(Color.FromRgb(0xE9, 0xE6, 0xDF));
-    private static readonly IBrush Black = new ImmutableSolidColorBrush(Color.FromRgb(0x3A, 0x3F, 0x47));
+    private static readonly IBrush White = new ImmutableSolidColorBrush(Colors.Label);
+    private static readonly IBrush Black = new ImmutableSolidColorBrush(Colors.Separator);
     private static readonly IBrush Down = new ImmutableSolidColorBrush(Colors.Attention);
     private static readonly IBrush OnWhite = new ImmutableSolidColorBrush(Colors.Window);
     private static readonly IBrush OnBlack = new ImmutableSolidColorBrush(Colors.Label);

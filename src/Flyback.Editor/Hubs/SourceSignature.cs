@@ -111,7 +111,7 @@ internal sealed class SourceSignature
             if (i == signature.Active) socket.FontWeight = FontWeight.Bold;
             else socket.Foreground = new SolidColorBrush(Colors.Value);
 
-            if (i == signature.Piped) inlines.Add(new Run("|> ") { Foreground = new SolidColorBrush(Colors.Feedback) });
+            if (i == signature.Piped) inlines.Add(new Run("|> ") { Foreground = new SolidColorBrush(Colors.Attention) });
 
             inlines.Add(socket);
         }

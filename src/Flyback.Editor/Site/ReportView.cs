@@ -72,7 +72,7 @@ internal static class ReportView
             Name = "reportStatus",
             FontSize = Text.Body,
             TextWrapping = TextWrapping.Wrap,
-            Foreground = new SolidColorBrush(Colors.Sink),
+            Foreground = new SolidColorBrush(Colors.Fault),
             IsVisible = false,
         };
 

@@ -19,7 +19,8 @@
     "value": "#8A92A0",
     "normalled": "#6C7482",
     "muted": "#8A909A",
-    "inactive": "#5A606A"
+    "inactive": "#5A606A",
+    "bright": "#F2F4F8"
   },
   "accent": "#77EA9A"
 }

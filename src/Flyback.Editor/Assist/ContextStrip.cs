@@ -18,7 +18,7 @@ namespace Flyback.Editor.Assist;
 internal sealed class ContextStrip : StackPanel
 {
     private static readonly IBrush Track = new ImmutableSolidColorBrush(Colors.GridMajor);
-    private static readonly IBrush Fill = new ImmutableSolidColorBrush(Colors.Feedback);
+    private static readonly IBrush Fill = new ImmutableSolidColorBrush(Colors.Attention);
     private static readonly IBrush Full = new ImmutableSolidColorBrush(Colors.Attention);
     private static readonly IBrush Ink = new ImmutableSolidColorBrush(Colors.Label);
 

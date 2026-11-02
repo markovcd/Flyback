@@ -163,7 +163,7 @@ internal sealed class PluginHub : IDisposable
             {
                 NeededHeading(),
                 neededRows,
-                Section("PROBLEMS", "pluginProblems", run?.Problems, Colors.Sink),
+                Section("PROBLEMS", "pluginProblems", run?.Problems, Colors.Fault),
                 Heading("INSTALLED"),
                 installedStatus,
                 installedRows,
@@ -425,8 +425,8 @@ internal sealed class PluginHub : IDisposable
     {
         List<Control> marks = [];
 
-        if (plugin.Trouble is { } trouble) marks.Add(Mark("pluginTrouble", ink => Glyphs.Warning(16, ink), Colors.Sink, trouble));
-        if (plugin.Assisting is { } said) marks.Add(Mark("pluginAssisting", ink => Glyphs.Spark(16, ink), Colors.Feedback, said));
+        if (plugin.Trouble is { } trouble) marks.Add(Mark("pluginTrouble", ink => Glyphs.Warning(16, ink), Colors.Fault, trouble));
+        if (plugin.Assisting is { } said) marks.Add(Mark("pluginAssisting", ink => Glyphs.Spark(16, ink), Colors.Attention, said));
 
         var row = Row(plugin.Plugin, Picture(plugin.Picture), Installed(plugin), marks: marks);
 
@@ -712,7 +712,7 @@ internal sealed class PluginHub : IDisposable
         Text = text,
         FontSize = Text.Caption,
         FontWeight = FontWeight.SemiBold,
-        Foreground = new SolidColorBrush(Colors.Feedback),
+        Foreground = new SolidColorBrush(Colors.Attention),
         Margin = new Thickness(0, 10, 0, 2),
     };
 

@@ -261,7 +261,7 @@ internal sealed class AssistantComposer
         foreach (var (state, ground, ink) in new[]
                  {
                      (null, Colors.Label, Colors.Window),
-                     (":pointerover", Colors.BeamCore, Colors.Window),
+                     (":pointerover", Colors.Bright, Colors.Window),
                      (":pressed", Colors.Value, Colors.Window),
                      (":disabled", Colors.Node, Colors.Inactive),
                  })

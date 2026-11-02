@@ -86,7 +86,7 @@ internal static class ValueWell
             FlowDirection.LeftToRight,
             Numbers,
             CanvasText.RowSize,
-            hot || editing ? Brushes.White : lit ? HoverInk : ink);
+            hot || editing ? EditLevel : lit ? HoverInk : ink);
 
         // The chevrons give way to a number that needs their room.
         var room = well.Width - Padding * 2;
@@ -187,32 +187,32 @@ internal static class ValueWell
     private static readonly Typeface Numbers = new(Text.Mono);
 
     /// <summary>What a number at rest is written in over the picture.</summary>
-    public static readonly IBrush GlassInk = new ImmutableSolidColorBrush(Color.FromRgb(0xC8, 0xCC, 0xD4));
+    public static readonly IBrush GlassInk = new ImmutableSolidColorBrush(Colors.Label);
 
     private static readonly IBrush Shadow = new ImmutableSolidColorBrush(Avalonia.Media.Colors.Black, 0.7);
     private static readonly IImmutableBrush Attention = new ImmutableSolidColorBrush(Colors.Attention);
-    private static readonly IImmutableBrush HoverInk = new ImmutableSolidColorBrush(Color.FromRgb(0xE8, 0xEA, 0xF0));
-    private static readonly IBrush HoverFill = new ImmutableSolidColorBrush(Color.FromRgb(0x1F, 0x22, 0x27));
-    private static readonly IPen HoverEdge = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromRgb(0x7C, 0x84, 0x94)));
-    private static readonly IBrush TurnFill = new ImmutableSolidColorBrush(Color.FromRgb(0x0F, 0x11, 0x13));
+    private static readonly IImmutableBrush HoverInk = new ImmutableSolidColorBrush(Colors.Bright);
+    private static readonly IBrush HoverFill = new ImmutableSolidColorBrush(Colors.Blend(Colors.Panel, Colors.Toolbar, 0.5));
+    private static readonly IPen HoverEdge = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Blend(Colors.Normalled, Colors.Value, 0.5)));
+    private static readonly IBrush TurnFill = new ImmutableSolidColorBrush(Colors.Edge);
     private static readonly IPen TurnEdge = new ImmutablePen(Attention, 2);
     private static readonly IPen FineHalo = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Attention, 0.28), 3);
-    private static readonly IBrush RestTrack = new ImmutableSolidColorBrush(Color.FromRgb(0x4A, 0x50, 0x5B));
-    private static readonly IBrush LitTrack = new ImmutableSolidColorBrush(Color.FromRgb(0x6B, 0x73, 0x85));
+    private static readonly IBrush RestTrack = new ImmutableSolidColorBrush(Colors.Blend(Colors.Separator, Colors.Inactive, 0.5));
+    private static readonly IBrush LitTrack = new ImmutableSolidColorBrush(Colors.Normalled);
     private static readonly IBrush Tick = LitTrack;
-    private static readonly IBrush RestLevel = new ImmutableSolidColorBrush(Color.FromRgb(0x9B, 0xA3, 0xB1));
+    private static readonly IBrush RestLevel = new ImmutableSolidColorBrush(Colors.Blend(Colors.Value, Colors.Label, 0.3));
     private static readonly IBrush HoverLevel = new ImmutableSolidColorBrush(Colors.Label);
     private static readonly IBrush HoverRow = new ImmutableSolidColorBrush(Avalonia.Media.Colors.White, 0.06);
     private static readonly IBrush TurnRow = new ImmutableSolidColorBrush(Colors.Attention, 0.13);
     private static readonly IBrush Hollow = new ImmutableSolidColorBrush(Colors.Canvas);
     private static readonly IPen Outline = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Outline), 1.2);
-    private static readonly IPen FocusRing = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromRgb(0xE8, 0xEA, 0xF0)), 1.5);
-    private static readonly IBrush EditFill = new ImmutableSolidColorBrush(Color.FromRgb(0x0B, 0x0C, 0x0E));
-    private static readonly IPen EditEdge = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromRgb(0xF2, 0xF4, 0xF8)));
-    private static readonly IPen EditHalo = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromRgb(0xF2, 0xF4, 0xF8), 0.28), 2);
-    private static readonly IBrush EditLevel = new ImmutableSolidColorBrush(Color.FromRgb(0xF2, 0xF4, 0xF8));
-    private static readonly IPen LitRing = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromRgb(0xF2, 0xF4, 0xF8)), 2);
+    private static readonly IPen FocusRing = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Bright), 1.5);
+    private static readonly IBrush EditFill = new ImmutableSolidColorBrush(Colors.Edge);
+    private static readonly IPen EditEdge = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Bright));
+    private static readonly IPen EditHalo = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Bright, 0.28), 2);
+    private static readonly IBrush EditLevel = new ImmutableSolidColorBrush(Colors.Bright);
+    private static readonly IPen LitRing = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Bright), 2);
 
     /// <summary>What the number is written in at rest, lighter than other values so it reads as something to take hold of.</summary>
-    public static readonly IBrush Ink = new ImmutableSolidColorBrush(Color.FromRgb(0xAE, 0xB5, 0xC2));
+    public static readonly IBrush Ink = new ImmutableSolidColorBrush(Colors.Blend(Colors.Value, Colors.Label, 0.6));
 }

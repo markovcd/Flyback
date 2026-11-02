@@ -38,6 +38,14 @@ The editor is drawn as an instrument, with a scope on the bench as the reference
   shipped scheme of its name, as an instrument profile does. `format` rises only when an
   older reader would get a file wrong; a file from a newer Flyback is skipped whole, and
   a color a file lacks or gets wrong is Phosphor's, with the report bar saying which.
+  `text.bright`, for a value being turned or typed, a heading and a selection's outline,
+  may be left out and is then the label taken most of the way to white.
+- **The interface is drawn only in the scheme.** A module family's color stands for a
+  module and nothing else: the assistant, links and a finished tutorial step take the
+  accent. A fault is one fixed red, `Colors.Fault`, kept apart from the Output family's
+  so it never reads as a module. `SchemeColorTests` fails on a color written out in the
+  editor's code or a family color used outside the canvas; shadows, glints and the logo
+  are exempt.
 - **The controls are Flyback's.** Fluent takes `Colors.Attention` as its accent and
   2 px corners; toolbar and panel glyph buttons have no fill until pointed at or
   switched on. Number boxes and the clock are set in the mono face.

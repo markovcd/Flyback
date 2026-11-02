@@ -18,10 +18,10 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
 {
     private static readonly IBrush Lit = new ImmutableSolidColorBrush(Colors.Attention);
     private static readonly IBrush Ink = new ImmutableSolidColorBrush(Colors.Label);
-    private static readonly IBrush Live = new ImmutableSolidColorBrush(Colors.Feedback);
+    private static readonly IBrush Live = new ImmutableSolidColorBrush(Colors.Attention);
 
-    /// <summary>The person's side, in the Forms periwinkle: nothing else in the column is that color.</summary>
-    private static readonly Color You = Colors.Form;
+    /// <summary>The person's side, in the value text's gray, apart from the assistant's accent.</summary>
+    private static readonly Color You = Colors.Value;
 
     private static readonly Color Bubble = Colors.Blend(Colors.Window, You, 0.16);
 
@@ -152,7 +152,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
             // The answer, however long it runs. Folding it would hide the one
             // thing the turn was for.
             case Voice.Proposed:
-                Card(text, Colors.Feedback, Glyphs.Tick(10, Live), "Proposed patch", "Proposed: ");
+                Card(text, Colors.Attention, Glyphs.Tick(10, Live), "Proposed patch", "Proposed: ");
                 break;
 
             case Voice.Failed:
@@ -307,7 +307,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
                 Background = new ImmutableSolidColorBrush(Colors.Faded(accent, 0.16)),
                 Child = mark,
             },
-            new TextBlock { Text = title, FontSize = Text.Body, FontWeight = FontWeight.SemiBold, Foreground = Brushes.White });
+            new TextBlock { Text = title, FontSize = Text.Body, FontWeight = FontWeight.SemiBold, Foreground = new ImmutableSolidColorBrush(Colors.Bright) });
 
         heading.Spacing = 8;
 
@@ -428,7 +428,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
         {
             Text = text,
             TextWrapping = TextWrapping.Wrap,
-            Foreground = Brushes.White,
+            Foreground = new ImmutableSolidColorBrush(Colors.Bright),
             FontSize = Text.Body,
             LineHeight = 18,
         };
@@ -464,7 +464,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
                 Name = "more",
                 FontSize = Text.Small,
                 FontWeight = FontWeight.Medium,
-                Foreground = new ImmutableSolidColorBrush(Colors.Blend(You, Avalonia.Media.Colors.White, 0.45)),
+                Foreground = new ImmutableSolidColorBrush(Colors.Blend(You, Colors.Bright, 0.45)),
                 Background = Brushes.Transparent,
                 BorderThickness = new Thickness(0),
                 Padding = new Thickness(0, 2),
@@ -505,7 +505,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
             Text = "You",
             FontSize = Text.Small,
             FontWeight = FontWeight.SemiBold,
-            Foreground = new ImmutableSolidColorBrush(Colors.Blend(You, Avalonia.Media.Colors.White, 0.35)),
+            Foreground = new ImmutableSolidColorBrush(Colors.Blend(You, Colors.Bright, 0.35)),
             HorizontalAlignment = HorizontalAlignment.Right,
         });
 
@@ -528,7 +528,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
             Width = 20,
             Height = 20,
             CornerRadius = new CornerRadius(6),
-            Background = new ImmutableSolidColorBrush(Colors.Faded(Colors.Feedback, 0.14)),
+            Background = new ImmutableSolidColorBrush(Colors.Faded(Colors.Attention, 0.14)),
             Child = Glyphs.Spark(12, Live),
         };
 
@@ -537,7 +537,7 @@ internal sealed class TranscriptView : ScrollViewer, ITranscript
             Text = "Assistant",
             FontSize = Text.Small,
             FontWeight = FontWeight.SemiBold,
-            Foreground = new ImmutableSolidColorBrush(Colors.Blend(Colors.Feedback, Avalonia.Media.Colors.White, 0.3)),
+            Foreground = new ImmutableSolidColorBrush(Colors.Blend(Colors.Attention, Colors.Bright, 0.3)),
             VerticalAlignment = VerticalAlignment.Center,
         });
 

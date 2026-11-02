@@ -496,13 +496,15 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     [Then("the shot has no assistant's column")]
     public void ThenNoAssistantColumn() => AssistantBadge(Shot()).ShouldBeFalse();
 
-    /// <summary>Whether the column's teal badge sits at its top left, beside the word Assistant.</summary>
+    /// <summary>Whether the column's badge, in the scheme's accent, sits at its top left, beside the word Assistant.</summary>
     private static bool AssistantBadge(LoadedImage shot)
     {
         var at = (83 * shot.Width + 26) * 3;
-        var (r, g, b) = (shot.Pixels[at], shot.Pixels[at + 1], shot.Pixels[at + 2]);
+        var accent = Ui.Controls.Colors.Attention;
 
-        return g - r > 0.3f && b - r > 0.3f;
+        return Math.Abs(shot.Pixels[at] - accent.R / 255f) < 0.1f
+            && Math.Abs(shot.Pixels[at + 1] - accent.G / 255f) < 0.1f
+            && Math.Abs(shot.Pixels[at + 2] - accent.B / 255f) < 0.1f;
     }
 
     [When("flyback-cli shoots {string} with the editor {string}")]

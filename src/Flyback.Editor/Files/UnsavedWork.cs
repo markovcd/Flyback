@@ -130,7 +130,7 @@ internal sealed class UnsavedWork(
                 + "what it has not finished. Saving the patch does not keep that.",
                 discard: "Stop the assistant",
                 offerSave: false,
-                mark: Badge(Colors.Feedback, ink => Glyphs.Spark(24, ink))) == Unsaved.Discard;
+                mark: Badge(Colors.Attention, ink => Glyphs.Spark(24, ink))) == Unsaved.Discard;
         }
         finally
         {

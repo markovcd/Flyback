@@ -46,6 +46,26 @@ public sealed class SchemeFileTests
         problems.ShouldContain("grounds.canvas is missing or not a #RRGGBB color, so Phosphor's is used.");
     }
 
+    [Fact]
+    public void Bright_text_a_file_leaves_out_is_worked_out_without_a_word()
+    {
+        var (scheme, problems) = Read(Sodium);
+
+        scheme.ShouldNotBeNull();
+        scheme.Bright.ShouldBe(Flyback.Ui.Controls.Colors.Blend(Color.FromRgb(0xF2, 0xD9, 0xB8), Avalonia.Media.Colors.White, SchemeFile.BrightUnless));
+        problems.ShouldNotContain(line => line.Contains("bright", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Bright_text_a_file_names_is_its_own_and_a_wrong_one_is_said()
+    {
+        Read("""{ "format": 1, "name": "X", "text": { "bright": "#FFFFF0" } }""").Scheme.ShouldNotBeNull()
+            .Bright.ShouldBe(Color.FromRgb(0xFF, 0xFF, 0xF0));
+
+        Read("""{ "format": 1, "name": "X", "text": { "bright": "white" } }""").Problems
+            .ShouldContain("text.bright is not a #RRGGBB color, so it is worked out from the others.");
+    }
+
     [Theory]
     [InlineData("#FFF")]
     [InlineData("#FF9A1F80")]

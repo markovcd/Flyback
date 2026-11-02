@@ -98,6 +98,13 @@ internal static class Colors
     /// <summary>A level turned all the way down, which still has to be visible.</summary>
     public static Color Inactive => Current.Inactive;
 
+    /// <summary>Text at its brightest: a value being turned or typed, a heading, a selection's outline.</summary>
+    public static Color Bright => Current.Bright;
+
+    /// <summary>Something wrong: a fault, a refusal, a problem to read. The same in every scheme.</summary>
+    /// <remarks>A red apart from the Output family's, so a fault never reads as a module.</remarks>
+    public static Color Fault { get; } = Color.FromRgb(0xF0, 0x52, 0x4F);
+
     // --- the one color that means "look here" ------------------------------
 
     /// <summary>

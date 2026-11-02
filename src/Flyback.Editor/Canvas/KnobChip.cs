@@ -50,6 +50,6 @@ internal static class KnobChip
 
     private static readonly Typeface Mono = new(Flyback.Ui.Controls.Text.Mono);
     private static readonly Typeface MonoBold = new(Flyback.Ui.Controls.Text.Mono, weight: FontWeight.SemiBold);
-    private static readonly IBrush ChipFill = new ImmutableSolidColorBrush(Color.FromRgb(0x3A, 0x3E, 0x46));
-    private static readonly IBrush Light = new ImmutableSolidColorBrush(Color.FromRgb(0xE8, 0xEA, 0xF0));
+    private static readonly IBrush ChipFill = new ImmutableSolidColorBrush(Colors.Separator);
+    private static readonly IBrush Light = new ImmutableSolidColorBrush(Colors.Bright);
 }

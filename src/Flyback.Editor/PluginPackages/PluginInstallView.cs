@@ -107,7 +107,7 @@ internal static class PluginInstallView
 
         if (refusal is not null)
         {
-            var reason = Wrapped($"Cannot be installed. {refusal}", Text.Body, new SolidColorBrush(Colors.Sink));
+            var reason = Wrapped($"Cannot be installed. {refusal}", Text.Body, new SolidColorBrush(Colors.Fault));
 
             reason.Name = "pluginRefusal";
             page.Children.Add(reason);

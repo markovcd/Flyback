@@ -219,7 +219,7 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
     }
 
     /// <summary>What a value the module cannot read is marked in.</summary>
-    private static readonly IBrush Unread = new ImmutableSolidColorBrush(Colors.Sink);
+    private static readonly IBrush Unread = new ImmutableSolidColorBrush(Colors.Fault);
 
     /// <summary>
     /// A label and a list to pick from, on the same grid a knob's row uses.

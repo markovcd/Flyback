@@ -23,6 +23,9 @@ internal static class SchemeFile
 
     public const int LongestName = 40;
 
+    /// <summary>How far toward white a file's label is taken for the bright text it does not name.</summary>
+    public const double BrightUnless = 0.7;
+
     private static readonly JsonDocumentOptions Reading = new()
     {
         CommentHandling = JsonCommentHandling.Skip,
@@ -135,11 +138,28 @@ internal static class SchemeFile
             colors[i] = standIns[i];
         }
 
+        var bright = Optional(root, "text", "bright", problems)
+            ?? Controls.Colors.Blend(colors[11], Avalonia.Media.Colors.White, BrightUnless);
+
         return new Scheme(
             name,
             colors[0], colors[1], colors[2], colors[3], colors[4], colors[5], colors[6], colors[7],
             colors[8], colors[9], colors[10], colors[11], colors[12], colors[13], colors[14], colors[15],
-            colors[16]);
+            colors[16], bright);
+    }
+
+    /// <summary>A color a file may leave out, worked out from the others when it does; one it gets wrong is said.</summary>
+    private static Color? Optional(JsonElement root, string? section, string key, ICollection<string> problems)
+    {
+        if (Hex(root, section, key) is { } color) return color;
+
+        var holder = root;
+        var present = (section is null || (root.TryGetProperty(section, out holder) && holder.ValueKind == JsonValueKind.Object))
+            && holder.TryGetProperty(key, out _);
+
+        if (present) problems.Add($"{(section is null ? key : $"{section}.{key}")} is not a #RRGGBB color, so it is worked out from the others.");
+
+        return null;
     }
 
     private static Color? Hex(JsonElement root, string? section, string key)

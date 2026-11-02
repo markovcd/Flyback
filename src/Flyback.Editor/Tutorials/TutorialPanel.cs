@@ -23,7 +23,7 @@ internal sealed class TutorialPanel : UserControl, IReactTo<PatchChanged>
     private static readonly IBrush Rule = new ImmutableSolidColorBrush(Colors.Edge);
     private static readonly IBrush Ink = new ImmutableSolidColorBrush(Colors.Label);
     private static readonly IBrush Lit = new ImmutableSolidColorBrush(Colors.Attention);
-    private static readonly IBrush Met = new ImmutableSolidColorBrush(Colors.Oscillator);
+    private static readonly IBrush Met = new ImmutableSolidColorBrush(Colors.Attention);
     private static readonly IBrush Current = new ImmutableSolidColorBrush(Colors.NodeSelected);
 
     private readonly NodeEditor editor;
@@ -33,7 +33,7 @@ internal sealed class TutorialPanel : UserControl, IReactTo<PatchChanged>
     private readonly StackPanel list = new() { Name = "tutorial-list", Spacing = 8, Margin = new Thickness(12) };
     private readonly StackPanel lesson = new() { Name = "tutorial-lesson", Spacing = 10, Margin = new Thickness(12) };
     private readonly ContentControl body = new();
-    private readonly TextBlock heading = new() { FontSize = Text.Emphasis, FontWeight = FontWeight.SemiBold, Foreground = Brushes.White, VerticalAlignment = VerticalAlignment.Center };
+    private readonly TextBlock heading = new() { FontSize = Text.Emphasis, FontWeight = FontWeight.SemiBold, Foreground = new ImmutableSolidColorBrush(Colors.Bright), VerticalAlignment = VerticalAlignment.Center };
     private readonly Button all = new() { Name = "tutorial-all", Content = "All tutorials", FontSize = Text.Small, IsVisible = false };
 
     private bool[] met = [];
@@ -172,7 +172,7 @@ internal sealed class TutorialPanel : UserControl, IReactTo<PatchChanged>
         foreach (var tutorial in ShippedTutorials.All)
         {
             var card = new StackPanel { Spacing = 3 };
-            card.Children.Add(new TextBlock { Text = tutorial.Title, FontSize = Text.Body, FontWeight = FontWeight.SemiBold, Foreground = Brushes.White });
+            card.Children.Add(new TextBlock { Text = tutorial.Title, FontSize = Text.Body, FontWeight = FontWeight.SemiBold, Foreground = new ImmutableSolidColorBrush(Colors.Bright) });
             card.Children.Add(Words(tutorial.Summary));
             card.Children.Add(Text.Quiet($"{tutorial.Steps.Count} steps, from {tutorial.From}", Text.Caption));
 
@@ -210,7 +210,7 @@ internal sealed class TutorialPanel : UserControl, IReactTo<PatchChanged>
                 {
                     Text = $"{(met[i] ? "✓" : $"{i + 1}.")}  {tutorial.Steps[i].Title}",
                     FontSize = Text.Small,
-                    Foreground = met[i] ? Met : i == Step ? Brushes.White : Text.Muted,
+                    Foreground = met[i] ? Met : i == Step ? new ImmutableSolidColorBrush(Colors.Bright) : Text.Muted,
                 },
             };
             steps.Children.Add(row);
@@ -221,7 +221,7 @@ internal sealed class TutorialPanel : UserControl, IReactTo<PatchChanged>
         if (Step < tutorial.Steps.Count)
         {
             var step = tutorial.Steps[Step];
-            lesson.Children.Add(new TextBlock { Name = "tutorial-step", Text = step.Title, FontSize = Text.Heading, FontWeight = FontWeight.SemiBold, Foreground = Brushes.White, TextWrapping = TextWrapping.Wrap });
+            lesson.Children.Add(new TextBlock { Name = "tutorial-step", Text = step.Title, FontSize = Text.Heading, FontWeight = FontWeight.SemiBold, Foreground = new ImmutableSolidColorBrush(Colors.Bright), TextWrapping = TextWrapping.Wrap });
             lesson.Children.Add(Words(step.Text));
 
             if (Hint is { } hint)

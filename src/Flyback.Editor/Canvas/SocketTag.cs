@@ -19,9 +19,9 @@ internal static class SocketTag
     private const double Pad = 4;
 
     private static readonly IPen HotRing = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Attention), 2);
-    private static readonly IPen RestRing = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromRgb(0xF2, 0xF4, 0xF8)), 2);
+    private static readonly IPen RestRing = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Bright), 2);
     private static readonly IBrush Plate = new ImmutableSolidColorBrush(Colors.Canvas, 0.85);
-    private static readonly IBrush Ink = new ImmutableSolidColorBrush(Color.FromRgb(0xF2, 0xF4, 0xF8));
+    private static readonly IBrush Ink = new ImmutableSolidColorBrush(Colors.Bright);
 
     /// <summary>Where the plate with the name goes for an input socket at <paramref name="socket"/>: to its left, off the module.</summary>
     internal static Rect PlateAt(Point socket, Size text) =>

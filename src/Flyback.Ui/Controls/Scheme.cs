@@ -26,7 +26,8 @@ internal sealed record Scheme(
     Color Normalled,
     Color Muted,
     Color Inactive,
-    Color Attention)
+    Color Attention,
+    Color Bright)
 {
     /// <summary>The default: blue-gray grounds and the P31 green of the Beam module's trace (ADR-0219).</summary>
     public static Scheme Phosphor { get; } = SchemeLibrary.Shipped[0];

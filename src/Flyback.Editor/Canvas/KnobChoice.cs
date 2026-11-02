@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Flyback.Core.Graph;
 using Flyback.Editor.Notices;
+using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Canvas;
 
@@ -185,11 +186,11 @@ internal sealed class KnobChoice(CanvasHistory history, CanvasSelection selectio
         };
 
     private static readonly Typeface MonoBold = new(Flyback.Ui.Controls.Text.Mono, weight: FontWeight.Bold);
-    private static readonly IBrush Ground = new ImmutableSolidColorBrush(Color.FromRgb(0x0E, 0x10, 0x13), 0.96);
+    private static readonly IBrush Ground = new ImmutableSolidColorBrush(Colors.Edge, 0.96);
     private static readonly IPen Edge = new ImmutablePen(new ImmutableSolidColorBrush(Avalonia.Media.Colors.White, 0.30));
-    private static readonly IBrush Picked = new ImmutableSolidColorBrush(Color.FromRgb(0x3A, 0x3E, 0x46));
-    private static readonly IPen PickedEdge = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromRgb(0xE8, 0xEA, 0xF0)), 1.5);
-    private static readonly IBrush Bright = new ImmutableSolidColorBrush(Color.FromRgb(0xF2, 0xF4, 0xF8));
-    private static readonly IBrush Light = new ImmutableSolidColorBrush(Color.FromRgb(0xE8, 0xEA, 0xF0));
-    private static readonly IBrush Dim = new ImmutableSolidColorBrush(Color.FromRgb(0xB4, 0xBB, 0xC8));
+    private static readonly IBrush Picked = new ImmutableSolidColorBrush(Colors.Separator);
+    private static readonly IPen PickedEdge = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Bright), 1.5);
+    private static readonly IBrush Bright = new ImmutableSolidColorBrush(Colors.Bright);
+    private static readonly IBrush Light = new ImmutableSolidColorBrush(Colors.Bright);
+    private static readonly IBrush Dim = new ImmutableSolidColorBrush(Colors.Blend(Colors.Value, Colors.Label, 0.7));
 }

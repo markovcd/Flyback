@@ -96,7 +96,7 @@ internal static class TurnReadout
 
         if (turn.Hot || turn.Typed is not null) context.DrawEllipse(null, Ghost, new Point(rail.Center.X, rail.Bottom - rail.Height * start), 7, 7);
 
-        if (turn.Hot) context.DrawEllipse(Brushes.White, Thumb, thumb, 5.25, 5.25);
+        if (turn.Hot) context.DrawEllipse(Bright, Thumb, thumb, 5.25, 5.25);
         else context.DrawEllipse(Ground, RestThumb, thumb, 6, 6);
 
         // The words, right of the rail.
@@ -121,7 +121,7 @@ internal static class TurnReadout
                 _ => Bright,
             };
 
-            var entry = Text(typed, 34, Brushes.White, sans: false, bold: true, width: room - 4);
+            var entry = Text(typed, 34, Bright, sans: false, bold: true, width: room - 4);
             context.DrawText(entry, new Point(box.X, box.Y + (box.Height - entry.Height) / 2));
             context.FillRectangle(accent, new Rect(box.X + entry.Width + 2, box.Y + 7, 2, 30));
             context.FillRectangle(accent, new Rect(box.X, box.Bottom - 2, box.Width, 2));
@@ -129,7 +129,7 @@ internal static class TurnReadout
         else
         {
             var said = port.Format(turn.Value);
-            var number = Text(said, said.Length > 5 || turn.Fine ? 34 : 40, Brushes.White, sans: false, bold: true, width: room);
+            var number = Text(said, said.Length > 5 || turn.Fine ? 34 : 40, Bright, sans: false, bold: true, width: room);
             context.DrawText(number, new Point(left, card.Y + 34 + (48 - number.Height) / 2));
         }
 
@@ -258,22 +258,22 @@ internal static class TurnReadout
     private static readonly Typeface MonoBold = new(Flyback.Ui.Controls.Text.Mono, weight: FontWeight.SemiBold);
     private static readonly Typeface SansBold = new(Typeface.Default.FontFamily, weight: FontWeight.SemiBold);
 
-    private static readonly IBrush Ground = new ImmutableSolidColorBrush(Color.FromRgb(0x0E, 0x10, 0x13), 0.96);
+    private static readonly IBrush Ground = new ImmutableSolidColorBrush(Colors.Edge, 0.96);
     private static readonly IPen Edge = new ImmutablePen(new ImmutableSolidColorBrush(Avalonia.Media.Colors.White, 0.30));
-    private static readonly IBrush Track = new ImmutableSolidColorBrush(Color.FromRgb(0x4A, 0x50, 0x5B));
+    private static readonly IBrush Track = new ImmutableSolidColorBrush(Colors.Blend(Colors.Separator, Colors.Inactive, 0.5));
     private static readonly IImmutableBrush Attention = new ImmutableSolidColorBrush(Colors.Attention);
     private static readonly IBrush TickInk = new ImmutableSolidColorBrush(Colors.Value);
-    private static readonly IImmutableBrush Quiet = new ImmutableSolidColorBrush(Color.FromRgb(0x9B, 0xA3, 0xB1));
-    private static readonly IBrush Soft = new ImmutableSolidColorBrush(Color.FromRgb(0xB4, 0xBB, 0xC8));
-    private static readonly IBrush HintInk = new ImmutableSolidColorBrush(Color.FromRgb(0x8F, 0x97, 0xA6));
-    private static readonly IBrush RestFill = new ImmutableSolidColorBrush(Color.FromRgb(0x6B, 0x73, 0x85));
-    private static readonly IPen RestThumb = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromRgb(0xF2, 0xF4, 0xF8)), 2);
-    private static readonly IImmutableBrush ErrorInk = new ImmutableSolidColorBrush(Color.FromRgb(0xFF, 0x8A, 0x80));
-    private static readonly IBrush WarningInk = new ImmutableSolidColorBrush(Color.FromRgb(0xFF, 0xD2, 0x8A));
+    private static readonly IImmutableBrush Quiet = new ImmutableSolidColorBrush(Colors.Blend(Colors.Value, Colors.Label, 0.3));
+    private static readonly IBrush Soft = new ImmutableSolidColorBrush(Colors.Blend(Colors.Value, Colors.Label, 0.7));
+    private static readonly IBrush HintInk = new ImmutableSolidColorBrush(Colors.Value);
+    private static readonly IBrush RestFill = new ImmutableSolidColorBrush(Colors.Normalled);
+    private static readonly IPen RestThumb = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Bright), 2);
+    private static readonly IImmutableBrush ErrorInk = new ImmutableSolidColorBrush(Colors.Blend(Colors.Fault, Colors.Bright, 0.4));
+    private static readonly IBrush WarningInk = new ImmutableSolidColorBrush(Colors.Blend(Colors.Attention, Colors.Bright, 0.4));
     private static readonly IPen ErrorEdge = new ImmutablePen(ErrorInk, 2);
     private static readonly IPen WarningEdge = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Attention), 2);
-    private static readonly IBrush Bright = new ImmutableSolidColorBrush(Color.FromRgb(0xF2, 0xF4, 0xF8));
-    private static readonly IBrush BadgeInk = new ImmutableSolidColorBrush(Color.FromRgb(0x1A, 0x12, 0x04));
+    private static readonly IBrush Bright = new ImmutableSolidColorBrush(Colors.Bright);
+    private static readonly IBrush BadgeInk = new ImmutableSolidColorBrush(Colors.Edge);
     private static readonly IPen Ghost = new ImmutablePen(Quiet, 1.5, new ImmutableDashStyle([2, 2], 0));
     private static readonly IPen Thumb = new ImmutablePen(Attention, 3.5);
 }
