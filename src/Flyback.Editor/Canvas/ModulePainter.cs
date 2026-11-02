@@ -195,7 +195,7 @@ internal sealed class ModulePainter(
 
         if (ModuleOverview.At(view.Zoom))
         {
-            ModuleOverview.DrawName(context, bounds, ModuleFace.Heading(node, def), view.Zoom, ModuleFace.HeaderTextBrush, node.Off);
+            ModuleOverview.DrawName(context, bounds, ModuleFace.Heading(node, def), view.Zoom, ModuleFace.OverviewTextBrush, node.Off);
 
             for (var i = 0; i < def.Outputs.Count; i++)
                 NodeSkin.DrawPort(context, NodeGeometry.OutputPort(node, i), def.Outputs[i].Kind);

@@ -93,6 +93,37 @@ public class ColorsTests
     public void Each_shipped_scheme_has_an_accent_of_its_own() =>
         SchemeLibrary.Shipped.Select(scheme => scheme.Attention).Distinct().Count().ShouldBe(SchemeLibrary.Shipped.Count);
 
+    /// <summary>On a light scheme every family color is darkened until it stands out from paper, and keeps its hue.</summary>
+    [Fact]
+    public void A_family_color_deepened_on_a_pale_ground_stands_out_and_keeps_its_hue()
+    {
+        var paper = Color.FromRgb(0xF2, 0xEF, 0xE6);
+
+        foreach (var category in NodeCatalog.BuiltIn.Categories)
+        {
+            var accent = Colors.Accent(category);
+            var deep = Colors.Deepened(accent, paper);
+
+            Contrast(deep, paper).ShouldBeGreaterThanOrEqualTo(Colors.ColorOnGround, category);
+            deep.ToHsv().H.ShouldBe(accent.ToHsv().H, 1.5, category);
+        }
+    }
+
+    [Fact]
+    public void A_color_that_already_stands_out_is_not_deepened()
+    {
+        var ink = Color.FromRgb(0x20, 0x40, 0x80);
+
+        Colors.Deepened(ink, Color.FromRgb(0xF2, 0xEF, 0xE6)).ShouldBe(ink);
+    }
+
+    [Fact]
+    public void A_band_is_written_on_in_whichever_of_white_and_black_reads()
+    {
+        Colors.InkOn(Color.FromRgb(0x14, 0x15, 0x18)).ShouldBe(Color.FromRgb(0xFF, 0xFF, 0xFF));
+        Colors.InkOn(Color.FromRgb(0xD8, 0xD4, 0xC8)).ShouldBe(Color.FromRgb(0x00, 0x00, 0x00));
+    }
+
     /// <summary>WCAG's contrast ratio, from one to twenty-one.</summary>
     private static double Contrast(Color one, Color other)
     {

@@ -80,12 +80,12 @@ internal sealed class ModulePlate : Decorator
     }
 
     /// <summary>
-    /// What the line under the name is written in. White pulled back rather than the
-    /// canvas's label gray, because it stands on the band beside the name rather than
+    /// What the line under the name is written in. The band's ink pulled back rather than
+    /// the canvas's label gray, because it stands on the band beside the name rather than
     /// on the body: one surface, one ink, one of them quieter.
     /// </summary>
     private static readonly IBrush Label =
-        new ImmutableSolidColorBrush(Avalonia.Media.Colors.White, 0.7);
+        new ImmutableSolidColorBrush(ModuleFace.HeaderInk, 0.7);
 
     /// <summary>Where the name stands: a panel, because renaming swaps a box in for it.</summary>
     private readonly StackPanel name = new() { VerticalAlignment = VerticalAlignment.Center };
@@ -322,10 +322,10 @@ internal sealed class ModulePlate : Decorator
     /// A box, which belongs to no category and wears the grays the canvas draws one
     /// in.
     /// </summary>
-    public static ModulePlate Box() => new((Brushes.White, Label));
+    public static ModulePlate Box() => new((ModuleFace.HeaderTextBrush, Label));
 
     /// <summary>
-    /// White over the label gray, which is what the canvas writes on a block — or,
+    /// The band's ink over the label gray, which is what the canvas writes on a block — or,
     /// where the skin asks for it, each line colored from the background it
     /// covers. Read off <see cref="ModuleBackdrop"/> rather than worked out again
     /// here, and from the panel's own picture (ADR-0118), so the plate can never
@@ -333,7 +333,7 @@ internal sealed class ModulePlate : Decorator
     /// </summary>
     private static (IBrush Ink, IBrush Quiet) Inks(NodeDef def, ModuleSkin? skin)
     {
-        if (skin is not { ContrastText: true }) return (Brushes.White, Label);
+        if (skin is not { ContrastText: true }) return (ModuleFace.HeaderTextBrush, Label);
 
         var backdrop = ModuleBackdrop.Of(def, selected: false, panel: true);
         var (top, floor) = backdrop.HeaderGradient;

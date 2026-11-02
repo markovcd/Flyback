@@ -9,9 +9,10 @@ namespace Flyback.Core.Tests.Architecture;
 /// and no module family's color standing for something other than a module.
 /// </summary>
 /// <remarks>
-/// A shadow, a casing or a glint (pure black or white with some alpha) is no color of
-/// its own, so it may be written out. The logo and its studio mark keep their colors in
-/// every scheme.
+/// Only what is drawn over the picture is written in white and black, since the picture
+/// is the same in every scheme; anywhere else a light scheme needs the opposite, which
+/// <c>Colors.Lift</c>, <c>Colors.Press</c> and <c>Colors.InkOn</c> give. The logo and its
+/// studio mark keep their colors in every scheme.
 /// </remarks>
 [TestCategory(TestCategory.Unmeasured)]
 public partial class SchemeColorTests
@@ -22,24 +23,33 @@ public partial class SchemeColorTests
     /// <summary>Drawings that are the same in every scheme.</summary>
     private static readonly string[] Marks = ["LogoBeam.cs", "LogoMark.cs", "StudioMark.cs", "QrCode.cs"];
 
+    /// <summary>What is drawn over the picture, which no scheme colors.</summary>
+    private static readonly string[] OverPicture =
+        ["CanvasGlass.cs", "LivePatching.cs", "SeekTrack.cs", "StageKnob.cs", "StageSwitch.cs", "StatsOverlay.cs", "TuckedAway.cs"];
+
+    private static bool Exempt(string file) => Palette.Contains(file) || Marks.Contains(file) || OverPicture.Contains(file);
+
     [Fact]
     public void No_color_is_written_out_in_the_interface() =>
-        Offenders(Written(), file => Palette.Contains(file) || Marks.Contains(file), Glint)
+        Offenders(Written(), Exempt)
             .ShouldBeEmpty("the interface takes its colors from the scheme (Colors.cs); one written out stays the same in every scheme");
 
     [Fact]
+    public void White_and_black_are_written_only_over_the_picture() =>
+        Offenders(Pole(), Exempt)
+            .ShouldBeEmpty("a highlight, shadow or ink in white or black vanishes on one kind of scheme; Colors.Lift, Colors.Press and Colors.InkOn turn with the ground");
+
+    [Fact]
     public void A_module_family_color_stands_only_for_a_module() =>
-        Offenders(Family(), file => Palette.Contains(file) || Marks.Contains(file), _ => false)
+        Offenders(Family(), file => Palette.Contains(file) || Marks.Contains(file))
             .ShouldBeEmpty("a family color says what a module is; anywhere else the scheme's accent, text or danger says it");
 
-    private static List<string> Offenders(Regex pattern, Func<string, bool> allowed, Func<string, bool> excused) =>
+    private static List<string> Offenders(Regex pattern, Func<string, bool> allowed) =>
         [.. Sources()
             .Where(path => !allowed(Path.GetFileName(path)))
             .SelectMany(path => File.ReadLines(path).Select((line, i) => (path, line, number: i + 1)))
-            .Where(at => pattern.IsMatch(at.line) && !excused(at.line))
+            .Where(at => pattern.IsMatch(at.line))
             .Select(at => $"{Path.GetRelativePath(Repository.Root, at.path)}:{at.number}: {at.line.Trim()}")];
-
-    private static bool Glint(string line) => Gray().Count(line) == Written().Count(line);
 
     private static IEnumerable<string> Sources() =>
         new[] { "Flyback.Editor", "Flyback.Ui" }
@@ -49,8 +59,8 @@ public partial class SchemeColorTests
     [GeneratedRegex(@"Color\.From(?:Rgb|Argb)\(\s*(0x|\d)|Color\.Parse\(\s*""#")]
     private static partial Regex Written();
 
-    [GeneratedRegex(@"Color\.FromArgb\([^,()]+,\s*(?:(?:0|0x00),\s*(?:0|0x00),\s*(?:0|0x00)|255,\s*255,\s*255)\s*\)")]
-    private static partial Regex Gray();
+    [GeneratedRegex(@"\b(?:Colors|Brushes)\.(?:White|Black)\b")]
+    private static partial Regex Pole();
 
     [GeneratedRegex(@"\bColors\.(Sink|Source|Oscillator|Sequencer|Maths|Space|Pattern|Tint|Feedback|Form|Note|Shaping|Echo|Reading|Routing|Unknown|BeamCore|ColorPort|AnyPort|ScalarPort)\b")]
     private static partial Regex Family();

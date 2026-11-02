@@ -25,7 +25,13 @@ internal static class ModuleFace
     /// </summary>
     internal const double OffOpacity = 0.38;
 
-    internal static readonly IImmutableBrush HeaderTextBrush = Brushes.White;
+    /// <summary>What a title on a band is written in: white or black, whichever reads on the edge color every band is mostly made of.</summary>
+    internal static Color HeaderInk { get; } = Colors.InkOn(Colors.Edge);
+
+    internal static readonly IImmutableBrush HeaderTextBrush = new ImmutableSolidColorBrush(HeaderInk);
+
+    /// <summary>What a module's name is written in when zoomed out, on a plate of the canvas.</summary>
+    internal static readonly IImmutableBrush OverviewTextBrush = new ImmutableSolidColorBrush(Colors.InkOn(Colors.Canvas));
 
     /// <summary>The line through the name of a module that is switched off.</summary>
     internal static readonly IPen OffStrike = new ImmutablePen(HeaderTextBrush, 1.5);

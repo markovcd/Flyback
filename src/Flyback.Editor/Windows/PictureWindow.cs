@@ -38,7 +38,7 @@ internal sealed class PictureWindow : Window
     internal PictureWindow(Screen screen, PreviewHost preview, IAudioEngine sound, Func<bool> heard)
     {
         Title = "Flyback picture";
-        Background = Brushes.Black;
+        Background = Flyback.Ui.Controls.Colors.Letterbox;
         ShowInTaskbar = false;
         ShowActivated = false;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;

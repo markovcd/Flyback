@@ -441,7 +441,7 @@ internal sealed class ShellLayout(
 
     public void BuildRightPanel(Grid grid, int column)
     {
-        previewBox = fullScreen.PreviewBox = new Border { Background = Brushes.Black, Child = preview, Focusable = true };
+        previewBox = fullScreen.PreviewBox = new Border { Background = Flyback.Ui.Controls.Colors.Letterbox, Child = preview, Focusable = true };
         KeyboardNavigation.SetIsTabStop(previewBox, false);
         PictureTaps.Attach(previewBox, transport.TogglePause, () =>
         {

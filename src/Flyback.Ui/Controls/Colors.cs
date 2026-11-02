@@ -1,4 +1,5 @@
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Flyback.Core.Graph;
 
 namespace Flyback.Ui.Controls;
@@ -79,6 +80,9 @@ internal static class Colors
     /// </summary>
     public static Color DialogShadow => Press(0.9);
 
+    /// <summary>Behind a picture, where it does not reach: black in every scheme, as a screen is.</summary>
+    public static IImmutableSolidColorBrush Letterbox { get; } = new ImmutableSolidColorBrush(Avalonia.Media.Colors.Black);
+
     /// <summary>The canvas grid, and the brighter line every tenth of it.</summary>
     public static Color Grid => Current.Grid;
 
@@ -138,59 +142,62 @@ internal static class Colors
     public static Color Attention => Current.Attention;
 
     // --- module accents -----------------------------------------------------
+    //
+    // Each is drawn through Deepened, so on a light scheme it keeps its hue and stands out
+    // from the canvas.
 
-    public static Color Sink { get; } = Color.FromRgb(0xE0, 0x5A, 0x5A);
-    public static Color Source { get; } = Color.FromRgb(0x4A, 0x9E, 0xDE);
+    public static Color Sink => Deepened(Color.FromRgb(0xE0, 0x5A, 0x5A));
+    public static Color Source => Deepened(Color.FromRgb(0x4A, 0x9E, 0xDE));
     /// <summary>A dark sea green, kept off the P31 green of <see cref="Attention"/> so a selected oscillator still shows its ring.</summary>
-    public static Color Oscillator { get; } = Color.FromRgb(0x3A, 0xA1, 0x87);
-    public static Color Sequencer { get; } = Color.FromRgb(0xD8, 0xB0, 0x4A);
-    public static Color Maths { get; } = Color.FromRgb(0x7E, 0x86, 0x94);
-    public static Color Space { get; } = Color.FromRgb(0xB4, 0x84, 0xE0);
-    public static Color Pattern { get; } = Color.FromRgb(0xE0, 0xA8, 0x4A);
-    public static Color Tint { get; } = Color.FromRgb(0xE0, 0x6A, 0xB8);
-    public static Color Feedback { get; } = Color.FromRgb(0x3F, 0xC8, 0xC8);
+    public static Color Oscillator => Deepened(Color.FromRgb(0x3A, 0xA1, 0x87));
+    public static Color Sequencer => Deepened(Color.FromRgb(0xD8, 0xB0, 0x4A));
+    public static Color Maths => Deepened(Color.FromRgb(0x7E, 0x86, 0x94));
+    public static Color Space => Deepened(Color.FromRgb(0xB4, 0x84, 0xE0));
+    public static Color Pattern => Deepened(Color.FromRgb(0xE0, 0xA8, 0x4A));
+    public static Color Tint => Deepened(Color.FromRgb(0xE0, 0x6A, 0xB8));
+    public static Color Feedback => Deepened(Color.FromRgb(0x3F, 0xC8, 0xC8));
 
     /// <summary>
     /// Shapes with edges. A periwinkle between the Source's blue and the
     /// Geometry violet, because a form is a field like the one and is read
     /// through the other.
     /// </summary>
-    public static Color Form { get; } = Color.FromRgb(0x7A, 0x8C, 0xE8);
+    public static Color Form => Deepened(Color.FromRgb(0x7A, 0x8C, 0xE8));
 
     /// <summary>
     /// The modules that know what a note is. Lime, next along from the Timing
     /// yellow: a pitch and a rhythm are the two halves of the same subject and
     /// should read as neighbors rather than as strangers.
     /// </summary>
-    public static Color Note { get; } = Color.FromRgb(0xA8, 0xCE, 0x52);
+    public static Color Note => Deepened(Color.FromRgb(0xA8, 0xCE, 0x52));
 
     /// <summary>
     /// What is done to a waveform. Burnt orange, between the Pattern orange and
     /// the Output red, because shaping is the last thing before the sink.
     /// </summary>
-    public static Color Shaping { get; } = Color.FromRgb(0xD8, 0x7A, 0x48);
+    public static Color Shaping => Deepened(Color.FromRgb(0xD8, 0x7A, 0x48));
 
     /// <summary>
     /// The delay-line effects. A darker teal than Feedback's cyan and related to
     /// it on purpose: both are a patch reading something that already happened.
     /// </summary>
-    public static Color Echo { get; } = Color.FromRgb(0x3E, 0xA0, 0xB0);
+    public static Color Echo => Deepened(Color.FromRgb(0x3E, 0xA0, 0xB0));
 
     /// <summary>
     /// The charts and the meter. Slate, and deliberately the quietest accent
     /// after Maths: a module that looks at the patch should not be louder than
     /// the patch.
     /// </summary>
-    public static Color Reading { get; } = Color.FromRgb(0x92, 0xA8, 0xC8);
+    public static Color Reading => Deepened(Color.FromRgb(0x92, 0xA8, 0xC8));
 
     /// <summary>
     /// The mixers and the bus. A muted clay, quiet beside the families that make
     /// a signal, because routing carries theirs rather than one of its own.
     /// </summary>
-    public static Color Routing { get; } = Color.FromRgb(0xC0, 0x9C, 0x88);
+    public static Color Routing => Deepened(Color.FromRgb(0xC0, 0x9C, 0x88));
 
     /// <summary>A category nothing here knows, which a plugin may well introduce.</summary>
-    public static Color Unknown { get; } = Color.FromRgb(0x88, 0x88, 0x88);
+    public static Color Unknown => Deepened(Color.FromRgb(0x88, 0x88, 0x88));
 
     /// <summary>
     /// What color a module's category is drawn in — its header on the canvas and its
@@ -234,7 +241,7 @@ internal static class Colors
             return (category, category);
         }
 
-        var accent = Of(palette.Accent);
+        var accent = Deepened(Of(palette.Accent));
 
         return (accent, palette.Floor is { } floor ? Of(floor) : accent);
     }
@@ -283,6 +290,54 @@ internal static class Colors
 
     private static byte Part(byte from, byte to, double amount) =>
         (byte)Math.Clamp(Math.Round(from + (to - from) * amount), 0, 255);
+
+    // --- on a light ground --------------------------------------------------
+
+    /// <summary>
+    /// A family, socket or wire color as the scheme draws it: itself on a dark scheme, and
+    /// on a light one darkened, hue kept, until it stands <see cref="ColorOnGround"/> to
+    /// one against the canvas.
+    /// </summary>
+    public static Color Deepened(Color color) =>
+        Current.Light ? Deepenings.GetOrAdd((color, Current.Canvas), key => Deepened(key.Item1, key.Item2)) : color;
+
+    /// <summary><paramref name="color"/> darkened, hue kept, until it stands <see cref="ColorOnGround"/> to one against <paramref name="ground"/>.</summary>
+    public static Color Deepened(Color color, Color ground)
+    {
+        var made = color;
+
+        for (var light = 1.0; light > 0 && ContrastRatio(made, ground) < ColorOnGround; light -= 0.01)
+            made = Shade(color, light);
+
+        return made;
+    }
+
+    /// <summary>The contrast a color drawn as a line or a fill keeps against a light canvas: WCAG's for graphics.</summary>
+    public const double ColorOnGround = 3.0;
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<(Color, Color), Color> Deepenings = new();
+
+    /// <summary>WCAG's contrast ratio between two opaque colors, from one to twenty-one.</summary>
+    public static double ContrastRatio(Color a, Color b)
+    {
+        var (lighter, darker) = (Luminance(a), Luminance(b)) is var (x, y) && x > y ? (x, y) : (y, x);
+
+        return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    /// <summary>WCAG's relative luminance: the light in a color as the eye weighs it, from nought to one.</summary>
+    public static double Luminance(Color color) =>
+        0.2126 * Linear(color.R) + 0.7152 * Linear(color.G) + 0.0722 * Linear(color.B);
+
+    private static double Linear(byte channel)
+    {
+        var c = channel / 255.0;
+
+        return c <= 0.04045 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
+    }
+
+    /// <summary>White or black, whichever reads on <paramref name="band"/>: the ink for a title on a band.</summary>
+    public static Color InkOn(Color band) => ContrastRatio(White, band) >= ContrastRatio(Black, band) ? White : Black;
 
     // --- writing on a color the palette did not choose -----------------------
 
@@ -345,9 +400,9 @@ internal static class Colors
 
     // --- sockets ------------------------------------------------------------
 
-    public static Color ColorPort { get; } = Color.FromRgb(0xE8, 0xC8, 0x60);
-    public static Color AnyPort { get; } = Color.FromRgb(0x9E, 0xC8, 0x9E);
-    public static Color ScalarPort { get; } = Color.FromRgb(0xB8, 0xBC, 0xC4);
+    public static Color ColorPort => Deepened(Color.FromRgb(0xE8, 0xC8, 0x60));
+    public static Color AnyPort => Deepened(Color.FromRgb(0x9E, 0xC8, 0x9E));
+    public static Color ScalarPort => Deepened(Color.FromRgb(0xB8, 0xBC, 0xC4));
 
     /// <summary>What flows down a wire, said in color.</summary>
     public static Color PortColor(PortKind kind) => kind switch
@@ -364,5 +419,5 @@ internal static class Colors
 
     /// <summary>The sweep behind the mark, which is three of the module accents.</summary>
     public static (Color Start, Color Middle, Color End) Sweep { get; } =
-        (Source, Feedback, Oscillator);
+        (Color.FromRgb(0x4A, 0x9E, 0xDE), Color.FromRgb(0x3F, 0xC8, 0xC8), Color.FromRgb(0x3A, 0xA1, 0x87));
 }

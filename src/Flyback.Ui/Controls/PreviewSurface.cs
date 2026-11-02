@@ -357,7 +357,7 @@ public class PreviewSurface : Control, IPreviewSurface
     public override void Render(DrawingContext context)
     {
         var area = new Rect(Bounds.Size);
-        context.FillRectangle(Brushes.Black, area);
+        context.FillRectangle(Colors.Letterbox, area);
 
         if (bitmap is null) return;
 

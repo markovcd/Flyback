@@ -248,7 +248,7 @@ internal sealed class GroupPainter(
 
         if (ModuleOverview.At(view.Zoom))
         {
-            ModuleOverview.DrawName(context, bounds, group.Title(), view.Zoom, ModuleFace.HeaderTextBrush, off);
+            ModuleOverview.DrawName(context, bounds, group.Title(), view.Zoom, ModuleFace.OverviewTextBrush, off);
 
             for (var i = 0; i < sockets.Outputs.Count; i++)
                 if (selection.Scene.Named(sockets.Outputs[i]) is var (_, spec))
