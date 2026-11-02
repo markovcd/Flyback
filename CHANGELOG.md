@@ -21,6 +21,7 @@
 - A module the text placed inside a group, a def call or a loop shows those levels at the top of the inspector, `Bass › voice`; pressing one selects every module in it.
 - A value being turned can move to another input on the same module without letting go: Tab or Shift+Tab, or the wheel, with a mouse or trackpad; a second finger tapped below or above the turning one by touch. A finger held anywhere on a module turns the input on the row beside it rather than switching the module off while held (Bypass in the inspector does that); zoomed out past the rows, a right-drag or a held finger anywhere on a module turns its first input, and the input turning is ringed and named beside its socket, and its card points at it.
 - Live patching shows only the view that owns the patch: its text when the text is the document, its modules otherwise. F2 no longer swaps them over the picture, and the transport over the picture has no text button.
+- The text view offers what may be typed where the caret is, as you type or on Ctrl+Space: a module's sockets inside its brackets, its outputs after a dot, the names in sight and the modules there are.
 
 ### Viewer
 
@@ -30,6 +31,7 @@
 - `flyback-cli shot --shut` draws every box shut, as `--open` draws every one open.
 - `flyback-cli levels --json` gives each call's arguments and the wires leaving each level; `flyback-cli shot --select` takes a level by the label `levels` prints.
 - `flyback-cli shot --open` draws every box open, its modules showing.
+- `flyback-cli complete song.fbks --at 4:12` lists what may be typed at one place in a text patch, as the text view offers it.
 
 ### Installing
 

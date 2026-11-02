@@ -5,7 +5,8 @@ Feature: The command line says whether a patch works, and whether two are the sa
   flyback-cli measure what its outputs carry, flyback-cli levels which groups,
   def calls and loop passes its text opens, and flyback-cli compare whether two
   are the same instrument; flyback-cli print, flyback-cli pack and
-  flyback-cli save write it out, and flyback-cli shot draws the editor around it.
+  flyback-cli save write it out, flyback-cli shot draws the editor around it,
+  and flyback-cli complete says what may be typed at one place in its text.
 
   Scenario: A patch that works passes the check
     Given a 220 Hz sine is playing
@@ -43,6 +44,17 @@ Feature: The command line says whether a patch works, and whether two are the sa
     When flyback-cli lists the levels of "pads.fbks" around "Saw"
     Then the command succeeds
     And it names "pads = for pitch ×2 › pass 1/2 › Pad 1"
+
+  Scenario: Asking what may be typed inside a call lists the module's sockets
+    Given the text saved as "half.fbks":
+      """
+      let lfo = sine(freq: 0.5)
+      saw(freq: lfo, am
+      """
+    When flyback-cli complete is asked about line 2, column 18 of "half.fbks"
+    Then the command succeeds
+    And it names "amp"
+    And it does not name "freq"
 
   Scenario: A shipped preset is described by its name, with no file saved first
     When flyback-cli describes the preset "Plasma"

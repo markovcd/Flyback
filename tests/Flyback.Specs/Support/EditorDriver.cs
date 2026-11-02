@@ -1490,6 +1490,35 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     /// <summary>What the text view holds.</summary>
     public string Text => ReadWindow(open => Source(open).Text);
 
+    /// <summary>Shows the text view emptied, with the caret in it.</summary>
+    public void StartTyping()
+    {
+        DoWindow((open, _) => Named<ToggleButton>(open, "code").IsChecked = true);
+
+        DoWindow((open, _) =>
+        {
+            Source(open).Text = string.Empty;
+            Source(open).TextArea.Focus();
+        });
+    }
+
+    /// <summary>Types into the text view a keystroke at a time.</summary>
+    public void TypeInText(string said) => DoWindow((open, _) =>
+    {
+        foreach (var letter in said)
+        {
+            open.KeyTextInput(letter.ToString());
+            Dispatcher.UIThread.RunJobs();
+        }
+    });
+
+    /// <summary>What the list under the caret offers, or null while it is shut.</summary>
+    public IReadOnlyList<string>? Offered => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<SourceView>().Single().Completing.Showing?.Select(c => c.Label).ToArray());
+
+    /// <summary>Takes what the list under the caret has picked, as Enter does.</summary>
+    public void ChooseOffered() => DoWindow((open, _) => open.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None));
+
     /// <summary>Whether leaving would lose anything, which a page asks about before it is left.</summary>
     public bool SomethingToLose => ReadWindow(_ => Service<UnsavedWork>().SomethingToLose);
 

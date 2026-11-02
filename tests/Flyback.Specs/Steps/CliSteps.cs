@@ -341,6 +341,9 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     [When("flyback-cli compares {string} with {string}")]
     public void WhenCompared(string first, string second) => Run("compare", Path(first), Path(second));
 
+    [When("flyback-cli complete is asked about line {int}, column {int} of {string}")]
+    public void WhenCompleted(int line, int column, string name) => Run("complete", Path(name), "--at", $"{line}:{column}");
+
     [Given("a plugin package signed by its author")]
     public void GivenPackage() => File.WriteAllBytes(Path(PackageName), Package());
 
@@ -561,6 +564,9 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
 
     [Then("it names {string}")]
     public void ThenNames(string name) => said.ShouldContain(name);
+
+    [Then("it does not name {string}")]
+    public void ThenDoesNotName(string name) => said.ShouldNotContain(name);
 
     [Then("it points at line {int}")]
     public void ThenPointsAt(int line) => said.ShouldContain($":{line}:");

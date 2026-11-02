@@ -131,6 +131,9 @@ internal sealed class SourceView : UserControl
     /// <summary>Whether the next character typed joins the step the last one made.</summary>
     private bool joining;
 
+    /// <summary>The list of what may be typed at the caret.</summary>
+    internal SourceCompletion Completing { get; }
+
     /// <param name="settings">The canvas section, whose setting the font size is.</param>
     public SourceView(CanvasSection settings)
     {
@@ -139,6 +142,7 @@ internal sealed class SourceView : UserControl
         EditorFontSizeChanged += (_, size) => settings.SaveEditorFontSize(size);
 
         complaintsScroll.Content = complaints;
+        Completing = new SourceCompletion(text);
 
         text.TextArea.TextView.BackgroundRenderers.Add(backing);
         text.TextArea.TextView.BackgroundRenderers.Add(marked);

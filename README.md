@@ -167,6 +167,7 @@ flyback-cli check --preset "Mycelium" --json
 flyback-cli compare nebula.fbk nebula-ported.fbk --seconds 30
 flyback-cli info nebula.fbk
 flyback-cli info --preset "Plasma"
+flyback-cli complete song.fbks --at 4:12
 flyback-cli levels song.fbks --of bass
 flyback-cli measure nebula.fbk LFO Mixer.out --seconds 10
 flyback-cli modules

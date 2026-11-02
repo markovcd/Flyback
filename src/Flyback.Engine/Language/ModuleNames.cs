@@ -48,6 +48,14 @@ internal sealed class ModuleNames
         return dot < 0 ? def.TypeId : def.TypeId[(dot + 1)..];
     }
 
+    /// <summary>The shortest name the text reads as <paramref name="def"/>: its short name where that is its alone, else its type id.</summary>
+    public string Written(NodeDef def)
+    {
+        var plain = ShortName(def);
+
+        return !ambiguous.Contains(plain) && byShortName.TryGetValue(plain, out var held) && ReferenceEquals(held, def) ? plain : def.TypeId;
+    }
+
     /// <summary>Whether a name is a module's, ambiguous or not.</summary>
     public bool Knows(string name) =>
         modules.Get(name) is not null || byShortName.ContainsKey(name) || ambiguous.Contains(name);
