@@ -1359,8 +1359,16 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
         document.TakeSource(document.AsText());
     });
 
-    /// <summary>Fades the patch over the picture as its wait running out would.</summary>
-    public void LeaveLivePatchAlone() => DoWindow((_, _) => Service<LivePatching>().Fade.Fade());
+    /// <summary>
+    /// Fades the patch over the picture as its wait running out would. The wait itself is made
+    /// the longest there is, so a slow machine's steps never outlast it and fade the patch again.
+    /// </summary>
+    public void LeaveLivePatchAlone() => DoWindow((_, _) =>
+    {
+        var live = Service<LivePatching>();
+        live.Look = new LivePatchingLook { ModuleFadeSeconds = LivePatchingLook.LongestWait, TextFadeSeconds = LivePatchingLook.LongestWait };
+        live.Fade.Fade();
+    });
 
     /// <summary>Whether the patch over the picture has faded away.</summary>
     public bool LivePatchFaded => ReadWindow(_ => Service<LivePatching>().Fade.IsFaded);
