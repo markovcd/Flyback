@@ -19,8 +19,9 @@ the arguments they were given, loops, and each loop pass with the item it took.
 
 **Inside an open box each level is a band**, laid left to right as its wires run, under a
 shelf with a chip naming it: a group's name, a call as written (`bass = voice`), a pass as
-`1/3 pitch = 110`. A level that placed nothing and holds one level shares its chip. A box
-is laid out open when it holds a level, shut otherwise; there is one layout.
+`1/3 pitch = 110`. A level that placed nothing and holds one level shares its chip. Every box
+opens shut, and the bands inside one are laid out all the same, so opening it shows them;
+there is one layout.
 
 **A shut box lists the first levels inside it** along its foot, and the pass that made it,
 the rest as `+N`. The foot rather than under the header, so its sockets keep the rows the

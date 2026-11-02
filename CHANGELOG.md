@@ -15,7 +15,7 @@
 - Three more tutorials: knobs you can play, a song in sections brought in and out by an Arrangement, and text that builds itself with a def and a loop.
 - Zoomed out too far for a module's rows to be read, as a patch framed on a phone is, each module and box shows its name large across its middle instead; a double tap or double-click on one brings it up to a size that reads, and one on bare canvas looks at the whole patch again.
 - The text lets blocks nest: a def inside a def, a group or a loop, in sight only inside that block and reading what it sees, and a group inside a group or a loop. A group inside a group is drawn as part of the outer one, and a named group in a loop is a box a pass, "Voice 1", "Voice 2".
-- A box the text filled with groups, def calls or loop passes opens with each laid out as a band under a chip naming it, left to right as the wires run; pressing a chip selects every module in it.
+- A box the text filled with groups, def calls or loop passes opens shut like any other, and opening it shows each laid out as a band under a chip naming it, left to right as the wires run; pressing a chip selects every module in it.
 - A shut box lists the levels inside it as chips along its foot, and a loop pass's box the pass it is, `1/3 pitch = 110`. Zoomed far out, only each box's outermost chips show, large enough to read.
 - Pressing a level's chip shows the level in the inspector: what a call or a loop pass was given, what is inside it, the wires leaving it, the other calls of its def, and Show in text to open the text at its line.
 - A module the text placed inside a group, a def call or a loop shows those levels at the top of the inspector, `Bass › voice`; pressing one selects every module in it.

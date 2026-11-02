@@ -47,8 +47,11 @@ public class LevelBandTests
 
         // shaped is called inside voice, after its Sine: beside it, not under it.
         shaped.X.ShouldBeGreaterThan(sine.X + size.Width);
-        patch.Groups.ShouldNotBeNull().ShouldAllBe(group => !group.Collapsed);
     }
+
+    [Fact]
+    public void A_box_holding_a_level_opens_shut_like_any_other() =>
+        Built(Nested).Groups.ShouldNotBeNull().ShouldAllBe(group => group.Collapsed);
 
     [Fact]
     public void A_box_with_no_level_inside_it_is_laid_out_shut_as_before()
