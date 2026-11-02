@@ -172,8 +172,8 @@ internal static class TurnReadout
     /// <summary>The keys and gestures the card's state answers to.</summary>
     internal static string Hint(Turn turn) => turn switch
     {
-        { Hot: true, Finger: true } => "slide ↕ · second finger fine",
-        { Hot: true } => "drag ↕ · ⇧ fine · esc cancel",
+        { Hot: true, Finger: true } => "slide ↕ · 2nd finger: hold fine, tap switch",
+        { Hot: true } => "drag ↕ · ⇧ fine · tab next · esc cancel",
         { Typed: null, Finger: true } => "hold and slide ↕ · or the buttons",
         { Typed: not null } => "↵ apply · esc cancel · tab next",
         _ => "↑↓ nudge · ↵ type · alt L link",

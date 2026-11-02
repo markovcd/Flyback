@@ -676,7 +676,10 @@ internal sealed class CanvasGestures
     {
         e.Handled = true;
 
-        // Over the well with the keys the wheel nudges it; over anything else it pans or zooms.
+        // While a value turns the wheel picks which; over the well with the keys it nudges
+        // it; over anything else it pans or zooms.
+        if (dial.SwitchBy(e.Delta.Y)) return;
+
         var at = e.GetPosition(canvas);
         var over = selection.Scene.HitWell(view.ToGraph(at), out var node, out var port);
 
@@ -781,6 +784,9 @@ internal sealed class CanvasGestures
         module.Aim(over, modifiers);
         repaint.Request();
     }
+
+    /// <summary>Moves the turn under way to the next input on its module that turns, or the one before for a negative <paramref name="step"/>.</summary>
+    public bool SwitchTurn(int step) => dial.Switch(step);
 
     /// <summary>Stops a turn of a socket, and puts the cursor back to what the pointer is over.</summary>
     private bool EndTurn(Control canvas, bool restore = false)

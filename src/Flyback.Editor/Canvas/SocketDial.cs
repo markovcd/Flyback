@@ -47,6 +47,9 @@ internal sealed class SocketDial(
     private Point dialHome;
     private IPointerAnchor? dialAnchor;
 
+    /// <summary>Wheel travel toward the next switch, short of a whole notch.</summary>
+    private double wheelCarry;
+
     public bool Turning => dialed is not null;
 
     /// <summary>Whether the turn under way is a finger's, which nothing holds in place.</summary>
@@ -109,6 +112,7 @@ internal sealed class SocketDial(
         dialed = (nodeId, port, min, max, value, spec);
         dialAt = spec.Travel(value, min, max);
         Moved = false;
+        wheelCarry = 0;
         dialLast = dialHome = screen;
 
         dialAnchor = anchored ? anchors.Take(canvas) : null;
@@ -149,6 +153,57 @@ internal sealed class SocketDial(
         if (d.Spec.Stepped) value = MathF.Round(value);
 
         Set(d.Node, d.Port, value);
+    }
+
+    /// <summary>
+    /// Moves the turn under way to the next input on the same body that can be turned,
+    /// <paramref name="step"/> down the column or up it, round past the ends; says whether it moved.
+    /// </summary>
+    public bool Switch(int step)
+    {
+        if (dialed is not { } d || step == 0) return false;
+
+        var was = new SocketPick(d.Node, d.Port);
+        var rows = selection.Scene.InputsBeside(was);
+        var at = rows.IndexOf(was);
+
+        if (at < 0) return false;
+
+        for (var i = 1; i < rows.Count; i++)
+        {
+            var next = rows[((at + Math.Sign(step) * i) % rows.Count + rows.Count) % rows.Count];
+
+            if (!Dialable(next.Node, next.Port, out var node, out var spec)) continue;
+
+            var value = node.InputValues[next.Port];
+            var min = Math.Min(spec.Min, value);
+            var max = Math.Max(spec.Max, value);
+
+            dialed = (next.Node, next.Port, min, max, value, spec);
+            dialAt = spec.Travel(value, min, max);
+
+            reactions.Raise(new InputLetGo(was));
+            repaint.Request();
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>Switches the turn under way by notches of the wheel, rolled toward the user for the next input down.</summary>
+    public bool SwitchBy(double notches)
+    {
+        if (dialed is null) return false;
+
+        // A trackpad scrolls in fractions of a notch, many to a stroke, so the switch waits for a whole one.
+        wheelCarry += notches;
+
+        var whole = (int)wheelCarry;
+        wheelCarry -= whole;
+
+        for (var i = 0; i < Math.Abs(whole); i++) Switch(-Math.Sign(whole));
+
+        return true;
     }
 
     /// <summary>Stops turning, putting the value back first when <paramref name="restore"/>, and says whether a turn was under way.</summary>

@@ -1,5 +1,6 @@
 using Avalonia;
 using Flyback.Core.Graph;
+using Flyback.Editor.Notices;
 
 namespace Flyback.Editor.Canvas;
 
@@ -379,6 +380,17 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
         var bounds = geometry.GroupBounds(patch, group, sockets);
 
         return (bounds, geometry.GroupInputPort(bounds, sockets, row));
+    }
+
+    /// <summary>The inputs drawn on the same body as <paramref name="pick"/>, top to bottom: its module's, or the shut box's it is behind.</summary>
+    public List<SocketPick> InputsBeside(SocketPick pick)
+    {
+        if (ShutGroupOf(pick.Node) is { } group)
+            return [.. patch.SocketsOf(group).Inputs.Select(socket => new SocketPick(socket.Node, socket.Port))];
+
+        if (patch.Find(pick.Node) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return [];
+
+        return [.. Enumerable.Range(0, def.Inputs.Count).Select(port => new SocketPick(node.Id, port))];
     }
 
     /// <summary>The input whose well area is under <paramref name="graph"/> and which <paramref name="wants"/>, boxes first as they are drawn over modules.</summary>

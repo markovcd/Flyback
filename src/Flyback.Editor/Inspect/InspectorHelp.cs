@@ -54,7 +54,7 @@ internal static class InspectorHelp
             Row("Patch a wire", "Drag from a socket into another, or onto bare canvas to add a module already plugged in.", "Drag"),
             Row("Unplug", "Drag a connected input to take the wire somewhere else.", "Drag"),
             Row("Re-route an output", "Feeds one of its wires from somewhere else instead. Put it back and the next one takes the next wire.", "Ctrl+Drag"),
-            Row("Turn a value", "Drag an unplugged input's value up or down, or right-drag its socket. Shift is finer.", "Drag"),
+            Row("Turn a value", "Drag an unplugged input's value up or down, or right-drag its socket. Shift is finer; Tab or the wheel moves to the next input.", "Drag"),
             Row("Reset a value", "Puts an unplugged input back to the value a new module starts with.", "Alt+Click"),
             Row("Pick a value", "Click a value's well; then the arrows nudge it, Shift finer, PgUp and PgDn further, and the wheel nudges it too.", "Click"),
             Row("Type a value", "Opens a picked value for an exact number, a note name like A3, or a time like 10 ms. Enter applies, Esc cancels, Tab moves on.", "Enter"),
@@ -118,7 +118,7 @@ internal static class InspectorHelp
         [
             Row("Patch a wire", "Drag from a socket into another, or onto bare canvas to add a module already plugged in. A fingertip beside a socket lands on it."),
             Row("Unplug", "Drag a connected input to take the wire somewhere else."),
-            Row("Turn a value", "Hold a finger on an unplugged input's value, then slide it up or down. A second finger anywhere makes it finer."),
+            Row("Turn a value", "Hold a finger on an unplugged input's value, then slide it up or down. A second finger held anywhere makes it finer; tapped below or above, it moves to the next input or the one before."),
             Row("Step a value", "Tap a value for buttons under its module that step it down or up, make the steps fine, or type a number."),
         ]),
         new("Selecting and moving",

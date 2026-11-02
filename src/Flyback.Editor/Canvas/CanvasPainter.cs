@@ -143,10 +143,14 @@ internal sealed class CanvasPainter(
     {
         if (focus.Reading is not var (pick, turn) || selection.Scene.RowOf(pick.Node, pick.Port) is not var (bounds, socket)) return;
 
-        var well = geometry.Compact ? new Rect(socket, socket) : ValueWell.At(bounds, socket);
+        // Zoomed out the rows are not drawn, so the card points at the socket itself, ringed.
+        var bare = geometry.Compact || view.Overview;
+        var well = bare ? new Rect(socket, socket) : ValueWell.At(bounds, socket);
         var (card, above) = TurnReadout.Place(view.OnScreen(bounds), view.OnScreen(well), view.Size);
 
         TurnReadout.Draw(context, card, above, view.OnScreen(well).Center.X, turn);
+
+        if (view.Overview) SocketTag.Draw(context, view.GraphToScreen.Transform(socket), turn.Name, turn.Hot);
     }
 
     /// <summary>A finger's tether, the card, the step bar and the list of knobs, over everything.</summary>

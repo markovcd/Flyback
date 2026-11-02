@@ -41,6 +41,9 @@ internal sealed class Fingers
     private const ulong DoubleTapTime = 400;
     private const double DoubleTapDistance = 24;
 
+    /// <summary>How quickly, in milliseconds, a second finger lifts for it to have tapped rather than rested.</summary>
+    private const ulong SecondTapTime = 300;
+
     private enum Phase
     {
         None,
@@ -84,6 +87,9 @@ internal sealed class Fingers
 
     /// <summary>Whether a second finger rests beside the one turning a value, which makes the turn fine.</summary>
     private bool fine;
+
+    /// <summary>The second finger resting beside a turn, where and when it landed, which lifted soon and still is a tap.</summary>
+    private (int Id, Point At, ulong Time)? beside;
 
     private bool seen;
 
@@ -153,6 +159,7 @@ internal sealed class Fingers
             // A second finger on a value being turned makes the turn a fine one.
             case Phase.Right when gestures.Turning:
                 fine = true;
+                beside = (pointer.Id, screen, time);
                 break;
 
             // A held finger is the right button held still, which a pinch takes back.
@@ -228,8 +235,16 @@ internal sealed class Fingers
                 phase = Phase.Spent;
                 break;
 
+            // A second finger tapped above the turning one switches the turn to the input
+            // above, and one tapped below to the input below.
             case Phase.Right:
                 fine = false;
+
+                if (beside is var (id, at, landed) && id == pointer.Id && time >= landed && time - landed <= SecondTapTime
+                    && Distance(screen, at) <= Slop && first is not null && down.TryGetValue(first.Id, out var turning))
+                    gestures.SwitchTurn(screen.Y < turning.Y ? -1 : 1);
+
+                beside = null;
                 break;
 
             // The finger left down goes on moving the view, and one put back pinches again.
@@ -295,6 +310,7 @@ internal sealed class Fingers
         phase = Phase.None;
         first = null;
         fine = false;
+        beside = null;
         panning = false;
         holdTimer.Stop();
         gestures.Lifted(on);

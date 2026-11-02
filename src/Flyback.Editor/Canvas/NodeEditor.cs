@@ -239,6 +239,14 @@ internal sealed class NodeEditor
 
         if (e.Key is Key.LeftShift or Key.RightShift) Gestures.ModifiersChanged(e.KeyModifiers | KeyModifiers.Shift);
 
+        // Tab moves a turn under way to the next input on its module, Shift+Tab back up.
+        if (e.Key == Key.Tab && Gestures.Turning)
+        {
+            Gestures.SwitchTurn((e.KeyModifiers & KeyModifiers.Shift) != 0 ? -1 : 1);
+            e.Handled = true;
+            return;
+        }
+
         // A well with the keys answers first: its arrows, Enter and Escape, and every key while typing.
         if (WellFocus.Key(e.Key, e.KeyModifiers))
         {
