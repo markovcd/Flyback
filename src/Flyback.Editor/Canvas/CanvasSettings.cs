@@ -71,6 +71,9 @@ public sealed class CanvasSettings
     /// <summary>Whether the patch comes round to the start of the seek bar when it reaches its end.</summary>
     public bool SeekLoop { get; set; }
 
+    /// <summary>Whether a patch with no length plays on rather than stopping at three minutes, with no seek bar.</summary>
+    public bool Endless { get; set; }
+
     /// <summary>How long Measure runs the patch for, in seconds.</summary>
     public double MeasureSeconds { get; set; } = MeasureOptions.DefaultSeconds;
 

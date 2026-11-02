@@ -6,6 +6,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Flyback.Core.Graph;
 using Flyback.Editor.Bars;
+using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
 using Flyback.Editor.Hubs;
 using Flyback.Editor.Shell;
@@ -346,5 +347,112 @@ public sealed class SeekBarTests : EditorTest
         Click(window, Track(window), 30);
 
         Editor(window).IsFocused.ShouldBeTrue();
+    }
+
+    /// <summary>Turns Endless on, as the Picture section's box does.</summary>
+    private void Endless(MainWindow window, SeekBar bar)
+    {
+        Service<CanvasSection>(window).SaveEndless(true);
+        bar.Update();
+        Settle(window);
+    }
+
+    [AvaloniaFact]
+    public void An_endless_patch_with_no_length_plays_on_past_three_minutes()
+    {
+        var (window, bar) = WithBar();
+
+        Endless(window, bar);
+        Play(window);
+        Preview(window).Time = Patch.DefaultLength + 60;
+        bar.Update();
+
+        Service<Playback>(window).Paused.ShouldBeFalse();
+        Preview(window).Time.ShouldBe(Patch.DefaultLength + 60, 1);
+        All<TextBlock>(window).Single(t => t.Name == "seekPosition").Text.ShouldStartWith("4:00.");
+    }
+
+    [AvaloniaFact]
+    public void An_endless_patch_has_no_strip_length_or_loop_and_says_endless()
+    {
+        var (window, bar) = WithBar();
+
+        Endless(window, bar);
+
+        Track(window).IsVisible.ShouldBeFalse();
+        Length(window).IsVisible.ShouldBeFalse();
+        bar.Loop.IsVisible.ShouldBeFalse();
+        bar.Note.IsVisible.ShouldBeTrue();
+        Service<TransportRow>(window).Pause.IsVisible.ShouldBeTrue();
+        Service<TransportRow>(window).Rewind.IsVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void A_hidden_row_leaves_no_playhead_line_for_an_endless_patch()
+    {
+        var (window, bar) = WithBar();
+
+        Endless(window, bar);
+        Service<TransportRow>(window).Shown = false;
+        bar.Update();
+
+        bar.Line.IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void A_patch_with_a_length_stops_at_its_end_where_endless_is_on()
+    {
+        var (window, bar) = WithBar(length: 20);
+
+        Endless(window, bar);
+        Preview(window).Time = 21;
+        bar.Update();
+        Settle(window);
+
+        Service<Playback>(window).Paused.ShouldBeTrue();
+        Track(window).IsVisible.ShouldBeTrue();
+        bar.Note.IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Giving_an_endless_patch_a_length_it_has_played_past_stops_it()
+    {
+        var (window, bar) = WithBar();
+
+        Endless(window, bar);
+        Play(window);
+        Preview(window).Time = 30;
+        bar.Update();
+
+        Lasting(window, 20);
+        bar.Update();
+        Settle(window);
+
+        Track(window).IsVisible.ShouldBeTrue();
+        Service<Playback>(window).Paused.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void The_transport_over_a_picture_has_no_strip_or_loop_for_an_endless_patch()
+    {
+        var (window, bar) = WithBar();
+        var overlay = new TransportOverlay();
+
+        bar.Drive(overlay);
+        Endless(window, bar);
+
+        overlay.Track.IsVisible.ShouldBeFalse();
+        overlay.Looped.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Endless_is_kept_for_the_next_window()
+    {
+        var setup = new EditorSetup { Folders = new() { SettingsPath = settingsPath } };
+        var (window, bar) = WithBar(setup);
+
+        Endless(window, bar);
+
+        WithBar(setup).Bar.Endless.ShouldBeTrue();
     }
 }

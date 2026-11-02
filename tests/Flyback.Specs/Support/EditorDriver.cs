@@ -1090,6 +1090,23 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
             open.MouseUp(at, MouseButton.Left);
         });
 
+    /// <summary>Puts the patch's clock at <paramref name="seconds"/>, as time passing would, for a transport with no seek bar.</summary>
+    public void PutClock(double seconds) => DoWindow((_, _) => Service<Playback>().SeekTo(seconds));
+
+    /// <summary>Lets the editor run for <paramref name="time"/>, for a check that nothing happens in it.</summary>
+    public void Idle(TimeSpan time) => Run(async () =>
+    {
+        await Task.Delay(time);
+        return true;
+    });
+
+    /// <summary>Whether the transport row says Endless where the seek bar, length and loop were.</summary>
+    public bool SaysEndless => ReadWindow(open =>
+        Named<TextBlock>(open, "seekEndless").IsVisible
+        && !SeekBar(open).IsVisible
+        && !Named<TextBox>(open, "seekLength").IsVisible
+        && !Named<ToggleButton>(open, "seekLoop").IsVisible);
+
     /// <summary>Switches the seek bar's loop on, as a click on it does.</summary>
     public void LoopSeekBar() =>
         DoWindow((open, _) =>

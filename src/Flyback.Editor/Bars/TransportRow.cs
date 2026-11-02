@@ -16,7 +16,8 @@ namespace Flyback.Editor.Bars;
 /// Every target in it is <see cref="Reach"/> square, for a finger as much as a mouse.
 /// </summary>
 /// <remarks>
-/// Hidden, it leaves a drawn line of the playhead in its place. Narrower than
+/// Hidden, it leaves a drawn line of the playhead in its place, or nothing for a patch
+/// that plays on. Narrower than
 /// <see cref="NarrowWidth"/>, the length, loop and Volume go behind one button, so the
 /// seek bar keeps room to be aimed at.
 /// </remarks>
@@ -78,8 +79,8 @@ internal sealed class TransportRow
             MinWidth = 240,
         };
 
-        Label("Length", 0);
-        Label("Loop", 1);
+        Label("Length", 0).Bind(Visual.IsVisibleProperty, seek.Length.GetObservable(Visual.IsVisibleProperty));
+        Label("Loop", 1).Bind(Visual.IsVisibleProperty, seek.Loop.GetObservable(Visual.IsVisibleProperty));
         Label("Volume", 2).Bind(Visual.IsVisibleProperty, volume.View.GetObservable(Visual.IsVisibleProperty));
 
         More = Button("transport-more", "Length, loop and Volume", Glyphs.Dots(), MoreTip);
@@ -100,6 +101,7 @@ internal sealed class TransportRow
         Place(Rewind, 1);
         Place(seek.Position, 2);
         Place(seek.Track, 3);
+        Place(seek.Note, 3);
         foreach (var (control, column, margin) in foldable)
         {
             control.Margin = margin;
@@ -150,7 +152,7 @@ internal sealed class TransportRow
         set
         {
             bar.IsVisible = value;
-            Seek.Line.IsVisible = !value;
+            Seek.RowShown = value;
         }
     }
 

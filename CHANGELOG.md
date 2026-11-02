@@ -10,6 +10,7 @@
 
 ### Editor
 
+- Endless, in Settings → Picture and a page's settings: a patch with no length plays on until paused rather than stopping at three minutes, with the seek bar, length and loop set aside and pause, rewind and the clock left on the transport row.
 - A module's buttons under its name stand in one row while the inspector has room for them, and wrap onto a second only when it does not.
 - On a Mac, two fingers scrolling on the trackpad move the canvas and a pinch zooms it, as in other Mac programs; Cmd with the wheel zooms, for a mouse. A scroll over a picked value adds up to whole nudges instead of one per tiny step. Elsewhere the wheel zooms as before.
 - Three more tutorials: knobs you can play, a song in sections brought in and out by an Arrangement, and text that builds itself with a def and a loop.

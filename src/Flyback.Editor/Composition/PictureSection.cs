@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Flyback.Editor.Bars;
+using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Hubs;
 using Flyback.Editor.Knobs;
@@ -51,6 +52,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
     private readonly PanelKnobs knobs;
     private readonly RecordingState recording;
     private readonly LivePatchingRows live;
+    private readonly CanvasSection canvas;
 
     public string Name => "Picture";
 
@@ -110,6 +112,14 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
+    /// <summary>Whether a patch with no length plays on, with no seek bar.</summary>
+    private readonly CheckBox endless = new()
+    {
+        Name = "endless",
+        Content = "Endless: a patch with no length plays on",
+        FontSize = Text.Body,
+    };
+
     /// <summary>The monitors <see cref="fullScreenOn"/> lists after its first two rows, in order.</summary>
     private List<MonitorSpot> fullScreenMonitors = [];
 
@@ -125,7 +135,8 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         FullScreenPreview fullScreen,
         PanelKnobs knobs,
         RecordingState recording,
-        LivePatchingRows live)
+        LivePatchingRows live,
+        CanvasSection canvas)
     {
         this.settings = settings;
         this.monitors = monitors;
@@ -137,6 +148,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         this.knobs = knobs;
         this.recording = recording;
         this.live = live;
+        this.canvas = canvas;
 
         ToolTip.SetTip(previewFrameRate,
             "How often the preview redraws itself. Lower to see it near what a recording will "
@@ -168,6 +180,12 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
 
         rows.Children.Add(InspectorRows.Field("Full screen", fullScreenOn));
         rows.Children.Add(InspectorRows.Field("Transport", transportEdge));
+
+        ToolTip.SetTip(endless,
+            "A patch whose length box is empty plays on until paused, as it does in the viewer, rather than "
+            + "stopping at three minutes. The seek bar, length and loop step aside while it does; pause and "
+            + "rewind stay.");
+        rows.Children.Add(endless);
         rows.Children.Add(live.View);
 
         preview.BackendChanged += message =>
@@ -240,6 +258,8 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
     {
         var before = settings.Change(Read);
 
+        if (canvas.Endless != (endless.IsChecked == true)) canvas.SaveEndless(endless.IsChecked == true);
+
         Apply(settings.Current, before);
     }
 
@@ -258,6 +278,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         transportEdge.SelectedIndex = current.Transport == TransportEdge.Bottom ? 1 : 0;
         previewFrameRate.SelectedIndex = SettingRows.Nearest(PreviewFrameRates, current.PreviewFrameRate);
         smoothing.SelectedIndex = current.Smoothing == Smoothing.Off ? 0 : 1;
+        endless.IsChecked = canvas.Endless;
         live.Show(current);
     }
 

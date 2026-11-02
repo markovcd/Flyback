@@ -19,7 +19,8 @@ namespace Flyback.Editor.Bars;
 /// The patch's clock on the transport row: where it is, and a thumb to drag it
 /// anywhere from zero to the patch's length, typed in the box beside it. At the end
 /// the patch stops, or comes round to zero where the loop switch is on. An empty box
-/// is no length, which the editor plays as <see cref="Patch.DefaultLength"/>.
+/// is no length, which the editor plays as <see cref="Patch.DefaultLength"/>, or
+/// plays on with no strip, length or loop where the Endless setting is on.
 /// </summary>
 /// <remarks>
 /// The length is the patch's, an edit like any other; the switch is the editor's, kept
@@ -35,6 +36,7 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
     private readonly PreviewHost preview;
     private readonly NodeEditor editor;
     private readonly TextWriteBack writeBack;
+    private readonly CanvasSection settings;
 
     private readonly List<TransportOverlay> overlays = [];
 
@@ -44,6 +46,7 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
         this.preview = preview;
         this.editor = editor;
         this.writeBack = writeBack;
+        this.settings = settings;
 
         Track = new SeekTrack
         {
@@ -70,6 +73,19 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
         };
 
         Line = new PlayheadLine { Maximum = playback.Length };
+
+        Note = new TextBlock
+        {
+            Name = "seekEndless",
+            Text = "Endless",
+            FontSize = Text.Body,
+            Foreground = Text.Muted,
+            IsVisible = false,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        ToolTip.SetTip(Note, "This patch has no length and Endless is on in the settings, so it plays on until paused. Give it a length to bring the seek bar back.");
 
         Length = new TextBox
         {
@@ -117,6 +133,9 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
     /// <summary>The clock as a drawn line, for when the row is hidden.</summary>
     public PlayheadLine Line { get; }
 
+    /// <summary>What stands where the strip was while the patch plays on.</summary>
+    public TextBlock Note { get; }
+
     /// <summary>The strip the thumb runs along.</summary>
     public SeekTrack Track { get; }
 
@@ -125,6 +144,20 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
 
     /// <summary>The switch that brings the patch round to zero at the end of its length.</summary>
     public ToggleButton Loop { get; }
+
+    /// <summary>Whether the patch plays on: Endless is on and the patch has no length.</summary>
+    public bool Endless => settings.Endless && editor.History.Patch.Length is null;
+
+    /// <summary>Whether the transport row is shown, rather than the line standing in for it.</summary>
+    public bool RowShown
+    {
+        get;
+        set
+        {
+            field = value;
+            Line.IsVisible = !value && !Endless;
+        }
+    } = true;
 
     /// <summary>Whether the bar can be used: not during a take, which is paced by its own samples.</summary>
     public bool IsEnabled
@@ -160,14 +193,20 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
 
     /// <summary>
     /// Stops a patch that has reached the end of its length, or brings it round to
-    /// zero where it loops, then moves every thumb to where the clock is, unless it is
+    /// zero where it loops, unless it plays on; then moves every thumb to where the clock is, unless it is
     /// in somebody's hand.
     /// </summary>
     public void Update()
     {
         if (Held) return;
 
-        if (IsEnabled && !playback.Paused && preview.Time >= Track.Maximum)
+        var endless = Endless;
+
+        Track.IsVisible = Length.IsVisible = Loop.IsVisible = !endless;
+        Note.IsVisible = endless;
+        Line.IsVisible = !RowShown && !endless;
+
+        if (!endless && IsEnabled && !playback.Paused && preview.Time >= Track.Maximum)
         {
             if (Loop.IsChecked == true) playback.Rewind();
             else playback.Pause();
@@ -176,7 +215,8 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
         Track.Value = Line.Value = Math.Min(preview.Time, Track.Maximum);
         Position.Text = StatusClock.Text(preview.Time);
 
-        foreach (var overlay in overlays) overlay.Follow(preview.Time, Track.Maximum, Loop.IsChecked == true);
+        foreach (var overlay in overlays)
+            overlay.Follow(preview.Time, endless ? null : Track.Maximum, !endless && Loop.IsChecked == true);
     }
 
     /// <summary>Whether a hand has any of the thumbs.</summary>

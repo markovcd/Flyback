@@ -477,7 +477,8 @@ length 2:30.50
 
 Plain seconds (`length 95.5`) and a duration (`length 90s`) read too, from a tenth
 of a second to a day; anything else is `bad-length`. A patch that says nothing
-plays for three minutes, and a printing says nothing for it.
+plays for three minutes in the editor, or on until paused where its Endless
+setting is on and in the viewer, and a printing says nothing for it.
 
 A block goes **after** the brackets and there is at most one, so it needs no
 name. A file goes **inside** them and has no name either — a call carries at

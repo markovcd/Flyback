@@ -29,6 +29,7 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
 
     private readonly CheckBox dragToPan = Switch("pageDragToPan", "Drag empty canvas to pan");
     private readonly CheckBox compactModules = Switch("pageCompactModules", "Compact modules");
+    private readonly CheckBox endless = Switch("pageEndless", "Endless");
 
     /// <summary>Drag to pan and its note, which a finger has no use for.</summary>
     private readonly Border panRow;
@@ -71,6 +72,9 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
         var compactRow = Row(compactModules, "Puts each input beside an output on one row.");
         compactRow.Margin = new Thickness(8, 4, 8, 4);
 
+        var endlessRow = Row(endless, "A patch with no length plays on until paused, with no seek bar.");
+        endlessRow.Margin = new Thickness(8, 4, 8, 4);
+
         var liveTitle = new TextBlock
         {
             Text = "Live patching",
@@ -98,7 +102,7 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
                 Name = "pageSettings",
                 Width = PanelWidth,
                 Spacing = 6,
-                Children = { header, panRow, compactRow, liveTitle, live.View },
+                Children = { header, panRow, compactRow, endlessRow, liveTitle, live.View },
             },
         };
 
@@ -108,10 +112,12 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
             dragToPan.IsChecked = canvas.DragToPan;
             live.Show(settings.Current);
             compactModules.IsChecked = canvas.CompactModules;
+            endless.IsChecked = canvas.Endless;
         };
 
         dragToPan.IsCheckedChanged += (_, _) => Change(settings => settings.DragToPan = dragToPan.IsChecked == true);
         compactModules.IsCheckedChanged += (_, _) => Change(settings => settings.CompactModules = compactModules.IsChecked == true);
+        endless.IsCheckedChanged += (_, _) => Change(settings => settings.Endless = endless.IsChecked == true);
     }
 
     /// <summary>The panel, open or shut; for a test.</summary>

@@ -54,3 +54,16 @@ Feature: The patch's clock can be moved anywhere along the seek bar
     And the patch is playing
     When the patch plays on past the end of the seek bar
     Then the patch's clock is at about 0 seconds
+
+  # Endless is the editor's setting, for a piece that has no end: the viewer
+  # already plays such a patch on, and now the editor can too.
+  Scenario: A patch with no length plays on past three minutes where Endless is on
+    Given the settings play a patch with no length on
+    And a rainbow across the screen
+    And the patch is open in the editor
+    And the patch is playing
+    When the patch's clock reaches 240 seconds
+    And the seek bar has had time to look
+    Then the patch is playing
+    And the patch's clock is at about 240 seconds
+    And the transport row says Endless where the seek bar was

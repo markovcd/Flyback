@@ -12,11 +12,11 @@ Feature: The editor in a page offers only what a page can do
     Then the toolbar has none of "open, save, assistant, plugins, about"
     And the toolbar still has "undo, redo, tidy, code, controls, swap, side, transport, view-it, settings"
 
-  Scenario: A page's gear offers drag to pan and compact modules, and nothing about plugins
+  Scenario: A page's gear offers drag to pan, compact modules and Endless, and nothing about plugins
     Given a rainbow across the screen
     And the editor is in a page
     And the patch is open in the editor
-    Then the page's settings offer "Drag empty canvas to pan, Compact modules"
+    Then the page's settings offer "Drag empty canvas to pan, Compact modules, Endless"
     When "Drag empty canvas to pan" is ticked on the page's settings
     Then the left button pans empty canvas
     And the page's browser keeps it for the next visit

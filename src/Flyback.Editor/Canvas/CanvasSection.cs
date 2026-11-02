@@ -289,6 +289,16 @@ internal sealed class CanvasSection : ISettingsSection
         Write();
     }
 
+    /// <summary>Whether a patch with no length plays on, as last saved.</summary>
+    internal bool Endless => saved.Endless;
+
+    /// <summary>Saves whether a patch with no length plays on, leaving the switches as last saved.</summary>
+    internal void SaveEndless(bool endless)
+    {
+        saved.Endless = endless;
+        Write();
+    }
+
     public void Save()
     {
         saved = new CanvasSettings
@@ -301,6 +311,7 @@ internal sealed class CanvasSection : ISettingsSection
             AnimateSkins = animateSkins.IsChecked == true,
             EditorFontSize = saved.EditorFontSize,
             SeekLoop = saved.SeekLoop,
+            Endless = saved.Endless,
             MeasureSeconds = CanvasSettings.MeasureWindows[Math.Max(measureWindow.SelectedIndex, 0)],
             MeasurePicture = (MeasurePictureSize)Math.Max(measurePicture.SelectedIndex, 0),
         };

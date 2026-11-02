@@ -1,5 +1,6 @@
 using Avalonia.Input;
 using Avalonia.Layout;
+using Flyback.Editor.Canvas;
 using Flyback.Host;
 using Flyback.Specs.Support;
 using Reqnroll;
@@ -73,6 +74,25 @@ public sealed class TransportSteps(EditorDriver editor) : IDisposable
         new OutputSettings { Transport = TransportEdge.Bottom }.Save(path);
         editor.Setup = editor.Setup with { Folders = editor.Setup.Folders with { SettingsPath = path } };
     }
+
+    [Given("the settings play a patch with no length on")]
+    public void GivenEndless()
+    {
+        var path = Path.Combine(settings.FullName, "settings.json");
+
+        new CanvasSettings { Endless = true }.Save(path);
+        editor.Setup = editor.Setup with { Folders = editor.Setup.Folders with { SettingsPath = path } };
+    }
+
+    [When("the patch's clock reaches {int} seconds")]
+    public void WhenTheClockReaches(int seconds) => editor.PutClock(seconds);
+
+    /// <summary>The seek bar looks every tenth of a second, so half a second is five chances to stop the patch.</summary>
+    [When("the seek bar has had time to look")]
+    public void WhenTheBarHasLooked() => editor.Idle(TimeSpan.FromSeconds(0.5));
+
+    [Then("the transport row says Endless where the seek bar was")]
+    public void ThenSaysEndless() => editor.SaysEndless.ShouldBeTrue();
 
     [Then("the transport waits at the top of the picture")]
     public void ThenTheTransportAtTheTop() => editor.TransportEdge.ShouldBe(VerticalAlignment.Top);
