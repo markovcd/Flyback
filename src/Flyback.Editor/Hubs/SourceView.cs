@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using System.Xml;
 using Avalonia;
 using Avalonia.Controls;
@@ -34,7 +35,7 @@ namespace Flyback.Editor.Hubs;
 /// is a word processor with a Pro license, so this is AvalonEdit.
 /// </para>
 /// </remarks>
-internal sealed class SourceView : UserControl
+internal sealed partial class SourceView : UserControl
 {
     private static readonly FontFamily Mono =
         new("Consolas, Menlo, DejaVu Sans Mono, monospace");
@@ -790,7 +791,8 @@ internal sealed class SourceView : UserControl
 
             if (stream is null) return null;
 
-            using var reader = XmlReader.Create(stream);
+            using var text = new StreamReader(stream);
+            using var reader = XmlReader.Create(new StringReader(OnGround(text.ReadToEnd())));
 
             return HighlightingLoader.Load(reader, HighlightingManager.Instance);
         }
@@ -801,6 +803,18 @@ internal sealed class SourceView : UserControl
             return null;
         }
     }
+
+    /// <summary>The language's colors as the scheme draws a family color, deepened on a light one.</summary>
+    private static string OnGround(string xshd) => Foregrounds().Replace(xshd, match =>
+    {
+        var rgb = Convert.ToUInt32(match.Groups[1].Value, 16);
+        var color = Colors.Deepened(Color.FromUInt32(0xFF000000 | rgb));
+
+        return $"foreground=\"#{color.R:X2}{color.G:X2}{color.B:X2}\"";
+    });
+
+    [GeneratedRegex("foreground=\"#([0-9A-Fa-f]{6})\"")]
+    private static partial Regex Foregrounds();
 
     /// <summary>
     /// Paints the lines a build complained about.
