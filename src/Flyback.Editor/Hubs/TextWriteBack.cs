@@ -31,6 +31,41 @@ internal sealed class TextWriteBack : IReactTo<InputTurned>, IReactTo<InputLetGo
         this.editor = editor;
         this.source = source;
         this.report = report;
+
+        editor.History.Fixed = Fixed;
+    }
+
+    /// <summary>The map <see cref="fixedIn"/> was worked out from.</summary>
+    private SourceMap? fixedFrom;
+
+    /// <summary>Which values the text cannot write, asked once per map since the canvas asks every frame.</summary>
+    private readonly Dictionary<(Guid Node, int Port), bool> fixedIn = [];
+
+    /// <summary>
+    /// Whether the text owns the patch and has nowhere to write this value: a module
+    /// stamped out more than once, or a value said as a sum.
+    /// </summary>
+    private bool Fixed(Guid id, int port)
+    {
+        if (!document.Owned) return false;
+
+        var map = document.Map;
+
+        if (!ReferenceEquals(map, fixedFrom))
+        {
+            fixedIn.Clear();
+            fixedFrom = map;
+        }
+
+        if (fixedIn.TryGetValue((id, port), out var known)) return known;
+
+        var found = editor.History.Patch.Find(id) is { } node
+            && NodeCatalog.Get(node.TypeId) is { } def
+            && port < def.Inputs.Count
+            && map.Knob(id, def.Inputs[port].Name.Replace(' ', '_'), "0") is null;
+
+        fixedIn[(id, port)] = found;
+        return found;
     }
 
     public Task On(InputTurned notice)

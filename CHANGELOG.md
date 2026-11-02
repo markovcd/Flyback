@@ -34,6 +34,7 @@
 - A pinch over the text view, by two fingers on a screen or on a trackpad, makes its text larger or smaller in whole points, the size Ctrl+scroll and the A− and A+ buttons set; Ctrl+0 still puts it back.
 
 - On a desktop, a start that is slow to open its window shows Flyback's mark while it does.
+- While the text owns the patch, a value turns in its well on the canvas as it does in the inspector, and letting go writes it into the text; a value the text says as a sum, or through a def used more than once, shows no well.
 
 ### Viewer
 

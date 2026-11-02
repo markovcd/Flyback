@@ -128,7 +128,7 @@ internal sealed class CanvasGestures
     /// </summary>
     public bool Tapped(Point screen, int taps)
     {
-        if (history.Locked || drag != Drag.None || choice.For is not null || bar.ButtonAt(screen) is not null) return false;
+        if (drag != Drag.None || choice.For is not null || bar.ButtonAt(screen) is not null) return false;
         if (view.Overview || !selection.Scene.HitWell(view.ToGraph(screen), Math.Min(Fingers.Reach / view.Zoom, Fingers.MostReach), out var node, out var port)) return false;
 
         if (!selection.Contains(node)) selection.Select(node);
@@ -362,7 +362,7 @@ internal sealed class CanvasGestures
 
         // A value's well turns it with the left button, as the right does on the socket.
         // A finger holds first, through Fingers, so a swipe across a module still moves it.
-        if (!history.Locked && !press.Touch && drag == Drag.None && !view.Overview
+        if (!press.Touch && drag == Drag.None && !view.Overview
             && scene.HitWell(graph, out var wellNode, out var wellPort))
         {
             if (!selection.Contains(wellNode)) selection.Select(wellNode);
@@ -889,7 +889,7 @@ internal sealed class CanvasGestures
 
         if (scene.HitPort(graph, out _, out _, out _)) return PortCursor;
 
-        if (!history.Locked && scene.HitWell(graph, out _, out _)) return WellCursor;
+        if (scene.HitWell(graph, out _, out _)) return WellCursor;
         if (!history.Locked && scene.HitChip(graph, out _, out _)) return PanCursor;
 
         var draggable = scene.HitNode(graph) is not null

@@ -35,6 +35,26 @@ public class SourceViewKnobsTests : SourceViewTest
     }
 
     /// <summary>
+    /// A value the text says as a sum has no figure to write a turn into, so the
+    /// canvas offers no well for it; its neighbors on the same module still turn.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_value_written_as_arithmetic_has_no_well_on_the_canvas()
+    {
+        var window = Open();
+
+        Evaluate(window, "clamp(low: 1 / 12) |> out.left");
+
+        var history = Editor(window).History;
+        var clamp = history.Patch.Nodes.Single(n => n.TypeId == "math.clamp");
+        var inputs = NodeCatalog.Require(clamp.TypeId).Inputs.Select(p => p.Name).ToList();
+
+        history.Locked.ShouldBeTrue();
+        history.Turnable(clamp.Id, inputs.IndexOf("low")).ShouldBeFalse();
+        history.Turnable(clamp.Id, inputs.IndexOf("high")).ShouldBeTrue();
+    }
+
+    /// <summary>
     /// A panel knob turned by hand rests where it was left, and the <c>panel</c>
     /// line says so, or applying the text again would put it back.
     /// </summary>

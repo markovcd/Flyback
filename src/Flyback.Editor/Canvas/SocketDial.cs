@@ -288,7 +288,7 @@ internal sealed class SocketDial(
         NodeSkin.DrawPort(context, scene.InputAnchor(node, def, d.Port), def.Inputs[d.Port].Kind, share, DialedBrush);
     }
 
-    /// <summary>Whether this input's value can be turned: unpatched, and resting on a knob of its own.</summary>
+    /// <summary>Whether this input's value can be turned: unpatched, resting on a knob of its own, and one its owner can write.</summary>
     public bool Dialable(Guid nodeId, int port, out NodeInstance node, out PortSpec spec)
     {
         node = null!;
@@ -301,7 +301,7 @@ internal sealed class SocketDial(
 
         (node, spec) = (found, def.Inputs[port]);
 
-        return HasOwnKnob(patch, found, port, spec);
+        return HasOwnKnob(patch, found, port, spec) && history.Turnable(nodeId, port);
     }
 
     /// <summary>Whether an input is unpatched and rests on a knob of its own rather than a wire or a panel knob.</summary>

@@ -419,3 +419,11 @@ text taken for somebody's typing and never printed again. And what is on disk is
 restated beside every step the text owns when the text is saved, so stepping
 back and forward across the apply does not hand back an unsaved document over a
 file that has it to the letter.
+
+**2026-11-02 — values turn on a locked canvas too.** The wells on the modules are
+the inspector's knobs drawn where the module is, and turning one goes through the
+same write-back, so a locked canvas turns them with every gesture the canvas has for
+a value. What stays locked is what the graph is made of. A value the text cannot
+write in place, a module stamped out of a `def` more than once or a number said as
+`1 / 12`, is drawn without a well, so the canvas does not offer a turn the next
+apply would take back.

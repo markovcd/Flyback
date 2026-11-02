@@ -167,13 +167,28 @@ public class ValueWellTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void A_locked_canvas_does_not_turn_a_well()
+    public void A_locked_canvas_still_turns_a_well()
     {
         var patch = Chain(out var osc);
         var (editor, window) = Editing(patch);
         var port = Turnable(patch, osc);
         var was = osc.InputValues[port];
         editor.History.Locked = true;
+
+        Drag(window, Well(editor, window, osc, port), 40);
+
+        osc.InputValues[port].ShouldBeGreaterThan(was);
+    }
+
+    [AvaloniaFact]
+    public void A_value_its_owner_cannot_write_has_no_well_to_turn()
+    {
+        var patch = Chain(out var osc);
+        var (editor, window) = Editing(patch);
+        var port = Turnable(patch, osc);
+        var was = osc.InputValues[port];
+        editor.History.Locked = true;
+        editor.History.Fixed = (node, _) => node == osc.Id;
 
         Drag(window, Well(editor, window, osc, port), 40);
 

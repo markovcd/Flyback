@@ -298,7 +298,7 @@ internal sealed class SocketFocus(SocketDial dial, KnobChoice choice, CanvasHist
         {
             var port = ((pick.Port + step * i) % count + count) % count;
 
-            if (!ValueWell.Has(history.Patch, node, def, port)) continue;
+            if (!ValueWell.Has(history.Patch, node, def, port) || !history.Turnable(node.Id, port)) continue;
 
             picked = new SocketPick(pick.Node, port);
             repaint.Request();

@@ -17,7 +17,8 @@ namespace Flyback.Editor.Canvas;
 /// A shut box being looked into: drawn open, over everything else, while it stays
 /// shut in the patch. Its ring covers whatever lies under it.
 /// </param>
-internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGroup? peek = null)
+/// <param name="turnable">Whether an input's value may be turned; a well that may not is no well to hit.</param>
+internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGroup? peek = null, Func<Guid, int, bool>? turnable = null)
 {
     // Everything below is drawing and pointing. Nothing here touches the graph:
     // a collapsed box is several modules that are not being painted and one that
@@ -353,8 +354,12 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
     public bool HitWell(Point graph, double slack, out Guid nodeId, out int portIndex)
     {
         var shown = patch;
+        var turns = turnable;
 
-        return HitRow(graph, (node, def, port) => ValueWell.Has(shown, node, def, port), out nodeId, out portIndex, slack);
+        return HitRow(
+            graph,
+            (node, def, port) => ValueWell.Has(shown, node, def, port) && turns?.Invoke(node.Id, port) != false,
+            out nodeId, out portIndex, slack);
     }
 
     /// <summary>The linked input whose knob chip is under <paramref name="graph"/>, on a module or a shut box drawn at full size.</summary>

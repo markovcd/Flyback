@@ -27,6 +27,15 @@ internal sealed class CanvasHistory(NodeGeometry geometry, Reactions reactions)
     /// </summary>
     public bool Locked { get; set; }
 
+    /// <summary>
+    /// Whether an input's value is one the owner cannot write back, so the canvas shows
+    /// it without a well to turn.
+    /// </summary>
+    public Func<Guid, int, bool>? Fixed { get; set; }
+
+    /// <summary>Whether an input's value may be turned, as far as its owner is concerned.</summary>
+    public bool Turnable(Guid node, int port) => Fixed?.Invoke(node, port) != true;
+
     /// <summary>Whether the <see cref="PatchChanged"/> being raised is a patch opened rather than edited.</summary>
     public bool Opening { get; private set; }
 

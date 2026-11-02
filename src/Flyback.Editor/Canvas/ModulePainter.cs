@@ -322,7 +322,7 @@ internal sealed class ModulePainter(
             return;
         }
 
-        var well = !connected && ValueWell.Has(Patch, node, def, index) ? focus.StateOf(node.Id, index) : (WellState?)null;
+        var well = !connected && ValueWell.Has(Patch, node, def, index) && history.Turnable(node.Id, index) ? focus.StateOf(node.Id, index) : (WellState?)null;
 
         if (well is { } lit) ValueWell.DrawRow(context, bounds, center, lit);
 

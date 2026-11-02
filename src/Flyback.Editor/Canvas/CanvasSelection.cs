@@ -65,7 +65,7 @@ internal sealed class CanvasSelection
     public IReadOnlyList<NodeInstance> Nodes => [.. Patch.Nodes.Where(node => ids.Contains(node.Id))];
 
     /// <summary>What the canvas shows of the patch, and what is under a point on it.</summary>
-    public CanvasScene Scene => new(Patch, geometry, Peeked);
+    public CanvasScene Scene => new(Patch, geometry, Peeked, history.Turnable);
 
     public bool Contains(Guid id) => ids.Contains(id);
 
