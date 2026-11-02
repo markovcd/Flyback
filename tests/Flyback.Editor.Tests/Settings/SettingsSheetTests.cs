@@ -22,6 +22,11 @@ public class SettingsSheetTests : OutputSettingsTest
         All<SettingsSheet>(dialog).Single().Narrow.ShouldBeFalse();
         Named<ScrollViewer>(dialog, "settingsList").IsEffectivelyVisible.ShouldBeFalse();
         Tabs(dialog).Items.Cast<TabItem>().ShouldAllBe(item => item.IsVisible);
+
+        ShowSettingsTab(dialog, PlayingTab);
+        Settle(window);
+
+        Named<ComboBox>(dialog, "takeover").Bounds.X.ShouldBe(InspectorRows.SettingsGutter, "its name stands beside it");
     }
 
     [AvaloniaFact]
@@ -47,6 +52,10 @@ public class SettingsSheetTests : OutputSettingsTest
         Named<Button>(dialog, "settingsBack").IsEffectivelyVisible.ShouldBeTrue();
         Shoot(window, "settings-phone-page.png");
         Named<CheckBox>(dialog, "endless").Bounds.Right.ShouldBeLessThanOrEqualTo(frame.Bounds.Width, "a tab runs to the sheet's width, not past it");
+
+        var takeover = Named<ComboBox>(dialog, "takeover");
+        takeover.Bounds.Width.ShouldBeGreaterThan(frame.Bounds.Width - 100, "a list takes the row's whole width, its name above it");
+        takeover.Bounds.X.ShouldBe(0, "nothing stands beside it");
 
         Press(Named<Button>(dialog, "settingsBack"));
         Settle(window);

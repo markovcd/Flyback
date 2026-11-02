@@ -44,7 +44,7 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
 
     /// <summary>The gutter, and whatever columns the caller needs beside it.</summary>
     internal static Grid Row(string beside, double gutter = Gutter) =>
-        new() { ColumnDefinitions = new ColumnDefinitions($"{gutter},{beside}") };
+        gutter == SettingsGutter ? new FieldRow(beside) : new Grid { ColumnDefinitions = new ColumnDefinitions($"{gutter},{beside}") };
 
     /// <summary>
     /// A knob whose number is not what it means, and so wants a column for what it

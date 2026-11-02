@@ -158,6 +158,8 @@ internal sealed class SettingsSheet : Grid
 
         foreach (var view in views) view.Width = phone ? double.NaN : SettingsSession.SectionWidth;
 
+        SetValue(FieldRow.StackedProperty, phone);
+
         tabs.Padding = phone ? new Thickness(0) : new Thickness(4, SettingsSession.ListTop, 0, 0);
         tabs.IsVisible = !phone || paged;
         list.IsVisible = phone && !paged;

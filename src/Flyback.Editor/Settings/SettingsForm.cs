@@ -254,7 +254,7 @@ public sealed class SettingsForm : UserControl
             note.Width = double.NaN;
             note.Margin = new Thickness(Gutter, 0, 0, 0);
 
-            var line = new Grid { ColumnDefinitions = new ColumnDefinitions($"{Gutter},*") };
+            var line = new FieldRow("*");
 
             Grid.SetColumn(Control, 1);
 

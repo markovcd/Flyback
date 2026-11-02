@@ -27,7 +27,8 @@ reading every row above it. He approved the regrouping from a clickable mock.
 - The saved settings are untouched: only where a control is drawn moved.
 
 - **A phone taps into a tab.** Where the sheet is narrower than the list beside a tab,
-  it shows the list alone, and a tapped row shows that tab full width under a way back.
+  it shows the list alone, and a tapped row shows that tab full width under a way back,
+  each row's name standing above its control rather than in the gutter beside it.
   The tab control stays underneath with its headers hidden, so the two shapes share one
   selection and one Save.
 
