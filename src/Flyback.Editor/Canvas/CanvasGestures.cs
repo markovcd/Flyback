@@ -263,58 +263,85 @@ internal sealed class CanvasGestures
         // A press anywhere takes the keys back from a well; one on a well gives them again.
         focus.Clear();
 
-        // Over a module Ctrl adds to the selection; over an output it lifts a wire off.
-        var ctrl = (modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
+        var press = new Press(canvas, pointer, screen, graph, modifiers, clickCount);
 
-        var dragToPan = DragToPan && pointer?.Type != PointerType.Touch;
-
-        if (button == MouseButton.Right)
+        return button switch
         {
-            // Over an unpatched input, the button held down is a knob for its value. Zoomed
-            // out, anywhere on a module is, for its first input; Tab or a second finger moves on.
-            var anchored = pointer?.Type != PointerType.Touch;
+            MouseButton.Right => PressRight(press, scene),
+            MouseButton.Left => PressLeft(press, scene),
+            _ => false,
+        };
+    }
 
-            if (drag == Drag.None
-                && (dial.Start(canvas, graph, screen, anchored)
-                    || (view.Overview && !scene.HitPort(graph, out _, out _, out _) && dial.StartOnBody(canvas, graph, screen, anchored))))
-            {
-                tips.Down(canvas);
-                pointer?.Capture(canvas);
-                return true;
-            }
+    /// <summary>
+    /// One press as the handlers below take it: where it landed, on screen and on the
+    /// canvas, and with which keys held and how many clicks.
+    /// </summary>
+    private readonly record struct Press(
+        Control Canvas, IPointer? Pointer, Point Screen, Point Graph, KeyModifiers Modifiers, int ClickCount)
+    {
+        /// <summary>Over a module Ctrl adds to the selection; over an output it lifts a wire off.</summary>
+        public bool Ctrl => (Modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
 
-            var bare = !scene.HitPort(graph, out _, out _, out _)
-                && scene.HitBox(graph) is null
-                && scene.HitNode(graph) is null;
+        public bool Touch => Pointer?.Type == PointerType.Touch;
+    }
 
-            // Dragged, it is a rubber band; let go where it went down, the list opens.
-            if (dragToPan && bare && drag == Drag.None)
-            {
-                StartMarquee(graph, ctrl, MouseButton.Right);
-                stillAt = screen;
-                pointer?.Capture(canvas);
-                return false;
-            }
+    /// <summary>The right button: a value's knob, a rubber band, the list, or a module held to flip it.</summary>
+    private bool PressRight(Press press, CanvasScene scene)
+    {
+        var (canvas, pointer, screen, graph) = (press.Canvas, press.Pointer, press.Screen, press.Graph);
+        var onPort = scene.HitPort(graph, out _, out _, out _);
 
-            // Not over a module, where a right-click is about that module, and not on
-            // a locked canvas, where the next evaluation would take it straight off.
-            if (!history.Locked && bare) MenuRequested?.Invoke(this, graph);
+        // Over an unpatched input, the button held down is a knob for its value. Zoomed
+        // out, anywhere on a module is, for its first input; Tab or a second finger moves on.
+        var anchored = !press.Touch;
 
-            // Over a module or a shut box, the button is held to flip it.
-            if (!scene.HitPort(graph, out _, out _, out _))
-            {
-                if (scene.HitBox(graph) is { } shut) held.Hold(shut.Members);
-                else if (scene.HitNode(graph) is { } under)
-                    held.Hold(selection.Contains(under.Id) ? selection.Nodes.Select(n => n.Id) : [under.Id]);
+        if (drag == Drag.None
+            && (dial.Start(canvas, graph, screen, anchored)
+                || (view.Overview && !onPort && dial.StartOnBody(canvas, graph, screen, anchored))))
+        {
+            tips.Down(canvas);
+            pointer?.Capture(canvas);
+            return true;
+        }
 
-                if (held.Holding) pointer?.Capture(canvas);
-            }
+        var bare = !onPort
+            && scene.HitBox(graph) is null
+            && scene.HitNode(graph) is null;
 
+        // Dragged, it is a rubber band; let go where it went down, the list opens.
+        if (DragToPan && !press.Touch && bare && drag == Drag.None)
+        {
+            StartMarquee(graph, press.Ctrl, MouseButton.Right);
+            stillAt = screen;
+            pointer?.Capture(canvas);
             return false;
         }
 
-        if (button != MouseButton.Left) return false;
+        // Not over a module, where a right-click is about that module, and not on
+        // a locked canvas, where the next evaluation would take it straight off.
+        if (!history.Locked && bare) MenuRequested?.Invoke(this, graph);
 
+        // Over a module or a shut box, the button is held to flip it.
+        if (!onPort)
+        {
+            if (scene.HitBox(graph) is { } shut) held.Hold(shut.Members);
+            else if (scene.HitNode(graph) is { } under)
+                held.Hold(selection.Contains(under.Id) ? selection.Nodes.Select(n => n.Id) : [under.Id]);
+
+            if (held.Holding) pointer?.Capture(canvas);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// The left button on what a value or a wire is handled by: a well, a knob chip, a
+    /// socket or a remap mark. Past those, the module, box or bare canvas under it.
+    /// </summary>
+    private bool PressLeft(Press press, CanvasScene scene)
+    {
+        var (canvas, pointer, graph) = (press.Canvas, press.Pointer, press.Graph);
         var liftedLast = wire.Pressed();
 
         // A press outside the box being looked into puts it back, and goes on to be
@@ -332,21 +359,21 @@ internal sealed class CanvasGestures
 
         // A value's well turns it with the left button, as the right does on the socket.
         // A finger holds first, through Fingers, so a swipe across a module still moves it.
-        if (!history.Locked && pointer?.Type != PointerType.Touch && drag == Drag.None && !view.Overview
+        if (!history.Locked && !press.Touch && drag == Drag.None && !view.Overview
             && scene.HitWell(graph, out var wellNode, out var wellPort))
         {
             if (!selection.Contains(wellNode)) selection.Select(wellNode);
 
-            if ((modifiers & KeyModifiers.Alt) != 0) return dial.Reset(wellNode, wellPort);
+            if ((press.Modifiers & KeyModifiers.Alt) != 0) return dial.Reset(wellNode, wellPort);
 
             // A double-click opens it for typing, the first click having given it the keys.
-            if (clickCount == 2)
+            if (press.ClickCount == 2)
             {
                 focus.Pick(new SocketPick(wellNode, wellPort));
                 return focus.BeginTyping();
             }
 
-            if (!dial.Start(canvas, wellNode, wellPort, screen)) return false;
+            if (!dial.Start(canvas, wellNode, wellPort, press.Screen)) return false;
 
             tips.Down(canvas);
             pointer?.Capture(canvas);
@@ -369,7 +396,7 @@ internal sealed class CanvasGestures
             // Before a wire is lifted off, so whatever hears of that change already sees a
             // gesture under way.
             drag = Drag.Wire;
-            wire.Start(portNode, portIndex, isOutput, lifting: ctrl, liftedLast, graph);
+            wire.Start(portNode, portIndex, isOutput, lifting: press.Ctrl, liftedLast, graph);
             pointer?.Capture(canvas);
             repaint.Request();
             return false;
@@ -380,6 +407,17 @@ internal sealed class CanvasGestures
             marks.Splice(marked, at);
             return true;
         }
+
+        return PressBody(press, scene) ?? PressBare(press);
+    }
+
+    /// <summary>
+    /// The left button on a module, a shelf's chip, a shut box or an open group's strip,
+    /// and whether it was answered in full; null over none of them.
+    /// </summary>
+    private bool? PressBody(Press press, CanvasScene scene)
+    {
+        var (canvas, pointer, graph, clickCount) = (press.Canvas, press.Pointer, press.Graph, press.ClickCount);
 
         // A box before a module, because that is the order they are painted in.
         if (scene.HitBox(graph) is null && scene.HitNode(graph) is { } node)
@@ -393,12 +431,12 @@ internal sealed class CanvasGestures
 
             // Shift on one member of a group selected whole means that one: it is about
             // to be carried out, and the whole group would ride along as itself.
-            if ((modifiers & KeyModifiers.Shift) != 0 && selection.Group is { } whole && whole.Members.Contains(node.Id))
+            if ((press.Modifiers & KeyModifiers.Shift) != 0 && selection.Group is { } whole && whole.Members.Contains(node.Id))
                 selection.Select(node.Id);
 
-            module.PressModule(node, ctrl);
+            module.PressModule(node, press.Ctrl);
             drag = Drag.Node;
-            if (!history.Locked) module.Aim(graph, modifiers);
+            if (!history.Locked) module.Aim(graph, press.Modifiers);
 
             pointer?.Capture(canvas);
             repaint.Request();
@@ -418,7 +456,7 @@ internal sealed class CanvasGestures
         if (scene.HitBox(graph) is { } box)
         {
             if (clickCount == 2) selection.Peek(box);
-            else PressGroup(box, ctrl);
+            else PressGroup(box, press.Ctrl);
 
             pointer?.Capture(canvas);
             repaint.Request();
@@ -430,17 +468,25 @@ internal sealed class CanvasGestures
             if (clickCount == 2 && opened == selection.Peeked) selection.EndPeek();
             // Shutting a group is an edit, so a locked canvas selects it instead.
             else if (clickCount == 2 && !history.Locked) edits.ToggleBox(opened);
-            else PressGroup(opened, ctrl);
+            else PressGroup(opened, press.Ctrl);
 
             pointer?.Capture(canvas);
             repaint.Request();
             return false;
         }
 
-        // A double-click on empty canvas looks at the whole patch again, and is still a click there.
-        if (clickCount == 2) view.FrameAll();
+        return null;
+    }
 
-        if (dragToPan)
+    /// <summary>The left button on empty canvas: a pan where a drag pans, otherwise a rubber band.</summary>
+    private bool PressBare(Press press)
+    {
+        var (canvas, pointer, screen, graph) = (press.Canvas, press.Pointer, press.Screen, press.Graph);
+
+        // A double-click on empty canvas looks at the whole patch again, and is still a click there.
+        if (press.ClickCount == 2) view.FrameAll();
+
+        if (DragToPan && !press.Touch)
         {
             drag = Drag.Pan;
             panOrigin = screen;
@@ -452,7 +498,7 @@ internal sealed class CanvasGestures
 
         // Left on empty canvas draws a rubber band. A band that sweeps nothing selects
         // nothing, which is what a click on empty canvas does.
-        StartMarquee(graph, ctrl, MouseButton.Left);
+        StartMarquee(graph, press.Ctrl, MouseButton.Left);
         band.Sweep();
 
         pointer?.Capture(canvas);
