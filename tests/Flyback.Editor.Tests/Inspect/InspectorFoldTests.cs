@@ -160,7 +160,24 @@ public class InspectorFoldTests : EditorTest
         plate.Layout.ShouldBe(PlateLayout.Narrow);
 
         var name = All<TextBlock>(window).Single(t => t.Name == "moduleName");
-        Named(window, "switch-modules").TranslatePoint(default, name)!.Value.Y.ShouldBeGreaterThan(name.Bounds.Height);
+        var off = Named(window, "switch-modules");
+        off.TranslatePoint(default, name)!.Value.Y.ShouldBeGreaterThan(name.Bounds.Height);
+        Named(window, "cut-modules").TranslatePoint(default, off)!.Value.Y.ShouldBe(0, "both rows fit side by side");
+    }
+
+    [AvaloniaFact]
+    public void A_panel_too_narrow_for_both_rows_side_by_side_wraps_the_second_under_the_first()
+    {
+        var window = Selecting(out _);
+        window.Width = 1100;
+        Settle(window);
+
+        var plate = (ModulePlate)PlateHost(window).Content!;
+        plate.Under.Width = 200;
+        Settle(window);
+
+        var off = Named(window, "switch-modules");
+        Named(window, "cut-modules").TranslatePoint(default, off)!.Value.Y.ShouldBeGreaterThan(off.Bounds.Height);
     }
 
     [AvaloniaFact]

@@ -26,8 +26,8 @@ internal sealed class InspectorFold
     /// <summary>The band's own width before any button: its insets, the mark and the gaps beside it.</summary>
     private const double BandChrome = 24 + 26 + 20;
 
-    /// <summary>What a glyph button takes along the band, and the gap between its groups.</summary>
-    private const double ButtonRoom = 40, GroupGap = 10;
+    /// <summary>What a glyph button takes along the band.</summary>
+    private const double ButtonRoom = 40;
 
     /// <summary>Names the description a module's or a box's panel opens with, so a short panel can leave it to the menu.</summary>
     public const string DescriptionName = "panel-description";
@@ -104,7 +104,7 @@ internal sealed class InspectorFold
         if (lastPress.ByFinger) return PlateLayout.Touch;
 
         var rows = plate is null ? [] : PlateActions.Rows(plate);
-        var needed = BandChrome + NameRoom + rows.Sum(row => row.Count) * ButtonRoom + Math.Max(0, rows.Count - 1) * GroupGap;
+        var needed = BandChrome + NameRoom + rows.Sum(row => row.Count) * ButtonRoom + Math.Max(0, rows.Count - 1) * ModulePlate.GroupGap;
 
         return rows.Count > 0 && reading.Bounds.Width >= needed ? PlateLayout.Wide : PlateLayout.Narrow;
     }

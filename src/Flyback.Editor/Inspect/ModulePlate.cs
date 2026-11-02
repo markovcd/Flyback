@@ -39,6 +39,9 @@ internal sealed class ModulePlate : Decorator
     /// </summary>
     private const double Inset = 12;
 
+    /// <summary>The gap between one row of glyphs and the next beside it.</summary>
+    public const double GroupGap = 10;
+
     /// <summary>
     /// How far a quiet line is pulled back into what is behind it, where a skin asks
     /// for text colored from its background.
@@ -102,9 +105,11 @@ internal sealed class ModulePlate : Decorator
 
     private readonly ContentControl mark = new() { VerticalAlignment = VerticalAlignment.Center };
 
-    private readonly StackPanel rest = new()
+    /// <summary>The rows of glyphs, side by side while they fit and wrapping one under another when they do not.</summary>
+    private readonly WrapPanel rest = new()
     {
-        Spacing = 4,
+        ItemSpacing = GroupGap,
+        LineSpacing = 6,
         Margin = new Thickness(Inset, 6, Inset, 10),
     };
 
@@ -172,8 +177,6 @@ internal sealed class ModulePlate : Decorator
             case PlateLayout.Wide:
                 // One row of glyphs on the band, beside the name, in groups.
                 rest.IsVisible = true;
-                rest.Orientation = Orientation.Horizontal;
-                rest.Spacing = 10;
                 rest.Margin = new Thickness(0);
                 rest.VerticalAlignment = VerticalAlignment.Center;
                 foreach (var row in rest.Children.OfType<StackPanel>()) row.Margin = new Thickness(0);
@@ -184,11 +187,9 @@ internal sealed class ModulePlate : Decorator
 
             case PlateLayout.Narrow:
                 rest.IsVisible = true;
-                rest.Orientation = Orientation.Vertical;
-                rest.Spacing = 4;
                 rest.Margin = new Thickness(Inset, 6, Inset, 10);
                 rest.VerticalAlignment = VerticalAlignment.Top;
-                foreach (var row in rest.Children.OfType<StackPanel>()) row.Margin = new Thickness(0, 0, 0, 6);
+                foreach (var row in rest.Children.OfType<StackPanel>()) row.Margin = new Thickness(0);
                 ((StackPanel)Child!).Children.Add(rest);
                 strip.IsVisible = false;
                 break;
