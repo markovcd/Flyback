@@ -139,11 +139,15 @@ internal static class TurnReadout
         (string line, IBrush ink) = verdict is { } read
             ? (read.Said, read.Tone switch { Tone.Error => ErrorInk, Tone.Warning => WarningInk, _ => Soft })
             : (turn.Hot ? Change(turn) : $"default {port.Format(port.Default)}", turn.Hot ? Attention : Soft);
+        // The hint wraps onto a second line on a narrow card, which the change line then gives up.
+        var hint = Text(Hint(turn), 10.5, HintInk, sans: true, width: room);
+        hint.MaxLineCount = 2;
+        var hintWraps = hint.Height > 10.5 * 1.8;
+
         var change = Text(line, 11.5, ink, sans: true, width: room);
-        change.MaxLineCount = 2;
+        change.MaxLineCount = hintWraps ? 1 : 2;
         context.DrawText(change, new Point(left, card.Y + 100));
 
-        var hint = Text(Hint(turn), 10.5, HintInk, sans: true, width: room);
         context.DrawText(hint, new Point(left, card.Bottom - 12 - hint.Height));
     }
 
@@ -169,14 +173,14 @@ internal static class TurnReadout
         return ($"Reads as {turn.Port.Format(value)}", Tone.Info);
     }
 
-    /// <summary>The keys and gestures the card's state answers to.</summary>
+    /// <summary>The keys and gestures the card's state answers to, in words: the web build's font has no arrows.</summary>
     internal static string Hint(Turn turn) => turn switch
     {
-        { Hot: true, Finger: true } => "slide ↕ · 2nd finger: hold fine, tap switch",
-        { Hot: true } => "drag ↕ · ⇧ fine · tab next · esc cancel",
-        { Typed: null, Finger: true } => "hold and slide ↕ · or the buttons",
-        { Typed: not null } => "↵ apply · esc cancel · tab next",
-        _ => "↑↓ nudge · ↵ type · alt L link",
+        { Hot: true, Finger: true } => "slide up or down · second finger: hold for fine, tap to switch",
+        { Hot: true } => "drag up or down · Shift fine · Tab next · Esc cancel",
+        { Typed: null, Finger: true } => "hold and slide up or down · or the buttons",
+        { Typed: not null } => "Enter apply · Esc cancel · Tab next",
+        _ => "arrows nudge · Enter types · Alt+L links",
     };
 
     /// <summary>Where the turn began, and by how much it has moved where the number is a plain number.</summary>

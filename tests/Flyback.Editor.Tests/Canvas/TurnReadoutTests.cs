@@ -109,4 +109,17 @@ public class TurnReadoutTests : EditorTest
         using var file = File.Create(path);
         frame.Save(file, new PngBitmapEncoderOptions());
     }
+
+    /// <summary>The web build's font draws arrows and key symbols as empty boxes.</summary>
+    [AvaloniaFact]
+    public void Every_hint_is_written_in_characters_every_font_has()
+    {
+        var spec = NodeCatalog.Get(NodeCatalog.SineTypeId)!.Inputs[1];
+        var turns = new[] { WellState.Turn, WellState.Focus }
+            .SelectMany(state => new[] { true, false }.SelectMany(finger => new string?[] { null, "1" }
+                .Select(typed => new TurnReadout.Turn("freq", "Sine", spec, 1, 1, 0, 2, state, typed, finger))));
+
+        foreach (var turn in turns)
+            TurnReadout.Hint(turn).Where(c => c > 0x7E && c != '·').ShouldBeEmpty(TurnReadout.Hint(turn));
+    }
 }
