@@ -8,7 +8,7 @@ namespace Flyback.Editor.Inspect;
 /// Whether the inspector shows its plate whole or folded into the pinned header: whole at the
 /// top of the scrolling rows, which scroll it away; folded once its name band has scrolled past,
 /// and from the start on a panel too short for the plate and a couple of rows. Under a mouse on
-/// a wide panel the plate is one short line, pinned above the rows, and never folds.
+/// a wide panel the plate is a name line and a button row, pinned above the rows, and never folds.
 /// </summary>
 /// <remarks>
 /// The wash draws the band behind whichever is showing: as deep as the plate's name band, less
@@ -20,11 +20,8 @@ internal sealed class InspectorFold
     /// <summary>How tall the inspector has to be for the plate to show whole at all.</summary>
     public const double Compact = 200;
 
-    /// <summary>The least room the name keeps on the band with the buttons beside it.</summary>
-    private const double NameRoom = 140;
-
-    /// <summary>The band's own width before any button: its insets, the mark and the gaps beside it.</summary>
-    private const double BandChrome = 24 + 26 + 20;
+    /// <summary>The button row's own width before any button: its insets.</summary>
+    private const double RowChrome = 24;
 
     /// <summary>What a glyph button takes along the band.</summary>
     private const double ButtonRoom = 40;
@@ -97,14 +94,17 @@ internal sealed class InspectorFold
 
     /// <summary>
     /// How <paramref name="plate"/> is laid out for the hand working it and the room it has: its
-    /// buttons beside the name under a mouse only while the name keeps room of its own.
+    /// buttons in one row under the name under a mouse while they fit in one.
     /// </summary>
     public PlateLayout Layout(ModulePlate? plate)
     {
         if (lastPress.ByFinger) return PlateLayout.Touch;
 
+        // A pinned plate would leave a short panel no room for its rows.
+        if (IsCompact) return PlateLayout.Narrow;
+
         var rows = plate is null ? [] : PlateActions.Rows(plate);
-        var needed = BandChrome + NameRoom + rows.Sum(row => row.Count) * ButtonRoom + Math.Max(0, rows.Count - 1) * ModulePlate.GroupGap;
+        var needed = RowChrome + rows.Sum(row => row.Count) * ButtonRoom + Math.Max(0, rows.Count - 1) * ModulePlate.GroupGap;
 
         return rows.Count > 0 && reading.Bounds.Width >= needed ? PlateLayout.Wide : PlateLayout.Narrow;
     }
@@ -116,7 +116,7 @@ internal sealed class InspectorFold
 
         aside.Holding(plate is not null);
 
-        // Under a mouse on a wide panel the plate is one short line and never needs to fold.
+        // Under a mouse on a wide panel the plate is two short lines and never needs to fold.
         Pin(plate is not null && layout == PlateLayout.Wide);
 
         var compact = plate is not null && layout != PlateLayout.Wide && IsCompact;

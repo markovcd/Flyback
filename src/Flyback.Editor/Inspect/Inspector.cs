@@ -275,18 +275,11 @@ internal sealed class Inspector
 
         plate.Named.Children.Add(BuildTitle(node, def, plate));
 
-        plate.Named.Children.Add(new TextBlock
-        {
-            Text = def.Category,
-            FontSize = Text.Small,
-            Foreground = plate.Quiet,
-            TextAlignment = TextAlignment.Left,
-        });
+        plate.Kind(def.Category);
 
         PlateHost.Content = plate;
 
-        // What can be done to the module goes under its name, above the
-        // description — see ActionRow. Where it goes is settled here and what is
+        // What can be done to the module goes under its name — see ActionRow. Where it goes is settled here and what is
         // in it at the end, because a knob does not decide whether a module can
         // be grouped.
         var above = plate.Under.Children.Count;
@@ -308,17 +301,6 @@ internal sealed class Inspector
             };
 
         if (LevelPath.Of(editor, levels, node.Id, fingers) is { } path) Panel.Children.Add(path);
-
-        if (!string.IsNullOrEmpty(def.Description))
-            Panel.Children.Add(new TextBlock
-            {
-                Name = InspectorFold.DescriptionName,
-                Text = def.Description,
-                TextWrapping = TextWrapping.Wrap,
-                Foreground = ModulePlate.BodyQuiet(def),
-                FontSize = Text.Body,
-                Margin = new Thickness(0, 4, 0, 6),
-            });
 
         if (BuildNormalledNote(node, def) is { } normalled) Panel.Children.Add(normalled);
 
@@ -350,6 +332,18 @@ internal sealed class Inspector
             });
 
         BuildOutputs(def, node);
+
+        // After the values: what the module is matters once, what it is set to every time.
+        if (!string.IsNullOrEmpty(def.Description))
+            Panel.Children.Add(new TextBlock
+            {
+                Name = InspectorFold.DescriptionName,
+                Text = def.Description,
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = Text.Muted,
+                FontSize = Text.Body,
+                Margin = new Thickness(0, 16, 0, 6),
+            });
 
         // The Output cannot be deleted, so it gets no button for it. What the
         // picture is drawn at and by is a property of the machine rather than of

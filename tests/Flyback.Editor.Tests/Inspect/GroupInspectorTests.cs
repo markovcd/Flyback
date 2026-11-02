@@ -273,7 +273,7 @@ public class GroupInspectorTests : EditorTest
         var window = Open(out _);
         var row = Middle(window, Button(window, "delete-group"));
 
-        row.ShouldBeGreaterThan(Middle(window, Lined(window, "Group")), "under the name");
+        row.ShouldBeGreaterThan(Middle(window, Lined(window, "GROUP")), "under the name");
         row.ShouldBeLessThan(Middle(window, Description(window)), "and above the description");
         row.ShouldBeLessThan(Middle(window, Lined(window, "In")));
     }

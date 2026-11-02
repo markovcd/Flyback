@@ -129,7 +129,7 @@ public class InspectorFoldTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void Under_a_mouse_on_a_wide_panel_the_buttons_stand_on_the_band_beside_the_name()
+    public void Under_a_mouse_on_a_wide_panel_the_buttons_stand_in_one_row_under_the_name()
     {
         var window = Selecting(out _);
         window.Width = 1440;
@@ -144,25 +144,55 @@ public class InspectorFoldTests : EditorTest
         var name = All<TextBlock>(window).Single(t => t.Name == "moduleName");
         var off = Named(window, "switch-modules");
 
-        off.TranslatePoint(default, name)!.Value.Y.ShouldBeLessThan(name.Bounds.Height, "on the band, not under it");
-        off.TranslatePoint(default, name)!.Value.X.ShouldBeGreaterThan(name.Bounds.Width / 2, "to the right of the name");
+        off.TranslatePoint(default, name)!.Value.Y.ShouldBeGreaterThanOrEqualTo(name.Bounds.Height, "under the name");
+        Named(window, "cut-modules").TranslatePoint(default, off)!.Value.Y.ShouldBe(0, "every button in one row");
         name.TextAlignment.ShouldBe(Avalonia.Media.TextAlignment.Left);
     }
 
     [AvaloniaFact]
-    public void Under_a_mouse_on_a_narrow_panel_the_buttons_stand_under_the_name()
+    public void The_family_stands_on_the_name_line()
     {
         var window = Selecting(out _);
-        window.Width = 1100;
+        window.Width = 1440;
+        window.Height = 900;
+        Settle(window);
+
+        var name = All<TextBlock>(window).Single(t => t.Name == "moduleName");
+        var kind = All<TextBlock>(window).Single(t => t.Name == "plate-kind");
+
+        kind.Text.ShouldBe("OSCILLATORS");
+        kind.TranslatePoint(default, name)!.Value.X.ShouldBeGreaterThan(name.Bounds.Width - 1, "beside the name");
+        Math.Abs(kind.TranslatePoint(new Point(0, kind.Bounds.Height / 2), name)!.Value.Y - name.Bounds.Height / 2).ShouldBeLessThan(4, "on its line");
+    }
+
+    [AvaloniaFact]
+    public void The_description_comes_after_the_values()
+    {
+        var window = Selecting(out _);
+        window.Width = 1440;
+        window.Height = 900;
+        Settle(window);
+
+        var description = All<TextBlock>(window).Single(t => t.Name == InspectorFold.DescriptionName);
+        var output = All<TextBlock>(window).First(t => t.Text == "Outputs");
+
+        description.TranslatePoint(default, output)!.Value.Y.ShouldBeGreaterThan(0);
+    }
+
+    [AvaloniaFact]
+    public void Under_a_mouse_on_a_panel_too_narrow_for_one_row_the_buttons_scroll_with_the_rows()
+    {
+        var window = Selecting(out _);
+        window.Width = 390;
         Settle(window);
 
         var plate = (ModulePlate)PlateHost(window).Content!;
         plate.Layout.ShouldBe(PlateLayout.Narrow);
+        PlateHost(window).Parent.ShouldBeOfType<StackPanel>("a narrow plate scrolls away with the rows");
+        PlateHost(window).IsVisible.ShouldBeTrue("the panel is tall enough for the plate");
 
         var name = All<TextBlock>(window).Single(t => t.Name == "moduleName");
-        var off = Named(window, "switch-modules");
-        off.TranslatePoint(default, name)!.Value.Y.ShouldBeGreaterThan(name.Bounds.Height);
-        Named(window, "cut-modules").TranslatePoint(default, off)!.Value.Y.ShouldBe(0, "both rows fit side by side");
+        Named(window, "switch-modules").TranslatePoint(default, name)!.Value.Y.ShouldBeGreaterThan(name.Bounds.Height);
     }
 
     [AvaloniaFact]

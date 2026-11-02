@@ -87,20 +87,35 @@ internal sealed class ModulePlate : Decorator
     private static readonly IBrush Label =
         new ImmutableSolidColorBrush(Avalonia.Media.Colors.White, 0.7);
 
-    /// <summary>
-    /// The header band's contents: the name, and under it what kind of thing this
-    /// is. Both on the band, because the band is what says which block this is.
-    /// </summary>
+    /// <summary>Where the name stands: a panel, because renaming swaps a box in for it.</summary>
     private readonly StackPanel name = new() { VerticalAlignment = VerticalAlignment.Center };
+
+    /// <summary>
+    /// The name line: the name, and just past it what kind of thing this is.
+    /// </summary>
+    /// <remarks>
+    /// Docked rather than stacked, so the name and its rename box are measured at the
+    /// width there is: a box measured at infinite width draws its caret in the wrong place.
+    /// The kind is docked right on a line only as wide as both, which stands it just past
+    /// the name; while a box is open the kind steps aside and the box takes the line.
+    /// </remarks>
+    private readonly DockPanel line = new()
+    {
+        HorizontalAlignment = HorizontalAlignment.Left,
+        VerticalAlignment = VerticalAlignment.Center,
+        ClipToBounds = true,
+    };
+
+    private TextBlock? kind;
 
     private Button? stripPicture;
 
-    /// <summary>The band: the mark, the name, and on a wide panel under a mouse the buttons too.</summary>
+    /// <summary>The band: the mark and the name, on one line.</summary>
     private readonly Grid band = new()
     {
-        ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"),
-        ColumnSpacing = 10,
-        Margin = new Thickness(Inset, 6, Inset, 7),
+        ColumnDefinitions = new ColumnDefinitions("Auto,*"),
+        ColumnSpacing = 8,
+        Margin = new Thickness(Inset, 6, Inset, 6),
     };
 
     private readonly ContentControl mark = new() { VerticalAlignment = VerticalAlignment.Center };
@@ -129,11 +144,20 @@ internal sealed class ModulePlate : Decorator
         Quiet = inks.Quiet;
 
         Grid.SetColumn(mark, 0);
-        Grid.SetColumn(name, 1);
+        line.Children.Add(name);
+        Grid.SetColumn(line, 1);
         band.Children.Add(mark);
-        band.Children.Add(name);
+        band.Children.Add(line);
 
         Child = new StackPanel { Children = { band, strip, rest } };
+
+        name.Children.CollectionChanged += (_, _) =>
+        {
+            var renaming = name.Children.OfType<TextBox>().Any();
+
+            if (kind is not null) kind.IsVisible = !renaming;
+            line.HorizontalAlignment = renaming ? HorizontalAlignment.Stretch : HorizontalAlignment.Left;
+        };
     }
 
     /// <summary>How the plate is laid out at the moment, once <see cref="Lay"/> has been asked.</summary>
@@ -161,11 +185,11 @@ internal sealed class ModulePlate : Decorator
             {
                 Data = glyph,
                 Stroke = ink,
-                StrokeThickness = 2.2,
-                StrokeLineCap = PenLineCap.Round,
+                StrokeThickness = 1.8,
+                StrokeLineCap = PenLineCap.Square,
                 Stretch = Stretch.Uniform,
-                Width = layout == PlateLayout.Wide ? 26 : 24,
-                Height = layout == PlateLayout.Wide ? 26 : 24,
+                Width = 18,
+                Height = 18,
             };
 
         (rest.Parent as Panel)?.Children.Remove(rest);
@@ -175,13 +199,12 @@ internal sealed class ModulePlate : Decorator
         switch (layout)
         {
             case PlateLayout.Wide:
-                // One row of glyphs on the band, beside the name, in groups.
+                // One row of glyphs under the name line, in groups, all on the band.
                 rest.IsVisible = true;
-                rest.Margin = new Thickness(0);
-                rest.VerticalAlignment = VerticalAlignment.Center;
+                rest.Margin = new Thickness(Inset - 6, 0, Inset, 4);
+                rest.VerticalAlignment = VerticalAlignment.Top;
                 foreach (var row in rest.Children.OfType<StackPanel>()) row.Margin = new Thickness(0);
-                Grid.SetColumn(rest, 2);
-                band.Children.Add(rest);
+                ((StackPanel)Child!).Children.Add(rest);
                 strip.IsVisible = false;
                 break;
 
@@ -245,6 +268,28 @@ internal sealed class ModulePlate : Decorator
         strip.IsVisible = true;
     }
 
+    /// <summary>What kind of thing this is, set small and spaced beside the name.</summary>
+    public void Kind(string text)
+    {
+        if (kind is { } old) line.Children.Remove(old);
+
+        kind = new TextBlock
+        {
+            Name = "plate-kind",
+            Text = text.ToUpperInvariant(),
+            FontSize = Text.Small - 1,
+            FontWeight = FontWeight.SemiBold,
+            LetterSpacing = 1,
+            Foreground = Quiet,
+            Margin = new Thickness(8, 1, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+
+        DockPanel.SetDock(kind, Dock.Right);
+        line.Children.Insert(0, kind);
+    }
+
     /// <summary>
     /// Where the name goes. A panel rather than the control itself, because renaming
     /// swaps a box in for the name where it stands.
@@ -259,7 +304,7 @@ internal sealed class ModulePlate : Decorator
     /// it. The wash draws that band and reads this — the panel sets the name at the
     /// size it wants, and nothing else has a number that has to agree.
     /// </summary>
-    public double Band => band.Bounds.Bottom + band.Margin.Bottom;
+    public double Band => Layout == PlateLayout.Wide ? Bounds.Height : band.Bounds.Bottom + band.Margin.Bottom;
 
     /// <summary>What the plate says about its block, for what stands in for it on a short panel.</summary>
     public PlateFace? Face { get; set; }

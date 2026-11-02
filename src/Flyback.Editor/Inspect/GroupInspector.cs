@@ -51,6 +51,17 @@ internal sealed class GroupInspector(
 
         Edges(group);
 
+        // After the edges, as a module's description comes after its values.
+        surface.Panel.Children.Add(new TextBlock
+        {
+            Name = InspectorFold.DescriptionName,
+            Text = BoxDescription,
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = Text.Muted,
+            FontSize = Text.Body,
+            Margin = new Thickness(0, 16, 0, 6),
+        });
+
         // A box on a locked canvas is drawn from the text's group statements, so
         // everything that would change one is left off for the same reason
         // deleting a module is — see Inspector.Build.
@@ -59,7 +70,7 @@ internal sealed class GroupInspector(
         Actions(group, plate, above);
     }
 
-    /// <summary>The box's face, its description, and where the row of actions goes under the name.</summary>
+    /// <summary>The box's face, and where the row of actions goes under the name.</summary>
     private (ModulePlate Plate, int Above) Plate(NodeGroup group)
     {
         // The box's own face, in the grays the canvas draws one in — a box belongs to
@@ -71,13 +82,7 @@ internal sealed class GroupInspector(
 
         plate.Named.Children.Add(Title(group, plate));
 
-        plate.Named.Children.Add(new TextBlock
-        {
-            Text = group.Name is null ? "Group" : $"Group · {group.Counted}",
-            FontSize = Text.Small,
-            Foreground = plate.Quiet,
-            TextAlignment = TextAlignment.Left,
-        });
+        plate.Kind(group.Name is null ? "Group" : $"Group · {group.Counted}");
 
         surface.PlateHost.Content = plate;
 
@@ -87,7 +92,7 @@ internal sealed class GroupInspector(
                 if (plate.Title is { } title) Rename(group, plate, title);
             };
 
-        // Under the name, above the description, where a module's own row sits.
+        // Under the name, where a module's own row sits.
         var above = plate.Under.Children.Count;
 
         plate.Face = new PlateFace(
@@ -99,16 +104,6 @@ internal sealed class GroupInspector(
             editor.History.Locked
                 ? null
                 : new PlateName(() => group.Name, group.Counted, NodeGroup.NameLimit, typed => group.Rename(typed), () => editor.History.Record()));
-
-        surface.Panel.Children.Add(new TextBlock
-        {
-            Name = InspectorFold.DescriptionName,
-            Text = BoxDescription,
-            TextWrapping = TextWrapping.Wrap,
-            Foreground = Text.Muted,
-            FontSize = Text.Body,
-            Margin = new Thickness(0, 4, 0, 6),
-        });
 
         return (plate, above);
     }

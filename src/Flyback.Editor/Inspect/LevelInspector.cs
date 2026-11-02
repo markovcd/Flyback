@@ -39,14 +39,9 @@ internal sealed class LevelInspector(NodeEditor editor, InspectorSurface surface
             TextTrimming = TextTrimming.CharacterEllipsis,
         });
 
-        plate.Named.Children.Add(new TextBlock
-        {
-            Text = pass is { } made && !ReferenceEquals(made, level)
-                ? $"{Kind(level.Kind)} · pass {made.Pass}/{made.Passes} · line {level.Line}"
-                : $"{Kind(level.Kind)} · line {level.Line}",
-            FontSize = Text.Small,
-            Foreground = plate.Quiet,
-        });
+        plate.Kind(pass is { } made && !ReferenceEquals(made, level)
+            ? $"{Kind(level.Kind)} · pass {made.Pass}/{made.Passes} · line {level.Line}"
+            : $"{Kind(level.Kind)} · line {level.Line}");
 
         plate.Face = new PlateFace(Title(level), Kind(level.Kind), ModuleGlyphs.Group, new SolidColorBrush(Colors.Label), null, null);
         surface.PlateHost.Content = plate;
