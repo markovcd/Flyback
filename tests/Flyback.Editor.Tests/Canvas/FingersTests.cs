@@ -172,11 +172,12 @@ public class FingersTests : EditorTest
     [AvaloniaFact]
     public void A_socket_tip_a_held_finger_brought_up_comes_down_when_it_lifts()
     {
-        var (editor, window) = Editing(Pair(out _, out var sine));
+        // Held on a module with no values, since a hold on one with values turns one.
+        var (editor, window) = Editing(Pair(out var clock, out _));
         var finger = Finger();
-        var output = On(editor, NodeGeometry.OutputPort(sine, 0));
+        var output = On(editor, NodeGeometry.OutputPort(clock, 0));
 
-        editor.Fingers.Down(editor, finger, On(editor, Body(sine)), 1_000);
+        editor.Fingers.Down(editor, finger, On(editor, Body(clock)), 1_000);
         editor.Fingers.Held();
         editor.Fingers.Move(editor, finger, output);
         Settle(window);
