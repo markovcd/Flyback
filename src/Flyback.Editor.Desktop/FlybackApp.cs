@@ -30,7 +30,7 @@ public sealed class FlybackApp : Application
         // Before Avalonia's macOS setup, which reads both into the menu bar.
         Name = GlobalConstants.ApplicationName;
         NativeMenu.SetMenu(this, menu.Menu);
-        EditorTheme.Apply(this, CanvasSettings.Load(SettingsFile.Path).ColorScheme);
+        EditorTheme.Apply(this, StartingScheme.For(ThisMachine.Folders()));
     }
 
     public override void OnFrameworkInitializationCompleted()

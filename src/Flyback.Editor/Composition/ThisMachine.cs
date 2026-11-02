@@ -11,6 +11,7 @@ using Flyback.Editor.Windows;
 using Flyback.Host;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
+using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Composition;
 
@@ -39,6 +40,7 @@ internal static class ThisMachine
         AllowedPluginsPath = PluginAllowances.DefaultFile,
         SharedPresetFolder = KeptSharedPresets.DefaultFolder,
         ModelFolder = ModelStore.DefaultRoot,
+        SchemeFolder = SchemeLibrary.UserFolder,
     };
 
     /// <summary>A desktop window on this machine, reaching the preset site this copy was built for.</summary>

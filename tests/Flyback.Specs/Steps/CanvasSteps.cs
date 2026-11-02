@@ -10,8 +10,16 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>How the canvas draws a module, and what the mouse does on it.</summary>
 [Binding]
-public sealed class CanvasSteps(PatchContext context, EditorDriver editor)
+public sealed class CanvasSteps(PatchContext context, EditorDriver editor) : IDisposable
 {
+    /// <summary>The schemes folder a scenario made, removed after it.</summary>
+    private string? schemes;
+
+    public void Dispose()
+    {
+        if (schemes is not null) Directory.Delete(schemes, recursive: true);
+    }
+
     private static NodeDef Filter => NodeCatalog.Require(NodeCatalog.FilterTypeId);
 
     private static int Cutoff => Filter.Inputs.ToList().FindIndex(p => p.Name == "cutoff");
@@ -59,6 +67,15 @@ public sealed class CanvasSteps(PatchContext context, EditorDriver editor)
         editor.Tip.ShouldBe($"{value}\n{Filter.Inputs[Cutoff].Help}");
     }
 
+    [Given("a color scheme called {word} in the schemes folder")]
+    public void GivenASchemeInTheFolder(string name)
+    {
+        schemes = Directory.CreateTempSubdirectory("flyback-scheme-specs").FullName;
+        File.WriteAllText(Path.Combine(schemes, $"{name.ToLowerInvariant()}.json"), $$"""{ "format": 1, "name": "{{name}}", "accent": "#FF9A1F" }""");
+
+        editor.Setup = editor.Setup with { Folders = editor.Setup.Folders with { SchemeFolder = schemes } };
+    }
+
     [When("{word} is chosen as the editor's colors")]
     public void WhenColorsAreChosen(string scheme)
     {
@@ -68,7 +85,7 @@ public sealed class CanvasSteps(PatchContext context, EditorDriver editor)
     }
 
     [Then("the editor starts in {word} the next time")]
-    public void ThenTheEditorStartsIn(string scheme) => editor.NextColorScheme.ToString().ShouldBe(scheme);
+    public void ThenTheEditorStartsIn(string scheme) => editor.NextColorScheme.ShouldBe(scheme);
 
     [Then("the editor is drawn in Phosphor until then")]
     public static void ThenStillPhosphor() => Ui.Controls.Colors.Current.ShouldBe(Ui.Controls.Scheme.Phosphor);

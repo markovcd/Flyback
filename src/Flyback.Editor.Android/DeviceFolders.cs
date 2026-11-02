@@ -18,6 +18,7 @@ internal static class DeviceFolders
             SettingsPath = Path.Combine(root, "settings.json"),
             RecoveryFolder = Path.Combine(root, "Recovery"),
             SharedPresetFolder = Path.Combine(root, "Shared"),
+            SchemeFolder = Path.Combine(root, "Schemes"),
         };
     }
 }

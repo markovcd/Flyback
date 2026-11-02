@@ -75,9 +75,14 @@ internal sealed class CanvasSection : ISettingsSection
     private readonly ComboBox colorScheme = new Picker
     {
         Name = "colorScheme",
-        ItemsSource = Enum.GetNames<ColorScheme>().ToList(),
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
+
+    /// <summary>Where the user's own color schemes are read from, or null for the shipped ones alone.</summary>
+    private readonly string? schemeFolder;
+
+    /// <summary>The names the Colors list offers, read afresh each time the window opens.</summary>
+    private List<string> schemes = [];
 
     private readonly ComboBox measurePicture = new Picker
     {
@@ -103,6 +108,7 @@ internal sealed class CanvasSection : ISettingsSection
     public CanvasSection(EditorFolders folders, NodeEditor canvas, ReportLine report, IBrowserStore browser, EditorHost host)
     {
         path = folders.SettingsPath;
+        schemeFolder = folders.SchemeFolder;
         this.canvas = canvas;
         this.browser = browser;
         this.report = (message, detail) => report.Say(message, detail);
@@ -137,7 +143,10 @@ internal sealed class CanvasSection : ISettingsSection
 
         ToolTip.SetTip(colorScheme,
             "Phosphor is the green of the Beam module's trace on blue-gray. Amber is amber on "
-            + "teal-black, Graphite orange on charcoal, Midnight orange on violet-black.");
+            + "teal-black, Graphite orange on charcoal, Midnight orange on violet-black. A scheme "
+            + "of your own is a .json file in the schemes folder beside the settings.");
+
+        Schemes(report: false);
 
         View.Children.Add(InspectorRows.Field("Colors", colorScheme));
 
@@ -252,7 +261,7 @@ internal sealed class CanvasSection : ISettingsSection
         measureWindow.SelectedIndex = Math.Max(0, CanvasSettings.MeasureWindows.ToList().IndexOf(saved.MeasureSeconds));
 
         measurePicture.SelectedIndex = (int)saved.MeasurePicture;
-        colorScheme.SelectedIndex = (int)saved.ColorScheme;
+        colorScheme.SelectedIndex = Math.Max(0, schemes.FindIndex(name => string.Equals(name, saved.ColorScheme, StringComparison.OrdinalIgnoreCase)));
 
         canvas.Geometry.Compact = saved.CompactModules;
         MenuBarShown?.Invoke(saved.MenuBar);
@@ -296,8 +305,27 @@ internal sealed class CanvasSection : ISettingsSection
         Write();
     }
 
-    /// <summary>The colors the editor starts in next time, as last saved.</summary>
-    internal ColorScheme ColorScheme => saved.ColorScheme;
+    /// <summary>The name of the color scheme the editor starts in next time, as last saved.</summary>
+    internal string ColorScheme => saved.ColorScheme;
+
+    /// <summary>Looks again for schemes, so one put in the folder since is offered.</summary>
+    public void Opening()
+    {
+        Schemes(report: true);
+        Show();
+    }
+
+    /// <summary>Lists the shipped schemes and the folder's, and says what was wrong with any file there.</summary>
+    private void Schemes(bool report)
+    {
+        var library = SchemeLibrary.Load(schemeFolder);
+
+        schemes = [.. library.Schemes.Select(scheme => scheme.Name)];
+        colorScheme.ItemsSource = schemes;
+
+        if (report && library.Problems.Count > 0)
+            this.report($"A color scheme in the schemes folder has a problem: {library.Problems[0]}", string.Join('\n', library.Problems));
+    }
 
     /// <summary>How long Measure runs the patch for, as last saved.</summary>
     internal double MeasureSeconds => saved.MeasureSeconds;
@@ -340,7 +368,7 @@ internal sealed class CanvasSection : ISettingsSection
             Endless = saved.Endless,
             MeasureSeconds = CanvasSettings.MeasureWindows[Math.Max(measureWindow.SelectedIndex, 0)],
             MeasurePicture = (MeasurePictureSize)Math.Max(measurePicture.SelectedIndex, 0),
-            ColorScheme = (ColorScheme)Math.Max(colorScheme.SelectedIndex, 0),
+            ColorScheme = colorScheme.SelectedItem as string ?? CanvasSettings.DefaultColorScheme,
         };
 
         Show();

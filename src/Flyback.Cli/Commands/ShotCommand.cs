@@ -83,9 +83,14 @@ internal static class ShotCommand
             Description = "Draw every box shut.",
         };
 
+        var gallery = new Option<bool>("--gallery")
+        {
+            Description = "Draw the preset gallery open over the window.",
+        };
+
         var colors = new Option<string>("--colors")
         {
-            Description = "The color scheme to draw in, as Settings, Canvas, Colors names it: Phosphor unless given.",
+            Description = "The color scheme to draw in: a name Settings, Canvas, Colors offers, or a scheme's .json file. Phosphor unless given.",
         };
 
         var editor = new Option<FileInfo>("--editor")
@@ -95,7 +100,7 @@ internal static class ShotCommand
 
         var command = new Command("shot", "Draw the editor's window with a patch open, at a chosen second, into a PNG.")
         {
-            given.Patch, given.Preset, given.Presets, output, at, size, select, canvas, crop, measure, assistant, live, open, shut, colors, editor,
+            given.Patch, given.Preset, given.Presets, output, at, size, select, canvas, crop, measure, assistant, live, open, shut, colors, gallery, editor,
         };
 
         command.SetAction(result =>
@@ -146,7 +151,9 @@ internal static class ShotCommand
             if (result.GetValue(live)) arguments.Add("--live");
             if (result.GetValue(open)) arguments.Add("--open");
             if (result.GetValue(shut)) arguments.Add("--shut");
-            if (result.GetValue(colors) is { } scheme) arguments.AddRange(["--colors", scheme]);
+            if (result.GetValue(gallery)) arguments.Add("--gallery");
+            if (result.GetValue(colors) is { } scheme)
+                arguments.AddRange(["--colors", scheme.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ? Path.GetFullPath(scheme) : scheme]);
 
             arguments.AddRange(file is not null ? [file.FullName] : ["--preset", named!]);
 

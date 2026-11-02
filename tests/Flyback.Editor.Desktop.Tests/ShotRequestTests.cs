@@ -44,8 +44,28 @@ public sealed class ShotRequestTests
     [Fact]
     public void A_shot_is_drawn_in_the_color_scheme_it_names()
     {
-        Parse("--size", "640x360").Request.ShouldNotBeNull().ColorScheme.ShouldBe(ColorScheme.Phosphor);
-        Parse("--size", "640x360", "--colors", "graphite").Request.ShouldNotBeNull().ColorScheme.ShouldBe(ColorScheme.Graphite);
+        Parse("--size", "640x360").Request.ShouldNotBeNull().Scheme.ShouldBeNull();
+        Parse("--size", "640x360", "--colors", "graphite").Request.ShouldNotBeNull().Scheme!.Name.ShouldBe("Graphite");
+    }
+
+    [Fact]
+    public void A_shot_is_drawn_in_a_scheme_file_with_what_it_lacks_said()
+    {
+        var file = Path.Combine(Path.GetTempPath(), $"flyback-scheme-{Guid.NewGuid():N}.json");
+        File.WriteAllText(file, """{ "format": 1, "name": "Sodium", "accent": "#FF9A1F" }""");
+
+        try
+        {
+            var (request, said) = Parse("--size", "640x360", "--colors", file);
+
+            request.ShouldNotBeNull().Scheme!.Name.ShouldBe("Sodium");
+            request.Scheme!.Window.ShouldBe(Scheme.Phosphor.Window);
+            said.ShouldContain("grounds.window is missing");
+        }
+        finally
+        {
+            File.Delete(file);
+        }
     }
 
     [Theory]

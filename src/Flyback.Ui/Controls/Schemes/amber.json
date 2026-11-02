@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "name": "Amber",
+  "grounds": {
+    "edge": "#080F11",
+    "outline": "#0A1214",
+    "window": "#0C1618",
+    "canvas": "#0A1D1E",
+    "panel": "#092121",
+    "toolbar": "#072828",
+    "grid": "#072A2A",
+    "gridMajor": "#053433",
+    "module": "#023C3A",
+    "moduleSelected": "#004643",
+    "separator": "#195751"
+  },
+  "text": {
+    "label": "#DDD9BD",
+    "value": "#C9C4AA",
+    "normalled": "#86907B",
+    "muted": "#9BA58C",
+    "inactive": "#626C5E"
+  },
+  "accent": "#D1AC00"
+}

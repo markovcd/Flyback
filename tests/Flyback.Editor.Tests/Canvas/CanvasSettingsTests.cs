@@ -84,16 +84,32 @@ public sealed class CanvasSettingsTests : EditorTest
         SchemePicker(dialog).SelectedItem = "Amber";
         CloseSettings(window, dialog);
 
-        CanvasSettings.Load(settingsPath).ColorScheme.ShouldBe(ColorScheme.Amber);
+        CanvasSettings.Load(settingsPath).ColorScheme.ShouldBe("Amber");
         Colors.Current.ShouldBe(Scheme.Phosphor);
         SchemePicker(OpenSettings(Open(settingsPath), CanvasTab)).SelectedItem.ShouldBe("Amber");
     }
 
+    [AvaloniaFact]
+    public void A_scheme_in_the_schemes_folder_is_offered_beside_the_shipped_ones()
+    {
+        var folder = Path.Combine(Path.GetDirectoryName(settingsPath)!, "schemes");
+        Directory.CreateDirectory(folder);
+        File.WriteAllText(Path.Combine(folder, "sodium.json"), """{ "format": 1, "name": "Sodium", "accent": "#FF9A1F" }""");
+
+        var window = NewMainWindow(new EditorSetup { Folders = new() { SettingsPath = settingsPath, SchemeFolder = folder } });
+        window.Show();
+        Settle(window);
+
+        var picker = SchemePicker(OpenSettings(window, CanvasTab));
+
+        picker.Items.Cast<string>().ShouldBe(["Phosphor", "Amber", "Graphite", "Midnight", "Sodium"]);
+    }
+
     [AvaloniaTheory]
+    [InlineData("""{ "colorScheme": "" }""")]
     [InlineData("""{ "colorScheme": 9 }""")]
-    [InlineData("""{ "colorScheme": "Teal" }""")]
-    public void Colors_this_build_does_not_know_are_phosphor(string json) =>
-        CanvasSettings.Parse(json).ColorScheme.ShouldBe(ColorScheme.Phosphor);
+    public void A_scheme_name_that_is_not_one_is_phosphor(string json) =>
+        CanvasSettings.Parse(json).ColorScheme.ShouldBe("Phosphor");
 
     [AvaloniaFact]
     public void A_plugin_paints_its_own_modules_until_switched_off()

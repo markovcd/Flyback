@@ -8,6 +8,7 @@ using Flyback.Core.Graph;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
+using Flyback.Editor.Gallery;
 using Flyback.Editor.Composition;
 using Flyback.Editor.Files;
 using Flyback.Editor.Hubs;
@@ -55,7 +56,7 @@ internal static class Shot
 
         var plugins = PluginHost.Load().Install();
 
-        ShotApp.Scheme = request.ColorScheme;
+        ShotApp.Scheme = request.Scheme ?? Scheme.Phosphor;
 
         using var session = HeadlessUnitTestSession.StartNew(typeof(ShotApp), AvaloniaTestIsolationLevel.PerAssembly);
 
@@ -128,6 +129,13 @@ internal static class Shot
 
             provider.GetRequiredService<StatusBar>().Update();
             Settle(window);
+
+            // Not awaited: the gallery is a question, answered only by closing it.
+            if (request.Gallery)
+            {
+                _ = provider.GetRequiredService<PresetSlot>().ShowGallery();
+                Settle(window);
+            }
 
             // Read before the capture: a window that settles again fits the view again.
             var around = request.Crop ? Around(canvas, window) : (Rect?)null;

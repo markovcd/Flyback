@@ -13,8 +13,8 @@ internal sealed class ShotApp : Application
         .WithInterFont()
         .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false });
 
-    /// <summary>The colors the next session's window is drawn in.</summary>
-    public static ColorScheme Scheme { get; set; } = ColorScheme.Phosphor;
+    /// <summary>The color scheme the next session's window is drawn in.</summary>
+    public static Scheme Scheme { get; set; } = Scheme.Phosphor;
 
     public override void Initialize() => EditorTheme.Apply(this, Scheme);
 }

@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "name": "Midnight",
+  "grounds": {
+    "edge": "#100C18",
+    "outline": "#130E1D",
+    "window": "#171123",
+    "canvas": "#1A1327",
+    "panel": "#1B1529",
+    "toolbar": "#1E172E",
+    "grid": "#1F182F",
+    "gridMajor": "#231B35",
+    "module": "#261E3A",
+    "moduleSelected": "#2A2140",
+    "separator": "#3E344E"
+  },
+  "text": {
+    "label": "#D4C7B7",
+    "value": "#BAA898",
+    "normalled": "#747477",
+    "muted": "#848586",
+    "inactive": "#58575E"
+  },
+  "accent": "#F46036"
+}

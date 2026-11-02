@@ -21,9 +21,9 @@ internal static class EditorTheme
     /// declared in markup (ADR-0016). A new one each time: a style belongs to exactly
     /// one collection, and the headless session builds a fresh application per test.
     /// </remarks>
-    public static void Apply(Application application, ColorScheme scheme = ColorScheme.Phosphor)
+    public static void Apply(Application application, Scheme? scheme = null)
     {
-        Colors.Use(Scheme.Of(scheme));
+        Colors.Use(scheme ?? Scheme.Phosphor);
 
         var fluent = new FluentTheme();
         fluent.Palettes[ThemeVariant.Dark] = new ColorPaletteResources { Accent = Colors.Attention };

@@ -19,10 +19,11 @@ namespace Flyback.Editor.Desktop.Shots;
 /// <param name="Live">Whether the picture has the window with the patch over it, as live patching shows it.</param>
 /// <param name="Open">Whether every box is drawn open.</param>
 /// <param name="Shut">Whether every box is drawn shut.</param>
-/// <param name="ColorScheme">The colors the window is drawn in.</param>
+/// <param name="Scheme">The color scheme the window is drawn in.</param>
+/// <param name="Gallery">Whether the preset gallery is open over the window.</param>
 internal sealed record ShotRequest(
     string Out, string? Patch, string? Preset, double At, int Width, int Height, string? Select, bool Canvas = false, bool Crop = false, bool Measure = false,
-    bool Assistant = false, bool Live = false, bool Open = false, bool Shut = false, ColorScheme ColorScheme = ColorScheme.Phosphor)
+    bool Assistant = false, bool Live = false, bool Open = false, bool Shut = false, Scheme? Scheme = null, bool Gallery = false)
 {
     public const string Flag = "--shot";
 
@@ -30,7 +31,7 @@ internal sealed record ShotRequest(
     public static bool Claims(string[] args) => args.Length > 0 && args[0] == Flag;
 
     /// <summary>
-    /// Reads <c>--shot OUT --at SECONDS --size WxH [--select NAME] [--canvas] [--crop] [--measure] [--assistant] [--live] [--open | --shut] [--colors SCHEME] (--preset NAME | PATCH)</c>,
+    /// Reads <c>--shot OUT --at SECONDS --size WxH [--select NAME] [--canvas] [--crop] [--measure] [--assistant] [--live] [--open | --shut] [--colors SCHEME] [--gallery] (--preset NAME | PATCH)</c>,
     /// or says on <paramref name="error"/> what is wrong with it.
     /// </summary>
     public static ShotRequest? Parse(string[] args, TextWriter error)
@@ -39,9 +40,9 @@ internal sealed record ShotRequest(
 
         var output = args[1];
         string? patch = null, preset = null, select = null;
-        bool canvas = false, crop = false, measure = false, assistant = false, live = false, open = false, shut = false;
+        bool canvas = false, crop = false, measure = false, assistant = false, live = false, open = false, shut = false, gallery = false;
         var at = 0d;
-        var scheme = ColorScheme.Phosphor;
+        Scheme? scheme = null;
         var (width, height) = (0, 0);
 
         for (var i = 2; i < args.Length; i++)
@@ -78,6 +79,12 @@ internal sealed record ShotRequest(
                 continue;
             }
 
+            if (flag == "--gallery")
+            {
+                gallery = true;
+                continue;
+            }
+
             if (flag == "--shut")
             {
                 shut = true;
@@ -110,11 +117,15 @@ internal sealed record ShotRequest(
                 case "--preset":
                     preset = value;
                     break;
-                case "--colors" when Enum.TryParse<ColorScheme>(value, ignoreCase: true, out var named) && Enum.IsDefined(named):
+                case "--colors" when value.EndsWith(".json", StringComparison.OrdinalIgnoreCase):
+                    if (SchemeFrom(value, error) is not { } read) return null;
+                    scheme = read;
+                    break;
+                case "--colors" when SchemeLibrary.Load(null).Named(value) is { } named:
                     scheme = named;
                     break;
                 case "--colors":
-                    return Refuse($"--colors is one of {string.Join(", ", Enum.GetNames<ColorScheme>())}, not {value}.");
+                    return Refuse($"--colors is a scheme file or one of {string.Join(", ", SchemeLibrary.Shipped.Select(s => s.Name))}, not {value}.");
                 default:
                     return Refuse($"{flag} {value} is not something a shot takes.");
             }
@@ -124,12 +135,36 @@ internal sealed record ShotRequest(
         if (width == 0) return Refuse("give --size as WIDTHxHEIGHT.");
         if (open && shut) return Refuse("give --open or --shut, and not both.");
 
-        return new ShotRequest(output, patch, preset, at, width, height, select, canvas, crop, measure, assistant, live, open, shut, scheme);
+        return new ShotRequest(output, patch, preset, at, width, height, select, canvas, crop, measure, assistant, live, open, shut, scheme, gallery);
 
         ShotRequest? Refuse(string why)
         {
             error.WriteLine($"Flyback {Flag}: {why}");
             return null;
         }
+    }
+
+    /// <summary>
+    /// The scheme a file holds, read as the editor reads its schemes folder: a color the
+    /// file lacks is Phosphor's, and said on <paramref name="error"/>. Null for no scheme at all.
+    /// </summary>
+    private static Scheme? SchemeFrom(string path, TextWriter error)
+    {
+        var problems = new List<string>();
+        Scheme? scheme = null;
+
+        try
+        {
+            if (new FileInfo(path).Length > SchemeFile.MostBytes) problems.Add($"is larger than {SchemeFile.MostBytes / 1024} KB.");
+            else scheme = SchemeFile.Read(File.ReadAllText(path), Scheme.Phosphor, problems);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            problems.Add($"could not be read: {ex.Message}");
+        }
+
+        foreach (var problem in problems) error.WriteLine($"Flyback {Flag}: {Path.GetFileName(path)} {problem}");
+
+        return scheme;
     }
 }

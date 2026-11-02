@@ -15,6 +15,7 @@ Where input or code from outside crosses into Flyback, what stands at the door, 
 | Boundary | Hostile input | What stands at the door | Read |
 |---|---|---|---|
 | Opening a patch, bundle or sample | A crafted file: huge lengths, deep nesting, a path in a bundle's name | Readers cap every length against what the input could hold; parsers report and never throw; a bundle is read into memory and writes no path | `PatchIO`, `PatchBundle`, `PatchPaths` in `Flyback.Engine`; ADR-0020 |
+| A color scheme in the schemes folder | A crafted file: huge, deeply nested, a name meant to mislead | At most 200 files of 64 KB each; nesting capped; every color six hex digits or Phosphor's; a name of at most 40 characters with no control characters; a file that fails is skipped and named in the report bar | `SchemeFile`, `SchemeLibrary` |
 | Command-line flags | `--size`, `--seconds`, `--fps` large enough to overflow | A ceiling on each, overflow checked | `flyback-cli`; [outside-input](../.claude/skills/outside-input/SKILL.md) |
 | Loading a plugin | Code that runs with the user's rights | Loads only if shipped or allowed, and only while every file hashes as it did | `PluginTrust`, `PackageSigner`; ADR-0158 |
 | Loading an ASIO driver | Native code a sound card's installer registered, run in Flyback's process | Only the driver picked on the Sound tab, from those `HKLM\SOFTWARE\ASIO` lists, which only an administrator writes | `AsioDrivers`; ADR-0192 |

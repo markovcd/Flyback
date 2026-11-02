@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "name": "Graphite",
+  "grounds": {
+    "edge": "#161616",
+    "outline": "#1A1A1A",
+    "window": "#202020",
+    "canvas": "#262626",
+    "panel": "#2A2A2A",
+    "toolbar": "#303030",
+    "grid": "#313131",
+    "gridMajor": "#3A3A3A",
+    "module": "#363636",
+    "moduleSelected": "#404040",
+    "separator": "#4A4B47"
+  },
+  "text": {
+    "label": "#CBD1BA",
+    "value": "#ACBFA4",
+    "normalled": "#7E8979",
+    "muted": "#8E9A88",
+    "inactive": "#646C61"
+  },
+  "accent": "#FF7F11"
+}

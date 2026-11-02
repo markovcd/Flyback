@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "name": "Phosphor",
+  "grounds": {
+    "edge": "#101114",
+    "outline": "#141518",
+    "window": "#16181B",
+    "canvas": "#1A1C20",
+    "panel": "#1C1E22",
+    "toolbar": "#22252A",
+    "grid": "#24272C",
+    "gridMajor": "#2C3036",
+    "module": "#2A2D34",
+    "moduleSelected": "#32363E",
+    "separator": "#3A3E46"
+  },
+  "text": {
+    "label": "#C8CCD4",
+    "value": "#8A92A0",
+    "normalled": "#6C7482",
+    "muted": "#8A909A",
+    "inactive": "#5A606A"
+  },
+  "accent": "#77EA9A"
+}

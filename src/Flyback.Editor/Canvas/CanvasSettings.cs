@@ -93,9 +93,10 @@ public sealed class CanvasSettings
         _ => (128, 72),
     };
 
-    /// <summary>The grounds, text and accent the editor is drawn in, from its next start.</summary>
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public ColorScheme ColorScheme { get; set; } = ColorScheme.Phosphor;
+    /// <summary>The name of the color scheme the editor is drawn in from its next start.</summary>
+    public string ColorScheme { get; set; } = DefaultColorScheme;
+
+    public const string DefaultColorScheme = "Phosphor";
 
     /// <summary>Where these settings are kept in <see cref="SettingsFile"/>.</summary>
     public const string Section = "canvas";
@@ -130,7 +131,8 @@ public sealed class CanvasSettings
 
             if (!Enum.IsDefined(loaded.MeasurePicture)) loaded.MeasurePicture = MeasurePictureSize.Small;
 
-            if (!Enum.IsDefined(loaded.ColorScheme)) loaded.ColorScheme = ColorScheme.Phosphor;
+            if (string.IsNullOrWhiteSpace(loaded.ColorScheme) || loaded.ColorScheme.Length > SchemeFile.LongestName)
+                loaded.ColorScheme = DefaultColorScheme;
 
             return loaded;
         }

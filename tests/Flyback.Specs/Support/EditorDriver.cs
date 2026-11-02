@@ -999,7 +999,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
         DoWindow((open, _) => Named<ComboBox>(open, name).SelectedItem = row);
 
     /// <summary>The colors the editor starts in next time, as the Canvas settings last saved them.</summary>
-    public Flyback.Ui.Controls.ColorScheme NextColorScheme => Run(() => Service<CanvasSection>().ColorScheme);
+    public string NextColorScheme => Run(() => Service<CanvasSection>().ColorScheme);
 
     /// <summary>Points the Decisions tab's For picker at the use so worded, on the settings window that is up.</summary>
     public void PickDecisionUse(string wording) =>

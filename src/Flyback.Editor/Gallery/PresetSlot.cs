@@ -324,6 +324,9 @@ internal sealed class PresetSlot
         report.Say(name is null ? "The preset this was restarted for has been taken off the preset site." : $"“{name}” has been taken off the preset site.");
     }
 
+    /// <summary>Opens the gallery as the Presets button does, finishing when it is closed.</summary>
+    internal Task ShowGallery() => ShowGalleryAsync();
+
     private async Task ShowGalleryAsync()
     {
         if (RefuseWhileRecording()) return;

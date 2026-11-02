@@ -46,6 +46,9 @@ public sealed record EditorFolders : IPresetFolder
     /// <summary>Where each shared preset opened is kept, to open again while the site does not answer. Null keeps none.</summary>
     public string? SharedPresetFolder { get; init; }
 
+    /// <summary>Where the user's own color schemes are read from. Null knows only the shipped ones.</summary>
+    public string? SchemeFolder { get; init; }
+
     /// <summary>Where decision models keep their downloaded files. Null keeps none, so no model that needs one can answer.</summary>
     public string? ModelFolder { get; init; }
 }

@@ -32,6 +32,12 @@ The editor is drawn as an instrument, with a scope on the bench as the reference
   effect at the next start: brushes made from the colors are cached for the run, and
   repainting every one of them live is not worth what it would cost.
   `flyback-cli shot --colors` draws the window in any of them.
+- **A scheme is data.** Each is a JSON file of seventeen `#RRGGBB` colors by role under
+  a `format` and a `name`; the four are shipped inside Flyback as such files, and any in
+  the schemes folder beside the settings are offered after them, a file winning over a
+  shipped scheme of its name, as an instrument profile does. `format` rises only when an
+  older reader would get a file wrong; a file from a newer Flyback is skipped whole, and
+  a color a file lacks or gets wrong is Phosphor's, with the report bar saying which.
 - **The controls are Flyback's.** Fluent takes `Colors.Attention` as its accent and
   2 px corners; toolbar and panel glyph buttons have no fill until pointed at or
   switched on. Number boxes and the clock are set in the mono face.

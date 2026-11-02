@@ -75,13 +75,13 @@ public class ColorsTests
     /// to the 3:1 for secondary text, and the accent to the 3:1 a control needs on the window.
     /// </summary>
     [Theory]
-    [InlineData(ColorScheme.Phosphor)]
-    [InlineData(ColorScheme.Amber)]
-    [InlineData(ColorScheme.Graphite)]
-    [InlineData(ColorScheme.Midnight)]
-    public void Every_scheme_can_be_read(ColorScheme name)
+    [InlineData("Phosphor")]
+    [InlineData("Amber")]
+    [InlineData("Graphite")]
+    [InlineData("Midnight")]
+    public void Every_shipped_scheme_can_be_read(string name)
     {
-        var scheme = Scheme.Of(name);
+        var scheme = SchemeLibrary.Shipped.Single(shipped => shipped.Name == name);
 
         Contrast(scheme.Label, scheme.Node).ShouldBeGreaterThanOrEqualTo(4.5);
         Contrast(scheme.Value, scheme.Node).ShouldBeGreaterThanOrEqualTo(3);
@@ -90,13 +90,8 @@ public class ColorsTests
     }
 
     [Fact]
-    public void Each_scheme_has_an_accent_of_its_own() =>
-        Enum.GetValues<ColorScheme>().Select(name => Scheme.Of(name).Attention).Distinct()
-            .Count().ShouldBe(Enum.GetValues<ColorScheme>().Length);
-
-    [Fact]
-    public void A_scheme_this_build_does_not_know_is_phosphor() =>
-        Scheme.Of((ColorScheme)99).ShouldBe(Scheme.Phosphor);
+    public void Each_shipped_scheme_has_an_accent_of_its_own() =>
+        SchemeLibrary.Shipped.Select(scheme => scheme.Attention).Distinct().Count().ShouldBe(SchemeLibrary.Shipped.Count);
 
     /// <summary>WCAG's contrast ratio, from one to twenty-one.</summary>
     private static double Contrast(Color one, Color other)
