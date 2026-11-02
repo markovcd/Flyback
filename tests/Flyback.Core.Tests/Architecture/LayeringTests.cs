@@ -45,6 +45,29 @@ public class LayeringTests
             Packages(project).ShouldBeEmpty($"{project} takes no dependencies (ADR-0019)");
     }
 
+    [Fact]
+    public void The_command_line_reaches_no_window()
+    {
+        var closure = Closure("Flyback.Cli");
+
+        closure.Except(Model).Except(Engine).Except(Hosting).Except(["Flyback.Cli", "Flyback.Site.Client"])
+            .ShouldBeEmpty("flyback-cli runs where there is no display, so nothing it loads may be a shell or the UI");
+        closure.SelectMany(Packages)
+            .Where(p => p.StartsWith("Avalonia", StringComparison.Ordinal) || p.StartsWith("SkiaSharp", StringComparison.Ordinal) || p.StartsWith("HarfBuzzSharp", StringComparison.Ordinal))
+            .ShouldBeEmpty("flyback-cli runs where there is no display, so it takes no windowing or font package");
+    }
+
+    private static string[] Closure(string project)
+    {
+        var seen = new SortedSet<string>(StringComparer.Ordinal);
+        var waiting = new Stack<string>([project]);
+        while (waiting.TryPop(out var next))
+            if (seen.Add(next))
+                foreach (var reference in References(next))
+                    waiting.Push(reference);
+        return seen.ToArray();
+    }
+
     private static string[] References(string project) =>
         Load(project).Descendants("ProjectReference")
             .Select(r => Path.GetFileNameWithoutExtension(((string)r.Attribute("Include")!).Replace('\\', '/')))
