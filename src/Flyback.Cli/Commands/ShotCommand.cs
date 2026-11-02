@@ -90,7 +90,7 @@ internal static class ShotCommand
 
         var colors = new Option<string>("--colors")
         {
-            Description = "The color scheme to draw in: a name Settings, Canvas, Colors offers, or a scheme's .json file. Phosphor unless given.",
+            Description = "The color scheme to draw in: a name Settings, Canvas, Colors offers, or a scheme's .json file. Graphite unless given.",
         };
 
         var editor = new Option<FileInfo>("--editor")

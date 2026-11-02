@@ -8,27 +8,27 @@
   color-scheme: dark;
 
   /* surfaces, darkest first */
-  --edge: #101114;
-  --outline: #141518;
-  --window: #16181B;
-  --canvas: #1A1C20;
-  --panel: #1C1E22;
-  --toolbar: #22252A;
-  --grid: #24272C;
-  --grid-major: #2C3036;
-  --node: #2A2D34;
-  --node-selected: #32363E;
-  --separator: #3A3E46;
+  --edge: #161616;
+  --outline: #1A1A1A;
+  --window: #202020;
+  --canvas: #262626;
+  --panel: #2A2A2A;
+  --toolbar: #303030;
+  --grid: #313131;
+  --grid-major: #3A3A3A;
+  --node: #363636;
+  --node-selected: #404040;
+  --separator: #4A4B47;
 
   /* text */
-  --bright: #E9ECF1;
-  --label: #C8CCD4;
-  --value: #8A92A0;
-  --muted: #8A909A;
-  --normalled: #6C7482;
+  --bright: #EFF1EA;
+  --label: #CBD1BA;
+  --value: #ACBFA4;
+  --muted: #8E9A88;
+  --normalled: #7E8979;
 
   /* the one color that means "look here" */
-  --attention: #77EA9A;
+  --attention: #FF7F11;
 
   /* module families, borrowed to color a heading or a card's edge */
   --sink: #E05A5A;
@@ -128,8 +128,8 @@ strong { color: var(--bright); font-weight: 650; }
   background: var(--node); color: var(--bright);
 }
 .button:hover { background: var(--node-selected); color: var(--bright); }
-.button.primary { background: var(--attention); color: #16181B; border-color: #4BB874; }
-.button.primary:hover { background: #FFC266; color: #16181B; }
+.button.primary { background: var(--attention); color: var(--edge); border-color: #C9640D; }
+.button.primary:hover { background: #FF9A45; color: var(--edge); }
 .button svg { width: 17px; height: 17px; flex: none; }
 
 /* ---- the canvas: a grid every so often, brighter every tenth ------------- */
@@ -189,7 +189,7 @@ pre {
 pre code { background: none; padding: 0; font-size: inherit; color: inherit; border-radius: 0; }
 
 /* The text view's colors, from Flyback.xshd. */
-.t-com { color: #6C7482; font-style: italic; }
+.t-com { color: var(--normalled); font-style: italic; }
 .t-key { color: #3FC8C8; font-weight: 700; }
 .t-pipe { color: #E06AB8; font-weight: 700; }
 .t-sink { color: #E05A5A; }
@@ -202,7 +202,7 @@ pre code { background: none; padding: 0; font-size: inherit; color: inherit; bor
 /* C# and XML, in the same palette: keywords cyan, strings green, comments quiet. */
 .k { color: #3FC8C8; }
 .s { color: #4FC387; }
-.c { color: #6C7482; font-style: italic; }
+.c { color: var(--normalled); font-style: italic; }
 
 ul, ol { margin: 14px 0 0; padding-left: 22px; }
 li { margin: 7px 0; }
@@ -267,7 +267,7 @@ figcaption { font-size: 13.5px; color: var(--muted); margin-top: 12px; line-heig
   position: absolute; right: 10px; bottom: 10px;
   width: 30px; height: 30px; border-radius: 5px;
   border: 1px solid var(--separator);
-  background: rgba(16, 17, 20, 0.86)
+  background: rgba(22, 22, 22, 0.86)
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23E9ECF1' stroke-width='1.7' stroke-linecap='round'%3E%3Ccircle cx='8.5' cy='8.5' r='5.6'/%3E%3Cpath d='M12.6 12.6 17.2 17.2M6.2 8.5h4.6M8.5 6.2v4.6'/%3E%3C/svg%3E")
     center / 16px 16px no-repeat;
   opacity: 0; transition: opacity 0.15s ease;
@@ -281,7 +281,7 @@ figcaption { font-size: 13.5px; color: var(--muted); margin-top: 12px; line-heig
 .lightbox {
   position: fixed; inset: 0; z-index: 50;
   display: grid; grid-template-rows: minmax(0, 1fr) auto;
-  background: rgba(10, 11, 13, 0.97);
+  background: rgba(16, 16, 16, 0.97);
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
 }
 .lightbox[hidden] { display: none; }
@@ -309,7 +309,7 @@ figcaption { font-size: 13.5px; color: var(--muted); margin-top: 12px; line-heig
 .lb-button {
   position: absolute; width: 44px; height: 44px; border-radius: 6px;
   display: grid; place-items: center; cursor: pointer;
-  background: rgba(34, 37, 42, 0.9); color: var(--bright); border: 1px solid var(--separator);
+  background: rgba(48, 48, 48, 0.9); color: var(--bright); border: 1px solid var(--separator);
 }
 .lb-button:hover { background: var(--node-selected); }
 .lb-button svg { width: 20px; height: 20px; }

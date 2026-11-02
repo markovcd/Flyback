@@ -18,7 +18,7 @@ after a CRT's return stroke.
 The editor is drawn as an instrument, with a scope on the bench as the reference
 ("Phosphor"). Arek picked the direction from three drawn on a design page.
 
-- **The accent is P31 green, #77EA9A.** It is the Beam module's own trace at its default
+- **Phosphor's accent is P31 green, #77EA9A.** It is the Beam module's own trace at its default
   hue, taken where the trace begins to whiten, so it comes from Flyback rather than from
   taste. Amber was tried first as the default and dropped: Arek's other app, also built
   with Claude, had landed on near-black and an amber a few units away, which is the
@@ -27,17 +27,18 @@ The editor is drawn as an instrument, with a scope on the bench as the reference
 - **Three more color schemes stand beside it**, in Settings, Canvas, Colors. Arek picked
   them from palettes a generator gave with nothing locked: Amber (teal-black grounds,
   cream text, #D1AC00), Graphite (charcoal, sage text, #FF7F11) and Midnight
-  (violet-black, warm grays, #F46036). Phosphor stays the default. A scheme changes
+  (violet-black, warm grays, #F46036). Graphite is the default, and the site is drawn
+  in it: P31 belongs to the Phosphor scheme, not to Flyback as a whole. A scheme changes
   the grounds, the text and the accent, never a module's category color, and takes
   effect at the next start: brushes made from the colors are cached for the run, and
   repainting every one of them live is not worth what it would cost.
   `flyback-cli shot --colors` draws the window in any of them.
 - **A scheme is data.** Each is a JSON file of seventeen `#RRGGBB` colors by role under
-  a `format` and a `name`; the four are shipped inside Flyback as such files, and any in
+  a `format` and a `name`; the shipped ones are inside Flyback as such files, and any in
   the schemes folder beside the settings are offered after them, a file winning over a
   shipped scheme of its name, as an instrument profile does. `format` rises only when an
   older reader would get a file wrong; a file from a newer Flyback is skipped whole, and
-  a color a file lacks or gets wrong is Phosphor's, with the report bar saying which.
+  a color a file lacks or gets wrong is Graphite's, with the report bar saying which.
   `text.bright`, for a value being turned or typed, a heading and a selection's outline,
   may be left out and is then the label taken most of the way to white, or to black in a
   scheme whose file sets `light` true. That flag puts Fluent's controls in their light

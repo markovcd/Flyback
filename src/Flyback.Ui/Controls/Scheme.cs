@@ -31,6 +31,9 @@ internal sealed record Scheme(
     Color Bright,
     bool Light)
 {
-    /// <summary>The default: blue-gray grounds and the P31 green of the Beam module's trace (ADR-0219).</summary>
-    public static Scheme Phosphor { get; } = SchemeLibrary.Shipped[0];
+    /// <summary>The name of the scheme the editor is drawn in until another is chosen.</summary>
+    public const string DefaultName = "Graphite";
+
+    /// <summary>The scheme the editor is drawn in until another is chosen: charcoal, sage text and orange (ADR-0219).</summary>
+    public static Scheme Default { get; } = SchemeLibrary.Shipped[0];
 }

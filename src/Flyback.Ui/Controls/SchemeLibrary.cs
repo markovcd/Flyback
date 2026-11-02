@@ -17,10 +17,10 @@ internal sealed class SchemeLibrary
     /// <summary>Where a person puts a scheme of their own, one <c>.json</c> per scheme.</summary>
     public static string UserFolder => Path.Combine(GlobalConstants.DataFolder, "schemes");
 
-    /// <summary>The schemes shipped inside Flyback, Phosphor first.</summary>
+    /// <summary>The schemes shipped inside Flyback, the default first.</summary>
     public static IReadOnlyList<Scheme> Shipped { get; } = ReadShipped();
 
-    /// <summary>Every scheme there is, Phosphor first.</summary>
+    /// <summary>Every scheme there is, the default first.</summary>
     public IReadOnlyList<Scheme> Schemes { get; }
 
     /// <summary>What was wrong with the files in the folder, each line naming its file.</summary>
@@ -77,7 +77,7 @@ internal sealed class SchemeLibrary
                 ?? throw new InvalidOperationException($"The shipped {resource} {string.Join(' ', problems)}"));
         }
 
-        return [.. schemes.OrderBy(scheme => scheme.Name != "Phosphor").ThenBy(scheme => scheme.Name, StringComparer.Ordinal)];
+        return [.. schemes.OrderBy(scheme => scheme.Name != Scheme.DefaultName).ThenBy(scheme => scheme.Name, StringComparer.Ordinal)];
     }
 
     private static IEnumerable<(string File, string Json)> ReadFolder(string? folder, List<string> problems)

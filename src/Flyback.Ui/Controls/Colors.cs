@@ -21,7 +21,7 @@ internal static class Colors
     /// Set once, before the first window: brushes made from these colors are cached
     /// for the life of the program, so a scheme chosen later takes effect at the next start.
     /// </remarks>
-    public static Scheme Current { get; private set; } = Scheme.Phosphor;
+    public static Scheme Current { get; private set; } = Scheme.Default;
 
     /// <summary>Draws everything built from here on in <paramref name="scheme"/>.</summary>
     public static void Use(Scheme scheme) => Current = scheme;
@@ -136,7 +136,7 @@ internal static class Colors
     /// say. One color for all three on purpose: they are the same request.
     /// </summary>
     /// <remarks>
-    /// In <see cref="Scheme.Phosphor"/>, P31 green, as the Beam module draws its trace at
+    /// In Phosphor, P31 green, as the Beam module draws its trace at
     /// its default hue, taken where the trace begins to whiten (ADR-0219).
     /// </remarks>
     public static Color Attention => Current.Attention;

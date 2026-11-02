@@ -22,15 +22,24 @@ public sealed class SchemeFileTests
     private static (Scheme? Scheme, List<string> Problems) Read(string json, Scheme? fallback = null)
     {
         var problems = new List<string>();
-        return (SchemeFile.Read(json, fallback ?? Scheme.Phosphor, problems), problems);
+        return (SchemeFile.Read(json, fallback ?? Scheme.Default, problems), problems);
+    }
+
+    [Fact]
+    public void Graphite_is_the_default_orange_on_charcoal()
+    {
+        Scheme.Default.Name.ShouldBe("Graphite");
+        Scheme.Default.Window.ShouldBe(Color.FromRgb(0x20, 0x20, 0x20));
+        Scheme.Default.Attention.ShouldBe(Color.FromRgb(0xFF, 0x7F, 0x11));
     }
 
     [Fact]
     public void Phosphor_is_shipped_as_the_green_of_the_beam_on_blue_gray()
     {
-        Scheme.Phosphor.Name.ShouldBe("Phosphor");
-        Scheme.Phosphor.Window.ShouldBe(Color.FromRgb(0x16, 0x18, 0x1B));
-        Scheme.Phosphor.Attention.ShouldBe(Color.FromRgb(0x77, 0xEA, 0x9A));
+        var phosphor = SchemeLibrary.Load(null).Named("Phosphor").ShouldNotBeNull();
+
+        phosphor.Window.ShouldBe(Color.FromRgb(0x16, 0x18, 0x1B));
+        phosphor.Attention.ShouldBe(Color.FromRgb(0x77, 0xEA, 0x9A));
     }
 
     [Fact]
@@ -42,8 +51,8 @@ public sealed class SchemeFileTests
         scheme.Name.ShouldBe("Sodium");
         scheme.Window.ShouldBe(Color.FromRgb(0x12, 0x0C, 0x06));
         scheme.Attention.ShouldBe(Color.FromRgb(0xFF, 0x9A, 0x1F));
-        scheme.Canvas.ShouldBe(Scheme.Phosphor.Canvas);
-        problems.ShouldContain("grounds.canvas is missing or not a #RRGGBB color, so Phosphor's is used.");
+        scheme.Canvas.ShouldBe(Scheme.Default.Canvas);
+        problems.ShouldContain("grounds.canvas is missing or not a #RRGGBB color, so Graphite's is used.");
     }
 
     [Fact]
@@ -99,7 +108,7 @@ public sealed class SchemeFileTests
     {
         var (scheme, problems) = Read($$"""{ "format": 1, "name": "X", "accent": "{{accent}}" }""");
 
-        scheme.ShouldNotBeNull().Attention.ShouldBe(Scheme.Phosphor.Attention);
+        scheme.ShouldNotBeNull().Attention.ShouldBe(Scheme.Default.Attention);
         problems.ShouldContain(line => line.StartsWith("accent is missing", StringComparison.Ordinal));
     }
 

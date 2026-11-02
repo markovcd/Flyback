@@ -146,7 +146,7 @@ internal sealed record ShotRequest(
 
     /// <summary>
     /// The scheme a file holds, read as the editor reads its schemes folder: a color the
-    /// file lacks is Phosphor's, and said on <paramref name="error"/>. Null for no scheme at all.
+    /// file lacks is the default's, and said on <paramref name="error"/>. Null for no scheme at all.
     /// </summary>
     private static Scheme? SchemeFrom(string path, TextWriter error)
     {
@@ -156,7 +156,7 @@ internal sealed record ShotRequest(
         try
         {
             if (new FileInfo(path).Length > SchemeFile.MostBytes) problems.Add($"is larger than {SchemeFile.MostBytes / 1024} KB.");
-            else scheme = SchemeFile.Read(File.ReadAllText(path), Scheme.Phosphor, problems);
+            else scheme = SchemeFile.Read(File.ReadAllText(path), Scheme.Default, problems);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

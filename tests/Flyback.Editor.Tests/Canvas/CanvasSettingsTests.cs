@@ -80,12 +80,12 @@ public sealed class CanvasSettingsTests : EditorTest
         var window = Open(settingsPath);
         var dialog = OpenSettings(window, CanvasTab);
 
-        SchemePicker(dialog).SelectedItem.ShouldBe("Phosphor");
+        SchemePicker(dialog).SelectedItem.ShouldBe("Graphite");
         SchemePicker(dialog).SelectedItem = "Amber";
         CloseSettings(window, dialog);
 
         CanvasSettings.Load(settingsPath).ColorScheme.ShouldBe("Amber");
-        Colors.Current.ShouldBe(Scheme.Phosphor);
+        Colors.Current.ShouldBe(Scheme.Default);
         SchemePicker(OpenSettings(Open(settingsPath), CanvasTab)).SelectedItem.ShouldBe("Amber");
     }
 
@@ -102,14 +102,14 @@ public sealed class CanvasSettingsTests : EditorTest
 
         var picker = SchemePicker(OpenSettings(window, CanvasTab));
 
-        picker.Items.Cast<string>().ShouldBe(["Phosphor", "Amber", "Graphite", "Midnight", "Paper", "Sodium"]);
+        picker.Items.Cast<string>().ShouldBe(["Graphite", "Amber", "Midnight", "Paper", "Phosphor", "Sodium"]);
     }
 
     [AvaloniaTheory]
     [InlineData("""{ "colorScheme": "" }""")]
     [InlineData("""{ "colorScheme": 9 }""")]
-    public void A_scheme_name_that_is_not_one_is_phosphor(string json) =>
-        CanvasSettings.Parse(json).ColorScheme.ShouldBe("Phosphor");
+    public void A_scheme_name_that_is_not_one_is_graphite(string json) =>
+        CanvasSettings.Parse(json).ColorScheme.ShouldBe("Graphite");
 
     [AvaloniaFact]
     public void A_plugin_paints_its_own_modules_until_switched_off()

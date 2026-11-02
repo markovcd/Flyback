@@ -17,11 +17,11 @@ public sealed class SchemeLibraryTests : IDisposable
 
     [Fact]
     public void Four_schemes_are_shipped_phosphor_first() =>
-        SchemeLibrary.Shipped.Select(scheme => scheme.Name).ShouldBe(["Phosphor", "Amber", "Graphite", "Midnight", "Paper"]);
+        SchemeLibrary.Shipped.Select(scheme => scheme.Name).ShouldBe(["Graphite", "Amber", "Midnight", "Paper", "Phosphor"]);
 
     [Fact]
     public void Without_a_folder_only_the_shipped_ones_are_offered() =>
-        Names(SchemeLibrary.Load(null)).ShouldBe(["Phosphor", "Amber", "Graphite", "Midnight", "Paper"]);
+        Names(SchemeLibrary.Load(null)).ShouldBe(["Graphite", "Amber", "Midnight", "Paper", "Phosphor"]);
 
     [Fact]
     public void A_scheme_in_the_folder_is_offered_after_the_shipped_ones()
@@ -30,7 +30,7 @@ public sealed class SchemeLibraryTests : IDisposable
 
         var library = SchemeLibrary.Load(folder.FullName);
 
-        Names(library).ShouldBe(["Phosphor", "Amber", "Graphite", "Midnight", "Paper", "Sodium"]);
+        Names(library).ShouldBe(["Graphite", "Amber", "Midnight", "Paper", "Phosphor", "Sodium"]);
         library.Find("sodium").Attention.ShouldBe(Avalonia.Media.Color.FromRgb(0xFF, 0x9A, 0x1F));
         library.Problems.ShouldContain(line => line.StartsWith("sodium.json grounds.edge is missing", StringComparison.Ordinal));
     }
@@ -42,7 +42,7 @@ public sealed class SchemeLibraryTests : IDisposable
 
         var library = SchemeLibrary.Load(folder.FullName);
 
-        Names(library).ShouldBe(["Phosphor", "amber", "Graphite", "Midnight", "Paper"]);
+        Names(library).ShouldBe(["Graphite", "amber", "Midnight", "Paper", "Phosphor"]);
         library.Find("Amber").Attention.ShouldBe(Avalonia.Media.Color.FromRgb(0xFF, 0xB0, 0x40));
     }
 
@@ -54,7 +54,7 @@ public sealed class SchemeLibraryTests : IDisposable
 
         var library = SchemeLibrary.Load(folder.FullName);
 
-        Names(library).ShouldBe(["Phosphor", "Amber", "Graphite", "Midnight", "Paper"]);
+        Names(library).ShouldBe(["Graphite", "Amber", "Midnight", "Paper", "Phosphor"]);
         library.Problems.ShouldContain("future.json is format 2, from a newer Flyback; this one reads format 1.");
         library.Problems.ShouldContain(line => line.StartsWith("broken.json is not JSON", StringComparison.Ordinal));
     }
@@ -64,8 +64,8 @@ public sealed class SchemeLibraryTests : IDisposable
     {
         var library = SchemeLibrary.Load(null);
 
-        library.Find("Teal").ShouldBe(Scheme.Phosphor);
-        library.Find(null).ShouldBe(Scheme.Phosphor);
+        library.Find("Teal").ShouldBe(Scheme.Default);
+        library.Find(null).ShouldBe(Scheme.Default);
         library.Named("Teal").ShouldBeNull();
     }
 }
