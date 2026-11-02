@@ -29,6 +29,12 @@ internal sealed class SourceCompletion
         editor.AddHandler(InputElement.KeyDownEvent, Asked, RoutingStrategies.Tunnel);
     }
 
+    /// <summary>The list has come up.</summary>
+    public event EventHandler? Opened;
+
+    /// <summary>The list has gone.</summary>
+    public event EventHandler? Closed;
+
     /// <summary>The words the list is showing, or null while it is shut.</summary>
     /// <remarks>Only tests read it: the seam that says what a popup no test can see is offering.</remarks>
     public IReadOnlyList<Completion>? Showing =>
@@ -83,11 +89,15 @@ internal sealed class SourceCompletion
 
         opened.Closed += (_, _) =>
         {
-            if (window == opened) window = null;
+            if (window != opened) return;
+
+            window = null;
+            Closed?.Invoke(this, EventArgs.Empty);
         };
 
         window = opened;
         opened.Show();
+        Opened?.Invoke(this, EventArgs.Empty);
 
         if (list.Typed.Length > 0) opened.CompletionList.SelectItem(list.Typed);
     }

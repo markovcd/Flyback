@@ -1,8 +1,6 @@
 using System.CommandLine;
-using System.Globalization;
 using System.Text.Json;
 using Flyback.Cli.Common;
-using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Engine.Language;
 using PluginRegistry = Flyback.Cli.Plugins;
@@ -17,53 +15,21 @@ internal static class CompleteCommand
 {
     public static Command Build(PluginRegistry plugins, Option<bool> json)
     {
-        var patch = new Argument<string>("patch")
-        {
-            Description = "The patch, written as text (." + PatchLanguage.FileExtension + "), or - to read it from standard input.",
-        };
-
-        var at = new Option<string>("--at")
-        {
-            Description = "Where the cursor is, as line:column, both counting from one.",
-            Required = true,
-        };
+        var given = new CaretInput();
 
         var command = new Command("complete", "Say what may be written at one place in a text patch.")
         {
-            patch, at, json,
+            given.Patch, given.At, json,
         };
 
         command.SetAction(result =>
         {
-            var output = result.InvocationConfiguration.Output;
-            var error = result.InvocationConfiguration.Error;
-            var path = result.GetValue(patch)!;
-
-            if (Where(result.GetValue(at)!) is not var (line, column))
-            {
-                error.WriteLine($"{GlobalConstants.ApplicationName} complete: --at takes line:column, both whole numbers from one, like 3:14.");
+            if (!given.Read(result, "complete", result.InvocationConfiguration.Error, out var source, out var line, out var column))
                 return Exit.Failed;
-            }
-
-            string source;
-
-            if (path == "-")
-            {
-                source = Console.In.ReadToEnd();
-            }
-            else if (!File.Exists(path))
-            {
-                error.WriteLine($"{GlobalConstants.ApplicationName} complete: {Path.GetFileName(path)} does not exist.");
-                return Exit.Failed;
-            }
-            else
-            {
-                source = File.ReadAllText(path);
-            }
 
             plugins.Ready();
 
-            return Run(source, line, column, NodeCatalog.Current, result.GetValue(json), output);
+            return Run(source, line, column, NodeCatalog.Current, result.GetValue(json), result.InvocationConfiguration.Output);
         });
 
         return command;
@@ -107,11 +73,4 @@ internal static class CompleteCommand
 
         return Exit.Ok;
     }
-
-    private static (int Line, int Column)? Where(string at) =>
-        at.Split(':') is [var l, var c]
-        && int.TryParse(l, NumberStyles.None, CultureInfo.InvariantCulture, out var line) && line >= 1
-        && int.TryParse(c, NumberStyles.None, CultureInfo.InvariantCulture, out var column) && column >= 1
-            ? (line, column)
-            : null;
 }

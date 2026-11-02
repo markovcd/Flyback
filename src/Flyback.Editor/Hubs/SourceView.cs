@@ -134,6 +134,12 @@ internal sealed class SourceView : UserControl
     /// <summary>The list of what may be typed at the caret.</summary>
     internal SourceCompletion Completing { get; }
 
+    /// <summary>The sockets of the call the caret is in.</summary>
+    internal SourceSignature Signing { get; }
+
+    /// <summary>What the word under the pointer is.</summary>
+    internal SourceHover Hovering { get; }
+
     /// <param name="settings">The canvas section, whose setting the font size is.</param>
     public SourceView(CanvasSection settings)
     {
@@ -143,6 +149,8 @@ internal sealed class SourceView : UserControl
 
         complaintsScroll.Content = complaints;
         Completing = new SourceCompletion(text);
+        Signing = new SourceSignature(text, Completing);
+        Hovering = new SourceHover(text);
 
         text.TextArea.TextView.BackgroundRenderers.Add(backing);
         text.TextArea.TextView.BackgroundRenderers.Add(marked);
@@ -248,6 +256,7 @@ internal sealed class SourceView : UserControl
         rows.Children.Add(text);
         rows.Children.Add(complaintsScroll);
         rows.Children.Add(bottom);
+        rows.Children.Add(Signing.Popup);
 
         Content = rows;
         Say(null);

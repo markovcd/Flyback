@@ -6,7 +6,8 @@ Feature: The command line says whether a patch works, and whether two are the sa
   def calls and loop passes its text opens, and flyback-cli compare whether two
   are the same instrument; flyback-cli print, flyback-cli pack and
   flyback-cli save write it out, flyback-cli shot draws the editor around it,
-  and flyback-cli complete says what may be typed at one place in its text.
+  flyback-cli complete says what may be typed at one place in its text, and
+  flyback-cli hover what the word there is and the sockets of the call it is in.
 
   Scenario: A patch that works passes the check
     Given a 220 Hz sine is playing
@@ -55,6 +56,16 @@ Feature: The command line says whether a patch works, and whether two are the sa
     Then the command succeeds
     And it names "amp"
     And it does not name "freq"
+
+  Scenario: Asking about a word in a call says what it is and the call's sockets
+    Given the text saved as "drive.fbks":
+      """
+      saw(freq: 110) |> drive(drive: 4) |> out.left
+      """
+    When flyback-cli hover is asked about line 1, column 27 of "drive.fbks"
+    Then the command succeeds
+    And it names "drive · input of Drive"
+    And it names "in drive(…), Drive (audio.drive):"
 
   Scenario: A shipped preset is described by its name, with no file saved first
     When flyback-cli describes the preset "Plasma"

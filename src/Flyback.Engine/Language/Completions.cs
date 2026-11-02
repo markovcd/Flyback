@@ -17,74 +17,32 @@ internal static class Completions
 
     public static CompletionList At(string source, int line, int column, ModuleCatalog modules)
     {
-        var offset = Offset(source, line, column);
+        var offset = Caret.Offset(source, line, column);
         var start = offset;
 
-        while (start > 0 && (char.IsAsciiLetterOrDigit(source[start - 1]) || source[start - 1] == '_')) start--;
+        while (start > 0 && Caret.IsWordCharacter(source[start - 1])) start--;
 
         var typed = source[start..offset];
         var list = new CompletionList(line, column - (offset - start), typed, []);
 
         if (typed is [var first, ..] && char.IsAsciiDigit(first)) return list;
-        if (Quiet(source, start)) return list;
-
-        var issues = new List<LanguageIssue>();
-        var scanned = Lexer.Scan(source[..start], issues);
-
-        if (issues.Any(i => i.Code == IssueCode.UnclosedBlock)) return list;
-
-        var tokens = StatementTokens.ForParsing(scanned).Where(t => t.Kind != TokenKind.End).ToArray();
-        var offered = new Offer(tokens, VisibleNames.Before(tokens), modules).Items();
+        if (Caret.Before(source, start, modules) is not { } caret) return list;
 
         return list with
         {
-            Items = [.. offered
+            Items = [.. new Offer(caret).Items()
                 .Where(c => c.Label.StartsWith(typed, StringComparison.OrdinalIgnoreCase))
                 .DistinctBy(c => c.Label)],
         };
     }
 
-    /// <summary>Where line and column fall in the text, clamped to it.</summary>
-    private static int Offset(string source, int line, int column)
-    {
-        var at = 0;
-
-        for (var l = 1; l < line; l++)
-        {
-            var next = source.IndexOf('\n', at);
-            if (next < 0) return source.Length;
-            at = next + 1;
-        }
-
-        var end = source.IndexOf('\n', at) is var newline and >= 0 ? newline : source.Length;
-
-        return Math.Clamp(at + column - 1, at, end);
-    }
-
-    /// <summary>Whether <paramref name="at"/> is inside a comment or a text, where nothing is offered.</summary>
-    private static bool Quiet(string source, int at)
-    {
-        var inText = false;
-
-        for (var i = source.LastIndexOf('\n', Math.Max(at - 1, 0)) + 1; i < at; i++)
-        {
-            var c = source[i];
-
-            if (c is '"' or '“' or '”') inText = !inText;
-            else if (c == '#' && !inText) return true;
-        }
-
-        return inText;
-    }
-
     /// <summary>What one place offers, worked out from the tokens before it.</summary>
-    private sealed class Offer(IReadOnlyList<Token> tokens, IReadOnlyList<VisibleName> names, ModuleCatalog modules)
+    private sealed class Offer(Caret caret)
     {
-        private readonly ModuleNames written = ModuleNames.For(modules);
 
         public IEnumerable<Completion> Items()
         {
-            if (tokens is not [.., var last]) return Statement();
+            if (caret.Tokens is not [.., var last]) return Statement();
 
             return last.Kind switch
             {
@@ -92,9 +50,9 @@ internal static class Completions
                 TokenKind.Dot => AfterDot(),
                 TokenKind.Pipe => Stages(),
                 TokenKind.Identifier => AfterWord(last.Text),
-                TokenKind.OpenParen or TokenKind.Comma when Call() is { } call => Arguments(call).Concat(Values(true)),
+                TokenKind.OpenParen or TokenKind.Comma when caret.Call() is { } call => Arguments(call).Concat(Values(true)),
                 TokenKind.Number or TokenKind.Text or TokenKind.Block or TokenKind.CloseParen or TokenKind.CloseBrace => [],
-                _ => Values(Call() is not null),
+                _ => Values(caret.Call() is not null),
             };
         }
 
@@ -122,9 +80,9 @@ internal static class Completions
         {
             var builtins = new List<Completion> { new("t", CompletionKind.Builtin, "the clock, in seconds", "t") };
 
-            if (modules.Get(NodeCatalog.CoordTypeId) is { } coordinates)
+            if (caret.Modules.Get(NodeCatalog.CoordTypeId) is { } coordinates)
                 builtins.AddRange(coordinates.Outputs.Select(o =>
-                    new Completion(SocketNames.Written(o), CompletionKind.Builtin, Line(o.Help, "one of the picture's coordinates"), SocketNames.Written(o))));
+                    new Completion(SocketNames.Written(o), CompletionKind.Builtin, Caret.FirstSentence(o.Help, "one of the picture's coordinates"), SocketNames.Written(o))));
 
             builtins.Add(Sum());
             builtins.Add(new Completion("for", CompletionKind.Keyword, "a loop: for name in list { ... }", "for "));
@@ -137,7 +95,7 @@ internal static class Completions
         private static Completion Sum() => new("sum", CompletionKind.Builtin, "adds up a list: sum(voices)", "sum");
 
         private IEnumerable<Completion> Names() =>
-            names
+            caret.Names
                 .Reverse()
                 .DistinctBy(n => n.Name)
                 .Select(n => n.Kind switch
@@ -149,29 +107,28 @@ internal static class Completions
                 .OrderBy(c => c.Label, StringComparer.OrdinalIgnoreCase);
 
         private IEnumerable<Completion> Modules() =>
-            modules.All
+            caret.Modules.All
                 .Where(d => d.TypeId != NodeCatalog.OutputTypeId)
-                .Select(d => (Def: d, Name: written.Written(d)))
+                .Select(d => (Def: d, Name: caret.Written.Written(d)))
                 .OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase)
-                .Select(m => new Completion(m.Name, CompletionKind.Module, Line(m.Def.Description, m.Def.Name), m.Name));
+                .Select(m => new Completion(m.Name, CompletionKind.Module, Caret.FirstSentence(m.Def.Description, m.Def.Name), m.Name));
 
         /// <summary>The sockets or parameters a call has not named yet, each written with its colon.</summary>
         private IEnumerable<Completion> Arguments((string Callee, int Open) call)
         {
-            var named = Named(call.Open);
+            var named = caret.Named(call.Open);
 
             // The pipe rule puts what is piped in on 'in', so the call has no need to name it.
-            if (ChainBefore(call.Open, out var begins) is not null && begins > 0 && tokens[begins - 1].Kind == TokenKind.Pipe)
-                named.Add("in");
+            if (caret.Piped(call.Open)) named.Add("in");
 
-            if (Def(call.Callee) is { } def)
+            if (caret.Def(call.Callee) is { } def)
             {
                 return def.Parameters
                     .Where(p => !named.Contains(p))
                     .Select(p => new Completion(p, CompletionKind.Parameter, $"a parameter of {def.Name}", p + ": "));
             }
 
-            return Module(call.Callee) is { } module
+            return caret.Module(call.Callee) is { } module
                 ? module.Inputs
                     .Where(p => !named.Contains(SocketNames.Written(p)))
                     .Select(p => Socket(p, CompletionKind.Socket, SocketNames.Written(p) + ": "))
@@ -181,36 +138,25 @@ internal static class Completions
         /// <summary>After a dot: a module's outputs, the Output's sockets, a let's knobs, or the rest of a dotted type id.</summary>
         private IEnumerable<Completion> AfterDot()
         {
-            var dot = tokens.Count - 1;
-
-            if (dot >= 1 && tokens[dot - 1].Kind == TokenKind.CloseParen)
-            {
-                var open = Opening(dot - 1);
-                return open >= 0 && CalleeBefore(open) is { } callee && Module(callee) is { } called ? Outputs(called) : [];
-            }
-
-            if (ChainBefore(dot, out var begins) is not { } path) return [];
-
-            var startsStatement = begins == 0 || tokens[begins - 1].Kind is TokenKind.NewLine or TokenKind.OpenBrace;
             var items = new List<Completion>();
+            var selected = caret.Selected(out var path, out var startsStatement);
 
-            if (path == "out" && modules.Get(NodeCatalog.OutputTypeId) is { } output)
-                items.AddRange(output.Inputs.Select(p => Socket(p, CompletionKind.Socket, SocketNames.Written(p))));
+            if (selected is { TypeId: NodeCatalog.OutputTypeId })
+                items.AddRange(selected.Inputs.Select(p => Socket(p, CompletionKind.Socket, SocketNames.Written(p))));
+            else if (selected is not null)
+                items.AddRange(Outputs(selected));
 
-            if (names.LastOrDefault(n => n.Name == path && n.Kind == CompletionKind.Name) is { Callee: { } bound } && Module(bound) is { } module)
-            {
-                items.AddRange(Outputs(module));
+            if (selected is not null && path is not null && path != "out" && startsStatement)
+                items.AddRange(selected.Inputs.Select(p => Socket(p, CompletionKind.Socket, SocketNames.Written(p))));
 
-                if (startsStatement)
-                    items.AddRange(module.Inputs.Select(p => Socket(p, CompletionKind.Socket, SocketNames.Written(p))));
-            }
+            if (path is null) return items;
 
             var prefix = path + ".";
 
-            items.AddRange(modules.All
+            items.AddRange(caret.Modules.All
                 .Where(d => d.TypeId.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(d => d.TypeId, StringComparer.OrdinalIgnoreCase)
-                .Select(d => new Completion(d.TypeId[prefix.Length..], CompletionKind.Module, Line(d.Description, d.Name), d.TypeId[prefix.Length..])));
+                .Select(d => new Completion(d.TypeId[prefix.Length..], CompletionKind.Module, Caret.FirstSentence(d.Description, d.Name), d.TypeId[prefix.Length..])));
 
             return items;
         }
@@ -219,101 +165,6 @@ internal static class Completions
             module.Outputs.Select(p => Socket(p, CompletionKind.Output, SocketNames.Written(p)));
 
         private static Completion Socket(PortSpec port, CompletionKind kind, string insert) =>
-            new(SocketNames.Written(port), kind, Line(port.Help, port.Name), insert);
-
-        /// <summary>The call the cursor is inside the brackets of, by its callee and where its bracket opens.</summary>
-        private (string Callee, int Open)? Call()
-        {
-            var depth = 0;
-
-            for (var i = tokens.Count - 1; i >= 0; i--)
-            {
-                switch (tokens[i].Kind)
-                {
-                    case TokenKind.CloseParen:
-                        depth++;
-                        break;
-                    case TokenKind.OpenParen when depth > 0:
-                        depth--;
-                        break;
-                    case TokenKind.OpenParen:
-                        return CalleeBefore(i) is { } callee ? (callee, i) : null;
-                    case TokenKind.OpenBrace or TokenKind.CloseBrace or TokenKind.NewLine when depth == 0:
-                        return null;
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>The socket or parameter names a call already gives, from its bracket to the cursor.</summary>
-        private HashSet<string> Named(int open)
-        {
-            var named = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var depth = 0;
-
-            for (var i = open; i < tokens.Count - 1; i++)
-            {
-                if (tokens[i].Kind == TokenKind.OpenParen) depth++;
-                else if (tokens[i].Kind == TokenKind.CloseParen) depth--;
-                else if (depth == 1 && tokens[i].Kind == TokenKind.Identifier && tokens[i + 1].Kind == TokenKind.Colon)
-                    named.Add(tokens[i].Text);
-            }
-
-            return named;
-        }
-
-        /// <summary>The index of the bracket that opens the one closing at <paramref name="close"/>, or -1.</summary>
-        private int Opening(int close)
-        {
-            var depth = 0;
-
-            for (var i = close; i >= 0; i--)
-            {
-                if (tokens[i].Kind == TokenKind.CloseParen) depth++;
-                else if (tokens[i].Kind == TokenKind.OpenParen && --depth == 0) return i;
-            }
-
-            return -1;
-        }
-
-        /// <summary>The dotted name written straight before a call's bracket, where nothing is selected ahead of it.</summary>
-        private string? CalleeBefore(int open) =>
-            ChainBefore(open, out var begins) is { } chain && (begins == 0 || tokens[begins - 1].Kind != TokenKind.Dot) ? chain : null;
-
-        /// <summary>The dotted name that ends just before <paramref name="end"/>, and the index it begins at.</summary>
-        private string? ChainBefore(int end, out int begins)
-        {
-            begins = end;
-
-            if (end < 1 || tokens[end - 1].Kind != TokenKind.Identifier) return null;
-
-            var parts = new List<string> { tokens[end - 1].Text };
-            begins = end - 1;
-
-            while (begins >= 2 && tokens[begins - 1].Kind == TokenKind.Dot && tokens[begins - 2].Kind == TokenKind.Identifier)
-            {
-                parts.Insert(0, tokens[begins - 2].Text);
-                begins -= 2;
-            }
-
-            return string.Join('.', parts);
-        }
-
-        private VisibleName? Def(string name) =>
-            names.LastOrDefault(n => n.Name == name && n.Kind == CompletionKind.Definition);
-
-        private NodeDef? Module(string name) =>
-            Def(name) is null ? written.Find(name, out _, out _) : null;
-    }
-
-    /// <summary>The first sentence of <paramref name="text"/>, or <paramref name="otherwise"/> where it says nothing.</summary>
-    private static string Line(string text, string otherwise)
-    {
-        if (string.IsNullOrWhiteSpace(text)) return otherwise;
-
-        var stop = text.IndexOf(". ", StringComparison.Ordinal);
-
-        return (stop >= 0 ? text[..(stop + 1)] : text).ReplaceLineEndings(" ").Trim();
+            new(SocketNames.Written(port), kind, Caret.FirstSentence(port.Help, port.Name), insert);
     }
 }

@@ -1516,6 +1516,23 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     public IReadOnlyList<string>? Offered => ReadWindow(open =>
         open.GetVisualDescendants().OfType<SourceView>().Single().Completing.Showing?.Select(c => c.Label).ToArray());
 
+    /// <summary>The socket the signature above the caret marks as being filled, or null while none shows.</summary>
+    public string? SignatureFilling => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<SourceView>().Single().Signing.Showing is { Active: >= 0 } signature
+            ? signature.Sockets[signature.Active].Name
+            : null);
+
+    /// <summary>What the tooltip says about the first <paramref name="word"/> in the text, as resting the pointer on it would show.</summary>
+    public string? HoverOn(string word) => ReadWindow(open =>
+    {
+        var view = open.GetVisualDescendants().OfType<SourceView>().Single();
+        var text = Source(open);
+        var at = text.Document.GetLocation(text.Text.IndexOf(word, StringComparison.Ordinal) + 1);
+
+        view.Hovering.Show(at.Line, at.Column);
+        return view.Hovering.Showing?.Title;
+    });
+
     /// <summary>Takes what the list under the caret has picked, as Enter does.</summary>
     public void ChooseOffered() => DoWindow((open, _) => open.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None));
 

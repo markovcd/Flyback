@@ -23,6 +23,12 @@ public sealed class TextCompletionSteps(EditorDriver editor)
     [Then("nothing is offered")]
     public void ThenNothing() => editor.Offered.ShouldBeNull();
 
+    [Then("the sockets above the caret mark {string} as the one being filled")]
+    public void ThenFilling(string socket) => editor.SignatureFilling.ShouldBe(socket);
+
+    [Then("resting on {string} says {string}")]
+    public void ThenHover(string word, string said) => editor.HoverOn(word).ShouldNotBeNull().ShouldStartWith(said);
+
     [Then("the text reads {string}")]
     public void ThenReads(string text) => editor.Text.ShouldBe(text);
 }

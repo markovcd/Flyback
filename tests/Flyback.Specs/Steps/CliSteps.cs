@@ -344,6 +344,9 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     [When("flyback-cli complete is asked about line {int}, column {int} of {string}")]
     public void WhenCompleted(int line, int column, string name) => Run("complete", Path(name), "--at", $"{line}:{column}");
 
+    [When("flyback-cli hover is asked about line {int}, column {int} of {string}")]
+    public void WhenHovered(int line, int column, string name) => Run("hover", Path(name), "--at", $"{line}:{column}");
+
     [Given("a plugin package signed by its author")]
     public void GivenPackage() => File.WriteAllBytes(Path(PackageName), Package());
 

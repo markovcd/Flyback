@@ -114,7 +114,7 @@ internal static class VisibleNames
     }
 
     /// <summary>The index of the bracket that closes the one at <paramref name="open"/>, or the last token where none does.</summary>
-    internal static int Closing(IReadOnlyList<Token> tokens, int open)
+    private static int Closing(IReadOnlyList<Token> tokens, int open)
     {
         var depth = 0;
 
