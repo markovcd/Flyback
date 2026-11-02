@@ -154,6 +154,9 @@ internal sealed class LivePatching : IReactTo<ViewChanged>, IReactTo<OwnershipCh
         ShowPatch(true);
     }
 
+    /// <summary>Whether Escape leaves the picture: over the text, only once its completion list is shut.</summary>
+    public bool LeavesOnEscape => Coding && source.Completing.Showing is null;
+
     /// <summary>
     /// Puts the patch over the full-screen picture or takes it off, and says whether it could.
     /// Over the text, Tab is the text's own.

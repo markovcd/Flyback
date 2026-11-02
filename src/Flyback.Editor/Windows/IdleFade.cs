@@ -21,6 +21,12 @@ internal sealed class IdleFade(Func<bool> busy)
     private Transitions? transitionsBefore;
     private bool wakesOnPointer;
 
+    /// <summary>The pointer whose press woke the control, which does nothing else until it lets go.</summary>
+    private IPointer? waking;
+
+    /// <summary>Whether the taps of the press that woke the control are still to be swallowed.</summary>
+    private bool tapsSpent;
+
     /// <summary>Whether the control is faded out, or fading.</summary>
     public bool IsFaded { get; private set; }
 
@@ -40,15 +46,12 @@ internal sealed class IdleFade(Func<bool> busy)
         transitionsBefore = control.Transitions;
         control.Transitions = [new DoubleTransition { Property = Visual.OpacityProperty, Duration = Fading }];
 
-        if (pointer)
-        {
-            control.AddHandler(InputElement.PointerMovedEvent, Woken, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
-            control.AddHandler(InputElement.PointerPressedEvent, Woken, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
-        }
+        // A press wakes the control from here, where it is first asked whether it was faded.
+        foreach (var swallowed in Swallowed) control.AddHandler(swallowed, Swallow, RoutingStrategies.Tunnel, handledEventsToo: true);
+
+        if (pointer) control.AddHandler(InputElement.PointerMovedEvent, Woken, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
 
         control.AddHandler(InputElement.KeyDownEvent, Woken, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
-
-        foreach (var swallowed in Swallowed) control.AddHandler(swallowed, Swallow, RoutingStrategies.Tunnel);
 
         timer = new DispatcherTimer { Interval = wait };
         timer.Tick += (_, _) => Fade();
@@ -65,12 +68,13 @@ internal sealed class IdleFade(Func<bool> busy)
         if (faded is not { } control) return;
 
         control.RemoveHandler(InputElement.PointerMovedEvent, Woken);
-        control.RemoveHandler(InputElement.PointerPressedEvent, Woken);
         control.RemoveHandler(InputElement.KeyDownEvent, Woken);
         foreach (var swallowed in Swallowed) control.RemoveHandler(swallowed, Swallow);
         control.Transitions = transitionsBefore;
         control.Opacity = 1;
         IsFaded = false;
+        waking = null;
+        tapsSpent = false;
 
         faded = null;
         transitionsBefore = null;
@@ -113,11 +117,51 @@ internal sealed class IdleFade(Func<bool> busy)
     private void Woken(object? sender, RoutedEventArgs e) => Wake();
 
     /// <summary>
-    /// A pointer that can't wake the faded control lands on it and goes no further: nothing
-    /// unseen is selected or dragged, and the picture under it is not clicked.
+    /// A pointer that lands on the faded control goes no further: nothing unseen is selected,
+    /// dragged or turned, and the picture under it is not clicked. A press that may wake it
+    /// does, and is spent on that, taps and all.
     /// </summary>
     private void Swallow(object? sender, RoutedEventArgs e)
     {
-        if (IsFaded && !wakesOnPointer) e.Handled = true;
+        var routed = e.RoutedEvent;
+        var pointer = (e as PointerEventArgs)?.Pointer;
+
+        if (routed == InputElement.PointerPressedEvent && pointer != waking)
+        {
+            waking = null;
+            tapsSpent = false;
+        }
+
+        if (waking is not null && pointer == waking)
+        {
+            e.Handled = true;
+
+            if (routed != InputElement.PointerReleasedEvent) return;
+
+            waking = null;
+            tapsSpent = true;
+            return;
+        }
+
+        if (tapsSpent && (routed == InputElement.TappedEvent || routed == InputElement.DoubleTappedEvent))
+        {
+            e.Handled = true;
+            return;
+        }
+
+        var pressed = wakesOnPointer && routed == InputElement.PointerPressedEvent;
+
+        if (!IsFaded)
+        {
+            if (pressed) Wake();
+            return;
+        }
+
+        e.Handled = true;
+
+        if (!pressed) return;
+
+        waking = pointer;
+        Wake();
     }
 }

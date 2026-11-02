@@ -43,6 +43,7 @@
 ### Fixes
 
 - Live text set to wake on keys only keeps clicks to itself while faded, so they no longer pause the picture or leave full screen, and it comes back at a key wherever the keys had gone.
+- One input no longer does two things: a touch on faded live modules only brings them back; Escape over the text's completion list shuts the list rather than leaving full screen; Ctrl+D in the text duplicates as on the canvas instead of deleting the line; a trackpad scroll that is panning or zooming the canvas goes on doing so over a picked value; a trackpad turns a panel knob by whole notches; and on a Mac, Cmd+Ctrl+F no longer also frames the patch.
 
 - macOS: an update no longer fails to sign the app when a plugin from the preset site is installed. Installed plugins now live in `~/.config/Flyback/plugins` rather than inside `Flyback.app`, and the ones already inside it are moved there. An update whose signing fails says it is installed rather than that it will try again.
 - Noise read past about two billion draws the same on the graphics card, on the processor and in the browser.

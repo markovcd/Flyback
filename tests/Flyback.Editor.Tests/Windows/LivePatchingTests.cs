@@ -276,6 +276,39 @@ public class LivePatchingTests : EditorTest
         Service<FullScreenPreview>(window).IsFullScreen.ShouldBeFalse();
     }
 
+    /// <summary>The completion list is the text's: Escape shuts it first, and only the next one leaves.</summary>
+    [AvaloniaFact]
+    public void Escape_over_the_completion_list_shuts_the_list_before_it_leaves()
+    {
+        var window = Open();
+        var completing = Source(window).Completing;
+
+        TextOwns(window);
+        GoLive(window);
+
+        var text = All<AvaloniaEdit.TextEditor>(window).Single();
+        text.TextArea.Focus();
+        text.CaretOffset = text.Text.Length;
+        window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        foreach (var letter in "sine(")
+        {
+            window.KeyTextInput(letter.ToString());
+            Dispatcher.UIThread.RunJobs();
+        }
+
+        Settle(window);
+        completing.Showing.ShouldNotBeNull("the list should be open");
+
+        PressEscape(window);
+
+        completing.Showing.ShouldBeNull();
+        Service<LivePatching>(window).IsOn.ShouldBeTrue("the first Escape was the list's");
+
+        PressEscape(window);
+
+        Service<LivePatching>(window).IsOn.ShouldBeFalse();
+    }
+
     [AvaloniaFact]
     public void Over_the_picture_the_text_has_no_row_of_buttons_and_no_band_across_the_caret_s_line()
     {
@@ -325,6 +358,33 @@ public class LivePatchingTests : EditorTest
         Settle(window);
 
         fade.IsFaded.ShouldBeFalse("a move brings them back");
+    }
+
+    /// <summary>A finger never hovers, so its first touch on modules it cannot see only brings them back.</summary>
+    [AvaloniaFact]
+    public void A_finger_on_the_faded_modules_brings_them_back_and_moves_nothing()
+    {
+        var window = Open();
+        var editor = Editor(window);
+        var fade = Service<LivePatching>(window).Fade;
+
+        GoLive(window);
+
+        var node = editor.History.Patch.Nodes[0];
+        var bounds = editor.Geometry.Bounds(node, NodeCatalog.Get(node.TypeId)!);
+        var at = Screen(editor, window, new Point(bounds.Center.X, bounds.Top + 4));
+        var x = node.X;
+
+        fade.Fade();
+        fade.IsFaded.ShouldBeTrue();
+        FingerAlong(editor, window, at, Steps(at, new Vector(80, 0)));
+
+        fade.IsFaded.ShouldBeFalse("the touch brings them back");
+        editor.History.Patch.Find(node.Id)!.X.ShouldBe(x, "and moves nothing it could not see");
+
+        FingerAlong(editor, window, at, Steps(at, new Vector(80, 0)));
+
+        editor.History.Patch.Find(node.Id)!.X.ShouldBeGreaterThan(x, "once seen, the module is dragged");
     }
 
     [AvaloniaFact]

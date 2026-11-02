@@ -231,6 +231,38 @@ public class SocketFocusTests : EditorTest
         editor.View.Zoom.ShouldNotBe(zoom, "a well without the keys leaves the wheel to the zoom");
     }
 
+    /// <summary>
+    /// A scroll that began on the canvas zooms on over the well with the keys until it rests,
+    /// as a trackpad pan that slides the well under the pointer goes on panning.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_scroll_that_moves_the_view_goes_on_moving_it_over_the_well_until_it_rests()
+    {
+        var (editor, window, sine, freq) = Clicked();
+        var was = sine.InputValues[freq.Port];
+        var well = Well(editor, window, sine, freq.Port);
+        var bare = editor.TranslatePoint(new Point(20, 20), window)!.Value;
+
+        Scroll(editor, window, bare, 1_000);
+        var zoom = editor.View.Zoom;
+        Scroll(editor, window, well, 1_000 + CanvasGestures.ScrollRest);
+        Settle(window);
+
+        sine.InputValues[freq.Port].ShouldBe(was, "the scroll that was zooming is not the well's");
+        editor.View.Zoom.ShouldNotBe(zoom);
+
+        Scroll(editor, window, Well(editor, window, sine, freq.Port), 1_001 + 2 * CanvasGestures.ScrollRest);
+        Settle(window);
+
+        sine.InputValues[freq.Port].ShouldBeGreaterThan(was, "once it rests, the wheel over the well nudges it");
+    }
+
+    /// <summary>One notch of the wheel up, raised on the canvas at a time of the test's choosing.</summary>
+    private static void Scroll(NodeEditor editor, Window window, Point at, ulong time) =>
+        editor.RaiseEvent(new PointerWheelEventArgs(
+            editor, new Pointer(Pointer.GetNextFreeId(), PointerType.Mouse, true), window, at, time,
+            new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.Other), KeyModifiers.None, new Vector(0, 1)));
+
     [AvaloniaFact]
     public void A_trackpad_nudges_the_well_once_its_scroll_adds_up_to_a_notch()
     {

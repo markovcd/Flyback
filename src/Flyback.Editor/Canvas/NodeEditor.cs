@@ -296,8 +296,8 @@ internal sealed class NodeEditor
                 // Bypass, on the letter a desk uses for it; a module is off or it is on.
                 Key.B when editable => Edits.SwitchSelected,
 
-                // Under Control, since every bare letter belongs to the instrument.
-                Key.F => FrameAll,
+                // Under Control, since every bare letter belongs to the instrument; Cmd+Ctrl+F is a Mac's full screen.
+                Key.F when (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != (KeyModifiers.Control | KeyModifiers.Meta) => FrameAll,
                 _ => null,
             };
 

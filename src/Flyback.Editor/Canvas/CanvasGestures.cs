@@ -726,23 +726,49 @@ internal sealed class CanvasGestures
     /// <summary>How many screen pixels a notch of the wheel pans, the step a scroll viewer takes.</summary>
     internal const double PanPerNotch = 50;
 
+    /// <summary>
+    /// How long, in milliseconds, the wheel rests before a scroll that was moving the view is over,
+    /// which a trackpad's momentum runs on well inside.
+    /// </summary>
+    internal const ulong ScrollRest = 250;
+
+    /// <summary>When the scroll moving the view last turned the wheel; null while none is.</summary>
+    private ulong? viewScrolledAt;
+
     public void Wheel(Control canvas, PointerWheelEventArgs e)
     {
         e.Handled = true;
+
+        // A scroll that is moving the view goes on moving it until it rests: a well that slides
+        // under the pointer is not nudged by it, nor is a turn begun under its momentum switched.
+        if (viewScrolledAt is { } last && e.Timestamp >= last && e.Timestamp - last <= ScrollRest)
+        {
+            viewScrolledAt = e.Timestamp;
+            if (!dial.Turning) MoveView(canvas, e);
+            return;
+        }
+
+        viewScrolledAt = null;
 
         // While a value turns the wheel picks which; over the well with the keys it nudges
         // it; over anything else it pans or zooms.
         if (dial.SwitchBy(e.Delta.Y)) return;
 
-        var at = e.GetPosition(canvas);
-        var over = selection.Scene.HitWell(view.ToGraph(at), out var node, out var port);
+        var over = selection.Scene.HitWell(view.ToGraph(e.GetPosition(canvas)), out var node, out var port);
 
         if (over && focus.Focused == new SocketPick(node, port) && focus.Wheel(e.Delta.Y)) return;
 
+        viewScrolledAt = e.Timestamp;
+        MoveView(canvas, e);
+    }
+
+    /// <summary>Pans the view by a scroll, or zooms it about the pointer.</summary>
+    private void MoveView(Control canvas, PointerWheelEventArgs e)
+    {
         if (ScrollPans && (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) == 0)
             view.PanBy(e.Delta * PanPerNotch);
         else
-            view.ZoomAt(at, e.Delta.Y);
+            view.ZoomAt(e.GetPosition(canvas), e.Delta.Y);
     }
 
     /// <summary>A pinch on a touchpad, which zooms about the pointer by as much as the fingers spread.</summary>

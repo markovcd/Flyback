@@ -43,6 +43,9 @@ internal class Knob : Control, ITurnable
     /// <summary>A finger's press, which turns the knob once it has moved past the slop.</summary>
     private FingerSwipe? swipe;
 
+    /// <summary>The wheel's turn short of a whole notch, carried to the next scroll.</summary>
+    private double wheelCarry;
+
     static Knob()
     {
         AffectsRender<Knob>(ValueProperty, LitProperty);
@@ -188,11 +191,21 @@ internal class Knob : Control, ITurnable
     {
         base.OnPointerWheelChanged(e);
 
+        e.Handled = true;
+
+        // A trackpad scrolls in fractions of a notch, many to a stroke, so a step waits for a whole one.
+        if (Math.Sign(e.Delta.Y) != Math.Sign(wheelCarry)) wheelCarry = 0;
+        wheelCarry += e.Delta.Y;
+
+        var notches = (int)Math.Truncate(wheelCarry);
+        wheelCarry -= notches;
+
+        if (notches == 0) return;
+
         var step = (e.KeyModifiers & KeyModifiers.Shift) != 0 ? 0.005 : 0.02;
 
-        Turn(Value + Math.Sign(e.Delta.Y) * step);
+        Turn(Value + notches * step);
         Released?.Invoke();
-        e.Handled = true;
     }
 
     private void LetGo()

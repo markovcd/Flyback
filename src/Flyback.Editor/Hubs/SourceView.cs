@@ -179,6 +179,7 @@ internal sealed class SourceView : UserControl
         text.AddHandler(PointerWheelChangedEvent, Zoomed, RoutingStrategies.Tunnel);
         text.AddHandler(KeyDownEvent, Resized, RoutingStrategies.Tunnel);
         text.AddHandler(KeyDownEvent, Pasted, RoutingStrategies.Tunnel);
+        SourceDuplicate.Attach(text);
 
         // A run of typing is one thing to take back. The stack takes an operation
         // per change and a change is a keystroke, so without this a sentence comes
