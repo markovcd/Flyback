@@ -35,6 +35,7 @@ internal sealed class Document
     private readonly Reactions reactions;
     private readonly LastPress lastPress;
     private readonly CaretFollow caret;
+    private readonly JointUndo undo;
 
     public Document(
         NodeEditor editor,
@@ -60,29 +61,14 @@ internal sealed class Document
         // knows whose the patch was.
         editor.History.Mark = Owning();
 
-        // While the text is the document its stack is the history, so a step the
-        // canvas records is one that stack has to be able to take back.
-        editor.History.Recorded += (_, _) =>
-        {
-            if (sourceOwned) unstacked++;
-
-            // A new step empties the canvas's redo stack.
-            sinceHandover = null;
-        };
+        undo = new JointUndo(this, editor.History, source, reactions);
 
         source.EvaluateRequested += (_, _) =>
         {
             usage.Count(Used.Applied);
             Evaluate();
         };
-        source.Changed += (_, _) =>
-        {
-            // Typing empties the text's redo stack. A step being walked is not
-            // typing, and sets this for itself.
-            if (!stepping) sinceHandover = null;
-
-            reactions.Raise(new EditStateChanged());
-        };
+        source.Changed += (_, _) => reactions.Raise(new EditStateChanged());
         source.Moved += (_, at) => PointAt(at);
         source.Pasting = Pasted;
 
@@ -158,11 +144,11 @@ internal sealed class Document
         return load.Report;
     }
 
-    /// <summary>Whether an undo would take anything back, from either stack.</summary>
-    public bool CanUndo => UndoLandsOn is not null;
+    /// <inheritdoc cref="JointUndo.CanUndo"/>
+    public bool CanUndo => undo.CanUndo;
 
-    /// <inheritdoc cref="CanUndo"/>
-    public bool CanRedo => RedoLandsOn is not null;
+    /// <inheritdoc cref="JointUndo.CanRedo"/>
+    public bool CanRedo => undo.CanRedo;
 
     /// <summary>
     /// Whether the text is the document. False for a patch that came from a
@@ -230,29 +216,9 @@ internal sealed class Document
     /// <summary>Who owns the patch as things now stand.</summary>
     private Ownership Owning() => new(sourceOwned, sourceOnDisk, printed, printedOrder);
 
-    /// <summary>
-    /// Steps the canvas has recorded that the text's stack has not been told about
-    /// yet.
-    /// </summary>
-    /// <remarks>
-    /// Counted rather than put on that stack as they happen, because a knob is
-    /// turned before its number is written into the text and the two are one thing
-    /// somebody did. One press then takes back the number and the sound together.
-    /// </remarks>
-    private int unstacked;
 
-    /// <inheritdoc cref="stepping"/>
-    public bool Stepping => stepping;
-
-    /// <summary>
-    /// Whether a step of the text's stack is being walked right now.
-    /// </summary>
-    /// <remarks>
-    /// Nothing may be put on that stack while it is being read off: walking a step
-    /// rebuilds the panel, and a control losing the focus to that looks like a
-    /// write-back trying to record itself inside the undo that caused it.
-    /// </remarks>
-    private bool stepping;
+    /// <inheritdoc cref="JointUndo.Stepping"/>
+    public bool Stepping => undo.Stepping;
 
     /// <summary>
     /// Whether there is typing here that has not been made into a patch — which
@@ -373,90 +339,20 @@ internal sealed class Document
     /// </remarks>
     private bool Coding => showingCode;
 
-    /// <summary>
-    /// Which stack a press of undo or redo lands on, and nothing where it lands on
-    /// neither.
-    /// </summary>
-    /// <remarks>
-    /// Here once because two things ask it and they have to agree: the gesture,
-    /// which acts on the answer, and the toolbar, which grays the button when there
-    /// is none.
-    /// </remarks>
-    private enum Landing
-    {
-        Text,
-        Canvas,
-    }
-
-    /// <remarks>
-    /// The text's stack first wherever the text is in play — it owns the patch, or
-    /// it is what is showing — and the canvas's alone otherwise. A canvas that owns
-    /// the patch and is showing must not reach into the text: what is on that stack
-    /// then is typing into a printing nobody is looking at.
-    /// </remarks>
-    private Landing? UndoLandsOn =>
-        TextInPlay && source.CanUndo ? Landing.Text
-        : editor.History.CanUndo ? Landing.Canvas
-        : null;
-
-    /// <remarks>
-    /// As <see cref="UndoLandsOn"/>, and the text's stack besides for the one press
-    /// that puts an evaluation back — see <see cref="sinceHandover"/>.
-    /// </remarks>
-    private Landing? RedoLandsOn =>
-        (TextInPlay || sinceHandover == 0) && source.CanRedo ? Landing.Text
-        : editor.History.CanRedo ? Landing.Canvas
-        : null;
 
     /// <summary>Whether the text owns the patch or is the view showing.</summary>
-    private bool TextInPlay => sourceOwned || showingCode;
+    internal bool TextInPlay => sourceOwned || showingCode;
 
-    /// <summary>
-    /// How many canvas steps have been taken back since an undo handed the patch to
-    /// the canvas, or null where none has.
-    /// </summary>
-    /// <remarks>
-    /// Undoing an evaluation moves the owner and the view to the canvas and leaves
-    /// the deed that puts it back on top of the text's redo stack. At nought that
-    /// deed is the next thing to redo, though neither the owner nor the view says
-    /// so; anything that empties either redo stack ends it.
-    /// </remarks>
-    private int? sinceHandover;
 
     /// <summary>
     /// Takes back the last thing done to whichever view is showing — or, where that
     /// view has nothing left, the last thing done to the patch.
     /// </summary>
-    /// <remarks>
-    /// Where the text is the document, its stack is the document's history from
-    /// either view: typing, applying and turning a knob are one run of things
-    /// somebody did, so the last two go on that stack rather than on a second one
-    /// to be interleaved later by guessing. Where the graph is the document the two
-    /// are independent and undo follows the view. Either way the gesture falls
-    /// through when its stack is empty, or applying a printing — loaded rather than
-    /// typed — would be the one thing nobody could take back.
-    /// </remarks>
     public void Undo()
     {
         if (Gesturing) return;
 
-        var landing = UndoLandsOn;
-
-        if (landing is not null) usage.Count(Used.Undone);
-
-        switch (landing)
-        {
-            case Landing.Text:
-                source.Undo();
-                break;
-
-            case Landing.Canvas:
-                editor.History.Undo();
-                Owed(-1);
-                if (sinceHandover is { } behind) sinceHandover = behind + 1;
-                Stepped();
-                break;
-        }
+        if (undo.Undo()) usage.Count(Used.Undone);
 
         reactions.Raise(new EditStateChanged());
     }
@@ -465,46 +361,16 @@ internal sealed class Document
     {
         if (Gesturing) return;
 
-        var landing = RedoLandsOn;
-
-        if (landing is not null) usage.Count(Used.Redone);
-
-        switch (landing)
-        {
-            case Landing.Text:
-                source.Redo();
-                break;
-
-            case Landing.Canvas:
-                editor.History.Redo();
-                Owed(1);
-                if (sinceHandover is { } behind) sinceHandover = Math.Max(0, behind - 1);
-                Stepped();
-                break;
-        }
+        if (undo.Redo()) usage.Count(Used.Redone);
 
         reactions.Raise(new EditStateChanged());
-    }
-
-    /// <summary>
-    /// Counts a canvas step that this gesture took back or put again without the
-    /// text's stack being involved.
-    /// </summary>
-    /// <remarks>
-    /// Left counted, the next write-back would put it on that stack as well, and
-    /// one press there would take back two edits — the second of them one somebody
-    /// had already taken back by hand.
-    /// </remarks>
-    private void Owed(int steps)
-    {
-        if (sourceOwned) unstacked = Math.Max(0, unstacked + steps);
     }
 
     /// <summary>
     /// The patch has just come back out of the canvas's history: two things to
     /// put in step with it, where either is out of step at all.
     /// </summary>
-    private void Stepped()
+    internal void Stepped()
     {
         Handed();
         Reprint();
@@ -546,47 +412,8 @@ internal sealed class Document
     /// </remarks>
     private bool Gesturing => editor.Gestures.Gesturing;
 
-    /// <summary>
-    /// Puts the patch steps taken since the last of these on the text's stack, as
-    /// one thing to take back.
-    /// </summary>
-    /// <remarks>
-    /// A count rather than the steps themselves, because the canvas is already
-    /// keeping them and keeping them twice is how two records of one edit come to
-    /// disagree. One history, reached through whichever view somebody is in.
-    /// </remarks>
-    public void RememberPatchSteps()
-    {
-        if (unstacked == 0 || stepping) return;
-
-        var steps = unstacked;
-        unstacked = 0;
-
-        source.Remember(() => StepPatch(steps, back: true), () => StepPatch(steps, back: false));
-    }
-
-    /// <summary>Walks the canvas's history, and who owns the patch, with it.</summary>
-    private void StepPatch(int steps, bool back)
-    {
-        var owned = sourceOwned;
-
-        stepping = true;
-
-        try
-        {
-            for (var step = 0; step < steps; step++)
-                if (back ? editor.History.Undo() : editor.History.Redo())
-                    Handed();
-        }
-        finally
-        {
-            stepping = false;
-        }
-
-        sinceHandover = back && owned && !sourceOwned ? 0 : null;
-
-        reactions.Raise(new EditStateChanged());
-    }
+    /// <inheritdoc cref="JointUndo.RememberPatchSteps"/>
+    public void RememberPatchSteps() => undo.RememberPatchSteps();
 
     /// <summary>
     /// Puts back who owned the patch at the step the canvas has just arrived at.
@@ -598,7 +425,7 @@ internal sealed class Document
     /// recorded before anybody opened the text view remembers there being no
     /// printing, and taking it back is not a handover.
     /// </remarks>
-    private void Handed()
+    internal void Handed()
     {
         if (editor.History.Mark is not Ownership was || was.Owned == sourceOwned) return;
 
@@ -991,8 +818,7 @@ internal sealed class Document
         mapped = null;
         means = null;
         appliedText = null;
-        unstacked = 0;
-        sinceHandover = null;
+        undo.Forget();
 
         reactions.Raise(new TextForgotten());
     }
