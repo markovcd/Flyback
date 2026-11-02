@@ -25,8 +25,6 @@ namespace Flyback.Editor.Knobs;
 /// </remarks>
 internal sealed class ControlsPanel : Border
 {
-    private const double CellWidth = 76;
-
     private readonly KnobArrangement strip = new() { ItemSpacing = 2, LineSpacing = 4 };
 
     /// <summary>The add button and the randomize cell, beside a grid rather than in it.</summary>
@@ -36,7 +34,7 @@ internal sealed class ControlsPanel : Border
 
     private readonly ScrollViewer scroller;
 
-    private readonly Dictionary<Guid, Cell> cells = [];
+    private readonly Dictionary<Guid, KnobCell> cells = [];
 
     private string? shape;
 
@@ -70,15 +68,9 @@ internal sealed class ControlsPanel : Border
     /// <summary>The randomize cell at the end of the panel.</summary>
     public RollCell Roll => roll;
 
-    /// <summary>A knob was asked to sit out randomizing, or to take part again.</summary>
-    public event Action<Guid, bool>? HoldRequested;
-
     /// <summary>Shows how a randomize is set: its reach, its glide, its controller and whether there is a back.</summary>
     public void ShowRoll(double amount, double glide, MidiBinding? trigger, bool canGoBack, bool learning) =>
         roll.Show(amount, glide, trigger, canGoBack, learning);
-
-    /// <summary>Somebody asked for another knob.</summary>
-    public event Action? AddRequested;
 
     /// <summary>A knob is being turned on screen: its id and where it now is.</summary>
     public event Action<Guid, float>? Turning;
@@ -86,34 +78,18 @@ internal sealed class ControlsPanel : Border
     /// <summary>The hand came off a knob it had turned.</summary>
     public event Action<Guid>? TurnEnded;
 
-    /// <summary>Linking sockets to this knob was asked for, or asked to stop.</summary>
-    public event Action<Guid>? LinkRequested;
+    /// <summary>What is done with what the hand asks of a knob; nothing is, unset.</summary>
+    public IKnobRequests? Requests { get; set; }
 
-    public event Action<Guid>? LearnRequested;
+    /// <summary>What a knob's position on the panel is measured against while it is dragged.</summary>
+    internal Visual Strip => strip;
 
-    /// <summary>Learn this knob, then each one after it in turn.</summary>
-    public event Action<Guid>? LearnOnwardRequested;
+    internal void Turn(Guid id, float value) => Turning?.Invoke(id, value);
 
-    public event Action<Guid>? ForgetRequested;
-
-    public event Action<Guid, string>? Renamed;
-
-    public event Action<Guid>? RemoveRequested;
-
-    /// <summary>A knob was asked to be played as a knob, a switch or a button.</summary>
-    public event Action<Guid, ControlKind>? KindRequested;
-
-    /// <summary>A knob's sockets were asked to follow it in decades, or evenly.</summary>
-    public event Action<Guid, bool>? LogarithmicRequested;
+    internal void LetGo(Guid id) => TurnEnded?.Invoke(id);
 
     /// <summary>Whether a knob sweeps its sockets in decades, given its id; null where it drives none.</summary>
     public Func<Guid, bool?>? Logarithmic { get; set; }
-
-    /// <summary>A knob was moved: its id, and the place it should have once taken out of its old one.</summary>
-    public event Action<Guid, int>? MoveRequested;
-
-    /// <summary>A knob was dropped onto another: the two ids, to trade places.</summary>
-    public event Action<Guid, Guid>? SwapRequested;
 
     /// <summary>
     /// What a knob's value reads as, given its id and position — the socket's own
@@ -137,12 +113,9 @@ internal sealed class ControlsPanel : Border
     /// </summary>
     public Func<IReadOnlyList<PanelInstrument>>? Instruments { get; set; }
 
-    /// <summary>A knob was bound from the list, to this.</summary>
-    public event Action<Guid, MidiBinding>? BindRequested;
+    internal string LabelOf(MidiBinding binding) => Label?.Invoke(binding) ?? binding.Label;
 
-    private string LabelOf(MidiBinding binding) => Label?.Invoke(binding) ?? binding.Label;
-
-    private string ExplainOf(MidiBinding binding) => Explain?.Invoke(binding) ?? binding.Label;
+    internal string ExplainOf(MidiBinding binding) => Explain?.Invoke(binding) ?? binding.Label;
 
     /// <summary>The knob whose sockets are being linked, tinted so it can be found.</summary>
     public Guid? Linking
@@ -235,7 +208,7 @@ internal sealed class ControlsPanel : Border
 
         for (var i = 0; i < controls.Count; i++)
         {
-            var cell = new Cell(this, controls[i], i, controls.Count);
+            var cell = new KnobCell(this, controls[i], i, controls.Count);
             cells[controls[i].Id] = cell;
             strip.Children.Add(cell.Root);
         }
@@ -255,7 +228,7 @@ internal sealed class ControlsPanel : Border
         };
 
         ToolTip.SetTip(add, "Add a knob. Click a knob's name, then sockets on the canvas, to link them to it.");
-        add.Click += (_, _) => AddRequested?.Invoke();
+        add.Click += (_, _) => Requests?.Add();
 
         after.Add(add);
 
@@ -282,7 +255,7 @@ internal sealed class ControlsPanel : Border
     /// lands: onto the middle of a cell, which it swaps with, or else as an index among
     /// all the knobs, with the cell edge that marks it.
     /// </summary>
-    private (int Index, Cell Beside, bool? After)? DropAt(Point point)
+    internal (int Index, KnobCell Beside, bool? After)? DropAt(Point point)
     {
         var ordered = cells.Values.OrderBy(c => c.Index).ToList();
 
@@ -308,422 +281,9 @@ internal sealed class ControlsPanel : Border
         }
     }
 
-    private void ClearDropMarks()
+    internal void ClearDropMarks()
     {
         foreach (var cell in cells.Values) cell.Mark(DropMark.None);
     }
 
-    /// <summary>What a cell shows while a dragged knob is over it.</summary>
-    private enum DropMark
-    {
-        None,
-        Before,
-        After,
-        Swap,
-    }
-
-    private sealed class Cell
-    {
-        private static readonly IBrush Heard = new ImmutableSolidColorBrush(Colors.Attention);
-
-        private static readonly IBrush SwapTint = new ImmutableSolidColorBrush(Colors.Attention, 0.18);
-
-        /// <summary>How far the name has to travel before a press is a move rather than a click.</summary>
-        private const double DragThreshold = 5;
-
-        private readonly ControlsPanel panel;
-        private readonly PatchControl control;
-        private readonly int count;
-        private readonly StackPanel body;
-        private Point? pressed;
-        private bool dragging;
-        private readonly TextBlock name;
-        private readonly TextBox renaming;
-        private readonly TextBlock value;
-        private readonly TextBlock midi;
-        private readonly Border dot;
-        private readonly DispatcherTimer fade;
-
-        public Cell(ControlsPanel panel, PatchControl control, int index, int count)
-        {
-            this.panel = panel;
-            this.control = control;
-            this.count = count;
-            Index = index;
-
-            name = new TextBlock
-            {
-                Name = "knob-name",
-                Text = control.Name,
-                FontSize = Text.Small,
-                Foreground = new SolidColorBrush(Colors.Label),
-                TextTrimming = TextTrimming.CharacterEllipsis,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Cursor = new Cursor(StandardCursorType.Hand),
-                Background = Brushes.Transparent,
-            };
-
-            ToolTip.SetTip(name, control.Held
-                ? "Held: randomizing leaves this knob alone. Click to link sockets to it, drag it between knobs to move it or onto one to swap them, double-click to rename it."
-                : "Click to link sockets to this knob, drag it between knobs to move it or onto one to swap them, double-click to rename it.");
-
-            if (control.Held) name.Foreground = Text.Muted;
-
-            renaming = new TextBox { FontSize = Text.Small, IsVisible = false, MinHeight = 0, Padding = new Thickness(2, 0) };
-
-            Played = control.Kind == ControlKind.Knob
-                ? new Knob { Name = "panel-knob", Value = control.Value, HorizontalAlignment = HorizontalAlignment.Center }
-                : new PanelSwitch
-                {
-                    Name = "panel-switch",
-                    Momentary = control.Kind == ControlKind.Button,
-                    Value = control.Value,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                };
-
-            value = new TextBlock
-            {
-                FontSize = Text.Caption,
-                Foreground = new SolidColorBrush(Colors.Value),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-            };
-
-            dot = new Border
-            {
-                Width = 5,
-                Height = 5,
-                CornerRadius = new CornerRadius(2.5),
-                Background = Heard,
-                Opacity = 0,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 0, 3, 0),
-            };
-
-            // Cut short with an ellipsis rather than run into the next cell: a
-            // binding named by its instrument is longer than a cell is wide.
-            midi = new TextBlock
-            {
-                FontSize = Text.Micro,
-                Foreground = Text.Muted,
-                VerticalAlignment = VerticalAlignment.Center,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-            };
-
-            var more = new Button
-            {
-                Name = "knob-menu",
-                Content = Glyphs.Dots(12),
-                Padding = new Thickness(4, 0),
-                MinHeight = 0,
-                Height = 16,
-                FontSize = Text.Small,
-                Background = Brushes.Transparent,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-
-            more.Flyout = Menu();
-
-            var footer = new DockPanel { LastChildFill = true, Height = 16 };
-            DockPanel.SetDock(more, Dock.Right);
-            DockPanel.SetDock(dot, Dock.Left);
-            footer.Children.Add(more);
-            footer.Children.Add(dot);
-            footer.Children.Add(midi);
-
-            body = new StackPanel
-            {
-                Width = CellWidth,
-                Spacing = 1,
-                Children =
-                {
-                    new Panel { Children = { name, renaming } },
-                    Played,
-                    value,
-                    footer,
-                },
-            };
-
-            // An edge on each side, lit only while a dragged knob would land there.
-            Root = new Border
-            {
-                BorderThickness = new Thickness(2, 0),
-                BorderBrush = Brushes.Transparent,
-                Child = body,
-            };
-
-            Footer(learning: false);
-
-            fade = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(180) };
-            fade.Tick += (_, _) =>
-            {
-                dot.Opacity = 0;
-                fade.Stop();
-            };
-
-            Knob.Turned += turned => panel.Turning?.Invoke(control.Id, (float)turned);
-            Knob.Released += () => panel.TurnEnded?.Invoke(control.Id);
-
-            // A click links and a drag moves, so which it was is only known once the
-            // button comes up or the pointer has traveled.
-            name.PointerPressed += (_, e) =>
-            {
-                if (!e.GetCurrentPoint(name).Properties.IsLeftButtonPressed) return;
-
-                if (e.ClickCount == 2)
-                {
-                    pressed = null;
-                    BeginRename();
-                }
-                else
-                {
-                    pressed = e.GetPosition(panel.strip);
-                    dragging = false;
-                    e.Pointer.Capture(name);
-                }
-
-                e.Handled = true;
-            };
-
-            name.PointerMoved += (_, e) =>
-            {
-                if (pressed is not { } from) return;
-
-                var at = e.GetPosition(panel.strip);
-
-                if (!dragging && Math.Abs(at.X - from.X) + Math.Abs(at.Y - from.Y) < DragThreshold) return;
-
-                dragging = true;
-                body.Opacity = 0.45;
-
-                panel.ClearDropMarks();
-                if (panel.DropAt(at) is { } drop && (drop.After is not null || drop.Beside != this))
-                    drop.Beside.Mark(drop.After switch
-                    {
-                        true => DropMark.After,
-                        false => DropMark.Before,
-                        null => DropMark.Swap,
-                    });
-            };
-
-            name.PointerReleased += (_, e) =>
-            {
-                if (pressed is null) return;
-
-                var wasDragging = dragging;
-                pressed = null;
-                dragging = false;
-                e.Pointer.Capture(null);
-                body.Opacity = 1;
-                panel.ClearDropMarks();
-
-                if (!wasDragging)
-                {
-                    panel.LinkRequested?.Invoke(control.Id);
-                    return;
-                }
-
-                if (panel.DropAt(e.GetPosition(panel.strip)) is not { } drop) return;
-
-                if (drop.After is null)
-                {
-                    if (drop.Beside != this) panel.SwapRequested?.Invoke(control.Id, drop.Beside.control.Id);
-                    return;
-                }
-
-                // Counted among the knobs as they stand, so one landing past its old
-                // place is one fewer along once it has been taken out.
-                var to = drop.Index > Index ? drop.Index - 1 : drop.Index;
-
-                if (to != Index) panel.MoveRequested?.Invoke(control.Id, to);
-            };
-
-            name.PointerCaptureLost += (_, _) =>
-            {
-                if (pressed is null) return;
-
-                pressed = null;
-                dragging = false;
-                body.Opacity = 1;
-                panel.ClearDropMarks();
-            };
-
-            renaming.KeyDown += (_, e) =>
-            {
-                if (e.Key == Key.Enter) EndRename(keep: true);
-                else if (e.Key == Key.Escape) EndRename(keep: false);
-                else return;
-
-                e.Handled = true;
-            };
-
-            renaming.LostFocus += (_, _) => EndRename(keep: true);
-        }
-
-        public Border Root { get; }
-
-        /// <summary>Where this knob stands on the panel.</summary>
-        public int Index { get; }
-
-        /// <summary>
-        /// Lights where a dragged knob would land: an edge to slip in at, or the whole cell
-        /// to swap with, tinted and lit on both sides so the cell keeps its size.
-        /// </summary>
-        public void Mark(DropMark mark)
-        {
-            Root.BorderBrush = mark == DropMark.None ? Brushes.Transparent : Heard;
-            Root.Background = mark == DropMark.Swap ? SwapTint : null;
-            Root.BorderThickness = mark switch
-            {
-                DropMark.After => new Thickness(0, 0, 2, 0),
-                DropMark.Before => new Thickness(2, 0, 0, 0),
-                _ => new Thickness(2, 0),
-            };
-        }
-
-        /// <summary>What the knob is played with: a knob, or a switch or a button.</summary>
-        public Control Played { get; }
-
-        public ITurnable Knob => (ITurnable)Played;
-
-        public void Show(float at, string? reading)
-        {
-            Knob.Value = at;
-            value.Text = reading ?? StageKnobs.Position(control.Kind, at);
-        }
-
-        public void Footer(bool learning)
-        {
-            midi.Text = learning ? control.Kind == ControlKind.Knob ? "turn a knob…" : "press a button…" : control.Midi is { } bound ? panel.LabelOf(bound) : string.Empty;
-            midi.Foreground = learning ? Heard : Text.Muted;
-            ToolTip.SetTip(midi, !learning && control.Midi is { } explained ? panel.ExplainOf(explained) : null);
-        }
-
-        public void Flash()
-        {
-            dot.Opacity = 1;
-            fade.Stop();
-            fade.Start();
-        }
-
-        /// <summary>
-        /// The knob's menu, filled before it is ever opened: a flyout sizes itself as
-        /// it opens, so items added then show as an empty sliver. A cell is rebuilt
-        /// whenever its binding changes, so the items never go stale.
-        /// </summary>
-        private MenuFlyout Menu()
-        {
-            var flyout = new MenuFlyout();
-
-            flyout.Items.Add(Item("Link sockets…", () => panel.LinkRequested?.Invoke(control.Id)));
-
-            flyout.Items.Add(control.Midi is null
-                ? Item(control.Kind == ControlKind.Knob ? "Learn MIDI controller" : "Learn MIDI button or pad", () => panel.LearnRequested?.Invoke(control.Id))
-                : Item($"Forget {panel.ExplainOf(control.Midi)}", () => panel.ForgetRequested?.Invoke(control.Id)));
-
-            if (control.Midi is not null)
-                flyout.Items.Add(Item("Learn another controller", () => panel.LearnRequested?.Invoke(control.Id)));
-
-            if (Index < count - 1)
-                flyout.Items.Add(Item("Learn this and every knob after it", () => panel.LearnOnwardRequested?.Invoke(control.Id)));
-
-            // Filled as it opens, since which instruments are plugged in changes;
-            // hidden rather than empty where none of them is known by name.
-            var bind = new MenuItem { Header = "Bind to" };
-            flyout.Items.Add(bind);
-
-            flyout.Opening += (_, _) =>
-            {
-                var instruments = panel.Instruments?.Invoke() ?? [];
-
-                bind.IsVisible = instruments.Count > 0;
-                bind.ItemsSource = instruments.Select(instrument => new MenuItem
-                {
-                    Header = instrument.Profile.Name,
-                    ItemsSource = instrument.Profile.Tracks.Select(track => new MenuItem
-                    {
-                        Header = track.Name,
-                        ItemsSource = instrument.Profile.PagesOf(track)
-                            .SelectMany(page => page.Controls.Select(knob => Item(
-                                $"{page.Name} {knob.Name}",
-                                () => panel.BindRequested?.Invoke(
-                                    control.Id, new MidiBinding(instrument.Id, track.Channel, knob.Controller)))))
-                            .ToList(),
-                    }).ToList(),
-                }).ToList();
-            };
-
-            flyout.Items.Add(new MenuItem
-            {
-                Header = "Play as",
-                ItemsSource = new[] { (ControlKind.Knob, "Knob"), (ControlKind.Switch, "Switch"), (ControlKind.Button, "Button") }
-                    .Select(kind =>
-                    {
-                        var item = Item(kind.Item2, () => panel.KindRequested?.Invoke(control.Id, kind.Item1));
-                        item.ToggleType = MenuItemToggleType.Radio;
-                        item.IsChecked = control.Kind == kind.Item1;
-                        return item;
-                    })
-                    .ToList(),
-            });
-
-            // Ticked as it opens: whether it is depends on the links, which change
-            // without the cell being rebuilt.
-            var log = new MenuItem { Header = "Logarithmic", ToggleType = MenuItemToggleType.CheckBox, IsVisible = control.Kind == ControlKind.Knob };
-            log.Click += (_, _) => panel.LogarithmicRequested?.Invoke(control.Id, panel.Logarithmic?.Invoke(control.Id) != true);
-            flyout.Items.Add(log);
-
-            flyout.Opening += (_, _) =>
-            {
-                var sweeps = panel.Logarithmic?.Invoke(control.Id);
-                log.IsEnabled = sweeps is not null;
-                log.IsChecked = sweeps == true;
-            };
-
-            var hold = new MenuItem { Header = "Hold when randomizing", ToggleType = MenuItemToggleType.CheckBox, IsChecked = control.Held };
-            hold.Click += (_, _) => panel.HoldRequested?.Invoke(control.Id, !control.Held);
-            flyout.Items.Add(hold);
-
-            flyout.Items.Add(new Separator());
-
-            var left = Item("Move left", () => panel.MoveRequested?.Invoke(control.Id, Index - 1));
-            var right = Item("Move right", () => panel.MoveRequested?.Invoke(control.Id, Index + 1));
-            left.IsEnabled = Index > 0;
-            right.IsEnabled = Index < count - 1;
-
-            flyout.Items.Add(left);
-            flyout.Items.Add(right);
-            flyout.Items.Add(Item("Rename", BeginRename));
-            flyout.Items.Add(Item("Remove knob", () => panel.RemoveRequested?.Invoke(control.Id)));
-
-            return flyout;
-        }
-
-        private static MenuItem Item(string header, Action act)
-        {
-            var item = new MenuItem { Header = header };
-            item.Click += (_, _) => act();
-            return item;
-        }
-
-        private void BeginRename()
-        {
-            renaming.Text = control.Name;
-            name.IsVisible = false;
-            renaming.IsVisible = true;
-            renaming.Focus();
-            renaming.SelectAll();
-        }
-
-        private void EndRename(bool keep)
-        {
-            if (!renaming.IsVisible) return;
-
-            renaming.IsVisible = false;
-            name.IsVisible = true;
-
-            if (keep && renaming.Text is { } text && text.Trim() != control.Name)
-                panel.Renamed?.Invoke(control.Id, text);
-        }
-    }
 }

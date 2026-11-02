@@ -21,7 +21,7 @@ namespace Flyback.Editor.Knobs;
 /// The knob panel is shown and hidden by the window, which owns the row it stands
 /// in; this asks for it with <see cref="KnobsWanted"/> when a knob needs to be seen.
 /// </remarks>
-internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArrived>, IReactTo<KnobChosen>
+internal sealed class PanelKnobs : IKnobRequests, IReactTo<PatchCompiled>, IReactTo<DocumentArrived>, IReactTo<KnobChosen>
 {
     private readonly NodeEditor editor;
     private readonly TextWriteBack writeBack;
@@ -132,17 +132,6 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
 
         View.Instruments = () => PanelInstrument.PluggedIn(midi, instruments);
 
-        View.BindRequested += (id, binding) =>
-        {
-            if (editor.History.Patch.Control(id) is not { } control) return;
-
-            learning.Cancel();
-            control.Midi = binding;
-            editor.History.Record();
-            writeBack.PanelEdited();
-            report.Say($"'{control.Name}' follows {instruments.Describe(binding, Source(binding.Device))}.");
-        };
-
         View.Describe = id =>
         {
             var names = ControlMap.Following(editor.History.Patch, id)
@@ -155,44 +144,10 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
             return names.Count == 0 ? "Follows nothing yet. Click its name, then sockets, to link them." : string.Join(", ", names);
         };
 
-        View.AddRequested += () =>
-        {
-            usage.Count(Used.Knob);
-
-            var added = editor.History.Patch.AddControl();
-
-            editor.History.Record();
-            writeBack.PanelEdited();
-            Link(added.Id);
-        };
-
         View.Turning += Turn;
         Stage.Turning += Turn;
         View.TurnEnded += writeBack.LetGoOfKnob;
         Stage.TurnEnded += writeBack.LetGoOfKnob;
-
-        View.LinkRequested += id => Link(editor.Linking.Control == id ? null : id);
-
-        View.LearnRequested += id => _ = LearnAsync(id);
-        View.LearnOnwardRequested += id => _ = LearnAsync(id, onward: true);
-
-        View.ForgetRequested += id =>
-        {
-            if (editor.History.Patch.Control(id) is not { } control) return;
-
-            control.Midi = null;
-            editor.History.Record();
-            writeBack.PanelEdited();
-        };
-
-        View.Renamed += (id, name) =>
-        {
-            if (editor.History.Patch.Control(id) is not { } control) return;
-
-            control.Name = name;
-            editor.History.Record();
-            writeBack.PanelEdited();
-        };
 
         View.Logarithmic = id =>
         {
@@ -201,83 +156,129 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
             return links.Count == 0 ? null : links.All(f => f.Link.Knee > 0f);
         };
 
-        View.LogarithmicRequested += (id, inDecades) =>
-        {
-            if (editor.History.Patch.Control(id) is not { } knob) return;
-
-            var following = ControlMap.Following(editor.History.Patch, id).ToList();
-
-            foreach (var (node, port, link) in following)
-            {
-                if (NodeCatalog.Get(node.TypeId) is not { } def || port >= def.Inputs.Count) continue;
-
-                var swept = link.Swept(inDecades, def.Inputs[port]);
-                ControlMap.Link(node, port, swept);
-
-                // One socket keeps reading what it read, so the switch is not heard.
-                if (following.Count == 1)
-                {
-                    knob.Value = swept.Inverse(link.At(knob.Value));
-                    hub.Set(id, knob.Value);
-                }
-            }
-
-            editor.History.Record();
-        };
-
-        View.KindRequested += (id, kind) =>
-        {
-            if (editor.History.Patch.Control(id) is not { } control || control.Kind == kind) return;
-
-            control.Kind = kind;
-
-            // A knob is turned by a controller, never struck by a pad.
-            if (kind == ControlKind.Knob && control.Midi is { Note: true }) control.Midi = null;
-
-            hub.Set(id, control.Value);
-            editor.History.Record();
-            writeBack.PanelEdited();
-            report.Say($"'{control.Name}' is played as a {PanelDeclaration.Word(kind)}.");
-        };
-
-        View.HoldRequested += (id, held) =>
-        {
-            if (editor.History.Patch.Control(id) is not { } control) return;
-
-            control.Held = held;
-            editor.History.Record();
-            writeBack.PanelEdited();
-            report.Say(held ? $"'{control.Name}' stays where it is when the panel is randomized." : $"'{control.Name}' is randomized with the rest.");
-        };
-
-        View.MoveRequested += (id, index) =>
-        {
-            if (!editor.History.Patch.MoveControl(id, index)) return;
-
-            editor.History.Record();
-            writeBack.PanelEdited();
-        };
-
-        View.SwapRequested += (first, second) =>
-        {
-            if (!editor.History.Patch.SwapControls(first, second)) return;
-
-            editor.History.Record();
-            writeBack.PanelEdited();
-        };
-
-        View.RemoveRequested += id =>
-        {
-            if (editor.Linking.Control == id) Link(null);
-            if (View.Learning == id) learning.Cancel();
-
-            if (!editor.History.Patch.RemoveControl(id)) return;
-
-            editor.History.Record();
-            writeBack.PanelEdited();
-        };
-
         editor.Linking.SocketPicked += (_, pick) => PickSocket(pick);
+
+        View.Requests = this;
+    }
+
+    void IKnobRequests.ToggleLink(Guid id) => Link(editor.Linking.Control == id ? null : id);
+
+    void IKnobRequests.Learn(Guid id, bool onward) => _ = LearnAsync(id, onward);
+
+    void IKnobRequests.Bind(Guid id, MidiBinding binding)
+    {
+        if (editor.History.Patch.Control(id) is not { } control) return;
+
+        learning.Cancel();
+        control.Midi = binding;
+        editor.History.Record();
+        writeBack.PanelEdited();
+        report.Say($"'{control.Name}' follows {instruments.Describe(binding, Source(binding.Device))}.");
+    }
+
+    void IKnobRequests.Add()
+    {
+        usage.Count(Used.Knob);
+
+        var added = editor.History.Patch.AddControl();
+
+        editor.History.Record();
+        writeBack.PanelEdited();
+        Link(added.Id);
+    }
+
+    void IKnobRequests.Forget(Guid id)
+    {
+        if (editor.History.Patch.Control(id) is not { } control) return;
+
+        control.Midi = null;
+        editor.History.Record();
+        writeBack.PanelEdited();
+    }
+
+    void IKnobRequests.Rename(Guid id, string name)
+    {
+        if (editor.History.Patch.Control(id) is not { } control) return;
+
+        control.Name = name;
+        editor.History.Record();
+        writeBack.PanelEdited();
+    }
+
+    void IKnobRequests.SweepInDecades(Guid id, bool inDecades)
+    {
+        if (editor.History.Patch.Control(id) is not { } knob) return;
+
+        var following = ControlMap.Following(editor.History.Patch, id).ToList();
+
+        foreach (var (node, port, link) in following)
+        {
+            if (NodeCatalog.Get(node.TypeId) is not { } def || port >= def.Inputs.Count) continue;
+
+            var swept = link.Swept(inDecades, def.Inputs[port]);
+            ControlMap.Link(node, port, swept);
+
+            // One socket keeps reading what it read, so the switch is not heard.
+            if (following.Count == 1)
+            {
+                knob.Value = swept.Inverse(link.At(knob.Value));
+                hub.Set(id, knob.Value);
+            }
+        }
+
+        editor.History.Record();
+    }
+
+    void IKnobRequests.PlayAs(Guid id, ControlKind kind)
+    {
+        if (editor.History.Patch.Control(id) is not { } control || control.Kind == kind) return;
+
+        control.Kind = kind;
+
+        // A knob is turned by a controller, never struck by a pad.
+        if (kind == ControlKind.Knob && control.Midi is { Note: true }) control.Midi = null;
+
+        hub.Set(id, control.Value);
+        editor.History.Record();
+        writeBack.PanelEdited();
+        report.Say($"'{control.Name}' is played as a {PanelDeclaration.Word(kind)}.");
+    }
+
+    void IKnobRequests.Hold(Guid id, bool held)
+    {
+        if (editor.History.Patch.Control(id) is not { } control) return;
+
+        control.Held = held;
+        editor.History.Record();
+        writeBack.PanelEdited();
+        report.Say(held ? $"'{control.Name}' stays where it is when the panel is randomized." : $"'{control.Name}' is randomized with the rest.");
+    }
+
+    void IKnobRequests.Move(Guid id, int index)
+    {
+        if (!editor.History.Patch.MoveControl(id, index)) return;
+
+        editor.History.Record();
+        writeBack.PanelEdited();
+    }
+
+    void IKnobRequests.Swap(Guid first, Guid second)
+    {
+        if (!editor.History.Patch.SwapControls(first, second)) return;
+
+        editor.History.Record();
+        writeBack.PanelEdited();
+    }
+
+    void IKnobRequests.Remove(Guid id)
+    {
+        if (editor.Linking.Control == id) Link(null);
+        if (View.Learning == id) learning.Cancel();
+
+        if (!editor.History.Patch.RemoveControl(id)) return;
+
+        editor.History.Record();
+        writeBack.PanelEdited();
     }
 
     /// <summary>A knob turned by hand, on the panel or over the picture.</summary>
