@@ -101,16 +101,30 @@ internal sealed class SocketDial(
         && Start(canvas, nodeId, port, screen, anchored);
 
     /// <summary>
-    /// Starts turning the first input that turns on the module or shut box under
-    /// <paramref name="graph"/>, for a view zoomed out too far for its sockets to be aimed at.
+    /// Starts turning an input that turns on the module or shut box under <paramref name="graph"/>:
+    /// the one whose row is nearest it when <paramref name="nearest"/>, otherwise the first.
     /// </summary>
-    public bool StartOnBody(Control canvas, Point graph, Point screen, bool anchored = true)
+    public bool StartOnBody(Control canvas, Point graph, Point screen, bool anchored = true, bool nearest = false)
     {
-        foreach (var pick in selection.Scene.InputsUnder(graph))
-            if (Dialable(pick.Node, pick.Port, out _, out _))
-                return Start(canvas, pick.Node, pick.Port, screen, anchored);
+        var scene = selection.Scene;
+        SocketPick? best = null;
+        var bestDistance = double.MaxValue;
 
-        return false;
+        foreach (var pick in scene.InputsUnder(graph))
+        {
+            if (!Dialable(pick.Node, pick.Port, out _, out _)) continue;
+            if (!nearest) return Start(canvas, pick.Node, pick.Port, screen, anchored);
+
+            if (scene.RowOf(pick.Node, pick.Port) is not var (_, center)) continue;
+
+            var distance = Math.Abs(center.Y - graph.Y);
+
+            if (distance >= bestDistance) continue;
+
+            (best, bestDistance) = (pick, distance);
+        }
+
+        return best is { } chosen && Start(canvas, chosen.Node, chosen.Port, screen, anchored);
     }
 
     /// <summary>Starts turning one input, and says whether it can be turned.</summary>

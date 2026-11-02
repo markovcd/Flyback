@@ -118,7 +118,7 @@ internal static class InspectorHelp
         [
             Row("Patch a wire", "Drag from a socket into another, or onto bare canvas to add a module already plugged in. A fingertip beside a socket lands on it."),
             Row("Unplug", "Drag a connected input to take the wire somewhere else."),
-            Row("Turn a value", "Hold a finger on an unplugged input's value, then slide it up or down. A second finger held anywhere makes it finer; tapped below or above, it moves to the next input or the one before. Zoomed out, hold anywhere on a module."),
+            Row("Turn a value", "Hold a finger on an unplugged input's value, then slide it up or down. A finger held anywhere else on a module turns the input on the row beside it. A second finger held anywhere makes it finer; tapped below or above, it moves to the next input or the one before."),
             Row("Step a value", "Tap a value for buttons under its module that step it down or up, make the steps fine, or type a number."),
         ]),
         new("Selecting and moving",
@@ -126,7 +126,7 @@ internal static class InspectorHelp
             Row("Move", "Drag a module."),
             Row("Select", "Drag bare canvas."),
             Row("Pan and zoom", "Two fingers drag the view, and spread or pinch to zoom. The frame button on the toolbar fits the whole patch."),
-            Row("Hear without", "Hold a finger on a module to hear the patch without it until you let go."),
+            Row("Hear without", "Tap Bypass under a module's name to hear the patch without it, and again to bring it back."),
             Row("Look inside a box", "Double-tap it."),
         ]),
     ];

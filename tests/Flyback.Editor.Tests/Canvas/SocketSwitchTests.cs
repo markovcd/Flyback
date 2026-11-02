@@ -226,6 +226,41 @@ public class SocketSwitchTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void A_finger_held_on_a_module_turns_the_input_on_the_row_nearest_it_and_mutes_nothing()
+    {
+        var (editor, _, sine) = Board();
+        var turnable = Turnable(editor, sine);
+        var last = turnable[^1];
+        var row = Geometry.InputPort(sine, NodeCatalog.Get(sine.TypeId)!, last);
+        var at = editor.GraphToScreen.Transform(new Point(sine.X + NodeGeometry.Width / 2, row.Y));
+        var finger = Finger();
+
+        editor.Fingers.Down(editor, finger, at, 1_000);
+        editor.Fingers.Held();
+
+        editor.Dial.Dialed.ShouldBe(new SocketPick(sine.Id, last));
+        editor.History.Patch.Find(sine.Id)!.Off.ShouldBeFalse();
+        editor.Fingers.Up(editor, finger, at, 2_000);
+    }
+
+    [AvaloniaFact]
+    public void A_finger_held_on_a_module_with_no_values_mutes_nothing()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var clock = builder.Add(NodeCatalog.TimeTypeId, 300, 200);
+        var (editor, _) = Editing(builder.Patch);
+        var at = editor.GraphToScreen.Transform(Body(clock));
+        var finger = Finger();
+
+        editor.Fingers.Down(editor, finger, at, 1_000);
+        editor.Fingers.Held();
+
+        editor.Dial.Turning.ShouldBeFalse();
+        editor.History.Patch.Find(clock.Id)!.Off.ShouldBeFalse();
+        editor.Fingers.Up(editor, finger, at, 2_000);
+    }
+
+    [AvaloniaFact]
     public void Close_enough_to_read_a_right_drag_on_a_module_body_turns_nothing()
     {
         var (editor, window, sine) = Board();

@@ -19,7 +19,7 @@
 - A shut box lists the levels inside it as chips along its foot, and a loop pass's box the pass it is, `1/3 pitch = 110`. Zoomed far out, only each box's outermost chips show, large enough to read.
 - Pressing a level's chip shows the level in the inspector: what a call or a loop pass was given, what is inside it, the wires leaving it, the other calls of its def, and Show in text to open the text at its line.
 - A module the text placed inside a group, a def call or a loop shows those levels at the top of the inspector, `Bass › voice`; pressing one selects every module in it.
-- A value being turned can move to another input on the same module without letting go: Tab or Shift+Tab, or the wheel, with a mouse or trackpad; a second finger tapped below or above the turning one by touch. Zoomed out past the rows, a right-drag or a held finger anywhere on a module turns its first input, and the input turning is ringed and named beside its socket, and its card points at it.
+- A value being turned can move to another input on the same module without letting go: Tab or Shift+Tab, or the wheel, with a mouse or trackpad; a second finger tapped below or above the turning one by touch. A finger held anywhere on a module turns the input on the row beside it rather than switching the module off while held (Bypass in the inspector does that); zoomed out past the rows, a right-drag or a held finger anywhere on a module turns its first input, and the input turning is ringed and named beside its socket, and its card points at it.
 - Live patching shows only the view that owns the patch: its text when the text is the document, its modules otherwise. F2 no longer swaps them over the picture, and the transport over the picture has no text button.
 
 ### Viewer

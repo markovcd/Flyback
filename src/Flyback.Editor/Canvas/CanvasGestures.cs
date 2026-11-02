@@ -292,13 +292,15 @@ internal sealed class CanvasGestures
         var (canvas, pointer, screen, graph) = (press.Canvas, press.Pointer, press.Screen, press.Graph);
         var onPort = scene.HitPort(graph, out _, out _, out _);
 
-        // Over an unpatched input, the button held down is a knob for its value. Zoomed
-        // out, anywhere on a module is, for its first input; Tab or a second finger moves on.
+        // Over an unpatched input, the button held down is a knob for its value. A finger
+        // held anywhere on a module turns the input on the row nearest it, and zoomed out
+        // anything does, for its first input; Tab or a second finger moves on.
         var anchored = !press.Touch;
 
         if (drag == Drag.None
             && (dial.Start(canvas, graph, screen, anchored)
-                || (view.Overview && !onPort && dial.StartOnBody(canvas, graph, screen, anchored))))
+                || ((view.Overview || press.Touch) && !onPort
+                    && dial.StartOnBody(canvas, graph, screen, anchored, nearest: press.Touch && !view.Overview))))
         {
             tips.Down(canvas);
             pointer?.Capture(canvas);
@@ -322,8 +324,9 @@ internal sealed class CanvasGestures
         // a locked canvas, where the next evaluation would take it straight off.
         if (!history.Locked && bare) MenuRequested?.Invoke(this, graph);
 
-        // Over a module or a shut box, the button is held to flip it.
-        if (!onPort)
+        // Over a module or a shut box, the button is held to flip it. Not a finger's,
+        // whose hold on a module turns a value; the inspector switches it off.
+        if (!onPort && !press.Touch)
         {
             if (scene.HitBox(graph) is { } shut) held.Hold(shut.Members);
             else if (scene.HitNode(graph) is { } under)

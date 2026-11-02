@@ -62,3 +62,12 @@ picks a control, disabled ones that show their tip included. A tip opened rather
 on the status bar, since a phone's status bar trims a sentence to a few words. A repeat
 button keeps its hold, and a finger a scroll took over opens nothing. A socket's tip on the
 canvas is still out of reach, since a held finger there is the right button.
+
+## Amendment, 2026-11-02: a held finger on a module turns a value
+
+A finger held on a module turns the input on the row nearest it, and zoomed out past the
+rows its first input; a second finger tapped below or above moves the turn along. It no
+longer switches the module off while held: the two shared one gesture and differed by a few
+pixels, and turning a value is the commoner wish. Bypass in the inspector switches a module
+off by touch. The mouse's right button held on a module still does, since a pointer lands
+where it is aimed.

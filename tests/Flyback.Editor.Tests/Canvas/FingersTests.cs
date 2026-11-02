@@ -325,12 +325,12 @@ public class FingersTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void A_second_finger_on_a_module_held_still_pinches_and_leaves_it_alone()
+    public void A_second_finger_on_a_module_with_no_values_held_still_pinches_and_leaves_it_alone()
     {
-        var (editor, _) = Editing(Pair(out _, out var sine));
+        var (editor, _) = Editing(Pair(out var clock, out _));
         var held = Finger();
         var second = Finger();
-        var at = On(editor, Body(sine));
+        var at = On(editor, Body(clock));
 
         editor.Fingers.Down(editor, held, at, 1_000);
         editor.Fingers.Held();
