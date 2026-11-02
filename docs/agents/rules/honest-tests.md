@@ -22,14 +22,8 @@ A failing test is fixed by fixing the code it caught. It is never fixed by movin
 - A test that fails some runs and not others is a bug in the test or the code. Find which; do not rerun it until it passes.
 - The IL, GLSL and JavaScript backends agree with the interpreter because the tests say so (ADR-0035). When one of them differs, the backend is wrong, not the comparison.
 
-## A spec says what the product does, and the user decides that
+## A spec's assertion is the user's call
 
-A `Then` in `tests/Flyback.Specs/Features/` states behavior the user sees. Changing what one asserts changes the product, so it needs the user's go-ahead: either the task asked for that exact behavior change, or the user agreed to it when asked. Without that, leave the behavior as the spec says, and ask in the reply.
+Changing what a `Then` in `tests/Flyback.Specs/Features/` asserts changes the product: do it only when the task asked for that behavior or the user agreed when asked. Otherwise keep the behavior and ask. Rewording a step is free.
 
-**Why:** the user asked for it outright after a session made boxes open by default on its own judgment and edited the spec to agree; another session had to undo it the next day.
-
-**How to apply:**
-
-- A spec that fails because of a change nobody asked for means the change is wrong, not the spec.
-- When a requested change does contradict a spec, name the scenario and the line in the reply, and change it in the commit that makes the requested change.
-- Rewording a step, renaming one or moving a scenario without changing what it asserts needs no go-ahead.
+**Why:** a session flipped a default on its own judgment and edited the spec to match.
