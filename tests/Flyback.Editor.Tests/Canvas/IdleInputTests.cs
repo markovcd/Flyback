@@ -28,7 +28,7 @@ public class IdleInputTests : EditorTest
 
         int Brightest(int port) => Pixels(editor, window, Label(port)).Max(c => c.R + c.G + c.B);
 
-        CanvasPainter.Idle(NodeCatalog.FormulaOf(expression), 1).ShouldBeTrue();
+        ModuleFace.Idle(NodeCatalog.FormulaOf(expression), 1).ShouldBeTrue();
         Brightest(1).ShouldBeLessThan(Brightest(0) - 150, "b's label is faint beside a's");
         Shoot(window, "idle-inputs.png");
     }

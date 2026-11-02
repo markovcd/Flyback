@@ -100,7 +100,7 @@ internal sealed class CanvasTips(
             var title = node.Title(def);
 
             if (new Rect(bounds.X, bounds.Y, bounds.Width, NodeGeometry.HeaderHeight).Contains(graph)
-                && CanvasText.Overflows(title, CanvasPainter.HeaderSize, CanvasPainter.HeaderWidth(bounds, tags.Tagged(def))))
+                && CanvasText.Overflows(title, ModuleFace.HeaderSize, ModuleFace.HeaderWidth(bounds, tags.Tagged(def))))
             {
                 return (node.Id, title);
             }
@@ -135,7 +135,7 @@ internal sealed class CanvasTips(
     {
         if (scene.Named(socket) is not var (label, spec)) return null;
 
-        var cut = CanvasText.Overflows(label, CanvasText.RowSize, CanvasPainter.BoxLabelRoom(bounds, resting: false, geometry.Compact)) ? label : null;
+        var cut = CanvasText.Overflows(label, CanvasText.RowSize, ModuleFace.BoxLabelRoom(bounds, resting: false, geometry.Compact)) ? label : null;
         var resting = geometry.Compact && !socket.IsOutput && Patch.Find(socket.Node) is { } node
             ? SocketTips.Resting(Patch, node, spec, socket.Port)
             : null;

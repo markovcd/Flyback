@@ -570,7 +570,11 @@ the same reason `Canvas` shadows Avalonia's control, so it is written
 split the way the window is: hubs (`CanvasHistory`, `CanvasSelection`,
 `Viewport`) and regions that take them (`CanvasEdits`, `CanvasClipboard`,
 `CanvasGestures`, `CanvasPainter`, `SocketDial` and the rest), with the control
-one file that hands its pointer, keys and `Render` to them. `NodeGeometry`, one
+one file that hands its pointer, keys and `Render` to them. `CanvasPainter` holds
+only the order things are drawn in; the ground, the wires, the modules and the
+groups each have a painter of their own (`GroundPainter`, `WirePainter`,
+`ModulePainter`, `GroupPainter`), and what a module and a box share is in
+`ModuleFace`. `NodeGeometry`, one
 per window since compact modules are the window's setting, is the single source
 of measurement that both painting and hit-testing call, which is what keeps a
 socket where it is drawn. A

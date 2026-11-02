@@ -27,6 +27,7 @@ internal sealed class NodeEditor
         IReactTo<SelectAllAsked>
 {
     private readonly CanvasPainter painter;
+    private readonly CanvasGlass glass;
     private readonly Usage usage;
 
     public NodeEditor(
@@ -45,6 +46,7 @@ internal sealed class NodeEditor
         KnobLinking linking,
         UndescribedTags tags,
         CanvasPainter painter,
+        CanvasGlass glass,
         Repaint repaint,
         CanvasReport report,
         NodeGeometry geometry,
@@ -69,6 +71,7 @@ internal sealed class NodeEditor
         Tags = tags;
 
         this.painter = painter;
+        this.glass = glass;
         this.usage = usage;
         Report = report;
 
@@ -153,15 +156,15 @@ internal sealed class NodeEditor
     internal Matrix GraphToScreen => View.GraphToScreen;
 
     /// <summary>How opaque a module's fill is drawn: see-through over the picture, unless its value is in hand.</summary>
-    internal double FillOpacity(Guid node) => painter.FillOpacity(node);
+    internal double FillOpacity(Guid node) => glass.FillOpacity(node);
 
     /// <summary>Whether the patch is drawn over the picture, for live patching.</summary>
     internal bool SeeThrough
     {
-        get => painter.SeeThrough;
+        get => glass.SeeThrough;
         set
         {
-            painter.SeeThrough = value;
+            glass.SeeThrough = value;
             InvalidateVisual();
         }
     }
@@ -169,10 +172,10 @@ internal sealed class NodeEditor
     /// <summary>How opaque the fills, boxes and wires are drawn over the picture.</summary>
     internal double GlassOpacity
     {
-        get => painter.GlassOpacity;
+        get => glass.GlassOpacity;
         set
         {
-            painter.GlassOpacity = value;
+            glass.GlassOpacity = value;
             InvalidateVisual();
         }
     }

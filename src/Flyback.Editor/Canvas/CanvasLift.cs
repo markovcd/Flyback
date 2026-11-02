@@ -21,7 +21,7 @@ internal sealed class CanvasLift(CanvasGestures gestures, CanvasSelection select
 
     private static readonly BoxShadows Shadow = ShadowOf(ShadowStrength);
 
-    private static readonly BoxShadows ShadowOff = ShadowOf(ShadowStrength * CanvasPainter.OffOpacity);
+    private static readonly BoxShadows ShadowOff = ShadowOf(ShadowStrength * ModuleFace.OffOpacity);
 
     private static BoxShadows ShadowOf(double strength) => new(new BoxShadow
     {
@@ -58,7 +58,7 @@ internal sealed class CanvasLift(CanvasGestures gestures, CanvasSelection select
             lift = context.PushTransform(Matrix.CreateTranslation(Offset));
         }
 
-        return new Scope(lift, off ? context.PushOpacity(CanvasPainter.OffOpacity) : null);
+        return new Scope(lift, off ? context.PushOpacity(ModuleFace.OffOpacity) : null);
     }
 
     /// <summary>What <see cref="Hold"/> pushed, popped in the opposite order.</summary>

@@ -292,7 +292,7 @@ internal sealed class Inspector
         var above = plate.Under.Children.Count;
 
         plate.Face = new PlateFace(
-            CanvasPainter.Heading(node, def),
+            ModuleFace.Heading(node, def),
             def.Category,
             ModuleGlyphs.For(def),
             new SolidColorBrush(Colors.Palette(def).Accent),
@@ -438,10 +438,10 @@ internal sealed class Inspector
             Name = "moduleName",
 
             // The same heading the canvas draws — a Send or a Receive names its
-            // bus alongside its own name (CanvasPainter.Heading) — so the
+            // bus alongside its own name (ModuleFace.Heading) — so the
             // panel and the block read the same. The rename box beneath this
             // still edits node.Name, not the bus suffix.
-            Text = CanvasPainter.Heading(node, def),
+            Text = ModuleFace.Heading(node, def),
             FontSize = Text.Title,
             FontWeight = FontWeight.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis,
@@ -496,7 +496,7 @@ internal sealed class Inspector
         renamer.Open(
             title,
             plate.Ink,
-            $"{CanvasPainter.Heading(node, def)} · {def.Category}",
+            $"{ModuleFace.Heading(node, def)} · {def.Category}",
             node.Name,
             def.Name,
             NodeInstance.NameLimit,

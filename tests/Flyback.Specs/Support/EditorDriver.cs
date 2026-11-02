@@ -300,7 +300,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
 
     /// <summary>Whether an input is drawn faint, as one its module's formula never reads.</summary>
     public bool InputIdle(Guid node, int port) =>
-        Read(canvas => canvas.History.Patch.Find(node) is { } found && CanvasPainter.Idle(NodeCatalog.FormulaOf(found), port));
+        Read(canvas => canvas.History.Patch.Find(node) is { } found && ModuleFace.Idle(NodeCatalog.FormulaOf(found), port));
 
     /// <summary>Whether an input's value sits in a well on the canvas.</summary>
     public bool HasWell(Guid node, int port) =>

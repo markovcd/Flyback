@@ -50,6 +50,12 @@ internal static class CanvasServices
         services.AddSingleton<RubberBand>();
         services.AddSingleton<CanvasGestures>();
         services.AddSingleton<Fingers>();
+        services.AddSingleton<CanvasLift>();
+        services.AddSingleton<CanvasGlass>();
+        services.AddSingleton<GroundPainter>();
+        services.AddSingleton<WirePainter>();
+        services.AddSingleton<ModulePainter>();
+        services.AddSingleton<GroupPainter>();
         services.AddSingleton<CanvasPainter>();
         services.AddPart<NodeEditor>();
 
