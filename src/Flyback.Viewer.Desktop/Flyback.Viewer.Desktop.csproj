@@ -37,6 +37,14 @@
     <PackageReference Include="Avalonia.Themes.Fluent" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="System.CommandLine" />
+    <!--
+      The editor's Skia and HarfBuzz, which its SVG controls take newer than Avalonia does:
+      both are published into one folder, and every copy of a shared library must be one version.
+    -->
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
+    <PackageReference Include="HarfBuzzSharp" />
+    <PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" />
   </ItemGroup>
 
   <!--

@@ -49,6 +49,12 @@
     <PackageVersion Include="SkiaSharp.NativeAssets.WebAssembly" Version="4.148.0" />
     <PackageVersion Include="HarfBuzzSharp.NativeAssets.WebAssembly" Version="14.2.0" />
 
+    <!-- The viewer, held to the same Skia and HarfBuzz as the editor it shares a folder with. -->
+    <PackageVersion Include="SkiaSharp" Version="4.148.0" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="4.148.0" />
+    <PackageVersion Include="HarfBuzzSharp" Version="14.2.0" />
+    <PackageVersion Include="HarfBuzzSharp.NativeAssets.Linux" Version="14.2.0" />
+
     <!-- The editor's container and its HTTP clients (ADR-0150): the runtime's own, versioned with it. -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.13" />
