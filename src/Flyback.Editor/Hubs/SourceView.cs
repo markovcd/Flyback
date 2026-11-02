@@ -178,6 +178,7 @@ internal sealed class SourceView : UserControl
         // Tunneled for the same reason: the editor's scroller takes the wheel.
         text.AddHandler(PointerWheelChangedEvent, Zoomed, RoutingStrategies.Tunnel);
         text.AddHandler(KeyDownEvent, Resized, RoutingStrategies.Tunnel);
+        _ = new SourcePinch(text, () => EditorFontSize, size => EditorFontSize = size);
         text.AddHandler(KeyDownEvent, Pasted, RoutingStrategies.Tunnel);
         SourceDuplicate.Attach(text);
 

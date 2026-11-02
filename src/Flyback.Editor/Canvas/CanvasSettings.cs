@@ -59,7 +59,7 @@ public sealed class CanvasSettings
     /// <summary>Whether each toolbar button has its name printed under its symbol.</summary>
     public bool ToolbarLabels { get; set; } = true;
 
-    /// <summary>The text editor's font size, set by Ctrl+scroll over it.</summary>
+    /// <summary>The text editor's font size, set by Ctrl+scroll or a pinch over it.</summary>
     public double EditorFontSize { get; set; } = DefaultEditorFontSize;
 
     public const double DefaultEditorFontSize = 13;
