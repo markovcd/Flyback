@@ -133,7 +133,7 @@ internal sealed class ModalOverlay : Border
         if (frame is null || scroller is null) return;
 
         var narrowest = Math.Min(parts.Max(Needs) + 2, widest);
-        var side = Math.Clamp((window - narrowest) / 2, 0, Inset);
+        var side = Math.Clamp((window - Math.Min(parts.Max(Prefers) + 2, widest)) / 2, 0, Inset);
 
         frame.Margin = new Thickness(side, Inset, side, Inset);
         frame.MinWidth = Math.Min(narrowest, window);
@@ -169,6 +169,13 @@ internal sealed class ModalOverlay : Border
     /// </summary>
     private static double Needs(Control part)
         => Math.Max(part.MinWidth, double.IsNaN(part.Width) ? 0 : part.Width) + part.Margin.Left + part.Margin.Right;
+
+    /// <summary>
+    /// The width <paramref name="part"/> is drawn at given the room: its <see cref="Layoutable.MaxWidth"/>
+    /// where it narrows down to a minimum, so the margin gives way before it does.
+    /// </summary>
+    private static double Prefers(Control part)
+        => double.IsInfinity(part.MaxWidth) ? Needs(part) : Math.Max(Needs(part), part.MaxWidth + part.Margin.Left + part.Margin.Right);
 
     private Control Frame(string title, Control content, Control? header, bool fill, bool wide, bool top)
     {

@@ -107,6 +107,12 @@ internal sealed class SettingsSheet : Grid
 
         back = new DockPanel { IsVisible = false, Margin = new Thickness(0, 0, 0, 6), Children = { Left(backButton), title } };
 
+        // A tab picked from outside the list, by a script or a test, is shown as a tap shows it.
+        tabs.SelectionChanged += (_, _) =>
+        {
+            if (narrow == true && !paged) Page(true);
+        };
+
         SetRow(back, 0);
         SetRow(tabs, 1);
         SetRow(list, 1);
