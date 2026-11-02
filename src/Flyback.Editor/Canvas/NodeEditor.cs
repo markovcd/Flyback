@@ -136,6 +136,9 @@ internal sealed class NodeEditor
     /// <summary>The input whose well has the keys, and what is being typed into it.</summary>
     internal SocketFocus WellFocus { get; }
 
+    /// <summary>Whether Tab is the canvas's: it moves a turn under way, or the keys of a picked value, to the next input.</summary>
+    internal bool WantsTab => Gestures.Turning || WellFocus.Focused is not null;
+
     /// <summary>The list of panel knobs that drops from a socket.</summary>
     internal KnobChoice KnobChoice { get; }
 

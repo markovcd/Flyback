@@ -321,7 +321,8 @@ internal sealed class EditorView : Border
     }
 
     /// <summary>
-    /// Tab over a full-screen picture puts the patch over it or takes it off, and Escape
+    /// Tab over a full-screen picture puts the patch over it or takes it off, unless the canvas
+    /// is turning or has picked a value, and Escape
     /// leaves the patch's text over it, which would otherwise take the key for itself.
     /// </summary>
     private void OnLiveKey(object? sender, KeyEventArgs e)
@@ -336,6 +337,9 @@ internal sealed class EditorView : Border
         }
 
         if (e.Key != Key.Tab || (e.KeyModifiers & ~KeyModifiers.Shift) != 0) return;
+
+        // A value turning or picked on the canvas takes Tab to move to the next input.
+        if (e.Source is NodeEditor { WantsTab: true }) return;
 
         if (live.ToggleOverPicture()) e.Handled = true;
     }

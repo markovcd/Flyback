@@ -5,8 +5,11 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Flyback.Core.Graph;
+using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
 using Flyback.Editor.Hubs;
+using Flyback.Editor.Notices;
 using Flyback.Editor.Windows;
 using Flyback.Ui.Controls;
 using Shouldly;
@@ -88,6 +91,28 @@ public class LivePatchingTests : EditorTest
         editor.IsEffectivelyVisible.ShouldBeFalse("Tab again gives the picture back to itself");
         Preview(window).IsEffectivelyVisible.ShouldBeTrue("still full screen");
         editor.SeeThrough.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Tab_with_a_value_picked_on_the_modules_moves_to_the_next_input_and_leaves_them_shown()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var node = builder.Add(NodeCatalog.SineTypeId, 300, 200);
+        builder.Add(NodeCatalog.OutputTypeId, 700, 200);
+        var window = Open(builder.Patch);
+        var editor = Editor(window);
+        var def = NodeCatalog.Get(node.TypeId)!;
+        var ports = Enumerable.Range(0, def.Inputs.Count).Where(p => ValueWell.Has(editor.History.Patch, editor.History.Patch.Find(node.Id)!, def, p)).ToList();
+
+        DoubleClickPicture(window);
+        PressTab(window);
+
+        editor.WellFocus.Pick(new SocketPick(node.Id, ports[0]));
+        editor.Focus();
+        PressTab(window);
+
+        editor.IsEffectivelyVisible.ShouldBeTrue("Tab went to the picked value, not to the picture");
+        editor.WellFocus.Focused.ShouldBe(new SocketPick(node.Id, ports[1]));
     }
 
     [AvaloniaFact]
