@@ -60,7 +60,9 @@ The editor is drawn as an instrument, with a scope on the bench as the reference
   the one Arek's other Claude-built app draws too. Arek picked, from three drawn from
   instruments, a ring of dots like a sampled trace, lit to the value, its lit end
   glowing and the trail behind fading as phosphor does. The panel prints no value
-  under a knob; its tip says it.
+  under a knob; its tip says it. A button and a switch are lamps of the same dots, which Arek
+  picked over a bat toggle and lit scope keys: a button's ring lights whole while held,
+  and a switch's pointer turns to one of two lamps.
 - **The controls are Flyback's.** Fluent takes `Colors.Attention` as its accent and
   2 px corners; toolbar and panel glyph buttons have no fill until pointed at or
   switched on. Number boxes and the clock are set in the mono face.

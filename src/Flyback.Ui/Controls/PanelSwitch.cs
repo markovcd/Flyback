@@ -18,11 +18,22 @@ internal class PanelSwitch : Control, ITurnable
     public static readonly StyledProperty<bool> LitProperty =
         AvaloniaProperty.Register<PanelSwitch, bool>(nameof(Lit));
 
-    private static readonly IBrush Off = new ImmutableSolidColorBrush(Colors.Node);
-    private static readonly IBrush On = new ImmutableSolidColorBrush(Colors.Attention);
+    /// <summary>The dots round a button, which all light while it is held.</summary>
+    private const int Dots = 20;
+
+    /// <summary>Where a switch's two lamps stand, off and on, in degrees clockwise from the right.</summary>
+    private const double OffLamp = 225;
+
+    private const double OnLamp = 315;
+
+    private static readonly IBrush Face = new ImmutableSolidColorBrush(Colors.Node);
     private static readonly IBrush LitFace = new ImmutableSolidColorBrush(Colors.Attention, 0.18);
-    private static readonly IBrush Thumb = new ImmutableSolidColorBrush(Colors.Label);
-    private static readonly IPen Edge = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Separator), 2);
+    private static readonly IBrush Lamp = new ImmutableSolidColorBrush(Colors.Attention);
+    private static readonly IBrush Unlit = new ImmutableSolidColorBrush(Colors.Inactive);
+    private static readonly IBrush Halo = new ImmutableSolidColorBrush(Colors.Attention, 0.25);
+    private static readonly IPen Glow = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Attention, 0.18), 3);
+    private static readonly IPen Pointer = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Label), 2, lineCap: PenLineCap.Round);
+    private static readonly IPen OnPointer = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Bright), 2, lineCap: PenLineCap.Round);
 
     private bool holding;
 
@@ -65,23 +76,59 @@ internal class PanelSwitch : Control, ITurnable
     /// <summary>Whether it is on.</summary>
     protected bool IsOn => Value >= 0.5;
 
+    /// <summary>
+    /// Lamps like the knob's ring: a button is a ring of dots that all light while it is
+    /// held, a switch a short pointer turned to one of two lamps, off and on.
+    /// </summary>
     public override void Render(DrawingContext context)
     {
         var center = new Point(Bounds.Width / 2, Bounds.Height / 2);
+        var radius = Math.Min(Bounds.Width, Bounds.Height) / 2 - 3;
 
         if (Momentary)
         {
-            var radius = Math.Min(Bounds.Width, Bounds.Height) / 2 - 6;
-            context.DrawEllipse(IsOn ? On : Lit ? LitFace : Off, Edge, center, radius, radius);
+            context.DrawEllipse(Lit ? LitFace : Face, null, center, radius - 6, radius - 6);
+
+            if (IsOn) context.DrawEllipse(null, Glow, center, radius - 2, radius - 2);
+
+            for (var i = 0; i < Dots; i++)
+            {
+                var dot = Along(center, radius, 2 * Math.PI * i / Dots);
+
+                if (IsOn) context.DrawEllipse(Lamp, null, dot, 1.7, 1.7);
+                else context.DrawEllipse(Unlit, null, dot, 1, 1);
+            }
+
             return;
         }
 
-        var track = new Rect(center.X - 16, center.Y - 9, 32, 18);
-        var thumb = new Point(IsOn ? track.Right - 9 : track.Left + 9, center.Y);
+        var hub = center + new Vector(0, 3);
 
-        context.DrawRectangle(IsOn ? On : Lit ? LitFace : Off, Edge, track, 9, 9);
-        context.DrawEllipse(Thumb, null, thumb, 6, 6);
+        context.DrawEllipse(Lit ? LitFace : Face, null, hub, radius - 8, radius - 8);
+
+        foreach (var (at, on) in new[] { (OffLamp, !IsOn), (OnLamp, IsOn) })
+        {
+            var lamp = Along(center, radius - 1, Radians(at));
+
+            if (!on)
+            {
+                context.DrawEllipse(Unlit, null, lamp, 1.2, 1.2);
+                continue;
+            }
+
+            context.DrawEllipse(Halo, null, lamp, 4, 4);
+            context.DrawEllipse(Lamp, null, lamp, 2, 2);
+        }
+
+        var angle = Radians(IsOn ? OnLamp : OffLamp);
+
+        context.DrawLine(IsOn ? OnPointer : Pointer, Along(hub, 2, angle), Along(hub, radius - 11, angle));
     }
+
+    private static double Radians(double degrees) => degrees * Math.PI / 180;
+
+    private static Point Along(Point center, double distance, double angle) =>
+        new(center.X + distance * Math.Cos(angle), center.Y + distance * Math.Sin(angle));
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
