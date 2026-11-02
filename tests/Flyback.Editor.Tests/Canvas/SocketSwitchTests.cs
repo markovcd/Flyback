@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Notices;
+using Flyback.Ui.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
