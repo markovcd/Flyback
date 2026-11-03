@@ -512,6 +512,15 @@ internal sealed partial class SourceView : UserControl
     /// they were reading. Moving it is a move like any other, so the panel
     /// follows it exactly as it follows an arrow key.
     /// </remarks>
+    /// <summary>The bottom left of the caret's line where the caret stands, in this view's coordinates, or null while it is off screen.</summary>
+    internal Point? CaretBottom()
+    {
+        var view = text.TextArea.TextView;
+        var at = view.GetVisualPosition(text.TextArea.Caret.Position, VisualYPosition.LineBottom) - view.ScrollOffset;
+
+        return at.Y < 0 || at.Y > view.Bounds.Height ? null : view.TranslatePoint(at, this);
+    }
+
     public int Caret
     {
         get => text.TextArea.Caret.Offset;

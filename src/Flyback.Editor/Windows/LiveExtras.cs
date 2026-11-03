@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Hubs;
 using Flyback.Editor.Inspect;
@@ -19,6 +20,10 @@ namespace Flyback.Editor.Windows;
 /// [ ] button or Ctrl+I, since the inspector is put away while the picture has the window.
 /// </summary>
 /// <remarks>
+/// The card hangs under the module it edits, or beside it where there is no room below, or at
+/// the caret's line on the right over the text, and follows it as the view moves.
+/// </remarks>
+/// <remarks>
 /// Offered only where the module's rows are drawn: zoomed out past reading, a module is a
 /// name and nothing else is reached through it. Over the text the selection is the call the
 /// caret stands in. The card holds the inspector's own controls, so an edit goes through the
@@ -26,7 +31,15 @@ namespace Flyback.Editor.Windows;
 /// </remarks>
 internal sealed class LiveExtras : IReactTo<SelectionChanged>, IReactTo<PatchChanged>
 {
-    private const double Width = 360;
+    /// <summary>Wide enough for a keyboard's octave; a card of choices is wider, to fit more buttons a row.</summary>
+    private const double Narrow = 380;
+
+    private const double Wide = 440;
+
+    private double Width => Card.Width;
+
+    /// <summary>The gap between the card and what it hangs from, and the least it keeps from the picture's edges.</summary>
+    private const double Gap = 12;
 
     private readonly LivePatching live;
     private readonly FullScreenPreview fullScreen;
@@ -34,8 +47,8 @@ internal sealed class LiveExtras : IReactTo<SelectionChanged>, IReactTo<PatchCha
     private readonly SourceView source;
     private readonly ExtraEditors extras;
 
-    private readonly StackPanel body = new() { Spacing = 4 };
-    private readonly TextBlock title = new() { FontWeight = FontWeight.SemiBold, VerticalAlignment = VerticalAlignment.Center };
+    private readonly StackPanel body = new() { Spacing = 12 };
+    private readonly TextBlock title = new() { FontSize = 14, FontWeight = FontWeight.SemiBold, Foreground = new SolidColorBrush(Colors.Bright), VerticalAlignment = VerticalAlignment.Center };
 
     private TransportOverlay? overlay;
 
@@ -55,13 +68,15 @@ internal sealed class LiveExtras : IReactTo<SelectionChanged>, IReactTo<PatchCha
             Name = "liveExtrasClose",
             Content = Glyphs.Cross(),
             Background = Brushes.Transparent,
-            Padding = new Thickness(6),
+            Width = 32,
+            Height = 32,
+            Padding = new Thickness(8),
             HorizontalAlignment = HorizontalAlignment.Right,
         };
         close.Click += (_, _) => Close();
         ToolTip.SetTip(close, "Shut  (Esc)");
 
-        var head = new DockPanel { Margin = new Thickness(0, 0, 0, 6) };
+        var head = new DockPanel { Margin = new Thickness(0, 0, 0, 12) };
         DockPanel.SetDock(close, Dock.Right);
         head.Children.Add(close);
         head.Children.Add(title);
@@ -75,20 +90,22 @@ internal sealed class LiveExtras : IReactTo<SelectionChanged>, IReactTo<PatchCha
         {
             Name = "liveExtrasCard",
             IsVisible = false,
-            Width = Width,
-            HorizontalAlignment = HorizontalAlignment.Right,
+            Width = Narrow,
+            MaxHeight = 560,
+            HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Top,
-            Margin = new Thickness(16, 64, 16, 64),
-            Padding = new Thickness(14, 10, 14, 14),
-            Background = new SolidColorBrush(Colors.Panel, 0.94),
-            BorderBrush = new SolidColorBrush(Colors.Separator),
+            Padding = new Thickness(16, 10, 10, 16),
+            Background = new SolidColorBrush(Colors.Window, 0.9),
+            BorderBrush = new SolidColorBrush(Colors.Value, 0.3),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(2),
+            CornerRadius = new CornerRadius(8),
             Child = content,
         };
 
         live.Changed += Sync;
         editor.View.OverviewChanged += Sync;
+        editor.View.Moved += Hang;
+        source.Moved += (_, _) => Hang();
     }
 
     /// <summary>The card itself, for the tests.</summary>
@@ -136,6 +153,7 @@ internal sealed class LiveExtras : IReactTo<SelectionChanged>, IReactTo<PatchCha
         Build(node, def);
         Place();
         Card.IsVisible = true;
+        Hang();
         Sync();
     }
 
@@ -153,10 +171,66 @@ internal sealed class LiveExtras : IReactTo<SelectionChanged>, IReactTo<PatchCha
     private void Build(NodeInstance node, NodeDef def)
     {
         shown = node;
-        title.Text = node.Name;
+        Card.Width = def.Extras.All(extra => extra is ScaleExtra) ? Narrow : Wide;
+        title.Text = def.Extras.Count == 1 ? $"{node.Name ?? def.Name} · {def.Extras[0].Key}" : node.Name ?? def.Name;
         body.Children.Clear();
 
-        foreach (var control in extras.Of(node, def, reading: false)) body.Children.Add(control);
+        foreach (var extra in def.Extras)
+        {
+            if (extras.Large(extra, node, def) is not { } control) continue;
+
+            if (def.Extras.Count > 1)
+                body.Children.Add(new TextBlock { Text = extra.Key, FontSize = 12, Foreground = new SolidColorBrush(Colors.Muted) });
+
+            body.Children.Add(control);
+        }
+    }
+
+    /// <summary>
+    /// Hangs the card under the module, or under the caret's line over the text, or over it
+    /// where there is no room below, kept inside the picture.
+    /// </summary>
+    private void Hang()
+    {
+        if (!IsOpen || shown is null || fullScreen.PreviewBox is not { } picture || NodeCatalog.Get(shown.TypeId) is not { } def) return;
+
+        var room = picture.Bounds.Size;
+        Rect? under = null;
+
+        if (live.Coding)
+        {
+            if (source.CaretBottom() is { } caret && source.TranslatePoint(caret, picture) is { } at)
+                under = new Rect(at.X, at.Y - 24, 0, 24);
+        }
+        else
+        {
+            var box = editor.View.OnScreen(editor.Geometry.Bounds(shown, def));
+            if (editor.TranslatePoint(box.TopLeft, picture) is { } at) under = new Rect(at, box.Size);
+        }
+
+        if (under is not { } from) return;
+
+        Card.Measure(Size.Infinity);
+        var height = Card.DesiredSize.Height;
+
+        // Over the text the card keeps to the right, clear of the lines it would cover. Under a
+        // module it hangs below where there is room, and otherwise stands beside it.
+        double left, top;
+
+        if (live.Coding)
+            (left, top) = (room.Width - Width - Gap * 2, Below(from) ?? from.Top - Gap - height);
+        else if (Below(from) is { } below)
+            (left, top) = (from.Center.X - Width / 2, below);
+        else
+            (left, top) = (from.Right + Gap + Width <= room.Width - Gap ? from.Right + Gap : from.Left - Gap - Width, from.Top);
+
+        Card.Margin = new Thickness(
+            Math.Clamp(left, Gap, Math.Max(Gap, room.Width - Width - Gap)),
+            Math.Clamp(top, Gap, Math.Max(Gap, room.Height - height - Gap)),
+            0,
+            0);
+
+        double? Below(Rect over) => over.Bottom + Gap + height <= room.Height - Gap ? over.Bottom + Gap : null;
     }
 
     /// <summary>Over the picture, above the patch lifted onto it and under the transport.</summary>
@@ -216,6 +290,7 @@ internal sealed class LiveExtras : IReactTo<SelectionChanged>, IReactTo<PatchCha
         if (IsOpen && editor.History.Patch.Find(shown!.Id) is { } now && !ReferenceEquals(now, shown) && NodeCatalog.Get(now.TypeId) is { } def)
             Build(now, def);
 
+        Hang();
         Sync();
         return Task.CompletedTask;
     }

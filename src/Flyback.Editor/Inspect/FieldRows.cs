@@ -11,6 +11,7 @@ using Flyback.Editor.Settings;
 using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
 using Flyback.Ui.Midi;
+using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Inspect;
 
@@ -29,25 +30,45 @@ internal sealed class FieldRows(NodeEditor editor, TextWriteBack writeBack, Midi
     /// tell you which one it is drawing. A field shape this build has never heard
     /// of is skipped rather than drawn wrongly.
     /// </remarks>
-    public Control? Declared(NodeInstance node, NodeExtra extra, bool reading)
+    /// <param name="large">
+    /// Sized for a finger, as on the card over the live picture: a short choice is a row of
+    /// buttons, and the card's own heading names the extra.
+    /// </param>
+    public Control? Declared(NodeInstance node, NodeExtra extra, bool reading, bool large = false)
     {
         if (extra.Fields.Count == 0) return null;
 
-        var section = new StackPanel { Margin = new Thickness(0, 8, 0, 0) };
+        var section = new StackPanel { Margin = new Thickness(0, large ? 0 : 8, 0, 0), Spacing = large ? 12 : 0 };
 
-        section.Children.Add(new TextBlock
-        {
-            Text = extra.Key,
-            FontSize = Text.Micro,
-            Foreground = Text.Muted,
-            Margin = new Thickness(0, 0, 0, 4),
-        });
+        if (!large)
+            section.Children.Add(new TextBlock
+            {
+                Text = extra.Key,
+                FontSize = Text.Micro,
+                Foreground = Text.Muted,
+                Margin = new Thickness(0, 0, 0, 4),
+            });
 
         foreach (var field in extra.Fields)
+        {
+            if (large && field is ExtraField.Choice { Options.Count: <= ChoiceChips.Most } choice && NodeCatalog.Get(node.TypeId) is { } def)
+            {
+                section.Children.Add(new ChoiceChips(choice.Label, choice.Options, choice.Value(node.StateOf(extra.Key)?[field.Key]), Colors.Palette(def).Accent, next => Picked(node, extra, choice, next)).View);
+                continue;
+            }
+
             if (FieldRow(node, extra, field, reading) is { } control)
                 section.Children.Add(InspectorRows.Helped(control, field.Help));
+        }
 
         return section;
+    }
+
+    private void Picked(NodeInstance node, NodeExtra extra, ExtraField.Choice choice, string next)
+    {
+        Store(node, extra, choice, JsonValue.Create(next));
+
+        if (choice.Reshapes) Dispatcher.UIThread.Post(() => editor.Reactions.Raise(new PanelStale()));
     }
 
     private Control? FieldRow(NodeInstance node, NodeExtra extra, ExtraField field, bool reading) => field switch
@@ -74,12 +95,7 @@ internal sealed class FieldRows(NodeEditor editor, TextWriteBack writeBack, Midi
         ExtraField.Choice choice => rows.ChoiceRow(
             choice,
             choice.Value(node.StateOf(extra.Key)?[field.Key]),
-            next =>
-            {
-                Store(node, extra, field, JsonValue.Create(next));
-
-                if (choice.Reshapes) Dispatcher.UIThread.Post(() => editor.Reactions.Raise(new PanelStale()));
-            },
+            next => Picked(node, extra, choice, next),
 
             // What the same field would say if asked again. An extra is free to
             // compute its fields afresh — MidiExtra does, because what it lists

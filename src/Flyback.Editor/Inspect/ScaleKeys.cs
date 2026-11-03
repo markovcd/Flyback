@@ -27,10 +27,16 @@ namespace Flyback.Editor.Inspect;
 internal sealed class ScaleKeys
 {
     /// <summary>How wide one natural key is. Seven of them fill the panel's width.</summary>
-    private const double KeyWidth = 30;
+    private readonly double keyWidth;
 
-    private const double NaturalHeight = 46;
-    private const double SharpHeight = 28;
+    private readonly double naturalHeight;
+    private readonly double sharpHeight;
+
+    /// <summary>Whether the keys are sized for a finger, as on the card over the live picture.</summary>
+    private readonly bool large;
+
+    private static readonly IBrush OffNatural = new ImmutableSolidColorBrush(Colors.Value);
+    private static readonly IBrush OffNaturalText = new ImmutableSolidColorBrush(Colors.Node);
 
     /// <summary>Marks the buttons that are keys, so a test can pick them out of the tree.</summary>
     internal const string KeyTag = "scale-key";
@@ -50,6 +56,7 @@ internal sealed class ScaleKeys
 
     private const string LitClass = "lit";
     private const string OffClass = "off";
+    private const string OffNaturalClass = "off-natural";
 
     /// <summary>The scale as it stands, from wherever it is kept.</summary>
     private readonly Func<List<int>> read;
@@ -76,8 +83,15 @@ internal sealed class ScaleKeys
     };
 
     /// <summary>The scale a module carries.</summary>
-    public ScaleKeys(NodeInstance node, NodeDef def, Action<string?> changed)
+    /// <param name="large">
+    /// Keys a finger can hit, painted as a keyboard is, with one hint line under them;
+    /// otherwise the inspector's compact row with its shortcuts and summary.
+    /// </param>
+    public ScaleKeys(NodeInstance node, NodeDef def, Action<string?> changed, bool large = false)
     {
+        this.large = large;
+        (keyWidth, naturalHeight, sharpHeight) = large ? (44d, 120d, 74d) : (30d, 46d, 28d);
+
         read = () => ScaleExtra.Of(node);
         write = scale =>
         {
@@ -87,19 +101,36 @@ internal sealed class ScaleKeys
 
         on = new SolidColorBrush(Colors.Palette(def).Accent);
 
-        var panel = new StackPanel { Margin = new Thickness(0, 14, 0, 0) };
+        var panel = new StackPanel { Margin = new Thickness(0, large ? 0 : 14, 0, 0) };
 
-        panel.Children.Add(new TextBlock
+        if (large)
         {
-            Text = "scale",
-            FontSize = Text.Micro,
-            Foreground = Text.Muted,
-            Margin = new Thickness(0, 0, 0, 4),
-        });
+            var board = Keyboard();
+            board.HorizontalAlignment = HorizontalAlignment.Center;
+            panel.Children.Add(board);
+            panel.Children.Add(new TextBlock
+            {
+                Text = "Tap a key to put it in the scale or take it out. Heard at once.",
+                FontSize = Text.Body,
+                Foreground = Text.Muted,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 12, 0, 0),
+            });
+        }
+        else
+        {
+            panel.Children.Add(new TextBlock
+            {
+                Text = "scale",
+                FontSize = Text.Micro,
+                Foreground = Text.Muted,
+                Margin = new Thickness(0, 0, 0, 4),
+            });
 
-        panel.Children.Add(Keyboard());
-        panel.Children.Add(Buttons());
-        panel.Children.Add(summary);
+            panel.Children.Add(Keyboard());
+            panel.Children.Add(Buttons());
+            panel.Children.Add(summary);
+        }
 
         // Fluent gives a button a rounded corner and a hover that lifts it off
         // the panel. A keyboard is a run of keys that touch, so both go: what is
@@ -120,7 +151,7 @@ internal sealed class ScaleKeys
         // The theme repaints a hovered button's fill and text from its own resources,
         // which hides whether the key is on. Hover says "this one" with a ring and
         // leaves the fill and text to say on or off.
-        foreach (var (state, fill, text) in new[] { (LitClass, on, OnText), (OffClass, Off, OffText) })
+        foreach (var (state, fill, text) in new[] { (LitClass, on, OnText), (OffClass, Off, OffText), (OffNaturalClass, OffNatural, OffNaturalText) })
         {
             var hovered = new Style(x => x
                 .OfType<Button>().Class(KeyTag).Class(state).Class(":pointerover")
@@ -148,16 +179,16 @@ internal sealed class ScaleKeys
     {
         var board = new Avalonia.Controls.Canvas
         {
-            Width = Naturals.Length * KeyWidth,
-            Height = NaturalHeight,
+            Width = Naturals.Length * keyWidth,
+            Height = naturalHeight,
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
         for (var i = 0; i < Naturals.Length; i++)
         {
-            var key = Key(Naturals[i], KeyWidth - 1, NaturalHeight);
+            var key = Key(Naturals[i], keyWidth - 1, naturalHeight);
 
-            Avalonia.Controls.Canvas.SetLeft(key, i * KeyWidth);
+            Avalonia.Controls.Canvas.SetLeft(key, i * keyWidth);
             Avalonia.Controls.Canvas.SetTop(key, 0);
             board.Children.Add(key);
         }
@@ -170,9 +201,10 @@ internal sealed class ScaleKeys
             var sharp = Naturals[i] + 1;
             if (Naturals.Contains(sharp % Pitch.Classes)) continue;
 
-            var key = Key(sharp, KeyWidth - 9, SharpHeight);
+            var sharpWidth = large ? 28 : keyWidth - 9;
+            var key = Key(sharp, sharpWidth, sharpHeight);
 
-            Avalonia.Controls.Canvas.SetLeft(key, (i + 1) * KeyWidth - (KeyWidth - 9) / 2 - 0.5);
+            Avalonia.Controls.Canvas.SetLeft(key, (i + 1) * keyWidth - sharpWidth / 2 - 0.5);
             Avalonia.Controls.Canvas.SetTop(key, 0);
             board.Children.Add(key);
         }
@@ -186,14 +218,15 @@ internal sealed class ScaleKeys
         {
             Width = width,
             Height = height,
-            FontSize = Text.Micro,
+            FontSize = large ? Text.Body : Text.Micro,
             Content = new TextBlock
             {
                 Text = Pitch.ClassName(pitchClass),
-                FontSize = Text.Micro,
+                FontSize = large ? Text.Body : Text.Micro,
+                FontWeight = large ? FontWeight.SemiBold : FontWeight.Normal,
                 VerticalAlignment = VerticalAlignment.Bottom,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 4),
+                Margin = new Thickness(0, 0, 0, large ? 8 : 4),
             },
         };
 
@@ -269,13 +302,15 @@ internal sealed class ScaleKeys
         foreach (var (pitchClass, key) in keys)
         {
             var lit = scale.Contains(pitchClass);
+            var natural = large && Naturals.Contains(pitchClass);
 
-            key.Background = lit ? on : Off;
+            key.Background = lit ? on : natural ? OffNatural : Off;
             key.BorderBrush = Edge.Brush;
-            key.Foreground = lit ? OnText : OffText;
-            key.Opacity = lit ? 1 : 0.75;
+            key.Foreground = lit ? OnText : natural ? OffNaturalText : OffText;
+            key.Opacity = lit || large ? 1 : 0.75;
             key.Classes.Set(LitClass, lit);
-            key.Classes.Set(OffClass, !lit);
+            key.Classes.Set(OffClass, !lit && !natural);
+            key.Classes.Set(OffNaturalClass, !lit && natural);
         }
 
         summary.Text = scale.Count switch

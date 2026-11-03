@@ -78,6 +78,9 @@ internal sealed class Viewport
     /// <summary>Raised as the view crosses the zoom below which rows are no longer drawn, either way.</summary>
     public event Action? OverviewChanged;
 
+    /// <summary>Raised after every pan, which every zoom ends with.</summary>
+    public event Action? Moved;
+
     public Point Pan { get; private set; } = Home;
 
     /// <summary>The size of the control the canvas fills.</summary>
@@ -246,6 +249,8 @@ internal sealed class Viewport
         Pan = new Point(
             Held(to.X, Size.Width, ViewReachAcross),
             Held(to.Y, Size.Height, ViewReachDown));
+
+        Moved?.Invoke();
 
         double Held(double offset, double viewport, double reach)
         {

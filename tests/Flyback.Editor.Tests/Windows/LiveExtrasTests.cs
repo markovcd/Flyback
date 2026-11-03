@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -8,6 +9,7 @@ using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
+using Flyback.Editor.Controls;
 using Flyback.Editor.Hubs;
 using Flyback.Editor.Inspect;
 using Flyback.Editor.Tests.Controls;
@@ -92,6 +94,49 @@ public class LiveExtrasTests : EditorTest
         Click(window, ExtrasButton(window));
 
         extras.IsOpen.ShouldBeFalse("the same button shuts it");
+    }
+
+    [AvaloniaFact]
+    public void The_card_hangs_under_the_module_it_edits_and_names_it()
+    {
+        var window = Open(Snapped(out var quantiser, out _));
+        var extras = Service<LiveExtras>(window);
+        var editor = Editor(window);
+
+        GoLive(window);
+        Select(window, quantiser);
+        Click(window, ExtrasButton(window));
+
+        var box = editor.View.OnScreen(editor.Geometry.Bounds(quantiser, NodeCatalog.Get(quantiser.TypeId)!));
+        var card = extras.Card.TranslatePoint(default, editor)!.Value;
+
+        All<TextBlock>(extras.Card).First().Text.ShouldBe("Quantiser · scale");
+        card.Y.ShouldBeGreaterThan(box.Bottom, "under the module");
+        (card.X + extras.Card.Bounds.Width / 2).ShouldBe(box.Center.X, 1, "centered on it");
+    }
+
+    [AvaloniaFact]
+    public void A_short_choice_on_the_card_is_a_row_of_buttons_and_a_tap_keeps_it()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var ink = builder.Add("color.ink", 300, 0);
+        builder.Wire(ink, 0, builder.Add(NodeCatalog.OutputTypeId, 600, 0), NodeCatalog.OutputColorPort);
+
+        var window = Open(builder.Patch);
+        var extras = Service<LiveExtras>(window);
+        var placed = Editor(window).History.Patch.Find(ink.Id)!;
+
+        GoLive(window);
+        Select(window, placed);
+        Click(window, ExtrasButton(window));
+
+        var chips = All<Button>(extras.Card).Where(b => b.Classes.Contains(ChoiceChips.ChipTag)).ToList();
+        chips.ShouldNotBeEmpty("a list this short is buttons");
+        All<Picker>(extras.Card).ShouldBeEmpty();
+
+        Click(window, chips.Single(b => b.Content is "Over"));
+
+        (placed.StateOf(NodeCatalog.InkStateKey)?[NodeCatalog.InkModeKey]?.GetValue<string>() ?? "").ShouldBe(NodeCatalog.InkOver);
     }
 
     [AvaloniaFact]
