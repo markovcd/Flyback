@@ -342,14 +342,16 @@ public class LivePatchingTests : EditorTest
         var picture = Service<FullScreenPreview>(window).PreviewBox!;
 
         for (var y = 0.1; y < 1; y += 0.2)
-        for (var x = 0.1; x < 1; x += 0.2)
         {
-            var at = new Point(window.Bounds.Width * x, window.Bounds.Height * y);
-            window.MouseDown(at, MouseButton.Left);
-            window.MouseUp(at, MouseButton.Left);
-            Settle(window);
+            for (var x = 0.1; x < 1; x += 0.2)
+            {
+                var at = new Point(window.Bounds.Width * x, window.Bounds.Height * y);
+                window.MouseDown(at, MouseButton.Left);
+                window.MouseUp(at, MouseButton.Left);
+                Settle(window);
 
-            playback.Paused.ShouldBeFalse($"a click at {at} leaves the patch playing");
+                playback.Paused.ShouldBeFalse($"a click at {at} leaves the patch playing");
+            }
         }
 
         var pointer = new Pointer(Pointer.GetNextFreeId(), PointerType.Mouse, isPrimary: true);
