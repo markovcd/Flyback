@@ -125,7 +125,8 @@ ask() {
 
 # A field of the last answer: a string without its quotes, or a bare number, true, false or null.
 field() {
-  printf '%s' "$state" | sed -n "s/.*\"$1\":\"\([^\"]*\)\".*/\1/p; t; s/.*\"$1\":\([^,}]*\).*/\1/p"
+  # Separate -e expressions: BSD sed reads the rest of a line after "t" as its label.
+  printf '%s' "$state" | sed -n -e "s/.*\"$1\":\"\([^\"]*\)\".*/\1/p" -e t -e "s/.*\"$1\":\([^,}]*\).*/\1/p"
 }
 
 state=""
