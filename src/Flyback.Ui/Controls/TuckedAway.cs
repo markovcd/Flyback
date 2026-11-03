@@ -33,6 +33,9 @@ public abstract class TuckedAway : Border
     /// <summary>How long the contents stay once the pointer has left them.</summary>
     private static readonly TimeSpan Grace = TimeSpan.FromMilliseconds(900);
 
+    /// <summary>How long they stay once a finger has lifted, which has no pointer left behind to hold them.</summary>
+    private static readonly TimeSpan FingerGrace = TimeSpan.FromSeconds(4);
+
     /// <summary>A dark rim under the light strokes, so they read on a white frame and a black one alike.</summary>
     protected static DropShadowEffect Halo() => new() { OffsetX = 0, OffsetY = 0, BlurRadius = 3, Color = Avalonia.Media.Colors.Black, Opacity = 0.9 };
 
@@ -87,6 +90,15 @@ public abstract class TuckedAway : Border
             arriving = GuardsArrival;
         };
 
+        // A finger arrives by no hover, so its press on the dots is what opens them.
+        Dots.PointerPressed += (_, e) =>
+        {
+            if (IsOpen) return;
+
+            Shown();
+            e.Handled = true;
+        };
+
         AddHandler(PointerMovedEvent, (_, e) => arriving &= OnDots(e), RoutingStrategies.Tunnel, handledEventsToo: true);
         AddHandler(PointerPressedEvent, (_, e) =>
         {
@@ -94,11 +106,15 @@ public abstract class TuckedAway : Border
         }, RoutingStrategies.Tunnel);
 
         PointerEntered += (_, _) => tuck.Stop();
-        PointerExited += (_, _) => { if (!held && !IsPinned) tuck.Start(); };
+        PointerExited += (_, e) => { if (!held && !IsPinned) Tuck(e.Pointer); };
 
         // A knob dragged past the edge keeps its place until it is let go.
-        AddHandler(PointerPressedEvent, (_, _) => held = true, RoutingStrategies.Tunnel, handledEventsToo: true);
-        AddHandler(PointerReleasedEvent, (_, _) => Released(), RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(PointerPressedEvent, (_, _) =>
+        {
+            held = true;
+            tuck.Stop();
+        }, RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(PointerReleasedEvent, (_, e) => Released(e.Pointer), RoutingStrategies.Tunnel, handledEventsToo: true);
 
         tuck.Tick += (_, _) =>
         {
@@ -276,12 +292,18 @@ public abstract class TuckedAway : Border
         Dots.Opacity = Proximity(Math.Sqrt(Math.Pow(at.X - middle.X, 2) + Math.Pow(at.Y - middle.Y, 2)));
     }
 
-    private void Released()
+    private void Released(IPointer pointer)
     {
         if (!held) return;
 
         held = false;
-        if (!IsPointerOver && !IsPinned) tuck.Start();
+        if ((pointer.Type == PointerType.Touch || !IsPointerOver) && !IsPinned) Tuck(pointer);
+    }
+
+    private void Tuck(IPointer pointer)
+    {
+        tuck.Interval = pointer.Type == PointerType.Touch ? FingerGrace : Grace;
+        tuck.Start();
     }
 
     private void Hidden()

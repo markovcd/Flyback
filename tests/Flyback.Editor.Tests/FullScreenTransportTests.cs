@@ -145,6 +145,37 @@ public sealed class FullScreenTransportTests : EditorTest
         Preview(window).Time.ShouldBe(before);
     }
 
+    /// <summary>A finger has no hover to arrive by, so its tap on the dots is what opens them.</summary>
+    [AvaloniaFact]
+    public void A_finger_on_the_dots_opens_the_bar_and_it_stays_open_after_lifting()
+    {
+        var window = Open();
+
+        FullScreen(window);
+
+        var before = Preview(window).Time;
+        var overlay = Overlay(window);
+
+        FingerAlong(overlay.Dots, window, Dots(window, overlay));
+
+        overlay.IsOpen.ShouldBeTrue();
+        Preview(window).Time.ShouldBe(before, "the tap that opens the bar seeks nothing");
+    }
+
+    [AvaloniaFact]
+    public void A_finger_on_the_knobs_dots_opens_the_knobs()
+    {
+        var window = Open();
+
+        FullScreen(window);
+
+        var knobs = All<StageKnobs>(window).Single();
+
+        FingerAlong(knobs.Dots, window, Dots(window, knobs));
+
+        knobs.IsOpen.ShouldBeTrue();
+    }
+
     [AvaloniaFact]
     public void Its_loop_switch_is_the_toolbars()
     {
