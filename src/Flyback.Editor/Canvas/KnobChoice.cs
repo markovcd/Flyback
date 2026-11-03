@@ -29,7 +29,7 @@ internal sealed class KnobChoice(CanvasHistory history, CanvasSelection selectio
     /// <summary>The line Enter would pick.</summary>
     public int Index { get; private set; }
 
-    /// <summary>The lines of the list: each knob on the panel, New knob, and Unlink where the socket follows one.</summary>
+    /// <summary>The lines of the list: each knob on the panel, New knob while the panel has room, and Unlink where the socket follows one.</summary>
     public IReadOnlyList<Row> Rows
     {
         get
@@ -52,7 +52,7 @@ internal sealed class KnobChoice(CanvasHistory history, CanvasSelection selectio
                 rows.Add(new Row(Tag(i), $"{knob.Name} · {said}", others.Count > 0 && knob.Id != linked, knob.Id, Current: knob.Id == linked));
             }
 
-            rows.Add(new Row("+", "New knob", false, null));
+            if (!patch.ControlsFull) rows.Add(new Row("+", "New knob", false, null));
             if (linked is { } id) rows.Add(new Row("×", "Unlink", false, id, Unlink: true));
 
             return rows;

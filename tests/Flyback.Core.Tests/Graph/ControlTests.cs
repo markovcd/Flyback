@@ -353,4 +353,16 @@ public class ControlTests
         link.At(0f).ShouldBe(off);
         link.At(1f).ShouldBe(on);
     }
+
+    [Fact]
+    public void A_full_panel_refuses_another_knob()
+    {
+        var patch = new Patch();
+
+        for (var i = 0; i < Patch.MostControls; i++) patch.AddControl();
+
+        patch.ControlsFull.ShouldBeTrue();
+        Should.Throw<InvalidOperationException>(() => patch.AddControl());
+        patch.Controls!.Count.ShouldBe(Patch.MostControls);
+    }
 }

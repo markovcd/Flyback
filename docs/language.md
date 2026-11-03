@@ -617,6 +617,9 @@ Output's knobs are never in a call, so they follow one by a statement,
 it hears the controller on any channel. `held`, a bare word, keeps the knob
 where it is when the panel is randomized: `panel level = 0.8, held`.
 
+A panel holds at most 32 knobs, switches and buttons together; a `panel` line
+past that is `too-many-controls`.
+
 `switch` or `button`, a bare word, plays the knob as one, resting at 0 for off
 or 1 for on. A switch flips at each press and stays; a button is on only while
 held. Either takes `note:` in place of `cc:` for a pad or a key, and a switch on

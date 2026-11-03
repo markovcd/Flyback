@@ -189,9 +189,18 @@ public sealed class Patch
     /// <summary>The knob called <paramref name="id"/>, or null where the panel has none.</summary>
     internal PatchControl? Control(Guid id) => Controls?.FirstOrDefault(c => c.Id == id);
 
+    /// <summary>The most knobs, switches and buttons a panel holds: two pages of an 8x2 controller.</summary>
+    internal const int MostControls = 32;
+
+    /// <summary>Whether the panel holds as many controls as it may, so another cannot be added.</summary>
+    internal bool ControlsFull => (Controls?.Count ?? 0) >= MostControls;
+
     /// <summary>Puts a new knob at the end of the panel, and hands it back.</summary>
+    /// <exception cref="InvalidOperationException">The panel is <see cref="ControlsFull"/>.</exception>
     internal PatchControl AddControl(string? name = null, float value = 0.5f)
     {
+        if (ControlsFull) throw new InvalidOperationException($"A panel holds at most {MostControls} controls.");
+
         var control = new PatchControl { Id = Guid.NewGuid(), Name = name ?? NextControlName(), Value = value };
 
         (Controls ??= []).Add(control);

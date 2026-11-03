@@ -42,6 +42,9 @@ internal sealed class PanelKnobs : IKnobRequests, IReactTo<PatchCompiled>, IReac
     /// <summary>How many knobs the panel last showed, so a patch arriving with some opens it.</summary>
     private int knobsShown;
 
+    /// <summary>Whether the open patch has been told its panel holds more than it may.</summary>
+    private bool overSaid;
+
     /// <summary>The knob panel itself.</summary>
     public ControlsPanel View { get; } = new() { IsVisible = false };
 
@@ -185,6 +188,8 @@ internal sealed class PanelKnobs : IKnobRequests, IReactTo<PatchCompiled>, IReac
 
     void IKnobRequests.Add()
     {
+        if (editor.History.Patch.ControlsFull) return;
+
         usage.Count(Used.Knob);
 
         var added = editor.History.Patch.AddControl();
@@ -328,6 +333,7 @@ internal sealed class PanelKnobs : IKnobRequests, IReactTo<PatchCompiled>, IReac
     public Task On(DocumentArrived notice)
     {
         hub.Forget();
+        overSaid = false;
         return Task.CompletedTask;
     }
 
@@ -343,6 +349,13 @@ internal sealed class PanelKnobs : IKnobRequests, IReactTo<PatchCompiled>, IReac
 
         if (knobs.Count > 0 && knobsShown == 0) reactions.Raise(new KnobsWanted());
         knobsShown = knobs.Count;
+
+        if (knobs.Count <= Patch.MostControls) overSaid = false;
+        else if (!overSaid)
+        {
+            overSaid = true;
+            report.Say($"This patch's panel has {knobs.Count} controls, past the {Patch.MostControls} a panel holds. All are kept, but no more can be added until some are removed.");
+        }
 
         if (editor.Linking.Control is { } linking && editor.History.Patch.Control(linking) is null) Link(null);
     }
@@ -418,6 +431,9 @@ internal sealed class PanelKnobs : IKnobRequests, IReactTo<PatchCompiled>, IReac
         if (notice.Control is { } same && ControlMap.Of(node, notice.Pick.Port)?.Control == same) return Task.CompletedTask;
 
         var added = notice.Control is null;
+
+        if (added && patch.ControlsFull) return Task.CompletedTask;
+
         var knob = notice.Control is { } chosen ? patch.Control(chosen) : patch.AddControl();
 
         if (knob is null) return Task.CompletedTask;

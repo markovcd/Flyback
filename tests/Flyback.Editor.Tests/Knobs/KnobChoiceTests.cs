@@ -178,4 +178,17 @@ public class KnobChoiceTests : EditorTest
         Choice(window).Index.ShouldBe(1);
         Editor(window).History.Patch.Find(value.Id)!.InputValues[0].ShouldBe(0.2f);
     }
+
+    [AvaloniaFact]
+    public void A_full_panel_offers_its_knobs_but_no_new_one()
+    {
+        var (patch, value) = Board();
+        for (var i = 0; i < Patch.MostControls; i++) patch.AddControl();
+        var window = Open(patch);
+
+        AltL(window, value);
+
+        Choice(window).Rows.Count.ShouldBe(Patch.MostControls);
+        Choice(window).Rows.ShouldNotContain(row => row.Text == "New knob");
+    }
 }

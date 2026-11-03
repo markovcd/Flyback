@@ -27,6 +27,15 @@ public sealed class LinkingSteps(PatchContext context, EditorDriver editor)
         held = editor.KnobReading(Sine.Id, Freq).ShouldNotBeNull();
     }
 
+    [Given("the panel already holds as many knobs as it can")]
+    public void GivenFullPanel()
+    {
+        for (var i = 0; i < Patch.MostControls; i++) context.Patch.AddControl();
+    }
+
+    [Then("the list of knobs has no {string}")]
+    public void ThenListLacks(string line) => editor.KnobList.ShouldNotContain(line);
+
     [When("Alt+L is pressed")]
     public void WhenAltL() => editor.Press(PhysicalKey.L, RawInputModifiers.Alt);
 

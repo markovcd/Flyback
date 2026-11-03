@@ -554,4 +554,33 @@ public class KnobPanelTests : EditorTest
         control.Value.ShouldBe(0f);
         All<PanelSwitch>(Panel(window)).ShouldHaveSingleItem().Value.ShouldBe(0d);
     }
+
+    /// <summary><see cref="Board"/> with <paramref name="count"/> knobs, written straight into the list so it may pass the limit.</summary>
+    private static Patch Knobbed(int count)
+    {
+        var (patch, _) = Board();
+
+        patch.Controls = [.. Enumerable.Range(1, count).Select(n => new PatchControl { Id = Guid.NewGuid(), Name = $"Knob {n}" })];
+        return patch;
+    }
+
+    [AvaloniaFact]
+    public void A_full_panel_greys_out_adding_a_knob()
+    {
+        var window = Open(Knobbed(Patch.MostControls));
+
+        var add = All<Button>(window).Single(b => b.Name == "add-knob");
+        add.IsEnabled.ShouldBeFalse();
+        ToolTip.GetTip(add).ShouldBe($"A panel holds at most {Patch.MostControls} knobs. Remove one to add another.");
+    }
+
+    [AvaloniaFact]
+    public void A_patch_past_the_limit_opens_with_every_knob_and_says_no_more_can_be_added()
+    {
+        var window = Open(Knobbed(Patch.MostControls + 3));
+
+        Editor(window).History.Patch.Controls!.Count.ShouldBe(Patch.MostControls + 3);
+        All<Button>(window).Single(b => b.Name == "add-knob").IsEnabled.ShouldBeFalse();
+        All<ReportLine>(window).Single().History.ShouldContain(line => line.StartsWith($"This patch's panel has {Patch.MostControls + 3} controls", StringComparison.Ordinal));
+    }
 }

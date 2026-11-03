@@ -326,4 +326,13 @@ public class PanelTests
     {
         Refused(line).Code.ShouldBe(IssueCode.UnknownSetting);
     }
+
+    [Fact]
+    public void A_panel_holds_at_most_its_limit_of_controls()
+    {
+        var full = string.Join('\n', Enumerable.Range(1, Patch.MostControls).Select(n => $"panel k{n} = 0.5"));
+
+        Build(full).Patch.Controls.ShouldNotBeNull().Count.ShouldBe(Patch.MostControls);
+        Refused(full + "\npanel one_more = 0.5").Code.ShouldBe(IssueCode.TooManyControls);
+    }
 }

@@ -518,6 +518,13 @@ public sealed class Binder
             return;
         }
 
+        if (patch.ControlsFull)
+        {
+            issues.Complain(IssueCode.TooManyControls, line, column,
+                $"a panel holds at most {Patch.MostControls} knobs, switches and buttons. Take one out to add this one.");
+            return;
+        }
+
         if (!Free(statement.Name, scope, line, column)) return;
 
         // A knob given a range is written like a call, so it cannot share a

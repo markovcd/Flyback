@@ -65,6 +65,11 @@ public static class IssueCode
     /// <summary>A block that writes more parts, or a part more sections, than an Arrangement holds.</summary>
     public const string TooManyParts = "too-many-parts";
 
+    // --- the panel -------------------------------------------------------------
+
+    /// <summary>A <c>panel</c> line past the most controls a panel holds.</summary>
+    public const string TooManyControls = "too-many-controls";
+
     // --- names -----------------------------------------------------------------
 
     public const string UnknownName = "unknown-name";

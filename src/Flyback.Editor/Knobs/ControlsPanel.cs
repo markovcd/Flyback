@@ -227,7 +227,13 @@ internal sealed class ControlsPanel : Border
             Margin = new Thickness(8, 0),
         };
 
-        ToolTip.SetTip(add, "Add a knob. Click a knob's name, then sockets on the canvas, to link them to it.");
+        var full = controls.Count >= Patch.MostControls;
+
+        add.IsEnabled = !full;
+        ToolTip.SetTip(add, full
+            ? $"A panel holds at most {Patch.MostControls} knobs. Remove one to add another."
+            : "Add a knob. Click a knob's name, then sockets on the canvas, to link them to it.");
+        ToolTip.SetShowOnDisabled(add, true);
         add.Click += (_, _) => Requests?.Add();
 
         after.Add(add);
