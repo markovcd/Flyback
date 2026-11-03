@@ -218,6 +218,7 @@ internal static class EditorServices
         services.AddSingleton<SocketRows>();
         services.AddSingleton<FileRows>();
         services.AddSingleton<FieldRows>();
+        services.AddSingleton<ExtraEditors>();
         services.AddSingleton<KeyboardSection>();
         services.AddSingleton<GroupInspector>();
         services.AddSingleton<LevelInspector>();
@@ -236,6 +237,7 @@ internal static class EditorServices
         services.AddPart<TransportControls>();
         services.AddPart<FullScreenPreview>();
         services.AddPart<LivePatching>();
+        services.AddPart<LiveExtras>();
         services.AddPart<ShellLayout>();
         services.AddSingleton<EditorReadout>();
 

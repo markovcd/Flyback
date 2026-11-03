@@ -10,6 +10,7 @@
 
 ### Editor
 
+- While live patching, selecting a module that carries more than knobs (a Quantiser's scale, a sequencer's steps, a file, a plugin's choices) puts a [ ] button on the transport over the picture; it or Ctrl+I opens a card with the inspector's own controls for them, and what is changed there is written into the text when the text owns the patch. Over the text, the module is the one the caret is in. Zoomed out too far for rows to read, there is nothing to open.
 - The web editor says why when it cannot start, rather than staying on Starting.
 - The knob panel's randomize takes one narrow column: a die ringed as far round as the amount reaches, and under it Back with the number of randomizes it can step through, drawn as a clock rather than the undo arrow. The amount, the glide and the controller button that fires it are in the die's flyout, opened by a right-click or a long press, with their values written beside them.
 - Settings, Canvas, Colors offers Paper, a light scheme of ballpoint blue on cream. A scheme of your own can be light too, with `"light": true` in its file: the controls turn light, module, socket, wire and syntax colors darken just enough to read on the pale ground, and titles on module bands turn black.

@@ -110,9 +110,14 @@ internal sealed class LivePatching : IReactTo<ViewChanged>, IReactTo<OwnershipCh
         }
     }
 
+    /// <summary>Raised as the patch goes over the picture or comes off it, or another view takes its place.</summary>
+    public event Action? Changed;
+
     /// <summary>Lights the live buttons as the patch is shown.</summary>
     private void Sync()
     {
+        Changed?.Invoke();
+
         if (overlay is null) return;
 
         overlay.PatchOver = IsOn;

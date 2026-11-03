@@ -46,7 +46,8 @@ internal sealed class ShellLayout(
     EditorHost host,
     LastPress lastPress,
     PictureAside aside,
-    LivePatching live)
+    LivePatching live,
+    LiveExtras liveExtras)
     : IReactTo<PatchCompiled>,
         IReactTo<GestureFinished>,
         IReactTo<KnobsWanted>,
@@ -486,6 +487,7 @@ internal sealed class ShellLayout(
         var stats = new StatsOverlay(preview, audio, () => playback.HasSound);
         transport.Register(overlay, stats);
         live.Attach(overlay);
+        liveExtras.Attach(overlay);
         row.Seek.Drive(overlay);
         TransportOverlay.Lay(settings.Current.Transport, overlay, knobs.Stage);
         grid.Children.Add(previewBox);

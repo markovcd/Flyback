@@ -33,13 +33,11 @@ internal sealed class Inspector
         IReactTo<OwnershipChanged>
 {
     private readonly NodeEditor editor;
-    private readonly TextWriteBack writeBack;
     private readonly CaretFollow caret;
     private readonly PatchHeader header;
     private readonly MeasuredRows measuredRows;
     private readonly SocketRows socketRows;
-    private readonly FileRows files;
-    private readonly FieldRows fieldRows;
+    private readonly ExtraEditors extras;
     private readonly KeyboardSection keyboard;
 
     /// <summary>The panel a group gets instead of a module's.</summary>
@@ -61,7 +59,6 @@ internal sealed class Inspector
 
     public Inspector(
         NodeEditor editor,
-        TextWriteBack writeBack,
         CaretFollow caret,
         EditorHost host,
         InspectorSurface surface,
@@ -69,21 +66,18 @@ internal sealed class Inspector
         PatchHeader header,
         MeasuredRows measuredRows,
         SocketRows socketRows,
-        FileRows files,
-        FieldRows fieldRows,
+        ExtraEditors extras,
         KeyboardSection keyboard,
         GroupInspector groups,
         LevelInspector levelPanel,
         PatchLevels levels)
     {
         this.editor = editor;
-        this.writeBack = writeBack;
         this.caret = caret;
         this.header = header;
         this.measuredRows = measuredRows;
         this.socketRows = socketRows;
-        this.files = files;
-        this.fieldRows = fieldRows;
+        this.extras = extras;
         this.keyboard = keyboard;
         this.groups = groups;
         this.levelPanel = levelPanel;
@@ -313,13 +307,8 @@ internal sealed class Inspector
         for (var i = 0; i < def.Inputs.Count; i++)
             Panel.Children.Add(socketRows.Edged(InspectorRows.Helped(socketRows.Input(def, node, def.Inputs[i], i, reading), def.Inputs[i].Help), node, i, output: false));
 
-        // Whatever the module carries that is not a knob, each kind edited by the
-        // control that suits it. This mapping lives here rather than on the extra
-        // because it is the one part of a kind that needs Avalonia, which the
-        // engine does not reference.
-        foreach (var extra in def.Extras)
-            if (EditorFor(extra, node, def, reading) is { } control)
-                Panel.Children.Add(extra.Fields.Count == 0 ? InspectorRows.Helped(control, extra.Help) : control);
+        // Whatever the module carries that is not a knob, each kind edited by the control that suits it.
+        foreach (var control in extras.Of(node, def, reading)) Panel.Children.Add(control);
 
         if (keyboard.Build(node) is { } laid) Panel.Children.Add(laid);
 
@@ -546,37 +535,4 @@ internal sealed class Inspector
             _ => $"{string.Join(", ", parts[..^1])} and {parts[^1]}",
         };
     }
-
-    /// <summary>
-    /// Which control edits one of the things a module carries that is not a knob.
-    /// </summary>
-    /// <remarks>
-    /// The one place the App knows the kinds apart, and a lookup here rather than a
-    /// method on <see cref="NodeExtra"/> because the engine does not reference
-    /// Avalonia. A kind with nothing here costs a row on the panel and not the
-    /// panel.
-    /// </remarks>
-    private Control? EditorFor(NodeExtra extra, NodeInstance node, NodeDef def, bool reading) => extra switch
-    {
-        // A sequencer's tune is a list rather than a row of knobs (ADR-0038),
-        // so it is edited as one — added to, taken from and reordered.
-        StepsExtra steps => new StepList(
-            node, steps.Spec, Colors.Palette(def).Accent, because => writeBack.Edited(node, because)).View,
-
-        // A quantiser's scale is a set rather than a sequence, so it is edited
-        // as the octave it is a subset of rather than as a list of numbers.
-        ScaleExtra => new ScaleKeys(node, def, because => writeBack.Edited(node, because)).View,
-
-        // An Arrangement's parts are a grid, read as a shape and written a row at a time.
-        ArrangementExtra => new PartGrid(node, def, because => writeBack.Edited(node, because)).View,
-
-        // The one a node carries that is not a number, so it is a name and a
-        // button rather than a control with a range.
-        FileExtra file => files.Row(node, file),
-
-        // Anything else is a plugin's own kind, which ships no control and is
-        // drawn from what it declares instead — see ADR-0055. A kind that
-        // declares nothing simply gets no rows.
-        _ => fieldRows.Declared(node, extra, reading),
-    };
 }

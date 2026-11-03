@@ -301,6 +301,9 @@ internal static class Glyphs
     public static Control Live() => Stroked(
         "M2,3 L14,3 L14,13 L2,13 Z M4.5,5.5 L7,5.5 L7,8 L4.5,8 Z M9,8 L11.5,8 L11.5,10.5 L9,10.5 Z M7,6.75 L9,9.25");
 
+    /// <summary>Square brackets round a dash: what a module carries besides its knobs.</summary>
+    public static Control Extras() => Stroked("M6,2.5 L3.5,2.5 L3.5,13.5 L6,13.5 M10,2.5 L12.5,2.5 L12.5,13.5 L10,13.5 M6.5,8 L9.5,8");
+
     /// <summary>A bookmark — a group put by, to be added again later.</summary>
     public static Control Keep() => Stroked("M4.5,2.5 L11.5,2.5 L11.5,13.5 L8,10.5 L4.5,13.5 Z");
 

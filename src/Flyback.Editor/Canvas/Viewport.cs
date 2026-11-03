@@ -64,7 +64,19 @@ internal sealed class Viewport
         };
     }
 
-    public double Zoom { get; private set; } = 1;
+    public double Zoom
+    {
+        get;
+        private set
+        {
+            var was = Overview;
+            field = value;
+            if (Overview != was) OverviewChanged?.Invoke();
+        }
+    } = 1;
+
+    /// <summary>Raised as the view crosses the zoom below which rows are no longer drawn, either way.</summary>
+    public event Action? OverviewChanged;
 
     public Point Pan { get; private set; } = Home;
 

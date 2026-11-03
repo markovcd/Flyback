@@ -28,7 +28,7 @@ public sealed class TransportOverlay : TuckedAway
     private const double Wide = 360;
 
     /// <summary>What the buttons beside the strip take: the four of the transport, and the live ones when shown.</summary>
-    private double Beside => (4 + (Live ? 3 : 0)) * (ToolSize + Gap) + 12;
+    private double Beside => (4 + (Live ? 3 : 0) + (extrasButton.IsVisible ? 1 : 0)) * (ToolSize + Gap) + 12;
 
     /// <summary>A switch that is on, in the color the knobs' travel and the toolbar's strip are.</summary>
     private static readonly IBrush On = new ImmutableSolidColorBrush(Colors.Attention);
@@ -41,6 +41,7 @@ public sealed class TransportOverlay : TuckedAway
     private readonly Button loopButton;
     private readonly Button patchButton;
     private readonly Button leaveButton;
+    private readonly Button extrasButton;
 
     public TransportOverlay()
         : this(new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gap })
@@ -60,6 +61,9 @@ public sealed class TransportOverlay : TuckedAway
         muteButton = Tool(Glyphs.Speaker(), "Sound on or off", () => MuteClicked?.Invoke());
         patchButton = Tool(Glyphs.Live(), "The patch over the picture, or the picture alone  (Tab)", () => PatchClicked?.Invoke());
         leaveButton = Tool(Glyphs.Cross(), "Give the window back  (Esc)", () => LeaveClicked?.Invoke());
+        extrasButton = Tool(Glyphs.Extras(), "What the selected module carries besides its knobs  (Ctrl+I)", () => ExtrasClicked?.Invoke());
+        extrasButton.Name = "liveExtras";
+        extrasButton.IsVisible = false;
         patchButton.Name = "livePatch";
         leaveButton.Name = "liveLeave";
         patchButton.IsVisible = leaveButton.IsVisible = false;
@@ -85,6 +89,7 @@ public sealed class TransportOverlay : TuckedAway
         row.Children.Add(loopButton);
         row.Children.Add(muteButton);
         row.Children.Add(patchButton);
+        row.Children.Add(extrasButton);
         row.Children.Add(leaveButton);
 
         Margin = new Thickness(Inset);
@@ -119,6 +124,29 @@ public sealed class TransportOverlay : TuckedAway
 
     /// <summary>The patch button was pressed: the patch over the picture, or taken off it.</summary>
     public event Action? PatchClicked;
+
+    /// <summary>The [ ] button was pressed: the card of what the selected module carries opened or shut.</summary>
+    public event Action? ExtrasClicked;
+
+    /// <summary>Whether the [ ] button is on the strip, for a selected module that carries more than knobs.</summary>
+    public bool Extras
+    {
+        get => extrasButton.IsVisible;
+        set
+        {
+            if (extrasButton.IsVisible == value) return;
+
+            extrasButton.IsVisible = value;
+            InvalidateMeasure();
+        }
+    }
+
+    /// <summary>Whether that card is open, which lights the [ ] button.</summary>
+    public bool ExtrasOpen
+    {
+        get => extrasButton.Classes.Contains(Engaged);
+        set => extrasButton.Classes.Set(Engaged, value);
+    }
 
     /// <summary>The leave button was pressed: the window given back.</summary>
     public event Action? LeaveClicked;
