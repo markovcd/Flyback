@@ -210,8 +210,9 @@ internal sealed class LiveExtras : IReactTo<SelectionChanged>, IReactTo<PatchCha
 
         if (under is not { } from) return;
 
-        Card.Measure(Size.Infinity);
-        var height = Card.DesiredSize.Height;
+        // The card's own height: what it asks for includes the margin it was last hung at.
+        Card.Measure(new Size(Width + Card.Margin.Left, room.Height + Card.Margin.Top));
+        var height = Card.DesiredSize.Height - Card.Margin.Top - Card.Margin.Bottom;
 
         // Over the text the card keeps to the right, clear of the lines it would cover. Under a
         // module it hangs below where there is room, and otherwise stands beside it.

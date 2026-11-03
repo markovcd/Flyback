@@ -140,6 +140,27 @@ public class LiveExtrasTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void Opening_the_card_again_puts_it_where_it_was()
+    {
+        var window = Open(Snapped(out var quantiser, out _));
+        var extras = Service<LiveExtras>(window);
+
+        GoLive(window);
+        Select(window, quantiser);
+
+        var places = new List<Thickness>();
+
+        for (var i = 0; i < 4; i++)
+        {
+            Press(window, Key.I, RawInputModifiers.Control, PhysicalKey.I);
+            places.Add(extras.Card.Margin);
+            Press(window, Key.I, RawInputModifiers.Control, PhysicalKey.I);
+        }
+
+        places.Distinct().Count().ShouldBe(1, string.Join(" | ", places));
+    }
+
+    [AvaloniaFact]
     public void A_key_on_the_card_changes_the_scale_and_the_text_that_owns_it()
     {
         var window = Open();
