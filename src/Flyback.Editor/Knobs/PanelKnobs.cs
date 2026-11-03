@@ -235,6 +235,9 @@ internal sealed class PanelKnobs : IKnobRequests, IReactTo<PatchCompiled>, IReac
 
         control.Kind = kind;
 
+        // A button is on only while held, so it starts off whatever the knob was at.
+        if (kind == ControlKind.Button) control.Value = 0;
+
         // A knob is turned by a controller, never struck by a pad.
         if (kind == ControlKind.Knob && control.Midi is { Note: true }) control.Midi = null;
 

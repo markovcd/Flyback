@@ -534,4 +534,24 @@ public class KnobPanelTests : EditorTest
         All<PanelSwitch>(Panel(window)).ShouldHaveSingleItem().Value.ShouldBe(1d);
         All<Knob>(Panel(window)).Where(k => k.Name == "panel-knob").ShouldBeEmpty();
     }
+
+    [AvaloniaFact]
+    public void The_knob_menu_plays_a_knob_as_a_button_that_rests_off()
+    {
+        var (patch, _) = Board();
+        var knob = patch.AddControl(value: 0.7f);
+        var window = Open(patch);
+
+        var menu = All<Button>(Panel(window)).First(b => b.Name == "knob-menu").Flyout.ShouldBeOfType<MenuFlyout>();
+        var playAs = menu.Items.OfType<MenuItem>().Single(i => (i.Header as string) == "Play as");
+
+        playAs.Items.OfType<MenuItem>().Single(i => (i.Header as string) == "Button")
+            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
+        Settle(window);
+
+        var control = Editor(window).History.Patch.Control(knob.Id).ShouldNotBeNull();
+        control.Kind.ShouldBe(ControlKind.Button);
+        control.Value.ShouldBe(0f);
+        All<PanelSwitch>(Panel(window)).ShouldHaveSingleItem().Value.ShouldBe(0d);
+    }
 }

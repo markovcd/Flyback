@@ -38,6 +38,7 @@
 
 - On a desktop, a start that is slow to open its window shows Flyback's mark while it does.
 - While the text owns the patch, a value turns in its well on the canvas as it does in the inspector, and letting go writes it into the text; a value the text says as a sum, or through a def used more than once, shows no well.
+- A knob turned past halfway and then played as a button no longer starts lit, as if held, until it is pressed once.
 
 ### Viewer
 
