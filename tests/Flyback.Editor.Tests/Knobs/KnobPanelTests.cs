@@ -8,6 +8,7 @@ using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
 using Flyback.Editor.Knobs;
+using Flyback.Editor.Windows;
 using Flyback.Ui.Controls;
 using Shouldly;
 
@@ -223,6 +224,64 @@ public class KnobPanelTests : EditorTest
         Settle(window);
 
         Editor(window).Linking.Control.ShouldBeNull();
+    }
+
+    /// <summary>Opens the panel and adds a knob, which starts linking sockets to it.</summary>
+    private MainWindow Linking(Patch patch)
+    {
+        var window = Open(patch);
+
+        window.KeyPressQwerty(PhysicalKey.K, RawInputModifiers.Control);
+        Settle(window);
+        AddKnob(window);
+        Editor(window).Linking.Control.ShouldNotBeNull();
+
+        return window;
+    }
+
+    private static void ShouldNotBeLinking(MainWindow window)
+    {
+        Editor(window).Linking.Control.ShouldBeNull();
+        Panel(window).Linking.ShouldBeNull("the knob is not lit once linking stops");
+    }
+
+    [AvaloniaFact]
+    public void Adding_a_module_stops_linking()
+    {
+        var (patch, _) = Board();
+        var window = Linking(patch);
+
+        Editor(window).Edits.AddNode("value").ShouldNotBeNull();
+        Settle(window);
+
+        ShouldNotBeLinking(window);
+    }
+
+    [AvaloniaFact]
+    public void Removing_a_module_stops_linking()
+    {
+        var (patch, value) = Board();
+        var window = Linking(patch);
+
+        Editor(window).Selection.Select(value.Id);
+        Editor(window).Edits.DeleteSelected();
+        Settle(window);
+
+        Editor(window).History.Patch.Find(value.Id).ShouldBeNull();
+        ShouldNotBeLinking(window);
+    }
+
+    [AvaloniaFact]
+    public void Going_full_screen_stops_linking()
+    {
+        var (patch, _) = Board();
+        var window = Linking(patch);
+
+        window.KeyPress(Key.F11, RawInputModifiers.None, PhysicalKey.F11, null);
+        Settle(window);
+
+        Service<FullScreenPreview>(window).IsFullScreen.ShouldBeTrue();
+        ShouldNotBeLinking(window);
     }
 
     [AvaloniaFact]

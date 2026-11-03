@@ -19,10 +19,16 @@ internal sealed class KnobLinking(CanvasSelection selection, Repaint repaint, No
         get;
         set
         {
+            if (field == value) return;
+
             field = value;
             repaint.Request();
+            Changed?.Invoke();
         }
     }
+
+    /// <summary><see cref="Control"/> started, moved to another knob or stopped.</summary>
+    public event Action? Changed;
 
     /// <summary>A socket was clicked while <see cref="Control"/> was set.</summary>
     public event EventHandler<SocketPick>? SocketPicked;

@@ -12,7 +12,8 @@ namespace Flyback.Editor.Canvas;
 /// <remarks>
 /// Each is one step however many modules it touches, because one gesture asked for
 /// all of them (ADR-0044). None of them is refused here on a locked canvas: the
-/// gestures and keys that reach them are.
+/// gestures and keys that reach them are. Adding or removing a module stops linking
+/// sockets to a knob: the click that linked them is over.
 /// </remarks>
 internal sealed class CanvasEdits(
     CanvasHistory history,
@@ -21,6 +22,7 @@ internal sealed class CanvasEdits(
     Repaint repaint,
     CanvasReport report,
     NodeGeometry geometry,
+    KnobLinking linking,
     Usage usage)
 {
     /// <summary>How far a duplicate or a paste steps clear of what is already there.</summary>
@@ -53,6 +55,7 @@ internal sealed class CanvasEdits(
         Patch.Nodes.Add(node);
         JoinRingAt(node, at ?? view.Middle);
         selection.Select(node.Id);
+        linking.Control = null;
         history.Record();
         return node;
     }
@@ -88,6 +91,7 @@ internal sealed class CanvasEdits(
 
         JoinRingAt(node, drop.At);
         selection.Select(node.Id);
+        linking.Control = null;
         history.Record();
         return node;
     }
@@ -162,6 +166,7 @@ internal sealed class CanvasEdits(
 
         selection.Refocus();
         selection.Announce();
+        linking.Control = null;
         history.Record();
     }
 
@@ -234,6 +239,7 @@ internal sealed class CanvasEdits(
         selection.WholeBoxes();
         selection.Refocus();
         selection.Announce();
+        linking.Control = null;
         history.Record();
 
         report.Say(into is null
@@ -406,6 +412,7 @@ internal sealed class CanvasEdits(
 
         selection.Take([.. added.Select(node => node.Id)]);
         selection.Announce();
+        linking.Control = null;
         history.Record();
 
         return added;

@@ -157,6 +157,7 @@ internal sealed class PanelKnobs : IKnobRequests, IReactTo<PatchCompiled>, IReac
         };
 
         editor.Linking.SocketPicked += (_, pick) => PickSocket(pick);
+        editor.Linking.Changed += () => View.Linking = editor.Linking.Control;
 
         View.Requests = this;
     }
@@ -344,7 +345,6 @@ internal sealed class PanelKnobs : IKnobRequests, IReactTo<PatchCompiled>, IReac
     public void Link(Guid? control)
     {
         editor.Linking.Control = control;
-        View.Linking = control;
 
         if (control is { } id && editor.History.Patch.Control(id) is { } knob)
         {

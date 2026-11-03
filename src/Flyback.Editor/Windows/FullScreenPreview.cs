@@ -202,6 +202,9 @@ internal sealed class FullScreenPreview(
 
         IsFullScreen = full;
         knobs.OverPicture = full;
+
+        // The canvas the sockets are clicked on is put away.
+        if (full) knobs.Link(null);
         keys.Away = full;
 
         if (full) usage.Count(Used.FullScreen);

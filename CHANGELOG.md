@@ -59,6 +59,7 @@
 
 ### Fixes
 
+- Linking sockets to a panel knob stops on going full screen and on adding or removing a module.
 - Live text set to wake on keys only keeps clicks to itself while faded, so they no longer pause the picture or leave full screen, and it comes back at a key wherever the keys had gone.
 - One input no longer does two things: a touch on faded live modules only brings them back; Escape over the text's completion list shuts the list rather than leaving full screen; Ctrl+D in the text duplicates as on the canvas instead of deleting the line; a trackpad scroll that is panning or zooming the canvas goes on doing so over a picked value; a trackpad turns a panel knob by whole notches; and on a Mac, Cmd+Ctrl+F no longer also frames the patch.
 
