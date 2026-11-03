@@ -26,6 +26,9 @@ internal sealed class CanvasSelection
     /// <summary>The shut box being looked into, which lives here and not in the patch.</summary>
     private Guid? peek;
 
+    /// <summary>Whether the selection is one module picked on its own, which a group of just that module does not take over.</summary>
+    private bool picked;
+
     public CanvasSelection(CanvasHistory history, Repaint repaint, CanvasReport report, NodeGeometry geometry, Reactions reactions, Usage usage)
     {
         this.history = history;
@@ -77,7 +80,7 @@ internal sealed class CanvasSelection
     {
         get
         {
-            if (Patch.Groups is null || ids.Count == 0) return null;
+            if (Patch.Groups is null || ids.Count == 0 || picked) return null;
 
             foreach (var group in Patch.Groups)
                 if (group.Members.Count == ids.Count && group.Members.All(ids.Contains))
@@ -120,7 +123,14 @@ internal sealed class CanvasSelection
     /// </summary>
     public void Select(Guid? id)
     {
-        if (Focus == id && ids.Count == (id is null ? 0 : 1)) return;
+        var was = picked;
+        picked = id is not null;
+
+        if (Focus == id && ids.Count == (id is null ? 0 : 1))
+        {
+            if (picked != was) Announce();
+            return;
+        }
 
         ids.Clear();
         if (id is { } one) ids.Add(one);
@@ -162,6 +172,8 @@ internal sealed class CanvasSelection
     /// </summary>
     public void Toggle(Guid id)
     {
+        picked = false;
+
         if (!ids.Add(id))
         {
             ids.Remove(id);
@@ -182,6 +194,7 @@ internal sealed class CanvasSelection
     /// </summary>
     public void Take(IReadOnlyList<Guid> members, Guid? focus = null)
     {
+        picked = false;
         ids.Clear();
         ids.UnionWith(members);
 
@@ -193,12 +206,17 @@ internal sealed class CanvasSelection
     {
         var wanted = members.ToArray();
 
+        picked = false;
         ids.Clear();
         ids.UnionWith(wanted);
     }
 
     /// <summary>Adds <paramref name="members"/> without announcing it.</summary>
-    public void Add(IEnumerable<Guid> members) => ids.UnionWith(members);
+    public void Add(IEnumerable<Guid> members)
+    {
+        picked = false;
+        ids.UnionWith(members);
+    }
 
     /// <summary>Takes a module out without announcing it, and says whether it was in.</summary>
     public bool Remove(Guid id) => ids.Remove(id);
@@ -244,7 +262,12 @@ internal sealed class CanvasSelection
 
         foreach (var group in Patch.Groups)
             if (group.Collapsed && group != peeked && group.Members.Any(ids.Contains))
+            {
                 ids.UnionWith(group.Members);
+
+                // A module behind a shut box is chosen as the box.
+                picked = false;
+            }
 
         return ids.Count != before;
     }
@@ -274,7 +297,8 @@ internal sealed class CanvasSelection
         peek = null;
 
         // A module picked out inside is behind the box again.
-        if (WholeBoxes()) Announce();
+        var was = picked;
+        if (WholeBoxes() || picked != was) Announce();
 
         repaint.Request();
         return true;
@@ -293,6 +317,7 @@ internal sealed class CanvasSelection
         ids.Clear();
         Focus = null;
         peek = null;
+        picked = false;
     }
 
     /// <summary>

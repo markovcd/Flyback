@@ -153,6 +153,29 @@ public class GroupTests : EditorTest
         editor.Selection.Nodes.ShouldBe([first]);
     }
 
+    /// <summary>
+    /// A click on the only module in an open group shows that module's panel, and a
+    /// press on the strip above it shows the group's, though both select the same module.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_only_module_in_a_group_still_has_its_own_panel()
+    {
+        var patch = Chain(out _, out var first, out _, out _);
+        var group = patch.Group([first.Id]).ShouldNotBeNull();
+        group.Collapsed = false;
+        var (editor, window) = Editing(patch);
+
+        Click(editor, window, OpenHandle(patch, group));
+        editor.Selection.Group.ShouldBe(group);
+
+        Click(editor, window, Body(first));
+        editor.Selection.Group.ShouldBeNull("the module was clicked, not its box");
+        editor.Selection.Focused.ShouldBe(first);
+
+        Click(editor, window, OpenHandle(patch, group));
+        editor.Selection.Group.ShouldBe(group);
+    }
+
     /// <summary>The Output is left out of a group, and the one module beside it is grouped.</summary>
     [AvaloniaFact]
     public void Ctrl_g_on_one_module_and_the_output_groups_the_module()
