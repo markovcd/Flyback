@@ -1413,12 +1413,19 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
             preview.RaiseEvent(new TappedEventArgs(InputElement.DoubleTappedEvent, released));
         });
 
-    /// <summary>Taps the picture once, as a click or a finger does.</summary>
+    /// <summary>How many times the picture has been tapped, so each tap lands apart from the last.</summary>
+    private int pictureTaps;
+
+    /// <summary>
+    /// Taps the picture once, as a click or a finger does. Each tap lands a little to the
+    /// side of the one before, so two in a row are two taps rather than a double-click.
+    /// </summary>
     public void TapPicture() =>
         DoWindow((open, _) =>
         {
             var preview = open.GetVisualDescendants().OfType<PreviewHost>().Single();
-            var at = preview.TranslatePoint(new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 2), open)!.Value;
+            var aside = pictureTaps++ % 2 * 24;
+            var at = preview.TranslatePoint(new Point(preview.Bounds.Width / 2 + aside, preview.Bounds.Height / 2), open)!.Value;
 
             open.MouseDown(at, MouseButton.Left);
             open.MouseUp(at, MouseButton.Left);
