@@ -444,10 +444,11 @@ internal sealed class ShellLayout(
     {
         previewBox = fullScreen.PreviewBox = new Border { Background = Flyback.Ui.Controls.Colors.Letterbox, Child = preview, Focusable = true };
         KeyboardNavigation.SetIsTabStop(previewBox, false);
+        // A full-screen picture is played over, live, where a stray click must not pause it.
         PictureTaps.Attach(previewBox, transport.TogglePause, () =>
         {
             if (!host.InPage) fullScreen.Toggle();
-        });
+        }, () => !fullScreen.IsFullScreen);
         Grid.SetColumn(previewBox, column);
         Grid.SetRow(previewBox, 0);
         previewRow = grid.RowDefinitions[0];

@@ -54,7 +54,7 @@ internal sealed class PictureWindow : Window
 
         Content = picture;
 
-        PictureTaps.Attach(this, () => PauseRequested?.Invoke(this, EventArgs.Empty), Close);
+        PictureTaps.Attach(this, () => PauseRequested?.Invoke(this, EventArgs.Empty), Close, () => false);
 
         KeyDown += (_, e) =>
         {

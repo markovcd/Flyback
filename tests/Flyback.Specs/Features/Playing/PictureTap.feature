@@ -1,7 +1,8 @@
 Feature: A tap on the picture plays and pauses it
   A click or a finger on the picture pauses the patch and, tapped again, plays it, in the
   editor and the viewer alike. A double-click still gives the picture the whole screen,
-  and leaves the patch playing or paused as it was.
+  and leaves the patch playing or paused as it was. A picture with the editor's whole
+  window is played over, live, so a tap there pauses nothing.
 
   Background:
     Given a rainbow across the screen
@@ -19,6 +20,14 @@ Feature: A tap on the picture plays and pauses it
     And the patch is playing
     When the picture is given the whole window
     Then the patch is playing
+
+  Scenario: A tap on the editor's full-screen picture leaves the patch playing
+    Given the patch is open in the editor
+    And the patch is playing
+    When the picture is given the whole window
+    And the picture is tapped
+    Then the patch is playing
+    And the picture has the whole window
 
   Scenario: A tap on the viewer's picture pauses the patch, and another plays it
     When the viewer plays it

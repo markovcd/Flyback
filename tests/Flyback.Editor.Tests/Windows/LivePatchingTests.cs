@@ -328,6 +328,40 @@ public class LivePatchingTests : EditorTest
         editor.Options.HighlightCurrentLine.ShouldBeTrue();
     }
 
+    /// <summary>A stray click while playing live never pauses, wherever it lands, even one that reaches the picture.</summary>
+    [AvaloniaFact]
+    public void Clicks_anywhere_over_the_live_text_do_not_pause()
+    {
+        var window = Open();
+        Play(window);
+
+        TextOwns(window);
+        GoLive(window);
+
+        var playback = Service<Playback>(window);
+        var picture = Service<FullScreenPreview>(window).PreviewBox!;
+
+        for (var y = 0.1; y < 1; y += 0.2)
+        for (var x = 0.1; x < 1; x += 0.2)
+        {
+            var at = new Point(window.Bounds.Width * x, window.Bounds.Height * y);
+            window.MouseDown(at, MouseButton.Left);
+            window.MouseUp(at, MouseButton.Left);
+            Settle(window);
+
+            playback.Paused.ShouldBeFalse($"a click at {at} leaves the patch playing");
+        }
+
+        var pointer = new Pointer(Pointer.GetNextFreeId(), PointerType.Mouse, isPrimary: true);
+        var released = new PointerEventArgs(
+            InputElement.PointerReleasedEvent, picture, pointer, picture, new Point(10, 10), 0,
+            new PointerPointProperties(), KeyModifiers.None);
+        picture.RaiseEvent(new TappedEventArgs(InputElement.TappedEvent, released));
+        Settle(window);
+
+        playback.Paused.ShouldBeFalse("a tap on the full-screen picture itself pauses nothing");
+    }
+
     [AvaloniaFact]
     public void Space_over_the_text_does_not_pause()
     {
