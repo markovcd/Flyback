@@ -14,7 +14,7 @@ internal sealed class ShotApp : Application
         .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false });
 
     /// <summary>The color scheme the next session's window is drawn in.</summary>
-    public static Scheme Scheme { get; set; } = Scheme.Default;
+    public static Scheme Scheme { get; set; } = SchemeLibrary.Default;
 
     public override void Initialize() => EditorTheme.Apply(this, Scheme);
 }

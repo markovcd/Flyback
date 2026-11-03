@@ -21,7 +21,7 @@ internal static class Colors
     /// Set once, before the first window: brushes made from these colors are cached
     /// for the life of the program, so a scheme chosen later takes effect at the next start.
     /// </remarks>
-    public static Scheme Current { get; private set; } = Scheme.Default;
+    public static Scheme Current { get; private set; } = SchemeLibrary.Default;
 
     /// <summary>Draws everything built from here on in <paramref name="scheme"/>.</summary>
     public static void Use(Scheme scheme) => Current = scheme;

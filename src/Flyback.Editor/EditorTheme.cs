@@ -23,7 +23,7 @@ internal static class EditorTheme
     /// </remarks>
     public static void Apply(Application application, Scheme? scheme = null)
     {
-        Colors.Use(scheme ?? Scheme.Default);
+        Colors.Use(scheme ?? SchemeLibrary.Default);
 
         var fluent = new FluentTheme();
         var variant = Colors.LightGrounds ? ThemeVariant.Light : ThemeVariant.Dark;

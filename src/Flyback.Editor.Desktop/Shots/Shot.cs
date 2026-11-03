@@ -56,7 +56,7 @@ internal static class Shot
 
         var plugins = PluginHost.Load().Install();
 
-        ShotApp.Scheme = request.Scheme ?? Scheme.Default;
+        ShotApp.Scheme = request.Scheme ?? SchemeLibrary.Default;
 
         using var session = HeadlessUnitTestSession.StartNew(typeof(ShotApp), AvaloniaTestIsolationLevel.PerAssembly);
 

@@ -17,8 +17,14 @@ internal sealed class SchemeLibrary
     /// <summary>Where a person puts a scheme of their own, one <c>.json</c> per scheme.</summary>
     public static string UserFolder => Path.Combine(GlobalConstants.DataFolder, "schemes");
 
+    /// <summary>The name of the scheme the editor is drawn in until another is chosen.</summary>
+    public const string DefaultName = "Graphite";
+
     /// <summary>The schemes shipped inside Flyback, the default first.</summary>
     public static IReadOnlyList<Scheme> Shipped { get; } = ReadShipped();
+
+    /// <summary>The scheme the editor is drawn in until another is chosen: charcoal, sage text and orange (ADR-0219).</summary>
+    public static Scheme Default => Shipped[0];
 
     /// <summary>Every scheme there is, the default first.</summary>
     public IReadOnlyList<Scheme> Schemes { get; }
@@ -77,7 +83,7 @@ internal sealed class SchemeLibrary
                 ?? throw new InvalidOperationException($"The shipped {resource} {string.Join(' ', problems)}"));
         }
 
-        return [.. schemes.OrderBy(scheme => scheme.Name != Scheme.DefaultName).ThenBy(scheme => scheme.Name, StringComparer.Ordinal)];
+        return [.. schemes.OrderBy(scheme => scheme.Name != DefaultName).ThenBy(scheme => scheme.Name, StringComparer.Ordinal)];
     }
 
     private static IEnumerable<(string File, string Json)> ReadFolder(string? folder, List<string> problems)

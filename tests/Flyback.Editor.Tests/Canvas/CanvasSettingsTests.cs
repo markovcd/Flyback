@@ -85,7 +85,7 @@ public sealed class CanvasSettingsTests : EditorTest
         CloseSettings(window, dialog);
 
         CanvasSettings.Load(settingsPath).ColorScheme.ShouldBe("Amber");
-        Colors.Current.ShouldBe(Scheme.Default);
+        Colors.Current.ShouldBe(SchemeLibrary.Default);
         SchemePicker(OpenSettings(Open(settingsPath), CanvasTab)).SelectedItem.ShouldBe("Amber");
     }
 

@@ -156,7 +156,7 @@ internal sealed record ShotRequest(
         try
         {
             if (new FileInfo(path).Length > SchemeFile.MostBytes) problems.Add($"is larger than {SchemeFile.MostBytes / 1024} KB.");
-            else scheme = SchemeFile.Read(File.ReadAllText(path), Scheme.Default, problems);
+            else scheme = SchemeFile.Read(File.ReadAllText(path), SchemeLibrary.Default, problems);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

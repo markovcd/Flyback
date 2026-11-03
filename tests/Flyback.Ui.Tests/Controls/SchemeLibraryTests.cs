@@ -19,6 +19,11 @@ public sealed class SchemeLibraryTests : IDisposable
     public void Four_schemes_are_shipped_phosphor_first() =>
         SchemeLibrary.Shipped.Select(scheme => scheme.Name).ShouldBe(["Graphite", "Amber", "Midnight", "Paper", "Phosphor"]);
 
+    /// <summary>Android's Mono sets a type up when it compiles a method building one, so a static on <see cref="Scheme"/> runs while the shipped schemes are read.</summary>
+    [Fact]
+    public void A_scheme_holds_no_static_state_for_reading_the_shipped_ones_to_run_into() =>
+        typeof(Scheme).TypeInitializer.ShouldBeNull();
+
     [Fact]
     public void Without_a_folder_only_the_shipped_ones_are_offered() =>
         Names(SchemeLibrary.Load(null)).ShouldBe(["Graphite", "Amber", "Midnight", "Paper", "Phosphor"]);
@@ -64,8 +69,8 @@ public sealed class SchemeLibraryTests : IDisposable
     {
         var library = SchemeLibrary.Load(null);
 
-        library.Find("Teal").ShouldBe(Scheme.Default);
-        library.Find(null).ShouldBe(Scheme.Default);
+        library.Find("Teal").ShouldBe(SchemeLibrary.Default);
+        library.Find(null).ShouldBe(SchemeLibrary.Default);
         library.Named("Teal").ShouldBeNull();
     }
 }

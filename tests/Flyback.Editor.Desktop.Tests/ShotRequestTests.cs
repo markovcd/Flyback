@@ -59,7 +59,7 @@ public sealed class ShotRequestTests
             var (request, said) = Parse("--size", "640x360", "--colors", file);
 
             request.ShouldNotBeNull().Scheme!.Name.ShouldBe("Sodium");
-            request.Scheme!.Window.ShouldBe(Scheme.Default.Window);
+            request.Scheme!.Window.ShouldBe(SchemeLibrary.Default.Window);
             said.ShouldContain("grounds.window is missing");
         }
         finally

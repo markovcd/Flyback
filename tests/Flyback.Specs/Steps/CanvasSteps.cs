@@ -88,7 +88,7 @@ public sealed class CanvasSteps(PatchContext context, EditorDriver editor) : IDi
     public void ThenTheEditorStartsIn(string scheme) => editor.NextColorScheme.ShouldBe(scheme);
 
     [Then("the editor is drawn in Graphite until then")]
-    public static void ThenStillGraphite() => Ui.Controls.Colors.Current.ShouldBe(Ui.Controls.Scheme.Default);
+    public static void ThenStillGraphite() => Ui.Controls.Colors.Current.ShouldBe(Ui.Controls.SchemeLibrary.Default);
 
     private Point originBefore;
 

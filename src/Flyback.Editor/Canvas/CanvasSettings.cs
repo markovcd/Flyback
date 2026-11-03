@@ -96,7 +96,7 @@ public sealed class CanvasSettings
     /// <summary>The name of the color scheme the editor is drawn in from its next start.</summary>
     public string ColorScheme { get; set; } = DefaultColorScheme;
 
-    public const string DefaultColorScheme = Scheme.DefaultName;
+    public const string DefaultColorScheme = SchemeLibrary.DefaultName;
 
     /// <summary>Where these settings are kept in <see cref="SettingsFile"/>.</summary>
     public const string Section = "canvas";
