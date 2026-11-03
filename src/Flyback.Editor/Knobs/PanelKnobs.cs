@@ -21,7 +21,7 @@ namespace Flyback.Editor.Knobs;
 /// The knob panel is shown and hidden by the window, which owns the row it stands
 /// in; this asks for it with <see cref="KnobsWanted"/> when a knob needs to be seen.
 /// </remarks>
-internal sealed class PanelKnobs : IKnobRequests, IReactTo<PatchCompiled>, IReactTo<DocumentArrived>, IReactTo<KnobChosen>
+internal sealed class PanelKnobs : IKnobRequests, IReactTo<PatchCompiled>, IReactTo<DocumentArrived>, IReactTo<KnobChosen>, IReactTo<ViewChanged>, IReactTo<OwnershipChanged>
 {
     private readonly NodeEditor editor;
     private readonly TextWriteBack writeBack;
@@ -158,6 +158,12 @@ internal sealed class PanelKnobs : IKnobRequests, IReactTo<PatchCompiled>, IReac
 
         editor.Linking.SocketPicked += (_, pick) => PickSocket(pick);
         editor.Linking.Changed += () => View.Linking = editor.Linking.Control;
+
+        // Another patch, or another step of this one, is not the one the linking began on.
+        editor.History.Replaced += (_, how) =>
+        {
+            if (how is Replacement.Opened or Replacement.Restored) Link(null);
+        };
 
         View.Requests = this;
     }
@@ -341,9 +347,29 @@ internal sealed class PanelKnobs : IKnobRequests, IReactTo<PatchCompiled>, IReac
         if (editor.Linking.Control is { } linking && editor.History.Patch.Control(linking) is null) Link(null);
     }
 
+    /// <summary>The text is showing, so the canvas the sockets are clicked on is not.</summary>
+    public Task On(ViewChanged notice)
+    {
+        if (notice.ShowingCode) Link(null);
+        return Task.CompletedTask;
+    }
+
+    /// <summary>The text owns the patch, which a link made on the canvas would not reach.</summary>
+    public Task On(OwnershipChanged notice)
+    {
+        if (notice.Owned) Link(null);
+        return Task.CompletedTask;
+    }
+
     /// <summary>Starts linking sockets to a knob, or stops with null.</summary>
     public void Link(Guid? control)
     {
+        if (control is not null && editor.History.Locked)
+        {
+            report.Say(TextOwns);
+            control = null;
+        }
+
         editor.Linking.Control = control;
 
         if (control is { } id && editor.History.Patch.Control(id) is { } knob)
@@ -353,10 +379,19 @@ internal sealed class PanelKnobs : IKnobRequests, IReactTo<PatchCompiled>, IReac
         }
     }
 
+    private const string TextOwns = "The text owns this patch, so its sockets cannot be linked to a knob on the canvas.";
+
     /// <summary>Links a clicked socket to the knob being linked, or lets it go if it already follows it.</summary>
     private void PickSocket(SocketPick pick)
     {
         if (editor.Linking.Control is not { } id || editor.History.Patch.Control(id) is not { } knob) return;
+
+        if (editor.History.Locked)
+        {
+            report.Say(TextOwns);
+            Link(null);
+            return;
+        }
 
         if (ControlMap.Of(editor.History.Patch.Find(pick.Node)!, pick.Port) is { } existing && existing.Control == id)
             LetGo(pick, knob, existing);
@@ -458,6 +493,8 @@ internal sealed class PanelKnobs : IKnobRequests, IReactTo<PatchCompiled>, IReac
     private async Task LearnAsync(Guid id, bool onward = false)
     {
         if (editor.History.Patch.Control(id) is null) return;
+
+        Link(null);
 
         if (learning.Start("No MIDI device is plugged in, so there is no controller to learn.") is not { } cancel) return;
 

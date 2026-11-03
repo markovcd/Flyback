@@ -8,7 +8,6 @@ using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
 using Flyback.Editor.Knobs;
-using Flyback.Editor.Windows;
 using Flyback.Ui.Controls;
 using Shouldly;
 
@@ -21,10 +20,10 @@ namespace Flyback.Editor.Tests.Knobs;
 public class KnobPanelTests : EditorTest
 {
 
-    private static ControlsPanel Panel(MainWindow window) => All<ControlsPanel>(window).Single();
+    internal static ControlsPanel Panel(MainWindow window) => All<ControlsPanel>(window).Single();
 
     /// <summary>A Value module whose knob colors the picture.</summary>
-    private static (Patch Patch, NodeInstance Value) Board(float knob = 0.2f)
+    internal static (Patch Patch, NodeInstance Value) Board(float knob = 0.2f)
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
@@ -36,10 +35,10 @@ public class KnobPanelTests : EditorTest
         return (b.Patch, value);
     }
 
-    private static Point OnWindow(MainWindow window, Visual visual, Point local) =>
+    internal static Point OnWindow(MainWindow window, Visual visual, Point local) =>
         visual.TranslatePoint(local, window)!.Value;
 
-    private static void Click(MainWindow window, Point at)
+    internal static void Click(MainWindow window, Point at)
     {
         window.MouseDown(at, MouseButton.Left);
         window.MouseUp(at, MouseButton.Left);
@@ -56,7 +55,7 @@ public class KnobPanelTests : EditorTest
         Click(window, OnWindow(window, editor, editor.GraphToScreen.Transform(graph)));
     }
 
-    private static void AddKnob(MainWindow window)
+    internal static void AddKnob(MainWindow window)
     {
         var add = All<Button>(window).Single(b => b.Name == "add-knob");
 
@@ -224,64 +223,6 @@ public class KnobPanelTests : EditorTest
         Settle(window);
 
         Editor(window).Linking.Control.ShouldBeNull();
-    }
-
-    /// <summary>Opens the panel and adds a knob, which starts linking sockets to it.</summary>
-    private MainWindow Linking(Patch patch)
-    {
-        var window = Open(patch);
-
-        window.KeyPressQwerty(PhysicalKey.K, RawInputModifiers.Control);
-        Settle(window);
-        AddKnob(window);
-        Editor(window).Linking.Control.ShouldNotBeNull();
-
-        return window;
-    }
-
-    private static void ShouldNotBeLinking(MainWindow window)
-    {
-        Editor(window).Linking.Control.ShouldBeNull();
-        Panel(window).Linking.ShouldBeNull("the knob is not lit once linking stops");
-    }
-
-    [AvaloniaFact]
-    public void Adding_a_module_stops_linking()
-    {
-        var (patch, _) = Board();
-        var window = Linking(patch);
-
-        Editor(window).Edits.AddNode("value").ShouldNotBeNull();
-        Settle(window);
-
-        ShouldNotBeLinking(window);
-    }
-
-    [AvaloniaFact]
-    public void Removing_a_module_stops_linking()
-    {
-        var (patch, value) = Board();
-        var window = Linking(patch);
-
-        Editor(window).Selection.Select(value.Id);
-        Editor(window).Edits.DeleteSelected();
-        Settle(window);
-
-        Editor(window).History.Patch.Find(value.Id).ShouldBeNull();
-        ShouldNotBeLinking(window);
-    }
-
-    [AvaloniaFact]
-    public void Going_full_screen_stops_linking()
-    {
-        var (patch, _) = Board();
-        var window = Linking(patch);
-
-        window.KeyPress(Key.F11, RawInputModifiers.None, PhysicalKey.F11, null);
-        Settle(window);
-
-        Service<FullScreenPreview>(window).IsFullScreen.ShouldBeTrue();
-        ShouldNotBeLinking(window);
     }
 
     [AvaloniaFact]
