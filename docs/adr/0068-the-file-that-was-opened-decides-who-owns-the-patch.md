@@ -427,3 +427,9 @@ a value. What stays locked is what the graph is made of. A value the text cannot
 write in place, a module stamped out of a `def` more than once or a number said as
 `1 / 12`, is drawn without a well, so the canvas does not offer a turn the next
 apply would take back.
+
+**2026-11-03 — the canvas says who owns it.** A locked canvas looked the same as an
+open one, so a refused gesture read as a broken one. While the text owns the patch,
+a tag pinned to the top-left of the view says so and names F2; pressing it opens the
+text. It is drawn on the view rather than the patch, so no pan or zoom loses it, and
+not over the picture in live patching, where only the text shows.

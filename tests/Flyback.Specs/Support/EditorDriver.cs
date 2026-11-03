@@ -1525,6 +1525,25 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
         });
     }
 
+    /// <summary>Hides the text view, so the canvas shows.</summary>
+    public void ShowCanvas() => DoWindow((open, _) => Named<ToggleButton>(open, "code").IsChecked = false);
+
+    /// <summary>Whether the text view is the one showing.</summary>
+    public bool TextShowing => ReadWindow(open => Named<ToggleButton>(open, "code").IsChecked == true);
+
+    /// <summary>What the tag in the canvas's corner says, or null while there is none.</summary>
+    public string? OwnerTagSays => Read(_ => Service<OwnerTag>().Box is null ? null : OwnerTag.Label);
+
+    /// <summary>Clicks the tag in the canvas's corner.</summary>
+    public void PressOwnerTag() =>
+        DoWindow((open, canvas) =>
+        {
+            var at = canvas.TranslatePoint(Service<OwnerTag>().Box!.Value.Center, open)!.Value;
+
+            open.MouseDown(at, MouseButton.Left);
+            open.MouseUp(at, MouseButton.Left);
+        });
+
     /// <summary>What the text view holds.</summary>
     public string Text => ReadWindow(open => Source(open).Text);
 

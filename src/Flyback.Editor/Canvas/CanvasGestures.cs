@@ -32,6 +32,7 @@ internal sealed class CanvasGestures
     private static readonly Cursor PortCursor = new(StandardCursorType.Cross);
     private static readonly Cursor NodeCursor = new(StandardCursorType.SizeAll);
     private static readonly Cursor WellCursor = new(StandardCursorType.SizeNorthSouth);
+    private static readonly Cursor ButtonCursor = new(StandardCursorType.Hand);
 
     /// <summary>
     /// While a button is dragging the view. A hand rather than the four-way
@@ -50,6 +51,7 @@ internal sealed class CanvasGestures
     private readonly SocketFocus focus;
     private readonly KnobChoice choice;
     private readonly StepBar bar;
+    private readonly OwnerTag owner;
     private readonly HeldModules held;
     private readonly KnobLinking linking;
     private readonly RemapMarks marks;
@@ -83,6 +85,7 @@ internal sealed class CanvasGestures
         SocketFocus focus,
         KnobChoice choice,
         StepBar bar,
+        OwnerTag owner,
         HeldModules held,
         KnobLinking linking,
         RemapMarks marks,
@@ -95,6 +98,7 @@ internal sealed class CanvasGestures
         Reactions reactions)
     {
         this.shelves = shelves;
+        this.owner = owner;
         this.history = history;
         this.reactions = reactions;
         this.selection = selection;
@@ -128,7 +132,7 @@ internal sealed class CanvasGestures
     /// </summary>
     public bool Tapped(Point screen, int taps)
     {
-        if (drag != Drag.None || choice.For is not null || bar.ButtonAt(screen) is not null) return false;
+        if (drag != Drag.None || choice.For is not null || bar.ButtonAt(screen) is not null || owner.Contains(screen)) return false;
         if (view.Overview || !selection.Scene.HitWell(view.ToGraph(screen), Math.Min(Fingers.Reach / view.Zoom, Fingers.MostReach), out var node, out var port)) return false;
 
         if (!selection.Contains(node)) selection.Select(node);
@@ -253,6 +257,8 @@ internal sealed class CanvasGestures
 
             choice.Close();
         }
+
+        if (button == MouseButton.Left && owner.Press(screen)) return true;
 
         if (button == MouseButton.Left && bar.ButtonAt(screen) is { } stepped)
         {
@@ -885,6 +891,8 @@ internal sealed class CanvasGestures
     /// </summary>
     private Cursor CursorOver(Point graph)
     {
+        if (owner.Contains(view.GraphToScreen.Transform(graph))) return ButtonCursor;
+
         var scene = selection.Scene;
 
         if (scene.HitPort(graph, out _, out _, out _)) return PortCursor;

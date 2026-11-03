@@ -24,7 +24,8 @@ internal sealed class NodeEditor
         IReactTo<ModuleAsked>,
         IReactTo<FrameAsked>,
         IReactTo<PasteAsked>,
-        IReactTo<SelectAllAsked>
+        IReactTo<SelectAllAsked>,
+        IReactTo<OwnershipChanged>
 {
     private readonly CanvasPainter painter;
     private readonly CanvasGlass glass;
@@ -86,6 +87,13 @@ internal sealed class NodeEditor
     internal Reactions Reactions { get; }
 
     public Task On(PatchChanged notice)
+    {
+        InvalidateVisual();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Puts up or takes down the tag saying the text owns the patch.</summary>
+    public Task On(OwnershipChanged notice)
     {
         InvalidateVisual();
         return Task.CompletedTask;

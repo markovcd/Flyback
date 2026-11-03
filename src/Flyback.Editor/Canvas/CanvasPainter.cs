@@ -24,6 +24,7 @@ internal sealed class CanvasPainter(
     SocketFocus focus,
     KnobChoice choice,
     StepBar bar,
+    OwnerTag owner,
     RemapMarks marks,
     MeasureLabels measured,
     LevelShelves shelves,
@@ -125,9 +126,11 @@ internal sealed class CanvasPainter(
         if (view.Overview) SocketTag.Draw(context, view.GraphToScreen.Transform(socket), turn.Name, turn.Hot);
     }
 
-    /// <summary>A finger's tether, the card, the step bar and the list of knobs, over everything.</summary>
+    /// <summary>The tag saying the text owns the patch, a finger's tether, the card, the step bar and the list of knobs, over everything.</summary>
     private void DrawOverlays(DrawingContext context)
     {
+        owner.Draw(context);
+
         if (dial.Tether is var (home, finger))
         {
             context.DrawLine(TetherPen, home, finger);

@@ -18,6 +18,8 @@ internal sealed class CanvasTips(
     RemapMarks marks,
     UndescribedTags tags,
     MeasureLabels measured,
+    OwnerTag ownerTag,
+    Viewport view,
     NodeGeometry geometry)
 {
     /// <summary>What the tooltip is up for, null while it is down.</summary>
@@ -54,6 +56,8 @@ internal sealed class CanvasTips(
 
     private (object? Over, object? Tip) At(Point graph)
     {
+        if (ownerTag.Contains(view.GraphToScreen.Transform(graph))) return (ownerTag, OwnerTag.Tip);
+
         if (tags.Hit(graph) is { } tag) return (tag.Id, UndescribedTags.Note);
 
         if (measured.Hit(graph) is var (measurement, report)) return (measurement, report);
