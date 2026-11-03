@@ -10,6 +10,7 @@
 
 ### Editor
 
+- A setting that takes effect only at a start (new colors, or Direct3D in place of OpenGL on Windows) puts a ticked Restart Flyback box beside Save in Settings, and a sound device at another rate asks to restart now or later. On the desktop the restart opens the patch on screen again, Android starts the app afresh, and on iOS the settings say how to restart by hand.
 - On a touch screen, a tap on the dots over a full-screen picture opens the transport or the knobs, and they stay for four seconds after the last touch; before, a finger could not open them at all.
 - A click or tap on the picture no longer pauses it, in the editor and the desktop viewer, so a stray click while live patching keeps the patch playing; the transport's pause button and Space pause, and a double-click still goes full screen and back. The web viewer is unchanged.
 - While live patching, selecting a module that carries more than knobs (a Quantiser's scale, a sequencer's steps, a file, a plugin's choices) puts a [ ] button on the transport over the picture; it or Ctrl+I opens a card under the module (beside it where there is no room) with controls sized for a finger: a keyboard for a scale, a row of buttons for a short choice. What is changed there is written into the text when the text owns the patch. Over the text, the module is the one the caret is in. Zoomed out too far for rows to read, there is nothing to open.

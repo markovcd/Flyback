@@ -131,9 +131,11 @@ internal sealed class PatchFiles
     /// there is none, which is what a preset has.
     /// </param>
     /// <param name="files">What a bundle brought with it, and null for everything else.</param>
-    public void Became(string? name, string? beside, BundleFiles? files = null)
+    /// <param name="reopen">What a restart opens to bring this document back, and null where nothing names it.</param>
+    public void Became(string? name, string? beside, BundleFiles? files = null, Reopen? reopen = null)
     {
         Name = name;
+        Reopen = reopen;
 
         Carried = files;
         bundled = files is not null;
@@ -143,6 +145,9 @@ internal sealed class PatchFiles
 
         reactions.Raise(new DocumentArrived(Sounds, Pictures));
     }
+
+    /// <summary>What a restart opens to bring back <paramref name="file"/>, or null where it is not on this machine's disk.</summary>
+    private static Reopen? Opened(IStorageFile file) => file.TryGetLocalPath() is { } path ? new Reopen(Path: path) : null;
 
     /// <summary>Looks in <paramref name="library"/> for what is not beside the patch, and reads the patch's files again.</summary>
     /// <param name="reread">False before any patch has arrived, when there is nothing to read again.</param>
@@ -158,6 +163,9 @@ internal sealed class PatchFiles
         if (reread) reactions.Raise(new FilesMoved(Sounds, Pictures));
     }
 
+    /// <summary>What a restart opens to bring the document back, or null where nothing names it: a file on disk or a preset the site shared.</summary>
+    public Reopen? Reopen { get; private set; }
+
     /// <summary>Whether the document is a bundle, which is what the next save offers first.</summary>
     public bool IsBundle => bundled;
 
@@ -171,9 +179,10 @@ internal sealed class PatchFiles
     /// carries is still the only copy of those files.
     /// </remarks>
     /// <param name="asBundle">Which kind of file it went to, which is what the next save offers.</param>
-    private void SavedAs(string name, bool asBundle)
+    private void SavedAs(IStorageFile file, bool asBundle)
     {
-        Name = name;
+        Name = Path.GetFileNameWithoutExtension(file.Name);
+        Reopen = Opened(file);
         bundled = asBundle;
 
         // Whatever preset the list still showed, the patch just took on a file
@@ -272,7 +281,8 @@ internal sealed class PatchFiles
             // about — see Became.
             Became(
                 Path.GetFileNameWithoutExtension(file.Name),
-                Path.GetDirectoryName(file.TryGetLocalPath()));
+                Path.GetDirectoryName(file.TryGetLocalPath()),
+                reopen: Opened(file));
 
             usage.Count(Used.Opened);
 
@@ -325,7 +335,7 @@ internal sealed class PatchFiles
 
             await using (var stream = await file.OpenWriteAsync()) await packed.CopyToAsync(stream);
 
-            SavedAs(Path.GetFileNameWithoutExtension(file.Name), asBundle: true);
+            SavedAs(file, asBundle: true);
             conversation.ConversationSaved();
 
             // Saved as a bundle, so a bundle is the document now and the graph
@@ -512,7 +522,7 @@ internal sealed class PatchFiles
                 var folder = Path.GetDirectoryName(file.TryGetLocalPath());
                 var spilled = folder is { Length: > 0 } ? Scatter(folder) : 0;
 
-                SavedAs(Path.GetFileNameWithoutExtension(file.Name), asBundle: false);
+                SavedAs(file, asBundle: false);
                 document.MarkSourceSaved();
 
                 // The text is the document, so the conversation is kept beside
@@ -572,7 +582,8 @@ internal sealed class PatchFiles
 
             Became(
                 Path.GetFileNameWithoutExtension(file.Name),
-                Path.GetDirectoryName(file.TryGetLocalPath()));
+                Path.GetDirectoryName(file.TryGetLocalPath()),
+                reopen: Opened(file));
 
             usage.Count(Used.Opened);
 
@@ -643,7 +654,8 @@ internal sealed class PatchFiles
             Became(
                 Path.GetFileNameWithoutExtension(file.Name),
                 Path.GetDirectoryName(file.TryGetLocalPath()),
-                new BundleFiles(bundle.Files, SoundFolder, PictureFolder));
+                new BundleFiles(bundle.Files, SoundFolder, PictureFolder),
+                reopen: Opened(file));
 
             usage.Count(Used.Opened);
 
@@ -707,7 +719,7 @@ internal sealed class PatchFiles
 
             // Only once it is actually on disk. A patch that failed to write is
             // still a patch with everything to lose.
-            SavedAs(Path.GetFileNameWithoutExtension(file.Name), asBundle: false);
+            SavedAs(file, asBundle: false);
 
             // And what was said about it, beside it — ADR-0072.
             KeepConversation(file, written);

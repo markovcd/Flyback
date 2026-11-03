@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Avalonia.Threading;
+using Flyback.Editor.Notices;
 using Flyback.Editor.Shell;
 
 namespace Flyback.Editor.Files;
@@ -15,7 +16,7 @@ namespace Flyback.Editor.Files;
 /// unsaved question would have offered to save. A setup with no recovery folder
 /// keeps nothing, as does a folder that will not open.
 /// </remarks>
-internal sealed class WorkKeeper
+internal sealed class WorkKeeper : IReactTo<RestartAsked>
 {
     /// <summary>How often unsaved work is looked at, and so the most a crash can cost.</summary>
     private static readonly TimeSpan Interval = TimeSpan.FromSeconds(2);
@@ -41,6 +42,20 @@ internal sealed class WorkKeeper
     {
         folder = folders.RecoveryFolder;
         work = unsaved.Work;
+    }
+
+    /// <summary>After the unsaved question, which is what decides whether a restart goes ahead.</summary>
+    int IReactTo<RestartAsked>.Priority => 1;
+
+    /// <summary>
+    /// A restart has had its unsaved question answered, so nothing is left for it to
+    /// bring back: on a phone the process ends without a window closing to say so.
+    /// </summary>
+    public Task On(RestartAsked notice)
+    {
+        if (notice.Restarted) Stop();
+
+        return Task.CompletedTask;
     }
 
     /// <summary>Starts keeping unsaved work. Once, when the window opens; until then nothing is written.</summary>

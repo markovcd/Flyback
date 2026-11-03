@@ -688,6 +688,9 @@ internal sealed class PresetSlot
         return await OpenSharedAsync(name, fileName, bytes, new Reopen());
     }
 
+    /// <summary>What a restart opens to bring a shared preset back: it again, where the site named it.</summary>
+    private static Reopen? Shared(Reopen reopen) => reopen.Shared is { Length: > 0 } ? reopen : null;
+
     /// <param name="opened">What the status bar says once it is open, where it is not the usual.</param>
     private async Task<bool> OpenSharedAsync(string name, string fileName, byte[] bytes, Reopen reopen, string? opened = null)
     {
@@ -709,7 +712,7 @@ internal sealed class PresetSlot
                     return false;
                 }
 
-                files.Became(name, beside: null, new BundleFiles(bundle.Files, files.SoundFolder, files.PictureFolder));
+                files.Became(name, beside: null, new BundleFiles(bundle.Files, files.SoundFolder, files.PictureFolder), Shared(reopen));
                 patch = bundle.Patch;
                 conversation = bundle.Conversation;
             }
@@ -724,7 +727,7 @@ internal sealed class PresetSlot
                     return false;
                 }
 
-                files.Became(name, beside: null);
+                files.Became(name, beside: null, reopen: Shared(reopen));
                 patch = loaded.Patch;
             }
 

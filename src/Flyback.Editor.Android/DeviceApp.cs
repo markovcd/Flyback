@@ -22,7 +22,7 @@ public sealed class DeviceApp : Avalonia.Application
             if (host.Child is not null) return;
 
             var request = DeviceRequest.Current;
-            host.Child = DeviceEditor.Build(typeof(DeviceApp).Assembly, DeviceFolders.Private(), request.Preset, request.Interpreted, provider => DeviceState.Provider = provider);
+            host.Child = DeviceEditor.Build(typeof(DeviceApp).Assembly, DeviceFolders.Private(), request.Preset, request.Interpreted, provider => DeviceState.Provider = provider, DeviceRestart.Launch);
         };
 
         device.MainView = host;

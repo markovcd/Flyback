@@ -15,7 +15,8 @@ internal static class DeviceEditor
     /// <param name="app">The app's assembly, whose linked plugins make modules.</param>
     /// <param name="preset">A shipped preset to start on once the editor is open, as a script launching the app asks; null for the usual one.</param>
     /// <param name="started">Handed the container as soon as it is built, for the app's own readout.</param>
-    public static EditorView Build(Assembly app, EditorFolders folders, string? preset, bool interpreted, Action<IServiceProvider> started)
+    /// <param name="relaunch">Starts the app again, or null where the system lets no app do that.</param>
+    public static EditorView Build(Assembly app, EditorFolders folders, string? preset, bool interpreted, Action<IServiceProvider> started, Action<Reopen?>? relaunch = null)
     {
         var plugins = PluginHost.LoadLinked(app).Install();
 
@@ -23,7 +24,7 @@ internal static class DeviceEditor
         {
             Plugins = plugins,
             Folders = folders,
-            Host = new() { PresetSite = Site.PresetSite.Built },
+            Host = new() { PresetSite = Site.PresetSite.Built, Relaunch = relaunch },
             Launch = new() { Interpreted = interpreted },
         }, services =>
         {

@@ -268,6 +268,14 @@ internal sealed class CanvasSection : ISettingsSection
         Write();
     }
 
+    /// <summary>A scheme picked and not yet saved, other than the one drawing the editor now, waits for a restart.</summary>
+    public string? Restarts =>
+        colorScheme.SelectedItem is string picked
+        && !string.Equals(picked, saved.ColorScheme, StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(picked, Flyback.Ui.Controls.Colors.Current.Name, StringComparison.OrdinalIgnoreCase)
+            ? "use the new colors"
+            : null;
+
     /// <summary>The name of the color scheme the editor starts in next time, as last saved.</summary>
     internal string ColorScheme => saved.ColorScheme;
 

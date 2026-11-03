@@ -144,8 +144,32 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         return new PixelSize(width, height);
     }
 
+    /// <summary>
+    /// A driver picked and not yet saved, other than the one drawing now, waits for a
+    /// restart on Windows, the one system that picks its driver only as Flyback starts.
+    /// </summary>
+    public string? Restarts
+    {
+        get
+        {
+            var row = renderer.SelectedIndex;
+
+            if (!OperatingSystem.IsWindows() || row < 0 || row == ProcessorRow) return null;
+
+            var picked = OutputSettings.DriversHere[row];
+
+            return picked != startedOn && row != RendererRow(settings.Current.Gpu, settings.Current)
+                ? $"draw with {Said(picked)}"
+                : null;
+        }
+    }
+
+    /// <summary>The driver this run draws with, as the settings said when it started.</summary>
+    private GraphicsDriver startedOn;
+
     public void Start()
     {
+        startedOn = settings.Current.DriverHere;
         Show();
         Apply(settings.Current, before: null);
     }

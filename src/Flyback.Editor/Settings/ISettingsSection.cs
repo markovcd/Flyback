@@ -14,6 +14,12 @@ internal interface ISettingsSection
     /// <summary>The controls, lent to the window and kept between openings.</summary>
     Control View { get; }
 
+    /// <summary>
+    /// What the controls hold that only a restart puts in force and is not saved yet, as
+    /// the end of "Restart Flyback to …", or null where nothing waits for one.
+    /// </summary>
+    string? Restarts => null;
+
     /// <summary>Puts what was last saved in force, once, as the editor is built.</summary>
     void Start() { }
 

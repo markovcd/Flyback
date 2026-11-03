@@ -39,7 +39,7 @@ internal sealed class UnsavedWork(
 {
     public Task On(SaveAsked notice) => SavePatchAsync();
 
-    public async Task On(RestartAsked notice) => notice.Restarted = await RelaunchAsync(notice.Reopen);
+    public async Task On(RestartAsked notice) => notice.Restarted = await RelaunchAsync(notice.Reopen, notice.SameDocument);
 
     /// <summary>The canvas has the patch back once any typing not yet applied has been asked about.</summary>
     public async Task On(HandBackAsked notice)
@@ -181,13 +181,14 @@ internal sealed class UnsavedWork(
     /// window stays: the question was canceled, or a take is running, which only its
     /// own button should end.
     /// </summary>
-    public async Task<bool> RelaunchAsync(Reopen? reopen)
+    /// <param name="sameDocument">Opens the document on screen instead, as the unsaved question leaves it.</param>
+    public async Task<bool> RelaunchAsync(Reopen? reopen, bool sameDocument = false)
     {
         if (host.Relaunch is not { } relaunch) return false;
 
         if (recording.InHand || !await MayReplaceThePatchAsync()) return false;
 
-        relaunch(reopen);
+        relaunch(sameDocument ? files.Reopen : reopen);
 
         Leaving = true;
         close.Close();

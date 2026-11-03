@@ -15,9 +15,16 @@ public sealed class CanvasSteps(PatchContext context, EditorDriver editor) : IDi
     /// <summary>The schemes folder a scenario made, removed after it.</summary>
     private string? schemes;
 
+    /// <summary>The settings file a scenario that restarts keeps, removed after it.</summary>
+    private string? settings;
+
+    /// <summary>How many times Flyback was asked to start again.</summary>
+    private int restarts;
+
     public void Dispose()
     {
         if (schemes is not null) Directory.Delete(schemes, recursive: true);
+        if (settings is not null && File.Exists(settings)) File.Delete(settings);
     }
 
     private static NodeDef Filter => NodeCatalog.Require(NodeCatalog.FilterTypeId);
@@ -86,6 +93,33 @@ public sealed class CanvasSteps(PatchContext context, EditorDriver editor) : IDi
 
     [Then("the editor starts in {word} the next time")]
     public void ThenTheEditorStartsIn(string scheme) => editor.NextColorScheme.ShouldBe(scheme);
+
+    [Given("Flyback can start itself again")]
+    public void GivenFlybackCanRestart()
+    {
+        settings = Path.Combine(Path.GetTempPath(), $"flyback-restart-{Guid.NewGuid():N}.json");
+        editor.Setup = editor.Setup with
+        {
+            Folders = editor.Setup.Folders with { SettingsPath = settings },
+            Host = editor.Setup.Host with { Relaunch = _ => restarts++ },
+        };
+    }
+
+    [When("{word} is chosen as the editor's colors, leaving the offer to restart ticked")]
+    public void WhenColorsAreChosenWithTheRestart(string scheme)
+    {
+        editor.OpenSettings("Canvas");
+        editor.PickSetting("colorScheme", scheme);
+        editor.Tick("Restart Flyback to use the new colors", on: true);
+        editor.Answer("Save");
+    }
+
+    [Then("Flyback starts again, in {word}")]
+    public void ThenFlybackStartsAgainIn(string scheme)
+    {
+        restarts.ShouldBe(1);
+        CanvasSettings.Load(settings!).ColorScheme.ShouldBe(scheme);
+    }
 
     [Then("the editor is drawn in Graphite until then")]
     public static void ThenStillGraphite() => Ui.Controls.Colors.Current.ShouldBe(Ui.Controls.SchemeLibrary.Default);

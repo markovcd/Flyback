@@ -104,6 +104,7 @@ internal static class EditorServices
         services.AddSingleton<PresetLibrary>();
         services.AddPart<OutputSettingRepository>();
         services.AddPart<SettingsSession>();
+        services.AddPart<RestartQuestion>();
         services.AddSingleton<Starting>();
         services.AddPart<SettingsStart>();
         services.AddPart<EditorStart>();

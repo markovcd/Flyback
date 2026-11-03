@@ -1,5 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Editor.Composition;
@@ -17,11 +19,15 @@ internal sealed class SettingsSession(
     IEnumerable<ISettingsSection> sections,
     IDialog dialog,
     Usage usage,
-    EditorHost host)
+    EditorHost host,
+    Reactions reactions)
     : IReactTo<SettingsAsked>
 {
     /// <summary>Whether the settings sheet is waiting for an answer.</summary>
     public bool IsShowing { get; private set; }
+
+    /// <summary>The offer to restart under the open window, or null while none is open.</summary>
+    private RestartOffer? offer;
 
     /// <summary>A page has its own few settings instead, in <see cref="PageSettings"/>.</summary>
     public Task On(SettingsAsked notice) => host.InPage ? Task.CompletedTask : ShowAsync();
@@ -35,6 +41,7 @@ internal sealed class SettingsSession(
         usage.Count(Used.Settings);
 
         bool saved;
+        bool restart;
 
         try
         {
@@ -43,11 +50,16 @@ internal sealed class SettingsSession(
         finally
         {
             IsShowing = false;
+            restart = offer?.Asked == true;
+            offer = null;
         }
 
         if (saved)
         {
             foreach (var section in sections) section.Save();
+
+            if (restart) await reactions.RaiseAsync(new RestartAsked(null, SameDocument: true));
+
             return;
         }
 
@@ -137,12 +149,28 @@ internal sealed class SettingsSession(
             Children = { save, cancel },
         };
 
+        var restart = offer = new RestartOffer(host.Relaunch is not null, saysHow: OperatingSystem.IsIOS());
+        var foot = new DockPanel { LastChildFill = false, Children = { restart, buttons } };
+
+        // Beside Save where there is room, above it on a phone.
+        DockPanel.SetDock(buttons, Dock.Right);
+        foot.SizeChanged += (_, e) =>
+        {
+            var side = e.NewSize.Width < Width ? Dock.Top : Dock.Left;
+
+            if (DockPanel.GetDock(restart) == side) return;
+
+            DockPanel.SetDock(restart, side);
+            restart.Margin = side == Dock.Top ? new Thickness(0, 0, 0, 12) : new Thickness(0, 0, 12, 0);
+        };
+        restart.Margin = new Thickness(0, 0, 12, 0);
+
         // A line rather than a box around the tabs, so it reads as one sheet
         // that ends before the buttons rather than a bordered pane sitting on
         // another.
         var divider = new Border { Height = 1, Background = new SolidColorBrush(Colors.Separator) };
 
-        return new DialogBody(
+        var body = new DialogBody(
             new HeightUpTo(Height)
             {
                 Child = new SettingsSheet(tabs, Width, [.. sections.Select(section => section.View)]),
@@ -155,10 +183,19 @@ internal sealed class SettingsSession(
             {
                 Spacing = 12,
                 Margin = new Thickness(18, 12, 18, 18),
-                Children = { divider, buttons },
+                Children = { divider, foot },
             },
             fits: true);
+
+        // Any list turned in any section may be a change that waits for a restart.
+        body.AddHandler(SelectingItemsControl.SelectionChangedEvent, (_, _) => Offer(), RoutingStrategies.Bubble, handledEventsToo: true);
+        Offer();
+
+        return body;
     }
+
+    /// <summary>Offers the restart for what the sections hold, or takes the offer down.</summary>
+    private void Offer() => offer?.Offer(RestartOffer.Joined(sections.Select(section => section.Restarts)));
 
     /// <summary>
     /// One section as a tab. The header is a text block sized like the rest of the

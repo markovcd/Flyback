@@ -229,6 +229,7 @@ internal sealed class Playback
             next.Device.Dispose();
             report.Say("That device plays at another rate, so it is used from the next time Flyback starts.");
             SyncAudioToVolume();
+            reactions.Raise(new DeviceRateDiffers());
             return;
         }
 
