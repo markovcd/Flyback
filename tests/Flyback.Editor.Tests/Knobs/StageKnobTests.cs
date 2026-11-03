@@ -122,7 +122,7 @@ public class StageKnobTests : EditorTest
     {
         var (patch, _) = Board();
 
-        for (var i = 0; i < 40; i++) patch.AddControl($"Knob {i}");
+        for (var i = 0; !patch.ControlsFull; i++) patch.AddControl($"Knob {i}");
 
         var window = FullScreen(patch);
 
