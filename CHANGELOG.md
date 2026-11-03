@@ -10,7 +10,7 @@
 
 ### Editor
 
-- On a touch screen, a tap on the dots over a full-screen picture opens the transport or the knobs, which stay for four seconds after the last touch; before, a finger could not open them at all.
+- On a touch screen, a tap on the dots over a full-screen picture opens the transport or the knobs, and they stay for four seconds after the last touch; before, a finger could not open them at all.
 - A click or tap on a full-screen picture no longer pauses it, so a stray click while live patching keeps the patch playing; the transport's pause button and Space still pause, and a double-click still leaves full screen. The picture in its pane still pauses at a tap.
 - While live patching, selecting a module that carries more than knobs (a Quantiser's scale, a sequencer's steps, a file, a plugin's choices) puts a [ ] button on the transport over the picture; it or Ctrl+I opens a card under the module (beside it where there is no room) with controls sized for a finger: a keyboard for a scale, a row of buttons for a short choice. What is changed there is written into the text when the text owns the patch. Over the text, the module is the one the caret is in. Zoomed out too far for rows to read, there is nothing to open.
 - The web editor says why when it cannot start, rather than staying on Starting.
