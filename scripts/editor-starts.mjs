@@ -57,7 +57,7 @@ const profile = mkdtempSync(join(tmpdir(), 'editor-starts-'));
 const chrome = spawn(process.env.FLYBACK_CHROMIUM ?? 'chrome-headless-shell', [
   '--headless', '--no-sandbox', '--remote-debugging-pipe', '--enable-unsafe-swiftshader', '--no-first-run',
   '--window-size=1280,800', `--user-data-dir=${profile}`, 'about:blank',
-], { stdio: ['ignore', 'ignore', 'ignore', 'pipe', 'pipe'] });
+], { stdio: ['ignore', 'ignore', 'ignore', 'pipe', 'pipe'], detached: true });
 
 let verdict = null;
 
@@ -67,12 +67,14 @@ function finish(code, said) {
   verdict = code;
   (code === 0 ? console.log : console.error)(said);
   server.close();
-  if (chrome.exitCode === null && chrome.signalCode === null) chrome.kill('SIGKILL');
-  else gone();
+  // The whole group: google-chrome is a script, and its browser outlives a kill of the script alone.
+  try { process.kill(-chrome.pid, 'SIGKILL'); } catch { }
+  if (chrome.exitCode !== null || chrome.signalCode !== null) gone();
 }
 
+/** Exits with the verdict; a profile a straggling Chrome still holds is left to the temporary folder. */
 function gone() {
-  rmSync(profile, { recursive: true, force: true, maxRetries: 5 });
+  try { rmSync(profile, { recursive: true, force: true, maxRetries: 5 }); } catch { }
   process.exit(verdict);
 }
 
