@@ -2,27 +2,14 @@ using Avalonia.Input;
 
 namespace Flyback.Ui.Controls;
 
-/// <summary>A tap on a picture plays and pauses, and a double tap does the picture's other thing.</summary>
+/// <summary>A double tap on a picture does the picture's one thing, such as taking the whole screen; a tap does nothing.</summary>
 public static class PictureTaps
 {
-    /// <summary>
-    /// Pauses or plays on a tap of <paramref name="picture"/> while <paramref name="pauses"/> says so,
-    /// always when it is left out. A double tap arrives as a tap and then a double tap, so the second
-    /// puts the first back before running <paramref name="doubled"/>.
-    /// </summary>
-    public static void Attach(InputElement picture, Action toggle, Action? doubled = null, Func<bool>? pauses = null)
-    {
-        picture.Tapped += (_, e) =>
-        {
-            if (pauses?.Invoke() != false) toggle();
-            e.Handled = true;
-        };
-
+    /// <summary>Runs <paramref name="doubled"/> on a double tap of <paramref name="picture"/>.</summary>
+    public static void Attach(InputElement picture, Action doubled) =>
         picture.DoubleTapped += (_, e) =>
         {
-            if (pauses?.Invoke() != false) toggle();
-            doubled?.Invoke();
+            doubled();
             e.Handled = true;
         };
-    }
 }

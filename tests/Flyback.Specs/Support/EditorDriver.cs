@@ -1396,8 +1396,8 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     /// <summary>Double-clicks the picture, which gives it the whole window.</summary>
     /// <remarks>
     /// The tap and the double tap a double-click is recognized as, raised on the picture.
-    /// Headless clicks are stamped when they are injected, so on a busy machine the pause
-    /// the first one toggles can carry the second past the double-click time.
+    /// Headless clicks are stamped when they are injected, so on a busy machine the second
+    /// can land past the double-click time.
     /// </remarks>
     public void FullScreen() =>
         DoWindow((open, _) =>
