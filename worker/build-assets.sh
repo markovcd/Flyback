@@ -41,6 +41,8 @@ rm -rf "$out" "$large"
 mkdir -p "$out"
 
 cp -r "$root/site/." "$out/"
+# The toolbar and footer every page carries (scripts/site-frame.mjs), not pages themselves.
+rm -rf "$out/partials"
 
 if [ -n "$built" ]; then
   cp -r "$built/." "$work/"

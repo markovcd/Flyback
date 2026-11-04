@@ -38,3 +38,8 @@ Feature: The Worker serves the whole website
   Scenario: The website takes its colors from one place
     When someone reads the website's pages, stylesheets and scripts
     Then every color in them is one of site.css's, and those are the Graphite scheme's
+
+  @node
+  Scenario: Every page wears the one toolbar and footer
+    When someone checks the website's pages against its toolbar and footer
+    Then every page wears them as they are written once, in the site's partials
