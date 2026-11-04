@@ -23,7 +23,8 @@ internal sealed class ModulePainter(
     Repaint repaint,
     NodeGeometry geometry,
     CanvasLift lift,
-    CanvasGlass glass)
+    CanvasGlass glass,
+    PaintFrame frame)
 {
     private static readonly IBrush NormalBrush = new ImmutableSolidColorBrush(Colors.Normalled);
     private static readonly IBrush LinkedBrush = new ImmutableSolidColorBrush(Colors.Attention, 0.85);
@@ -225,7 +226,7 @@ internal sealed class ModulePainter(
             var room = geometry.Compact ? ModuleFace.HalfRow(bounds) : bounds.Width - 24;
             var label = CanvasText.Text(port.Name, CanvasText.RowSize, Ink(center.Y, RowInk, 0, CanvasText.LabelBrush), room, true);
 
-            context.DrawText(label, ModuleFace.LabelAt(bounds, center, label, output: true));
+            CanvasText.Draw(context, label, ModuleFace.LabelAt(bounds, center, label, output: true));
             NodeSkin.DrawPort(context, center, port.Kind);
         }
 
@@ -256,7 +257,7 @@ internal sealed class ModulePainter(
             // Wider than the column a number gets: "Coordinates x" does not fit
             // where "0.25" does, and trimmed it would stop telling x from y.
             var name = CanvasText.Text(source, CanvasText.RowSize, ink(center.Y, RowInk, NormalFade, NormalBrush), bounds.Width * 0.5, true);
-            context.DrawText(name, new Point(bounds.Right - 12 - name.Width, center.Y - name.Height / 2));
+            CanvasText.Draw(context, name, new Point(bounds.Right - 12 - name.Width, center.Y - name.Height / 2));
             return true;
         }
 
@@ -286,7 +287,7 @@ internal sealed class ModulePainter(
             true);
         var spot = new Point(bounds.Right - 12 - value.Width, center.Y - value.Height / 2);
 
-        context.DrawText(value, spot);
+        CanvasText.Draw(context, value, spot);
 
         if (flagged)
             context.DrawRectangle(null, FlagPen, new Rect(spot.X - 3, spot.Y - 1, value.Width + 6, value.Height + 2), 3, 3);
@@ -312,7 +313,7 @@ internal sealed class ModulePainter(
         DrawingContext context, NodeInstance node, NodeDef def, PortSpec port, int index, string name, Rect bounds, Point center,
         bool follow, string? formula, RemapSpans? spans, Func<double, double, double, IBrush, IBrush> ink)
     {
-        var connected = Patch.IncomingTo(node.Id, index) is not null;
+        var connected = (frame.For(Patch) is { } memo ? memo.IncomingTo(node.Id, index) : Patch.IncomingTo(node.Id, index)) is not null;
 
         using var idle = ModuleFace.Idle(formula, index) ? context.PushOpacity(IdleOpacity) : (IDisposable?)null;
 
@@ -332,7 +333,7 @@ internal sealed class ModulePainter(
         var width = ModuleFace.BoxLabelRoom(bounds, valued, compact: false);
         var label = CanvasText.Text(CanvasText.Fit(name, width), CanvasText.RowSize, ink(center.Y, RowInk, 0, CanvasText.LabelBrush), width, true);
 
-        context.DrawText(label, ModuleFace.LabelAt(bounds, center, label, output: false));
+        CanvasText.Draw(context, label, ModuleFace.LabelAt(bounds, center, label, output: false));
 
         if (well is { } state) ValueWell.DrawSocket(context, center, port.Kind, state);
         else if (KnobChip.Of(Patch, node, index) is not null) SocketDiamond.DrawLinked(context, center, port.Kind);
@@ -355,7 +356,7 @@ internal sealed class ModulePainter(
         var label = CanvasText.Text(CanvasText.Fit(name, room), CanvasText.RowSize, brush, room, true);
         var at = ModuleFace.LabelAt(bounds, center, label, output: false);
 
-        context.DrawText(label, at);
+        CanvasText.Draw(context, label, at);
 
         if (!connected && ControlMap.Of(node, i) is { } found && Patch.Control(found.Control) is not null)
             context.DrawEllipse(follow ? brush : LinkedBrush, null, new Point(at.X + label.Width + 6, center.Y), 2.5, 2.5);

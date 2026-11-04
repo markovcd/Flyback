@@ -68,7 +68,7 @@ internal static class ModuleFace
     /// <summary>Writes a title, struck through with <paramref name="strike"/> where one is given.</summary>
     internal static void DrawTitle(DrawingContext context, FormattedText title, Point at, IPen? strike)
     {
-        context.DrawText(title, at);
+        CanvasText.Draw(context, title, at);
 
         if (strike is not null)
             context.DrawLine(

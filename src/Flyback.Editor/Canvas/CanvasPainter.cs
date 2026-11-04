@@ -36,7 +36,8 @@ internal sealed class CanvasPainter(
     WirePainter wires,
     ModulePainter modules,
     GroupPainter groups,
-    PaintClock clock)
+    PaintClock clock,
+    PaintFrame frame)
 {
     private static readonly IPen TetherPen = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Attention), 2);
 
@@ -49,7 +50,7 @@ internal sealed class CanvasPainter(
     {
         var started = Stopwatch.GetTimestamp();
 
-        Paint(context);
+        using (frame.Open(Patch)) Paint(context);
 
         clock.Record(Stopwatch.GetElapsedTime(started));
     }
@@ -67,7 +68,7 @@ internal sealed class CanvasPainter(
             // The wires of modules being dragged are drawn after the modules, so
             // nothing the block is pulled across hides where it is still patched.
             var lifted = gestures.Carrying ? selection.Ids : new HashSet<Guid>();
-            var scene = selection.Scene;
+            var scene = selection.Scene.During(frame);
 
             // Under the modules and the wires both: the ground a group stands on.
             using (glass.Push(context)) groups.DrawOpenGroups(context, scene);

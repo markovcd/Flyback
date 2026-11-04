@@ -29,6 +29,18 @@ internal static class ModuleOverview
     /// <summary>Whether the view at <paramref name="zoom"/> draws modules this way.</summary>
     internal static bool At(double zoom) => zoom < Below;
 
+    /// <summary>Names laid out at a zoom, kept while the zoom holds, as it does through a pan.</summary>
+    private static readonly Remembered<(string Name, double Size, IBrush Brush, double Room, int Lines), FormattedText> Names = new(1024);
+
+    private static FormattedText Lay(string name, double size, IBrush brush, double room, int lines) =>
+        new(name, System.Globalization.CultureInfo.InvariantCulture, FlowDirection.LeftToRight, Typeface.Default, size, brush)
+        {
+            MaxTextWidth = room,
+            MaxLineCount = lines,
+            Trimming = TextTrimming.CharacterEllipsis,
+            TextAlignment = TextAlignment.Center,
+        };
+
     /// <summary>
     /// The name of a module or a box, centered on <paramref name="bounds"/> on a dark plate so it
     /// reads over the body's mark, and struck through when it is switched off.
@@ -39,20 +51,14 @@ internal static class ModuleOverview
         var room = bounds.Width * (1 + Spill * 2);
         var lines = Math.Clamp((int)(bounds.Height / (size * 1.3)), 1, MostLines);
 
-        var text = new FormattedText(name, System.Globalization.CultureInfo.InvariantCulture, FlowDirection.LeftToRight, Typeface.Default, size, brush)
-        {
-            MaxTextWidth = room,
-            MaxLineCount = lines,
-            Trimming = TextTrimming.CharacterEllipsis,
-            TextAlignment = TextAlignment.Center,
-        };
+        var text = Names.Get((name, size, brush, room, lines), static key => Lay(key.Name, key.Size, key.Brush, key.Room, key.Lines));
 
         var center = bounds.Center;
         var pad = 3 / zoom;
         var plate = new Rect(center.X - text.Width / 2 - pad, center.Y - text.Height / 2 - pad / 2, text.Width + pad * 2, text.Height + pad);
 
         context.DrawRectangle(Plate, null, plate, pad, pad);
-        context.DrawText(text, new Point(center.X - room / 2, center.Y - text.Height / 2));
+        CanvasText.Draw(context, text, new Point(center.X - room / 2, center.Y - text.Height / 2));
 
         if (off)
             context.DrawLine(

@@ -295,7 +295,7 @@ internal sealed class GroupPainter(
         var width = ModuleFace.BoxLabelRoom(bounds, resting: false, geometry.Compact);
         var text = CanvasText.Text(CanvasText.Fit(label, width), CanvasText.RowSize, CanvasText.LabelBrush, width, true);
 
-        context.DrawText(text, ModuleFace.LabelAt(bounds, center, text, socket.IsOutput));
+        CanvasText.Draw(context, text, ModuleFace.LabelAt(bounds, center, text, socket.IsOutput));
         NodeSkin.DrawPort(context, center, spec.Kind);
     }
 }

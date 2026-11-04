@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Runtime.CompilerServices;
+using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Colors = Flyback.Ui.Controls.Colors;
@@ -52,6 +54,27 @@ internal static class CanvasText
     }
 
     private static readonly Remembered<(string Label, double Width), string> Fitted = new(4096);
+
+    /// <summary>
+    /// Draws text made by <see cref="Text"/> at <paramref name="at"/>. Drawing a
+    /// <see cref="FormattedText"/> shapes it again every time, so its glyphs are kept
+    /// and drawn from instead.
+    /// </summary>
+    internal static void Draw(DrawingContext context, FormattedText text, Point at)
+    {
+        var glyphs = Glyphs.GetValue(text, static laid =>
+        {
+            var drawing = new DrawingGroup();
+
+            using (var into = drawing.Open()) into.DrawText(laid, default);
+
+            return drawing;
+        });
+
+        using (context.PushTransform(Matrix.CreateTranslation(at.X, at.Y))) glyphs.Draw(context);
+    }
+
+    private static readonly ConditionalWeakTable<FormattedText, DrawingGroup> Glyphs = [];
 
     /// <summary>Laid-out text, which is shaped once and drawn again on every frame it stays the same.</summary>
     private static readonly Remembered<(string Text, double Size, IBrush Brush, double MaxWidth, bool Trim), FormattedText> Laid = new(4096);

@@ -63,7 +63,7 @@
 ### Performance
 
 - The desktop editor opens its window about a second sooner, its code compiled ahead of time; the web editor shows its logo and a loading bar while it downloads, and the iPhone and iPad editor opens on its logo in its own colors rather than a white screen.
-- Panning and zooming a large patch is smoother, most of all on a phone: the canvas skips modules and wires out of view and keeps the shapes of wires and fitted socket names from one frame to the next.
+- Panning and zooming a large patch is smoother, most of all on a phone: the canvas skips modules and wires out of view, looks up what it draws once a frame, and keeps wire shapes, pens and laid-out text from one frame to the next.
 - On Android the sound runs ahead of the screen's drawing, so a busy canvas no longer starves it.
 
 ### Fixes

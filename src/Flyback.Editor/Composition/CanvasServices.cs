@@ -58,6 +58,7 @@ internal static class CanvasServices
         services.AddSingleton<ModulePainter>();
         services.AddSingleton<GroupPainter>();
         services.AddSingleton<PaintClock>();
+        services.AddSingleton<PaintFrame>();
         services.AddSingleton<CanvasPainter>();
         services.AddPart<NodeEditor>();
 

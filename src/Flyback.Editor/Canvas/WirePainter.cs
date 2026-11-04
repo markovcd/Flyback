@@ -14,7 +14,8 @@ internal sealed class WirePainter(
     NodeGeometry geometry,
     CanvasLift lift,
     CanvasGlass glass,
-    Viewport view)
+    Viewport view,
+    PaintFrame frame)
 {
     /// <summary>How thick a wire is drawn, and how far under full strength.</summary>
     private const double WireThickness = 2.2;
@@ -50,6 +51,24 @@ internal sealed class WirePainter(
     /// <summary>A loop's wire: <see cref="DashStyle.Dash"/>, made once so each wire's pen can be immutable.</summary>
     private static readonly ImmutableDashStyle LoopDashes = new(DashStyle.Dash.Dashes, DashStyle.Dash.Offset);
 
+    /// <summary>
+    /// Pens made once and drawn with again: a pen new to a frame costs the renderer a
+    /// lookup and a hash of its own, and a patch has hundreds of wires.
+    /// </summary>
+    private static readonly Remembered<(Color Color, double Opacity, double Thickness, bool Looped), ImmutablePen> Pens = new(1024);
+
+    private static readonly Remembered<(double Thickness, bool Looped), ImmutablePen> Casings = new(16);
+
+    private static readonly Remembered<(Color Color, double Opacity), ImmutableSolidColorBrush> Inks = new(256);
+
+    private static ImmutableSolidColorBrush InkFor(Color color, double opacity) =>
+        Inks.Get((color, opacity), static key => new ImmutableSolidColorBrush(key.Color, key.Opacity));
+
+    private static ImmutablePen PenFor(Color color, double opacity, double thickness, bool looped) =>
+        Pens.Get(
+            (color, opacity, thickness, looped),
+            static key => new ImmutablePen(InkFor(key.Color, key.Opacity), key.Thickness, key.Looped ? LoopDashes : null));
+
     private Patch Patch => history.Patch;
 
     /// <param name="context">Where the canvas is drawing.</param>
@@ -71,12 +90,13 @@ internal sealed class WirePainter(
         // What a loop is made of, and the one thing about a wire the canvas
         // cannot read off its two ends — see Cycles.Backwards, which the compiler
         // asks the same question of.
-        var backwards = Cycles.BackwardsThroughBuses(Patch);
-        var scene = selection.Scene;
+        var memo = frame.For(Patch);
+        var backwards = memo?.Backwards ?? Cycles.BackwardsThroughBuses(Patch);
+        var scene = selection.Scene.During(frame);
 
         // Which wires carry voices, asked of the patch the compiler sees — see
         // VoiceCounts — so a chain beyond a bus is drawn as what it carries.
-        var voices = VoiceCounts.Of(Buses.Joined(Patch), NodeCatalog.Current);
+        var voices = memo?.Voices ?? VoiceCounts.Of(Buses.Joined(Patch), NodeCatalog.Current);
 
         foreach (var connection in Patch.Connections)
         {
@@ -91,8 +111,8 @@ internal sealed class WirePainter(
             // is simply not on the canvas while the box is shut.
             if (scene.Hidden(connection)) continue;
 
-            var source = Patch.Find(connection.SourceNode);
-            var target = Patch.Find(connection.TargetNode);
+            var source = scene.Find(connection.SourceNode);
+            var target = scene.Find(connection.TargetNode);
             if (source is null || target is null) continue;
 
             var sourceDef = NodeCatalog.Get(source.TypeId);
@@ -132,19 +152,19 @@ internal sealed class WirePainter(
             // it runs off into, measured end to end rather than along the curve.
             var leaving = peeked && scene.InPeek(connection.SourceNode) != scene.InPeek(connection.TargetNode);
 
-            IBrush ink = leaving && from != to
-                ? Fading(color, opacity, scene.InPeek(connection.SourceNode) ? (from, to) : (to, from))
-                : new ImmutableSolidColorBrush(color, opacity);
-
             var thickness = theirs ? LiftedWireThickness : WireThickness;
-            IPen pen = ink is IImmutableBrush still ? new ImmutablePen(still, thickness, dashes) : new Pen(ink, thickness, dashes);
+            var looped = dashes is not null;
+
+            IPen pen = leaving && from != to
+                ? new Pen(Fading(color, opacity, scene.InPeek(connection.SourceNode) ? (from, to) : (to, from)), thickness, dashes)
+                : PenFor(color, opacity, thickness, looped);
             var count = voices.GetValueOrDefault(connection.SourceNode, 1);
 
-            if (glass.SeeThrough) Route(new ImmutablePen(CanvasGlass.Casing, thickness + 2.5, dashes));
+            if (glass.SeeThrough) Route(Casings.Get((thickness + 2.5, looped), static key => new ImmutablePen(CanvasGlass.Casing, key.Thickness, key.Looped ? LoopDashes : null)));
 
             if (count > 1)
             {
-                Route(new ImmutablePen(new ImmutableSolidColorBrush(color, opacity * VoicesBandOpacity), thickness * VoicesBand, dashes));
+                Route(PenFor(color, opacity * VoicesBandOpacity, thickness * VoicesBand, looped));
                 DrawVoiceCount(context, from, count, color, opacity);
             }
 
@@ -170,7 +190,7 @@ internal sealed class WirePainter(
     /// <summary>How many voices a polyphonic wire carries, just past the output it leaves.</summary>
     private static void DrawVoiceCount(DrawingContext context, Point from, int count, Color color, double opacity)
     {
-        var text = CanvasText.Text($"×{count}", CanvasText.RowSize, new ImmutableSolidColorBrush(color, opacity), 40, false);
+        var text = CanvasText.Text($"×{count}", CanvasText.RowSize, InkFor(color, opacity), 40, false);
 
         context.DrawText(text, new Point(from.X + 8, from.Y - text.Height - 2));
     }

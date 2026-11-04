@@ -18,8 +18,17 @@ namespace Flyback.Editor.Canvas;
 /// shut in the patch. Its ring covers whatever lies under it.
 /// </param>
 /// <param name="turnable">Whether an input's value may be turned; a well that may not is no well to hit.</param>
-internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGroup? peek = null, Func<Guid, int, bool>? turnable = null)
+internal readonly struct CanvasScene(
+    Patch patch, NodeGeometry geometry, NodeGroup? peek = null, Func<Guid, int, bool>? turnable = null, SceneMemo? memo = null)
 {
+    /// <summary>The same scene, asking <paramref name="frame"/> what it has already looked up while a frame of this patch is drawn.</summary>
+    public CanvasScene During(PaintFrame frame) => frame.For(patch) is { } kept ? new(patch, geometry, peek, turnable, kept) : this;
+
+    /// <summary>The module called <paramref name="id"/>.</summary>
+    public NodeInstance? Find(Guid id) => memo is { } kept ? kept.Find(id) : patch.Find(id);
+
+    private GroupSockets SocketsOf(NodeGroup group) => memo is { } kept ? kept.SocketsOf(group) : patch.SocketsOf(group);
+
     // Everything below is drawing and pointing. Nothing here touches the graph:
     // a collapsed box is several modules that are not being painted and one that
     // is, and every wire still runs between exactly the modules it always ran
@@ -57,7 +66,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
         {
             if (!group.Collapsed || ReferenceEquals(group, peek)) continue;
 
-            var sockets = patch.SocketsOf(group);
+            var sockets = SocketsOf(group);
             var bounds = geometry.GroupBounds(patch, group, sockets);
 
             if (bounds.Width > 0) yield return (group, sockets, bounds);
@@ -67,7 +76,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
     /// <summary>Whether an output is inside a shut box and not on its edge, so nothing on the canvas shows it.</summary>
     public bool Unseen(Guid nodeId, int port) =>
         ShutGroupOf(nodeId) is { } group
-        && patch.SocketsOf(group).IndexOfOutput(new GroupSocket(nodeId, port, IsOutput: true)) < 0;
+        && SocketsOf(group).IndexOfOutput(new GroupSocket(nodeId, port, IsOutput: true)) < 0;
 
     /// <summary>Whether this module is inside a box, and so is not drawn itself.</summary>
     public bool Shut(Guid nodeId) => ShutGroupOf(nodeId) is not null;
@@ -126,7 +135,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
     {
         if (ShutGroupOf(node.Id) is { } group)
         {
-            var sockets = patch.SocketsOf(group);
+            var sockets = SocketsOf(group);
             var row = sockets.IndexOfOutput(new GroupSocket(node.Id, port, IsOutput: true));
 
             if (row >= 0)
@@ -146,7 +155,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
     {
         if (patch.CollapsedGroupOf(node.Id) is { } group)
         {
-            var bounds = geometry.GroupBounds(patch, group, patch.SocketsOf(group));
+            var bounds = geometry.GroupBounds(patch, group, SocketsOf(group));
 
             if (bounds.Width > 0) return bounds;
         }
@@ -159,7 +168,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
     {
         if (ShutGroupOf(node.Id) is { } group)
         {
-            var sockets = patch.SocketsOf(group);
+            var sockets = SocketsOf(group);
             var row = sockets.IndexOfInput(new GroupSocket(node.Id, port, IsOutput: false));
 
             if (row >= 0)
@@ -230,7 +239,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
         var bottom = double.MinValue;
 
         foreach (var id in group.Members)
-            if (without?.Contains(id) != true && patch.Find(id) is { } node && NodeCatalog.Get(node.TypeId) is { } def)
+            if (without?.Contains(id) != true && Find(id) is { } node && NodeCatalog.Get(node.TypeId) is { } def)
             {
                 var bounds = geometry.Bounds(node, def);
 
@@ -313,7 +322,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
     /// </summary>
     public (string Label, PortSpec Spec)? Named(GroupSocket socket)
     {
-        if (patch.Find(socket.Node) is not { } node) return null;
+        if (Find(socket.Node) is not { } node) return null;
         if (NodeCatalog.Get(node.TypeId) is not { } def) return null;
 
         var ports = socket.IsOutput ? def.Outputs : def.Inputs;
@@ -373,11 +382,11 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
     /// <summary>Where an input's row is drawn: on its module, or on the edge of the shut box it is behind; null where it is not drawn.</summary>
     public (Rect Bounds, Point Center)? RowOf(Guid nodeId, int port)
     {
-        if (patch.Find(nodeId) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return null;
+        if (Find(nodeId) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return null;
 
         if (ShutGroupOf(nodeId) is not { } group) return (geometry.Bounds(node, def), geometry.InputPort(node, def, port));
 
-        var sockets = patch.SocketsOf(group);
+        var sockets = SocketsOf(group);
         var row = sockets.IndexOfInput(new GroupSocket(nodeId, port, IsOutput: false));
 
         if (row < 0) return null;
@@ -391,7 +400,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
     public List<SocketPick> InputsUnder(Point graph)
     {
         if (HitBox(graph) is { } box)
-            return [.. patch.SocketsOf(box).Inputs.Select(socket => new SocketPick(socket.Node, socket.Port))];
+            return [.. SocketsOf(box).Inputs.Select(socket => new SocketPick(socket.Node, socket.Port))];
 
         if (HitNode(graph) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return [];
 
@@ -402,9 +411,9 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
     public List<SocketPick> InputsBeside(SocketPick pick)
     {
         if (ShutGroupOf(pick.Node) is { } group)
-            return [.. patch.SocketsOf(group).Inputs.Select(socket => new SocketPick(socket.Node, socket.Port))];
+            return [.. SocketsOf(group).Inputs.Select(socket => new SocketPick(socket.Node, socket.Port))];
 
-        if (patch.Find(pick.Node) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return [];
+        if (Find(pick.Node) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return [];
 
         return [.. Enumerable.Range(0, def.Inputs.Count).Select(port => new SocketPick(node.Id, port))];
     }
@@ -429,7 +438,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
                 var socket = sockets.Inputs[row];
 
                 if (!Well(bounds, geometry.GroupInputPort(bounds, sockets, row)).Contains(graph)) continue;
-                if (patch.Find(socket.Node) is not { } inside || NodeCatalog.Get(inside.TypeId) is not { } within) continue;
+                if (Find(socket.Node) is not { } inside || NodeCatalog.Get(inside.TypeId) is not { } within) continue;
                 if (!wants(inside, within, socket.Port)) continue;
 
                 (nodeId, portIndex) = (socket.Node, socket.Port);
@@ -702,7 +711,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
 
         foreach (var (id, from) in origins)
         {
-            if (patch.Find(id) is not { } node) continue;
+            if (Find(id) is not { } node) continue;
             if (NodeCatalog.Get(node.TypeId) is not { } def) continue;
 
             var room = Room(def);
