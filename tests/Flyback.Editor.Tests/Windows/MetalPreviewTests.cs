@@ -180,15 +180,15 @@ public class MetalPreviewTests : EditorTest
         var row = width * 4;
 
         for (var y = 0; y < height; y++)
-        for (var x = 0; x < row; x += 4)
-        {
-            var from = y * row + x;
-            var to = (height - 1 - y) * row + x;
-            rgba[to + 0] = bgra[from + 2];
-            rgba[to + 1] = bgra[from + 1];
-            rgba[to + 2] = bgra[from + 0];
-            rgba[to + 3] = bgra[from + 3];
-        }
+            for (var x = 0; x < row; x += 4)
+            {
+                var from = y * row + x;
+                var to = (height - 1 - y) * row + x;
+                rgba[to + 0] = bgra[from + 2];
+                rgba[to + 1] = bgra[from + 1];
+                rgba[to + 2] = bgra[from + 0];
+                rgba[to + 3] = bgra[from + 3];
+            }
 
         return rgba;
     }
