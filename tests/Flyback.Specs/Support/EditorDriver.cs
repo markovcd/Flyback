@@ -471,17 +471,20 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
             .Select(b => b.Name)
             .ToList());
 
-    /// <summary>How many rows the toolbar's shown buttons stand in.</summary>
+    /// <summary>How many rows the toolbar's shown buttons stand in, counted by their middles, since a named button stands taller.</summary>
     public int ToolbarRows => ReadWindow(_ =>
     {
         var bar = Service<Toolbar>().View;
 
         return bar.GetVisualDescendants().OfType<Button>()
             .Where(b => b.IsEffectivelyVisible)
-            .Select(b => Math.Round(b.TranslatePoint(default, bar)!.Value.Y / 10))
+            .Select(b => Math.Round(b.TranslatePoint(new Point(0, b.Bounds.Height / 2), bar)!.Value.Y / 10))
             .Distinct()
             .Count();
     });
+
+    /// <summary>Whether the toolbar's buttons print their names under their symbols.</summary>
+    public bool ToolbarNamesShown => ReadWindow(_ => Service<Toolbar>().Overflow.LegendsShown);
 
     /// <summary>What the toolbar's menu offers, in order, or nothing while the menu's button is hidden.</summary>
     public IReadOnlyList<string> ToolbarMenu => ReadWindow(_ =>

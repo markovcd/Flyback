@@ -39,7 +39,7 @@ public sealed class ToolbarOverflowTests : EditorTest
     {
         var window = Open();
 
-        Resize(window, 600);
+        Resize(window, 900);
 
         var folded = Folded(window);
 
@@ -63,7 +63,8 @@ public sealed class ToolbarOverflowTests : EditorTest
             var shown = All<Button>(window).Where(b => b.IsEffectivelyVisible && bar.IsVisualAncestorOf(b)).ToList();
 
             shown.ShouldAllBe(b => b.TranslatePoint(new Point(b.Bounds.Width, 0), window)!.Value.X <= width + 0.5);
-            shown.Select(b => Math.Round(b.TranslatePoint(default, bar)!.Value.Y)).Distinct().Count().ShouldBe(1);
+            // A button with a legend stands taller than one without, so the row lines up their middles.
+            shown.Select(b => Math.Round(b.TranslatePoint(new Point(0, b.Bounds.Height / 2), bar)!.Value.Y)).Distinct().Count().ShouldBe(1);
         }
     }
 
@@ -93,14 +94,41 @@ public sealed class ToolbarOverflowTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void A_narrowing_window_drops_the_legends_before_folding_a_button()
+    public void A_narrowing_window_folds_buttons_and_keeps_the_legends()
     {
         var window = Open();
 
         Resize(window, 1440);
         Resize(window, 900);
 
-        Service<Toolbar>(window).Overflow.LegendsShown.ShouldBeFalse();
-        Folded(window).ShouldBeEmpty();
+        Service<Toolbar>(window).Overflow.LegendsShown.ShouldBeTrue();
+        Folded(window).ShouldNotBeEmpty();
+    }
+
+    [AvaloniaFact]
+    public void A_phone_wide_window_prints_the_legends()
+    {
+        var window = Open();
+
+        Resize(window, 390);
+
+        Service<Toolbar>(window).Overflow.LegendsShown.ShouldBeTrue();
+        All<TextBlock>(window).ShouldContain(text => text.Text == "PRESETS" && text.IsEffectivelyVisible);
+    }
+
+    [AvaloniaFact]
+    public void Without_legends_a_narrow_window_folds_fewer_buttons()
+    {
+        var window = Open();
+        var overflow = Service<Toolbar>(window).Overflow;
+
+        Resize(window, 390);
+        var labeled = Folded(window).Length;
+
+        overflow.LegendsWanted = false;
+        overflow.Fit(390);
+
+        overflow.LegendsShown.ShouldBeFalse();
+        Folded(window).Length.ShouldBeLessThan(labeled);
     }
 }

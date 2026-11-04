@@ -10,6 +10,7 @@ Feature: The patch is played from a row of its own along the foot of the window
 
   Scenario: The toolbar keeps one row in a window 830 pixels wide
     Given the screen is 830 pixels wide
+    And the toolbar's buttons print no names
     And the patch is open in the editor
     Then the toolbar is one row tall
     And the toolbar has no menu

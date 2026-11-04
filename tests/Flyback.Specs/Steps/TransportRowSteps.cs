@@ -1,5 +1,6 @@
 using Avalonia;
 using Flyback.Editor.Bars;
+using Flyback.Editor.Canvas;
 using Flyback.Specs.Support;
 using Reqnroll;
 using Shouldly;
@@ -8,12 +9,23 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>The row along the foot of the window that plays the patch.</summary>
 [Binding]
-public sealed class TransportRowSteps(EditorDriver editor)
+public sealed class TransportRowSteps(EditorDriver editor) : IDisposable
 {
     private double canvasBefore;
 
+    private readonly DirectoryInfo settings = Directory.CreateTempSubdirectory("flyback-transport-row-specs");
+
     [Given("the screen is {int} pixels wide")]
     public void GivenWide(int width) => editor.Screen = new Size(width, 800);
+
+    [Given("the toolbar's buttons print no names")]
+    public void GivenNoNames()
+    {
+        var path = Path.Combine(settings.FullName, "settings.json");
+
+        new CanvasSettings { ToolbarLabels = false }.Save(path);
+        editor.Setup = editor.Setup with { Folders = editor.Setup.Folders with { SettingsPath = path } };
+    }
 
     [When("a finger slides along the seek bar from {int} to {int} seconds")]
     public void WhenFingerSlides(int from, int to) => editor.SlideFingerAlongSeekBar(from, to);
@@ -63,4 +75,6 @@ public sealed class TransportRowSteps(EditorDriver editor)
         foreach (var name in has.Split(", ")) offered.ShouldContain(name);
         foreach (var name in hasNot.Split(", ")) offered.ShouldNotContain(name);
     }
+
+    public void Dispose() => settings.Delete(recursive: true);
 }

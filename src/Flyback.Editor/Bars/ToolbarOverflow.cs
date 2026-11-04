@@ -70,18 +70,31 @@ internal sealed class ToolbarOverflow
 
     /// <summary>
     /// Folds what does not fit in <paramref name="width"/>, after bringing back all that was
-    /// folded. The legends go before any button does, so a narrow window keeps every button.
+    /// folded. Wanted legends stay while buttons fold, and go only when the row cannot fit
+    /// with every foldable button folded.
     /// </summary>
     public void Fit(double width)
     {
         if (width <= 0) return;
 
+        Legend(LegendsWanted);
+        Fold(width);
+
+        if (LegendsShown && Wanted() > width)
+        {
+            Legend(false);
+            Fold(width);
+        }
+
+        menu.ItemsSource = Items();
+    }
+
+    /// <summary>Brings back every folded button, then folds them in order until the row fits.</summary>
+    private void Fold(double width)
+    {
         foreach (var control in folded) Show(control, true);
         folded.Clear();
         Tidy();
-
-        Legend(LegendsWanted);
-        if (LegendsShown && Wanted() > width) Legend(false);
 
         foreach (var (control, _) in order)
         {
@@ -92,8 +105,6 @@ internal sealed class ToolbarOverflow
             folded.Add(control);
             Tidy();
         }
-
-        menu.ItemsSource = Items();
     }
 
     private void Legend(bool shown)

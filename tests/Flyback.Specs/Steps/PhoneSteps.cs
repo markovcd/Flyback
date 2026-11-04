@@ -95,6 +95,9 @@ public sealed class PhoneSteps(PatchContext context, EditorDriver editor)
         foreach (var label in labels.Split(", ")) offered.ShouldContain(label);
     }
 
+    [Then("the toolbar's buttons print their names")]
+    public void ThenNamesShown() => editor.ToolbarNamesShown.ShouldBeTrue();
+
     [Then("the toolbar has no menu")]
     public void ThenNoMenu() => editor.ToolbarMenu.ShouldBeEmpty();
 

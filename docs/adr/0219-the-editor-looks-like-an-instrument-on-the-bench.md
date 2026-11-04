@@ -76,7 +76,9 @@ The editor is drawn as an instrument, with a scope on the bench as the reference
 - **Toolbar symbols are panel marks.** Drawn on a 16-unit box at weight 1.6 with square
   caps and miter joins, a solid fill where a hardware legend would have one, and the
   name in small bold capitals under each. The names are a setting, on by default; a
-  window too narrow for them drops the names before folding any button.
+  window too narrow for every named button folds buttons and keeps the names, and drops
+  them only when the bar cannot fit with every button folded, so the setting shows on a
+  phone too.
 - **The inspector opens on the values.** The name and the family share one line, the
   buttons stand in their own row under it on the band, and the description follows
   the outputs, since it is read once and the values every time.

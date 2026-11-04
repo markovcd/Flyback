@@ -17,6 +17,14 @@ Feature: The editor fits a window as narrow as a phone held upright
     And every toolbar button is on the screen
     And the toolbar's menu offers "Settings, Plugins, About"
 
+  Scenario: The toolbar keeps its buttons' names, folding more buttons for them
+    Given the patch is open in the editor
+    When a finger taps bare canvas
+    Then the toolbar's buttons print their names
+    And the toolbar is one row tall
+    And every toolbar button is on the screen
+    And the toolbar's menu offers "Open…, Save…, Settings"
+
   Scenario: A button folded into the toolbar's menu does what it does on the bar
     Given the patch is open in the editor
     When "Settings" is picked from the toolbar's menu
