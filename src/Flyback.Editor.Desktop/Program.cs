@@ -15,6 +15,9 @@ internal static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        // First, before the terminal that started the old process can hang up on this one.
+        Restart.Detach(args);
+
         SlowStart.Begin();
 
         // Only a console somebody is looking at is worth keeping or writing to.

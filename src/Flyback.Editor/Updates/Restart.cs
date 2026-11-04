@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.InteropServices;
 
 namespace Flyback.Editor.Updates;
 
@@ -12,7 +13,7 @@ namespace Flyback.Editor.Updates;
 /// being replaced is one the old process has loaded, and until it exits Windows will
 /// not let the new one move the replacement into place.
 /// </remarks>
-internal static class Restart
+internal static partial class Restart
 {
     /// <summary>What the new process is told to wait for the old one with, followed by its id.</summary>
     public const string AfterFlag = "--after";
@@ -38,7 +39,14 @@ internal static class Restart
             return;
         }
 
-        var start = new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false };
+        // Not on the terminal this one was started from, which may close as this exits.
+        var start = new ProcessStartInfo(Environment.ProcessPath!)
+        {
+            UseShellExecute = false,
+            RedirectStandardInput = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        };
 
         foreach (var argument in arguments) start.ArgumentList.Add(argument);
 
@@ -78,6 +86,26 @@ internal static class Restart
             ? (null, args)
             : (args[at + 1], [.. args[..at], .. args[(at + 2)..]]);
     }
+
+    /// <summary>
+    /// Leaves the terminal session a restart was started in, on macOS and Linux: a
+    /// terminal that ran the old process hangs up its session as that exits, which
+    /// would end this one with it.
+    /// </summary>
+    public static void Detach(string[] args)
+    {
+        if (Array.IndexOf(args, AfterFlag) < 0) return;
+
+        // Fails only for a process group leader, which a process just started is not.
+        if (OperatingSystem.IsMacOS()) _ = MacSetsid();
+        else if (OperatingSystem.IsLinux()) _ = LinuxSetsid();
+    }
+
+    [LibraryImport("/usr/lib/libSystem.B.dylib", EntryPoint = "setsid")]
+    private static partial int MacSetsid();
+
+    [LibraryImport("libc.so.6", EntryPoint = "setsid")]
+    private static partial int LinuxSetsid();
 
     /// <summary>
     /// Waits for the process <see cref="AfterFlag"/> names, if it names one, and gives
