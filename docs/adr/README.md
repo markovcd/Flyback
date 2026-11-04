@@ -203,6 +203,7 @@ context, decision, consequences.
 | [0175](0175-the-preset-site-is-a-worker-and-github-reads-what-is-submitted.md) | The preset site is a Worker, and GitHub reads what is submitted *(user-directed)* |
 | [0176](0176-the-preset-site-lives-at-flybackmodular-app-alone.md) | The preset site lives at flybackmodular.app alone *(user-directed)* |
 | [0177](0177-the-net-site-is-gone.md) | The .NET site is gone *(user-directed)* |
+| [0222](0222-the-website-is-built-by-hugo-from-one-layout.md) | The website is built by Hugo from one layout *(user-directed)* |
 | [0025](0025-platform-io-behind-loadable-plugins.md) | Platform I/O behind plugins loaded at run time |
 | [0026](0026-modules-from-plugins-with-provenance-in-the-file.md) | Modules may come from plugins, and the file records which *(user-directed)* |
 | [0028](0028-publish-one-platform-at-a-time.md) | Publish one platform at a time, with only that platform's plugins |
