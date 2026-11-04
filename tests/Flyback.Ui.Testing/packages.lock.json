@@ -127,7 +127,7 @@
       },
       "HarfBuzzSharp": {
         "type": "CentralTransitive",
-        "requested": "[14.2.0, )",
+        "requested": "[14.2.1.400, )",
         "resolved": "8.3.1.3",
         "contentHash": "NGZ2+ZVNPM+NdHB/asW0/ykWngyHWwcqjrbN2nDeH1B/aptPGlCUl8wkQ2cSJxw5fdWgdmIPmNuTPWpLwNVXWg==",
         "dependencies": {
@@ -137,7 +137,7 @@
       },
       "HarfBuzzSharp.NativeAssets.Linux": {
         "type": "CentralTransitive",
-        "requested": "[14.2.0, )",
+        "requested": "[14.2.1.400, )",
         "resolved": "8.3.1.3",
         "contentHash": "RI6A1LgmooU30+4QIyFt5rmBCzP0VzTR+587IJSGvYIsHHWlahFufihYxtraLfsIhW7I8dn6+xX+DZGygOPKWQ=="
       },
@@ -149,7 +149,7 @@
       },
       "SkiaSharp": {
         "type": "CentralTransitive",
-        "requested": "[4.148.0, )",
+        "requested": "[4.154.0, )",
         "resolved": "3.119.4",
         "contentHash": "53NOSUZ1Us+91Sm0uCkIivh/k7jOowRErZT2sIWwPFN9mLUvdxnE6rS4sWo4255+Rd2MWUSF+j0NMZHD6Cke+Q==",
         "dependencies": {
@@ -159,7 +159,7 @@
       },
       "SkiaSharp.NativeAssets.Linux": {
         "type": "CentralTransitive",
-        "requested": "[4.148.0, )",
+        "requested": "[4.154.0, )",
         "resolved": "3.119.4",
         "contentHash": "UAyVzbqNfZsZbKbzj68zXLyUyF/SbTKmzTfOO6qDu++dtIUMMTzPBe8oOuzU/DiewpfKoUUlOSsJmqWc6blxBw=="
       },

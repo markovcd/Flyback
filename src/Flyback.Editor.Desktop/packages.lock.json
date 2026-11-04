@@ -298,7 +298,7 @@
           "Avalonia.AvaloniaEdit": "[12.0.0, )",
           "Avalonia.Fonts.Inter": "[12.1.5, )",
           "Avalonia.Skia": "[12.1.5, )",
-          "Avalonia.Themes.Fluent": "[12.1.4, )",
+          "Avalonia.Themes.Fluent": "[12.1.5, )",
           "Flyback.Assist": "[0.1.0-dev, )",
           "Flyback.Core": "[0.1.0-dev, )",
           "Flyback.Engine": "[0.1.0-dev, )",
@@ -393,16 +393,16 @@
       },
       "Avalonia.Themes.Fluent": {
         "type": "CentralTransitive",
-        "requested": "[12.1.4, )",
-        "resolved": "12.1.4",
-        "contentHash": "vx7P4as07WLQqA2mhMy4iBsqhkWEGwZI7g9Rd2DlJgz3uKS2tSvY6nZqHq3sWMFDBYBT65jkTsetPrgV8oprsQ==",
+        "requested": "[12.1.5, )",
+        "resolved": "12.1.5",
+        "contentHash": "FGjtJEpeVIbth+u4r507c9nbm1NQWLTvT3RC4e/yqDceRC4crAl37zVUloElA6rexDz69y0WvDfMLGX+t12yBQ==",
         "dependencies": {
-          "Avalonia": "12.1.4"
+          "Avalonia": "12.1.5"
         }
       },
       "Avalonia.Win32": {
         "type": "CentralTransitive",
-        "requested": "[12.1.4, )",
+        "requested": "[12.1.5, )",
         "resolved": "12.1.5",
         "contentHash": "QHfRLCyvVzj74AMCohS5a08Jz5f7VAeRgZ0SJsDTSfqxRzdbw9DXpKsncu21YmEvRWxMPkwyoB9cx9dvS1Bwmg==",
         "dependencies": {
@@ -412,7 +412,7 @@
       },
       "HarfBuzzSharp": {
         "type": "CentralTransitive",
-        "requested": "[14.2.0, )",
+        "requested": "[14.2.1.400, )",
         "resolved": "14.2.0",
         "contentHash": "B9zczdZELTKyJoNZXJLTgq+Ho2Z6H8oFcFbelvmHixkA8/2sH9acE589KvOa951g1aN262pOU5ThhZxw33bGSg==",
         "dependencies": {
@@ -422,7 +422,7 @@
       },
       "HarfBuzzSharp.NativeAssets.Linux": {
         "type": "CentralTransitive",
-        "requested": "[14.2.0, )",
+        "requested": "[14.2.1.400, )",
         "resolved": "14.2.0",
         "contentHash": "KgdkGoqCoRPAdekskR9asBbY5tzfqRcYQ0/+hz8rvPMAmbQqX1g57xr6rbGUyIVY5j5ioExZWUZ10QocUVpgwQ=="
       },
@@ -457,7 +457,7 @@
       },
       "SkiaSharp": {
         "type": "CentralTransitive",
-        "requested": "[4.148.0, )",
+        "requested": "[4.154.0, )",
         "resolved": "4.148.0",
         "contentHash": "t+oZDnzvi0en060BFDTmJ16C0zjsiXRrtOe70luIuIi/exVZtl1obrYh8D+IoHlGtp7bqzEBVncafbAl0ttmPQ==",
         "dependencies": {
@@ -467,7 +467,7 @@
       },
       "SkiaSharp.NativeAssets.Linux": {
         "type": "CentralTransitive",
-        "requested": "[4.148.0, )",
+        "requested": "[4.154.0, )",
         "resolved": "4.148.0",
         "contentHash": "diba2vLeoKmWVkVTdXYOG14c7+s5FsH/AQZ5UPiFLRwLKgrCQNJPLKw8q60HzfOcJt+t/blv+1xkinqd5ZjX5A=="
       },
