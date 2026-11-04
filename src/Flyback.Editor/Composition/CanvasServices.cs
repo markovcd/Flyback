@@ -57,6 +57,7 @@ internal static class CanvasServices
         services.AddSingleton<WirePainter>();
         services.AddSingleton<ModulePainter>();
         services.AddSingleton<GroupPainter>();
+        services.AddSingleton<PaintClock>();
         services.AddSingleton<CanvasPainter>();
         services.AddPart<NodeEditor>();
 

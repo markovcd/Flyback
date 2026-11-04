@@ -21,11 +21,12 @@ internal sealed class BlockWriter
     private readonly Func<float[], Func<bool>, bool> write;
     private readonly Action close;
     private readonly Func<bool> wanted;
+    private readonly Action? begin;
     private volatile bool running = true;
 
-    private BlockWriter(float[] block, AudioCallback fill, Func<float[], Func<bool>, bool> write, Action close)
+    private BlockWriter(float[] block, AudioCallback fill, Func<float[], Func<bool>, bool> write, Action close, Action? begin)
     {
-        (this.block, this.fill, this.write, this.close) = (block, fill, write, close);
+        (this.block, this.fill, this.write, this.close, this.begin) = (block, fill, write, close, begin);
         wanted = () => running;
         thread = new Thread(Run) { IsBackground = true, Name = $"{GlobalConstants.ApplicationName} audio" };
     }
@@ -36,11 +37,12 @@ internal sealed class BlockWriter
     /// <summary>
     /// Starts the thread. <paramref name="write"/> writes the whole block, asking the
     /// function it is given whether to carry on between partial writes, and returns false
-    /// once the device is gone. <paramref name="close"/> runs on the thread as it ends.
+    /// once the device is gone. <paramref name="close"/> runs on the thread as it ends, and
+    /// <paramref name="begin"/> on it before the first block.
     /// </summary>
-    public static BlockWriter Start(float[] block, AudioCallback fill, Func<float[], Func<bool>, bool> write, Action close)
+    public static BlockWriter Start(float[] block, AudioCallback fill, Func<float[], Func<bool>, bool> write, Action close, Action? begin = null)
     {
-        var writer = new BlockWriter(block, fill, write, close);
+        var writer = new BlockWriter(block, fill, write, close, begin);
         writer.thread.Start();
         return writer;
     }
@@ -57,6 +59,15 @@ internal sealed class BlockWriter
 
     private void Run()
     {
+        try
+        {
+            begin?.Invoke();
+        }
+        catch
+        {
+            // Whatever it could not set up, the sound still plays.
+        }
+
         try
         {
             while (running)

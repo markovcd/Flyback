@@ -37,7 +37,11 @@ internal sealed class DeviceState : BroadcastReceiver
         if (intent?.Action == Played) Provider.GetRequiredService<Playback>().Resume();
         if (intent?.Action == Sided) Provider.GetRequiredService<Reactions>().Raise(new SideAsked(intent.GetBooleanExtra("shown", true)));
 
-        ResultData = Provider.GetRequiredService<EditorReadout>().Read().ToJsonString();
+        var read = Provider.GetRequiredService<EditorReadout>().Read();
+
+        if (DeviceStalls.Path is { } stalls) read["stallTrace"] = stalls;
+
+        ResultData = read.ToJsonString();
     }
 
     /// <summary>Listens while <paramref name="activity"/> lives, to senders holding DUMP: adb's shell, and no other app.</summary>

@@ -64,7 +64,9 @@ public sealed class AudioTrackDevice(AudioFormat format) : IAudioDevice
                 opened.Stop();
                 opened.Release();
                 opened.Dispose();
-            });
+            },
+            // Ahead of the UI and render threads, as Android's own audio threads run, so a busy screen does not starve the sound.
+            () => global::Android.OS.Process.SetThreadPriority(global::Android.OS.ThreadPriority.UrgentAudio));
     }
 
     public void Stop()

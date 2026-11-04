@@ -36,9 +36,16 @@ A launch opens a preset and picks the interpreter from the intent:
 A broadcast asks the running editor how it is doing, and the answer is the JSON the web
 editor's `window.flyback.state()` gives, read by the same `EditorReadout`: the preset, the
 renderer and its rate, what the sound plays through, `soundRunsOn` (`IL` or `interpreter`),
-`soundSpeed` (0 until IL plays) and the status bar's last message:
+`soundSpeed` (0 until IL plays), how long the canvas takes to draw on the UI thread
+(`canvasPaintMilliseconds`, and `canvasPaints` and `canvasSlowestPaintMilliseconds` since the
+last read, so read, pan, read again) and the status bar's last message:
 `adb shell am broadcast -a app.flybackmodular.editor.STATE -p app.flybackmodular.editor | sed -n 's/.*data="\(.*\)"$/\1/p'`.
 Only a sender holding `DUMP` reaches it, which adb's shell does and another app does not.
+
+`--ez stalls true` on the launch writes every stall over 100 ms (the UI thread, a picture's
+frame, the sound callback, and the step running) to `stalls.txt` in the app's folder on shared
+storage; the broadcast names it as `stallTrace`, and
+`adb pull /sdcard/Android/data/app.flybackmodular.editor/files/stalls.txt` fetches it.
 
 Not yet checked on a device: MIDI, the state broadcast (compiled against the bindings only), the dialogs (`WindowDialog`), the file pickers, the gallery's
 download from the preset site, and anything after a rotation.

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
@@ -34,7 +35,8 @@ internal sealed class CanvasPainter(
     GroundPainter ground,
     WirePainter wires,
     ModulePainter modules,
-    GroupPainter groups)
+    GroupPainter groups,
+    PaintClock clock)
 {
     private static readonly IPen TetherPen = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Attention), 2);
 
@@ -44,6 +46,15 @@ internal sealed class CanvasPainter(
     private Patch Patch => history.Patch;
 
     public void Render(DrawingContext context)
+    {
+        var started = Stopwatch.GetTimestamp();
+
+        Paint(context);
+
+        clock.Record(Stopwatch.GetElapsedTime(started));
+    }
+
+    private void Paint(DrawingContext context)
     {
         if (!glass.SeeThrough) ground.DrawGround(context);
         // Clear, but there: an empty patch of picture still pans and draws a marquee.

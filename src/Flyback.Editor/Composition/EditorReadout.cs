@@ -19,13 +19,18 @@ internal sealed class EditorReadout(
     IAudioEngine sound,
     ReportLine report,
     UnsavedWork unsaved,
-    ScreenKeys keys)
+    ScreenKeys keys,
+    PaintClock paints)
 {
-    /// <summary>The patch on the canvas, what draws and plays it and how fast, and the last thing the editor said.</summary>
+    /// <summary>
+    /// The patch on the canvas, what draws and plays it and how fast, how long the canvas
+    /// took to draw (the count and slowest since the last read), and the last thing the editor said.
+    /// </summary>
     public JsonObject Read()
     {
         var patch = history.Patch;
         var said = report.History;
+        var (lastPaint, slowestPaint, painted) = paints.Take();
 
         return new JsonObject
         {
@@ -41,6 +46,9 @@ internal sealed class EditorReadout(
             ["soundBackend"] = sound.Backend,
             ["soundRunsOn"] = sound.RunsOn,
             ["soundSpeed"] = Math.Round(sound.Speed, 2),
+            ["canvasPaints"] = painted,
+            ["canvasPaintMilliseconds"] = Math.Round(lastPaint.TotalMilliseconds, 2),
+            ["canvasSlowestPaintMilliseconds"] = Math.Round(slowestPaint.TotalMilliseconds, 2),
             ["said"] = said.Count > 0 ? said[^1] : null,
             ["unsaved"] = unsaved.MustAsk,
             ["keys"] = keys.Shown,
