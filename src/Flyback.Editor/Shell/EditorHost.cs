@@ -18,6 +18,12 @@ public sealed record EditorHost
     public FileTypes? FileTypes { get; init; }
 
     /// <summary>
+    /// A phone or tablet (ADR-0184): one screen, every press a finger's, and no other program
+    /// to start or to hand files to, so Settings leaves out what only a desktop acts on.
+    /// </summary>
+    public bool OnDevice { get; init; }
+
+    /// <summary>
     /// Flyback updates itself here (ADR-0088), so Settings offers the switch for it. Unset where
     /// nothing in Flyback does: a phone, a page, a Microsoft Store copy.
     /// </summary>

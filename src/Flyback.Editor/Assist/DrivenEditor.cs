@@ -38,7 +38,7 @@ internal sealed class DrivenEditor(
     public Func<string?> Held { get; set; } = () => null;
 
     /// <summary>Whether this platform can host the channel: a desktop, not a phone or a page.</summary>
-    public static bool Possible => !OperatingSystem.IsBrowser() && !OperatingSystem.IsAndroid();
+    public static bool Possible => !OperatingSystem.IsBrowser() && !OperatingSystem.IsAndroid() && !OperatingSystem.IsIOS();
 
     /// <summary>The pipe or socket listened on.</summary>
     internal string Channel { get; set; } = EditorChannel.Name;

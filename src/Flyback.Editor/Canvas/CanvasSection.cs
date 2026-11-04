@@ -160,8 +160,12 @@ internal sealed class CanvasSection : ISettingsSection
         View.Children.Add(toolbarLabels);
         View.Children.Add(compactModules);
         View.Children.Add(Note("A patch tidied compact may overlap once this is cleared."));
-        View.Children.Add(SettingRows.Heading("Mouse"));
-        View.Children.Add(dragToPan);
+        // On a device every press is a finger's, which never drags to pan.
+        if (!host.OnDevice)
+        {
+            View.Children.Add(SettingRows.Heading("Mouse"));
+            View.Children.Add(dragToPan);
+        }
         View.Children.Add(SettingRows.Heading("Plugin modules"));
         View.Children.Add(pluginSkins);
         View.Children.Add(animateSkins);

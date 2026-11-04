@@ -113,19 +113,23 @@ internal sealed class FilesSection : ISettingsSection
             + "reaches the editor, which asks before installing it.");
 
         View.Children.Add(BuildStartupPatch());
-        View.Children.Add(InspectorRows.Field("Open with", opener));
-
-        View.Children.Add(new TextBlock
+        // A device hands no file to Flyback by its type.
+        if (!host.OnDevice)
         {
-            Text = OperatingSystem.IsMacOS()
-                ? "Finder always hands Flyback's files to Flyback, which passes them to the viewer "
-                    + "when the viewer is chosen."
-                : "Only for you, and only this copy of Flyback. Saving with Nothing takes back what "
-                    + "Flyback registered. A program you picked yourself for these files stays picked.",
-            FontSize = Text.Small,
-            Foreground = Text.Muted,
-            TextWrapping = TextWrapping.Wrap,
-        });
+            View.Children.Add(InspectorRows.Field("Open with", opener));
+
+            View.Children.Add(new TextBlock
+            {
+                Text = OperatingSystem.IsMacOS()
+                    ? "Finder always hands Flyback's files to Flyback, which passes them to the viewer "
+                        + "when the viewer is chosen."
+                    : "Only for you, and only this copy of Flyback. Saving with Nothing takes back what "
+                        + "Flyback registered. A program you picked yourself for these files stays picked.",
+                FontSize = Text.Small,
+                Foreground = Text.Muted,
+                TextWrapping = TextWrapping.Wrap,
+            });
+        }
 
         View.Children.Add(BuildLibrary());
 

@@ -54,7 +54,8 @@ internal sealed class FullScreenSection : ISettingsSection
         TransportControls transport,
         FullScreenPreview fullScreen,
         PanelKnobs knobs,
-        LivePatchingRows live)
+        LivePatchingRows live,
+        EditorHost host)
     {
         this.settings = settings;
         this.monitors = monitors;
@@ -73,7 +74,8 @@ internal sealed class FullScreenSection : ISettingsSection
 
         rows.Children.Add(SettingRows.Heading("Where it goes"));
 
-        rows.Children.Add(InspectorRows.Field("Monitor", fullScreenOn));
+        // A device has the one screen.
+        if (!host.OnDevice) rows.Children.Add(InspectorRows.Field("Monitor", fullScreenOn));
 
         rows.Children.Add(InspectorRows.Field("Transport at", transportEdge));
         rows.Children.Add(SettingRows.Heading("Live patching"));

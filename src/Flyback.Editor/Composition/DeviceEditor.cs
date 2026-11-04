@@ -24,7 +24,7 @@ internal static class DeviceEditor
         {
             Plugins = plugins,
             Folders = folders,
-            Host = new() { PresetSite = Site.PresetSite.Built, Relaunch = relaunch },
+            Host = new() { PresetSite = Site.PresetSite.Built, Relaunch = relaunch, OnDevice = true },
             Launch = new() { Interpreted = interpreted },
         }, services =>
         {
