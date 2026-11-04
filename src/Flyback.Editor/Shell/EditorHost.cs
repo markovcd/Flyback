@@ -18,6 +18,12 @@ public sealed record EditorHost
     public FileTypes? FileTypes { get; init; }
 
     /// <summary>
+    /// Flyback updates itself here (ADR-0088), so Settings offers the switch for it. Unset where
+    /// nothing in Flyback does: a phone, a page, a Microsoft Store copy.
+    /// </summary>
+    public bool UpdatesItself { get; init; }
+
+    /// <summary>
     /// Starts Flyback again once this window has closed, which is what loads a plugin
     /// just installed. Null offers no restart.
     /// </summary>

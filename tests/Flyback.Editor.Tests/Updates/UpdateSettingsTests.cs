@@ -31,9 +31,14 @@ public sealed class UpdateSettingsTests : EditorTest
         if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
     }
 
-    private MainWindow Open(string? settingsPath = null, string? note = null, ReleaseNotes? whatsNew = null)
+    private MainWindow Open(string? settingsPath = null, string? note = null, ReleaseNotes? whatsNew = null, bool updatesItself = true)
     {
-        var window = NewMainWindow(new EditorSetup { Folders = new() { SettingsPath = settingsPath }, Launch = new() { OpeningNote = note, WhatsNew = whatsNew } });
+        var window = NewMainWindow(new EditorSetup
+        {
+            Folders = new() { SettingsPath = settingsPath },
+            Launch = new() { OpeningNote = note, WhatsNew = whatsNew },
+            Host = new() { UpdatesItself = updatesItself },
+        });
 
         window.Show();
         Settle(window);
@@ -51,6 +56,16 @@ public sealed class UpdateSettingsTests : EditorTest
         var window = Open(settingsPath);
 
         Switch(OpenSettings(window, PrivacyTab)).IsChecked.ShouldBe(true);
+    }
+
+    [AvaloniaFact]
+    public void A_copy_something_else_updates_offers_no_switch()
+    {
+        var dialog = OpenSettings(Open(settingsPath, updatesItself: false), PrivacyTab);
+
+        All<CheckBox>(dialog).ShouldNotContain(c => c.Name == "checkForUpdates");
+        All<TextBlock>(dialog).ShouldNotContain(t => t.Text == "Updates");
+        All<CheckBox>(dialog).ShouldContain(c => c.Name == "countUsage", "usage stays on the tab");
     }
 
     [AvaloniaFact]
