@@ -41,7 +41,15 @@ internal static class WirePath
     }
 
     /// <summary>A horizontal-tangent bezier, so wires leave and enter sockets cleanly.</summary>
-    public static void Draw(DrawingContext context, Point from, Point to, IPen pen)
+    public static void Draw(DrawingContext context, Point from, Point to, IPen pen) =>
+        context.DrawGeometry(null, pen, Forward.Get((from, to), static ends => Curve(ends.From, ends.To)));
+
+    /// <summary>Wires' shapes in graph units, which a pan or a zoom leaves as they were.</summary>
+    private static readonly Remembered<(Point From, Point To), StreamGeometry> Forward = new(2048);
+
+    private static readonly Remembered<(Point From, Point To, double Run), StreamGeometry> Returning = new(1024);
+
+    private static StreamGeometry Curve(Point from, Point to)
     {
         var reach = Reach(from, to);
 
@@ -53,7 +61,30 @@ internal static class WirePath
             sink.EndFigure(false);
         }
 
-        context.DrawGeometry(null, pen, geometry);
+        return geometry;
+    }
+
+    /// <summary>Where a wire drawn by <see cref="Draw"/> can reach: its ends and the handles the curve stays between.</summary>
+    public static Rect Extent(Point from, Point to)
+    {
+        var reach = Reach(from, to);
+
+        return Around(from.X, from.X + reach, to.X, to.X - reach, from.Y, to.Y);
+    }
+
+    /// <summary>Where a wire drawn by <see cref="DrawReturn"/> along <paramref name="run"/> can reach.</summary>
+    public static Rect ReturnExtent(Point from, Point to, double run) =>
+        Around(from.X + ReturnWireReach, to.X - ReturnWireReach, from.X, to.X, from.Y, to.Y, run);
+
+    /// <summary>The smallest rectangle holding the first four as X and the rest as Y, a line's being as good as a box's.</summary>
+    private static Rect Around(double x0, double x1, double x2, double x3, params ReadOnlySpan<double> ys)
+    {
+        var (left, right) = (Math.Min(Math.Min(x0, x1), Math.Min(x2, x3)), Math.Max(Math.Max(x0, x1), Math.Max(x2, x3)));
+        var (top, bottom) = (double.MaxValue, double.MinValue);
+
+        foreach (var y in ys) (top, bottom) = (Math.Min(top, y), Math.Max(bottom, y));
+
+        return new Rect(left, top, right - left, bottom - top);
     }
 
     /// <summary>The point <paramref name="t"/> of the way along the wire <see cref="Draw"/> draws.</summary>
@@ -84,7 +115,10 @@ internal static class WirePath
     /// it goes round one module or across the canvas.
     /// </remarks>
     /// <param name="run">The height the flat run back sits at — see <see cref="ReturnRun"/>.</param>
-    public static void DrawReturn(DrawingContext context, Point from, Point to, double run, IPen pen)
+    public static void DrawReturn(DrawingContext context, Point from, Point to, double run, IPen pen) =>
+        context.DrawGeometry(null, pen, Returning.Get((from, to, run), static way => Round(way.From, way.To, way.Run)));
+
+    private static StreamGeometry Round(Point from, Point to, double run)
     {
         var geometry = new StreamGeometry();
         using (var sink = geometry.Open())
@@ -113,7 +147,7 @@ internal static class WirePath
             sink.EndFigure(false);
         }
 
-        context.DrawGeometry(null, pen, geometry);
+        return geometry;
     }
 
     /// <summary>

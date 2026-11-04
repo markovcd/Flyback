@@ -14,7 +14,11 @@ internal static class CanvasText
     internal static readonly IBrush LabelBrush = new ImmutableSolidColorBrush(Colors.Label);
     internal static readonly IBrush ValueBrush = new ImmutableSolidColorBrush(Colors.Value);
 
-    internal static FormattedText Text(string text, double size, IBrush brush, double maxWidth, bool trim)
+    /// <remarks>The same text, size, brush and room give back the same object, so it must not be changed once made.</remarks>
+    internal static FormattedText Text(string text, double size, IBrush brush, double maxWidth, bool trim) =>
+        Laid.Get((text, size, brush, maxWidth, trim), static key => Lay(key.Text, key.Size, key.Brush, key.MaxWidth, key.Trim));
+
+    private static FormattedText Lay(string text, double size, IBrush brush, double maxWidth, bool trim)
     {
         var formatted = new FormattedText(
             text,
@@ -43,6 +47,17 @@ internal static class CanvasText
     /// </summary>
     internal static string Fit(string label, double width)
     {
+        // Measuring is text shaping, a dozen times over for a long label.
+        return Fitted.Get((label, width), static key => Cut(key.Label, key.Width));
+    }
+
+    private static readonly Remembered<(string Label, double Width), string> Fitted = new(4096);
+
+    /// <summary>Laid-out text, which is shaped once and drawn again on every frame it stays the same.</summary>
+    private static readonly Remembered<(string Text, double Size, IBrush Brush, double MaxWidth, bool Trim), FormattedText> Laid = new(4096);
+
+    private static string Cut(string label, double width)
+    {
         var dot = label.LastIndexOf('.');
 
         if (dot <= 0 || !Overflows(label, RowSize, width)) return label;
@@ -54,13 +69,13 @@ internal static class CanvasText
         {
             var mid = (fits + over) / 2;
 
-            if (Overflows(Cut(mid), RowSize, width)) over = mid;
+            if (Overflows(Keep(mid), RowSize, width)) over = mid;
             else fits = mid;
         }
 
-        return Cut(fits);
+        return Keep(fits);
 
-        string Cut(int keep) => head[..keep].TrimEnd() + "…" + port;
+        string Keep(int keep) => head[..keep].TrimEnd() + "…" + port;
     }
 
     /// <summary>Whether a label is cut short where it is drawn in <paramref name="width"/>.</summary>

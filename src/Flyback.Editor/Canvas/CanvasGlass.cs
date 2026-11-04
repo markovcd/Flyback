@@ -26,7 +26,7 @@ internal sealed class CanvasGlass(SocketDial dial, SocketFocus focus)
     internal double FillOpacity(Guid node) => SeeThrough && dial.Dialed?.Node != node && focus.Focused?.Node != node ? GlassOpacity : 1;
 
     /// <summary>Over a live picture, the dark casing under a wire.</summary>
-    internal static readonly IBrush Casing = new ImmutableSolidColorBrush(Color.FromArgb(200, 0, 0, 0));
+    internal static readonly IImmutableBrush Casing = new ImmutableSolidColorBrush(Color.FromArgb(200, 0, 0, 0));
 
     /// <summary>Over a live picture, the shadow under a number written straight on it.</summary>
     internal static readonly IBrush TextShadow = new ImmutableSolidColorBrush(Color.FromArgb(178, 0, 0, 0));

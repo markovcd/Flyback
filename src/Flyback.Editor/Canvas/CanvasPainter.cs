@@ -68,14 +68,15 @@ internal sealed class CanvasPainter(
             if (!gestures.Gesturing) marks.Draw(context);
 
             foreach (var node in Patch.Nodes)
-                if (!scene.Shut(node.Id) && !scene.InPeek(node.Id) && !lift.Raised(node.Id) && NodeCatalog.Get(node.TypeId) is { } def)
+                if (!scene.Shut(node.Id) && !scene.InPeek(node.Id) && !lift.Raised(node.Id) && NodeCatalog.Get(node.TypeId) is { } def
+                    && view.Shows(geometry.Bounds(node, def)))
                     modules.DrawNode(context, node, def);
 
             // A box being carried is drawn last of them, so it passes over the others.
             using (glass.Push(context))
             {
                 foreach (var (group, sockets, bounds) in scene.Boxes())
-                    if (!lift.Raised(group)) groups.DrawBox(context, group, sockets, bounds);
+                    if (!lift.Raised(group) && view.Shows(bounds)) groups.DrawBox(context, group, sockets, bounds);
 
                 foreach (var (group, sockets, bounds) in scene.Boxes())
                     if (lift.Raised(group)) groups.DrawBox(context, group, sockets, bounds);

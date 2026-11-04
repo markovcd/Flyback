@@ -13,7 +13,8 @@ internal sealed class WirePainter(
     CanvasSelection selection,
     NodeGeometry geometry,
     CanvasLift lift,
-    CanvasGlass glass)
+    CanvasGlass glass,
+    Viewport view)
 {
     /// <summary>How thick a wire is drawn, and how far under full strength.</summary>
     private const double WireThickness = 2.2;
@@ -45,6 +46,9 @@ internal sealed class WirePainter(
         new ImmutableSolidColorBrush(Colors.Attention, 0.7),
         1.5,
         new ImmutableDashStyle([1, 3], 0));
+
+    /// <summary>A loop's wire: <see cref="DashStyle.Dash"/>, made once so each wire's pen can be immutable.</summary>
+    private static readonly ImmutableDashStyle LoopDashes = new(DashStyle.Dash.Dashes, DashStyle.Dash.Offset);
 
     private Patch Patch => history.Patch;
 
@@ -99,6 +103,11 @@ internal sealed class WirePainter(
 
             var from = lift.Held(source.Id, scene.OutputAnchor(source, connection.SourcePort));
             var to = lift.Held(target.Id, scene.InputAnchor(target, targetDef, connection.TargetPort));
+            var returning = from.X > to.X;
+            var run = returning ? WirePath.ReturnRun(scene.RouteBounds(source, sourceDef), scene.RouteBounds(target, targetDef)) : 0;
+
+            if (!view.Shows(returning ? WirePath.ReturnExtent(from, to, run) : WirePath.Extent(from, to))) continue;
+
             // A wire swinging past the range its socket takes is drawn in the
             // accent, which is where the status bar's warning about it points.
             var color = AutoRemap.Overflow(Patch, connection) is null
@@ -113,7 +122,7 @@ internal sealed class WirePainter(
             // Dashed where the wire runs backwards, which is the whole of how a
             // loop shows itself: what this one carries is the evaluation before,
             // and a solid wire would say it carried this one.
-            var dashes = backwards.Contains(connection) ? DashStyle.Dash : null;
+            var dashes = backwards.Contains(connection) ? LoopDashes : null;
 
             // Heavier and at full strength, which is the same signal the pending
             // wire gives: this one is in play.
@@ -125,17 +134,17 @@ internal sealed class WirePainter(
 
             IBrush ink = leaving && from != to
                 ? Fading(color, opacity, scene.InPeek(connection.SourceNode) ? (from, to) : (to, from))
-                : new SolidColorBrush(color, opacity);
+                : new ImmutableSolidColorBrush(color, opacity);
 
             var thickness = theirs ? LiftedWireThickness : WireThickness;
-            var pen = new Pen(ink, thickness, dashes);
+            IPen pen = ink is IImmutableBrush still ? new ImmutablePen(still, thickness, dashes) : new Pen(ink, thickness, dashes);
             var count = voices.GetValueOrDefault(connection.SourceNode, 1);
 
-            if (glass.SeeThrough) Route(new Pen(CanvasGlass.Casing, thickness + 2.5, dashes));
+            if (glass.SeeThrough) Route(new ImmutablePen(CanvasGlass.Casing, thickness + 2.5, dashes));
 
             if (count > 1)
             {
-                Route(new Pen(new SolidColorBrush(color, opacity * VoicesBandOpacity), thickness * VoicesBand, dashes));
+                Route(new ImmutablePen(new ImmutableSolidColorBrush(color, opacity * VoicesBandOpacity), thickness * VoicesBand, dashes));
                 DrawVoiceCount(context, from, count, color, opacity);
             }
 
@@ -147,12 +156,8 @@ internal sealed class WirePainter(
             // other chain. The dashes are what say which wire is the cut.
             void Route(IPen drawn)
             {
-                if (from.X > to.X)
+                if (returning)
                 {
-                    var run = WirePath.ReturnRun(
-                        scene.RouteBounds(source, sourceDef),
-                        scene.RouteBounds(target, targetDef));
-
                     WirePath.DrawReturn(context, from, to, run, drawn);
                     return;
                 }
@@ -165,7 +170,7 @@ internal sealed class WirePainter(
     /// <summary>How many voices a polyphonic wire carries, just past the output it leaves.</summary>
     private static void DrawVoiceCount(DrawingContext context, Point from, int count, Color color, double opacity)
     {
-        var text = CanvasText.Text($"×{count}", CanvasText.RowSize, new SolidColorBrush(color, opacity), 40, false);
+        var text = CanvasText.Text($"×{count}", CanvasText.RowSize, new ImmutableSolidColorBrush(color, opacity), 40, false);
 
         context.DrawText(text, new Point(from.X + 8, from.Y - text.Height - 2));
     }

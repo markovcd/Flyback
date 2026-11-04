@@ -26,6 +26,9 @@ internal sealed class Viewport
     /// </summary>
     internal const double MinZoom = 0.13;
 
+    /// <summary>Screen pixels past the view's edge that a module is still drawn within, for a name or a shadow overhanging it.</summary>
+    private const double CullMargin = 64;
+
     private const double MaxZoom = 3.0;
 
     /// <summary>How far in framing may zoom, which is less than the wheel may.</summary>
@@ -110,6 +113,22 @@ internal sealed class Viewport
 
     /// <summary>What the view shows, in graph units.</summary>
     public Rect Visible => new(ToGraph(default), ToGraph(new Point(Size.Width, Size.Height)));
+
+    /// <summary>
+    /// Whether anything drawn within <paramref name="graph"/> can reach the control, give or
+    /// take what spills past a module's edge; always true before the control has a size.
+    /// </summary>
+    public bool Shows(Rect graph)
+    {
+        if (Size.Width <= 0 || Size.Height <= 0) return true;
+
+        var spill = Math.Max(NodeGeometry.Width, CullMargin / Zoom);
+
+        var seen = Visible.Inflate(spill);
+
+        // Compared edge by edge, so a level wire's extent, which has no height, still counts.
+        return graph.Left <= seen.Right && graph.Right >= seen.Left && graph.Top <= seen.Bottom && graph.Bottom >= seen.Top;
+    }
 
     /// <summary>The control has a new size: framed if a frame is waiting or nothing has moved the view since the last, and held on the canvas otherwise.</summary>
     public void Resize(Size size)
