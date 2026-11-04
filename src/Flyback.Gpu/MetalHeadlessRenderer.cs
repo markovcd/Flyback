@@ -64,6 +64,16 @@ internal sealed class MetalHeadlessRenderer : IHeadlessRenderer
         if (failure is not null) throw new InvalidOperationException(failure);
     }
 
+    /// <inheritdoc cref="MetalFrameRenderer.Behind"/>
+    public bool Behind => renderer.Behind;
+
+    /// <summary>Reads back the frame still in flight, where an overlapped renderer has one, into <paramref name="destination"/>.</summary>
+    public void CatchUp(int width, int height, Span<byte> destination, int stride)
+    {
+        if (renderer.CatchUp(new SurfaceSize(width, height), destination, stride) is { } failure)
+            throw new InvalidOperationException(failure);
+    }
+
     public void Dispose()
     {
         renderer.Dispose();

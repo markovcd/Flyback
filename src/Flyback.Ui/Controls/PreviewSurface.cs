@@ -72,6 +72,14 @@ public class PreviewSurface : Control, IPreviewSurface
     /// </summary>
     private protected virtual double Rest => RestFraction;
 
+    /// <summary>Whether the frame on screen is one behind the last one drawn, as a renderer that overlaps its frames leaves it.</summary>
+    private protected virtual bool Behind => false;
+
+    /// <summary>Reads the frame still in flight into <paramref name="destination"/>, on the thread that draws.</summary>
+    private protected virtual void CatchUp(Span<byte> destination, int stride, PixelSize size)
+    {
+    }
+
     public PreviewSurface() : this(new SynthRenderer(), "CPU frame")
     {
     }
@@ -236,6 +244,8 @@ public class PreviewSurface : Control, IPreviewSurface
         // Opened and still compiling: the last frame stays and the clock stands.
         if (activeProgram.Waiting) return;
 
+        var catchingUp = false;
+
         if (Clock is { } clock)
         {
             var driven = clock();
@@ -245,7 +255,13 @@ public class PreviewSurface : Control, IPreviewSurface
             // not a numeric comparison — a tolerance here would drop real frames
             // whenever the timeline advances slowly.
             // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (driven == Time && !dirty) return;
+            if (driven == Time && !dirty)
+            {
+                // Held still, no next frame will hand back the one drawn last, so it is fetched.
+                if (!Behind) return;
+
+                catchingUp = true;
+            }
 
             Time = driven;
         }
@@ -260,7 +276,7 @@ public class PreviewSurface : Control, IPreviewSurface
 
         try
         {
-            await RenderFrameAsync();
+            await RenderFrameAsync(catchingUp);
         }
         catch (Exception ex)
         {
@@ -281,7 +297,8 @@ public class PreviewSurface : Control, IPreviewSurface
         }
     }
 
-    private async Task RenderFrameAsync()
+    /// <param name="catchingUp">Whether to show the frame still in flight rather than draw another.</param>
+    private async Task RenderFrameAsync(bool catchingUp)
     {
         // Snapshot everything the background pass needs while still on the UI thread.
         var size = new PixelSize(Math.Max(resolution.Width, 1), Math.Max(resolution.Height, 1));
@@ -308,6 +325,12 @@ public class PreviewSurface : Control, IPreviewSurface
         await Task.Run(() =>
         {
             using var traced = StallTrace.Step(step);
+
+            if (catchingUp)
+            {
+                CatchUp(buffer, stride, size);
+                return;
+            }
 
             renderer.Render(program, time, size.Width, size.Height, buffer, stride, played);
             Smooth(smoothing, buffer, size, stride);

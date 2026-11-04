@@ -62,6 +62,12 @@ public sealed class MetalPreviewSurface : PreviewSurface, IGpuPreview, ICaptured
     {
     }
 
+    /// <summary>A frame late while the picture plays, so one held still is fetched once nothing follows it.</summary>
+    private protected override bool Behind => picture.Behind;
+
+    private protected override void CatchUp(Span<byte> destination, int stride, PixelSize size) =>
+        picture.CatchUp(destination, stride, size.Width, size.Height);
+
     /// <summary>No rest: the frame's cost is the graphics card's, and the processor waited it out idle.</summary>
     private protected override double Rest => 0;
 
@@ -122,6 +128,19 @@ public sealed class MetalPreviewSurface : PreviewSurface, IGpuPreview, ICaptured
 
             renderer.Smoothing = Smoothing;
             renderer.Render(patch, time, width, height, destination, stride, live);
+
+            if (Capture is { } sink) Hand(sink, destination, width, height, stride);
+        }
+
+        /// <summary>Whether the frame last handed back is one behind the frame drawn last.</summary>
+        public bool Behind => renderer?.Behind == true;
+
+        /// <summary>Hands back the frame drawn last, which the one before it was shown in place of.</summary>
+        public void CatchUp(Span<byte> destination, int stride, int width, int height)
+        {
+            if (renderer is null || retired) return;
+
+            renderer.CatchUp(width, height, destination, stride);
 
             if (Capture is { } sink) Hand(sink, destination, width, height, stride);
         }

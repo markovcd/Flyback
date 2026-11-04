@@ -72,6 +72,7 @@
 - macOS: an update no longer fails to sign the app when a plugin from the preset site is installed. Installed plugins now live in `~/.config/Flyback/plugins` rather than inside `Flyback.app`, and the ones already inside it are moved there. An update whose signing fails says it is installed rather than that it will try again.
 - Noise read past about two billion draws the same on the graphics card, on the processor and in the browser.
 - `render --quality` refuses a number outside 1 to 100 instead of quietly clamping it.
+- On a Mac, a paused picture shows the patch as it is now: opening another patch, an edit, a rewind or a seek while paused no longer leaves the frame before it on screen.
 
 ## 0.11.0 — 2026-10-27
 

@@ -356,15 +356,8 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device, bool overlap
 
             var shown = late ? sent!.Value : now;
             var error = MetalDevice.Wait(shown.Commands);
-            var frame = new ReadOnlySpan<byte>((void*)MetalDevice.Contents(readbacks[shown.Readback]), bytes);
 
-            if (error is null)
-            {
-                if (stride == row) frame.CopyTo(destination);
-                else
-                    for (var y = 0; y < resolution.Height; y++)
-                        frame.Slice(y * row, row).CopyTo(destination.Slice(y * stride, row));
-            }
+            if (error is null) ReadBack(shown.Readback, resolution, destination, stride);
 
             if (late) ObjC.Release(shown.Commands);
 
@@ -384,6 +377,50 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device, bool overlap
         {
             ObjC.Pop(pool);
         }
+    }
+
+    /// <summary>Whether a frame is still in flight, so the one last handed back is a frame behind.</summary>
+    public bool Behind => sent is not null;
+
+    /// <summary>
+    /// Waits out the frame still in flight and reads it into <paramref name="destination"/>,
+    /// for a preview with no next frame coming to hand it back. A frame of another size is
+    /// let go unread. Null on success.
+    /// </summary>
+    public string? CatchUp(SurfaceSize resolution, Span<byte> destination, int stride)
+    {
+        if (sent is not { } waiting) return null;
+
+        sent = null;
+
+        var pool = ObjC.Push();
+
+        try
+        {
+            var error = MetalDevice.Wait(waiting.Commands);
+
+            if (error is null && waiting.Size == resolution) ReadBack(waiting.Readback, resolution, destination, stride);
+
+            ObjC.Release(waiting.Commands);
+
+            return error;
+        }
+        finally
+        {
+            ObjC.Pop(pool);
+        }
+    }
+
+    /// <summary>Copies a finished readback into <paramref name="destination"/>, row by row where the strides differ.</summary>
+    private void ReadBack(int readback, SurfaceSize resolution, Span<byte> destination, int stride)
+    {
+        var row = resolution.Width * ResolvedBytes;
+        var frame = new ReadOnlySpan<byte>((void*)MetalDevice.Contents(readbacks[readback]), row * resolution.Height);
+
+        if (stride == row) frame.CopyTo(destination);
+        else
+            for (var y = 0; y < resolution.Height; y++)
+                frame.Slice(y * row, row).CopyTo(destination.Slice(y * stride, row));
     }
 
     /// <summary>Waits out a frame sent and not read back, and lets it go.</summary>
