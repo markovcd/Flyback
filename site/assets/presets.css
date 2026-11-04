@@ -33,9 +33,9 @@ input[type="file"]::file-selector-button {
   padding: 6px 11px; cursor: pointer; text-decoration: none;
 }
 .chip:hover { background: var(--node-selected); color: var(--bright); }
-.chip[aria-pressed="true"] { background: var(--attention); color: var(--edge); border-color: #C9640D; }
+.chip[aria-pressed="true"] { background: var(--attention); color: var(--edge); border-color: var(--attention-edge); }
 .chip small { color: var(--muted); margin-left: 4px; }
-.chip[aria-pressed="true"] small { color: #4A2406; }
+.chip[aria-pressed="true"] small { color: var(--attention-ink); }
 
 /* A run of cards under a heading: the shared presets, then the shipped ones under the editor's headings. */
 .run { margin-bottom: 40px; }

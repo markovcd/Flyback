@@ -45,12 +45,12 @@
   .promo { padding: 32px 0 0; }
   @media (min-width: 900px) { .promo { padding-top: 40px; } }
   .ad { position: relative; margin: 0 auto; max-width: min(100%, calc(74vh * 16 / 9)); }
-  .ad video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: #000; border-radius: 8px; border: 1px solid var(--edge); box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.95); }
+  .ad video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: black; border-radius: 8px; border: 1px solid var(--edge); box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.95); }
   .ad .sound {
     position: absolute; right: 12px; bottom: 12px;
     display: inline-flex; align-items: center; gap: 8px;
     font: 600 13px/1 var(--sans); padding: 9px 12px; border-radius: 5px; cursor: pointer;
-    background: rgba(16, 17, 20, 0.86); color: var(--bright); border: 1px solid var(--separator);
+    background: color-mix(in srgb, var(--edge) 86%, transparent); color: var(--bright); border: 1px solid var(--separator);
   }
   .ad .sound:hover { background: var(--node-selected); }
   .ad .sound svg { width: 16px; height: 16px; }
@@ -64,16 +64,19 @@
   .hero .wall {
     display: none; position: absolute; top: 0; right: 0; left: calc(50vw + 40px);
     flex-direction: column; gap: 12px; padding-top: 12px; opacity: 0.5; pointer-events: none;
-    -webkit-mask-image: linear-gradient(90deg, transparent 8%, #000 55%), linear-gradient(#000 50%, transparent 85%);
+    -webkit-mask-image: linear-gradient(90deg, transparent 8%, black 55%), linear-gradient(black 50%, transparent 85%);
     -webkit-mask-composite: source-in;
-    mask-image: linear-gradient(90deg, transparent 8%, #000 55%), linear-gradient(#000 50%, transparent 85%);
+    mask-image: linear-gradient(90deg, transparent 8%, black 55%), linear-gradient(black 50%, transparent 85%);
     mask-composite: intersect;
   }
   @media (min-width: 1280px) { .hero .wall { display: flex; } }
   .hero .wall > div { display: flex; gap: 12px; }
   .hero .wall > div:nth-child(odd) { margin-left: -122px; }
-  .hero .wall img { flex: none; width: 232px; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 5px; border: 1px solid var(--edge); background: #000; }
+  .hero .wall img { flex: none; width: 232px; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 5px; border: 1px solid var(--edge); background: black; }
   .hero .intro { max-width: 46rem; }
+  .sweep-from { stop-color: var(--source); }
+  .sweep-via { stop-color: var(--feedback); }
+  .sweep-to { stop-color: var(--oscillator); }
   .hero h1 .sweep {
     background: linear-gradient(90deg, var(--source), var(--feedback) 50%, var(--oscillator));
     -webkit-background-clip: text; background-clip: text; color: transparent;
@@ -111,14 +114,14 @@
   .clips { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 40px; }
   @media (min-width: 760px) { .clips { grid-template-columns: repeat(2, 1fr); } }
   .clip { margin: 0; }
-  .clip video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: #000; border-radius: var(--radius); border: 1px solid var(--edge); }
+  .clip video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: black; border-radius: var(--radius); border: 1px solid var(--edge); }
   .clip figcaption { display: flex; gap: 10px; align-items: baseline; }
   .clip figcaption strong { font-size: 14.5px; }
 
   .stills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
   @media (min-width: 760px) { .stills { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
   .still { margin: 0; }
-  .still img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 5px; border: 1px solid var(--edge); background: #000; }
+  .still img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 5px; border: 1px solid var(--edge); background: black; }
   .still figcaption { margin-top: 8px; font-size: 13px; }
   .still figcaption strong { display: block; font-size: 13.5px; }
 
@@ -242,7 +245,7 @@
 
 <svg class="saw" viewBox="0 0 720 10" preserveAspectRatio="none" aria-hidden="true">
   <defs>
-    <linearGradient id="sweep" x1="0" x2="1"><stop offset="0" stop-color="#4A9EDE"/><stop offset="0.5" stop-color="#3FC8C8"/><stop offset="1" stop-color="#4FC387"/></linearGradient>
+    <linearGradient id="sweep" x1="0" x2="1"><stop offset="0" class="sweep-from"/><stop offset="0.5" class="sweep-via"/><stop offset="1" class="sweep-to"/></linearGradient>
     <pattern id="saw" width="24" height="10" patternUnits="userSpaceOnUse"><path d="M0 9 L24 1.5 L24 9" fill="none" stroke="url(#sweep)" stroke-width="1.4"/></pattern>
   </defs>
   <rect width="720" height="10" fill="url(#saw)" opacity="0.6"/>

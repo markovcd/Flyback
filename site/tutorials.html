@@ -23,7 +23,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750&display=swap">
 <link rel="stylesheet" href="assets/site.css">
 <style>
-  .watch { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; margin: 8px 0 72px; }
+  .watch { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; margin: 32px 0 72px; }
   @media (min-width: 960px) { .watch { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; } }
 
   .now { margin-top: 18px; }
@@ -72,15 +72,19 @@
 
 <div class="page">
 
-<div class="wrap">
-  <header class="doc-head" style="border: 0">
-    <p class="eyebrow" style="color: var(--oscillator)">Tutorials</p>
-    <h1>Learn Flyback, one short video at a time.</h1>
-    <p class="lede">Each video takes one idea and shows it in the editor, start to finish. New ones go up on the
-    <a href="https://www.youtube.com/@FlybackModular">Flyback channel on YouTube</a>. In the editor itself, Tutorials,
-    at the left of its status bar, opens tutorials that check your patch as you build it, a step at a time.</p>
-  </header>
+<div class="canvas">
+  <div class="wrap">
+    <header class="doc-head">
+      <p class="eyebrow">Tutorials</p>
+      <h1>Learn Flyback, one short video at a time.</h1>
+      <p class="lede">Each video takes one idea and shows it in the editor, start to finish. New ones go up on the
+      <a href="https://www.youtube.com/@FlybackModular">Flyback channel on YouTube</a>. In the editor itself, Tutorials,
+      at the left of its status bar, opens tutorials that check your patch as you build it, a step at a time.</p>
+    </header>
+  </div>
+</div>
 
+<div class="wrap">
   <div class="watch">
     <div>
       <figure class="clip player" style="margin: 0">

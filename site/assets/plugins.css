@@ -15,7 +15,7 @@ main > .note:first-child { max-width: var(--measure); margin: 0 0 24px; }
 
 span.chip { cursor: default; }
 span.chip:hover { background: var(--node); color: var(--label); }
-.chip.reach { color: var(--attention); border-color: #6A3A12; }
+.chip.reach { color: var(--attention); border-color: var(--attention-dim); }
 
 dl.said { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px 18px; font-size: 14.5px; }
 dl.said dt { color: var(--muted); }

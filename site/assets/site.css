@@ -29,6 +29,10 @@
 
   /* the one color that means "look here" */
   --attention: #FF7F11;
+  --attention-edge: #C9640D;
+  --attention-hover: #FF9A45;
+  --attention-dim: #6A3A12;
+  --attention-ink: #4A2406;
 
   /* module families, borrowed to color a heading or a card's edge */
   --sink: #E05A5A;
@@ -48,6 +52,20 @@
   --routing: #C09C88;
 
   --beam-core: #FFF3DC;
+
+  /* the text view's colors, from Flyback.xshd */
+  --code-keyword: #3FC8C8;
+  --code-pipe: #E06AB8;
+  --code-sink: #E05A5A;
+  --code-domain: #4A9EDE;
+  --code-socket: #A8CE52;
+  --code-module: #B484E0;
+  --code-number: #E0A84A;
+  --code-text: #4FC387;
+
+  /* the site's own */
+  --titlebar: #1F1F1F;
+  --scrim: rgba(16, 16, 16, 0.97);
 
   --sans: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
   --mono: "Cascadia Mono", Consolas, Menlo, "DejaVu Sans Mono", ui-monospace, monospace;
@@ -128,8 +146,8 @@ strong { color: var(--bright); font-weight: 650; }
   background: var(--node); color: var(--bright);
 }
 .button:hover { background: var(--node-selected); color: var(--bright); }
-.button.primary { background: var(--attention); color: var(--edge); border-color: #C9640D; }
-.button.primary:hover { background: #FF9A45; color: var(--edge); }
+.button.primary { background: var(--attention); color: var(--edge); border-color: var(--attention-edge); }
+.button.primary:hover { background: var(--attention-hover); color: var(--edge); }
 .button svg { width: 17px; height: 17px; flex: none; }
 
 /* ---- the canvas: a grid every so often, brighter every tenth ------------- */
@@ -190,18 +208,18 @@ pre code { background: none; padding: 0; font-size: inherit; color: inherit; bor
 
 /* The text view's colors, from Flyback.xshd. */
 .t-com { color: var(--normalled); font-style: italic; }
-.t-key { color: #3FC8C8; font-weight: 700; }
-.t-pipe { color: #E06AB8; font-weight: 700; }
-.t-sink { color: #E05A5A; }
-.t-dom { color: #4A9EDE; }
-.t-sock { color: #A8CE52; }
-.t-mod { color: #B484E0; }
-.t-num { color: #E0A84A; }
-.t-str { color: #4FC387; }
+.t-key { color: var(--code-keyword); font-weight: 700; }
+.t-pipe { color: var(--code-pipe); font-weight: 700; }
+.t-sink { color: var(--code-sink); }
+.t-dom { color: var(--code-domain); }
+.t-sock { color: var(--code-socket); }
+.t-mod { color: var(--code-module); }
+.t-num { color: var(--code-number); }
+.t-str { color: var(--code-text); }
 
 /* C# and XML, in the same palette: keywords cyan, strings green, comments quiet. */
-.k { color: #3FC8C8; }
-.s { color: #4FC387; }
+.k { color: var(--code-keyword); }
+.s { color: var(--code-text); }
 .c { color: var(--normalled); font-style: italic; }
 
 ul, ol { margin: 14px 0 0; padding-left: 22px; }
@@ -248,7 +266,7 @@ figcaption { font-size: 13.5px; color: var(--muted); margin-top: 12px; line-heig
 .window > .titlebar {
   display: flex; align-items: center; gap: 8px;
   height: 30px; padding: 0 12px;
-  background: #1F1F1F; color: var(--label); font-size: 12px;
+  background: var(--titlebar); color: var(--label); font-size: 12px;
   border-bottom: 1px solid var(--edge);
 }
 .window > .titlebar img { width: 14px; height: 14px; }
@@ -262,18 +280,27 @@ figcaption { font-size: 13.5px; color: var(--muted); margin-top: 12px; line-heig
   each one is a link to the file itself, where the browser can zoom and pan.
 */
 .zoom { display: block; position: relative; }
-.zoom::after {
+.zoom::before, .zoom::after {
   content: "";
-  position: absolute; right: 10px; bottom: 10px;
-  width: 30px; height: 30px; border-radius: 5px;
-  border: 1px solid var(--separator);
-  background: rgba(22, 22, 22, 0.86)
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23E9ECF1' stroke-width='1.7' stroke-linecap='round'%3E%3Ccircle cx='8.5' cy='8.5' r='5.6'/%3E%3Cpath d='M12.6 12.6 17.2 17.2M6.2 8.5h4.6M8.5 6.2v4.6'/%3E%3C/svg%3E")
-    center / 16px 16px no-repeat;
+  position: absolute;
   opacity: 0; transition: opacity 0.15s ease;
 }
-.zoom:hover::after, .zoom:focus-visible::after { opacity: 1; }
-@media (hover: none) { .zoom::after { opacity: 1; } }
+.zoom::before {
+  right: 10px; bottom: 10px;
+  width: 30px; height: 30px; border-radius: 5px;
+  border: 1px solid var(--separator);
+  background: color-mix(in srgb, var(--edge) 86%, transparent);
+}
+/* A magnifier drawn in --bright through a mask, so it follows the theme. */
+.zoom::after {
+  right: 17px; bottom: 17px;
+  width: 16px; height: 16px;
+  background: var(--bright);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round'%3E%3Ccircle cx='8.5' cy='8.5' r='5.6'/%3E%3Cpath d='M12.6 12.6 17.2 17.2M6.2 8.5h4.6M8.5 6.2v4.6'/%3E%3C/svg%3E") center / 16px 16px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round'%3E%3Ccircle cx='8.5' cy='8.5' r='5.6'/%3E%3Cpath d='M12.6 12.6 17.2 17.2M6.2 8.5h4.6M8.5 6.2v4.6'/%3E%3C/svg%3E") center / 16px 16px no-repeat;
+}
+.zoom:hover::before, .zoom:hover::after, .zoom:focus-visible::before, .zoom:focus-visible::after { opacity: 1; }
+@media (hover: none) { .zoom::before, .zoom::after { opacity: 1; } }
 
 /* ---- the picture overlay (site.js) --------------------------------------- */
 
@@ -281,7 +308,7 @@ figcaption { font-size: 13.5px; color: var(--muted); margin-top: 12px; line-heig
 .lightbox {
   position: fixed; inset: 0; z-index: 50;
   display: grid; grid-template-rows: minmax(0, 1fr) auto;
-  background: rgba(16, 16, 16, 0.97);
+  background: var(--scrim);
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
 }
 .lightbox[hidden] { display: none; }
@@ -292,7 +319,7 @@ figcaption { font-size: 13.5px; color: var(--muted); margin-top: 12px; line-heig
 .lb-img {
   position: absolute; left: 0; top: 0; max-width: none;
   transform-origin: 0 0; user-select: none; -webkit-user-select: none;
-  border-radius: 4px; box-shadow: 0 20px 60px -20px #000; cursor: zoom-in;
+  border-radius: 4px; box-shadow: 0 20px 60px -20px black; cursor: zoom-in;
 }
 .lb-img.lb-animate { transition: transform 0.18s ease-out; }
 .lb-zoomed .lb-img { cursor: grab; border-radius: 0; }
@@ -309,7 +336,7 @@ figcaption { font-size: 13.5px; color: var(--muted); margin-top: 12px; line-heig
 .lb-button {
   position: absolute; width: 44px; height: 44px; border-radius: 6px;
   display: grid; place-items: center; cursor: pointer;
-  background: rgba(48, 48, 48, 0.9); color: var(--bright); border: 1px solid var(--separator);
+  background: color-mix(in srgb, var(--toolbar) 90%, transparent); color: var(--bright); border: 1px solid var(--separator);
 }
 .lb-button:hover { background: var(--node-selected); }
 .lb-button svg { width: 20px; height: 20px; }

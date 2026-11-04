@@ -33,3 +33,8 @@ Feature: The Worker serves the whole website
     When someone opens the tutorials page
     Then every video in its list has a name of its own to link to, a title and a line on what it shows
     And its player starts on the first video in the list
+
+  @unmeasured
+  Scenario: The website takes its colors from one place
+    When someone reads the website's pages, stylesheets and scripts
+    Then every color in them is one of site.css's, and those are the Graphite scheme's
