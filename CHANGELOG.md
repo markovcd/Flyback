@@ -6,6 +6,8 @@
 
 ### Presets
 
+- Fracture's sub bass is about ten decibels louder, so a subwoofer carries the drop as it should in drum and bass; the mix is trimmed to keep it off the rails.
+
 ### Assistant
 
 ### Editor

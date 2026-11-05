@@ -127,8 +127,8 @@ group "Bass" {
   # The first theme's bass sits on F and keeps falling away from it; the second's
   # climbs from D flat through the scale's three major chords to a bar on C that wants
   # the F back. Thirty milliseconds of glide, because a Reese slides: two saws a
-  # little over one per cent apart, a Filter a Wander opens, and a Phaser, with a sine
-  # for the sub, all ducked by the kick.
+  # little over one per cent apart, a Filter a Wander opens, and a Phaser, over a sine
+  # sub louder than the saws, all ducked by the kick.
   let bass_open = wander(rate: 0.3, seed: 5, low: 250, high: 1400)
   let second_line = beats
     |> notes(rate: 0.5) [ C#1 C#1 C#1 C#1 D#1 D#1 D#1 D#1 G#1 G#1 G#1 G#1 C1 C1 C1 C2 ]
@@ -142,7 +142,7 @@ group "Bass" {
     |> drive(drive: 2.5)
   let duck = duck(key: kick_stroke, depth: 0.6, attack: 100us, release: 100us)
   let bass = (
-      reese + sine(freq: bass_pitch, amp: 0.45)) * duck.gain * parts.part_3
+      reese + sine(freq: bass_pitch, amp: 1.4)) * duck.gain * parts.part_3
 }
 
 group "Picture: Strips" {
@@ -310,7 +310,7 @@ group "Desk" {
         level_4: 0.5,
         bus_left: rhythm.bus_left,
         bus_right: rhythm.bus_right,
-        trim: 0.34)
+        trim: 0.31)
 }
 
 group "Picture: Print" {
