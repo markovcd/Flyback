@@ -54,6 +54,10 @@ public sealed class CanvasSettings
     /// </summary>
     public bool DragToPan { get; set; }
 
+    /// <summary>What a scroll over the canvas does to the view (ADR-0226).</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public CanvasScroll Scroll { get; set; }
+
     /// <summary>Whether the menus macOS shows in its menu bar are along the top of the window on Windows and Linux.</summary>
     public bool MenuBar { get; set; }
 
@@ -130,6 +134,8 @@ public sealed class CanvasSettings
             if (!MeasureWindows.Contains(loaded.MeasureSeconds)) loaded.MeasureSeconds = MeasureOptions.DefaultSeconds;
 
             if (!Enum.IsDefined(loaded.MeasurePicture)) loaded.MeasurePicture = MeasurePictureSize.Small;
+
+            if (!Enum.IsDefined(loaded.Scroll)) loaded.Scroll = CanvasScroll.Auto;
 
             if (string.IsNullOrWhiteSpace(loaded.ColorScheme) || loaded.ColorScheme.Length > SchemeFile.LongestName)
                 loaded.ColorScheme = DefaultColorScheme;

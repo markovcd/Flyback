@@ -31,7 +31,14 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
     private readonly CheckBox compactModules = Switch("pageCompactModules", "Compact modules");
     private readonly CheckBox endless = Switch("pageEndless", "Endless");
 
-    /// <summary>Drag to pan and its note, which a finger has no use for.</summary>
+    private readonly ComboBox scroll = new Picker
+    {
+        Name = "pageScroll",
+        ItemsSource = CanvasSection.ScrollChoices,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
+    /// <summary>Drag to pan and the scroll, which a finger has no use for.</summary>
     private readonly Border panRow;
 
     public PageSettings(EditorHost host, Toolbar toolbar, CanvasSection canvas, LivePatchingRows live, OutputSettingRepository settings, IBrowserStore browser)
@@ -64,10 +71,20 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(5),
             Padding = new Thickness(8),
-            Child = Row(dragToPan,
-                "For a mouse or trackpad without a middle button. Left-drag moves the view; "
-                + "right-drag selects, right-click adds a module."),
+            Child = new StackPanel
+            {
+                Spacing = 8,
+                Children =
+                {
+                    Row(dragToPan,
+                        "For a mouse or trackpad without a middle button. Left-drag moves the view; "
+                        + "right-drag selects, right-click adds a module."),
+                    InspectorRows.Field("Scroll", scroll),
+                },
+            },
         };
+
+        ToolTip.SetTip(scroll, CanvasSection.ScrollTip);
 
         var compactRow = Row(compactModules, "Puts each input beside an output on one row.");
         compactRow.Margin = new Thickness(8, 4, 8, 4);
@@ -112,12 +129,14 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
         Flyout.Opening += (_, _) =>
         {
             dragToPan.IsChecked = canvas.DragToPan;
+            scroll.SelectedIndex = (int)canvas.Scroll;
             live.Show(settings.Current);
             compactModules.IsChecked = canvas.CompactModules;
             endless.IsChecked = canvas.Endless;
         };
 
         dragToPan.IsCheckedChanged += (_, _) => Change(settings => settings.DragToPan = dragToPan.IsChecked == true);
+        scroll.SelectionChanged += (_, _) => Change(settings => settings.Scroll = (CanvasScroll)Math.Max(scroll.SelectedIndex, 0));
         compactModules.IsCheckedChanged += (_, _) => Change(settings => settings.CompactModules = compactModules.IsChecked == true);
         endless.IsCheckedChanged += (_, _) => Change(settings => settings.Endless = endless.IsChecked == true);
     }

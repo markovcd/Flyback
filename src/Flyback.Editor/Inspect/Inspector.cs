@@ -228,7 +228,7 @@ internal sealed class Inspector
                 {
                     Text = caret.IsAdrift
                         ? caret.IsAdriftBox ? InspectorHelp.AdriftingGroup : InspectorHelp.Adrifting
-                        : InspectorHelp.Locked(fingers, editor.Gestures.DragToPan, editor.Gestures.ScrollPans),
+                        : InspectorHelp.Locked(fingers, editor.Gestures.DragToPan, editor.Gestures.ScrollMode),
                     TextWrapping = TextWrapping.Wrap,
                     Foreground = Text.Muted,
                     FontSize = Text.Body,
@@ -236,7 +236,7 @@ internal sealed class Inspector
             }
             else
             {
-                Panel.Children.Add(ShortcutList.Of(InspectorHelp.Shortcuts(inPage, fingers, editor.Gestures.DragToPan, editor.Gestures.ScrollPans), openShortcuts));
+                Panel.Children.Add(ShortcutList.Of(InspectorHelp.Shortcuts(inPage, fingers, editor.Gestures.DragToPan, editor.Gestures.ScrollMode), openShortcuts));
             }
 
             return;

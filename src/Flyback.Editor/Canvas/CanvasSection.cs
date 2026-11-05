@@ -40,6 +40,22 @@ internal sealed class CanvasSection : ISettingsSection
         VerticalAlignment = VerticalAlignment.Center,
     };
 
+    private readonly ComboBox scroll = new Picker
+    {
+        Name = "canvasScroll",
+        ItemsSource = ScrollChoices,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
+    /// <summary>What the Scroll list says for each <see cref="CanvasScroll"/>, in its order.</summary>
+    internal static readonly IReadOnlyList<string> ScrollChoices = ["Automatic", "Pans the view", "Zooms the view"];
+
+    /// <summary>What the Scroll list's tooltip says, in the settings window and the page's panel.</summary>
+    internal const string ScrollTip =
+        "What scrolling over the canvas does. Automatic zooms with a mouse wheel, and on a Mac pans with "
+        + "two fingers on a trackpad, where a pinch zooms. Pans the view makes every scroll pan, with Ctrl or Cmd "
+        + "held to zoom; Zooms the view makes every scroll zoom.";
+
     private readonly CheckBox pluginSkins = new()
     {
         Name = "pluginSkins",
@@ -117,6 +133,8 @@ internal sealed class CanvasSection : ISettingsSection
 
         canvas.Gestures.DragToPan = saved.DragToPan;
         canvas.Gestures.ScrollPans = host.ScrollPans;
+        canvas.Gestures.ScrollIsMouse = host.ScrollIsMouse;
+        canvas.Gestures.Scroll = saved.Scroll;
 
         ToolTip.SetTip(compactModules,
             "Put each input beside an output on one row, and show a knob's value when "
@@ -126,6 +144,8 @@ internal sealed class CanvasSection : ISettingsSection
             "Drag empty canvas with the left button to move the view. The right button then "
             + "selects: drag it across modules, or click it to add one. For a mouse or trackpad without a middle "
             + "button; cleared, the middle button pans and the left one selects.");
+
+        ToolTip.SetTip(scroll, ScrollTip);
 
         ToolTip.SetTip(pluginSkins,
             "A plugin may give its modules a color, a texture or a picture of their own. "
@@ -165,6 +185,7 @@ internal sealed class CanvasSection : ISettingsSection
         {
             View.Children.Add(SettingRows.Heading("Mouse"));
             View.Children.Add(dragToPan);
+            View.Children.Add(InspectorRows.Field("Scroll", scroll));
         }
         View.Children.Add(SettingRows.Heading("Plugin modules"));
         View.Children.Add(pluginSkins);
@@ -223,6 +244,7 @@ internal sealed class CanvasSection : ISettingsSection
         toolbarLabels.IsChecked = saved.ToolbarLabels;
         compactModules.IsChecked = saved.CompactModules;
         dragToPan.IsChecked = saved.DragToPan;
+        scroll.SelectedIndex = (int)saved.Scroll;
         pluginSkins.IsChecked = saved.PluginSkins;
         animateSkins.IsChecked = saved.AnimateSkins;
         measureWindow.SelectedIndex = Math.Max(0, CanvasSettings.MeasureWindows.ToList().IndexOf(saved.MeasureSeconds));
@@ -235,9 +257,10 @@ internal sealed class CanvasSection : ISettingsSection
         ToolbarLabelsShown?.Invoke(saved.ToolbarLabels);
 
         // The empty inspector names the gestures, so it is told when they change.
-        if (canvas.Gestures.DragToPan != saved.DragToPan)
+        if (canvas.Gestures.DragToPan != saved.DragToPan || canvas.Gestures.Scroll != saved.Scroll)
         {
             canvas.Gestures.DragToPan = saved.DragToPan;
+            canvas.Gestures.Scroll = saved.Scroll;
             canvas.Selection.Announce();
         }
 
@@ -260,6 +283,9 @@ internal sealed class CanvasSection : ISettingsSection
 
     /// <summary>Whether the left button pans empty canvas, as last saved.</summary>
     internal bool DragToPan => saved.DragToPan;
+
+    /// <summary>What a scroll over the canvas does, as last saved.</summary>
+    internal CanvasScroll Scroll => saved.Scroll;
 
     /// <summary>Whether modules are drawn compact, as last saved.</summary>
     internal bool CompactModules => saved.CompactModules;
@@ -336,6 +362,7 @@ internal sealed class CanvasSection : ISettingsSection
             ToolbarLabels = toolbarLabels.IsChecked == true,
             CompactModules = compactModules.IsChecked == true,
             DragToPan = dragToPan.IsChecked == true,
+            Scroll = (CanvasScroll)Math.Max(scroll.SelectedIndex, 0),
             PluginSkins = pluginSkins.IsChecked == true,
             AnimateSkins = animateSkins.IsChecked == true,
             EditorFontSize = saved.EditorFontSize,

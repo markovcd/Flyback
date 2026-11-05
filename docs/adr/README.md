@@ -126,7 +126,8 @@ context, decision, consequences.
 | [0045](0045-what-is-copied-is-a-patch-file.md) | What is copied is a patch file *(user-directed)* |
 | [0046](0046-the-module-list-is-a-gesture-not-a-panel.md) | The module list is a gesture, not a panel *(user-directed; a left-drag pan offered as a setting by [0182](0182-drag-to-pan-is-a-setting-that-trades-the-left-and-right-buttons.md); a Mac's scroll pans by [0217](0217-on-a-mac-a-scroll-pans-and-a-pinch-zooms.md))* |
 | [0182](0182-drag-to-pan-is-a-setting-that-trades-the-left-and-right-buttons.md) | Drag to pan is a setting that trades the left and right buttons *(user-directed)* |
-| [0217](0217-on-a-mac-a-scroll-pans-and-a-pinch-zooms.md) | On a Mac a scroll pans and a pinch zooms *(user-directed)* |
+| [0217](0217-on-a-mac-a-scroll-pans-and-a-pinch-zooms.md) | On a Mac a scroll pans and a pinch zooms *(user-directed; a mouse wheel zooms by [0226](0226-on-a-mac-a-mouse-wheel-zooms-and-a-trackpad-pans.md))* |
+| [0226](0226-on-a-mac-a-mouse-wheel-zooms-and-a-trackpad-pans.md) | On a Mac a mouse wheel zooms and a trackpad pans *(user-directed)* |
 | [0070](0070-a-preset-declares-no-coordinates.md) | A preset declares no coordinates *(user-directed)* |
 | [0071](0071-two-undo-stacks-and-which-one-a-press-lands-on.md) | Two undo stacks, and which one a press lands on |
 | [0078](0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md) | Export leaves the shell for the CLI that already writes it *(user-directed; its Output-panel `Record…` row moved to the toolbar by [0080](0080-record-moves-to-the-toolbar-with-a-glyph-and-ctrl-r.md); playing without the editor is [0123](0123-a-third-program-plays-a-patch-and-writes-nothing.md))* |

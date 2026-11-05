@@ -2,6 +2,7 @@
 
 **Status:** Accepted · 2026-11-01 · *user-directed* · amends
 [0046](0046-the-module-list-is-a-gesture-not-a-panel.md)'s wheel zoom on a Mac
+· amended by [0226](0226-on-a-mac-a-mouse-wheel-zooms-and-a-trackpad-pans.md): a mouse wheel zooms
 
 ## Context
 

@@ -14,10 +14,13 @@ public sealed class TrackpadSteps(PatchContext context, EditorDriver editor)
     private double zoomWas;
     private Point panWas;
 
+    /// <summary>Whether the scroll the host reports comes from a mouse wheel; a trackpad until a step says so.</summary>
+    private bool mouse;
+
     [Given("the editor runs on a Mac")]
     public void GivenAMac()
     {
-        editor.Setup = editor.Setup with { Host = editor.Setup.Host with { ScrollPans = true } };
+        editor.Setup = editor.Setup with { Host = editor.Setup.Host with { ScrollPans = true, ScrollIsMouse = () => mouse } };
 
         zoomWas = editor.Read(canvas => canvas.View.Zoom);
         panWas = editor.Read(canvas => canvas.View.Pan);
@@ -25,6 +28,13 @@ public sealed class TrackpadSteps(PatchContext context, EditorDriver editor)
 
     [When("two fingers scroll on the trackpad")]
     public void WhenTwoFingersScroll() => editor.Scroll(Beside(), new Vector(0.5, -1.5));
+
+    [When("a mouse wheel turns")]
+    public void WhenAMouseWheelTurns()
+    {
+        mouse = true;
+        editor.Scroll(Beside(), new Vector(0, 1));
+    }
 
     [When("two fingers spread on the trackpad")]
     public void WhenTwoFingersSpread() => editor.Pinch(Beside(), 0.3);

@@ -729,6 +729,24 @@ internal sealed class CanvasGestures
     /// </summary>
     public bool ScrollPans { get; set; }
 
+    /// <summary>What a scroll does, as the Canvas settings say; <see cref="CanvasScroll.Auto"/> leaves it to <see cref="ScrollPans"/> and the device.</summary>
+    public CanvasScroll Scroll { get; set; }
+
+    /// <summary>
+    /// Whether the scroll being handled comes from a mouse wheel (true) or a trackpad (false),
+    /// or null where the host cannot tell; asked at the start of each scroll.
+    /// </summary>
+    public Func<bool?>? ScrollIsMouse { get; set; }
+
+    /// <summary>
+    /// What a scroll does once <see cref="CanvasScroll.Auto"/> is settled for this host:
+    /// <see cref="CanvasScroll.Auto"/> only where a scroll pans and a mouse wheel zooms.
+    /// </summary>
+    public CanvasScroll ScrollMode => Scroll != CanvasScroll.Auto ? Scroll : ScrollPans ? CanvasScroll.Auto : CanvasScroll.Zoom;
+
+    /// <summary>Whether the scroll under way pans rather than zooms, settled at its first notch.</summary>
+    private bool scrollPansView;
+
     /// <summary>How many screen pixels a notch of the wheel pans, the step a scroll viewer takes.</summary>
     internal const double PanPerNotch = 50;
 
@@ -765,13 +783,19 @@ internal sealed class CanvasGestures
         if (over && focus.Focused == new SocketPick(node, port) && focus.Wheel(e.Delta.Y)) return;
 
         viewScrolledAt = e.Timestamp;
+        scrollPansView = ScrollMode switch
+        {
+            CanvasScroll.Pan => true,
+            CanvasScroll.Zoom => false,
+            _ => ScrollIsMouse?.Invoke() != true,
+        };
         MoveView(canvas, e);
     }
 
     /// <summary>Pans the view by a scroll, or zooms it about the pointer.</summary>
     private void MoveView(Control canvas, PointerWheelEventArgs e)
     {
-        if (ScrollPans && (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) == 0)
+        if (scrollPansView && (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) == 0)
             view.PanBy(e.Delta * PanPerNotch);
         else
             view.ZoomAt(e.GetPosition(canvas), e.Delta.Y);

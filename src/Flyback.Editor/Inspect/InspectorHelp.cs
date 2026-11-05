@@ -1,3 +1,4 @@
+using Flyback.Editor.Canvas;
 using Flyback.Editor.Hubs;
 
 namespace Flyback.Editor.Inspect;
@@ -11,17 +12,17 @@ internal static class InspectorHelp
     /// has no keys.
     /// </summary>
     /// <param name="dragToPan">Whether the left button pans and the right one selects (ADR-0182).</param>
-    /// <param name="scrollPans">Whether a scroll pans and a pinch zooms, as on a Mac (ADR-0217).</param>
-    internal static IReadOnlyList<HelpGroup> Shortcuts(bool inPage, bool fingers, bool dragToPan = false, bool scrollPans = false)
+    /// <param name="scroll">What a scroll does, settled for the host (ADR-0217, ADR-0226).</param>
+    internal static IReadOnlyList<HelpGroup> Shortcuts(bool inPage, bool fingers, bool dragToPan = false, CanvasScroll scroll = CanvasScroll.Zoom)
     {
-        List<HelpGroup> groups = fingers ? FingerGroups(inPage) : KeyGroups(inPage, dragToPan, scrollPans);
+        List<HelpGroup> groups = fingers ? FingerGroups(inPage) : KeyGroups(inPage, dragToPan, scroll);
         groups.RemoveAll(g => g.Rows.Count == 0);
         return groups;
     }
 
     private static HelpRow Row(string title, string detail = "", string keys = "") => new(title, detail, keys);
 
-    private static List<HelpGroup> KeyGroups(bool inPage, bool dragToPan, bool scrollPans) =>
+    private static List<HelpGroup> KeyGroups(bool inPage, bool dragToPan, CanvasScroll scroll) =>
     [
         new("Getting started",
         [
@@ -65,14 +66,19 @@ internal static class InspectorHelp
         new("Selecting and moving",
         [
             dragToPan ? Row("Select", "Right-drag the background.", "Right-drag") : Row("Select", "Drag the background.", "Drag"),
-            (dragToPan, scrollPans) switch
+            (dragToPan, scroll != CanvasScroll.Zoom) switch
             {
                 (true, true) => Row("Pan", "Drag the background, or scroll with two fingers on a trackpad.", "Drag"),
                 (true, false) => Row("Pan", "Drag the background.", "Drag"),
                 (false, true) => Row("Pan", "Two fingers on a trackpad, or middle-drag.", "Scroll"),
                 _ => Row("Pan", keys: "Middle-drag"),
             },
-            scrollPans ? Row("Zoom", "Pinch on a trackpad.", "Ctrl+Scroll") : Row("Zoom", keys: "Wheel"),
+            scroll switch
+            {
+                CanvasScroll.Pan => Row("Zoom", "Pinch on a trackpad.", "Ctrl+Scroll"),
+                CanvasScroll.Auto => Row("Zoom", "The mouse wheel, or pinch on a trackpad.", "Wheel"),
+                _ => Row("Zoom", keys: "Wheel"),
+            },
             Row("Add to selection", keys: "Ctrl+Click"),
             Row("Select all", keys: "Ctrl+A"),
             Row("Frame the patch", "Or double-click the background. Zoomed out, double-click a module to bring it up to read.", "Ctrl+F"),
@@ -137,7 +143,7 @@ internal static class InspectorHelp
     /// that writes is gone; naming the gestures that are switched off would leave
     /// somebody concluding the program was broken.
     /// </summary>
-    internal static string Locked(bool fingers, bool dragToPan = false, bool scrollPans = false) =>
+    internal static string Locked(bool fingers, bool dragToPan = false, CanvasScroll scroll = CanvasScroll.Zoom) =>
         "The text is the document, and this is a view of what it builds. "
         + (fingers ? "Tap the code button, on the toolbar," : "Press F2")
         + " to go back to it — modules and wires are added and removed there, "
@@ -152,7 +158,12 @@ internal static class InspectorHelp
             ? "Drag bare canvas to select. Two fingers drag the view, and spread or pinch to zoom. "
             + "Zoomed out, a double tap on a module brings it up to read; one on bare canvas shows the whole patch."
             : (dragToPan ? "Right-drag the background to select, drag it" : "Drag the background to select, middle-drag")
-              + (scrollPans ? " or scroll to pan, pinch to zoom.\n" : " to pan, wheel to zoom.\n")
+              + scroll switch
+              {
+                  CanvasScroll.Pan => " or scroll to pan, pinch to zoom.\n",
+                  CanvasScroll.Auto => " or scroll a trackpad to pan, wheel or pinch to zoom.\n",
+                  _ => " to pan, wheel to zoom.\n",
+              }
               + "Ctrl+click adds to a selection, Ctrl+A takes everything.\n"
               + "Ctrl+C copies what is selected, Ctrl+F frames the patch.");
 

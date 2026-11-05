@@ -68,6 +68,18 @@ const VIEWER_TAB = 'flyback-viewer';
 let viewerTab = null;
 let viewed = null;
 
+/**
+ * What the latest wheel event came from: 1 a mouse wheel, 0 a trackpad, -1 unknown. A trackpad's
+ * legacy wheelDeltaY is exactly three times its deltaY the other way; a wheel's is a multiple of 120,
+ * and Firefox counts a wheel in lines.
+ */
+let lastWheel = -1;
+window.addEventListener('wheel', e => {
+  if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) lastWheel = 1;
+  else if (e.wheelDeltaY) lastWheel = e.wheelDeltaY === -3 * e.deltaY ? 0 : 1;
+  else if (e.deltaX) lastWheel = 0;
+}, { capture: true, passive: true });
+
 runtime.setModuleImports('gl', gl);
 runtime.setModuleImports('speakers', speakers);
 // The preview is a box holding the canvas and what is said in place of a picture it cannot draw.
@@ -103,6 +115,7 @@ runtime.setModuleImports('page', {
   attachGl: box => gl.attach(box.firstChild, () => runtime.localHeapViewU8()),
   hasFocus: () => document.hasFocus(),
   onMac: () => /^mac/i.test(navigator.userAgentData?.platform ?? navigator.platform ?? ''),
+  lastWheel: () => lastWheel,
   // The native controls' layer, which holds the picture's canvas, goes under Avalonia's own canvas.
   pictureBehind: behind => {
     for (const layer of document.querySelectorAll('.avalonia-native-host')) {

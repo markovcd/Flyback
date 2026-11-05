@@ -54,6 +54,12 @@ public sealed record EditorHost
     /// </summary>
     public bool ScrollPans { get; init; }
 
+    /// <summary>
+    /// Whether the scroll being handled comes from a mouse wheel (true) or a trackpad (false), where
+    /// <see cref="ScrollPans"/> is set: a mouse wheel then zooms (ADR-0226). Null, or answering null, pans.
+    /// </summary>
+    public Func<bool?>? ScrollIsMouse { get; init; }
+
     /// <summary>Leaves the editor for the front page of the site it is served from. Null puts no mark on the toolbar.</summary>
     public Action? Home { get; init; }
 }

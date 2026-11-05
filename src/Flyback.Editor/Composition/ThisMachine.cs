@@ -51,5 +51,6 @@ internal static class ThisMachine
         Relaunch = Restart.Launch,
         UpdatesItself = !StoreCopy.Running,
         ScrollPans = OperatingSystem.IsMacOS(),
+        ScrollIsMouse = OperatingSystem.IsMacOS() ? MacScroll.IsMouse : null,
     };
 }
