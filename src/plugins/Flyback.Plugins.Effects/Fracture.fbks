@@ -127,8 +127,9 @@ group "Bass" {
   # The first theme's bass sits on F and keeps falling away from it; the second's
   # climbs from D flat through the scale's three major chords to a bar on C that wants
   # the F back. Thirty milliseconds of glide, because a Reese slides: two saws a
-  # little over one per cent apart, a Filter a Wander opens, and a Phaser, over a sine
-  # sub louder than the saws, all ducked by the kick.
+  # little over one per cent apart, a Filter a Wander opens, and a Phaser, cut under
+  # 110 Hz so a sine sub has the low end to itself, all ducked by the kick. The sub
+  # plays an octave up below 41 Hz, where a subwoofer gives out.
   let bass_open = wander(rate: 0.3, seed: 5, low: 250, high: 1400)
   let second_line = beats
     |> notes(rate: 0.5) [ C#1 C#1 C#1 C#1 D#1 D#1 D#1 D#1 G#1 G#1 G#1 G#1 C1 C1 C1 C2 ]
@@ -136,13 +137,16 @@ group "Bass" {
     |> notes(rate: 0.5) [ F1 F1 F1 F1 F1 F1 G#1 G#1 D#1 D#1 D#1 D#1 C#1 C#1 D#1 D#1 ]
     |> math.mix(a: _, b: second_line, t: second)
   let bass_pitch = bass_line |> slew(rise: 31.62278ms, fall: 31.62278ms) |> note(note: _)
-  let reese = saw(freq: bass_pitch * 2, amp: 0.6) + saw(freq: bass_pitch * 2.025, amp: 0.6)
+  let reese_saws = saw(freq: bass_pitch * 2, amp: 0.6) + saw(freq: bass_pitch * 2.025, amp: 0.6)
     |> filter(cutoff: bass_open, resonance: 0.35)
     |> phaser(rate: 0.15, depth: 0.8, feedback: 0.5, mix: 0.6)
     |> drive(drive: 2.5)
-  let duck = duck(key: kick_stroke, depth: 0.6, attack: 100us, release: 100us)
+    |> filter(cutoff: 110)
+  let reese = reese_saws.high
+  let sub_pitch = bass_pitch * (2 - step(41, bass_pitch))
+  let duck = duck(key: kick_stroke, depth: 0.8, attack: 100us, release: 100us)
   let bass = (
-      reese + sine(freq: bass_pitch, amp: 1.4)) * duck.gain * parts.part_3
+      reese + sine(freq: sub_pitch, amp: 3.2)) * duck.gain * parts.part_3
 }
 
 group "Picture: Strips" {
@@ -289,6 +293,7 @@ group "Desk" {
   let rhythm = drums
     |> desk(
         left_1: _,
+        level_1: 0.7,
         left_2: bass,
         level_2: 0.4,
         left_3: pad,
@@ -310,7 +315,7 @@ group "Desk" {
         level_4: 0.5,
         bus_left: rhythm.bus_left,
         bus_right: rhythm.bus_right,
-        trim: 0.31)
+        trim: 0.3)
 }
 
 group "Picture: Print" {

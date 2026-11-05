@@ -6,7 +6,7 @@
 
 ### Presets
 
-- Fracture's sub bass is about ten decibels louder, so a subwoofer carries the drop as it should in drum and bass; the mix is trimmed to keep it off the rails.
+- Fracture has a sub bass a subwoofer carries: the Reese is cut under 110 Hz so a louder sine sub has the low end to itself, its notes under 41 Hz play an octave up where a subwoofer still answers, and the drums sit a little lower in the mix.
 
 ### Assistant
 
