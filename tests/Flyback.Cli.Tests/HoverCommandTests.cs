@@ -68,7 +68,7 @@ public sealed class HoverCommandTests : IDisposable
     [Fact]
     public void A_place_with_nothing_to_say_says_so()
     {
-        var (code, output, _) = Run("hover", Written("# a comment"), "--at", "1:5");
+        var (code, output, _) = Run("hover", Written("// a comment"), "--at", "1:5");
 
         code.ShouldBe(Exit.Ok);
         output.ShouldContain("nothing to say here");

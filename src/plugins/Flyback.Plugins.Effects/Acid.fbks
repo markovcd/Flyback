@@ -1,17 +1,17 @@
-# A whole acid techno track: a hundred and twenty-eight bars of a 303 line in two
-# themes, a galloping bass under it, a breakdown, three builds and a second 303 that
-# answers the first, and a picture driven by the same signals that drive the sound.
-#
-# The line is built the way the instrument is. A step can be accented and can slide
-# into the next, and both are in the pattern rather than on a knob. The filter is
-# two Filters in a row, which is four poles. Its cutoff is counted in octaves and
-# raised to a power of two at the end, so the envelope sweeps the way an ear hears a
-# sweep. An accent charges a Slew that takes a quarter of a second to fall, so
-# accents close together climb on each other's backs.
-#
-# The harmony is a root a bar, added to everything pitched before its Note, so a
-# change of chord moves the line, the bass and the pad in parallel. That is how the
-# machine itself transposes a pattern, and why no part here needs a scale.
+// A whole acid techno track: a hundred and twenty-eight bars of a 303 line in two
+// themes, a galloping bass under it, a breakdown, three builds and a second 303 that
+// answers the first, and a picture driven by the same signals that drive the sound.
+//
+// The line is built the way the instrument is. A step can be accented and can slide
+// into the next, and both are in the pattern rather than on a knob. The filter is
+// two Filters in a row, which is four poles. Its cutoff is counted in octaves and
+// raised to a power of two at the end, so the envelope sweeps the way an ear hears a
+// sweep. An accent charges a Slew that takes a quarter of a second to fall, so
+// accents close together climb on each other's backs.
+//
+// The harmony is a root a bar, added to everything pitched before its Note, so a
+// change of chord moves the line, the bass and the pad in parallel. That is how the
+// machine itself transposes a pattern, and why no part here needs a scale.
 
 description "A whole acid techno track: a hundred and twenty-eight bars of a 303 line"
   "in two themes, with accents and slides through a four-pole filter, over a galloping"
@@ -22,20 +22,20 @@ length 3:56.31
 requires flyback.effects, flyback.picture, flyback.voice
 
 group "Clock" {
-  # A hundred and thirty a minute. Every part reads the count of beats, so the tempo
-  # is this one knob.
+  // A hundred and thirty a minute. Every part reads the count of beats, so the tempo
+  // is this one knob.
   let clock = time()
   let tempo = tempo(bpm: 130)
   let beats = clock * tempo
 }
 
 group "Arrangement" {
-  # Eight bars a section: an intro and a build, four phrases of the first drop, a
-  # phrase stripped back and a second build, the second drop, a breakdown with no
-  # drums at all, a third build, three phrases of everything and the way out. These
-  # rows are the bass, the answer and the pad; which theme (a switch, because a
-  # pattern half way between two is neither); where the hand leaves the cutoff knob
-  # for each phrase; and how many bands the picture is cut into.
+  // Eight bars a section: an intro and a build, four phrases of the first drop, a
+  // phrase stripped back and a second build, the second drop, a breakdown with no
+  // drums at all, a third build, three phrases of everything and the way out. These
+  // rows are the bass, the answer and the pad; which theme (a switch, because a
+  // pattern half way between two is neither); where the hand leaves the cutoff knob
+  // for each phrase; and how many bands the picture is cut into.
   let parts = beats
     |> arrangement(rate: 0.03125) [
         0 1 1 1 1 1 1 1 1 1 0 1 1 1 1 0 |
@@ -44,13 +44,13 @@ group "Arrangement" {
         0 0 0 0 1 1 0 0 0 0 1 1 1 0 0 0 |
         0.15 0.4 0.7 0.85 0.7 0.9 0.3 0.5 0.85 1 0.35 0.5 0.9 1 0.8 0.2 |
         11.3 17.6 21.8 21.8 22.85 22.85 14.45 17.6 26 26 6.05 17.6 26 26 24.95 11.3 ]
-  # The knob gets there over six seconds and comes back over three, so it is turned
-  # rather than set.
+  // The knob gets there over six seconds and comes back over three, so it is turned
+  // rather than set.
   let knob = parts.part_5 |> slew(rise: 6.0255955s, fall: 3.0199516s)
-  # The kick and the closed hats, out only for the breakdown; the clap; the open hat
-  # and the crash, which come with a drop; and which sections build. A build's second
-  # half is a ramp, and its last bar has no kick and no bass, so the drop lands on a
-  # bar of nothing.
+  // The kick and the closed hats, out only for the breakdown; the clap; the open hat
+  // and the crash, which come with a drop; and which sections build. A build's second
+  // half is a ramp, and its last bar has no kick and no bass, so the drop lands on a
+  // bar of nothing.
   let drum_parts = beats
     |> arrangement(rate: 0.03125) [
         1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 |
@@ -59,7 +59,7 @@ group "Arrangement" {
         0 1 0 0 0 0 0 1 0 0 0 1 0 0 0 0 ]
   let rising = drum_parts.progress |> smoothstep(edge0: 0.5)
   let ramp = rising * drum_parts.part_4
-  # The knob with the ramp on it, and a little of a hand that is never quite still.
+  // The knob with the ramp on it, and a little of a hand that is never quite still.
   let hand = knob + ramp * 0.3 + wander(
       rate: 0.07,
       seed: 4.1,
@@ -67,9 +67,9 @@ group "Arrangement" {
       high: 0.06)
   let last_bar = step(0.875, drum_parts.progress)
   let no_kick = 1 - last_bar * drum_parts.part_4
-  # The harmony, a bar at a time, in semitones from A, for each theme. The first stays
-  # home for six bars and goes up to C and down to G to come back; the second rocks
-  # between F and G and ends on E, which wants the A.
+  // The harmony, a bar at a time, in semitones from A, for each theme. The first stays
+  // home for six bars and goes up to C and down to G to come back; the second rocks
+  // between F and G and ends on E, which wants the A.
   let harmony = beats
     |> arrangement(rate: 0.25) [ 0 0 0 0 0 0 3 -2 | -4 -4 -2 -2 -4 -4 -2 -5 ]
   let root = harmony
@@ -77,8 +77,8 @@ group "Arrangement" {
 }
 
 group "Kick" {
-  # Four on the floor, out for the breakdown. Its level is also the sidechain on the
-  # bass and the pad.
+  // Four on the floor, out for the breakdown. Its level is also the sidechain on the
+  // bass and the pad.
   let kick_note = beats |> stroke(curve: 5)
   let kick_stroke = kick_note * no_kick * drum_parts
   let duck = duck(key: kick_stroke, depth: 0.7, attack: 100us, release: 100us)
@@ -86,8 +86,8 @@ group "Kick" {
 }
 
 group "Picture: Geometry" {
-  # The kick moves the light three ways (the zoom here, the brightness, and the twist
-  # on the feedback), so the breakdown is the picture holding still.
+  // The kick moves the light three ways (the zoom here, the brightness, and the twist
+  // on the feedback), so the breakdown is the picture holding still.
   let plane = kick_stroke |> remap(in_low: 0, out_low: 0.98, out_high: 1.22)
     |> transform(zoom: _, angle: clock * 0.04, order: "turn")
   let drift = clock * 0.015
@@ -95,10 +95,10 @@ group "Picture: Geometry" {
 }
 
 group "Acid Line" {
-  # Both themes run the whole time and the arrangement chooses between them. A slide
-  # is two things a step apart: the step that slides holds its gate into the next, and
-  # the step it slides into arrives by glide and is not struck. A step's volume in the
-  # marks is whether it slides, and its value whether the step before it did.
+  // Both themes run the whole time and the arrangement chooses between them. A slide
+  // is two things a step apart: the step that slides holds its gate into the next, and
+  // the step it slides into arrives by glide and is not struck. A step's volume in the
+  // marks is whether it slides, and its value whether the step before it did.
   let marks_a = beats
     |> values(gate_length: 1, shape: 0) [ ~ ~ 0 1%0 ~ ~ ~ 0 1%0 ~ ~ ~ ~ 0 1%0 ~ ]
   let slides_a = marks_a.gate |> remap(in_low: 0, out_low: 0.55)
@@ -115,21 +115,21 @@ group "Acid Line" {
         G3%0.7 A2%0.7 ]
   let line = line_a |> math.mix(a: _, b: line_b, t: parts.part_4)
   let slid_into = marks_a |> math.mix(a: _, b: marks_b, t: parts.part_4)
-  # The glide is on the frequency, because a Note snaps to the semitone: a millisecond
-  # where there is no slide, and sixty where there is.
+  // The glide is on the frequency, because a Note snaps to the semitone: a millisecond
+  // where there is no slide, and sixty where there is.
   let glide_time = slid_into |> remap(in_low: 0, out_low: -3, out_high: -1.22)
   let line_pitch = line + root |> note(note: _) |> slew(rise: glide_time, fall: glide_time)
   let knob_octaves = hand |> remap(in_low: 0, out_high: 3)
   let line_gate = line_a.gate |> math.mix(a: _, b: line_b.gate, t: parts.part_4)
-  # A step that was slid into is not struck. The envelope falls faster with the knob
-  # shut than open, the other knob a hand is on.
+  // A step that was slid into is not struck. The envelope falls faster with the knob
+  // shut than open, the other knob a hand is on.
   let envelope = hand |> remap(in_low: 0, out_low: -0.9, out_high: -0.45)
     |> decay(trigger: line_gate * (1 - slid_into), decay: _, curve: 0.4)
   let envelope_depth = hand |> remap(in_low: 0, out_low: 1.8, out_high: 3)
-  # Whether a step has an accent is which side of the gap its gate is on; what it adds
-  # goes through a Slew that rises at once and takes a quarter of a second to fall.
-  # The cutoff is in octaves over 180 Hz: the knob, the envelope by as much as the
-  # knob allows, and the accent on top.
+  // Whether a step has an accent is which side of the gap its gate is on; what it adds
+  // goes through a Slew that rises at once and takes a quarter of a second to fall.
+  // The cutoff is in octaves over 180 Hz: the knob, the envelope by as much as the
+  // knob allows, and the accent on top.
   let accented = line_gate |> smoothstep(edge0: 0.75, edge1: 0.95)
   let accent = accented * envelope |> slew(rise: 5.011873ms, fall: 251.18863ms)
   let cutoff = pow(2, knob_octaves + envelope * envelope_depth + accent * 0.9) * 180
@@ -137,10 +137,10 @@ group "Acid Line" {
 }
 
 group "Picture: Geometry" {
-  # Where the line has got to in its bar is how many wedges the fold has, so the
-  # picture rebuilds itself once a bar. The field is read from the folded plane so it
-  # is itself symmetric, and the hand on the knob opens the warp as it opens the
-  # filter. The line's gate widens the rings.
+  // Where the line has got to in its bar is how many wedges the fold has, so the
+  // picture rebuilds itself once a bar. The field is read from the folded plane so it
+  // is itself symmetric, and the hand on the knob opens the warp as it opens the
+  // filter. The line's gate widens the rings.
   let kaleidoscope_segments = line_a.index |> remap(in_low: 0, out_low: 3, out_high: 9)
   let folded = plane |> kaleidoscope(segments: kaleidoscope_segments)
   let fractal = folded
@@ -152,8 +152,8 @@ group "Picture: Geometry" {
 }
 
 group "Picture: Color" {
-  # A Palette rather than a hue: a handful of colors that go together, cut into the
-  # arrangement's bands.
+  // A Palette rather than a hue: a handful of colors that go together, cut into the
+  // arrangement's bands.
   let kick_light = kick_stroke |> remap(in_low: 0, out_low: 0.6, out_high: 1.7)
   let light = filaments * kick_light |> clamp(low: 0)
   let colored = hand |> remap(in_low: 0, out_low: 0.06, out_high: 0.42)
@@ -171,10 +171,10 @@ group "Picture: Feedback" {
 }
 
 group "Bass" {
-  # The gallop: nothing where the kick is, the two sixteenths after the off-beat, a
-  # pick-up and an octave at the end of the bar. A root under A is taken up an octave
-  # instead. A saw through a Filter the same sixteenth plucks, and a sine for the part
-  # that is felt, added after the Drive.
+  // The gallop: nothing where the kick is, the two sixteenths after the off-beat, a
+  // pick-up and an octave at the end of the bar. A root under A is taken up an octave
+  // instead. A saw through a Filter the same sixteenth plucks, and a sine for the part
+  // that is felt, added after the Drive.
   let gallop = beats
     |> values(gate_length: 0.8, shape: 0.04) [
         ~ ~ 0 0%0.75 ~ ~ 0 0%0.75 ~ ~ 0 0%0.75 ~ 0%0.6 0 12%0.85 ]
@@ -189,16 +189,16 @@ group "Bass" {
 }
 
 group "Space" {
-  # The slow weather: the Drive after the filter from a purr to a snarl, and the
-  # resonance from ringing to whistling.
+  // The slow weather: the Drive after the filter from a purr to a snarl, and the
+  // resonance from ringing to whistling.
   let resonance = wander(rate: 0.04, seed: 1.7, low: 0.6, high: 0.93)
   let snarl = wander(rate: 0.09, seed: 0.29, low: 2.2, high: 6.5)
 }
 
 group "Acid Line" {
-  # A Filter with nearly no resonance into one with nearly all of it, into the Drive,
-  # which is where the snarl is. Then its top from a third Filter at 150 Hz: the
-  # bottom octave belongs to the kick and the bass.
+  // A Filter with nearly no resonance into one with nearly all of it, into the Drive,
+  // which is where the snarl is. Then its top from a third Filter at 150 Hz: the
+  // bottom octave belongs to the kick and the bass.
   let four_poles = saw(freq: line_pitch, amp: 0.9)
     |> filter(cutoff: cutoff, resonance: 0.1)
     |> filter(cutoff: cutoff, resonance: resonance)
@@ -207,9 +207,9 @@ group "Acid Line" {
 }
 
 group "Answer" {
-  # A second machine for the second drop and the last, on its square wave, well over
-  # an octave up, playing in the gaps. One Filter rather than two, so it is thinner as
-  # well as higher.
+  // A second machine for the second drop and the last, on its square wave, well over
+  // an octave up, playing in the gaps. One Filter rather than two, so it is thinner as
+  // well as higher.
   let answer_line = beats
     |> notes(gate_length: 0.6) [
         E4%0 E4%0 E4 E4%0 E4%0 G4%0 G4%0.7 A4%0.7 A4%0 C5%0 C5 A4%0.7 A4%0 G4%0.7 A4
@@ -225,8 +225,8 @@ group "Answer" {
 }
 
 group "Space" {
-  # Three sixteenths on the left and two on the right, side by side, each hearing the
-  # two machines, and how long they hang about is a Wander.
+  // Three sixteenths on the left and two on the right, side by side, each hearing the
+  // two machines, and how long they hang about is a Wander.
   let taps = line_voice.high + answer * 0.3
     |> echo(
         tempo: tempo,
@@ -236,9 +236,9 @@ group "Space" {
 }
 
 group "Pad" {
-  # The chord the line only implies, for the intro, the breakdown and the way out: the
-  # root, a minor third and a fifth counted in semitones, so it moves in parallel with
-  # everything else. It arrives over two seconds and goes over half of one.
+  // The chord the line only implies, for the intro, the breakdown and the way out: the
+  // root, a minor third and a fifth counted in semitones, so it moves in parallel with
+  // everything else. It arrives over two seconds and goes over half of one.
   let pad_note = root + 57
   let pad_root = pad_note |> note(note: _)
   let pad_third = pad_note + 3 |> note(note: _)
@@ -254,8 +254,8 @@ group "Pad" {
 }
 
 group "Clap" {
-  # Two and four. A clap is several hands not quite together, so the first twentieth
-  # of the stroke is three short bursts and the tail is let through after them.
+  // Two and four. A clap is several hands not quite together, so the first twentieth
+  // of the stroke is three short bursts and the tail is let through after them.
   let clap_bursts = beats |> stroke(rate: 32, curve: 1.5)
   let clap_note = beats |> stroke(rate: 0.5, offset: 0.5, curve: 12)
   let clap_tail = clap_note.phase |> smoothstep(edge0: 0.045, edge1: 0.05)
@@ -269,7 +269,7 @@ group "Clap" {
 }
 
 group "Space" {
-  # One room on a send, for what should sound further off than the drums.
+  // One room on a send, for what should sound further off than the drums.
   let room = clap
     |> mixer(
         in_1: _,
@@ -284,8 +284,8 @@ group "Space" {
 }
 
 group "Hats" {
-  # Closed on every sixteenth at four strengths that repeat every beat, and open on
-  # the off-beat once the drop has come.
+  // Closed on every sixteenth at four strengths that repeat every beat, and open on
+  // the off-beat once the drop has come.
   let closed_note = beats |> stroke(rate: 4, curve: 7)
   let hat_accents = beats |> values() [ 0.55 0.3 0.8 0.4 ]
   let open_note = beats |> stroke(offset: 0.5)
@@ -294,9 +294,9 @@ group "Hats" {
 }
 
 group "Builds" {
-  # A snare roll that doubles for the last bar, louder as the square of the ramp, a
-  # Hiss whose band climbs nearly five octaves under it, and a crash on what the drop
-  # lands on.
+  // A snare roll that doubles for the last bar, louder as the square of the ramp, a
+  // Hiss whose band climbs nearly five octaves under it, and a crash on what the drop
+  // lands on.
   let roll_note = beats |> stroke(rate: last_bar * 4 + 4, curve: 2.5)
   let riser_band = ramp |> remap(in_low: 0, out_low: 250, out_high: 7000)
   let crash_note = beats |> stroke(rate: 0.03125, curve: 16)
@@ -310,8 +310,8 @@ group "Builds" {
 }
 
 group "Desk" {
-  # Two Desks of four, chained by their buses. The hats lean right and the clap left;
-  # a Desk has one level for both sides, so the lean is on the signal.
+  // Two Desks of four, chained by their buses. The hats lean right and the clap left;
+  // a Desk has one level for both sides, so the lean is on the signal.
   let drums = kick
     |> desk(
         left_1: _,

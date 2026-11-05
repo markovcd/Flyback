@@ -123,11 +123,11 @@ public class DescriptionLineTests
     [Fact]
     public void The_panel_changes_the_line_where_it_stands()
     {
-        const string source = "# lead\ndescription \"hum\"\nsine() |> out.left\n";
+        const string source = "// lead\ndescription \"hum\"\nsine() |> out.left\n";
 
         var change = Built(source).Map.Description("description \"drone\"");
 
-        Applied(source, change!.Value).ShouldBe("# lead\ndescription \"drone\"\nsine() |> out.left\n");
+        Applied(source, change!.Value).ShouldBe("// lead\ndescription \"drone\"\nsine() |> out.left\n");
     }
 
     [Fact]

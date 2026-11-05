@@ -1,22 +1,22 @@
-# A whole acid house track on the two Easy modules: ninety-six bars of a drum
-# machine, a bass line and a chord stab over A minor, D minor, A minor and E minor,
-# with an organ hook on top.
-#
-# Three Arrangements of eight-bar sections say what plays when, for the drums, the
-# music and the picture: the intro, a build, the first drop, a breakdown where the
-# stab turns into a pad under a soft hook, a second build, the last drop with the
-# hook an octave up, and the way out, which leads back into the start. In a build a
-# snare roll climbs through its second half and the kick sits out its last bar. A
-# fourth Arrangement changes chord every two bars and transposes the bass line, as
-# the machine itself transposes a pattern, and a coin picks each pass of the hook
-# from it and two variations. The hook has its own echo, thrown into eighth by
-# eighth and hardest on the ends of its phrases, a room and some drive, each set by
-# a fifth Arrangement, which also washes a band of noise down into each drop and the
-# breakdown. The drums keep their own time at 124 bpm and everything else steps on
-# Time at the same tempo, so nothing is wired for timing. The picture is rings bent
-# by folded clouds, colored by the chord and folded, bent and turned differently in
-# each section, with the kick punching the zoom and trails carrying it rather than a
-# flash.
+// A whole acid house track on the two Easy modules: ninety-six bars of a drum
+// machine, a bass line and a chord stab over A minor, D minor, A minor and E minor,
+// with an organ hook on top.
+//
+// Three Arrangements of eight-bar sections say what plays when, for the drums, the
+// music and the picture: the intro, a build, the first drop, a breakdown where the
+// stab turns into a pad under a soft hook, a second build, the last drop with the
+// hook an octave up, and the way out, which leads back into the start. In a build a
+// snare roll climbs through its second half and the kick sits out its last bar. A
+// fourth Arrangement changes chord every two bars and transposes the bass line, as
+// the machine itself transposes a pattern, and a coin picks each pass of the hook
+// from it and two variations. The hook has its own echo, thrown into eighth by
+// eighth and hardest on the ends of its phrases, a room and some drive, each set by
+// a fifth Arrangement, which also washes a band of noise down into each drop and the
+// breakdown. The drums keep their own time at 124 bpm and everything else steps on
+// Time at the same tempo, so nothing is wired for timing. The picture is rings bent
+// by folded clouds, colored by the chord and folded, bent and turned differently in
+// each section, with the kick punching the zoom and trails carrying it rather than a
+// flash.
 
 description "A three-minute acid house track on the Easy modules at 124 bpm: builds,"
   "two drops and a breakdown in A minor, a bass line, a chord stab and an organ hook,"
@@ -31,9 +31,9 @@ panel Echo_knob = 0.5, label: "Echo"
 panel Swing = 0.15
 
 group "Arrangement" {
-  # A chord every two bars, A minor, D minor, A minor, E minor: the root the bass line
-  # is moved by in semitones from A, the stab's three voices close together, and the
-  # picture's hue, gliding across each chord toward the next one's.
+  // A chord every two bars, A minor, D minor, A minor, E minor: the root the bass line
+  // is moved by in semitones from A, the stab's three voices close together, and the
+  // picture's hue, gliding across each chord toward the next one's.
   let chords = arrangement(rate: 0.25833333) [
       0 5 0 -5 |
       57 57 57 55 |
@@ -41,10 +41,10 @@ group "Arrangement" {
       64 65 64 64 |
       >0.72 >0.6 >0.5 >0.6 ]
   let clock = time()
-  # The sections: intro, intro with the bass, build, two of the first drop, breakdown,
-  # build, two of the last drop, stripped back, and out. Each drum's velocity in each
-  # section (kick, clap, closed hat, open hat, cowbell, tom), and which sections are
-  # builds.
+  // The sections: intro, intro with the bass, build, two of the first drop, breakdown,
+  // build, two of the last drop, stripped back, and out. Each drum's velocity in each
+  // section (kick, clap, closed hat, open hat, cowbell, tom), and which sections are
+  // builds.
   let drum_parts = arrangement(rate: 0.06458333) [
       1 1 1 1 1 0 1 1 1 1 1 1 |
       0 0.8 0.8 0.8 0.8 0 0.8 0.8 0.8 0.8 0.8 0 |
@@ -53,10 +53,10 @@ group "Arrangement" {
       0 0 0.3 0.3 0.3 0 0.3 0.3 0.3 0 0 0 |
       0 0.6 0.6 0.6 0.6 0 0.6 0.6 0.6 0.6 0.6 0 |
       0 0 1 0 0 0 1 0 0 0 0 0 ]
-  # The picture in each section: how many wedges it is folded into, how far the fold
-  # turns each bar in radians, how hard the clouds bend the rings, how bright it is,
-  # how many rings, its energy (the kick's punch and the trails' pull) and how far the
-  # color is turned warm.
+  // The picture in each section: how many wedges it is folded into, how far the fold
+  // turns each bar in radians, how hard the clouds bend the rings, how bright it is,
+  // how many rings, its energy (the kick's punch and the trails' pull) and how far the
+  // color is turned warm.
   let picture_parts = arrangement(rate: 0.06458333) [
       3 4 5 6 8 3 5 7 12 6 4 3 |
       0 0.1 0.2 0.3 -0.3 0 0.25 0.4 -0.4 0.2 0.1 0 |
@@ -65,12 +65,12 @@ group "Arrangement" {
       2.4 3.2 4 5.2 5.4 2.2 4.2 6 6 3.6 3.2 2.4 |
       0.1 0.3 0.5 0.8 0.85 0.05 0.55 1 1 0.4 0.3 0.1 |
       0 0 0 0 0 0 0 0.4 0.4 0 0 0 ]
-  # A build's second half, climbing from nothing to one.
+  // A build's second half, climbing from nothing to one.
   let snare_roll = drum_parts.part_7
     |> expression(a: _, b: drum_parts.progress, formula: "a * smoothstep(0.5, 1, b)")
-  # The bass, the stab, the pad the stab becomes in the breakdown, the hook (growing
-  # through the second build), its octave and brightness, and how far the bass's pluck
-  # opens.
+  // The bass, the stab, the pad the stab becomes in the breakdown, the hook (growing
+  // through the second build), its octave and brightness, and how far the bass's pluck
+  // opens.
   let music_parts = arrangement(rate: 0.06458333) [
       0 0.75 0.75 0.75 0.75 0.75 0.75 0.75 0.75 0.75 0.75 0 |
       0 0 0 1 1 1 0 1 1 0 0 0 |
@@ -80,11 +80,11 @@ group "Arrangement" {
       0.4 0.4 0.4 0.4 0.75 0.4 0.4 0.75 0.75 0.4 0.4 0.4 |
       0.1 0.12 0.18 0.25 0.28 0.2 0.3 0.35 0.35 0.25 0.15 0.1 ]
   let bass_open = music_parts.part_7 |> slew(rise: 3.981072s, fall: 1.9952624s)
-  # The knobs are slewed, so a knob turned while it plays glides rather than steps.
+  // The knobs are slewed, so a knob turned while it plays glides rather than steps.
   let echo = slew(in: Echo_knob(0..0.6), rise: 30.19952ms, fall: 30.19952ms)
-  # What happens to the hook in each section: how much of it is thrown into its echo,
-  # how much goes into the room, how hard it is driven, and where the noise washes
-  # down.
+  // What happens to the hook in each section: how much of it is thrown into its echo,
+  // how much goes into the room, how hard it is driven, and where the noise washes
+  // down.
   let hook_parts = arrangement(rate: 0.06458333) [
       0 0 0 0 0.5 1 0.8 0.4 0.6 0 0 0 |
       0 0 0 0 0.25 0.7 0.45 0.2 0.3 0 0 0 |
@@ -94,9 +94,9 @@ group "Arrangement" {
 }
 
 group "Picture" {
-  # Each section has its own fold, bend and turn. The fold's center drifts, the kick
-  # punches the zoom, and on every bar the fold turns a notch, eased in on the
-  # downbeat.
+  // Each section has its own fold, bend and turn. The fold's center drifts, the kick
+  // punches the zoom, and on every bar the fold turns a notch, eased in on the
+  // downbeat.
   let drift = translate(
       dx: sin(clock * 0.13) * 0.25,
       dy: sin(clock * 0.089 + 1) * 0.18)
@@ -109,8 +109,8 @@ group "Picture" {
 }
 
 group "Drums" {
-  # The kick sits out a build's last bar, so the drop lands on it; the tom fills each
-  # section's last bar.
+  // The kick sits out a build's last bar, so the drop lands on it; the tom fills each
+  // section's last bar.
   let kick = drummer(
       bpm: 124,
       velocity: drum_parts * (
@@ -165,15 +165,15 @@ group "Picture" {
     |> rings(
         freq: picture_parts.part_5,
         offset: clock * 0.51666665 + clouds * picture_parts.part_3 + kick.env * 0.1)
-  # The hue follows the chords and creeps round the wheel over the song; each ring
-  # takes its own shade.
+  // The hue follows the chords and creeps round the wheel over the song; each ring
+  // takes its own shade.
   let hue = chords.part_5 + clouds * 0.15 + clock * 0.003 + rings * 0.12
   let ring_light = (rings * 0.5 + 0.5) * (0.4 + clouds)
 }
 
 group "Bass" {
-  # Two bars of the bass on A: on the offbeats between the kicks, with a pick-up at
-  # the end of each bar. A square under a sub, round and warm.
+  // Two bars of the bass on A: on the offbeats between the kicks, with a pick-up at
+  // the end of each bar. A square under a sub, round and warm.
   let bass_line = notes(rate: 8.266666, gate_length: 0.8) [
       ~ ~ A1 ~ ~ ~ A1 ~ ~ ~ A1 ~ ~ A1 ~ C2 ~ ~ A1 ~ ~ ~ A2 ~ ~ ~ A1 ~ ~ G2 ~ E2 ]
   let bass = synth(
@@ -193,8 +193,8 @@ group "Bass" {
 }
 
 group "Chords" {
-  # Two bars of the stab, in eighths. As a pad the stab's gates lengthen and its notes
-  # hold. A dotted eighth of echo on the left and an eighth on the right.
+  // Two bars of the stab, in eighths. As a pad the stab's gates lengthen and its notes
+  // hold. A dotted eighth of echo on the left and an eighth on the right.
   let stab_steps = values(rate: 4.133333, gate_length: 0.35 + music_parts.part_3 * 0.55) [
       ~ 1 ~ ~ ~ 1 ~ 1 ~ 1 ~ ~ ~ 1 ~ 1 ]
   let stab_sustain = music_parts.part_3 * 0.6
@@ -227,11 +227,11 @@ group "Chords" {
         level_3: music_parts.part_2)
   let stab_echo_left = stab |> delay(time: 0.36290324, feedback: 0.35, mix: echo)
   let stab_echo_right = stab.right |> delay(time: 0.24193549, feedback: 0.35, mix: echo)
-  # The hook, four bars of eighths, and two variations on it: one climbing and
-  # answering from the top, one sparse and syncopated. Each ends on B, leading back to
-  # A. A coin for each pass of the hook: heads plays it as written, tails flips again
-  # for which variation. The pass's gate dips for its last few hundredths, which is a
-  # rest in all three. The hook is faded rather than stopped when a section drops it.
+  // The hook, four bars of eighths, and two variations on it: one climbing and
+  // answering from the top, one sparse and syncopated. Each ends on B, leading back to
+  // A. A coin for each pass of the hook: heads plays it as written, tails flips again
+  // for which variation. The pass's gate dips for its last few hundredths, which is a
+  // rest in all three. The hook is faded rather than stopped when a section drops it.
   let hook = notes(rate: 4.133333, gate_length: 0.6) [
       A4 ~ C5 ~ E5 ~ D5 C5 ~ C5 ~ A4 ~ G4 A4 ~ A4 ~ C5 ~ G5 ~ E5 D5 ~ E5 ~ D5 ~ C5 B4 ~ ]
   let climbing_hook = notes(rate: 4.133333, gate_length: 0.6) [
@@ -261,9 +261,9 @@ group "Chords" {
 }
 
 group "Hook" {
-  # How much of each eighth of the hook is thrown into its wet-only echo: a little
-  # throughout, more on the high notes, and most on the ends of its phrases. A harder
-  # throw also feeds back longer. Slewed, so the send never clicks between eighths.
+  // How much of each eighth of the hook is thrown into its wet-only echo: a little
+  // throughout, more on the high notes, and most on the ends of its phrases. A harder
+  // throw also feeds back longer. Slewed, so the send never clicks between eighths.
   let throws = values(rate: 4.133333) [
       0.12 0.12 0.12 0.12 0.35 0.2 0.12 0.12 0.12 0.12 0.12 0.12 0.12 0.7 0.7 0.7 0.12
       0.12 0.12 0.12 0.5 0.2 0.12 0.12 0.12 0.12 0.12 0.12 0.12 0.6 1 1 ]
@@ -281,8 +281,8 @@ group "Hook" {
 }
 
 group "Mix" {
-  # The bass and the chords are ducked by the kick; the drums go round them on the
-  # bus.
+  // The bass and the chords are ducked by the kick; the drums go round them on the
+  // bus.
   let music = bass
     |> desk(
         left_1: _,
@@ -303,8 +303,8 @@ group "Mix" {
 }
 
 group "Wash" {
-  # A band of noise falling from a hiss to a rumble over the first two bars of each
-  # drop and of the breakdown, a different noise on each side, into the hook's room.
+  // A band of noise falling from a hiss to a rumble over the first two bars of each
+  // drop and of the breakdown, a different noise on each side, into the hook's room.
   let wash_level = hook_parts.part_4
     |> expression(
         a: _,
@@ -326,7 +326,7 @@ group "Wash" {
 }
 
 group "Mix" {
-  # The wash goes round the duck with the drums.
+  // The wash goes round the duck with the drums.
   let drums = kick
     |> desk(
         left_1: _,

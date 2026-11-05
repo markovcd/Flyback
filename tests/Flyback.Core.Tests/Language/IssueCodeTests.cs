@@ -32,7 +32,7 @@ public class IssueCodeTests
     [InlineData("sine(nope: 1) |> out.left", IssueCode.UnknownSocket)]
     [InlineData("x |> out.color\ny |> out.color", IssueCode.WiredTwice)]
     [InlineData("\"never closed", IssueCode.UnclosedText)]
-    [InlineData("// the clock\nsine() |> out.left", IssueCode.SlashComment)]
+    [InlineData("# the clock\nsine() |> out.left", IssueCode.HashComment)]
     [InlineData("let = 3", IssueCode.Syntax)]
     [InlineData("notes() [ H3 ] |> out.left", IssueCode.UnknownNote)]
     [InlineData("keyboard scale [ C D E G A ]", IssueCode.UnknownScale)]
@@ -73,8 +73,8 @@ public class IssueCodeTests
     [InlineData("panel rate = 2\nsine(freq: rate(0..4), amp: rate) |> out.left")]
     [InlineData("let (a, b) = sine()\na |> out.left\nb |> out.right")]
     [InlineData("group \"K\" {\n  panel level = 0.5\n}\nsine(amp: level) |> out.left")]
-    [InlineData("// --- CLOCK & TIMING / 2 ---\nsine() |> out.left")]
-    [InlineData("sine() |> out.left // the tone & its level")]
+    [InlineData("# --- CLOCK & TIMING / 2 ---\nsine() |> out.left")]
+    [InlineData("sine() |> out.left # the tone & its level")]
     public void A_refused_statement_is_the_one_complaint(string source)
     {
         var load = Build(source);
@@ -85,12 +85,12 @@ public class IssueCodeTests
 
     /// <summary>A heading written the way other languages write one is told the comment sign, and that a group is where headings go.</summary>
     [Fact]
-    public void A_slash_comment_is_told_the_comment_sign_and_where_a_heading_goes()
+    public void A_hash_comment_is_told_the_comment_sign_and_where_a_heading_goes()
     {
-        var issue = Build("// --- CLOCK & TIMING ---\nlet tempo = tempo(bpm: 100)").Issues.ShouldHaveSingleItem();
+        var issue = Build("# --- CLOCK & TIMING ---\nlet tempo = tempo(bpm: 100)").Issues.ShouldHaveSingleItem();
 
         issue.Line.ShouldBe(1);
-        issue.Message.ShouldContain("a comment starts with '#'");
+        issue.Message.ShouldContain("a comment starts with '//'");
         issue.Message.ShouldContain("group");
     }
 }

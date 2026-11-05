@@ -1,8 +1,8 @@
-# A drum kit and a bass line played by four Euclidean rhythms, and a clock face
-# drawn by the same rhythm. Euclid and Decay play the kit, Noise makes the hats,
-# the snare, the bass notes and the filter's drift, and Slew glides the bass. The
-# picture is a hand swept round by the loop, a ring the kick pushes out, and a
-# difference flash on the snare, stacked with three Layers.
+// A drum kit and a bass line played by four Euclidean rhythms, and a clock face
+// drawn by the same rhythm. Euclid and Decay play the kit, Noise makes the hats,
+// the snare, the bass notes and the filter's drift, and Slew glides the bass. The
+// picture is a hand swept round by the loop, a ring the kick pushes out, and a
+// difference flash on the snare, stacked with three Layers.
 
 description "Four Euclidean rhythms playing a noise kit and a gliding bass, drawn as a"
   "clock hand, a ring the kick pushes and a flash on the snare."
@@ -31,7 +31,7 @@ group "Picture: hand" {
     |> layer(base: rgb(r: 0.02, g: 0.02, b: 0.05), top: hand_color, amount: _, mode: "add")
 }
 
-# A sine with a fast pitch drop.
+// A sine with a fast pitch drop.
 group "Kick" {
   let kick_level = kick_steps
     |> decay(trigger: _, attack: 316.2278us, decay: 281.8383ms, curve: 0.7)
@@ -39,8 +39,8 @@ group "Kick" {
   let kick = sine(freq: kick_drop * 160 + 48, amp: kick_level)
 }
 
-# Meters, because an envelope has no memory on the picture and would draw its
-# trigger.
+// Meters, because an envelope has no memory on the picture and would draw its
+// trigger.
 group "Picture: hits" {
   let kick_meter = kick_level |> meter(window: 19.95262ms)
   let ring = kick_meter.peak |> remap(in_low: 0, out_low: 0.35, out_high: 0.6)
@@ -48,7 +48,7 @@ group "Picture: hits" {
     |> fill(distance: _, width: 0.015)
 }
 
-# Noise through a filter.
+// Noise through a filter.
 group "Hats and snare" {
   let snare_level = snare_steps |> decay(trigger: _, attack: 316.2278us, decay: 112.20185ms)
   let hat_level = hat_steps |> decay(trigger: _, attack: 100us, decay: 31.62278ms, curve: 1)
@@ -61,8 +61,8 @@ group "Picture: hits" {
   let snare_meter = snare_level |> meter(window: 31.62278ms)
 }
 
-# Random notes on the step, snapped to A minor pentatonic, glided. The notes share
-# the Euclids' rate, so a new note lands exactly on a step.
+// Random notes on the step, snapped to A minor pentatonic, glided. The notes share
+// the Euclids' rate, so a new note lands exactly on a step.
 group "Bass" {
   let bass_notes = noise(rate: rate, seed: 11, amp: 6, bias: 45)
   let bass_pitch = bass_notes.random |> quantiser() [ A C D E G ]

@@ -20,7 +20,7 @@ public class SourceViewUndoViewTests : SourceViewTest
         var text = ShowCode(window);
 
         // Through the document, which is what typing is.
-        text.Document.Insert(0, "# a note to myself\n");
+        text.Document.Insert(0, "// a note to myself\n");
         Settle(window);
 
         CodeButton(window).IsChecked = false;
@@ -35,7 +35,7 @@ public class SourceViewUndoViewTests : SourceViewTest
         Settle(window);
 
         Editor(window).History.Patch.Nodes.Count.ShouldBe(before, "the module just added is what came back");
-        text.Text.ShouldStartWith("# a note to myself", customMessage: "and the typing was left alone");
+        text.Text.ShouldStartWith("// a note to myself", customMessage: "and the typing was left alone");
 
         // With nothing left on the canvas's stack the button goes gray, rather
         // than offering a press that would land where nobody is looking.
@@ -47,7 +47,7 @@ public class SourceViewUndoViewTests : SourceViewTest
         Press(Undo(window));
         Settle(window);
 
-        text.Text.ShouldNotStartWith("# a note to myself");
+        text.Text.ShouldNotStartWith("// a note to myself");
     }
 
     /// <summary>
@@ -67,7 +67,7 @@ public class SourceViewUndoViewTests : SourceViewTest
         var text = ShowCode(window);
 
         // Through the document, which is what typing is.
-        text.Document.Insert(0, "# a note to myself\n");
+        text.Document.Insert(0, "// a note to myself\n");
         Settle(window);
 
         CodeButton(window).IsChecked = false;
@@ -87,11 +87,11 @@ public class SourceViewUndoViewTests : SourceViewTest
 
         ShowCode(window);
 
-        text.Text.ShouldStartWith("# a note to myself");
+        text.Text.ShouldStartWith("// a note to myself");
 
         Press(Undo(window));
         Settle(window);
 
-        text.Text.ShouldNotStartWith("# a note to myself", customMessage: "the typing is what Ctrl+Z takes back in the view it was done in");
+        text.Text.ShouldNotStartWith("// a note to myself", customMessage: "the typing is what Ctrl+Z takes back in the view it was done in");
     }
 }

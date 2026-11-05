@@ -220,7 +220,7 @@ internal sealed class Caret
             var c = source[i];
 
             if (c is '"' or '“' or '”') inText = !inText;
-            else if (c == '#' && !inText) return true;
+            else if (c == '/' && !inText && i + 1 < at && source[i + 1] == '/') return true;
         }
 
         return inText;

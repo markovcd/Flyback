@@ -145,7 +145,7 @@ public sealed class WindowTitleTests : EditorTest
 
         // Through the document, which is what typing is — assigning the text
         // loads one instead, and a document that was loaded is not typing.
-        Writing(window).Document.Insert(0, "# a note to myself\n");
+        Writing(window).Document.Insert(0, "// a note to myself\n");
         Settle(window);
 
         window.Title.ShouldBe(named + " •");

@@ -119,7 +119,7 @@ internal static class Handbook
           a piano.
         - **`length 2:30.50`** or **`length 90s`**, on its own line, says how long
           the patch plays for, from a tenth of a second to a day.
-        - **`#` starts a comment**, to the end of the line. `//` is refused.
+        - **`//` starts a comment**, to the end of the line. `#` is refused: it is a sharp.
         - **`group "Bass" { … }`** draws the modules its statements place as one
           box, shut. Blocks with the same name are one group. A group holds
           modules only: no group, `panel` or `requires` inside one. A group is

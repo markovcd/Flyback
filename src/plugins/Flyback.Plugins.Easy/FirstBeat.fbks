@@ -1,9 +1,9 @@
-# A beat from four Easy Drums and no timing wires: each is left on Auto, so each
-# plays the rhythm its sound is usually heard in, and all four share the one tempo.
-#
-# The hats are panned apart and lightly swung. The picture is rings pushed outward
-# by the kick, colored round the wheel by where they sit, and lit by the kick and
-# the snare.
+// A beat from four Easy Drums and no timing wires: each is left on Auto, so each
+// plays the rhythm its sound is usually heard in, and all four share the one tempo.
+//
+// The hats are panned apart and lightly swung. The picture is rings pushed outward
+// by the kick, colored round the wheel by where they sit, and lit by the kick and
+// the snare.
 
 description "Four Easy Drums on Auto, a kick, a snare and two hats, each playing the"
   "rhythm that suits it, with the picture pulsing on the kick."

@@ -100,13 +100,13 @@ public class SourceViewKnobsTests : SourceViewTest
     {
         var window = Open();
 
-        Evaluate(window, "# the knobs\npanel level = 0.5\npanel tone = 0.25\npanel spare = 0.75\nsine(freq: 220, amp: level) |> out.left\nout.volume = tone");
+        Evaluate(window, "// the knobs\npanel level = 0.5\npanel tone = 0.25\npanel spare = 0.75\nsine(freq: 220, amp: level) |> out.left\nout.volume = tone");
 
         KnobMenu(window, 0, "Move right");
-        Text(window).Text.ShouldStartWith("# the knobs\npanel tone = 0.25\npanel level = 0.5\npanel spare = 0.75\n");
+        Text(window).Text.ShouldStartWith("// the knobs\npanel tone = 0.25\npanel level = 0.5\npanel spare = 0.75\n");
 
         KnobMenu(window, 2, "Remove knob");
-        Text(window).Text.ShouldStartWith("# the knobs\npanel tone = 0.25\npanel level = 0.5\nsine(");
+        Text(window).Text.ShouldStartWith("// the knobs\npanel tone = 0.25\npanel level = 0.5\nsine(");
 
         var add = All<Button>(window).Single(b => b.Name == "add-knob");
         var at = add.TranslatePoint(new Point(add.Bounds.Width / 2, add.Bounds.Height / 2), window)!.Value;
@@ -117,7 +117,7 @@ public class SourceViewKnobsTests : SourceViewTest
         window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
         Settle(window);
 
-        Text(window).Text.ShouldStartWith("# the knobs\npanel tone = 0.25\npanel level = 0.5\npanel knob_1 = 0.5, label: \"Knob 1\"\nsine(");
+        Text(window).Text.ShouldStartWith("// the knobs\npanel tone = 0.25\npanel level = 0.5\npanel knob_1 = 0.5, label: \"Knob 1\"\nsine(");
         PatchLanguage.Build(Text(window).Text).Issues.ShouldBeEmpty();
     }
 

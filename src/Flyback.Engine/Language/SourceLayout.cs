@@ -283,12 +283,8 @@ public static class SourceLayout
                     continue;
 
                 // The rest of the line is a comment, which has no structure to
-                // find and must never be broken — unless the hash is a sharp.
-                // A note is spelled `C#4`, and the lexer reads that as one word
-                // because it begins on a letter; a hash that begins a comment is
-                // one nothing runs into. Being wrong the other way would leave a
-                // line long, which is the safe direction to be wrong in.
-                case '#' when at == from || !char.IsAsciiLetterOrDigit(line[at - 1]):
+                // find and must never be broken.
+                case '/' when at + 1 < line.Length && line[at + 1] == '/':
                     return;
 
                 case '(' or '[':
@@ -309,7 +305,7 @@ public static class SourceLayout
     }
 
     /// <summary>Whether a line is nothing but a comment, which cannot be broken anywhere.</summary>
-    private static bool Commented(string line) => line.TrimStart().StartsWith('#');
+    private static bool Commented(string line) => line.TrimStart().StartsWith("//", StringComparison.Ordinal);
 
     private static int Indent(string line) => line.Length - line.TrimStart().Length;
 }

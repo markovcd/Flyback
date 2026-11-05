@@ -29,7 +29,7 @@ public class SourceHighlightingTests
     [InlineData("panel cutoff = 0.4, label: \"Cutoff\"", "panel", "Keyword")]
     [InlineData("panel hit = 0, button, note: 36", "button", "Keyword")]
     [InlineData("panel drop = 0, switch, latching", "latching", "Keyword")]
-    [InlineData("panel level = 0.8, held # kept", "held", "Keyword")]
+    [InlineData("panel level = 0.8, held // kept", "held", "Keyword")]
     [InlineData("requires flyback.picture", "requires", "Keyword")]
     [InlineData("requires \"flyback.picture\"", "requires", "Keyword")]
     [InlineData("keyboard scale [ D F# A ]", "keyboard scale", "Keyword")]
@@ -59,14 +59,14 @@ public class SourceHighlightingTests
     [InlineData("let v = [(A2, 0.5), (E3, 0.3)]", "E3", "Number")]
     [InlineData("x |> sine(t: 0.5)", "x", "Domain")]
     [InlineData("x |> sine(t: 0.5)", "t", "Socket")]
-    [InlineData("saw() # a C#4 here is a comment", "# a C#4 here is a comment", "Comment")]
+    [InlineData("saw() // a C#4 here is a comment", "// a C#4 here is a comment", "Comment")]
     public void Each_part_of_a_line_takes_its_color(string line, string part, string color) =>
         ColorOf(line, part).ShouldBe(color);
 
     [AvaloniaTheory]
     [InlineData("def tone(in, level) = in", "in")]
     [InlineData("let tags = 3", "tags")]
-    [InlineData("let author = 3 # \"x\"", "author")]
+    [InlineData("let author = 3 // \"x\"", "author")]
     [InlineData("t.length |> out.left", "length")]
     [InlineData("let A = 1", "A")]
     public void A_name_spelled_like_a_word_of_the_language_is_left_plain(string line, string part) =>

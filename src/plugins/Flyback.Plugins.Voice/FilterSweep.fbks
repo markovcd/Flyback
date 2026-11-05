@@ -1,8 +1,8 @@
-# A saw folded and then filtered: make the harmonics first, take them away second.
-# Two hands on the instrument and nothing else, both far below audio rate, so what
-# is heard can be traced to a knob without following a wire. Nothing is drawn: the
-# filter holds its integrators in one-evaluation cells (ADR-0041), which the
-# picture has none of.
+// A saw folded and then filtered: make the harmonics first, take them away second.
+// Two hands on the instrument and nothing else, both far below audio rate, so what
+// is heard can be traced to a knob without following a wire. Nothing is drawn: the
+// filter holds its integrators in one-evaluation cells (ADR-0041), which the
+// picture has none of.
 
 description "A saw folded and then filtered: make the harmonics first, take them away"
   "second."

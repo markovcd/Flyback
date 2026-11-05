@@ -8,13 +8,13 @@
     "\\b(?:description|author|tags)\\b(?=[ \\t]*\")",
     "\\brequires\\b(?=[ \\t]+[\"\\w])",
     "\\bpanel\\b(?=[ \\t]+\\w+[ \\t]*=)",
-    "\\b(?:held|switch|button|latching)\\b(?=[ \\t]*(?:,|#|\\n|$))",
+    "\\b(?:held|switch|button|latching)\\b(?=[ \\t]*(?:,|\/\/|\\n|$))",
     "\\bkeyboard[ \\t]+(?:piano|scale)\\b",
     "\\blength\\b(?=[ \\t]+\\d)",
   ].join("|"), "y");
 
   var code = [
-    ["t-com", /#[^\n]*/y],
+    ["t-com", /\/\/[^\n]*/y],
     ["t-str", /"[^"\n]*"?/y],
     ["t-key", keywords],
     ["t-sink", /\bout\s*\.\s*\w+/y],

@@ -12,8 +12,8 @@ public static class IssueCode
     public const string UnclosedBlock = "unclosed-block";
     public const string StrayCharacter = "stray-character";
 
-    /// <summary>A comment written with <c>//</c>, which the language writes with <c>#</c>.</summary>
-    public const string SlashComment = "slash-comment";
+    /// <summary>A comment written with <c>#</c>, which the language writes with <c>//</c>.</summary>
+    public const string HashComment = "hash-comment";
 
     /// <summary>Digits run on into letters or a second point: <c>1e3</c>, <c>0x10</c>, <c>220Hz</c>, <c>1.5.5</c>.</summary>
     public const string MalformedNumber = "malformed-number";

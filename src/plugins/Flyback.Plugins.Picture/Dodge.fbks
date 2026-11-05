@@ -1,13 +1,13 @@
-# A game: walls fall down seven lanes, each with one gap, and the key under the gap
-# is the lane you have to be in when the wall arrives. Z to M are the lanes and the
-# lane is the last note struck, so a clean run plays the gaps' tune; black keys and
-# other octaves fall to the nearest white key.
-#
-# Three loops of one (ADR-0075) hold the state: keys (last pitch and gate, and
-# whether a note is new), over (when the run ended, or -1) and start (when it
-# began). Everything else is derived from those and the clock. A cell holds 16 either
-# way, so times wrap at 512 seconds. Gaps are a quadratic residue modulo 997 thrown
-# by a Dice, in whole numbers, so picture and sound agree.
+// A game: walls fall down seven lanes, each with one gap, and the key under the gap
+// is the lane you have to be in when the wall arrives. Z to M are the lanes and the
+// lane is the last note struck, so a clean run plays the gaps' tune; black keys and
+// other octaves fall to the nearest white key.
+//
+// Three loops of one (ADR-0075) hold the state: keys (last pitch and gate, and
+// whether a note is new), over (when the run ended, or -1) and start (when it
+// began). Everything else is derived from those and the clock. A cell holds 16 either
+// way, so times wrap at 512 seconds. Gaps are a quadratic residue modulo 997 thrown
+// by a Dice, in whole numbers, so picture and sound agree.
 
 description "A game to play on the keys: walls fall down seven lanes, Z to M, and the"
   "key under each gap is where you have to be when it arrives."
@@ -18,36 +18,36 @@ requires flyback.picture
 let keys_in = midi.in()
 
 group "Game" {
-  # When the run began, over 33 and a sixty-fourth; negative while over says it
-  # is not running.
+  // When the run began, over 33 and a sixty-fourth; negative while over says it
+  // is not running.
   let start = expression(
       c: t,
       formula: "mix(-abs(a), mix(mod(c, 512) / 33 + 1 / 64, a, step(1 / 128, a)), 1 - step(-0.5, b))")
-  # Seconds into the run, held where it ended.
+  // Seconds into the run, held where it ended.
   let played = start
     |> expression(
         a: _,
         c: t,
         formula: "mix(step(-0.5, b) * mod(32 * b - 33 * (abs(a) - 1 / 64), 512), mod(c - 33 * (abs(a) - 1 / 64), 512), step(1 / 128, a))")
-  # Rows the walls have come, three short of the player at the start: 1.2 a
-  # second, rising to 4.
+  // Rows the walls have come, three short of the player at the start: 1.2 a
+  // second, rising to 4.
   let rows = played
     |> expression(
         a: _,
         formula: "1.2 * min(a, 70) + 0.02 * min(a, 70) * min(a, 70) + 4 * (a - min(a, 70)) - 3")
-  # The last note's nearest white key, or the middle before one is struck.
+  // The last note's nearest white key, or the middle before one is struck.
   let lane = keys_in
     |> expression(
         a: _,
         b: keys_in.velocity,
         formula: "mix(3, floor(mod(floor(a + 0.5), 12) * 7 / 12 + 0.5), step(0.001, b))")
-  # Last note and gate in whole numbers, and 256 on top when this one was struck.
+  // Last note and gate in whole numbers, and 256 on top when this one was struck.
   let keys = expression(
       b: keys_in,
       c: keys_in.gate,
       formula: "(floor(b + 0.5) + 128 * step(0.5, c) + 256 * step(0.5, c) * max(1 - step(128, mod(floor(32 * a + 0.5), 256)), step(0.5, abs(floor(b + 0.5) - mod(floor(32 * a + 0.5), 256) + 128 * step(128, mod(floor(32 * a + 0.5), 256)))))) / 32")
-  # In a wall and not in its gap, the run is over: when it ended, over 32, or -1
-  # while it runs.
+  // In a wall and not in its gap, the run is over: when it ended, over 32, or -1
+  // while it runs.
   let over = rows
     |> expression(
         a: _,
@@ -61,15 +61,15 @@ group "Game" {
 }
 
 group "Picture" {
-  # Seven lanes 0.26 wide across the middle, dimmed between runs. Drawn first so
-  # the output reaches over before anything else in the game's loop, which puts
-  # the cut on the wires out of over.
+  // Seven lanes 0.26 wide across the middle, dimmed between runs. Drawn first so
+  // the output reaches over before anything else in the game's loop, which puts
+  // the cut on the wires out of over.
   let lanes = x
     |> expression(
         a: _,
         b: over,
         formula: "(0.05 - 0.025 * step(-0.5, b)) * window(a, -0.91, 0.91)")
-  # The player at -0.72, a row every half.
+  // The player at -0.72, a row every half.
   let walls = rows
     |> expression(
         a: _,
@@ -82,7 +82,7 @@ group "Picture" {
         b: x,
         c: y,
         formula: "1 - smoothstep(0, 0.006, max(abs(b - 0.26 * a + 0.78) - 0.09, abs(c + 0.72) - 0.045))")
-  # The key under each lane: one Text, its line chosen by the lane the pixel is in.
+  // The key under each lane: one Text, its line chosen by the lane the pixel is in.
   let pixel_lane = x
     |> expression(a: _, formula: "clamp(floor((a + 0.91) / 0.26), 0, 6)")
   let letters = x + 0.78 - 0.26 * pixel_lane
@@ -94,7 +94,7 @@ group "Picture" {
         lines: "Z|X|C|V|B|N|M",
         font: "tiny")
     |> fill(distance: _, softness: 0.004)
-  # Walls cleared, in three digits along the top: one Text, its line the digit.
+  // Walls cleared, in three digits along the top: one Text, its line the digit.
   let digit = x
     |> expression(a: _, formula: "clamp(floor((a + 0.15) / 0.1), 0, 2)")
   let score = x + 0.1 - 0.1 * digit
@@ -105,7 +105,7 @@ group "Picture" {
         line: floor(max(0, floor(rows - 0.25) + 1) / pow(10, 2 - digit)),
         lines: "0|1|2|3|4|5|6|7|8|9")
     |> fill(distance: _, softness: 0.004)
-  # Between runs: what to do, blinking, and a red flash that fades from the end.
+  // Between runs: what to do, blinking, and a red flash that fades from the end.
   let message = text(
       y: y - 0.1,
       size: 0.1,
@@ -121,8 +121,8 @@ group "Picture" {
 }
 
 group "Sound" {
-  # The key plucked, the gap chimed as each wall passes, and a thud when one
-  # does not.
+  // The key plucked, the gap chimed as each wall passes, and a thud when one
+  // does not.
   let pitch = keys_in |> note(note: _)
   let chime_pitch = rows
     |> expression(

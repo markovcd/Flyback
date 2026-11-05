@@ -27,9 +27,9 @@ Feature: A coding assistant somebody runs builds a patch with Flyback's own tool
     And the history has 3 edits
 
   Scenario: Editing a patch written as text keeps what its author wrote
-    Given "noted.fbks" holds rings under the comment "# turn slowly"
+    Given "noted.fbks" holds rings under the comment "// turn slowly"
     When a coding assistant turns the rings up to 9 in "noted.fbks"
-    Then "noted.fbks" still says "# turn slowly"
+    Then "noted.fbks" still says "// turn slowly"
     And the rings in "noted.fbks" are at 9
 
   Scenario: A client that speaks MCP builds a patch, and the file holds it

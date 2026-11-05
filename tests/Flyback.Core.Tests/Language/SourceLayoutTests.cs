@@ -55,7 +55,7 @@ public class SourceLayoutTests
     [Fact]
     public void A_long_comment_is_left_long()
     {
-        var comment = "# " + new string('a', 200);
+        var comment = "// " + new string('a', 200);
 
         SourceLayout.Wrap(comment).ShouldBe(comment);
     }

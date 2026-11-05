@@ -913,14 +913,14 @@ public class CommandTests
         using var directory = new Scratch();
         var file = directory.File("plasma.fbks");
 
-        File.WriteAllText(file.FullName, "# mine\nx |> out.color\n");
+        File.WriteAllText(file.FullName, "// mine\nx |> out.color\n");
 
         var (code, _, error) = Run((o, e) => PrintCommand.Run(
             Preset("Plasma"), file, file, check: false, o, e));
 
         code.ShouldBe(Exit.Failed);
         error.ShouldContain("the file being read");
-        File.ReadAllText(file.FullName).ShouldContain("# mine");
+        File.ReadAllText(file.FullName).ShouldContain("// mine");
     }
 
     // --- compare -------------------------------------------------------------

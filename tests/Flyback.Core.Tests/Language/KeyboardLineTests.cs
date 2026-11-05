@@ -134,11 +134,11 @@ public class KeyboardLineTests
     [Fact]
     public void The_panel_changes_the_line_where_it_stands()
     {
-        const string source = "# lead\nkeyboard scale [ C D E F G A B ]\nmidi.in().pitch |> out.left\n";
+        const string source = "// lead\nkeyboard scale [ C D E F G A B ]\nmidi.in().pitch |> out.left\n";
 
         var change = Built(source).Map.Keyboard("keyboard scale [ G A B C D E F ]");
 
-        Applied(source, change!.Value).ShouldBe("# lead\nkeyboard scale [ G A B C D E F ]\nmidi.in().pitch |> out.left\n");
+        Applied(source, change!.Value).ShouldBe("// lead\nkeyboard scale [ G A B C D E F ]\nmidi.in().pitch |> out.left\n");
     }
 
     [Fact]

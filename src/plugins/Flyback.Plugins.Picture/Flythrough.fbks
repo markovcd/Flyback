@@ -1,8 +1,8 @@
-# A flight through a lattice of spheres that turn to boxes and back, drawn by a
-# Raymarch: every pixel follows its own ray into the scene, sixty-four steps of the
-# whole distance function each. The kick swells the shapes and lurches the camera
-# forward, the hats light a halo round every edge, and each eight bars reshapes and
-# recolors the space while a techno track plays.
+// A flight through a lattice of spheres that turn to boxes and back, drawn by a
+// Raymarch: every pixel follows its own ray into the scene, sixty-four steps of the
+// whole distance function each. The kick swells the shapes and lurches the camera
+// forward, the hats light a halo round every edge, and each eight bars reshapes and
+// recolors the space while a techno track plays.
 
 description "A flight through a lattice that pulses with the kick, drawn by marching a"
   "ray from every pixel, while a techno track plays."
@@ -11,7 +11,7 @@ length 2:03.87
 
 requires flyback.picture, flyback.voice, flyback.effects
 
-# A hundred and twenty-four a minute; a phrase is eight bars, and the track is eight.
+// A hundred and twenty-four a minute; a phrase is eight bars, and the track is eight.
 group "Clock" {
   let tempo = tempo(bpm: 124)
   let sixteenths = tempo * 4
@@ -19,9 +19,9 @@ group "Clock" {
   let phrases = tempo * 0.03125
 }
 
-# A row a part: kick, bass, hats, pad, lead. The picture's own rows fade in over a
-# quarter of the section, so the space reshapes rather than jumps: how boxy the
-# shapes are, and where the colors sit.
+// A row a part: kick, bass, hats, pad, lead. The picture's own rows fade in over a
+// quarter of the section, so the space reshapes rather than jumps: how boxy the
+// shapes are, and where the colors sit.
 group "Arrangement" {
   let parts = arrangement(rate: phrases) [
       0 1 1 1 0 1 1 0 |
@@ -46,7 +46,7 @@ group "Drums" {
   let hat_out = hiss(level: hat_level, cutoff: 8000, seed: 5)
 }
 
-# Off the beat, where the kick is not, and an octave up on the last sixteenth.
+// Off the beat, where the kick is not, and an octave up on the last sixteenth.
 group "Bass" {
   let bass_seq = notes(rate: sixteenths, gate_length: 0.55) [
       D2%0 D2%0 D2 D2%0.6 D2%0 D2%0 D2 D2%0 D2%0 D2%0 D2 D2%0.6 D2%0 D2%0 D2 D3%0.8 ]
@@ -56,7 +56,7 @@ group "Bass" {
     |> mul(a: _, b: bass_seq.gate * parts.part_2)
 }
 
-# Root, minor third and fifth, opened slowly.
+// Root, minor third and fifth, opened slowly.
 group "Pad" {
   let pad_hz = root + 12 |> note(note: _)
   let pad_tone = osc(freq: pad_hz, detune: 0.3, mix: 0.8, amp: 0.4)
@@ -66,7 +66,7 @@ group "Pad" {
   let pad_out = pad_tone * parts.part_4 |> chorus(rate: 0.2, depth: 0.6, mix: 0.5)
 }
 
-# A bell arpeggio up the chord, echoed on the dotted eighth.
+// A bell arpeggio up the chord, echoed on the dotted eighth.
 group "Lead" {
   let lead_seq = notes(rate: sixteenths, gate_length: 0.5) [
       D4 F4 A4 D5 A4 F4 C5 A4 D4 F4 A4 E5 D5 C5 A4 F4 ]
@@ -81,8 +81,8 @@ group "Mix" {
   kick_out * 0.8 + hat_out * 0.2 + (bass_out * 0.45 + room) * duck.gain |> out.left
 }
 
-# The camera flies steadily and is shoved by every kick; the lattice corkscrews
-# slowly, the kick swells it, and the hats light the edges.
+// The camera flies steadily and is shoved by every kick; the lattice corkscrews
+// slowly, the kick swells it, and the hats light the edges.
 group "Picture" {
   raymarch(
       travel: t * 1.5 + thump * 0.35,

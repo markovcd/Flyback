@@ -27,7 +27,7 @@ internal sealed class PatchReports(WorkingPatch bench)
         // The very text edit_patch finds its pieces in.
         text.AppendLine(Text());
 
-        if (Unnamed() is { Length: > 0 } unnamed) text.Append("# with no let name, answering to: ").AppendLine(unnamed);
+        if (Unnamed() is { Length: > 0 } unnamed) text.Append("// with no let name, answering to: ").AppendLine(unnamed);
 
         // A module this build cannot place has no syntax, so it is said in
         // prose rather than left out of the picture entirely.

@@ -102,7 +102,7 @@ public class SourceViewUndoTests : SourceViewTest
 
         // Through the document, which is what typing is. Assigning Text loads a
         // document instead, and loading one empties the stack on purpose.
-        text.Document.Insert(0, "# a note to myself\n");
+        text.Document.Insert(0, "// a note to myself\n");
         Settle(window);
 
         Press(Undo(window));
@@ -113,7 +113,7 @@ public class SourceViewUndoTests : SourceViewTest
         Press(Redo(window));
         Settle(window);
 
-        text.Text.ShouldStartWith("# a note to myself");
+        text.Text.ShouldStartWith("// a note to myself");
     }
 
     /// <summary>Types a run of characters, one keystroke at a time.</summary>
@@ -191,7 +191,7 @@ public class SourceViewUndoTests : SourceViewTest
         Settle(window);
 
         // Not typing: put in as one edit, the way the panel writes a knob back.
-        text.Document.Insert(0, "# ");
+        text.Document.Insert(0, "// ");
         Settle(window);
 
         Type(window, "note");
@@ -199,8 +199,8 @@ public class SourceViewUndoTests : SourceViewTest
         Press(Undo(window));
         Settle(window);
 
-        text.Text.ShouldStartWith("# ", customMessage: "the word came back on its own");
-        text.Text.ShouldNotStartWith("# n");
+        text.Text.ShouldStartWith("// ", customMessage: "the word came back on its own");
+        text.Text.ShouldNotStartWith("// n");
     }
 
     /// <summary>
@@ -231,7 +231,7 @@ public class SourceViewUndoTests : SourceViewTest
 
         var applied = Editor(window).History.Patch.Nodes.Count;
 
-        ShowCode(window).Text = Hum + "\n# and some more typing";
+        ShowCode(window).Text = Hum + "\n// and some more typing";
         Settle(window);
 
         CodeButton(window).IsChecked = false;
@@ -349,7 +349,7 @@ public class SourceViewUndoTests : SourceViewTest
 
         var text = Text(window);
 
-        text.Document.Insert(0, "# a note to myself\n");
+        text.Document.Insert(0, "// a note to myself\n");
         Settle(window);
 
         Press(Undo(window));

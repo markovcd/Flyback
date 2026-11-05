@@ -1,8 +1,8 @@
-# A model played as oscilloscope music: a Path goes round a cube's edges fifty-five
-# times a second, a Rotate 3D turns it about the vertical at 0.7 radians a second
-# and tips it toward the viewer, and a Perspective spreads the near edges wider.
-# What is heard is what the Beam draws, with thirty milliseconds of phosphor: about
-# two trips round the cube.
+// A model played as oscilloscope music: a Path goes round a cube's edges fifty-five
+// times a second, a Rotate 3D turns it about the vertical at 0.7 radians a second
+// and tips it toward the viewer, and a Perspective spreads the near edges wider.
+// What is heard is what the Beam draws, with thirty milliseconds of phosphor: about
+// two trips round the cube.
 
 description "A cube's edges played as one path at a pitch, turned in perspective as it"
   "plays: a model drawn by its sound."

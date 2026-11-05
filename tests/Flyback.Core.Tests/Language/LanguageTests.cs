@@ -436,7 +436,7 @@ public class LanguageTests
         let beat = tempo(112)
 
         group "Song" {
-          # drums, snare, bass, second string, pad, how far the filters open
+          // drums, snare, bass, second string, pad, how far the filters open
           let band = beat.beats |> arrangement(rate: 1/32) [
             0 1 1 1  1 1 1 0  1 1 1 0 |
             0 0 1 1  1 1 1 0  1 1 0 0 |
@@ -446,7 +446,7 @@ public class LanguageTests
             0.1 0.3 0.6 0.7  1 1 0.7 0.2  1 1 0.45 0.1
           ]
 
-          # the chorus, the lead, a fill
+          // the chorus, the lead, a fill
           let form = beat.beats |> arrangement(rate: 1/32) [
             0 0 0 0  1 1 0 0  1 1 0 0 |
             0 0 0 1  1 1 1 1  1 1 1 0 |

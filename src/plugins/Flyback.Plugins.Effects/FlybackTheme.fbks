@@ -1,12 +1,12 @@
-# Flyback's own theme: three minutes of synthwave at a hundred and twenty-eight in A
-# minor, the promo's arp, bass and hook grown into a song, on a two-channel scope
-# whose beam sweeps the screen once a beat.
-#
-# The harmony is four roots a bar, A, F, C and G, then A, F, A and G. Every chord
-# tone is a root plus an interval snapped to A minor, so the arp and the pads never
-# name a chord. On the screen the upper trace is the bass's sawtooth, as many teeth
-# as its root is high, and its missing vertical edges are the retrace the beam is
-# blanked for; the lower is the arp's sine.
+// Flyback's own theme: three minutes of synthwave at a hundred and twenty-eight in A
+// minor, the promo's arp, bass and hook grown into a song, on a two-channel scope
+// whose beam sweeps the screen once a beat.
+//
+// The harmony is four roots a bar, A, F, C and G, then A, F, A and G. Every chord
+// tone is a root plus an interval snapped to A minor, so the arp and the pads never
+// name a chord. On the screen the upper trace is the bass's sawtooth, as many teeth
+// as its root is high, and its missing vertical edges are the retrace the beam is
+// blanked for; the lower is the arp's sine.
 
 description "Flyback's theme: three minutes of synthwave in A minor, an arp, a pumping"
   "bass and a hook, on a two-channel scope whose beam crosses the screen once a beat."
@@ -34,11 +34,11 @@ group "Drums" {
 }
 
 group "Arrangement" {
-  # Twelve sections of eight bars: intro, intro, verse, verse, chorus, chorus,
-  # breakdown, build, three choruses and the outro, three minutes exactly. A row each
-  # for the kick and snare, the hats, the bass, the arp, the chords, the lead, how far
-  # the filters open and the pops. Filters sweep open over four seconds and close over
-  # two, and the roots move a bar a step.
+  // Twelve sections of eight bars: intro, intro, verse, verse, chorus, chorus,
+  // breakdown, build, three choruses and the outro, three minutes exactly. A row each
+  // for the kick and snare, the hats, the bass, the arp, the chords, the lead, how far
+  // the filters open and the pops. Filters sweep open over four seconds and close over
+  // two, and the roots move a bar a step.
   let parts = beats
     |> arrangement(rate: 0.03125) [
         0 0 0.85 0.85 1 1 0 0.85 1 1 1 0 |
@@ -51,7 +51,7 @@ group "Arrangement" {
         0 0.7 1 1 1 1 0.6 1 1 1 1 0.8 ]
   let filters_open = parts.part_7 |> slew(rise: 4s, fall: 2s)
   let roots = beats |> notes(rate: 0.25) [ A2 F2 C3 G2 A2 F2 A2 G2 ]
-  # The verse and the build end in a riser, a snare roll through their last bar.
+  // The verse and the build end in a riser, a snare roll through their last bar.
   let ends_in_riser = step(
       3,
       (parts.section - 1) % 4) * step(parts.section, 8)
@@ -63,8 +63,8 @@ group "Arrangement" {
 }
 
 group "Drums" {
-  # Ghost sixteenths under an open hat on the off-beat; the snare on two and four.
-  # Every section the kick plays in opens on a crash and a sub drop.
+  // Ghost sixteenths under an open hat on the off-beat; the snare on two and four.
+  // Every section the kick plays in opens on a crash and a sub drop.
   let hat_level = (sixteenth * 0.35 + off_beat * 0.8) * parts.part_2
   let kick_level = on_beat * parts
   let snare_stroke = two_and_four * parts
@@ -94,9 +94,9 @@ group "Drums" {
 }
 
 group "Picture: Scope" {
-  # The graticule, lit by the hats. The beam crosses the screen once a beat, and the
-  # phosphor it leaves fades over the beat after. Channel one, the bass: a sawtooth
-  # with a tooth for every 160 hertz of root, riding the kick.
+  // The graticule, lit by the hats. The beam crosses the screen once a beat, and the
+  // phosphor it leaves fades over the beat after. Channel one, the bass: a sawtooth
+  // with a tooth for every 160 hertz of root, riding the kick.
   let graticule = coord
     |> expression(
         a: _,
@@ -109,7 +109,7 @@ group "Picture: Scope" {
   let bass_trace = 0.005 / (
       abs(coord.y - 0.35 - bass_height * (2 * fract(bass_phase) - 1)) + 0.005)
   let phosphor = exp(-3 * fract(beats - (coord / coord.aspect + 1) / 2))
-  # The name, a letter on each pop of the hook, which starts 28 beats into a section.
+  // The name, a letter on each pop of the hook, which starts 28 beats into a section.
   let lettering = text(
       size: 0.24,
       reveal: (floor((beats - 28) % 32 * 2) + 1.5) / 7,
@@ -118,9 +118,9 @@ group "Picture: Scope" {
 }
 
 group "Arp" {
-  # Up the chord to the tenth and back, in sixteenths, an octave higher once the
-  # filters are open. Four voices take the sixteenths in turn and each rings for a
-  # beat, so a note is still sounding under the three after it.
+  // Up the chord to the tenth and back, in sixteenths, an octave higher once the
+  // filters are open. Four voices take the sixteenths in turn and each rings for a
+  // beat, so a note is still sounding under the three after it.
   let arp_octave = 12 + 12 * step(0.9, filters_open)
   let arp_opening = filters_open |> remap(in_low: 0, out_low: 900, out_high: 6500)
   let arp_1_step = beats + -0 |> values(rate: 1) [ 0 15.5 ]
@@ -147,7 +147,7 @@ group "Arp" {
 }
 
 group "Picture: Scope" {
-  # Channel two, the arp: a sine for every 250 hertz of its note, struck by it.
+  // Channel two, the arp: a sine for every 250 hertz of its note, struck by it.
   let arp_height = 0.04 + 0.16 * arp_level * parts.part_4
   let arp_phase = coord * arp_1_pitch / 250
   let arp_trace = 0.004 / (
@@ -155,10 +155,10 @@ group "Picture: Scope" {
 }
 
 group "Pops" {
-  # The hook: seven eighths up A minor pentatonic, A C D E G A C, once a section, on
-  # its last bar, climbing into the next: seven bars' rest, then the run. Two voices
-  # take the eighths in turn, each a sine with its octave and twelfth, ringing over
-  # the next note and starting half again as high for its first few milliseconds.
+  // The hook: seven eighths up A minor pentatonic, A C D E G A C, once a section, on
+  // its last bar, climbing into the next: seven bars' rest, then the run. Two voices
+  // take the eighths in turn, each a sine with its octave and twelfth, ringing over
+  // the next note and starting half again as high for its first few milliseconds.
   let pop_1_notes = beats + -0 |> notes(rate: 1, gate_length: 1) [ A4%0@28 A4 D5 G5 C6 ]
   let pop_2_notes = beats + -0.5
     |> notes(rate: 1, gate_length: 1) [ C5%0@28 C5 E5 A5 A5%0 ]
@@ -175,9 +175,9 @@ group "Pops" {
 }
 
 group "Picture: Scope" {
-  # The name flares as it lands and fades over the next section's first two bars.
-  # Counting back to the section the run played in keeps the silent run of the first
-  # from typing anything.
+  // The name flares as it lands and fades over the next section's first two bars.
+  // Counting back to the section the run played in keeps the silent run of the first
+  // from typing anything.
   let lettering_light = beats
     |> expression(
         a: _,
@@ -191,7 +191,7 @@ group "Picture: Tube" {
 }
 
 group "Bass" {
-  # Root and octave in eighths.
+  // Root and octave in eighths.
   let bass_steps = beats |> values(rate: 2, gate_length: 0.92, shape: 0.03) [ 0 12 ]
   let bass_pitch = bass_steps + roots + -12 |> note(note: _)
   let bass_pluck = beats |> stroke(rate: 2, curve: 6)
@@ -204,8 +204,8 @@ group "Bass" {
 }
 
 group "Chords" {
-  # Three supersaws on the root, third and fifth: a pad while the filters are shut,
-  # and pumping stabs under the kick once they open.
+  // Three supersaws on the root, third and fifth: a pad while the filters are shut,
+  // and pumping stabs under the kick once they open.
   let chord_root = roots + 12
   let chord_root_pitch = chord_root |> note(note: _)
   let chord_third = chord_root |> tune(transpose: 3.5) [ A B C D E F G ]
@@ -221,7 +221,7 @@ group "Chords" {
 }
 
 group "Lead" {
-  # The promo's hook, in eighths over four bars.
+  // The promo's hook, in eighths over four bars.
   let hook = beats
     |> notes(rate: 2, gate_length: 0.9, shape: 0.06) [
         E5@2 A5 G5 E5@2 D5 C5 C5 D5 E5@2 F5 E5@0.5 E5%0@2.5 A5@3 G5 E5@2 D5 E5 E5@5
@@ -237,7 +237,7 @@ group "Lead" {
 }
 
 group "Desk" {
-  # The dry synths duck under the kick; their echoes and the hall do not.
+  // The dry synths duck under the kick; their echoes and the hall do not.
   let synths = bass
     |> desk(
         left_1: _,
@@ -270,7 +270,7 @@ group "Desk" {
 }
 
 group "Space" {
-  # A ping-pong of three sixteenths a side, and a hall.
+  // A ping-pong of three sixteenths a side, and a hall.
   let echo = arp
     |> mixer(
         in_1: _,
@@ -329,7 +329,7 @@ group "Desk" {
 }
 
 group "Master" {
-  # Glued a few decibels, as the promo's saturation does, then brightened.
+  // Glued a few decibels, as the promo's saturation does, then brightened.
   let compressor = master_desk
     |> compressor(
         left: _,

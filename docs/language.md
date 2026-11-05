@@ -21,7 +21,7 @@ Source files are `.fbks`, beside the `.fbk` document they build into and the
 ## 1. Hello
 
 ```
-# Three drifting sine fields summed and read through a cosine palette.
+// Three drifting sine fields summed and read through a cosine palette.
 
 let across = x |> sine(freq: 0.8, phase: t * 0.11)
 let down   = y |> sine(freq: 0.9, phase: t * -0.07)
@@ -45,26 +45,27 @@ it is a decision. `_` is where the pipe lands when the module has no `in` for it
 Fifteen forms, and no others.
 
 ```
-# a comment, to end of line
+// a comment, to end of line
 
-let NAME = pipeline              # bind a signal, and name the node
-let (A, B) = call                # take a def's several results apart
-def NAME(a, b = 1) = body        # a subgraph with holes in it
-pipeline |> out.color            # a terminated pipeline: the only side effect
-NAME.port = 0.6                  # set a knob
-NAME.port <- pipeline            # back-wire, which is how a cycle is closed
-off NAME                         # switch a module off, so it is a wire
-panel NAME = 0.5, cc: 21, …      # a knob on the patch's panel
-requires flyback.picture, …      # the plugins the patch cannot be built without
-group "Name" { statements }      # draw these together on the canvas
-description "What it is for"     # say what the patch is for, once
-author "Who made it"             # say who made the patch, once
-tags "drone" "slow"              # words to find the patch by, once
-length 2:30.50                   # how long the patch plays for, once
+let NAME = pipeline              // bind a signal, and name the node
+let (A, B) = call                // take a def's several results apart
+def NAME(a, b = 1) = body        // a subgraph with holes in it
+pipeline |> out.color            // a terminated pipeline: the only side effect
+NAME.port = 0.6                  // set a knob
+NAME.port <- pipeline            // back-wire, which is how a cycle is closed
+off NAME                         // switch a module off, so it is a wire
+panel NAME = 0.5, cc: 21, …      // a knob on the patch's panel
+requires flyback.picture, …      // the plugins the patch cannot be built without
+group "Name" { statements }      // draw these together on the canvas
+description "What it is for"     // say what the patch is for, once
+author "Who made it"             // say who made the patch, once
+tags "drone" "slow"              // words to find the patch by, once
+length 2:30.50                   // how long the patch plays for, once
 ```
 
-A comment starts with `#`; `//` is refused as `slash-comment`, and a part of a
-patch that wants a heading wants a `group`.
+A comment starts with `//`; `#` is refused as `hash-comment`, since in a
+language of notes it is a sharp, and a part of a patch that wants a heading
+wants a `group`.
 
 Statements are newline-separated. A pipeline may be broken across lines freely;
 a line ending in `|>` or `,`, or a line beginning with `|>`, a string, a `{`
@@ -148,8 +149,8 @@ of mistake, and the reason there is no such guess.
 signal moves at once:
 
 ```
-rotate(angle: t * 0.15)          # outputs (x, y)
-  |> kaleidoscope(segments: 6)   # inputs  (x, y, segments) — the pair fills both
+rotate(angle: t * 0.15)          // outputs (x, y)
+  |> kaleidoscope(segments: 6)   // inputs  (x, y, segments) — the pair fills both
   |> clouds(z: t * 0.3, scale: 2.5)
 ```
 
@@ -178,9 +179,9 @@ A binding is its module's first output. Any other is taken by name:
 ```
 let riff = notes(rate: 4) [ A3 C4 E4 G4 ]
 
-riff        # the 'out' output — the note number
-riff.gate   # the gate
-riff.index  # where in the pattern it has got to
+riff        // the 'out' output — the note number
+riff.gate   // the gate
+riff.index  // where in the pattern it has got to
 ```
 
 A `let` binds the node rather than one of its outputs, so a binding piped into a
@@ -191,9 +192,9 @@ A call takes the same selector, so a module read once needs no name to be read
 by:
 
 ```
-let beats = tempo(bpm: 104).beats          # the count of beats, not the rate
+let beats = tempo(bpm: 104).beats          // the count of beats, not the rate
 
-beats |> notes(rate: 2) [ A2 E3 ].gate     # the sequencer's gate, with the beats arriving
+beats |> notes(rate: 2) [ A2 E3 ].gate     // the sequencer's gate, with the beats arriving
   |> adsr(gate: _)
 ```
 
@@ -212,8 +213,8 @@ has to say so:
 ```
 let pitch = steps |> note(note: _)
 
-sine(freq: pitch)          # a tune
-x |> sine(freq: 1.5)       # a field
+sine(freq: pitch)          // a tune
+x |> sine(freq: 1.5)       // a field
 ```
 
 This is the same distinction the assistant handbook spends five paragraphs on,
@@ -819,7 +820,7 @@ group "Bass" {
 A pipeline cannot express a loop, so the back-wire does:
 
 ```
-# An integrator: each evaluation adds a little of the source to what it held.
+// An integrator: each evaluation adds a little of the source to what it held.
 
 let sum = square(freq: 110) * 0.06 |> add(a: _)
 
@@ -1541,7 +1542,7 @@ description "A whole song from the engine's own modules: seven parts in a room, 
 let beat = tempo(112)
 
 group "Song" {
-  # drums, snare, bass, second string, pad, how far the filters open
+  // drums, snare, bass, second string, pad, how far the filters open
   let band = beat.beats |> arrangement(rate: 1/32) [
     0 1 1 1  1 1 1 0  1 1 1 0 |
     0 0 1 1  1 1 1 0  1 1 0 0 |
@@ -1551,7 +1552,7 @@ group "Song" {
     0.1 0.3 0.6 0.7  1 1 0.7 0.2  1 1 0.45 0.1
   ]
 
-  # the chorus, the lead, a fill
+  // the chorus, the lead, a fill
   let form = beat.beats |> arrangement(rate: 1/32) [
     0 0 0 0  1 1 0 0  1 1 0 0 |
     0 0 0 1  1 1 1 1  1 1 1 0 |

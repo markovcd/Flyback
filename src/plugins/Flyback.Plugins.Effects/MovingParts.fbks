@@ -1,8 +1,8 @@
-# Flanger, phaser and chorus in the order a pedalboard would have them, the chorus
-# last because its two outputs make the result stereo. The three run at rates that
-# share no common factor worth the name, so the combination never quite repeats.
-# Nothing is drawn: a flanger combs its input with a delay line, which has no
-# picture side.
+// Flanger, phaser and chorus in the order a pedalboard would have them, the chorus
+// last because its two outputs make the result stereo. The three run at rates that
+// share no common factor worth the name, so the combination never quite repeats.
+// Nothing is drawn: a flanger combs its input with a delay line, which has no
+// picture side.
 
 description "Flanger, phaser and chorus in the order a pedalboard would have them."
 tags "effects"

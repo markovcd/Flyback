@@ -71,7 +71,7 @@ public sealed class CompleteCommandTests : IDisposable
     [Fact]
     public void A_place_with_nothing_to_offer_says_so()
     {
-        var (code, output, _) = Run("complete", Written("# a comm"), "--at", "1:9");
+        var (code, output, _) = Run("complete", Written("// a comm"), "--at", "1:9");
 
         code.ShouldBe(Exit.Ok);
         output.ShouldContain("nothing to offer here");

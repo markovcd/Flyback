@@ -85,7 +85,7 @@ public class HoverTests
     [Fact]
     public void A_comment_a_number_or_an_unknown_word_says_nothing()
     {
-        Hover("# a si¦ne").ShouldBeNull();
+        Hover("// a si¦ne").ShouldBeNull();
         Hover("sine(freq: 2¦20)").ShouldBeNull();
         Hover("nothi¦ng(1)").ShouldBeNull();
     }

@@ -1,16 +1,16 @@
-# Two channels that are two signals, rather than one signal made quieter on one
-# side.
+// Two channels that are two signals, rather than one signal made quieter on one
+// side.
 
 description "Stereo from one voice: left and right fed differently rather than panned."
 tags "basics"
 
-# The twin takes the root's snapped note rather than its own, so the two cannot
-# drift apart by an edit.
+// The twin takes the root's snapped note rather than its own, so the two cannot
+// drift apart by an edit.
 let root  = note(A2)
 let twin  = note(root.note, cents: 9)
 
-# One envelope for both, opened by one pulse: the two ears are the same note, and
-# only the tuning of it differs.
+// One envelope for both, opened by one pulse: the two ears are the same note, and
+// only the tuning of it differs.
 let shape = pulse(freq: 1.5, width: 0.3)
               |> adsr(gate: _, attack: 10ms, decay: 125.89255ms, sustain: 0.4, release: 158.48931ms)
 

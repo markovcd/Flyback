@@ -1,15 +1,15 @@
-# Seven concentric orbits at seven speeds, drawing together over about four minutes
-# into an alignment that is never quite exact and then coming apart again. Each dot
-# strikes one degree of A minor as it comes round, into a long delay and a large
-# room.
-#
-# Each orbit is one turn per four minutes faster than the one outside it, so every
-# dot would meet every other on that four minutes exactly, but each speed is nudged
-# by a root of a prime, a fiftieth of a turn per cycle, so the meeting is only ever
-# nearly. In between it does what a pendulum wave does, because it is one: the dots
-# fall into a traveling wave, then two clusters facing each other, then three, then
-# four, and back. A turn takes eleven to sixteen seconds, and a bell rings for the
-# whole of one, so seven voices is a slow chord rather than a clatter.
+// Seven concentric orbits at seven speeds, drawing together over about four minutes
+// into an alignment that is never quite exact and then coming apart again. Each dot
+// strikes one degree of A minor as it comes round, into a long delay and a large
+// room.
+//
+// Each orbit is one turn per four minutes faster than the one outside it, so every
+// dot would meet every other on that four minutes exactly, but each speed is nudged
+// by a root of a prime, a fiftieth of a turn per cycle, so the meeting is only ever
+// nearly. In between it does what a pendulum wave does, because it is one: the dots
+// fall into a traveling wave, then two clusters facing each other, then three, then
+// four, and back. A turn takes eleven to sixteen seconds, and a bell rings for the
+// whole of one, so seven voices is a slow chord rather than a clatter.
 
 description "Two pulses whose rates are a ratio of the square root of two: they pass"
   "close, flare, and never once land together — a piece with no loop, because it cannot"
@@ -18,9 +18,9 @@ tags "drums"
 
 requires flyback.effects, flyback.picture, flyback.voice
 
-# A knob a dot, resting where the piece is written and reaching from stopped to
-# twice as fast. Turning one turns the whole shape: the four minutes is what the
-# seven speeds are to each other, not a number anything holds.
+// A knob a dot, resting where the piece is written and reaching from stopped to
+// twice as fast. Turning one turns the whole shape: the four minutes is what the
+// seven speeds are to each other, not a number anything holds.
 panel orbit_1 = 0.5, label: "Orbit 1"
 panel orbit_2 = 0.5, label: "Orbit 2"
 panel orbit_3 = 0.5, label: "Orbit 3"
@@ -33,18 +33,18 @@ group "Picture" {
   let coord = coord()
 }
 
-# The faint circle a dot runs on, so its place can be read and the screen keeps its
-# shape between passes.
+// The faint circle a dot runs on, so its place can be read and the screen keeps its
+// shape between passes.
 def ring(at, size) = {
   let ring = at |> circle(radius: size) |> fill(distance: _, softness: 0.004, width: 0.0045)
   ring.outline * 0.14
 }
 
-# How near two neighbors are: nought when opposite and one when together, sharpened
-# so that only a real approach counts.
+// How near two neighbors are: nought when opposite and one when together, sharpened
+// so that only a real approach counts.
 def nearness(a, b) = pow(1 - abs(fract(a - b + 0.5) - 0.5) * 2, 6)
 
-# A dot at its turn's angle on an orbit, as bright as it is struck.
+// A dot at its turn's angle on an orbit, as bright as it is struck.
 def dot(at, level, turn, orbit, smallest, largest) = {
   let dot = level |> remap(in_low: 0, out_low: smallest, out_high: largest)
     |> circle(
@@ -62,8 +62,8 @@ group "Picture" {
     }
 }
 
-# One stroke a turn, so a bell rings for the whole of it; the quick ones fall away
-# sooner, which keeps the top clear.
+// One stroke a turn, so a bell rings for the whole of it; the quick ones fall away
+// sooner, which keeps the top clear.
 group "The seven speeds" {
   let time = time()
   let (turns, strokes) = for (speed, curve) in [
@@ -81,9 +81,9 @@ group "The seven speeds" {
   let (stroke_1, stroke_2, stroke_3, stroke_4, stroke_5, stroke_6, stroke_7) = strokes
 }
 
-# Neighbors only: every pair would be twenty-one signals for a picture that can
-# show one thing at a time. 'passing' is how much passing there is anywhere, which
-# the drone leans on.
+// Neighbors only: every pair would be twenty-one signals for a picture that can
+// show one thing at a time. 'passing' is how much passing there is anywhere, which
+// the drone leans on.
 group "The passes" {
   let passes = for (a, b) in [
       (turn_1, turn_2),
@@ -98,9 +98,9 @@ group "The passes" {
   let passing = sum(passes) * 0.16666667
 }
 
-# A dot on each orbit, warm outside where the slow low ones are and cold in the
-# middle. Where two neighbors would meet if they ever did, between their orbits at
-# the angle of the faster one, a dot as bright as the pass is close.
+// A dot on each orbit, warm outside where the slow low ones are and cold in the
+// middle. Where two neighbors would meet if they ever did, between their orbits at
+// the angle of the faster one, a dot as bright as the pass is close.
 group "Picture" {
   let (dot_1, dot_2, dot_3, dot_4, dot_5, dot_6, dot_7) =
     for (stroke, turn, orbit, smallest, largest) in [
@@ -125,10 +125,10 @@ group "Picture" {
 }
 
 group "Voices" {
-  # A struck tone with one overtone an octave or a twelfth above it, and barely
-  # any of that: what is wanted is the part of a bell left after the strike. The
-  # high ones are let through a little louder, since the room swallows the top of
-  # the chord first.
+  // A struck tone with one overtone an octave or a twelfth above it, and barely
+  // any of that: what is wanted is the part of a bell left after the strike. The
+  // high ones are let through a little louder, since the room swallows the top of
+  // the chord first.
   let bells = bell(
       freq: note(note: A2),
       level: stroke_1,
@@ -142,22 +142,22 @@ group "Voices" {
       index: 0.26) * 1.0999999 + bell(freq: note(
           note: G4), level: stroke_6, ratio: 3, index: 0.22) * 1.18 + bell(freq: note(note: C5), level: stroke_7, ratio: 3, index: 0.17999999) * 1.26
 
-  # Half a second and five sixths of one, which are not a ratio of each other, so
-  # the repeats interleave rather than doubling up. Then one hall, whose second
-  # output is the stereo.
+  // Half a second and five sixths of one, which are not a ratio of each other, so
+  // the repeats interleave rather than doubling up. Then one hall, whose second
+  // output is the stereo.
   let echo = chord
     |> echo(tempo: 3, left: 6, right: 10, feedback: 0.55, mix: 0.6, taps: "side")
   let room = echo + echo.right * 1 |> reverb(size: 0.95, decay: 0.88, mix: 1)
 
-  # Two fifths a long way down that lean up as the dots draw together: the only
-  # thing that says the alignment is coming before it arrives.
+  // Two fifths a long way down that lean up as the dots draw together: the only
+  // thing that says the alignment is coming before it arrives.
   let swell = wander(rate: 0.05, seed: 3, low: 0.45)
   let drone_low = sine(freq: 55 * (1 + passing * 0.008), amp: swell * 0.34)
   let drone_high = sine(freq: 82.5 * (1 + passing * 0.008), amp: swell * 0.16)
 }
 
-# A little of the strike itself, so the attacks are in the room as well as behind
-# it.
+// A little of the strike itself, so the attacks are in the room as well as behind
+// it.
 group "Desk" {
   let dry = chord
     |> desk(

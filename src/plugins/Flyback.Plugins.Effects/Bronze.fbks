@@ -1,17 +1,17 @@
-# A gamelan: sixteen gong cycles on a tempo that breathes, every part written in the
-# degrees of a five-note scale and thinned or figured out of one melody, and a
-# mandala with a ring for each tier of the orchestra.
-#
-# The piece has no tempo knob because it has no one tempo. How many beats have gone
-# by is a closed form of the clock, a steady pace with two sines taken off it, so it
-# crawls at the gong that opens it, runs through the middle and crawls home, and the
-# picture can work out where the music is from the time alone.
-#
-# Everything that strikes is struck by that count. An envelope is the fraction left
-# of a beat, or of two, four or sixteen of them, raised to a power: it needs no
-# trigger, it lengthens when the music slows the way a player's stroke does, and the
-# screen reads the same number the speakers do. The scale is pelog, as five of its
-# seven tones, written as frequencies because no piano has these.
+// A gamelan: sixteen gong cycles on a tempo that breathes, every part written in the
+// degrees of a five-note scale and thinned or figured out of one melody, and a
+// mandala with a ring for each tier of the orchestra.
+//
+// The piece has no tempo knob because it has no one tempo. How many beats have gone
+// by is a closed form of the clock, a steady pace with two sines taken off it, so it
+// crawls at the gong that opens it, runs through the middle and crawls home, and the
+// picture can work out where the music is from the time alone.
+//
+// Everything that strikes is struck by that count. An envelope is the fraction left
+// of a beat, or of two, four or sixteen of them, raised to a power: it needs no
+// trigger, it lengthens when the music slows the way a player's stroke does, and the
+// screen reads the same number the speakers do. The scale is pelog, as five of its
+// seven tones, written as frequencies because no piano has these.
 
 description "A gamelan: sixteen gong cycles on a tempo that breathes, every part"
   "figured out of one melody in a five-note scale, and a mandala with a ring for each"
@@ -27,11 +27,11 @@ group "Picture: Metal" {
 
 group "Clock" {
   let clock = time()
-  # Beats gone by: the steady pace, ninety a minute on average, less the integral of
-  # two sines of swing. One turn of the slower is exactly the piece; it takes the
-  # tempo from fifty-one a minute at the ends to over a hundred in the middle, and the
-  # second flattens that middle into a plateau. The tiers are Strokes off the count at
-  # their own rates.
+  // Beats gone by: the steady pace, ninety a minute on average, less the integral of
+  // two sines of swing. One turn of the slower is exactly the piece; it takes the
+  // tempo from fifty-one a minute at the ends to over a hundred in the middle, and the
+  // second flattens that middle into a plateau. The tiers are Strokes off the count at
+  // their own rates.
   let quick_swing = sin(clock * 0.07363108) * 2.7162445
   let beats = clock * 1.5 - sin(clock * 0.03681554) * 12.2231 - quick_swing
   let gong_stroke = beats |> stroke(rate: 0.0625, curve: 5)
@@ -42,11 +42,11 @@ group "Clock" {
 }
 
 group "Arrangement" {
-  # Who plays, a gong at a time. It opens with the gong and the flute alone, fills as
-  # the tempo climbs, bursts at the top, drops to almost nothing at full speed, comes
-  # back, and thins as it slows. The rows include the burst (the whole orchestra on
-  # the gong for a twentieth of a second), the flute, which runs the other way, the
-  # drums, and how many of sixteen steps the low drum strikes.
+  // Who plays, a gong at a time. It opens with the gong and the flute alone, fills as
+  // the tempo climbs, bursts at the top, drops to almost nothing at full speed, comes
+  // back, and thins as it slows. The rows include the burst (the whole orchestra on
+  // the gong for a twentieth of a second), the flute, which runs the other way, the
+  // drums, and how many of sixteen steps the low drum strikes.
   let parts = beats
     |> arrangement(rate: 0.0625) [
         0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 |
@@ -57,16 +57,16 @@ group "Arrangement" {
         1 1 0 0 0 0 0 0 1 0 0 0 0 0 0 1 |
         0 0 0 1 1 1 1 1 0 1 1 1 1 1 0 0 |
         3 3 3 3 5 6 7 7 3 3 6 7 7 5 5 5 ]
-  # The melody moved up the scale by nought, nought, two and one degrees, four gongs
-  # round, in degrees so what moves stays in the scale.
+  // The melody moved up the scale by nought, nought, two and one degrees, four gongs
+  // round, in degrees so what moves stays in the scale.
   let round_place = (parts.section - 1) % 4
   let lift = step(1.5, round_place) * (4 - round_place)
   let burst_note = beats |> stroke(rate: 0.0625, curve: 70)
   let burst = burst_note * parts.part_5
-  # Irama: where the beat is slow, in the first two gongs and the last, the figuration
-  # doubles, so the surface runs at the same speed over a melody half as fast. It
-  # jumps, because a rate passing between the two would sweep the figure through every
-  # step in between.
+  // Irama: where the beat is slow, in the first two gongs and the last, the figuration
+  // doubles, so the surface runs at the same speed over a melody half as fast. It
+  // jumps, because a rate passing between the two would sweep the figure through every
+  // step in between.
   let irama = 4 + 4 * (
       step(parts.section, 2.5) + step(15.5, parts.section))
   let grade_level = beats
@@ -76,9 +76,9 @@ group "Arrangement" {
 }
 
 group "Drums" {
-  # The pair of drums that lead a gamelan. The lower plays more as the orchestra
-  # fills, and its pitch is its own stroke, so the skin drops as it is let go. A Drive
-  # is the hand on the skin.
+  // The pair of drums that lead a gamelan. The lower plays more as the orchestra
+  // fills, and its pitch is its own stroke, so the skin drops as it is let go. A Drive
+  // is the hand on the skin.
   let low_drum_hits = beats
     |> euclid(steps: 16, hits: parts.part_8, rotate: 3, curve: 4)
   let low_drum = low_drum_hits.stroke * parts.part_7
@@ -93,8 +93,8 @@ group "Drums" {
 }
 
 group "Picture: Plane" {
-  # The mandala turns with the count rather than the clock, so it slows when the music
-  # does, and the low drum pushes it in on every hit.
+  // The mandala turns with the count rather than the clock, so it slows when the music
+  // does, and the low drum pushes it in on every hit.
   let plane = low_drum |> remap(in_low: 0, out_low: 1, out_high: 0.94)
     |> transform(zoom: _, angle: beats * 0.04, order: "turn")
   let around = plane |> polar()
@@ -105,11 +105,11 @@ group "Picture: Metal" {
 }
 
 group "Gongs" {
-  # The great gong on the first beat of sixteen: two sines a little over a hertz
-  # apart, the slow wave a real one is tuned to have, with a millisecond or two of
-  # rise because a sine switched on at full height is a click. The timekeeper is one
-  # dry note every beat, and the smaller gong answers half way round, a pelog fifth
-  # up.
+  // The great gong on the first beat of sixteen: two sines a little over a hertz
+  // apart, the slow wave a real one is tuned to have, with a millisecond or two of
+  // rise because a sine switched on at full height is a click. The timekeeper is one
+  // dry note every beat, and the smaller gong answers half way round, a pelog fifth
+  // up.
   let gong_rise = gong_stroke.phase |> smoothstep(edge1: 0.0015)
   let gong_level = gong_stroke * gong_rise
   let gong = bell(
@@ -127,8 +127,8 @@ group "Gongs" {
 }
 
 group "Picture: Gong" {
-  # The gong is the boss at the middle, swelling when it is struck, and a wave of
-  # rings that travels out from it while it rings.
+  // The gong is the boss at the middle, swelling when it is struck, and a wave of
+  // rings that travels out from it while it rings.
   let boss_size = gong_level |> remap(in_low: 0, out_low: 0.1, out_high: 0.17)
   let boss = plane |> circle(radius: boss_size)
     |> fill(distance: _, softness: 0.004)
@@ -140,9 +140,9 @@ group "Picture: Gong" {
 }
 
 group "Low Metal" {
-  # Every fourth note of the melody left to ring for its four beats, every second an
-  # octave up, and the melody itself a beat a note; each pair is tuned a few hertz
-  # apart, the shimmer that makes bronze sound alive.
+  // Every fourth note of the melody left to ring for its four beats, every second an
+  // octave up, and the melody itself a beat a note; each pair is tuned a few hertz
+  // apart, the shimmer that makes bronze sound alive.
   let four_rise = four_stroke.phase |> smoothstep(edge1: 0.004)
   let four_level = four_stroke * four_rise
   let two_rise = two_stroke.phase |> smoothstep(edge1: 0.006)
@@ -152,8 +152,8 @@ group "Low Metal" {
 }
 
 group "Picture: Low Metal" {
-  # Four beats is a square that turns an eighth with each stroke, eased in so it moves
-  # as the note sounds and then holds. Two beats is eight points, turning against it.
+  // Four beats is a square that turns an eighth with each stroke, eased in so it moves
+  // as the note sounds and then holds. Two beats is eight points, turning against it.
   let square_light = four_level |> remap(in_low: 0, out_low: 0.5, out_high: 1.3)
   let square_ease = four_stroke.phase |> smoothstep(edge1: 0.25)
   let square_turned = plane
@@ -173,10 +173,10 @@ group "Picture: Metal" {
 }
 
 group "Picture: Score" {
-  # The melody drawn as sixteen beads round a ring, each as far out as its note is
-  # high: a second copy of the melody's list is read at the sector instead of the
-  # beat, so every pixel asks the list what note belongs where it is. The bead being
-  # played lights.
+  // The melody drawn as sixteen beads round a ring, each as far out as its note is
+  // high: a second copy of the melody's list is read at the sector instead of the
+  // beat, so every pixel asks the list what note belongs where it is. The bead being
+  // played lights.
   let sector = around.angle * 2.546479 + 8
   let bead = floor(sector)
   let bead_degree = bead |> values(rate: 1) [ 0 2 3 2 4 3 2 1 2 4 5 4 3 1 2 1 ]
@@ -192,8 +192,8 @@ group "Picture: Score" {
 }
 
 group "Cymbals" {
-  # The cymbals: every quarter of a beat with the tresillo leaned on, the top of a
-  # Hiss for the sizzle.
+  // The cymbals: every quarter of a beat with the tresillo leaned on, the top of a
+  // Hiss for the sizzle.
   let sizzle_note = beats |> stroke(rate: 4, curve: 8)
   let tresillo = beats |> euclid()
   let tresillo_lean = tresillo.hit |> remap(in_low: 0, out_low: 0.3)
@@ -202,8 +202,8 @@ group "Cymbals" {
 }
 
 group "Picture: Rim" {
-  # The cymbals are sixteen needles round the rim and the chimes twelve points inside
-  # the score, as bright as the stroke sounding.
+  // The cymbals are sixteen needles round the rim and the chimes twelve points inside
+  // the score, as bright as the stroke sounding.
   let needles = plane |> star(radius: 0.98, points: 16, sharpness: 0.8)
     |> fill(distance: _, softness: 0.004, width: 0.008)
   let points = plane |> star(points: 12, sharpness: 0.6)
@@ -211,8 +211,8 @@ group "Picture: Rim" {
 }
 
 group "Chimes" {
-  # Five in sixteen, off the beat, a fourth of the scale above the melody, folded
-  # after the envelope: brass at the front of the note and bronze at the back.
+  // Five in sixteen, off the beat, a fourth of the scale above the melody, folded
+  // after the envelope: brass at the front of the note and bronze at the back.
   let chime_hits = beats |> euclid(steps: 16, hits: 5, rotate: 2, curve: 6)
   let chime_level = max(chime_hits.stroke, burst) * parts.part_4
 }
@@ -222,15 +222,15 @@ group "Picture: Rim" {
 }
 
 group "Picture: Metal" {
-  # Everything struck is one ink, gold at the middle and copper at the rim.
+  // Everything struck is one ink, gold at the middle and copper at the rim.
   let struck = rgb(r: 0.9, g: 0.4, b: 0.2) |> color.mix(a: gold, b: _, t: rim_t)
     |> gain(gain: struck_center + (score + rim))
 }
 
 group "Picture: Figuration" {
-  # The interlock as brickwork: a Checker on the polar plane, so one player's tiles
-  # sit between the other's, each lit when its player strikes. There are as many tiles
-  # as strokes to the cycle, so the wall doubles when the figuration does.
+  // The interlock as brickwork: a Checker on the polar plane, so one player's tiles
+  // sit between the other's, each lit when its player strikes. There are as many tiles
+  // as strokes to the cycle, so the wall doubles when the figuration does.
   let bricks = around.angle * 1.2732395 * irama
     |> checker(x: _, y: around * 14, size: 1)
   let wall = plane |> circle(radius: 0.786)
@@ -238,11 +238,11 @@ group "Picture: Figuration" {
 }
 
 group "Melody" {
-  # One list, three speeds: the melody, every second note an octave down, every fourth
-  # below that, so the slow parts agree by construction. The figuration is one list
-  # and two players: it walks three notes, the low pair one player's and the high pair
-  # the other's, so the middle note is struck by both. The flute's line is a note to
-  # four beats, high in the same scale.
+  // One list, three speeds: the melody, every second note an octave down, every fourth
+  // below that, so the slow parts agree by construction. The figuration is one list
+  // and two players: it walks three notes, the low pair one player's and the high pair
+  // the other's, so the middle note is struck by both. The flute's line is a note to
+  // four beats, high in the same scale.
   let figure_note = beats |> stroke(rate: irama, curve: 4)
   let figure = beats
     |> values(rate: irama, gate_length: 0.85) [
@@ -260,9 +260,9 @@ group "Melody" {
 }
 
 group "Figuration" {
-  # One stroke and one pitch for both players, and an instrument each seven hertz
-  # apart. Whose note it is is the step itself: nought is the first player's, two the
-  # second's, and one is both.
+  // One stroke and one pitch for both players, and an instrument each seven hertz
+  // apart. Whose note it is is the step itself: nought is the first player's, two the
+  // second's, and one is both.
   let figure_level = figure_note * parts.part_3 * figure.gate
   let second_level = figure_level * min(figure, 1)
   let first_level = figure_level * min(2 - figure, 1)
@@ -286,8 +286,8 @@ group "Picture: Metal" {
 }
 
 group "Picture: Flute" {
-  # The flute is the one light not fixed to the wheel, circling further out the higher
-  # it plays, in the green bronze goes in the rain.
+  // The flute is the one light not fixed to the wheel, circling further out the higher
+  // it plays, in the green bronze goes in the rain.
   let flute_turn = beats * 0.13
   let flute_reach = flute_degree |> remap(in_low: 1, in_high: 7, out_low: 0.3, out_high: 0.85)
   let flute_place = translate(
@@ -298,8 +298,8 @@ group "Picture: Flute" {
 }
 
 group "Picture: Cloth" {
-  # Behind it all, kawung: the batik of four petals to a tile, a four-pointed Star
-  # turned an eighth inside a Tile, in indigo, lifted out of the dark by the gong.
+  // Behind it all, kawung: the batik of four petals to a tile, a four-pointed Star
+  // turned an eighth inside a Tile, in indigo, lifted out of the dark by the gong.
   let cloth_light = gong_level |> remap(in_low: 0, out_low: 0.35, out_high: 0.9)
   let tile = tile(tiles: 4)
   let petal_turn = tile |> rotate(angle: 0.7853982)
@@ -314,16 +314,16 @@ group "Picture: Metal" {
 }
 
 group "Picture: Ringing" {
-  # Bronze rings, so the picture does: each stroke leaves the wheel as a fading copy
-  # of itself, long while the picture is muted and short when it is bright.
+  // Bronze rings, so the picture does: each stroke leaves the wheel as a fading copy
+  // of itself, long while the picture is muted and short when it is bright.
   let trails_persist = grade_level
     |> remap(in_low: 0.8, in_high: 1.3, out_low: 0.92, out_high: 0.8)
 }
 
 group "Flute" {
-  # The one voice that is not struck: a glide of eighty milliseconds, a phase leaned
-  # on five times a second, a breath of Hiss an octave over the note, tongued by its
-  # own gate and swelling on a period that shares nothing with the beat.
+  // The one voice that is not struck: a glide of eighty milliseconds, a phase leaned
+  // on five times a second, a breath of Hiss an octave over the note, tongued by its
+  // own gate and swelling on a period that shares nothing with the beat.
   let flute_pitch = flute_degree
     |> values(rate: 1) [
         554.4 594.20593 647.9827 816.4649 875.0096 1108.8 1188.4119 1295.9655 1632.9298
@@ -372,7 +372,7 @@ group "Chimes" {
 }
 
 group "Room" {
-  # A pavilion: one Reverb on a send, fed most by what should sound furthest away.
+  // A pavilion: one Reverb on a send, fed most by what should sound furthest away.
   let far_send = flute
     |> mixer(
         in_1: _,
@@ -397,8 +397,8 @@ group "Room" {
 }
 
 group "Desk" {
-  # Three Desks of four, chained by their buses. The first player is on the left and
-  # the second on the right, so the figuration crosses the room a note at a time.
+  // Three Desks of four, chained by their buses. The first player is on the left and
+  // the second on the right, so the figuration crosses the room a note at a time.
   let low_desk = gong
     |> desk(
         left_1: _,

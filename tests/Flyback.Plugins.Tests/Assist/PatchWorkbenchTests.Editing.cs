@@ -71,7 +71,7 @@ public partial class PatchWorkbenchTests
     [Fact]
     public async Task An_edit_keeps_the_line_endings_the_text_was_written_with()
     {
-        const string text = "# the one knob\r\nlet knob1 = value(value: 0.25)\r\nknob1 |> out.color\r\n";
+        const string text = "// the one knob\r\nlet knob1 = value(value: 0.25)\r\nknob1 |> out.color\r\n";
         var bench = new PatchWorkbench(NodeCatalog.BuiltIn, PatchLanguage.Build(text, NodeCatalog.BuiltIn).Patch, text: text);
 
         var turned = await Edit(bench, "knob\nlet knob1 = value(value: 0.25)", "knob\nlet knob1 = value(value: 0.75)");
@@ -84,14 +84,14 @@ public partial class PatchWorkbenchTests
     [Fact]
     public async Task A_workbench_over_text_edits_that_text_and_keeps_its_comments()
     {
-        const string text = "# the one knob\nlet knob1 = value(value: 0.25)\nknob1 |> out.color\n";
+        const string text = "// the one knob\nlet knob1 = value(value: 0.25)\nknob1 |> out.color\n";
         var bench = new PatchWorkbench(NodeCatalog.BuiltIn, PatchLanguage.Build(text, NodeCatalog.BuiltIn).Patch, text: text);
 
         var turned = await Edit(bench, "value: 0.25", "value: 0.75");
 
         turned.Ok.ShouldBeTrue(turned.Text);
         bench.Text.ShouldBe(text.Replace("0.25", "0.75"));
-        (await Call(bench, "describe_patch")).Text.ShouldContain("# the one knob");
+        (await Call(bench, "describe_patch")).Text.ShouldContain("// the one knob");
         Knob(bench).ShouldBe(0.75f);
     }
 
@@ -121,7 +121,7 @@ public partial class PatchWorkbenchTests
     [Fact]
     public async Task Reset_puts_the_starting_text_back()
     {
-        const string text = "# the one knob\nlet knob1 = value(value: 0.25)\nknob1 |> out.color\n";
+        const string text = "// the one knob\nlet knob1 = value(value: 0.25)\nknob1 |> out.color\n";
         var bench = new PatchWorkbench(NodeCatalog.BuiltIn, PatchLanguage.Build(text, NodeCatalog.BuiltIn).Patch, text: text);
 
         await Edit(bench, "value: 0.25", "value: 0.75");

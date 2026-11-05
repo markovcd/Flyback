@@ -75,12 +75,12 @@ public sealed class ToolCommandTests : IDisposable
     [Fact]
     public async Task Editing_a_text_patch_keeps_what_its_author_wrote()
     {
-        File.WriteAllText(Path("p.fbks"), "# a ring\nrings() |> out.color\n");
+        File.WriteAllText(Path("p.fbks"), "// a ring\nrings() |> out.color\n");
 
         var (code, _, complained) = await Call("p.fbks", "edit_patch", Edit("rings()", "rings(freq: 9)"));
 
         code.ShouldBe(Exit.Ok, complained);
-        File.ReadAllText(Path("p.fbks")).ShouldBe("# a ring\nrings(freq: 9) |> out.color\n");
+        File.ReadAllText(Path("p.fbks")).ShouldBe("// a ring\nrings(freq: 9) |> out.color\n");
     }
 
     [Fact]

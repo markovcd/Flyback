@@ -188,7 +188,7 @@ public class CompletionTests
     [Fact]
     public void Nothing_is_offered_in_a_comment_a_text_a_step_block_or_a_number()
     {
-        Labels("# sin¦").ShouldBeEmpty();
+        Labels("// sin¦").ShouldBeEmpty();
         Labels("description \"sin¦").ShouldBeEmpty();
         Labels("notes(rate: 4) [ A3 C¦").ShouldBeEmpty();
         Labels("sine(freq: 2¦").ShouldBeEmpty();

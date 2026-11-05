@@ -94,7 +94,7 @@ public class SourceViewAssistantTests : SourceViewTest
 
         // Typed rather than loaded, so there is a stack under the text to go back
         // down — and a second apply, so the patch is this text's.
-        text.Document.Insert(text.Document.TextLength, "\n# and a second note");
+        text.Document.Insert(text.Document.TextLength, "\n// and a second note");
         Press(Apply(window));
         Settle(window);
 
@@ -134,7 +134,7 @@ public class SourceViewAssistantTests : SourceViewTest
         Settle(window);
 
         Text(window).Text.ShouldBe(edited);
-        Text(window).Text.ShouldContain("# one steady tone");
+        Text(window).Text.ShouldContain("// one steady tone");
         Editor(window).History.Locked.ShouldBeTrue("the text is still the document");
     }
 

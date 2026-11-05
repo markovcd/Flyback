@@ -181,13 +181,13 @@ public class PasteAcrossTests : EditorTest
 
         Apply(window, "let hum = t |> sine(freq: 220)\nhum |> out.left\n");
 
-        await Clipboard(window).SetTextAsync("# pasted as it is");
+        await Clipboard(window).SetTextAsync("// pasted as it is");
 
         var text = ShowCode(window);
         text.CaretOffset = 0;
 
         PasteInto(window, text);
 
-        text.Text.ShouldStartWith("# pasted as it is");
+        text.Text.ShouldStartWith("// pasted as it is");
     }
 }

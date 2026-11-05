@@ -1,7 +1,7 @@
-# The patch the "One knob, two echoes" video builds: a pluck through an Echo, and a
-# ring that a Trails carries down a tunnel, both held by one panel knob that sets
-# how much comes round again in the sound and in the picture, each over its own
-# range.
+// The patch the "One knob, two echoes" video builds: a pluck through an Echo, and a
+// ring that a Trails carries down a tunnel, both held by one panel knob that sets
+// how much comes round again in the sound and in the picture, each over its own
+// range.
 
 description "One knob, two loops: a pluck through an echo, and a ring that echoes down"
   "a tunnel."
@@ -13,7 +13,7 @@ panel repeats = 0.6, label: "Repeats"
 
 let tempo = tempo(bpm: 96)
 
-# The sound: a note a beat, and an echo that keeps time with it.
+// The sound: a note a beat, and an echo that keeps time with it.
 let tune = tempo.beats |> notes(rate: 1, gate_length: 0.3) [ E4 G4 B4 E5 D5 B4 G4 A4 ]
 let pitch = tune |> note(note: _)
 let envelope = tune.gate
@@ -21,7 +21,7 @@ let envelope = tune.gate
 let echo = triangle(freq: pitch) * envelope
   |> echo(tempo: tempo, feedback: repeats(0..0.9), mix: 0.45)
 
-# The picture: a ring on every note, and a trail that carries it inward.
+// The picture: a ring on every note, and a trail that carries it inward.
 let ring = circle(radius: 0.6) |> fill(distance: _, width: 0.025)
 let flash = tempo.beats |> stroke()
 

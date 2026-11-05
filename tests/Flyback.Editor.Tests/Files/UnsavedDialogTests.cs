@@ -113,7 +113,7 @@ public sealed class UnsavedDialogTests : EditorTest
 
         // Through the document, which is what typing is.
         All<AvaloniaEdit.TextEditor>(window).Single(b => b.Name == "source")
-            .Document.Insert(0, "# a note to myself\n");
+            .Document.Insert(0, "// a note to myself\n");
 
         Settle(window);
 
@@ -432,7 +432,7 @@ public sealed class UnsavedDialogTests : EditorTest
         Settle(window);
 
         All<AvaloniaEdit.TextEditor>(window).Single(b => b.Name == "source").Text = """
-            # a tone, and a note about it
+            // a tone, and a note about it
             let hum = t |> sine(freq: 220)
             hum |> out.left
             """;

@@ -65,7 +65,7 @@ public abstract class SourceViewTest : EditorTest
 
     /// <summary>A tone: the clock, an oscillator and the Output it reaches.</summary>
     internal const string Hum = """
-        # one steady tone
+        // one steady tone
         let hum = t |> sine(freq: 220)
         hum |> out.left
         """;

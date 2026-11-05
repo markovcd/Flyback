@@ -73,7 +73,7 @@ public sealed class DrivenBenchTests
     public async Task An_edit_of_a_text_document_hands_back_the_text_with_its_comments()
     {
         const string written = """
-            # a slow wobble
+            // a slow wobble
             let lfo = t |> sine(freq: 2)
             lfo |> out.left
             """;
@@ -86,7 +86,7 @@ public sealed class DrivenBenchTests
         outcome.Ok.ShouldBeTrue(outcome.Text);
         editor.Applied.ShouldBe(1);
         editor.Text.ShouldBe(written.Replace("freq: 2", "freq: 3", StringComparison.Ordinal));
-        editor.Text.ShouldContain("# a slow wobble");
+        editor.Text.ShouldContain("// a slow wobble");
     }
 
     /// <summary>

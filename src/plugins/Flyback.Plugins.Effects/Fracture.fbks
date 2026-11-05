@@ -1,15 +1,15 @@
-# Drum and bass at 170 turning into IDM: a synthesized break, chopped, over a Reese
-# bass, with a picture cut into strips by the same list that cuts the drums.
-#
-# Every drum is a stateless Stroke and Sequencer, so the kit reads a bent clock
-# (which eighth of the bar, and how far into it) instead of the beat count. A list
-# swaps eighths, a die repeats a slice inside itself, and a reversed fraction plays
-# a drum backwards. The picture's eight strips slide apart by how far the list moved
-# each slice, so an unchopped break is an unbroken frame.
-#
-# The form is ABA: a bass falling from F under dice-played bells, then a bass
-# climbing through the scale's major chords under a written tune. The scale is F
-# natural minor.
+// Drum and bass at 170 turning into IDM: a synthesized break, chopped, over a Reese
+// bass, with a picture cut into strips by the same list that cuts the drums.
+//
+// Every drum is a stateless Stroke and Sequencer, so the kit reads a bent clock
+// (which eighth of the bar, and how far into it) instead of the beat count. A list
+// swaps eighths, a die repeats a slice inside itself, and a reversed fraction plays
+// a drum backwards. The picture's eight strips slide apart by how far the list moved
+// each slice, so an unchopped break is an unbroken frame.
+//
+// The form is ABA: a bass falling from F under dice-played bells, then a bass
+// climbing through the scale's major chords under a written tune. The scale is F
+// natural minor.
 
 description "Drum and bass at a hundred and seventy: a synthesized break chopped by"
   "bending the clock it reads, a Reese bass, and a picture cut into strips by the same"
@@ -20,20 +20,20 @@ length 3:00.71
 requires flyback.effects, flyback.mastering, flyback.picture, flyback.voice
 
 group "Clock" {
-  # A hundred and seventy a minute, and the count of beats everything that is not a
-  # drum reads.
+  // A hundred and seventy a minute, and the count of beats everything that is not a
+  // drum reads.
   let clock = time()
   let tempo = tempo(bpm: 170)
   let beats = clock * tempo
 }
 
 group "Arrangement" {
-  # Sixteen sections of eight bars: two of intro, two of build, the drop played
-  # straight, the same drop chopped, a breakdown and a build, then four of everything
-  # before it thins out. The third quarter is the second theme, and the last quarter
-  # is the first come home. The rows are the kick and snare, the hats, the bass,
-  # whether the break is chopped, the pad's level and how bright the picture is
-  # graded.
+  // Sixteen sections of eight bars: two of intro, two of build, the drop played
+  // straight, the same drop chopped, a breakdown and a build, then four of everything
+  // before it thins out. The third quarter is the second theme, and the last quarter
+  // is the first come home. The rows are the kick and snare, the hats, the bass,
+  // whether the break is chopped, the pad's level and how bright the picture is
+  // graded.
   let parts = beats
     |> arrangement(rate: 0.03125) [
         0 0 0.5 1 1 1 1 1 0 1 1 1 1 1 1 0 |
@@ -42,10 +42,10 @@ group "Arrangement" {
         0 0 0 0 0 0 1 1 0 0 0 1 1 1 0 0 |
         0.925 0.85 0.775 0.7 0.6 0.6 0.55 0.55 0.9 0.75 0.7 0.525 0.5 0.5 0.575 0.875 |
         0.875 0.95 1.025 1.1 1.2 1.2 1.25 1.25 0.9 1.05 1.1 1.275 1.3 1.3 1.225 0.925 ]
-  # Whether it is the second theme, and whether the break is chopped: switches,
-  # because half way between two tunes or two places in a bar is neither. The pad
-  # settles rather than steps, and the last of every four sections but the very last
-  # ends in a riser.
+  // Whether it is the second theme, and whether the break is chopped: switches,
+  // because half way between two tunes or two places in a bar is neither. The pad
+  // settles rather than steps, and the last of every four sections but the very last
+  // ends in a riser.
   let second = parts.section |> window(from: 9, to: 13)
   let chopped = step(0.5, parts.part_4)
   let swell = parts.part_5 |> slew(rise: 2s, fall: 4s)
@@ -57,31 +57,31 @@ group "Arrangement" {
 }
 
 group "Cut" {
-  # Which eighth of the bar it is, and the list of which eighth is played instead: two
-  # bars that start as they should and come apart.
+  // Which eighth of the bar it is, and the list of which eighth is played instead: two
+  // bars that start as they should and come apart.
   let eighths = beats * 2
   let straight = floor(eighths % 8)
   let cuts = beats |> values(rate: 2) [ 0 1 2 3 4 5 2 3 0 1 0 1 4 2 6 7 ]
   let slice = straight |> math.mix(a: _, b: cuts, t: chopped)
-  # One die an eighth. The top quarter of its range is a roll, the slice played two,
-  # three or four times inside itself, and the bottom sixth is a slice played
-  # backwards.
+  // One die an eighth. The top quarter of its range is a roll, the slice played two,
+  // three or four times inside itself, and the bottom sixth is a slice played
+  // backwards.
   let die = beats |> noise(rate: 2, seed: 3)
   let roll_size = die.random |> remap(in_low: 0.45, out_low: 1, out_high: 4.99)
   let rolls = (max(floor(roll_size), 1) + -1) * chopped + 1
   let through = fract(fract(eighths) * rolls)
   let reversed = step(die.random, -0.7) * chopped
   let within = through |> math.mix(a: _, b: 1 - through, t: reversed)
-  # The kit's clock: the slice and the place in it, back in beats. How far the list
-  # moved the slice is what the picture slides its strips by.
+  // The kit's clock: the slice and the place in it, back in beats. How far the list
+  // moved the slice is what the picture slides its strips by.
   let drum_beats = (slice + within) * 0.5
   let moved = (cuts - straight) * chopped
 }
 
 group "Break" {
-  # One bar of sixteenths and one list for two drums: a step's value is how hard the
-  # kick is hit and its volume how hard the snare is, so the pattern is written once
-  # and cannot disagree with itself.
+  // One bar of sixteenths and one list for two drums: a step's value is how hard the
+  // kick is hit and its volume how hard the snare is, so the pattern is written once
+  // and cannot disagree with itself.
   let snare_note = drum_beats |> stroke(rate: 4, curve: 1.6)
   let pattern = drum_beats
     |> values(gate_length: 1) [
@@ -89,23 +89,23 @@ group "Break" {
   let snare_stroke = snare_note * pattern.gate * parts
   let kick_note = drum_beats |> stroke(rate: 4, curve: 1.3)
   let kick_stroke = kick_note * pattern * parts
-  # Eleven sixteenths in sixteen, off the same bent clock, so a roll rolls the hats
-  # too. The Hiss shares the wires' seed, so it is the same noise.
+  // Eleven sixteenths in sixteen, off the same bent clock, so a roll rolls the hats
+  // too. The Hiss shares the wires' seed, so it is the same noise.
   let hat_hits = drum_beats |> euclid(steps: 16, hits: 11, curve: 4)
   let hat_stroke = hat_hits.stroke * parts.part_2
   let crush_die = die.random |> smoothstep(edge0: 0.2, edge1: 0.5)
   let crush = crush_die * chopped
-  # A Drum for the snare's shell, and white noise for the wires: the band round two
-  # kilohertz for the crack and what is over it for the air.
+  // A Drum for the snare's shell, and white noise for the wires: the band round two
+  // kilohertz for the crack and what is over it for the air.
   let rattle = noise(seed: 1) |> filter(cutoff: 2100, resonance: 0.3)
   let snare = drum(
       level: snare_stroke,
       pitch: 200,
       sweep: 170,
       drive: 3) + snare_stroke * (rattle.band * 3.5 + rattle.high * 1.2)
-  # The kit through one Drive, which brings the ghost notes and the hats up to the
-  # level of the hits. Then a Sample and Hold clocked at five kilohertz, a sampler
-  # with not enough of them, only while the die is rolling.
+  // The kit through one Drive, which brings the ghost notes and the hats up to the
+  // level of the hits. Then a Sample and Hold clocked at five kilohertz, a sampler
+  // with not enough of them, only while the die is rolling.
   let kit = drum(
       level: kick_stroke,
       pitch: 55,
@@ -124,12 +124,12 @@ group "Picture: Strips" {
 }
 
 group "Bass" {
-  # The first theme's bass sits on F and keeps falling away from it; the second's
-  # climbs from D flat through the scale's three major chords to a bar on C that wants
-  # the F back. Thirty milliseconds of glide, because a Reese slides: two saws a
-  # little over one per cent apart, a Filter a Wander opens, and a Phaser, cut under
-  # 110 Hz so a sine sub has the low end to itself, all ducked by the kick. The sub
-  # plays an octave up below 41 Hz, where a subwoofer gives out.
+  // The first theme's bass sits on F and keeps falling away from it; the second's
+  // climbs from D flat through the scale's three major chords to a bar on C that wants
+  // the F back. Thirty milliseconds of glide, because a Reese slides: two saws a
+  // little over one per cent apart, a Filter a Wander opens, and a Phaser, cut under
+  // 110 Hz so a sine sub has the low end to itself, all ducked by the kick. The sub
+  // plays an octave up below 41 Hz, where a subwoofer gives out.
   let bass_open = wander(rate: 0.3, seed: 5, low: 250, high: 1400)
   let second_line = beats
     |> notes(rate: 0.5) [ C#1 C#1 C#1 C#1 D#1 D#1 D#1 D#1 G#1 G#1 G#1 G#1 C1 C1 C1 C2 ]
@@ -150,9 +150,9 @@ group "Bass" {
 }
 
 group "Picture: Strips" {
-  # The frame in eight strips, one a slice, each sliding sideways by how far the list
-  # moved the slice playing. The bass ripples down the frame as deep as its Filter is
-  # open, and a roll is the picture as many times smaller.
+  // The frame in eight strips, one a slice, each sliding sideways by how far the list
+  // moved the slice playing. The bass ripples down the frame as deep as its Filter is
+  // open, and a roll is the picture as many times smaller.
   let ripple_depth = bass_open |> remap(in_low: 250, in_high: 1400, out_high: 0.03)
   let ripple = sin(coord.y * 9 + beats * 2) * (ripple_depth * parts.part_3)
   let plane = sin(
@@ -161,10 +161,10 @@ group "Picture: Strips" {
 }
 
 group "Picture: Tunnel" {
-  # Two tunnels, one of squares and one of triangles, turning against each other and
-  # compared, so what shows is where they differ. A slice played backwards is the
-  # picture turned inside out; the white goes lilac for the second theme, and the
-  # snare is orange.
+  // Two tunnels, one of squares and one of triangles, turning against each other and
+  // compared, so what shows is where they differ. A slice played backwards is the
+  // picture turned inside out; the white goes lilac for the second theme, and the
+  // snare is orange.
   let squares_turned = plane |> rotate(angle: beats * 0.04)
   let triangles_turned = plane |> rotate(angle: beats * -0.07)
   let triangle_distance = triangles_turned |> polygon(radius: 0.001, sides: 3)
@@ -182,8 +182,8 @@ group "Picture: Tunnel" {
 }
 
 group "Picture: Sparks" {
-  # The bells are squares on a grid of four to the unit, a die thrown for each cell,
-  # and the hats are grain: a Noise read across the frame instead of along the clock.
+  // The bells are squares on a grid of four to the unit, a die thrown for each cell,
+  // and the hats are grain: a Noise read across the frame instead of along the clock.
   let cell_x = coord * 4
   let cell_y = coord.y * 4
   let tile = fract(cell_x) + -0.5
@@ -194,9 +194,9 @@ group "Picture: Sparks" {
 }
 
 group "Bells" {
-  # A tune nobody wrote: a die on every sixteenth, an octave either side of a high F,
-  # snapped to the scale, with a Wander for how many sixteenths sound. They belong to
-  # the first theme.
+  // A tune nobody wrote: a die on every sixteenth, an octave either side of a high F,
+  // snapped to the scale, with a Wander for how many sixteenths sound. They belong to
+  // the first theme.
   let bell_die = beats |> noise(seed: 9)
   let bell_hits = beats
     |> euclid(steps: 16, hits: wander(seed: 2, low: 3, high: 9), curve: 4)
@@ -208,9 +208,9 @@ group "Bells" {
 }
 
 group "Lead" {
-  # The second theme's tune, written down and sung rather than struck: a note to the
-  # beat, rising through each chord and coming down by step. The rests hold their
-  # pitch, so the glide slides between the notes either side of a gap.
+  // The second theme's tune, written down and sung rather than struck: a note to the
+  // beat, rising through each chord and coming down by step. The rests hold their
+  // pitch, so the glide slides between the notes either side of a gap.
   let lead_line = beats
     |> notes(rate: 1, gate_length: 0.9, shape: 0.06) [
         F5 F5%0 G#5 G#5%0 C6 C6%0 A#5 G#5 G5 G5%0 A#5 A#5%0 D#6 D#6%0 C#6 A#5 C6 C6%0
@@ -238,16 +238,16 @@ group "Picture: Sparks" {
 }
 
 group "Picture: Print" {
-  # A short trail, shorter the brighter the section. While the drums are crushed the
-  # picture is too: fewer levels instead of fewer moments.
+  // A short trail, shorter the brighter the section. While the drums are crushed the
+  // picture is too: fewer levels instead of fewer moments.
   let trails_persist = parts.part_6
     |> remap(in_low: 0.8, in_high: 1.3, out_low: 0.85, out_high: 0.6)
   let posterise_levels = crush |> remap(in_low: 0, out_low: 24, out_high: 3)
 }
 
 group "Space" {
-  # A dotted eighth and five sixteenths of echo, a riser whose band climbs nearly five
-  # octaves in four bars, and one hall for what should sound far away.
+  // A dotted eighth and five sixteenths of echo, a riser whose band climbs nearly five
+  // octaves in four bars, and one hall for what should sound far away.
   let taps = bells + lead * 0.6 |> echo(tempo: tempo, feedback: 0.5, mix: 1)
   let riser_band = ramp |> remap(in_low: 0, out_low: 250, out_high: 7000)
   let riser = hiss(
@@ -260,8 +260,8 @@ group "Space" {
 }
 
 group "Pad" {
-  # The chord over the bass, three octaves up: the root on seven detuned saws, and a
-  # third and a seventh snapped to the scale.
+  // The chord over the bass, three octaves up: the root on seven detuned saws, and a
+  // third and a seventh snapped to the scale.
   let pad_note = bass_line + 36
   let pad_pitch = pad_note |> note(note: _)
   let third = pad_note |> tune(transpose: 3.6) [ F G G# A# C C# D# ]
@@ -289,7 +289,7 @@ group "Space" {
 }
 
 group "Desk" {
-  # Two Desks of four, chained by their buses into one of eight.
+  // Two Desks of four, chained by their buses into one of eight.
   let rhythm = drums
     |> desk(
         left_1: _,
@@ -327,8 +327,8 @@ group "Picture: Print" {
 }
 
 group "Master" {
-  # Glued a couple of decibels, the sub kept in the middle, the top opened for the
-  # hats, and a limiter for the loudness a drum and bass track is played at.
+  // Glued a couple of decibels, the sub kept in the middle, the top opened for the
+  // hats, and a limiter for the loudness a drum and bass track is played at.
   let compressor = air
     |> compressor(
         left: _,

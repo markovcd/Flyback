@@ -11,9 +11,6 @@
   means is the same thing it means on the canvas wherever there is a
   correspondence: a socket name is the pale label a socket carries on a node,
   and the Output is the sink's red.
-
-  A span's start outranks any rule that would run across it, so the comment
-  begins at a '#' that is not the sharp of a note.
 -->
 <SyntaxDefinition name="Flyback" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
 
@@ -29,7 +26,7 @@
 
   <RuleSet ignoreCase="false">
 
-    <Span color="Comment" begin="#(?!(?&lt;=\b[A-G]#)-?\d)" />
+    <Span color="Comment" begin="//" />
 
     <!-- The one string the language has, which names a file or says something about the patch. -->
     <Span color="Text" begin="&quot;" end="&quot;" />
@@ -43,13 +40,13 @@
 
   <!--
     Inside brackets a note may leave out its octave (a tune's or a keyboard's
-    scale), '#' is its sharp, and the step and arrangement notation has
+    scale), and the step and arrangement notation has
     operators of its own: a rest, velocity, repeat, elongate, alternation and
     the bar between parts.
   -->
   <RuleSet name="Block" ignoreCase="false">
 
-    <Span color="Comment" begin="#(?&lt;!\b[A-G]#)" />
+    <Span color="Comment" begin="//" />
     <Span color="Text" begin="&quot;" end="&quot;" />
     <Span ruleSet="Block" multiline="true" begin="\[" end="\]" />
 

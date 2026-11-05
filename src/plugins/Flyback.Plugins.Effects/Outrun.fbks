@@ -1,19 +1,19 @@
-# A whole synthwave track, ninety-six bars of four dark chords, gated pads, a
-# rolling bass and a gated-reverb snare, under a picture that is drawn rather than
-# grown: a slatted sun over a ridge, and a grid running to the horizon a line to the
-# beat.
-#
-# This one draws a scene: every region of the frame is a mask made of a comparison,
-# every mask mixes one color over what is behind it, and the order of the mixes is
-# the depth. The perspective is one division, how far under the horizon a pixel is,
-# turned over, and everything on the ground is flat pattern read at the plane that
-# division gives back.
-#
-# The harmony is written once, as four roots: A, F, B and E. No part says what kind
-# of chord stands on any of them. A third is a little over three and a half
-# semitones above the root and a fifth is seven, and both go through a scale of A
-# harmonic minor, which has no F sharp, so the chord over B is diminished, and has a
-# G sharp, so the chord over E is the major one that pulls back to A.
+// A whole synthwave track, ninety-six bars of four dark chords, gated pads, a
+// rolling bass and a gated-reverb snare, under a picture that is drawn rather than
+// grown: a slatted sun over a ridge, and a grid running to the horizon a line to the
+// beat.
+//
+// This one draws a scene: every region of the frame is a mask made of a comparison,
+// every mask mixes one color over what is behind it, and the order of the mixes is
+// the depth. The perspective is one division, how far under the horizon a pixel is,
+// turned over, and everything on the ground is flat pattern read at the plane that
+// division gives back.
+//
+// The harmony is written once, as four roots: A, F, B and E. No part says what kind
+// of chord stands on any of them. A third is a little over three and a half
+// semitones above the root and a fifth is seven, and both go through a scale of A
+// harmonic minor, which has no F sharp, so the chord over B is diminished, and has a
+// G sharp, so the chord over E is the major one that pulls back to A.
 
 description "A whole synthwave track: four chords, gated pads and a gated-reverb snare,"
   "under a drawn scene — a slatted sun, a ridge, and a grid that arrives a line to the"
@@ -25,10 +25,10 @@ requires flyback.effects, flyback.picture, flyback.voice
 
 group "Picture: Sky" {
   let coord = coord()
-  # Three colors up the frame: the pink of the horizon, violet over it, and nearly
-  # black at the top. Stars are Cells: under a threshold the distance to the nearest
-  # point is a dot. Each twinkles on its own cell's number, only the upper sky has
-  # any, and the hats make them all flare.
+  // Three colors up the frame: the pink of the horizon, violet over it, and nearly
+  // black at the top. Stars are Cells: under a threshold the distance to the nearest
+  // point is a dot. Each twinkles on its own cell's number, only the upper sky has
+  // any, and the hats make them all flare.
   let dusk_t = coord.y |> smoothstep(edge0: -0.08, edge1: 0.45)
   let zenith_t = coord.y |> smoothstep(edge0: 0.3)
   let sky = rgb(g: 0.35, b: 0.5)
@@ -40,9 +40,9 @@ group "Picture: Sky" {
 }
 
 group "Clock" {
-  # A hundred and twelve a minute. Every part reads the count of beats, so the tempo
-  # is one knob. What is left of the sixteenth, cubed, is a pluck that cannot drift
-  # off the grid because it is the grid.
+  // A hundred and twelve a minute. Every part reads the count of beats, so the tempo
+  // is one knob. What is left of the sixteenth, cubed, is a pluck that cannot drift
+  // off the grid because it is the grid.
   let clock = time()
   let tempo = tempo(bpm: 112)
   let beats = clock * tempo
@@ -54,16 +54,16 @@ group "Picture: Sky" {
 }
 
 group "Hats" {
-  # Closed on every sixteenth and open on the off-beat, which rings longer.
+  // Closed on every sixteenth and open on the off-beat, which rings longer.
   let closed_hat = beats |> stroke(rate: 4, curve: 7)
   let open_hat = beats |> stroke(offset: 0.5)
 }
 
 group "Arrangement" {
-  # Twelve sections of eight bars: intro, intro, build, build, drop, drop, breakdown,
-  # build, and three of the peak before the outro. A row a part, then how hard the
-  # pads are chopped, the lead, how far the filters open and how bright the picture is
-  # graded.
+  // Twelve sections of eight bars: intro, intro, build, build, drop, drop, breakdown,
+  // build, and three of the peak before the outro. A row a part, then how hard the
+  // pads are chopped, the lead, how far the filters open and how bright the picture is
+  // graded.
   let parts = beats
     |> arrangement(rate: 0.03125) [
         0 0 0.5 1 1 1 0 1 1 1 1 0 |
@@ -74,10 +74,10 @@ group "Arrangement" {
         0 0 0 0 0 0 0 0 1 1 1 0 |
         0.15 0.3 0.45 0.6 0.8 0.85 0.35 0.5 0.95 1 1 0.2 |
         0.925 1 1.075 1.15 1.25 1.275 1.025 1.1 1.325 1.35 1.35 0.95 ]
-  # The harmony, a bar at a time: A, F, B and E, two bars each. It is the only place
-  # the chords are written down. Every fourth section but the outro ends in a riser,
-  # the filters fade in over four seconds, and the last two beats of a section are a
-  # tom fill.
+  // The harmony, a bar at a time: A, F, B and E, two bars each. It is the only place
+  // the chords are written down. Every fourth section but the outro ends in a riser,
+  // the filters fade in over four seconds, and the last two beats of a section are a
+  // tom fill.
   let root = beats |> notes(rate: 0.25) [ A2 A2 F2 F2 B1 B1 E2 E2 ]
   let rising = parts.progress |> smoothstep(edge0: 0.5)
   let ramp = rising * (
@@ -97,7 +97,7 @@ group "Picture: Sky" {
 }
 
 group "Kick" {
-  # Four on the floor, whose level is also the sidechain on the bass.
+  // Four on the floor, whose level is also the sidechain on the bass.
   let kick_note = beats |> stroke(curve: 5)
   let kick_stroke = kick_note * parts
   let duck = duck(key: kick_stroke, depth: 0.65, attack: 100us, release: 100us)
@@ -105,11 +105,11 @@ group "Kick" {
 }
 
 group "Picture: Sun" {
-  # A Circle with the plane slid down under it, swelling a little on the kick, filled
-  # hard for the disc and very soft for the haze; yellow at the top and hot pink at
-  # the bottom. The slats are nine bands down the disc, sliding downwards a band every
-  # four beats, with a gap at the foot of each that grows towards the bottom. Round
-  # the sun, the triangle every record sleeve had, lit by the snare.
+  // A Circle with the plane slid down under it, swelling a little on the kick, filled
+  // hard for the disc and very soft for the haze; yellow at the top and hot pink at
+  // the bottom. The slats are nine bands down the disc, sliding downwards a band every
+  // four beats, with a gap at the foot of each that grows towards the bottom. Round
+  // the sun, the triangle every record sleeve had, lit by the snare.
   let sun_y = coord.y + -0.24
   let disc = kick_stroke |> remap(in_low: 0, out_low: 0.4, out_high: 0.42)
     |> circle(x: coord, y: sun_y, radius: _)
@@ -125,10 +125,10 @@ group "Picture: Sun" {
 }
 
 group "Snare" {
-  # Two and four: a band of Hiss for the wires and a Drum that does not sweep for the
-  # shell. Then the sound of the decade: a hall far too big for a drum, shut off a
-  # fifth of a second after the hit. The gate is the ramp that struck the drum, so it
-  # cannot open late.
+  // Two and four: a band of Hiss for the wires and a Drum that does not sweep for the
+  // shell. Then the sound of the decade: a hall far too big for a drum, shut off a
+  // fifth of a second after the hit. The gate is the ramp that struck the drum, so it
+  // cannot open late.
   let backbeat = beats |> stroke(rate: 0.5, offset: 0.5, curve: 9)
   let snare_stroke = backbeat * parts.part_2
   let snare_dry = hiss(
@@ -150,9 +150,9 @@ group "Picture: Sun" {
 }
 
 group "Picture: Ridge" {
-  # Mountains are one row of a Clouds field, read along x with y pinned, standing only
-  # at the sides to leave the sun its gap. Lit along the crest, and wired down the
-  # faces by lines slanted by how far under the crest they are.
+  // Mountains are one row of a Clouds field, read along x with y pinned, standing only
+  // at the sides to leave the sun its gap. Lit along the crest, and wired down the
+  // faces by lines slanted by how far under the crest they are.
   let magenta = rgb(g: 0.2, b: 0.75)
   let rock = value(value: 3.7) |> clouds(x: coord, y: _, z: 1.3, scale: 2.2)
     |> remap(in_low: 0, out_low: 0.05, out_high: 0.5)
@@ -167,11 +167,11 @@ group "Picture: Ridge" {
 }
 
 group "Picture: Grid" {
-  # The perspective: how far under the horizon a pixel is, turned over, is how far
-  # away the ground there is, held off nought at the horizon. A line's width grows
-  # with the distance to stay one width on the screen, by its square for the lines
-  # coming towards. Faded before the horizon, struck by the bass, and colored by the
-  # chord.
+  // The perspective: how far under the horizon a pixel is, turned over, is how far
+  // away the ground there is, held off nought at the horizon. A line's width grows
+  // with the distance to stay one width on the screen, by its square for the lines
+  // coming towards. Faded before the horizon, struck by the bass, and colored by the
+  // chord.
   let chord_color = root |> remap(in_low: 35, in_high: 45)
   let depth = max(-0.08 - coord.y, 0.004)
   let away = 1 / depth
@@ -188,9 +188,9 @@ group "Picture: Grid" {
 }
 
 group "Picture: Scene" {
-  # The depth of the scene is the order of these: the sky with its stars and the sun's
-  # haze, the sun where a slat shows, the triangle, the mountains, the ground, and the
-  # line of light where they meet, which the kick brightens.
+  // The depth of the scene is the order of these: the sky with its stars and the sun's
+  // haze, the sun where a slat shows, the triangle, the mountains, the ground, and the
+  // line of light where they meet, which the kick brightens.
   let horizon_edge = abs(coord.y + 0.08) |> smoothstep(edge1: 0.07)
   let kick_glow = kick_stroke |> remap(in_low: 0, out_low: 0.6, out_high: 1.3)
   let scene = sky + stars |> ink(under: _, mask: haze * 0.4, g: 0.18, b: 0.55)
@@ -202,17 +202,17 @@ group "Picture: Scene" {
 }
 
 group "Picture: Tape" {
-  # What a worn cassette does to it: a ghost that trails everything bright, scanlines,
-  # and the riser taking the colors away a level at a time until the drop gives them
-  # back.
+  // What a worn cassette does to it: a ghost that trails everything bright, scanlines,
+  // and the riser taking the colors away a level at a time until the drop gives them
+  // back.
   let posterise_levels = ramp |> remap(in_low: 0, out_low: 32, out_high: 4)
   let scanlines = sin(coord.y * 400) |> remap(out_low: 0.86)
 }
 
 group "Arp" {
-  # Up the chord and back in sixteenths, the same list over every chord, snapped to
-  # the scale; over B the fifth it asks for is not in the scale, and what it plays is
-  # the tritone.
+  // Up the chord and back in sixteenths, the same list over every chord, snapped to
+  // the scale; over B the fifth it asks for is not in the scale, and what it plays is
+  // the tritone.
   let arp_line = beats
     |> values() [ 0 7 12 15.6 19 15.6 12 7 0 7 12 15.6 19 24 19 15.6 ]
   let arp_pitch = arp_line + root |> tune(transpose: 12) [ A B C D E F G# ]
@@ -222,10 +222,10 @@ group "Arp" {
 }
 
 group "Lead" {
-  # The one melody that was written down, kept back for the peak. It keeps to what
-  # both halves of the harmony can bear. The rests hold their pitch, so the glide
-  # slides between the notes either side of a gap; a second voice a hair sharp, and a
-  # vibrato on the phase.
+  // The one melody that was written down, kept back for the peak. It keeps to what
+  // both halves of the harmony can bear. The rests hold their pitch, so the glide
+  // slides between the notes either side of a gap; a second voice a hair sharp, and a
+  // vibrato on the phase.
   let lead_line = beats
     |> notes(rate: 2, gate_length: 0.85, shape: 0.06) [
         E5 E5%0 E5 F5 E5 E5%0 D5 D5%0 B4 B4%0 D5 D5%0 F5 E5 D5 D5%0 E5 E5%0 E5 E5%0 B4
@@ -241,8 +241,8 @@ group "Lead" {
 }
 
 group "Toms" {
-  # Eight sixteenths down the toms, pitched by how far through the section it is, so
-  # the run falls without a list.
+  // Eight sixteenths down the toms, pitched by how far through the section it is, so
+  // the run falls without a list.
   let tom_note = beats |> stroke(rate: 4, curve: 2.5)
   let tom_pitch = parts.progress
     |> remap(in_low: 0.9375, out_low: 230, out_high: 95)
@@ -255,8 +255,8 @@ group "Toms" {
 }
 
 group "Space" {
-  # A dotted eighth and five sixteenths of echo, and one hall on a send for what
-  # should sound far away.
+  // A dotted eighth and five sixteenths of echo, and one hall on a send for what
+  // should sound far away.
   let taps = arp
     |> mixer(
         in_1: _,
@@ -269,9 +269,9 @@ group "Space" {
 }
 
 group "Pad" {
-  # Seven detuned saws on the root, and a saw each on the third and the fifth the
-  # scale allows. The trance gate is a list of ones and noughts at the sixteenth,
-  # slewed so it chops without clicking. The Chorus makes it stereo.
+  // Seven detuned saws on the root, and a saw each on the third and the fifth the
+  // scale allows. The trance gate is a list of ones and noughts at the sixteenth,
+  // slewed so it chops without clicking. The Chorus makes it stereo.
   let pad_note = root + 12
   let pad_pitch = pad_note |> note(note: _)
   let third = pad_note |> tune(transpose: 3.6) [ A B C D E F G# ]
@@ -304,7 +304,7 @@ group "Space" {
 }
 
 group "Riser" {
-  # A Hiss whose band climbs nearly five octaves in four bars.
+  // A Hiss whose band climbs nearly five octaves in four bars.
   let riser_band = ramp |> remap(in_low: 0, out_low: 250, out_high: 7000)
   let riser = hiss(
       level: ramp,
@@ -315,9 +315,9 @@ group "Riser" {
 }
 
 group "Bass" {
-  # Root and octave in rolling sixteenths over the harmony, with a sub an octave
-  # under, added after the Drive so it stays a sine. How far the pluck opens the
-  # Filter is the arrangement.
+  // Root and octave in rolling sixteenths over the harmony, with a sub an octave
+  // under, added after the Drive so it stays a sine. How far the pluck opens the
+  // Filter is the arrangement.
   let bass_line = beats
     |> values(gate_length: 0.7, shape: 0.03) [
         0 0%0.8 12%0.9 0%0.8 0 12%0.8 0%0.9 12%0.85 ]
@@ -332,8 +332,8 @@ group "Bass" {
 }
 
 group "Desk" {
-  # Three Desks of four, chained by their buses into one of twelve; the last is the
-  # master.
+  // Three Desks of four, chained by their buses into one of twelve; the last is the
+  // master.
   let drums = kick
     |> desk(
         left_1: _,

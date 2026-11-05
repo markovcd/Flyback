@@ -60,18 +60,19 @@ public static class Lexer
 
             // To the end of the line, and the newline itself is left to be read
             // as the statement break it is.
-            if (c == '#')
+            if (c == '/' && i + 1 < source.Length && source[i + 1] == '/')
             {
                 while (i < source.Length && source[i] != '\n') i++;
                 continue;
             }
 
             // Read to the end of the line as the comment it was meant to be, so
-            // what it says is not taken apart into complaints of its own.
-            if (c == '/' && i + 1 < source.Length && source[i + 1] == '/')
+            // what it says is not taken apart into complaints of its own. A note's
+            // sharp never reaches here: the note is read whole from its letter.
+            if (c == '#')
             {
-                issues.Add(new LanguageIssue(line, column, IssueCode.SlashComment,
-                    "a comment starts with '#', not '//'. To head a part of the patch, put it in a group: group \"Clock\" { ... }."));
+                issues.Add(new LanguageIssue(line, column, IssueCode.HashComment,
+                    "a comment starts with '//', not '#'. To head a part of the patch, put it in a group: group \"Clock\" { ... }."));
 
                 while (i < source.Length && source[i] != '\n') i++;
                 continue;
