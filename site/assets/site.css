@@ -1,6 +1,6 @@
 /*
-  The site wears the app's Graphite scheme: Hugo fills the grounds, the text and
-  the accent from graphite.json (ADR-0222). The family colors are Colors.cs's and
+  The site wears the app's Phosphor scheme: Hugo fills the grounds, the text and
+  the accent from phosphor.json (ADR-0222). The family colors are Colors.cs's and
   the code colors Flyback.xshd's. The site has no light theme.
 */
 
@@ -29,10 +29,10 @@
 
   /* the one color that means "look here" */
   --attention: {{ .accent }};
-  --attention-edge: #C9640D;
-  --attention-hover: #FF9A45;
-  --attention-dim: #6A3A12;
-  --attention-ink: #4A2406;
+  --attention-edge: #4BB874;
+  --attention-hover: #A4F3BC;
+  --attention-dim: #24573A;
+  --attention-ink: #133D24;
 
   /* module families, borrowed to color a heading or a card's edge */
   --sink: #E05A5A;

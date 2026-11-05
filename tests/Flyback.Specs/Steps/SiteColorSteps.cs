@@ -8,7 +8,7 @@ using Shouldly;
 
 namespace Flyback.Specs.Steps;
 
-/// <summary>The website's colors as built: written once, in <c>site.css</c>'s <c>:root</c>, and the Graphite scheme's.</summary>
+/// <summary>The website's colors as built: written once, in <c>site.css</c>'s <c>:root</c>, and the Phosphor scheme's.</summary>
 [Binding]
 public sealed partial class SiteColorSteps(IUnitTestRuntimeProvider runtime)
 {
@@ -51,13 +51,13 @@ public sealed partial class SiteColorSteps(IUnitTestRuntimeProvider runtime)
         }
     }
 
-    [Then("every color in them is one of site.css's, and those are the Graphite scheme's")]
+    [Then("every color in them is one of site.css's, and those are the Phosphor scheme's")]
     public void ThenColorsComeFromOnePlace()
     {
         strays.ShouldBeEmpty("Name a color in site.css's :root and use its var(): " + Environment.NewLine + string.Join(Environment.NewLine, strays));
 
         var site = Declared().Matches(root).ToDictionary(m => m.Groups["name"].Value, m => m.Groups["value"].Value.Trim());
-        var scheme = JsonNode.Parse(File.ReadAllText(Path.Combine(Repository.Root, "src", "Flyback.Ui", "Controls", "Schemes", "graphite.json")))!;
+        var scheme = JsonNode.Parse(File.ReadAllText(Path.Combine(Repository.Root, "src", "Flyback.Ui", "Controls", "Schemes", "phosphor.json")))!;
 
         var expected = new Dictionary<string, string>();
         foreach (var group in new[] { "grounds", "text" })
@@ -70,7 +70,7 @@ public sealed partial class SiteColorSteps(IUnitTestRuntimeProvider runtime)
 
         var differ = expected
             .Where(e => !site.TryGetValue(e.Key, out var value) || !value.Equals(e.Value, StringComparison.OrdinalIgnoreCase))
-            .Select(e => $"--{e.Key}: {(site.TryGetValue(e.Key, out var value) ? value : "missing")}, Graphite has {e.Value}")
+            .Select(e => $"--{e.Key}: {(site.TryGetValue(e.Key, out var value) ? value : "missing")}, Phosphor has {e.Value}")
             .ToList();
         differ.ShouldBeEmpty(string.Join(Environment.NewLine, differ));
 

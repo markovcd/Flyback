@@ -27,8 +27,8 @@ The editor is drawn as an instrument, with a scope on the bench as the reference
 - **Three more color schemes stand beside it**, in Settings, Canvas, Colors. Arek picked
   them from palettes a generator gave with nothing locked: Amber (teal-black grounds,
   cream text, #D1AC00), Graphite (charcoal, sage text, #FF7F11) and Midnight
-  (violet-black, warm grays, #F46036). Graphite is the default, and the site is drawn
-  in it: P31 belongs to the Phosphor scheme, not to Flyback as a whole. A scheme changes
+  (violet-black, warm grays, #F46036). Phosphor is the default, and the site is drawn
+  in it. A scheme changes
   the grounds, the text and the accent, never a module's category color, and takes
   effect at the next start: brushes made from the colors are cached for the run, and
   repainting every one of them live is not worth what it would cost.
@@ -38,7 +38,7 @@ The editor is drawn as an instrument, with a scope on the bench as the reference
   the schemes folder beside the settings are offered after them, a file winning over a
   shipped scheme of its name, as an instrument profile does. `format` rises only when an
   older reader would get a file wrong; a file from a newer Flyback is skipped whole, and
-  a color a file lacks or gets wrong is Graphite's, with the report bar saying which.
+  a color a file lacks or gets wrong is Phosphor's, with the report bar saying which.
   `text.bright`, for a value being turned or typed, a heading and a selection's outline,
   may be left out and is then the label taken most of the way to white, or to black in a
   scheme whose file sets `light` true. That flag puts Fluent's controls in their light

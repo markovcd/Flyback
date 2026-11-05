@@ -18,12 +18,12 @@ internal sealed class SchemeLibrary
     public static string UserFolder => Path.Combine(GlobalConstants.DataFolder, "schemes");
 
     /// <summary>The name of the scheme the editor is drawn in until another is chosen.</summary>
-    public const string DefaultName = "Graphite";
+    public const string DefaultName = "Phosphor";
 
     /// <summary>The schemes shipped inside Flyback, the default first.</summary>
     public static IReadOnlyList<Scheme> Shipped { get; } = ReadShipped();
 
-    /// <summary>The scheme the editor is drawn in until another is chosen: charcoal, sage text and orange (ADR-0219).</summary>
+    /// <summary>The scheme the editor is drawn in until another is chosen: blue-gray grounds and the P31 green of the Beam module's trace (ADR-0219).</summary>
     public static Scheme Default => Shipped[0];
 
     /// <summary>Every scheme there is, the default first.</summary>

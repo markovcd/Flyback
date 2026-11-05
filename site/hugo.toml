@@ -15,7 +15,7 @@ disableKinds = ["section", "taxonomy", "term", "rss", "sitemap", "404"]
 noBuildLock = true
 disableHugoGeneratorInject = true
 
-# The app's color schemes, as data: site.css and every page's theme-color read Graphite.
+# The app's color schemes, as data: site.css and every page's theme-color read Phosphor.
 [[module.mounts]]
 source = "../src/Flyback.Ui/Controls/Schemes"
 target = "data/schemes"

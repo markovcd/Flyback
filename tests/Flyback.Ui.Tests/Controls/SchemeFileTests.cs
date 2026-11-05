@@ -26,20 +26,20 @@ public sealed class SchemeFileTests
     }
 
     [Fact]
-    public void Graphite_is_the_default_orange_on_charcoal()
+    public void Phosphor_is_the_default_the_green_of_the_beam_on_blue_gray()
     {
-        SchemeLibrary.Default.Name.ShouldBe("Graphite");
-        SchemeLibrary.Default.Window.ShouldBe(Color.FromRgb(0x20, 0x20, 0x20));
-        SchemeLibrary.Default.Attention.ShouldBe(Color.FromRgb(0xFF, 0x7F, 0x11));
+        SchemeLibrary.Default.Name.ShouldBe("Phosphor");
+        SchemeLibrary.Default.Window.ShouldBe(Color.FromRgb(0x16, 0x18, 0x1B));
+        SchemeLibrary.Default.Attention.ShouldBe(Color.FromRgb(0x77, 0xEA, 0x9A));
     }
 
     [Fact]
-    public void Phosphor_is_shipped_as_the_green_of_the_beam_on_blue_gray()
+    public void Graphite_is_shipped_as_orange_on_charcoal()
     {
-        var phosphor = SchemeLibrary.Load(null).Named("Phosphor").ShouldNotBeNull();
+        var graphite = SchemeLibrary.Load(null).Named("Graphite").ShouldNotBeNull();
 
-        phosphor.Window.ShouldBe(Color.FromRgb(0x16, 0x18, 0x1B));
-        phosphor.Attention.ShouldBe(Color.FromRgb(0x77, 0xEA, 0x9A));
+        graphite.Window.ShouldBe(Color.FromRgb(0x20, 0x20, 0x20));
+        graphite.Attention.ShouldBe(Color.FromRgb(0xFF, 0x7F, 0x11));
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public sealed class SchemeFileTests
         scheme.Window.ShouldBe(Color.FromRgb(0x12, 0x0C, 0x06));
         scheme.Attention.ShouldBe(Color.FromRgb(0xFF, 0x9A, 0x1F));
         scheme.Canvas.ShouldBe(SchemeLibrary.Default.Canvas);
-        problems.ShouldContain("grounds.canvas is missing or not a #RRGGBB color, so Graphite's is used.");
+        problems.ShouldContain("grounds.canvas is missing or not a #RRGGBB color, so Phosphor's is used.");
     }
 
     [Fact]

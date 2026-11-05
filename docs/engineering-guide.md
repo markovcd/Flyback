@@ -1181,7 +1181,7 @@ has MIDI voices or panel knobs. It must compile clean, fit the canvas, and stay
 inside what the speakers carry; `ShippedPresetTests` checks the first two.
 
 **Change how something looks.** Change the token in `Colors.cs` or `Text.cs` (the
-site takes the Graphite scheme's colors itself; a family color goes in
+site takes the default scheme's colors itself; a family color goes in
 `site/assets/site.css` too), then retake the affected screenshots from the real app
 (`site-screenshots` skill). Never draw a module in HTML, CSS or SVG
 ([0119](adr/0119-the-website-shows-a-module-by-photographing-one.md)).

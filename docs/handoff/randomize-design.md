@@ -4,7 +4,7 @@ Written on 2026-11-02, on `main` at `25b8e18`, for Claude Design. It is on TODO.
 
 Flyback is a patchable synthesizer: one patch of modules wired together makes both a picture and a sound. A patch can pin a row of **panel knobs** under the canvas (the **knob panel**) to perform it by hand or from a MIDI controller. **Randomize** sends those knobs somewhere new so the player can hear and see where the patch can go, then keep it or go back. This brief asks for a redesign of the randomize controls, which today are small, unlabeled and easy to misread.
 
-Reference shot: `panel-today.png` in the project files (`randomize/`), the knob panel in the Graphite scheme with one knob.
+Reference shot: `panel-today.png` in the project files (`randomize/`), the knob panel in the Graphite scheme with one knob (taken before Phosphor was the default).
 
 ## The words
 
@@ -60,24 +60,24 @@ A set of artboards showing one coherent randomize:
 
 - **Real controls.** The knob panel is built from Avalonia controls (buttons, a drawn `Knob` control, text), not painted like the canvas, so ordinary controls, menus and flyouts are fine.
 - **Space.** The panel is one row of knob cells under the canvas (a 44 px "+" is its tallest control), wrapping to more rows when there are many or the window is narrow. The randomize tool must not take more width than two knob cells.
-- **Colors** come from the scheme. Graphite is the default:
+- **Colors** come from the scheme. Phosphor is the default:
 
   | Use | Hex |
   |---|---|
-  | Window | #202020 |
-  | Canvas | #262626 |
-  | Panel | #2A2A2A |
-  | Toolbar | #303030 |
-  | Module | #363636 |
-  | Separator | #4A4B47 |
-  | Label | #CBD1BA |
-  | Value | #ACBFA4 |
-  | Muted | #8E9A88 |
-  | Inactive | #646C61 |
-  | Bright | #EFF1EA |
-  | Accent | #FF7F11 |
+  | Window | #16181B |
+  | Canvas | #1A1C20 |
+  | Panel | #1C1E22 |
+  | Toolbar | #22252A |
+  | Module | #2A2D34 |
+  | Separator | #3A3E46 |
+  | Label | #C8CCD4 |
+  | Value | #8A92A0 |
+  | Muted | #8A909A |
+  | Inactive | #5A606A |
+  | Bright | #F2F4F8 |
+  | Accent | #77EA9A |
 
-  The design must hold in the other schemes too (Amber, Midnight, Phosphor, Paper, which is light). No new accent color: picking one is the user's call. Avoid the generic dark-UI-with-amber look; the app is moving away from it.
+  The design must hold in the other schemes too (Amber, Graphite, Midnight, Paper, which is light). No new accent color: picking one is the user's call. Avoid the generic dark-UI-with-amber look; the app is moving away from it.
 - **Type.** System sans; small labels 11 px, body 12 px, titles 17 px.
 - **Drivable without eyes.** Flyback is built and tested by an AI assistant, so every state the design adds (held, a learned trigger, back's depth, a glide in progress) must also be reachable by a key or a command and readable as text, not only by hover or color. Today there is no command-line or MCP way to randomize or to read held; a design that names its keys is a plus.
 - **Accessibility.** Text contrast at least 4.5:1 on the panel. Held and not held must differ by more than hue.

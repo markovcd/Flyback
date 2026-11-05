@@ -37,5 +37,5 @@ Feature: The Worker serves the whole website
   @unmeasured @hugo
   Scenario: The website takes its colors from one place
     When someone reads the website's pages, stylesheets and scripts
-    Then every color in them is one of site.css's, and those are the Graphite scheme's
+    Then every color in them is one of site.css's, and those are the Phosphor scheme's
 

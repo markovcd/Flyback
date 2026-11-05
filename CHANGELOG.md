@@ -10,6 +10,8 @@
 
 ### Editor
 
+- Phosphor, the green of the Beam module's trace on blue-gray, is the editor's color scheme until another is chosen in Settings, Canvas, Colors. A scheme already saved there is kept.
+
 ### Viewer
 
 ### Command line

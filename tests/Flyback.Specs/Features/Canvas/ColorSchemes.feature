@@ -1,8 +1,8 @@
 Feature: The editor in colors of your choosing
-  Settings, Canvas, Colors draws the editor in a color scheme: Graphite, orange on
-  charcoal, until another is chosen; Amber on teal-black; Midnight, orange on
-  violet-black; Paper, ballpoint blue on cream; Phosphor, the green of the Beam module's
-  trace on blue-gray; or one of your own, a file in the schemes folder. A scheme chosen there is the one the editor starts in from then on, and Save offers to
+  Settings, Canvas, Colors draws the editor in a color scheme: Phosphor, the green of
+  the Beam module's trace on blue-gray, until another is chosen; Amber on teal-black;
+  Graphite, orange on charcoal; Midnight, orange on violet-black; Paper, ballpoint blue
+  on cream; or one of your own, a file in the schemes folder. A scheme chosen there is the one the editor starts in from then on, and Save offers to
   start Flyback again in it at once.
 
   Scenario: A scheme chosen in the settings is the one the editor starts in next
@@ -10,7 +10,7 @@ Feature: The editor in colors of your choosing
     And the patch is open in the editor
     When Midnight is chosen as the editor's colors
     Then the editor starts in Midnight the next time
-    And the editor is drawn in Graphite until then
+    And the editor is drawn in Phosphor until then
 
   Scenario: Flyback offers to start again in the new colors
     Given a level of 0.25 on the screen

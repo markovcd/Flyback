@@ -146,9 +146,9 @@ internal sealed class CanvasSection : ISettingsSection
             + "and a button says what it does when the pointer rests on it.");
 
         ToolTip.SetTip(colorScheme,
-            "Graphite is orange on charcoal. Amber is amber on teal-black, Midnight orange on "
-            + "violet-black, Paper ballpoint blue on cream, Phosphor the green of the Beam module's "
-            + "trace on blue-gray. A scheme "
+            "Phosphor is the green of the Beam module's trace on blue-gray. Amber is amber on "
+            + "teal-black, Graphite orange on charcoal, Midnight orange on violet-black, Paper "
+            + "ballpoint blue on cream. A scheme "
             + "of your own is a .json file in the schemes folder beside the settings.");
 
         Schemes(report: false);
