@@ -8,9 +8,9 @@
   <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
   <!-- Added to a phone's home screen, the editor opens with no browser bars at all. -->
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#16181c">
+  <meta name="theme-color" content="#16181B">
   <style>
-    html, body, #out { margin: 0; height: 100%; background: #16181c; overflow: hidden; }
+    html, body, #out { margin: 0; height: 100%; background: #16181B; overflow: hidden; }
     /* The visible height, so a phone browser's address bar never covers the transport and status bars. */
     html, body { height: 100dvh; }
     /* Every finger is the editor's: no page pinch, scroll or pull-to-refresh. */
@@ -19,10 +19,10 @@
     .avalonia-input-element { font-size: 16px; }
     /* Shown over the empty page until the editor has drawn; main.js fills the bar and takes it away. */
     #loading { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-               gap: 20px; background: #16181c; color: #9a9ca3; font: 13px/1.5 Inter, system-ui, sans-serif; transition: opacity 0.2s; }
+               gap: 20px; background: #16181B; color: #8A909A; font: 13px/1.5 Inter, system-ui, sans-serif; transition: opacity 0.2s; }
     #loading img { width: 96px; height: 96px; }
-    #loading .bar { width: 200px; height: 3px; border-radius: 2px; background: #2a2d33; overflow: hidden; }
-    #loading .fill { width: 0; height: 100%; background: #4c8dff; transition: width 0.15s; }
+    #loading .bar { width: 200px; height: 3px; border-radius: 2px; background: #2A2D34; overflow: hidden; }
+    #loading .fill { width: 0; height: 100%; background: #77EA9A; transition: width 0.15s; }
     #loading.gone { opacity: 0; pointer-events: none; }
   </style>
 </head>

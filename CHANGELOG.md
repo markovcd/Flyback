@@ -22,6 +22,7 @@
 
 ### Viewer
 
+- The web viewer wears Phosphor, as the editor does, and the web editor's loading screen does too: blue-gray grounds and the green of the Beam module's trace instead of amber and blue.
 - `flyback-viewer --smooth best` draws four samples a pixel.
 
 ### Command line

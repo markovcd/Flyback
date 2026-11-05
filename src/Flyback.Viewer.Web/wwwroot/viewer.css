@@ -1,17 +1,17 @@
 :root {
   --edge: #101114;
-  --bar: #14161a;
-  --field: #1a1d22;
-  --rule: #23262c;
-  --line: #2c3037;
-  --outline: #343941;
-  --track: #2a2e35;
-  --cap: #262a31;
-  --bright: #eceae6;
-  --label: #cfd2d6;
-  --muted: #9aa0a8;
-  --attention: #ffb340;
-  --on-attention: #1a1203;
+  --bar: #141518;
+  --field: #1A1C20;
+  --rule: #24272C;
+  --line: #2C3036;
+  --outline: #3A3E46;
+  --track: #2A2D34;
+  --cap: #1C1E22;
+  --bright: #F2F4F8;
+  --label: #C8CCD4;
+  --muted: #8A909A;
+  --attention: #77EA9A;
+  --on-attention: #101114;
   --sink: #ff6b6b;
   --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
   --sheet-height: 45vh;
@@ -487,7 +487,7 @@ input[type="range"] { accent-color: var(--attention); cursor: pointer; }
   -webkit-touch-callout: none;
 }
 
-#keybed button.sharp { height: 150px; background: #3a3f47; color: var(--bright); }
+#keybed button.sharp { height: 150px; background: var(--outline); color: var(--bright); }
 #keybed button.down { background: var(--attention); color: var(--on-attention); }
 #keybed .note { font-size: 14px; font-weight: 600; }
 #keybed .key { font-family: var(--mono); font-size: 11px; opacity: 0.6; }
@@ -552,7 +552,7 @@ input[type="range"] { accent-color: var(--attention); cursor: pointer; }
     touch-action: none;
   }
 
-  #grip::before { content: ""; width: 40px; height: 5px; border-radius: 3px; background: #4a5059; }
+  #grip::before { content: ""; width: 40px; height: 5px; border-radius: 3px; background: #5A606A; }
 
   .tabs {
     display: flex;
