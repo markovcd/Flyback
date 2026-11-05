@@ -17,7 +17,7 @@ description "Drum and bass at a hundred and seventy: a synthesized break chopped
 tags "song" "drums"
 length 3:00.71
 
-requires flyback.effects, flyback.picture, flyback.voice
+requires flyback.effects, flyback.mastering, flyback.picture, flyback.voice
 
 group "Clock" {
   # A hundred and seventy a minute, and the count of beats everything that is not a
@@ -326,6 +326,35 @@ group "Picture: Print" {
     |> out.color
 }
 
-air |> out.left
-air.right |> out.right
+group "Master" {
+  # Glued a couple of decibels, the sub kept in the middle, the top opened for the
+  # hats, and a limiter for the loudness a drum and bass track is played at.
+  let compressor = air
+    |> compressor(
+        left: _,
+        right: air.right,
+        threshold: -14,
+        ratio: 2,
+        attack: 10ms,
+        release: 125.89255ms,
+        makeup: 6)
+  let eq = compressor
+    |> eq(
+        left: _,
+        right: compressor.right,
+        low_cut: 30,
+        low_freq: 60,
+        low_gain: 1.5,
+        mid_freq: 400,
+        mid_gain: -1.5,
+        mid_q: 0.8,
+        high_freq: 8000,
+        high_gain: 2.5)
+  let width = eq |> width(left: _, right: eq.right, width: 1.15, mono_below: 150)
+  let limiter = width
+    |> limiter(left: _, right: width.right, ceiling: -0.5, release: 50.11873ms)
+}
+
+limiter |> out.left
+limiter.right |> out.right
 out.volume = 0.7

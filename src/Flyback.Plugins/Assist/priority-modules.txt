@@ -105,3 +105,6 @@ flyback.picture.palette
 flyback.picture.polygon
 flyback.picture.posterise
 flyback.picture.star
+
+# The mastering chain the songs end in.
+flyback.mastering.eq

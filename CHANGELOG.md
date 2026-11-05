@@ -7,7 +7,7 @@
 ### Presets
 
 - Tranquility, on the preset site, has a clean sine sub under its rolling bass, so a subwoofer plays the bass and not only the kick; the master trim is lowered so the limiter does not pump on it.
-- Fracture has a sub bass a subwoofer carries: the Reese is cut under 110 Hz so a louder sine sub has the low end to itself, its notes under 41 Hz play an octave up where a subwoofer still answers, and the drums sit a little lower in the mix.
+- Fracture has a sub bass a subwoofer carries: the Reese is cut under 110 Hz so a louder sine sub has the low end to itself, its notes under 41 Hz play an octave up where a subwoofer still answers, and the drums sit a little lower in the mix. It is mastered as the other songs are: a gentle compressor, an EQ, width kept mono under 150 Hz and a limiter, about 4 LU louder than before.
 
 ### Assistant
 
