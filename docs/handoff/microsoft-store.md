@@ -27,7 +27,7 @@ delete this file, in the commit that adds the Store badge to the site.
      assistant sends a patch to a model the user picked themselves.
    - **Packages:** upload the `.msix`.
    - **Store listing (English):** description, at least one screenshot (1366×768 or
-     larger; `site/assets/shots` has them), the search terms.
+     larger; `site/static/assets/shots` has them), the search terms.
    - **Submission options → restricted capabilities:** justify `runFullTrust` (a desktop
      program) and `unvirtualizedResources` (settings and plugins in `%AppData%\Flyback`,
      shared with the command line, a zip copy and the assistant's own program; ADR-0199).

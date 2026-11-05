@@ -1,0 +1,79 @@
+{{ define "main" -}}
+<div class="page">
+
+<div class="canvas">
+  <div class="wrap">
+    <header class="doc-head">
+      <p class="eyebrow">Tutorials</p>
+      <h1>Learn Flyback, one short video at a time.</h1>
+      <p class="lede">Each video takes one idea and shows it in the editor, start to finish. New ones go up on the
+      <a href="https://www.youtube.com/@FlybackModular">Flyback channel on YouTube</a>. In the editor itself, Tutorials,
+      at the left of its status bar, opens tutorials that check your patch as you build it, a step at a time.</p>
+    </header>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="watch">
+    <div>
+      <figure class="clip player" style="margin: 0">
+        <iframe src="https://www.youtube-nocookie.com/embed/FhKpYZxMlec" title="What is Flyback?"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      </figure>
+      <div class="now" aria-live="polite">
+        <span class="count">1 of 9</span>
+        <h2>What is Flyback?</h2>
+        <p>Modules, sockets and wires, the Output, and one patch making both the picture and the sound.</p>
+      </div>
+      <div class="steps">
+        <button type="button" data-step="-1" disabled>← Previous</button>
+        <button type="button" data-step="1">Next →</button>
+      </div>
+    </div>
+
+    {{/* One entry per video, in watching order. The link is the video on YouTube, for a browser without the script. */}}
+    <ol class="playlist" aria-label="Tutorials">
+      <li><a href="https://www.youtube.com/watch?v=FhKpYZxMlec" data-video="FhKpYZxMlec" data-slug="what-is-flyback" aria-current="true"
+             data-blurb="Modules, sockets and wires, the Output, and one patch making both the picture and the sound.">
+        <span class="num">1</span><img src="https://i.ytimg.com/vi/FhKpYZxMlec/mqdefault.jpg" alt="" loading="lazy">
+        <span><strong>What is Flyback?</strong><small>2:03</small></span></a></li>
+      <li><a href="https://www.youtube.com/watch?v=npkO3aYA_CA" data-video="npkO3aYA_CA" data-slug="your-first-patch"
+             data-blurb="From an empty canvas to rings that move: a Sine wired into the Output, stripes from Coordinates, a knob, Rings and Time.">
+        <span class="num">2</span><img src="https://i.ytimg.com/vi/npkO3aYA_CA/mqdefault.jpg" alt="" loading="lazy">
+        <span><strong>Your first patch</strong><small>1:27</small></span></a></li>
+      <li><a href="https://www.youtube.com/watch?v=SxKHeOr8l0g" data-video="SxKHeOr8l0g" data-slug="make-a-beat"
+             data-blurb="A kick, a Euclidean hat and a bass line on one Tempo, rings that flash on every kick, and a knob for the bass filter. Ends as the Beat you can see preset.">
+        <span class="num">3</span><img src="https://i.ytimg.com/vi/SxKHeOr8l0g/mqdefault.jpg" alt="" loading="lazy">
+        <span><strong>Make a beat you can see</strong><small>1:54</small></span></a></li>
+      <li><a href="https://www.youtube.com/watch?v=s8Ys324Lv9I" data-video="s8Ys324Lv9I" data-slug="one-knob-two-echoes"
+             data-blurb="A plucked tune through an Echo that keeps time, a ring on every note carried down a tunnel by Trails, and one knob that sets how long both last. Ends as the Two echoes preset.">
+        <span class="num">4</span><img src="https://i.ytimg.com/vi/s8Ys324Lv9I/mqdefault.jpg" alt="" loading="lazy">
+        <span><strong>One knob, two echoes</strong><small>2:12</small></span></a></li>
+      <li><a href="https://www.youtube.com/watch?v=6aPxkERSXdc" data-video="6aPxkERSXdc" data-slug="seeing-a-sound"
+             data-blurb="One sound drawn three ways: a Sine on a Scope and an Analyzer, then two Sines a fifth apart on a Beam, drawing a knot that turns. Ends as the Lissajous preset.">
+        <span class="num">5</span><img src="https://i.ytimg.com/vi/6aPxkERSXdc/mqdefault.jpg" alt="" loading="lazy">
+        <span><strong>Seeing a sound</strong><small>1:45</small></span></a></li>
+      <li><a href="https://www.youtube.com/watch?v=B9JqyT0UJlg" data-video="B9JqyT0UJlg" data-slug="the-patch-as-text"
+             data-blurb="Press F2 and a patch is text: the Drone preset line by line, one number changed and built with Ctrl+Enter, and the .fbks file it saves as.">
+        <span class="num">6</span><img src="https://i.ytimg.com/vi/B9JqyT0UJlg/mqdefault.jpg" alt="" loading="lazy">
+        <span><strong>The patch as text</strong><small>1:56</small></span></a></li>
+      <li><a href="https://www.youtube.com/watch?v=c1X-H2UjlyM" data-video="c1X-H2UjlyM" data-slug="ask-the-assistant"
+             data-blurb="Choose a model, type an idea, press Expand and send: the assistant builds the patch, proposes it, and keeps changing it as you talk. Ends on Rain on a Window, on the preset site.">
+        <span class="num">7</span><img src="https://i.ytimg.com/vi/c1X-H2UjlyM/mqdefault.jpg" alt="" loading="lazy">
+        <span><strong>Ask the assistant</strong><small>2:20</small></span></a></li>
+      <li><a href="https://www.youtube.com/watch?v=jzZ6SOU6jKk" data-video="jzZ6SOU6jKk" data-slug="turn-any-music-into-a-picture"
+             data-blurb="A Line In, a Meter on the kick and another on the loudness, and a turning kaleidoscope they light and color. Ends as the Visualizer preset.">
+        <span class="num">8</span><img src="https://i.ytimg.com/vi/jzZ6SOU6jKk/mqdefault.jpg" alt="" loading="lazy">
+        <span><strong>Turn any music into a picture</strong><small>1:40</small></span></a></li>
+      <li><a href="https://www.youtube.com/watch?v=eSrklBUPrPw" data-video="eSrklBUPrPw" data-slug="music-that-writes-itself"
+             data-blurb="A Wander held one value a beat, snapped to a pentatonic, each note its own length, drawn as a scrolling score. Ends as the Wandering tune preset.">
+        <span class="num">9</span><img src="https://i.ytimg.com/vi/eSrklBUPrPw/mqdefault.jpg" alt="" loading="lazy">
+        <span><strong>Music that writes itself</strong><small>1:50</small></span></a></li>
+    </ol>
+  </div>
+</div>
+</div>
+
+</div>
+{{- end }}

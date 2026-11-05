@@ -1,0 +1,40 @@
+{{ define "main" -}}
+<div class="canvas">
+  <div class="wrap">
+    <header class="doc-head shelf-head">
+      <span class="eyebrow">Plugins</span>
+      <h1>Modules people wrote.</h1>
+      <p class="lede">Plugins Flyback users built and shared. Download a <code>.fbkp</code> and open it in Flyback:
+        it shows what the plugin is and installs only when asked.</p>
+      <div class="actions">
+        <a class="button primary" href="submit-plugin.html">Submit a plugin</a>
+        <a class="button" href="https://github.com/markovcd/Flyback/blob/main/docs/plugin-guide.md">Write one</a>
+        <a class="button" href="https://github.com/markovcd/Flyback/discussions">Ask or show in Discussions</a>
+      </div>
+    </header>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="note">
+    <span class="tag">Before you install one</span>
+    <p>A plugin runs inside Flyback with everything you can do: it can read your files and reach the network.
+      What is listed here is what the plugin's own metadata says, read without running it, and a review is not
+      an audit. Open the package in Flyback and read what it shows before pressing Install.</p>
+  </div>
+
+  <div class="filters">
+    <input type="search" id="search" placeholder="Search names, authors, descriptions and tags" aria-label="Search plugins">
+    <div class="chips" id="platforms" aria-label="Systems"></div>
+  </div>
+
+  <div class="shelf plugins" id="shelf" aria-live="polite"></div>
+  <p class="empty" id="empty" hidden>No plugins match. <a href="submit-plugin.html">Submit one?</a></p>
+
+  <nav class="pager" id="pager" aria-label="Pages" hidden>
+    <button type="button" class="button small" id="previous">Newer</button>
+    <span id="where"></span>
+    <button type="button" class="button small" id="next">Older</button>
+  </nav>
+</main>
+{{- end }}

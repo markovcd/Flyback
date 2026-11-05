@@ -1,34 +1,34 @@
 /*
-  The site wears the app's theme. Every color below is named after, and equal to,
-  one in src/Flyback.Ui/Controls/Colors.cs; the code colors are Flyback.xshd's.
-  The app has no light theme, so neither does this.
+  The site wears the app's Graphite scheme: Hugo fills the grounds, the text and
+  the accent from graphite.json (ADR-0222). The family colors are Colors.cs's and
+  the code colors Flyback.xshd's. The site has no light theme.
 */
 
 :root {
   color-scheme: dark;
 
   /* surfaces, darkest first */
-  --edge: #161616;
-  --outline: #1A1A1A;
-  --window: #202020;
-  --canvas: #262626;
-  --panel: #2A2A2A;
-  --toolbar: #303030;
-  --grid: #313131;
-  --grid-major: #3A3A3A;
-  --node: #363636;
-  --node-selected: #404040;
-  --separator: #4A4B47;
+  --edge: {{ .grounds.edge }};
+  --outline: {{ .grounds.outline }};
+  --window: {{ .grounds.window }};
+  --canvas: {{ .grounds.canvas }};
+  --panel: {{ .grounds.panel }};
+  --toolbar: {{ .grounds.toolbar }};
+  --grid: {{ .grounds.grid }};
+  --grid-major: {{ .grounds.gridMajor }};
+  --node: {{ .grounds.module }};
+  --node-selected: {{ .grounds.moduleSelected }};
+  --separator: {{ .grounds.separator }};
 
   /* text */
-  --bright: #EFF1EA;
-  --label: #CBD1BA;
-  --value: #ACBFA4;
-  --muted: #8E9A88;
-  --normalled: #7E8979;
+  --bright: {{ .text.bright }};
+  --label: {{ .text.label }};
+  --value: {{ .text.value }};
+  --muted: {{ .text.muted }};
+  --normalled: {{ .text.normalled }};
 
   /* the one color that means "look here" */
-  --attention: #FF7F11;
+  --attention: {{ .accent }};
   --attention-edge: #C9640D;
   --attention-hover: #FF9A45;
   --attention-dim: #6A3A12;

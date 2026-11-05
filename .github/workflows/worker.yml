@@ -79,7 +79,7 @@ jobs:
               | src/Flyback.Host/* | src/Flyback.Gpu/* | src/Flyback.Assist/* \
               | src/Flyback.Engine/* | src/Flyback.Core/* | src/Flyback.Plugins/* | src/plugins/* \
               | .editorconfig | Directory.Build.props | Directory.Build.targets \
-              | Directory.Packages.props | global.json | scripts/stills.sh | scripts/editor-starts.mjs | Dockerfile \
+              | Directory.Packages.props | global.json | scripts/stills.sh | scripts/editor-starts.mjs | scripts/install-hugo.sh | Dockerfile \
               | .github/workflows/worker.yml)
                 touched=true
                 echo "$file"

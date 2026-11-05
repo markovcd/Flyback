@@ -1,51 +1,4 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Play Flyback from an Elektron Syntakt — Flyback Tutorials</title>
-<meta name="description" content="Set up an Elektron Syntakt to play Flyback: the box's MIDI and USB settings, the whole box added in one pick, a MIDI track sequencing a Flyback voice, a Flyback sequencer kept to its clock, a picture lit by its tracks, and its knobs on the panel.">
-<link rel="canonical" href="https://flybackmodular.app/tutorials/syntakt.html">
-<meta property="og:type" content="article">
-<meta property="og:site_name" content="Flyback">
-<meta property="og:url" content="https://flybackmodular.app/tutorials/syntakt.html">
-<meta property="og:title" content="Play Flyback from an Elektron Syntakt">
-<meta property="og:description" content="Set up an Elektron Syntakt to play Flyback: the box's MIDI and USB settings, the whole box added in one pick, a MIDI track sequencing a Flyback voice, a Flyback sequencer kept to its clock, a picture lit by its tracks, and its knobs on the panel.">
-<meta property="og:image" content="https://flybackmodular.app/assets/share.jpg">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="The Flyback logo and the words One patch. A picture and a sound., in front of a wall of pictures Flyback presets make.">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#303030">
-<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750&display=swap">
-<link rel="stylesheet" href="../assets/site.css">
-<style>
-  .patch-fig { margin: 24px 0 0; }
-  .settings td:first-child { white-space: nowrap; color: var(--bright); }
-  .settings td:nth-child(2) { white-space: nowrap; }
-  .settings code { white-space: normal; }
-</style>
-</head>
-<body>
-
-<header class="toolbar">
-  <div class="wrap">
-    <a class="brand" href="../"><img src="../assets/logo.svg" alt=""><span>Flyback</span></a>
-    <nav aria-label="Site">
-      <a href="../" class="optional">Overview</a>
-      <a href="../tutorials.html" aria-current="page">Tutorials</a>
-      <a href="../presets.html">Presets</a>
-      <a href="../shared-plugins.html">Plugins</a>
-      <span class="sep" aria-hidden="true"></span>
-      <a href="https://github.com/markovcd/Flyback">GitHub</a>
-      <a href="https://www.youtube.com/@FlybackModular">YouTube</a>
-    </nav>
-  </div>
-</header>
-
+{{ define "main" -}}
 <div class="page">
 
 <div class="canvas">
@@ -359,36 +312,4 @@ out.volume = 0</code></pre>
 </div>
 
 </div>
-
-<footer class="site-foot">
-  <div class="wrap">
-    <span class="brand-foot"><img src="../assets/logo.svg" alt="">Flyback · MIT License · by <img src="../assets/potato-smasher.svg" alt="">Potato Smasher</span>
-    <a href="../">Overview</a>
-    <a href="../tutorials.html" aria-current="page">Tutorials</a>
-    <a href="https://github.com/markovcd/Flyback/blob/main/docs/plugin-guide.md">Plugin guide</a>
-    <a href="https://github.com/markovcd/Flyback/blob/main/docs/language.md">Language reference</a>
-    <a href="https://github.com/markovcd/Flyback/blob/main/CHANGELOG.md">Changelog</a>
-    <a href="https://github.com/markovcd/Flyback">GitHub</a>
-    <a href="https://github.com/markovcd/Flyback/discussions">Discussions</a>
-    <a href="https://www.youtube.com/@FlybackModular">YouTube</a>
-    <a href="mailto:hello@flybackmodular.app">Email</a>
-    <a href="../method.html">How it was built</a>
-    <a href="../privacy.html">Privacy</a>
-  </div>
-  <div class="wrap donate">
-    <button type="button" class="qr" title="Click to copy the address">
-      <img src="../assets/donate-qr.svg" alt="The donation address as a QR code" width="104" height="104">
-    </button>
-    <div class="ask">
-      <span>If this was worth anything to you, a little bitcoin is welcome.</span>
-      <span class="quiet">It buys tokens, which is what Flyback is written with. Strictly non-profit: nothing here is sold and nobody is paid out of it.</span>
-      <code>bc1qdu86tdtksg6mlqspdxmc2de9qppte3a5430lmg</code>
-      <span class="said" role="status">Click the code to copy the address.</span>
-    </div>
-  </div>
-  <script src="../assets/donate.js"></script>
-</footer>
-
-<script src="../assets/site.js"></script>
-</body>
-</html>
+{{- end }}

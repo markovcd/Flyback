@@ -1,0 +1,2 @@
+{{- /* The way from a page up to the site's root: "" at the top, "../" a folder down. */ -}}
+{{- return strings.Repeat (sub (len (findRE "/" .RelPermalink)) 1) "../" -}}

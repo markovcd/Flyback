@@ -320,7 +320,7 @@ The gallery shows the build's stills from `/stills/` where the site has them (AD
 
 `window.flyback` drives the page from a script: `state()` says which preset is open, how many modules and wires it has, which renderer draws the picture and at what rate, and the last thing the editor said; `preset(name)` opens a shipped preset, as `/editor/?preset=<name>` does on load; `openUrl(url, fileName, title)` fetches a shared one and opens it, as `?file=` does, answering null or why it could not; `text()` reads the open patch in the language; `apply(text)` applies text as the text view's Apply does, one edit that one undo takes back, and answers null or what is wrong with it; `sound()` says how the sound is going; `view()` presses View it, which opens the patch as it stands in the web viewer in a tab of its own, and answers the viewer's address, or null where the browser refused the tab.
 
-`worker/build-assets.sh` builds the website as the Worker serves it, the viewer, the editor and the stills built in, and `worker/dev.sh` serves it; `--no-aot` makes it quicker.
+`hugo server --source site` previews the website as you edit it. `worker/build-assets.sh` builds it as the Worker serves it, the viewer, the editor and the stills built in, and `worker/dev.sh` serves it; `--no-aot` makes it quicker.
 
 ## Android editor
 

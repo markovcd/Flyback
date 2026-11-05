@@ -236,5 +236,5 @@ money?" --json`, and the same through a `laya-serve` on the Decision server plug
 ### Docs, in the same commit
 
 `docs/plugin-guide.md` (the plugin in the shipped list), `docs/engineering-guide.md`'s
-table of what ships, `site/index.html`, the README's build note for the export script, a
+table of what ships, `site/layouts/home.html`, the README's build note for the export script, a
 `CHANGELOG.md` bullet, and an amendment to ADR-0186 for the native build.

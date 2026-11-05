@@ -1,0 +1,39 @@
+{{ define "main" -}}
+<div class="canvas">
+  <div class="wrap">
+    <header class="doc-head shelf-head">
+      <span class="eyebrow">Presets</span>
+      <h1>Patches that play in your browser.</h1>
+      <p class="lede">The presets Flyback ships with, and the ones people shared, sound and picture on the same
+        engine compiled to WebAssembly, with nothing to install. Every wire in them is yours to change, in Flyback or in the
+        editor here, whose View it plays your version back in the viewer.</p>
+      <div class="actions">
+        <a class="button primary" href="submit.html">Submit a preset</a>
+        <a class="button" href="https://github.com/markovcd/Flyback/releases/latest">Download Flyback</a>
+        <a class="button" href="https://github.com/markovcd/Flyback/discussions">Ask or show in Discussions</a>
+      </div>
+    </header>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="filters">
+    <input type="search" id="search" placeholder="Search names, authors and descriptions" aria-label="Search presets">
+    <div class="chips" id="tags" aria-label="Tags"></div>
+  </div>
+
+  <section class="run" id="shared" aria-labelledby="shared-title" hidden>
+    <h2 id="shared-title">SHARED BY PEOPLE <small id="shared-count"></small></h2>
+    <div class="shelf" id="shelf" aria-live="polite"></div>
+    <nav class="pager" id="pager" aria-label="Pages" hidden>
+      <button type="button" class="button small" id="previous">Newer</button>
+      <span id="where"></span>
+      <button type="button" class="button small" id="next">Older</button>
+    </nav>
+  </section>
+
+  <div id="shipped" aria-live="polite"></div>
+
+  <p class="empty" id="empty" hidden>No presets match. <a href="submit.html">Submit one?</a></p>
+</main>
+{{- end }}

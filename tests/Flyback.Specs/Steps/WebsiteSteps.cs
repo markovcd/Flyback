@@ -23,7 +23,11 @@ public sealed partial class WebsiteSteps(IUnitTestRuntimeProvider runtime)
     private JsonObject built = [];
 
     [When("someone opens the preset site")]
-    public void WhenTheSiteIsOpened() => page = SiteFiles.Read("/");
+    public void WhenTheSiteIsOpened()
+    {
+        BuiltSite.Need(runtime);
+        page = SiteFiles.Read("/");
+    }
 
     [Then("they read what Flyback is")]
     public void ThenTheOverviewIsRead() => page.ShouldContain("patchable video and audio synthesizer");
@@ -32,6 +36,7 @@ public sealed partial class WebsiteSteps(IUnitTestRuntimeProvider runtime)
     [When("someone follows every link between the preset site's pages")]
     public void WhenEveryLinkIsFollowed()
     {
+        BuiltSite.Need(runtime);
         var root = new Uri("http://localhost/");
         var seen = new HashSet<string>(StringComparer.Ordinal) { "/" };
         var pages = new Queue<Uri>([root]);
@@ -74,6 +79,7 @@ public sealed partial class WebsiteSteps(IUnitTestRuntimeProvider runtime)
     [When("someone opens the preset site's presets page")]
     public void WhenThePresetsPageIsOpened()
     {
+        BuiltSite.Need(runtime);
         page = SiteFiles.Read("/presets.html");
         built = PresetsPage.Open(runtime, "shelf", "", Answers());
     }
@@ -201,7 +207,11 @@ public sealed partial class WebsiteSteps(IUnitTestRuntimeProvider runtime)
     }
 
     [When("someone opens the tutorials page")]
-    public void WhenTheTutorialsPageIsOpened() => page = SiteFiles.Read("/tutorials.html");
+    public void WhenTheTutorialsPageIsOpened()
+    {
+        BuiltSite.Need(runtime);
+        page = SiteFiles.Read("/tutorials.html");
+    }
 
     [Then("every video in its list has a name of its own to link to, a title and a line on what it shows")]
     public void ThenEveryVideoIsNamed()

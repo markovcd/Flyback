@@ -7,7 +7,7 @@ namespace Flyback.Editor.Controls;
 
 /// <summary>
 /// Potato Smasher's mark at icon size: the spud on its butter square, handle,
-/// plate and eyes, as in <c>site/assets/potato-smasher.svg</c>.
+/// plate and eyes, as in <c>site/static/assets/potato-smasher.svg</c>.
 /// </summary>
 /// <remarks>
 /// The colors are the studio's own, not Flyback's palette, so they stay put when

@@ -1,21 +1,24 @@
 using System.Text.RegularExpressions;
 using Flyback.Editor.Inspect;
-using Flyback.Tests;
+using Flyback.Specs.Support;
 using Reqnroll;
+using Reqnroll.UnitTestProvider;
 using Shouldly;
 
 namespace Flyback.Specs.Steps;
 
 /// <summary>The keys the website's prose names, against the rows of the editor's help.</summary>
 [Binding]
-public sealed partial class ShortcutHelpSteps
+public sealed partial class ShortcutHelpSteps(IUnitTestRuntimeProvider runtime)
 {
     private IReadOnlyList<string> named = [];
 
     [When("the keys named on the website are read")]
-    public void WhenRead() =>
-        named = [.. Shortcut().Matches(File.ReadAllText(Repository.Path("site", "index.html")))
-            .Select(match => Tag().Replace(match.Value, "")).Distinct()];
+    public void WhenRead()
+    {
+        BuiltSite.Need(runtime);
+        named = [.. Shortcut().Matches(SiteFiles.Read("/")).Select(match => Tag().Replace(match.Value, "")).Distinct()];
+    }
 
     [Then("each of them is listed in the editor's shortcut help")]
     public void ThenEachIsInTheHelp()

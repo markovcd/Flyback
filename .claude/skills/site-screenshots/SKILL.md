@@ -1,6 +1,6 @@
 ---
 name: site-screenshots
-description: Use when a UI or preset change makes a screenshot in site/assets/shots stale, or when the site needs a new picture of a patch or a module - the headless shot tests for canvas-only crops, and the PowerShell window-capture recipe and its coordinate quirks for the full-window ones.
+description: Use when a UI or preset change makes a screenshot in site/static/assets/shots stale, or when the site needs a new picture of a patch or a module - the headless shot tests for canvas-only crops, and the PowerShell window-capture recipe and its coordinate quirks for the full-window ones.
 ---
 
 # Recapturing site screenshots
@@ -40,7 +40,7 @@ Run it from a folder holding the CLI, the editor and the plugins together (a pub
 
 flyback-theme.webp and plasma.webp (1440x900) are that command as it stands, Plasma at `--at 55.7` with nothing selected. The rest are 1440x900 shots cropped to one part of the window (with the toolbar's names on: the panels from row 59 to 826, canvas to 936 across, right column from 941, the picture's row to 340, the inspector from 345): plasma-code is index.html's '# The same patch, as text.' listing saved as a `.fbks` and shot at `--at 55.7`, cropped to (0, 59)-(1440, 345); plasma-inspector is `--preset Plasma --at 55.7 --select across`, cropped to (941, 59)-(1440, 826); knob-panel is Slow weather's panel row at `--at 8`, cropped to (8, 712)-(698, 829) to take in the knobs, the die, the arrow and amount and glide; whole-band and euclid-kit are their bundles with every group shut, `--crop`.
 
-The full-window shots in `site/assets/shots` (nebula.webp, whole-band.webp, euclid-kit.webp, the other plasma-*.webp; 1600x863) are the maximized app with a saved preset opened from the command line (`Flyback.exe nebula.fbk`), patch framed, caught at a chosen `t`. `flyback-cli pack --preset <name> -o <name>.fbkb` writes the preset out; for the shots that show shut boxes (whole-band, euclid-kit), set every `Group.Collapsed` in the bundle's `patch.fbk`, since a bundle is a zip. These need the real window, so a stale one goes on the list above.
+The full-window shots in `site/static/assets/shots` (nebula.webp, whole-band.webp, euclid-kit.webp, the other plasma-*.webp; 1600x863) are the maximized app with a saved preset opened from the command line (`Flyback.exe nebula.fbk`), patch framed, caught at a chosen `t`. `flyback-cli pack --preset <name> -o <name>.fbkb` writes the preset out; for the shots that show shut boxes (whole-band, euclid-kit), set every `Group.Collapsed` in the bundle's `patch.fbk`, since a bundle is a zip. These need the real window, so a stale one goes on the list above.
 
 A preset with sound plays through the user's speakers while it is captured, for the few seconds the recipe takes. Capture it anyway; muting the system is a system setting and off limits.
 

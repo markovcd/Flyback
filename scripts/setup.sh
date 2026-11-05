@@ -2,7 +2,7 @@
 # Sets up a machine that has no .NET SDK to build and test Flyback: a cloud session's
 # container, most often.
 #
-#   ./scripts/setup.sh            the SDK global.json names, into ~/.dotnet, and the wasm-tools workload
+#   ./scripts/setup.sh            the SDK global.json names, into ~/.dotnet, the wasm-tools workload, and Hugo into ~/.hugo
 #   ./scripts/setup.sh --android  the android workload as well, for compiling Flyback.Plugins.AndroidIO
 #
 # The usual download hosts (builds.dotnet.microsoft.com, dotnetcli.azureedge.net) are
@@ -102,6 +102,13 @@ for workload in "${wanted[@]}"; do
   fi
 done
 
+if command -v hugo >/dev/null 2>&1 || [ -x "$HOME/.hugo/hugo" ]; then
+  echo "Hugo is installed"
+else
+  echo "installing Hugo, which builds the website"
+  ./scripts/install-hugo.sh "$HOME/.hugo"
+fi
+
 chromium="${FLYBACK_CHROMIUM:-}"
 if [ -z "$chromium" ]; then
   for candidate in /opt/pw-browsers/chromium-*/chrome-linux/chrome; do
@@ -116,6 +123,7 @@ fi
     echo "export DOTNET_ROOT=\"\$HOME/.dotnet\""
     echo 'case ":$PATH:" in *":$HOME/.dotnet:"*) ;; *) export PATH="$HOME/.dotnet:$HOME/.dotnet/tools:$PATH" ;; esac'
   fi
+  [ -x "$HOME/.hugo/hugo" ] && echo 'case ":$PATH:" in *":$HOME/.hugo:"*) ;; *) export PATH="$HOME/.hugo:$PATH" ;; esac'
   [ -n "$chromium" ] && echo "export FLYBACK_CHROMIUM=\"$chromium\""
 } > "$env_file"
 

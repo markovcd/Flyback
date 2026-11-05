@@ -680,7 +680,7 @@ restore is locked to the committed lock files, so a version that moved fails
 there rather than building.
 
 `worker.yml` deploys the website on every push to `main` that touches the site,
-once Build has passed on that commit: `site/` as it stands, with the web viewer, the web editor and the stills built
+once Build has passed on that commit: the site Hugo builds from `site/` (ADR-0222), with the web viewer, the web editor and the stills built
 in. Nothing in that build reads the prose, so nothing catches a stale sentence, which is why a site edit goes in the same commit as the change
 it describes.
 
@@ -874,6 +874,7 @@ A test is filed under what it needs beyond the .NET runtime, as its `Category` t
 | `ffmpeg` | ffmpeg, to write or read a clip | `[TestCategory(TestCategory.Ffmpeg)]`, or `@ffmpeg` on a feature or scenario |
 | `node` | Node, to run what a page runs | `[TestCategory(TestCategory.Node)]`, or `@node` |
 | `browser` | A Chromium to open the pages in | `@browser` |
+| `hugo` | Hugo, to build the website from `site/` | `@hugo` |
 | `jack` | A JACK server to play into | `[TestCategory(TestCategory.Jack)]`, or `@jack` |
 | `gpu` | An OpenGL context | `[TestCategory(TestCategory.Gpu)]`, or `@gpu` |
 | `unmeasured` | Nothing: it reads files or metadata and runs no Flyback code | `[TestCategory(TestCategory.Unmeasured)]`, or `@unmeasured` |
@@ -1179,8 +1180,9 @@ of a missing or damaged file.
 has MIDI voices or panel knobs. It must compile clean, fit the canvas, and stay
 inside what the speakers carry; `ShippedPresetTests` checks the first two.
 
-**Change how something looks.** Change the token in `Colors.cs` or `Text.cs`, then
-`site/assets/site.css`, then retake the affected screenshots from the real app
+**Change how something looks.** Change the token in `Colors.cs` or `Text.cs` (the
+site takes the Graphite scheme's colors itself; a family color goes in
+`site/assets/site.css` too), then retake the affected screenshots from the real app
 (`site-screenshots` skill). Never draw a module in HTML, CSS or SVG
 ([0119](adr/0119-the-website-shows-a-module-by-photographing-one.md)).
 

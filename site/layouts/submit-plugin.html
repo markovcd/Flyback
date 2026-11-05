@@ -1,0 +1,37 @@
+{{ define "main" -}}
+<div class="canvas">
+  <div class="wrap">
+    <header class="doc-head shelf-head">
+      <span class="eyebrow">Plugins</span>
+      <h1>Submit a plugin.</h1>
+      <p class="lede">Pack it with <code>flyback-cli pack-plugin --key</code> and send the <code>.fbkp</code>. It is
+        listed once it has been reviewed.</p>
+    </header>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="submit">
+    <div class="note">
+      <span class="tag">Said by the plugin</span>
+      <p>The name, version, author and description come from the plugin assembly's own metadata:
+        <code>&lt;Product&gt;</code>, <code>&lt;Version&gt;</code>, <code>&lt;Authors&gt;</code> and
+        <code>&lt;Description&gt;</code> in its project. What it adds and what it reaches are read from its code.
+        The site runs none of it, and refuses a package the editor would refuse.</p>
+    </div>
+
+    <form id="submit">
+      <label>Plugin package <span class="quiet">A signed .fbkp made by flyback-cli pack-plugin, up to 64 MB</span>
+        <input type="file" name="file" id="file" accept=".fbkp" required>
+      </label>
+
+      <div>
+        <button type="submit" class="button primary" id="send">Submit</button>
+      </div>
+      <p class="status" id="status" role="status"></p>
+    </form>
+
+    <div id="received" hidden></div>
+  </div>
+</main>
+{{- end }}

@@ -1,0 +1,39 @@
+{{ define "main" -}}
+<div class="canvas">
+  <div class="wrap">
+    <header class="doc-head shelf-head">
+      <span class="eyebrow">Presets</span>
+      <h1>Admin.</h1>
+      <p class="lede" id="admin-lede">Signed in, the shelves show unpublished presets and plugins too, and every
+        one can be published, unpublished or deleted, and a preset renamed. What people have reported, and the
+        letters they have written from inside Flyback, are listed here.</p>
+    </header>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="submit">
+    <form id="sign-in" hidden>
+      <label>User
+        <input type="text" name="user" id="user" autocomplete="username" required>
+      </label>
+      <label>Password
+        <input type="password" name="password" id="password" autocomplete="current-password" required>
+      </label>
+      <div>
+        <button type="submit" class="button primary" id="enter">Sign in</button>
+      </div>
+      <p class="status" id="status" role="status"></p>
+    </form>
+
+    <div class="actions" id="signed-in" hidden>
+      <a class="button primary" href="presets.html">To the presets</a>
+      <a class="button" href="shared-plugins.html">To the plugins</a>
+      <button type="button" class="button" id="sign-out">Sign out</button>
+    </div>
+  </div>
+
+  <section class="reports" id="reports" aria-live="polite" hidden></section>
+  <section class="reports" id="letters" aria-live="polite" hidden></section>
+</main>
+{{- end }}

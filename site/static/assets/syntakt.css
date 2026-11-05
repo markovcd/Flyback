@@ -1,0 +1,4 @@
+.patch-fig { margin: 24px 0 0; }
+.settings td:first-child { white-space: nowrap; color: var(--bright); }
+.settings td:nth-child(2) { white-space: nowrap; }
+.settings code { white-space: normal; }

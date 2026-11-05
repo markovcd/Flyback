@@ -1,16 +1,17 @@
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using Flyback.Specs.Support;
 using Flyback.Tests;
 using Reqnroll;
+using Reqnroll.UnitTestProvider;
 using Shouldly;
 
 namespace Flyback.Specs.Steps;
 
-/// <summary>The website's colors: written once, in <c>site.css</c>'s <c>:root</c>, and equal to the Graphite scheme's.</summary>
+/// <summary>The website's colors as built: written once, in <c>site.css</c>'s <c>:root</c>, and the Graphite scheme's.</summary>
 [Binding]
-public sealed partial class SiteColorSteps
+public sealed partial class SiteColorSteps(IUnitTestRuntimeProvider runtime)
 {
-    private static readonly string Site = Path.Combine(Repository.Root, "site");
 
     private string root = string.Empty;
     private readonly List<string> strays = [];
@@ -19,9 +20,11 @@ public sealed partial class SiteColorSteps
     [When("someone reads the website's pages, stylesheets and scripts")]
     public void WhenTheSiteIsRead()
     {
-        foreach (var file in Directory.EnumerateFiles(Site, "*.*", SearchOption.AllDirectories).Order(StringComparer.Ordinal))
+        BuiltSite.Need(runtime);
+
+        foreach (var file in Directory.EnumerateFiles(BuiltSite.Root, "*.*", SearchOption.AllDirectories).Order(StringComparer.Ordinal))
         {
-            var name = Path.GetRelativePath(Site, file).Replace('\\', '/');
+            var name = Path.GetRelativePath(BuiltSite.Root, file).Replace('\\', '/');
             var text = File.ReadAllText(file);
 
             switch (Path.GetExtension(file))

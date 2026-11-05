@@ -1,0 +1,44 @@
+{{ define "main" -}}
+<div class="canvas">
+  <div class="wrap">
+    <header class="doc-head shelf-head">
+      <span class="eyebrow">Presets</span>
+      <h1>Submit a preset.</h1>
+      <p class="lede">Save the patch in Flyback and send the file. It goes up straight away, and a picture and a
+        sound of it follow once it has been rendered.</p>
+    </header>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="submit">
+    <div class="note">
+      <span class="tag">Said by the patch</span>
+      <p>The description, the author and the tags come from the patch itself. Set them in Flyback's panel with
+        nothing selected, or with <code>description</code>, <code>author</code> and <code>tags</code> in the text,
+        then save.</p>
+    </div>
+
+    <form id="submit">
+      <label>Preset file <span class="quiet">A .fbk, or a .fbkb bundle with its sounds and pictures</span>
+        <input type="file" name="file" id="file" accept=".fbk,.fbkb" required>
+      </label>
+
+      <dl id="said" hidden>
+        <dt>Description</dt><dd id="said-description"></dd>
+        <dt>Author</dt><dd id="said-author"></dd>
+        <dt>Tags</dt><dd id="said-tags"></dd>
+      </dl>
+
+      <label>Name <span class="quiet">The file's name where left blank</span>
+        <input type="text" name="name" id="name" maxlength="60" autocomplete="off">
+      </label>
+
+      <div>
+        <button type="submit" class="button primary" id="send">Submit</button>
+      </div>
+      <p class="status" id="status" role="status"></p>
+    </form>
+  </div>
+</main>
+{{- end }}

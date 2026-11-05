@@ -5,7 +5,7 @@ description: Use when a Flyback preset that has a track on the website changes a
 
 # The website's audio tracks
 
-The two tracks in `site/assets/audio` (acid, slow-weather) are the first minute of the preset rendered with `flyback-cli render patch.fbk --out x.wav --seconds 60` (48 kHz), then ffmpeg two-pass `loudnorm` to -16 LUFS (TP -1.5, LRA 11, linear), `afade=t=out:st=56:d=4`, 44.1 kHz, `libmp3lame -q:a 2`. Both measure -16.0/-16.1 LUFS integrated, so a new one must match. The site lists the tracks as rendered by the CLI with nothing added; a track at a different loudness or with different bars would stand out from the other.
+The two tracks in `site/static/assets/audio` (acid, slow-weather) are the first minute of the preset rendered with `flyback-cli render patch.fbk --out x.wav --seconds 60` (48 kHz), then ffmpeg two-pass `loudnorm` to -16 LUFS (TP -1.5, LRA 11, linear), `afade=t=out:st=56:d=4`, 44.1 kHz, `libmp3lame -q:a 2`. Both measure -16.0/-16.1 LUFS integrated, so a new one must match. The site lists the tracks as rendered by the CLI with nothing added; a track at a different loudness or with different bars would stand out from the other.
 
 The `data-peaks` attribute on the site's `.player` is 96 values: the RMS of each of 96 equal slices of the decoded MP3, divided by the largest, floored at .10, written like `.61` with no leading zero. It is a dozen lines of Python to rewrite.
 
@@ -13,7 +13,7 @@ Whole band has no MP3. A whole song goes under "Whole tracks, seen and heard" as
 
 ## When a preset with a track changes audibly
 
-Re-render, re-encode, replace the peaks and check the blurb in `site/index.html`, all in the same commit.
+Re-render, re-encode, replace the peaks and check the blurb in `site/layouts/home.html`, all in the same commit.
 
 ## Tuning by spectrum
 

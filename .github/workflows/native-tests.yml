@@ -100,14 +100,14 @@ jobs:
           echo "GALLIUM_DRIVER=llvmpipe" >> "$GITHUB_ENV"
 
       # The run never fails this step, so the summary is written from a failing one.
-      # The web editor, the viewer and the pages run in a browser or under Node, the
-      # same on every machine, so their tests are the Linux gate's alone.
+      # The web editor, the viewer and the pages run in a browser or under Node, and the
+      # website is built by Hugo, the same on every machine, so their tests are the Linux gate's alone.
       # No test host takes ten minutes, so one that has finished nothing for ten has hung.
       - name: Test
         run: |
           mkdir -p test-results
           set +e
-          dotnet test --solution Flyback.slnx -c Release --no-build --filter-not-trait "Category=browser" --filter-not-trait "Category=node" \
+          dotnet test --solution Flyback.slnx -c Release --no-build --filter-not-trait "Category=browser" --filter-not-trait "Category=node" --filter-not-trait "Category=hugo" \
             --hangdump --hangdump-timeout 10m --hangdump-type Mini \
             --report-xunit-junit --results-directory test-results
           echo $? > test-results/exit-code

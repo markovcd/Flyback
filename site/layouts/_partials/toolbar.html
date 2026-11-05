@@ -1,0 +1,15 @@
+{{- $up := partial "up.html" . -}}
+<header class="toolbar">
+  <div class="wrap">
+    <a class="brand" href="{{ or $up "./" }}"><img src="{{ $up }}assets/logo.svg" alt=""><span>Flyback</span></a>
+    <nav aria-label="Site">
+      <a href="{{ or $up "./" }}"{{ if eq .Params.nav "overview" }} aria-current="page"{{ end }} class="optional">Overview</a>
+      <a href="{{ $up }}tutorials.html"{{ if eq .Params.nav "tutorials" }} aria-current="page"{{ end }}>Tutorials</a>
+      <a href="{{ $up }}presets.html"{{ if eq .Params.nav "presets" }} aria-current="page"{{ end }}>Presets</a>
+      <a href="{{ $up }}shared-plugins.html"{{ if eq .Params.nav "plugins" }} aria-current="page"{{ end }}>Plugins</a>
+      <span class="sep" aria-hidden="true"></span>
+      <a href="https://github.com/markovcd/Flyback">GitHub</a>
+      <a href="https://www.youtube.com/@FlybackModular">YouTube</a>
+    </nav>
+  </div>
+</header>

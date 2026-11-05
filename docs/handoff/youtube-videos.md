@@ -1,6 +1,6 @@
 # Videos for the YouTube channel
 
-Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an idea when one comes up, move it to Made when it is made, and onto `site/tutorials.html` when it is posted. It is on TODO.md; it stays as long as the channel wants videos.
+Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an idea when one comes up, move it to Made when it is made, and onto the tutorials page (`site/layouts/tutorials.html`) when it is posted. It is on TODO.md; it stays as long as the channel wants videos.
 
 - **Kind:** Backlog
 - **Status:** Open: nine made and posted, the rest proposed
@@ -9,7 +9,7 @@ Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an ide
 
 [explainroo](https://github.com/vincentsch/explainroo) turns a `script.md` and a `scenes.js` into a narrated MP4 on this machine. It is installed in `~/.explainroo`, with each video's project in `~/.explainroo/videos/<name>` and its working files in `~/.explainroo/work/<name>`; never in a session's scratchpad, which is wiped between turns. What Flyback adds on top of it:
 
-- **A `flyback` look.** A sixth theme in explainroo's `engine/themes.js` (with its name in `src/project.js` and `engine/runtime.js`), kept as `~/.explainroo/flyback-look.patch`: the canvas `#1A1C20` with the editor's grid, the module-family colors as its named colors, the attention amber as its accent, Inter for text. Every value is from `site/assets/site.css`. Inter's variable font goes in the project's `assets/fonts/` as `InterV`, since explainroo bundles Inter at 400 only.
+- **A `flyback` look.** A sixth theme in explainroo's `engine/themes.js` (with its name in `src/project.js` and `engine/runtime.js`), kept as `~/.explainroo/flyback-look.patch`: the canvas `#1A1C20` with the editor's grid, the module-family colors as its named colors, the attention amber as its accent, Inter for text. Every value is from the built `assets/site.css`. Inter's variable font goes in the project's `assets/fonts/` as `InterV`, since explainroo bundles Inter at 400 only.
 - **The real editor, not a drawing of it.** `flyback-cli shot <patch> --editor <Flyback> --size 1920x1080 --at <s> --select <module>` draws the whole window headless at the video's own size, so a screen is a full frame and the camera zooms into it. Write each step as `.fbks`, `flyback-cli save` it to `.fbk` so the canvas is the document, and shoot it; a module with no wire is dropped by the text, so that step is the next one's `.fbk` with its wire taken out. The preview in a shot is one frame: lay the step's `flyback-cli render` over it, at x 1254, y 88, 666x375 in a 1920x1080 shot. What Is Flyback drew its modules in `scenes.js` instead; ADR-0119's reason holds for videos too, and a drawing goes stale when a module changes.
 - **Real output, not illustrations of it.** Clips from `flyback-cli render`, cut into JPEG frames (24 fps at 960x540 is plenty; 30 where it must stay in step with sound) and drawn by time. Stills for a gallery from `--size 480x270 --at 6`.
 - **Flyback's sound, not explainroo's music.** `"music": false` and `"sfx": "minimal"`, then `~/.explainroo/work/mix-bed.sh <project> <bed.wav> [offset] [gain]` lays a preset's render (Slow weather so far) about 16 LU under the voice with a limiter. A preset at full level in a scene with no narration is aligned to that scene's start in `build/timeline.json`. `verify` on the remuxed file checks the voice still reads.
@@ -36,7 +36,7 @@ Started on 2026-10-07, on `main` at `67cfbd96`. A backlog that grows: add an ide
 
 Roughly in the order worth making. Each is 60 to 120 seconds unless it says otherwise.
 
-One of them replaces the written tutorial still under `site/tutorials/`. When it is posted, `tutorials/syntakt.html` goes, with every link to it and its `PatchShotTests` lines, in the same commit.
+One of them replaces the written tutorial `tutorials/syntakt.html` (`site/layouts/syntakt.html` and `site/content/tutorials/syntakt.md`). When it is posted, it goes, with every link to it and its `PatchShotTests` lines, in the same commit.
 
 - **Play it from an Elektron Syntakt.** Replaces `tutorials/syntakt.html`. The box's MIDI and USB settings, the whole Syntakt added in one pick, a MIDI track sequencing a Flyback voice, a Flyback sequencer kept to its clock, a picture lit by its tracks, and its knobs on the panel. Needs the real box filmed or captured; the editor half can be `flyback-cli shot`.
 - **Play it.** The computer keyboard as an instrument, a MIDI controller, chords down a polyphonic wire, knobs learned to a controller, the die. Played and No Sense Dub.

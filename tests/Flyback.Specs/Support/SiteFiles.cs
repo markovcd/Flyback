@@ -2,7 +2,7 @@ using Flyback.Tests;
 
 namespace Flyback.Specs.Support;
 
-/// <summary>The website's files as the repository keeps them: <c>site/</c>, with the viewer and the editor from their projects' pages.</summary>
+/// <summary>The website's files as the Worker serves them: the site Hugo built from <c>site/</c>, with the viewer and the editor from their projects' pages.</summary>
 internal static class SiteFiles
 {
     private static readonly string Root = Repository.Root;
@@ -17,11 +17,12 @@ internal static class SiteFiles
         {
             ["viewer", var tail] => (Path.Combine("src", "Flyback.Viewer.Web", "wwwroot"), tail),
             ["editor", var tail] => (Path.Combine("src", "Flyback.Editor.Web", "wwwroot"), tail),
-            _ => ("site", relative),
+            _ => (BuiltSite.Root, relative),
         };
 
-        var file = Path.GetFullPath(Path.Combine(Root, folder, rest));
-        return file.StartsWith(Path.Combine(Root, folder), StringComparison.Ordinal) && File.Exists(file) ? file : null;
+        var under = Path.GetFullPath(Path.Combine(Root, folder));
+        var file = Path.GetFullPath(Path.Combine(under, rest));
+        return file.StartsWith(under, StringComparison.Ordinal) && File.Exists(file) ? file : null;
     }
 
     public static string Read(string path) =>

@@ -19,6 +19,9 @@ internal enum TestCategory
     /// <summary>A Chromium to open the pages in.</summary>
     Browser,
 
+    /// <summary>The Hugo program, to build the website from <c>site/</c>.</summary>
+    Hugo,
+
     /// <summary>A JACK server to play into.</summary>
     Jack,
 

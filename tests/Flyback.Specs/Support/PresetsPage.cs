@@ -14,6 +14,7 @@ internal static class PresetsPage
     /// <param name="page">The body's <c>data-page</c>: <c>shelf</c> or <c>preset</c>.</param>
     public static JsonObject Open(IUnitTestRuntimeProvider runtime, string page, string search, JsonObject answers)
     {
+        BuiltSite.Need(runtime);
         var folder = Directory.CreateTempSubdirectory("flyback-presets-page");
 
         try

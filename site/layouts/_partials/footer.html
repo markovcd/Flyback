@@ -1,8 +1,9 @@
+{{- $up := partial "up.html" . -}}
 <footer class="site-foot">
   <div class="wrap">
-    <span class="brand-foot"><img src="{up}assets/logo.svg" alt="">Flyback · MIT License · by <img src="{up}assets/potato-smasher.svg" alt="">Potato Smasher</span>
-    <a href="{home}" data-section="overview">Overview</a>
-    <a href="{up}tutorials.html" data-section="tutorials">Tutorials</a>
+    <span class="brand-foot"><img src="{{ $up }}assets/logo.svg" alt="">Flyback · MIT License · by <img src="{{ $up }}assets/potato-smasher.svg" alt="">Potato Smasher</span>
+    <a href="{{ or $up "./" }}"{{ if eq .Params.nav "overview" }} aria-current="page"{{ end }}>Overview</a>
+    <a href="{{ $up }}tutorials.html"{{ if eq .Params.nav "tutorials" }} aria-current="page"{{ end }}>Tutorials</a>
     <a href="https://github.com/markovcd/Flyback/blob/main/docs/plugin-guide.md">Plugin guide</a>
     <a href="https://github.com/markovcd/Flyback/blob/main/docs/language.md">Language reference</a>
     <a href="https://github.com/markovcd/Flyback/blob/main/CHANGELOG.md">Changelog</a>
@@ -10,12 +11,12 @@
     <a href="https://github.com/markovcd/Flyback/discussions">Discussions</a>
     <a href="https://www.youtube.com/@FlybackModular">YouTube</a>
     <a href="mailto:hello@flybackmodular.app">Email</a>
-    <a href="{up}method.html" data-section="method">How it was built</a>
-    <a href="{up}privacy.html" data-section="privacy">Privacy</a>
+    <a href="{{ $up }}method.html"{{ if eq .Params.nav "method" }} aria-current="page"{{ end }}>How it was built</a>
+    <a href="{{ $up }}privacy.html"{{ if eq .Params.nav "privacy" }} aria-current="page"{{ end }}>Privacy</a>
   </div>
   <div class="wrap donate">
     <button type="button" class="qr" title="Click to copy the address">
-      <img src="{up}assets/donate-qr.svg" alt="The donation address as a QR code" width="104" height="104">
+      <img src="{{ $up }}assets/donate-qr.svg" alt="The donation address as a QR code" width="104" height="104">
     </button>
     <div class="ask">
       <span>If this was worth anything to you, a little bitcoin is welcome.</span>
@@ -24,5 +25,5 @@
       <span class="said" role="status">Click the code to copy the address.</span>
     </div>
   </div>
-  <script src="{up}assets/donate.js"></script>
+  <script src="{{ $up }}assets/donate.js"></script>
 </footer>

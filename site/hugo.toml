@@ -1,0 +1,21 @@
+# The website, built by Hugo (ADR-0222): content/ holds each page's own body,
+# layouts/ what every page shares, static/ what is copied as it is.
+#
+#   hugo --source site --destination <folder>   build it (worker/build-assets.sh does)
+#   hugo server --source site                   preview it with live reload
+
+baseURL = "https://flybackmodular.app/"
+locale = "en"
+title = "Flyback"
+
+# Pages keep their .html names.
+uglyURLs = true
+
+disableKinds = ["section", "taxonomy", "term", "rss", "sitemap", "404"]
+noBuildLock = true
+disableHugoGeneratorInject = true
+
+# The app's color schemes, as data: site.css and every page's theme-color read Graphite.
+[[module.mounts]]
+source = "../src/Flyback.Ui/Controls/Schemes"
+target = "data/schemes"

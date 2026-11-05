@@ -92,6 +92,11 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/* \
  && dotnet workload install wasm-tools --version 10.0.402
 
+# Hugo builds the website (ADR-0222), for the site's build and the specs that read
+# it: one binary, pinned by version and checksum in the script.
+COPY scripts/install-hugo.sh /tmp/install-hugo.sh
+RUN /tmp/install-hugo.sh /usr/local/bin && rm /tmp/install-hugo.sh
+
 # Everything a change has to get past, up to the tests.
 FROM tools AS built
 ARG CONFIGURATION
