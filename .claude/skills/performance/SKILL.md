@@ -44,6 +44,10 @@ About 10 ms a 1080p frame for Whole band in `flyback-cli render`, readback, swiz
 - **Done:** the sound renders in a worker of its own (`speaker.js`), with nothing shared; the page gets the Meters' readings by message. In Chrome, AOT, on a busy machine, Whole band held 1.6x with no dropouts and Warehouse 1.3 to 1.5x with some. A cold script runs Warehouse at 0.6x, so the worker warms it up for three seconds before the first play. What is left is the script's own speed: `advance`, `readLine`, `noise3` and `hash`.
 - **Measure:** `node artifacts/web/hear.mjs --preset X --seconds 8` prints `speed`; `--cpu-prof` on the same line gives a profile. A 0.2 s timing on a freshly made script is before V8 has optimized it and reads low.
 
+### 4. The sound's IL on a heavy patch
+
+`perf record` with `DOTNET_PerfMapEnabled=1 DOTNET_EnableWriteXorExecute=0` names the emitted methods (without the second, every one is `memfd:doublemapper`). With powers, exponentials and noise cells remembered by the whole program (`IlOps.Remembers`), Mycelium on a 4-core cloud box: the emitted chunks' own arithmetic 31%, `DelayState.Read` 9% (the float load of the line: a cache miss across twenty-odd lines, not the index), `sin` 7%, the decimation filter 3%. Between one sample and the next, 50-87% of Mul, Add, Mix and Step ops see the same operands, but most sit downstream of something that moves every sample; skipping them needs regions guarded on their inputs, not a check per op.
+
 ## Ruled out, with numbers
 
 Measured on Tranquility's sound, once IL chunking landed (ADR-0076, amendment of 2026-09-23):

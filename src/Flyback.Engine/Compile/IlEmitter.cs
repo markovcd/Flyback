@@ -40,6 +40,10 @@ internal sealed class IlEmitter
     private static readonly FieldInfo FeedbackAgeField = typeof(FeedbackFrame).GetField(nameof(FeedbackFrame.Age))!;
     private static readonly FieldInfo TablesField = typeof(IlContext).GetField(nameof(IlContext.Tables))!;
     private static readonly FieldInfo PicturesField = typeof(IlContext).GetField(nameof(IlContext.Pictures))!;
+    private static readonly FieldInfo MemoryField = typeof(IlContext).GetField(nameof(IlContext.Memory))!;
+    private static readonly MethodInfo RememberedPowMethod = typeof(IlOps).GetMethod(nameof(IlOps.RememberedPow))!;
+    private static readonly MethodInfo RememberedExpMethod = typeof(IlOps).GetMethod(nameof(IlOps.RememberedExp))!;
+    private static readonly MethodInfo RememberedNoise3Method = typeof(IlOps).GetMethod(nameof(IlOps.RememberedNoise3))!;
     private static readonly MethodInfo ConstantMethod = typeof(IlOps).GetMethod(nameof(IlOps.Constant))!;
 
     private readonly ILGenerator il;
@@ -47,15 +51,17 @@ internal sealed class IlEmitter
     private readonly int from;
     private readonly int to;
     private readonly (int From, int To) outputs;
+    private readonly bool remember;
     private readonly Dictionary<int, LocalBuilder> locals = [];
 
-    private IlEmitter(ILGenerator il, Op[] ops, int from, int to, (int From, int To) outputs)
+    private IlEmitter(ILGenerator il, Op[] ops, int from, int to, (int From, int To) outputs, bool remember)
     {
         this.il = il;
         this.ops = ops;
         this.from = from;
         this.to = to;
         this.outputs = outputs;
+        this.remember = remember;
     }
 
     /// <summary>
@@ -68,12 +74,22 @@ internal sealed class IlEmitter
     /// Ops <paramref name="from"/> to <paramref name="to"/> as methods of at most
     /// <see cref="ChunkSize"/> ops each, to be called in order.
     /// </summary>
-    public static DynamicMethod[] EmitChunks(string name, Op[] ops, int from, int to, (int From, int To) outputs)
+    /// <param name="remember">
+    /// Whether the dearest ops keep their last answer in <see cref="IlContext.Memory"/>:
+    /// only for the whole program, which one thread runs, and whose ops are the program's own.
+    /// </param>
+    public static DynamicMethod[] EmitChunks(
+        string name,
+        Op[] ops,
+        int from,
+        int to,
+        (int From, int To) outputs,
+        bool remember = false)
     {
         var chunks = new List<DynamicMethod>();
 
         for (var start = from; start < to || chunks.Count == 0; start += ChunkSize)
-            chunks.Add(Emit(name, ops, start, Math.Min(to, start + ChunkSize), outputs));
+            chunks.Add(Emit(name, ops, start, Math.Min(to, start + ChunkSize), outputs, remember));
 
         return [.. chunks];
     }
@@ -83,14 +99,20 @@ internal sealed class IlEmitter
     /// as one method. The rest of <paramref name="ops"/> is only looked at to learn
     /// which registers another stretch will read.
     /// </summary>
-    public static DynamicMethod Emit(string name, Op[] ops, int from, int to, (int From, int To) outputs)
+    public static DynamicMethod Emit(
+        string name,
+        Op[] ops,
+        int from,
+        int to,
+        (int From, int To) outputs,
+        bool remember = false)
     {
         // Owned by CompiledPatch so it may call what the interpreter calls; the
         // visibility checks are skipped because a dynamic method is not itself a
         // member of anything.
         var method = new DynamicMethod(name, typeof(void), Parameters, typeof(CompiledPatch), skipVisibility: true);
 
-        new IlEmitter(method.GetILGenerator(), ops, from, to, outputs).Run();
+        new IlEmitter(method.GetILGenerator(), ops, from, to, outputs, remember).Run();
         return method;
     }
 
@@ -121,6 +143,7 @@ internal sealed class IlEmitter
         // Only a whole run is handed state, so a stage's count reaches nothing.
         var line = 0;
         var cell = 0;
+        var kept = 0;
 
         for (var i = 0; i < from; i++)
         {
@@ -129,9 +152,11 @@ internal sealed class IlEmitter
                 case OpMemory.Line: line++; break;
                 case OpMemory.Cell: cell++; break;
             }
+
+            kept += IlOps.Remembers(ops[i].Code);
         }
 
-        for (var i = from; i < to; i++) One(ops[i], ref line, ref cell);
+        for (var i = from; i < to; i++) One(ops[i], ref line, ref cell, ref kept);
 
         var readElsewhere = new HashSet<int>();
         for (var i = 0; i < ops.Length; i++)
@@ -151,10 +176,26 @@ internal sealed class IlEmitter
         il.Emit(ReflectionOpCodes.Ret);
     }
 
-    private void One(Op op, ref int line, ref int cell)
+    private void One(Op op, ref int line, ref int cell, ref int kept)
     {
         switch (op.Code)
         {
+            case OpCode.Pow or OpCode.Exp or OpCode.Noise3 when remember:
+                il.Emit(ReflectionOpCodes.Ldarg_0);
+                il.Emit(ReflectionOpCodes.Ldfld, MemoryField);
+                il.Emit(ReflectionOpCodes.Ldc_I4, kept);
+                kept += IlOps.Remembers(op.Code);
+                foreach (var input in OpShape.Reads(op)) Load(input);
+                il.Emit(
+                    ReflectionOpCodes.Call,
+                    op.Code switch
+                    {
+                        OpCode.Pow => RememberedPowMethod,
+                        OpCode.Exp => RememberedExpMethod,
+                        _ => RememberedNoise3Method,
+                    });
+                break;
+
             case OpCode.Const:
                 il.Emit(ReflectionOpCodes.Ldarg_0);
                 il.Emit(ReflectionOpCodes.Ldfld, ConstantsField);
@@ -265,6 +306,7 @@ internal sealed class IlEmitter
                 break;
 
             default:
+                kept += IlOps.Remembers(op.Code);
                 foreach (var input in OpShape.Reads(op)) Load(input);
                 Call(op.Code);
                 break;

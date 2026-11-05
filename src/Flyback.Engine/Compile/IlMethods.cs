@@ -40,7 +40,7 @@ internal sealed class IlMethods
         var outputs = (patch.OutputBase, patch.OutputBase + patch.OutputWidth);
 
         var whole = parts.HasFlag(IlParts.Whole)
-            ? IlEmitter.EmitChunks("Whole", patch.Ops, 0, patch.Ops.Length, outputs)
+            ? IlEmitter.EmitChunks("Whole", patch.Ops, 0, patch.Ops.Length, outputs, remember: true)
             : null;
 
         DynamicMethod[]? frame = null, row = null, pixel = null;
@@ -56,9 +56,10 @@ internal sealed class IlMethods
             else
             {
                 // What the interpreter does for a program it cannot sort: the pixel
-                // runs all of it, and the other two stages run nothing.
+                // runs all of it, and the other two stages run nothing. Not the whole
+                // program's own methods, which remember and so run on one thread.
                 frame = row = IlEmitter.EmitChunks("Nothing", [], 0, 0, outputs);
-                pixel = whole ?? IlEmitter.EmitChunks("Whole", patch.Ops, 0, patch.Ops.Length, outputs);
+                pixel = IlEmitter.EmitChunks("Whole", patch.Ops, 0, patch.Ops.Length, outputs);
             }
         }
 

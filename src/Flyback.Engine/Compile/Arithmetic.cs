@@ -67,6 +67,7 @@ internal static class Arithmetic
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static double Modulo(double a, double b) => b == 0d ? 0d : Guard(a - b * Math.Floor(a / b));
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static double Smoothstep(double edge0, double edge1, double x)
     {
         if (edge0 == edge1) return x < edge0 ? 0d : 1d;

@@ -320,14 +320,12 @@ public sealed class AudioRenderer
         var history = delayLines[channel];
         var taps = filterTaps;
         var sum = 0f;
-        var index = historyPosition;
+        var i = 0;
 
-        // Walk backwards from the newest sample through the delay line.
-        for (var i = 0; i < Taps; i++)
-        {
-            index = index == 0 ? Taps - 1 : index - 1;
-            sum += history[index] * taps[i];
-        }
+        // Walk backwards from the newest sample through the delay line: down to its
+        // start, then from its end down to the oldest.
+        for (var index = historyPosition - 1; index >= 0; index--, i++) sum += history[index] * taps[i];
+        for (var index = Taps - 1; index >= historyPosition; index--, i++) sum += history[index] * taps[i];
 
         return sum;
     }

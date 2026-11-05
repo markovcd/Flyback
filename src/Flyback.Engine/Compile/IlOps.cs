@@ -139,6 +139,79 @@ internal static class IlOps
     }
 
     /// <summary>
+    /// <see cref="Pow"/>, answered from <paramref name="memory"/> when its operands are
+    /// the bits it was last asked, which in a sound is most samples: an exponent off a
+    /// knob or a note changes far less often than once a sample.
+    /// </summary>
+    /// <param name="memory">Operands and answer, three to a slot, always a true pair.</param>
+    /// <param name="at">Where this op's slot starts.</param>
+    [MethodImpl(Inline)]
+    public static double RememberedPow(double[] memory, int at, double a, double b)
+    {
+        ref var slot = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(memory), at);
+
+        if (Same(slot, a) && Same(Unsafe.Add(ref slot, 1), b)) return Unsafe.Add(ref slot, 2);
+
+        var answer = Pow(a, b);
+        slot = a;
+        Unsafe.Add(ref slot, 1) = b;
+        Unsafe.Add(ref slot, 2) = answer;
+        return answer;
+    }
+
+    /// <summary><see cref="Exp"/>, remembered as <see cref="RememberedPow"/> is.</summary>
+    [MethodImpl(Inline)]
+    public static double RememberedExp(double[] memory, int at, double a)
+    {
+        ref var slot = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(memory), at);
+
+        if (Same(slot, a)) return Unsafe.Add(ref slot, 2);
+
+        var answer = Exp(a);
+        slot = a;
+        Unsafe.Add(ref slot, 2) = answer;
+        return answer;
+    }
+
+    /// <summary><see cref="Noise3"/>, keeping the hashes of the cell it last read (<see cref="Noise.Value3(double, double, double, ref double)"/>).</summary>
+    [MethodImpl(Inline)]
+    public static double RememberedNoise3(double[] memory, int at, double a, double b, double c) =>
+        Noise.Value3(a, b, c, ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(memory), at));
+
+    /// <summary>
+    /// How many numbers an op keeps between evaluations of the whole program, and nought
+    /// for all but the dearest: those where a comparison costs less than working it out again.
+    /// </summary>
+    public static int Remembers(OpCode code) => code switch
+    {
+        OpCode.Pow or OpCode.Exp => 3,
+        OpCode.Noise3 => Noise.Kept,
+        _ => 0,
+    };
+
+    /// <summary>Memory for the ops of a program, in its order, each slot holding a true pair of question and answer.</summary>
+    public static double[] Memory(IEnumerable<OpCode> codes)
+    {
+        var remembered = codes.Where(code => Remembers(code) > 0).ToArray();
+        var memory = new double[remembered.Sum(Remembers)];
+        var at = 0;
+
+        foreach (var code in remembered)
+        {
+            switch (code)
+            {
+                case OpCode.Pow: memory[at + 2] = Pow(0d, 0d); break;
+                case OpCode.Exp: memory[at + 2] = Exp(0d); break;
+                case OpCode.Noise3: Noise.Keep(0d, 0d, 0d, ref memory[at]); break;
+            }
+
+            at += Remembers(code);
+        }
+
+        return memory;
+    }
+
+    /// <summary>
     /// The register a constant is read from, out of an array the constructor sized
     /// to the whole bank — so, like the bank, it is read without a bounds check.
     /// </summary>
@@ -149,6 +222,11 @@ internal static class IlOps
     /// <summary>What the emitter calls for <paramref name="code"/>, or null for an op it writes out itself.</summary>
     public static MethodInfo? For(OpCode code) =>
         typeof(IlOps).GetMethod(code.ToString(), BindingFlags.Public | BindingFlags.Static);
+
+    /// <summary>Equal to the bit, so a negative nought is not taken for a positive one.</summary>
+    [MethodImpl(Inline)]
+    private static bool Same(double kept, double asked) =>
+        BitConverter.DoubleToInt64Bits(kept) == BitConverter.DoubleToInt64Bits(asked);
 
     [MethodImpl(Inline)]
     private static Span<double> Triple(ref double bank, int first) =>

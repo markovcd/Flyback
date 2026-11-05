@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Flyback.Core;
 using Flyback.Core.Compile;
 
@@ -504,6 +505,7 @@ public sealed class DelayState
     /// signal, for as long as the part it belongs to was resting.
     /// </para>
     /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteUnit(int slot, double value) =>
         units[slot] = double.IsNormal(value) ? Math.Clamp(value, -16d, 16d) : 0d;
 
@@ -540,6 +542,7 @@ public sealed class DelayState
     /// against, and starting from a guess would be a click of exactly the kind
     /// this exists to remove.
     /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public double Advance(int cell, double input, double frequency)
     {
         // A non-finite input carries no distance, so the phase holds where it is
@@ -592,6 +595,7 @@ public sealed class DelayState
     /// still a normal double is a subnormal float long before it is nothing, and it
     /// is the narrow one that is read back on every tap. See <see cref="WriteUnit"/>.
     /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(int slot, double value)
     {
         var line = lines[slot];
@@ -608,8 +612,16 @@ public sealed class DelayState
     /// accumulate, so the write is bounded as well — ADR-0013's rule, applied to
     /// something that persists.
     /// </summary>
+    /// <remarks>
+    /// An index already inside the line is returned as it is, and one a step either
+    /// side is brought back by a length, so only a wider stray pays for the division.
+    /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int Index(int index, int length)
     {
+        if ((uint)index < (uint)length) return index;
+        if (index < 0 && index + length >= 0) return index + length;
+
         index %= length;
         return index < 0 ? index + length : index;
     }
