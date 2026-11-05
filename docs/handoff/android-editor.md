@@ -58,13 +58,20 @@ download from the preset site, and anything after a rotation.
 | x86_64 emulator, Release | Whole band, no oversampling | 1.4 to 1.9× |
 | Pixel 9 Pro (Tensor G4, ARM64, API 37), Release, Mono | Mycelium, no oversampling | 1.2× |
 | Pixel 9 Pro, Release, CoreCLR | Mycelium, no oversampling | 1.54× |
+| Pixel 9 Pro, Release, CoreCLR, remembered ops and a performance hint (bc4cfea) | Mycelium, no oversampling | 2.9 to 3.2× |
 | i5-14600KF, Release `flyback-cli render` | Mycelium, no oversampling | about 13× |
 
 The phone is about eleven times slower than a desktop, so Mycelium only just keeps up there
 and the heavier presets will not. **The user accepted this speed for now (2026-10-08):** it
 does not block the phone layout, Line In or MIDI.
 
-CoreCLR (ADR-0223) closed about a third of the gap; the rest is open. The engine's own leads
+CoreCLR (ADR-0223) closed about a third of the gap. Read `soundSpeed` on a phone with care:
+the governor runs the sound thread on a middle core and lowers its clock as the work shrinks,
+so a faster engine can read the same. `simpleperf record --app ... -e cpu-cycles,instructions,task-clock`
+on a build made profileable (`<profileable android:shell="true"/>` in the manifest, never
+committed) counts cycles per second of sound instead: Mycelium took 0.80 G before the engine
+work of 2026-11-05 and 0.60 G after, and with the performance hint the thread's clock went from
+1.34 to 1.85 GHz. The engine's own leads
 are in the `performance` skill. A cold start on CoreCLR took 7.9 s on the Pixel, with logcat
 saying twice that it timed out waiting for `libandroid.so`; it has not been timed against Mono.
 
