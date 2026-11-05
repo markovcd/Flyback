@@ -10,6 +10,7 @@
 
 ### Editor
 
+- Android and iOS have no Plugins button, and a patch that needs a plugin no longer offers one from the site there: a phone runs only the plugins built into the app, so there was nothing to install or update.
 - Settings, Privacy no longer shows Keep Flyback up to date on Android, iOS or a Microsoft Store copy, where the store or the APK you install updates Flyback and the switch did nothing.
 - On Android and iOS, Settings leaves out the rows a phone never acts on: Open with, Drag empty canvas to pan, the full-screen Monitor, the ffmpeg encoder and the video and sound formats only ffmpeg writes; takes there are Motion JPEG AVI and WAV. On iOS the switch that lets a program edit the open patch is gone too, as on Android.
 - A setting that takes effect only at a start (new colors, or Direct3D in place of OpenGL on Windows) puts a ticked Restart Flyback box beside Save in Settings, and a sound device at another rate asks to restart now or later. On the desktop the restart opens the patch on screen again, Android starts the app afresh, and on iOS the settings say how to restart by hand.

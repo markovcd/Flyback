@@ -19,7 +19,8 @@ public sealed record EditorHost
 
     /// <summary>
     /// A phone or tablet (ADR-0184): one screen, every press a finger's, and no other program
-    /// to start or to hand files to, so Settings leaves out what only a desktop acts on.
+    /// to start or to hand files to, so Settings leaves out what only a desktop acts on. Its
+    /// plugins are linked in, so there is no plugins window and nothing missing is offered.
     /// </summary>
     public bool OnDevice { get; init; }
 

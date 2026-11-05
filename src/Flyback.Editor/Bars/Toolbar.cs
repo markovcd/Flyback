@@ -279,13 +279,11 @@ internal sealed class Toolbar
         var program = ToolbarButtons.Group();
 
         // A page has only its own few settings (PageSettings), and no plugins or About.
+        // A device has only the plugins linked into it, so nothing to install or update.
         program.Children.Add(Settings);
 
-        if (full)
-        {
-            program.Children.Add(Plugins);
-            program.Children.Add(About);
-        }
+        if (full && !host.OnDevice) program.Children.Add(Plugins);
+        if (full) program.Children.Add(About);
 
         // Left to right, rather than the program group docked to the far edge —
         // everything reached from the toolbar sits together at the near side instead

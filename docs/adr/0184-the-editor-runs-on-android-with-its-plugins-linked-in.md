@@ -60,3 +60,7 @@ from Microsoft, since a distribution's packaged SDK takes no workloads.
 
 The app runs on CoreCLR rather than Mono, and the sound's IL on CoreCLR's JIT; see
 [0223](0223-android-runs-on-coreclr.md). Mycelium on the Pixel 9 Pro went from 1.2× to 1.54×.
+
+## Amendment, 2026-11-05: no plugins window
+
+Since nothing installs on a device, Android and iOS have no Plugins button, and a patch short of a plugin is not offered one from the site (`EditorHost.OnDevice`).
