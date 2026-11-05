@@ -300,7 +300,7 @@ group "Voice" {
 // through the lowpass so it darkens, and the returns ducked under the answer's own
 // notes so they bloom in the gaps.
 group "Answer Echo" {
-  let answer_loop = answer + voice_send * 0.9 |> add(a: _)
+  let answer_loop = answer + voice_send * 0.6 |> add(a: _)
   let answer_taps = answer_loop
     |> filter(cutoff: 3600, resonance: 0)
     |> echo(tempo: tempo, left: 3, right: 4, feedback: 0, mix: 1)
@@ -471,9 +471,9 @@ group "Desk" {
         attack: 10ms,
         release: 150ms)
   let sub_line = sub_tone * sub_in * duck.gain * 0.2
-  let spoken = voice * 1.5
-  let master = glue + sub_line + spoken + voice_room * 0.7
-    |> limiter(left: _, right: glue.right + sub_line + spoken + voice_room.wide * 0.7, ceiling: -1.4)
+  let spoken = voice * 0.9
+  let master = glue + sub_line + spoken + voice_room * 0.45
+    |> limiter(left: _, right: glue.right + sub_line + spoken + voice_room.wide * 0.45, ceiling: -1.4)
 }
 
 // The plane, torn: twelve strips slide by how far the cuts moved the eighth, a die
