@@ -542,7 +542,6 @@ public sealed class DelayState
     /// against, and starting from a guess would be a click of exactly the kind
     /// this exists to remove.
     /// </remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public double Advance(int cell, double input, double frequency)
     {
         // A non-finite input carries no distance, so the phase holds where it is

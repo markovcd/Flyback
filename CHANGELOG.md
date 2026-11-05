@@ -31,6 +31,8 @@
 
 ### Performance
 
+- A picture whose modules keep a phase, such as Plasma, builds after an edit as fast as it did before 0.12.0, about twice as fast as in 0.12.0.
+
 ### Fixes
 
 ## 0.12.0 — 2026-11-05
