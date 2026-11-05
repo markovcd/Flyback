@@ -40,7 +40,7 @@ internal sealed class IlMethods
         var outputs = (patch.OutputBase, patch.OutputBase + patch.OutputWidth);
 
         var whole = parts.HasFlag(IlParts.Whole)
-            ? IlEmitter.EmitChunks("Whole", patch.Ops, 0, patch.Ops.Length, outputs, remember: true)
+            ? IlEmitter.EmitChunks("Whole", patch.Ops, 0, patch.Ops.Length, outputs, whole: true)
             : null;
 
         DynamicMethod[]? frame = null, row = null, pixel = null;

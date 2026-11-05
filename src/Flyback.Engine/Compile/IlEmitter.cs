@@ -51,17 +51,19 @@ internal sealed class IlEmitter
     private readonly int from;
     private readonly int to;
     private readonly (int From, int To) outputs;
-    private readonly bool remember;
+    private readonly bool whole;
+    private readonly Repeats? repeats;
     private readonly Dictionary<int, LocalBuilder> locals = [];
 
-    private IlEmitter(ILGenerator il, Op[] ops, int from, int to, (int From, int To) outputs, bool remember)
+    private IlEmitter(ILGenerator il, Op[] ops, int from, int to, (int From, int To) outputs, Repeats? repeats)
     {
         this.il = il;
         this.ops = ops;
         this.from = from;
         this.to = to;
         this.outputs = outputs;
-        this.remember = remember;
+        this.repeats = repeats;
+        whole = repeats is not null;
     }
 
     /// <summary>
@@ -74,9 +76,10 @@ internal sealed class IlEmitter
     /// Ops <paramref name="from"/> to <paramref name="to"/> as methods of at most
     /// <see cref="ChunkSize"/> ops each, to be called in order.
     /// </summary>
-    /// <param name="remember">
-    /// Whether the dearest ops keep their last answer in <see cref="IlContext.Memory"/>:
-    /// only for the whole program, which one thread runs, and whose ops are the program's own.
+    /// <param name="whole">
+    /// Whether these are the whole program, run by one thread in order: then an op that
+    /// repeats an earlier one is not worked out again (<see cref="Repeats"/>), and the
+    /// dearest ops keep their last answer in <see cref="IlContext.Memory"/>.
     /// </param>
     public static DynamicMethod[] EmitChunks(
         string name,
@@ -84,12 +87,13 @@ internal sealed class IlEmitter
         int from,
         int to,
         (int From, int To) outputs,
-        bool remember = false)
+        bool whole = false)
     {
         var chunks = new List<DynamicMethod>();
+        var repeats = whole ? new Repeats(ops, outputs) : null;
 
         for (var start = from; start < to || chunks.Count == 0; start += ChunkSize)
-            chunks.Add(Emit(name, ops, start, Math.Min(to, start + ChunkSize), outputs, remember));
+            chunks.Add(Emit(name, ops, start, Math.Min(to, start + ChunkSize), outputs, repeats));
 
         return [.. chunks];
     }
@@ -105,14 +109,14 @@ internal sealed class IlEmitter
         int from,
         int to,
         (int From, int To) outputs,
-        bool remember = false)
+        Repeats? repeats = null)
     {
         // Owned by CompiledPatch so it may call what the interpreter calls; the
         // visibility checks are skipped because a dynamic method is not itself a
         // member of anything.
         var method = new DynamicMethod(name, typeof(void), Parameters, typeof(CompiledPatch), skipVisibility: true);
 
-        new IlEmitter(method.GetILGenerator(), ops, from, to, outputs, remember).Run();
+        new IlEmitter(method.GetILGenerator(), ops, from, to, outputs, repeats).Run();
         return method;
     }
 
@@ -124,9 +128,11 @@ internal sealed class IlEmitter
         for (var i = from; i < to; i++)
         {
             var op = ops[i];
+            if (Repeated(i)) continue;
 
-            foreach (var input in OpShape.Reads(op))
+            foreach (var read in OpShape.Reads(op))
             {
+                var input = Resolve(read);
                 if (written.Contains(input) || locals.ContainsKey(input)) continue;
 
                 Address(input);
@@ -156,12 +162,16 @@ internal sealed class IlEmitter
             kept += IlOps.Remembers(ops[i].Code);
         }
 
-        for (var i = from; i < to; i++) One(ops[i], ref line, ref cell, ref kept);
+        for (var i = from; i < to; i++)
+        {
+            if (Repeated(i)) kept += IlOps.Remembers(ops[i].Code);
+            else One(ops[i], ref line, ref cell, ref kept);
+        }
 
         var readElsewhere = new HashSet<int>();
         for (var i = 0; i < ops.Length; i++)
-            if (i < from || i >= to)
-                readElsewhere.UnionWith(OpShape.Reads(ops[i]));
+            if ((i < from || i >= to) && !Repeated(i))
+                readElsewhere.UnionWith(OpShape.Reads(ops[i]).Select(Resolve));
 
         foreach (var register in scalarWrites)
         {
@@ -180,7 +190,7 @@ internal sealed class IlEmitter
     {
         switch (op.Code)
         {
-            case OpCode.Pow or OpCode.Exp or OpCode.Noise3 when remember:
+            case OpCode.Pow or OpCode.Exp or OpCode.Noise3 when whole:
                 il.Emit(ReflectionOpCodes.Ldarg_0);
                 il.Emit(ReflectionOpCodes.Ldfld, MemoryField);
                 il.Emit(ReflectionOpCodes.Ldc_I4, kept);
@@ -337,7 +347,11 @@ internal sealed class IlEmitter
             ReflectionOpCodes.Call,
             IlOps.For(code) ?? throw new NotSupportedException($"The IL backend has no lowering for {code}."));
 
-    private void Load(int register) => il.Emit(ReflectionOpCodes.Ldloc, Local(register));
+    private void Load(int register) => il.Emit(ReflectionOpCodes.Ldloc, Local(Resolve(register)));
+
+    private bool Repeated(int op) => repeats?.Repeated(op) ?? false;
+
+    private int Resolve(int register) => repeats?.Resolve(register) ?? register;
 
     private LocalBuilder Local(int register)
     {
