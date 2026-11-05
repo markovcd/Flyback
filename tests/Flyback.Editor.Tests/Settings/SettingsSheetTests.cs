@@ -65,6 +65,24 @@ public class SettingsSheetTests : OutputSettingsTest
     }
 
     [AvaloniaFact]
+    public void A_phone_opens_a_tab_on_its_first_tap()
+    {
+        var window = Phone();
+
+        // Opened a second time, the sheet is never laid out wide, so its tabs are first
+        // realized with the list put away, as on a phone from the start.
+        CloseSettings(window, OpenSettings(window), "cancel");
+        var dialog = OpenSettings(window);
+
+        Press(Rows(dialog).Single(row => Said(row) == "Playing"));
+        Settle(window);
+
+        Tabs(dialog).SelectedItem.ShouldBeOfType<TabItem>().Header.ShouldBeOfType<TextBlock>().Text.ShouldBe("Playing");
+        Named<ComboBox>(dialog, "takeover").IsEffectivelyVisible.ShouldBeTrue("the tab shows its settings");
+        Named<ComboBox>(dialog, "takeover").Bounds.Width.ShouldBeGreaterThan(0);
+    }
+
+    [AvaloniaFact]
     public void A_phone_saves_every_tab_as_the_desktop_does()
     {
         var window = Phone(settingsPath);

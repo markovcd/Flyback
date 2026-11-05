@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
@@ -24,6 +25,9 @@ internal sealed class SettingsSheet : Grid
     private readonly ScrollViewer list;
     private readonly DockPanel back;
     private readonly TextBlock title = new() { FontSize = Text.Emphasis, FontWeight = FontWeight.SemiBold, VerticalAlignment = VerticalAlignment.Center };
+
+    /// <summary>The tab control's list of tabs, once its template is applied.</summary>
+    private ItemsPresenter? strip;
 
     /// <summary>Whether the sheet is too narrow for the list beside a tab; null until first measured.</summary>
     private bool? narrow;
@@ -107,6 +111,12 @@ internal sealed class SettingsSheet : Grid
 
         back = new DockPanel { IsVisible = false, Margin = new Thickness(0, 0, 0, 6), Children = { Left(backButton), title } };
 
+        tabs.TemplateApplied += (_, e) =>
+        {
+            strip = e.NameScope.Find<ItemsPresenter>("PART_ItemsPresenter");
+            Lay();
+        };
+
         // A tab picked from outside the list, by a script or a test, is shown as a tap shows it.
         tabs.SelectionChanged += (_, _) =>
         {
@@ -152,9 +162,9 @@ internal sealed class SettingsSheet : Grid
     {
         var phone = narrow == true;
 
-        // A tab's header hidden leaves its page showing, so a phone's page is the tab
-        // control with its list put away.
-        foreach (var item in tabs.Items.Cast<TabItem>()) item.IsVisible = !phone;
+        // A phone's page is the tab control with its list put away. The list goes as a
+        // whole: a tab control drops a selected tab whose own header is hidden.
+        if (strip is not null) strip.IsVisible = !phone;
 
         foreach (var view in views) view.Width = phone ? double.NaN : SettingsSession.SectionWidth;
 
