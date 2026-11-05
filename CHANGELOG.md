@@ -6,15 +6,32 @@
 
 ### Presets
 
-- Tranquility, on the preset site, has a clean sine sub under its rolling bass, so a subwoofer plays the bass and not only the kick; the master trim is lowered so the limiter does not pump on it.
-- Fracture has a sub bass a subwoofer carries: the Reese is cut under 110 Hz so a louder sine sub has the low end to itself, its notes under 41 Hz play an octave up where a subwoofer still answers, and the drums sit a little lower in the mix. It is mastered as the other songs are: a gentle compressor, an EQ, width kept mono under 150 Hz and a limiter, about 4 LU louder than before.
-
 ### Assistant
 
 ### Editor
 
-- Settings → Sound offers 8× oversampling.
-- On Android and iOS the sound starts with no oversampling; Settings → Sound raises it.
+### Viewer
+
+### Command line
+
+### Installing
+
+### Performance
+
+### Fixes
+
+## 0.12.0 — 2026-11-05
+
+142 commits since 0.11.0.
+
+### Presets
+
+- Tranquility, on the preset site, has a clean sine sub under its rolling bass, so a subwoofer plays the bass and not only the kick; the master trim is lowered so the limiter does not pump on it.
+- Fracture has a sub bass a subwoofer carries: the Reese is cut under 110 Hz so a louder sine sub has the low end to itself, its notes under 41 Hz play an octave up where a subwoofer still answers, and the drums sit a little lower in the mix. It is mastered as the other songs are: a gentle compressor, an EQ, width kept mono under 150 Hz and a limiter, about 4 LU louder than before.
+
+### Editor
+
+- Settings → Sound offers 8× oversampling, and on Android and iOS the sound starts with none; Settings → Sound raises it.
 - Android and iOS have no Plugins button, and a patch that needs a plugin no longer offers one from the site there: a phone runs only the plugins built into the app, so there was nothing to install or update.
 - Settings, Privacy no longer shows Keep Flyback up to date on Android, iOS or a Microsoft Store copy, where the store or the APK you install updates Flyback and the switch did nothing.
 - On Android and iOS, Settings leaves out the rows a phone never acts on: Open with, Drag empty canvas to pan, the full-screen Monitor, the ffmpeg encoder and the video and sound formats only ffmpeg writes; takes there are Motion JPEG AVI and WAV. On iOS the switch that lets a program edit the open patch is gone too, as on Android.
@@ -35,10 +52,9 @@
 - The text lets blocks nest: a def inside a def, a group or a loop, in sight only inside that block and reading what it sees, and a group inside a group or a loop. A group inside a group is drawn as part of the outer one, and a named group in a loop is a box a pass, "Voice 1", "Voice 2".
 - A box the text filled with groups, def calls or loop passes opens shut like any other, and opening it shows each laid out as a band under a chip naming it, left to right as the wires run; pressing a chip selects every module in it.
 - A shut box lists the levels inside it as chips along its foot, and a loop pass's box the pass it is, `1/3 pitch = 110`. Zoomed far out, only each box's outermost chips show, large enough to read.
-- Pressing a level's chip shows the level in the inspector: what a call or a loop pass was given, what is inside it, the wires leaving it, the other calls of its def, and Show in text to open the text at its line.
-- A module the text placed inside a group, a def call or a loop shows those levels at the top of the inspector, `Bass › voice`; pressing one selects every module in it.
+- Pressing a level's chip shows the level in the inspector: what a call or a loop pass was given, what is inside it, the wires leaving it, the other calls of its def, and Show in text to open the text at its line. A module the text placed inside a group, a def call or a loop shows those levels at the top of the inspector, `Bass › voice`; pressing one selects every module in it.
 - A value being turned can move to another input on the same module without letting go: Tab or Shift+Tab, or the wheel, with a mouse or trackpad; a second finger tapped below or above the turning one by touch. A finger held anywhere on a module turns the input on the row beside it rather than switching the module off while held (Bypass in the inspector does that); zoomed out past the rows, a right-drag or a held finger anywhere on a module turns its first input, and the input turning is ringed and named beside its socket, and its card points at it.
-- A group can hold a single module: Ctrl+G and the group button work on one module, a group worn down to one by a delete or a move stays, and a `group` block in the text round one module draws its box Clicking that module shows its own panel; the strip above an open box, or the shut box, shows the group's.
+- A group can hold a single module: Ctrl+G and the group button work on one module, a group worn down to one by a delete or a move stays, and a `group` block in the text round one module draws its box. Clicking that module shows its own panel; the strip above an open box, or the shut box, shows the group's.
 - Live patching shows only the view that owns the patch: its text when the text is the document, its modules otherwise. F2 no longer swaps them over the picture, and the transport over the picture has no text button.
 - The text view offers what may be typed where the caret is, as you type or on Ctrl+Space: a module's sockets inside its brackets, its outputs after a dot, the names in sight and the modules there are. Inside a call its sockets stand above the caret with the one being filled in bold, and resting the pointer on a word says what it is.
 - The editor has a look of its own: an orange accent on charcoal (the Graphite color scheme) instead of the system blue for selection, toggles and readings, square corners, toolbar buttons with no fill until pointed at or switched on, numbers set in a mono face, modules drawn as flat panels with a rule in their family's color along a dark title band and no glyph behind their rows, and the canvas ruled like a scope's graticule. Settings, Canvas, Colors offers more color schemes from the next start: Amber, Midnight, Phosphor (the green of the Beam module's trace) and any of your own saved as JSON in the schemes folder. Every panel follows the scheme: the value wells, the turn readout, the knob chooser, the step bar, socket tags and the keyboard drawing, the assistant's column, links and tutorial steps no longer keep Phosphor's grays or a module family's color, and a fault is shown in one red of its own.
@@ -48,39 +64,30 @@
 - A module's title on the canvas sits centered in its band.
 - Settings is regrouped and quieter: its tabs are listed in groups, full screen and live patching have a tab of their own, MIDI is now Playing and holds Endless, every tab is cut by small headings, and explanations moved from under the switches into their tooltips. On a phone, Settings is a list of its tabs to tap into, each then full width with its names above their controls, instead of a sheet wider than the screen.
 - A pinch over the text view, by two fingers on a screen or on a trackpad, makes its text larger or smaller in whole points, the size Ctrl+scroll and the A− and A+ buttons set; Ctrl+0 still puts it back.
-
 - On a desktop, a start that is slow to open its window shows Flyback's mark while it does.
 - While the text owns the patch, a value turns in its well on the canvas as it does in the inspector, and letting go writes it into the text; a value the text says as a sum, or through a def used more than once, shows no well.
 - A knob turned past halfway and then played as a button no longer starts lit, as if held, until it is pressed once.
 - While the text owns the patch, a tag in the canvas's corner says so, with F2 beside it; pressing it opens the text.
 
-### Viewer
-
 ### Command line
 
-- `flyback-cli levels` lists the groups, def calls and loop passes a text patch opens, inside one another, with their modules; `--of` names the ones a module sits in.
-- `flyback-cli shot --shut` draws every box shut, as `--open` draws every one open.
-- `flyback-cli levels --json` gives each call's arguments and the wires leaving each level; `flyback-cli shot --select` takes a level by the label `levels` prints.
-- `flyback-cli shot --open` draws every box open, its modules showing.
+- `flyback-cli levels` lists the groups, def calls and loop passes a text patch opens, inside one another, with their modules; `--of` names the ones a module sits in, and `--json` gives each call's arguments and the wires leaving each level.
+- `flyback-cli shot --open` draws every box open, its modules showing, and `--shut` draws every one shut; `--select` takes a level by the label `levels` prints.
 - `flyback-cli complete song.fbks --at 4:12` lists what may be typed at one place in a text patch, as the text view offers it; `flyback-cli hover` says what the word there is and the sockets of the call it is in.
-
-### Installing
 
 ### Performance
 
 - The desktop editor opens its window about a second sooner, its code compiled ahead of time; the web editor shows its logo and a loading bar while it downloads, and the iPhone and iPad editor opens on its logo in its own colors rather than a white screen.
 - Panning and zooming a large patch is smoother, most of all on a phone: the canvas skips modules and wires out of view, looks up what it draws once a frame, and keeps wire shapes, pens and laid-out text from one frame to the next.
-- On Android the sound runs ahead of the screen's drawing, so a busy canvas no longer starves it.
+- On Android the sound runs ahead of the screen's drawing, so a busy canvas no longer starves it, and its thread tells the system how long it has to fill each block, so a heavy patch is given the clock it needs rather than falling behind on a slowed core.
 - The Android app runs on the same .NET runtime as the desktop and works the sound out about a third faster: Mycelium plays at 1.5× real time on a Pixel 9 Pro rather than 1.2×. The app is about twice the download it was.
 - A heavy patch's sound takes about a third less work to render, sample for sample the same.
-- On Android the sound's thread tells the system how long it has to fill each block, so a heavy patch is given the clock it needs rather than falling behind on a slowed core.
 
 ### Fixes
 
 - Linking sockets to a panel knob stops on going full screen, adding or removing a module, opening a patch, undo or redo, showing the text and learning a controller, and does not start while the text owns the patch.
 - Live text set to wake on keys only keeps clicks to itself while faded, so they no longer pause the picture or leave full screen, and it comes back at a key wherever the keys had gone.
 - One input no longer does two things: a touch on faded live modules only brings them back; Escape over the text's completion list shuts the list rather than leaving full screen; Ctrl+D in the text duplicates as on the canvas instead of deleting the line; a trackpad scroll that is panning or zooming the canvas goes on doing so over a picked value; a trackpad turns a panel knob by whole notches; and on a Mac, Cmd+Ctrl+F no longer also frames the patch.
-
 - macOS: an update no longer fails to sign the app when a plugin from the preset site is installed. Installed plugins now live in `~/.config/Flyback/plugins` rather than inside `Flyback.app`, and the ones already inside it are moved there. An update whose signing fails says it is installed rather than that it will try again.
 - Noise read past about two billion draws the same on the graphics card, on the processor and in the browser.
 - `render --quality` refuses a number outside 1 to 100 instead of quietly clamping it.

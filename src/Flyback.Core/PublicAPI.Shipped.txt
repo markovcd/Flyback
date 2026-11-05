@@ -690,7 +690,6 @@ const Flyback.Core.Graph.ModuleCategories.Shaping = "Shaping" -> string!
 const Flyback.Core.Graph.ModuleCategories.TimeEffects = "Time effects" -> string!
 const Flyback.Core.Graph.ModuleCategories.Timing = "Timing" -> string!
 const Flyback.Core.Graph.NodeCatalog.MaxParts = 8 -> int
-const Flyback.Core.Graph.NodeGroup.Fewest = 2 -> int
 const Flyback.Core.Graph.NodeGroup.NameLimit = 26 -> int
 override Flyback.Core.Compile.CompileIssue.Equals(object? obj) -> bool
 override Flyback.Core.Compile.CompileIssue.GetHashCode() -> int
