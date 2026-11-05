@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs the Android editor on a device or an emulator and asks it how it is doing, so
 # a session checks the APK without a window (ADR-0184): the app boots on a preset, Play is pressed, the
-# picture draws, AudioTrack plays, the sound's IL runs under Mono's JIT, the state
+# picture draws, AudioTrack plays, the sound's IL runs under CoreCLR's JIT, the state
 # broadcast answers, and all of it holds after a rotation.
 #
 #   ./scripts/android-smoke.sh                   Sidebands on the attached device, or on the AVD named flyback

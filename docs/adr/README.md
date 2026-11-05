@@ -31,7 +31,8 @@ context, decision, consequences.
 | [0166](0166-flyback-cli-shot-draws-the-editors-window-with-no-screen.md) | flyback-cli shot draws the editor's window with no screen *(user-directed)* |
 | [0183](0183-the-binder-is-one-walk-and-what-it-asks-for-is-handed-nothing-back.md) | The binder is one walk, and what it asks for is handed nothing back *(user-directed)* |
 | [0187](0187-the-plate-scrolls-with-the-reading-and-folds-into-a-pinned-header.md) | The plate scrolls with the reading and folds into a pinned header *(user-directed; supersedes [0122](0122-the-panel-wears-the-block-it-is-about.md)'s pinned plate and right-hand name)* |
-| [0184](0184-the-editor-runs-on-android-with-its-plugins-linked-in.md) | The editor runs on Android, with its plugins linked in *(user-directed)* |
+| [0184](0184-the-editor-runs-on-android-with-its-plugins-linked-in.md) | The editor runs on Android, with its plugins linked in *(user-directed; its runtime moved to CoreCLR by [0223](0223-android-runs-on-coreclr.md))* |
+| [0223](0223-android-runs-on-coreclr.md) | Android runs on CoreCLR *(user-directed)* |
 | [0211](0211-the-editor-builds-for-ios-as-android-does.md) | The editor builds for iOS as it does for Android *(user-directed; its simulator run made daily by [0212](0212-macos-runs-on-every-push-the-device-and-measuring-runs-daily.md))* |
 | [0189](0189-the-architecture-is-a-c4-model-in-structurizr-dsl.md) | The architecture is a C4 model in Structurizr DSL *(user-directed; superseded by [0204](0204-the-c4-views-are-mermaid-flowcharts.md))* |
 | [0204](0204-the-c4-views-are-mermaid-flowcharts.md) | The C4 views are Mermaid flowcharts *(user-directed)* |

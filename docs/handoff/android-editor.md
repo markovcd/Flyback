@@ -16,7 +16,7 @@ from the code, except where the order says done.
 
 `src/Flyback.Editor.Android` boots to the canvas on an emulator, draws the picture on GLES
 at 49 fps, and plays the sound through `Flyback.Plugins.AndroidIO`'s `AudioTrack`. The sound's
-IL runs under Mono's JIT (see the speed below).
+IL runs under CoreCLR's JIT (ADR-0223; see the speed below).
 
 The toolchain is user-local: a Microsoft .NET SDK in `~/.dotnet`
 (Ubuntu's packaged SDK takes no workloads) with the android workload, a JDK in
@@ -56,18 +56,17 @@ download from the preset site, and anything after a rotation.
 |---|---|---|
 | x86_64 emulator, Release | Sidebands, 2× oversampling | 18× real time |
 | x86_64 emulator, Release | Whole band, no oversampling | 1.4 to 1.9× |
-| Pixel 9 Pro (Tensor G4, ARM64, API 37), Release | Mycelium, no oversampling | 1.2× |
+| Pixel 9 Pro (Tensor G4, ARM64, API 37), Release, Mono | Mycelium, no oversampling | 1.2× |
+| Pixel 9 Pro, Release, CoreCLR | Mycelium, no oversampling | 1.54× |
 | i5-14600KF, Release `flyback-cli render` | Mycelium, no oversampling | about 13× |
 
 The phone is about eleven times slower than a desktop, so Mycelium only just keeps up there
 and the heavier presets will not. **The user accepted this speed for now (2026-10-08):** it
 does not block the phone layout, Line In or MIDI.
 
-The lead when it is taken up: .NET Android runs Mono's JIT, which generates weaker code than
-the desktop's RyuJIT. .NET 10 is believed to carry an experimental CoreCLR runtime for Android
-(`<UseMonoRuntime>false</UseMonoRuntime>`); unchecked whether it exists in this SDK or runs the
-editor. Build with it, measure Mycelium on the phone again, and the difference is what the
-runtime costs rather than the phone. The engine's own leads are in the `performance` skill.
+CoreCLR (ADR-0223) closed about a third of the gap; the rest is open. The engine's own leads
+are in the `performance` skill. A cold start on CoreCLR took 7.9 s on the Pixel, with logcat
+saying twice that it timed out waiting for `libandroid.so`; it has not been timed against Mono.
 
 ## What already carries over
 
@@ -97,9 +96,9 @@ runtime costs rather than the phone. The engine's own leads are in the `performa
    written from a thread of its own as ALSA's is, an `AudioRecord` input and a `MidiManager`
    input, against `IAudioInput` and `IMidiInput`.
 5. **The IL path.** The sound's desktop speed is IL generated at run time (ADR-0076). It runs
-   under Mono's JIT. A Debug build runs Mono's interpreter by default, where
+   under CoreCLR's JIT (ADR-0223). A Debug build would run an interpreter by default, where
    `RuntimeFeature.IsDynamicCodeCompiled` is false and no IL is built, so the project sets
-   `UseInterpreter=false`. On a Pixel 9 Pro it is about eleven times slower than a desktop.
+   `UseInterpreter=false`. On a Pixel 9 Pro it is about eight times slower than a desktop.
 6. **Trimming.** Release builds trim, and the patch reader deserializes by reflection: take
    the page's `TrimMode=partial`.
 7. **Touch, the bulk.** ADR-0165 makes a finger a mouse button, and the touch bugs it left

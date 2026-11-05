@@ -55,3 +55,8 @@ from Microsoft, since a distribution's packaged SDK takes no workloads.
 - A Bluetooth keyboard is not heard: Android lists one only once an app has opened it by its
   address, which takes a scan and a permission of its own.
 - A phone needs a layout of its own; a tablet takes the desktop's once the touch bugs land.
+
+## Amendment, 2026-11-05: CoreCLR
+
+The app runs on CoreCLR rather than Mono, and the sound's IL on CoreCLR's JIT; see
+[0223](0223-android-runs-on-coreclr.md). Mycelium on the Pixel 9 Pro went from 1.2× to 1.54×.
