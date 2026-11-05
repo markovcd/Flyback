@@ -86,7 +86,12 @@ internal static class About
 
         var titles = new StackPanel { Spacing = 2, Margin = new Thickness(12, 0, 0, 0) };
 
-        var mark = Mark(said => titles.Children.Add(Quiet(said)));
+        // Laid out from the start and only shown when the mark has something to say,
+        // so the window keeps its size and place when it does.
+        var said = Quiet("Its code is on the clipboard, to paste into the text view or onto the canvas.");
+        said.Opacity = 0;
+
+        var mark = Mark(() => said.Opacity = 1);
 
         titles.Children.Add(new TextBlock
         {
@@ -100,6 +105,7 @@ internal static class About
         titles.Children.Add(Credited());
         titles.Children.Add(Link(Website));
         titles.Children.Add(Link($"mailto:{Email}", Email));
+        titles.Children.Add(said);
 
         Grid.SetColumn(mark, 0);
         Grid.SetColumn(titles, 1);
@@ -129,8 +135,8 @@ internal static class About
     /// Drawn at twice its size and scaled down, so the beam has an edge on a
     /// display that would otherwise show it one pixel wide.
     /// </remarks>
-    /// <param name="say">Puts a line under the titles.</param>
-    private static Control Mark(Action<string> say)
+    /// <param name="copied">Says the patch's text is on the clipboard.</param>
+    private static Control Mark(Action copied)
     {
         const int side = 56;
         const int clicks = 7;
@@ -167,7 +173,7 @@ internal static class About
             if (TopLevel.GetTopLevel(mark)?.Clipboard is not { } clipboard) return;
 
             await clipboard.SetTextAsync(PatchPrinter.Print(patch));
-            say("Its code is on the clipboard, to paste into the text view or onto the canvas.");
+            copied();
         };
 
         // The frames are drawn on a thread of their own, which nothing else here

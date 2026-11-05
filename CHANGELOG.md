@@ -19,6 +19,7 @@
 - A comment in the text starts with `//`; a `#` comment is refused, with a message saying to write `//`.
 - Settings, Picture, Smoothing offers Best, four samples a pixel, in the preview and in a recorded take.
 - A module's glyph is back on the canvas: small in its color before its name, and larger over the name when zoomed out. A shut box shows the group glyph.
+- The About window keeps its size and place when its mark comes alive; the line saying the code is on the clipboard has its room from the start.
 
 ### Viewer
 

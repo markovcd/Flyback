@@ -217,6 +217,7 @@ public class AboutTests : EditorTest
 
         Click(window, Middle(window), 6);
         (await clipboard.TryGetTextAsync()).ShouldBe("something else", "six clicks are not seven");
+        Saying(window).ShouldBeFalse("nothing is on the clipboard to say so");
 
         Click(window, Middle(window), 1);
 
@@ -226,8 +227,34 @@ public class AboutTests : EditorTest
         built.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program.Ops
             .ShouldBe(LogoBeam.Patch().CompileForVideo(NodeCatalog.BuiltIn).Program.Ops);
 
-        Words(window).ShouldContain(t => t.Contains("clipboard"));
+        Saying(window).ShouldBeTrue();
     }
+
+    private static bool Saying(Window window) =>
+        All<TextBlock>(window).Single(t => (t.Text ?? string.Empty).Contains("clipboard")).Opacity > 0;
+
+    /// <summary>
+    /// The line it says that in is there from the start, so neither the window
+    /// nor anything in it moves when the mark comes alive.
+    /// </summary>
+    [AvaloniaFact]
+    public void Coming_alive_moves_nothing()
+    {
+        var window = Showing();
+        var size = window.ClientSize;
+        var lines = Lines(window);
+
+        Click(window, Middle(window), 7);
+        Pump(() => Saying(window), window);
+        Settle(window);
+
+        window.ClientSize.ShouldBe(size);
+        Lines(window).ShouldBe(lines);
+    }
+
+    /// <summary>Where each line of text sits in the window.</summary>
+    private static List<Rect> Lines(Window window) =>
+        All<TextBlock>(window).Select(t => new Rect(t.TranslatePoint(default, window) ?? default, t.Bounds.Size)).ToList();
 
     /// <summary>
     /// And nothing puts the drawing back but closing the window, so a click meant
