@@ -46,7 +46,7 @@ internal sealed partial class SourceView : UserControl
     /// will not load, which leaves plain text rather than taking the window down
     /// over a color scheme.
     /// </summary>
-    private static readonly IHighlightingDefinition? Language = LoadHighlighting();
+    internal static readonly IHighlightingDefinition? Language = LoadHighlighting();
 
     private readonly TextEditor text = new()
     {

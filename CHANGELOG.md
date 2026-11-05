@@ -11,6 +11,7 @@
 ### Editor
 
 - Phosphor, the green of the Beam module's trace on blue-gray, is the editor's color scheme until another is chosen in Settings, Canvas, Colors. A scheme already saved there is kept.
+- The text view colors `for` loops, `panel`, `requires`, `keyboard` and `length` lines, `...`, `_`, notes, durations and step notation, and a sharp such as `C#4` no longer turns the rest of its line into a comment.
 
 ### Viewer
 

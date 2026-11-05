@@ -4,12 +4,16 @@
   The Flyback language, colored. Written by hand rather than taken from a
   grammar registry, because no registry has heard of this language and one of
   these has to be written either way — see docs/language.md and ADR-0065.
+  site/static/assets/site.js colors snippets on the site by the same rules.
 
   The colors are the shell's own (Controls/Colors.cs) so the text view reads as
   part of the program rather than as an editor bolted into it. What each one
   means is the same thing it means on the canvas wherever there is a
   correspondence: a socket name is the pale label a socket carries on a node,
   and the Output is the sink's red.
+
+  A span's start outranks any rule that would run across it, so the comment
+  begins at a '#' that is not the sharp of a note.
 -->
 <SyntaxDefinition name="Flyback" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
 
@@ -25,40 +29,75 @@
 
   <RuleSet ignoreCase="false">
 
-    <Span color="Comment" begin="#" />
+    <Span color="Comment" begin="#(?!(?&lt;=\b[A-G]#)-?\d)" />
 
-    <!-- The one string the language has, which names a file. -->
+    <!-- The one string the language has, which names a file or says something about the patch. -->
     <Span color="Text" begin="&quot;" end="&quot;" />
 
-    <Keywords color="Keyword">
-      <Word>let</Word>
-      <Word>def</Word>
-      <Word>group</Word>
-      <Word>off</Word>
-      <Word>description</Word>
-      <Word>author</Word>
-      <Word>tags</Word>
-    </Keywords>
+    <!-- A module's step or arrangement block, or a list. -->
+    <Span ruleSet="Block" multiline="true" begin="\[" end="\]" />
+
+    <Import ruleSet="Code" />
+
+  </RuleSet>
+
+  <!--
+    Inside brackets a note may leave out its octave (a tune's or a keyboard's
+    scale), '#' is its sharp, and the step and arrangement notation has
+    operators of its own: a rest, velocity, repeat, elongate, alternation and
+    the bar between parts.
+  -->
+  <RuleSet name="Block" ignoreCase="false">
+
+    <Span color="Comment" begin="#(?&lt;!\b[A-G]#)" />
+    <Span color="Text" begin="&quot;" end="&quot;" />
+    <Span ruleSet="Block" multiline="true" begin="\[" end="\]" />
+
+    <Rule color="Number">\b[A-G][#b]?(?:-?\d+)?(?![\w#])</Rule>
+
+    <Rule color="Comment">~</Rule>
+
+    <Rule color="Pipe">\|&gt;|&lt;-|\.\.\.?|\b_\b|[|&lt;&gt;!@%]</Rule>
+
+    <Import ruleSet="Code" />
+
+  </RuleSet>
+
+  <RuleSet name="Code" ignoreCase="false">
+
+    <Rule color="Keyword">\b(?:let|def|group|for|off)\b</Rule>
+
+    <!-- A loop's "in", which is never the socket of that name nor a def's parameter. -->
+    <Rule color="Keyword">\bin\b(?=\s+(?:[^\s:,)=.]|$))</Rule>
 
     <!--
-      The domains. They are not modules and are not spelled like them: x, y and
-      t are the three things a patch is read across, and coloring them as
-      sources is what makes a line that never moves visible at a glance.
+      The lines about the whole patch, each told from a name by what follows it.
+      A rule sees only up to where a text, a comment or a block begins, so the
+      end of what it sees stands for the quote or the bracket.
     -->
-    <Keywords color="Domain">
-      <Word>t</Word>
-      <Word>x</Word>
-      <Word>y</Word>
-      <Word>radius</Word>
-      <Word>angle</Word>
-      <Word>aspect</Word>
-    </Keywords>
+    <Rule color="Keyword">\b(?:description|author|tags)\b(?=\s+(?:"|$))</Rule>
+    <Rule color="Keyword">\brequires\b(?=\s+(?:["\w]|$))</Rule>
+    <Rule color="Keyword">\bpanel\b(?=\s+\w+\s*=)</Rule>
+    <Rule color="Keyword">\b(?:held|switch|button|latching)\b(?=\s*(?:,|$))</Rule>
+    <Rule color="Keyword">\bkeyboard\s+(?:piano|scale)\b</Rule>
+    <Rule color="Keyword">\blength\b(?=\s+\d)</Rule>
 
     <!-- The Output, which every patch has exactly one of. -->
     <Rule color="Sink">\bout\s*\.\s*\w+</Rule>
 
+    <!--
+      The domains. They are not modules and are not spelled like them: x, y and
+      t are the three things a patch is read across, and coloring them as
+      sources is what makes a line that never moves visible at a glance. A
+      socket or a module of the same name is not one.
+    -->
+    <Rule color="Domain">\b(?:x|y|t|radius|angle|aspect)\b(?!\s*[:(])</Rule>
+
     <!-- A named argument, which is a socket on the module being called. -->
     <Rule color="Socket">\b[A-Za-z_]\w*\s*(?=:)</Rule>
+
+    <!-- A note, which the language reads as the number it is. -->
+    <Rule color="Number">\b[A-G][#b]?-?\d+\b</Rule>
 
     <!--
       Anything being called, which is a module or a def and is deliberately not
@@ -70,10 +109,13 @@
     -->
     <Rule color="Module">\b[A-Za-z_]\w*(?=\s*\()</Rule>
 
-    <!-- The pipe, the back-wire, and the range that fills two sockets at once. -->
-    <Rule color="Pipe">\|&gt;|&lt;-|\.\.</Rule>
+    <!--
+      The pipe, the back-wire, the range that fills two sockets at once, the
+      spread of a list over a call's sockets, and the "_" that says where a pipe lands.
+    -->
+    <Rule color="Pipe">\|&gt;|&lt;-|\.\.\.?|\b_\b</Rule>
 
-    <Rule color="Number">\b\d+(\.\d+)?\b</Rule>
+    <Rule color="Number">\b\d+(?:\.\d+)?(?:us|ms|s)?\b</Rule>
 
   </RuleSet>
 
