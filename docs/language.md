@@ -1014,34 +1014,6 @@ something the preset says, that is a hole and it is marked as one.
 
 The Output, alone. An empty file.
 
-### Picture in — [`Presets.PictureIn`](../src/Flyback.Engine/Graph/Presets/PictureIn.fbks)
-
-```
-description "A photograph put through the same geometry a generated field goes through,"
-  "once you choose one."
-
-let zoom = sine(freq: 0.05) |> remap(-1..1, 0.85..1.4)
-scale(scale: zoom)
-  |> rotate(angle: t * 0.05)
-  |> warp(by: clouds(z: t * 0.15, scale: 1.8), amount: 0.12)
-  |> picture()
-  |> gain(gain: 1.15, bias: -0.05)
-  |> out.color
-```
-
-`picture()` names no file, exactly as the preset ships it — the file is chosen
-in the editor, and `picture("sunset.png")` is how a patch that has one says so.
-
-### Clip — [`Presets.Clip`](../src/Flyback.Engine/Graph/Presets/Clip.fbks)
-
-```
-description "A sound file played and retriggered every two seconds, once you choose one."
-
-sample(level: 0.9, trigger: pulse(freq: 0.5, width: 0.02)) |> out.left
-
-out.volume = 0.7
-```
-
 ### Plasma — [`Presets.Plasma`](../src/Flyback.Engine/Graph/Presets/Plasma.fbks)
 
 ```

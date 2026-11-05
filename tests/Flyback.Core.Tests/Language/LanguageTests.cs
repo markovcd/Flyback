@@ -297,24 +297,6 @@ public class LanguageTests
         """);
 
     [Fact]
-    public void Clip() => Same("Clip", """
-        sample(level: 0.9, trigger: pulse(freq: 0.5, width: 0.02)) |> out.left
-
-        out.volume = 0.7
-        """);
-
-    [Fact]
-    public void PictureIn() => Same("Picture in", """
-        let zoom = sine(freq: 0.05) |> remap(-1..1, 0.85..1.4)
-        scale(scale: zoom)
-          |> rotate(angle: t * 0.05)
-          |> warp(by: clouds(z: t * 0.15, scale: 1.8), amount: 0.12)
-          |> picture()
-          |> gain(gain: 1.15, bias: -0.05)
-          |> out.color
-        """);
-
-    [Fact]
     public void ThreeChannels() => Same("Three channels", """
         let apart = sine(freq: 0.08) |> remap(-1..1, 0..0.1)
         let plane = rotate(angle: t * 0.06) |> kaleidoscope(segments: 6) |> translate(dx: 0.55)

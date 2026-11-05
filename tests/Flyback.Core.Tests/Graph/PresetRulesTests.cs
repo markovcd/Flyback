@@ -91,11 +91,7 @@ public class PresetRulesTests
     }
 
     /// <summary>Every shipped patch compiles clean for both sinks.</summary>
-    /// <remarks>
-    /// Warnings are allowed and are load-bearing for two of them: Clip and
-    /// Picture in ship with no file chosen, and the warning saying so is the
-    /// patch's first instruction. Errors are not.
-    /// </remarks>
+    /// <remarks>Warnings are allowed; errors are not.</remarks>
     [Theory]
     [MemberData(nameof(Every))]
     public void Every_preset_compiles(string name)

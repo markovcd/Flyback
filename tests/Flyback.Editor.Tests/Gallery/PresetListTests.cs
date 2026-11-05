@@ -412,13 +412,13 @@ public class PresetListTests : EditorTest
         Control Speaker(string preset) => All<ContentControl>(Tile(window, preset)).Single(c => c.Name == "sound-only");
         string Says(string preset) => All<TextBlock>(Tile(window, preset)).Single(t => t.Parent is Grid).Text ?? "";
 
-        UntilDrawn(window, () => Speaker("Clip").IsVisible);
+        UntilDrawn(window, () => Speaker("Heads or tails").IsVisible);
 
-        ToolTip.GetTip(Speaker("Clip")).ShouldBe("Sound only");
-        Says("Clip").ShouldBeEmpty();
-        All<Image>(Tile(window, "Clip")).Single().Source.ShouldBeNull();
+        ToolTip.GetTip(Speaker("Heads or tails")).ShouldBe("Sound only");
+        Says("Heads or tails").ShouldBeEmpty();
+        All<Image>(Tile(window, "Heads or tails")).Single().Source.ShouldBeNull();
 
-        // Asked for before Clip, so drawn by now: the thumbnails are taken one at a time.
+        // Asked for before Heads or tails, so drawn by now: the thumbnails are taken one at a time.
         Speaker("Empty").IsVisible.ShouldBeFalse();
         Says("Empty").ShouldBeEmpty();
         All<Image>(Tile(window, "Empty")).Single().Source.ShouldBeNull();

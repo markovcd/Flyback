@@ -38,8 +38,6 @@ internal static class Presets
             Description = "The Output, with everything still to plug into it.",
             Tags = ["basics"],
         },
-        Offered("Picture in", PictureIn, PresetKind.Blank),
-        Offered("Clip", Clip, PresetKind.Blank),
 
         // --- one idea, one sink ------------------------------------------------
 
@@ -76,18 +74,6 @@ internal static class Presets
 
     /// <summary>Just the Output, with everything still to plug into it.</summary>
     public static Patch Empty(ModuleCatalog modules) => Text("Empty.fbks", modules);
-
-    /// <summary>
-    /// A photograph read as a field, and put through the same geometry a
-    /// generated one goes through.
-    /// </summary>
-    public static Patch PictureIn(ModuleCatalog modules) => Text("PictureIn.fbks", modules);
-
-    /// <summary>
-    /// The sample player, wired the three ways it is worth wiring: played
-    /// forward on the clock, restarted by a trigger, and scrubbed by a signal.
-    /// </summary>
-    public static Patch Clip(ModuleCatalog modules) => Text("Clip.fbks", modules);
 
     /// <summary>Three drifting sine fields summed and read through a cosine palette — the "hello world" of video synths.</summary>
     public static Patch Plasma(ModuleCatalog modules) => Text("Plasma.fbks", modules);
