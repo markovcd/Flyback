@@ -119,7 +119,11 @@ public sealed class OutputSettings
     /// <see cref="AudioRenderer.Oversamples"/> — the Sound section. A take, a
     /// <c>flyback-cli render</c> and the viewer follow it too, so what is heard is what is written.
     /// </summary>
-    public int Oversample { get; set; } = AudioRenderer.DefaultOversample;
+    public int Oversample { get; set; } = OversampleHere;
+
+    /// <summary>The oversampling a new settings file starts at: none on a phone or tablet, where every evaluation costs battery and heat.</summary>
+    public static int OversampleHere { get; } =
+        OperatingSystem.IsAndroid() || OperatingSystem.IsIOS() ? 1 : AudioRenderer.DefaultOversample;
 
     /// <summary>
     /// Whether the live sound is worked out at a lower oversampling when it keeps falling
@@ -360,7 +364,7 @@ public sealed class OutputSettings
             settings.FfmpegPath ??= string.Empty;
             settings.Library ??= string.Empty;
             settings.LatencyMilliseconds = Math.Clamp(settings.LatencyMilliseconds, ShortestLatency, LongestLatency);
-            if (!AudioRenderer.Oversamples.Contains(settings.Oversample)) settings.Oversample = AudioRenderer.DefaultOversample;
+            if (!AudioRenderer.Oversamples.Contains(settings.Oversample)) settings.Oversample = OversampleHere;
 
             // A "defaultPreset": null typed by hand is the one written here, not a fault.
             settings.DefaultPreset ??= string.Empty;
