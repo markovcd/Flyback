@@ -19,7 +19,7 @@ description "A whole acid techno track: a hundred and twenty-eight bars of a 303
 tags "song" "drums"
 length 3:56.31
 
-requires flyback.effects, flyback.picture, flyback.voice
+requires flyback.effects, flyback.mastering, flyback.picture, flyback.voice
 
 group "Clock" {
   // A hundred and thirty a minute. Every part reads the count of beats, so the tempo
@@ -173,18 +173,20 @@ group "Picture: Feedback" {
 group "Bass" {
   // The gallop: nothing where the kick is, the two sixteenths after the off-beat, a
   // pick-up and an octave at the end of the bar. A root under A is taken up an octave
-  // instead. A saw through a Filter the same sixteenth plucks, and a sine for the part
-  // that is felt, added after the Drive.
+  // instead. A saw through a Filter the same sixteenth plucks, cut under 100 Hz, and
+  // under it a sine sub on the chord's root, which the subwoofer is for.
   let gallop = beats
     |> values(gate_length: 0.8, shape: 0.04) [
         ~ ~ 0 0%0.75 ~ ~ 0 0%0.75 ~ ~ 0 0%0.75 ~ 0%0.6 0 12%0.85 ]
   let bass_pitch = root + 33 + step(root, -1.5) * 12 + gallop |> note(note: _)
+  let sub_pitch = root + 33 |> note(note: _)
   let bass_pluck = beats |> stroke(rate: 4, curve: 2.5)
   let bass_open = hand |> remap(in_low: 0, out_low: 350, out_high: 1100)
   let bass_tone = saw(freq: bass_pitch, amp: 0.8)
     |> filter(cutoff: bass_pluck * bass_open + 90, resonance: 0.35)
-  let bass_grit = bass_tone * gallop.gate |> drive(drive: 3)
-  let bass_ducked = (bass_grit + sine(freq: bass_pitch, amp: 0.85) * gallop.gate) * duck.gain
+  let bass_grit = bass_tone * gallop.gate |> drive(drive: 3) |> filter(cutoff: 60)
+  let bass_ducked = (
+      bass_grit.high + sine(freq: sub_pitch, amp: 1.2) * gallop.gate) * duck.gain
   let bass = bass_ducked * no_kick * parts
 }
 
@@ -338,13 +340,39 @@ group "Desk" {
         level_4: 0.5,
         bus_left: drums.bus_left,
         bus_right: drums.bus_right,
-        trim: 0.55)
+        trim: 0.5)
 }
 
 group "Picture: Feedback" {
   colored |> trails(zoom: 1.03, angle: trails_angle, persist: 0.88) |> out.color
 }
 
-master |> out.left
-master.right |> out.right
+group "Master" {
+  // Glued a couple of decibels, the sub kept in the middle, the top opened for the
+  // hats, and a limiter for the loudness a techno track is played at.
+  let compressor = master
+    |> compressor(
+        left: _,
+        right: master.right,
+        threshold: -14,
+        ratio: 2,
+        attack: 10ms,
+        release: 125.89255ms,
+        makeup: 5)
+  let eq = compressor
+    |> eq(
+        left: _,
+        right: compressor.right,
+        low_cut: 30,
+        low_freq: 60,
+        low_gain: 1.5,
+        high_freq: 8000,
+        high_gain: 2)
+  let width = eq |> width(left: _, right: eq.right, width: 1.15, mono_below: 150)
+  let limiter = width
+    |> limiter(left: _, right: width.right, ceiling: -0.5, release: 50.11873ms)
+}
+
+limiter |> out.left
+limiter.right |> out.right
 out.volume = 0.7
