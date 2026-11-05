@@ -67,7 +67,8 @@
 - Panning and zooming a large patch is smoother, most of all on a phone: the canvas skips modules and wires out of view, looks up what it draws once a frame, and keeps wire shapes, pens and laid-out text from one frame to the next.
 - On Android the sound runs ahead of the screen's drawing, so a busy canvas no longer starves it.
 - The Android app runs on the same .NET runtime as the desktop and works the sound out about a third faster: Mycelium plays at 1.5× real time on a Pixel 9 Pro rather than 1.2×. The app is about twice the download it was.
-- A heavy patch's sound renders about 30% faster, sample for sample the same.
+- A heavy patch's sound takes about a third less work to render, sample for sample the same.
+- On Android the sound's thread tells the system how long it has to fill each block, so a heavy patch is given the clock it needs rather than falling behind on a slowed core.
 
 ### Fixes
 

@@ -55,18 +55,32 @@ public sealed class AudioTrackDevice(AudioFormat format) : IAudioDevice
 
         opened.Play();
 
+        // Made on the writer's thread, which it names to Android, and only ever used there.
+        WorkDeadline? deadline = null;
+        var lasts = TimeSpan.FromSeconds((double)(block.Length / channels) / SampleRate);
+
         writer = BlockWriter.Start(
             block,
-            fill,
+            filling =>
+            {
+                deadline?.Begin();
+                fill(filling);
+                deadline?.End();
+            },
             (filled, _) => opened.Write(filled, 0, filled.Length, WriteMode.Blocking) >= 0,
             () =>
             {
+                deadline?.Dispose();
                 opened.Stop();
                 opened.Release();
                 opened.Dispose();
             },
-            // Ahead of the UI and render threads, as Android's own audio threads run, so a busy screen does not starve the sound.
-            () => global::Android.OS.Process.SetThreadPriority(global::Android.OS.ThreadPriority.UrgentAudio));
+            () =>
+            {
+                // Ahead of the UI and render threads, as Android's own audio threads run, so a busy screen does not starve the sound.
+                global::Android.OS.Process.SetThreadPriority(global::Android.OS.ThreadPriority.UrgentAudio);
+                deadline = WorkDeadline.ForThisThread(lasts);
+            });
     }
 
     public void Stop()
