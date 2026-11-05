@@ -46,6 +46,10 @@ public sealed class FractalsPlugin : IFlybackPlugin
         [
             PresetText.Preset(typeof(FractalsPlugin).Assembly, "Dive", "Dive.fbks"),
             PresetText.Preset(typeof(FractalsPlugin).Assembly, "Julia walk", "JuliaWalk.fbks", PresetKind.Interplay),
+            PresetText.Preset(typeof(FractalsPlugin).Assembly, "Escape Time", "EscapeTime.fbks", PresetKind.Showcase) with
+            {
+                Files = PresetFiles.Embedded(typeof(FractalsPlugin).Assembly, "EscapeTime"),
+            },
         ]);
     }
 }

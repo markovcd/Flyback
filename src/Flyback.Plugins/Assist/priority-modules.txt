@@ -109,3 +109,5 @@ flyback.picture.star
 # The mastering chain the songs end in.
 flyback.mastering.eq
 flyback.mastering.width
+flyback.mastering.compressor
+flyback.mastering.limiter

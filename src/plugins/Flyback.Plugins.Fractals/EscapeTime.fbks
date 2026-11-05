@@ -1,0 +1,596 @@
+// Generative IDM in the Iwato scale on A (A, B flat, D, E flat, G) at a hundred and
+// twenty-eight, four minutes in sixteen sections of eight bars: an intro, four of
+// development, a break and a build, four of climax and four of decay. One machine of
+// cuts bends the clock every drum and the tune at the peak read, and the picture is
+// torn by the same dice at twice the odds, so a stutter heard is a stutter seen.
+//
+// The picture is a Julia set whose c walks a circle that grazes the Mandelbrot set,
+// a Mandelbrot dive laid over it at the peak, both read on a plane the cuts tear
+// apart, through four reads of the last frame. The sound hears the same fractal
+// twice: two grain streams sweep loops across a Julia set of their own, and an Orbit
+// plays one random pixel of it a sixteenth at a time.
+
+description "Generative IDM in four minutes: Euclid and random sequencers cutting one"
+  "bent clock into stutters and buffer repeats over a steady sub, a warm tune, grains"
+  "read off a Julia set, and the same fractal torn, zoomed and fed back on the screen."
+tags "song" "drums"
+length 4:00.00
+
+requires flyback.effects, flyback.fractals, flyback.mastering, flyback.picture, flyback.voice
+
+// A hundred and twenty-eight a minute: a phrase is eight bars, and the song is
+// sixteen of them, fifteen seconds each.
+group "Clock" {
+  let tempo = tempo(bpm: 128)
+  let clock = time()
+  let beats = clock * tempo
+  let phrases = tempo * 0.03125
+  let sixteenths = tempo * 4
+}
+
+// Rows a part, a section a column. What is struck cuts on the section; the meter
+// rows are how many steps the hats and the bells loop over.
+group "Arrangement" {
+  let cuts = arrangement(rate: phrases) [
+      0 0 1 1 1 1 0 0.7 1 1 1 1 0.8 0 0 0 |
+      0 0 0 1 1 1 0 0.5 1 1 1 1 0 0 0 0 |
+      0 0.4 0.8 1 1 1 0 1 1 1 1 1 0.6 0.3 0 0 |
+      0 0.5 0.8 1 1 1 0.5 1 1 1 1 1 0.8 0.5 0.3 0 |
+      0 0 0 0.6 1 1 0.4 0.8 1 1 1 1 0.5 0.3 0 0 |
+      0 0 0 0.15 0.3 0.5 0 0.7 0.6 0.8 1 0.9 0.3 0 0 0 |
+      16 16 16 16 14 12 16 16 16 14 12 10 16 16 16 16 |
+      7 7 7 7 5 5 9 11 13 13 9 9 7 7 7 7 ]
+  let swells = arrangement(rate: phrases) [
+      >1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 >0 |
+      0.6 0.8 0.5 0.45 0.45 0.5 1 0.7 0.6 0.6 0.6 0.7 1 1 0.8 >0 |
+      0 0.7 1 1 0.8 1 1 0.6 1 1 1 1 1 0.9 0.5 0 |
+      0 0 0 0 0 0.5 0 0.4 1 0.1 1 1 0.4 0 0 0 |
+      >1 1 0.5 0.45 0.5 0.5 1 0.7 0.55 0.6 0.7 0.6 0.9 1 1 >0 |
+      0 0 0 0 0 0 0 1 1 1 1 1 0 0 0 0 |
+      >0.55 0.7 0.85 0.9 0.95 1 0.8 0.9 1.1 1.15 1.2 1.15 0.95 0.8 0.6 >0 |
+      4 4 4 4 3.5 3.5 4 4 4 3.5 3 4 4 4 4 4 ]
+  let looks = arrangement(rate: phrases) [
+      0.25 >0.27 >0.29 0.3 >0.33 >0.36 0.42 >0.45 0.47 >0.49 >0.51 0.53 >0.6 >0.7 0.8 >0.9 |
+      0.4 >0.6 0.6 >0.8 0.8 >1.1 >0.3 0.3 >0.6 0.6 >0.9 >0.5 0.6 >0.4 0.3 >0.2 |
+      0 0 0 0 0 0 >3 >5 >7 >8.5 >9.5 >10.5 >6 >3 >1 0 |
+      0 0 0 0 0 0.2 >0.8 0.8 0.6 0.55 0.65 >0.8 >0.5 >0.2 0 0 |
+      0.15 0.18 0.25 0.3 0.3 0.33 0.4 0.4 0.42 0.45 0.5 0.45 0.4 0.3 0.2 0.15 |
+      0.9 0.9 0.86 0.84 0.82 0.8 0.92 0.85 0.8 0.78 0.75 0.78 0.88 0.92 0.94 0.95 |
+      6 6 6 6 6 6 6 6 6 6 8 8 8 8 8 8 |
+      0 0 0 0 0 0 0 0 >1 1 1 >0 0 0 0 0 ]
+  let sub_in = swells |> slew(rise: 2s, fall: 3s)
+  let pad_in = swells.part_2 |> slew(rise: 3s, fall: 3s)
+  let song_in = swells.part_3 |> slew(rise: 2s, fall: 2s)
+  let answer_in = swells.part_4 |> slew(rise: 2s, fall: 2s)
+  let grains_in = swells.part_5 |> slew(rise: 3s, fall: 3s)
+  let tune_cut = step(0.5, swells.part_6)
+  let light = swells.part_7
+  let chop = cuts.part_6
+  let late = cuts.progress |> smoothstep(edge0: 0.4)
+  let building = cuts.section |> window(from: 7.5, to: 8.5)
+  let ramp = late * building
+}
+
+// The drums' bar is four beats, or three and a half or three where the meter row
+// says, so they drift against the tune. Every eighth of the bar may be swapped for
+// another, rolled two to four times inside itself or played backwards, and every beat
+// may repeat the eighth before it, as often as the chop row says. The bent clock
+// counts four beats a bar whatever the meter, so a two-bar pattern restarts on time.
+group "Cut" {
+  let meter = swells.part_8
+  let bar_pos = beats % meter
+  let bar_count = floor(beats / meter)
+  let counted = bar_count * 4 + bar_pos
+  let eighths = bar_pos * 2
+  let straight = floor(eighths)
+  let order = counted |> values(rate: 2) [ 0 1 2 3 4 5 6 7 0 1 2 2 5 4 6 6 ]
+  let die = beats |> noise(rate: 2, seed: 3)
+  let roll_die = beats |> noise(rate: 2, seed: 5)
+  let beat_die = beats |> noise(rate: 1, seed: 11)
+  let swapped = step(1 - chop, die.random * 0.5 + 0.5)
+  let repeat = step(1 - chop * 0.45, beat_die.random * 0.5 + 0.5)
+  let listed = straight + (order - straight) * swapped
+  let slice = listed + ((floor(straight * 0.5) * 2 + 7) % 8 - listed) * repeat
+  let roll_size = roll_die.random |> remap(in_low: 0.2, out_low: 1, out_high: 4.99)
+  let rolls = (max(floor(roll_size), 1) - 1) * step(0.01, chop) + 1
+  let through = fract(fract(eighths) * rolls)
+  let reversed = step(roll_die.random, -0.75) * step(0.01, chop)
+  let within = through + (1 - through * 2) * reversed
+  let bent = bar_count * 4 + (slice + within) * 0.5
+  let moved = slice - straight
+  let glitch_seed = floor(bent * 4) % 16
+}
+
+// The cuts as the speakers hear them: the same machine on the same dice, at half the
+// picture's odds. A repeat holds one eighth rather than a beat, a roll is two or three
+// and rarer, and the bar leaves four for one section in the development and one in
+// the climax. The picture keeps the cuts above.
+group "Heard Cut" {
+  let heard_chop = chop * 0.5
+  let heard_meter = arrangement(rate: phrases) [ 4 4 4 4 4 3.5 4 4 4 4 3.5 4 4 4 4 4 ]
+  let heard_pos = beats % heard_meter
+  let heard_bar = floor(beats / heard_meter)
+  let heard_counted = heard_bar * 4 + heard_pos
+  let heard_eighths = heard_pos * 2
+  let heard_straight = floor(heard_eighths)
+  let heard_order = heard_counted |> values(rate: 2) [ 0 1 2 3 4 5 6 7 0 1 2 2 5 4 6 6 ]
+  let heard_swapped = step(1 - heard_chop, die.random * 0.5 + 0.5)
+  let heard_repeat = step(1 - heard_chop * 0.45, beat_die.random * 0.5 + 0.5)
+    * (heard_straight % 2) * step(0.01, heard_chop)
+  let heard_listed = heard_straight + (heard_order - heard_straight) * heard_swapped
+  let heard_slice = heard_listed + (heard_straight - 1 - heard_listed) * heard_repeat
+  let heard_roll_size = roll_die.random |> remap(in_low: 0.6, out_low: 1, out_high: 3.99)
+  let heard_rolls = (max(floor(heard_roll_size), 1) - 1) * step(0.01, heard_chop) + 1
+  let heard_through = fract(fract(heard_eighths) * heard_rolls)
+  let heard_reversed = step(roll_die.random, -0.88) * step(0.01, heard_chop)
+  let heard_within = heard_through + (1 - heard_through * 2) * heard_reversed
+  let heard_bent = heard_bar * 4 + (heard_slice + heard_within) * 0.5
+}
+
+// A sustained sine on A, B flat, A and G in the first octave, so its fundamental stays
+// between forty-nine and fifty-eight hertz; under the E flat chord it holds the G. It
+// never reads the bent clock.
+group "Sub" {
+  let root = beats |> notes(rate: 0.125, gate_length: 1) [ A1 Bb1 A1 G1 ]
+  let sub_hz = root |> slew(rise: 40ms, fall: 40ms) |> note(note: _)
+  let sub_tone = sine(freq: sub_hz, amp: 0.85) + sine(freq: sub_hz * 2, amp: 0.12)
+}
+
+// One bar for two drums: a step's value is how hard the kick is hit, its volume how
+// hard the snare is. The picture reads them off its bent clock and the speakers off
+// the heard one, so a roll rolls both.
+group "Break" {
+  let pattern = bent
+    |> values(rate: 4, gate_length: 1) [
+        1%0 ~ ~ 0.55%0 0%1 ~ 0.8%0 0%0.3 ~ 0.7%0 ~ 0%0.25 0%1 ~ 0.6%0 0%0.4
+        1%0 ~ 0%0.3 ~ 0%1 0.7%0 ~ ~ 1%0 ~ 0.6%0 0%0.35 0%1 0%0.5 0.8%0 0%0.6 ]
+  let kick_note = bent |> stroke(rate: 4, curve: 1.4)
+  let thump = kick_note * pattern * cuts
+  let snare_note = bent |> stroke(rate: 4, curve: 2.2)
+  let snare_hit = snare_note * pattern.gate * cuts.part_2
+  let heard_pattern = heard_bent
+    |> values(rate: 4, gate_length: 1) [
+        1%0 ~ ~ 0.55%0 0%1 ~ 0.8%0 0%0.3 ~ 0.7%0 ~ 0%0.25 0%1 ~ 0.6%0 0%0.4
+        1%0 ~ ~ 0%0.3 0%1 0.7%0 ~ ~ 1%0 ~ 0.6%0 0%0.35 0%1 0%0.5 0.8%0 0%0.6 ]
+  let bar_feel = heard_bent |> values(rate: 0.25, gate_length: 1) [ 1 0.93 0.97 0.9 ]
+  let kick_beat = heard_bent |> stroke(rate: 4, curve: 1.4)
+  let kick_level = kick_beat * heard_pattern * cuts * bar_feel
+  let snare_beat = heard_bent |> stroke(rate: 4, curve: 2.2)
+  let snare_level = snare_beat * heard_pattern.gate * cuts.part_2 * (bar_feel * 0.6 + 0.4)
+  let kick = drum(level: kick_level, pitch: 49, sweep: 170, bend: 5, drive: 2.5)
+  let wires = noise(seed: 1) |> filter(cutoff: 2300, resonance: 0.35)
+  let snare = drum(level: snare_level, pitch: 196, sweep: 140, drive: 3)
+    + snare_level * (wires.band * 3 + wires.high * 1.1)
+  let hat_clock = heard_bent - (1 - cos(heard_bent * 12.566)) * 0.014
+  let hat_accent = hat_clock |> values(rate: 4, gate_length: 1) [ 1 0.55 0.8 0.55 0.7 ]
+  let hat_hits = hat_clock
+    |> euclid(
+        rate: 4,
+        steps: cuts.part_7,
+        hits: wander(rate: 0.11, seed: 2, low: 5, high: 11),
+        rotate: 2,
+        gate_length: 0.3,
+        curve: 9)
+  let hat_level = hat_hits.stroke * hat_accent * cuts.part_3
+  let hats = hiss(level: hat_level, cutoff: 7200, resonance: 0.25, gain: 1.5, seed: 1, band: "high")
+  let crush_amount = chop * (die.random * 0.5 + 0.5) |> smoothstep(edge0: 0.45, edge1: 0.7)
+  let heard_crush = heard_chop * (die.random * 0.5 + 0.5)
+    |> smoothstep(edge0: 0.45, edge1: 0.7)
+  let kit = kick + snare + hats
+  let crushed = kit |> crush(bits: 7, rate: 9000)
+  let drums = kit |> math.mix(a: _, b: crushed, t: heard_crush) |> drive(drive: 1.6)
+  let duck = duck(key: kick_level, depth: 0.35, attack: 100us, release: 90ms)
+}
+
+// Metal on the straight clock, so its meter keeps turning under the cuts: struck FM
+// with inharmonic ratios on a Euclid whose loop runs five to thirteen steps, and a
+// sine bending its own phase on five in twelve.
+group "Metal" {
+  let metal_clock = beats - (1 - cos(beats * 12.566)) * 0.006
+  let bell_hits = metal_clock
+    |> euclid(rate: 4, steps: cuts.part_8, hits: 3, rotate: 1, gate_length: 0.2, curve: 11)
+  let bell_die = beats |> noise(rate: 4, seed: 7)
+  let bell_hz = bell_die.random * 14 + 86 |> tune() [ A A# D D# G ]
+  let tines = fm(
+      freq: bell_hz,
+      level: bell_hits.stroke * cuts.part_4,
+      tone: 1.2,
+      ratio2: 3.73,
+      ratio3: 5.92,
+      ratio4: 1.41,
+      index2: 1.1,
+      index3: 0.7,
+      index4: 0.5,
+      algorithm: "fan")
+  let clank_hits = metal_clock
+    |> euclid(rate: 4, steps: 12, hits: 5, rotate: 3, gate_length: 0.2, curve: 6)
+  let clank_hz = bell_die.drift * 6 + 57 |> tune() [ A A# D D# G ]
+  let clank_osc = sine(freq: clank_hz)
+  let clank_bend = clank_hits.stroke * 0.15 + 0.04
+  let clank = clank_osc * clank_hits.stroke * cuts.part_4 |> filter(cutoff: 3000, resonance: 0)
+  let metal = tines * 0.7 + clank * 0.3 |> filter(cutoff: 180).high
+}
+
+// A comb tuned three octaves over the root, fed by the metal and closed through a
+// wire back into itself: the bells ring on in the chord.
+group "Resonator" {
+  let comb_hz = root + 36 |> note(note: _)
+  let comb_in = metal * 0.3 + hats * 0.2 |> add(a: _)
+  let comb = comb_in |> delay(time: 1 / comb_hz, feedback: 0, mix: 1)
+  let comb_dark = comb |> filter(cutoff: 1800, resonance: 0.05)
+  let comb_back = comb_dark.band |> drive(drive: 1.3) |> mul(a: _, b: 0.9)
+}
+
+// The chords the scale holds: A with its fourth, B flat with its third, G minor and
+// E flat major, two bars each.
+group "Pad" {
+  let chord_root = beats |> notes(rate: 0.125, gate_length: 1) [ A3 Bb3 G3 Eb3 ]
+  let kind = beats |> values(rate: 0.125, gate_length: 1) [ 1 2 5 4 ]
+  let chord = chord(note: chord_root, chord: kind)
+  let pad_tone = osc(freq: chord, detune: 0.25, mix: 0.7, amp: 0.35)
+    + triangle(freq: chord.hz3, amp: 0.28)
+    + sine(freq: chord.hz4, amp: 0.22)
+    |> filter(cutoff: wander(rate: 0.06, seed: 4, low: 700, high: 2200), resonance: 0.2)
+  let third = triangle(freq: chord.hz2, amp: 0.3) |> filter(cutoff: 9000, resonance: 0.2)
+  let pad = (pad_tone + third) * pad_in |> chorus(rate: 0.13, depth: 0.7, mix: 0.6)
+}
+
+// The tune, a note a beat over eight bars, sung by FM keys and a plucked string an
+// octave down. At the peak it reads the heard bent clock, so the cuts repeat it.
+group "Song" {
+  let tune_clock = beats |> math.mix(a: _, b: heard_bent, t: tune_cut)
+  let song = tune_clock
+    |> notes(rate: 1, gate_length: 0.8) [
+        D5 D5%0 A4 Bb4 D5 G5 Eb5 D5 Bb4 Bb4%0 D5 Bb4 G4 A4 Bb4 Bb4%0
+        D5 D5%0 Bb4 G4 Bb4 D5 Eb5 D5 Eb5 Eb5%0 G4 Bb4 A4 A4%0 Bb4 A4 ]
+  let song_hz = song |> slew(rise: 12ms, fall: 12ms) |> note(note: _)
+  let song_env = song.gate |> decay(trigger: _, attack: 4ms, decay: 1.1s, curve: 0.55)
+  let keys = fm(
+      freq: song_hz,
+      level: song_env,
+      tone: 0.8,
+      ratio2: 1,
+      ratio3: 14,
+      ratio4: 1,
+      index2: 0.6,
+      index3: 0.12,
+      index4: 0.3,
+      algorithm: "branch")
+  let pluck = string(trigger: song.gate, freq: song_hz * 0.5, decay: 1.4s, brightness: 0.3)
+  let sung = (keys * 0.6 + pluck * 0.45) * song_in
+  let song_echo = sung |> echo(tempo: tempo, left: 3, right: 5, feedback: 0.35, mix: 0.3)
+}
+
+// The answer at the peak: a two-bar figure of eighths moved onto each chord's root
+// and snapped to the scale, so it follows the harmony.
+group "Answer" {
+  let figure = tune_clock
+    |> notes(rate: 2, gate_length: 0.5) [
+        A4 D5 Eb5 A5%0.7 G5 Eb5 D5 Eb5 D5 Eb5 G5 Eb5 D5 A4 D5%0 Bb4 ]
+  let answer_hz = figure + (chord_root - 57) |> tune() [ A A# D D# G ]
+  let answer_env = figure.gate |> decay(trigger: _, attack: 2ms, decay: 380ms, curve: 0.7)
+  let answer = bell(freq: answer_hz, level: answer_env, ratio: 2.01, index: 0.45)
+    * answer_in
+}
+
+// "Tsukihi wa hyakudai no kakaku ni shite", three times: whole over the intro, once
+// across the turn into the peak with one eighth said twice on the beat, and once in
+// the decay, quieter and left mostly to the echo. It has a hall of its own, about
+// two seconds long, entered 35 ms late and held between 250 Hz and 6 kHz.
+group "Voice" {
+  let tsukihi_intro = clock - 10 |> sample("tsukihi.wav", level: 1)
+  let tsukihi_turn_at = clock - 118.125 - step(118.59375, clock) * 0.234375
+  let tsukihi_turn = tsukihi_turn_at |> sample("tsukihi.wav", level: 1)
+  let tsukihi_decay = clock - 190 |> sample("tsukihi.wav", level: 1)
+  let voice = tsukihi_intro * 1.2 + tsukihi_turn * 2 + tsukihi_decay * 0.5
+    |> filter(cutoff: 180, resonance: 0).high
+    |> filter(cutoff: 6500, resonance: 0)
+  let voice_send = tsukihi_intro + tsukihi_turn + tsukihi_decay * 1.6
+    |> filter(cutoff: 180, resonance: 0).high
+    |> filter(cutoff: 6500, resonance: 0)
+  let voice_room = voice
+    |> filter(cutoff: 250, resonance: 0).high
+    |> filter(cutoff: 6000, resonance: 0)
+    |> delay(time: 0.035, feedback: 0, mix: 1)
+    |> reverb(size: 0.6, decay: 0.75, mix: 1)
+  let voice_duck = audio.duck(left: voice, key: voice, depth: 0.3, full: 0.25, attack: 20ms, release: 450ms)
+}
+
+// The answer's echo: a dotted eighth left and a quarter right, each repeat back
+// through the lowpass so it darkens, and the returns ducked under the answer's own
+// notes so they bloom in the gaps.
+group "Answer Echo" {
+  let answer_loop = answer + voice_send * 0.9 |> add(a: _)
+  let answer_taps = answer_loop
+    |> filter(cutoff: 3600, resonance: 0)
+    |> echo(tempo: tempo, left: 3, right: 4, feedback: 0, mix: 1)
+  let answer_back = answer_taps * 0.4
+  let answer_gap = 1 - answer_env * 0.65
+  let answer_echo_l = answer_taps * answer_gap
+  let answer_echo_r = answer_taps.right * answer_gap
+}
+
+// Where c is: on a circle of radius 0.7885, from the rabbit through the basilica at
+// the peak, and out to dust as the song decays. The section glides the angle on; the
+// kick swells the radius and the snare shrinks it.
+group "Walk" {
+  let turns = looks + clock * 0.0025
+  let reach = thump * 0.016 - snare_hit * 0.012 + 0.7885
+  let c_re = cos(turns * 6.2831855) * reach
+  let c_im = sin(turns * 6.2831855) * reach
+}
+
+// Two streams of grains, half a grain apart: each loop is swept round a Julia set of
+// c at a chord tone, from a place and of a size thrown afresh for every grain. The
+// set itself reads as one, so the field has no step at its edge to buzz on, and
+// each stream is rounded off above three kilohertz and leans a little to the other
+// side.
+group "Grains" {
+  let heard_set = julia(re: c_re, im: c_im, iterations: "32")
+  let grain_a = beats |> stroke(rate: 4)
+  let grain_b = beats |> stroke(rate: 4, offset: 0.5)
+  let window_a = pow(sin(grain_a.phase * 3.1415927), 2)
+  let window_b = pow(sin(grain_b.phase * 3.1415927), 2)
+  let at_a = beats |> noise(rate: 4, seed: 9)
+  let at_b = beats - 0.125 |> noise(rate: 4, seed: 12)
+  let tone_a = chord + (chord.hz2 - chord) * step(-0.3, at_a.random) + (chord.hz3 - chord.hz2) * step(0.35, at_a.random)
+  let tone_b = chord.hz2 + (chord.hz3 - chord.hz2) * step(-0.2, at_b.random) + (chord.hz4 - chord.hz3) * step(0.4, at_b.random)
+  let heard_field = heard_set.escape + heard_set.inside
+  let loop_a = heard_field
+    |> scan(rate: tone_a, radius: at_a.drift * 0.12 + 0.18, x: at_a.random * 0.9, y: at_a.drift * 0.6)
+  let loop_b = heard_field
+    |> scan(rate: tone_b, radius: at_b.random * 0.1 + 0.15, x: at_b.drift * 0.9, y: at_b.random * 0.6)
+  let grains_l = loop_a * window_a * grains_in * 2
+    |> filter(cutoff: 3000, resonance: 0.05)
+    |> filter(cutoff: 3000, resonance: 0.05)
+    |> filter(cutoff: 140).high
+  let grains_r = loop_b * window_b * grains_in * 2
+    |> filter(cutoff: 3000, resonance: 0.05)
+    |> filter(cutoff: 3000, resonance: 0.05)
+    |> filter(cutoff: 140).high
+}
+
+// One pixel of the Julia set heard: its orbit, from a place thrown every sixteenth of
+// the heard bent clock, at three times the answer's pitch, so a cycle of three sings
+// it. The picture draws the path from the same dice on its own clock.
+group "Orbit" {
+  let start = bent |> noise(rate: 4, seed: 13)
+  let start_im = bent |> noise(rate: 4, seed: 14)
+  let orbit_hits = bent
+    |> euclid(rate: 4, steps: 16, hits: 7, rotate: 1, gate_length: 0.6, curve: 3)
+  let heard_start = heard_bent |> noise(rate: 4, seed: 13)
+  let heard_start_im = heard_bent |> noise(rate: 4, seed: 14)
+  let heard_hits = heard_bent
+    |> euclid(rate: 4, steps: 16, hits: 7, rotate: 1, gate_length: 0.6, curve: 3)
+  let path = orbit(
+      re: c_re,
+      im: c_im,
+      rate: answer_hz * 1.5,
+      start_re: heard_start.random * 1.2,
+      start_im: heard_start_im.random * 0.9,
+      mode: "julia")
+  let orbit_level = heard_hits.stroke * cuts.part_5 * 0.3
+  let orbit_l = path * orbit_level |> filter(cutoff: 200).high
+  let orbit_r = path.right * orbit_level |> filter(cutoff: 200).high
+}
+
+// The hiss through a band climbing five octaves across the build.
+group "Riser" {
+  let sweep_cut = ramp |> remap(in_low: 0, out_low: 300, out_high: 8000)
+  let riser = hiss(level: ramp, cutoff: sweep_cut, resonance: 0.6, gain: 1.4, seed: 3, band: "band")
+}
+
+// The tune, the answer, the pad and the grains on one Desk, then a buffer repeat on
+// each side: when an eighth repeats, the input is shut and an eighth's Delay loops
+// what it holds.
+group "Music" {
+  let music = song_echo
+    |> desk(
+        left_1: _,
+        right_1: song_echo.right,
+        level_1: 0.65,
+        left_2: answer,
+        level_2: 0.3,
+        left_3: pad * voice_duck.gain,
+        right_3: pad.wide * voice_duck.gain,
+        level_3: 0.6,
+        left_4: grains_l + grains_r * 0.4,
+        right_4: grains_r + grains_l * 0.4,
+        level_4: 0.7)
+  let held = heard_repeat * tune_cut |> slew(rise: 3ms, fall: 3ms)
+  let open = 1 - held
+  let repeat_l = music * open
+    |> delay(time: 0.234375, feedback: held * 0.95, mix: held)
+  let repeat_r = music.right * open
+    |> delay(time: 0.234375, feedback: held * 0.95, mix: held)
+}
+
+// The repeats of the orbit and the metal come round through a wire, darkened and
+// worn, rather than through the Echo's own feedback.
+group "Dub Echo" {
+  let dark = math.mix(t: 0.1)
+  let worn = dark |> drive(drive: 1.05) |> mul(a: _, b: 0.4)
+  let taps = orbit_l * 0.6 + metal * 0.4 + worn
+    |> filter(cutoff: 4500, resonance: 0)
+    |> echo(tempo: tempo, left: 3, right: 5, feedback: 0, mix: 1)
+}
+
+// One hall on a send.
+group "Room" {
+  let room = sung
+    |> mixer(
+        in_1: _,
+        level_1: 0.22,
+        in_2: pad,
+        level_2: 0.2,
+        in_3: grains_l + grains_r,
+        level_3: 0.3,
+        in_4: metal + comb_back,
+        level_4: 0.18)
+    |> reverb(size: 0.88, decay: 0.82, mix: 1)
+}
+
+// The rhythm and the returns on two Desks chained by their buses, the music over
+// them, and the sub joined in after the compressor so it is never pumped.
+group "Desk" {
+  let rhythm = drums
+    |> desk(
+        left_1: _,
+        level_1: 0.85,
+        left_2: metal,
+        right_2: comb_back,
+        level_2: 0.55,
+        left_3: orbit_l,
+        right_3: orbit_r,
+        level_3: 0.7,
+        left_4: riser,
+        level_4: 0.4)
+  let returns = repeat_l
+    |> desk(
+        left_1: _,
+        right_1: repeat_r,
+        level_1: 1,
+        left_2: room,
+        right_2: room.wide,
+        level_2: 0.5,
+        left_3: taps,
+        right_3: taps.right,
+        level_3: 0.4,
+        left_4: answer_echo_l,
+        right_4: answer_echo_r,
+        level_4: 0.14,
+        bus_left: rhythm.bus_left,
+        bus_right: rhythm.bus_right,
+        trim: 0.6)
+  let glue = returns
+    |> compressor(
+        left: _,
+        right: returns.right,
+        threshold: -12,
+        ratio: 2,
+        attack: 10ms,
+        release: 150ms)
+  let sub_line = sub_tone * sub_in * duck.gain * 0.2
+  let spoken = voice * 1.5
+  let master = glue + sub_line + spoken + voice_room * 0.7
+    |> limiter(left: _, right: glue.right + sub_line + spoken + voice_room.wide * 0.7, ceiling: -1.4)
+}
+
+// The plane, torn: twelve strips slide by how far the cuts moved the eighth, a die
+// for each block shoves it sideways while the clock is chopped, and a roll is the
+// picture as many times smaller.
+group "Picture: Tear" {
+  let pump = thump |> remap(in_low: 0, out_low: 1, out_high: 0.93)
+  let strip = floor((y + 1) * 6)
+  let far = clamp(moved, -3, 3)
+  let slide = sin(strip * 2.4 + slice * 1.7) * far * 0.06
+  let shove = x
+    |> expression(
+        a: _,
+        b: y,
+        c: glitch_seed,
+        d: chop,
+        formula: "step(0.8, dice(floor(a * 5) + floor(b * 7) * 13, c)) * (dice(floor(b * 7), c + 3) - 0.5) * d")
+  let torn = translate(dx: slide + shove * 0.5, dy: 0)
+    |> scale(scale: rolls * pump)
+}
+
+// The Julia set on the torn plane, zoomed by the section, bent by its own escape a
+// frame ago, its colors stepped round by the bent clock.
+group "Picture: Julia" {
+  let deep = exp(looks.part_2 * -0.6931472)
+  let spin = clock * 0.021 + looks * 2
+  let folded = torn |> kaleidoscope(segments: looks.part_7)
+  let fold_x = torn + (folded - torn) * looks.part_8
+  let fold_y = torn.y + (folded.y - torn.y) * looks.part_8
+  let held_plane = fold_x |> transform(x: _, y: fold_y, zoom: deep, angle: spin, order: "turn")
+  let smear_reach = chop * 0.06 + 0.012
+  let bend = held_plane |> warp(amount: smear_reach)
+  let seen_set = bend
+    |> julia(re: c_re, im: c_im, iterations: "128")
+  let smear = math.mix(a: seen_set.escape, t: 0.86)
+  let hue_step = fract(floor(bent * 4) * 0.618034) * chop * 0.5
+  let shift = clock * 0.017 + hue_step
+  let glow = sqrt(seen_set.escape)
+  let julia_ink = glow * 1.7 + shift + smear * 0.5
+    |> palette(t: _, cycles: 1, spread: looks.part_5, brightness: 0.45, contrast: 0.6)
+  let edges = seen_set.escape |> smoothstep(edge0: 0.012, edge1: 0.16)
+  let julia_lit = julia_ink |> gain(gain: edges * edges * light * 1.6 + seen_set.inside * 0.06)
+}
+
+// Seahorse Valley, dived into at the peak and climbed out of in the decay, laid
+// over the Julia set as light.
+group "Picture: Dive" {
+  let dive_plane = torn |> rotate(angle: spin * -0.5)
+  let valley = dive_plane
+    |> mandelbrot(re: -0.7436439, im: 0.1318259, zoom: looks.part_3, shift: shift, iterations: "128")
+  let valley_ink = valley.color |> gain(gain: light * 0.8)
+  let both = julia_lit
+    |> layer(base: _, top: valley_ink, amount: looks.part_4, mode: "screen")
+}
+
+// Where each grain is read, drawn as its loop, and the path of the pixel the Orbit
+// plays.
+group "Picture: Marks" {
+  let loop_a_at = translate(dx: at_a.random * 0.9, dy: at_a.drift * 0.6)
+    |> circle(radius: at_a.drift * 0.12 + 0.18)
+    |> fill(distance: _, softness: 0.006, width: 0.006)
+  let loop_b_at = translate(dx: at_b.drift * 0.9, dy: at_b.random * 0.6)
+    |> circle(radius: at_b.random * 0.1 + 0.15)
+    |> fill(distance: _, softness: 0.006, width: 0.006)
+  let grain_marks = loop_a_at.outline * window_a + loop_b_at.outline * window_b
+  let grain_ink = rgb(r: 0.55, g: 0.85, b: 1) |> gain(gain: grain_marks * grains_in * 0.8)
+  let orbit_seen = held_plane
+    |> orbit(
+        re: c_re,
+        im: c_im,
+        rate: 330,
+        start_re: start.random * 1.2,
+        start_im: start_im.random * 0.9,
+        mode: "julia")
+  let orbit_ink = orbit_seen.color * orbit_hits.stroke * cuts.part_5
+  let marked = both + grain_ink + orbit_ink
+}
+
+// Three reads of the last frame: one pulled in, turned by the cuts and bent by the
+// escape, one backing away for the green and the blue, and a soft one for a bloom.
+group "Picture: Feedback" {
+  let lurch = thump * 0.03 + moved * 0.01 + 0.006
+  let tunnel = torn |> warp(by: seen_set.escape, amount: 0.02)
+    |> transform(zoom: 0.975, angle: lurch)
+  let back = transform(zoom: 1.012, angle: -0.008)
+  let cool = back |> feedback() |> split()
+  let trail = tunnel |> feedback()
+    |> split()
+    |> rgb(r: _, g: cool.g, b: cool.b)
+    |> gain(gain: looks.part_6)
+  let fresh = max(trail, marked)
+  let bloom = fresh |> blur(radius: 0.012, amount: 0.35)
+}
+
+// The print: crushed to a few levels while the drums are, graded by the section,
+// trailed sideways by the cuts, and frozen on the last frame while a beat repeats,
+// flickering at the roll's own rate.
+group "Picture: Print" {
+  let levels = crush_amount |> remap(in_low: 0, out_low: 32, out_high: 7)
+  let graded = bloom
+    |> posterise(levels: levels)
+    |> grade(saturation: light * 0.4 + 0.75, contrast: 1.1, gamma: 1.1)
+    |> vignette(from: 0.4, to: 1.8)
+    |> trails(dx: far * 0.004, persist: 0.6)
+  let flicker = step(0.5, fract(eighths * rolls * 2))
+  let frozen = repeat * flicker
+  let last = feedback()
+  graded |> color.mix(a: _, b: last, t: frozen) |> gain(gain: swells) |> out.color
+}
+
+smear.b <- smear
+bend.by <- smear
+clank_osc.phase <- clank_osc * clank_bend
+dark.a <- dark
+dark.b <- taps.right
+comb_in.b <- comb_back
+answer_loop.b <- answer_back
+master |> out.left
+master.right |> out.right
+out.volume = 0.955

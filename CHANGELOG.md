@@ -6,6 +6,7 @@
 
 ### Presets
 
+- Escape Time, in the Fractals plugin: four minutes of generative IDM in the Iwato scale, one machine of cuts tearing a Julia set and the drums alike, with Basho's words spoken over it.
 - Acid has a sine sub on the chord's root under the gallop, whose saw is cut under 60 Hz to make room, and is mastered as the other songs are: a gentle compressor, an EQ, width kept mono under 150 Hz and a limiter.
 
 ### Assistant

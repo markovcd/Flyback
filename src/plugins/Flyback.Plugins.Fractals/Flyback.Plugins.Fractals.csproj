@@ -7,7 +7,7 @@
     <!-- What the install dialog and the plugins window show. -->
     <Product>Fractals</Product>
     <Authors>Flyback</Authors>
-    <Description>Three modules about one point c: the Mandelbrot set, which maps every c; the Julia set of c, its picture; and the orbit of c, its sound. In the classic colors, with Dive, a zoom into Seahorse Valley, and Julia walk, a c going round a circle seen and heard.</Description>
+    <Description>Three modules about one point c: the Mandelbrot set, which maps every c; the Julia set of c, its picture; and the orbit of c, its sound. In the classic colors, with Dive, a zoom into Seahorse Valley, Julia walk, a c going round a circle seen and heard, and Escape Time, a glitch song in the Iwato scale.</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +17,8 @@
     <!-- The pictures behind the modules (ADR-0118), read out of the assembly by Art. -->
     <EmbeddedResource Include="Art\*.png" LogicalName="art.%(Filename)%(Extension)" />
     <EmbeddedResource Include="*.fbks" LogicalName="%(Filename)%(Extension)" />
+    <!-- Escape Time's words: LibriVox's public-domain reading of Basho's Oku no Hosomichi. -->
+    <EmbeddedResource Include="EscapeTime\*.wav" LogicalName="EscapeTime/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

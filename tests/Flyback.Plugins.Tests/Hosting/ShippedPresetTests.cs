@@ -44,6 +44,7 @@ public class ShippedPresetTests
         ["Flyback Theme"] = 180,
         ["Vigil"] = 320,
         ["Flythrough"] = 123.87,
+        ["Escape Time"] = 240,
     };
 
     /// <summary>
