@@ -248,7 +248,8 @@ internal sealed class GroupPainter(
 
         if (ModuleOverview.At(view.Zoom))
         {
-            ModuleOverview.DrawName(context, bounds, group.Title(), view.Zoom, ModuleFace.OverviewTextBrush, off);
+            ModuleOverview.DrawName(
+                context, bounds, group.Title(), view.Zoom, ModuleFace.OverviewTextBrush, off, ModuleGlyphs.Group, NodeSkin.BoxGlyph);
 
             for (var i = 0; i < sockets.Outputs.Count; i++)
                 if (selection.Scene.Named(sockets.Outputs[i]) is var (_, spec))
@@ -261,9 +262,11 @@ internal sealed class GroupPainter(
             return;
         }
 
-        var title = CanvasText.Text(group.Title(), ModuleFace.HeaderSize, ModuleFace.HeaderTextBrush, bounds.Width - 16, true);
+        var title = CanvasText.Text(
+            group.Title(), ModuleFace.HeaderSize, ModuleFace.HeaderTextBrush, ModuleFace.HeaderWidth(bounds, tagged: false, marked: true), true);
 
-        ModuleFace.DrawTitle(context, title, ModuleFace.TitleAt(bounds, title), off ? ModuleFace.OffStrike : null);
+        ModuleFace.DrawGlyph(context, bounds, ModuleGlyphs.Group, NodeSkin.BoxGlyph);
+        ModuleFace.DrawTitle(context, title, ModuleFace.TitleAt(bounds, title, marked: true), off ? ModuleFace.OffStrike : null);
 
         for (var i = 0; i < sockets.Outputs.Count; i++)
             DrawBoxSocket(context, sockets.Outputs[i], NodeGeometry.GroupOutputPort(bounds, i), bounds);

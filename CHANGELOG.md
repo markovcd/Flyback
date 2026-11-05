@@ -17,6 +17,7 @@
 - The text view colors `for` loops, `panel`, `requires`, `keyboard` and `length` lines, `...`, `_`, notes, durations and step notation.
 - A comment in the text starts with `//`; a `#` comment is refused, with a message saying to write `//`.
 - Settings, Picture, Smoothing offers Best, four samples a pixel, in the preview and in a recorded take.
+- A module's glyph is back on the canvas: small in its color before its name, and larger over the name when zoomed out. A shut box shows the group glyph.
 
 ### Viewer
 

@@ -6,16 +6,13 @@ using Colors = Flyback.Ui.Controls.Colors;
 namespace Flyback.Editor.Canvas;
 
 /// <summary>
-/// The mark drawn faintly across a module's body: its own where the module is one
-/// you would name, and its category's otherwise.
+/// The glyph before a module's name: its own where the module is one you would
+/// name, and its category's otherwise.
 /// </summary>
 /// <remarks>
-/// Zoomed out far enough that no label can be read, the tint and the mark are the
-/// whole of what tells one module from another — which is why the mark is large
-/// and set in the body rather than small and set in the header. A module earns a
-/// drawing of its own by being the only one of itself: the four waveforms, the
-/// sink, the clock, the plane, the loop. Everything else is one of a family and
-/// is drawn as the family.
+/// A module earns a drawing of its own by being the only one of itself: the four
+/// waveforms, the sink, the clock, the plane, the loop. Everything else is one of a
+/// family and is drawn as the family.
 /// <para>
 /// Laid out on a twenty-four unit box and stroked, so one scale takes a path to
 /// whatever size it is wanted at, and a category nothing here knows draws nothing
@@ -30,7 +27,7 @@ internal static class ModuleGlyphs
     /// <summary>How thick the strokes are at that size.</summary>
     public const double Thickness = 1.7;
 
-    /// <summary>What to draw across <paramref name="def"/>, or null where nothing is known.</summary>
+    /// <summary>What to draw for <paramref name="def"/>, or null where nothing is known.</summary>
     public static Geometry? For(NodeDef def) =>
         ModuleSkins.Of(def) is ModuleSkin.Palette { Glyph: { } given } ? Given(given)
         : Own.TryGetValue(def.TypeId, out var mine) ? Given(mine)

@@ -104,7 +104,7 @@ internal sealed class CanvasTips(
             var title = node.Title(def);
 
             if (new Rect(bounds.X, bounds.Y, bounds.Width, NodeGeometry.HeaderHeight).Contains(graph)
-                && CanvasText.Overflows(title, ModuleFace.HeaderSize, ModuleFace.HeaderWidth(bounds, tags.Tagged(def))))
+                && CanvasText.Overflows(title, ModuleFace.HeaderSize, ModuleFace.HeaderWidth(bounds, tags.Tagged(def), ModuleFace.GlyphOf(def) is not null)))
             {
                 return (node.Id, title);
             }

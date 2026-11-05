@@ -196,7 +196,9 @@ internal sealed class ModulePainter(
 
         if (ModuleOverview.At(view.Zoom))
         {
-            ModuleOverview.DrawName(context, bounds, ModuleFace.Heading(node, def), view.Zoom, ModuleFace.OverviewTextBrush, node.Off);
+            ModuleOverview.DrawName(
+                context, bounds, ModuleFace.Heading(node, def), view.Zoom, ModuleFace.OverviewTextBrush, node.Off,
+                ModuleFace.GlyphOf(def), NodeSkin.Glyph(accent));
 
             for (var i = 0; i < def.Outputs.Count; i++)
                 NodeSkin.DrawPort(context, NodeGeometry.OutputPort(node, i), def.Outputs[i].Kind);
@@ -209,10 +211,15 @@ internal sealed class ModulePainter(
 
         var titleBrush = Ink(bounds.Y + (3 + NodeGeometry.HeaderHeight) / 2, TitleInk, fade: 0, ModuleFace.HeaderTextBrush);
 
-        var title = CanvasText.Text(
-            ModuleFace.Heading(node, def), ModuleFace.HeaderSize, titleBrush, ModuleFace.HeaderWidth(bounds, tags.Tagged(def)), true);
+        var glyph = ModuleFace.GlyphOf(def);
 
-        ModuleFace.DrawTitle(context, title, ModuleFace.TitleAt(bounds, title), node.Off ? follow ? new Pen(titleBrush, 1.5) : ModuleFace.OffStrike : null);
+        var title = CanvasText.Text(
+            ModuleFace.Heading(node, def), ModuleFace.HeaderSize, titleBrush,
+            ModuleFace.HeaderWidth(bounds, tags.Tagged(def), glyph is not null), true);
+
+        if (glyph is not null) ModuleFace.DrawGlyph(context, bounds, glyph, NodeSkin.Glyph(accent));
+
+        ModuleFace.DrawTitle(context, title, ModuleFace.TitleAt(bounds, title, glyph is not null), node.Off ? follow ? new Pen(titleBrush, 1.5) : ModuleFace.OffStrike : null);
 
         if (tags.Tagged(def)) UndescribedTags.Draw(context, bounds, follow ? titleBrush : null);
 

@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Flyback.Core.Graph;
+using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Canvas;
@@ -15,8 +16,24 @@ internal static class ModuleFace
     /// <summary>How large a module's title is drawn.</summary>
     internal const double HeaderSize = 12.5;
 
-    /// <summary>How wide a module's title may be drawn, leaving room for its tag.</summary>
-    internal static double HeaderWidth(Rect bounds, bool tagged) => bounds.Width - 16 - (tagged ? UndescribedTags.TagRoom : 0);
+    /// <summary>How wide a module's title may be drawn, leaving room for its glyph and its tag.</summary>
+    internal static double HeaderWidth(Rect bounds, bool tagged, bool marked) =>
+        bounds.Width - 16 - (tagged ? UndescribedTags.TagRoom : 0) - (marked ? GlyphRoom : 0);
+
+    /// <summary>The glyph before a module's title, or null for one whose author hung a picture behind it.</summary>
+    internal static Geometry? GlyphOf(NodeDef def) =>
+        ModuleSkins.Of(def) is ModuleSkin.Artwork ? null : ModuleGlyphs.For(def);
+
+    /// <summary>How large the glyph before a title is drawn.</summary>
+    private const double GlyphSize = 14;
+
+    /// <summary>How far a title moves right to make room for the glyph before it.</summary>
+    private const double GlyphRoom = GlyphSize + 5;
+
+    /// <summary>Draws <paramref name="glyph"/> at the left of the band, under the rule.</summary>
+    internal static void DrawGlyph(DrawingContext context, Rect bounds, Geometry glyph, IPen pen) =>
+        NodeSkin.DrawGlyph(
+            context, glyph, new Point(bounds.X + 7, bounds.Y + (3 + NodeGeometry.HeaderHeight - GlyphSize) / 2), GlyphSize, pen);
 
     /// <summary>
     /// How strongly a module that is switched off is drawn, and its wires with
@@ -59,8 +76,8 @@ internal static class ModuleFace
         new(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0);
 
     /// <summary>Where a title stands: its capitals centered in the band under the rule.</summary>
-    internal static Point TitleAt(Rect bounds, FormattedText title) =>
-        new(bounds.X + 9, bounds.Y + Baseline - title.Baseline);
+    internal static Point TitleAt(Rect bounds, FormattedText title, bool marked) =>
+        new(bounds.X + 9 + (marked ? GlyphRoom - 2 : 0), bounds.Y + Baseline - title.Baseline);
 
     /// <summary>The band's middle under its 3 px rule, plus half a capital's height.</summary>
     private const double Baseline = (3 + NodeGeometry.HeaderHeight) / 2.0 + HeaderSize * 0.36;

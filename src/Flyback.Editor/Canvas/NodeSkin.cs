@@ -248,6 +248,38 @@ internal static class NodeSkin
     private static readonly IPen Seam = new ImmutablePen(
         new ImmutableSolidColorBrush(Colors.Press(0.3)));
 
+    // --- glyphs ----------------------------------------------------------
+
+    /// <summary>What a module's glyph is stroked with: its accent. Thickness in the glyph's own units.</summary>
+    public static IPen Glyph(Color accent)
+    {
+        if (Glyphs.TryGetValue(accent, out var kept)) return kept;
+
+        var made = new ImmutablePen(
+            new ImmutableSolidColorBrush(accent),
+            ModuleGlyphs.Thickness,
+            lineCap: PenLineCap.Round,
+            lineJoin: PenLineJoin.Round);
+
+        Glyphs[accent] = made;
+
+        return made;
+    }
+
+    private static readonly Dictionary<Color, IPen> Glyphs = [];
+
+    /// <summary>A shut box's glyph, in the color its name has in the inspector.</summary>
+    public static IPen BoxGlyph { get; } = Glyph(Colors.Label);
+
+    /// <summary>Draws <paramref name="glyph"/> <paramref name="size"/> across with its top left at <paramref name="at"/>.</summary>
+    public static void DrawGlyph(DrawingContext context, Geometry glyph, Point at, double size, IPen pen)
+    {
+        var scale = size / ModuleGlyphs.Box;
+
+        using (context.PushTransform(Matrix.CreateScale(scale, scale) * Matrix.CreateTranslation(at.X, at.Y)))
+            context.DrawGeometry(null, pen, glyph);
+    }
+
     // --- sockets ---------------------------------------------------------
 
     public static void DrawPort(DrawingContext context, Point center, PortKind kind) =>

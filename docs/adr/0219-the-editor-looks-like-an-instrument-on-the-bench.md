@@ -69,8 +69,11 @@ The editor is drawn as an instrument, with a scope on the bench as the reference
 - **A module is a panel, not a node.** Square corners (2 px), a flat body with a
   slight tint of its category, and a dark title band with a 3 px rule in the
   category's accent along its top. The rule is what tells the kinds apart.
-- **No mark.** Neither the canvas nor the inspector draws a category's glyph behind the
-  rows. The small glyph beside a module's name in the inspector stays.
+- **The glyph stands before the name, not behind the rows.** A module's glyph is drawn
+  small in its accent at the left of the title band, as the inspector draws it beside
+  the name; a shut box has the group glyph there. Nothing is drawn behind the rows,
+  where a faint mark ran into the values. Zoomed out to the overview, the glyph stands
+  larger over the name. A module whose plugin hung a picture behind it has none.
 - **The grid is a graticule.** A line every fifth division, and the divisions between
   as ticks across those lines.
 - **Toolbar symbols are panel marks.** Drawn on a 16-unit box at weight 1.6 with square
@@ -88,8 +91,9 @@ is unchanged.
 
 ## Consequences
 
-- Zoomed far out, a module's kind is the rule and the tint, which is less than the old
-  colored band gave; the large name of the overview zoom carries what it is.
+- Zoomed far out, a module's kind is the rule, the tint and the glyph over its name,
+  which is less than the old colored band gave; the large name carries the rest.
+- A glyph takes 19 px of the band, so a long title is cut short sooner.
 - Wires glowing with the signal they carry was proposed and held back: the canvas would
   repaint every frame and the engine would have to report a level per output. It is a
   feature of its own if wanted.
