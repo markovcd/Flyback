@@ -157,7 +157,7 @@ internal sealed class SoundSection : ISettingsSection
                 + "every patch. A take, flyback-cli render and the viewer use it too.");
 
             ToolTip.SetTip(stepDown,
-                "When the sound keeps falling behind while it plays, work it out a step lower, 4× to 2× to 1×, "
+                "When the sound keeps falling behind while it plays, work it out a step lower, 8× to 4× to 2× to 1×, "
                 + "rather than let it stutter. Not while a take is recorded, which is written whole whatever the "
                 + "speakers do; a render keeps the setting above too.");
 

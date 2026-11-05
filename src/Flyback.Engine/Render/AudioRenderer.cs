@@ -20,10 +20,14 @@ public sealed class AudioRenderer
 {
     private const int DefaultSampleRate = GlobalConstants.SampleRate;
 
-    private const int Taps = 64;
+    /// <summary>
+    /// The decimation filter's length: 64 up to 4×, and longer above, so the filter's
+    /// transition stays as narrow against the output rate as it is at 4×.
+    /// </summary>
+    private readonly int filterLength;
     private const float DcBlockerPole = 0.9993f;
 
-    private readonly float[][] delayLines = [new float[Taps], new float[Taps]];
+    private readonly float[][] delayLines;
     private readonly float[] filterTaps;
     private readonly float[] dcPreviousInput = new float[2];
     private readonly float[] dcPreviousOutput = new float[2];
@@ -41,13 +45,15 @@ public sealed class AudioRenderer
     public const int DefaultOversample = 2;
 
     /// <summary>The factors on offer: a factor between these filters no better and costs more than the one above it.</summary>
-    public static IReadOnlyList<int> Oversamples { get; } = [1, 2, 4];
+    public static IReadOnlyList<int> Oversamples { get; } = [1, 2, 4, 8];
 
     public AudioRenderer(int sampleRate = DefaultSampleRate, int oversample = DefaultOversample)
     {
         SampleRate = sampleRate;
         Oversample = Math.Max(1, oversample);
-        filterTaps = DesignLowpass(Taps, 0.45 / Oversample);
+        filterLength = 16 * Math.Max(4, Oversample);
+        delayLines = [new float[filterLength], new float[filterLength]];
+        filterTaps = DesignLowpass(filterLength, 0.45 / Oversample);
     }
 
     public int SampleRate { get; }
@@ -289,7 +295,7 @@ public sealed class AudioRenderer
     {
         delayLines[0][historyPosition] = left;
         delayLines[1][historyPosition] = right;
-        historyPosition = (historyPosition + 1) % Taps;
+        historyPosition = historyPosition + 1 == filterLength ? 0 : historyPosition + 1;
     }
 
     /// <summary>
@@ -303,7 +309,7 @@ public sealed class AudioRenderer
     private float Finish(int channel)
     {
         var decimated = Oversample == 1
-            ? delayLines[channel][(historyPosition - 1 + Taps) % Taps]
+            ? delayLines[channel][historyPosition == 0 ? filterLength - 1 : historyPosition - 1]
             : Convolve(channel);
 
         // One-pole DC blocker. A patch holding a constant is trivially easy to
@@ -325,7 +331,7 @@ public sealed class AudioRenderer
         // Walk backwards from the newest sample through the delay line: down to its
         // start, then from its end down to the oldest.
         for (var index = historyPosition - 1; index >= 0; index--, i++) sum += history[index] * taps[i];
-        for (var index = Taps - 1; index >= historyPosition; index--, i++) sum += history[index] * taps[i];
+        for (var index = filterLength - 1; index >= historyPosition; index--, i++) sum += history[index] * taps[i];
 
         return sum;
     }
@@ -347,8 +353,8 @@ public sealed class AudioRenderer
 
             // x is an integer minus (taps-1)/2, so it is exactly representable
             // and reaches zero exactly — at the center tap, when taps is odd.
-            // At the current even Taps it never does, so this branch is there to
-            // keep the sinc singularity handled if that constant ever changes.
+            // The lengths used here are even, so it never does; this branch keeps
+            // the sinc singularity handled for an odd one.
             // ReSharper disable once CompareOfFloatsByEqualityOperator
             var sinc = x == 0
                 ? 2 * cutoff

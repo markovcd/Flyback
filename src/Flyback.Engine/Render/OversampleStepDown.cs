@@ -2,7 +2,7 @@ namespace Flyback.Engine.Render;
 
 /// <summary>
 /// Whether the live sound should be worked out at a lower oversampling because it keeps
-/// falling behind: 4× to 2× to 1×, one step at a time, and never back up in a run.
+/// falling behind: 8× to 4× to 2× to 1×, one step at a time, and never back up in a run.
 /// </summary>
 /// <remarks>
 /// Judged over <see cref="Window"/> of buffers: a quarter of them late, and at least

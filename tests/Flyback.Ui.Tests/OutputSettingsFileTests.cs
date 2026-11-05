@@ -42,7 +42,7 @@ public class OutputSettingsFileTests : IDisposable
     [Theory]
     [InlineData(0)]
     [InlineData(3)]
-    [InlineData(8)]
+    [InlineData(16)]
     public void An_oversampling_not_on_offer_is_the_default(int typed)
     {
         Directory.CreateDirectory(folder);
