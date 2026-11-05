@@ -39,6 +39,9 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
     /// <summary>What heads the presets somebody saved, last of all.</summary>
     public const string YoursHeading = "YOUR PRESETS";
 
+    /// <summary>Tiles scrolled into sight whose picture has not arrived yet.</summary>
+    public int Drawing { get; private set; }
+
     /// <summary>What heads the presets the preset site offers, after everything on this machine.</summary>
     public const string SiteHeading = "ON THE PRESET SITE";
 
@@ -182,7 +185,7 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
     /// first one gets there — unless the run is only picked from, which has no card
     /// and so nothing to show.
     /// </summary>
-    private static void Yours(
+    private void Yours(
         StackPanel gallery,
         YourPresets yours,
         PresetThumbnails thumbnails,
@@ -432,7 +435,7 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
         };
     }
 
-    private static PresetCard Tile(
+    private PresetCard Tile(
         PatchPreset preset,
         string section,
         PresetThumbnails thumbnails,
@@ -551,7 +554,21 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
             if (tile.Bounds.Width <= 0 || !e.EffectiveViewport.Intersects(new Rect(tile.Bounds.Size))) return;
 
             tile.EffectiveViewportChanged -= Seen;
-            _ = Fill(card, () => thumbnails.Of(preset, closing), choice, closing);
+            _ = Counted(Fill(card, () => thumbnails.Of(preset, closing), choice, closing));
+        }
+    }
+
+    private async Task Counted(Task filling)
+    {
+        Drawing++;
+
+        try
+        {
+            await filling;
+        }
+        finally
+        {
+            Drawing--;
         }
     }
 

@@ -18,6 +18,8 @@
 
 ### Command line
 
+- `flyback-cli shot --gallery` waits for the preset pictures in sight before it draws, rather than leaving their tiles blank.
+
 ### Installing
 
 ### Performance

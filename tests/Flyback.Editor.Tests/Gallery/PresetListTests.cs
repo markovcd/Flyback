@@ -378,6 +378,26 @@ public class PresetListTests : EditorTest
         frame.PixelSize.Width.ShouldBe(PresetThumbnails.Width);
     }
 
+    /// <summary>A shot of the gallery waits on this count, so it must reach nothing only once the tiles in sight are drawn.</summary>
+    [AvaloniaFact]
+    public void The_gallery_counts_the_pictures_in_sight_until_they_are_drawn()
+    {
+        var window = Open();
+        var gallery = Service<PresetGallery>(window);
+
+        OpenGallery(window);
+
+        gallery.Drawing.ShouldBeGreaterThan(0);
+
+        UntilDrawn(window, () => gallery.Drawing == 0);
+
+        var image = All<Image>(Tile(window, "Feedback tunnel")).Single();
+
+        UntilDrawn(window, () => gallery.Drawing == 0);
+
+        image.Source.ShouldNotBeNull();
+    }
+
     /// <summary>
     /// A preset with no picture in it has no frame to show: one that is only heard
     /// shows a speaker, and one with nothing wired yet leaves its tile bare.

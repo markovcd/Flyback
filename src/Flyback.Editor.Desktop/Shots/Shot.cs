@@ -135,6 +135,10 @@ internal static class Shot
             {
                 _ = provider.GetRequiredService<PresetSlot>().ShowGallery();
                 Settle(window);
+
+                var gallery = provider.GetRequiredService<PresetGallery>();
+                await Until(() => gallery.Drawing == 0, "the gallery's pictures", window);
+                Settle(window);
             }
 
             // Read before the capture: a window that settles again fits the view again.
