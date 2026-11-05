@@ -132,8 +132,8 @@ internal static class RenderCommand
         var smooth = new Option<string>("--smooth")
         {
             Description = "How the picture's jagged edges are smoothed: off, fast (a pass over each frame, as the preview does) "
-                + "or best (four samples a pixel, four times the drawing).",
-            DefaultValueFactory = _ => "best",
+                + "or best (four samples a pixel, four times the drawing). Left out, the editor's Settings → Picture → Smoothing.",
+            DefaultValueFactory = _ => defaults.Smoothing.ToString().ToLowerInvariant(),
         };
 
         smooth.AcceptOnlyFromAmong("off", "fast", "best");

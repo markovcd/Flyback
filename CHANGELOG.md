@@ -16,11 +16,15 @@
 - Phosphor, the green of the Beam module's trace on blue-gray, is the editor's color scheme until another is chosen in Settings, Canvas, Colors. A scheme already saved there is kept.
 - The text view colors `for` loops, `panel`, `requires`, `keyboard` and `length` lines, `...`, `_`, notes, durations and step notation.
 - A comment in the text starts with `//`; a `#` comment is refused, with a message saying to write `//`.
+- Settings, Picture, Smoothing offers Best, four samples a pixel, in the preview and in a recorded take.
 
 ### Viewer
 
+- `flyback-viewer --smooth best` draws four samples a pixel.
+
 ### Command line
 
+- `flyback-cli render` smooths as Settings, Picture, Smoothing says unless `--smooth` is given, rather than always at best.
 - `flyback-cli shot --gallery` waits for the preset pictures in sight before it draws, rather than leaving their tiles blank.
 
 ### Installing

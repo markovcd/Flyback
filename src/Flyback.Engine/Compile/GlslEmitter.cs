@@ -71,6 +71,13 @@ public static class GlslEmitter
     public static (string Vertex, string Fragment) Smoothing(GlslDialect dialect) =>
         (Header(dialect, fragment: false) + PatchVertexBody, Header(dialect, fragment: true) + SmoothingFragmentBody);
 
+    /// <summary>
+    /// The pass that halves a frame drawn at twice the size: a plain read at each pixel's
+    /// center, which falls on the corner of four texels and so averages them (ADR-0225).
+    /// </summary>
+    public static (string Vertex, string Fragment) Halving(GlslDialect dialect) =>
+        (Header(dialect, fragment: false) + PatchVertexBody, Header(dialect, fragment: true) + BlitFragmentBody);
+
     // --- headers -----------------------------------------------------------------
 
     /// <summary>

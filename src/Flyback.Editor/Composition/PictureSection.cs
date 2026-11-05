@@ -72,11 +72,11 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
-    /// <summary>Whether the preview smooths the picture's edges.</summary>
+    /// <summary>How the preview smooths the picture's edges, in <see cref="Smoothing"/>'s order.</summary>
     private readonly ComboBox smoothing = new Picker
     {
         Name = "smoothing",
-        ItemsSource = new[] { "Off", "Fast" },
+        ItemsSource = new[] { "Off", "Fast", "Best" },
         SelectedIndex = 1,
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
@@ -112,8 +112,9 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         rows.Children.Add(InspectorRows.Field("Size", resolution));
 
         ToolTip.SetTip(smoothing,
-            "Smooths the jagged edges of the picture, 3D above all, with a quick pass over each frame. "
-            + "A take records it too. flyback-cli render draws four samples a pixel unless told --smooth fast or off.");
+            "Smooths the jagged edges of the picture, 3D above all. Fast is a quick pass over each frame. "
+            + "Best draws four samples a pixel, which is cleaner and four times the drawing, so a heavy "
+            + "patch plays at a lower frame rate. A take records what the preview shows.");
 
         // A page draws on WebGL alone, so it has no renderer to pick.
         if (!host.InPage)
@@ -196,7 +197,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
         resolution.SelectedIndex = SizeRow(current);
         renderer.SelectedIndex = RendererRow(current.Gpu, current);
         previewFrameRate.SelectedIndex = SettingRows.Nearest(PreviewFrameRates, current.PreviewFrameRate);
-        smoothing.SelectedIndex = current.Smoothing == Smoothing.Off ? 0 : 1;
+        smoothing.SelectedIndex = (int)current.Smoothing;
     }
 
     /// <summary>Writes what the controls hold into <paramref name="into"/>, leaving what a control cannot say as it was.</summary>
@@ -221,7 +222,7 @@ internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
 
 
         into.PreviewFrameRate = PreviewFrameRates[Math.Max(previewFrameRate.SelectedIndex, 0)];
-        into.Smoothing = smoothing.SelectedIndex == 0 ? Smoothing.Off : Smoothing.Fast;
+        into.Smoothing = (Smoothing)Math.Max(smoothing.SelectedIndex, 0);
     }
 
     /// <param name="before">What was in force until now, or null as the editor starts.</param>

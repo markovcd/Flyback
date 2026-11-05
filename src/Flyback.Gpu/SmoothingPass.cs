@@ -5,7 +5,8 @@ namespace Flyback.Gpu;
 
 /// <summary>
 /// Smooths a finished frame's edges into a target of its own, which the window
-/// and a recording then read in place of the history (ADR-0215).
+/// and a recording then read in place of the history (ADR-0215): Fast with a pass
+/// over it, Best by halving a frame drawn at twice the size.
 /// </summary>
 internal sealed class SmoothingPass
 {
@@ -13,6 +14,8 @@ internal sealed class SmoothingPass
     private int sampler = -1;
     private int texelX = -1;
     private int texelY = -1;
+    private int halving;
+    private int halvingSampler = -1;
     private SurfaceSize size;
 
     /// <summary>The smoothed frame, eight bits a channel, as the window shows it.</summary>
@@ -32,6 +35,38 @@ internal sealed class SmoothingPass
         sampler = gl.GetUniformLocation(program, "uTexture");
         texelX = gl.GetUniformLocation(program, "uTexelX");
         texelY = gl.GetUniformLocation(program, "uTexelY");
+
+        var (halfVertex, halfFragment) = GlslEmitter.Halving(dialect);
+
+        if (GpuFrameRenderer.Link(gl, halfVertex, halfFragment, out error) is not { } halved)
+            return $"The halving shader would not build. {error}";
+
+        halving = halved;
+        halvingSampler = gl.GetUniformLocation(halving, "uTexture");
+
+        return null;
+    }
+
+    /// <summary>
+    /// Averages each two-by-two block of <paramref name="source"/>, twice the size of
+    /// <paramref name="resolution"/>, into <see cref="Texture"/>: one bilinear read at
+    /// the corner the four share. Null on success.
+    /// </summary>
+    public string? Halve(IGl gl, int source, SurfaceSize resolution)
+    {
+        if (halving == 0) return "The halving shader was never built.";
+        if (Resize(gl, resolution) is { } failure) return failure;
+
+        gl.BindFramebuffer(GL_FRAMEBUFFER, Framebuffer);
+        gl.Viewport(0, 0, resolution.Width, resolution.Height);
+        gl.UseProgram(halving);
+
+        gl.ActiveTexture(GL_TEXTURE0);
+        gl.BindTexture(GL_TEXTURE_2D, source);
+
+        if (halvingSampler >= 0) gl.Uniform1i(halvingSampler, 0);
+
+        gl.DrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
         return null;
     }
@@ -101,9 +136,11 @@ internal sealed class SmoothingPass
         {
             Release(gl);
             if (program != 0) gl.DeleteProgram(program);
+            if (halving != 0) gl.DeleteProgram(halving);
         }
 
         program = 0;
+        halving = 0;
         Framebuffer = 0;
         Texture = 0;
         size = default;

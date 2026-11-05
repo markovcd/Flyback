@@ -77,12 +77,12 @@ internal static class ViewerArguments
 
         var smooth = new Option<string>("--smooth")
         {
-            Description = "Smooth the picture's jagged edges with a quick pass over each frame: fast or off. "
-                + "Left out, the editor's Settings → Picture.",
-            DefaultValueFactory = _ => settings.Smoothing == Smoothing.Off ? "off" : "fast",
+            Description = "Smooth the picture's jagged edges: fast, a quick pass over each frame; best, four "
+                + "samples a pixel; or off. Left out, the editor's Settings → Picture.",
+            DefaultValueFactory = _ => settings.Smoothing.ToString().ToLowerInvariant(),
         };
 
-        smooth.AcceptOnlyFromAmong("off", "fast");
+        smooth.AcceptOnlyFromAmong("off", "fast", "best");
 
         var gpu = new Option<bool>("--gpu")
         {
@@ -296,7 +296,7 @@ internal static class ViewerArguments
                 ListPresets = result.GetValue(presets),
                 Size = Sized(result.GetValue(size)!) ?? new PixelSize(settings.Width, settings.Height),
                 FrameRate = result.GetValue(fps),
-                Smoothing = result.GetValue(smooth) == "off" ? Smoothing.Off : Smoothing.Fast,
+                Smoothing = Enum.Parse<Smoothing>(result.GetValue(smooth)!, ignoreCase: true),
                 Gpu = result.GetValue(gpu) || (!result.GetValue(cpu) && settings.Gpu),
                 Driver = offered.First(offer => Named(offer) == result.GetValue(driver)),
                 NoVideo = result.GetValue(noVideo),

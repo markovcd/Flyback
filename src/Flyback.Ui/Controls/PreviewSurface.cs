@@ -28,6 +28,10 @@ public class PreviewSurface : Control, IPreviewSurface
     private readonly Action reset;
     private readonly string step;
     private readonly DispatcherTimer timer;
+
+    /// <summary>Draws through <see cref="renderer"/> at twice the size and halves it, for Best.</summary>
+    private SmoothedFrames? best;
+
     private readonly Stopwatch frameClock = Stopwatch.StartNew();
 
     /// <summary>The tick rate with nothing asking for slower — as fast as the dispatcher allows.</summary>
@@ -332,8 +336,7 @@ public class PreviewSurface : Control, IPreviewSurface
                 return;
             }
 
-            renderer.Render(program, time, size.Width, size.Height, buffer, stride, played);
-            Smooth(smoothing, buffer, size, stride);
+            Draw(program, time, size, buffer, stride, played, smoothing);
         });
         FrameMilliseconds = (frameClock.Elapsed - started).TotalMilliseconds;
 
@@ -351,10 +354,20 @@ public class PreviewSurface : Control, IPreviewSurface
         meter.Mark(FrameMilliseconds);
     }
 
-    /// <summary>Smooths the frame just drawn, on the thread that drew it.</summary>
-    private protected virtual void Smooth(Smoothing smoothing, byte[] buffer, PixelSize size, int stride)
+    /// <summary>Draws a frame and smooths it, on a thread of the pool.</summary>
+    private protected virtual void Draw(
+        CompiledPatch program, double time, PixelSize size, byte[] buffer, int stride, LiveValues played, Smoothing smoothing)
     {
-        if (smoothing != Smoothing.Off) Fxaa.Apply(buffer, size.Width, size.Height, stride);
+        if (smoothing == Smoothing.Best && SmoothedFrames.FitsBest(size.Width, size.Height))
+        {
+            best ??= new SmoothedFrames(renderer, Smoothing.Best);
+            best.Render(program, time, size.Width, size.Height, buffer, stride, played);
+            return;
+        }
+
+        renderer.Render(program, time, size.Width, size.Height, buffer, stride, played);
+
+        if (smoothing == Smoothing.Fast) Fxaa.Apply(buffer, size.Width, size.Height, stride);
     }
 
     /// <summary>Copies the finished frame into the bitmap. Cheap enough to keep on the UI thread.</summary>

@@ -1,6 +1,6 @@
 # ADR-0215: A picture is smoothed fast live and best on export
 
-**Status:** Accepted · 2026-10-26 · *user-directed* · a pass after
+**Status:** Superseded in part by [0225](0225-smoothing-is-one-setting-and-it-can-be-best.md), where Smoothing is one setting everywhere and can be Best · accepted 2026-10-26 · *user-directed* · a pass after
 [0035](0035-a-glsl-backend-for-the-video-path.md)'s shader and
 [0214](0214-the-picture-draws-through-metal-on-apples-machines.md)'s, and a size for
 [0157](0157-flyback-cli-render-draws-on-the-gpu.md)'s render

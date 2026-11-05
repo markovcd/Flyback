@@ -39,6 +39,12 @@ public class GpuRenderTests
     public void The_GPU_smooths_a_preset_as_the_processor_does(string name) =>
         Agrees(Presets.All.Single(p => p.Name == name).Build(NodeCatalog.BuiltIn).CompileForVideo(NodeCatalog.BuiltIn).Program, Smoothing.Fast);
 
+    /// <summary>Best on the GPU, drawn at twice the size and halved, against the processor's.</summary>
+    [Theory]
+    [MemberData(nameof(Drawn))]
+    public void The_GPU_draws_a_preset_at_best_as_the_processor_does(string name) =>
+        Agrees(Presets.All.Single(p => p.Name == name).Build(NodeCatalog.BuiltIn).CompileForVideo(NodeCatalog.BuiltIn).Program, Smoothing.Best);
+
     /// <summary>Noise read past an int's range, where converting a float to an int is the shader's to wrap.</summary>
     [Theory]
     [InlineData("3000000000")]

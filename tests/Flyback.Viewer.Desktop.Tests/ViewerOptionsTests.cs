@@ -105,11 +105,11 @@ public class ViewerOptionsTests
         ran.Options.ShouldBeNull();
     }
 
-    /// <summary>Four samples a pixel is a render's, not a window's.</summary>
     [Fact]
-    public void The_viewer_does_not_take_best()
+    public void The_viewer_takes_best()
     {
-        Run(Machine, "--smooth", "best").ParseErrors.ShouldBeGreaterThan(0);
+        Settled(Machine, "--smooth", "best").Smoothing.ShouldBe(Smoothing.Best);
+        Settled(new OutputSettings { Smoothing = Smoothing.Best }).Smoothing.ShouldBe(Smoothing.Best);
     }
 
     /// <summary>NaN compares false with everything, so a range check alone lets it through.</summary>

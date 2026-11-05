@@ -20,7 +20,7 @@ namespace Flyback.Cli.Models;
 /// <param name="Oversample">How many times the output rate the sound is evaluated at: one of <see cref="AudioRenderer.Oversamples"/>.</param>
 /// <param name="Input">A sound file a Line In hears in place of a microphone, from its start; null for silence.</param>
 /// <param name="From">The second a clip or a sound starts at; the patch is played up to it unrecorded.</param>
-/// <param name="Smoothing">How the picture's edges are smoothed; four samples a pixel unless asked otherwise.</param>
+/// <param name="Smoothing">How the picture's edges are smoothed; the command line takes the editor's setting.</param>
 internal sealed record RenderOptions(
     FileInfo Out,
     int Width = 1920,

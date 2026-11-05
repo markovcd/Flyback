@@ -58,9 +58,9 @@ public sealed class MetalPreviewSurface : PreviewSurface, IGpuPreview, ICaptured
         set => picture.Smoothing = value;
     }
 
-    private protected override void Smooth(Smoothing smoothing, byte[] buffer, PixelSize size, int stride)
-    {
-    }
+    private protected override void Draw(
+        CompiledPatch program, double time, PixelSize size, byte[] buffer, int stride, LiveValues played, Smoothing smoothing) =>
+        picture.Render(program, time, size.Width, size.Height, buffer, stride, played);
 
     /// <summary>A frame late while the picture plays, so one held still is fetched once nothing follows it.</summary>
     private protected override bool Behind => picture.Behind;

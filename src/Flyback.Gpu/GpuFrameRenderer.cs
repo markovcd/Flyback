@@ -159,10 +159,13 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     public IFrameSink? Capture { get; set; }
 
     /// <summary>
-    /// How the frame's edges are smoothed before it is shown or read back. Best is
-    /// drawn as Fast here: four samples a pixel is a render's, not a window's.
+    /// How the frame's edges are smoothed before it is shown or read back. Best draws
+    /// the history at twice the width and height and halves it on the way out.
     /// </summary>
     public Smoothing Smoothing { get; set; }
+
+    /// <summary>A frame size whose Best target the card would not make, drawn as Fast instead.</summary>
+    private SurfaceSize refusedBest;
 
     /// <summary>Why frames cannot be read back here, or null when they can.</summary>
     public string? CaptureUnavailable => readback.Unavailable;
@@ -524,13 +527,20 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
         return failure;
     }
 
-    /// <summary>The frame to show and read back: the history as drawn, or that smoothed. Null on success.</summary>
+    /// <summary>The frame to show and read back: the history as drawn, or that smoothed or halved. Null on success.</summary>
     private string? Smooth(IGl gl, SurfaceSize resolution, out (int Framebuffer, int Texture, bool EightBit) shown)
     {
         shown = (framebuffers[read], textures[read], EightBitFeedback);
 
-        if (Smoothing == Smoothing.Off) return null;
-        if (smoothing.Draw(gl, textures[read], resolution) is { } failure) return failure;
+        if (size != resolution)
+        {
+            if (smoothing.Halve(gl, textures[read], resolution) is { } unhalved) return unhalved;
+        }
+        else
+        {
+            if (Smoothing == Smoothing.Off) return null;
+            if (smoothing.Draw(gl, textures[read], resolution) is { } failure) return failure;
+        }
 
         shown = (smoothing.Framebuffer, smoothing.Texture, true);
 
@@ -549,7 +559,16 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     /// <summary>Draws the patch into the history, where the next frame reads it and nothing shows it. Null on success.</summary>
     private string? Draw(IGl gl, SurfaceSize resolution, double time, LiveValues? live)
     {
-        if (Resize(gl, resolution) is { } failure) return failure;
+        var drawn = Drawn(resolution);
+
+        if (Resize(gl, drawn) is { } failure)
+        {
+            if (drawn == resolution) return failure;
+
+            refusedBest = resolution;
+
+            if (Resize(gl, resolution) is { } again) return again;
+        }
 
         // Nothing here draws over anything, so every test that could discard a
         // fragment is off. Skia sets its own state when it gets the context back.
@@ -582,7 +601,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
         // first program, and a new file's picture starts with its sound.
         if (patchProgram != 0 && (building is null || (!opening && time != drawnAt)))
         {
-            DrawPatch(gl, resolution, time, live);
+            DrawPatch(gl, size, time, live);
             drawnAt = time;
 
             // The frame just drawn becomes the one the next frame reads back.
@@ -591,6 +610,14 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
 
         return null;
     }
+
+    /// <summary>The size the history is drawn at: twice each way for Best, where it fits.</summary>
+    private SurfaceSize Drawn(SurfaceSize resolution) =>
+        Smoothing == Smoothing.Best
+        && resolution != refusedBest
+        && SmoothedFrames.FitsBest(resolution.Width, resolution.Height)
+            ? new SurfaceSize(resolution.Width * 2, resolution.Height * 2)
+            : resolution;
 
     private void DrawPatch(IGl gl, SurfaceSize resolution, double time, LiveValues? live)
     {

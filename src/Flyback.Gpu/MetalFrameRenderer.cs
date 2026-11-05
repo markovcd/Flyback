@@ -81,10 +81,13 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device, bool overlap
     private IntPtr smoothed;
 
     /// <summary>
-    /// How the frame's edges are smoothed as it is resolved. Best is drawn as Fast
-    /// here: four samples a pixel is a render's, not a window's.
+    /// How the frame's edges are smoothed as it is resolved. Best draws the history at
+    /// twice the width and height, and the resolve halves it.
     /// </summary>
     public Smoothing Smoothing { get; set; }
+
+    /// <summary>The size <see cref="resolved"/> was made at, which Best draws the history at twice of.</summary>
+    private SurfaceSize resolvedSize;
 
     /// <summary>
     /// Points the renderer at a program, compiling a library for it if the text has
@@ -318,13 +321,17 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device, bool overlap
 
         try
         {
-            if (Resize(resolution) is { } failure) return failure;
+            var drawn = Smoothing == Smoothing.Best && SmoothedFrames.FitsBest(resolution.Width, resolution.Height)
+                ? new SurfaceSize(resolution.Width * 2, resolution.Height * 2)
+                : resolution;
+
+            if (Resize(drawn, resolution) is { } failure) return failure;
             if (Resolver() is { } missing) return missing;
 
             var commands = device.Commands();
 
-            Draw(commands, resolution, time, live);
-            Resolve(commands, resolution);
+            Draw(commands, drawn, time, live);
+            Resolve(commands, resolution, halving: drawn != resolution);
 
             var row = resolution.Width * ResolvedBytes;
             var bytes = row * resolution.Height;
@@ -455,42 +462,49 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device, bool overlap
     }
 
     /// <summary>
-    /// Draws the frame just drawn into <see cref="resolved"/>, unscaled: the blit samples
-    /// texel centers, so each byte is the GPU's rounding of its half float.
+    /// Draws the frame just drawn into <see cref="resolved"/>. Unscaled, the blit samples
+    /// texel centers, so each byte is the GPU's rounding of its half float; from a history
+    /// twice the size (<paramref name="halving"/>), each sample falls on the corner of four
+    /// texels and averages them.
     /// </summary>
-    private void Resolve(IntPtr commands, SurfaceSize resolution)
+    private void Resolve(IntPtr commands, SurfaceSize resolution, bool halving)
     {
         var encoder = MetalDevice.Pass(commands, [resolved], clear: false, alpha: 1);
         var scale = stackalloc float[] { 1f, 1f };
         var texel = stackalloc float[] { 1f / resolution.Width, 1f / resolution.Height };
+        var fxaa = !halving && Smoothing != Smoothing.Off;
 
-        MetalDevice.Use(encoder, Smoothing == Smoothing.Off ? resolve : smoothed);
+        MetalDevice.Use(encoder, fxaa ? smoothed : resolve);
         MetalDevice.VertexBytes(encoder, scale, 2 * sizeof(float), MetalEmitter.BlitBuffer);
-        if (Smoothing != Smoothing.Off) MetalDevice.FragmentBytes(encoder, texel, 2 * sizeof(float), MetalEmitter.SmoothingBuffer);
+        if (fxaa) MetalDevice.FragmentBytes(encoder, texel, 2 * sizeof(float), MetalEmitter.SmoothingBuffer);
         MetalDevice.FragmentTexture(encoder, history[read], 0);
         MetalDevice.DrawQuad(encoder);
         MetalDevice.End(encoder);
     }
 
-    /// <summary>Makes the history pair, and the planes' beside it, for <paramref name="resolution"/>.</summary>
-    private string? Resize(SurfaceSize resolution)
+    /// <summary>
+    /// Makes the history pair, and the planes' beside it, at <paramref name="drawn"/>, and
+    /// the frame they resolve into at <paramref name="resolution"/>.
+    /// </summary>
+    private string? Resize(SurfaceSize drawn, SurfaceSize resolution)
     {
-        if (size == resolution && history[0] != 0) return null;
+        if (size == drawn && resolvedSize == resolution && history[0] != 0) return null;
 
         ReleaseTargets();
-        size = resolution;
+        size = drawn;
+        resolvedSize = resolution;
         clearPending = true;
 
         for (var i = 0; i < 2; i++)
         {
             history[i] = device.Texture(
-                MetalDevice.Rgba16Float, resolution.Width, resolution.Height, MetalDevice.RenderTarget | MetalDevice.ShaderRead, written: false);
+                MetalDevice.Rgba16Float, drawn.Width, drawn.Height, MetalDevice.RenderTarget | MetalDevice.ShaderRead, written: false);
 
             planes[i] = new IntPtr[planeTargets];
 
             for (var target = 0; target < planeTargets; target++)
                 planes[i][target] = device.Texture(
-                    planeFormat, resolution.Width, resolution.Height, MetalDevice.RenderTarget | MetalDevice.ShaderRead, written: false);
+                    planeFormat, drawn.Width, drawn.Height, MetalDevice.RenderTarget | MetalDevice.ShaderRead, written: false);
         }
 
         resolved = device.Texture(MetalDevice.Bgra8Unorm, resolution.Width, resolution.Height, MetalDevice.RenderTarget, written: false);
