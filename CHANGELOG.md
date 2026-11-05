@@ -65,7 +65,7 @@
 - The desktop editor opens its window about a second sooner, its code compiled ahead of time; the web editor shows its logo and a loading bar while it downloads, and the iPhone and iPad editor opens on its logo in its own colors rather than a white screen.
 - Panning and zooming a large patch is smoother, most of all on a phone: the canvas skips modules and wires out of view, looks up what it draws once a frame, and keeps wire shapes, pens and laid-out text from one frame to the next.
 - On Android the sound runs ahead of the screen's drawing, so a busy canvas no longer starves it.
-- The Android app runs on the same .NET runtime as the desktop, which works the sound out about a third faster: Mycelium plays at 1.5× real time on a Pixel 9 Pro rather than 1.2×. The app is about twice the download it was.
+- The Android app runs on the same .NET runtime as the desktop and works the sound out about a third faster: Mycelium plays at 1.5× real time on a Pixel 9 Pro rather than 1.2×. The app is about twice the download it was.
 
 ### Fixes
 
