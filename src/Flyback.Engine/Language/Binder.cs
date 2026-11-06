@@ -260,6 +260,7 @@ public sealed class Binder
                     Owns(value);
 
                     if (value is Placed placed) sourceSites.Name(placed.Id, let.Name);
+                    else if (value is Socket socket) sourceSites.NameOutput(let.Name, socket.Id, socket.Port);
                 }
                 else
                 {

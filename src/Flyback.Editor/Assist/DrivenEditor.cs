@@ -99,7 +99,9 @@ internal sealed class DrivenEditor(
             return new ChannelReply(request.Id, true, "said.");
         }
 
-        if (request.Tool is not { } tool) return new ChannelReply(request.Id, false, "a request names a tool, or says something.");
+        if (request.Briefing) return new ChannelReply(request.Id, true, bench.Briefing);
+
+        if (request.Tool is not { } tool) return new ChannelReply(request.Id, false, "a request names a tool, says something, or asks for the briefing.");
 
         if (request.Arguments is not { ValueKind: System.Text.Json.JsonValueKind.Object } arguments)
             return new ChannelReply(request.Id, false, "a tool's arguments are a JSON object.");

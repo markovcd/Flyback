@@ -3,7 +3,7 @@
 Found on 2026-11-06, on `main` at `9688c230`, in Flyback 0.12.0. It is on TODO.md; take an item off here as it lands, and delete this file, and its TODO.md item, in the commit that lands the last.
 
 - **Severity:** Critical (item 4), Medium or Low for the rest, marked on each
-- **Status:** Open; items 1 to 3 fixed
+- **Status:** Open; items 1 to 3, 16 to 18, 20 to 22, 31 and 34 fixed; 33 narrowed
 
 Everything below came from driving `flyback-cli mcp --editor` for an hour and a half while building a patch with the user. It was all confirmed by running; none of it was read from the code. The session's own client was a stdio script that started one `flyback-cli mcp` process per call, because `flyback` was not registered for Claude Code (item 33). Arrangement chaining is being built separately and is left out.
 
@@ -33,16 +33,16 @@ Everything below came from driving `flyback-cli mcp --editor` for an hour and a 
 
 ## `measure` (Low)
 
-16. **It can't ask for one output.** Naming a module returns every output (a Filter's three, a Noise's four), 20 to 40 lines to check one peak. Accept `module.output` handles.
-17. **It can't say which notes play.** A stepped output gets range, mean and step rate only, so confirming an arp's chord meant doing arithmetic on the mean. List the distinct values held, with note names on note outputs.
-18. **It doesn't know `let` aliases.** `measure(["hat"])` on `let hat = shine.high` answers "no module called 'hat'", although the briefing says each module answers to its `let` name.
-19. **It printed `master.left` twice** before `master.right`.
+16. **Fixed.** `measure` takes `module.output` for one output.
+17. **Fixed.** A stepped output lists the values it holds, up to twelve, and the Note Sequencer's, Note's, Quantiser's and Tune's note outputs name them: `holds C4 (60), E4 (64)`.
+18. **Fixed.** A `let` name that stands for one output, `hat` in `let hat = shine.high`, measures that output.
+19. **It printed `master.left` twice** before `master.right`. Not reproduced: a Desk named `master` printed each output once, and an output named twice in `handles` is now measured once. Needs the patch it happened on.
 
 ## `edit_patch`'s answer (Low)
 
-20. **"It now reads" lists lines in edit order** (74, 79, 84, 85, 70, 71), not line order.
-21. **A line two edits touched is printed twice**, before and after, both numbered 86.
-22. **Glitches:** the last echoed line runs into "Those with no let name answer to: …" with no line break, and issue texts end in a double period ("…its 'left'..").
+20. **Fixed.** "It now reads" lists lines in the order they stand, numbered where they end up.
+21. **Fixed.** A line two edits touched is printed once, as it ends.
+22. **Fixed.** "Those with no let name answer to" starts a line of its own, and an issue list ends in one period.
 
 ## Modules and their descriptions (Low)
 
@@ -59,7 +59,7 @@ Everything below came from driving `flyback-cli mcp --editor` for an hour and a 
 ## Editor (Low)
 
 30. **The assistant panel misreports an outside MCP client.** It showed "mcpc stopped driving the editor." and then "No assistant is selected. Pick one in Settings." in success-green. An outside client is a legitimate assistant, and with a reconnect per call, "stopped driving" likely followed every call. *Fix:* show who is connected, collapse connect/disconnect churn, and draw the warning as a warning.
-31. **The Arrangement panel draws seams between cells.** Cells are fractional pixels wide, so where an edge falls mid-pixel, anti-aliasing leaves a faint vertical line that moves when the panel is resized. Snap edges to whole pixels, or draw a run of equal cells as one rectangle.
+31. **Fixed.** The cells had half a pixel of margin at each side, which layout rounding turned into a one-pixel gap at some edges and none at others. They meet edge to edge now.
 
 ## Setup (Low, maybe not Flyback)
 
@@ -69,8 +69,9 @@ Everything below came from driving `flyback-cli mcp --editor` for an hour and a 
 
 The same patch, reopened in an editor and a `flyback-cli` built from source.
 
-33. **Loudness reads impossible values.** Where 0.12.0 read about -12 LUFS short-term, the build from `main` reads momentary +4.3 LUFS and short-term -4.1 with peaks held at -1 dBFS by the Limiter. Momentary loudness can't sit 5 dB above the peak. The means sit at the top of each range, as if the -70 floor were left out. It could be the Loudness module or how `measure` summarizes it; unconfirmed which.
-34. **A source-built `flyback-cli`'s briefing lists no plugin modules.** The Effects, Mastering, Voice and other plugin sections were missing from `instructions`, although the editor loaded those plugins and the patch compiled with them. An assistant on a dev build doesn't know Echo or Limiter exist.
+33. **Loudness reads impossible values.** Where 0.12.0 read about -12 LUFS short-term, the build from `main` reads momentary +4.3 LUFS and short-term -4.1 with peaks held at -1 dBFS by the Limiter. *Narrowed:* the meter is right, and the reading is possible. BS.1770's K-weighting lifts the top by 4 dB and two channels add 3, so a bright, dense signal reads louder in LUFS than its peak in dBFS: a 4 kHz sine at -1 dBFS in both channels reads +2.25 on the Loudness module and the same on `render --loudness`, an independent meter, once the Output's volume is allowed for (`LoudnessTests.A_bright_tone_reads_louder_than_its_peak`). The means sit near the top because -70 is only the first instant of an empty window. On Acid the module and `render --loudness` agree to within its 0.7 output volume. What is left is why the same patch reads about 16 dB hotter on `main` than on 0.12.0: most likely the mix itself grew and the Limiter flattened it toward a square, which is unconfirmed. Bisect with the patch, which is not in the repo or the project files.
+
+34. **Fixed.** A `flyback-cli` built in Debug or Release has no plugins beside it, so its own briefing named only the built-in modules. With the editor open, `mcp` now asks the editor for its briefing and hands the client that; with none, or an editor too old to answer, it falls back to its own.
 35. **`#` comments are refused now** (`//` starts one; `#` is a sharp). A saved patch, preset or conversation with `#` comments needs the upgrade step the `saved-data` skill asks for, if there isn't one yet.
 
 ## What worked

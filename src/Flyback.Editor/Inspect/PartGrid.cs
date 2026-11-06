@@ -184,7 +184,9 @@ internal sealed class PartGrid
                 {
                     Tag = CellTag,
                     Height = CellHeight,
-                    Margin = new Thickness(0.5, 1),
+                    // No gap at the sides: one would land on a fraction of a pixel and show as a seam
+                    // through a run of equal cells, moving as the panel is resized.
+                    Margin = new Thickness(0, 1),
                     Background = part[s].Glides ? Gradient(was, now) : new SolidColorBrush(Shade(now)),
                 };
 

@@ -17,6 +17,8 @@
 - A program driving the editor over MCP works on its own copy of the patch, as the assistant's column does: only `propose` puts it on the canvas, as one edit Ctrl+Z undoes. Knobs turned meanwhile are kept, and modules or wires changed meanwhile are replaced, with the column saying so.
 - `reset` from a program driving the editor goes back to the patch as it was last proposed or as the person last opened or changed it, never to the patch that was open when the program first called.
 - `propose` is refused while the last edit failed, so its summary can't describe a patch that isn't there; an edit that lands, or `describe_patch`, lets it through again.
+- `measure` takes `module.output` for one output, or a `let` name that stands for one, and lists the values a stepped output holds, notes by name.
+- With the editor open, `flyback-cli mcp` hands the client the editor's own briefing, plugin modules and all, however `flyback-cli` was built.
 
 ### Editor
 
@@ -46,6 +48,9 @@
 - A picture whose modules keep a phase, such as Plasma, builds after an edit as fast as it did before 0.12.0, about twice as fast as in 0.12.0.
 
 ### Fixes
+
+- `edit_patch` echoes each line it changed once, numbered where it now stands and in order, and a complaint in its answer ends in one period.
+- The Arrangement's grid in the inspector draws a run of equal levels without seams.
 
 ## 0.12.0 — 2026-11-05
 

@@ -105,7 +105,7 @@ internal sealed class PatchReports(WorkingPatch bench)
 
         var text = new StringBuilder();
 
-        if (newFaults.Length > 0) text.Append("Issues: ").Append(string.Join(" | ", newFaults)).Append('.');
+        if (newFaults.Length > 0) text.Append("Issues: ").Append(Ended(string.Join(" | ", newFaults)));
 
         // Kept apart from the faults rather than listed with them. A warning is
         // something to know, not something to clear — an assistant that cannot
@@ -115,7 +115,7 @@ internal sealed class PatchReports(WorkingPatch bench)
         if (newNotes.Length > 0)
         {
             if (text.Length > 0) text.Append(' ');
-            text.Append("Worth knowing: ").Append(string.Join(" | ", newNotes)).Append('.');
+            text.Append("Worth knowing: ").Append(Ended(string.Join(" | ", newNotes)));
         }
 
         var oldFaults = faults.Length - newFaults.Length;
@@ -134,6 +134,9 @@ internal sealed class PatchReports(WorkingPatch bench)
 
         static string Count(int count, string noun) =>
             count == 0 ? string.Empty : count == 1 ? $"1 {noun}" : $"{count} {noun}s";
+
+        // A complaint usually ends a sentence of its own, so the list takes no second stop.
+        static string Ended(string list) => list.EndsWith('.') || list.EndsWith('?') || list.EndsWith('!') ? list : list + ".";
     }
 
     /// <summary>

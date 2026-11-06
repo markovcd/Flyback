@@ -152,7 +152,7 @@ public partial class NodeCatalog
             ],
             [
                 Num("hz") with { Help = "The frequency, for an oscillator's 'freq'." },
-                Num("note") with { Help = "The semitone it snapped to." },
+                Num("note") with { Help = "The semitone it snapped to.", Display = PortDisplay.Note },
             ],
             (em, i) => Sounded(em, i[0], i[1], i[2]),
             "Pitch in note numbers, turned into a frequency.")
@@ -326,7 +326,7 @@ public partial class NodeCatalog
                     + "cannot slide mid-note.",
             },
         ],
-        [Num("note") with { Help = "A note number: patch it into a Note to hear it." }],
+        [Num("note") with { Help = "A note number: patch it into a Note to hear it.", Display = PortDisplay.Note }],
         EmitQuantiser,
         "Snaps what arrives to the nearest note the scale has switched on, in any octave, so "
         + "a sweep becomes a run up the scale. The switches are pitch classes: A on is every A. "
@@ -369,7 +369,7 @@ public partial class NodeCatalog
         ],
         [
             Num("hz") with { Help = "For an oscillator's 'freq'." },
-            Num("note") with { Help = "The same pitch as a note number." },
+            Num("note") with { Help = "The same pitch as a note number.", Display = PortDisplay.Note },
         ],
         (em, i) =>
         {

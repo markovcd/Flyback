@@ -20,4 +20,10 @@ internal interface IToolTarget
 
     /// <summary>Puts <paramref name="text"/> where the person reads it.</summary>
     Task<ToolAnswered> Say(string text, CancellationToken cancel);
+
+    /// <summary>
+    /// The briefing for the modules the target compiles with, or null where they are this
+    /// program's own and its briefing serves.
+    /// </summary>
+    Task<string?> Briefing(CancellationToken cancel);
 }

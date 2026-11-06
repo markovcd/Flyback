@@ -61,6 +61,10 @@ internal sealed class ChannelClient : IAsyncDisposable
     public Task<ChannelReply> Say(string text, CancellationToken cancel) =>
         Ask(new ChannelRequest(++next, Say: text), cancel);
 
+    /// <summary>The briefing for the editor's own modules, plugins and all.</summary>
+    public Task<ChannelReply> Brief(CancellationToken cancel) =>
+        Ask(new ChannelRequest(++next, Briefing: true), cancel);
+
     /// <summary>The reply to <paramref name="request"/>, or one numbered 0 where the channel closed.</summary>
     private async Task<ChannelReply> Ask(ChannelRequest request, CancellationToken cancel)
     {

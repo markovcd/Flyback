@@ -82,7 +82,10 @@ public static class Measurements
                 def.Outputs[socket.Port].Name,
                 sound.Slice(socket.Offset, socket.Width).ToArray(),
                 picture.AsSpan(other.Offset, other.Width).ToArray(),
-                Pictured(picture, first, last, other, pixels)));
+                Pictured(picture, first, last, other, pixels))
+            {
+                Display = def.Outputs[socket.Port].Display,
+            });
         }
 
         var issues = heard.Issues.Concat(seen.Issues).Select(issue => issue.Message).Distinct().ToArray();

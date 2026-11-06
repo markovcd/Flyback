@@ -34,6 +34,9 @@ internal sealed class DrivenBench(
     /// <summary>The summary of what the last call put on the canvas, or null where it put nothing.</summary>
     public string? Proposed { get; private set; }
 
+    /// <summary>The briefing, written from the modules the editor has loaded.</summary>
+    public string Briefing => Bench().Briefing;
+
     public async Task<ToolOutcome> Call(string tool, JsonElement arguments, CancellationToken cancel)
     {
         Proposed = null;

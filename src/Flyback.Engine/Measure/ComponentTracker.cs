@@ -17,6 +17,12 @@ internal sealed class ComponentTracker(double steppedShare, double fastest)
     /// <summary>How much the gaps between rises may vary for the signal to count as repeating.</summary>
     private const double Regularity = 1.25;
 
+    /// <summary>The most distinct values a stepped signal is listed with; one with more has none listed.</summary>
+    public const int Listed = 12;
+
+    /// <summary>Every value seen, up to one past <see cref="Listed"/>.</summary>
+    private readonly SortedSet<double> held = [];
+
     private long changes;
     private double min = double.PositiveInfinity;
     private double max = double.NegativeInfinity;
@@ -55,6 +61,8 @@ internal sealed class ComponentTracker(double steppedShare, double fastest)
             var interval = time - lastTime;
             if (interval > 0d) slope = Math.Max(slope, Math.Abs(value - last) / interval);
         }
+
+        if ((Count == 0 || value != last) && held.Count <= Listed) held.Add(value);
 
         min = Math.Min(min, value);
         max = Math.Max(max, value);
@@ -126,7 +134,10 @@ internal sealed class ComponentTracker(double steppedShare, double fastest)
                 ? (changes - 1) / (lastChange - firstChange)
                 : changes / seconds;
 
-            return new ComponentStats(low, high, mean, true, across, StepsPerSecond: steps);
+            return new ComponentStats(low, high, mean, true, across, StepsPerSecond: steps)
+            {
+                Held = held.Count <= Listed ? [.. held] : null,
+            };
         }
 
         return new ComponentStats(low, high, mean, true, across, Slope: slope);

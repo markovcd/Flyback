@@ -154,8 +154,9 @@ internal sealed class ToolTable(
             Does("measure", measurements.MeasureAsync,
                 "Runs the patch for a few seconds with nothing played in and says what each output "
                 + "carries, as numbers: its value when it holds still, otherwise its range, mean and "
-                + "how fast it moves (hertz, steps a second, or steepest slope), and whether it "
-                + "varies across the picture. Every output of the modules named, wired to anything "
+                + "how fast it moves (hertz, steps a second, or steepest slope), the values a stepped "
+                + "output holds where there are few, notes by name, and whether it "
+                + "varies across the picture. Every output of the modules named, or each output named, wired to anything "
                 + "or not, or of every module when none are named. The sound and the picture are "
                 + "measured apart, since memory and coordinates make them differ. Reach for it to "
                 + "check what a knob or an LFO really gives before wiring it, or why something is "

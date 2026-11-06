@@ -65,6 +65,18 @@ public class PartGridTests : EditorTest
         ShadeOf(-0.5f, 0f).ShouldNotBe(ShadeOf(-1f, 0f));
     }
 
+    /// <summary>A gap between two cells falls on a fraction of a pixel and shows as a seam through a run.</summary>
+    [AvaloniaFact]
+    public void The_cells_of_a_part_meet_edge_to_edge()
+    {
+        var window = Showing(out var node, out _);
+        var sections = ArrangementExtra.Of(node)[0].Count;
+
+        var cells = All<Border>(window).Where(b => Equals(b.Tag, PartGrid.CellTag)).Take(sections).ToArray();
+
+        for (var s = 1; s < cells.Length; s++) cells[s].Bounds.Left.ShouldBe(cells[s - 1].Bounds.Right, 1e-9);
+    }
+
     [AvaloniaFact]
     public void A_parts_cross_takes_it_away()
     {

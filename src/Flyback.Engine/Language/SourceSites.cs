@@ -27,6 +27,9 @@ internal sealed class SourceSites
     /// <summary>What the text calls each module it has a word for.</summary>
     private readonly Dictionary<Guid, string> named = [];
 
+    /// <summary>The output each <c>let</c> name that stands for one output is bound to.</summary>
+    private readonly Dictionary<string, (Guid Node, int Port)> outputs = new(StringComparer.Ordinal);
+
     /// <summary>Where each group block begins, and the group it built.</summary>
     private readonly List<(Site Where, Guid Group)> blocks = [];
 
@@ -48,6 +51,9 @@ internal sealed class SourceSites
     /// <summary>Calls <paramref name="node"/> <paramref name="name"/>, unless the text already has a word for it.</summary>
     public void Name(Guid node, string name) => named.TryAdd(node, name);
 
+    /// <summary>Calls output <paramref name="port"/> of <paramref name="node"/> <paramref name="name"/>, unless that name is taken.</summary>
+    public void NameOutput(string name, Guid node, int port) => outputs.TryAdd(name, (node, port));
+
     /// <summary>What the text calls <paramref name="node"/>, where it has a word for it.</summary>
     public string? NameOf(Guid node) => named.GetValueOrDefault(node);
 
@@ -56,8 +62,8 @@ internal sealed class SourceSites
 
     /// <summary>
     /// What the text says about modules the folding took away or remade: a word
-    /// that named one names the Expression it went into, and a knob or a call
-    /// written for one points nowhere, since its brackets take no formula.
+    /// that named one names the Expression it went into, and a knob, a call or a
+    /// name for one of its outputs points nowhere, since its brackets take no formula.
     /// </summary>
     public void Folded(Dictionary<Guid, Guid> into)
     {
@@ -69,13 +75,15 @@ internal sealed class SourceSites
 
         foreach (var id in into.Keys) calls.Remove(id);
 
+        foreach (var name in outputs.Where(pair => into.ContainsKey(pair.Value.Node)).Select(pair => pair.Key).ToList()) outputs.Remove(name);
+
         foreach (var key in written.Keys.Where(key => into.ContainsKey(key.Node)).ToList()) written.Remove(key);
 
         foreach (var (id, root) in into)
             if (bound.Remove(id)) bound.Add(root);
     }
 
-    public SourceMap Map(string source) => new(source, mentions, calls, Writable(), named, bound, blocks);
+    public SourceMap Map(string source) => new(source, mentions, calls, Writable(), named, bound, blocks, outputs);
 
     /// <summary>
     /// <see cref="written"/>, less the numbers read through a name more than once:

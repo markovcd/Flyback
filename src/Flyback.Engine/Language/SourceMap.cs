@@ -54,7 +54,11 @@ public sealed class SourceMap
     /// <summary>The name each module is bound to with <c>let</c>, where it has one.</summary>
     internal IReadOnlyDictionary<Guid, string> Named { get; }
 
+    /// <summary>The output each <c>let</c> name that stands for one output is bound to: <c>hat</c> in <c>let hat = shine.high</c>.</summary>
+    internal IReadOnlyDictionary<string, (Guid Node, int Port)> Outputs { get; }
+
     /// <param name="boxes">Where each <c>group</c> block begins, and the group it is.</param>
+    /// <param name="outputs">The output each <c>let</c> name that stands for one output is bound to.</param>
     internal SourceMap(
         string source,
         IReadOnlyList<(Site Where, Guid Node)> mentions,
@@ -62,9 +66,11 @@ public sealed class SourceMap
         IReadOnlyDictionary<(Guid Node, string Name), Site?> written,
         IReadOnlyDictionary<Guid, string> named,
         IReadOnlySet<Guid> bound,
-        IReadOnlyList<(Site Where, Guid Group)>? boxes = null)
+        IReadOnlyList<(Site Where, Guid Group)>? boxes = null,
+        IReadOnlyDictionary<string, (Guid Node, int Port)>? outputs = null)
     {
         text = new SourceMapText(source);
+        Outputs = new Dictionary<string, (Guid Node, int Port)>(outputs ?? new Dictionary<string, (Guid Node, int Port)>(), StringComparer.Ordinal);
         this.calls = new Dictionary<Guid, Site>(calls);
         Named = new Dictionary<Guid, string>(named);
         edits = new SourceMapEdits(text, this.calls, written, named, shared);

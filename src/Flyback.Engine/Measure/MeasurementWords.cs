@@ -1,4 +1,5 @@
 using System.Globalization;
+using Flyback.Core.Graph;
 
 namespace Flyback.Engine.Measure;
 
@@ -9,7 +10,8 @@ public static class MeasurementWords
     /// <param name="stats"></param>
     /// <param name="seconds">The window it was watched over.</param>
     /// <param name="pictured">Whether a picture is shown with it, which already says it varies across the picture.</param>
-    public static string Describe(ComponentStats stats, double seconds, bool pictured = false)
+    /// <param name="display">How its values read, so a note output's are named.</param>
+    public static string Describe(ComponentStats stats, double seconds, bool pictured = false, PortDisplay display = PortDisplay.Number)
     {
         ArgumentNullException.ThrowIfNull(stats);
 
@@ -26,11 +28,15 @@ public static class MeasurementWords
         else if (stats.StepsPerSecond is { } steps) parts.Add($"{Number(steps)} steps/s");
         else if (stats.Slope is { } slope) parts.Add($"changing, up to {Number(slope)}/s");
 
+        if (stats.Held is { } held) parts.Add("holds " + string.Join(", ", held.Select(value => Value(value, display))));
+
         return string.Join(" · ", parts);
     }
 
     /// <summary>A half's numbers, one per line under a label: a color's as r, g and b.</summary>
-    public static IEnumerable<string> Half(string label, IReadOnlyList<ComponentStats> components, double seconds, bool pictured = false)
+    /// <param name="display">How its values read, so a note output's are named.</param>
+    public static IEnumerable<string> Half(
+        string label, IReadOnlyList<ComponentStats> components, double seconds, bool pictured = false, PortDisplay display = PortDisplay.Number)
     {
         ArgumentNullException.ThrowIfNull(components);
 
@@ -39,7 +45,7 @@ public static class MeasurementWords
             var head = c == 0 ? label : string.Empty;
             var part = components.Count == 3 ? "rgb"[c] + " " : string.Empty;
 
-            yield return $"{head,-8} {part}{Describe(components[c], seconds, pictured)}";
+            yield return $"{head,-8} {part}{Describe(components[c], seconds, pictured, display)}";
         }
     }
 
@@ -71,6 +77,12 @@ public static class MeasurementWords
 
         return stats.Across && !stats.OverTime && !pictured ? $"{range} across" : range;
     }
+
+    /// <summary>A held value: a note by its name where it is a whole note, anything else as a number.</summary>
+    private static string Value(double value, PortDisplay display) =>
+        display == PortDisplay.Note && Math.Abs(value - Math.Round(value)) < 1e-4
+            ? $"{Pitch.Name((float)value)} ({Number(value)})"
+            : Number(value);
 
     /// <summary>Four places at most, and never "-0".</summary>
     public static string Number(double value)

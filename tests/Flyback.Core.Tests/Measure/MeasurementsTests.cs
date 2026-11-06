@@ -77,6 +77,48 @@ public class MeasurementsTests
     }
 
     [Fact]
+    public void A_sequencer_lists_the_values_it_holds_lowest_first()
+    {
+        var b = new PatchBuilder(Modules);
+        b.Add(NodeCatalog.OutputTypeId);
+        var steps = b.Add("seq.values", (1, 4f));
+
+        var held = Of(Take(b, seconds: 2d), steps).Sound.Single().Held.ShouldNotBeNull();
+
+        held.ShouldBe(held.Order());
+        held.Count.ShouldBeGreaterThan(1);
+    }
+
+    [Fact]
+    public void A_note_sequencer_says_its_output_is_notes()
+    {
+        var b = new PatchBuilder(Modules);
+        b.Add(NodeCatalog.OutputTypeId);
+        var riff = b.Add("seq.notes", (1, 4f));
+
+        Of(Take(b, seconds: 2d), riff).Display.ShouldBe(PortDisplay.Note);
+    }
+
+    [Fact]
+    public void A_signal_that_moves_smoothly_lists_no_values()
+    {
+        var b = new PatchBuilder(Modules);
+        b.Add(NodeCatalog.OutputTypeId);
+        var tone = b.Add("osc.sine", (1, 3f));
+
+        Of(Take(b), tone).Sound.Single().Held.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Held_notes_are_written_by_name_with_their_numbers()
+    {
+        var stats = new ComponentStats(60d, 67d, 63d, true, false, StepsPerSecond: 4d) { Held = [60d, 64d, 67d] };
+
+        MeasurementWords.Describe(stats, 2d, display: PortDisplay.Note).ShouldEndWith("holds C4 (60), E4 (64), G4 (67)");
+        MeasurementWords.Describe(stats, 2d).ShouldEndWith("holds 60, 64, 67");
+    }
+
+    [Fact]
     public void A_color_is_measured_as_its_red_green_and_blue()
     {
         var b = new PatchBuilder(Modules);

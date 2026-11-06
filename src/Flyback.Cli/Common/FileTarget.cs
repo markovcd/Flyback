@@ -39,4 +39,6 @@ internal sealed class FileTarget(PluginCatalog plugins, ToolHistory history, Fil
 
         return new ToolAnswered(true, "said.");
     }
+
+    public Task<string?> Briefing(CancellationToken cancel) => Task.FromResult<string?>(null);
 }

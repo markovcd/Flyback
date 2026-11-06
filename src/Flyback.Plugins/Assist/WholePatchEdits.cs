@@ -103,7 +103,7 @@ internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, 
 
         if (string.IsNullOrWhiteSpace(text))
             return ToolOutcome.Refused("the patch is empty, so there is nothing to edit; build it with write_patch.");
-        var changed = new List<string>();
+        var changed = new List<(int From, int To)>();
         var n = 0;
 
         foreach (var edit in edits.EnumerateArray())
@@ -135,7 +135,7 @@ internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, 
                     + "Take in enough around it to say which.");
 
             text = string.Concat(text.AsSpan(0, at), replace, text.AsSpan(at + find.Length));
-            changed.Add(Lines(text, at, replace.Length));
+            changed = Moved(changed, at, find.Length, replace.Length);
         }
 
         var load = Adopted(text.ReplaceLineEndings(newline));
@@ -144,7 +144,7 @@ internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, 
 
         var said = new StringBuilder($"edited: {bench.Patch.Nodes.Count} modules and {bench.Patch.Connections.Count} wires. It now reads:");
 
-        foreach (var lines in changed) said.AppendLine().Append(lines);
+        said.AppendLine().Append(Lines(text, changed));
 
         return ToolOutcome.Fine(Said(said, load));
     }
@@ -179,7 +179,12 @@ internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, 
     /// <summary>What a write or an edit answers after its first line: the handles nothing named, the warnings and the issues.</summary>
     private string Said(StringBuilder text, LanguageLoad load)
     {
-        if (reports.Unnamed() is { Length: > 0 } unnamed) text.Append(" Those with no let name answer to: ").Append(unnamed).Append('.');
+        // On a line of its own after the numbered lines an edit echoes, so it is not read as one of them.
+        if (reports.Unnamed() is { Length: > 0 } unnamed)
+        {
+            text.Append(text.ToString().Contains('\n') ? Environment.NewLine : " ")
+                .Append("Those with no let name answer to: ").Append(unnamed).Append('.');
+        }
 
         if (load.Issues.Count > 0)
             text.AppendLine().AppendLine("It has warnings, and is built as it stands:").AppendLine(Complaints(load));
@@ -187,23 +192,43 @@ internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, 
         return text.AppendLine().Append(reports.Issues()).ToString();
     }
 
-    /// <summary>The whole lines of <paramref name="text"/> that the span from <paramref name="at"/> touches, numbered.</summary>
-    private static string Lines(string text, int at, int length)
+    /// <summary>
+    /// The spans an edit has changed, after one more replaces <paramref name="removed"/>
+    /// characters at <paramref name="at"/> with <paramref name="inserted"/>: those it
+    /// touches merged into its own, and those after it moved along.
+    /// </summary>
+    private static List<(int From, int To)> Moved(List<(int From, int To)> spans, int at, int removed, int inserted)
     {
-        var first = at == 0 ? 0 : text.LastIndexOf('\n', at - 1) + 1;
+        var moved = new List<(int From, int To)>();
+        var (from, to) = (at, at + inserted);
 
-        var last = text.IndexOf('\n', at + length);
-        var number = text.AsSpan(0, first).Count('\n') + 1;
-        var lines = text[first..(last < 0 ? text.Length : last)].Split('\n');
-        var shown = new StringBuilder();
-
-        for (var i = 0; i < lines.Length; i++)
+        foreach (var (f, t) in spans)
         {
-            if (i > 0) shown.AppendLine();
-            shown.Append(CultureInfo.InvariantCulture, $"{number + i,4}| {lines[i]}");
+            if (t < at) moved.Add((f, t));
+            else if (f > at + removed) moved.Add((f + inserted - removed, t + inserted - removed));
+            else (from, to) = (Math.Min(from, f), Math.Max(to, t > at + removed ? t + inserted - removed : at + inserted));
         }
 
-        return shown.ToString();
+        moved.Add((from, to));
+
+        return moved;
+    }
+
+    /// <summary>The whole lines of <paramref name="text"/> the spans touch, once each, numbered and in order.</summary>
+    private static string Lines(string text, List<(int From, int To)> spans)
+    {
+        var lines = text.Split('\n');
+        var touched = new SortedSet<int>();
+
+        foreach (var (from, to) in spans)
+        {
+            var first = text.AsSpan(0, from).Count('\n');
+            var last = text.AsSpan(0, Math.Min(to, text.Length)).Count('\n');
+
+            for (var line = first; line <= last; line++) touched.Add(line);
+        }
+
+        return string.Join(Environment.NewLine, touched.Select(line => string.Create(CultureInfo.InvariantCulture, $"{line + 1,4}| {lines[line]}")));
     }
 
     /// <summary>

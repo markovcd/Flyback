@@ -1,6 +1,9 @@
 using System.Text.Json;
 using Flyback.Cli.Common;
+using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
 using Flyback.Host.Driving;
+using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
 
@@ -86,6 +89,55 @@ public sealed class EditorTargetTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task The_briefing_is_the_editors_own()
+    {
+        await using var server = Serve();
+        server.Start();
+
+        await using var target = new EditorTarget(Name);
+
+        (await target.Briefing(CancellationToken.None)).ShouldBe("the editor's briefing");
+        heard.ShouldHaveSingleItem().Briefing.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task An_editor_that_cannot_give_the_briefing_leaves_it_to_this_program()
+    {
+        await using var server = new ChannelServer(Name, (request, _) =>
+            Task.FromResult(new ChannelReply(request.Id, false, "a request names a tool, or says something.")));
+        server.Start();
+
+        await using var target = new EditorTarget(Name);
+
+        (await target.Briefing(CancellationToken.None)).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task With_no_editor_listening_the_briefing_is_left_to_this_program()
+    {
+        await using var target = new EditorTarget(Name);
+
+        (await target.Briefing(CancellationToken.None)).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Initialize_hands_the_client_the_editors_briefing()
+    {
+        await using var server = Serve();
+        server.Start();
+
+        await using var target = new EditorTarget(Name);
+        var mcp = new McpServer(new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, [], []), target);
+
+        var answer = await mcp.Answer("""{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}""", CancellationToken.None);
+
+        var instructions = answer!["result"]!["instructions"]!.GetValue<string>();
+
+        instructions.ShouldEndWith("the editor's briefing");
+        instructions.ShouldNotContain("osc.sine");
+    }
+
+    [Fact]
     public async Task A_line_longer_than_the_cap_is_never_read_whole()
     {
         var bytes = new byte[EditorChannel.LongestLine + 2];
@@ -101,8 +153,9 @@ public sealed class EditorTargetTests : IAsyncDisposable
     {
         lock (heard) heard.Add(request);
 
-        return Task.FromResult(request.Tool is { } tool
-            ? new ChannelReply(request.Id, true, $"ran {tool}", Convert.ToBase64String([1, 2, 3]))
+        return Task.FromResult(
+            request.Tool is { } tool ? new ChannelReply(request.Id, true, $"ran {tool}", Convert.ToBase64String([1, 2, 3]))
+            : request.Briefing ? new ChannelReply(request.Id, true, "the editor's briefing")
             : new ChannelReply(request.Id, true, "said."));
     });
 }

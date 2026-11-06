@@ -258,7 +258,7 @@ public partial class NodeCatalog
             },
         ],
         [
-            Num("out") with { Help = output },
+            Num("out") with { Help = output, Display = display },
             Num("gate", 0f, 0f, 1f) with { Help = "Open while a step plays, to shape note timing." },
             Num("index", 0f, 0f, 1f) with { Help = "Which step is playing, as a fraction of the pattern, for pattern control and display." },
         ],

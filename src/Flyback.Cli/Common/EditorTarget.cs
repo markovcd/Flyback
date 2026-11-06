@@ -31,6 +31,17 @@ internal sealed class EditorTarget(string name) : IToolTarget, IAsyncDisposable
     public Task<ToolAnswered> Say(string text, CancellationToken cancel) =>
         Over(channel => channel.Say(text, cancel), cancel);
 
+    /// <summary>
+    /// The editor's briefing, since it compiles with the plugins it loaded rather than this
+    /// program's; null where no editor answers, or one too old to be asked.
+    /// </summary>
+    public async Task<string?> Briefing(CancellationToken cancel)
+    {
+        var answered = await Over(channel => channel.Brief(cancel), cancel).ConfigureAwait(false);
+
+        return answered.Ok ? answered.Text : null;
+    }
+
     private async Task<ToolAnswered> Over(Func<ChannelClient, Task<ChannelReply>> ask, CancellationToken cancel)
     {
         if (client is null)

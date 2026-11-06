@@ -52,6 +52,19 @@ public class LoudnessTests
         heard.Right[^1].ShouldBe(-20f, 0.05f);
     }
 
+    /// <summary>
+    /// K-weighting's shelf: a bright sound counts for more than its level, so a dense,
+    /// limited mix reads louder in LUFS than its peak in dBFS.
+    /// </summary>
+    [Fact]
+    public void A_bright_tone_reads_louder_than_its_peak()
+    {
+        var heard = Play(Type, Sine(4000d, 0.891f, 1), heard: (Momentary, Peak));
+
+        heard.Right[^1].ShouldBe(-1f, 0.05f);
+        heard.Left[^1].ShouldBe(2.25f, 0.1f);
+    }
+
     /// <summary>K-weighting's highpass: a bass note counts for less than its level.</summary>
     [Fact]
     public void Deep_bass_counts_for_less()

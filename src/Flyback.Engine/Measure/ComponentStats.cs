@@ -21,4 +21,16 @@ public sealed record ComponentStats(
 {
     /// <summary>Whether it held one value throughout, everywhere.</summary>
     public bool Static => !OverTime && !Across;
+
+    /// <summary>The values a stepped signal held, lowest first, where there were few enough to list.</summary>
+    public IReadOnlyList<double>? Held { get; init; }
+
+    public bool Equals(ComponentStats? other) =>
+        other is not null
+        && (Min, Max, Mean, OverTime, Across, Hz, StepsPerSecond, Slope)
+            == (other.Min, other.Max, other.Mean, other.OverTime, other.Across, other.Hz, other.StepsPerSecond, other.Slope)
+        && (Held ?? []).SequenceEqual(other.Held ?? [])
+        && Held is null == other.Held is null;
+
+    public override int GetHashCode() => HashCode.Combine(Min, Max, Mean, OverTime, Across, Hz, StepsPerSecond, Slope);
 }

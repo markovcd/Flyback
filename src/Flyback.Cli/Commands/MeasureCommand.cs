@@ -221,8 +221,8 @@ internal static class MeasureCommand
             output.WriteLine();
             output.WriteLine($"{nameOf.GetValueOrDefault(m.Node, m.Module)}.{m.Socket}{(m.Differs ? "  (sound and picture differ)" : string.Empty)}");
 
-            foreach (var line in MeasurementWords.Half("sound", m.Sound, report.Seconds)) output.WriteLine("  " + line);
-            foreach (var line in MeasurementWords.Half("picture", m.Picture, report.Seconds)) output.WriteLine("  " + line);
+            foreach (var line in MeasurementWords.Half("sound", m.Sound, report.Seconds, display: m.Display)) output.WriteLine("  " + line);
+            foreach (var line in MeasurementWords.Half("picture", m.Picture, report.Seconds, display: m.Display)) output.WriteLine("  " + line);
         }
 
         return Exit.Ok;

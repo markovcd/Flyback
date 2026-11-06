@@ -1,3 +1,5 @@
+using Flyback.Core.Graph;
+
 namespace Flyback.Engine.Measure;
 
 /// <summary>What one output socket carried, to the speakers and to the screen.</summary>
@@ -21,6 +23,9 @@ public sealed record Measurement(
     IReadOnlyList<ComponentStats> Picture,
     IReadOnlyList<float[]>? Frames = null)
 {
+    /// <summary>How the output's numbers read: a note output's by name.</summary>
+    public PortDisplay Display { get; init; }
+
     /// <summary>
     /// Whether the two halves disagree: one moves and the other does not, the
     /// picture varies across itself, or their ranges differ.

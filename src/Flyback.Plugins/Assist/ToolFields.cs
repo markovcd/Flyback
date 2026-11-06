@@ -49,7 +49,7 @@ internal static class ToolFields
     /// <summary>What a look or a listen is for, which the assistant writes for its own record.</summary>
     public static readonly ToolField Note = new("note", Text);
 
-    public static readonly ToolField Handles = new("handles", ListOf(Text), Description: "Modules to measure. Left out, every module.");
+    public static readonly ToolField Handles = new("handles", ListOf(Text), Description: "What to measure: a module for all of its outputs, module.output or a let name for one output alone. Left out, every module.");
 
     // find_modules and describe_preset
 

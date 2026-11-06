@@ -3,6 +3,7 @@ using System.Text.Json;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
+using Flyback.Engine.Language;
 
 namespace Flyback.Plugins.Assist;
 
@@ -183,6 +184,33 @@ internal sealed class WorkingPatch(ModuleCatalog modules, ISampleLibrary? sample
         node = found;
         def = definition;
         refusal = string.Empty;
+        return true;
+    }
+
+    /// <summary>
+    /// The module and output a <c>let</c> name in <see cref="Source"/> stands for, as
+    /// <c>hat</c> in <c>let hat = shine.high</c>, or false where it names no one output.
+    /// </summary>
+    public bool NamedOutput(string name, out NodeInstance node, out int port)
+    {
+        node = null!;
+        port = 0;
+
+        if (Source is null) return false;
+
+        var map = PatchLanguage.Build(Source, modules).Map;
+
+        if (!map.Outputs.TryGetValue(name, out var bound)) return false;
+
+        // The bench keeps ids by handle, so a module with a let name is looked up by it.
+        var found = map.Named.TryGetValue(bound.Node, out var owner) && byHandle.TryGetValue(owner, out var named)
+            ? named
+            : Patch.Find(bound.Node);
+
+        if (found is null || modules.Get(found.TypeId) is not { } def || bound.Port >= def.Outputs.Count) return false;
+
+        node = found;
+        port = bound.Port;
         return true;
     }
 

@@ -211,8 +211,8 @@ internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selec
     {
         var lines = new List<string> { $"{measured.Module}.{measured.Socket}" };
 
-        lines.AddRange(MeasurementWords.Half("sound", measured.Sound, seconds));
-        lines.AddRange(MeasurementWords.Half("picture", measured.Picture, seconds, measured.Frames is not null));
+        lines.AddRange(MeasurementWords.Half("sound", measured.Sound, seconds, display: measured.Display));
+        lines.AddRange(MeasurementWords.Half("picture", measured.Picture, seconds, measured.Frames is not null, measured.Display));
 
         if (measured.Differs) lines.Add("The sound and the picture differ.");
         if (stale) lines.Add("Out of date: the patch has changed since. Measure again (Ctrl+Shift+M).");

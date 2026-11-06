@@ -42,6 +42,13 @@ public sealed class DrivenBenchTests
     }
 
     [Fact]
+    public void The_briefing_describes_the_modules_the_editor_has()
+    {
+        Bench().Briefing.ShouldContain("osc.sine");
+        editor.Applied.ShouldBe(0);
+    }
+
+    [Fact]
     public async Task A_call_that_only_reads_puts_nothing_on_the_canvas()
     {
         (await Call(Bench(), "describe_patch", "{}")).Ok.ShouldBeTrue();

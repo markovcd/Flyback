@@ -147,8 +147,8 @@ internal sealed class MeasuredRows(MeasureLabels measured)
     {
         if (measured.Report is not { } report || measured.Of(node.Id, port) is not { } found) return null;
 
-        var lines = MeasurementWords.Half("sound", found.Sound, report.Seconds)
-            .Concat(MeasurementWords.Half("picture", found.Picture, report.Seconds, found.Frames is not null));
+        var lines = MeasurementWords.Half("sound", found.Sound, report.Seconds, display: found.Display)
+            .Concat(MeasurementWords.Half("picture", found.Picture, report.Seconds, found.Frames is not null, found.Display));
 
         var block = new TextBlock
         {

@@ -69,6 +69,81 @@ public class PatchWorkbenchMeasureTests
     }
 
     [Fact]
+    public async Task One_output_is_named_as_module_dot_output()
+    {
+        var bench = Bench();
+
+        await Write(bench, "let riff = notes(rate: 4) [ C4 E4 G4 C5 ]");
+
+        var measured = await Call(bench, "measure", """{"handles":["riff.gate"]}""");
+
+        measured.Ok.ShouldBeTrue(measured.Text);
+        measured.Text.ShouldContain("riff.gate");
+        measured.Text.ShouldNotContain("riff.out");
+        measured.Text.ShouldNotContain("riff.index");
+    }
+
+    [Fact]
+    public async Task An_output_no_module_has_is_refused_with_the_ones_it_has()
+    {
+        var bench = Bench();
+
+        await Write(bench, "let riff = notes(rate: 4) [ C4 E4 G4 C5 ]");
+
+        var measured = await Call(bench, "measure", """{"handles":["riff.nonesuch"]}""");
+
+        measured.Ok.ShouldBeFalse();
+        measured.Text.ShouldContain("'riff' has no output called 'nonesuch'. It has out, gate, index.");
+    }
+
+    [Fact]
+    public async Task An_output_of_a_module_nobody_has_is_refused_naming_the_module()
+    {
+        var measured = await Call(Bench(), "measure", """{"handles":["nonesuch.out"]}""");
+
+        measured.Ok.ShouldBeFalse();
+        measured.Text.ShouldContain("no module called 'nonesuch'");
+    }
+
+    [Fact]
+    public async Task A_let_name_for_one_output_measures_that_output()
+    {
+        var bench = Bench();
+
+        await Write(bench, "let shine = noise()\nlet hat = shine.pink");
+
+        var measured = await Call(bench, "measure", """{"handles":["hat"]}""");
+
+        measured.Ok.ShouldBeTrue(measured.Text);
+        measured.Text.ShouldContain("shine.pink");
+        measured.Text.ShouldNotContain("shine.white");
+    }
+
+    [Fact]
+    public async Task A_note_sequencer_says_which_notes_it_holds_by_name()
+    {
+        var bench = Bench();
+
+        await Write(bench, "let riff = notes(rate: 4) [ C4 E4 G4 C5 ]");
+
+        var measured = await Call(bench, "measure", """{"handles":["riff.out"]}""");
+
+        measured.Text.ShouldContain("holds C4 (60), E4 (64), G4 (67), C5 (72)");
+    }
+
+    [Fact]
+    public async Task An_output_named_twice_is_measured_once()
+    {
+        var bench = Bench();
+
+        await Write(bench, "let riff = notes(rate: 4) [ C4 E4 G4 C5 ]");
+
+        var measured = await Call(bench, "measure", """{"handles":["riff.out","riff.out"]}""");
+
+        measured.Text.Split("riff.out").Length.ShouldBe(2);
+    }
+
+    [Fact]
     public void Measure_is_offered_to_a_model_that_can_neither_see_nor_hear()
     {
         Bench().Tools.ShouldContain(tool => tool.Name == "measure");

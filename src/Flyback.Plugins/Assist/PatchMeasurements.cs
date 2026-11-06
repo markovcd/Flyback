@@ -19,16 +19,16 @@ internal sealed class PatchMeasurements(WorkingPatch bench, WorkbenchLimits limi
     /// <remarks>On a pool thread, for the reason <see cref="PatchSenses.RenderAsync"/> gives.</remarks>
     public Task<ToolOutcome> MeasureAsync(JsonElement arguments, CancellationToken cancel)
     {
-        var chosen = new List<Guid>();
+        var chosen = new List<(Guid Node, int? Port)>();
 
         if (ToolFields.Handles.List(arguments, out var handles))
         {
             foreach (var handle in handles.EnumerateArray())
             {
-                if (!bench.Node(handle.GetString() ?? string.Empty, out var node, out _, out var refusal))
+                if (Chosen(handle.GetString() ?? string.Empty, out var refusal) is not { } one)
                     return Task.FromResult(ToolOutcome.Refused(refusal));
 
-                chosen.Add(node.Id);
+                if (!chosen.Contains(one)) chosen.Add(one);
             }
         }
 
@@ -43,7 +43,7 @@ internal sealed class PatchMeasurements(WorkingPatch bench, WorkbenchLimits limi
             {
                 var report = Measurements.Take(
                     patch,
-                    new MeasureOptions(seconds, from, Modules: chosen.Count == 0 ? null : chosen),
+                    new MeasureOptions(seconds, from, Modules: chosen.Count == 0 ? null : [.. chosen.Select(c => c.Node).Distinct()]),
                     bench.Modules,
                     bench.Samples,
                     bench.Pictures,
@@ -54,19 +54,65 @@ internal sealed class PatchMeasurements(WorkingPatch bench, WorkbenchLimits limi
                     + "The sound runs over time with memory; the picture runs over x, y and t without, "
                     + "so the two can differ.");
 
-                if (report.Measurements.Count == 0) text.Append("\nNothing measured has an output.");
+                var kept = report.Measurements
+                    .Where(m => chosen.Count == 0 || chosen.Any(c => c.Node == m.Node && (c.Port is null || c.Port == m.Port)))
+                    .ToList();
 
-                foreach (var m in report.Measurements)
+                if (kept.Count == 0) text.Append("\nNothing measured has an output.");
+
+                foreach (var m in kept)
                 {
                     text.Append('\n').Append(bench.Handle(patch.Find(m.Node))).Append('.').Append(m.Socket);
                     if (m.Differs) text.Append("  (sound and picture differ)");
 
-                    foreach (var line in MeasurementWords.Half("sound", m.Sound, seconds)) text.Append("\n  ").Append(line);
-                    foreach (var line in MeasurementWords.Half("picture", m.Picture, seconds)) text.Append("\n  ").Append(line);
+                    foreach (var line in MeasurementWords.Half("sound", m.Sound, seconds, display: m.Display)) text.Append("\n  ").Append(line);
+                    foreach (var line in MeasurementWords.Half("picture", m.Picture, seconds, display: m.Display)) text.Append("\n  ").Append(line);
                 }
 
                 return ToolOutcome.Fine(text.ToString());
             },
             cancel);
+    }
+
+    /// <summary>
+    /// What one name in <c>handles</c> asks for: a module's every output, one output as
+    /// <c>module.output</c>, or the output a <c>let</c> name stands for.
+    /// </summary>
+    private (Guid Node, int? Port)? Chosen(string name, out string refusal)
+    {
+        if (bench.Node(name, out var whole, out _, out refusal)) return (whole.Id, null);
+
+        if (bench.NamedOutput(name, out var aliased, out var bound))
+        {
+            refusal = string.Empty;
+            return (aliased.Id, bound);
+        }
+
+        var dot = name.LastIndexOf('.');
+
+        if (dot <= 0) return null;
+
+        if (!bench.Node(name[..dot], out var node, out var def, out var missing))
+        {
+            refusal = missing;
+            return null;
+        }
+
+        var socket = name[(dot + 1)..];
+
+        for (var port = 0; port < def.Outputs.Count; port++)
+        {
+            if (string.Equals(def.Outputs[port].Name, socket, StringComparison.OrdinalIgnoreCase))
+            {
+                refusal = string.Empty;
+                return (node.Id, port);
+            }
+        }
+
+        refusal = def.Outputs.Count == 0
+            ? $"'{name[..dot]}' has no outputs."
+            : $"'{name[..dot]}' has no output called '{socket}'. It has {string.Join(", ", def.Outputs.Select(o => o.Name))}.";
+
+        return null;
     }
 }

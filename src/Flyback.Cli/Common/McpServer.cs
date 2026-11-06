@@ -72,7 +72,7 @@ internal sealed class McpServer(PluginCatalog plugins, IToolTarget target, strin
         {
             return name switch
             {
-                "initialize" => Result(id, Initialize(parameters)),
+                "initialize" => Result(id, await Initialize(parameters, cancel).ConfigureAwait(false)),
                 "ping" => Result(id, []),
                 "tools/list" => Result(id, List()),
                 "tools/call" => await Call(id, parameters, cancel).ConfigureAwait(false),
@@ -85,12 +85,14 @@ internal sealed class McpServer(PluginCatalog plugins, IToolTarget target, strin
         }
     }
 
-    private JsonObject Initialize(JsonObject? parameters)
+    private async Task<JsonObject> Initialize(JsonObject? parameters, CancellationToken cancel)
     {
         var asked = (parameters?["protocolVersion"] as JsonValue)?.TryGetValue(out string? version) == true ? version : null;
 
         if ((parameters?["clientInfo"]?["name"] as JsonValue)?.TryGetValue(out string? client) == true && !string.IsNullOrWhiteSpace(client))
             target.Greet(client);
+
+        var briefing = await target.Briefing(cancel).ConfigureAwait(false) ?? blank.Value.Briefing;
 
         return new JsonObject
         {
@@ -102,7 +104,7 @@ internal sealed class McpServer(PluginCatalog plugins, IToolTarget target, strin
                 ["title"] = GlobalConstants.ApplicationName,
                 ["version"] = typeof(McpServer).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "0",
             },
-            ["instructions"] = target.Describes + "\n\n" + blank.Value.Briefing,
+            ["instructions"] = target.Describes + "\n\n" + briefing,
         };
     }
 
