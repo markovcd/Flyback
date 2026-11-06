@@ -311,13 +311,30 @@ internal static class Handbook
 
         """.ReplaceLineEndings(Newline);
 
+    /// <summary>The heading of how to work.</summary>
     private static readonly string Working = """
         ## How to work
 
+        """.ReplaceLineEndings(Newline);
+
+    /// <summary>Where the patch comes from, for a conversation in the editor's own column.</summary>
+    private static readonly string Opening = """
         The first message opens with the patch as it stands, and a later one
         with whatever the person changed on the canvas meanwhile, so there is
         no need to call `describe_patch` to look.
 
+        """.ReplaceLineEndings(Newline);
+
+    /// <summary>Where the patch comes from, for a program driving it from outside.</summary>
+    private static readonly string LiveOpening = """
+        Call `describe_patch` to see the patch as it stands. The person may
+        change it on the canvas between your calls, and nothing tells you
+        when, so look again before an edit that depends on what is there.
+
+        """.ReplaceLineEndings(Newline);
+
+    /// <summary>How to build and change a patch, and the mistakes that silence a beat.</summary>
+    private static readonly string Building = """
         **Build a new patch with `write_patch`, in one call.** Write the whole
         thing, read the issues that come back, and fix them with `edit_patch`.
 
@@ -380,6 +397,10 @@ internal static class Handbook
         mixer(kick, 1, bass, 0.7) |> out.left
         ```
 
+        """.ReplaceLineEndings(Newline);
+
+    /// <summary>What a proposal is, where it is what puts the patch on the canvas.</summary>
+    private static readonly string Proposing = """
         ## Proposing
 
         Check the result when the shape is right, adjust, then call `propose`
@@ -398,6 +419,38 @@ internal static class Handbook
         on. Ask it, and say the patch is not applied yet. "Is this good?" is
         not such a choice.
 
+        """.ReplaceLineEndings(Newline);
+
+    /// <summary>What a proposal is, where every edit is already live.</summary>
+    private static readonly string LiveProposing = """
+        ## Proposing
+
+        Every edit is on the person's canvas, or in their file, the moment
+        it is made, and each is one step they can undo. Nothing waits for a
+        proposal, so do not try things out on the patch you were asked to
+        change: a trial edit is one they see and hear.
+
+        Check the result when the shape is right, adjust, then call `propose`
+        with a one-line summary. It applies nothing: it checks the patch as
+        it stands and tells the person it is ready. It is refused while your
+        last edit failed, since the summary would describe a patch that is
+        not there; fix the edit, or look with `describe_patch` and propose
+        what stands.
+
+        `reset` goes back to the patch as you last proposed it or as the
+        person last changed it, whichever came later, never further.
+
+        **Never ask whether to propose.** If you built what was asked, propose
+        it and say what you would tune next.
+
+        The one reason not to propose is a choice only they can make: two
+        readings of the request, a key, a tempo with nothing to base a guess
+        on. Ask it. "Is this good?" is not such a choice.
+
+        """.ReplaceLineEndings(Newline);
+
+    /// <summary>The heading of the module list and how to read it.</summary>
+    private static readonly string Catalog = """
         # The modules
 
         Format: `type id | name | category`, then inputs and outputs as
@@ -549,7 +602,11 @@ internal static class Handbook
     /// wrong about that either wastes a tool it has or credits its own impression to
     /// a listener that was never there.
     /// </param>
-    public static string Render(ModuleCatalog modules, IReadOnlySet<string> undescribed, Listener hearing = Listener.None)
+    /// <param name="live">
+    /// Whether each edit reaches the person as it is made, as it does over MCP and
+    /// <c>flyback-cli tool</c>, rather than waiting for a proposal they accept.
+    /// </param>
+    public static string Render(ModuleCatalog modules, IReadOnlySet<string> undescribed, Listener hearing = Listener.None, bool live = false)
     {
         var text = new StringBuilder(Conventions)
             .Append(hearing switch
@@ -558,7 +615,11 @@ internal static class Handbook
                 Listener.Another => Secondhand,
                 _ => Deaf,
             })
-            .Append(Working);
+            .Append(Working).Append('\n')
+            .Append(live ? LiveOpening : Opening).Append('\n')
+            .Append(Building).Append('\n')
+            .Append(live ? LiveProposing : Proposing).Append('\n')
+            .Append(Catalog);
 
         if (undescribed.Count > 0) text.Append(Unexplained);
 
@@ -595,7 +656,7 @@ internal static class Handbook
         // What the briefing costs with every description left out, the note saying
         // so included.
         var fixedCost = new[] { Listener.None, Listener.Another, Listener.Itself }
-            .Max(hearing => Render(modules, everyone, hearing).Length);
+            .Max(hearing => Math.Max(Render(modules, everyone, hearing).Length, Render(modules, everyone, hearing, live: true).Length));
 
         var room = policy.Budget - PresetsReserve - fixedCost;
 

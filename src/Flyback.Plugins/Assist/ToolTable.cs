@@ -9,7 +9,6 @@ namespace Flyback.Plugins.Assist;
 /// handler that runs it.
 /// </summary>
 internal sealed class ToolTable(
-    PatchReports reports,
     WholePatchEdits whole,
     PatchProposals proposals,
     PatchSenses senses,
@@ -60,11 +59,12 @@ internal sealed class ToolTable(
         bool offered = true) =>
         new(new PatchTool(name, description, ToolField.Schema(fields)), run, offered);
 
-    public IReadOnlyList<Tool> Build(bool vision, Listener hearing, bool lookups, bool readsPresets)
+    /// <param name="live">Whether each edit reaches the person as it is made, which changes what <c>propose</c> and <c>reset</c> are.</param>
+    public IReadOnlyList<Tool> Build(bool vision, Listener hearing, bool lookups, bool readsPresets, bool live)
     {
         List<Tool> tools =
         [
-            Does("describe_patch", _ => ToolOutcome.Fine(reports.Describe()),
+            Does("describe_patch", _ => whole.Describe(),
                 "Every module in the working patch with its handle, what each input is set to or "
                 + "wired from, where each output goes, and what the compiler currently says. The "
                 + "first message of a conversation already opens with it.",
@@ -88,12 +88,20 @@ internal sealed class ToolTable(
                 [Edits]),
 
             Does("reset", _ => whole.Reset(),
-                "Throws away every edit and goes back to the patch as it was when this started.",
+                live
+                    ? "Throws away your edits since you last proposed or the person last changed the patch, "
+                      + "whichever came later, and goes back to the patch as it stood then. It never goes further back."
+                    : "Throws away every edit and goes back to the patch as it was when this started.",
                 []),
 
             Does("propose", proposals.ProposeAsync,
-                "Offers the patch to the person, with one line saying what it does. This ends your "
-                + "turn. Nothing you have built reaches their editor until you call this. The patch "
+                (live
+                    ? "Tells the person the patch is ready, with one line saying what it does. Every edit "
+                      + "is already theirs as you make it, so this applies nothing: it checks the patch as it "
+                      + "stands and announces it. "
+                    : "Offers the patch to the person, with one line saying what it does. This ends your "
+                      + "turn. Nothing you have built reaches their editor until you call this. ")
+                + "It is refused while your last edit failed. The patch "
                 + "must compile cleanly first, something must reach the Output — its 'color', "
                 + "its 'left', or both — and a sound that is wired must not be silent.",
                 [

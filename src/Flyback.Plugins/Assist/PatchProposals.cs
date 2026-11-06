@@ -12,6 +12,12 @@ internal sealed class PatchProposals(WorkingPatch bench, PatchSenses senses, Wor
         if (!ToolFields.Summary.Text(arguments, out var summary))
             return ToolOutcome.Refused($"{ToolFields.Summary.Quoted} is required: one line saying what this patch does.");
 
+        // A summary written after a failed edit describes the patch the edit would have made.
+        if (bench.Missed is { } missed)
+            return ToolOutcome.Refused(
+                "your last edit did not go through, so the patch is not what a summary written after it would say. "
+                + $"Fix the edit, or call describe_patch to see what stands and propose that. The edit was refused with: {missed}");
+
         // Both programs, because either may be the one that was built for. A
         // patch offered for its sound still has to have compiled its sound, and
         // the video pass never reaches a node only the ear does.

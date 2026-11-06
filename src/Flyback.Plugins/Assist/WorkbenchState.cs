@@ -29,4 +29,7 @@ internal sealed record WorkbenchState(
 
     /// <summary>The text the starting patch was written in, or null where it was drawn.</summary>
     public string? StartText { get; init; }
+
+    /// <summary>Why the last edit failed, where it did and nothing has looked at the patch since.</summary>
+    public string? Missed { get; init; }
 }

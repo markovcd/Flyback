@@ -10,18 +10,53 @@ namespace Flyback.Plugins.Assist;
 /// The tools that change the patch, all through its text: writing it afresh, editing
 /// what it says, and putting it back as it started.
 /// </summary>
-/// <param name="startingPoint">The patch the workbench was built over, as patch JSON, so a reset cannot hand back something an edit reached into.</param>
+/// <param name="startingPoint">The patch <c>reset</c> goes back to, as patch JSON, so a reset cannot hand back something an edit reached into.</param>
 /// <param name="startingText">The text that patch was written in, or null where it was not.</param>
-internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, string startingPoint, string? startingText)
+/// <param name="live">Whether each edit reaches the person as it is made, which is what <c>reset</c> says it goes back to.</param>
+internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, string startingPoint, string? startingText, bool live)
 {
+    private string start = startingPoint;
+    private string? startText = startingText;
+
+    /// <summary>Makes <paramref name="patch"/>, written in <paramref name="text"/>, what <c>reset</c> goes back to.</summary>
+    public void Settle(string patch, string? text)
+    {
+        start = patch;
+        startText = text;
+    }
+
     public ToolOutcome Reset()
     {
-        bench.Adopt(PatchIO.Read(startingPoint, bench.Modules).Patch);
-        bench.Source = startingText;
+        bench.Adopt(PatchIO.Read(start, bench.Modules).Patch);
+        bench.Source = startText;
         bench.Proposal = null;
+        bench.Missed = null;
         bench.Edits++;
 
-        return ToolOutcome.Fine($"back to the patch as it was when this started. {reports.Describe()}");
+        var back = live
+            ? "back to the patch as you last proposed it or as the person last changed it, whichever came later."
+            : "back to the patch as it was when this started.";
+
+        return ToolOutcome.Fine($"{back} {reports.Describe()}");
+    }
+
+    /// <summary>
+    /// <c>describe_patch</c>, which also lets <c>propose</c> through after a failed edit, the
+    /// patch having now been seen as it stands.
+    /// </summary>
+    public ToolOutcome Describe()
+    {
+        bench.Missed = null;
+
+        return ToolOutcome.Fine(reports.Describe());
+    }
+
+    /// <summary><paramref name="outcome"/>, noting on the bench whether the edit it answers went through.</summary>
+    private ToolOutcome Noted(ToolOutcome outcome)
+    {
+        bench.Missed = outcome.Ok ? null : outcome.Text;
+
+        return outcome;
     }
 
     /// <summary>
@@ -34,7 +69,9 @@ internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, 
     /// of 200. A module the text names by a handle the patch already had stays that
     /// module (<see cref="KeptModules"/>).
     /// </remarks>
-    public ToolOutcome WritePatch(JsonElement arguments)
+    public ToolOutcome WritePatch(JsonElement arguments) => Noted(Written(arguments));
+
+    private ToolOutcome Written(JsonElement arguments)
     {
         if (!ToolFields.Source.Text(arguments, out var source))
             return ToolOutcome.Refused($"{ToolFields.Source.Quoted} is required: the patch, written in the language.");
@@ -59,7 +96,9 @@ internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, 
     /// Every piece has to be found exactly once, and nothing is adopted unless all of
     /// them are and the result reads.
     /// </remarks>
-    public ToolOutcome EditPatch(JsonElement arguments)
+    public ToolOutcome EditPatch(JsonElement arguments) => Noted(Edited(arguments));
+
+    private ToolOutcome Edited(JsonElement arguments)
     {
         if (!ToolFields.Edits.List(arguments, out var edits) || edits.GetArrayLength() == 0)
             return ToolOutcome.Refused($"{ToolFields.Edits.Quoted} is required: a list of {{find, replace}} pieces of the patch's text.");

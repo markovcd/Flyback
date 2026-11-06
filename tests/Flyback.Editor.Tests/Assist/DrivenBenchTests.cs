@@ -118,6 +118,58 @@ public sealed class DrivenBenchTests
         editor.Current.Find(saw.Id).ShouldBeNull("the saw it replaced is gone");
     }
 
+    /// <summary>
+    /// A patch the person opened, or changed by hand, is as far back as a reset goes: never
+    /// the patch that was open when the program first called.
+    /// </summary>
+    [Fact]
+    public async Task A_reset_goes_back_no_further_than_the_patch_the_person_last_opened()
+    {
+        var bench = Bench();
+        await Call(bench, "write_patch", """{"source": "let lfo = sine()"}""");
+
+        const string opened = "let drone = t |> saw(freq: 55)\ndrone |> out.left";
+        editor.Current = PatchLanguage.Build(opened, NodeCatalog.BuiltIn).Patch;
+        editor.Text = opened;
+
+        (await Call(bench, "edit_patch", """{"edits": [{"find": "freq: 55", "replace": "freq: 110"}]}""")).Ok.ShouldBeTrue();
+
+        var reset = await Call(bench, "reset", "{}");
+
+        reset.Ok.ShouldBeTrue(reset.Text);
+        editor.Text.ShouldNotBeNull().ShouldContain("freq: 55");
+        editor.Current.Nodes.ShouldContain(node => node.TypeId == "osc.saw");
+        editor.Current.Nodes.ShouldNotContain(node => node.TypeId == "osc.sine");
+    }
+
+    [Fact]
+    public async Task A_reset_goes_back_no_further_than_the_last_proposal()
+    {
+        var bench = Bench();
+        await Call(bench, "write_patch", """{"source": "let tone = t |> sine(freq: 440)\ntone |> out.left"}""");
+        (await Call(bench, "propose", """{"summary": "a 440 Hz tone"}""")).Ok.ShouldBeTrue();
+
+        (await Call(bench, "edit_patch", """{"edits": [{"find": "freq: 440", "replace": "freq: 330"}]}""")).Ok.ShouldBeTrue();
+        (await Call(bench, "reset", "{}")).Ok.ShouldBeTrue();
+
+        editor.Text.ShouldNotBeNull().ShouldContain("freq: 440");
+        editor.Current.Nodes.ShouldContain(node => node.TypeId == "osc.sine");
+    }
+
+    [Fact]
+    public async Task A_proposal_after_an_edit_that_missed_is_refused_on_the_next_call()
+    {
+        var bench = Bench();
+        await Call(bench, "write_patch", """{"source": "let tone = t |> sine(freq: 440)\ntone |> out.left"}""");
+
+        (await Call(bench, "edit_patch", """{"edits": [{"find": "freq: 220", "replace": "freq: 330"}]}""")).Ok.ShouldBeFalse();
+
+        var offered = await Call(bench, "propose", """{"summary": "a 330 Hz tone"}""");
+
+        offered.Ok.ShouldBeFalse();
+        offered.Text.ShouldContain("last edit did not go through");
+    }
+
     private static async Task<ToolOutcome> Call(DrivenBench bench, string tool, string arguments)
     {
         using var given = JsonDocument.Parse(arguments);

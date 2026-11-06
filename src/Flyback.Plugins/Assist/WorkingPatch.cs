@@ -41,6 +41,12 @@ internal sealed class WorkingPatch(ModuleCatalog modules, ISampleLibrary? sample
     /// <summary>How many edits this turn has made.</summary>
     public int Edits { get; set; }
 
+    /// <summary>
+    /// Why the last edit failed, or null where it went through or the patch has been looked
+    /// at since; while it stands, <c>propose</c> is refused.
+    /// </summary>
+    public string? Missed { get; set; }
+
     /// <summary>The module each handle names.</summary>
     public IReadOnlyDictionary<string, NodeInstance> ByHandle => byHandle;
 

@@ -168,7 +168,8 @@ internal static class ToolCommand
         pictures: about?.Opened.Pictures,
         prose: AssistantSettings.Load(settingsPath).Prose(settingsPath ?? SettingsFile.Path),
         presets: plugins.Presets,
-        text: text);
+        text: text,
+        live: true);
 
     public static int List(PluginCatalog plugins, bool json, TextWriter output, string? settingsPath = null)
     {
@@ -307,14 +308,33 @@ internal static class ToolCommand
 
         // A .fbks is its own text at every step, the steps having written it.
         var sourced = PatchFile.Sourced(file);
-        var bench = Bench(plugins, PatchIO.Read(log.Start, modules).Patch, settingsPath, about, sourced ? Text(log.File(0)) : null);
+        var floor = log.Floor;
+        var bench = Bench(plugins, PatchIO.Read(log.Working(floor), modules).Patch, settingsPath, about, sourced ? Text(log.File(floor)) : null);
 
-        if (log.At > 0)
-            bench.Restore(new WorkbenchState(log.Start, log.Working(log.At), log.Handles(log.At)!, 0, 0) { Text = sourced ? Text(current) : null });
+        if (log.At > 0 || log.Missed is not null)
+        {
+            bench.Restore(new WorkbenchState(log.Working(floor), log.Working(log.At), log.Handles(log.At) ?? [], 0, 0)
+            {
+                Text = sourced ? Text(current) : null,
+                Missed = log.Missed,
+            });
+        }
 
         var outcome = await bench.InvokeAsync(tool, given, cancel).ConfigureAwait(false);
 
-        if (!outcome.Ok || bench.Edits == 0) return new ToolRan(outcome, false, log.At);
+        if (!outcome.Ok || bench.Edits == 0)
+        {
+            // What a call that changed nothing still leaves: a failed edit holding propose back, or a proposal reset stops at.
+            var settled = bench.HasProposal ? log.At : log.Settled;
+
+            if ((bench.Missed != log.Missed || settled != log.Settled)
+                && history.Keep(log with { Missed = bench.Missed, Settled = settled }) is { } unkept)
+            {
+                error.WriteLine(AskedPatch.Complaint(unkept));
+            }
+
+            return new ToolRan(outcome, false, log.At);
+        }
 
         var patch = bench.Snapshot();
         var state = bench.Save();
@@ -339,7 +359,7 @@ internal static class ToolCommand
             JsonSerializer.Serialize(given, Line),
             bytes,
             PatchIO.ToJson(patch, modules),
-            new Dictionary<string, Guid>(state.Handles, StringComparer.OrdinalIgnoreCase)));
+            new Dictionary<string, Guid>(state.Handles, StringComparer.OrdinalIgnoreCase))) with { Missed = null };
 
         if (history.Keep(log) is { } problem) error.WriteLine(AskedPatch.Complaint(problem));
 

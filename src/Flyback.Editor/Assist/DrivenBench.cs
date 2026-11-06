@@ -11,8 +11,10 @@ namespace Flyback.Editor.Assist;
 /// </summary>
 /// <remarks>
 /// Kept from one call to the next while the canvas is as the last call left it, so the
-/// handles the client chose still name their modules. A canvas edited by hand in between is
-/// taken up afresh, keeping the handles of the modules still there.
+/// handles the client chose still name their modules, and a failed edit still holds
+/// <c>propose</c> back. A canvas changed by anything else, a hand edit or another patch
+/// opened, is taken up afresh, keeping the handles of the modules still there, and becomes
+/// what <c>reset</c> goes back to; so does a patch proposed.
 /// </remarks>
 internal sealed class DrivenBench(
     IAssistantEditor editor,
@@ -21,8 +23,6 @@ internal sealed class DrivenBench(
     Func<IReadOnlyList<PatchPreset>> presets)
 {
     private PatchWorkbench? bench;
-    private string? start;
-    private string? startText;
     private string? left;
 
     public async Task<ToolOutcome> Call(string tool, JsonElement arguments, CancellationToken cancel)
@@ -34,6 +34,8 @@ internal sealed class DrivenBench(
         var outcome = await bench.InvokeAsync(tool, arguments, cancel).ConfigureAwait(true);
 
         if (outcome.Ok && bench.Edits > 0) editor.Apply(bench.Snapshot(), bench.Text);
+
+        if (bench.HasProposal) bench.Settle();
 
         left = PatchIO.ToJson(editor.Current, modules);
 
@@ -49,24 +51,20 @@ internal sealed class DrivenBench(
 
         var handles = bench?.Save().Handles;
 
-        if (start is null)
-        {
-            start = now;
-            startText = editor.Text;
-        }
-
         bench = new PatchWorkbench(
             modules,
-            PatchIO.Read(start, modules).Patch,
+            PatchIO.Read(now, modules).Patch,
             vision: true,
             hearing: Listener.None,
             samples: editor.Samples,
             pictures: editor.Pictures,
             prose: prose(),
             presets: presets(),
-            text: startText);
+            text: editor.Text,
+            live: true);
 
-        bench.Restore(new WorkbenchState(start, now, handles ?? new Dictionary<string, Guid>(), 0, 0) { Text = editor.Text });
+        if (handles is not null)
+            bench.Restore(new WorkbenchState(now, now, handles, 0, 0) { Text = editor.Text });
 
         return bench;
     }

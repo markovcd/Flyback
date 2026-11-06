@@ -27,7 +27,8 @@ flyback-cli tool <name> <patch> --args '<json object>'
 - `edit_patch` changes one: each `{find, replace}` swaps a piece of the text `describe_patch` showed, found exactly once. A knob is a number, a wire a pipe, a module a line. It keeps the rest of the text, comments included, so never rewrite a patch whole to change it.
 - `render` draws the picture to a PNG and prints where it is (`--picture <file>` says where). Open it and look before saying a picture is right.
 - `measure` says what an output carries: levels, pitch, how it moves. Use it on the sound, which you cannot hear.
-- `propose` checks the patch compiles cleanly and something reaches the Output. Run it before saying a patch is finished.
+- `propose` checks the patch compiles cleanly and something reaches the Output. It applies nothing, since every edit is already written. Run it before saying a patch is finished; it is refused while the last edit failed.
+- `reset` goes back to the patch as last proposed, or as the file stood before these tools touched it, never further.
 
 A refused call exits 1 and says why on standard error; read it and try again. `--json` prints one object with `ok`, `text`, `wrote`, `step` and any `picture` or `sound` path.
 

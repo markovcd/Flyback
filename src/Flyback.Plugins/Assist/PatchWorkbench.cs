@@ -25,8 +25,9 @@ public sealed class PatchWorkbench
 {
     private readonly WorkingPatch bench;
     private readonly WorkbenchLimits limits;
-    private readonly string startingPoint;
-    private readonly string? startingText;
+    private readonly WholePatchEdits whole;
+    private string startingPoint;
+    private string? startingText;
     private readonly PatchReports reports;
     private readonly CanvasChanges canvas;
 
@@ -48,6 +49,10 @@ public sealed class PatchWorkbench
     /// The text <paramref name="startingPoint"/> was built from, where it was written
     /// rather than drawn, so edits go into the person's own words.
     /// </param>
+    /// <param name="live">
+    /// Whether each edit reaches the person as it is made, as over MCP and
+    /// <c>flyback-cli tool</c>, rather than waiting for a proposal they accept.
+    /// </param>
     internal PatchWorkbench(
         ModuleCatalog modules,
         Patch startingPoint,
@@ -58,7 +63,8 @@ public sealed class PatchWorkbench
         IImageLibrary? pictures = null,
         ProsePolicy? prose = null,
         IReadOnlyList<PatchPreset>? presets = null,
-        string? text = null)
+        string? text = null,
+        bool live = false)
     {
         bench = new WorkingPatch(modules, samples, pictures);
         this.limits = limits ?? new WorkbenchLimits();
@@ -82,14 +88,15 @@ public sealed class PatchWorkbench
 
         Undescribed = policy.Undescribed(modules);
 
-        var briefing = Handbook.Render(modules, Undescribed, hearing);
+        var briefing = Handbook.Render(modules, Undescribed, hearing, live);
         Briefing = briefing + Handbook.Presets(readable, policy.Budget - briefing.Length);
 
         var senses = new PatchSenses(bench, this.limits);
 
+        whole = new WholePatchEdits(bench, reports, this.startingPoint, text, live);
+
         var table = new ToolTable(
-            reports,
-            new WholePatchEdits(bench, reports, this.startingPoint, text),
+            whole,
             new PatchProposals(bench, senses, this.limits),
             senses,
             new PatchMeasurements(bench, this.limits),
@@ -100,7 +107,7 @@ public sealed class PatchWorkbench
         // run it would be one more tool to weigh on every turn, for searching what
         // is already in front of the model. describe_module always has what the
         // briefing leaves to it, what each socket is for.
-        var vocabulary = table.Build(vision, hearing, lookups: Undescribed.Count > 0, readsPresets: readable.Count > 0);
+        var vocabulary = table.Build(vision, hearing, lookups: Undescribed.Count > 0, readsPresets: readable.Count > 0, live);
 
         Tools = [.. vocabulary.Where(tool => tool.Offered).Select(tool => tool.Spec)];
         bodies = vocabulary.ToDictionary(tool => tool.Spec.Name, tool => tool.Run, StringComparer.Ordinal);
@@ -153,6 +160,9 @@ public sealed class PatchWorkbench
     /// <summary>How many edits this turn has made.</summary>
     internal int Edits => bench.Edits;
 
+    /// <summary>Why the last edit failed, while <c>propose</c> is held back for it.</summary>
+    internal string? Missed => bench.Missed;
+
     /// <summary>How many tools this turn has called, against <see cref="WorkbenchLimits.MaxToolCalls"/>.</summary>
     internal int ToolCalls { get; private set; }
 
@@ -168,6 +178,17 @@ public sealed class PatchWorkbench
         return PatchIO.Read(PatchIO.ToJson(bench.Patch, bench.Modules), bench.Modules).Patch;
     }
 
+    /// <summary>
+    /// Makes the working patch what <c>reset</c> goes back to, for a host where each edit is
+    /// live and a proposal is as far back as a reset may reach.
+    /// </summary>
+    internal void Settle()
+    {
+        startingPoint = PatchIO.ToJson(bench.Patch, bench.Modules);
+        startingText = bench.Source;
+        whole.Settle(startingPoint, startingText);
+    }
+
     /// <summary>What <see cref="Restore"/> needs to put this workbench back as it stands.</summary>
     internal WorkbenchState Save() => new(
         startingPoint,
@@ -178,6 +199,7 @@ public sealed class PatchWorkbench
     {
         Text = bench.Source,
         StartText = startingText,
+        Missed = bench.Missed,
     };
 
     /// <summary>
@@ -196,6 +218,7 @@ public sealed class PatchWorkbench
         Take(PatchIO.Read(state.Working, bench.Modules).Patch, state.Text, state.Handles);
 
         bench.Proposal = null;
+        bench.Missed = state.Missed;
         bench.Edits = state.Edits;
         ToolCalls = state.ToolCalls;
     }

@@ -14,6 +14,10 @@
 
 ### Assistant
 
+- A program driving the editor over MCP, or `flyback-cli tool`, is told that each edit is live as it is made and that `propose` applies nothing, rather than that nothing reaches the person until it proposes.
+- `reset` from a program driving the editor goes back to the patch as it was last proposed or as the person last opened or changed it, never to the patch that was open when the program first called.
+- `propose` is refused while the last edit failed, so its summary can't describe a patch that isn't there; an edit that lands, or `describe_patch`, lets it through again.
+
 ### Editor
 
 - Phosphor, the green of the Beam module's trace on blue-gray, is the editor's color scheme until another is chosen in Settings, Canvas, Colors. A scheme already saved there is kept.

@@ -18,7 +18,7 @@ internal sealed class EditorTarget(string name) : IToolTarget, IAsyncDisposable
 
     public string Describes =>
         "Every tool edits or reads the patch open in the Flyback editor, as the person sees it; "
-        + "each edit is one the person can undo there.";
+        + "each edit lands on their canvas as soon as it is made, as one step they can undo there, and nothing waits for propose.";
 
     public void Greet(string client) => greeting = client;
 

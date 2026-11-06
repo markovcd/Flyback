@@ -216,6 +216,36 @@ public sealed class ToolCommandTests : IDisposable
         line.GetProperty("step").GetInt32().ShouldBe(1);
     }
 
+    [Fact]
+    public async Task A_proposal_after_an_edit_that_missed_in_an_earlier_call_is_refused()
+    {
+        await Call("p.fbks", "write_patch", Source("let tone = t |> sine(freq: 440)\ntone |> out.left"));
+        await Call("p.fbks", "edit_patch", Edit("freq: 220", "freq: 330"));
+
+        var (code, _, complained) = await Call("p.fbks", "propose", """{"summary": "a 330 Hz tone"}""");
+
+        code.ShouldBe(Exit.Problems);
+        complained.ShouldContain("last edit did not go through");
+
+        await Call("p.fbks", "describe_patch", "{}");
+
+        (await Call("p.fbks", "propose", """{"summary": "a 440 Hz tone"}""")).Code.ShouldBe(Exit.Ok);
+    }
+
+    [Fact]
+    public async Task A_reset_after_a_proposal_goes_back_to_it_and_no_further()
+    {
+        await Call("p.fbks", "write_patch", Source("let tone = t |> sine(freq: 440)\ntone |> out.left"));
+        (await Call("p.fbks", "propose", """{"summary": "a 440 Hz tone"}""")).Code.ShouldBe(Exit.Ok);
+        await Call("p.fbks", "edit_patch", Edit("freq: 440", "freq: 330"));
+
+        var (code, _, complained) = await Call("p.fbks", "reset", "{}");
+
+        code.ShouldBe(Exit.Ok, complained);
+        File.ReadAllText(Path("p.fbks")).ShouldContain("freq: 440");
+        File.ReadAllText(Path("p.fbks")).ShouldContain("sine(");
+    }
+
     private static string Source(string text) => JsonSerializer.Serialize(new { source = text });
 
     private static string Edit(string find, string replace) =>

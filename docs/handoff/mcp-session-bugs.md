@@ -2,16 +2,16 @@
 
 Found on 2026-11-06, on `main` at `9688c230`, in Flyback 0.12.0. It is on TODO.md; take an item off here as it lands, and delete this file, and its TODO.md item, in the commit that lands the last.
 
-- **Severity:** Critical (items 1 to 4), Medium or Low for the rest, marked on each
-- **Status:** Open
+- **Severity:** Critical (item 4), Medium or Low for the rest, marked on each
+- **Status:** Open; items 1 to 3 fixed
 
 Everything below came from driving `flyback-cli mcp --editor` for an hour and a half while building a patch with the user. It was all confirmed by running; none of it was read from the code. The session's own client was a stdio script that started one `flyback-cli mcp` process per call, because `flyback` was not registered for Claude Code (item 33). Arrangement chaining is being built separately and is left out.
 
 ## Critical
 
-1. **`reset` puts a patch from hours ago on the person's canvas.** It went back to the Plasma preset that was open when the bench was first made, not to the last accepted proposal, and the user saw Plasma open in the editor. The description gives no hint of that scope. *Fix:* reset to the person's current accepted patch, or refuse past the last accept.
-2. **Edits are live on the canvas, and `propose` gates nothing.** `propose` says "Nothing you have built reaches their editor until you call this", but the user saw `reset` and then a `write_patch` land with no proposal in between. Every trial edit, four test renders included, reached their canvas. The briefing's first line ("each edit is one the person can undo there") says the opposite of `propose`. *Fix:* make the bench private until proposed, or say plainly that edits are live and drop the claim.
-3. **`propose` goes through after a failed edit, with a summary that isn't true.** Seen three times. An empty `write_patch` failed and "Clears the patch." was proposed on the unchanged patch. A repeated `edit_patch` missed and was proposed anyway. The user accepted mid-edit, the next edit missed, and they were shown "output Desk at 0.9, peaks -1.2 dBFS" on a patch peaking at -0.3. *Fix:* refuse `propose` when the session's last edit failed, or when the bench is unchanged since the last proposal.
+1. **Fixed.** `reset` went back to the patch open when the bench was first made. It now goes back to the patch as last proposed, or as the person last opened or changed it, whichever is later; with `flyback-cli tool`, the last proposal or the file as it stood before the tools touched it.
+2. **Fixed by saying so.** Edits are live by design (ADR-0202: each call one undo step), so the live tool descriptions and briefing now say every edit lands as it is made and `propose` applies nothing. Making the bench private until proposed would need an accept step in the editor's column; that is Arek's call, not started.
+3. **Fixed.** `propose` is refused while the last edit failed, across calls and processes; an edit that lands, or `describe_patch`, lets it through. Refusing a proposal on an unchanged bench is not done: a live proposal of an unchanged patch is harmless.
 4. **A call sequence hung for more than 90 s.** `edit_patch`, `measure`, then `propose` in one process never answered, and the edit had landed. Run alone afterwards, `measure` and `propose` each answered in under a second. Probably `propose` while the previous proposal was still open; that isn't confirmed. *Fix:* find the wait; a call should never block on the person.
 
 ## The text the assistant edits changes under it (Medium)
