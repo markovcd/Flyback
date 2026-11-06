@@ -47,41 +47,58 @@ internal static class ModuleOverview
     /// <summary>The gap between the glyph and the name under it, on the screen.</summary>
     private const double GlyphGap = 3;
 
+    /// <summary>How large a renamed module's type is under its name, on the screen.</summary>
+    private const double TypeSize = 9.5;
+
+    /// <summary>How strongly the type is inked, against the name's full strength.</summary>
+    private const double TypeOpacity = 0.6;
+
     /// <summary>
     /// The name of a module or a box, centered on <paramref name="bounds"/> on a dark plate with its
     /// <paramref name="glyph"/> over it where it has one, and struck through when it is switched off.
+    /// A renamed module's <paramref name="type"/> goes under the name, quieter, where there is room for it.
     /// </summary>
     internal static void DrawName(
-        DrawingContext context, Rect bounds, string name, double zoom, IBrush brush, bool off, Geometry? glyph, IPen? pen)
+        DrawingContext context, Rect bounds, string name, double zoom, IBrush brush, bool off, Geometry? glyph, IPen? pen, string? type = null)
     {
         var size = TextSize / zoom;
         var room = bounds.Width * (1 + Spill * 2);
         var below = bounds.Y + NodeGeometry.HeaderHeight;
         var space = bounds.Bottom - below;
 
-        // The glyph gives way before the name does: it is drawn only where both fit.
-        var mark = glyph is not null && pen is not null ? Math.Min(GlyphSize / zoom, space * 0.4) : 0;
+        // What gives way first: the glyph, then the type, then the name's later lines.
+        var typed = type is null ? null : Names.Get((type, TypeSize / zoom, brush, room, 1), static key => Lay(key.Name, key.Size, key.Brush, key.Room, key.Lines));
+
+        if (typed is not null && space - typed.Height < size * 1.3) typed = null;
+
+        var under = typed?.Height ?? 0;
+        var mark = glyph is not null && pen is not null ? Math.Min(GlyphSize / zoom, (space - under) * 0.4) : 0;
         var gap = mark > 0 ? GlyphGap / zoom : 0;
-        var lines = Math.Clamp((int)((space - mark - gap) / (size * 1.3)), 1, MostLines);
+        var lines = Math.Clamp((int)((space - mark - gap - under) / (size * 1.3)), 1, MostLines);
 
         var text = Names.Get((name, size, brush, room, lines), static key => Lay(key.Name, key.Size, key.Brush, key.Room, key.Lines));
 
-        var top = below + (space - mark - gap - text.Height) / 2;
+        var top = below + (space - mark - gap - text.Height - under) / 2;
         var centerX = bounds.Center.X;
 
         if (mark > 0) NodeSkin.DrawGlyph(context, glyph!, new Point(centerX - mark / 2, top), mark, pen!);
 
         var textTop = top + mark + gap;
         var pad = 3 / zoom;
-        var plate = new Rect(centerX - text.Width / 2 - pad, textTop - pad / 2, text.Width + pad * 2, text.Height + pad);
+        var wide = Math.Max(text.Width, typed?.Width ?? 0);
+        var plate = new Rect(centerX - wide / 2 - pad, textTop - pad / 2, wide + pad * 2, text.Height + under + pad);
 
         context.DrawRectangle(Plate, null, plate, pad, pad);
         CanvasText.Draw(context, text, new Point(centerX - room / 2, textTop));
 
+        if (typed is not null)
+            using (context.PushOpacity(TypeOpacity))
+                CanvasText.Draw(context, typed, new Point(centerX - room / 2, textTop + text.Height));
+
         if (off)
             context.DrawLine(
                 new Pen(brush, 1.5 / zoom),
-                new Point(plate.Left + pad, textTop + text.Height / 2),
-                new Point(plate.Right - pad, textTop + text.Height / 2));
+                new Point(centerX - text.Width / 2, textTop + text.Height / 2),
+                new Point(centerX + text.Width / 2, textTop + text.Height / 2));
     }
 }

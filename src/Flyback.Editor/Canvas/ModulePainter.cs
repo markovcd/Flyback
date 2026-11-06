@@ -198,7 +198,7 @@ internal sealed class ModulePainter(
         {
             ModuleOverview.DrawName(
                 context, bounds, ModuleFace.Heading(node, def), view.Zoom, ModuleFace.OverviewTextBrush, node.Off,
-                ModuleFace.GlyphOf(def), NodeSkin.Glyph(accent));
+                ModuleFace.GlyphOf(def), NodeSkin.Glyph(accent), ModuleFace.HiddenType(node, def));
 
             for (var i = 0; i < def.Outputs.Count; i++)
                 NodeSkin.DrawPort(context, NodeGeometry.OutputPort(node, i), def.Outputs[i].Kind);

@@ -20,7 +20,7 @@
 - Settings, Picture, Smoothing offers Best, four samples a pixel, in the preview and in a recorded take.
 - A module's glyph is back on the canvas: small in its color before its name, and larger over the name when zoomed out. A shut box shows the group glyph.
 - The About window keeps its size and place when its mark comes alive; the line saying the code is on the clipboard has its room from the start.
-- A renamed module shows its type after its name on the canvas, quieter, and the inspector names it beside the family, so clearing the name is no longer the way to see what it is.
+- A renamed module shows its type after its name on the canvas, quieter, and under it when zoomed out, and the inspector names it beside the family, so clearing the name is no longer the way to see what it is.
 - On a Mac a mouse wheel zooms the canvas again, while two fingers on a trackpad still pan it. Settings, Canvas, Scroll can make every scroll pan or every scroll zoom instead.
 
 ### Viewer
