@@ -36,7 +36,6 @@
     <InternalsVisibleTo Include="Flyback.Plugins.Drawings.Tests" />
     <InternalsVisibleTo Include="Flyback.Plugins.Gemini.Tests" />
     <InternalsVisibleTo Include="Flyback.Plugins.OpenAi.Tests" />
-    <InternalsVisibleTo Include="Flyback.Plugins.Programs.Tests" />
     <InternalsVisibleTo Include="Flyback.Editor.Tests" />
     <InternalsVisibleTo Include="Flyback.Ui.Tests" />
     <InternalsVisibleTo Include="Flyback.Viewer.Desktop.Tests" />

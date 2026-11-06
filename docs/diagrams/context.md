@@ -18,7 +18,7 @@ flowchart TB
     end
     github["<b>GitHub</b><br/>[Software System]<br/>Releases signed builds, and runs the workflow that checks submissions."]:::external
     cloudflareAccess["<b>Cloudflare Access</b><br/>[Software System]<br/>Signs the admin in with a one-time PIN."]:::external
-    providers["<b>Assistant providers</b><br/>[Software System]<br/>OpenAI-style and Gemini endpoints, and the codex program the person signed in to."]:::external
+    providers["<b>Assistant providers</b><br/>[Software System]<br/>OpenAI-style and Gemini endpoints."]:::external
     decisionModel["<b>Decision model server</b><br/>[Software System]<br/>Answers typed questions with a probability, at POST /v1/systemone."]:::external
     aptabase["<b>Aptabase</b><br/>[Software System]<br/>Counts anonymous usage."]:::external
     secretStore["<b>Secret store</b><br/>[Software System]<br/>The operating system's keychain: DPAPI, Keychain or Secret Service."]:::external

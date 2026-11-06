@@ -248,9 +248,10 @@ context, decision, consequences.
 | [0161](0161-a-turn-is-the-hosts-and-a-provider-writes-only-its-format.md) | A turn is the host's, and a provider writes only its format *(user-directed)* |
 | [0169](0169-the-hosts-side-of-a-conversation-is-a-project-of-its-own.md) | The host's side of a conversation is a project of its own *(user-directed)* |
 | [0172](0172-claude-code-is-an-assistant-by-running-the-program-the-person-signed-in.md) | Claude Code is an assistant by running the program the person signed in *(user-directed; superseded by [0201](0201-claude-code-is-not-an-assistant-until-anthropic-says-it-may-be.md))* |
-| [0173](0173-codex-is-an-assistant-the-same-way-and-gemini-is-not.md) | Codex is an assistant the same way, and Gemini is not *(user-directed)* |
+| [0173](0173-codex-is-an-assistant-the-same-way-and-gemini-is-not.md) | Codex is an assistant the same way, and Gemini is not *(user-directed; superseded by [0228](0228-codex-drives-the-editor-over-mcp-and-has-no-plugin.md))* |
 | [0201](0201-claude-code-is-not-an-assistant-until-anthropic-says-it-may-be.md) | Claude Code is not an assistant until Anthropic says it may be *(user-directed)* |
 | [0202](0202-a-coding-assistant-the-person-runs-edits-the-open-patch-over-mcp.md) | A coding assistant the person runs edits the open patch over MCP *(user-directed; its tools changed by [0210](0210-the-assistant-edits-the-patchs-text.md))* |
+| [0228](0228-codex-drives-the-editor-over-mcp-and-has-no-plugin.md) | Codex drives the editor over MCP and has no plugin *(user-directed)* |
 | [0210](0210-the-assistant-edits-the-patchs-text.md) | The assistant edits the patch's text *(user-directed)* |
 | [0186](0186-a-decision-model-answers-typed-questions-behind-the-plugin-boundary.md) | A decision model answers typed questions behind the plugin boundary *(user-directed)* |
 | [0188](0188-what-every-host-reads-is-a-project-of-its-own.md) | What every host reads is a project of its own *(user-directed)* |

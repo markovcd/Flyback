@@ -22,6 +22,7 @@
 - After a proposal on a drawn patch, a program driving the editor goes on editing the text it wrote, comments and all, rather than a printing of the canvas. Its next call after the person changes the canvas opens with what they changed.
 - `measure` with no modules named shortens a long window over a big patch to answer in seconds, and says so. It names sockets as the language does, `bus_left`.
 - `write_patch` with an empty source clears the patch, and the cleared patch can be proposed.
+- The Codex assistant is gone from the column. Codex drives the editor over MCP instead, with the setup lines in Settings, Assistant.
 
 ### Editor
 

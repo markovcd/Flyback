@@ -72,8 +72,8 @@ Flyback.Editor.Android .apk                Editor under Avalonia.Android; not bu
 A project's namespace is its assembly name: `Flyback.Ui`,
 `Flyback.Editor`, `Flyback.Editor.Desktop`, `Flyback.Editor.Web`, `Flyback.Engine`. A folder
 adds a sub-namespace (`Flyback.Engine.Render`); nothing else does. The one exception is
-the source the plugins share: `src/plugins/Shared/Programs` is `Flyback.Plugins.Programs`
-in whichever plugin compiles it, since it is a folder and not a project ([0173](adr/0173-codex-is-an-assistant-the-same-way-and-gemini-is-not.md)).
+the source the plugins share: `src/plugins/Shared/Surveys` is `Flyback.Plugins.Surveys`
+in whichever plugin compiles it, since it is a folder and not a project.
 
 ---
 
@@ -457,15 +457,11 @@ folder out from under it.
 | AndroidIO | Sound and MIDI on Android, linked into `Flyback.Editor.Android` rather than loaded from a folder ([0184](adr/0184-the-editor-runs-on-android-with-its-plugins-linked-in.md)) | none |
 | Dpapi, Keychain, Keyring | Where an API key is kept ([0034](adr/0034-settings-in-a-file-the-key-in-the-operating-system.md)) | `ProtectedData` in Dpapi |
 | Picture, Voice, Effects, Mastering | Modules and presets | none |
-| Codex | Patch assistant over the installed `codex` program and a ChatGPT sign-in, so a subscription pays and no key exists ([0173](adr/0173-codex-is-an-assistant-the-same-way-and-gemini-is-not.md)) | none: a process with text in and JSON lines out |
 | SystemOne | A decision model over HTTP, the Decision server: whatever server it is given, such as a laya-serve ([0186](adr/0186-a-decision-model-answers-typed-questions-behind-the-plugin-boundary.md)) | none: hand-written JSON over HTTP |
 | OpenAi, Gemini | Patch assistants ([0033](adr/0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md), [0066](adr/0066-a-second-wire-format-so-one-model-can-hear.md)) | none: hand-written JSON over HTTP |
 
-Codex's `<calls>` protocol, session, process and locator are in `src/plugins/Shared/Programs`, source any
-plugin that runs a program compiles in rather than a project it references
-([0173](adr/0173-codex-is-an-assistant-the-same-way-and-gemini-is-not.md)).
-OpenAi and Gemini share `src/plugins/Shared/Surveys`, the survey loop over each one's `IModelProbe`, the
-same way ([0161](adr/0161-a-turn-is-the-hosts-and-a-provider-writes-only-its-format.md)).
+OpenAi and Gemini share `src/plugins/Shared/Surveys`, the survey loop over each one's `IModelProbe`, as
+source each compiles in rather than a project it references ([0161](adr/0161-a-turn-is-the-hosts-and-a-provider-writes-only-its-format.md)).
 LinuxIO and AndroidIO share `src/plugins/Shared/Audio`, the thread a blocking device is written or read
 on; MacIO and AndroidIO share `src/plugins/Shared/Midi`, the reader that cuts a stream of MIDI bytes
 into messages, since a CoreMIDI packet and an Android delivery hold more than one message.
@@ -834,7 +830,7 @@ changed: saved patches name it.
 | `Flyback.Cli.Tests` | Commands run in-process | |
 | `Flyback.Site.Tests` | flyback-site's checks, and its commands against a stand-in site | |
 | `Flyback.Plugins.Tests` | The host, every shipped module and preset | Loads real plugins off disk |
-| `Flyback.Plugins.OpenAi.Tests`, `.Gemini.Tests`, `.Codex.Tests`, `.Programs.Tests`, `.SystemOne.Tests` | Wire translation and sessions | Reference the plugin directly: translation is pure |
+| `Flyback.Plugins.OpenAi.Tests`, `.Gemini.Tests`, `.SystemOne.Tests` | Wire translation and sessions | Reference the plugin directly: translation is pure |
 | `Flyback.Plugins.Drawings.Tests` | The Path and Shape modules' reader and drawing | References the plugin directly |
 | `Flyback.Plugins.WinIO.Tests` | The ASIO output, against `FakeAsioDriver`, a driver's vtable in memory | References the plugin directly; runs anywhere |
 | `Flyback.Plugins.LinuxIO.Tests` | What the JACK output offers, against a stand-in for the server | References the plugin directly; runs anywhere |

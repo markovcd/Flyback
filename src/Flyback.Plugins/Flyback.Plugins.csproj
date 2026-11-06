@@ -36,10 +36,8 @@
     <InternalsVisibleTo Include="Flyback.Site.Tests" />
     <InternalsVisibleTo Include="Flyback.Plugins.Gemini.Tests" />
     <InternalsVisibleTo Include="Flyback.Plugins.OpenAi.Tests" />
-    <InternalsVisibleTo Include="Flyback.Plugins.Codex.Tests" />
     <InternalsVisibleTo Include="Flyback.Plugins.WinIO.Tests" />
     <InternalsVisibleTo Include="Flyback.Plugins.LinuxIO.Tests" />
-    <InternalsVisibleTo Include="Flyback.Plugins.Programs.Tests" />
     <InternalsVisibleTo Include="Flyback.Plugins.SystemOne.Tests" />
     <InternalsVisibleTo Include="Flyback.Specs" />
     <InternalsVisibleTo Include="Flyback.Ui" />

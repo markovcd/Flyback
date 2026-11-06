@@ -17,7 +17,3 @@ Feature: The effort setting can only be changed where it is sent
     Given a probe has measured how long gemini-3.6-flash thinks
     When the Gemini assistant's settings are opened
     Then the effort setting can be changed
-
-  Scenario: Codex always sends effort
-    When the Codex assistant's settings are opened
-    Then the effort setting can be changed

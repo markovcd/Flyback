@@ -64,7 +64,6 @@
     <Project Path="src/plugins/Flyback.Plugins.MacIO/Flyback.Plugins.MacIO.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Mastering/Flyback.Plugins.Mastering.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.OpenAi/Flyback.Plugins.OpenAi.csproj" />
-    <Project Path="src/plugins/Flyback.Plugins.Codex/Flyback.Plugins.Codex.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Picture/Flyback.Plugins.Picture.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.SystemOne/Flyback.Plugins.SystemOne.csproj" />
     <Project Path="src/plugins/Flyback.Plugins.Voice/Flyback.Plugins.Voice.csproj" />
@@ -90,10 +89,8 @@
     <Project Path="tests/Flyback.Plugins.Drawings.Tests/Flyback.Plugins.Drawings.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.Gemini.Tests/Flyback.Plugins.Gemini.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.OpenAi.Tests/Flyback.Plugins.OpenAi.Tests.csproj" />
-    <Project Path="tests/Flyback.Plugins.Codex.Tests/Flyback.Plugins.Codex.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.WinIO.Tests/Flyback.Plugins.WinIO.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.LinuxIO.Tests/Flyback.Plugins.LinuxIO.Tests.csproj" />
-    <Project Path="tests/Flyback.Plugins.Programs.Tests/Flyback.Plugins.Programs.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.SystemOne.Tests/Flyback.Plugins.SystemOne.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.Sample/Flyback.Plugins.Sample.csproj" />
     <Project Path="tests/Flyback.Plugins.Testing/Flyback.Plugins.Testing.csproj" />

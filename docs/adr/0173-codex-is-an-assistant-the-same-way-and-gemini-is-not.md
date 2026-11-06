@@ -1,6 +1,6 @@
 # ADR-0173: Codex is an assistant the same way, and Gemini is not
 
-**Status:** Accepted · 2026-10-05 · *user-directed* · follows
+**Status:** Superseded by [0228](0228-codex-drives-the-editor-over-mcp-and-has-no-plugin.md) · 2026-10-05 · *user-directed* · follows
 [0172](0172-claude-code-is-an-assistant-by-running-the-program-the-person-signed-in.md);
 implemented in `src/plugins/Flyback.Plugins.Codex`
 

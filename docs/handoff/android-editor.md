@@ -97,8 +97,7 @@ saying twice that it timed out waiting for `libandroid.so`; it has not been time
    that opens and saves through the system picker (Avalonia's `StorageProvider`).
 3. **Plugins.** The folder and `AssemblyLoadContext` loader (ADR-0025) does not work from an
    APK; link the module plugins in with `PluginHost.LoadLinked`, as the page does. Installing
-   a `.fbkp` is off. The CLI-wrapping assistant plugin (Codex) cannot run;
-   OpenAi and Gemini could, once a keystore plugin holds the key (ADR-0158).
+   a `.fbkp` is off. OpenAi and Gemini could, once a keystore plugin holds the key (ADR-0158).
 4. **Sound.** `Flyback.Plugins.AndroidIO`, linked in, registers an `AudioTrack` output,
    written from a thread of its own as ALSA's is, an `AudioRecord` input and a `MidiManager`
    input, against `IAudioInput` and `IMidiInput`.
