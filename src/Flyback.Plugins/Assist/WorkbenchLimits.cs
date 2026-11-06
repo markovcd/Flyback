@@ -15,6 +15,10 @@ namespace Flyback.Plugins.Assist;
 /// <param name="WarmUpStep">The frame interval stepped through before a render, so feedback has a real history.</param>
 /// <param name="ListenRate">The sample rate a <c>listen</c> renders at, kept low for the request size.</param>
 /// <param name="LongestListen">The most sound one call may render, in seconds.</param>
+/// <param name="MeasuredOutputSeconds">
+/// How many outputs times seconds one <c>measure</c> watches, since watching every output of
+/// a big patch costs about as much as the patch itself, per output: a window over more outputs is shortened to fit.
+/// </param>
 internal sealed record WorkbenchLimits(
     int MaxToolCalls = 200,
     int FrameWidth = 320,
@@ -26,4 +30,5 @@ internal sealed record WorkbenchLimits(
     double ListenLead = 4d,
     double WarmUpStep = 1d / 30d,
     int ListenRate = 24_000,
-    double LongestListen = 4d);
+    double LongestListen = 4d,
+    double MeasuredOutputSeconds = 1000d);

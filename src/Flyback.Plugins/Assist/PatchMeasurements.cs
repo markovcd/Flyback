@@ -1,5 +1,7 @@
 using System.Text;
 using System.Text.Json;
+using Flyback.Core.Graph;
+using Flyback.Engine.Language;
 using Flyback.Engine.Measure;
 
 namespace Flyback.Plugins.Assist;
@@ -32,7 +34,9 @@ internal sealed class PatchMeasurements(WorkingPatch bench, WorkbenchLimits limi
             }
         }
 
-        var seconds = ToolFields.Seconds.Number(arguments, out var length) ? Math.Clamp(length, 0.25d, LongestMeasure) : 2d;
+        var asked = ToolFields.Seconds.Number(arguments, out var length) ? Math.Clamp(length, 0.25d, LongestMeasure) : 2d;
+        var outputs = Outputs(chosen);
+        var seconds = Math.Max(0.25d, Math.Min(asked, limits.MeasuredOutputSeconds / Math.Max(1, outputs)));
 
         var from = ToolFields.From.Number(arguments, out var start) ? Math.Clamp(start, 0d, limits.LatestStart) : 0d;
 
@@ -54,6 +58,14 @@ internal sealed class PatchMeasurements(WorkingPatch bench, WorkbenchLimits limi
                     + "The sound runs over time with memory; the picture runs over x, y and t without, "
                     + "so the two can differ.");
 
+                if (seconds < asked)
+                {
+                    text.Append(
+                        $" Shortened from the {MeasurementWords.Number(asked)}s asked: watching {outputs} outputs at once "
+                        + $"is capped at {MeasurementWords.Number(limits.MeasuredOutputSeconds)} output-seconds, "
+                        + "so name the modules or outputs you need for a longer window.");
+                }
+
                 var kept = report.Measurements
                     .Where(m => chosen.Count == 0 || chosen.Any(c => c.Node == m.Node && (c.Port is null || c.Port == m.Port)))
                     .ToList();
@@ -62,7 +74,7 @@ internal sealed class PatchMeasurements(WorkingPatch bench, WorkbenchLimits limi
 
                 foreach (var m in kept)
                 {
-                    text.Append('\n').Append(bench.Handle(patch.Find(m.Node))).Append('.').Append(m.Socket);
+                    text.Append('\n').Append(bench.Handle(patch.Find(m.Node))).Append('.').Append(m.Socket.Replace(' ', '_'));
                     if (m.Differs) text.Append("  (sound and picture differ)");
 
                     foreach (var line in MeasurementWords.Half("sound", m.Sound, seconds, display: m.Display)) text.Append("\n  ").Append(line);
@@ -72,6 +84,16 @@ internal sealed class PatchMeasurements(WorkingPatch bench, WorkbenchLimits limi
                 return ToolOutcome.Fine(text.ToString());
             },
             cancel);
+    }
+
+    /// <summary>How many outputs a measurement of <paramref name="chosen"/> watches, or of every module where none are.</summary>
+    private int Outputs(List<(Guid Node, int? Port)> chosen)
+    {
+        int Of(NodeInstance? node) => node is not null && bench.Modules.Get(node.TypeId) is { } def ? def.Outputs.Count : 0;
+
+        return chosen.Count == 0
+            ? bench.Patch.Nodes.Sum(Of)
+            : chosen.Sum(one => one.Port is null ? Of(bench.Patch.Find(one.Node)) : 1);
     }
 
     /// <summary>
@@ -102,7 +124,7 @@ internal sealed class PatchMeasurements(WorkingPatch bench, WorkbenchLimits limi
 
         for (var port = 0; port < def.Outputs.Count; port++)
         {
-            if (string.Equals(def.Outputs[port].Name, socket, StringComparison.OrdinalIgnoreCase))
+            if (SocketNames.Same(def.Outputs[port].Name, socket))
             {
                 refusal = string.Empty;
                 return (node.Id, port);
@@ -111,7 +133,7 @@ internal sealed class PatchMeasurements(WorkingPatch bench, WorkbenchLimits limi
 
         refusal = def.Outputs.Count == 0
             ? $"'{name[..dot]}' has no outputs."
-            : $"'{name[..dot]}' has no output called '{socket}'. It has {string.Join(", ", def.Outputs.Select(o => o.Name))}.";
+            : $"'{name[..dot]}' has no output called '{socket}'. It has {string.Join(", ", def.Outputs.Select(SocketNames.Written))}.";
 
         return null;
     }

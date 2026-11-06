@@ -83,6 +83,40 @@ public sealed class DrivenBenchTests
         (await Call(bench, "measure", """{"handles": ["tone"], "seconds": 0.25}""")).Ok.ShouldBeTrue();
     }
 
+    /// <summary>A knob turned on the canvas between calls is named at the top of the next answer, in the program's handles.</summary>
+    [Fact]
+    public async Task A_knob_turned_by_hand_between_calls_is_told_in_the_next_answer()
+    {
+        var bench = Bench();
+        await Call(bench, "write_patch", $$"""{"source": "{{Tone}}"}""");
+        (await Call(bench, "propose", """{"summary": "a tone"}""")).Ok.ShouldBeTrue();
+
+        var turned = PatchIO.Read(PatchIO.ToJson(editor.Current, NodeCatalog.BuiltIn), NodeCatalog.BuiltIn).Patch;
+        var sine = turned.Nodes.First(node => node.TypeId == "osc.sine");
+        sine.InputValues[NodeCatalog.BuiltIn.Get("osc.sine")!.Inputs.ToList().FindIndex(port => port.Name == "freq")] = 330f;
+        editor.Current = turned;
+
+        var next = await Call(bench, "describe_patch", "{}");
+
+        next.Text.ShouldStartWith("The person changed on the canvas since your last call: tone.freq=330.");
+        (await Call(bench, "describe_patch", "{}")).Text.ShouldNotContain("The person changed", Case.Sensitive, "it is said once");
+    }
+
+    /// <summary>A module added on the canvas between calls is told in the next answer.</summary>
+    [Fact]
+    public async Task A_module_added_by_hand_between_calls_is_told_in_the_next_answer()
+    {
+        var bench = Bench();
+        await Call(bench, "write_patch", $$"""{"source": "{{Tone}}"}""");
+        (await Call(bench, "propose", """{"summary": "a tone"}""")).Ok.ShouldBeTrue();
+
+        var byHand = PatchIO.Read(PatchIO.ToJson(editor.Current, NodeCatalog.BuiltIn), NodeCatalog.BuiltIn).Patch;
+        byHand.Nodes.Add(new PatchBuilder(NodeCatalog.BuiltIn).Add("osc.saw", 300, 300));
+        editor.Current = byHand;
+
+        (await Call(bench, "describe_patch", "{}")).Text.ShouldStartWith("The person changed modules or wires on the canvas");
+    }
+
     /// <summary>A knob turned on the canvas while the program worked is kept, where the program left it alone.</summary>
     [Fact]
     public async Task A_knob_turned_by_hand_while_edits_wait_is_carried_onto_the_proposal()
@@ -168,11 +202,48 @@ public sealed class DrivenBenchTests
         (await Call(bench, "edit_patch", Replacing(line, line.Replace("saw(", "square(", StringComparison.Ordinal)))).Ok.ShouldBeTrue();
         (await Call(bench, "propose", """{"summary": "a square in place of the saw", "starts_silent": true}""")).Ok.ShouldBeTrue();
 
-        editor.Text.ShouldNotBeNull("the bench's text after an edit is handed over with the patch");
-        editor.Text.ShouldContain("square(");
+        editor.Handed.ShouldNotBeNull("the bench's text after an edit is handed over with the patch");
+        editor.Handed.ShouldContain("square(");
         editor.Current.Find(lfo.Id).ShouldNotBeNull().TypeId.ShouldBe("osc.sine");
         editor.Current.Find(output.Id).ShouldNotBeNull();
         editor.Current.Find(saw.Id).ShouldBeNull("the saw it replaced is gone");
+    }
+
+    /// <summary>
+    /// Where the canvas owns the patch the canvas keeps no text, so the program's own text is
+    /// what it goes on editing after a proposal: its comments, aliases and positional
+    /// arguments stay, and an edit written against it finds what it wrote.
+    /// </summary>
+    [Fact]
+    public async Task After_a_proposal_of_a_drawn_patch_the_program_edits_the_text_it_wrote()
+    {
+        Drawn();
+
+        const string written = """
+            // Parts: 1 kick, 2 hat
+            let kick = t |> sine(freq: 55)
+            let hiss = noise()
+            let hat = hiss.white
+            mixer(kick, 0.5, hat, 0.25) |> remap(0..1, 45..260) |> out.left
+            """;
+
+        var bench = Bench();
+        (await Call(bench, "write_patch", JsonSerializer.Serialize(new { source = written }))).Ok.ShouldBeTrue();
+        (await Call(bench, "propose", """{"summary": "a kick and a hat", "starts_silent": true}""")).Ok.ShouldBeTrue();
+
+        editor.Text.ShouldBeNull("the canvas still owns the patch");
+
+        var described = (await Call(bench, "describe_patch", "{}")).Text;
+        described.ShouldContain("// Parts: 1 kick, 2 hat");
+        described.ShouldContain("let hat = hiss.white");
+        described.ShouldContain("remap(0..1, 45..260)");
+
+        var edited = await Call(bench, "edit_patch", Replacing("mixer(kick, 0.5, hat, 0.25)", "mixer(kick, 0.6, hat, 0.25)"));
+        edited.Ok.ShouldBeTrue(edited.Text);
+
+        var measured = await Call(bench, "measure", """{"handles": ["kick"], "seconds": 0.25}""");
+        measured.Ok.ShouldBeTrue(measured.Text);
+        measured.Text.ShouldContain("kick.out");
     }
 
     /// <summary>

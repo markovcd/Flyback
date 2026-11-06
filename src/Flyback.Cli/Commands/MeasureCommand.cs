@@ -5,6 +5,7 @@ using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
+using Flyback.Engine.Language;
 using Flyback.Engine.Measure;
 using PluginRegistry = Flyback.Cli.Plugins;
 
@@ -284,7 +285,7 @@ internal static class MeasureCommand
             var def = catalog.Require(patch.Find(node)!.TypeId);
 
             for (var port = 0; port < def.Outputs.Count; port++)
-                if (string.Equals(def.Outputs[port].Name, socket, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(def.Outputs[port].Name, socket, StringComparison.OrdinalIgnoreCase) || SocketNames.Same(def.Outputs[port].Name, socket))
                     return (node, port);
 
             refusal = def.Outputs.Count == 0

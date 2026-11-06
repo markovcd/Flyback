@@ -54,6 +54,22 @@ public sealed class DrivenEditorSteps : IDisposable
     public void WhenWrites(string client) =>
         Serve(client, new JsonObject { ["name"] = "write_patch", ["arguments"] = new JsonObject { ["source"] = "t |> sine(freq: 440) |> out.left" } });
 
+    [When("{string} writes this into the open patch over flyback-cli mcp --editor:")]
+    public void WhenWritesText(string client, string source) =>
+        Serve(client, new JsonObject { ["name"] = "write_patch", ["arguments"] = new JsonObject { ["source"] = source } });
+
+    [When("{string} reads the open patch over flyback-cli mcp --editor")]
+    public void WhenReads(string client) =>
+        Serve(client, new JsonObject { ["name"] = "describe_patch", ["arguments"] = new JsonObject() });
+
+    [Then("the answer has the line {string}")]
+    public void ThenAnswerHas(string line)
+    {
+        var text = answers.ShouldHaveSingleItem()["result"]!["content"]![0]!["text"]!.GetValue<string>();
+
+        text.Split('\n').Select(l => l.Trim()).ShouldContain(line, text);
+    }
+
     [When("{string} proposes {string} over flyback-cli mcp --editor")]
     public void WhenProposes(string client, string summary) =>
         Serve(client, new JsonObject { ["name"] = "propose", ["arguments"] = new JsonObject { ["summary"] = summary } });

@@ -17,6 +17,22 @@ Feature: A coding assistant somebody runs edits the patch open in the editor
     When that is undone
     Then the canvas holds no sine
 
+  Scenario: After a proposal on a drawn patch, the program goes on editing the text it wrote
+    Given the editor lets a program on this computer edit the open patch
+    When "Claude Code" writes this into the open patch over flyback-cli mcp --editor:
+      """
+      // Parts: 1 kick, 2 hat
+      let kick = t |> sine(freq: 55)
+      let hiss = noise()
+      let hat = hiss.white
+      mixer(kick, 0.5, hat, 0.25) |> remap(0..1, 45..260) |> out.left
+      """
+    And "Claude Code" proposes "A kick and a hat." over flyback-cli mcp --editor
+    And "Claude Code" reads the open patch over flyback-cli mcp --editor
+    Then the answer has the line "// Parts: 1 kick, 2 hat"
+    And the answer has the line "let hat = hiss.white"
+    And the answer has the line "mixer(kick, 0.5, hat, 0.25) |> remap(0..1, 45..260) |> out.left"
+
   Scenario: Until somebody lets it, no program can edit the open patch
     Given the editor has not been let edit by a program
     When "Claude Code" writes a sine into the open patch over flyback-cli mcp --editor

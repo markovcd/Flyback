@@ -165,7 +165,8 @@ internal sealed class ToolTable(
                     Handles,
                     Seconds.Described(
                         $"How long to run, from 0.25 to {Number(PatchMeasurements.LongestMeasure)}. Defaults to 2. "
-                        + "A repeat needs a few cycles in the window to be counted."),
+                        + "A repeat needs a few cycles in the window to be counted. Over many outputs at once it is "
+                        + "shortened, and the answer says so: name what you need for a long window."),
                     From.Described(
                         $"Where on the patch's timeline the window starts, up to {Number(limits.LatestStart)}. Defaults to 0. "
                         + "Anything that remembers earlier moments starts empty there."),

@@ -66,8 +66,9 @@ internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, 
 
     private ToolOutcome Written(JsonElement arguments)
     {
-        if (!ToolFields.Source.Text(arguments, out var source))
-            return ToolOutcome.Refused($"{ToolFields.Source.Quoted} is required: the patch, written in the language.");
+        // An empty source is how a patch is cleared, so only a missing one is refused.
+        if (!ToolFields.Source.Text(arguments, out var source) && !ToolFields.Source.Blank(arguments))
+            return ToolOutcome.Refused($"{ToolFields.Source.Quoted} is required: the patch, written in the language, or \"\" to clear it.");
 
         var load = Adopted(source);
 

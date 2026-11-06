@@ -59,6 +59,55 @@ public class PatchWorkbenchMeasureTests
         measured.Text.ShouldContain("0.1 Hz");
     }
 
+    /// <summary>Every output of a big patch over a long window would take minutes, so the window is cut to fit and said to be.</summary>
+    [Fact]
+    public async Task A_window_over_more_outputs_than_the_cap_allows_is_shortened_and_says_so()
+    {
+        var bench = new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false, limits: new WorkbenchLimits(MeasuredOutputSeconds: 8d));
+
+        await Write(bench, "let a = sine(freq: 3)\nlet b = sine(freq: 5)\nlet c = sine(freq: 7)\nlet d = sine(freq: 9)");
+
+        var measured = await Call(bench, "measure", """{"seconds":60}""");
+
+        measured.Ok.ShouldBeTrue(measured.Text);
+        measured.Text.ShouldContain("Measured 2s");
+        measured.Text.ShouldContain("Shortened from the 60s asked: watching 4 outputs");
+        measured.Text.ShouldContain("a.out");
+    }
+
+    [Fact]
+    public async Task A_window_over_outputs_named_within_the_cap_runs_as_long_as_asked()
+    {
+        var bench = new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false, limits: new WorkbenchLimits(MeasuredOutputSeconds: 8d));
+
+        await Write(bench, "let a = sine(freq: 3)\nlet b = sine(freq: 5)\nlet c = sine(freq: 7)\nlet d = sine(freq: 9)");
+
+        var measured = await Call(bench, "measure", """{"seconds":8,"handles":["a.out"]}""");
+
+        measured.Ok.ShouldBeTrue(measured.Text);
+        measured.Text.ShouldContain("Measured 8s");
+        measured.Text.ShouldNotContain("Shortened");
+    }
+
+    /// <summary>A socket whose name has a space is named as the language writes it, with an underscore, both ways.</summary>
+    [Fact]
+    public async Task An_output_is_named_and_printed_as_the_language_writes_it()
+    {
+        var bench = Bench();
+
+        await Write(bench, "let bus = desk(left_1: sine(freq: 3))");
+
+        var measured = await Call(bench, "measure", """{"handles":["bus.bus_left"],"seconds":0.25}""");
+
+        measured.Ok.ShouldBeTrue(measured.Text);
+        measured.Text.ShouldContain("bus.bus_left");
+        measured.Text.ShouldNotContain("bus left");
+
+        var whole = await Call(bench, "measure", """{"handles":["bus"],"seconds":0.25}""");
+
+        whole.Text.ShouldContain("bus.bus_right");
+    }
+
     [Fact]
     public async Task A_handle_nobody_has_is_refused()
     {

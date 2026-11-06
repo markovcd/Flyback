@@ -39,7 +39,8 @@ internal sealed class PatchProposals(WorkingPatch bench, PatchSenses senses, Wor
         // nothing is watching and nothing is listening, so there is nothing to
         // offer whatever the modules add up to. The sink itself is always there,
         // so what has to be checked is whether anything arrives at it.
-        if (!bench.Patch.Connections.Any(c => c.TargetNode == bench.Patch.Output.Id))
+        // A patch of nothing but the Output is the canvas cleared, which is worth offering.
+        if (bench.Patch.Nodes.Count > 1 && !bench.Patch.Connections.Any(c => c.TargetNode == bench.Patch.Output.Id))
         {
             return ToolOutcome.Refused(
                 "nothing is wired into the Output, so nothing this patch does comes out anywhere. "

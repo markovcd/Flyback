@@ -48,13 +48,13 @@ public class PatchWorkbenchMissTests
     }
 
     [Fact]
-    public async Task An_empty_write_holds_a_proposal_back_as_well()
+    public async Task A_write_that_does_not_read_holds_a_proposal_back_as_well()
     {
         var bench = await Toned();
 
-        (await Call(bench, "write_patch", """{"source":""}""")).Ok.ShouldBeFalse();
+        (await Call(bench, "write_patch", """{"source":"let x = nonesuch()"}""")).Ok.ShouldBeFalse();
 
-        (await Call(bench, "propose", """{"summary":"clears the patch"}""")).Ok.ShouldBeFalse();
+        (await Call(bench, "propose", """{"summary":"a nonesuch"}""")).Ok.ShouldBeFalse();
     }
 
     [Fact]

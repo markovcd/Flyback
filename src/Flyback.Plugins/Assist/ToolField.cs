@@ -48,6 +48,10 @@ internal sealed record ToolField(string Name, ToolKind Kind, bool Required = fal
         return false;
     }
 
+    /// <summary>A string sent with nothing in it but white space.</summary>
+    public bool Blank(JsonElement arguments) =>
+        Find(arguments, out var found) && found.ValueKind == JsonValueKind.String && string.IsNullOrWhiteSpace(found.GetString());
+
     /// <summary>A string that is not empty.</summary>
     public bool Text(JsonElement arguments, out string value)
     {

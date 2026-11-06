@@ -17,7 +17,7 @@ internal static class ToolFields
     // write_patch
 
     public static readonly ToolField Source = new("source", Text, Required: true,
-        "The whole patch in the language. Nothing is adopted unless all of it reads.");
+        "The whole patch in the language, or \"\" to clear it. Nothing is adopted unless all of it reads.");
 
     // edit_patch
 

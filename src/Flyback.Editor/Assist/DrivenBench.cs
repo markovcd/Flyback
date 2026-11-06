@@ -31,6 +31,9 @@ internal sealed class DrivenBench(
     /// <summary>Whether the bench holds edits the canvas has not been given.</summary>
     private bool unproposed;
 
+    /// <summary>What the person changed on the canvas since the last call, for the next answer to open with.</summary>
+    private string? meanwhile;
+
     /// <summary>The summary of what the last call put on the canvas, or null where it put nothing.</summary>
     public string? Proposed { get; private set; }
 
@@ -48,6 +51,12 @@ internal sealed class DrivenBench(
         var outcome = await bench.InvokeAsync(tool, arguments, cancel).ConfigureAwait(true);
 
         if (outcome.Ok && bench.Edits > 0) unproposed = true;
+
+        if (meanwhile is { } changed)
+        {
+            meanwhile = null;
+            outcome = outcome with { Text = $"{changed}\n\n{outcome.Text}" };
+        }
 
         return bench.HasProposal ? Deliver(bench, outcome) : outcome;
     }
@@ -69,7 +78,9 @@ internal sealed class DrivenBench(
         editor.Apply(proposal, text);
 
         Proposed = bench.ProposalSummary;
-        Over(bench.Save().Handles);
+
+        // A canvas that owns its patch keeps no text, and the bench's still says exactly what it holds.
+        Over(bench.Save().Handles, text ?? editor.Text);
 
         return ToolOutcome.Fine($"{outcome.Text} It is on the person's canvas now. {Applied(overwrote, carried)}");
     }
@@ -92,11 +103,30 @@ internal sealed class DrivenBench(
     {
         if (bench is not null && (unproposed || PatchIO.ToJson(editor.Current, modules) == seen)) return bench;
 
-        return Over(bench?.Save().Handles);
+        if (bench is not null) meanwhile = Changed(bench);
+
+        return Over(bench?.Save().Handles, editor.Text);
     }
 
-    /// <summary>A workbench over the canvas as it stands, which is also what <c>reset</c> goes back to.</summary>
-    private PatchWorkbench Over(IReadOnlyDictionary<string, Guid>? handles)
+    /// <summary>What the person changed on the canvas since <paramref name="bench"/> took it up, in its handles.</summary>
+    private string Changed(PatchWorkbench bench)
+    {
+        var was = PatchIO.Read(seen!, modules).Patch;
+        var now = editor.Current;
+
+        if (!PatchShape.Of(was).Matches(now))
+            return "The person changed modules or wires on the canvas since your last call, or opened another patch; "
+                + "describe_patch shows it as it stands now.";
+
+        var carried = Retuning.Carry(was, now, Retuning.Copy(was));
+
+        return carried.Count == 0
+            ? "The person moved or changed something on the canvas since your last call; describe_patch shows it as it stands now."
+            : $"The person changed on the canvas since your last call: {bench.Told(carried)}.";
+    }
+
+    /// <summary>A workbench over the canvas as it stands, written in <paramref name="text"/>, which is also what <c>reset</c> goes back to.</summary>
+    private PatchWorkbench Over(IReadOnlyDictionary<string, Guid>? handles, string? text)
     {
         seen = PatchIO.ToJson(editor.Current, modules);
         unproposed = false;
@@ -110,11 +140,11 @@ internal sealed class DrivenBench(
             pictures: editor.Pictures,
             prose: prose(),
             presets: presets(),
-            text: editor.Text,
+            text: text,
             delivery: Delivery.Proposal);
 
         if (handles is not null)
-            bench.Restore(new WorkbenchState(seen, seen, handles, 0, 0) { Text = editor.Text });
+            bench.Restore(new WorkbenchState(seen, seen, handles, 0, 0) { Text = text });
 
         return bench;
     }
