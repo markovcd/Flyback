@@ -123,4 +123,53 @@ internal static class ModuleFace
 
         return $"{title} · {bus}";
     }
+
+    /// <summary>
+    /// The module's type name where a rename hides it from the heading, or null
+    /// where the heading already says what the module is.
+    /// </summary>
+    internal static string? HiddenType(NodeInstance node, NodeDef def)
+    {
+        if (node.Name is not { } name || string.Equals(name, def.Name, StringComparison.OrdinalIgnoreCase)) return null;
+
+        return NodeCatalog.BusOf(node) is { } bus && string.Equals(name, bus, StringComparison.OrdinalIgnoreCase) ? null : def.Name;
+    }
+
+    /// <summary>What the inspector says a module is: its family, after its type where a rename hides that.</summary>
+    internal static string KindOf(NodeInstance node, NodeDef def) =>
+        HiddenType(node, def) is { } type ? $"{type} · {def.Category}" : def.Category;
+
+    /// <summary>How large a renamed module's type is drawn after its name.</summary>
+    private const double TypeSize = 11;
+
+    /// <summary>How strongly the type is inked, against the name's full strength.</summary>
+    private const double TypeOpacity = 0.55;
+
+    /// <summary>The gap between the name and the type after it.</summary>
+    private const double TypeGap = 6;
+
+    /// <summary>The narrowest room a type is trimmed into rather than left out.</summary>
+    private const double TypeLeast = 18;
+
+    /// <summary>
+    /// A renamed module's type, laid after its name, quieter, in the room the name
+    /// leaves; null where too little is left. The type trims before the name does.
+    /// </summary>
+    internal static (FormattedText Text, Point At)? LayType(string type, Rect bounds, FormattedText title, Point titleAt, double room, IBrush ink)
+    {
+        var left = room - title.Width - TypeGap;
+
+        if (left < TypeLeast) return null;
+
+        var text = CanvasText.Text(type, TypeSize, ink, left, true);
+
+        return (text, new Point(titleAt.X + title.Width + TypeGap, bounds.Y + Baseline - text.Baseline));
+    }
+
+    /// <summary>Draws what <see cref="LayType"/> laid, at the type's strength.</summary>
+    internal static void DrawType(DrawingContext context, (FormattedText Text, Point At) laid)
+    {
+        using (context.PushOpacity(TypeOpacity))
+            CanvasText.Draw(context, laid.Text, laid.At);
+    }
 }

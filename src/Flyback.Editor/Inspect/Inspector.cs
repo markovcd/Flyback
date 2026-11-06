@@ -269,7 +269,7 @@ internal sealed class Inspector
 
         plate.Named.Children.Add(BuildTitle(node, def, plate));
 
-        plate.Kind(def.Category);
+        plate.Kind(ModuleFace.KindOf(node, def));
 
         PlateHost.Content = plate;
 
@@ -280,7 +280,7 @@ internal sealed class Inspector
 
         plate.Face = new PlateFace(
             ModuleFace.Heading(node, def),
-            def.Category,
+            ModuleFace.KindOf(node, def),
             ModuleGlyphs.For(def),
             new SolidColorBrush(Colors.Palette(def).Accent),
             def.Description,
@@ -479,7 +479,7 @@ internal sealed class Inspector
         renamer.Open(
             title,
             plate.Ink,
-            $"{ModuleFace.Heading(node, def)} · {def.Category}",
+            $"{ModuleFace.Heading(node, def)} · {ModuleFace.KindOf(node, def)}",
             node.Name,
             def.Name,
             NodeInstance.NameLimit,

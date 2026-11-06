@@ -961,6 +961,10 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
             UiTest.Press(RowButton(row, button) ?? throw new InvalidOperationException($"the row '{caption}' has no {button}"));
         });
 
+    /// <summary>What the module panel says the selected module is, beside its name.</summary>
+    public string? PanelKind() =>
+        ReadWindow(open => open.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => t.Name == "plate-kind")?.Text);
+
     /// <summary>Renames the one module selected: a double-click on its name on the panel, then typing and Enter.</summary>
     /// <remarks>One turn of the thread from click to Enter, so no other scenario's window takes the focus in between.</remarks>
     public void Rename(string name) =>

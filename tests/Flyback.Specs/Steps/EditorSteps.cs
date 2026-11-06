@@ -30,6 +30,20 @@ public sealed class EditorSteps(PatchContext context, EditorDriver editor)
         editor.Rename(name);
     }
 
+    [When("the sine is renamed {string}")]
+    public void WhenTheSineIsRenamed(string name)
+    {
+        editor.Select(context.Node("Sine").Id);
+        editor.Rename(name);
+    }
+
+    [Then("the sine's panel says it is {string}")]
+    public void ThenTheSinesPanelSays(string kind)
+    {
+        editor.Select(context.Node("Sine").Id);
+        editor.PanelKind().ShouldBe(kind);
+    }
+
     [Then("the sine's {string} reads {string}")]
     public void ThenTheInputReads(string port, string text) => Reads(context.Node("Sine").Id, port, text);
 

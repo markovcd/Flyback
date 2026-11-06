@@ -74,6 +74,10 @@ The editor is drawn as an instrument, with a scope on the bench as the reference
   the name; a shut box has the group glyph there. Nothing is drawn behind the rows,
   where a faint mark ran into the values. Zoomed out to the overview, the glyph stands
   larger over the name. A module whose plugin hung a picture behind it has none.
+- **A renamed module still says what it is.** Its type follows the name on the band,
+  smaller and fainter in the same ink, and is the first thing cut when the band is too
+  narrow; zoomed out, only the name shows. The inspector's kind line reads
+  "Sine · Oscillators" for it. A module keeping its own name looks as before.
 - **The grid is a graticule.** A line every fifth division, and the divisions between
   as ticks across those lines.
 - **Toolbar symbols are panel marks.** Drawn on a 16-unit box at weight 1.6 with square

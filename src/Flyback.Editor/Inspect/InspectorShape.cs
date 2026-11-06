@@ -87,7 +87,10 @@ internal static class InspectorShape
             ? string.Concat(home.Exposed.Where(s => s.Node == node.Id).Select(s => $"{(s.IsOutput ? 'o' : 'i')}{s.Port}"))
             : "";
 
-        return $"{node.Id:N}{patched}{groups}{linked}{switched}{spans}e{edge}";
+        // The kind line names the type once a rename hides it, so renaming has to rebuild it.
+        var hidden = ModuleFace.HiddenType(node, def) is null ? 'n' : 't';
+
+        return $"{node.Id:N}{patched}{groups}{linked}{switched}{spans}e{edge}{hidden}";
     }
 
     /// <summary>Whether an input's row is a wire, a panel knob or a slider, and what the row names.</summary>

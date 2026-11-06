@@ -213,13 +213,16 @@ internal sealed class ModulePainter(
 
         var glyph = ModuleFace.GlyphOf(def);
 
-        var title = CanvasText.Text(
-            ModuleFace.Heading(node, def), ModuleFace.HeaderSize, titleBrush,
-            ModuleFace.HeaderWidth(bounds, tags.Tagged(def), glyph is not null), true);
+        var headerWidth = ModuleFace.HeaderWidth(bounds, tags.Tagged(def), glyph is not null);
+        var title = CanvasText.Text(ModuleFace.Heading(node, def), ModuleFace.HeaderSize, titleBrush, headerWidth, true);
+        var titleAt = ModuleFace.TitleAt(bounds, title, glyph is not null);
 
         if (glyph is not null) ModuleFace.DrawGlyph(context, bounds, glyph, NodeSkin.Glyph(accent));
 
-        ModuleFace.DrawTitle(context, title, ModuleFace.TitleAt(bounds, title, glyph is not null), node.Off ? follow ? new Pen(titleBrush, 1.5) : ModuleFace.OffStrike : null);
+        ModuleFace.DrawTitle(context, title, titleAt, node.Off ? follow ? new Pen(titleBrush, 1.5) : ModuleFace.OffStrike : null);
+
+        if (ModuleFace.HiddenType(node, def) is { } type && ModuleFace.LayType(type, bounds, title, titleAt, headerWidth, titleBrush) is { } laid)
+            ModuleFace.DrawType(context, laid);
 
         if (tags.Tagged(def)) UndescribedTags.Draw(context, bounds, follow ? titleBrush : null);
 
