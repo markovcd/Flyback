@@ -1,4 +1,4 @@
-using Flyback.Core.Compile;
+﻿using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Flyback.Engine.Compile;
@@ -22,12 +22,14 @@ public class ArrangementTests
     private static float[][] Run(
         IEnumerable<float> domain,
         IReadOnlyList<IReadOnlyList<PartLevel>>? parts = null,
-        float fade = 0f)
+        float fade = 0f,
+        float before = 0f,
+        float rate = 1f)
     {
         var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
         var emitter = new Emitter();
 
-        Slot[] inputs = [emitter.Load(OpCode.LoadX), emitter.Constant(1f), emitter.Constant(fade)];
+        Slot[] inputs = Inputs(emitter, emitter.Load(OpCode.LoadX), rate, fade, before);
 
         var tidy = ArrangementExtra.Tidy(parts ?? Song);
         var outputs = def.Emit(emitter, new EmitContext(inputs) { Parts = tidy });
@@ -44,6 +46,13 @@ public class ArrangementTests
             }),
         ];
     }
+
+    /// <summary>The Arrangement's inputs: 'in', 'rate', 'fade', and every part's level before it starts.</summary>
+    private static Slot[] Inputs(Emitter emitter, Slot domain, float rate = 1f, float fade = 0f, float before = 0f) =>
+        [
+            domain, emitter.Constant(rate), emitter.Constant(fade),
+            .. Enumerable.Repeat(emitter.Constant(before), NodeCatalog.MaxParts),
+        ];
 
     [Fact]
     public void Each_part_holds_its_level_through_its_section()
@@ -103,7 +112,7 @@ public class ArrangementTests
     [Fact]
     public void With_no_parts_everything_holds_still()
     {
-        Run([0.5f, 1.5f], parts: []).ShouldAllBe(r => r.All(v => v == 0f));
+        Run([0.5f, 1.5f], parts: []).ShouldAllBe(r => r.Take(NodeCatalog.MaxParts + 2).All(v => v == 0f));
     }
 
     [Fact]
@@ -145,8 +154,7 @@ public class ArrangementTests
         int Ops(PartLevel[][] parts)
         {
             var emitter = new Emitter();
-            Slot[] inputs = [emitter.Load(OpCode.LoadX), emitter.Constant(1f), emitter.Constant(0f)];
-            def.Emit(emitter, new EmitContext(inputs) { Parts = ArrangementExtra.Tidy(parts) });
+            def.Emit(emitter, new EmitContext(Inputs(emitter, emitter.Load(OpCode.LoadX))) { Parts = ArrangementExtra.Tidy(parts) });
             return emitter.ToProgram().Length;
         }
 
@@ -154,5 +162,63 @@ public class ArrangementTests
         var two = Ops([[new(1f), new(0f), new(1f), new(0f)], [new(0.5f), new(0.5f), new(0.5f), new(0.5f)]]);
 
         two.ShouldBeLessThanOrEqualTo(one + 1);
+    }
+    [Fact]
+    public void Before_it_starts_each_part_is_its_input()
+    {
+        var readings = Run([-3f, -0.5f], before: 0.25f);
+
+        readings.ShouldAllBe(r => r.Take(NodeCatalog.MaxParts).All(v => Math.Abs(v - 0.25f) < 1e-5f));
+        readings.ShouldAllBe(r => r[NodeCatalog.MaxParts] == 0f && r[NodeCatalog.MaxParts + 1] == 0f);
+    }
+
+    [Fact]
+    public void The_first_time_through_its_first_section_comes_from_its_input()
+    {
+        var readings = Run([0f, 0.25f, 0.5f, 4.25f], parts: [[new(1f, Glides: true), new(0f)]], before: 0.5f);
+
+        readings.Select(r => r[0]).ShouldBe([0.5f, 0.625f, 0.75f, 0.25f], tolerance: 1e-3);
+    }
+
+    [Fact]
+    public void Next_reaches_nought_where_its_last_section_ends()
+    {
+        var readings = Run([0f, 2f, 4f], rate: 0.5f);
+        const int next = NodeCatalog.MaxParts + 2;
+
+        readings.Select(r => r[next]).ShouldBe([-8f, -6f, -4f], tolerance: 1e-4);
+    }
+
+    /// <summary>Two Arrangements of four sections, the second's parts and 'in' wired from the first.</summary>
+    [Fact]
+    public void A_chained_one_picks_up_where_the_one_before_ends()
+    {
+        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var emitter = new Emitter();
+        PartLevel[][] second = [[new(0.25f), new(0.25f), new(0.75f), new(0.75f)]];
+
+        var first = def.Emit(emitter, new EmitContext(Inputs(emitter, emitter.Load(OpCode.LoadX))) { Parts = ArrangementExtra.Tidy(Song) });
+
+        Slot[] chained =
+        [
+            first[NodeCatalog.MaxParts + 2], emitter.Constant(1f), emitter.Constant(0f),
+            .. first.Take(NodeCatalog.MaxParts),
+        ];
+        var outputs = def.Emit(emitter, new EmitContext(chained) { Parts = ArrangementExtra.Tidy(second) });
+
+        var program = new CompiledPatch(emitter.ToProgram(), emitter.RegisterCount, outputs[0].Base, 1);
+        var registers = program.AllocateRegisters();
+
+        float[] At(float x)
+        {
+            program.Evaluate(x, 0f, 0f, registers, default);
+            return [(float)registers[outputs[0].Base], (float)registers[outputs[1].Base], (float)registers[outputs[NodeCatalog.MaxParts + 1].Base]];
+        }
+
+        At(1.5f).ShouldBe([0f, 1f, 0f], tolerance: 1e-4);
+        At(3.5f).ShouldBe([0.5f, 0f, 0f], tolerance: 1e-4);
+        At(4.5f).ShouldBe([0.25f, 0f, 1f], tolerance: 1e-4);
+        At(6.5f).ShouldBe([0.75f, 0f, 3f], tolerance: 1e-4);
+        At(8.5f).ShouldBe([0.25f, 0f, 1f], tolerance: 1e-4);
     }
 }

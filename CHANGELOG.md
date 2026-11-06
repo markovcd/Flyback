@@ -1,8 +1,10 @@
-# Changelog
+﻿# Changelog
 
 ## Unreleased
 
 ### Modules
+
+- Arrangements chain, for a piece longer than 32 sections: wire one's `next` into the next one's `in` and each of its parts into the next one's part, and the second picks up where the first ends, fading from the first's levels into its own. Before it starts an Arrangement hands on what comes into its parts, and its first section comes from them the first time through.
 
 ### Presets
 

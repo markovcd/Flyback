@@ -177,6 +177,10 @@ public partial class NodeCatalog
                 {
                     Help = "How long a change of level takes at the start of a section, as a fraction of the section.",
                 },
+                .. Enumerable.Range(1, MaxParts).Select(part => new PortSpec($"part {part}", PatchOnly: true)
+                {
+                    Help = $"Part {part}'s level before this one starts: the Arrangement before it in a chain.",
+                }),
             ],
             [
                 .. Enumerable.Range(1, MaxParts).Select(part => Num($"part {part}") with
@@ -184,12 +188,17 @@ public partial class NodeCatalog
                     Help = $"Part {part}'s level in the section playing.",
                 }),
                 Num("progress", 0f, 0f, 1f) with { Help = "How far through its section it is, 0 to 1." },
-                Num("section") with { Help = "Which section is playing, counting from 1." },
+                Num("section") with { Help = "Which section is playing, counting from 1, and 0 before it starts." },
+                Num("next") with
+                {
+                    Help = "'in' with this one's length taken off: wire it into the next Arrangement's 'in' and its parts into the next one's, and it picks up where this one ends.",
+                },
             ],
             EmitArrangement,
             "Which parts play in each section of a piece, and how loud: a row of levels for each "
             + "part, stepping a section at a time. Wire a part into a Desk's level or a drum's "
-            + "velocity to bring it in and out.")
+            + "velocity to bring it in and out. For more than " + MaxSections + " sections, chain them: "
+            + "'next' into the next one's 'in' and each part into the next one's part.")
         {
             Words = "sections of a song",
             Extras = [new ArrangementExtra(DefaultParts)],
@@ -485,46 +494,63 @@ public partial class NodeCatalog
     /// Both are chains of Mixes on section edges every part shares, so a part costs an op
     /// for each change of level and nothing for a section that holds the one before's. A
     /// level is reached over 'fade', or over the whole section where it glides. Section
-    /// one comes from the last section, which is where a looping arrangement comes from.
+    /// one comes from the last section, which is where a looping arrangement comes from,
+    /// except the first time through, when it comes from the part's input. Before it
+    /// starts, while 'in' is below nought, each part is its input: that is how one
+    /// Arrangement takes over from the one before it in a chain. A part it does not have
+    /// holds at nought once it starts.
     /// </remarks>
     private static Slot[] EmitArrangement(Emitter em, EmitContext node)
     {
+        const int firstPart = 3;
         var parts = node.Parts;
         var zero = em.Constant(0f);
+        var one = em.Constant(1f);
 
         if (parts.Count == 0 || parts[0].Count == 0)
-            return [.. Enumerable.Repeat(zero, MaxParts), zero, zero];
+            return [.. Enumerable.Range(0, MaxParts).Select(p => node[firstPart + p]), zero, zero, node[0]];
 
         var sections = parts[0].Count;
 
         var traveled = em.Mul(node[0], node[1]);
         var index = em.Unary(OpCode.Floor, em.Binary(OpCode.Mod, traveled, em.Constant(sections)));
-        var progress = em.Unary(OpCode.Fract, traveled);
+        var started = em.Binary(OpCode.Step, zero, traveled);
+        var progress = em.Mul(em.Unary(OpCode.Fract, traveled), started);
+
+        // Before the start, or in the first section the first time through: a part still comes from its input.
+        var fromInput = em.Sub(one, em.Binary(OpCode.Step, one, traveled));
 
         // Whether the section playing is at or past each one: the same edges a sequence's windows use.
         var edges = new Slot[sections];
         for (var s = 1; s < sections; s++) edges[s] = em.Binary(OpCode.Step, em.Constant(s), index);
 
-        var fade = em.Ternary(OpCode.Clamp, node[2], em.Constant(ShortestFade), em.Constant(1f));
+        var fade = em.Ternary(OpCode.Clamp, node[2], em.Constant(ShortestFade), one);
         var eased = em.Ternary(OpCode.Smoothstep, zero, fade, progress);
 
-        var outputs = new Slot[MaxParts + 2];
+        // How far a part that holds one level throughout has got from its input to that level.
+        var settled = em.Ternary(OpCode.Mix, one, eased, fromInput);
+
+        var outputs = new Slot[MaxParts + 3];
 
         for (var p = 0; p < MaxParts; p++)
-            outputs[p] = p < parts.Count ? Part(parts[p]) : zero;
+            outputs[p] = Part(p < parts.Count ? parts[p] : [new PartLevel(0f)], node[firstPart + p]);
 
         outputs[MaxParts] = progress;
-        outputs[MaxParts + 1] = em.Add(index, 1f);
+        outputs[MaxParts + 1] = em.Mul(em.Add(index, 1f), started);
+        outputs[MaxParts + 2] = em.Sub(
+            node[0],
+            em.Binary(OpCode.Div, em.Constant(sections), em.Binary(OpCode.Max, node[1], em.Constant(1e-6f))));
 
         return outputs;
 
-        Slot Part(IReadOnlyList<PartLevel> levels)
+        Slot Part(IReadOnlyList<PartLevel> levels, Slot input)
         {
             // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (levels.All(level => level.Value == levels[0].Value)) return em.Constant(levels[0].Value);
+            if (levels.All(level => level.Value == levels[0].Value))
+                return em.Ternary(OpCode.Mix, input, em.Constant(levels[0].Value), settled);
 
             var now = Chain(s => levels[s].Value);
-            var was = Chain(s => levels[(s + sections - 1) % sections].Value);
+            var was = em.Ternary(OpCode.Mix, Chain(s => levels[(s + sections - 1) % sections].Value), input, fromInput);
 
             var ramp = levels.Any(level => level.Glides)
                 ? em.Ternary(OpCode.Mix, eased, progress, Chain(s => levels[s].Glides ? 1f : 0f))

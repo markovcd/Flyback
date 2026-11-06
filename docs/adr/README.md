@@ -1,4 +1,4 @@
-# Architecture decision records
+﻿# Architecture decision records
 
 Each record captures one decision, the situation that forced it, and what it
 costs. Format is [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions):
@@ -179,7 +179,8 @@ context, decision, consequences.
 | [0154](0154-an-mp3-sample-is-read-by-ffmpeg.md) | An MP3 sample is read by ffmpeg *(user-directed)* |
 | [0049](0049-record-the-gpu-frame-not-the-interpreter.md) | Record the GPU frame, not the interpreter *(user-directed)* |
 | [0038](0038-a-sequencers-notes-are-a-list-on-the-node.md) | A sequencer's notes are a list on the node *(user-directed)* |
-| [0153](0153-an-arrangement-is-a-grid-of-parts-on-the-node.md) | An Arrangement is a grid of parts on the node *(user-directed)* |
+| [0153](0153-an-arrangement-is-a-grid-of-parts-on-the-node.md) | An Arrangement is a grid of parts on the node *(user-directed; chaining added by [0227](0227-arrangements-chain-by-handing-on-their-parts.md))* |
+| [0227](0227-arrangements-chain-by-handing-on-their-parts.md) | Arrangements chain by handing on their parts *(user-directed)* |
 | [0037](0037-one-output-block-that-every-patch-has.md) | One Output block, which every patch has *(user-directed; its `gain` socket renamed `volume` by [0079](0079-the-gain-knob-becomes-volume-and-nought-is-off.md); its picture settings moved to the settings window by [0082](0082-the-output-settings-move-to-the-settings-window.md))* |
 | [0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md) | A plugin can hold state without a new opcode *(user-directed; the filter itself, and five more like it, moved into the engine by [0128](0128-filter-random-slew-drive-delay-and-reverb-are-the-engines-own.md))* |
 | [0042](0042-the-clock-and-the-memory-flag-belong-to-the-emitter.md) | The clock and the memory flag belong to the emitter |

@@ -139,7 +139,7 @@ poly.voice |  | index, count
 probe | in, window, scale | out
 scan | in, clock, rate, radius, x, y, scale | out, view
 scope | in, window, scale | out
-seq.arrangement | in, rate, fade | part 1, part 2, part 3, part 4, part 5, part 6, part 7, part 8, progress, section
+seq.arrangement | in, rate, fade, part 1, part 2, part 3, part 4, part 5, part 6, part 7, part 8 | part 1, part 2, part 3, part 4, part 5, part 6, part 7, part 8, progress, section, next
 seq.chance | gate, chance, seed | gate, else
 seq.hold | in, trigger | out
 seq.notes | in, rate, gate length, shape | out, gate, index

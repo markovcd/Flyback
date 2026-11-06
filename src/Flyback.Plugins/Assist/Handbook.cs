@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
@@ -103,7 +103,10 @@ internal static class Handbook
           silenced, which is not a rest. An Arrangement's parts are a block
           too, a row of levels a section for each part and `|` between parts:
           `arrangement(rate: 1/32) [ 1 1 0 1 | 0 >1 1 0 ]`, where `>` glides
-          there over the section.
+          there over the section. Past 32 sections, chain them rather than
+          shortening the sections: `let b = a.next |> arrangement(rate: 1/32,
+          part_1: a, part_2: a.part_2) [ ... ]` plays b where a ends, and b's
+          parts are the whole piece.
         - **A file is a string**: `sample("kick.wav")`, `picture("photo.png")`.
         - **`off name`**, on its own line, switches a module off: what is
           patched into it comes straight out, and nothing where nothing is.

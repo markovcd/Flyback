@@ -46,8 +46,7 @@ Everything below came from driving `flyback-cli mcp --editor` for an hour and a 
 
 ## Modules and their descriptions (Low)
 
-23. **An Arrangement's first glide does nothing.** A row opening `>0.05` sits at 0.05 from the first sample. Glide from 0, or from the last section as the loop does.
-24. **There's no plain way to fade in over several sections.** The first glide jumps (23), a Slew starts settled (25), and Fade's `from` and `to` only span 0..1 of its level. Fading a pad in over four bars took an Expression on `section + progress`.
+24. **There's no plain way to fade in over several sections.** A Slew starts settled (25), and Fade's `from` and `to` only span 0..1 of its level. Fading a pad in over four bars took an Expression on `section + progress`.
 25. **Slew starts settled.** Fed a constant from the first sample it never rises from 0, and neither the module nor the briefing says so.
 26. **Noise's `drift` has no stated speed.** At `rate: 0.047` it barely moved in a minute, and nothing says how `rate` maps to how far and how fast drift wanders.
 27. **A Note Sequencer's rest drops `out` to note 0** (8 Hz). That's harmless while the gate is shut, but a Slew or a long release after it sweeps down on every rest. Holding the last note may be the better rest.

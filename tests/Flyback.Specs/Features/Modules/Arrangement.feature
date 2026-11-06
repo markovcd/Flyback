@@ -1,4 +1,4 @@
-Feature: An Arrangement says which parts play in each section
+﻿Feature: An Arrangement says which parts play in each section
   An Arrangement steps through the sections of a piece and gives each of its
   parts a level for the section playing, so a piece can bring its parts in and
   out without a sequencer for each of them.
@@ -19,3 +19,10 @@ Feature: An Arrangement says which parts play in each section
     Given an arrangement of sections 2 seconds long whose first part is "1 1 1", telling which section is playing
     Then the sound is about 1 at 1 seconds
     And the sound is about 3 at 5 seconds
+
+  Scenario: A second Arrangement picks up where the first one ends
+    Given two arrangements of sections 2 seconds long whose first parts are "1 0" and "0.5 0.25", the second chained after the first
+    Then the sound is about 1 at 1 seconds
+    And the sound is about 0 at 3 seconds
+    And the sound is about 0.5 at 5 seconds
+    And the sound is about 0.25 at 7 seconds

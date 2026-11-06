@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.Json.Nodes;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
@@ -419,6 +419,12 @@ public sealed class PatchSteps(PatchContext context)
     [Given("an arrangement of sections {float} seconds long whose first part is {string}, telling which section is playing")]
     public void GivenAnArrangementsSection(float seconds, string part) =>
         Written($"arrangement(rate: {Number(1f / seconds)}) [ {part} ].section |> out.left");
+
+    [Given("two arrangements of sections {float} seconds long whose first parts are {string} and {string}, the second chained after the first")]
+    public void GivenTwoChainedArrangements(float seconds, string first, string second) =>
+        Written(
+            $"let first = arrangement(rate: {Number(1f / seconds)}) [ {first} ]{(char)10}"
+            + $"first.next |> arrangement(rate: {Number(1f / seconds)}, part_1: first) [ {second} ] |> out.left");
 
     [Given("a window from {float} to {float} seconds")]
     public void GivenAWindow(float from, float to) =>
