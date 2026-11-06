@@ -359,7 +359,9 @@ internal static class ToolCommand
             JsonSerializer.Serialize(given, Line),
             bytes,
             PatchIO.ToJson(patch, modules),
-            new Dictionary<string, Guid>(state.Handles, StringComparer.OrdinalIgnoreCase))) with { Missed = null };
+            new Dictionary<string, Guid>(state.Handles, StringComparer.OrdinalIgnoreCase)));
+
+        log = log with { Missed = null };
 
         if (history.Keep(log) is { } problem) error.WriteLine(AskedPatch.Complaint(problem));
 
