@@ -10,7 +10,7 @@ Everything below came from driving `flyback-cli mcp --editor` for an hour and a 
 ## Critical
 
 1. **Fixed.** `reset` went back to the patch open when the bench was first made. It now goes back to the patch as last proposed, or as the person last opened or changed it, whichever is later; with `flyback-cli tool`, the last proposal or the file as it stood before the tools touched it.
-2. **Fixed by saying so.** Edits are live by design (ADR-0202: each call one undo step), so the live tool descriptions and briefing now say every edit lands as it is made and `propose` applies nothing. Making the bench private until proposed would need an accept step in the editor's column; that is Arek's call, not started.
+2. **Fixed.** Over MCP in the editor the program now works on its own copy, as the column does, and only `propose` puts the patch on the canvas, as one undo step (ADR-0202's 2026-11-06 amendment). Over a patch file each edit is still written, and the tools say so.
 3. **Fixed.** `propose` is refused while the last edit failed, across calls and processes; an edit that lands, or `describe_patch`, lets it through. Refusing a proposal on an unchanged bench is not done: a live proposal of an unchanged patch is harmless.
 4. **A call sequence hung for more than 90 s.** `edit_patch`, `measure`, then `propose` in one process never answered, and the edit had landed. Run alone afterwards, `measure` and `propose` each answered in under a second. Probably `propose` while the previous proposal was still open; that isn't confirmed. *Fix:* find the wait; a call should never block on the person.
 

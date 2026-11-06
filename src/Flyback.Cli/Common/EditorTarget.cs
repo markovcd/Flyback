@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Flyback.Cli.Models;
 using Flyback.Host.Driving;
+using Flyback.Plugins.Assist;
 
 namespace Flyback.Cli.Common;
 
@@ -17,8 +18,10 @@ internal sealed class EditorTarget(string name) : IToolTarget, IAsyncDisposable
     private string greeting = "an MCP client";
 
     public string Describes =>
-        "Every tool edits or reads the patch open in the Flyback editor, as the person sees it; "
-        + "each edit lands on their canvas as soon as it is made, as one step they can undo there, and nothing waits for propose.";
+        "Every tool reads or edits your own copy of the patch open in the Flyback editor. Nothing reaches "
+        + "the person's canvas until propose, which puts it there as one step they can undo.";
+
+    public Delivery Delivery => Delivery.Proposal;
 
     public void Greet(string client) => greeting = client;
 

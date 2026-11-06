@@ -14,8 +14,8 @@ public class PatchWorkbenchMissTests
         tone1 |> out.left
         """;
 
-    private static PatchWorkbench Bench(bool live = false) =>
-        new(NodeCatalog.BuiltIn, new Patch(), vision: false, live: live);
+    private static PatchWorkbench Bench(Delivery delivery = Delivery.Turn) =>
+        new(NodeCatalog.BuiltIn, new Patch(), vision: false, delivery: delivery);
 
     private static Task<ToolOutcome> Call(PatchWorkbench bench, string tool, string arguments = "{}") =>
         bench.InvokeAsync(tool, JsonSerializer.Deserialize<JsonElement>(arguments), CancellationToken.None);
@@ -23,9 +23,9 @@ public class PatchWorkbenchMissTests
     private static Task<ToolOutcome> Edit(PatchWorkbench bench, string find, string replace) =>
         Call(bench, "edit_patch", JsonSerializer.Serialize(new { edits = new[] { new { find, replace } } }));
 
-    private static async Task<PatchWorkbench> Toned(bool live = false)
+    private static async Task<PatchWorkbench> Toned()
     {
-        var bench = Bench(live);
+        var bench = Bench();
 
         (await Call(bench, "write_patch", JsonSerializer.Serialize(new { source = Tone }))).Ok.ShouldBeTrue();
 
@@ -96,36 +96,26 @@ public class PatchWorkbenchMissTests
     }
 
     [Fact]
-    public async Task A_settled_live_workbench_resets_to_the_proposal_and_no_further()
+    public void Each_delivery_is_told_what_propose_does_there()
     {
-        var bench = await Toned(live: true);
-
-        (await Call(bench, "propose", """{"summary":"a 440 hz tone"}""")).Ok.ShouldBeTrue();
-        bench.Settle();
-
-        (await Edit(bench, "freq: 440", "freq: 330")).Ok.ShouldBeTrue();
-
-        var reset = await Call(bench, "reset");
-
-        reset.Ok.ShouldBeTrue(reset.Text);
-        reset.Text.ShouldContain("as you last proposed it");
-        bench.Text.ShouldNotBeNull().ShouldContain("freq: 440");
-        bench.Snapshot().Nodes.ShouldContain(node => node.TypeId == "osc.sine");
-    }
-
-    [Fact]
-    public void A_live_workbench_says_edits_are_live_and_propose_applies_nothing()
-    {
-        var live = Bench(live: true);
+        var live = Bench(Delivery.Live);
 
         live.Tools.Single(tool => tool.Name == "propose").Description.ShouldContain("applies nothing");
         live.Tools.Single(tool => tool.Name == "propose").Description.ShouldNotContain("Nothing you have built reaches");
-        live.Briefing.ShouldContain("Nothing waits for a");
+        live.Briefing.ShouldContain("Every edit is written to the patch file the moment it is made");
         live.Briefing.ShouldNotContain("Nothing reaches the person's editor until");
+
+        var driven = Bench(Delivery.Proposal);
+
+        driven.Tools.Single(tool => tool.Name == "propose").Description.ShouldContain("Puts the patch on the person's canvas");
+        driven.Tools.Single(tool => tool.Name == "propose").Description.ShouldNotContain("ends your turn");
+        driven.Briefing.ShouldContain("Nothing reaches the person's editor until");
+        driven.Briefing.ShouldContain("Call `describe_patch` to see the patch");
 
         var conversation = Bench();
 
-        conversation.Tools.Single(tool => tool.Name == "propose").Description.ShouldContain("Nothing you have built reaches their editor");
+        conversation.Tools.Single(tool => tool.Name == "propose").Description.ShouldContain("This ends your turn");
         conversation.Briefing.ShouldContain("Nothing reaches the person's editor until");
+        conversation.Briefing.ShouldContain("The first message opens with the patch");
     }
 }

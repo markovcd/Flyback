@@ -325,7 +325,7 @@ internal static class Handbook
 
         """.ReplaceLineEndings(Newline);
 
-    /// <summary>Where the patch comes from, for a program driving it from outside.</summary>
+    /// <summary>Where the patch comes from, for a program calling the tools from outside.</summary>
     private static readonly string LiveOpening = """
         Call `describe_patch` to see the patch as it stands. The person may
         change it on the canvas between your calls, and nothing tells you
@@ -425,10 +425,10 @@ internal static class Handbook
     private static readonly string LiveProposing = """
         ## Proposing
 
-        Every edit is on the person's canvas, or in their file, the moment
-        it is made, and each is one step they can undo. Nothing waits for a
-        proposal, so do not try things out on the patch you were asked to
-        change: a trial edit is one they see and hear.
+        Every edit is written to the patch file the moment it is made, and
+        each is one step `flyback-cli tool undo` takes back. Nothing waits
+        for a proposal, so do not try things out on a file you were asked to
+        change.
 
         Check the result when the shape is right, adjust, then call `propose`
         with a one-line summary. It applies nothing: it checks the patch as
@@ -437,8 +437,8 @@ internal static class Handbook
         not there; fix the edit, or look with `describe_patch` and propose
         what stands.
 
-        `reset` goes back to the patch as you last proposed it or as the
-        person last changed it, whichever came later, never further.
+        `reset` goes back to the patch as you last proposed it or as it stood
+        before these tools touched it, never further.
 
         **Never ask whether to propose.** If you built what was asked, propose
         it and say what you would tune next.
@@ -602,11 +602,8 @@ internal static class Handbook
     /// wrong about that either wastes a tool it has or credits its own impression to
     /// a listener that was never there.
     /// </param>
-    /// <param name="live">
-    /// Whether each edit reaches the person as it is made, as it does over MCP and
-    /// <c>flyback-cli tool</c>, rather than waiting for a proposal they accept.
-    /// </param>
-    public static string Render(ModuleCatalog modules, IReadOnlySet<string> undescribed, Listener hearing = Listener.None, bool live = false)
+    /// <param name="delivery">How what the assistant builds reaches the person (<see cref="Delivery"/>).</param>
+    public static string Render(ModuleCatalog modules, IReadOnlySet<string> undescribed, Listener hearing = Listener.None, Delivery delivery = Delivery.Turn)
     {
         var text = new StringBuilder(Conventions)
             .Append(hearing switch
@@ -616,9 +613,9 @@ internal static class Handbook
                 _ => Deaf,
             })
             .Append(Working).Append('\n')
-            .Append(live ? LiveOpening : Opening).Append('\n')
+            .Append(delivery == Delivery.Turn ? Opening : LiveOpening).Append('\n')
             .Append(Building).Append('\n')
-            .Append(live ? LiveProposing : Proposing).Append('\n')
+            .Append(delivery == Delivery.Live ? LiveProposing : Proposing).Append('\n')
             .Append(Catalog);
 
         if (undescribed.Count > 0) text.Append(Unexplained);
@@ -656,7 +653,7 @@ internal static class Handbook
         // What the briefing costs with every description left out, the note saying
         // so included.
         var fixedCost = new[] { Listener.None, Listener.Another, Listener.Itself }
-            .Max(hearing => Math.Max(Render(modules, everyone, hearing).Length, Render(modules, everyone, hearing, live: true).Length));
+            .Max(hearing => Enum.GetValues<Delivery>().Max(delivery => Render(modules, everyone, hearing, delivery).Length));
 
         var room = policy.Budget - PresetsReserve - fixedCost;
 

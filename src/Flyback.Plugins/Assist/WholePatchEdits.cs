@@ -12,30 +12,23 @@ namespace Flyback.Plugins.Assist;
 /// </summary>
 /// <param name="startingPoint">The patch <c>reset</c> goes back to, as patch JSON, so a reset cannot hand back something an edit reached into.</param>
 /// <param name="startingText">The text that patch was written in, or null where it was not.</param>
-/// <param name="live">Whether each edit reaches the person as it is made, which is what <c>reset</c> says it goes back to.</param>
-internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, string startingPoint, string? startingText, bool live)
+/// <param name="delivery">How what is built reaches the person, which is what <c>reset</c> says it goes back to.</param>
+internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, string startingPoint, string? startingText, Delivery delivery)
 {
-    private string start = startingPoint;
-    private string? startText = startingText;
-
-    /// <summary>Makes <paramref name="patch"/>, written in <paramref name="text"/>, what <c>reset</c> goes back to.</summary>
-    public void Settle(string patch, string? text)
-    {
-        start = patch;
-        startText = text;
-    }
-
     public ToolOutcome Reset()
     {
-        bench.Adopt(PatchIO.Read(start, bench.Modules).Patch);
-        bench.Source = startText;
+        bench.Adopt(PatchIO.Read(startingPoint, bench.Modules).Patch);
+        bench.Source = startingText;
         bench.Proposal = null;
         bench.Missed = null;
         bench.Edits++;
 
-        var back = live
-            ? "back to the patch as you last proposed it or as the person last changed it, whichever came later."
-            : "back to the patch as it was when this started.";
+        var back = delivery switch
+        {
+            Delivery.Live => "back to the patch as you last proposed it or as the file stood before these tools touched it.",
+            Delivery.Proposal => "back to the patch on the person's canvas, as you last proposed it or as they last changed it.",
+            _ => "back to the patch as it was when this started.",
+        };
 
         return ToolOutcome.Fine($"{back} {reports.Describe()}");
     }

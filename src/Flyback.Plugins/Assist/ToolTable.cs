@@ -59,8 +59,8 @@ internal sealed class ToolTable(
         bool offered = true) =>
         new(new PatchTool(name, description, ToolField.Schema(fields)), run, offered);
 
-    /// <param name="live">Whether each edit reaches the person as it is made, which changes what <c>propose</c> and <c>reset</c> are.</param>
-    public IReadOnlyList<Tool> Build(bool vision, Listener hearing, bool lookups, bool readsPresets, bool live)
+    /// <param name="delivery">How what is built reaches the person, which decides what <c>propose</c> and <c>reset</c> are.</param>
+    public IReadOnlyList<Tool> Build(bool vision, Listener hearing, bool lookups, bool readsPresets, Delivery delivery)
     {
         List<Tool> tools =
         [
@@ -88,19 +88,27 @@ internal sealed class ToolTable(
                 [Edits]),
 
             Does("reset", _ => whole.Reset(),
-                live
-                    ? "Throws away your edits since you last proposed or the person last changed the patch, "
-                      + "whichever came later, and goes back to the patch as it stood then. It never goes further back."
-                    : "Throws away every edit and goes back to the patch as it was when this started.",
+                delivery switch
+                {
+                    Delivery.Live => "Throws away your edits since you last proposed, or since the file last changed "
+                        + "other than through these tools, and goes back to the patch as it stood then. It never goes further back.",
+                    Delivery.Proposal => "Throws away every edit since you last proposed, or since the person last changed "
+                        + "the patch on the canvas, and goes back to the patch as it stood then.",
+                    _ => "Throws away every edit and goes back to the patch as it was when this started.",
+                },
                 []),
 
             Does("propose", proposals.ProposeAsync,
-                (live
-                    ? "Tells the person the patch is ready, with one line saying what it does. Every edit "
-                      + "is already theirs as you make it, so this applies nothing: it checks the patch as it "
-                      + "stands and announces it. "
-                    : "Offers the patch to the person, with one line saying what it does. This ends your "
-                      + "turn. Nothing you have built reaches their editor until you call this. ")
+                delivery switch
+                {
+                    Delivery.Live => "Tells the person the patch is ready, with one line saying what it does. Every edit "
+                        + "is already written as you make it, so this applies nothing: it checks the patch as it "
+                        + "stands and announces it. ",
+                    Delivery.Proposal => "Puts the patch on the person's canvas, with one line saying what it does, as one "
+                        + "step they can undo. Nothing you have built reaches their editor until you call this. ",
+                    _ => "Offers the patch to the person, with one line saying what it does. This ends your "
+                        + "turn. Nothing you have built reaches their editor until you call this. ",
+                }
                 + "It is refused while your last edit failed. The patch "
                 + "must compile cleanly first, something must reach the Output — its 'color', "
                 + "its 'left', or both — and a sound that is wired must not be silent.",

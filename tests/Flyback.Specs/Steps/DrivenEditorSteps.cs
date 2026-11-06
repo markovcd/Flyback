@@ -52,7 +52,11 @@ public sealed class DrivenEditorSteps : IDisposable
 
     [When("{string} writes a sine into the open patch over flyback-cli mcp --editor")]
     public void WhenWrites(string client) =>
-        Serve(client, new JsonObject { ["name"] = "write_patch", ["arguments"] = new JsonObject { ["source"] = "t |> sine() |> out.left" } });
+        Serve(client, new JsonObject { ["name"] = "write_patch", ["arguments"] = new JsonObject { ["source"] = "t |> sine(freq: 440) |> out.left" } });
+
+    [When("{string} proposes {string} over flyback-cli mcp --editor")]
+    public void WhenProposes(string client, string summary) =>
+        Serve(client, new JsonObject { ["name"] = "propose", ["arguments"] = new JsonObject { ["summary"] = summary } });
 
     [When("{string} says {string} to the editor over flyback-cli mcp --editor")]
     public void WhenSays(string client, string text) =>

@@ -662,7 +662,7 @@ internal sealed class AssistantPanel : UserControl
         driver = program;
         lastSaid = false;
         composer.View.IsVisible = false;
-        transcript.Put(Voice.Note, $"{program} is driving the editor. Its calls show here, and each edit undoes on the canvas.");
+        transcript.Put(Voice.Note, $"{program} is driving the editor. Its calls show here, and what it proposes goes on the canvas as one edit Ctrl+Z undoes.");
         ShowSendState();
         ShowSpent();
     }

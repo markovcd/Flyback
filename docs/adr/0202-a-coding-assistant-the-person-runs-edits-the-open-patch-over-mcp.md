@@ -55,3 +55,9 @@ lands; once it has, the plugin is a second door to the same thing.
 - In the editor each call is its own undo step. MCP has no turn end to group them by.
 - A second program is refused while one drives, and told why.
 - The channel is desktop only: the switch is not offered on Android or in the page.
+
+## Amendment 2026-11-06: edits wait for a proposal
+
+- In the editor a program works on its own copy of the open patch, as the assistant's column does, and only `propose` puts it on the canvas, as one undo step. Each call being live put every trial edit and test render on the person's canvas, while `propose`'s own description said nothing reached them until it was called.
+- Changes the person makes while the copy holds unproposed edits are treated as the column treats them: knobs carried where the program left them alone, modules and wires replaced, and the answer says which.
+- `reset` goes back no further than the last proposal or the person's own last change. A patch file is still written after each edit, so over a file `propose` only checks.

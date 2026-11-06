@@ -25,9 +25,8 @@ public sealed class PatchWorkbench
 {
     private readonly WorkingPatch bench;
     private readonly WorkbenchLimits limits;
-    private readonly WholePatchEdits whole;
-    private string startingPoint;
-    private string? startingText;
+    private readonly string startingPoint;
+    private readonly string? startingText;
     private readonly PatchReports reports;
     private readonly CanvasChanges canvas;
 
@@ -49,10 +48,7 @@ public sealed class PatchWorkbench
     /// The text <paramref name="startingPoint"/> was built from, where it was written
     /// rather than drawn, so edits go into the person's own words.
     /// </param>
-    /// <param name="live">
-    /// Whether each edit reaches the person as it is made, as over MCP and
-    /// <c>flyback-cli tool</c>, rather than waiting for a proposal they accept.
-    /// </param>
+    /// <param name="delivery">How what is built reaches the person (<see cref="Delivery"/>).</param>
     internal PatchWorkbench(
         ModuleCatalog modules,
         Patch startingPoint,
@@ -64,7 +60,7 @@ public sealed class PatchWorkbench
         ProsePolicy? prose = null,
         IReadOnlyList<PatchPreset>? presets = null,
         string? text = null,
-        bool live = false)
+        Delivery delivery = Delivery.Turn)
     {
         bench = new WorkingPatch(modules, samples, pictures);
         this.limits = limits ?? new WorkbenchLimits();
@@ -88,15 +84,13 @@ public sealed class PatchWorkbench
 
         Undescribed = policy.Undescribed(modules);
 
-        var briefing = Handbook.Render(modules, Undescribed, hearing, live);
+        var briefing = Handbook.Render(modules, Undescribed, hearing, delivery);
         Briefing = briefing + Handbook.Presets(readable, policy.Budget - briefing.Length);
 
         var senses = new PatchSenses(bench, this.limits);
 
-        whole = new WholePatchEdits(bench, reports, this.startingPoint, text, live);
-
         var table = new ToolTable(
-            whole,
+            new WholePatchEdits(bench, reports, this.startingPoint, text, delivery),
             new PatchProposals(bench, senses, this.limits),
             senses,
             new PatchMeasurements(bench, this.limits),
@@ -107,7 +101,7 @@ public sealed class PatchWorkbench
         // run it would be one more tool to weigh on every turn, for searching what
         // is already in front of the model. describe_module always has what the
         // briefing leaves to it, what each socket is for.
-        var vocabulary = table.Build(vision, hearing, lookups: Undescribed.Count > 0, readsPresets: readable.Count > 0, live);
+        var vocabulary = table.Build(vision, hearing, lookups: Undescribed.Count > 0, readsPresets: readable.Count > 0, delivery);
 
         Tools = [.. vocabulary.Where(tool => tool.Offered).Select(tool => tool.Spec)];
         bodies = vocabulary.ToDictionary(tool => tool.Spec.Name, tool => tool.Run, StringComparer.Ordinal);
@@ -176,17 +170,6 @@ public sealed class PatchWorkbench
     {
         bench.Arrange();
         return PatchIO.Read(PatchIO.ToJson(bench.Patch, bench.Modules), bench.Modules).Patch;
-    }
-
-    /// <summary>
-    /// Makes the working patch what <c>reset</c> goes back to, for a host where each edit is
-    /// live and a proposal is as far back as a reset may reach.
-    /// </summary>
-    internal void Settle()
-    {
-        startingPoint = PatchIO.ToJson(bench.Patch, bench.Modules);
-        startingText = bench.Source;
-        whole.Settle(startingPoint, startingText);
     }
 
     /// <summary>What <see cref="Restore"/> needs to put this workbench back as it stands.</summary>

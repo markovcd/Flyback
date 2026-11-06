@@ -1,13 +1,16 @@
 Feature: A coding assistant somebody runs edits the patch open in the editor
   With Settings → Assistant → "Let a program on this computer edit the open patch" on, the editor listens on a
   channel only the same user can reach, and flyback-cli mcp --editor runs each tool call
-  on the canvas instead of on a file. Every edit it makes is one the person can undo, and
-  the assistant's column shows what it did and what it said, with no box to type in while
-  it drives.
+  on a copy of the patch open in it, as the assistant's own column does. Only a proposal
+  reaches the canvas, as one edit the person can undo, and the column shows what the
+  program did and what it said, with no box to type in while it drives.
 
-  Scenario: An edit over MCP lands on the canvas, and undo takes it back
+  Scenario: An edit over MCP waits for a proposal, which puts it on the canvas, and undo takes it back
     Given the editor lets a program on this computer edit the open patch
     When "Claude Code" writes a sine into the open patch over flyback-cli mcp --editor
+    Then the call was answered without an error
+    And the canvas holds no sine
+    When "Claude Code" proposes "A sine on the left." over flyback-cli mcp --editor
     Then the call was answered without an error
     And the canvas holds a sine
     And the editor keeps letting programs edit it, next time it starts

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Flyback.Cli.Commands;
 using Flyback.Cli.Models;
+using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.Cli.Common;
@@ -11,6 +12,8 @@ internal sealed class FileTarget(PluginCatalog plugins, ToolHistory history, Fil
     public string Describes =>
         $"Every tool edits or reads the patch {patch.FullName}, which is saved after each edit. "
         + "Undo with `flyback-cli tool undo` on that file.";
+
+    public Delivery Delivery => Delivery.Live;
 
     public void Greet(string client)
     {

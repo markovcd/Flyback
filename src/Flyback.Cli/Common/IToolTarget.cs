@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Flyback.Cli.Models;
+using Flyback.Plugins.Assist;
 
 namespace Flyback.Cli.Common;
 
@@ -8,6 +9,9 @@ internal interface IToolTarget
 {
     /// <summary>What the client is told it is editing, before the briefing.</summary>
     string Describes { get; }
+
+    /// <summary>How an edit reaches the person, which decides what the tools say <c>propose</c> and <c>reset</c> do.</summary>
+    Delivery Delivery { get; }
 
     /// <summary>The client's name, as it introduced itself.</summary>
     void Greet(string client);

@@ -9,19 +9,34 @@ using Xunit;
 
 namespace Flyback.Editor.Tests.Assist;
 
-/// <summary>A program's tool calls run on the canvas: each edit put on it once, its handles kept between calls.</summary>
+/// <summary>
+/// A program's tool calls run on a copy of the canvas, as the column's do: only a proposal
+/// goes on the canvas, as one change, and the handles it chose hold between calls.
+/// </summary>
 public sealed class DrivenBenchTests
 {
+    private const string Tone = "let tone = t |> sine(freq: 440)\\ntone |> out.left";
+
     private readonly FakeAssistantEditor editor = new(Presets.Empty(NodeCatalog.BuiltIn));
 
     private DrivenBench Bench() => new(editor, NodeCatalog.BuiltIn, () => ProsePolicy.Default, () => Presets.All);
 
     [Fact]
-    public async Task An_edit_goes_on_the_canvas_as_one_change()
+    public async Task An_edit_stays_off_the_canvas_until_it_is_proposed()
     {
-        var outcome = await Call(Bench(), "write_patch", """{"source": "let lfo = sine()"}""");
+        var bench = Bench();
+
+        var outcome = await Call(bench, "write_patch", $$"""{"source": "{{Tone}}"}""");
 
         outcome.Ok.ShouldBeTrue(outcome.Text);
+        editor.Applied.ShouldBe(0);
+        editor.Current.Nodes.ShouldNotContain(node => node.TypeId == "osc.sine");
+
+        var proposed = await Call(bench, "propose", """{"summary": "a 440 Hz tone"}""");
+
+        proposed.Ok.ShouldBeTrue(proposed.Text);
+        proposed.Text.ShouldContain("on the person's canvas");
+        bench.Proposed.ShouldBe("a 440 Hz tone");
         editor.Applied.ShouldBe(1);
         editor.Current.Nodes.ShouldContain(node => node.TypeId == "osc.sine");
     }
@@ -44,25 +59,63 @@ public sealed class DrivenBenchTests
 
         outcome.Ok.ShouldBeTrue(outcome.Text);
         outcome.Text.ShouldContain("lfo");
-        editor.Applied.ShouldBe(1, "a measurement changes nothing");
     }
 
     [Fact]
-    public async Task A_canvas_edited_by_hand_is_taken_up_and_the_handles_still_hold()
+    public async Task A_canvas_edited_by_hand_while_nothing_waits_is_taken_up()
     {
         var bench = Bench();
-        await Call(bench, "write_patch", """{"source": "let lfo = sine()"}""");
+        await Call(bench, "write_patch", $$"""{"source": "{{Tone}}"}""");
+        (await Call(bench, "propose", """{"summary": "a tone"}""")).Ok.ShouldBeTrue();
 
         var byHand = PatchIO.Read(PatchIO.ToJson(editor.Current, NodeCatalog.BuiltIn), NodeCatalog.BuiltIn).Patch;
         byHand.Nodes.Add(new PatchBuilder(NodeCatalog.BuiltIn).Add("osc.saw", 300, 300));
         editor.Current = byHand;
 
-        var outcome = await Call(bench, "measure", """{"handles": ["lfo"], "seconds": 0.25}""");
-
-        outcome.Ok.ShouldBeTrue(outcome.Text);
-        outcome.Text.ShouldContain("lfo");
-
         (await Call(bench, "describe_patch", "{}")).Text.ShouldContain("saw");
+        (await Call(bench, "measure", """{"handles": ["tone"], "seconds": 0.25}""")).Ok.ShouldBeTrue();
+    }
+
+    /// <summary>A knob turned on the canvas while the program worked is kept, where the program left it alone.</summary>
+    [Fact]
+    public async Task A_knob_turned_by_hand_while_edits_wait_is_carried_onto_the_proposal()
+    {
+        var (lfo, freq) = Drawn();
+        var bench = Bench();
+        var printed = (await Call(bench, "describe_patch", "{}")).Text;
+        var line = printed.Split('\n').First(l => l.Contains("saw(", StringComparison.Ordinal));
+
+        (await Call(bench, "edit_patch", Replacing(line, line.Replace("saw(", "square(", StringComparison.Ordinal)))).Ok.ShouldBeTrue();
+
+        var turned = PatchIO.Read(PatchIO.ToJson(editor.Current, NodeCatalog.BuiltIn), NodeCatalog.BuiltIn).Patch;
+        turned.Find(lfo.Id).ShouldNotBeNull().InputValues[freq] = 5f;
+        editor.Current = turned;
+
+        var proposed = await Call(bench, "propose", """{"summary": "a square in place of the saw", "starts_silent": true}""");
+
+        proposed.Ok.ShouldBeTrue(proposed.Text);
+        proposed.Text.ShouldContain("keeps 1 setting");
+        editor.Current.Nodes.ShouldContain(node => node.TypeId == "osc.square");
+        editor.Current.Find(lfo.Id).ShouldNotBeNull().InputValues[freq].ShouldBe(5f);
+    }
+
+    /// <summary>Modules changed on the canvas while the program worked are replaced, and the answer says so.</summary>
+    [Fact]
+    public async Task Modules_changed_by_hand_while_edits_wait_are_replaced_and_said_to_be()
+    {
+        var bench = Bench();
+        await Call(bench, "write_patch", $$"""{"source": "{{Tone}}"}""");
+
+        var byHand = PatchIO.Read(PatchIO.ToJson(editor.Current, NodeCatalog.BuiltIn), NodeCatalog.BuiltIn).Patch;
+        byHand.Nodes.Add(new PatchBuilder(NodeCatalog.BuiltIn).Add("osc.saw", 300, 300));
+        editor.Current = byHand;
+
+        var proposed = await Call(bench, "propose", """{"summary": "a tone"}""");
+
+        proposed.Ok.ShouldBeTrue(proposed.Text);
+        proposed.Text.ShouldContain("Ctrl+Z puts theirs back");
+        editor.Current.Nodes.ShouldContain(node => node.TypeId == "osc.sine");
+        editor.Current.Nodes.ShouldNotContain(node => node.TypeId == "osc.saw");
     }
 
     /// <summary>
@@ -70,23 +123,24 @@ public sealed class DrivenBenchTests
     /// the canvas is handed back keeps everything they wrote around the change.
     /// </summary>
     [Fact]
-    public async Task An_edit_of_a_text_document_hands_back_the_text_with_its_comments()
+    public async Task A_proposal_of_a_text_document_hands_back_the_text_with_its_comments()
     {
         const string written = """
-            // a slow wobble
-            let lfo = t |> sine(freq: 2)
-            lfo |> out.left
+            // a steady tone
+            let tone = t |> sine(freq: 440)
+            tone |> out.left
             """;
 
         editor.Current = PatchLanguage.Build(written, NodeCatalog.BuiltIn).Patch;
         editor.Text = written;
 
-        var outcome = await Call(Bench(), "edit_patch", """{"edits": [{"find": "freq: 2", "replace": "freq: 3"}]}""");
+        var bench = Bench();
+        (await Call(bench, "edit_patch", """{"edits": [{"find": "freq: 440", "replace": "freq: 330"}]}""")).Ok.ShouldBeTrue();
+        (await Call(bench, "propose", """{"summary": "a 330 Hz tone"}""")).Ok.ShouldBeTrue();
 
-        outcome.Ok.ShouldBeTrue(outcome.Text);
         editor.Applied.ShouldBe(1);
-        editor.Text.ShouldBe(written.Replace("freq: 2", "freq: 3", StringComparison.Ordinal));
-        editor.Text.ShouldContain("// a slow wobble");
+        editor.Text.ShouldBe(written.Replace("freq: 440", "freq: 330", StringComparison.Ordinal));
+        editor.Text.ShouldContain("// a steady tone");
     }
 
     /// <summary>
@@ -94,23 +148,19 @@ public sealed class DrivenBenchTests
     /// it did not touch are the same modules afterwards.
     /// </summary>
     [Fact]
-    public async Task An_edit_of_a_drawn_patch_keeps_the_modules_it_did_not_touch()
+    public async Task A_proposal_of_a_drawn_patch_keeps_the_modules_it_did_not_touch()
     {
-        var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var output = b.Add(NodeCatalog.OutputTypeId, 600, 0);
-        var lfo = b.Add("osc.sine", 0, 0);
-        var saw = b.Add("osc.saw", 0, 200);
-        b.Wire(lfo, 0, output, NodeCatalog.OutputLeftPort);
-        editor.Current = b.Patch;
+        var (lfo, _) = Drawn();
+        var output = editor.Current.Output;
+        var saw = editor.Current.Nodes.First(node => node.TypeId == "osc.saw");
 
         var bench = Bench();
         var printed = (await Call(bench, "describe_patch", "{}")).Text;
         var line = printed.Split('\n').First(l => l.Contains("saw(", StringComparison.Ordinal));
 
-        var outcome = await Call(bench, "edit_patch",
-            JsonSerializer.Serialize(new { edits = new[] { new { find = line, replace = line.Replace("saw(", "square(", StringComparison.Ordinal) } } }));
+        (await Call(bench, "edit_patch", Replacing(line, line.Replace("saw(", "square(", StringComparison.Ordinal)))).Ok.ShouldBeTrue();
+        (await Call(bench, "propose", """{"summary": "a square in place of the saw", "starts_silent": true}""")).Ok.ShouldBeTrue();
 
-        outcome.Ok.ShouldBeTrue(outcome.Text);
         editor.Text.ShouldNotBeNull("the bench's text after an edit is handed over with the patch");
         editor.Text.ShouldContain("square(");
         editor.Current.Find(lfo.Id).ShouldNotBeNull().TypeId.ShouldBe("osc.sine");
@@ -126,7 +176,8 @@ public sealed class DrivenBenchTests
     public async Task A_reset_goes_back_no_further_than_the_patch_the_person_last_opened()
     {
         var bench = Bench();
-        await Call(bench, "write_patch", """{"source": "let lfo = sine()"}""");
+        await Call(bench, "write_patch", $$"""{"source": "{{Tone}}"}""");
+        (await Call(bench, "propose", """{"summary": "a tone"}""")).Ok.ShouldBeTrue();
 
         const string opened = "let drone = t |> saw(freq: 55)\ndrone |> out.left";
         editor.Current = PatchLanguage.Build(opened, NodeCatalog.BuiltIn).Patch;
@@ -137,30 +188,30 @@ public sealed class DrivenBenchTests
         var reset = await Call(bench, "reset", "{}");
 
         reset.Ok.ShouldBeTrue(reset.Text);
-        editor.Text.ShouldNotBeNull().ShouldContain("freq: 55");
-        editor.Current.Nodes.ShouldContain(node => node.TypeId == "osc.saw");
-        editor.Current.Nodes.ShouldNotContain(node => node.TypeId == "osc.sine");
+        reset.Text.ShouldContain("freq: 55");
+        reset.Text.ShouldNotContain("sine");
     }
 
     [Fact]
     public async Task A_reset_goes_back_no_further_than_the_last_proposal()
     {
         var bench = Bench();
-        await Call(bench, "write_patch", """{"source": "let tone = t |> sine(freq: 440)\ntone |> out.left"}""");
+        await Call(bench, "write_patch", $$"""{"source": "{{Tone}}"}""");
         (await Call(bench, "propose", """{"summary": "a 440 Hz tone"}""")).Ok.ShouldBeTrue();
 
         (await Call(bench, "edit_patch", """{"edits": [{"find": "freq: 440", "replace": "freq: 330"}]}""")).Ok.ShouldBeTrue();
-        (await Call(bench, "reset", "{}")).Ok.ShouldBeTrue();
 
-        editor.Text.ShouldNotBeNull().ShouldContain("freq: 440");
-        editor.Current.Nodes.ShouldContain(node => node.TypeId == "osc.sine");
+        var reset = await Call(bench, "reset", "{}");
+
+        reset.Ok.ShouldBeTrue(reset.Text);
+        reset.Text.ShouldContain("freq: 440");
     }
 
     [Fact]
-    public async Task A_proposal_after_an_edit_that_missed_is_refused_on_the_next_call()
+    public async Task A_proposal_after_an_edit_that_missed_is_refused_and_leaves_the_canvas_alone()
     {
         var bench = Bench();
-        await Call(bench, "write_patch", """{"source": "let tone = t |> sine(freq: 440)\ntone |> out.left"}""");
+        await Call(bench, "write_patch", $$"""{"source": "{{Tone}}"}""");
 
         (await Call(bench, "edit_patch", """{"edits": [{"find": "freq: 220", "replace": "freq: 330"}]}""")).Ok.ShouldBeFalse();
 
@@ -168,7 +219,28 @@ public sealed class DrivenBenchTests
 
         offered.Ok.ShouldBeFalse();
         offered.Text.ShouldContain("last edit did not go through");
+        editor.Applied.ShouldBe(0);
+        bench.Proposed.ShouldBeNull();
     }
+
+    /// <summary>A drawn patch on the canvas: a sine and a saw into the Output, and where the sine's freq knob is.</summary>
+    private (NodeInstance Lfo, int Freq) Drawn()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var output = b.Add(NodeCatalog.OutputTypeId, 600, 0);
+        var lfo = b.Add("osc.sine", 0, 0);
+        var saw = b.Add("osc.saw", 0, 200);
+        b.Wire(lfo, 0, output, NodeCatalog.OutputLeftPort);
+        b.Wire(saw, 0, output, NodeCatalog.OutputLeftPort + 1);
+        editor.Current = b.Patch;
+
+        var freq = NodeCatalog.BuiltIn.All.First(def => def.TypeId == "osc.sine").Inputs.ToList().FindIndex(port => port.Name == "freq");
+
+        return (lfo, freq);
+    }
+
+    private static string Replacing(string find, string replace) =>
+        JsonSerializer.Serialize(new { edits = new[] { new { find, replace } } });
 
     private static async Task<ToolOutcome> Call(DrivenBench bench, string tool, string arguments)
     {

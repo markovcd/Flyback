@@ -159,7 +159,8 @@ internal static class ToolCommand
     }
 
     /// <summary>The workbench a call runs on, built over <paramref name="over"/>.</summary>
-    internal static PatchWorkbench Bench(PluginCatalog plugins, Patch over, string? settingsPath, AskedPatch? about = null, string? text = null) => new(
+    internal static PatchWorkbench Bench(
+        PluginCatalog plugins, Patch over, string? settingsPath, AskedPatch? about = null, string? text = null, Delivery delivery = Delivery.Live) => new(
         plugins.Modules,
         over,
         vision: true,
@@ -169,7 +170,7 @@ internal static class ToolCommand
         prose: AssistantSettings.Load(settingsPath).Prose(settingsPath ?? SettingsFile.Path),
         presets: plugins.Presets,
         text: text,
-        live: true);
+        delivery: delivery);
 
     public static int List(PluginCatalog plugins, bool json, TextWriter output, string? settingsPath = null)
     {

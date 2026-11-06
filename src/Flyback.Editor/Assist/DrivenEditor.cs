@@ -108,7 +108,7 @@ internal sealed class DrivenEditor(
 
         var outcome = await bench.Call(tool, arguments, cancel);
 
-        Happened?.Invoke(Event(outcome));
+        Happened?.Invoke(bench.Proposed is { } summary ? new PatchEvent.Proposed(editor.Current, summary) : Event(outcome));
 
         return new ChannelReply(request.Id, outcome.Ok, outcome.Text, outcome.Png is { } png ? Convert.ToBase64String(png) : null);
     }

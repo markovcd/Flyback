@@ -14,7 +14,7 @@
 
 ### Assistant
 
-- A program driving the editor over MCP, or `flyback-cli tool`, is told that each edit is live as it is made and that `propose` applies nothing, rather than that nothing reaches the person until it proposes.
+- A program driving the editor over MCP works on its own copy of the patch, as the assistant's column does: only `propose` puts it on the canvas, as one edit Ctrl+Z undoes. Knobs turned meanwhile are kept, and modules or wires changed meanwhile are replaced, with the column saying so.
 - `reset` from a program driving the editor goes back to the patch as it was last proposed or as the person last opened or changed it, never to the patch that was open when the program first called.
 - `propose` is refused while the last edit failed, so its summary can't describe a patch that isn't there; an edit that lands, or `describe_patch`, lets it through again.
 
