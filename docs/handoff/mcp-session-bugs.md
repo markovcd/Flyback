@@ -80,6 +80,10 @@ The same patch, reopened in an editor and a `flyback-cli` built from source.
 
 36. **Fixed.** `measure` named a socket the way the catalog spells it, `desk1.bus left`, and refused `desk1.bus_left`, which is how the language writes it. It now takes and prints the language's spelling; `flyback-cli measure` takes either.
 
+## Found on `main` at `b50021d6` (Medium)
+
+37. **`mcp --editor` never reconnects after the editor restarts.** Once the editor it was attached to closed, every tool answered `Pipe is broken.` until the client restarted the server; reopening the editor did not help. *Fix:* on a broken pipe, drop the connection and attach to whichever editor is open on the next call, saying so if none is.
+
 ## What worked
 
 The language reads well, and `edit_patch` applies whole or says exactly why not (`[used-before-bound]` with line and column). `measure` was trustworthy for levels, step rates and section timing, and `render` for checking a picture. The editor adds `requires` lines itself, and on 0.12.0 the Mastering plugin's EQ, Compressor, Limiter and Loudness behaved like a mastering chain should.
