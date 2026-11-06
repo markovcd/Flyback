@@ -423,7 +423,7 @@ public sealed class PatchSteps(PatchContext context)
     [Given("two arrangements of sections {float} seconds long whose first parts are {string} and {string}, the second chained after the first")]
     public void GivenTwoChainedArrangements(float seconds, string first, string second) =>
         Written(
-            $"let first = arrangement(rate: {Number(1f / seconds)}) [ {first} ]{(char)10}"
+            $"let first = arrangement(rate: {Number(1f / seconds)}, loop: 0) [ {first} ]{(char)10}"
             + $"first.next |> arrangement(rate: {Number(1f / seconds)}, part_1: first) [ {second} ] |> out.left");
 
     [Given("a window from {float} to {float} seconds")]

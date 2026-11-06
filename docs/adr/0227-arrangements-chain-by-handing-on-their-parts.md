@@ -1,4 +1,4 @@
-# ADR-0227: Arrangements chain by handing on their parts
+﻿# ADR-0227: Arrangements chain by handing on their parts
 
 **Status:** Accepted · 2026-11-06 · *user-directed* · amends
 [0153](0153-an-arrangement-is-a-grid-of-parts-on-the-node.md)'s "section one's before is the last section"
@@ -30,9 +30,13 @@ value, while a chain has to carry every part.
 - **Section one comes from the input the first time through**, so the change into
   the second Arrangement fades or glides from the first's last level. After that
   it comes from the last section, as it did.
-- **The last of a chain loops on its own**, as one Arrangement does. Looping the
-  whole chain would need the first to know the last's length, which only a wire
-  backwards could tell it.
+- **`loop`**, a new last input resting at 1, comes round to the first section
+  after the last as before; at 0 the Arrangement stays at the end of its last
+  section, `section` and `progress` with it. Every Arrangement in a chain but the
+  last turns it off, so nothing keyed on the first's `section` fires again under
+  the second. Nothing on a wire tells an Arrangement it is chained, so this is a
+  knob rather than automatic. Looping the whole chain would need the first to
+  know the last's length, which only a wire backwards could tell it.
 
 A compile-time join, where wiring `next` made the second read the first's grid,
 needed one wire rather than nine but would make a wire mean something other than
@@ -41,7 +45,7 @@ module.
 
 ## Consequences
 
-A chained piece is three wires for three parts plus `next`, written once in the
-text. Every Arrangement costs one op more for each part that changes and one for
+A chained piece is three wires for three parts plus `next`, and `loop` off,
+written once in the text. Every Arrangement costs one op more for each part that changes and one for
 each that holds or is missing, and a fresh one fades in from its inputs, nought
 unwired, over `fade` at the very start rather than from its last section.

@@ -4,7 +4,7 @@
 
 ### Modules
 
-- Arrangements chain, for a piece longer than 32 sections: wire one's `next` into the next one's `in` and each of its parts into the next one's part, and the second picks up where the first ends, fading from the first's levels into its own. Before it starts an Arrangement hands on what comes into its parts, and its first section comes from them the first time through.
+- Arrangements chain, for a piece longer than 32 sections: wire one's `next` into the next one's `in` and each of its parts into the next one's part, and the second picks up where the first ends, fading from the first's levels into its own. Turn `loop` off on the first and it stays on its last section once it ends, rather than starting over underneath. Before it starts an Arrangement hands on what comes into its parts, and its first section comes from them the first time through.
 
 ### Presets
 

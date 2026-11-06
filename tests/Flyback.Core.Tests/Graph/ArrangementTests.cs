@@ -24,12 +24,13 @@ public class ArrangementTests
         IReadOnlyList<IReadOnlyList<PartLevel>>? parts = null,
         float fade = 0f,
         float before = 0f,
-        float rate = 1f)
+        float rate = 1f,
+        float loop = 1f)
     {
         var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
         var emitter = new Emitter();
 
-        Slot[] inputs = Inputs(emitter, emitter.Load(OpCode.LoadX), rate, fade, before);
+        Slot[] inputs = Inputs(emitter, emitter.Load(OpCode.LoadX), rate, fade, before, loop);
 
         var tidy = ArrangementExtra.Tidy(parts ?? Song);
         var outputs = def.Emit(emitter, new EmitContext(inputs) { Parts = tidy });
@@ -47,11 +48,12 @@ public class ArrangementTests
         ];
     }
 
-    /// <summary>The Arrangement's inputs: 'in', 'rate', 'fade', and every part's level before it starts.</summary>
-    private static Slot[] Inputs(Emitter emitter, Slot domain, float rate = 1f, float fade = 0f, float before = 0f) =>
+    /// <summary>The Arrangement's inputs: 'in', 'rate', 'fade', every part's level before it starts, and 'loop'.</summary>
+    private static Slot[] Inputs(Emitter emitter, Slot domain, float rate = 1f, float fade = 0f, float before = 0f, float loop = 1f) =>
         [
             domain, emitter.Constant(rate), emitter.Constant(fade),
             .. Enumerable.Repeat(emitter.Constant(before), NodeCatalog.MaxParts),
+            emitter.Constant(loop),
         ];
 
     [Fact]
@@ -181,6 +183,17 @@ public class ArrangementTests
     }
 
     [Fact]
+    public void With_loop_off_it_stays_on_its_last_section()
+    {
+        var readings = Run([3.5f, 4.5f, 40f], loop: 0f);
+        const int progress = NodeCatalog.MaxParts, section = NodeCatalog.MaxParts + 1;
+
+        readings.Select(r => r[0]).ShouldBe([0.5f, 0.5f, 0.5f], tolerance: 1e-5);
+        readings.Select(r => r[section]).ShouldBe([4f, 4f, 4f]);
+        readings[2][progress].ShouldBe(1f, 1e-3);
+    }
+
+    [Fact]
     public void Next_reaches_nought_where_its_last_section_ends()
     {
         var readings = Run([0f, 2f, 4f], rate: 0.5f);
@@ -197,12 +210,13 @@ public class ArrangementTests
         var emitter = new Emitter();
         PartLevel[][] second = [[new(0.25f), new(0.25f), new(0.75f), new(0.75f)]];
 
-        var first = def.Emit(emitter, new EmitContext(Inputs(emitter, emitter.Load(OpCode.LoadX))) { Parts = ArrangementExtra.Tidy(Song) });
+        var first = def.Emit(emitter, new EmitContext(Inputs(emitter, emitter.Load(OpCode.LoadX), loop: 0f)) { Parts = ArrangementExtra.Tidy(Song) });
 
         Slot[] chained =
         [
             first[NodeCatalog.MaxParts + 2], emitter.Constant(1f), emitter.Constant(0f),
             .. first.Take(NodeCatalog.MaxParts),
+            emitter.Constant(1f),
         ];
         var outputs = def.Emit(emitter, new EmitContext(chained) { Parts = ArrangementExtra.Tidy(second) });
 
@@ -212,13 +226,17 @@ public class ArrangementTests
         float[] At(float x)
         {
             program.Evaluate(x, 0f, 0f, registers, default);
-            return [(float)registers[outputs[0].Base], (float)registers[outputs[1].Base], (float)registers[outputs[NodeCatalog.MaxParts + 1].Base]];
+            return
+            [
+                (float)registers[outputs[0].Base], (float)registers[outputs[1].Base], (float)registers[outputs[NodeCatalog.MaxParts + 1].Base],
+                (float)registers[first[NodeCatalog.MaxParts + 1].Base],
+            ];
         }
 
-        At(1.5f).ShouldBe([0f, 1f, 0f], tolerance: 1e-4);
-        At(3.5f).ShouldBe([0.5f, 0f, 0f], tolerance: 1e-4);
-        At(4.5f).ShouldBe([0.25f, 0f, 1f], tolerance: 1e-4);
-        At(6.5f).ShouldBe([0.75f, 0f, 3f], tolerance: 1e-4);
-        At(8.5f).ShouldBe([0.25f, 0f, 1f], tolerance: 1e-4);
+        At(1.5f).ShouldBe([0f, 1f, 0f, 2f], tolerance: 1e-4);
+        At(3.5f).ShouldBe([0.5f, 0f, 0f, 4f], tolerance: 1e-4);
+        At(4.5f).ShouldBe([0.25f, 0f, 1f, 4f], tolerance: 1e-4);
+        At(6.5f).ShouldBe([0.75f, 0f, 3f, 4f], tolerance: 1e-4);
+        At(8.5f).ShouldBe([0.25f, 0f, 1f, 4f], tolerance: 1e-4);
     }
 }

@@ -36,6 +36,9 @@ public partial class NodeCatalog
     /// </summary>
     private const float ShortestFade = 0.001f;
 
+    /// <summary>How far short of its end an Arrangement that does not loop stays, as a fraction of a section, so it stays inside its last.</summary>
+    private const float HeldShort = 0.0001f;
+
     /// <summary>A minor pentatonic, so a Note Sequencer plays a tune the moment it is dropped.</summary>
     private static readonly Step[] DefaultRiff =
         [.. new[] { 57f, 60f, 62f, 64f, 67f, 64f, 62f, 60f }.Select(n => new Step(n))];
@@ -181,6 +184,10 @@ public partial class NodeCatalog
                 {
                     Help = $"Part {part}'s level before this one starts: the Arrangement before it in a chain.",
                 }),
+                new PortSpec("loop", PortKind.Scalar, 1f, 0f, 1f, Display: PortDisplay.Integer)
+                {
+                    Help = "1 to come round to the first section after the last, 0 to stay on the last: 0 on every Arrangement in a chain but the last.",
+                },
             ],
             [
                 .. Enumerable.Range(1, MaxParts).Select(part => Num($"part {part}") with
@@ -198,7 +205,7 @@ public partial class NodeCatalog
             "Which parts play in each section of a piece, and how loud: a row of levels for each "
             + "part, stepping a section at a time. Wire a part into a Desk's level or a drum's "
             + "velocity to bring it in and out. For more than " + MaxSections + " sections, chain them: "
-            + "'next' into the next one's 'in' and each part into the next one's part.")
+            + "'next' into the next one's 'in', each part into the next one's part, and 'loop' off on all but the last.")
         {
             Words = "sections of a song",
             Extras = [new ArrangementExtra(DefaultParts)],
@@ -498,11 +505,12 @@ public partial class NodeCatalog
     /// except the first time through, when it comes from the part's input. Before it
     /// starts, while 'in' is below nought, each part is its input: that is how one
     /// Arrangement takes over from the one before it in a chain. A part it does not have
-    /// holds at nought once it starts.
+    /// holds at nought once it starts. With 'loop' off it stays at the end of its last
+    /// section rather than coming round.
     /// </remarks>
     private static Slot[] EmitArrangement(Emitter em, EmitContext node)
     {
-        const int firstPart = 3;
+        const int firstPart = 3, loop = firstPart + MaxParts;
         var parts = node.Parts;
         var zero = em.Constant(0f);
         var one = em.Constant(1f);
@@ -513,9 +521,14 @@ public partial class NodeCatalog
         var sections = parts[0].Count;
 
         var traveled = em.Mul(node[0], node[1]);
-        var index = em.Unary(OpCode.Floor, em.Binary(OpCode.Mod, traveled, em.Constant(sections)));
+        var position = em.Ternary(
+            OpCode.Mix,
+            em.Binary(OpCode.Min, traveled, em.Constant(sections - HeldShort)),
+            em.Binary(OpCode.Mod, traveled, em.Constant(sections)),
+            em.Binary(OpCode.Step, em.Constant(0.5f), node[loop]));
+        var index = em.Unary(OpCode.Floor, position);
         var started = em.Binary(OpCode.Step, zero, traveled);
-        var progress = em.Mul(em.Unary(OpCode.Fract, traveled), started);
+        var progress = em.Mul(em.Unary(OpCode.Fract, position), started);
 
         // Before the start, or in the first section the first time through: a part still comes from its input.
         var fromInput = em.Sub(one, em.Binary(OpCode.Step, one, traveled));

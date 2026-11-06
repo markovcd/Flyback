@@ -595,15 +595,17 @@ length taken off, so piped into a second one's `in` it starts that one where the
 first ends; until then the second hands on whatever is wired into its parts:
 
 ```
-let verse = arrangement(in: beats, rate: 1/32) [ 1 1 0 1 | 0 1 1 1 ]
+let verse = arrangement(in: beats, rate: 1/32, loop: 0) [ 1 1 0 1 | 0 1 1 1 ]
 let chorus = verse.next |> arrangement(rate: 1/32, part_1: verse, part_2: verse.part_2) [
     1 >0.5 1 1 |
     1 1 1 0 ]
 ```
 
 Use `chorus`'s parts from then on. Each section comes from the one before, and
-the second's first section from the first's last. The last of a chain comes round
-to its own first section after its last.
+the second's first section from the first's last. `loop: 0` keeps the first on its
+last section once it ends, so its `section` and `progress` stop there rather than
+starting over; leave it on the last of a chain to bring the piece round to that
+one's first section.
 
 ---
 
