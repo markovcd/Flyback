@@ -7,7 +7,7 @@ Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or 
 | [decision-model.md](decision-model.md) | Laya, and what to ask a decision model, measured against a local laya-serve | Plan | Open: all but Laya landed; next steps proposed |
 | [assistant-says-what-it-can-do.md](assistant-says-what-it-can-do.md) | The assistant answers what it can do, and offers plugin authoring when a .NET SDK is present | Plan | Open |
 | [assistant-request-cost.md](assistant-request-cost.md) | The assistant spends requests and tokens it does not need | Issue | Open: four of eight fixed |
-| [mcp-session-bugs.md](mcp-session-bugs.md) | Driving the editor over MCP: `reset` and edits reach the canvas unasked, `propose` after a failed edit, and 28 lesser bugs | Issue | Open |
+| [mcp-session-bugs.md](mcp-session-bugs.md) | Driving the editor over MCP: `reset` and edits reach the canvas unasked, `propose` after a failed edit, Loudness wrong on `main`, and lesser bugs | Issue | Open |
 | [grab-the-output.md](grab-the-output.md) | Grab the picture or the sound and the knobs move: derivatives through the patch | Plan | Open, parked; spiked |
 | [android-editor.md](android-editor.md) | An Android editor: a third shell beside the desktop and the page | Plan | Open, parked |
 | [ios-editor.md](ios-editor.md) | An iPhone and iPad editor: what differs from Android | Plan | Open, parked |

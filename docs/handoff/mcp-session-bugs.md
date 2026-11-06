@@ -63,8 +63,16 @@ Everything below came from driving `flyback-cli mcp --editor` for an hour and a 
 
 ## Setup (Low, maybe not Flyback)
 
-32. **`flyback` was missing from `~/.claude.json`** although it was registered with `claude mcp add -s user` on 2026-10-19, so Claude Code had no native tools. Worth checking whether an install or update removes it.
+32. **`flyback` was missing from `~/.claude.json`** although it was registered with `claude mcp add -s user` on 2026-10-19, so Claude Code had no native tools. Worth checking whether an install or update removes it. It was gone again on the same day, an hour after it was added back.
+
+## Found on `main` at `876fa272` (Medium)
+
+The same patch, reopened in an editor and a `flyback-cli` built from source.
+
+33. **Loudness reads impossible values.** Where 0.12.0 read about -12 LUFS short-term, the build from `main` reads momentary +4.3 LUFS and short-term -4.1 with peaks held at -1 dBFS by the Limiter. Momentary loudness can't sit 5 dB above the peak. The means sit at the top of each range, as if the -70 floor were left out. It could be the Loudness module or how `measure` summarizes it; unconfirmed which.
+34. **A source-built `flyback-cli`'s briefing lists no plugin modules.** The Effects, Mastering, Voice and other plugin sections were missing from `instructions`, although the editor loaded those plugins and the patch compiled with them. An assistant on a dev build doesn't know Echo or Limiter exist.
+35. **`#` comments are refused now** (`//` starts one; `#` is a sharp). A saved patch, preset or conversation with `#` comments needs the upgrade step the `saved-data` skill asks for, if there isn't one yet.
 
 ## What worked
 
-The language reads well, and `edit_patch` applies whole or says exactly why not (`[used-before-bound]` with line and column). `measure` was trustworthy for levels, step rates and section timing, and `render` for checking a picture. The editor adds `requires` lines itself, and the Mastering plugin's EQ, Compressor, Limiter and Loudness behaved like a mastering chain should.
+The language reads well, and `edit_patch` applies whole or says exactly why not (`[used-before-bound]` with line and column). `measure` was trustworthy for levels, step rates and section timing, and `render` for checking a picture. The editor adds `requires` lines itself, and on 0.12.0 the Mastering plugin's EQ, Compressor, Limiter and Loudness behaved like a mastering chain should.
