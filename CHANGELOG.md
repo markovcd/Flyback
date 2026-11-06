@@ -51,6 +51,7 @@
 
 - `edit_patch` echoes each line it changed once, numbered where it now stands and in order, and a complaint in its answer ends in one period.
 - The Arrangement's grid in the inspector draws a run of equal levels without seams.
+- The Loudness meter reads right after a seek, a loop or a measurement started partway into a piece, rather than tens of decibels too loud.
 
 ## 0.12.0 — 2026-11-05
 

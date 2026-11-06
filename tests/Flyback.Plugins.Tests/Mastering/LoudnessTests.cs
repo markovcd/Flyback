@@ -65,6 +65,28 @@ public class LoudnessTests
         heard.Left[^1].ShouldBe(2.25f, 0.1f);
     }
 
+    /// <summary>A meter that starts a minute into the piece, as one measured from there does.</summary>
+    [Fact]
+    public void A_meter_started_late_in_the_piece_reads_as_one_started_at_the_top()
+    {
+        // From a crest, so the very sample the clock jumped to is loud.
+        var heard = Play(Type, Sine(997d, 0.1f, 3.5, phase: Math.PI / 2), heard: (Momentary, Short), clock: i => 60d + i / (double)Rate);
+
+        heard.Left[^1].ShouldBe(-20f, 0.05f);
+        heard.Right[^1].ShouldBe(-20f, 0.05f);
+    }
+
+    /// <summary>A loop back to the top, or a seek, is no time passing: the windows carry on through it.</summary>
+    [Fact]
+    public void A_jump_in_the_clock_leaves_the_reading_alone()
+    {
+        var half = Rate / 2;
+        var heard = Play(Type, Sine(997d, 0.1f, 1), heard: (Momentary, Momentary), clock: i => i < half ? 30d + i / (double)Rate : (i - half) / (double)Rate);
+
+        heard.Left[half - 1].ShouldBe(-20f, 0.05f);
+        heard.Left[^1].ShouldBe(-20f, 0.05f);
+    }
+
     /// <summary>K-weighting's highpass: a bass note counts for less than its level.</summary>
     [Fact]
     public void Deep_bass_counts_for_less()

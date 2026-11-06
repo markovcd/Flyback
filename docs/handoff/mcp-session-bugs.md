@@ -3,7 +3,7 @@
 Found on 2026-11-06, on `main` at `9688c230`, in Flyback 0.12.0. It is on TODO.md; take an item off here as it lands, and delete this file, and its TODO.md item, in the commit that lands the last.
 
 - **Severity:** Critical (item 4), Medium or Low for the rest, marked on each
-- **Status:** Open; items 1 to 3, 16 to 18, 20 to 22, 31 and 34 fixed; 33 narrowed
+- **Status:** Open; items 1 to 3, 16 to 18, 20 to 22, 31, 33 and 34 fixed
 
 Everything below came from driving `flyback-cli mcp --editor` for an hour and a half while building a patch with the user. It was all confirmed by running; none of it was read from the code. The session's own client was a stdio script that started one `flyback-cli mcp` process per call, because `flyback` was not registered for Claude Code (item 33). Arrangement chaining is being built separately and is left out.
 
@@ -69,7 +69,7 @@ Everything below came from driving `flyback-cli mcp --editor` for an hour and a 
 
 The same patch, reopened in an editor and a `flyback-cli` built from source.
 
-33. **Loudness reads impossible values.** Where 0.12.0 read about -12 LUFS short-term, the build from `main` reads momentary +4.3 LUFS and short-term -4.1 with peaks held at -1 dBFS by the Limiter. *Narrowed:* the meter is right, and the reading is possible. BS.1770's K-weighting lifts the top by 4 dB and two channels add 3, so a bright, dense signal reads louder in LUFS than its peak in dBFS: a 4 kHz sine at -1 dBFS in both channels reads +2.25 on the Loudness module and the same on `render --loudness`, an independent meter, once the Output's volume is allowed for (`LoudnessTests.A_bright_tone_reads_louder_than_its_peak`). The means sit near the top because -70 is only the first instant of an empty window. On Acid the module and `render --loudness` agree to within its 0.7 output volume. What is left is why the same patch reads about 16 dB hotter on `main` than on 0.12.0: most likely the mix itself grew and the Limiter flattened it toward a square, which is unconfirmed. Bisect with the patch, which is not in the repo or the project files.
+33. **Fixed.** The Loudness module counted the first evaluation after a seek, a loop or a measurement started partway in as lasting the whole jump, and that share never left its windows: on the pentagram patch, measured from 60 s, momentary read +7.8 LUFS where `render --loudness` read -14.6 before the Output's volume. A jump in the clock now counts as no time, and each evaluation's share leaves the window exactly as it came in. The same patch now reads -14.3 momentary.
 
 34. **Fixed.** A `flyback-cli` built in Debug or Release has no plugins beside it, so its own briefing named only the built-in modules. With the editor open, `mcp` now asks the editor for its briefing and hands the client that; with none, or an editor too old to answer, it falls back to its own.
 35. **`#` comments are refused now** (`//` starts one; `#` is a sharp). A saved patch, preset or conversation with `#` comments needs the upgrade step the `saved-data` skill asks for, if there isn't one yet.

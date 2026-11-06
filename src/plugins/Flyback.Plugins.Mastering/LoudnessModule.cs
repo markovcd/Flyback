@@ -15,9 +15,10 @@ namespace Flyback.Plugins.Mastering;
 /// are those coefficients, and at any other rate they are what libebur128 and
 /// ffmpeg would use there.
 /// <para>
-/// A window's mean square is a running sum: each weighted square is added as it
-/// comes in and taken away again as it comes out of a delay line the window's
-/// length. The sum telescopes, so it does not drift. Integrated loudness, gated
+/// A window's mean square is a running sum: each weighted square's share is added
+/// as it comes in, and the same share taken away as it comes out of a delay line
+/// the window's length. The sum telescopes, so it does not drift. A seek or a loop
+/// moves the clock by more than one evaluation at once, and counts as no time. Integrated loudness, gated
 /// over a whole program, is not attempted: it needs the whole program, which
 /// is what <c>flyback render --loudness</c> has.
 /// </para>
@@ -40,6 +41,9 @@ internal static class LoudnessModule
 
     /// <summary>The quietest peak, in dBFS.</summary>
     private const float Quietest = -100f;
+
+    /// <summary>The longest one evaluation can take, in seconds: a seek or a loop moves the clock further than that at once.</summary>
+    private const float LongestStep = 0.001f;
 
     /// <summary>How fast a peak falls back, in seconds per twenty decibels: a program meter's.</summary>
     private const float PeakFall = 1.7f;
@@ -81,8 +85,8 @@ internal static class LoudnessModule
     private static Slot[] Emit(Emitter em, EmitContext node)
     {
         var live = em.HasMemory();
-        var step = em.Interval();
         var zero = em.Constant(0f);
+        var step = Counted(em.Interval());
 
         var shelfG = Dsp.Warp(em, em.Constant(ShelfHertz));
         var shelfK = em.Constant(1f / ShelfQ);
@@ -117,18 +121,23 @@ internal static class LoudnessModule
             return em.Mul(weighted, weighted);
         }
 
+        // A clock that went back, or forward by more than an evaluation, is a seek or a
+        // loop, and counts as no time at all.
+        Slot Counted(Slot interval) => em.Mul(
+            em.Binary(OpCode.Max, interval, zero),
+            em.Sub(em.Constant(1f), em.Binary(OpCode.Step, em.Constant(LongestStep), interval)));
+
         Slot Window(float seconds)
         {
-            // An evaluation short, because a line reads before it writes: what
-            // leaves is what came in exactly one window ago.
+            // Each evaluation's share of the mean goes into the line, so exactly what
+            // was added leaves one window later. An evaluation short, because a line
+            // reads before it writes.
+            var share = em.Mul(energy, em.Mul(step, 1f / seconds));
             var leaving = em.DelayLine(
-                OpCode.Delay, energy, zero, em.Sub(em.Constant(seconds), step), seconds);
+                OpCode.Delay, share, zero, em.Sub(em.Constant(seconds), step), seconds);
 
             var cell = em.AllocateUnitSlot();
-            var mean = em.Binary(
-                OpCode.Max,
-                em.Add(em.UnitRead(cell), em.Mul(em.Sub(energy, leaving), em.Mul(step, 1f / seconds))),
-                zero);
+            var mean = em.Binary(OpCode.Max, em.Add(em.UnitRead(cell), em.Sub(share, leaving)), zero);
 
             em.UnitWrite(cell, mean);
 

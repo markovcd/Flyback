@@ -18,6 +18,7 @@ internal static class MasteringBench
 
     /// <param name="into">Which of the module's inputs x and y are patched into; -1 leaves one out.</param>
     /// <param name="heard">Which of the module's outputs reach the Output's left and right.</param>
+    /// <param name="clock">The time each sample is played at; a sample's index over the rate unless given.</param>
     public static (float[] Left, float[] Right) Play(
         string type,
         float[] x,
@@ -25,6 +26,7 @@ internal static class MasteringBench
         (int X, int Y)? into = null,
         (int Left, int Right)? heard = null,
         Action<NodeInstance>? configure = null,
+        Func<int, double>? clock = null,
         params (int Port, float Value)[] knobs)
     {
         var patch = Wired(type, into ?? (0, y is null ? -1 : 1), heard ?? (0, 1), NodeCatalog.OutputLeftPort, knobs, configure);
@@ -40,7 +42,7 @@ internal static class MasteringBench
 
         for (var i = 0; i < x.Length; i++)
         {
-            program.Evaluate(x[i], y?[i] ?? 0f, i / (double)Rate, registers, default, state);
+            program.Evaluate(x[i], y?[i] ?? 0f, clock?.Invoke(i) ?? i / (double)Rate, registers, default, state);
             left[i] = (float)registers[program.OutputBase];
             right[i] = (float)registers[program.OutputBase + 1];
         }
