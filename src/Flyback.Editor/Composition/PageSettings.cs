@@ -9,7 +9,10 @@ using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Windows;
+using Flyback.Engine.Render;
 using Flyback.Host;
+using Flyback.Ui;
+using Flyback.Ui.Audio;
 using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 
@@ -31,6 +34,22 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
     private readonly CheckBox compactModules = Switch("pageCompactModules", "Compact modules");
     private readonly CheckBox endless = Switch("pageEndless", "Endless");
 
+    /// <summary>Which edge of a full-screen picture the transport waits at, and so which the knobs do.</summary>
+    private readonly ComboBox transportEdge = new Picker
+    {
+        Name = "pageTransportEdge",
+        ItemsSource = new[] { "Top, knobs below", "Bottom, knobs on top" },
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
+    /// <summary>The oversampling the sound starts at, one row a factor of <see cref="AudioRenderer.Oversamples"/>.</summary>
+    private readonly ComboBox oversample = new Picker
+    {
+        Name = "pageOversample",
+        ItemsSource = AudioRenderer.Oversamples.Select(OversamplingText.Choice).ToList(),
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
     private readonly ComboBox scroll = new Picker
     {
         Name = "pageScroll",
@@ -41,7 +60,7 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
     /// <summary>Drag to pan and the scroll, which a finger has no use for.</summary>
     private readonly Border panRow;
 
-    public PageSettings(EditorHost host, Toolbar toolbar, CanvasSection canvas, LivePatchingRows live, OutputSettingRepository settings, IBrowserStore browser)
+    public PageSettings(EditorHost host, Toolbar toolbar, CanvasSection canvas, LivePatchingRows live, FullScreenSection fullScreen, IAudioEngine audio, OutputSettingRepository settings, IBrowserStore browser)
     {
         this.host = host;
         this.toolbar = toolbar;
@@ -92,6 +111,9 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
         var endlessRow = Row(endless, "A patch with no length plays on until paused, with no seek bar.");
         endlessRow.Margin = new Thickness(8, 4, 8, 4);
 
+        var oversampleRow = Row(oversample, "Oversampling", "Lowered a step by itself whenever the sound keeps falling behind.");
+        var transportRow = Row(transportEdge, "Transport at", "Over a full-screen picture; the knobs take the other edge.");
+
         live.View.Margin = new Thickness(8, 0, 8, 4);
 
         // Taking effect as it is changed and kept in the browser, as the switches are.
@@ -119,6 +141,10 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
                     compactRow,
                     Heading("Playing"),
                     endlessRow,
+                    Heading("Sound"),
+                    oversampleRow,
+                    Heading("Full screen"),
+                    transportRow,
                     Heading("Live patching"),
                     live.View,
                 },
@@ -133,12 +159,32 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
             live.Show(settings.Current);
             compactModules.IsChecked = canvas.CompactModules;
             endless.IsChecked = canvas.Endless;
+            transportEdge.SelectedIndex = settings.Current.Transport == TransportEdge.Bottom ? 1 : 0;
+            oversample.SelectedIndex = Math.Max(0, AudioRenderer.Oversamples.ToList().IndexOf(settings.Current.Oversample));
         };
 
         dragToPan.IsCheckedChanged += (_, _) => Change(settings => settings.DragToPan = dragToPan.IsChecked == true);
         scroll.SelectionChanged += (_, _) => Change(settings => settings.Scroll = (CanvasScroll)Math.Max(scroll.SelectedIndex, 0));
         compactModules.IsCheckedChanged += (_, _) => Change(settings => settings.CompactModules = compactModules.IsChecked == true);
         endless.IsCheckedChanged += (_, _) => Change(settings => settings.Endless = endless.IsChecked == true);
+
+        transportEdge.SelectionChanged += (_, _) =>
+        {
+            if (!Flyout.IsOpen) return;
+
+            settings.Current.Transport = transportEdge.SelectedIndex == 1 ? TransportEdge.Bottom : TransportEdge.Top;
+            fullScreen.Apply(settings.Current);
+            browser.Write(PageOutput.Section, PageOutput.Of(settings.Current).Json());
+        };
+
+        oversample.SelectionChanged += (_, _) =>
+        {
+            if (!Flyout.IsOpen || oversample.SelectedIndex < 0) return;
+
+            settings.Current.Oversample = AudioRenderer.Oversamples[oversample.SelectedIndex];
+            audio.Oversample = settings.Current.Oversample;
+            browser.Write(PageOutput.Section, PageOutput.Of(settings.Current).Json());
+        };
     }
 
     /// <summary>The panel, open or shut; for a test.</summary>
@@ -189,6 +235,29 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
             },
         },
     };
+
+    /// <summary>A labeled picker with a note under it.</summary>
+    private static StackPanel Row(ComboBox picker, string label, string note)
+    {
+        var row = new StackPanel
+        {
+            Spacing = 2,
+            Margin = new Thickness(8, 0, 8, 4),
+            Children =
+            {
+                InspectorRows.Field(label, picker),
+                new TextBlock
+                {
+                    Text = note,
+                    FontSize = Text.Small,
+                    Foreground = Text.Muted,
+                    TextWrapping = TextWrapping.Wrap,
+                },
+            },
+        };
+
+        return row;
+    }
 
     private static Control Heading(string text)
     {

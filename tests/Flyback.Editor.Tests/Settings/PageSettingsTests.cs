@@ -123,6 +123,56 @@ public sealed class PageSettingsTests : EditorTest
         Editor(next).GlassOpacity.ShouldBe(0.4, 1e-9);
     }
 
+    private ComboBox Picker(MainWindow window, string name) =>
+        ((Control)Panel(window).Flyout.Content!).GetLogicalDescendants().OfType<ComboBox>().Single(c => c.Name == name);
+
+    [AvaloniaFact]
+    public void The_transport_edge_applies_at_once_and_is_kept_for_the_next_visit()
+    {
+        var window = Open();
+        PressGear(window);
+
+        Picker(window, "pageTransportEdge").SelectedIndex = 1;
+        Settle(window);
+
+        Service<Flyback.Editor.Settings.OutputSettingRepository>(window).Current.Transport.ShouldBe(Flyback.Host.TransportEdge.Bottom);
+        Flyback.Editor.Settings.PageOutput.Parse(browser.Kept[Flyback.Editor.Settings.PageOutput.Section]).Transport.ShouldBe(Flyback.Host.TransportEdge.Bottom);
+
+        var next = Open();
+        Service<Flyback.Editor.Settings.OutputSettingRepository>(next).Current.Transport.ShouldBe(Flyback.Host.TransportEdge.Bottom);
+    }
+
+    [AvaloniaFact]
+    public void The_oversampling_reaches_the_sound_at_once_and_is_kept_for_the_next_visit()
+    {
+        var window = Open();
+        PressGear(window);
+
+        Picker(window, "pageOversample").SelectedIndex = 3;
+        Settle(window);
+
+        Service<Flyback.Ui.Audio.IAudioEngine>(window).Oversample.ShouldBe(8);
+        Flyback.Editor.Settings.PageOutput.Parse(browser.Kept[Flyback.Editor.Settings.PageOutput.Section]).Oversample.ShouldBe(8);
+
+        var next = Open();
+        Service<Flyback.Ui.Audio.IAudioEngine>(next).Oversample.ShouldBe(8);
+        PressGear(next);
+        Picker(next, "pageOversample").SelectedIndex.ShouldBe(3);
+    }
+
+    [AvaloniaTheory]
+    [InlineData("{ not json")]
+    [InlineData("null")]
+    [InlineData("""{"transport":"Sideways","oversample":3}""")]
+    [InlineData("""{"transport":7,"oversample":"lots"}""")]
+    public void Output_settings_the_browser_garbled_open_as_the_defaults(string kept)
+    {
+        var read = Flyback.Editor.Settings.PageOutput.Parse(kept);
+
+        read.Transport.ShouldBe(Flyback.Host.TransportEdge.Top);
+        read.Oversample.ShouldBe(Flyback.Engine.Render.AudioRenderer.DefaultOversample);
+    }
+
     [AvaloniaFact]
     public void A_browser_that_kept_nothing_opens_with_the_defaults()
     {

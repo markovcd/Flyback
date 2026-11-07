@@ -33,6 +33,9 @@ public static partial class WebExports
     private static readonly WebGl Gl = new();
 
     private static WebSound? sound;
+
+    /// <summary>The oversampling last asked for, which a sound made after the asking starts at.</summary>
+    private static int? oversample;
     private static WebPicture? picture;
 
     /// <summary>What the open patch says it is for, and its panel's knobs.</summary>
@@ -161,6 +164,7 @@ public static partial class WebExports
             if (load.TooNew) return load.Detail;
 
             var next = new WebSound(new Opened(load.Patch, keptFiles, keptFiles), (float)aspect, sound);
+            if (sound is null && oversample is { } asked) next.Oversample = asked;
 
             sound?.Dispose();
             sound = next;
@@ -236,11 +240,14 @@ public static partial class WebExports
     [JSExport]
     public static void Play(string key, double value) => sound?.Play(key, (float)value);
 
-    /// <summary>Works the sound out at <paramref name="factor"/> times the output rate from here on; a factor not on offer is ignored.</summary>
+    /// <summary>Works the sound out at <paramref name="factor"/> times the output rate from here on, the sound of a patch opened later too; a factor not on offer is ignored.</summary>
     [JSExport]
     public static void Oversample(int factor)
     {
-        if (sound is not null && AudioRenderer.Oversamples.Contains(factor)) sound.Oversample = factor;
+        if (!AudioRenderer.Oversamples.Contains(factor)) return;
+
+        oversample = factor;
+        if (sound is not null) sound.Oversample = factor;
     }
 
     /// <summary>The width over the height of the picture the sound belongs to, which Coordinates' <c>aspect</c> reads.</summary>
@@ -267,7 +274,7 @@ public static partial class WebExports
         {
             var opened = open();
 
-            if (part == SoundPart) sound = new WebSound(opened, width, height);
+            if (part == SoundPart) sound = new WebSound(opened, width, height) { Oversample = oversample ?? AudioRenderer.DefaultOversample };
             else picture = new WebPicture(opened, width, height);
 
             description = opened.Patch.Description;

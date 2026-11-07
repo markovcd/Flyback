@@ -152,7 +152,8 @@ internal sealed class FullScreenSection : ISettingsSection
         live.Read(into);
     }
 
-    private void Apply(OutputSettings now)
+    /// <summary>Lays the transport and the knobs at the edges <paramref name="now"/> names, and puts the live patching look in force.</summary>
+    internal void Apply(OutputSettings now)
     {
         live.Apply(now);
 

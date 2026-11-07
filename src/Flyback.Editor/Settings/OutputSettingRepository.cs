@@ -17,10 +17,17 @@ internal sealed class OutputSettingRepository
         path = folders.SettingsPath;
         this.report = report;
 
-        // A page's picture is drawn small, and of the rest the browser keeps only how a live patch looks.
+        // A page's picture is drawn small, and of the rest the browser keeps only what PageSettings offers.
         Current = path is not null ? OutputSettings.Load(path)
-            : host.InPage ? new OutputSettings { Width = 480, Height = 270, Live = LivePatchingLook.Parse(browser.Read(LivePatchingLook.Section)) }
+            : host.InPage ? InPage(browser)
             : new OutputSettings();
+    }
+
+    private static OutputSettings InPage(IBrowserStore browser)
+    {
+        var settings = new OutputSettings { Width = 480, Height = 270, Live = LivePatchingLook.Parse(browser.Read(LivePatchingLook.Section)) };
+        PageOutput.Parse(browser.Read(PageOutput.Section)).Into(settings);
+        return settings;
     }
 
     /// <summary>The settings in force, changed in place; set from outside only by a run that keeps nothing, such as a shot.</summary>

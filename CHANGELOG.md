@@ -34,6 +34,7 @@
 - The About window keeps its size and place when its mark comes alive; the line saying the code is on the clipboard has its room from the start.
 - A renamed module shows its type after its name on the canvas, quieter, and under it when zoomed out, and the inspector names it beside the family, so clearing the name is no longer the way to see what it is.
 - On a Mac a mouse wheel zooms the canvas again, while two fingers on a trackpad still pan it. Settings, Canvas, Scroll can make every scroll pan or every scroll zoom instead.
+- The web editor's settings choose the oversampling the sound starts at and which edge the transport takes over a full-screen picture, and keep both for the next visit.
 
 ### Viewer
 
