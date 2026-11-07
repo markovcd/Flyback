@@ -17,6 +17,8 @@
 
 ### Command line
 
+- `flyback-cli render` draws on the GPU through Metal on a Mac, where it drew on the processor.
+
 ### Installing
 
 ### Performance

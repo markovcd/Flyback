@@ -23,9 +23,9 @@ namespace Flyback.Cli.Commands;
 /// ADR-0089 for why some of them are ffmpeg's work and two are this program's own.
 /// </summary>
 /// <remarks>
-/// The picture is drawn on the GPU through a headless context where there is one,
-/// and on the processor where there is not or where asked; the two may differ in
-/// their last bits (ADR-0035, ADR-0157). On the processor the programs run as IL,
+/// The picture is drawn on the GPU, through Metal on a Mac and a headless OpenGL context elsewhere,
+/// and on the processor where there is none or where asked; the two may differ in
+/// their last bits (ADR-0035, ADR-0157, ADR-0214). On the processor the programs run as IL,
 /// which gives the interpreter's bytes faster.
 /// </remarks>
 internal static class RenderCommand
@@ -468,13 +468,13 @@ internal static class RenderCommand
     /// draw on the processor. <paramref name="refused"/> when --gpu was asked for
     /// and there is none; said on <paramref name="error"/> either way.
     /// </summary>
-    private static HeadlessRenderer? Gpu(CompiledPatch program, RenderOptions options, TextWriter error, out bool refused)
+    private static IHeadlessRenderer? Gpu(CompiledPatch program, RenderOptions options, TextWriter error, out bool refused)
     {
         refused = false;
 
         if (options.Interpreted || options.Backend == PictureBackend.Processor) return null;
 
-        var gpu = HeadlessRenderer.Open(out var why);
+        var gpu = OpenGpu(out var why);
 
         if (gpu?.Prepare(program) is { } failure)
         {
@@ -497,6 +497,12 @@ internal static class RenderCommand
 
         return null;
     }
+
+    /// <summary>Metal on Apple's machines, unless FLYBACK_CGL asks for OpenGL there; OpenGL everywhere else (ADR-0214).</summary>
+    private static IHeadlessRenderer? OpenGpu(out string? why) =>
+        OperatingSystem.IsMacOS() && Environment.GetEnvironmentVariable("FLYBACK_CGL") != "1"
+            ? MetalHeadlessRenderer.Open(out why)
+            : HeadlessRenderer.Open(out why);
 
     /// <summary>
     /// Whether a render plays the sound: to write it, or because the picture is of what
