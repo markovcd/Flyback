@@ -6,7 +6,6 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
-using Flyback.Editor.Hubs;
 using Flyback.Editor.Tests.Controls;
 using Flyback.Editor.Sequence;
 using Flyback.Engine.Language;
@@ -73,7 +72,6 @@ public class SequencePaneTests : EditorTest
 
         window.MouseDown(at, MouseButton.Left);
         window.MouseUp(at, MouseButton.Left);
-        Service<TextWriteBack>(window).HandCameOff();
         Settle(window);
 
         SourceViewTest.Text(window).Text.ShouldContain("    bass: 1 1");

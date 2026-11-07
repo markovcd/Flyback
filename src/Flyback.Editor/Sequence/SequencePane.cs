@@ -179,7 +179,7 @@ internal sealed class SequencePane : IReactTo<PatchCompiled>, IReactTo<DocumentA
         rows.Played = clock.Played(preview.Time);
     }
 
-    /// <summary>Puts the edited parts on the Song and files the change in the history.</summary>
+    /// <summary>Puts the edited parts on the Song, files the change in the history and writes it into the text.</summary>
     private void Save(string? because)
     {
         if (song is not { } node) return;
@@ -188,6 +188,7 @@ internal sealed class SequencePane : IReactTo<PatchCompiled>, IReactTo<DocumentA
         rows.Parts = new SongParts(SongExtra.Of(node));
         Summarize();
         writeBack.Edited(node, because);
+        writeBack.HandCameOff();
     }
 
     private void Edit(Action<SongParts> change, string because)
