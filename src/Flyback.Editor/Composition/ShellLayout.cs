@@ -70,7 +70,6 @@ internal sealed class ShellLayout(
     private const int WideColumn = 2;
     private const int SideColumn = 4;
     private bool previewHideWaiting;
-    private bool swapped;
     private GridSplitter? sideSplitter;
     private GridLength sideShare = new(WindowLayout.DefaultSideWeight, GridUnitType.Star);
     private GridLength canvasShare = new(3, GridUnitType.Star);
@@ -329,12 +328,11 @@ internal sealed class ShellLayout(
 
     /// <summary>
     /// Takes the column beside the canvas away, or brings it back at the width it left with.
-    /// It holds the canvas while the two are swapped, and then it stays.
+    /// Swapped, it holds the canvas and the inspector, and away it leaves the picture the width.
     /// </summary>
     public void ShowSide(bool shown)
     {
         if (columns is null || sideSplitter is null) return;
-        if (swapped) shown = true;
         if (shown != sideShown && !fullScreen.IsFullScreen)
         {
             if (!shown) sideShare = columns.ColumnDefinitions[SideColumn].Width;
@@ -434,9 +432,7 @@ internal sealed class ShellLayout(
         if (columns is null || previewBox is null || patchPane is null || inspectorBox is null || previewSplitter is null) return;
         if (swapped == (Grid.GetColumn(previewBox) == WideColumn)) return;
 
-        this.swapped = swapped;
         if (swapped) ShowSide(true);
-        toolbar.Side.IsEnabled = !swapped;
         ToolTip.SetTip(toolbar.Side, swapped ? Toolbar.SideSwappedTip : Toolbar.SideTip);
 
         var (pictureColumn, patchColumn) = swapped ? (WideColumn, SideColumn) : (SideColumn, WideColumn);
@@ -576,9 +572,9 @@ internal sealed class ShellLayout(
         LaySequence();
         if (ControlsRow is { } row && knobs.View.IsVisible) row.Height = controlsShare;
         ShowControls(saved.ControlsOpen);
+        toolbar.Swap.IsChecked = saved.Swapped && toolbar.Swap.IsEnabled;
         if (narrow) sideBeforeNarrow = saved.SideOpen;
         else ShowSide(saved.SideOpen);
-        toolbar.Swap.IsChecked = saved.Swapped && toolbar.Swap.IsEnabled;
         toolbar.Transport.IsChecked = saved.TransportOpen;
         if (saved.Code) document.ShowCode(true);
     }

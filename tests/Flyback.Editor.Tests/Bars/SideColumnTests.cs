@@ -47,7 +47,7 @@ public class SideColumnTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void Swapping_brings_the_column_back_and_holds_it()
+    public void Swapping_brings_the_column_back_with_the_canvas_in_it()
     {
         var window = Open();
         var editor = Editor(window);
@@ -57,15 +57,41 @@ public class SideColumnTests : EditorTest
         Press(window, Button(window, "swap"));
 
         side.IsChecked.ShouldBe(true, "the canvas stands in that column now");
-        side.IsEnabled.ShouldBeFalse();
+        side.IsEnabled.ShouldBeTrue();
         ToolTip.GetTip(side).ShouldBe(Toolbar.SideSwappedTip);
         editor.Bounds.Width.ShouldBeGreaterThan(250, "the canvas has a column to stand in");
 
         Press(window, Button(window, "swap"));
 
-        side.IsEnabled.ShouldBeTrue();
         side.IsChecked.ShouldBe(true);
         ToolTip.GetTip(side).ShouldBe(Toolbar.SideTip);
+    }
+
+    /// <summary>Swapped, the column holds the canvas, so putting it away gives the picture and the knobs the width.</summary>
+    [AvaloniaFact]
+    public void Putting_the_column_away_while_swapped_gives_the_picture_its_width_and_back()
+    {
+        var window = Open();
+        var editor = Editor(window);
+        var side = Button(window, "side");
+
+        Press(window, Button(window, "controls"));
+        Press(window, Button(window, "swap"));
+        var pictureWas = Preview(window).Bounds.Width;
+        var knobs = All<Flyback.Editor.Knobs.ControlsPanel>(window).Single();
+
+        Press(window, side);
+
+        side.IsChecked.ShouldBe(false);
+        editor.Bounds.Width.ShouldBe(0, 0.5);
+        Preview(window).Bounds.Width.ShouldBeGreaterThan(pictureWas + 250);
+        knobs.IsEffectivelyVisible.ShouldBeTrue("the knobs stay under the picture");
+        knobs.Bounds.Width.ShouldBe(Preview(window).Bounds.Width, 1);
+
+        Press(window, side);
+
+        Preview(window).Bounds.Width.ShouldBe(pictureWas, 0.5);
+        editor.Bounds.Width.ShouldBeGreaterThan(250);
     }
 
     /// <summary>Full screen takes the preview's column whatever its width, and gives it back as it was.</summary>

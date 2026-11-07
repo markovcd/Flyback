@@ -35,10 +35,25 @@ public sealed class LayoutSteps(EditorDriver editor)
     [Then("the canvas is as wide as it was")]
     public void ThenAsWide() => editor.CanvasWidth.ShouldBe(canvasWas, 0.5);
 
-    [Then("the side column is showing and cannot be put away")]
-    public void ThenStays()
+    [Then("the side column is showing with the canvas in it")]
+    public void ThenShowing()
     {
-        editor.Toggled("side").ShouldBe((true, false));
+        editor.Toggled("side").ShouldBe((true, true));
         editor.CanvasWidth.ShouldBeGreaterThan(0);
+    }
+
+    [When("the side column is put away again")]
+    public void WhenPutAwayAgain()
+    {
+        canvasWas = editor.CanvasWidth;
+        previewWas = editor.PreviewWidth;
+        editor.Toggle("side", false);
+    }
+
+    [Then("the picture has the canvas's width as well as its own")]
+    public void ThenPictureWider()
+    {
+        editor.CanvasWidth.ShouldBe(0, 0.5);
+        editor.PreviewWidth.ShouldBeGreaterThanOrEqualTo(canvasWas + previewWas - 1);
     }
 }

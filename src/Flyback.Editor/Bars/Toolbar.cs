@@ -56,9 +56,9 @@ internal sealed class Toolbar
     public const string SideTip =
         "Show the preview and the inspector beside the canvas, or give the canvas their width.";
 
-    /// <summary>What it says while the canvas is in that column.</summary>
+    /// <summary>What it does while the canvas is swapped into that column.</summary>
     public const string SideSwappedTip =
-        "The canvas is in this column while it is swapped with the preview, so the column stays.";
+        "Show the canvas and the inspector beside the picture, or give the picture their width.";
 
     /// <summary>What it does in a window too narrow for the canvas and the column side by side.</summary>
     public const string SideNarrowTip =

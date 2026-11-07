@@ -37,6 +37,7 @@
 - A renamed module shows its type after its name on the canvas, quieter, and under it when zoomed out, and the inspector names it beside the family, so clearing the name is no longer the way to see what it is.
 - On a Mac a mouse wheel zooms the canvas again, while two fingers on a trackpad still pan it. Settings, Canvas, Scroll can make every scroll pan or every scroll zoom instead.
 - The web editor's settings choose the oversampling the sound starts at and which edge the transport takes over a full-screen picture, and keep both for the next visit.
+- With the picture swapped onto the canvas's place, the side button puts the canvas and the inspector away too, leaving the picture the whole width beside the assistant and with the knobs under it.
 
 ### Viewer
 
