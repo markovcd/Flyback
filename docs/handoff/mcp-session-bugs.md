@@ -84,6 +84,13 @@ The same patch, reopened in an editor and a `flyback-cli` built from source.
 
 37. **`mcp --editor` never reconnects after the editor restarts.** Once the editor it was attached to closed, every tool answered `Pipe is broken.` until the client restarted the server; reopening the editor did not help. *Fix:* on a broken pipe, drop the connection and attach to whichever editor is open on the next call, saying so if none is.
 
+## Found on `main` at `979db514` (Medium)
+
+An editor built from `main`, driven through the installed 0.13.0 `Flyback.app`'s `flyback-cli mcp --editor`.
+
+38. **A `measure` that times out leaves the editor locked against the same client.** A 56 s `measure` of six handles ended in `Request timed out`; every call after it, `describe_module` included, answered `another program is driving the editor already.` The only other `flyback-cli mcp` processes on the machine were idle. *Fix:* when a request is abandoned, release the editor or let the same server reattach to its own session; and say who holds the editor rather than "another program".
+39. **An editor and a `flyback-cli` from either side of 26e1888 cannot find each other.** The installed 0.13.0 CLI looks for `$TMPDIR/CoreFxPipe_flyback-editor-<user>` (and the desktop app starts it without `TMPDIR`, so `/tmp`), while an editor from `main` listens on `~/Library/Caches/Flyback/flyback-editor.sock`. The CLI says the editor's setting is off, which sends the user to the wrong fix. *Fix:* have the CLI try both paths until the old one is gone, and word the error as "no editor found at <path>".
+
 ## What worked
 
 The language reads well, and `edit_patch` applies whole or says exactly why not (`[used-before-bound]` with line and column). `measure` was trustworthy for levels, step rates and section timing, and `render` for checking a picture. The editor adds `requires` lines itself, and on 0.12.0 the Mastering plugin's EQ, Compressor, Limiter and Loudness behaved like a mastering chain should.
