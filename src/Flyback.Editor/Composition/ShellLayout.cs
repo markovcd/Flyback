@@ -432,7 +432,6 @@ internal sealed class ShellLayout(
         if (columns is null || previewBox is null || patchPane is null || inspectorBox is null || previewSplitter is null) return;
         if (swapped == (Grid.GetColumn(previewBox) == WideColumn)) return;
 
-        if (swapped) ShowSide(true);
         ToolTip.SetTip(toolbar.Side, swapped ? Toolbar.SideSwappedTip : Toolbar.SideTip);
 
         var (pictureColumn, patchColumn) = swapped ? (WideColumn, SideColumn) : (SideColumn, WideColumn);

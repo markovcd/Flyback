@@ -11,11 +11,17 @@ Feature: The canvas can have the preview's column too
     When the side column is brought back
     Then the canvas is as wide as it was
 
-  Scenario: Swapping brings the side column back, and putting it away widens the picture
+  Scenario: Putting the side column away while swapped widens the picture
+    Given a rainbow across the screen
+    And the patch is open in the editor
+    When the preview and the canvas are swapped
+    Then the side column is showing with the canvas in it
+    When the side column is put away again
+    Then the picture has the canvas's width as well as its own
+
+  Scenario: Swapping leaves a side column that was put away where it is
     Given a rainbow across the screen
     And the patch is open in the editor
     When the side column is put away
     And the preview and the canvas are swapped
-    Then the side column is showing with the canvas in it
-    When the side column is put away again
-    Then the picture has the canvas's width as well as its own
+    Then the side column is still away

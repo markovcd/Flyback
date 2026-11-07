@@ -47,23 +47,26 @@ public class SideColumnTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void Swapping_brings_the_column_back_with_the_canvas_in_it()
+    public void Swapping_leaves_the_column_away()
     {
         var window = Open();
         var editor = Editor(window);
         var side = Button(window, "side");
 
         Press(window, side);
+        var canvasWas = editor.Bounds.Width;
         Press(window, Button(window, "swap"));
 
-        side.IsChecked.ShouldBe(true, "the canvas stands in that column now");
+        side.IsChecked.ShouldBe(false, "a swap does not bring the column back");
         side.IsEnabled.ShouldBeTrue();
         ToolTip.GetTip(side).ShouldBe(Toolbar.SideSwappedTip);
-        editor.Bounds.Width.ShouldBeGreaterThan(250, "the canvas has a column to stand in");
+        editor.Bounds.Width.ShouldBe(0, 0.5);
+        Preview(window).Bounds.Width.ShouldBe(canvasWas, 0.5, "the picture has the canvas's whole width");
 
         Press(window, Button(window, "swap"));
 
-        side.IsChecked.ShouldBe(true);
+        side.IsChecked.ShouldBe(false);
+        editor.Bounds.Width.ShouldBe(canvasWas, 0.5);
         ToolTip.GetTip(side).ShouldBe(Toolbar.SideTip);
     }
 

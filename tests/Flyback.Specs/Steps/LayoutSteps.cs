@@ -42,6 +42,13 @@ public sealed class LayoutSteps(EditorDriver editor)
         editor.CanvasWidth.ShouldBeGreaterThan(0);
     }
 
+    [Then("the side column is still away")]
+    public void ThenStillAway()
+    {
+        editor.Toggled("side").ShouldBe((false, true));
+        editor.CanvasWidth.ShouldBe(0, 0.5);
+    }
+
     [When("the side column is put away again")]
     public void WhenPutAwayAgain()
     {

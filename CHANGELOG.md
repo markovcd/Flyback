@@ -10,6 +10,8 @@
 
 ### Editor
 
+- Swapping the picture and the canvas leaves the side column as it was, so with every panel put away a swap no longer brings it back.
+
 ### Viewer
 
 ### Command line
