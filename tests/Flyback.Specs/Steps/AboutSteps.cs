@@ -61,8 +61,8 @@ public sealed class AboutSteps(HeadlessTurn turn) : HeadlessWindow(turn)
             return true;
         });
 
-    [Then("the clipboard holds text that builds the picture the mark plays")]
-    public void ThenTheClipboardBuildsTheMark()
+    [Then("the clipboard holds text that builds the whole scene the mark is a close-up of")]
+    public void ThenTheClipboardBuildsTheScene()
     {
         var text = Run(async () =>
             await (TopLevel.GetTopLevel(Open)?.Clipboard ?? throw new InvalidOperationException("no clipboard")).TryGetTextAsync());
@@ -71,7 +71,7 @@ public sealed class AboutSteps(HeadlessTurn turn) : HeadlessWindow(turn)
 
         built.Ok.ShouldBeTrue(built.Report);
         built.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program.Ops
-            .ShouldBe(LogoBeam.Patch().CompileForVideo(NodeCatalog.BuiltIn).Program.Ops);
+            .ShouldBe(LogoScene.Patch().CompileForVideo(NodeCatalog.BuiltIn).Program.Ops);
     }
 
     private Window Open => Shown.ShouldNotBeNull("the About window is not open");

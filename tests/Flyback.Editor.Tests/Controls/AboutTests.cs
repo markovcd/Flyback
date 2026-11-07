@@ -204,8 +204,8 @@ public class AboutTests : EditorTest
     }
 
     /// <summary>
-    /// Coming alive puts the mark's patch on the clipboard as text, which builds
-    /// the very picture it plays, and the window says so.
+    /// Coming alive puts the whole scene the mark is a close-up of on the
+    /// clipboard as text, comments and all, and the window says so.
     /// </summary>
     [AvaloniaFact]
     public async Task Coming_alive_puts_its_code_on_the_clipboard()
@@ -221,11 +221,12 @@ public class AboutTests : EditorTest
 
         Click(window, Middle(window), 1);
 
-        var built = PatchLanguage.Build((await clipboard.TryGetTextAsync()).ShouldNotBeNull(), NodeCatalog.BuiltIn);
+        var text = (await clipboard.TryGetTextAsync()).ShouldNotBeNull();
+        var built = PatchLanguage.Build(text, NodeCatalog.BuiltIn);
 
         built.Ok.ShouldBeTrue(built.Report);
-        built.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program.Ops
-            .ShouldBe(LogoBeam.Patch().CompileForVideo(NodeCatalog.BuiltIn).Program.Ops);
+        text.ShouldBe(LogoScene.Text);
+        built.Patch.CompileForAudio(NodeCatalog.BuiltIn).HasErrors.ShouldBeFalse("the scene comes with its music");
 
         Saying(window).ShouldBeTrue();
     }

@@ -1,0 +1,301 @@
+// The About window's mark, the whole of it: an old set in a dark room, its tube
+// drawing the Flyback logo a bar at a time, and the IDM loop playing on it. Every
+// module is the engine's own.
+//
+// The kick flashes the screen and lights the room and the grille, the snare tears
+// the picture sideways and blinks the power light, the channel knob turns with each
+// chord, and when the drums stutter the tube rolls. Turn the Camera's zoom to 0.4,
+// dx to 0.2 and dy to -0.07 to see the tube as the About window does.
+
+description "An old set in a dark room drawing the Flyback logo, and the IDM loop playing"
+  "on it: a ratcheting kit that stutters, a sub, a wandering pad, bells, and blips"
+  "in seven against the bar's sixteen."
+tags "drums" "loop"
+
+// Ninety-six a minute, so the beam crosses a ramp in two beats and the logo is
+// drawn once a bar.
+group "Clock" {
+  let tempo = tempo(bpm: 96)
+  let beats = tempo.beats
+}
+
+// Two bars of kick and snare: a step's value is how hard it is hit. The picture reads
+// each as a flash that falls away across its sixteenth.
+group "Kick" {
+  let kick_steps = beats |> values(rate: 4, gate_length: 0.5, shape: 0.01) [
+    1 ~ ~ 0.6 ~ ~ 0.9 ~ ~ ~ 0.7 ~ ~ 0.5 ~ ~
+    1 ~ ~ ~ ~ 0.5 0.8 ~ ~ ~ ~ ~ 1 ~ 0.6 0.4 ]
+  let kick_flash = kick_steps.gate * pow(1 - fract(beats * 4), 3)
+}
+
+group "Snare" {
+  let snare_steps = beats |> values(rate: 4, gate_length: 0.5, shape: 0.01) [
+    ~ ~ ~ ~ ~ ~ ~ ~ 1 ~ ~ 0.25 ~ ~ 0.3 ~
+    ~ ~ 0.2 ~ ~ ~ ~ ~ 1 ~ ~ ~ ~ 0.35 0.5 0.7 ]
+  let snare_flash = snare_steps * snare_steps.gate * pow(1 - fract(beats * 4), 2)
+}
+
+// The harmony, two bars a chord: D minor with its ninth, B flat major seventh, G
+// minor seventh, and A with its fourth hung over the turn back.
+group "Harmony" {
+  let root = beats |> notes(rate: 0.125, gate_length: 1, shape: 0) [ D3 Bb2 G2 A2 ]
+  let kind = beats |> values(rate: 0.125, gate_length: 1, shape: 0) [ 21 10 12 22 ]
+  let chord = chord(note: root, chord: kind)
+  let shift = root - 50
+}
+
+// White, which the hats, the snare and the dust each take a band of.
+let hiss = noise()
+
+group "Drums" {
+  let kick_hit = kick_steps.gate
+  let kick_hard = kick_steps |> hold(trigger: kick_hit)
+  let kick_level = kick_hit |> adsr(gate: _, attack: 1ms, decay: 260ms, sustain: 0, release: 80ms)
+  let kick_sweep = kick_hit |> adsr(gate: _, attack: 500us, decay: 40ms, sustain: 0, release: 15ms)
+  let kick = sine(freq: kick_sweep * 150 + 47) * kick_level * kick_hard * 1.8 |> clamp(-1, 1)
+
+  let snare_hit = snare_steps.gate
+  let snare_hard = snare_steps |> hold(trigger: snare_hit)
+  let snare_level = snare_hit |> adsr(gate: _, attack: 500us, decay: 140ms, sustain: 0, release: 60ms)
+  let wires = (hiss |> filter(cutoff: 1400, resonance: 0)).high |> filter(cutoff: 7000, resonance: 0)
+  let shell = sine(freq: 190, amp: 0.6) * snare_level * snare_level
+  let snare = (wires * 2 * snare_level + shell) * snare_hard
+
+  // A sixteenth's hats, and on some beats, by the dice, thirty-seconds or
+  // triplets instead: the ratchet.
+  let beat_die = beats |> noise(rate: 1, seed: 3)
+  let ratchet = 4 + step(0.5, beat_die.random) * 4 + step(0.7, -beat_die.random) * 2
+  let hat_accent = beats |> values(rate: 4, gate_length: 1, shape: 0) [
+    0.9 0.3 0.55 0.35 0.8 0.3 0.6 0.4 0.9 0.3 0.5 0.35 0.75 0.4 0.65 0.5 ]
+  let hat_env = pow(1 - fract(beats * ratchet), 14) * hat_accent
+  let hats = (hiss |> filter(cutoff: 7500, resonance: 0.1)).high * hat_env * 0.7
+
+  let duck = duck(key: kick_level, depth: 0.5, attack: 100us, release: 120ms)
+}
+
+// Blips in seven over the bar's sixteen, their pitch in five, so the two meters
+// only meet again after thirty-five sixteenths.
+group "Blips" {
+  let blip_steps = beats |> values(rate: 4, gate_length: 0.3, shape: 0.01) [ 1 ~ 0.6 ~ ~ 0.8 0.4 ]
+  let blip_notes = beats |> values(rate: 4, gate_length: 1, shape: 0) [ 86 93 89 98 81 ]
+  let blip_hz = blip_notes |> tune(transpose: shift) [ C D E F G A A# ]
+  let blip_level = blip_steps.gate |> adsr(gate: _, attack: 200us, decay: 30ms, sustain: 0, release: 20ms)
+  let blips = sine(freq: blip_hz) * blip_level * blip_steps * 0.5
+  let blip_pan = beats |> values(rate: 4, gate_length: 1, shape: 0) [ 0.2 0.8 0.5 0.9 0.1 0.6 ]
+}
+
+// The sub, a sine an octave under the chord's root, between forty-nine and
+// seventy-four hertz, falling on the kick's pushes.
+group "Sub" {
+  let sub_steps = beats |> values(rate: 4, gate_length: 0.9, shape: 0.02) [
+    0 ~ ~ 0 ~ ~ 0 ~ ~ ~ 12 ~ ~ 0 ~ ~
+    0 ~ ~ ~ ~ 0 0 ~ ~ ~ 7 ~ 0 ~ 0 ~ ]
+  let sub_note = sub_steps + root - 12 |> slew(rise: 30ms, fall: 30ms)
+  let sub_hz = sub_note |> note(note: _)
+  let sub_level = sub_steps.gate |> adsr(gate: _, attack: 3ms, decay: 300ms, sustain: 0.6, release: 90ms)
+  let sub = (sine(freq: sub_hz) + sine(freq: sub_hz * 2, amp: 0.15)) * sub_level * 0.8
+}
+
+// The pad: two saws a chord tone, a hair apart, through a lowpass that wanders,
+// with a tape's slow wow under all of it.
+group "Pad" {
+  let wow = noise(rate: 0.7, seed: 6).drift * 0.004 + 1
+  let pad_raw = saw(freq: chord * wow, amp: 0.3) + saw(freq: chord * wow * 1.004, amp: 0.3)
+    + saw(freq: chord.hz2 * wow * 0.997, amp: 0.25) + saw(freq: chord.hz3 * wow, amp: 0.22)
+    + triangle(freq: chord.hz4 * wow * 2, amp: 0.2)
+  let pad_open = noise(rate: 0.25, seed: 4).drift |> remap(in_low: -1, in_high: 1, out_low: 500, out_high: 1600)
+  let pad = pad_raw |> filter(cutoff: pad_open, resonance: 0.25)
+}
+
+// Bells: a sine bending its own phase on a bar-long figure of sixteenths, snapped
+// to D minor and moved onto each chord's root, echoed a dotted eighth left
+// and an eighth right.
+group "Bells" {
+  let bell_steps = beats |> values(rate: 4, gate_length: 0.4, shape: 0.01) [
+    74 ~ 81 77 ~ 84 ~ 79 81 ~ 86 ~ 77 ~ ~ 72 ]
+  let bell_hz = bell_steps |> tune(transpose: shift) [ C D E F G A A# ]
+  let bell_level = bell_steps.gate |> adsr(gate: _, attack: 1ms, decay: 420ms, sustain: 0, release: 200ms)
+  let bell_mod = sine(freq: bell_hz * 3.5) * bell_level * 0.35
+  let bell = sine(freq: bell_hz, phase: bell_mod) * bell_level * 0.4
+  let bell_left = bell |> delay(time: 0.46875, feedback: 0.5, mix: 0.35)
+  let bell_right = bell |> delay(time: 0.3125, feedback: 0.5, mix: 0.35)
+}
+
+// The stutter: on the last beat of every other bar, three times in five, the
+// drums are shut out and a sixteenth of them loops in a Delay. The tube loses its
+// vertical hold for as long.
+group "Stutter" {
+  let bar_die = beats |> noise(rate: 0.5, seed: 11)
+  let rolled = step(7, beats % 8) * step(-0.2, bar_die.random)
+  let held = rolled |> slew(rise: 3ms, fall: 3ms)
+  let kit = kick * 0.9 + snare * 1.1 + hats * 2.2
+  let stutter = kit * (1 - held) |> delay(time: 0.15625, feedback: held * 0.95, mix: held)
+}
+
+// Dust: the white's clicks, now and then, the way a record crackles.
+group "Dust" {
+  let crackle = hiss |> step(edge: 0.9995) |> mul(a: _, b: 0.25)
+  let dust = crackle + (hiss |> filter(cutoff: 3000, resonance: 0)).band * 0.008
+}
+
+// The pad, the bells, the snare and the blips in one hall, the bells' echoes split
+// left and right, the sub and the pad ducked under the kick.
+group "Mix" {
+  let hall = pad * 0.25 + bell * 0.5 + snare * 0.15 + blips * 0.3 |> reverb(size: 0.8, decay: 0.75, mix: 1)
+  let left = stutter + sub * duck.gain + pad * duck.gain * 0.5 + bell_left + blips * (1 - blip_pan)
+    + hall * 0.35 + dust
+  let right = stutter + sub * duck.gain + pad * duck.gain * 0.5 + bell_right + blips * blip_pan
+    + hall.wide * 0.35 + dust
+  left * 0.8 |> drive(drive: 1.2) |> out.left
+  right * 0.8 |> drive(drive: 1.2) |> out.right
+}
+
+// Where the room is looked at from. At a zoom of 1 it is the whole room; at 0.4,
+// moved 0.2 left and 0.07 up, the tube fills a square frame, which is how the About
+// window shows it.
+group "Camera" {
+  let view = transform(zoom: 1, dx: 0, dy: 0)
+}
+
+// The tube, measured on its own face: the screen's middle is nought and its box
+// reaches one, then bowed out by the glass.
+group "Face" {
+  let lx = (view + 0.2) / 0.4
+  let ly = (view.y - 0.07) / 0.4
+  let bulge = 1 + 0.22 * (lx * lx + ly * ly)
+  let bowed_x = lx * bulge
+  let face_y = ly * bulge
+  let band = 2 * fract(t / 4.7) - 1
+  let hum = exp(-18 * (face_y - band) * (face_y - band))
+  let face_x = bowed_x
+    |> expression(a: _, b: face_y, c: hum + snare_flash, d: t,
+       formula: "a + c * 0.055 * sin(d * 11) + sin(b * 34 + d * 9) * 0.0035")
+  let pic_y = (face_y + rolled * fract(beats * 2) * 2.6 + 1.3) % 2.6 - 1.3
+}
+
+// The beam sweeping the two ramps in a bar, resting on each far corner for the last
+// twentieth of its half.
+group "Beam" {
+  let phase = fract(beats / 4)
+  let half = step(0.5, phase)
+  let along = min(fract(phase * 2) / 0.95, 1)
+  let beam_x = along |> expression(a: _, b: half, formula: "mix(mix(-0.4297, 0.4297, a), mix(-0.4297, 0.2891, a), b)")
+  let beam_y = along |> expression(a: _, b: half, formula: "mix(mix(0.2812, 0.5625, a), mix(-0.1562, 0.0781, a), b)")
+  let distance = hypot(face_x - beam_x, pic_y - beam_y)
+  let glow = distance |> smoothstep(edge0: 0.098, edge1: 0.055)
+  let core = distance |> smoothstep(edge0: 0.042, edge1: 0.012)
+  let beam = hsv(hue: 0.57 - along * 0.16, saturation: 0.66, value: glow + core * 1.2)
+  let bar = face_x |> expression(a: _, b: pic_y,
+    formula: "0.5 * (1 - smoothstep(0.0755, 0.0886, hypot(a + 0.4297, b - clamp(b, -0.5625, 0.2812))))")
+  let retrace = beam |> ink(mask: bar, r: 0.878, g: 0.353, b: 0.353)
+}
+
+// Scan lines, snow, the hum bar's lift and the mains' flutter, and the kick, as one
+// number the light is multiplied by.
+group "Raster" {
+  let scan = 0.7 + 0.3 * cos(pic_y * 37.699112)
+  let snow = view |> clouds(z: t * 14, scale: 10)
+  let lift = scan |> expression(a: _, b: snow, c: hum, d: t,
+    formula: "a * (0.89 + b * 0.22) * (1 + c * 0.28) * (1 + sin(d * 46) * 0.02)")
+  let emitted = retrace |> gain(gain: lift * (1 + kick_flash * 0.45))
+  let face = emitted |> vignette(x: face_x, y: face_y, from: 0.55, to: 1.6, dark: 0.22)
+  let lit_glass = face |> ink(r: 0.1, g: 0.125, b: 0.118)
+  let on_glass = bowed_x |> expression(a: _, b: face_y,
+    formula: "(1 - smoothstep(1.21, 1.25, abs(a) * (1 + 0.35 * (a * a + b * b)))) * (1 - smoothstep(1.21, 1.25, abs(b) * (1 + 0.35 * (a * a + b * b))))")
+  let glass = lit_glass |> gain(gain: on_glass)
+}
+
+
+// The set: a wooden cabinet, the tube's black bezel, two knobs and a grille on the
+// right, rabbit ears on top and two splayed legs, each a distance from its edge.
+group "Set" {
+  let cab_d = view |> expression(a: _, b: view.y,
+    formula: "hypot(max(abs(a - 0.04) - 0.71, 0), max(abs(b - 0.05) - 0.48, 0)) + min(max(abs(a - 0.04) - 0.71, abs(b - 0.05) - 0.48), 0) - 0.07")
+  let bez_d = view |> expression(a: _, b: view.y,
+    formula: "hypot(max(abs(a + 0.2) - 0.36, 0), max(abs(b - 0.07) - 0.36, 0)) + min(max(abs(a + 0.2) - 0.36, abs(b - 0.07) - 0.36), 0) - 0.09")
+  let grille_d = view |> expression(a: _, b: view.y,
+    formula: "hypot(max(abs(a - 0.53) - 0.14, 0), max(abs(b + 0.24) - 0.1, 0)) + min(max(abs(a - 0.53) - 0.14, abs(b + 0.24) - 0.1), 0) - 0.03")
+  let rod_l_h = view |> expression(a: _, b: view.y, formula: "clamp(((a - 0.04) * -0.4 + (b - 0.6) * 0.35) / 0.2825, 0, 1)")
+  let rod_r_h = view |> expression(a: _, b: view.y, formula: "clamp(((a - 0.04) * 0.42 + (b - 0.6) * 0.345) / 0.29543, 0, 1)")
+  let leg_l_h = view |> expression(a: _, b: view.y, formula: "clamp(((a + 0.6) * -0.06 + (b + 0.5) * -0.25) / 0.0661, 0, 1)")
+  let leg_r_h = view |> expression(a: _, b: view.y, formula: "clamp(((a - 0.68) * 0.06 + (b + 0.5) * -0.25) / 0.0661, 0, 1)")
+  let rods_d = view |> expression(a: _, b: view.y, c: rod_l_h, d: rod_r_h,
+    formula: "min(hypot(a - 0.04 + 0.4 * c, b - 0.6 - 0.35 * c), hypot(a - 0.04 - 0.42 * d, b - 0.6 - 0.345 * d))")
+  let legs_d = view |> expression(a: _, b: view.y, c: leg_l_h, d: leg_r_h,
+    formula: "min(hypot(a + 0.6 + 0.06 * c, b + 0.5 + 0.25 * c) - 0.024 + c * 0.008, hypot(a - 0.68 - 0.06 * d, b + 0.5 + 0.25 * d) - 0.024 + d * 0.008)")
+  let tips_d = min(hypot(view + 0.36, view.y - 0.95), hypot(view - 0.46, view.y - 0.945)) - 0.017
+  let dome_d = max(hypot(view - 0.04, view.y - 0.6) - 0.08, 0.6 - view.y)
+
+  let cabinet = cab_d |> smoothstep(edge0: 0.004, edge1: -0.004)
+  let bezel = bez_d |> smoothstep(edge0: 0.004, edge1: -0.004)
+  let grille = grille_d |> smoothstep(edge0: 0.003, edge1: -0.003)
+  let rods = min(rods_d - 0.007, tips_d) |> smoothstep(edge0: 0.004, edge1: -0.004)
+  let dome = dome_d |> smoothstep(edge0: 0.004, edge1: -0.004)
+  let legs = legs_d |> smoothstep(edge0: 0.004, edge1: -0.004)
+}
+
+// Two knobs, the channel's turning to each new chord and the volume's held, a
+// power light that the snare blinks, and the grille glowing with the kick.
+group "Controls" {
+  let channel = beats |> values(rate: 0.125, gate_length: 1, shape: 0) [ 0.5 -1.3 2.2 -0.4 ]
+  let channel_along = view |> expression(a: _, b: view.y, c: channel,
+    formula: "clamp((a - 0.53) * sin(c) + (b - 0.33) * cos(c), 0, 0.062)")
+  let channel_mark = view |> expression(a: _, b: view.y, c: channel, d: channel_along,
+    formula: "1 - smoothstep(0.007, 0.012, hypot(a - 0.53 - d * sin(c), b - 0.33 - d * cos(c)))")
+  let volume_along = view |> expression(a: _, b: view.y, formula: "clamp((a - 0.53) * 0.7833 + (b - 0.11) * 0.6216, 0, 0.062)")
+  let volume_mark = view |> expression(a: _, b: view.y, c: volume_along,
+    formula: "1 - smoothstep(0.007, 0.012, hypot(a - 0.53 - c * 0.7833, b - 0.11 - c * 0.6216))")
+  let knob_d = min(hypot(view - 0.53, view.y - 0.33), hypot(view - 0.53, view.y - 0.11))
+  let knobs = knob_d |> smoothstep(edge0: 0.086, edge1: 0.078)
+  let knob_shade = 0.6 + 0.4 * smoothstep(0.03, 0.08, knob_d) + (view.y - 0.2) * 0.4
+  let marks = max(channel_mark, volume_mark) * knobs
+  let slats = step(0.42, fract((view.y + 0.37) * 34)) * grille
+  let speaker = 0.06 + kick_flash * 0.5 + snare_flash * 0.25
+  let lamp = hypot(view - 0.35, view.y + 0.03) |> smoothstep(edge0: 0.014, edge1: 0.009)
+  let lamp_glow = exp(-hypot(view - 0.35, view.y + 0.03) * 60) * (0.35 + snare_flash * 0.65)
+}
+
+// The room: a striped wall the set shadows, the sideboard it stands on, and the
+// tube's own light, in the beam's hue and pulsing with the kick, cast on both.
+group "Room" {
+  let stripes = 0.9 + 0.1 * step(0.5, fract(view * 5 + 0.25))
+  let shadow = 0.4 + 0.6 * smoothstep(0, 0.32, min(cab_d, legs_d + 0.05))
+  let wall = rgb(r: 0.07, g: 0.075, b: 0.095) |> gain(gain: stripes * shadow * (0.85 + view.y * 0.15))
+  let board_grain = view |> expression(a: _, b: view.y, formula: "0.82 + 0.1 * sin(b * 260 + sin(a * 3.1) * 2) + 0.08 * sin(a * 2.7 + b * 9)")
+  let board_edge = 1 + exp(-abs(view.y + 0.752) * 220) * 1.4
+  let board = rgb(r: 0.15, g: 0.09, b: 0.05) |> gain(gain: board_grain * board_edge * (1.1 + (view.y + 0.75) * 1.2))
+  let on_board = view.y |> smoothstep(edge0: -0.748, edge1: -0.756)
+  let light = exp(-1.6 * hypot(view + 0.2, (view.y - 0.07) * 1.25)) * (0.5 + kick_flash * 0.55)
+  let tint = hsv(hue: 0.57 - along * 0.16, saturation: 0.5, value: light * 0.4)
+  let room = wall + (board - wall) * on_board + tint
+}
+
+// The set laid over the room, front to back, and the glass in the bezel.
+group "Scene" {
+  let wood_grain = view |> expression(a: _, b: view.y, formula: "0.86 + 0.08 * sin(b * 190 + sin(a * 2.3) * 3 + sin(a * 7.1 + b * 13) * 1.2) + 0.06 * sin(b * 23 + a * 1.7)")
+  let wood_rim = cab_d |> smoothstep(edge0: -0.05, edge1: -0.004)
+  let wood = rgb(r: 0.4, g: 0.22, b: 0.11)
+    |> gain(gain: wood_grain * (1 - wood_rim * 0.45) * (0.85 + view.y * 0.3), bias: tint * 0.35)
+  let metal = rgb(r: 0.5, g: 0.51, b: 0.55) |> gain(gain: 0.75 + 0.25 * sin(view * 40 + view.y * 25))
+  let plastic = rgb(r: 0.05, g: 0.045, b: 0.04)
+  let ring = exp(-abs(bez_d + 0.006) * 150) * 0.12
+  let bezel_col = rgb(r: 0.03, g: 0.03, b: 0.035) |> gain(bias: ring)
+  let knob_col = plastic |> gain(gain: knob_shade * 2.2)
+  let mark_col = rgb(r: 0.85, g: 0.8, b: 0.68)
+  let cloth = rgb(r: 0.09, g: 0.07, b: 0.05)
+  let glow_col = rgb(r: 1, g: 0.6, b: 0.25) |> gain(gain: speaker)
+  let grille_col = cloth + (glow_col - cloth) * slats
+  let lamp_col = rgb(r: 0.9, g: 0.15, b: 0.1) |> gain(gain: 0.4 + snare_flash * 0.6)
+
+  let back_set = room + (metal - room) * rods
+  let stood = back_set + (plastic - back_set) * max(dome, legs)
+  let boxed = stood + (wood - stood) * cabinet
+  let panel = boxed + (grille_col - boxed) * grille
+  let knobbed = panel + (knob_col - panel) * knobs
+  let marked = knobbed + (mark_col - knobbed) * marks
+  let lamped = marked + (lamp_col - marked) * lamp
+  let framed = lamped + (bezel_col - lamped) * bezel
+  let lit_lamp = framed |> ink(under: _, mask: lamp_glow, r: 0.9, g: 0.2, b: 0.1)
+  let trailed = glass |> trails(persist: 0.985)
+  trailed * on_glass + lit_lamp * (1 - on_glass) |> out.color
+}

@@ -87,6 +87,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The scene the About window's mark becomes, and the text it copies. -->
+    <EmbeddedResource Include="Controls\LogoScene.fbks" LogicalName="logo-scene.fbks" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Read at run time by SourceView, so it travels inside the assembly. -->
     <EmbeddedResource Include="Hubs\Flyback.xshd" />
   </ItemGroup>

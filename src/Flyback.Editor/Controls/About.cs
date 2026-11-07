@@ -7,7 +7,6 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Core;
 using Flyback.Engine.Graph;
-using Flyback.Engine.Language;
 using Flyback.Engine.Render;
 using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
@@ -88,7 +87,7 @@ internal static class About
 
         // Laid out from the start and only shown when the mark has something to say,
         // so the window keeps its size and place when it does.
-        var said = Quiet("Its code is on the clipboard, to paste into the text view or onto the canvas.");
+        var said = Quiet("The whole scene is on the clipboard, music and all, to paste into the text view or onto the canvas.");
         said.Opacity = 0;
 
         var mark = Mark(() => said.Opacity = 1);
@@ -127,15 +126,15 @@ internal static class About
 
     /// <summary>
     /// The mark, and what it does for somebody who keeps clicking it: on the
-    /// seventh it stops being a drawing and becomes the patch it is a picture
-    /// of, for as long as the window is open, and that patch's text goes on the
-    /// clipboard.
+    /// seventh it stops being a drawing and becomes a close-up of the tube in
+    /// <see cref="LogoScene"/>, for as long as the window is open, and the whole
+    /// scene's text goes on the clipboard.
     /// </summary>
     /// <remarks>
     /// Drawn at twice its size and scaled down, so the beam has an edge on a
     /// display that would otherwise show it one pixel wide.
     /// </remarks>
-    /// <param name="copied">Says the patch's text is on the clipboard.</param>
+    /// <param name="copied">Says the scene's text is on the clipboard.</param>
     private static Control Mark(Action copied)
     {
         const int side = 56;
@@ -163,16 +162,14 @@ internal static class About
         {
             if (motion is not null || ++counted < clicks) return;
 
-            var patch = LogoBeam.Patch();
-
             drawn.IsVisible = false;
             played.IsVisible = true;
             motion = PresetMotion.Play(
-                new Opened(patch, new SampleLibrary(), new ImageLibrary()), played, clock: null, side * 2, side * 2);
+                new Opened(LogoScene.Framed(), new SampleLibrary(), new ImageLibrary()), played, clock: null, side * 2, side * 2);
 
             if (TopLevel.GetTopLevel(mark)?.Clipboard is not { } clipboard) return;
 
-            await clipboard.SetTextAsync(PatchPrinter.Print(patch));
+            await clipboard.SetTextAsync(LogoScene.Text);
             copied();
         };
 

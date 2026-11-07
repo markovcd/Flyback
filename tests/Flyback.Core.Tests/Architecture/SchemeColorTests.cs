@@ -21,7 +21,7 @@ public partial class SchemeColorTests
     private static readonly string[] Palette = ["Colors.cs", "SchemeFile.cs"];
 
     /// <summary>Drawings that are the same in every scheme.</summary>
-    private static readonly string[] Marks = ["LogoBeam.cs", "LogoMark.cs", "StudioMark.cs", "QrCode.cs"];
+    private static readonly string[] Marks = ["LogoScene.cs", "LogoMark.cs", "StudioMark.cs", "QrCode.cs"];
 
     /// <summary>What is drawn over the picture, which no scheme colors.</summary>
     private static readonly string[] OverPicture =
