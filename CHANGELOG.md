@@ -11,6 +11,7 @@
 ### Editor
 
 - Swapping the picture and the canvas leaves the side column as it was, so with every panel put away a swap no longer brings it back.
+- A window too narrow for two columns keeps the picture and the canvas swapped: the picture shows, and the side button trades it for the canvas. Swap works in such a window too.
 
 ### Viewer
 

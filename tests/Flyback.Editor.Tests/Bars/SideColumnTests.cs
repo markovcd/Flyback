@@ -70,6 +70,43 @@ public class SideColumnTests : EditorTest
         ToolTip.GetTip(side).ShouldBe(Toolbar.SideTip);
     }
 
+    /// <summary>A window too narrow for two columns keeps the swap: the picture shows, and the side button trades it for the canvas.</summary>
+    [AvaloniaFact]
+    public void A_narrow_window_keeps_the_swap()
+    {
+        var window = Open();
+        var editor = Editor(window);
+        var swap = Button(window, "swap");
+        var side = Button(window, "side");
+
+        Press(window, side);
+        Press(window, swap);
+
+        window.MinWidth = 0;
+        window.Width = 500;
+        Settle(window);
+
+        swap.IsChecked.ShouldBe(true, "a small window does not swap back");
+        swap.IsEnabled.ShouldBeTrue();
+        ToolTip.GetTip(side).ShouldBe(Toolbar.SideNarrowSwappedTip);
+        editor.Bounds.Width.ShouldBe(0, 0.5);
+        Preview(window).Bounds.Width.ShouldBeGreaterThan(400, "the picture has the one column");
+
+        Press(window, side);
+
+        editor.Bounds.Width.ShouldBeGreaterThan(400, "the side button trades the picture for the canvas");
+        Preview(window).Bounds.Width.ShouldBe(0, 0.5);
+
+        Press(window, side);
+        window.Width = 1400;
+        Settle(window);
+
+        swap.IsChecked.ShouldBe(true);
+        side.IsChecked.ShouldBe(false);
+        editor.Bounds.Width.ShouldBe(0, 0.5);
+        Preview(window).Bounds.Width.ShouldBeGreaterThan(800);
+    }
+
     /// <summary>Swapped, the column holds the canvas, so putting it away gives the picture and the knobs the width.</summary>
     [AvaloniaFact]
     public void Putting_the_column_away_while_swapped_gives_the_picture_its_width_and_back()

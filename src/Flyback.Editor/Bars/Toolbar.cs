@@ -64,9 +64,9 @@ internal sealed class Toolbar
     public const string SideNarrowTip =
         "Show the preview and the inspector in the canvas's place, or the canvas again.";
 
-    /// <summary>What the swap button says in such a window.</summary>
-    public const string NarrowSwapTip =
-        "The window is too narrow to swap the preview and the canvas; the side button shows one or the other.";
+    /// <summary>What it does in such a window while the picture is swapped into the canvas's place.</summary>
+    public const string SideNarrowSwappedTip =
+        "Show the canvas and the inspector in the picture's place, or the picture again.";
 
     public Button Open { get; } = ToolbarButtons.Drawn("open", Glyphs.Open(), "Open a patch (CTRL+O)…", "OPEN");
 

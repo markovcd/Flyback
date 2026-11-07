@@ -362,8 +362,8 @@ internal sealed class ShellLayout(
 
     /// <summary>
     /// Goes to one column or back to two as the window crosses the width the two need. One
-    /// column opens on the canvas, and the side button trades it for the preview and the
-    /// inspector; swapping those two needs both columns, so it waits for a wider window.
+    /// column opens on the canvas, or the picture while swapped, and the side button trades
+    /// it for the other column.
     /// </summary>
     private void Narrow(bool value)
     {
@@ -373,7 +373,6 @@ internal sealed class ShellLayout(
         {
             sideBeforeNarrow = sideShown;
             if (sideShown) sideShare = columns.ColumnDefinitions[SideColumn].Width;
-            toolbar.Swap.IsChecked = false;
         }
 
         narrow = value;
@@ -381,8 +380,19 @@ internal sealed class ShellLayout(
         LaySide();
 
         if (toolbar.Side.IsChecked != sideShown) toolbar.Side.IsChecked = sideShown;
-        ToolTip.SetTip(toolbar.Side, narrow ? Toolbar.SideNarrowTip : Toolbar.SideTip);
+        TipSide(toolbar.Swap.IsChecked == true);
         ShowPreview(playback.HasPicture);
+    }
+
+    private void TipSide(bool swapped)
+    {
+        ToolTip.SetTip(toolbar.Side, (narrow, swapped) switch
+        {
+            (true, true) => Toolbar.SideNarrowSwappedTip,
+            (true, false) => Toolbar.SideNarrowTip,
+            (false, true) => Toolbar.SideSwappedTip,
+            _ => Toolbar.SideTip,
+        });
     }
 
     public void ShowPreview(bool shown)
@@ -393,8 +403,8 @@ internal sealed class ShellLayout(
         previewHideWaiting = !shown && toolbar.Swap.IsChecked == true && editor.Gestures.Gesturing;
         if (previewHideWaiting) return;
 
-        toolbar.Swap.IsEnabled = shown && !narrow;
-        ToolTip.SetTip(toolbar.Swap, !shown ? Toolbar.NoPictureToSwapTip : narrow ? Toolbar.NarrowSwapTip : Toolbar.SwapTip);
+        toolbar.Swap.IsEnabled = shown;
+        ToolTip.SetTip(toolbar.Swap, shown ? Toolbar.SwapTip : Toolbar.NoPictureToSwapTip);
         if (fullScreen.IsFullScreen || previewBox is null || previewRow is null || previewSplitter is null) return;
         if (!shown) toolbar.Swap.IsChecked = false;
         if (!showing && previewBox.IsVisible) previewShare = previewRow.Height;
@@ -432,7 +442,7 @@ internal sealed class ShellLayout(
         if (columns is null || previewBox is null || patchPane is null || inspectorBox is null || previewSplitter is null) return;
         if (swapped == (Grid.GetColumn(previewBox) == WideColumn)) return;
 
-        ToolTip.SetTip(toolbar.Side, swapped ? Toolbar.SideSwappedTip : Toolbar.SideTip);
+        TipSide(swapped);
 
         var (pictureColumn, patchColumn) = swapped ? (WideColumn, SideColumn) : (SideColumn, WideColumn);
         Grid.SetColumn(previewBox, pictureColumn);
