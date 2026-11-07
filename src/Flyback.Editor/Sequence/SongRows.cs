@@ -203,7 +203,7 @@ internal sealed class SongRows : Control
             context.DrawRectangle(fill, null, cell, 2, 2);
         }
 
-        var head = Played % levels.Count;
+        var head = Head(part);
         var at = Math.Floor(head);
         var glow = new SolidColorBrush(Colors.Attention);
 
@@ -269,9 +269,12 @@ internal sealed class SongRows : Control
             for (var s = 0; s < levels.Count; s++)
                 context.FillRectangle(new SolidColorBrush(Shade(levels[s].Value)), new Rect(RowLayout.NameWidth + s * cell, top, Math.Max(1, cell - 1), line));
 
-            context.FillRectangle(glow, new Rect(RowLayout.NameWidth + Played % levels.Count * cell, top - 1, 2, line + 2));
+            context.FillRectangle(glow, new Rect(RowLayout.NameWidth + Head(p) * cell, top - 1, 2, line + 2));
         }
     }
+
+    /// <summary>Where a part's playhead is in its own loop, in sections.</summary>
+    public double Head(int part) => Played % parts.Levels(part).Count;
 
     /// <summary>The sections from 0 to <paramref name="last"/> that are in view.</summary>
     private (int First, int Last) Visible(int last) =>

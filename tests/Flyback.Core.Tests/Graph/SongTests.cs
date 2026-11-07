@@ -125,4 +125,12 @@ public class SongTests
         patch.CanAdd(SongModule.TypeId).ShouldBeFalse();
         patch.CanAdd(NodeCatalog.ArrangementTypeId).ShouldBeTrue();
     }
+
+    [Fact]
+    public void A_part_may_not_be_called_what_one_of_the_Song_s_sockets_is()
+    {
+        var tidy = SongExtra.Tidy([new("part_1", [new(1f)]), new("section", [new(1f)]), new("played", [new(1f)]), new("part_9", [new(1f)])]);
+
+        tidy.Select(part => part.Name).ShouldBe(["part_12", "section2", "played2", "part_9"]);
+    }
 }

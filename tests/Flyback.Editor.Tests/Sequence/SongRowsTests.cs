@@ -95,4 +95,20 @@ public class SongRowsTests : EditorTest
 
         sought.ShouldBe([3d]);
     }
+
+    [AvaloniaFact]
+    public void Each_part_s_playhead_comes_round_at_its_own_length()
+    {
+        var (_, rows, _) = Showing();
+
+        rows.Played = 5.5;
+
+        rows.Head(0).ShouldBe(1.5);
+        rows.Head(1).ShouldBe(1.5);
+
+        rows.Played = 6.25;
+
+        rows.Head(0).ShouldBe(2.25);
+        rows.Head(1).ShouldBe(0.25);
+    }
 }

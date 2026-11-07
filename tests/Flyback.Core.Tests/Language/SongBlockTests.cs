@@ -87,4 +87,15 @@ public class SongBlockTests
 
         load.Issues.ShouldHaveSingleItem().Message.ShouldContain("'kick', 'part_2'");
     }
+
+    [Fact]
+    public void Every_part_is_printed_by_its_name_the_first_as_much_as_the_rest()
+    {
+        var load = Read("let song = song() [ kick: 1 bass: 0 ]\nsong.kick + song.bass |> out.left");
+
+        var printed = PatchPrinter.Print(load.Patch, NodeCatalog.BuiltIn);
+
+        printed.ShouldContain("song.kick");
+        printed.ShouldContain("song.bass");
+    }
 }

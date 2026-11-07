@@ -485,4 +485,21 @@ public class PatchClipboardTests
 
         ControlMap.Of(gain, 1).ShouldNotBeNull("the patch it came from keeps its link");
     }
+
+    [Fact]
+    public void A_Song_is_left_out_of_a_paste_into_a_patch_that_has_one()
+    {
+        var song = NodeCatalog.BuiltIn.Require(SongModule.TypeId);
+        var into = new Patch();
+        into.Nodes.Add(NodeInstance.Create(song, 0, 0));
+
+        var fragment = new Patch();
+        fragment.Nodes.Add(NodeInstance.Create(song, 0, 0));
+        fragment.Nodes.Add(NodeInstance.Create(NodeCatalog.BuiltIn.Require("osc.sine"), 0, 0));
+
+        var added = PatchClipboard.Paste(into, fragment);
+
+        added.Select(node => node.TypeId).ShouldBe(["osc.sine"]);
+        into.Nodes.Count(node => node.TypeId == SongModule.TypeId).ShouldBe(1);
+    }
 }
