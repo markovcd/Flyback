@@ -337,6 +337,12 @@ Flyback.Core.Graph.Extras.SettingsExtra.Equals(Flyback.Core.Graph.Extras.Setting
 Flyback.Core.Graph.Extras.SettingsExtra.SettingsExtra(string! StateKey, System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.ExtraField!>! Declared) -> void
 Flyback.Core.Graph.Extras.SettingsExtra.StateKey.get -> string!
 Flyback.Core.Graph.Extras.SettingsExtra.StateKey.init -> void
+Flyback.Core.Graph.Extras.SongExtra
+Flyback.Core.Graph.Extras.SongExtra.Deconstruct(out System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.SongPart!>! Default) -> void
+Flyback.Core.Graph.Extras.SongExtra.Default.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.SongPart!>!
+Flyback.Core.Graph.Extras.SongExtra.Default.init -> void
+Flyback.Core.Graph.Extras.SongExtra.Equals(Flyback.Core.Graph.Extras.SongExtra? other) -> bool
+Flyback.Core.Graph.Extras.SongExtra.SongExtra(System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.SongPart!>! Default) -> void
 Flyback.Core.Graph.Extras.StepsExtra
 Flyback.Core.Graph.Extras.StepsExtra.Deconstruct(out Flyback.Core.Graph.StepSpec! Spec) -> void
 Flyback.Core.Graph.Extras.StepsExtra.Equals(Flyback.Core.Graph.Extras.StepsExtra? other) -> bool
@@ -631,6 +637,15 @@ Flyback.Core.Graph.ScaleMode.Id.init -> void
 Flyback.Core.Graph.ScaleMode.Name.get -> string!
 Flyback.Core.Graph.ScaleMode.Name.init -> void
 Flyback.Core.Graph.ScaleMode.ScaleMode(string! Id, string! Name, int[]! Classes) -> void
+Flyback.Core.Graph.SongPart
+Flyback.Core.Graph.SongPart.<Clone>$() -> Flyback.Core.Graph.SongPart!
+Flyback.Core.Graph.SongPart.Deconstruct(out string! Name, out System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PartLevel>! Levels) -> void
+Flyback.Core.Graph.SongPart.Equals(Flyback.Core.Graph.SongPart? other) -> bool
+Flyback.Core.Graph.SongPart.Levels.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PartLevel>!
+Flyback.Core.Graph.SongPart.Levels.init -> void
+Flyback.Core.Graph.SongPart.Name.get -> string!
+Flyback.Core.Graph.SongPart.Name.init -> void
+Flyback.Core.Graph.SongPart.SongPart(string! Name, System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PartLevel>! Levels) -> void
 Flyback.Core.Graph.Step
 Flyback.Core.Graph.Step.Deconstruct(out float Value, out float Length, out float Volume) -> void
 Flyback.Core.Graph.Step.Equals(Flyback.Core.Graph.Step other) -> bool
@@ -825,6 +840,15 @@ override Flyback.Core.Graph.Extras.SettingsExtra.Fields.get -> System.Collection
 override Flyback.Core.Graph.Extras.SettingsExtra.GetHashCode() -> int
 override Flyback.Core.Graph.Extras.SettingsExtra.Key.get -> string!
 override Flyback.Core.Graph.Extras.SettingsExtra.ToString() -> string!
+override Flyback.Core.Graph.Extras.SongExtra.<Clone>$() -> Flyback.Core.Graph.Extras.SongExtra!
+override Flyback.Core.Graph.Extras.SongExtra.Announce() -> string!
+override Flyback.Core.Graph.Extras.SongExtra.Equals(object? obj) -> bool
+override Flyback.Core.Graph.Extras.SongExtra.Fold(Flyback.Core.Graph.EmitContext ctx, Flyback.Core.Graph.NodeInstance! node, Flyback.Core.Graph.ExtraEnv env) -> Flyback.Core.Graph.EmitContext
+override Flyback.Core.Graph.Extras.SongExtra.GetHashCode() -> int
+override Flyback.Core.Graph.Extras.SongExtra.Help.get -> string!
+override Flyback.Core.Graph.Extras.SongExtra.Key.get -> string!
+override Flyback.Core.Graph.Extras.SongExtra.Seed(Flyback.Core.Graph.NodeInstance! node) -> void
+override Flyback.Core.Graph.Extras.SongExtra.ToString() -> string!
 override Flyback.Core.Graph.Extras.StepsExtra.<Clone>$() -> Flyback.Core.Graph.Extras.StepsExtra!
 override Flyback.Core.Graph.Extras.StepsExtra.Announce() -> string!
 override Flyback.Core.Graph.Extras.StepsExtra.Equals(object? obj) -> bool
@@ -876,6 +900,9 @@ override Flyback.Core.Graph.PortSpec.GetHashCode() -> int
 override Flyback.Core.Graph.ScaleMode.Equals(object? obj) -> bool
 override Flyback.Core.Graph.ScaleMode.GetHashCode() -> int
 override Flyback.Core.Graph.ScaleMode.ToString() -> string!
+override Flyback.Core.Graph.SongPart.Equals(object? obj) -> bool
+override Flyback.Core.Graph.SongPart.GetHashCode() -> int
+override Flyback.Core.Graph.SongPart.ToString() -> string!
 override Flyback.Core.Graph.Step.GetHashCode() -> int
 override Flyback.Core.Graph.StepSpec.Equals(object? obj) -> bool
 override Flyback.Core.Graph.StepSpec.GetHashCode() -> int
@@ -897,6 +924,7 @@ override sealed Flyback.Core.Graph.Extras.PictureExtra.Equals(Flyback.Core.Graph
 override sealed Flyback.Core.Graph.Extras.SampleExtra.Equals(Flyback.Core.Graph.Extras.FileExtra? other) -> bool
 override sealed Flyback.Core.Graph.Extras.ScaleExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
 override sealed Flyback.Core.Graph.Extras.SettingsExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
+override sealed Flyback.Core.Graph.Extras.SongExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
 override sealed Flyback.Core.Graph.Extras.StepsExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
 override sealed Flyback.Core.Graph.ModuleSkin.Artwork.Equals(Flyback.Core.Graph.ModuleSkin? other) -> bool
 override sealed Flyback.Core.Graph.ModuleSkin.Grain.Equals(Flyback.Core.Graph.ModuleSkin.Palette? other) -> bool
@@ -964,6 +992,9 @@ static Flyback.Core.Graph.Extras.ScaleExtra.operator !=(Flyback.Core.Graph.Extra
 static Flyback.Core.Graph.Extras.ScaleExtra.operator ==(Flyback.Core.Graph.Extras.ScaleExtra? left, Flyback.Core.Graph.Extras.ScaleExtra? right) -> bool
 static Flyback.Core.Graph.Extras.SettingsExtra.operator !=(Flyback.Core.Graph.Extras.SettingsExtra? left, Flyback.Core.Graph.Extras.SettingsExtra? right) -> bool
 static Flyback.Core.Graph.Extras.SettingsExtra.operator ==(Flyback.Core.Graph.Extras.SettingsExtra? left, Flyback.Core.Graph.Extras.SettingsExtra? right) -> bool
+static Flyback.Core.Graph.Extras.SongExtra.Set(Flyback.Core.Graph.NodeInstance! node, System.Collections.Generic.IEnumerable<Flyback.Core.Graph.SongPart!>! parts) -> void
+static Flyback.Core.Graph.Extras.SongExtra.operator !=(Flyback.Core.Graph.Extras.SongExtra? left, Flyback.Core.Graph.Extras.SongExtra? right) -> bool
+static Flyback.Core.Graph.Extras.SongExtra.operator ==(Flyback.Core.Graph.Extras.SongExtra? left, Flyback.Core.Graph.Extras.SongExtra? right) -> bool
 static Flyback.Core.Graph.Extras.StepsExtra.Set(Flyback.Core.Graph.NodeInstance! node, System.Collections.Generic.IEnumerable<Flyback.Core.Graph.Step>! notes) -> void
 static Flyback.Core.Graph.Extras.StepsExtra.operator !=(Flyback.Core.Graph.Extras.StepsExtra? left, Flyback.Core.Graph.Extras.StepsExtra? right) -> bool
 static Flyback.Core.Graph.Extras.StepsExtra.operator ==(Flyback.Core.Graph.Extras.StepsExtra? left, Flyback.Core.Graph.Extras.StepsExtra? right) -> bool
@@ -1005,6 +1036,8 @@ static Flyback.Core.Graph.PortSpec.operator ==(Flyback.Core.Graph.PortSpec left,
 static Flyback.Core.Graph.PresetFiles.Embedded(System.Reflection.Assembly! assembly, string! folder) -> System.Func<System.Collections.Generic.IReadOnlyDictionary<string!, byte[]!>!>!
 static Flyback.Core.Graph.ScaleMode.operator !=(Flyback.Core.Graph.ScaleMode? left, Flyback.Core.Graph.ScaleMode? right) -> bool
 static Flyback.Core.Graph.ScaleMode.operator ==(Flyback.Core.Graph.ScaleMode? left, Flyback.Core.Graph.ScaleMode? right) -> bool
+static Flyback.Core.Graph.SongPart.operator !=(Flyback.Core.Graph.SongPart? left, Flyback.Core.Graph.SongPart? right) -> bool
+static Flyback.Core.Graph.SongPart.operator ==(Flyback.Core.Graph.SongPart? left, Flyback.Core.Graph.SongPart? right) -> bool
 static Flyback.Core.Graph.Step.operator !=(Flyback.Core.Graph.Step left, Flyback.Core.Graph.Step right) -> bool
 static Flyback.Core.Graph.Step.operator ==(Flyback.Core.Graph.Step left, Flyback.Core.Graph.Step right) -> bool
 static Flyback.Core.Graph.StepSpec.operator !=(Flyback.Core.Graph.StepSpec? left, Flyback.Core.Graph.StepSpec? right) -> bool

@@ -4,6 +4,28 @@
 
 ### Modules
 
+### Presets
+
+### Assistant
+
+### Editor
+
+### Viewer
+
+### Command line
+
+### Installing
+
+### Performance
+
+### Fixes
+
+## 0.13.0 — 2026-11-07
+
+33 commits since 0.12.0.
+
+### Modules
+
 - Arrangements chain, for a piece longer than 32 sections: wire one's `next` into the next one's `in` and each of its parts into the next one's part, and the second picks up where the first ends, fading from the first's levels into its own. Turn `loop` off on the first and it stays on its last section once it ends, rather than starting over underneath. Before it starts an Arrangement hands on what comes into its parts, and its first section comes from them the first time through.
 
 - The Song: a patch's one sequence of sections, shown in the Sequence pane under the canvas. Its parts are named, `song.kick`, and each loops at its own length, so a 12-section bass comes round against a 16-section drum line. In the pane a click switches a level, a double-click makes it glide, a drag up or down turns it and a drag along paints it; each part's handle sets its length, the ruler seeks, and the pane collapses to one strip. In the text a part is a line, its name and a colon first.
@@ -34,7 +56,6 @@
 - Clicked seven times, the About window's mark shows a close-up of an old TV drawing the logo, and copies the whole scene: the set in a dark room, with an IDM loop playing on it.
 - Settings, Picture, Smoothing offers Best, four samples a pixel, in the preview and in a recorded take.
 - A module's glyph is back on the canvas: small in its color before its name, and larger over the name when zoomed out. A shut box shows the group glyph.
-- The About window keeps its size and place when its mark comes alive; the line saying the code is on the clipboard has its room from the start.
 - A renamed module shows its type after its name on the canvas, quieter, and under it when zoomed out, and the inspector names it beside the family, so clearing the name is no longer the way to see what it is.
 - On a Mac a mouse wheel zooms the canvas again, while two fingers on a trackpad still pan it. Settings, Canvas, Scroll can make every scroll pan or every scroll zoom instead.
 - The web editor's settings choose the oversampling the sound starts at and which edge the transport takes over a full-screen picture, and keep both for the next visit.
@@ -49,8 +70,6 @@
 
 - `flyback-cli render` smooths as Settings, Picture, Smoothing says unless `--smooth` is given, rather than always at best.
 - `flyback-cli shot --gallery` waits for the preset pictures in sight before it draws, rather than leaving their tiles blank.
-
-### Installing
 
 ### Performance
 
