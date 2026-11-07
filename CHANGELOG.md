@@ -6,6 +6,8 @@
 
 - Arrangements chain, for a piece longer than 32 sections: wire one's `next` into the next one's `in` and each of its parts into the next one's part, and the second picks up where the first ends, fading from the first's levels into its own. Turn `loop` off on the first and it stays on its last section once it ends, rather than starting over underneath. Before it starts an Arrangement hands on what comes into its parts, and its first section comes from them the first time through.
 
+- The Song: a patch's one sequence of sections, shown in the Sequence pane under the canvas. Its parts are named, `song.kick`, and each loops at its own length, so a 12-section bass comes round against a 16-section drum line. In the pane a click switches a level, a double-click makes it glide, a drag up or down turns it and a drag along paints it; each part's handle sets its length, the ruler seeks, and the pane collapses to one strip. In the text a part is a line, its name and a colon first.
+
 ### Presets
 
 - The Clip and Picture in presets are gone. Their Sample and Picture modules are still in the module list.

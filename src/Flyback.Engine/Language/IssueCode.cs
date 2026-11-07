@@ -65,6 +65,12 @@ public static class IssueCode
     /// <summary>A block that writes more parts, or a part more sections, than an Arrangement holds.</summary>
     public const string TooManyParts = "too-many-parts";
 
+    /// <summary>A part in the Song's block with no name before it, or a name the text cannot write or has already.</summary>
+    public const string PartName = "part-name";
+
+    /// <summary>A second Song in a patch, which has at most one.</summary>
+    public const string OneSong = "one-song";
+
     // --- the panel -------------------------------------------------------------
 
     /// <summary>A <c>panel</c> line past the most controls a panel holds.</summary>

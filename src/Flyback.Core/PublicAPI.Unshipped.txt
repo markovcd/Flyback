@@ -1,1 +1,34 @@
 #nullable enable
+Flyback.Core.Graph.Extras.SongExtra
+Flyback.Core.Graph.Extras.SongExtra.Deconstruct(out System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.SongPart!>! Default) -> void
+Flyback.Core.Graph.Extras.SongExtra.Default.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.SongPart!>!
+Flyback.Core.Graph.Extras.SongExtra.Default.init -> void
+Flyback.Core.Graph.Extras.SongExtra.Equals(Flyback.Core.Graph.Extras.SongExtra? other) -> bool
+Flyback.Core.Graph.Extras.SongExtra.SongExtra(System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.SongPart!>! Default) -> void
+Flyback.Core.Graph.SongPart
+Flyback.Core.Graph.SongPart.<Clone>$() -> Flyback.Core.Graph.SongPart!
+Flyback.Core.Graph.SongPart.Deconstruct(out string! Name, out System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PartLevel>! Levels) -> void
+Flyback.Core.Graph.SongPart.Equals(Flyback.Core.Graph.SongPart? other) -> bool
+Flyback.Core.Graph.SongPart.Levels.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PartLevel>!
+Flyback.Core.Graph.SongPart.Levels.init -> void
+Flyback.Core.Graph.SongPart.Name.get -> string!
+Flyback.Core.Graph.SongPart.Name.init -> void
+Flyback.Core.Graph.SongPart.SongPart(string! Name, System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PartLevel>! Levels) -> void
+override Flyback.Core.Graph.Extras.SongExtra.<Clone>$() -> Flyback.Core.Graph.Extras.SongExtra!
+override Flyback.Core.Graph.Extras.SongExtra.Announce() -> string!
+override Flyback.Core.Graph.Extras.SongExtra.Equals(object? obj) -> bool
+override Flyback.Core.Graph.Extras.SongExtra.Fold(Flyback.Core.Graph.EmitContext ctx, Flyback.Core.Graph.NodeInstance! node, Flyback.Core.Graph.ExtraEnv env) -> Flyback.Core.Graph.EmitContext
+override Flyback.Core.Graph.Extras.SongExtra.GetHashCode() -> int
+override Flyback.Core.Graph.Extras.SongExtra.Help.get -> string!
+override Flyback.Core.Graph.Extras.SongExtra.Key.get -> string!
+override Flyback.Core.Graph.Extras.SongExtra.Seed(Flyback.Core.Graph.NodeInstance! node) -> void
+override Flyback.Core.Graph.Extras.SongExtra.ToString() -> string!
+override Flyback.Core.Graph.SongPart.Equals(object? obj) -> bool
+override Flyback.Core.Graph.SongPart.GetHashCode() -> int
+override Flyback.Core.Graph.SongPart.ToString() -> string!
+override sealed Flyback.Core.Graph.Extras.SongExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
+static Flyback.Core.Graph.Extras.SongExtra.operator !=(Flyback.Core.Graph.Extras.SongExtra? left, Flyback.Core.Graph.Extras.SongExtra? right) -> bool
+static Flyback.Core.Graph.Extras.SongExtra.operator ==(Flyback.Core.Graph.Extras.SongExtra? left, Flyback.Core.Graph.Extras.SongExtra? right) -> bool
+static Flyback.Core.Graph.Extras.SongExtra.Set(Flyback.Core.Graph.NodeInstance! node, System.Collections.Generic.IEnumerable<Flyback.Core.Graph.SongPart!>! parts) -> void
+static Flyback.Core.Graph.SongPart.operator !=(Flyback.Core.Graph.SongPart? left, Flyback.Core.Graph.SongPart? right) -> bool
+static Flyback.Core.Graph.SongPart.operator ==(Flyback.Core.Graph.SongPart? left, Flyback.Core.Graph.SongPart? right) -> bool

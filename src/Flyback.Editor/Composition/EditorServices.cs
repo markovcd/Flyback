@@ -14,6 +14,7 @@ using Flyback.Editor.Knobs;
 using Flyback.Editor.Midi;
 using Flyback.Editor.Notices;
 using Flyback.Editor.PluginPackages;
+using Flyback.Editor.Sequence;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Site;
@@ -239,6 +240,7 @@ internal static class EditorServices
         services.AddPart<FullScreenPreview>();
         services.AddPart<LivePatching>();
         services.AddPart<LiveExtras>();
+        services.AddPart<SequencePane>();
         services.AddPart<ShellLayout>();
         services.AddSingleton<EditorReadout>();
 

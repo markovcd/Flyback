@@ -426,6 +426,10 @@ public sealed class PatchSteps(PatchContext context)
             $"let first = arrangement(rate: {Number(1f / seconds)}, loop: 0) [ {first} ]{(char)10}"
             + $"first.next |> arrangement(rate: {Number(1f / seconds)}, part_1: first) [ {second} ] |> out.left");
 
+    [Given("a song of sections {float} seconds long whose parts are {string}, playing its {word}")]
+    public void GivenASong(float seconds, string parts, string part) =>
+        Written($"let song = song(rate: {Number(1f / seconds)}) [ {parts} ]{(char)10}song.{part} |> out.left");
+
     [Given("a window from {float} to {float} seconds")]
     public void GivenAWindow(float from, float to) =>
         Written($"window(in: t, from: {Number(from)}, to: {Number(to)}) |> out.left");

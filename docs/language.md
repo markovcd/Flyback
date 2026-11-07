@@ -607,6 +607,30 @@ last section once it ends, so its `section` and `progress` stop there rather tha
 starting over; leave it on the last of a chain to bring the piece round to that
 one's first section.
 
+### Song notation
+
+A patch has at most one Song, the sequence of sections the editor shows in its
+Sequence pane under the canvas. Its parts are named, and each loops over as many
+sections as it has, so parts of different lengths come round at different times.
+Its block is a line for each part, the name and a colon first:
+
+```
+let song = beat.beats |> song(rate: 1/16, fade: 0.05) [
+    kick: 1 1 1 1 0 1 1 1 1 1 1 1 0 0 1 1
+    bass: 0 0 1 1 1 0.8 0 1 1 1 1 0
+    pad:  >1 1 1 0.5
+]
+```
+
+A part is read by its name, `song.kick`; `song.section` counts the longest part's
+sections from 1, `song.progress` runs 0 to 1 through each, and `song.played` counts
+the sections played without coming round. The next name starts the next part, so
+a long one may run over lines, and a printing carries a part on every 16 sections.
+A name is a letter or `_` and then letters, digits and `_`, one no other part has
+and none of the Song's own outputs; anything else, or a level before any name, is
+`part-name`. Up to 8 parts of up to 256 sections, or `too-many-parts`; a second
+`song()` in a patch is `one-song`.
+
 ---
 
 ## 9. The panel

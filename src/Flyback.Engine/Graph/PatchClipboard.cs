@@ -93,7 +93,8 @@ public static class PatchClipboard
     /// the modules that arrived.
     /// </summary>
     /// <remarks>
-    /// Modules get fresh ids and the wires follow. Any Output is dropped. Unknown
+    /// Modules get fresh ids and the wires follow. Any Output is dropped, and a Song where
+    /// the patch has one already. Unknown
     /// modules are the caller's to refuse (<see cref="PatchLoad.IsComplete"/>). A
     /// Send on a bus already in use gets a bus of its own
     /// (<see cref="BusEdits.Separate"/>). Groups are rebuilt with their edge
@@ -117,6 +118,8 @@ public static class PatchClipboard
 
         foreach (var node in arriving)
         {
+            if (!into.CanAdd(node.TypeId)) continue;
+
             var fresh = node.Clone(Guid.NewGuid(), dx, dy);
 
             renamed[node.Id] = fresh.Id;

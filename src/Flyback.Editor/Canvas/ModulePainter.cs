@@ -234,7 +234,7 @@ internal sealed class ModulePainter(
             var port = def.Outputs[i];
             var center = NodeGeometry.OutputPort(node, i);
             var room = geometry.Compact ? ModuleFace.HalfRow(bounds) : bounds.Width - 24;
-            var label = CanvasText.Text(port.Name, CanvasText.RowSize, Ink(center.Y, RowInk, 0, CanvasText.LabelBrush), room, true);
+            var label = CanvasText.Text(OutputNames.Of(node, def, i), CanvasText.RowSize, Ink(center.Y, RowInk, 0, CanvasText.LabelBrush), room, true);
 
             CanvasText.Draw(context, label, ModuleFace.LabelAt(bounds, center, label, output: true));
             NodeSkin.DrawPort(context, center, port.Kind);

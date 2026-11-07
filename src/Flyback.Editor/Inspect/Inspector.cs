@@ -397,7 +397,7 @@ internal sealed class Inspector
 
         for (var i = 0; i < def.Outputs.Count; i++)
         {
-            Panel.Children.Add(socketRows.Edged(InspectorRows.Helped(socketRows.Output(node, def.Outputs[i].Name, i), def.Outputs[i].Help), node, i, output: true));
+            Panel.Children.Add(socketRows.Edged(InspectorRows.Helped(socketRows.Output(node, OutputNames.Of(node, def, i), i), def.Outputs[i].Help), node, i, output: true));
 
             foreach (var shown in measuredRows.Under(node, i)) Panel.Children.Add(shown);
         }

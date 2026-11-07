@@ -284,6 +284,8 @@ internal static class MeasureCommand
             var socket = name[(dot + 1)..].Trim();
             var def = catalog.Require(patch.Find(node)!.TypeId);
 
+            if (OutputNames.Own(patch.Find(node)!, def, socket) is >= 0 and var part) return (node, part);
+
             for (var port = 0; port < def.Outputs.Count; port++)
                 if (string.Equals(def.Outputs[port].Name, socket, StringComparison.OrdinalIgnoreCase) || SocketNames.Same(def.Outputs[port].Name, socket))
                     return (node, port);

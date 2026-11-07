@@ -971,6 +971,9 @@ public static class PatchPrinter
 
                 var name = plan.Names[wire.SourceNode];
 
+                var own = OutputNames.Of(node, def, wire.SourcePort);
+                if (OutputNames.Own(node, def, own) >= 0) return Part.Of($"{name}.{own}");
+
                 return Part.Of(wire.SourcePort == 0
                     ? name
                     : $"{name}.{def.Outputs[wire.SourcePort].Name.Replace(' ', '_')}");

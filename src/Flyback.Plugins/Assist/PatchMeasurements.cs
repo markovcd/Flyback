@@ -122,6 +122,12 @@ internal sealed class PatchMeasurements(WorkingPatch bench, WorkbenchLimits limi
 
         var socket = name[(dot + 1)..];
 
+        if (OutputNames.Own(node, def, socket) is >= 0 and var part)
+        {
+            refusal = string.Empty;
+            return (node.Id, part);
+        }
+
         for (var port = 0; port < def.Outputs.Count; port++)
         {
             if (SocketNames.Same(def.Outputs[port].Name, socket))

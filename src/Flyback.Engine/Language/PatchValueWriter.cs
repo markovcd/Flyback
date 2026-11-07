@@ -28,6 +28,7 @@ internal static class PatchValueWriter
         }
 
         if (def.Extra<ArrangementExtra>() is not null) return ArrangementNotation.Write(ArrangementExtra.Of(node));
+        if (def.Extra<SongExtra>() is not null) return SongNotation.Write(SongExtra.Of(node));
 
         return null;
     }

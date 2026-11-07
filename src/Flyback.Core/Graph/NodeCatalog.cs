@@ -145,6 +145,7 @@ public static partial class NodeCatalog
             .Concat(Oscillators())
             .Concat(Strings())
             .Concat(Sequencers())
+            .Append(SongModule.Def)
             .Concat(Envelopes())
             .Append(Duck())
             .Append(Filter())

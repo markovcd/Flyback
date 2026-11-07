@@ -143,6 +143,7 @@ seq.arrangement | in, rate, fade, part 1, part 2, part 3, part 4, part 5, part 6
 seq.chance | gate, chance, seed | gate, else
 seq.hold | in, trigger | out
 seq.notes | in, rate, gate length, shape | out, gate, index
+seq.song | in, rate, fade | part 1, part 2, part 3, part 4, part 5, part 6, part 7, part 8, progress, section, played
 seq.tempo | bpm, in | out, beats
 seq.values | in, rate, gate length, shape | out, gate, index
 space.kaleidoscope | x, y, segments | x, y

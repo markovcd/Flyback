@@ -81,7 +81,8 @@ internal static class ArrangementNotation
     /// <summary>One part's levels as the block writes them, with no brackets.</summary>
     public static string Row(IEnumerable<PartLevel> part) => string.Join(' ', part.Select(Written));
 
-    private static PartLevel? Level(string word)
+    /// <summary>One level as a block writes it, or null where it is not one.</summary>
+    public static PartLevel? Level(string word)
     {
         var glides = word.StartsWith('>');
         var number = glides ? word[1..] : word;

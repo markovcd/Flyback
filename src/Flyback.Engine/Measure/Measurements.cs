@@ -79,7 +79,7 @@ public static class Measurements
                 socket.Node,
                 socket.Port,
                 node.Title(def),
-                def.Outputs[socket.Port].Name,
+                OutputNames.Of(node, def, socket.Port),
                 sound.Slice(socket.Offset, socket.Width).ToArray(),
                 picture.AsSpan(other.Offset, other.Width).ToArray(),
                 Pictured(picture, first, last, other, pixels))

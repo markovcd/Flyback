@@ -19,6 +19,7 @@ internal static class Vocabulary
         StepsExtra => "a block after the call, in step notation",
         ScaleExtra => "a block of note names after the call",
         ArrangementExtra => "a block of parts after the call",
+        SongExtra => "a block after the call, a line for each part starting with its name and a colon",
         FileExtra => "the call's one unnamed string",
         _ => "named arguments",
     };

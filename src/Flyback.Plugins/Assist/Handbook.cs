@@ -107,7 +107,11 @@ internal static class Handbook
           shortening the sections: with `a` given `loop: 0`, `let b = a.next
           |> arrangement(rate: 1/32, part_1: a, part_2: a.part_2) [ ... ]`
           plays b where a ends, b's parts are the whole piece, and a's
-          `section` stays on its last.
+          `section` stays on its last. For a whole song, a patch has one
+          `song()`, whose parts are named and each loops at its own length,
+          a line a part: `let song = beat.beats |> song(rate: 1/16) [ kick: 1
+          1 0 1  bass: 0 1 1 ]`, read as `song.kick`; it shows in the pane
+          under the canvas, and a second `song()` is refused.
         - **A file is a string**: `sample("kick.wav")`, `picture("photo.png")`.
         - **`off name`**, on its own line, switches a module off: what is
           patched into it comes straight out, and nothing where nothing is.

@@ -11,6 +11,7 @@ using Flyback.Editor.Inspect;
 using Flyback.Editor.Keys;
 using Flyback.Editor.Knobs;
 using Flyback.Editor.Notices;
+using Flyback.Editor.Sequence;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Statistics;
@@ -47,7 +48,8 @@ internal sealed class ShellLayout(
     LastPress lastPress,
     PictureAside aside,
     LivePatching live,
-    LiveExtras liveExtras)
+    LiveExtras liveExtras,
+    SequencePane sequence)
     : IReactTo<PatchCompiled>,
         IReactTo<GestureFinished>,
         IReactTo<KnobsWanted>,
@@ -89,6 +91,11 @@ internal sealed class ShellLayout(
     private GridLength assistantShare = new(WindowLayout.DefaultAssistantWidth, GridUnitType.Pixel);
     private readonly GridSplitter controlsSplitter = Splitter(across: false, "controls-splitter");
     private GridLength controlsShare = new(WindowLayout.DefaultControlsHeight);
+    private readonly GridSplitter sequenceSplitter = Splitter(across: false, "sequence-splitter");
+    private GridLength sequenceShare = new(WindowLayout.DefaultSequenceHeight);
+
+    /// <summary>The canvas or the text, over the Sequence pane.</summary>
+    private Grid? work;
 
     /// <summary>The gap a splitter keeps between the panels it divides.</summary>
     internal const double SplitterGap = 5;
@@ -225,13 +232,32 @@ internal sealed class ShellLayout(
             ],
         };
 
+        work = new Grid
+        {
+            RowDefinitions =
+            [
+                new RowDefinition(new GridLength(1, GridUnitType.Star)) { MinHeight = 120 },
+                new RowDefinition(GridLength.Auto),
+                new RowDefinition(new GridLength(0)),
+            ],
+        };
+
         Grid.SetRow(editor, 0);
         Grid.SetRow(source, 0);
+        Grid.SetRow(sequenceSplitter, 1);
+        Grid.SetRow(sequence.View, 2);
+        work.Children.Add(editor);
+        work.Children.Add(source);
+        work.Children.Add(sequenceSplitter);
+        work.Children.Add(sequence.View);
+        sequence.LayoutChanged += LaySequence;
+        LaySequence();
+
+        Grid.SetRow(work, 0);
         Grid.SetRow(controlsSplitter, 1);
         controlsSplitter.IsVisible = false;
         Grid.SetRow(knobs.View, 2);
-        patchPane.Children.Add(editor);
-        patchPane.Children.Add(source);
+        patchPane.Children.Add(work);
         patchPane.Children.Add(controlsSplitter);
         patchPane.Children.Add(knobs.View);
 
@@ -514,6 +540,21 @@ internal sealed class ShellLayout(
         if (!shown) knobs.Link(null);
     }
 
+    /// <summary>Gives the Sequence pane its row: none without a Song, its strip collapsed, and the height it had open.</summary>
+    private void LaySequence()
+    {
+        if (work is null) return;
+
+        var row = work.RowDefinitions[2];
+        if (row.Height.IsAbsolute && row.Height.Value > SequencePane.StripHeight && sequenceSplitter.IsVisible) sequenceShare = row.Height;
+
+        var open = sequence.HasSong && !sequence.Collapsed;
+
+        row.MinHeight = open ? 90 : 0;
+        row.Height = !sequence.HasSong ? new GridLength(0) : sequence.Collapsed ? new GridLength(SequencePane.StripHeight) : sequenceShare;
+        sequenceSplitter.IsVisible = open;
+    }
+
     private RowDefinition? ControlsRow => knobs.View.Parent is Grid grid ? grid.RowDefinitions[2] : null;
 
     public void ApplyPanelLayout()
@@ -530,6 +571,9 @@ internal sealed class ShellLayout(
         if (LeftOpen) assistantColumn.Width = assistantShare;
         toolbar.Assistant.IsChecked = saved.AssistantOpen && toolbar.Assistant.IsEnabled;
         controlsShare = new GridLength(saved.ControlsHeight, GridUnitType.Pixel);
+        sequenceShare = new GridLength(saved.SequenceHeight, GridUnitType.Pixel);
+        sequence.Collapsed = saved.SequenceCollapsed;
+        LaySequence();
         if (ControlsRow is { } row && knobs.View.IsVisible) row.Height = controlsShare;
         ShowControls(saved.ControlsOpen);
         if (narrow) sideBeforeNarrow = saved.SideOpen;
@@ -572,6 +616,8 @@ internal sealed class ShellLayout(
             AssistantOpen = assistant.IsVisible,
             ControlsHeight = knobs.View.IsVisible ? Under(knobs.View, length => length.Value) : controlsShare.Value,
             ControlsOpen = knobs.View.IsVisible,
+            SequenceHeight = sequenceSplitter.IsVisible && work is not null ? work.RowDefinitions[2].Height.Value : sequenceShare.Value,
+            SequenceCollapsed = sequence.Collapsed,
             Code = document.ShowingCode,
             Swapped = toolbar.Swap.IsChecked == true,
             SideOpen = narrow ? sideBeforeNarrow : sideShown,

@@ -584,15 +584,16 @@ public sealed class Patch
 
     /// <summary>
     /// Whether another module of this type may be placed. Everything says yes
-    /// but the Output, of which a patch has exactly one, always.
+    /// but the Output, of which a patch has exactly one, always, and the Song,
+    /// of which it has at most one.
     /// </summary>
     /// <remarks>
     /// Compilation roots at the Output it finds and walks backwards (ADR-0011),
     /// so a second is never reached: whatever is wired into it looks connected,
     /// renders nothing, and raises no complaint, because the patch compiled.
     /// </remarks>
-    [SuppressMessage("Performance", "CA1822", Justification = "Plugin contract: asked of a patch.")]
-    internal bool CanAdd(string typeId) => !NodeCatalog.IsSink(typeId);
+    internal bool CanAdd(string typeId) =>
+        !NodeCatalog.IsSink(typeId) && (typeId != SongModule.TypeId || Nodes.All(node => node.TypeId != typeId));
 
     /// <summary>
     /// Puts the Output in place if it is not already there, and hands it back.

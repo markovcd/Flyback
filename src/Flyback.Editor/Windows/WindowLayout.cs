@@ -52,6 +52,12 @@ public sealed class WindowLayout
     /// <inheritdoc cref="AssistantWidth"/>
     public double ControlsHeight { get; set; } = DefaultControlsHeight;
 
+    /// <inheritdoc cref="AssistantWidth"/>
+    public double SequenceHeight { get; set; } = DefaultSequenceHeight;
+
+    /// <summary>The Sequence pane is down to its strip.</summary>
+    public bool SequenceCollapsed { get; set; }
+
     public bool AssistantOpen { get; set; }
 
     public bool ControlsOpen { get; set; }
@@ -72,7 +78,7 @@ public sealed class WindowLayout
 
     public const double DefaultPreviewWeight = 1, DefaultInspectorWeight = 1.1;
 
-    public const double DefaultAssistantWidth = 320, DefaultControlsHeight = 118;
+    public const double DefaultAssistantWidth = 320, DefaultControlsHeight = 118, DefaultSequenceHeight = 230;
 
     public static string File => Path.Combine(GlobalConstants.DataFolder, "layout.json");
 
@@ -114,6 +120,7 @@ public sealed class WindowLayout
 
         AssistantWidth = Pixels(AssistantWidth, DefaultAssistantWidth);
         ControlsHeight = Pixels(ControlsHeight, DefaultControlsHeight);
+        SequenceHeight = Pixels(SequenceHeight, DefaultSequenceHeight);
 
         return this;
 

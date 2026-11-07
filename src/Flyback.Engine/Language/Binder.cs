@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Language.Ast;
 using Flyback.Engine.Language.Ast.Expressions;
@@ -743,12 +744,19 @@ public sealed class Binder
         if (value is not Placed placed)
             return Refuse(IssueCode.NotAModule, line, column, $"this is not a module, so it has no output called '{name}'.");
 
-        var port = SocketNames.Find(placed.Def.Outputs, name);
+        var node = wiring.Patch.Find(placed.Id);
+        var port = node is not null && OutputNames.Own(node, placed.Def, name) is >= 0 and var own
+            ? own
+            : SocketNames.Find(placed.Def.Outputs, name);
 
         if (port < 0)
         {
+            var outputs = node is null
+                ? SocketNames.List(placed.Def.Outputs)
+                : string.Join(", ", placed.Def.Outputs.Select((_, at) => $"'{OutputNames.Of(node, placed.Def, at).Replace(' ', '_')}'"));
+
             return Refuse(IssueCode.UnknownOutput, line, column,
-                $"'{placed.Def.Name}' has no output called '{name}'. It has {SocketNames.List(placed.Def.Outputs)}.");
+                $"'{placed.Def.Name}' has no output called '{name}'. It has {outputs}.");
         }
 
         return new Socket(placed.Id, placed.Def, port);
@@ -956,6 +964,12 @@ public sealed class Binder
         {
             return Refuse(IssueCode.OutputIsNotASource, expr.Line, expr.Column,
                 "every patch already has its Output. Wire into 'out.color' or 'out.left'.");
+        }
+
+        if (def.TypeId == SongModule.TypeId && !wiring.Patch.CanAdd(def.TypeId))
+        {
+            return Refuse(IssueCode.OneSong, expr.Line, expr.Column,
+                "a patch has one Song, and this is a second. For another sequence of sections, use an 'arrangement'.");
         }
 
         var arguments = new CallArguments();

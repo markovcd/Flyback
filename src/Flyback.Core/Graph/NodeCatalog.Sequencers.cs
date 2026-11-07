@@ -34,7 +34,7 @@ public partial class NodeCatalog
     /// The shortest a change between sections may take, as a fraction of a section:
     /// a level that jumps in one sample clicks, for the reason a gate's edge does.
     /// </summary>
-    private const float ShortestFade = 0.001f;
+    internal const float ShortestFade = 0.001f;
 
     /// <summary>How far short of its end an Arrangement that does not loop stays, as a fraction of a section, so it stays inside its last.</summary>
     private const float HeldShort = 0.0001f;
@@ -493,15 +493,9 @@ public partial class NodeCatalog
         ];
     }
 
-    /// <summary>
-    /// Each part as where it is and where it came from, blended by how far the change
-    /// between them has got.
-    /// </summary>
+    /// <summary>Each part's level in the section playing (see <see cref="SectionLevels"/>).</summary>
     /// <remarks>
-    /// Both are chains of Mixes on section edges every part shares, so a part costs an op
-    /// for each change of level and nothing for a section that holds the one before's. A
-    /// level is reached over 'fade', or over the whole section where it glides. Section
-    /// one comes from the last section, which is where a looping arrangement comes from,
+    /// Section one comes from the last section, which is where a looping arrangement comes from,
     /// except the first time through, when it comes from the part's input. Before it
     /// starts, while 'in' is below nought, each part is its input: that is how one
     /// Arrangement takes over from the one before it in a chain. A part it does not have
@@ -533,20 +527,16 @@ public partial class NodeCatalog
         // Before the start, or in the first section the first time through: a part still comes from its input.
         var fromInput = em.Sub(one, em.Binary(OpCode.Step, one, traveled));
 
-        // Whether the section playing is at or past each one: the same edges a sequence's windows use.
-        var edges = new Slot[sections];
-        for (var s = 1; s < sections; s++) edges[s] = em.Binary(OpCode.Step, em.Constant(s), index);
+        var edges = SectionLevels.Edges(em, index, sections);
 
         var fade = em.Ternary(OpCode.Clamp, node[2], em.Constant(ShortestFade), one);
         var eased = em.Ternary(OpCode.Smoothstep, zero, fade, progress);
-
-        // How far a part that holds one level throughout has got from its input to that level.
-        var settled = em.Ternary(OpCode.Mix, one, eased, fromInput);
+        var levels = new SectionLevels(em, eased, progress, fromInput);
 
         var outputs = new Slot[MaxParts + 3];
 
         for (var p = 0; p < MaxParts; p++)
-            outputs[p] = Part(p < parts.Count ? parts[p] : [new PartLevel(0f)], node[firstPart + p]);
+            outputs[p] = levels.Part(p < parts.Count ? parts[p] : [new PartLevel(0f)], edges, node[firstPart + p]);
 
         outputs[MaxParts] = progress;
         outputs[MaxParts + 1] = em.Mul(em.Add(index, 1f), started);
@@ -555,39 +545,5 @@ public partial class NodeCatalog
             em.Binary(OpCode.Div, em.Constant(sections), em.Binary(OpCode.Max, node[1], em.Constant(1e-6f))));
 
         return outputs;
-
-        Slot Part(IReadOnlyList<PartLevel> levels, Slot input)
-        {
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (levels.All(level => level.Value == levels[0].Value))
-                return em.Ternary(OpCode.Mix, input, em.Constant(levels[0].Value), settled);
-
-            var now = Chain(s => levels[s].Value);
-            var was = em.Ternary(OpCode.Mix, Chain(s => levels[(s + sections - 1) % sections].Value), input, fromInput);
-
-            var ramp = levels.Any(level => level.Glides)
-                ? em.Ternary(OpCode.Mix, eased, progress, Chain(s => levels[s].Glides ? 1f : 0f))
-                : eased;
-
-            return em.Add(was, em.Mul(em.Sub(now, was), ramp));
-        }
-
-        // The value for the section playing, a Mix at each edge where it changes.
-        Slot Chain(Func<int, float> at)
-        {
-            var held = at(0);
-            var value = em.Constant(held);
-
-            for (var s = 1; s < sections; s++)
-            {
-                // ReSharper disable once CompareOfFloatsByEqualityOperator
-                if (at(s) == held) continue;
-
-                held = at(s);
-                value = em.Ternary(OpCode.Mix, value, em.Constant(held), edges[s]);
-            }
-
-            return value;
-        }
     }
 }

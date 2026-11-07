@@ -47,6 +47,12 @@ internal sealed class Carrying(ModuleCatalog modules, Wiring wiring, Issues issu
             return;
         }
 
+        if (def.Extra<SongExtra>() is not null)
+        {
+            SongExtra.Set(node, SongNotation.Read(block, opened.Line, opened.Column, issues.List));
+            return;
+        }
+
         if (def.Extra<ArrangementExtra>() is not null)
         {
             ArrangementExtra.Set(node, ArrangementNotation.Read(block, opened.Line, opened.Column, issues.List));
