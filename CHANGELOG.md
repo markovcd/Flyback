@@ -22,6 +22,8 @@
 
 ### Fixes
 
+- `flyback-cli mcp --editor` started by Claude's desktop app finds the open editor on a Mac.
+
 ## 0.13.0 — 2026-11-07
 
 33 commits since 0.12.0.

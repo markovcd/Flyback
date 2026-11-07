@@ -25,6 +25,11 @@ internal sealed class ChannelServer(string name, Func<ChannelRequest, Cancellati
     {
         if (accepting is not null) return;
 
+        if (!OperatingSystem.IsWindows() && Path.GetDirectoryName(name) is { Length: > 0 } folder)
+        {
+            Directory.CreateDirectory(folder, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        }
+
         var first = Listen();
         accepting = Task.Run(() => Accept(first, stop.Token));
     }

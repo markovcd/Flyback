@@ -10,7 +10,7 @@ namespace Flyback.Host.Driving;
 /// <remarks>
 /// A named pipe on Windows and a Unix socket elsewhere, both opened
 /// <see cref="PipeOptions.CurrentUserOnly"/>: only the same user can connect, and the
-/// socket sits in the user's own runtime folder where there is one.
+/// socket sits in a folder of the user's own where there is one.
 /// </remarks>
 internal static class EditorChannel
 {
@@ -22,10 +22,51 @@ internal static class EditorChannel
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     /// <summary>The pipe's name, or the socket's path, for this user.</summary>
-    public static string Name =>
-        !OperatingSystem.IsWindows() && Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR") is { Length: > 0 } runtime && Directory.Exists(runtime)
+    public static string Name => Locate(
+        Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR"),
+        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+        Environment.UserName);
+
+    /// <summary>The channel, built only from what an MCP client passes to a server it starts.</summary>
+    /// <remarks>
+    /// Never from <c>TMPDIR</c>, where .NET would put an unrooted socket: Claude's desktop app
+    /// starts its servers without it, so the editor and <c>flyback-cli</c> would look in two folders.
+    /// </remarks>
+    internal static string Locate(string? runtime, string home, string user)
+    {
+        if (OperatingSystem.IsWindows()) return $"flyback-editor-{Safe(user)}";
+
+        if (OperatingSystem.IsMacOS()) return Path.Combine(home, "Library", "Caches", "Flyback", "flyback-editor.sock");
+
+        if (runtime is not { Length: > 0 } || !Directory.Exists(runtime))
+        {
+            runtime = Uid() is { } uid && Directory.Exists($"/run/user/{uid}") ? $"/run/user/{uid}" : null;
+        }
+
+        return runtime is not null
             ? Path.Combine(runtime, "flyback-editor.sock")
-            : $"flyback-editor-{Safe(Environment.UserName)}";
+            : Path.Combine("/tmp", $"flyback-editor-{Safe(user)}.sock");
+    }
+
+    /// <summary>This process's user id, read from <c>/proc</c>; null where there is none.</summary>
+    private static string? Uid()
+    {
+        try
+        {
+            return File.ReadLines("/proc/self/status")
+                .FirstOrDefault(line => line.StartsWith("Uid:", StringComparison.Ordinal))
+                ?.Split('\t', StringSplitOptions.RemoveEmptyEntries)
+                .ElementAtOrDefault(1);
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
 
     private static string Safe(string name) => new([.. name.Where(char.IsAsciiLetterOrDigit)]);
 
