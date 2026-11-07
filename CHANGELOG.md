@@ -53,7 +53,6 @@
 - Phosphor, the green of the Beam module's trace on blue-gray, is the editor's color scheme until another is chosen in Settings, Canvas, Colors. A scheme already saved there is kept.
 - The text view colors `for` loops, `panel`, `requires`, `keyboard` and `length` lines, `...`, `_`, notes, durations and step notation.
 - A comment in the text starts with `//`; a `#` comment is refused, with a message saying to write `//`.
-- Clicked seven times, the About window's mark shows a close-up of an old TV drawing the logo, and copies the whole scene: the set in a dark room, with an IDM loop playing on it.
 - Settings, Picture, Smoothing offers Best, four samples a pixel, in the preview and in a recorded take.
 - A module's glyph is back on the canvas: small in its color before its name, and larger over the name when zoomed out. A shut box shows the group glyph.
 - A renamed module shows its type after its name on the canvas, quieter, and under it when zoomed out, and the inspector names it beside the family, so clearing the name is no longer the way to see what it is.
