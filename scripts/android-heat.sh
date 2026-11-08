@@ -7,7 +7,7 @@
 #
 #   ./scripts/android-heat.sh                      Mycelium on 1, 2 and 4 cores, 20 s each
 #   ./scripts/android-heat.sh Acid --cores "1 4"   another preset and other counts
-#   ./scripts/android-heat.sh --seconds 15         shorter runs; 20 s is the most
+#   ./scripts/android-heat.sh --seconds 90         longer runs, up to 120 s, when asked for
 #   ./scripts/android-heat.sh --no-build           the APK already installed
 #   ./scripts/android-heat.sh --out heat.csv       where the log goes (default: android-heat.csv)
 #
@@ -44,7 +44,7 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-[ "$seconds" -ge 1 ] && [ "$seconds" -le 20 ] || { echo "--seconds is 1 to 20: a phone gets hot fast" >&2; exit 2; }
+[ "$seconds" -ge 1 ] && [ "$seconds" -le 120 ] || { echo "--seconds is 1 to 120: a phone gets hot fast" >&2; exit 2; }
 
 sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}}"
 export PATH="$sdk/platform-tools:$PATH"
