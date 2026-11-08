@@ -10,11 +10,11 @@ using Shouldly;
 
 namespace Flyback.Editor.Tests.Bars;
 
-/// <summary>The status bar's count of what the patch costs, the picture and the sound each, the sound's oversampling and how fast it renders.</summary>
+/// <summary>The status bar's count of what the patch costs, the picture and the sound each: the sound's oversampling and rungs for how far ahead it renders.</summary>
 public sealed class StatusCountTests : EditorTest
 {
     [AvaloniaFact]
-    public void It_says_how_fast_a_sound_renders_and_counts_no_modules_or_wires()
+    public void It_shows_the_oversampling_and_lights_rungs_for_how_fast_a_sound_renders_and_counts_no_modules_or_wires()
     {
         var speakers = new LoopbackDevice();
         var window = Open(Tone(sound: true), replace: services => services.AddSingleton(new AudioSetup(speakers, new LoopbackOutput(speakers))));
@@ -23,16 +23,22 @@ public sealed class StatusCountTests : EditorTest
 
         var bar = Service<StatusBar>(window);
         var count = All<TextBlock>(window).Single(text => text.Name == "statusCount");
+        var oversample = All<TextBlock>(window).Single(text => text.Name == "soundOversample");
+        var panel = All<StackPanel>(window).Single(panel => panel.Name == "soundHeadroom");
 
         // Written on a timer, which a headless run cannot be relied on to tick, so the test writes it.
         Pump(() =>
         {
             speakers.Pump();
             bar.Update();
-            return count.Text?.Contains("sound renders at ") == true;
+            return bar.Rungs.Lit > 0;
         }, window);
 
-        (count.Text ?? "").ShouldContain("2× oversampling · sound renders at ");
+        panel.IsVisible.ShouldBeTrue();
+        oversample.Text.ShouldBe("2×");
+        (ToolTip.GetTip(panel) as string ?? "").ShouldMatch(@"^Sound renders \d+\.\d\d× faster than it plays, with 2× oversampling\.$");
+        (count.Text ?? "").ShouldNotContain("oversampling");
+        (count.Text ?? "").ShouldNotContain("renders");
 
         (count.Text ?? "").ShouldNotContain("modules");
         (count.Text ?? "").ShouldNotContain("wires");
@@ -56,7 +62,7 @@ public sealed class StatusCountTests : EditorTest
             Dispatcher.UIThread.RunJobs();
         }
 
-        (count.Text ?? "").ShouldNotContain("sound renders at");
+        All<StackPanel>(window).Single(panel => panel.Name == "soundHeadroom").IsVisible.ShouldBeFalse();
         (count.Text ?? "").ShouldNotContain("oversampling");
     }
 

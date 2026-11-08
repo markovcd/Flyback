@@ -76,6 +76,28 @@ public sealed class SchemeFileTests
     }
 
     [Fact]
+    public void A_warning_a_file_leaves_out_is_its_accent_taken_toward_the_fault_red()
+    {
+        var (scheme, problems) = Read(Sodium);
+
+        scheme.ShouldNotBeNull().Warning.ShouldBe(Flyback.Ui.Controls.Colors.Blend(Color.FromRgb(0xFF, 0x9A, 0x1F), SchemeFile.Fault, SchemeFile.WarningUnless));
+        problems.ShouldNotContain(line => line.Contains("warning", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Every_shipped_scheme_names_its_own_warning_apart_from_its_accent_and_the_fault_red()
+    {
+        foreach (var scheme in SchemeLibrary.Shipped)
+        {
+            scheme.Warning.ShouldNotBe(scheme.Attention, scheme.Name);
+            scheme.Warning.ShouldNotBe(SchemeFile.Fault, scheme.Name);
+            scheme.Warning.ShouldNotBe(Flyback.Ui.Controls.Colors.Blend(scheme.Attention, SchemeFile.Fault, SchemeFile.WarningUnless), scheme.Name);
+        }
+
+        SchemeLibrary.Default.Warning.ShouldBe(Color.FromRgb(0xF0, 0x88, 0x4A));
+    }
+
+    [Fact]
     public void A_scheme_is_dark_unless_its_file_says_light()
     {
         Read(Sodium).Scheme.ShouldNotBeNull().Light.ShouldBeFalse();

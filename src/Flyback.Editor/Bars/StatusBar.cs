@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Avalonia.Threading;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Hubs;
@@ -66,6 +67,29 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
         Margin = new Thickness(8, 0, 0, 0),
     };
 
+    /// <summary>The oversampling factor, short, beside the rungs.</summary>
+    private readonly TextBlock oversample = new()
+    {
+        Name = "soundOversample",
+        FontSize = Text.Body,
+        VerticalAlignment = VerticalAlignment.Center,
+    };
+
+    /// <summary>How far ahead of real time the sound is worked out.</summary>
+    public HeadroomRungs Rungs { get; } = new() { Name = "soundRungs", VerticalAlignment = VerticalAlignment.Center };
+
+    /// <summary>The factor and the rungs together, with the exact figures as their tip.</summary>
+    private readonly StackPanel headroom;
+
+    /// <summary>How long a step down in oversampling stays marked.</summary>
+    private static readonly TimeSpan SteppedFor = TimeSpan.FromSeconds(4);
+
+    private static readonly IBrush SteppedInk = new ImmutableSolidColorBrush(Colors.Attention);
+    private static readonly IBrush BehindInk = new ImmutableSolidColorBrush(Colors.Fault);
+
+    private int lastOversample;
+    private DateTime steppedUntil;
+
     /// <summary>Said in the report's place while a patch just opened is compiled, before it starts.</summary>
     public Shimmer Compiling { get; } = new("Compiling…");
 
@@ -86,7 +110,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
 
         var bar = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto"),
+            ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto,Auto"),
             Margin = new Thickness(12, 5),
         };
 
@@ -122,9 +146,24 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
         Grid.SetColumn(Tutorial, 0);
         Grid.SetColumn(report, 1);
         Grid.SetColumn(Compiling, 1);
-        Grid.SetColumn(status, 2);
-        Grid.SetColumn(rule, 3);
-        Grid.SetColumn(letter, 4);
+        headroom = new StackPanel
+        {
+            Name = "soundHeadroom",
+            Orientation = Orientation.Horizontal,
+            Spacing = 5,
+            Margin = new Thickness(8, 0, 0, 0),
+            Background = Brushes.Transparent,
+            IsVisible = false,
+            Children = { oversample, Rungs },
+        };
+
+        // A touch screen shows no tip, so a tap says the figures on the report line.
+        headroom.Tapped += (_, _) => report.Say(Figures());
+
+        Grid.SetColumn(headroom, 2);
+        Grid.SetColumn(status, 3);
+        Grid.SetColumn(rule, 4);
+        Grid.SetColumn(letter, 5);
 
         // An Auto column never trims, so the counts are held to half the bar by hand,
         // or a narrow window gives them the report's whole width.
@@ -133,6 +172,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
         bar.Children.Add(Tutorial);
         bar.Children.Add(report);
         bar.Children.Add(Compiling);
+        bar.Children.Add(headroom);
         bar.Children.Add(status);
         bar.Children.Add(rule);
         bar.Children.Add(letter);
@@ -178,11 +218,12 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
         var renderer = preview.Renderer is { } name ? $"   |   {name}" : "";
         var backend = playback.SoundBackend is { } through ? $"   |   {through}" : "";
 
-        // Nothing is said of the sound of a patch that has none.
-        var sound = playback.HasSound ? $"{OversamplingText.Of(playback.Oversample)}   |   " : "";
+        // Nothing is shown of the sound of a patch that has none.
+        headroom.IsVisible = playback.HasSound;
 
-        if (playback.HasSound && playback.SoundSpeed > 0)
-            sound = sound[..^"   |   ".Length] + string.Create(CultureInfo.InvariantCulture, $" · sound renders at {playback.SoundSpeed:0.00}×   |   ");
+        if (playback.HasSound) ShowHeadroom();
+
+        var sound = playback.HasSound ? "   |   " : "";
 
         // Only while the window is somebody's: a window behind others is drawn
         // at whatever rate the system leaves it, which says nothing about Flyback.
@@ -191,6 +232,40 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
         status.Text = string.Create(
             CultureInfo.InvariantCulture,
             $"{sound}{preview.FramesPerSecond:0} fps{renderer}{backend}");
+    }
+
+    /// <summary>The oversampling and the rungs, marked for a few seconds after a step down.</summary>
+    private void ShowHeadroom()
+    {
+        var factor = playback.Oversample;
+        var now = DateTime.UtcNow;
+
+        if (factor < lastOversample) steppedUntil = now + SteppedFor;
+        lastOversample = factor;
+
+        var speed = playback.SoundSpeed;
+        var state = SoundHeadroom.Of(speed, factor);
+        var stepped = now < steppedUntil;
+
+        oversample.Text = string.Create(CultureInfo.InvariantCulture, $"{factor}×");
+        if (state == Headroom.Behind) oversample.Foreground = BehindInk;
+        else if (stepped) oversample.Foreground = SteppedInk;
+        else oversample.ClearValue(TextBlock.ForegroundProperty);
+        Rungs.Show(SoundHeadroom.Lit(speed), state, stepped);
+
+        // Written while closed only, so an open tip holds still to be read.
+        if (!ToolTip.GetIsOpen(headroom)) ToolTip.SetTip(headroom, Figures());
+    }
+
+    /// <summary>The exact figures behind the rungs.</summary>
+    private string Figures()
+    {
+        var factor = OversamplingText.Of(playback.Oversample);
+        var speed = playback.SoundSpeed;
+
+        return speed > 0
+            ? string.Create(CultureInfo.InvariantCulture, $"Sound renders {speed:0.00}× faster than it plays, with {factor}.")
+            : $"Sound with {factor}; how fast it renders is not timed yet.";
     }
 
     private static Button Glyph(string name, Control glyph, string tip)

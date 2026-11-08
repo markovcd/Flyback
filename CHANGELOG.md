@@ -10,6 +10,7 @@
 
 ### Editor
 
+- The status bar shows the sound's oversampling as a short "2×" beside five rungs that light the further ahead of real time the sound renders, instead of a line of text. The rungs turn the color scheme's new warning color when the sound only just keeps up and red when it falls behind; the exact speed is in their tip, or said on a tap.
 - Swapping the picture and the canvas leaves the side column as it was, so with every panel put away a swap no longer brings it back.
 - A window too narrow for two columns keeps the picture and the canvas swapped: the picture shows, and the side button trades it for the canvas. Swap works in such a window too.
 

@@ -1259,6 +1259,16 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
         return Named<TextBlock>(open, "statusCount").Text ?? string.Empty;
     });
 
+    /// <summary>The status bar's sound headroom, written afresh: whether it shows, its oversampling, rungs lit and tip.</summary>
+    public (bool Shown, string Oversample, int Lit, string Tip) Headroom => ReadWindow(open =>
+    {
+        var bar = Service<StatusBar>();
+        bar.Update();
+        var panel = Named<StackPanel>(open, "soundHeadroom");
+
+        return (panel.IsVisible, Named<TextBlock>(open, "soundOversample").Text ?? string.Empty, bar.Rungs.Lit, ToolTip.GetTip(panel) as string ?? string.Empty);
+    });
+
     private static Slider Volume(MainWindow window) =>
         Named<Slider>(window, "volume");
 

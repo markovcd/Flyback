@@ -33,4 +33,5 @@ internal sealed record Scheme(
     Color Inactive,
     Color Attention,
     Color Bright,
+    Color Warning,
     bool Light);

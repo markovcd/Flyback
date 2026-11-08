@@ -6,7 +6,7 @@ namespace Flyback.Ui.Controls;
 
 /// <summary>
 /// A color scheme written as JSON: a <c>format</c>, a <c>name</c>, the <c>grounds</c> and
-/// the <c>text</c> by role, and the <c>accent</c>, each color <c>#RRGGBB</c>, and
+/// the <c>text</c> by role, the <c>accent</c> and the <c>warning</c>, each color <c>#RRGGBB</c>, and
 /// <c>light</c> set true where the grounds are pale.
 /// </summary>
 /// <remarks>
@@ -26,6 +26,12 @@ internal static class SchemeFile
 
     /// <summary>How far from the ground a file's label is taken for the bright text it does not name.</summary>
     public const double BrightUnless = 0.7;
+
+    /// <summary>The red of <see cref="Colors.Fault"/>, kept here so reading a scheme never sets <see cref="Colors"/> up.</summary>
+    public static Color Fault { get; } = Color.FromRgb(0xF0, 0x52, 0x4F);
+
+    /// <summary>How far toward the fault red the accent is taken for the warning a file does not name.</summary>
+    public const double WarningUnless = 0.5;
 
     private static readonly JsonDocumentOptions Reading = new()
     {
@@ -144,11 +150,14 @@ internal static class SchemeFile
         var bright = Optional(root, "text", "bright", problems)
             ?? ColorMix.Blend(colors[11], light ? Avalonia.Media.Colors.Black : Avalonia.Media.Colors.White, BrightUnless);
 
+        var warning = Optional(root, null, "warning", problems)
+            ?? ColorMix.Blend(colors[16], Fault, WarningUnless);
+
         return new Scheme(
             name,
             colors[0], colors[1], colors[2], colors[3], colors[4], colors[5], colors[6], colors[7],
             colors[8], colors[9], colors[10], colors[11], colors[12], colors[13], colors[14], colors[15],
-            colors[16], bright, light);
+            colors[16], bright, warning, light);
     }
 
     /// <summary>A yes or no a file may leave out, meaning no; one it gets wrong is said.</summary>

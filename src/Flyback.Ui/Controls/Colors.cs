@@ -127,7 +127,10 @@ internal static class Colors
 
     /// <summary>Something wrong: a fault, a refusal, a problem to read. The same in every scheme.</summary>
     /// <remarks>A red apart from the Output family's, so a fault never reads as a module.</remarks>
-    public static Color Fault { get; } = Color.FromRgb(0xF0, 0x52, 0x4F);
+    public static Color Fault => SchemeFile.Fault;
+
+    /// <summary>Close to going wrong, but not yet: the sound only just keeping up. Each scheme's own.</summary>
+    public static Color Warning => Current.Warning;
 
     // --- the one color that means "look here" ------------------------------
 

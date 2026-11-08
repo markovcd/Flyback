@@ -22,5 +22,6 @@
     "inactive": "#58575E",
     "bright": "#F2EEE9"
   },
-  "accent": "#F46036"
+  "accent": "#F46036",
+  "warning": "#E3B23C"
 }

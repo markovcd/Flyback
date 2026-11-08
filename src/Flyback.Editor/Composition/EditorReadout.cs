@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Files;
 using Flyback.Editor.Gallery;
@@ -48,6 +49,7 @@ internal sealed class EditorReadout(
             ["soundCores"] = sound.Cores,
             ["soundOversample"] = sound.Oversample,
             ["soundSpeed"] = Math.Round(sound.Speed, 2),
+            ["soundHeadroom"] = SoundHeadroom.Word(SoundHeadroom.Of(sound.Speed, sound.Oversample)),
             ["canvasPaints"] = painted,
             ["canvasPaintMilliseconds"] = Math.Round(lastPaint.TotalMilliseconds, 2),
             ["canvasSlowestPaintMilliseconds"] = Math.Round(slowestPaint.TotalMilliseconds, 2),

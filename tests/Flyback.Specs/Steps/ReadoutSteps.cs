@@ -26,5 +26,8 @@ public sealed class ReadoutSteps(EditorDriver editor)
     [Then("the script is told nothing of how fast the sound renders")]
     public void ThenNoSpeed() => ((double)Told["soundSpeed"]!).ShouldBe(0);
 
+    [Then("the script is told the sound has {string} of headroom")]
+    public void ThenHeadroom(string word) => ((string?)Told["soundHeadroom"]).ShouldBe(word);
+
     private JsonObject Told => told ?? throw new InvalidOperationException("No script has asked the editor yet.");
 }

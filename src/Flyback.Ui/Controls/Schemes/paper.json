@@ -22,5 +22,6 @@
     "muted": "#5E5748",
     "inactive": "#A39B8A"
   },
-  "accent": "#1F4BA5"
+  "accent": "#1F4BA5",
+  "warning": "#B8561A"
 }

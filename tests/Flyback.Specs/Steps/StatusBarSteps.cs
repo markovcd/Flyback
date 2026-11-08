@@ -55,17 +55,28 @@ public sealed class StatusBarSteps(EditorDriver editor) : IDisposable
             if (speakers.IsRunning) speakers.Pump();
     }
 
-    [Then("the status bar says how many times real time the sound renders at")]
-    public void ThenItSaysTheSpeed() => editor.StatusCount.ShouldMatch(@"sound renders at \d+\.\d\d×");
+    [Then("the status bar's rungs show how far ahead of real time the sound renders")]
+    public void ThenTheRungsShow()
+    {
+        var (shown, oversample, lit, _) = editor.Headroom;
 
-    [Then("the status bar says nothing of how fast the sound renders")]
-    public void ThenItSaysNothingOfTheSpeed() => editor.StatusCount.ShouldNotContain("sound renders at");
+        shown.ShouldBeTrue();
+        oversample.ShouldMatch(@"^\d+×$");
+        lit.ShouldBeGreaterThan(0, "a sine renders well ahead of real time");
+    }
+
+    [Then("the rungs' tip says how many times real time the sound renders at")]
+    public void ThenTheTipSaysTheSpeed() => editor.Headroom.Tip.ShouldMatch(@"Sound renders \d+\.\d\d× faster than it plays");
+
+    [Then("the status bar shows no rungs and no oversampling")]
+    public void ThenNoRungs()
+    {
+        editor.Headroom.Shown.ShouldBeFalse();
+        editor.StatusCount.ShouldNotContain("oversampl");
+    }
 
     [Then("the status bar says the sound plays through {string}")]
     public void ThenItNamesTheBackend(string backend) => editor.StatusCount.ShouldEndWith($"   |   {backend}");
-
-    [Then("the status bar says nothing of oversampling")]
-    public void ThenItSaysNothingOfOversampling() => editor.StatusCount.ShouldNotContain("oversampl");
 
     [Then("the status bar counts no modules or wires")]
     public void ThenNoCounts()
