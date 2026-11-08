@@ -35,7 +35,7 @@ A launch opens a preset and picks the interpreter from the intent:
 `adb shell am start -n app.flybackmodular.editor/crc64ce5bee3bb3e85030.MainActivity --es preset Sidebands --ez interpreted true`.
 A broadcast asks the running editor how it is doing, and the answer is the JSON the web
 editor's `window.flyback.state()` gives, read by the same `EditorReadout`: the preset, the
-renderer and its rate, what the sound plays through, `soundRunsOn` (`IL` or `interpreter`), `soundCores` (how many cores the sound is cut across),
+renderer and its rate, what the sound plays through, `soundRunsOn` (`IL` or `interpreter`), `soundCores` (how many cores the sound is cut across), `soundOversample` (the factor it is evaluated at now),
 `soundSpeed` (0 until IL plays), how long the canvas takes to draw on the UI thread
 (`canvasPaintMilliseconds`, and `canvasPaints` and `canvasSlowestPaintMilliseconds` since the
 last read, so read, pan, read again) and the status bar's last message:

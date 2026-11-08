@@ -3,7 +3,7 @@
 # (ADR-0230): plays a preset for a short run per count, logging once a second the skin,
 # CPU and battery temperatures, the throttling status, the battery's power (signed as the
 # phone reports it) and whether it is plugged in, each CPU cluster's clock and the
-# editor's soundSpeed and soundCores.
+# editor's soundSpeed, soundCores and soundOversample.
 #
 #   ./scripts/android-heat.sh                      Mycelium on 1, 2 and 4 cores, 20 s each
 #   ./scripts/android-heat.sh Acid --cores "1 4"   another preset and other counts
@@ -14,6 +14,7 @@
 # Kind to the phone: each run waits for the skin to cool to --cool (33 C) first, gives up
 # after ten minutes of waiting, and stops the app and the whole script the moment the
 # skin passes --hot (38 C). The app is force-stopped after every run and on any exit.
+# The screen is kept awake while the script runs, since a dimmed phone slows the sound.
 # Unplugged is best: charging heats the battery and blurs the power reading, so use
 # wireless debugging. Prints one line per run, with the mean power, which is what turns
 # into heat. Exit 0 when every run finished, 1 when one was stopped, 2 for a usage error.
@@ -52,7 +53,15 @@ command -v adb >/dev/null || { echo "no adb: set ANDROID_HOME to an SDK with pla
 [ "$(adb get-state 2>/dev/null || true)" = device ] || { echo "no device attached" >&2; exit 2; }
 
 stop_app() { adb shell am force-stop "$package" >/dev/null 2>&1 || true; }
-trap stop_app EXIT INT TERM
+
+timeout="$(adb shell settings get system screen_off_timeout 2>/dev/null | tr -d '\r')"
+finish() {
+  stop_app
+  [[ "$timeout" =~ ^[0-9]+$ ]] && adb shell settings put system screen_off_timeout "$timeout" >/dev/null 2>&1 || true
+}
+trap finish EXIT
+trap 'exit 130' INT TERM
+adb shell settings put system screen_off_timeout 1800000 >/dev/null
 
 if $build; then
   # Never -p:RuntimeIdentifier: it flows into every referenced project and rewrites their lock files.
@@ -95,7 +104,7 @@ ask() { adb shell am broadcast -a "$package.${1:-STATE}" -p "$package" 2>/dev/nu
 field() { printf '%s' "$2" | sed -n -e "s/.*\"$1\":\"\([^\"]*\)\".*/\1/p" -e t -e "s/.*\"$1\":\([^,}]*\).*/\1/p"; }
 
 clusters="$(adb shell 'ls -d /sys/devices/system/cpu/cpufreq/policy*' 2>/dev/null | tr -d '\r' | sed 's|.*/||' | tr '\n' ',' | sed 's/,$//')"
-echo "cores,second,skin,cpu,battery,status,power_mw,plugged,${clusters//policy/mhz_cpu},sound_speed,sound_cores" > "$out"
+echo "cores,second,skin,cpu,battery,status,power_mw,plugged,${clusters//policy/mhz_cpu},sound_speed,sound_cores,sound_oversample" > "$out"
 
 # Charging feeds the battery while the app drains it, so the current read is neither.
 if [ "$(read_phone | cut -d, -f6)" = 1 ]; then
@@ -136,7 +145,7 @@ for cores in $counts; do
     started=$SECONDS
     readings="$(read_phone)"
     state="$(ask)"
-    echo "$cores,$second,$readings,$(field soundSpeed "$state"),$(field soundCores "$state")" >> "$out"
+    echo "$cores,$second,$readings,$(field soundSpeed "$state"),$(field soundCores "$state"),$(field soundOversample "$state")" >> "$out"
 
     if above "$(printf '%s' "$readings" | cut -d, -f1)" "$hot"; then
       stop_app
@@ -153,12 +162,13 @@ done
 
 # One line per run, skipping the first five seconds while the patch warms up.
 awk -F, 'NR > 1 && $2 > 5 {
-  n[$1]++; power[$1] += $7; speed[$1] += $(NF - 1); used[$1] = $NF
+  n[$1]++; power[$1] += $7; speed[$1] += $(NF - 2); used[$1] = $(NF - 1)
+  if (!($1 in least) || $NF < least[$1]) least[$1] = $NF
   if (!($1 in first)) first[$1] = $3
   last[$1] = $3; if ($3 > top[$1]) top[$1] = $3
 }
 END {
-  for (c in n) printf "%s cores (used %s): %.0f mW, skin %.1f -> %.1f C (top %.1f), soundSpeed %.2fx\n", c, used[c], power[c] / n[c], first[c], last[c], top[c], speed[c] / n[c]
+  for (c in n) printf "%s cores (used %s): %.0f mW, skin %.1f -> %.1f C (top %.1f), soundSpeed %.2fx, oversample down to %s\n", c, used[c], power[c] / n[c], first[c], last[c], top[c], speed[c] / n[c], least[c]
 }' "$out" | sort -n >&2
 
 $stopped && exit 1
