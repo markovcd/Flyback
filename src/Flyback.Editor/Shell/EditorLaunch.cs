@@ -18,6 +18,9 @@ public sealed record EditorLaunch : IIlCompilerSetup
     /// <summary>Keep the CPU's programs on the interpreter for the whole run.</summary>
     public bool Interpreted { get; init; }
 
+    /// <summary>How many cores this run's sound may use in place of Settings → Sound → Cores, or null for the setting.</summary>
+    public int? SoundCores { get; init; }
+
     /// <summary>What the last update and any plugin just installed did, said once on the status bar.</summary>
     public string? OpeningNote { get; init; }
 

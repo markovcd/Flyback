@@ -120,7 +120,9 @@ saying twice that it timed out waiting for `libandroid.so`; it has not been time
    `flyback-cli shot` (ADR-0166); only the GL context, the audio device and permissions need
    an emulator over `adb`. An intent opens a preset, and the state broadcast says what plays
    and how fast; `scripts/android-smoke.sh` does both, waits for the sound to be timed,
-   rotates and asks again. Written on 2026-10-11 in a session with no emulator, so its
+   rotates and asks again. `scripts/android-heat.sh` plays a preset on a real phone at each
+   count of sound cores (`--ei cores N`), logging temperatures, power and clocks once a
+   second, and never starts a run on a warm phone. Written on 2026-10-11 in a session with no emulator, so its
    first run is still owed; it goes into `android.yml` when the APK ships.
 
 ## The order

@@ -16,7 +16,15 @@ internal static class DeviceEditor
     /// <param name="preset">A shipped preset to start on once the editor is open, as a script launching the app asks; null for the usual one.</param>
     /// <param name="started">Handed the container as soon as it is built, for the app's own readout.</param>
     /// <param name="relaunch">Starts the app again, or null where the system lets no app do that.</param>
-    public static EditorView Build(Assembly app, EditorFolders folders, string? preset, bool interpreted, Action<IServiceProvider> started, Action<Reopen?>? relaunch = null)
+    /// <param name="soundCores">How many cores the sound may use this run, over the setting, as a script measuring heat asks; null for the setting.</param>
+    public static EditorView Build(
+        Assembly app,
+        EditorFolders folders,
+        string? preset,
+        bool interpreted,
+        Action<IServiceProvider> started,
+        Action<Reopen?>? relaunch = null,
+        int? soundCores = null)
     {
         var plugins = PluginHost.LoadLinked(app).Install();
 
@@ -25,7 +33,7 @@ internal static class DeviceEditor
             Plugins = plugins,
             Folders = folders,
             Host = new() { PresetSite = Site.PresetSite.Built, Relaunch = relaunch, OnDevice = true },
-            Launch = new() { Interpreted = interpreted },
+            Launch = new() { Interpreted = interpreted, SoundCores = soundCores },
         }, services =>
         {
             services.AddSingleton<ITitle, DeviceTitle>();

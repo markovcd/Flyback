@@ -24,7 +24,7 @@ public sealed class DeviceApp : Avalonia.Application
             var request = DeviceRequest.Current;
 
             if (request.Stalls) DeviceStalls.Start();
-            host.Child = DeviceEditor.Build(typeof(DeviceApp).Assembly, DeviceFolders.Private(), request.Preset, request.Interpreted, provider => DeviceState.Provider = provider, DeviceRestart.Launch);
+            host.Child = DeviceEditor.Build(typeof(DeviceApp).Assembly, DeviceFolders.Private(), request.Preset, request.Interpreted, provider => DeviceState.Provider = provider, DeviceRestart.Launch, request.Cores);
         };
 
         device.MainView = host;

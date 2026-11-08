@@ -28,6 +28,7 @@ internal sealed class SoundSection : ISettingsSection
     private readonly OutputSettingRepository settings;
     private readonly IAudioEngine audio;
     private readonly Playback playback;
+    private readonly EditorLaunch launch;
 
     /// <summary>What lowers the oversampling when the sound keeps falling behind.</summary>
     private readonly LiveOversample live;
@@ -116,8 +117,9 @@ internal sealed class SoundSection : ISettingsSection
         TextWrapping = TextWrapping.Wrap,
     };
 
-    public SoundSection(PluginCatalog plugins, EditorHost host, OutputSettingRepository settings, IAudioEngine audio, Playback playback, ReportLine report)
+    public SoundSection(PluginCatalog plugins, EditorHost host, OutputSettingRepository settings, IAudioEngine audio, Playback playback, ReportLine report, EditorLaunch launch)
     {
+        this.launch = launch;
         this.plugins = plugins;
         this.settings = settings;
         this.audio = audio;
@@ -194,7 +196,7 @@ internal sealed class SoundSection : ISettingsSection
     {
         Show();
         audio.Oversample = settings.Current.Oversample;
-        SoundCores.Wanted = settings.Current.SoundCores;
+        SoundCores.Wanted = launch.SoundCores ?? settings.Current.SoundCores;
         live.Start();
     }
 
