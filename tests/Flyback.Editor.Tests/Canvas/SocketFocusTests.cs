@@ -269,9 +269,9 @@ public class SocketFocusTests : EditorTest
         // The up arrow's nudge, on a second canvas, is what one notch should come to.
         var (_, keyed, keyedSine, _) = Clicked();
         Press(keyed, Key.Up);
-        var oneNudge = keyedSine.InputValues[freq(keyedSine)];
+        var oneNudge = keyedSine.InputValues[Freq(keyedSine)];
         Press(keyed, Key.Up);
-        var twoNudges = keyedSine.InputValues[freq(keyedSine)];
+        var twoNudges = keyedSine.InputValues[Freq(keyedSine)];
 
         var (editor, window, sine, pick) = Clicked();
         var at = Well(editor, window, sine, pick.Port);
@@ -293,7 +293,7 @@ public class SocketFocusTests : EditorTest
 
         sine.InputValues[pick.Port].ShouldBe(twoNudges, "a whole notch is one nudge, as a mouse's always was");
 
-        static int freq(NodeInstance node) => Port(node, "freq");
+        static int Freq(NodeInstance node) => Port(node, "freq");
     }
 
     [AvaloniaFact]

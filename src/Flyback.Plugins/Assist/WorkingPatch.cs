@@ -231,16 +231,16 @@ internal sealed class WorkingPatch(ModuleCatalog modules, ISampleLibrary? sample
     /// </summary>
     private string Likely(string handle)
     {
-        const int Listed = 8;
+        const int listed = 8;
 
-        if (byHandle.Count <= Listed) return $"The patch has: {string.Join(", ", byHandle.Keys)}.";
+        if (byHandle.Count <= listed) return $"The patch has: {string.Join(", ", byHandle.Keys)}.";
 
         var close = byHandle.Keys
             .OrderBy(key => key.Contains(handle, StringComparison.OrdinalIgnoreCase)
                 || handle.Contains(key, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
             .ThenBy(key => Distance(key.ToLowerInvariant(), handle.ToLowerInvariant()))
             .ThenBy(key => key, StringComparer.OrdinalIgnoreCase)
-            .Take(Listed);
+            .Take(listed);
 
         return $"Nearest of its {byHandle.Count}: {string.Join(", ", close)}. describe_patch lists them all.";
 

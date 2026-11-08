@@ -63,7 +63,7 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
     [AvaloniaFact]
     public void Giving_the_knobs_the_top_moves_the_transport_to_the_bottom_and_is_kept()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var dialog = OpenSettings(window, FullScreenTab);
 
         All<ComboBox>(dialog).Single(c => c.Name == "transportEdge").SelectedIndex = 1;
@@ -71,13 +71,13 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
 
         All<TransportOverlay>(window).Single().VerticalAlignment.ShouldBe(Avalonia.Layout.VerticalAlignment.Bottom);
         All<StageKnobs>(window).Single().VerticalAlignment.ShouldBe(Avalonia.Layout.VerticalAlignment.Top);
-        OutputSettings.Load(settingsPath).Transport.ShouldBe(TransportEdge.Bottom);
+        OutputSettings.Load(SettingsPath).Transport.ShouldBe(TransportEdge.Bottom);
     }
 
     [AvaloniaFact]
     public void A_knob_grid_set_in_the_settings_holds_the_panel_and_is_kept()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var dialog = OpenSettings(window, PlayingTab);
 
         All<CheckBox>(dialog).Single(c => c.Name == "knobGrid").IsChecked = true;
@@ -87,13 +87,13 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
 
         All<ControlsPanel>(window).Single().KnobGrid.ShouldNotBeNull().ToString().ShouldBe("3x2");
         All<StageKnobs>(window).Single().KnobGrid.ShouldNotBeNull().ToString().ShouldBe("3x2");
-        OutputSettings.Load(settingsPath).KnobGrid.ToString().ShouldBe("3x2");
+        OutputSettings.Load(SettingsPath).KnobGrid.ToString().ShouldBe("3x2");
     }
 
     [AvaloniaFact]
     public void Save_is_drawn_apart_from_cancel()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var dialog = OpenSettings(window);
 
         IBrush? Fill(string name) => All<Avalonia.Controls.Presenters.ContentPresenter>(Named<Button>(dialog, name)).First().Background;
@@ -104,7 +104,7 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
     [AvaloniaFact]
     public void Columns_and_rows_sit_indented_under_the_knob_grid_switch()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var dialog = OpenSettings(window, PlayingTab);
 
         var grid = All<CheckBox>(dialog).Single(c => c.Name == "knobGrid");
@@ -124,7 +124,7 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
     [AvaloniaFact]
     public void Nothing_in_the_settings_window_is_clipped()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var dialog = OpenSettings(window);
         var clipped = new List<string>();
 
@@ -176,22 +176,22 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
     [AvaloniaFact]
     public void A_hand_edited_knob_grid_is_brought_into_range()
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
-        SettingsFile.Write(settingsPath, OutputSettings.Section, """{ "knobGrid": { "on": true, "columns": 0, "rows": 500 } }""");
+        Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
+        SettingsFile.Write(SettingsPath, OutputSettings.Section, """{ "knobGrid": { "on": true, "columns": 0, "rows": 500 } }""");
 
-        OutputSettings.Load(settingsPath).KnobGrid.ToString().ShouldBe("1x32");
+        OutputSettings.Load(SettingsPath).KnobGrid.ToString().ShouldBe("1x32");
     }
 
     [AvaloniaFact]
     public void A_file_with_no_knob_grid_wraps_the_knobs() =>
-        OutputSettings.Load(settingsPath).KnobGrid.On.ShouldBeFalse();
+        OutputSettings.Load(SettingsPath).KnobGrid.On.ShouldBeFalse();
 
     [AvaloniaFact]
     public void Picking_Direct3D_is_kept_for_the_next_launch_and_said()
     {
         Assert.SkipUnless(OperatingSystem.IsWindows(), "only Windows has a second driver");
 
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var dialog = OpenSettings(window);
         var render = All<ComboBox>(dialog).Single(c => c.Name == "render");
 
@@ -200,26 +200,26 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
         render.SelectedItem = "Direct3D";
         CloseSettings(window, dialog);
 
-        OutputSettings.Load(settingsPath).Graphics.ShouldBe(GraphicsDriver.Direct3D);
-        OutputSettings.Load(settingsPath).Gpu.ShouldBeTrue();
+        OutputSettings.Load(SettingsPath).Graphics.ShouldBe(GraphicsDriver.Direct3D);
+        OutputSettings.Load(SettingsPath).Gpu.ShouldBeTrue();
         All<ReportLine>(window).Single().History.ShouldContain("Direct3D draws from the next time Flyback starts.");
-        All<ComboBox>(OpenSettings(Open(settingsPath))).Single(c => c.Name == "render").SelectedItem.ShouldBe("Direct3D");
+        All<ComboBox>(OpenSettings(Open(SettingsPath))).Single(c => c.Name == "render").SelectedItem.ShouldBe("Direct3D");
     }
 
     /// <summary>The CPU draws the picture whatever draws the window, so picking it keeps the driver.</summary>
     [AvaloniaFact]
     public void Picking_the_cpu_keeps_the_driver()
     {
-        new OutputSettings { Graphics = GraphicsDriver.Direct3D }.Save(settingsPath);
+        new OutputSettings { Graphics = GraphicsDriver.Direct3D }.Save(SettingsPath);
 
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var dialog = OpenSettings(window);
 
         All<ComboBox>(dialog).Single(c => c.Name == "render").SelectedItem = "CPU";
         CloseSettings(window, dialog);
 
-        OutputSettings.Load(settingsPath).Gpu.ShouldBeFalse();
-        OutputSettings.Load(settingsPath).Graphics.ShouldBe(GraphicsDriver.Direct3D);
+        OutputSettings.Load(SettingsPath).Gpu.ShouldBeFalse();
+        OutputSettings.Load(SettingsPath).Graphics.ShouldBe(GraphicsDriver.Direct3D);
     }
 
     [AvaloniaFact]
@@ -255,7 +255,7 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
     [AvaloniaFact]
     public void The_startup_preset_is_kept_and_opens_the_next_launch_on_it()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var dialog = OpenSettings(window, FilesTab);
 
         var chosen = Patches[3];
@@ -263,9 +263,9 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
         PickStartupPreset(window, dialog, chosen);
         CloseSettings(window, dialog);
 
-        OutputSettings.Load(settingsPath).DefaultPreset.ShouldBe(chosen);
+        OutputSettings.Load(SettingsPath).DefaultPreset.ShouldBe(chosen);
 
-        var next = Open(settingsPath);
+        var next = Open(SettingsPath);
 
         next.Title.ShouldBe($"{chosen} — {GlobalConstants.ApplicationName}");
         StartupName(OpenSettings(next, FilesTab)).ShouldBe(chosen);
@@ -275,7 +275,7 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
     [AvaloniaFact]
     public void A_startup_preset_changed_and_not_saved_is_dropped()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var dialog = OpenSettings(window, FilesTab);
 
         var before = StartupName(dialog);
@@ -283,7 +283,7 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
         PickStartupPreset(window, dialog, Patches[4]);
         CloseSettings(window, dialog, "cancel");
 
-        File.Exists(settingsPath).ShouldBeFalse();
+        File.Exists(SettingsPath).ShouldBeFalse();
 
         StartupName(OpenSettings(window, FilesTab)).ShouldBe(before);
     }
@@ -302,13 +302,13 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
     [AvaloniaFact]
     public void A_startup_patch_this_launch_does_not_offer_is_kept()
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
-        SettingsFile.Write(settingsPath, OutputSettings.Section, "{\"defaultPreset\":\"A Plugin's Preset\"}");
+        Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
+        SettingsFile.Write(SettingsPath, OutputSettings.Section, "{\"defaultPreset\":\"A Plugin's Preset\"}");
 
-        OutputSettings.Load(settingsPath).DefaultPreset
+        OutputSettings.Load(SettingsPath).DefaultPreset
             .ShouldBe("A Plugin's Preset", "the file is read the way this test expects");
 
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var dialog = OpenSettings(window);
 
         var rate = PreviewFrameRate(dialog);
@@ -318,6 +318,6 @@ public class OutputSettingsStartupPresetTests : OutputSettingsTest
 
         CloseSettings(window, dialog);
 
-        OutputSettings.Load(settingsPath).DefaultPreset.ShouldBe("A Plugin's Preset");
+        OutputSettings.Load(SettingsPath).DefaultPreset.ShouldBe("A Plugin's Preset");
     }
 }

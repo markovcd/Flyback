@@ -21,10 +21,10 @@ internal static unsafe class ObjC
     private static readonly Dictionary<string, IntPtr> Classes = [];
     private static readonly Lock Gate = new();
 
-    private static delegate* unmanaged<byte*, IntPtr> objc_getClass;
-    private static delegate* unmanaged<byte*, IntPtr> sel_registerName;
-    private static delegate* unmanaged<IntPtr> objc_autoreleasePoolPush;
-    private static delegate* unmanaged<IntPtr, void> objc_autoreleasePoolPop;
+    private static delegate* unmanaged<byte*, IntPtr> objcGetClass;
+    private static delegate* unmanaged<byte*, IntPtr> selRegisterName;
+    private static delegate* unmanaged<IntPtr> objcAutoreleasePoolPush;
+    private static delegate* unmanaged<IntPtr, void> objcAutoreleasePoolPop;
 
     /// <summary>The address of <c>objc_msgSend</c>, cast at each call site to the call's shape.</summary>
     public static IntPtr MsgSend { get; private set; }
@@ -51,10 +51,10 @@ internal static unsafe class ObjC
                 return false;
             }
 
-            objc_getClass = (delegate* unmanaged<byte*, IntPtr>)getClass;
-            sel_registerName = (delegate* unmanaged<byte*, IntPtr>)register;
-            objc_autoreleasePoolPush = (delegate* unmanaged<IntPtr>)push;
-            objc_autoreleasePoolPop = (delegate* unmanaged<IntPtr, void>)pop;
+            objcGetClass = (delegate* unmanaged<byte*, IntPtr>)getClass;
+            selRegisterName = (delegate* unmanaged<byte*, IntPtr>)register;
+            objcAutoreleasePoolPush = (delegate* unmanaged<IntPtr>)push;
+            objcAutoreleasePoolPop = (delegate* unmanaged<IntPtr, void>)pop;
             MsgSend = send;
 
             why = null;
@@ -62,9 +62,9 @@ internal static unsafe class ObjC
         }
     }
 
-    public static IntPtr Class(string name) => Cached(Classes, name, objc_getClass);
+    public static IntPtr Class(string name) => Cached(Classes, name, objcGetClass);
 
-    public static IntPtr Sel(string name) => Cached(Selectors, name, sel_registerName);
+    public static IntPtr Sel(string name) => Cached(Selectors, name, selRegisterName);
 
     private static IntPtr Cached(Dictionary<string, IntPtr> cache, string name, delegate* unmanaged<byte*, IntPtr> look)
     {
@@ -83,9 +83,9 @@ internal static unsafe class ObjC
     }
 
     /// <summary>Drains what the calls since <see cref="Push"/> autoreleased, which on a thread of its own nothing else would.</summary>
-    public static IntPtr Push() => objc_autoreleasePoolPush();
+    public static IntPtr Push() => objcAutoreleasePoolPush();
 
-    public static void Pop(IntPtr pool) => objc_autoreleasePoolPop(pool);
+    public static void Pop(IntPtr pool) => objcAutoreleasePoolPop(pool);
 
     public static IntPtr Send(IntPtr receiver, string selector) =>
         ((delegate* unmanaged<IntPtr, IntPtr, IntPtr>)MsgSend)(receiver, Sel(selector));

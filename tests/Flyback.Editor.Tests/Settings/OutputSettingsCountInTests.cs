@@ -144,7 +144,7 @@ public class OutputSettingsCountInTests : OutputSettingsTest
     [AvaloniaFact]
     public async Task A_count_in_of_none_starts_the_take_at_once()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var dialog = OpenSettings(window, RecordingTab);
 
         CountIn(dialog).SelectedIndex = 0;
@@ -165,7 +165,7 @@ public class OutputSettingsCountInTests : OutputSettingsTest
     [AvaloniaFact]
     public async Task The_rewind_switched_off_leaves_the_clock_alone()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         Play(window);
         var dialog = OpenSettings(window, RecordingTab);
 

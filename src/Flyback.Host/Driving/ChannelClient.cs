@@ -19,10 +19,10 @@ internal sealed class ChannelClient : IAsyncDisposable
     /// <summary>A client greeted by the editor, or null with why not in <c>Why</c>.</summary>
     public static async Task<(ChannelClient? Client, string Why)> Connect(string name, string client, TimeSpan wait, CancellationToken cancel)
     {
-        const string Closed = "no editor is open with \"Let a program on this computer edit the open patch\" on.";
+        const string closed = "no editor is open with \"Let a program on this computer edit the open patch\" on.";
 
         // A socket that is not there would only time out.
-        if (Path.IsPathRooted(name) && !File.Exists(name)) return (null, Closed);
+        if (Path.IsPathRooted(name) && !File.Exists(name)) return (null, closed);
 
         var pipe = new NamedPipeClientStream(".", name, PipeDirection.InOut, EditorChannel.Options);
 
@@ -49,7 +49,7 @@ internal sealed class ChannelClient : IAsyncDisposable
         catch (Exception ex) when (ex is TimeoutException or IOException or UnauthorizedAccessException)
         {
             await pipe.DisposeAsync().ConfigureAwait(false);
-            return (null, Closed);
+            return (null, closed);
         }
     }
 

@@ -14,17 +14,17 @@ internal static class TranslateModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Translate 3D", DrawingsPlugin.Category,
         [
-            ..Space3d.Point(),
+            ..Space3D.Point(),
             new PortSpec("dx", PortKind.Scalar, 0f, -2f, 2f) { Help = "How far it moves across." },
             new PortSpec("dy", PortKind.Scalar, 0f, -2f, 2f) { Help = "How far it moves up." },
             new PortSpec("dz", PortKind.Scalar, 0f, -2f, 2f) { Help = "How far it moves toward the viewer." },
         ],
-        [.. Space3d.Point("Across, moved.", "Up, moved.", "Toward the viewer, moved.")],
+        [.. Space3D.Point("Across, moved.", "Up, moved.", "Toward the viewer, moved.")],
         (em, node) =>
         [
-            em.Add(node[Space3d.XPort], node[DxPort]),
-            em.Add(node[Space3d.YPort], node[DyPort]),
-            em.Add(node[Space3d.ZPort], node[DzPort]),
+            em.Add(node[Space3D.XPort], node[DxPort]),
+            em.Add(node[Space3D.YPort], node[DyPort]),
+            em.Add(node[Space3D.ZPort], node[DzPort]),
         ],
         "Moves a point in 3D. Before a Perspective, a positive 'dz' brings a model closer and a negative one "
         + "sends it away.")

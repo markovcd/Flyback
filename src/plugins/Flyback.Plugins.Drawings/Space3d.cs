@@ -3,7 +3,7 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Drawings;
 
 /// <summary>The sockets every 3D module shares: a point in, a point out.</summary>
-internal static class Space3d
+internal static class Space3D
 {
     public const int XPort = 0;
     public const int YPort = 1;

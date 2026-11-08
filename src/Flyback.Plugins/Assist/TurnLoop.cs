@@ -36,14 +36,14 @@ internal static class TurnLoop
     internal static readonly TimeSpan ToldWait = TimeSpan.FromSeconds(1);
 
     /// <summary>The waits told of, with how long each was, which are lines from the host rather than anything the assistant did.</summary>
-    private static readonly ConditionalWeakTable<PatchEvent, object> waits = [];
+    private static readonly ConditionalWeakTable<PatchEvent, object> Waits = [];
 
     /// <summary>Whether <paramref name="happened"/> is a wait for a refusal rather than anything the assistant did.</summary>
-    internal static bool IsWait(PatchEvent happened) => waits.TryGetValue(happened, out _);
+    internal static bool IsWait(PatchEvent happened) => Waits.TryGetValue(happened, out _);
 
     /// <summary>How long <paramref name="happened"/> waited for a refusal, or null where it is not a wait.</summary>
     internal static TimeSpan? Waited(PatchEvent happened) =>
-        waits.TryGetValue(happened, out var wait) ? (TimeSpan)wait : null;
+        Waits.TryGetValue(happened, out var wait) ? (TimeSpan)wait : null;
 
     /// <summary>What the model is told, once, when it changed the patch and stopped without offering it.</summary>
     internal const string Unproposed =
@@ -311,7 +311,7 @@ internal static class TurnLoop
             ? $"waiting {seconds}s for the rate limit"
             : $"waiting {seconds}s: the endpoint answered {status}");
 
-        waits.Add(line, wait);
+        Waits.Add(line, wait);
 
         return line;
     }

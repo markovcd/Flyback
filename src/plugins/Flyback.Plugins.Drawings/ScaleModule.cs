@@ -15,18 +15,18 @@ internal static class ScaleModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Scale 3D", DrawingsPlugin.Category,
         [
-            ..Space3d.Point(),
+            ..Space3D.Point(),
             new PortSpec("scale", PortKind.Scalar, 1f, -4f, 4f) { Help = "Every axis at once." },
             new PortSpec("sx", PortKind.Scalar, 1f, -4f, 4f) { Help = "Across alone. Negative mirrors it." },
             new PortSpec("sy", PortKind.Scalar, 1f, -4f, 4f) { Help = "Up alone. Negative mirrors it." },
             new PortSpec("sz", PortKind.Scalar, 1f, -4f, 4f) { Help = "Depth alone. Negative mirrors it." },
         ],
-        [.. Space3d.Point("Across, scaled.", "Up, scaled.", "Toward the viewer, scaled.")],
+        [.. Space3D.Point("Across, scaled.", "Up, scaled.", "Toward the viewer, scaled.")],
         (em, node) =>
         [
-            em.Mul(node[Space3d.XPort], em.Mul(node[ScalePort], node[SxPort])),
-            em.Mul(node[Space3d.YPort], em.Mul(node[ScalePort], node[SyPort])),
-            em.Mul(node[Space3d.ZPort], em.Mul(node[ScalePort], node[SzPort])),
+            em.Mul(node[Space3D.XPort], em.Mul(node[ScalePort], node[SxPort])),
+            em.Mul(node[Space3D.YPort], em.Mul(node[ScalePort], node[SyPort])),
+            em.Mul(node[Space3D.ZPort], em.Mul(node[ScalePort], node[SzPort])),
         ],
         "Grows or shrinks a point in 3D about the center, all at once with 'scale' or along one axis. "
         + "An envelope on 'scale' makes a model pulse.")

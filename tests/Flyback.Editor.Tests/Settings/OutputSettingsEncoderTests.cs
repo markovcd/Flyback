@@ -54,7 +54,7 @@ public class OutputSettingsEncoderTests : OutputSettingsTest
     [AvaloniaFact]
     public void The_formats_and_the_ffmpeg_are_kept_for_the_next_launch()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var dialog = OpenSettings(window, RecordingTab);
 
         VideoFormat(dialog).SelectedIndex = ClipFormats.Pictures.ToList().IndexOf(ClipFormats.Vp9WebM);
@@ -65,13 +65,13 @@ public class OutputSettingsEncoderTests : OutputSettingsTest
 
         CloseSettings(window, dialog);
 
-        var kept = OutputSettings.Load(settingsPath);
+        var kept = OutputSettings.Load(SettingsPath);
 
         kept.VideoFormat.ShouldBe(ClipFormats.Vp9WebM.Id);
         kept.SoundFormat.ShouldBe(ClipFormats.Mp3.Id);
         kept.FfmpegPath.ShouldBe("/opt/ffmpeg");
 
-        var again = OpenSettings(Open(settingsPath), RecordingTab);
+        var again = OpenSettings(Open(SettingsPath), RecordingTab);
 
         (VideoFormat(again).SelectedItem as string).ShouldBe(ClipFormats.Vp9WebM.Label);
         (SoundFormat(again).SelectedItem as string).ShouldBe(ClipFormats.Mp3.Label);
@@ -81,7 +81,7 @@ public class OutputSettingsEncoderTests : OutputSettingsTest
     [AvaloniaFact]
     public void A_format_changed_and_not_saved_is_dropped()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var dialog = OpenSettings(window, RecordingTab);
 
         var before = VideoFormat(dialog).SelectedItem as string;
@@ -104,7 +104,7 @@ public class OutputSettingsEncoderTests : OutputSettingsTest
     [AvaloniaFact]
     public void A_new_settings_file_starts_on_the_best_format_the_machine_can_write()
     {
-        var recording = OpenSettings(Open(settingsPath), RecordingTab);
+        var recording = OpenSettings(Open(SettingsPath), RecordingTab);
 
         (VideoFormat(recording).SelectedItem as string)
             .ShouldBe(ClipFormats.Preferred(Ffmpeg.Resolve(null) is not null).Label);
@@ -138,7 +138,7 @@ public class OutputSettingsEncoderTests : OutputSettingsTest
     [InlineData("cancel")]
     public void Closing_without_saving_puts_the_settings_back(string by)
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var preview = All<PreviewHost>(window).Single();
         var before = preview.Resolution;
 
@@ -152,7 +152,7 @@ public class OutputSettingsEncoderTests : OutputSettingsTest
         CloseSettings(window, dialog, by);
 
         preview.Resolution.ShouldBe(before);
-        File.Exists(settingsPath).ShouldBeFalse();
+        File.Exists(SettingsPath).ShouldBeFalse();
 
         var again = OpenSettings(window);
 
@@ -334,7 +334,7 @@ public class OutputSettingsEncoderTests : OutputSettingsTest
     [AvaloniaFact]
     public void A_size_picked_while_the_picker_is_grayed_out_is_not_saved()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var preview = All<PreviewHost>(window).Single();
         var before = preview.Resolution;
 
@@ -352,7 +352,7 @@ public class OutputSettingsEncoderTests : OutputSettingsTest
 
         CloseSettings(window, dialog);
 
-        var saved = OutputSettings.Load(settingsPath);
+        var saved = OutputSettings.Load(SettingsPath);
 
         saved.Width.ShouldBe(before.Width, "the size in force is the one written");
         saved.Height.ShouldBe(before.Height);

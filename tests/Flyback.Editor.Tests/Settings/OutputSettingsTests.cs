@@ -94,15 +94,15 @@ public class OutputSettingsTests : OutputSettingsTest
     [AvaloniaFact]
     public void Saving_keeps_the_settings_for_the_next_launch()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var dialog = OpenSettings(window);
 
         Size(dialog).SelectedIndex = 1;
         CloseSettings(window, dialog);
 
-        File.Exists(settingsPath).ShouldBeTrue();
+        File.Exists(SettingsPath).ShouldBeTrue();
 
-        var next = Open(settingsPath);
+        var next = Open(SettingsPath);
 
         All<PreviewHost>(next).Single().Resolution.Width.ShouldBe(480);
 

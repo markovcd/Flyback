@@ -85,7 +85,7 @@ public class SettingsSheetTests : OutputSettingsTest
     [AvaloniaFact]
     public void A_phone_saves_every_tab_as_the_desktop_does()
     {
-        var window = Phone(settingsPath);
+        var window = Phone(SettingsPath);
         var dialog = OpenSettings(window);
 
         Press(Rows(dialog).Single(row => Said(row) == "Picture"));
@@ -93,7 +93,7 @@ public class SettingsSheetTests : OutputSettingsTest
         Size(dialog).SelectedIndex = 1;
         CloseSettings(window, dialog);
 
-        var next = Open(settingsPath);
+        var next = Open(SettingsPath);
 
         Size(OpenSettings(next)).SelectedIndex.ShouldBe(1);
     }

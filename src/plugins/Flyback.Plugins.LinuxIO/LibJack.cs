@@ -104,11 +104,11 @@ internal static unsafe partial class LibJack
     /// <summary>Whether the link now exists; already existing is a yes.</summary>
     public static bool Link(IntPtr client, string source, string destination)
     {
-        const int Exists = 17; // EEXIST
+        const int exists = 17; // EEXIST
 
         var status = Connect(client, source, destination);
 
-        return status is 0 or Exists;
+        return status is 0 or exists;
     }
 
     /// <summary>Whether libjack is on this machine at all, asked the way <see cref="LibAsound.IsInstalled"/> is.</summary>

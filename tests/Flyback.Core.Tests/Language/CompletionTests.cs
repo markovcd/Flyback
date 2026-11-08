@@ -109,13 +109,13 @@ public class CompletionTests
     [Fact]
     public void A_name_bound_to_a_module_offers_its_outputs_and_on_its_own_line_its_knobs()
     {
-        const string Riff = "let riff = notes(rate: 4) [ A3 C4 ]\n";
+        const string riff = "let riff = notes(rate: 4) [ A3 C4 ]\n";
 
-        var read = Labels(Riff + "riff.gate |> adsr(gate: riff.¦");
+        var read = Labels(riff + "riff.gate |> adsr(gate: riff.¦");
         read.ShouldContain("gate");
         read.ShouldNotContain("rate");
 
-        var set = Labels(Riff + "riff.¦");
+        var set = Labels(riff + "riff.¦");
         set.ShouldContain("gate");
         set.ShouldContain("rate");
     }
@@ -147,7 +147,7 @@ public class CompletionTests
     [Fact]
     public void A_groups_names_outlive_it_and_a_loops_do_not()
     {
-        const string Source =
+        const string source =
             """
             group "Bass" {
               let bass = sine(freq: 55)
@@ -159,7 +159,7 @@ public class CompletionTests
 
             """;
 
-        var labels = Labels(Source + "¦");
+        var labels = Labels(source + "¦");
 
         labels.ShouldContain("bass");
         labels.ShouldContain("voices");
@@ -170,7 +170,7 @@ public class CompletionTests
     [Fact]
     public void A_def_written_in_a_block_stays_in_it()
     {
-        const string Source =
+        const string source =
             """
             group "Lead" {
               def twice(f) = f * 2
@@ -179,7 +179,7 @@ public class CompletionTests
 
             """;
 
-        var labels = Labels(Source + "¦");
+        var labels = Labels(source + "¦");
 
         labels.ShouldContain("lead");
         labels.ShouldNotContain("twice");

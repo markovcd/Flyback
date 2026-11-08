@@ -243,9 +243,9 @@ internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, 
         var text = new StringBuilder();
 
         // One stray comma can cascade into dozens, and the first few are the ones to fix.
-        const int Shown = 8;
+        const int shown = 8;
 
-        foreach (var issue in load.Issues.Take(Shown))
+        foreach (var issue in load.Issues.Take(shown))
         {
             text.Append(CultureInfo.InvariantCulture, $"{issue.Line}:{issue.Column} [{issue.Code}] {(issue.IsError ? "" : "warning: ")}{issue.Message}").AppendLine();
 
@@ -258,7 +258,7 @@ internal sealed class WholePatchEdits(WorkingPatch bench, PatchReports reports, 
             }
         }
 
-        if (load.Issues.Count > Shown) text.Append("and ").Append(load.Issues.Count - Shown).AppendLine(" more after these.");
+        if (load.Issues.Count > shown) text.Append("and ").Append(load.Issues.Count - shown).AppendLine(" more after these.");
 
         return text.ToString().TrimEnd();
     }

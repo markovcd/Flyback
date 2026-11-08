@@ -24,7 +24,7 @@ internal static class PerspectiveModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Perspective", DrawingsPlugin.Category,
         [
-            ..Space3d.Point(),
+            ..Space3D.Point(),
             new PortSpec("distance", PortKind.Scalar, 3f, 1.1f, 20f)
             {
                 Help = "How far the camera stands from the center. Near is dramatic, far is nearly flat.",
@@ -46,9 +46,9 @@ internal static class PerspectiveModule
     private static Slot[] Emit(Emitter em, EmitContext node)
     {
         var distance = node[DistancePort];
-        var away = em.Binary(OpCode.Max, em.Sub(distance, node[Space3d.ZPort]), em.Mul(distance, Nearest));
+        var away = em.Binary(OpCode.Max, em.Sub(distance, node[Space3D.ZPort]), em.Mul(distance, Nearest));
         var scale = em.Binary(OpCode.Div, distance, away);
 
-        return [em.Mul(node[Space3d.XPort], scale), em.Mul(node[Space3d.YPort], scale), node[Space3d.ZPort]];
+        return [em.Mul(node[Space3D.XPort], scale), em.Mul(node[Space3D.YPort], scale), node[Space3D.ZPort]];
     }
 }

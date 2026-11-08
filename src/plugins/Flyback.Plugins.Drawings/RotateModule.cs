@@ -20,12 +20,12 @@ internal static class RotateModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Rotate 3D", DrawingsPlugin.Category,
         [
-            ..Space3d.Point(),
+            ..Space3D.Point(),
             Angle("yaw", "About the vertical, in radians: turns it like a turntable."),
             Angle("pitch", "About the horizontal, in radians: tips the top toward the viewer."),
             Angle("roll", "In the plane of the screen, in radians: turns it like a wheel."),
         ],
-        [.. Space3d.Point("Across, turned.", "Up, turned.", "Toward the viewer, turned.")],
+        [.. Space3D.Point("Across, turned.", "Up, turned.", "Toward the viewer, turned.")],
         Emit,
         "Turns a point in 3D, such as a Path's x, y and z, by yaw, pitch and roll in that order. "
         + "A clock or an oscillator on an angle makes it spin.")
@@ -39,7 +39,7 @@ internal static class RotateModule
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {
-        var (x, y, z) = (node[Space3d.XPort], node[Space3d.YPort], node[Space3d.ZPort]);
+        var (x, y, z) = (node[Space3D.XPort], node[Space3D.YPort], node[Space3D.ZPort]);
 
         // Yaw mixes across with depth, pitch up with depth, roll across with up.
         (x, z) = Turned(em, x, z, node[YawPort]);

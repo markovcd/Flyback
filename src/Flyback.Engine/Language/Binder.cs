@@ -1193,16 +1193,16 @@ public sealed class Binder
     private Value? Summed(CallExpr expr, Scope scope, Value? piped)
     {
         var (line, column) = (expr.Line, expr.Column);
-        const string Shape = "'sum' adds up one list: 'sum(voices)', or 'voices |> sum()'.";
+        const string shape = "'sum' adds up one list: 'sum(voices)', or 'voices |> sum()'.";
 
         Value? list;
 
-        if (expr.Block is not null) return Refuse(IssueCode.NoBlock, expr.BlockLine, expr.BlockColumn, "'sum' carries no block. " + Shape);
+        if (expr.Block is not null) return Refuse(IssueCode.NoBlock, expr.BlockLine, expr.BlockColumn, "'sum' carries no block. " + shape);
 
         if (piped is not null && expr.Arguments.Count == 0) list = piped;
         else if (piped is null && expr.Arguments is [{ Name: null, Spread: false } only])
             list = Piped(only) ? null : Bind(only.Value, scope);
-        else return Refuse(IssueCode.NotAList, line, column, Shape);
+        else return Refuse(IssueCode.NotAList, line, column, shape);
 
         if (list is null) return null;
 
@@ -1333,14 +1333,14 @@ public sealed class Binder
     /// <summary><c>1..4</c> as a loop counts it: every whole number from the first to the last, both ends in.</summary>
     private List<Value>? Count(RangeExpr range, Scope scope)
     {
-        const string Shape = "a loop counts from one whole number up to another: 1..4.";
+        const string shape = "a loop counts from one whole number up to another: 1..4.";
 
         if (Bind(range.Low, scope) is not Figure low || Bind(range.High, scope) is not Figure high) return null;
 
         if (low.Style is NumberStyle.Duration || high.Style is NumberStyle.Duration
             || low.Amount != Math.Floor(low.Amount) || high.Amount != Math.Floor(high.Amount) || high.Amount < low.Amount)
         {
-            issues.Complain(IssueCode.BadCount, range.Line, range.Column, Shape);
+            issues.Complain(IssueCode.BadCount, range.Line, range.Column, shape);
             return null;
         }
 

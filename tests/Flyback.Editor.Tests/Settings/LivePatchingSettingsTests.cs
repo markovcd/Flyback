@@ -35,7 +35,7 @@ public class LivePatchingSettingsTests : OutputSettingsTest
     [AvaloniaFact]
     public void The_opacities_reach_the_patch_on_save_and_are_kept()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
 
         Set(window, dialog =>
         {
@@ -46,7 +46,7 @@ public class LivePatchingSettingsTests : OutputSettingsTest
         Editor(window).GlassOpacity.ShouldBe(0.5, 1e-9);
         All<SourceView>(window).Single().BandOpacity.ShouldBe(0.3, 1e-9);
 
-        var kept = OutputSettings.Load(settingsPath).Live;
+        var kept = OutputSettings.Load(SettingsPath).Live;
         kept.ModuleOpacity.ShouldBe(50);
         kept.TextOpacity.ShouldBe(30);
     }
@@ -54,7 +54,7 @@ public class LivePatchingSettingsTests : OutputSettingsTest
     [AvaloniaFact]
     public void Text_over_the_picture_fades_when_left_alone_and_comes_back_at_a_key()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var live = Service<LivePatching>(window);
 
         var document = Service<Flyback.Editor.Hubs.Document>(window);
@@ -76,7 +76,7 @@ public class LivePatchingSettingsTests : OutputSettingsTest
     [AvaloniaFact]
     public void Keys_only_leaves_faded_text_hidden_while_the_pointer_moves()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var live = Service<LivePatching>(window);
 
         Set(window, dialog => All<ComboBox>(dialog).Single(c => c.Name == "textWakes").SelectedIndex = 1);
@@ -91,13 +91,13 @@ public class LivePatchingSettingsTests : OutputSettingsTest
         Settle(window);
 
         live.Fade.IsFaded.ShouldBeTrue("the pointer does not bring it back");
-        OutputSettings.Load(settingsPath).Live.TextWakesOnPointer.ShouldBeFalse();
+        OutputSettings.Load(SettingsPath).Live.TextWakesOnPointer.ShouldBeFalse();
     }
 
     [AvaloniaFact]
     public void Keys_only_faded_text_takes_no_pointer()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var live = Service<LivePatching>(window);
 
         Set(window, dialog => All<ComboBox>(dialog).Single(c => c.Name == "textWakes").SelectedIndex = 1);
@@ -124,7 +124,7 @@ public class LivePatchingSettingsTests : OutputSettingsTest
     [AvaloniaFact]
     public void Keys_only_faded_text_keeps_clicks_off_the_picture_and_comes_back_at_a_key()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var live = Service<LivePatching>(window);
 
         Set(window, dialog => All<ComboBox>(dialog).Single(c => c.Name == "textWakes").SelectedIndex = 1);
@@ -162,7 +162,7 @@ public class LivePatchingSettingsTests : OutputSettingsTest
     [AvaloniaFact]
     public void Clicks_on_faded_modules_do_not_reach_the_picture()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var live = Service<LivePatching>(window);
 
         Play(window);
@@ -188,7 +188,7 @@ public class LivePatchingSettingsTests : OutputSettingsTest
     [AvaloniaFact]
     public void A_wait_of_nought_never_fades_the_modules()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var live = Service<LivePatching>(window);
 
         Set(window, dialog => Number(dialog, "moduleFade").Value = 0);
@@ -207,9 +207,9 @@ public class LivePatchingSettingsTests : OutputSettingsTest
     [InlineData("""{ }""", 78, 72, 3, 5)]
     public void A_hand_edited_look_reads_in_range(string section, int module, int text, double moduleFade, double textFade)
     {
-        SettingsFile.Write(settingsPath, OutputSettings.Section, section);
+        SettingsFile.Write(SettingsPath, OutputSettings.Section, section);
 
-        var look = OutputSettings.Load(settingsPath).Live;
+        var look = OutputSettings.Load(SettingsPath).Live;
 
         look.ModuleOpacity.ShouldBe(module);
         look.TextOpacity.ShouldBe(text);

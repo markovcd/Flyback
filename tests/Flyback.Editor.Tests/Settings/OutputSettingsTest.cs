@@ -24,7 +24,7 @@ namespace Flyback.Editor.Tests.Settings;
 public abstract class OutputSettingsTest : EditorTest
 {
     /// <summary>Where a window under test keeps its settings, so none land in the machine's own.</summary>
-    private protected readonly string settingsPath = Path.Combine(
+    private protected readonly string SettingsPath = Path.Combine(
         Path.GetTempPath(),
         "flyback-output-settings-" + Guid.NewGuid().ToString("N"),
         "settings.json");
@@ -33,7 +33,7 @@ public abstract class OutputSettingsTest : EditorTest
     {
         base.Dispose();
 
-        var folder = Path.GetDirectoryName(settingsPath);
+        var folder = Path.GetDirectoryName(SettingsPath);
 
         if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
 

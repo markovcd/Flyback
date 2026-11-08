@@ -40,7 +40,7 @@ internal static class ModuleGlyphs
     /// </summary>
     private static Geometry? Given(string data)
     {
-        var parsed = Parsed ??= [];
+        var parsed = ModuleGlyphs.parsed ??= [];
 
         if (parsed.TryGetValue(data, out var kept)) return kept;
 
@@ -62,7 +62,7 @@ internal static class ModuleGlyphs
 
     /// <summary>Kept per thread, because a geometry belongs to the thread that parsed it.</summary>
     [ThreadStatic]
-    private static Dictionary<string, Geometry?>? Parsed;
+    private static Dictionary<string, Geometry?>? parsed;
 
     /// <summary>What a module of <paramref name="category"/> is drawn as by default.</summary>
     public static Geometry? OfCategory(string category) =>

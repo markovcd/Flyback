@@ -145,12 +145,12 @@ public class NoiseTests
     [Fact]
     public void Every_output_is_still_noise_once_its_lattice_counts_past_an_int()
     {
-        const double Late = 2e8;
+        const double late = 2e8;
 
         foreach (var port in new[] { White, Pink, Stepped, Drift })
         {
             var read = Program(port, (RatePort, 64f)).Read;
-            var values = Enumerable.Range(0, 256).Select(i => read(Late + (i + 0.3) / 64)).ToList();
+            var values = Enumerable.Range(0, 256).Select(i => read(late + (i + 0.3) / 64)).ToList();
 
             values.ShouldAllBe(v => v >= -1f && v <= 1f, $"output {port}");
             values.Distinct().Count().ShouldBeGreaterThan(200, $"output {port}");

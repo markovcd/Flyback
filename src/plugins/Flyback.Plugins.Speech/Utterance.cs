@@ -238,7 +238,7 @@ internal sealed record Utterance(
     /// </summary>
     private static float[] Contour(List<float> lift, List<bool> pause, List<bool> question, int lead, int tail)
     {
-        const int Rise = 30;
+        const int rise = 30;
 
         var count = lift.Count;
         var contour = new float[count];
@@ -261,8 +261,8 @@ internal sealed record Utterance(
                 contour[j] = 1.1f - 0.2f * (j - start) / length + 0.12f * lift[j];
 
             if (k < count && question[k])
-                for (var j = Math.Max(start, k - Rise); j < k; j++)
-                    contour[j] += 0.4f * (j - (k - Rise)) / Rise;
+                for (var j = Math.Max(start, k - rise); j < k; j++)
+                    contour[j] += 0.4f * (j - (k - rise)) / rise;
         }
 
         return Smooth(Pad([.. contour], lead, tail, 1f, fill: true), 12);

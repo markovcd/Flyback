@@ -34,7 +34,7 @@ public class OutputSettingsRendererTests : OutputSettingsTest
     {
         Assert.SkipUnless(OperatingSystem.IsMacOS(), "Only a Mac chooses between Metal and OpenGL.");
 
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var preview = All<PreviewHost>(window).Single();
 
         preview.Child.ShouldBeOfType<MetalPreviewSurface>();
@@ -43,12 +43,12 @@ public class OutputSettingsRendererTests : OutputSettingsTest
 
         preview.Child.ShouldBeOfType<GpuPreviewSurface>();
         preview.Backend.ShouldBe(PreviewBackend.Gpu);
-        OutputSettings.Load(settingsPath).Graphics.ShouldBe(GraphicsDriver.OpenGl);
+        OutputSettings.Load(SettingsPath).Graphics.ShouldBe(GraphicsDriver.OpenGl);
 
         Choose(window, "Metal");
 
         preview.Child.ShouldBeOfType<MetalPreviewSurface>();
-        OutputSettings.Load(settingsPath).Graphics.ShouldBe(GraphicsDriver.Metal);
+        OutputSettings.Load(SettingsPath).Graphics.ShouldBe(GraphicsDriver.Metal);
     }
 
     private static void Choose(MainWindow window, string renderer)

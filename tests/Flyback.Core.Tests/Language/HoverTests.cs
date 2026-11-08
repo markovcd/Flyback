@@ -68,9 +68,9 @@ public class HoverTests
     [Fact]
     public void A_name_the_text_bound_says_what_it_placed_and_where()
     {
-        const string Source = "let lfo = sine(freq: 0.5)\nsaw(freq: lf¦o)";
+        const string source = "let lfo = sine(freq: 0.5)\nsaw(freq: lf¦o)";
 
-        Hover(Source).ShouldNotBeNull().Title.ShouldBe("lfo · Sine, bound on line 1");
+        Hover(source).ShouldNotBeNull().Title.ShouldBe("lfo · Sine, bound on line 1");
         Hover("let lf¦o = sine(freq: 0.5)").ShouldNotBeNull().Title.ShouldBe("lfo · Sine, bound on line 1");
         Hover("def voice(note, hue = 0) = sine(freq: note)\nvoi¦ce(220)").ShouldNotBeNull().Title.ShouldBe("def voice(note, hue)");
     }

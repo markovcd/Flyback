@@ -66,7 +66,7 @@ public class OutputSettingsRecordingAndSoundTests : OutputSettingsTest
     public void The_sound_input_is_chosen_on_the_sound_tab_and_kept_under_its_own_backend()
     {
         var plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, [.. Presets.All], [], audioInputs: [new TwoMicrophones()]);
-        var window = Open(settingsPath, plugins);
+        var window = Open(SettingsPath, plugins);
         var dialog = OpenSettings(window, SoundTab);
 
         Named<TextBlock>(dialog, "inputNote").Text.ShouldBe("Heard by Two microphones, for a Line In.");
@@ -77,7 +77,7 @@ public class OutputSettingsRecordingAndSoundTests : OutputSettingsTest
         choice.SelectedIndex = 1;
         CloseSettings(window, dialog);
 
-        var kept = OutputSettings.Load(settingsPath);
+        var kept = OutputSettings.Load(SettingsPath);
         kept.SoundInOf("two").Text("device").ShouldBe("rear");
         kept.SoundOf("two").All.ShouldBeEmpty();
     }
@@ -99,7 +99,7 @@ public class OutputSettingsRecordingAndSoundTests : OutputSettingsTest
     public void Where_two_backends_can_play_the_sound_tab_asks_which()
     {
         var plugins = new PluginCatalog([], [new Backend("wasapi", "WASAPI", 100), new Backend("asio", "ASIO", 50)], NodeCatalog.BuiltIn, [.. Presets.All], []);
-        var window = Open(settingsPath, plugins);
+        var window = Open(SettingsPath, plugins);
         var dialog = OpenSettings(window, SoundTab);
         var through = Named<ComboBox>(dialog, "soundOutput");
 
@@ -116,12 +116,12 @@ public class OutputSettingsRecordingAndSoundTests : OutputSettingsTest
 
         CloseSettings(window, dialog);
 
-        var kept = OutputSettings.Load(settingsPath);
+        var kept = OutputSettings.Load(SettingsPath);
         kept.SoundOutput.ShouldBe("asio");
         kept.SoundOf("asio").Text("device").ShouldBe("asio-second");
         kept.SoundOf("wasapi").All.ShouldBeEmpty();
 
-        Named<ComboBox>(OpenSettings(Open(settingsPath, plugins), SoundTab), "soundOutput").SelectedIndex.ShouldBe(1);
+        Named<ComboBox>(OpenSettings(Open(SettingsPath, plugins), SoundTab), "soundOutput").SelectedIndex.ShouldBe(1);
     }
 
     /// <summary>Saving without touching the pick names no backend, so one that starts to outrank it later still wins.</summary>
@@ -129,20 +129,20 @@ public class OutputSettingsRecordingAndSoundTests : OutputSettingsTest
     public void Saving_without_picking_leaves_the_backend_to_the_ranking()
     {
         var plugins = new PluginCatalog([], [new Backend("wasapi", "WASAPI", 100), new Backend("asio", "ASIO", 50)], NodeCatalog.BuiltIn, [.. Presets.All], []);
-        var window = Open(settingsPath, plugins);
+        var window = Open(SettingsPath, plugins);
         var dialog = OpenSettings(window, SoundTab);
 
         Latency(dialog).SelectedIndex = 0;
         CloseSettings(window, dialog);
 
-        OutputSettings.Load(settingsPath).SoundOutput.ShouldBeEmpty();
+        OutputSettings.Load(SettingsPath).SoundOutput.ShouldBeEmpty();
     }
 
     [AvaloniaFact]
     public void Where_one_backend_can_play_the_sound_tab_does_not_ask_which()
     {
         var plugins = new PluginCatalog([], [new Backend("wasapi", "WASAPI", 100), new Backend("asio", "ASIO", 50, Supported: false)], NodeCatalog.BuiltIn, [.. Presets.All], []);
-        var dialog = OpenSettings(Open(settingsPath, plugins), SoundTab);
+        var dialog = OpenSettings(Open(SettingsPath, plugins), SoundTab);
 
         All<ComboBox>(dialog).Select(c => c.Name).ShouldNotContain("soundOutput");
         Named<TextBlock>(dialog, "soundNote").Text.ShouldBe("Played by WASAPI.");
@@ -195,7 +195,7 @@ public class OutputSettingsRecordingAndSoundTests : OutputSettingsTest
     [AvaloniaFact]
     public void Recording_and_sound_are_kept_for_the_next_launch()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var dialog = OpenSettings(window, RecordingTab);
 
         FrameRate(dialog).SelectedIndex = 4;
@@ -210,7 +210,7 @@ public class OutputSettingsRecordingAndSoundTests : OutputSettingsTest
 
         CloseSettings(window, dialog);
 
-        var kept = OutputSettings.Load(settingsPath);
+        var kept = OutputSettings.Load(SettingsPath);
 
         kept.FrameRate.ShouldBe(60);
         kept.JpegQuality.ShouldBe(60);
@@ -218,7 +218,7 @@ public class OutputSettingsRecordingAndSoundTests : OutputSettingsTest
         kept.CountInSeconds.ShouldBe(OutputSettings.NoCountIn);
         kept.RewindBeforeTake.ShouldBeFalse();
 
-        var again = OpenSettings(Open(settingsPath), RecordingTab);
+        var again = OpenSettings(Open(SettingsPath), RecordingTab);
 
         (FrameRate(again).SelectedItem as string).ShouldBe("60 fps");
         Quality(again).Value.ShouldBe(60);
@@ -229,7 +229,7 @@ public class OutputSettingsRecordingAndSoundTests : OutputSettingsTest
     [AvaloniaFact]
     public void Recording_and_sound_changes_are_dropped_without_save()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var dialog = OpenSettings(window, RecordingTab);
 
         FrameRate(dialog).SelectedIndex = 0;
@@ -239,7 +239,7 @@ public class OutputSettingsRecordingAndSoundTests : OutputSettingsTest
 
         CloseSettings(window, dialog, "cancel");
 
-        File.Exists(settingsPath).ShouldBeFalse();
+        File.Exists(SettingsPath).ShouldBeFalse();
 
         var again = OpenSettings(window, RecordingTab);
 

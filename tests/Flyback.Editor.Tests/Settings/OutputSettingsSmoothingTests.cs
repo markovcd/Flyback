@@ -25,7 +25,7 @@ public class OutputSettingsSmoothingTests : OutputSettingsTest
     [AvaloniaFact]
     public void Turning_smoothing_off_reaches_the_preview_on_save_and_is_kept()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var preview = All<PreviewHost>(window).Single();
         var dialog = OpenSettings(window);
 
@@ -37,13 +37,13 @@ public class OutputSettingsSmoothingTests : OutputSettingsTest
         CloseSettings(window, dialog);
 
         preview.Smoothing.ShouldBe(Smoothing.Off);
-        OutputSettings.Load(settingsPath).Smoothing.ShouldBe(Smoothing.Off);
+        OutputSettings.Load(SettingsPath).Smoothing.ShouldBe(Smoothing.Off);
     }
 
     [AvaloniaFact]
     public void Best_reaches_the_preview_on_save_and_is_kept()
     {
-        var window = Open(settingsPath);
+        var window = Open(SettingsPath);
         var preview = All<PreviewHost>(window).Single();
         var dialog = OpenSettings(window);
 
@@ -52,7 +52,7 @@ public class OutputSettingsSmoothingTests : OutputSettingsTest
         CloseSettings(window, dialog);
 
         preview.Smoothing.ShouldBe(Smoothing.Best);
-        OutputSettings.Load(settingsPath).Smoothing.ShouldBe(Smoothing.Best);
+        OutputSettings.Load(SettingsPath).Smoothing.ShouldBe(Smoothing.Best);
         (Smoothed(OpenSettings(window)).SelectedItem as string).ShouldBe("Best");
     }
 
@@ -62,9 +62,9 @@ public class OutputSettingsSmoothingTests : OutputSettingsTest
     [InlineData("""{ }""")]
     public void A_preview_smoothing_it_cannot_draw_reads_as_fast(string section)
     {
-        SettingsFile.Write(settingsPath, OutputSettings.Section, section);
+        SettingsFile.Write(SettingsPath, OutputSettings.Section, section);
 
-        OutputSettings.Load(settingsPath).Smoothing.ShouldBe(Smoothing.Fast);
+        OutputSettings.Load(SettingsPath).Smoothing.ShouldBe(Smoothing.Fast);
     }
 
     private static ComboBox Smoothed(Avalonia.Visual within) => All<ComboBox>(within).Single(c => c.Name == "smoothing");
