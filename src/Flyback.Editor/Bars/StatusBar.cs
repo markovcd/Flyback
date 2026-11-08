@@ -1,6 +1,7 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -184,6 +185,9 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
             BorderThickness = new Thickness(0, 1, 0, 0),
             Child = bar,
         };
+
+        // Fixed-width, so counts that change four times a second hold their width.
+        View.SetValue(TextElement.FontFamilyProperty, Text.Mono);
 
         var ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(250) };
         ticker.Tick += (_, _) => Update();
