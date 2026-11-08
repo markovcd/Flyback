@@ -106,7 +106,8 @@ context, decision, consequences.
 | [0075](0075-a-cycle-carries-its-own-delay.md) | A cycle carries its own delay *(user-directed)* |
 | [0126](0126-a-bus-is-a-wire-with-no-cable.md) | A bus is a wire with no cable *(user-directed)* |
 | [0174](0174-a-polyphonic-wire-is-lowered-once-per-voice.md) | A polyphonic wire is lowered once per voice *(user-directed)* |
-| [0076](0076-the-processor-runs-a-program-as-il-once-it-is-built.md) | The processor runs a program as IL once it is built *(user-directed)* |
+| [0076](0076-the-processor-runs-a-program-as-il-once-it-is-built.md) | The processor runs a program as IL once it is built *(user-directed; its whole program emitted leg by leg by [0230](0230-the-sound-runs-in-legs-on-several-cores.md))* |
+| [0230](0230-the-sound-runs-in-legs-on-several-cores.md) | The sound runs in legs on several cores *(user-directed)* |
 | [0096](0096-an-op-nothing-reads-is-left-out.md) | An op nothing reads is left out *(user-directed)* |
 | [0143](0143-a-module-a-sweep-reads-is-lowered-once-wherever-it-reads-the-same.md) | A module a sweep reads is lowered once wherever it reads the same |
 | [0077](0077-the-picture-is-heard-only-through-a-scan.md) | The picture is heard only through a Scan *(user-directed; its aspect table's shell-export row retired by [0078](0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md); its Live-engine row amended by [0083](0083-the-live-engines-aspect-follows-the-preview.md))* |

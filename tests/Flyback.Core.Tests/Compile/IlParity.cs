@@ -77,6 +77,44 @@ internal static class IlParity
         }
     }
 
+    /// <summary>
+    /// The sound cut into as many as <paramref name="legs"/> legs and played through a
+    /// renderer, against the same program played whole on one core, in buffers of uneven
+    /// length: the first before the renderer has its relay, one longer than a relay's
+    /// round, and the rest shorter than a stretch.
+    /// </summary>
+    public static void Legs(Func<CompiledPatch> compile, int legs, string name)
+    {
+        int[] buffers = [700, SoundRelay.Frames + 900, 61, 1500];
+
+        var whole = compile();
+        whole.Attach(IlProgram.Compile(whole, IlParts.Whole, legs: 1));
+        var one = new AudioRenderer();
+        var memory = one.DelayMemoryFor(whole);
+
+        var cut = compile();
+        cut.Attach(IlProgram.Compile(cut, IlParts.Whole, legs));
+        var several = new AudioRenderer();
+        var lines = several.DelayMemoryFor(cut);
+
+        for (var b = 0; b < buffers.Length; b++)
+        {
+            var expected = new float[buffers[b] * 2];
+            var actual = new float[buffers[b] * 2];
+
+            one.Render(whole, expected, memory);
+            several.Render(cut, actual, lines);
+
+            for (var i = 0; i < expected.Length; i++)
+                BitConverter.SingleToInt32Bits(actual[i])
+                    .ShouldBe(BitConverter.SingleToInt32Bits(expected[i]), $"{name}, buffer {b}, sample {i}: {actual[i]:R} against {expected[i]:R}");
+
+            // Asked for by the first buffer and built here, as the engine builds one on a swap.
+            if (b == 0) several.Prepare(cut);
+            else if (cut.Il!.Legs is { } cuts) several.Legs.ShouldBe(cuts.Count, name);
+        }
+    }
+
     public static FeedbackFrame Stripes(int width, int height)
     {
         var pixels = new float[width * height * 3];

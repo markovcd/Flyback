@@ -1,5 +1,5 @@
-using System.Reflection;
 using System.Reflection.Emit;
+using System.Reflection;
 using Flyback.Core.Compile;
 using OpCode = Flyback.Core.Compile.OpCode;
 using ReflectionOpCodes = System.Reflection.Emit.OpCodes;
@@ -53,9 +53,19 @@ internal sealed class IlEmitter
     private readonly (int From, int To) outputs;
     private readonly bool whole;
     private readonly Repeats? repeats;
+    private readonly int[]? order;
+    private readonly Numbering numbering;
     private readonly Dictionary<int, LocalBuilder> locals = [];
 
-    private IlEmitter(ILGenerator il, Op[] ops, int from, int to, (int From, int To) outputs, Repeats? repeats)
+    private IlEmitter(
+        ILGenerator il,
+        Op[] ops,
+        int from,
+        int to,
+        (int From, int To) outputs,
+        Repeats? repeats,
+        int[]? order,
+        Numbering numbering)
     {
         this.il = il;
         this.ops = ops;
@@ -63,6 +73,8 @@ internal sealed class IlEmitter
         this.to = to;
         this.outputs = outputs;
         this.repeats = repeats;
+        this.order = order;
+        this.numbering = numbering;
         whole = repeats is not null;
     }
 
@@ -81,19 +93,28 @@ internal sealed class IlEmitter
     /// repeats an earlier one is not worked out again (<see cref="Repeats"/>), and the
     /// dearest ops keep their last answer in <see cref="IlContext.Memory"/>.
     /// </param>
+    /// <param name="repeats">The whole program's repeats, when the caller has worked them out already.</param>
+    /// <param name="order">
+    /// The order to run the ops in, as their places in <paramref name="ops"/>, with
+    /// <paramref name="from"/> and <paramref name="to"/> places in it; null for the
+    /// program's own. Each op keeps the lines and cells its place in the program gives it.
+    /// </param>
     public static DynamicMethod[] EmitChunks(
         string name,
         Op[] ops,
         int from,
         int to,
         (int From, int To) outputs,
-        bool whole = false)
+        bool whole = false,
+        Repeats? repeats = null,
+        int[]? order = null)
     {
         var chunks = new List<DynamicMethod>();
-        var repeats = whole ? new Repeats(ops, outputs) : null;
+        repeats = whole ? repeats ?? new Repeats(ops, outputs) : null;
+        var numbering = new Numbering(ops);
 
         for (var start = from; start < to || chunks.Count == 0; start += ChunkSize)
-            chunks.Add(Emit(name, ops, start, Math.Min(to, start + ChunkSize), outputs, repeats));
+            chunks.Add(Emit(name, ops, start, Math.Min(to, start + ChunkSize), outputs, repeats, order, numbering));
 
         return [.. chunks];
     }
@@ -109,14 +130,16 @@ internal sealed class IlEmitter
         int from,
         int to,
         (int From, int To) outputs,
-        Repeats? repeats = null)
+        Repeats? repeats = null,
+        int[]? order = null,
+        Numbering? numbering = null)
     {
         // Owned by CompiledPatch so it may call what the interpreter calls; the
         // visibility checks are skipped because a dynamic method is not itself a
         // member of anything.
         var method = new DynamicMethod(name, typeof(void), Parameters, typeof(CompiledPatch), skipVisibility: true);
 
-        new IlEmitter(method.GetILGenerator(), ops, from, to, outputs, repeats).Run();
+        new IlEmitter(method.GetILGenerator(), ops, from, to, outputs, repeats, order, numbering ?? new Numbering(ops)).Run();
         return method;
     }
 
@@ -124,9 +147,13 @@ internal sealed class IlEmitter
     {
         var written = new HashSet<int>();
         var scalarWrites = new List<int>();
+        var here = new HashSet<int>();
 
-        for (var i = from; i < to; i++)
+        for (var at = from; at < to; at++)
         {
+            var i = Place(at);
+            here.Add(i);
+
             var op = ops[i];
             if (Repeated(i)) continue;
 
@@ -145,32 +172,22 @@ internal sealed class IlEmitter
             if (width == 1) scalarWrites.Add(op.Out);
         }
 
-        // Counted from the start of the program, as the interpreter counts per walk.
-        // Only a whole run is handed state, so a stage's count reaches nothing.
-        var line = 0;
-        var cell = 0;
-        var kept = 0;
-
-        for (var i = 0; i < from; i++)
+        for (var at = from; at < to; at++)
         {
-            switch (OpShape.Owns(ops[i].Code))
-            {
-                case OpMemory.Line: line++; break;
-                case OpMemory.Cell: cell++; break;
-            }
+            var i = Place(at);
+            if (Repeated(i)) continue;
 
-            kept += IlOps.Remembers(ops[i].Code);
-        }
-
-        for (var i = from; i < to; i++)
-        {
-            if (Repeated(i)) kept += IlOps.Remembers(ops[i].Code);
-            else One(ops[i], ref line, ref cell, ref kept);
+            // Counted from the start of the program, as the interpreter counts per walk.
+            // Only a whole run is handed state, so a stage's count reaches nothing.
+            var line = numbering.Lines[i];
+            var cell = numbering.Cells[i];
+            var kept = numbering.Kept[i];
+            One(ops[i], ref line, ref cell, ref kept);
         }
 
         var readElsewhere = new HashSet<int>();
         for (var i = 0; i < ops.Length; i++)
-            if ((i < from || i >= to) && !Repeated(i))
+            if (!here.Contains(i) && !Repeated(i))
                 readElsewhere.UnionWith(OpShape.Reads(ops[i]).Select(Resolve));
 
         foreach (var register in scalarWrites)
@@ -185,6 +202,9 @@ internal sealed class IlEmitter
 
         il.Emit(ReflectionOpCodes.Ret);
     }
+
+    /// <summary>The op at <paramref name="at"/> in the order the ops run in.</summary>
+    private int Place(int at) => order?[at] ?? at;
 
     private void One(Op op, ref int line, ref int cell, ref int kept)
     {
@@ -359,6 +379,41 @@ internal sealed class IlEmitter
             locals[register] = local = il.DeclareLocal(typeof(double));
 
         return local;
+    }
+
+    /// <summary>
+    /// The line, cell and memory slot each op starts at, counted over the ops before it
+    /// in the program, as the interpreter counts them whatever order the IL runs in.
+    /// </summary>
+    internal sealed class Numbering
+    {
+        public Numbering(Op[] ops)
+        {
+            Lines = new int[ops.Length];
+            Cells = new int[ops.Length];
+            Kept = new int[ops.Length];
+
+            int line = 0, cell = 0, kept = 0;
+
+            for (var i = 0; i < ops.Length; i++)
+            {
+                (Lines[i], Cells[i], Kept[i]) = (line, cell, kept);
+
+                switch (OpShape.Owns(ops[i].Code))
+                {
+                    case OpMemory.Line: line++; break;
+                    case OpMemory.Cell: cell++; break;
+                }
+
+                kept += IlOps.Remembers(ops[i].Code);
+            }
+        }
+
+        public int[] Lines { get; }
+
+        public int[] Cells { get; }
+
+        public int[] Kept { get; }
     }
 
     /// <summary>Pushes <c>ref bank[register]</c>.</summary>

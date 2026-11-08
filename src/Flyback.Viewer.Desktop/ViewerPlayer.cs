@@ -77,6 +77,7 @@ internal sealed class ViewerPlayer : IDisposable
 
         audio.Aspect = SynthRenderer.AspectOf(options.Size.Width, options.Size.Height);
         audio.Oversample = options.Oversample;
+        SoundCores.Wanted = options.SoundCores;
         new LiveOversample(audio, () => options.StepDown, message => Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {message}")).Start();
         lineIn.Trouble += message => Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {message}");
 

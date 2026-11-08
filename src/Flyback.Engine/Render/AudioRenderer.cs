@@ -11,10 +11,10 @@ namespace Flyback.Engine.Render;
 /// oversampled internal rate.
 /// </summary>
 /// <remarks>
-/// Deliberately single-threaded, unlike <see cref="SynthRenderer"/>: stereo at
-/// 48 kHz with 4x oversampling is ~192k evaluations a second against video's
-/// ~31M, and this runs on an audio callback, where blocking on a parallel loop is
-/// what must not happen.
+/// Evaluations follow one another, so unlike <see cref="SynthRenderer"/> it cannot
+/// share them out. A dear enough program is cut into legs instead, which run on
+/// several cores a stretch apart (ADR-0230); the calling thread takes legs too, so
+/// a helper slow to wake never holds up the audio callback.
 /// </remarks>
 public sealed class AudioRenderer
 {
@@ -41,6 +41,8 @@ public sealed class AudioRenderer
     /// </summary>
     private DelayState? delays;
 
+    private readonly RelayOrder relays;
+
     /// <summary>The oversampling the sound is played and written at unless something says otherwise (ADR-0023).</summary>
     public const int DefaultOversample = 2;
 
@@ -54,6 +56,7 @@ public sealed class AudioRenderer
         filterLength = 16 * Math.Max(4, Oversample);
         delayLines = [new float[filterLength], new float[filterLength]];
         filterTaps = DesignLowpass(filterLength, 0.45 / Oversample);
+        relays = new RelayOrder(Oversample);
     }
 
     public int SampleRate { get; }
@@ -73,6 +76,9 @@ public sealed class AudioRenderer
 
     /// <summary>Whether the interpreter runs the fixed part of a sound once a buffer. Off, it runs every op every sample, for a test to compare against.</summary>
     internal bool Staged { get; init; } = true;
+
+    /// <summary>How many cores played the last buffer: more than one when its program is cut into legs (ADR-0230).</summary>
+    public int Legs { get; private set; } = 1;
 
     /// <summary>Sample-accurate position on the timeline. Audio cannot be advanced by wall-clock deltas.</summary>
     public double Time { get; private set; }
@@ -103,6 +109,12 @@ public sealed class AudioRenderer
     /// too, but only as a backstop, and there it would allocate in the callback.
     /// </summary>
     public void Prepare(CompiledPatch program)
+    {
+        Size(program);
+        if (program.Il is { Legs: not null } il) relays.Build(il);
+    }
+
+    private void Size(CompiledPatch program)
     {
         var needed = Math.Max(program.RegisterCount, program.OutputWidth);
         if (registerBank.Length < needed) registerBank = new double[needed];
@@ -197,7 +209,7 @@ public sealed class AudioRenderer
         var frames = interleavedStereo.Length / 2;
         if (frames == 0) return;
 
-        Prepare(program);
+        Size(program);
         var registers = registerBank;
 
         // Read once. Re-reading a field per sample would let a swap take effect
@@ -225,6 +237,25 @@ public sealed class AudioRenderer
         var lineLeft = live?.IndexOf(LineInSignal.Left) ?? -1;
         var lineRight = live?.IndexOf(LineInSignal.Right) ?? -1;
         var heard = lineLeft >= 0 || lineRight >= 0 ? Input : null;
+
+        // A Line In is read once a frame into the block every leg reads, so a sound that hears one plays on one core.
+        if (il?.Legs is { } cut && lineLeft < 0 && lineRight < 0 && relays.For(il) is { } relay)
+        {
+            Legs = cut.Count;
+
+            for (var done = 0; done < frames;)
+            {
+                var count = Math.Min(SoundRelay.Frames, frames - done);
+                var evaluated = relay.Run(il, registers, Time, innerStep, outerStep, count, lines, live, Aspect);
+
+                Decimate(evaluated, interleavedStereo.Slice(done * 2, count * 2));
+                done += count;
+            }
+
+            return;
+        }
+
+        Legs = 1;
 
         for (var frame = 0; frame < frames; frame++)
         {

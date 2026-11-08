@@ -1,5 +1,5 @@
-using System.CommandLine;
 using System.CommandLine.Parsing;
+using System.CommandLine;
 using System.Globalization;
 using Avalonia;
 using Flyback.Core;
@@ -309,6 +309,7 @@ internal static class ViewerArguments
                 LatencyMilliseconds = result.GetValue(latency),
                 Oversample = result.GetValue(oversample),
                 StepDown = settings.StepDownOnDropouts,
+                SoundCores = settings.SoundCores,
                 From = result.GetValue(from),
                 Paused = result.GetValue(paused),
                 For = result.GetResult(duration) is not null ? result.GetValue(duration) : null,

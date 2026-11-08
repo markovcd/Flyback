@@ -23,6 +23,8 @@
 
 ### Performance
 
+- A heavy patch's sound renders on several cores, 1.6 to 2.5 times as fast and sample for sample the same, with Settings → Sound → Cores and `flyback-cli render --sound-cores` to say how many.
+
 ### Fixes
 
 - `flyback-cli mcp --editor` started by Claude's desktop app finds the open editor on a Mac.

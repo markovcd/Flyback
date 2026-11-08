@@ -279,6 +279,9 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
     [Given("the editor's settings oversample the sound {int} times")]
     public void GivenOversampleSetting(int factor) => new OutputSettings { Oversample = factor }.Save(Path("settings.json"));
 
+    [Given("the editor's settings share the sound across {int} core(s)")]
+    public void GivenCoresSetting(int cores) => new OutputSettings { SoundCores = cores }.Save(Path("settings.json"));
+
     [When("flyback-cli renders {string} as {string} for {float} seconds")]
     public void WhenRendered(string patch, string into, float seconds) => WhenRenderedWith(patch, into, seconds, "");
 
@@ -327,6 +330,16 @@ public sealed class CliSteps(PatchContext context, IUnitTestRuntimeProvider runt
 
         foreach (var other in AudioRenderer.Oversamples.Where(other => other != factor))
             Furthest(other).ShouldBeGreaterThan(8f / 32768f, $"{other}× would have written the same file, so this proves nothing");
+    }
+
+    [Then("{string} and {string} hold the same samples")]
+    public void ThenSameSamples(string one, string other)
+    {
+        var first = WavReader.Read(Path(one), out var fault).ShouldNotBeNull(fault.ToString()).Samples;
+        var second = WavReader.Read(Path(other), out fault).ShouldNotBeNull(fault.ToString()).Samples;
+
+        first.Length.ShouldBeGreaterThan(0);
+        first.ShouldBe(second);
     }
 
     [When("flyback-cli checks {string}")]

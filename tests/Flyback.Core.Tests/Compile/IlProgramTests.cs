@@ -46,6 +46,25 @@ public class IlProgramTests
         IlParity.Sound(Build(name).CompileForAudio().Program, 12_000, name);
 
     /// <summary>
+    /// Every preset's sound cut into legs for several cores, against the same program
+    /// on one, so a register a leg reads and nobody handed it shows as a sample apart.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(AllPresets))]
+    public void The_sound_in_legs_is_the_sound_on_one_core_to_the_bit(string name) =>
+        IlParity.Legs(() => Build(name).CompileForAudio().Program, 4, name);
+
+    /// <summary>Renderers sharing the helper threads at once, as playing and exporting do, each hear their own sound.</summary>
+    [Fact]
+    public void Several_renderers_in_legs_at_once_each_play_their_own_sound()
+    {
+        var names = Presets.All.Select(p => p.Name).Take(6).ToArray();
+
+        Parallel.ForEach(names, new ParallelOptions { MaxDegreeOfParallelism = names.Length }, name =>
+            IlParity.Legs(() => Build(name).CompileForAudio().Program, 3, name));
+    }
+
+    /// <summary>
     /// Fails the day an opcode is added and the IL backend is not told about it —
     /// and checks, on the way, that what it was told gives the interpreter's answer.
     /// </summary>

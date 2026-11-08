@@ -59,6 +59,15 @@ internal sealed class Repeats
         }
     }
 
+    private Repeats(bool[] repeated, Dictionary<int, int> same)
+    {
+        this.repeated = repeated;
+        this.same = same;
+    }
+
+    /// <summary>The same repeats for the ops put in <paramref name="order"/>, given as their places in the program.</summary>
+    public Repeats Reordered(int[] order) => new([.. order.Select(i => repeated[i])], same);
+
     /// <summary>Whether op <paramref name="op"/> repeats an earlier one, and so is not emitted.</summary>
     public bool Repeated(int op) => repeated[op];
 

@@ -1,9 +1,10 @@
-using System.CommandLine;
 using System.CommandLine.Completions;
+using System.CommandLine;
 using System.Text;
 using Flyback.Cli.Commands;
 using Flyback.Cli.Common;
 using Flyback.Core;
+using Flyback.Engine.Render;
 using Flyback.Host;
 using Flyback.Plugins.Hosting;
 using PluginRegistry = Flyback.Cli.Plugins;
@@ -56,7 +57,12 @@ internal static class Program
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        var root = Commands(plugins, OutputSettings.Load(SettingsFlag.PathIn(args) ?? SettingsFile.Path));
+        var settings = OutputSettings.Load(SettingsFlag.PathIn(args) ?? SettingsFile.Path);
+
+        // Every command's sound shares as many cores as the editor's does; render's --sound-cores overrides it.
+        SoundCores.Wanted = settings.SoundCores;
+
+        var root = Commands(plugins, settings);
 
         // What dotnet-suggest asks for completions with, and the only reason the
         // shell can finish a command this program has.

@@ -25,9 +25,9 @@ public sealed class DelayState
     /// accumulators below hold a position on a clock, which is where a float runs
     /// out (ADR-0032).
     /// </summary>
-    private readonly float[][] lines;
+    private float[][] lines;
     private readonly int[] positions;
-    private readonly float[] lengths;
+    private float[] lengths;
 
     private readonly double[] phases;
     private readonly double[] previousInputs;
@@ -66,7 +66,7 @@ public sealed class DelayState
     /// <see cref="float"/> like the delay lines: a chart of a signal needs fewer
     /// bits than the signal.
     /// </remarks>
-    private readonly float[][] traces;
+    private float[][] traces;
     private readonly int[] traceHeads;
 
     /// <param name="lengthsInSeconds">Longest delay each line must hold, in program order.</param>
@@ -143,7 +143,90 @@ public sealed class DelayState
         traceOwners = [.. program.Taps.Select(tap => tap.Node)];
     }
 
-    public int SampleRate { get; }
+    public int SampleRate { get; private set; }
+
+    /// <summary>
+    /// Cells for one leg of a sound run on several cores (ADR-0230): every small array its
+    /// own, so two legs never write one cache line, and the lines and traces lent by
+    /// <see cref="Lend"/> from the state the legs share.
+    /// </summary>
+    internal static DelayState ForLeg(CompiledPatch program) =>
+        new([], 0, program.PhaseCount, program.UnitCount, program.TraceCount, program.PlaneCount, program.DelayLengths.Count);
+
+    private DelayState(
+        float[] lengthsInSeconds,
+        int sampleRate,
+        int phaseCount,
+        int unitCount,
+        int traceCount,
+        int planeCount,
+        int lineCount)
+    {
+        SampleRate = sampleRate;
+        lengths = lengthsInSeconds;
+        lines = [];
+        traces = [];
+        positions = new int[lineCount];
+        phases = new double[phaseCount];
+        previousInputs = new double[phaseCount];
+        running = new bool[phaseCount];
+        units = new double[unitCount];
+        planes = new double[planeCount];
+        traceHeads = new int[traceCount];
+    }
+
+    /// <summary>
+    /// Copies this state's small cells into <paramref name="leg"/> and lends it the lines
+    /// and traces, or says it was made for another shape. Allocation-free.
+    /// </summary>
+    internal bool Lend(DelayState leg)
+    {
+        if (leg.positions.Length != positions.Length
+            || leg.phases.Length != phases.Length
+            || leg.units.Length != units.Length
+            || leg.planes.Length != planes.Length
+            || leg.traceHeads.Length != traceHeads.Length)
+            return false;
+
+        leg.SampleRate = SampleRate;
+        leg.lengths = lengths;
+        leg.lines = lines;
+        leg.traces = traces;
+
+        Array.Copy(positions, leg.positions, positions.Length);
+        Array.Copy(phases, leg.phases, phases.Length);
+        Array.Copy(previousInputs, leg.previousInputs, previousInputs.Length);
+        Array.Copy(running, leg.running, running.Length);
+        Array.Copy(units, leg.units, units.Length);
+        Array.Copy(planes, leg.planes, planes.Length);
+        Array.Copy(traceHeads, leg.traceHeads, traceHeads.Length);
+        return true;
+    }
+
+    /// <summary>Takes back from <paramref name="leg"/> the cells it owns.</summary>
+    internal void TakeBack(DelayState leg, LegCells cells)
+    {
+        foreach (var line in cells.Lines)
+            if ((uint)line < (uint)positions.Length) positions[line] = leg.positions[line];
+
+        foreach (var phase in cells.Phases)
+        {
+            if ((uint)phase >= (uint)phases.Length) continue;
+
+            phases[phase] = leg.phases[phase];
+            previousInputs[phase] = leg.previousInputs[phase];
+            running[phase] = leg.running[phase];
+        }
+
+        foreach (var unit in cells.Units)
+            if ((uint)unit < (uint)units.Length) units[unit] = leg.units[unit];
+
+        foreach (var plane in cells.Planes)
+            if ((uint)plane < (uint)planes.Length) planes[plane] = leg.planes[plane];
+
+        foreach (var trace in cells.Traces)
+            if ((uint)trace < (uint)traceHeads.Length) traceHeads[trace] = leg.traceHeads[trace];
+    }
 
     /// <summary>
     /// Whose cells these are, as the program that asked for them said — see

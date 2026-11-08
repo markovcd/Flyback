@@ -100,6 +100,9 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | **domain** | The input a module is read across, such as `x` for an oscillator. | `PortSpec.Domain` | — |
 | **delay line**, **cell**, **plane** | What a program remembers: a ring of past samples, one remembered number, one number per pixel. | `DelayState`, `PlaneState` | buffer, memory alone |
 | **cycle** | A loop of wires, which carries one evaluation's delay. | `Cycles` | feedback (that is the Feedback module) |
+| **leg** | A run of a sound's ops that one core works through while another runs the run after it. | `SoundLegs` | thread, chunk, shard |
+| **knot** | Ops that one evaluation ties to the next, which a cut between legs never separates. | — | cycle (that is a loop of wires) |
+| **relay** | One renderer's legs running on several cores, each handing on to the next. | `SoundRelay` | pipeline, pool |
 
 ## The editor
 

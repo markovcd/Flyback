@@ -22,4 +22,9 @@ public class PluginPresetIlTests
     [MemberData(nameof(Names))]
     public void The_sound_is_the_interpreters_to_the_bit(string name) =>
         IlParity.Sound(PluginPresetPrograms.Compiled(name, video: false), PluginPresetPrograms.Frames * new AudioRenderer().Oversample, name);
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public void The_sound_in_legs_is_the_sound_on_one_core_to_the_bit(string name) =>
+        IlParity.Legs(() => PluginPresetPrograms.Compiled(name, video: false), 4, name);
 }

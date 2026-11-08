@@ -45,6 +45,7 @@ internal sealed class EditorReadout(
             ["time"] = Math.Round(preview.Time, 2),
             ["soundBackend"] = sound.Backend,
             ["soundRunsOn"] = sound.RunsOn,
+            ["soundCores"] = sound.Cores,
             ["soundSpeed"] = Math.Round(sound.Speed, 2),
             ["canvasPaints"] = painted,
             ["canvasPaintMilliseconds"] = Math.Round(lastPaint.TotalMilliseconds, 2),

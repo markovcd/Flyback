@@ -85,6 +85,8 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
         _ => "IL",
     };
 
+    public int Cores => Volatile.Read(ref activeState).Renderer.Legs;
+
     /// <summary>
     /// How loud the speakers are turned down to, from 0 to 1, against what the patch
     /// made. Applied after the capture sink is written, so a recording keeps what the

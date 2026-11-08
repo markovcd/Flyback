@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
-using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json;
 using Flyback.Core;
 using Flyback.Engine.Render;
 using Flyback.Plugins.Audio;
@@ -130,6 +130,13 @@ public sealed class OutputSettings
     /// behind — the Sound section. Only what is played live, and not while a take is recorded.
     /// </summary>
     public bool StepDownOnDropouts { get; set; } = true;
+
+    /// <summary>
+    /// How many cores a heavy sound may be cut across, or <see cref="Engine.Render.SoundCores.Automatic"/>
+    /// to leave it to the machine — the Sound section. A take, <c>flyback-cli render</c>
+    /// and the viewer follow it too.
+    /// </summary>
+    public int SoundCores { get; set; } = Engine.Render.SoundCores.Automatic;
 
     /// <summary>
     /// The preset the window opens on at the next launch, by name — the Files
@@ -365,6 +372,7 @@ public sealed class OutputSettings
             settings.Library ??= string.Empty;
             settings.LatencyMilliseconds = Math.Clamp(settings.LatencyMilliseconds, ShortestLatency, LongestLatency);
             if (!AudioRenderer.Oversamples.Contains(settings.Oversample)) settings.Oversample = OversampleHere;
+            settings.SoundCores = Engine.Render.SoundCores.Sane(settings.SoundCores);
 
             // A "defaultPreset": null typed by hand is the one written here, not a fault.
             settings.DefaultPreset ??= string.Empty;

@@ -279,8 +279,9 @@ frame, which ping-pongs between two buffers. `PlaneState` holds a float per pixe
 per plane for state on the video path, laid out pixel-major so rows stay
 independent ([0074](adr/0074-a-cell-is-a-plane-on-the-video-path.md)).
 
-**Sound.** `AudioRenderer` is single-threaded by design and allocates nothing once
-built. It runs the program four times per output sample and decimates through a
+**Sound.** `AudioRenderer` allocates nothing once built. A dear enough program is
+cut into legs that run on several cores a stretch apart, to the same bits
+([0230](adr/0230-the-sound-runs-in-legs-on-several-cores.md)). It runs the program four times per output sample and decimates through a
 64-tap windowed sinc, then a DC blocker and a clamp
 ([0023](adr/0023-oversample-the-audio-path.md)). Oscillators accumulate phase on
 this path rather than multiplying time

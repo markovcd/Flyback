@@ -48,12 +48,16 @@ About 10 ms a 1080p frame for Whole band in `flyback-cli render`, readback, swiz
 
 `perf record` with `DOTNET_PerfMapEnabled=1 DOTNET_EnableWriteXorExecute=0` names the emitted methods (without the second, every one is `memfd:doublemapper`). With powers, exponentials and noise cells remembered by the whole program (`IlOps.Remembers`), Mycelium on a 4-core cloud box: the emitted chunks' own arithmetic 31%, `DelayState.Read` 9% (the float load of the line: a cache miss across twenty-odd lines, not the index), `sin` 7%, the decimation filter 3%. Between one sample and the next, 50-87% of Mul, Add, Mix and Step ops see the same operands, but most sit downstream of something that moves every sample; skipping them needs regions guarded on their inputs, not a check per op.
 
+- **Done:** the sound runs in legs on several cores (ADR-0230), to the same bits. Speed against one core on a 4-vCPU cloud box, four legs (three): Whole band 1.62 (1.58), Mycelium 1.68 (1.63), Warehouse 1.92 (1.77), No Sense Dub 2.02 (2.00), Slow weather 2.45 (1.92), Acid 1.74 (1.92), Escape Time 2.51 (1.96), Overworld 1.94 (1.47). Without laying the knots apart, Slow weather was 97% one knot and could not be cut.
+- **Measure:** `AudioRenderer.Legs` and the readout's `soundCores` say how many legs the last buffer used. `IlProgram.Compile(program, IlParts.Whole, legs)` forces a count; `SoundLegs.Most` is the cap. More than four legs is untried.
+- **Open:** skipping unchanged ops. Even an oracle skips only 36-55% of the cost, before the guards.
+
 ## Ruled out, with numbers
 
 Measured on Tranquility's sound, once IL chunking landed (ADR-0076, amendment of 2026-09-23):
 
 - **A per-buffer stage for the IL sound** (ops reading only constants and live values, run once per buffer): 232 of 3,108 non-constant ops, 7.5%. Not worth the code: the JIT folds constants for nothing. The interpreter is another matter: `SoundPlan` runs what follows from the constants once a buffer, 15-22% of a large sound's ops, and Flythrough, Mycelium and Acid play 40-51% faster interpreted, as on iOS.
-- **Control rate for slow signals, and threads:** the sound runs at 2.27x real time on one core, roughly 7,000 ops before it chokes. Control rate breaks the bit-for-bit match with the interpreter and needs an ADR; threads are a large job. Reopen either only for a patch past that ceiling.
+- **Control rate for slow signals:** breaks the bit-for-bit match with the interpreter and needs an ADR. Threads, ruled out here once, are ADR-0230.
 - **Chunk size:** 128, 256 and 512 ops per method measured the same; 1,024 fell to 1.13x. Keep 256.
 - **What is left of the gap after an edit:** emit 3 ms, compile 4-6 ms, the check against the interpreter 1 ms; none is worth more code.
 - **The CPU picture's frame stage, redone per row:** `SynthRenderer` reruns it on every row because each worker has its own bank. 526 ops over 1,080 rows against 72 a pixel over two million pixels is under half a percent.

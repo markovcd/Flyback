@@ -1,6 +1,7 @@
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Flyback.Engine.Render;
 
 namespace Flyback.Engine.Compile;
 
@@ -64,9 +65,10 @@ public sealed class IlProgram
     /// renderer calls only one of them, and each part is a separate trip through
     /// the JIT; whatever is not built runs on the interpreter instead.
     /// </param>
+    /// <param name="legs">The most legs to cut the sound into whatever it costs, or nought for what suits this machine (<see cref="SoundCores"/>).</param>
     /// <exception cref="NotSupportedException">An op the backend has no lowering for.</exception>
-    public static IlProgram Compile(CompiledPatch patch, IlParts parts = IlParts.All) =>
-        Bind(IlMethods.Build(patch, parts), patch);
+    public static IlProgram Compile(CompiledPatch patch, IlParts parts = IlParts.All, int legs = 0) =>
+        Bind(IlMethods.Build(patch, parts, legs), patch);
 
     /// <summary>Code already built for a patch of this shape, bound to this one's constants.</summary>
     internal static IlProgram Bind(IlMethods methods, CompiledPatch patch) => new(methods, patch);
@@ -96,6 +98,27 @@ public sealed class IlProgram
             x, y, t, aspect,
             ref Unsafe.AsRef(in feedback),
             delays, live, planes);
+    }
+
+    /// <summary>Where the sound is cut for cores to run in turn (<see cref="SoundLegs"/>), or null when it runs on one.</summary>
+    internal SoundLegs? Legs => Methods.Legs;
+
+    /// <summary>
+    /// One leg of <see cref="Evaluate"/>, at the ear, on a bank holding what the legs before it handed on.
+    /// </summary>
+    internal void EvaluateLeg(int leg, double t, ref double bank, DelayState? delays, double aspect, LiveValues? live)
+    {
+        var chunks = Methods.LegChunks!;
+        var feedback = default(FeedbackFrame);
+
+        for (var c = chunks[leg]; c < chunks[leg + 1]; c++)
+            whole![c](ref bank, 0d, 0d, t, aspect, ref feedback, delays, live, default);
+    }
+
+    /// <summary>Puts this patch's constants where <see cref="SoundLegs.Constants"/> says a leg reads them.</summary>
+    internal void FillConstants(Span<double> bank)
+    {
+        foreach (var register in Methods.Legs!.Constants) bank[register] = context.Constants[register];
     }
 
     /// <inheritdoc cref="CompiledPatch.EvaluateStage"/>

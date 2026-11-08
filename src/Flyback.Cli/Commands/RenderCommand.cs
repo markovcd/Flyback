@@ -1,5 +1,5 @@
-using System.CommandLine;
 using System.CommandLine.Completions;
+using System.CommandLine;
 using System.Globalization;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
@@ -129,6 +129,15 @@ internal static class RenderCommand
 
         oversample.AcceptOnlyFromAmong([.. AudioRenderer.Oversamples.Select(factor => factor.ToString(CultureInfo.InvariantCulture))]);
 
+        var cores = new Option<int>("--sound-cores")
+        {
+            Description = "Cut a heavy sound across at most this many cores, 1 to " + SoundCores.Highest
+                + ", or 0 to leave it to the machine. The same samples whatever the count. Left out, the editor's Settings → Sound.",
+            DefaultValueFactory = _ => defaults.SoundCores,
+        };
+
+        cores.AcceptOnlyFromAmong([.. Enumerable.Range(0, SoundCores.Highest + 1).Select(count => count.ToString(CultureInfo.InvariantCulture))]);
+
         var smooth = new Option<string>("--smooth")
         {
             Description = "How the picture's jagged edges are smoothed: off, fast (a pass over each frame, as the preview does) "
@@ -168,7 +177,7 @@ internal static class RenderCommand
             + "and ffmpeg left out are the editor's: its preview size and Settings → Recording.")
         {
             given.Patch, given.Preset, given.Presets, output, size, at, seconds, from, fps, quality, format, ffmpeg, loudness, interpreted, gpu,
-            processor, settings, oversample, smooth, input, mute, solo,
+            processor, settings, oversample, cores, smooth, input, mute, solo,
         };
 
         command.SetAction((result, cancellation) =>
@@ -180,6 +189,8 @@ internal static class RenderCommand
             if (given.Listed(result, plugins)) return Task.FromResult(Exit.Ok);
 
             if (!given.Chosen(result, out var file, out var named)) return Task.FromResult(Exit.Failed);
+
+            SoundCores.Wanted = result.GetValue(cores);
 
             if (result.GetValue(gpu) && result.GetValue(processor))
             {

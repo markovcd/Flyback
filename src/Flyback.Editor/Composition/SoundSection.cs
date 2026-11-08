@@ -77,6 +77,14 @@ internal sealed class SoundSection : ISettingsSection
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
+    /// <summary>How many cores a heavy sound may be cut across, one row a choice of <see cref="SoundCores.Choices"/>.</summary>
+    private readonly ComboBox cores = new Picker
+    {
+        Name = "soundCores",
+        ItemsSource = SoundCores.Choices.Select(CoresText).ToList(),
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
     /// <summary>
     /// The sound backend's own settings — which device plays, for one — drawn from
     /// what it declares (ADR-0085). Empty where no backend is installed or it has
@@ -161,9 +169,14 @@ internal sealed class SoundSection : ISettingsSection
                 + "rather than let it stutter. Not while a take is recorded, which is written whole whatever the "
                 + "speakers do; a render keeps the setting above too.");
 
+            ToolTip.SetTip(cores,
+                "How many cores a heavy sound is shared across. More renders it faster and keeps more of the "
+                + "machine busy; the sound is the same either way. Automatic takes half the cores, up to four.");
+
             rows.Children.Add(SettingRows.Heading("Quality"));
             rows.Children.Add(InspectorRows.Field("Oversampling", oversample));
             rows.Children.Add(stepDown);
+            rows.Children.Add(InspectorRows.Field("Cores", cores));
         }
 
         // A page has no microphone to offer, and a machine with no input plugin says nothing.
@@ -180,6 +193,7 @@ internal sealed class SoundSection : ISettingsSection
     {
         Show();
         audio.Oversample = settings.Current.Oversample;
+        SoundCores.Wanted = settings.Current.SoundCores;
         live.Start();
     }
 
@@ -190,6 +204,7 @@ internal sealed class SoundSection : ISettingsSection
         var before = settings.Change(Read);
 
         audio.Oversample = settings.Current.Oversample;
+        SoundCores.Wanted = settings.Current.SoundCores;
 
         if (settings.Current.LatencyMilliseconds != before.LatencyMilliseconds || SoundChanged(before, settings.Current))
             playback.ReopenAudio(settings.Current);
@@ -202,6 +217,7 @@ internal sealed class SoundSection : ISettingsSection
         latency.SelectedIndex = SettingRows.Nearest(Latencies.Select(ms => (double)ms).ToArray(), current.LatencyMilliseconds);
         oversample.SelectedIndex = Math.Max(0, AudioRenderer.Oversamples.ToList().IndexOf(current.Oversample));
         stepDown.IsChecked = current.StepDownOnDropouts;
+        cores.SelectedIndex = Math.Max(0, SoundCores.Choices.ToList().IndexOf(current.SoundCores));
 
         saved = plugins.AudioOutput(current.SoundOutput);
 
@@ -230,11 +246,19 @@ internal sealed class SoundSection : ISettingsSection
         into.LatencyMilliseconds = Latencies[Math.Max(latency.SelectedIndex, 0)];
         into.Oversample = AudioRenderer.Oversamples[Math.Max(oversample.SelectedIndex, 0)];
         into.StepDownOnDropouts = stepDown.IsChecked == true;
+        into.SoundCores = SoundCores.Choices[Math.Max(cores.SelectedIndex, 0)];
 
         if (shown is not null) into.RememberSound(shown.Id, soundForm.Values);
         if (shown != saved) into.SoundOutput = shown!.Id;
         if (plugins.PreferredAudioInput is { } input) into.RememberSoundIn(input.Id, inputForm.Values);
     }
+
+    private static string CoresText(int count) => count switch
+    {
+        SoundCores.Automatic => $"Automatic ({SoundCores.Here})",
+        1 => "1 (no sharing)",
+        _ => count.ToString(System.Globalization.CultureInfo.InvariantCulture),
+    };
 
     /// <summary>
     /// Whether the sound backend's answers mean something else in

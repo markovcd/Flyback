@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Flyback.Engine.Render;
 
 namespace Flyback.Engine.Compile;
 
@@ -58,6 +59,7 @@ public sealed class IlCompiler : IDisposable
     {
         // A runtime that cannot compile code, as in a browser, has no thread to build it on either.
         enabled = setup is not { Interpreted: true } && RuntimeFeature.IsDynamicCodeCompiled;
+        SoundCores.Changed += Recut;
     }
 
     /// <summary>
@@ -99,7 +101,7 @@ public sealed class IlCompiler : IDisposable
     {
         ArgumentNullException.ThrowIfNull(program);
 
-        var key = new IlKey(new IlShape(program), PartsFor((int)lane));
+        var key = KeyFor(program, (int)lane);
         IlMethods? methods;
 
         lock (gate)
@@ -108,7 +110,7 @@ public sealed class IlCompiler : IDisposable
             built.TryGetValue(key, out methods);
         }
 
-        if (methods is null) _ = Build(program, key.Parts, out methods);
+        if (methods is null) _ = Build(program, key, out methods);
 
         lock (gate)
         {
@@ -130,7 +132,7 @@ public sealed class IlCompiler : IDisposable
     {
         ArgumentNullException.ThrowIfNull(program);
 
-        var failure = Build(program, parts, out var methods);
+        var failure = Build(program, new IlKey(new IlShape(program), parts, Legs(parts)), out var methods);
         if (methods is not null) program.Attach(IlProgram.Bind(methods, program));
         return failure;
     }
@@ -147,6 +149,7 @@ public sealed class IlCompiler : IDisposable
         {
             if (disposed) return;
             disposed = true;
+            SoundCores.Changed -= Recut;
             foreach (var program in latest) program?.Release();
             Settle();
         }
@@ -165,6 +168,25 @@ public sealed class IlCompiler : IDisposable
         _ => IlParts.Staged,
     };
 
+    private static IlKey KeyFor(CompiledPatch program, int lane) =>
+        new(new IlShape(program), PartsFor(lane), Legs(PartsFor(lane)));
+
+    /// <summary>The most legs a build of <paramref name="parts"/> may cut the sound into: one where it has no whole program.</summary>
+    private static int Legs(IlParts parts) => parts.HasFlag(IlParts.Whole) ? SoundCores.Most : 1;
+
+    /// <summary>Builds the sound playing now again for the cores just asked for, as it would an edit.</summary>
+    private void Recut()
+    {
+        lock (gate)
+        {
+            if (disposed) return;
+
+            foreach (var lane in new[] { IlLane.Sound, IlLane.AuditionSound })
+                if (latest[(int)lane] is { } program && !KeyFor(program, (int)lane).Equals(latestKey[(int)lane]))
+                    Place(program, (int)lane);
+        }
+    }
+
     private void Enqueue(CompiledPatch program, int lane)
     {
         var replaced = latest[lane];
@@ -178,7 +200,7 @@ public sealed class IlCompiler : IDisposable
 
     private void Place(CompiledPatch program, int lane)
     {
-        var key = new IlKey(new IlShape(program), PartsFor(lane));
+        var key = KeyFor(program, lane);
 
         latest[lane] = program;
         latestKey[lane] = key;
@@ -243,7 +265,7 @@ public sealed class IlCompiler : IDisposable
                 // while every core is busy.
                 Thread.CurrentThread.Priority = program.Waiting ? ThreadPriority.Normal : ThreadPriority.BelowNormal;
 
-                var failure = Build(program, key.Parts, out var methods);
+                var failure = Build(program, key, out var methods);
 
                 lock (gate)
                 {
@@ -276,13 +298,13 @@ public sealed class IlCompiler : IDisposable
         }
     }
 
-    private static string? Build(CompiledPatch program, IlParts parts, out IlMethods? methods)
+    private static string? Build(CompiledPatch program, IlKey key, out IlMethods? methods)
     {
         methods = null;
 
         try
         {
-            var candidate = IlMethods.Build(program, parts);
+            var candidate = IlMethods.Build(program, key.Parts, most: key.Legs);
 
             if (!IlProgram.Bind(candidate, program).AgreesWithInterpreter())
                 return "The compiled program disagreed with the interpreter, so this patch stays interpreted.";
