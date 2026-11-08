@@ -6,7 +6,6 @@ using Flyback.Editor.Composition;
 using Flyback.Editor.Hubs;
 using Flyback.Editor.Inspect;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.Editor.Tests.Inspect;
 

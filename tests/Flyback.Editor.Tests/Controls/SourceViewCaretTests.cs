@@ -1,5 +1,4 @@
 using Avalonia.Headless.XUnit;
-using Flyback.Editor.Composition;
 using Shouldly;
 
 namespace Flyback.Editor.Tests.Controls;

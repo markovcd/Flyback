@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Media;
 using Avalonia.Platform;
 using Flyback.Ui.Audio;
 using Flyback.Ui.Controls;

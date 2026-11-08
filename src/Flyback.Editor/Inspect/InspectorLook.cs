@@ -4,7 +4,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
-using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Inspect;

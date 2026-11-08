@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Flyback.Plugins;
 using Flyback.Ui.Controls;

@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -6,7 +5,6 @@ using AvaloniaEdit.CodeCompletion;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
 using Flyback.Engine.Language;
-using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Hubs;

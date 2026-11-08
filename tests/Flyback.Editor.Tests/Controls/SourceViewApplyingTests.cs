@@ -1,9 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Threading;
 using Flyback.Editor.Composition;
-using Flyback.Editor.Controls;
 using Shouldly;
 
 namespace Flyback.Editor.Tests.Controls;

@@ -1,6 +1,3 @@
-using Flyback.Plugins.Audio;
-using Flyback.Plugins.Midi;
-
 namespace Flyback.Plugins.AndroidIO;
 
 /// <summary>Entry point of the Android input and output plugin: sound out through <c>AudioTrack</c>, in through <c>AudioRecord</c>, and MIDI in through <c>MidiManager</c>.</summary>

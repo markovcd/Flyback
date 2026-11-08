@@ -9,7 +9,6 @@ using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
 using Shouldly;
-using Xunit;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Tests.Settings;

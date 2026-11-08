@@ -7,7 +7,6 @@ using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
 using Flyback.Editor.Hubs;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.Editor.Tests.Canvas;
 

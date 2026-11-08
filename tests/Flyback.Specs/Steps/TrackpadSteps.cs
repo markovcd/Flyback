@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Input;
-using Flyback.Editor.Shell;
 using Flyback.Specs.Support;
 using Reqnroll;
 using Shouldly;

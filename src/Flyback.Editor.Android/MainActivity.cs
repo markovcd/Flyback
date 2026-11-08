@@ -1,6 +1,4 @@
-using Android.App;
 using Android.Content.PM;
-using Android.OS;
 using Avalonia.Android;
 
 namespace Flyback.Editor.Android;

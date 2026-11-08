@@ -6,8 +6,6 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.Core.Graph;
-using Flyback.Core.Graph.Extras;
-using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Hubs;

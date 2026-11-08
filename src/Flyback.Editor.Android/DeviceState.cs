@@ -1,5 +1,4 @@
 using Android;
-using Android.App;
 using Android.Content;
 using Microsoft.Extensions.DependencyInjection;
 using Flyback.Editor.Composition;

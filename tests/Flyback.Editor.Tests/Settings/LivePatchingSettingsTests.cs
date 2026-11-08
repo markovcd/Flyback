@@ -9,8 +9,6 @@ using Flyback.Editor.Windows;
 using Flyback.Host;
 using Flyback.Editor.Composition;
 using Flyback.Editor.Controls;
-using Flyback.Editor.Shell;
-using Flyback.Ui.Controls;
 using Shouldly;
 using Xunit;
 

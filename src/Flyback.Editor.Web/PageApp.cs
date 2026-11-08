@@ -1,5 +1,4 @@
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Composition;

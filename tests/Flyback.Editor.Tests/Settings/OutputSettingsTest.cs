@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
-using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Flyback.Core.Graph;
@@ -9,8 +8,6 @@ using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
 using Flyback.Editor.Shell;
 using Flyback.Plugins.Hosting;
-using Flyback.Ui.Controls;
-using Shouldly;
 
 namespace Flyback.Editor.Tests.Settings;
 

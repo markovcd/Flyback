@@ -10,7 +10,6 @@ using Flyback.Editor.Composition;
 using Flyback.Editor.Hubs;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Windows;
-using Flyback.Ui.Controls;
 using Shouldly;
 
 namespace Flyback.Editor.Tests.Windows;

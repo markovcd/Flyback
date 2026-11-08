@@ -1,11 +1,8 @@
 using Flyback.Editor.Midi;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Media.Immutable;
-using Avalonia.Threading;
 using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
 using Colors = Flyback.Ui.Controls.Colors;
