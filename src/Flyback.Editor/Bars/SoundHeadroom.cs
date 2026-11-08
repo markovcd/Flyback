@@ -12,6 +12,10 @@ internal static class SoundHeadroom
     /// <summary>How many rungs <paramref name="speed"/> lights.</summary>
     public static int Lit(double speed) => Rungs.Count(rung => speed >= rung);
 
+    /// <summary>How many rungs to draw lit: tight or behind always lights the lowest, so a warning never reads as an empty bar.</summary>
+    public static int Shown(double speed, Headroom headroom) =>
+        headroom is Headroom.Tight or Headroom.Behind ? Math.Max(Lit(speed), 1) : Lit(speed);
+
     /// <summary>What a sound worked out at <paramref name="speed"/> times real time has to spare.</summary>
     /// <param name="speed">Zero while nothing is timed, as when no sound plays.</param>
     public static Headroom Of(double speed, int oversample) =>

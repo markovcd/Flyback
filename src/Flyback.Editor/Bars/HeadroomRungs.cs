@@ -54,13 +54,10 @@ internal sealed class HeadroomRungs : Control
             _ => Rest,
         };
 
-        // Behind lights the lowest rung red, so the bar never reads as simply empty.
-        var shown = headroom == Headroom.Behind ? 1 : lit;
-
         for (var i = 0; i < SoundHeadroom.Rungs.Length; i++)
         {
             var height = Lowest + i * Rise;
-            context.FillRectangle(i < shown ? on : Unlit, new Rect(i * (RungWidth + Gap), Bounds.Height - height, RungWidth, height));
+            context.FillRectangle(i < lit ? on : Unlit, new Rect(i * (RungWidth + Gap), Bounds.Height - height, RungWidth, height));
         }
     }
 }

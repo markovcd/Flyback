@@ -251,7 +251,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
         if (state == Headroom.Behind) oversample.Foreground = BehindInk;
         else if (stepped) oversample.Foreground = SteppedInk;
         else oversample.ClearValue(TextBlock.ForegroundProperty);
-        Rungs.Show(SoundHeadroom.Lit(speed), state, stepped);
+        Rungs.Show(SoundHeadroom.Shown(speed, state), state, stepped);
 
         // Written while closed only, so an open tip holds still to be read.
         if (!ToolTip.GetIsOpen(headroom)) ToolTip.SetTip(headroom, Figures());

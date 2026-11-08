@@ -18,6 +18,15 @@ public sealed class SoundHeadroomTests
     public void Each_rung_lights_at_its_speed(double speed, int lit) => SoundHeadroom.Lit(speed).ShouldBe(lit);
 
     [Theory]
+    [InlineData(0.6, 2)]
+    [InlineData(0.4, 1)]
+    public void A_sound_that_is_tight_or_behind_still_lights_its_lowest_rung(double speed, int oversample) =>
+        SoundHeadroom.Shown(speed, SoundHeadroom.Of(speed, oversample)).ShouldBe(1);
+
+    [Fact]
+    public void An_untimed_sound_lights_no_rung() => SoundHeadroom.Shown(0, Headroom.Untimed).ShouldBe(0);
+
+    [Theory]
     [InlineData(0, 2, "untimed")]
     [InlineData(3.1, 2, "plenty")]
     [InlineData(1.3, 2, "tight")]
