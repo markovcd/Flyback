@@ -234,18 +234,18 @@ internal sealed class AssistantRun : IDisposable
     /// Carries settings changed on the canvas while the turn ran into its proposal
     /// and into the workbench, except where the assistant changed the same one.
     /// </summary>
-    /// <returns>Every setting changed on the canvas, and whether each was kept.</returns>
-    internal IReadOnlyList<Retuned> Merge(Patch current)
+    /// <returns>The proposal to apply, or null where nothing was proposed.</returns>
+    internal MergedProposal? Merge(Patch current)
     {
-        if (Proposal is null) return [];
+        if (Proposal is null) return null;
 
-        var carried = Retuning.Carry(seen, current, Proposal);
+        var merged = MergedProposal.Of(seen, current, Proposal, ProposalText);
 
-        if (carried.Any(change => change.Kept)) ProposalText = null;
+        ProposalText = merged.Text;
 
-        Remember(Workbench.Follow(seen, current));
+        if (!merged.Overwrote) Remember(Workbench.Follow(seen, current));
 
-        return carried;
+        return merged;
     }
 
     /// <summary>

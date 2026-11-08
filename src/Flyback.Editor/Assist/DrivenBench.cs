@@ -64,36 +64,24 @@ internal sealed class DrivenBench(
     /// <summary>Puts the proposal on the canvas, with whatever the person changed meanwhile.</summary>
     private ToolOutcome Deliver(PatchWorkbench bench, ToolOutcome outcome)
     {
-        var was = PatchIO.Read(seen!, modules).Patch;
-        var now = editor.Current;
-        var proposal = bench.Snapshot();
-        var text = bench.Text;
+        var merged = MergedProposal.Of(PatchIO.Read(seen!, modules).Patch, editor.Current, bench.Snapshot(), bench.Text);
 
-        var overwrote = !PatchShape.Of(was).Matches(now);
-        IReadOnlyList<Retuned> carried = overwrote ? [] : Retuning.Carry(was, now, proposal);
-
-        // A carried knob is not in the bench's text, so the canvas writes its own.
-        if (carried.Any(change => change.Kept)) text = null;
-
-        editor.Apply(proposal, text);
+        editor.Apply(merged.Patch, merged.Text);
 
         Proposed = bench.ProposalSummary;
 
         // A canvas that owns its patch keeps no text, and the bench's still says exactly what it holds.
-        Over(bench.Save().Handles, text ?? editor.Text);
+        Over(bench.Save().Handles, merged.Text ?? editor.Text);
 
-        return ToolOutcome.Fine($"{outcome.Text} It is on the person's canvas now. {Applied(overwrote, carried)}");
+        return ToolOutcome.Fine($"{outcome.Text} It is on the person's canvas now. {Applied(merged)}");
     }
 
-    private static string Applied(bool overwrote, IReadOnlyList<Retuned> carried)
+    private static string Applied(MergedProposal merged)
     {
-        if (overwrote) return "It replaced modules or wires the person changed since you last looked; Ctrl+Z puts theirs back.";
+        if (merged.Overwrote) return "It replaced modules or wires the person changed since you last looked; Ctrl+Z puts theirs back.";
 
-        var kept = carried.Count(change => change.Kept);
-        var overruled = carried.Count - kept;
-
-        var keeping = kept == 0 ? string.Empty : $"It keeps {TranscriptView.Tally(kept, "setting")} the person changed meanwhile. ";
-        var standing = overruled == 0 ? string.Empty : $"Your value stands for {TranscriptView.Tally(overruled, "setting")} they also changed. ";
+        var keeping = merged.Kept == 0 ? string.Empty : $"It keeps {TranscriptView.Tally(merged.Kept, "setting")} the person changed meanwhile. ";
+        var standing = merged.Overruled == 0 ? string.Empty : $"Your value stands for {TranscriptView.Tally(merged.Overruled, "setting")} they also changed. ";
 
         return $"{keeping}{standing}Ctrl+Z puts the patch back as it was.".Trim();
     }

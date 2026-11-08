@@ -901,16 +901,15 @@ internal sealed class AssistantPanel : UserControl
     /// </remarks>
     private void Deliver()
     {
-        if (session.Run is not { Proposal: { } proposed } run) return;
+        if (session.Run is not { } run) return;
 
         // A turn somebody stopped is not one to act on. What it reached is in
         // the transcript, and asking again is a keystroke.
         if (stopping) return;
 
-        var overwrote = run.Reshaped(editor.Current);
-        IReadOnlyList<Retuned> carried = overwrote ? [] : run.Merge(editor.Current);
+        if (run.Merge(editor.Current) is not { } merged) return;
 
-        editor.Apply(proposed, run.ProposalText);
+        editor.Apply(merged.Patch, merged.Text);
 
         // What this run just put on the canvas is not somebody editing behind
         // it, so the next message carries on the same conversation rather than
@@ -919,20 +918,17 @@ internal sealed class AssistantPanel : UserControl
         run.Rebase(editor.Current);
         conversation.Rebase(editor.Current);
 
-        transcript.Put(Voice.Aside, Applied(overwrote, carried));
+        transcript.Put(Voice.Aside, Applied(merged));
 
         editor.Report(string.Empty, null);
     }
 
-    private static string Applied(bool overwrote, IReadOnlyList<Retuned> carried)
+    private static string Applied(MergedProposal merged)
     {
-        if (overwrote) return "Applied — this replaced the modules and wires you changed while it ran. Ctrl+Z puts them back.";
+        if (merged.Overwrote) return "Applied — this replaced the modules and wires you changed while it ran. Ctrl+Z puts them back.";
 
-        var kept = carried.Count(change => change.Kept);
-        var overruled = carried.Count - kept;
-
-        var keeping = kept == 0 ? string.Empty : $", keeping {TranscriptView.Tally(kept, "setting")} you changed while it ran";
-        var standing = overruled == 0 ? string.Empty : $" Its own value stands for {TranscriptView.Tally(overruled, "setting")} you also changed.";
+        var keeping = merged.Kept == 0 ? string.Empty : $", keeping {TranscriptView.Tally(merged.Kept, "setting")} you changed while it ran";
+        var standing = merged.Overruled == 0 ? string.Empty : $" Its own value stands for {TranscriptView.Tally(merged.Overruled, "setting")} you also changed.";
 
         return $"Applied{keeping}.{standing} Ctrl+Z puts the patch back as it was.";
     }

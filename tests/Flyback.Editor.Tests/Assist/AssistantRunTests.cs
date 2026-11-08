@@ -509,7 +509,7 @@ public class AssistantRunTests
         left.InputValues[0] = 0.1f;
         right.InputValues[0] = 0.2f;
 
-        var carried = run.Merge(open);
+        var carried = run.Merge(open).ShouldNotBeNull().Carried;
 
         var proposed = run.Proposal.ShouldNotBeNull();
         proposed.Find(left.Id).ShouldNotBeNull().InputValues[0].ShouldBe(0.1f);
