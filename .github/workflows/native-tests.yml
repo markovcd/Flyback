@@ -89,7 +89,7 @@ jobs:
           MESA: "26.2.4"
           MESA_SHA256: 351fc8c8b695878ffb3eaa044b3ead08672a48b1a045e3c3e3975811df0f6695
         run: |
-          curl -fsSL -o "$RUNNER_TEMP/mesa.7z" "https://github.com/pal1000/mesa-dist-win/releases/download/$MESA/mesa3d-$MESA-release-msvc.7z"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 15 -o "$RUNNER_TEMP/mesa.7z" "https://github.com/pal1000/mesa-dist-win/releases/download/$MESA/mesa3d-$MESA-release-msvc.7z"
           echo "$MESA_SHA256  $RUNNER_TEMP/mesa.7z" | sha256sum -c -
           7z x -y -o"$RUNNER_TEMP/mesa" "$RUNNER_TEMP/mesa.7z" > /dev/null
           for host in tests/*/bin/Release/*/; do
