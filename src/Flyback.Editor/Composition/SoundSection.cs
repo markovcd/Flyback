@@ -171,7 +171,8 @@ internal sealed class SoundSection : ISettingsSection
 
             ToolTip.SetTip(cores,
                 "How many cores a heavy sound is shared across. More renders it faster and keeps more of the "
-                + "machine busy; the sound is the same either way. Automatic takes half the cores, up to four.");
+                + "machine busy; the sound is the same either way. Automatic keeps a phone or tablet on one core, "
+                + "to keep it cool, and takes half the cores, up to four, elsewhere.");
 
             rows.Children.Add(SettingRows.Heading("Quality"));
             rows.Children.Add(InspectorRows.Field("Oversampling", oversample));

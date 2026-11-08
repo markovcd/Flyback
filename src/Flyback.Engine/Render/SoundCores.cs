@@ -17,8 +17,12 @@ public static class SoundCores
     /// <summary>Raised when <see cref="Wanted"/> changes, on the thread that changed it.</summary>
     public static event Action? Changed;
 
-    /// <summary>What this machine gets when nobody asks: half its cores, up to four, so a phone keeps cool.</summary>
-    public static int Here { get; } = Math.Clamp(Environment.ProcessorCount / 2, 1, 4);
+    /// <summary>
+    /// What this machine gets when nobody asks: one core on a phone or tablet, where every
+    /// busy core is heat, and half the cores up to four elsewhere.
+    /// </summary>
+    public static int Here { get; } =
+        OperatingSystem.IsAndroid() || OperatingSystem.IsIOS() ? 1 : Math.Clamp(Environment.ProcessorCount / 2, 1, 4);
 
     /// <summary>What was asked for, <see cref="Automatic"/> or a count from 1 to <see cref="Highest"/>.</summary>
     public static int Wanted

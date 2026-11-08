@@ -33,7 +33,8 @@ stretch behind the one before it.**
   leg must make the slowest leg 10% faster, and a cut that leaves one leg with three
   quarters of the work, or a program under about 1,500 adds, runs whole.
 - **The cap is a setting.** Settings → Sound → Cores, beside Oversampling: Automatic
-  (half the machine's cores, up to four, so a phone keeps cool), or 1 to 8. It is one
+  (one core on a phone or tablet, half the machine's cores up to four elsewhere), or
+  1 to 8. It is one
   number for the whole process (`SoundCores`), and changing it rebuilds the sound that
   is playing. Every flyback-cli command and the viewer read it from the settings, and
   `render --sound-cores` overrides it for one run.
@@ -51,8 +52,11 @@ stretch behind the one before it.**
 ## Consequences
 
 - Heavy presets on a 4-vCPU box: 1.6-2.5x with four legs, 1.5-2.0x with three; the
-  numbers are in the performance skill. A phone has eight cores and gets four legs
-  unless Cores says fewer.
+  numbers are in the performance skill.
+- A phone stays on one core until someone asks for more: every core kept busy is heat,
+  and a phone that runs hot throttles and burns the hand holding it. Whether legs run a
+  phone cooler or hotter for the same sound is unmeasured. iOS interprets the sound and
+  has no legs either way.
 - The web viewer has one thread and stays whole.
 - The readout says how many cores the last buffer used (`soundCores`).
 - More than four legs is untried; each one hands on more and gains less. Cores up to 8
