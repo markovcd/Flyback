@@ -23,7 +23,7 @@
 
 ### Performance
 
-- A heavy patch's sound renders on several cores, 1.6 to 2.5 times as fast and sample for sample the same, with Settings → Sound → Cores and `flyback-cli render --sound-cores` to say how many.
+- A heavy patch's sound renders on several cores, 1.6 to 2.5 times as fast and sample for sample the same, with Settings → Sound → Cores and `flyback-cli render --sound-cores` to say how many; a phone shares it across two.
 
 ### Fixes
 

@@ -18,11 +18,13 @@ public static class SoundCores
     public static event Action? Changed;
 
     /// <summary>
-    /// What this machine gets when nobody asks: one core on a phone or tablet, where every
-    /// busy core is heat, and half the cores up to four elsewhere.
+    /// What this machine gets when nobody asks: two cores on a phone or tablet, which a Pixel
+    /// played no warmer than one, and half the cores up to four elsewhere.
     /// </summary>
     public static int Here { get; } =
-        OperatingSystem.IsAndroid() || OperatingSystem.IsIOS() ? 1 : Math.Clamp(Environment.ProcessorCount / 2, 1, 4);
+        OperatingSystem.IsAndroid() || OperatingSystem.IsIOS()
+            ? Math.Clamp(Environment.ProcessorCount, 1, 2)
+            : Math.Clamp(Environment.ProcessorCount / 2, 1, 4);
 
     /// <summary>What was asked for, <see cref="Automatic"/> or a count from 1 to <see cref="Highest"/>.</summary>
     public static int Wanted
