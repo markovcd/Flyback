@@ -53,14 +53,7 @@ public class StageKnobTests : EditorTest
         All<NodeEditor>(window).Single().History.Open(patch);
         Settle(window);
 
-        var preview = All<PreviewHost>(window).Single();
-        var at = preview.TranslatePoint(new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 3), window)!.Value;
-
-        window.MouseDown(at, MouseButton.Left);
-        window.MouseUp(at, MouseButton.Left);
-        window.MouseDown(at, MouseButton.Left);
-        window.MouseUp(at, MouseButton.Left);
-        Settle(window);
+        DoubleClickPicture(window);
 
         return window;
     }
