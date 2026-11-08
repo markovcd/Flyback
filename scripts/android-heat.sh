@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Measures how warm the Android editor makes a phone at each count of sound cores
 # (ADR-0230): plays a preset for a short run per count, logging once a second the skin,
-# CPU and battery temperatures, the throttling status, the power drawn, each CPU
-# cluster's clock and the editor's soundSpeed and soundCores.
+# CPU and battery temperatures, the throttling status, the battery's power (signed as the
+# phone reports it) and whether it is plugged in, each CPU cluster's clock and the
+# editor's soundSpeed and soundCores.
 #
 #   ./scripts/android-heat.sh                      Mycelium on 1, 2 and 4 cores, 20 s each
 #   ./scripts/android-heat.sh Acid --cores "1 4"   another preset and other counts
@@ -69,17 +70,19 @@ read_phone() {
     hal="$(printf "%s\n" "$t" | sed -n "/Current temperatures from HAL/,/Current cooling devices/p")"
     skin="$(printf "%s\n" "$hal" | grep "mType=3," | sed -n "s/.*mValue=\([0-9.]*\).*/\1/p" | sort -n | tail -n 1)"
     cpu="$(printf "%s\n" "$hal" | grep "mType=0," | sed -n "s/.*mValue=\([0-9.]*\).*/\1/p" | sort -n | tail -n 1)"
-    battery="$(dumpsys battery 2>/dev/null | sed -n "s/^ *temperature: \([0-9]*\).*/\1/p")"
+    b="$(dumpsys battery 2>/dev/null)"
+    battery="$(printf "%s\n" "$b" | sed -n "s/^ *temperature: \([0-9]*\).*/\1/p")"
+    plugged="$(printf "%s\n" "$b" | grep -c "powered: true")"
     current="$(cat /sys/class/power_supply/battery/current_now 2>/dev/null)"
     voltage="$(cat /sys/class/power_supply/battery/voltage_now 2>/dev/null)"
     clocks=""
     for p in /sys/devices/system/cpu/cpufreq/policy*; do clocks="$clocks $(cat $p/scaling_cur_freq 2>/dev/null)"; done
-    echo "$skin $cpu $battery $status $current $voltage$clocks"
+    echo "$skin $cpu $battery $status $current $voltage $plugged$clocks"
   ' 2>/dev/null | tr -d '\r' | awk '{
     battery = $3 / 10
-    power = ($5 < 0 ? -$5 : $5) * $6 / 1e9
-    line = sprintf("%s,%s,%.1f,%s,%.0f", $1, $2, battery, $4, power)
-    for (i = 7; i <= NF; i++) line = line sprintf(",%.0f", $i / 1000)
+    power = $5 * $6 / 1e9
+    line = sprintf("%s,%s,%.1f,%s,%.0f,%s", $1, $2, battery, $4, power, $7 > 0 ? 1 : 0)
+    for (i = 8; i <= NF; i++) line = line sprintf(",%.0f", $i / 1000)
     print line
   }'
 }
@@ -92,7 +95,12 @@ ask() { adb shell am broadcast -a "$package.${1:-STATE}" -p "$package" 2>/dev/nu
 field() { printf '%s' "$2" | sed -n -e "s/.*\"$1\":\"\([^\"]*\)\".*/\1/p" -e t -e "s/.*\"$1\":\([^,}]*\).*/\1/p"; }
 
 clusters="$(adb shell 'ls -d /sys/devices/system/cpu/cpufreq/policy*' 2>/dev/null | tr -d '\r' | sed 's|.*/||' | tr '\n' ',' | sed 's/,$//')"
-echo "cores,second,skin,cpu,battery,status,power_mw,${clusters//policy/mhz_cpu},sound_speed,sound_cores" > "$out"
+echo "cores,second,skin,cpu,battery,status,power_mw,plugged,${clusters//policy/mhz_cpu},sound_speed,sound_cores" > "$out"
+
+# Charging feeds the battery while the app drains it, so the current read is neither.
+if [ "$(read_phone | cut -d, -f6)" = 1 ]; then
+  echo "warning: the phone is plugged in, so power_mw is charging and drawing mixed; unplug and use wireless debugging to trust it" >&2
+fi
 echo "device: $(adb shell getprop ro.product.model | tr -d '\r'); log: $out" >&2
 
 stopped=false
