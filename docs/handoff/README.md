@@ -17,7 +17,6 @@ Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or 
 | [pipeline-audit.md](pipeline-audit.md) | Where the pipeline is weakest, and what would fix each point | Audit | Open |
 | [asio-amd-crash.md](asio-amd-crash.md) | Rain on a Window on ASIO4ALL crashes inside AMD's OpenGL driver | Issue | Open: needs a session on the Windows machine |
 | [microsoft-store.md](microsoft-store.md) | Flyback Modular on the Microsoft Store: the submission steps left to the user | Plan | Open: waits on the user |
-| [randomize-design.md](randomize-design.md) | A brief for Claude Design: redesign the panel's and the module's randomize controls | Plan | Open: the panel's die landed; the rest is on the design canvas |
 
 Severity, for an issue: **Critical**, act now; **High**, a security or data problem in a release; **Medium**, wrong behavior or real risk; **Low**, friction or latent risk.
 
