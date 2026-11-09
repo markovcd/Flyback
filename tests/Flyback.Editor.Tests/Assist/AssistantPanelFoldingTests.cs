@@ -5,6 +5,7 @@ using Flyback.Core.Graph;
 using Shouldly;
 
 namespace Flyback.Editor.Tests.Assist;
+
 public sealed class AssistantPanelFoldingTests : AssistantPanelTest
 {
     [AvaloniaFact]

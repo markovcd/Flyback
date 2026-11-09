@@ -13,6 +13,7 @@ using Shouldly;
 using Xunit;
 
 namespace Flyback.Editor.Tests.Assist;
+
 public sealed class AssistantPanelSavedTests : AssistantPanelTest
 {
     [AvaloniaFact]

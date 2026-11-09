@@ -8,6 +8,7 @@ using Flyback.Engine.Graph;
 using Shouldly;
 
 namespace Flyback.Editor.Tests.Assist;
+
 public sealed class AssistantPanelInFlightTests : AssistantPanelTest
 {
     [AvaloniaFact]

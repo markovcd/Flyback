@@ -8,6 +8,7 @@ using Flyback.Plugins.Hosting;
 using Shouldly;
 
 namespace Flyback.Editor.Tests.Assist;
+
 public sealed class AssistantPanelProbingTests : AssistantPanelTest
 {
     /// <summary>

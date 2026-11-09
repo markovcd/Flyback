@@ -7,6 +7,7 @@ using Flyback.Editor.Assist;
 using Shouldly;
 
 namespace Flyback.Editor.Tests.Assist;
+
 public sealed class AssistantPanelWorkingTests : AssistantPanelTest
 {
     [AvaloniaFact]

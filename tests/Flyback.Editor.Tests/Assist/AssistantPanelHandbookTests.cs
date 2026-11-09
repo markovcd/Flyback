@@ -14,6 +14,7 @@ using Flyback.Plugins.Settings;
 using Shouldly;
 
 namespace Flyback.Editor.Tests.Assist;
+
 public sealed class AssistantPanelHandbookTests : AssistantPanelTest
 {
     /// <summary>A lookup is one of the steps it took, so it stays in their run rather than splitting it in two.</summary>

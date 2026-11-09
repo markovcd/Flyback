@@ -8,6 +8,7 @@ using Flyback.Engine.Render;
 using Shouldly;
 
 namespace Flyback.Editor.Tests.Assist;
+
 public sealed class AssistantPanelFramesTests : AssistantPanelTest
 {
     /// <summary>
