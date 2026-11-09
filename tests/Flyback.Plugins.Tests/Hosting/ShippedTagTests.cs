@@ -17,7 +17,7 @@ public class ShippedTagTests
         ["sound", "picture", "midi", "effects", "ai", "secrets", "windows", "macos", "linux", "android"];
 
     /// <summary>The test fixtures laid out beside the shipped plugins.</summary>
-    private static readonly string[] Fixtures = ["Sample", "FakeDecider"];
+    private static readonly string[] Fixtures = ["Sample", "Bare"];
 
     public static TheoryData<string> EveryPreset =>
         [.. ShippedPlugins.Loaded.Presets.Select(p => p.Name)];

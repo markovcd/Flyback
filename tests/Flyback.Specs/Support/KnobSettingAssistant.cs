@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Flyback.Assist;
-using Flyback.Plugins.Secrets;
+using Flyback.Assist.Keys;
 using Flyback.Plugins.Settings;
 
 namespace Flyback.Specs.Support;

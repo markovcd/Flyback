@@ -256,7 +256,8 @@ context, decision, consequences.
 | [0228](0228-codex-drives-the-editor-over-mcp-and-has-no-plugin.md) | Codex drives the editor over MCP and has no plugin *(user-directed)* |
 | [0231](0231-assistants-are-built-in-not-plugins.md) | Assistants are built in, not plugins *(user-directed)* |
 | [0210](0210-the-assistant-edits-the-patchs-text.md) | The assistant edits the patch's text *(user-directed)* |
-| [0186](0186-a-decision-model-answers-typed-questions-behind-the-plugin-boundary.md) | A decision model answers typed questions behind the plugin boundary *(user-directed)* |
+| [0186](0186-a-decision-model-answers-typed-questions-behind-the-plugin-boundary.md) | A decision model answers typed questions behind the plugin boundary *(user-directed; the plugin boundary superseded by [0232](0232-decision-models-are-built-in-and-the-keyed-client-leaves-the-contract.md))* |
+| [0232](0232-decision-models-are-built-in-and-the-keyed-client-leaves-the-contract.md) | Decision models are built in, and the keyed client leaves the contract *(user-directed)* |
 | [0188](0188-what-every-host-reads-is-a-project-of-its-own.md) | What every host reads is a project of its own *(user-directed)* |
 | [0206](0206-the-gate-has-a-ten-minute-time-budget.md) | The gate has a ten-minute time budget *(user-directed)* |
 | [0207](0207-mutation-testing-plants-bugs-in-each-commits-diff.md) | Mutation testing plants bugs in each commit's diff *(user-directed)* |

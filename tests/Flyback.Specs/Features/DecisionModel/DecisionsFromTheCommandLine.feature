@@ -4,12 +4,12 @@ Feature: A decision model can be asked from the command line
   script can act on how sure the answer is.
 
   Scenario: A yes-no question is answered in the System One format
-    Given the decision models that are installed
+    Given Flyback's decision models and a scripted one
     When flyback-cli decides whether "we were billed twice" is about money, as JSON
     Then the answer is a yes-no with a probability between 0 and 1
 
   Scenario: Decisions turned off ask nothing
-    Given the decision models that are installed
+    Given Flyback's decision models and a scripted one
     And decisions are turned off
     When flyback-cli decides whether "we were billed twice" is about money, as JSON
     Then the command fails, saying no decision model is in use

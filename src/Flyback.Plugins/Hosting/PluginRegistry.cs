@@ -1,6 +1,5 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
-using Flyback.Plugins.Decide;
 using Flyback.Plugins.Midi;
 using Flyback.Plugins.Secrets;
 
@@ -16,7 +15,6 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
     private readonly List<ISecretStore> secretStores = [];
     private readonly List<IMidiInput> midiInputs = [];
     private readonly List<IAudioInput> audioInputs = [];
-    private readonly List<IDecisionModel> decisionModels = [];
 
     /// <summary>Who registered each thing kept above, keyed by the thing itself.</summary>
     private readonly Dictionary<object, PluginInfo> providers = new(ReferenceEqualityComparer.Instance);
@@ -37,17 +35,16 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
 
     public IReadOnlyList<IAudioInput> AudioInputs => audioInputs;
 
-    public IReadOnlyList<IDecisionModel> DecisionModels => decisionModels;
 
     /// <summary>Every module offered, accepted or not, in order.</summary>
     private readonly List<NodeDef> offered = [];
 
     /// <summary>How far everything had got, to undo a plugin's registration back to.</summary>
     public readonly record struct Checkpoint(
-        ModuleCatalog Modules, int Offered, int Presets, int AudioOutputs, int SecretStores, int MidiInputs, int AudioInputs, int DecisionModels, int Problems);
+        ModuleCatalog Modules, int Offered, int Presets, int AudioOutputs, int SecretStores, int MidiInputs, int AudioInputs, int Problems);
 
     public Checkpoint Mark() => new(
-        Modules, offered.Count, presets.Count, audioOutputs.Count, secretStores.Count, midiInputs.Count, audioInputs.Count, decisionModels.Count, problems.Count);
+        Modules, offered.Count, presets.Count, audioOutputs.Count, secretStores.Count, midiInputs.Count, audioInputs.Count, problems.Count);
 
     public IEnumerable<NodeDef> OfferedSince(Checkpoint mark) => offered.Skip(mark.Offered);
 
@@ -61,7 +58,6 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
         Trim(secretStores, mark.SecretStores);
         Trim(midiInputs, mark.MidiInputs);
         Trim(audioInputs, mark.AudioInputs);
-        Trim(decisionModels, mark.DecisionModels);
         problems.RemoveRange(mark.Problems, problems.Count - mark.Problems);
     }
 
@@ -145,11 +141,5 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
     {
         audioInputs.Add(input);
         providers[input] = Source;
-    }
-
-    public void AddDecisionModel(IDecisionModel model)
-    {
-        decisionModels.Add(model);
-        providers[model] = Source;
     }
 }

@@ -5,14 +5,14 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Flyback.Assist;
+using Flyback.Assist.Decide;
+using Flyback.Assist.Keys;
 using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
 using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;
 
@@ -34,7 +34,7 @@ public sealed class PaletteByMeaningTests : EditorTest
 
     private MainWindow Opened(IDecisionModel? model) => Open(setup: new EditorSetup
     {
-        Plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, [], decisionModels: model is null ? [] : [model]),
+        DecisionModels = new(model is null ? [] : [model]),
     });
 
     private static ModulePalette Palette(MainWindow window)

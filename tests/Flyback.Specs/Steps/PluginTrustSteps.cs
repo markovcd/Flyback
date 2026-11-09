@@ -1,9 +1,9 @@
 using System.CommandLine;
 using System.Text.Json.Nodes;
 using Flyback.Assist;
+using Flyback.Assist.Keys;
 using Flyback.Cli.Common;
 using Flyback.Plugins;
-using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
@@ -87,7 +87,7 @@ public sealed class PluginTrustSteps : IDisposable
             new PluginTrust(true, ShippedList.Beside(PluginHost.DefaultDirectory), PluginAllowances.None));
     }
 
-    [When("two plugins offer a decision model under the same id")]
+    [When("two plugins offer a secret store under the same id")]
     public void WhenTwins() => catalog = PluginHost.LoadTypes(typeof(FirstTwin), typeof(SecondTwin));
 
     [Then("the copied plugin runs")]
@@ -120,7 +120,7 @@ public sealed class PluginTrustSteps : IDisposable
     public void ThenStoreOffered() => catalog.SecretStores.ShouldHaveSingleItem().Id.ShouldBe("dpapi");
 
     [Then("neither is offered")]
-    public void ThenNeither() => catalog.DecisionModels.ShouldBeEmpty();
+    public void ThenNeither() => catalog.SecretStores.ShouldBeEmpty();
 
     [Then("both are named as the reason")]
     public void ThenBothNamed()
@@ -202,14 +202,14 @@ public sealed class PluginTrustSteps : IDisposable
     {
         public PluginInfo Info { get; } = new("test.first", "First twin");
 
-        public void Register(IPluginRegistry registry) => registry.AddDecisionModel(new TwinModel());
+        public void Register(IPluginRegistry registry) => registry.AddSecretStore(new TwinStore());
     }
 
     public sealed class SecondTwin : IFlybackPlugin
     {
         public PluginInfo Info { get; } = new("test.second", "Second twin");
 
-        public void Register(IPluginRegistry registry) => registry.AddDecisionModel(new TwinModel());
+        public void Register(IPluginRegistry registry) => registry.AddSecretStore(new TwinStore());
     }
 
     private sealed class Twin(string origin) : IPatchAssistant
@@ -231,7 +231,7 @@ public sealed class PluginTrustSteps : IDisposable
         public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => throw new NotSupportedException();
     }
 
-    private sealed class TwinModel : IDecisionModel
+    private sealed class TwinStore : ISecretStore
     {
         public string Id => "twin";
 
@@ -239,13 +239,12 @@ public sealed class PluginTrustSteps : IDisposable
 
         public int Priority => 0;
 
-        public KeyCredential? Credential { get; } = new("FLYBACK_SPECS_TWIN_KEY", "");
+        public bool IsSupported => true;
 
-        public IReadOnlyList<SettingField> Form(SettingValues values) => [];
+        public void Keep(string account, string secret) { }
 
-        public string? Unavailable(DecisionConfig config) => null;
+        public string? Recall(string account) => null;
 
-        public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel) => throw new NotSupportedException();
+        public void Forget(string account) { }
     }
-
 }

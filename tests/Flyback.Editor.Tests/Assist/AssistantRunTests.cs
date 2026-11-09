@@ -1,9 +1,9 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Flyback.Assist;
+using Flyback.Assist.Keys;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;

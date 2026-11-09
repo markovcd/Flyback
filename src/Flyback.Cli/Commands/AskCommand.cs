@@ -2,14 +2,14 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.Globalization;
 using Flyback.Assist;
+using Flyback.Assist.Decide;
+using Flyback.Assist.Keys;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
-using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using PluginRegistry = Flyback.Cli.Plugins;
 
@@ -137,6 +137,7 @@ internal static class AskCommand
             return Run(
                 plugins.Catalog,
                 Assistants.Shipped,
+                plugins.DecisionModels,
                 about,
                 new AskOptions(
                     words.Length == 0 ? null : string.Join(' ', words),
@@ -165,6 +166,7 @@ internal static class AskCommand
     public static async Task<int> Run(
         PluginCatalog plugins,
         Assistants assistants,
+        DecisionModels decisionModels,
         AskedPatch about,
         AskOptions options,
         TextWriter output,
@@ -243,7 +245,7 @@ internal static class AskCommand
             logFolder,
             output,
             error,
-            new Decisions(plugins, DecisionSettings.Load(settingsPath), new Credentials(plugins.PreferredSecretStore), new ModelStore(ModelStore.DefaultRoot)));
+            new Decisions(decisionModels.All, DecisionSettings.Load(settingsPath), new Credentials(plugins.PreferredSecretStore), new ModelStore(ModelStore.DefaultRoot)));
 
         if (message is not null)
         {

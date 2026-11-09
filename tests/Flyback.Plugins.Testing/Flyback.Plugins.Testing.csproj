@@ -10,6 +10,7 @@
   <!-- What the plugin-facing tests share: a sound card, an endpoint, a JACK server. No test lives here. -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\Flyback.Plugins\Flyback.Plugins.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Assist\Flyback.Assist.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,3 +1,4 @@
+using Flyback.Assist.Decide;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.Cli;
@@ -11,8 +12,12 @@ namespace Flyback.Cli;
 /// no catalog: those load nothing and say nothing.
 /// </remarks>
 /// <param name="trust">Which folders load, for <c>plugin list</c>; <see cref="PluginTrust.For"/> the directory unless a test says otherwise.</param>
-internal sealed class Plugins(Func<PluginCatalog> load, string directory, TextWriter? report, Func<PluginTrust>? trust = null)
+/// <param name="decisionModels">The decision models offered; Flyback's unless a test says otherwise.</param>
+internal sealed class Plugins(Func<PluginCatalog> load, string directory, TextWriter? report, Func<PluginTrust>? trust = null, DecisionModels? decisionModels = null)
 {
+    /// <summary>The decision models the commands ask.</summary>
+    public DecisionModels DecisionModels => decisionModels ?? DecisionModels.Shipped;
+
     /// <summary>The plugins folder.</summary>
     public string Directory => directory;
 

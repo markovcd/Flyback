@@ -2,10 +2,10 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Assist;
+using Flyback.Assist.Keys;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Secrets;
 using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Assist;

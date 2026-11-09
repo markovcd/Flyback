@@ -1,3 +1,4 @@
+using Flyback.Assist.Decide;
 using Flyback.Core;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Files;
@@ -9,7 +10,6 @@ using Flyback.Editor.Statistics;
 using Flyback.Editor.Updates;
 using Flyback.Editor.Windows;
 using Flyback.Host;
-using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui.Controls;
 

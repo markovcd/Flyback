@@ -30,7 +30,7 @@ internal static class Packages
     public static byte[] Sample { get; } = File.ReadAllBytes(typeof(Plugins.Sample.SampleModulesPlugin).Assembly.Location);
 
     /// <summary>The fake decision model, which sets no tags and embeds no preview.</summary>
-    public static byte[] Bare { get; } = File.ReadAllBytes(typeof(Plugins.FakeDecider.ScriptedDeciderPlugin).Assembly.Location);
+    public static byte[] Bare { get; } = File.ReadAllBytes(typeof(Plugins.Bare.BarePlugin).Assembly.Location);
 
     /// <summary>The key test packages are signed with.</summary>
     public static ECDsa Key { get; } = ECDsa.Create(ECCurve.NamedCurves.nistP256);
@@ -45,7 +45,7 @@ internal static class Packages
     public static byte[] ForSample() => Signed.GetOrAdd("sample", _ => Sign(Zip([("win/Flyback.Plugins.Sample.dll", Sample)])));
 
     /// <summary>A package with the fake decision model for Windows, signed with <see cref="Key"/>.</summary>
-    public static byte[] ForBare() => Signed.GetOrAdd("bare", _ => Sign(Zip([("win/Flyback.Plugins.FakeDecider.dll", Bare)])));
+    public static byte[] ForBare() => Signed.GetOrAdd("bare", _ => Sign(Zip([("win/Flyback.Plugins.Bare.dll", Bare)])));
 
     public static byte[] Sign(byte[] package, ECDsa? key = null) => PackageSigner.Sign(package, key ?? Key);
 

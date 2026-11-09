@@ -1,4 +1,5 @@
 using Flyback.Assist;
+using Flyback.Assist.Keys;
 using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;

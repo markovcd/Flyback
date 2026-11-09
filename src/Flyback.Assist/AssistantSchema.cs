@@ -1,4 +1,4 @@
-using Flyback.Plugins.Secrets;
+using Flyback.Assist.Keys;
 using Flyback.Plugins.Settings;
 
 namespace Flyback.Assist;

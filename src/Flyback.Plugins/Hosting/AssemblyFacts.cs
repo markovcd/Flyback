@@ -104,7 +104,6 @@ internal sealed record AssemblyFacts(
         [nameof(IPluginRegistry.AddMidiInput)] = "a MIDI input",
         [nameof(IPluginRegistry.AddAudioInput)] = "a sound input",
         [nameof(IPluginRegistry.AddSecretStore)] = "a secret store",
-        [nameof(IPluginRegistry.AddDecisionModel)] = "a decision model",
     };
 
     private static string? Reach(string space, string type) => (space, type) switch

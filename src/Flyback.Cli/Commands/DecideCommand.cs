@@ -2,11 +2,11 @@ using System.CommandLine;
 using System.Globalization;
 using System.Text.Json;
 using Flyback.Assist;
+using Flyback.Assist.Decide;
+using Flyback.Assist.Keys;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
-using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using PluginRegistry = Flyback.Cli.Plugins;
 
@@ -55,6 +55,7 @@ internal static class DecideCommand
 
         command.SetAction((result, cancellation) => Run(
             plugins.Catalog,
+            plugins.DecisionModels,
             new DecideOptions(
                 result.GetValue(state),
                 result.GetValue(ask),
@@ -90,6 +91,7 @@ internal static class DecideCommand
     /// <param name="http">What downloads go over, for the tests.</param>
     public static async Task<int> Run(
         PluginCatalog plugins,
+        DecisionModels models,
         DecideOptions options,
         TextReader input,
         TextWriter output,
@@ -102,7 +104,7 @@ internal static class DecideCommand
     {
         var settings = DecisionSettings.Load(settingsPath);
         var decisions = new Decisions(
-            plugins,
+            models.All,
             settings,
             new Credentials(plugins.PreferredSecretStore),
             new ModelStore(modelsRoot ?? ModelStore.DefaultRoot));

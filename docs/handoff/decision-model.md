@@ -1,16 +1,17 @@
-# A decision model that runs here: the Laya plugin, and what to ask it
+# A decision model that runs here: Laya, and what to ask it
 
 Planned on 2026-09-28; the rest of it landed on 2026-10-08 and was measured against a local
 laya-serve the same day, on `main` at `71fb09b2`, and again once each use could name its checkpoint. It is on TODO.md; take it off there, and
-delete this file, in the commit that lands the Laya plugin.
+delete this file, in the commit that lands Laya. Decision models are built in, not plugins, since
+[ADR-0231](../adr/0231-assistants-are-built-in-not-plugins.md): Laya is a model in `src/Flyback.Assist/Decide`.
 
 ## Where it stands
 
 Landed ([ADR-0186](../adr/0186-a-decision-model-answers-typed-questions-behind-the-plugin-boundary.md)):
-the contract in `src/Flyback.Plugins/Decide` (`IDecisionModel`, `IPreparedModel`,
+the kit in `src/Flyback.Assist/Decide` (`IDecisionModel`, `IPreparedModel`,
 `ModelFile`, the questions and answers, `SystemOneWire`), `Decisions` as the one door,
 `ModelStore` downloading pinned files, `DecisionSettings` in the `decisions` section of
-`settings.json`, the Decision server plugin (`src/plugins/Flyback.Plugins.SystemOne`), `flyback-cli
+`settings.json`, the Decision server (`SystemOneModel`), `flyback-cli
 decide`, Settings → Decisions, and the uses: the module list by meaning (`ModuleFinder`,
 `modules --find`), complaints in order (`IssueTriage`, `check --triage`, the status line)
 and the assistant's messages read before sending (`TurnReading`).

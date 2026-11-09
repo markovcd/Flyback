@@ -11,8 +11,8 @@ using Flyback.Editor.Controls;
 using Flyback.Editor.Midi;
 using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
-using FoundModule = Flyback.Plugins.Decide.FoundModule;
-using ModuleFinder = Flyback.Plugins.Decide.ModuleFinder;
+using FoundModule = Flyback.Assist.Decide.FoundModule;
+using ModuleFinder = Flyback.Assist.Decide.ModuleFinder;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Canvas;

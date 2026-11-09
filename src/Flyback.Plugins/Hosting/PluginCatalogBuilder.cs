@@ -87,8 +87,7 @@ internal sealed class PluginCatalogBuilder
             Unclashed(registry.SecretStores, s => s.Id, "secret store"),
             Unclashed(registry.MidiInputs, i => i.Id, "MIDI input"),
             providers,
-            Unclashed(registry.AudioInputs, i => i.Id, "audio input"),
-            Unclashed(registry.DecisionModels, m => m.Id, "decision model"));
+            Unclashed(registry.AudioInputs, i => i.Id, "audio input"));
     }
 
     /// <summary>

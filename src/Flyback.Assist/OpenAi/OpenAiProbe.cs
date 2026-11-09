@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
+using Flyback.Assist.Keys;
 using Flyback.Assist.Surveys;
-using Flyback.Plugins.Secrets;
 
 namespace Flyback.Assist.OpenAi;
 

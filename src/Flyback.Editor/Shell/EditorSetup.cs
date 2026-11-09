@@ -1,4 +1,5 @@
 using Flyback.Assist;
+using Flyback.Assist.Decide;
 using Flyback.Editor.Statistics;
 using Flyback.Plugins.Hosting;
 
@@ -31,4 +32,7 @@ public sealed record EditorSetup
 
     /// <summary>The assistants the window offers; none unless the host says otherwise.</summary>
     internal Assistants Assistants { get; init; } = Assistants.None;
+
+    /// <summary>The decision models offered; none unless the shell hands Flyback's over.</summary>
+    internal DecisionModels DecisionModels { get; init; } = DecisionModels.None;
 }

@@ -3,8 +3,8 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Assist;
+using Flyback.Assist.Keys;
 using Flyback.Core;
-using Flyback.Plugins.Secrets;
 using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Settings;

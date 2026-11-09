@@ -3,14 +3,14 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
 using Flyback.Assist;
+using Flyback.Assist.Decide;
+using Flyback.Assist.Keys;
 using Flyback.Cli.Commands;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
@@ -227,12 +227,13 @@ public sealed class DecideCommandTests : IDisposable
         var said = new StringWriter();
         var complained = new StringWriter();
 
-        var plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, [], decisionModels: models.Length > 0 ? models : [new Echo()]);
+        var plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, []);
 
         using var http = new HttpClient(network);
 
         var code = await DecideCommand.Run(
             plugins,
+            new DecisionModels(models.Length > 0 ? models : [new Echo()]),
             new DecideOptions(options.State, options.Ask, options.Model, options.YesNo, options.Choice, options.Choices, null, [], options.Status, options.Prepare, options.Yes, options.Json)
             {
                 Use = options.Use,

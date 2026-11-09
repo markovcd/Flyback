@@ -1,13 +1,13 @@
 using System.CommandLine;
 using System.Text.Json;
 using Flyback.Assist;
+using Flyback.Assist.Decide;
+using Flyback.Assist.Keys;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Secrets;
 using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
@@ -51,7 +51,7 @@ internal static class ModulesCommand
             var output = result.InvocationConfiguration.Output;
 
             if (result.GetValue(find) is { } phrase)
-                return await FindAsync(plugins.Catalog, NodeCatalog.Current, phrase, result.GetValue(json), output, result.InvocationConfiguration.Error, cancel, result.GetValue(settings));
+                return await FindAsync(plugins.Catalog, plugins.DecisionModels, NodeCatalog.Current, phrase, result.GetValue(json), output, result.InvocationConfiguration.Error, cancel, result.GetValue(settings));
 
             return result.GetValue(module) is { } wanted
                 ? Describe(
@@ -66,6 +66,7 @@ internal static class ModulesCommand
     /// <param name="settingsPath">Somewhere other than the usual place, for the tests.</param>
     public static async Task<int> FindAsync(
         PluginCatalog plugins,
+        DecisionModels models,
         ModuleCatalog catalog,
         string phrase,
         bool json,
@@ -76,7 +77,7 @@ internal static class ModulesCommand
         string? modelsRoot = null)
     {
         var decisions = new Decisions(
-            plugins,
+            models.All,
             DecisionSettings.Load(settingsPath),
             new Credentials(plugins.PreferredSecretStore),
             new ModelStore(modelsRoot ?? ModelStore.DefaultRoot));

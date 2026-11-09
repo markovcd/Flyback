@@ -4,16 +4,16 @@ using System.Text;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Flyback.Assist;
+using Flyback.Assist.Decide;
+using Flyback.Assist.Keys;
 using Flyback.Core.Graph;
 using Flyback.Editor.Decide;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Decide;
-using Flyback.Plugins.FakeDecider;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
+using Flyback.Plugins.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
@@ -38,7 +38,7 @@ public sealed class DecisionsSectionTests : EditorTest
             new EditorSetup
             {
                 Folders = new EditorFolders { SettingsPath = SettingsPath, ModelFolder = Path.Combine(root, "models") },
-                Plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, [], decisionModels: models),
+                DecisionModels = new(models),
             },
             replace);
 

@@ -1,6 +1,6 @@
 using Flyback.Assist;
+using Flyback.Assist.Keys;
 using Flyback.Core.Graph;
-using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Flyback.Specs.Support;
 using Reqnroll;

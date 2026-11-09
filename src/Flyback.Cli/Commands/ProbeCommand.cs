@@ -1,11 +1,11 @@
 using System.CommandLine;
 using System.Text.Json;
 using Flyback.Assist;
+using Flyback.Assist.Keys;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Secrets;
 using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;

@@ -1,11 +1,11 @@
 using Flyback.Assist;
+using Flyback.Assist.Keys;
 using Flyback.Cli.Commands;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;

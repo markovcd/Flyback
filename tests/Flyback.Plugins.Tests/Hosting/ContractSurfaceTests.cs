@@ -45,9 +45,8 @@ public class ContractSurfaceTests
         ["Flyback.Core.Graph.PartLevel"] = "ArrangementExtra's default, one part's level in one section.",
         ["Flyback.Core.Graph.SongPart"] = "SongExtra's default, one named part of the Song and its levels.",
         ["Flyback.Plugins.Midi.MidiAction"] = "MidiMessage.Action's type, which a MIDI input plugin builds a message with.",
-        ["Flyback.Plugins.Decide.IPreparedModel"] = "The only way a decision model that runs here gets its files: the host downloads them, so the plugin never reaches the network (ADR-0186).",
-        ["Flyback.Plugins.Decide.ModelFile"] = "What IPreparedModel.Needs lists.",
         ["Flyback.Plugins.Settings.SettingField+Switch"] = "A field kind a plugin's settings form is built from.",
+        ["Flyback.Plugins.Settings.SettingField+Text"] = "A field kind a plugin's settings form is built from.",
     };
 
     private static readonly Assembly[] Contract = [typeof(NodeDef).Assembly, typeof(IFlybackPlugin).Assembly];

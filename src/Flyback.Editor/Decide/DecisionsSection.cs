@@ -2,10 +2,10 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Assist;
+using Flyback.Assist.Decide;
+using Flyback.Assist.Keys;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Settings;
-using Flyback.Plugins.Decide;
-using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Flyback.Ui.Controls;
 
@@ -375,7 +375,7 @@ internal sealed class DecisionsSection : ISettingsSection
 
         try
         {
-            var request = DecisionRequest.One(tryBox.Text, "edit", new Plugins.Decide.Question.YesNo(TryQuestion));
+            var request = DecisionRequest.One(tryBox.Text, "edit", new Flyback.Assist.Decide.Question.YesNo(TryQuestion));
 
             if (request.Problem() is { } problem)
             {

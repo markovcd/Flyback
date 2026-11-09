@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
-using Flyback.Plugins.Secrets;
+using Flyback.Assist.Keys;
 
 namespace Flyback.Assist.OpenAi;
 

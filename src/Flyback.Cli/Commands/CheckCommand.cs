@@ -1,6 +1,8 @@
 using System.CommandLine;
 using System.Text.Json;
 using Flyback.Assist;
+using Flyback.Assist.Decide;
+using Flyback.Assist.Keys;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core;
@@ -8,8 +10,6 @@ using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Language;
-using Flyback.Plugins.Decide;
-using Flyback.Plugins.Secrets;
 using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
@@ -110,7 +110,7 @@ internal static class CheckCommand
         complaints =>
         {
             var decisions = new Decisions(
-                plugins.Catalog,
+                plugins.DecisionModels.All,
                 DecisionSettings.Load(settingsPath),
                 new Credentials(plugins.Catalog.PreferredSecretStore),
                 new ModelStore(ModelStore.DefaultRoot));

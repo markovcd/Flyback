@@ -1,13 +1,14 @@
 using System.CommandLine;
 using System.Text.Json.Nodes;
 using Flyback.Assist;
+using Flyback.Assist.Decide;
+using Flyback.Assist.Keys;
 using Flyback.Cli.Common;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
+using Flyback.Plugins.Testing;
 using Flyback.Specs.Support;
 using Reqnroll;
 using Shouldly;
@@ -27,7 +28,7 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
 
     private readonly DirectoryInfo folder = Directory.CreateTempSubdirectory("flyback-decide-specs");
 
-    private PluginCatalog? catalog;
+    private DecisionModels? models;
     private int code;
     private string said = string.Empty;
     private string complained = string.Empty;
@@ -36,10 +37,10 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
 
     public void Dispose() => folder.Delete(recursive: true);
 
-    [Given("the decision models that are installed")]
+    [Given("Flyback's decision models and a scripted one")]
     public void GivenTheModels()
     {
-        catalog = ShippedPlugins.Loaded;
+        models = new([.. DecisionModels.Shipped.All, new ScriptedDecider()]);
 
         // The scripted one, which answers without a model or a network.
         new DecisionSettings { Model = "scripted" }.Save(SettingsPath);
@@ -48,21 +49,21 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
     [Given("decisions are turned off")]
     public void GivenOff()
     {
-        catalog ??= ShippedPlugins.Loaded;
+        models ??= DecisionModels.Shipped;
         new DecisionSettings { Model = DecisionSettings.Off }.Save(SettingsPath);
     }
 
     [Given("a decision model that takes {string} to mean a Kaleidoscope")]
     public void GivenKaleidoscopic(string phrase)
     {
-        catalog = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, [], decisionModels: [new Meaning(phrase, "Kaleidoscope", "Geometry")]);
+        models = new([new Meaning(phrase, "Kaleidoscope", "Geometry")]);
         new DecisionSettings().Save(SettingsPath);
     }
 
     [Given("a decision model that takes {string} to mean a Kaleidoscope only when its model is {string}")]
     public void GivenKaleidoscopicWhenSet(string phrase, string model)
     {
-        catalog = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, [], decisionModels: [new Meaning(phrase, "Kaleidoscope", "Geometry", model)]);
+        models = new([new Meaning(phrase, "Kaleidoscope", "Geometry", model)]);
         new DecisionSettings().Save(SettingsPath);
     }
 
@@ -99,7 +100,7 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
         editor.Setup = editor.Setup with
         {
             Folders = editor.Setup.Folders with { SettingsPath = SettingsPath },
-            Plugins = catalog.ShouldNotBeNull(),
+            DecisionModels = models.ShouldNotBeNull(),
         };
 
         editor.OpenSettings("Decisions");
@@ -111,7 +112,7 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
     [Given("a decision model that blames the module {string}")]
     public void GivenBlaming(string module)
     {
-        catalog = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, [], decisionModels: [new Blaming(module)]);
+        models = new([new Blaming(module)]);
         new DecisionSettings().Save(SettingsPath);
     }
 
@@ -161,7 +162,7 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
 
         code = InProcessCli.Run(
             [.. args, "--settings", SettingsPath],
-            new PluginRegistry(() => catalog.ShouldNotBeNull(), folder.FullName, null),
+            new PluginRegistry(() => ShippedPlugins.Loaded, folder.FullName, null, decisionModels: models.ShouldNotBeNull()),
             new InvocationConfiguration { Output = output, Error = error });
 
         said = output.ToString();

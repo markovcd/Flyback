@@ -6,7 +6,7 @@ namespace Flyback.Plugins.Settings;
 /// <remarks>
 /// The plugin declares, the App draws (ADR-0055, ADR-0069, ADR-0085). A
 /// credential is never a field, since it would land in the settings file in plain
-/// text (ADR-0034); see <see cref="Secrets.KeyCredential"/>. Every value is
+/// text (ADR-0034); a key goes to a secret store. Every value is
 /// stored as a string, and every shape here is public API.
 /// </remarks>
 /// <param name="Key">What this value is filed under in the settings file; never change it.</param>

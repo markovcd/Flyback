@@ -2,15 +2,15 @@ using System.CommandLine;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Flyback.Assist;
+using Flyback.Assist.Decide;
+using Flyback.Assist.Keys;
 using Flyback.Cli.Commands;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core.Graph;
 using Flyback.Editor.Assist;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Reqnroll;
 using Shouldly;
@@ -40,7 +40,9 @@ public sealed class AskSteps : IDisposable
 
     private IDecisionModel? reader;
 
-    private PluginCatalog Catalog => new([], [], NodeCatalog.BuiltIn, Presets.All, [], decisionModels: reader is null ? null : [reader]);
+    private static PluginCatalog Catalog => new([], [], NodeCatalog.BuiltIn, Presets.All, []);
+
+    private DecisionModels Models => new(reader is null ? [] : [reader]);
 
     public void Dispose() => folder.Delete(recursive: true);
 
@@ -72,6 +74,7 @@ public sealed class AskSteps : IDisposable
         code = await AskCommand.Run(
             Catalog,
             new Assistants([Assistant]),
+            Models,
             about,
             new AskOptions(idea, null, [], false, false, null, false, null, Expand: true),
             output,
@@ -122,6 +125,7 @@ public sealed class AskSteps : IDisposable
         code = await AskCommand.Run(
             Catalog,
             new Assistants([Assistant]),
+            Models,
             about,
             new AskOptions(message, null, [], false, json, null, false, null),
             output,

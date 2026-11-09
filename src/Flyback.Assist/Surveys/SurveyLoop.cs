@@ -1,5 +1,5 @@
 using System.Net;
-using Flyback.Plugins.Secrets;
+using Flyback.Assist.Keys;
 
 namespace Flyback.Assist.Surveys;
 

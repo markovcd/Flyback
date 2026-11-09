@@ -1,9 +1,9 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using Flyback.Assist;
+using Flyback.Assist.Keys;
 using Flyback.Assist.OpenAi;
 using Flyback.Assist.Surveys;
-using Flyback.Plugins.Secrets;
 using Shouldly;
 using Xunit;
 

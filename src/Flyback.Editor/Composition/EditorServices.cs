@@ -1,5 +1,7 @@
 using System.Net;
 using Flyback.Assist;
+using Flyback.Assist.Decide;
+using Flyback.Assist.Keys;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
@@ -23,9 +25,7 @@ using Flyback.Editor.Tutorials;
 using Flyback.Editor.Windows;
 using Flyback.Engine.Compile;
 using Flyback.Host;
-using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Secrets;
 using Flyback.Ui.Audio;
 using Flyback.Ui.Controls;
 using Microsoft.Extensions.DependencyInjection;
@@ -150,7 +150,7 @@ internal static class EditorServices
 
         services.AddSingleton<DecisionSettingRepository>();
         services.AddSingleton(sp => new Decisions(
-            sp.GetRequiredService<PluginCatalog>(),
+            setup.DecisionModels.All,
             sp.GetRequiredService<DecisionSettingRepository>().Current,
             sp.GetRequiredService<Credentials>(),
             new ModelStore(sp.GetRequiredService<EditorFolders>().ModelFolder)));

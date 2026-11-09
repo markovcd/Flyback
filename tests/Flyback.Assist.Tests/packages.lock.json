@@ -244,6 +244,7 @@
       "flyback.plugins.testing": {
         "type": "Project",
         "dependencies": {
+          "Flyback.Assist": "[0.1.0-dev, )",
           "Flyback.Plugins": "[0.1.0-dev, )"
         }
       },

@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Flyback.Assist.Decide;
 using Flyback.Core.Graph;
 using Flyback.Editor.Midi;
 using Flyback.Editor.Notices;
@@ -7,7 +8,6 @@ using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Statistics;
 using Flyback.Host;
-using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui.Midi;
 

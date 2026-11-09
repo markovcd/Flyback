@@ -3,8 +3,8 @@ using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.Threading;
 using Flyback.Assist;
+using Flyback.Assist.Keys;
 using Flyback.Editor.Settings;
-using Flyback.Plugins.Secrets;
 using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 

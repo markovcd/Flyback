@@ -4,13 +4,14 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Flyback.Assist;
+using Flyback.Assist.Decide;
+using Flyback.Assist.Keys;
 using Flyback.Cli.Commands;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
@@ -406,6 +407,7 @@ public sealed class AskCommandTests : IDisposable
         var code = await AskCommand.Run(
             plugins,
             new Assistants([assistant]),
+            DecisionModels.None,
             about,
             adjust?.Invoke(options) ?? options,
             said,

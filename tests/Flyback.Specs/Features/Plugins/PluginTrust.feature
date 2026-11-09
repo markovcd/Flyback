@@ -54,8 +54,8 @@ Feature: A plugin runs only once somebody said yes, and never holds a key
     And Flyback loads its plugins
     Then its secret store is offered
 
-  Scenario: Two plugins offering one decision model are both refused it
-    When two plugins offer a decision model under the same id
+  Scenario: Two plugins offering one secret store are both refused it
+    When two plugins offer a secret store under the same id
     Then neither is offered
     And both are named as the reason
 

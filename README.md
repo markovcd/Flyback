@@ -345,7 +345,7 @@ src/
   Flyback.Cli            command line tool
   Flyback.Core           patch model, module API and the built-in modules
   Flyback.Engine         compiler, text language, renderers and file formats
-  Flyback.Assist         the assistants, their workbench and conversations
+  Flyback.Assist         the assistants and decision models, the workbench and conversations
   Flyback.Plugins        plugin host and built-in plugin logic
   Flyback.Ui             the preview, sound device and look the app and the viewer share
   Flyback.Viewer.Desktop the viewer: opens a patch and plays it

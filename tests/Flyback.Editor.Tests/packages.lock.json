@@ -532,6 +532,13 @@
           "Flyback.Core": "[0.1.0-dev, )"
         }
       },
+      "flyback.plugins.bare": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Core": "[0.1.0-dev, )",
+          "Flyback.Plugins": "[0.1.0-dev, )"
+        }
+      },
       "flyback.plugins.drawings": {
         "type": "Project",
         "dependencies": {
@@ -547,20 +554,6 @@
         }
       },
       "flyback.plugins.effects": {
-        "type": "Project",
-        "dependencies": {
-          "Flyback.Core": "[0.1.0-dev, )",
-          "Flyback.Plugins": "[0.1.0-dev, )"
-        }
-      },
-      "flyback.plugins.fakeassistant": {
-        "type": "Project",
-        "dependencies": {
-          "Flyback.Core": "[0.1.0-dev, )",
-          "Flyback.Plugins": "[0.1.0-dev, )"
-        }
-      },
-      "flyback.plugins.fakedecider": {
         "type": "Project",
         "dependencies": {
           "Flyback.Core": "[0.1.0-dev, )",
@@ -612,6 +605,7 @@
       "flyback.plugins.testing": {
         "type": "Project",
         "dependencies": {
+          "Flyback.Assist": "[0.1.0-dev, )",
           "Flyback.Plugins": "[0.1.0-dev, )"
         }
       },

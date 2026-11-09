@@ -9,7 +9,6 @@ using Flyback.Editor.Assist;
 using Flyback.Editor.Notices;
 using Flyback.Engine.Graph;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;
 

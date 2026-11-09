@@ -1,10 +1,10 @@
 using System.Diagnostics;
 using System.Globalization;
 using Flyback.Assist;
+using Flyback.Assist.Decide;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core.Graph;
-using Flyback.Plugins.Decide;
 
 namespace Flyback.Cli.Commands;
 

@@ -1,6 +1,5 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
-using Flyback.Plugins.Decide;
 using Flyback.Plugins.Midi;
 using Flyback.Plugins.Secrets;
 
@@ -29,8 +28,7 @@ internal sealed class PluginCatalog
         IReadOnlyList<ISecretStore>? secretStores = null,
         IReadOnlyList<IMidiInput>? midiInputs = null,
         IReadOnlyDictionary<object, PluginInfo>? providers = null,
-        IReadOnlyList<IAudioInput>? audioInputs = null,
-        IReadOnlyList<IDecisionModel>? decisionModels = null)
+        IReadOnlyList<IAudioInput>? audioInputs = null)
     {
         // Copied under reference equality: two backends are the same one only if
         // they are the same object, whatever their ids or their Equals say.
@@ -46,7 +44,6 @@ internal sealed class PluginCatalog
         SecretStores = secretStores ?? [];
         MidiInputs = midiInputs ?? [];
         AudioInputs = audioInputs ?? [];
-        DecisionModels = decisionModels ?? [];
     }
 
     private readonly Dictionary<object, PluginInfo> providers;
@@ -74,23 +71,6 @@ internal sealed class PluginCatalog
 
     /// <summary>Every way installed of hearing a microphone or a line.</summary>
     public IReadOnlyList<IAudioInput> AudioInputs { get; }
-
-    /// <summary>Everything installed that answers typed questions with probabilities.</summary>
-    public IReadOnlyList<IDecisionModel> DecisionModels { get; }
-
-    /// <summary>
-    /// The decision model to offer: highest priority, ties broken on id. Null when none is
-    /// installed. Not filtered by whether it can answer: that depends on a configuration this
-    /// catalog has never seen, and a model with no key yet is still the one to offer.
-    /// </summary>
-    public IDecisionModel? PreferredDecisionModel => DecisionModels
-        .OrderByDescending(m => m.Priority)
-        .ThenBy(m => m.Id, StringComparer.Ordinal)
-        .FirstOrDefault();
-
-    /// <summary>The decision model a setting names, or null when it is no longer installed.</summary>
-    public IDecisionModel? DecisionModel(string id) =>
-        DecisionModels.FirstOrDefault(m => string.Equals(m.Id, id, StringComparison.Ordinal));
 
     /// <summary>
     /// The engine's modules with every plugin's folded in. Install it before

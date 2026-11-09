@@ -221,10 +221,10 @@ public class PluginHostTests
     {
         using var folder = new TempFolder();
 
-        var shipped = Path.Combine(PluginHost.DefaultDirectory, "FakeDecider", "Flyback.Plugins.FakeDecider.dll");
+        var shipped = Path.Combine(PluginHost.DefaultDirectory, "Bare", "Flyback.Plugins.Bare.dll");
         var twice = Directory.CreateDirectory(Path.Combine(folder.Path, "Twice")).FullName;
 
-        File.Copy(shipped, Path.Combine(twice, "Flyback.Plugins.FakeDecider.dll"));
+        File.Copy(shipped, Path.Combine(twice, "Flyback.Plugins.Bare.dll"));
         File.Copy(shipped, Path.Combine(twice, "Copy.dll"));
 
         var (problems, _) = PluginHost.Try(twice);
@@ -246,12 +246,12 @@ public class PluginHostTests
         using var installed = new TempFolder();
 
         CopyPlugin("Sample", shipped.Path);
-        CopyPlugin("FakeDecider", installed.Path);
+        CopyPlugin("Bare", installed.Path);
 
         var catalog = PluginHost.Load([(shipped.Path, Refusing()), (installed.Path, Refusing())]);
 
         catalog.Problems.Select(p => p.Folder).ShouldBe(
-            [Path.Combine(shipped.Path, "Sample"), Path.Combine(installed.Path, "FakeDecider")],
+            [Path.Combine(shipped.Path, "Sample"), Path.Combine(installed.Path, "Bare")],
             ignoreOrder: true);
     }
 
@@ -262,12 +262,12 @@ public class PluginHostTests
         using var shipped = new TempFolder();
         using var installed = new TempFolder();
 
-        CopyPlugin("FakeDecider", shipped.Path);
-        CopyPlugin("FakeDecider", installed.Path);
+        CopyPlugin("Bare", shipped.Path);
+        CopyPlugin("Bare", installed.Path);
 
         var catalog = PluginHost.Load([(shipped.Path, Refusing()), (installed.Path, Refusing())]);
 
-        catalog.Problems.ShouldHaveSingleItem().Folder.ShouldBe(Path.Combine(installed.Path, "FakeDecider"));
+        catalog.Problems.ShouldHaveSingleItem().Folder.ShouldBe(Path.Combine(installed.Path, "Bare"));
     }
 
     /// <summary>A trust that allows nothing, so a folder is judged and named but never loaded.</summary>
