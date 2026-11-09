@@ -189,6 +189,12 @@ internal sealed class Playback
     /// <summary>How many times real time the sound renders at lately, or 0 while nothing is measured.</summary>
     public double SoundSpeed => audio.Speed;
 
+    /// <summary>The loudest sample played lately, after the Volume, 1 being full scale.</summary>
+    public float SoundPeak => audio.Peak;
+
+    /// <summary>How many buffers played have clipped.</summary>
+    public long SoundClipped => audio.Clipped;
+
     /// <summary>What the sound plays through, or null where nothing can play.</summary>
     public string? SoundBackend => audio.Backend;
 

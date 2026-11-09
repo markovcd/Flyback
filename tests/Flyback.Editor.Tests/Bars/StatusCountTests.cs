@@ -35,6 +35,19 @@ public sealed class StatusCountTests : EditorTest
         }, window);
 
         panel.IsVisible.ShouldBeTrue();
+
+        // A sine at Volume 1 peaks near full scale and never past it.
+        Pump(() =>
+        {
+            speakers.Pump();
+            bar.ShowLevel();
+            return double.IsFinite(bar.Level.Level);
+        }, window);
+
+        bar.Level.IsVisible.ShouldBeTrue();
+        bar.Level.Level.ShouldBeGreaterThan(-3);
+        bar.Level.ClipLit.ShouldBeFalse();
+        (ToolTip.GetTip(bar.Level) as string ?? "").ShouldMatch(@"^Peak -?\d+\.\d dB; no clipping\.$");
         oversample.Text.ShouldBe("2×");
         (ToolTip.GetTip(panel) as string ?? "").ShouldMatch(@"^Sound renders \d+\.\d\d× faster than it plays, with 2× oversampling\.$");
         (count.Text ?? "").ShouldNotContain("oversampling");
@@ -63,6 +76,7 @@ public sealed class StatusCountTests : EditorTest
         }
 
         All<StackPanel>(window).Single(panel => panel.Name == "soundHeadroom").IsVisible.ShouldBeFalse();
+        bar.Level.IsVisible.ShouldBeFalse();
         (count.Text ?? "").ShouldNotContain("oversampling");
     }
 
