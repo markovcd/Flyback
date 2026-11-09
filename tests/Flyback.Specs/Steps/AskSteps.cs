@@ -320,6 +320,6 @@ public sealed class AskSteps : IDisposable
             {
                 Question.Choice choice => (Answer)new Answer.Chosen("module", choice.Options.ToDictionary(o => o.Label, o => o.Label == "module" ? 0.9 : 0.02), 0.9),
                 _ => new Answer.YesNo(1),
-            }), DecisionUsage.None));
+            }), new DecisionUsage(0, 0)));
     }
 }

@@ -139,7 +139,7 @@ public sealed class TurnReadingTests
             {
                 Question.Choice choice => (Answer)new Answer.Chosen(intent, choice.Options.ToDictionary(o => o.Label, o => o.Label == intent ? sure : (1 - sure) / (choice.Options.Count - 1)), sure),
                 _ => new Answer.YesNo(Does),
-            }), DecisionUsage.None));
+            }), new DecisionUsage(0, 0)));
     }
 
     /// <summary>Keeps each instruction it was sent, and proposes the patch it was handed when asked to.</summary>

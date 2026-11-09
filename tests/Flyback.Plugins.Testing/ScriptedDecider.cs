@@ -49,7 +49,7 @@ public sealed class ScriptedDecider(IReadOnlyDictionary<string, Answer>? script 
             q => Script.TryGetValue(q.Key, out var scripted) ? scripted : Unscripted(q.Value),
             StringComparer.Ordinal);
 
-        return Task.FromResult(new Decision(Model, answers, DecisionUsage.None));
+        return Task.FromResult(new Decision(Model, answers, new DecisionUsage(0, 0)));
     }
 
     private static Answer Unscripted(Question question) => question switch

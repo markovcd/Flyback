@@ -294,7 +294,7 @@ public sealed class DecideCommandTests : IDisposable
                 Question.Choice c => (Answer)new Answer.Chosen(c.Options[^1].Label, c.Options.ToDictionary(o => o.Label, _ => 1.0 / c.Options.Count), 0.5),
                 Question.Score s => new Answer.Scored(0, s.Levels, [.. s.Levels.Select((_, i) => i == 0 ? 1.0 : 0)], 1),
                 _ => new Answer.YesNo(0.9),
-            }), DecisionUsage.None));
+            }), new DecisionUsage(0, 0)));
         }
     }
 

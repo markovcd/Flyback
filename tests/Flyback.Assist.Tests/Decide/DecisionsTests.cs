@@ -152,7 +152,7 @@ public class DecisionsTests
 
             if (Throws is not null) throw Throws;
 
-            return Task.FromResult(new Decision(id, new Dictionary<string, Answer> { ["q"] = new Answer.YesNo(0.75) }, DecisionUsage.None));
+            return Task.FromResult(new Decision(id, new Dictionary<string, Answer> { ["q"] = new Answer.YesNo(0.75) }, new DecisionUsage(0, 0)));
         }
     }
 }

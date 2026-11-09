@@ -1,5 +1,6 @@
 using System.Reflection;
 using Flyback.Engine.Compile;
+using Flyback.Tests;
 using Shouldly;
 
 namespace Flyback.Core.Tests.Compile;
@@ -8,6 +9,8 @@ namespace Flyback.Core.Tests.Compile;
 /// What the engine makes the JIT inline whatever its own judgment says, which it then
 /// copies into every method the IL backend emits that calls it.
 /// </summary>
+/// <remarks>Unmeasured because coverage instrumentation inserts probes that inflate every body's IL.</remarks>
+[TestCategory(TestCategory.Unmeasured)]
 public class ForcedInliningTests
 {
     /// <summary>

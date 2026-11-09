@@ -34,7 +34,7 @@ internal sealed class RankingDecider(params (string Label, double P)[] favored) 
             _ => new Answer.YesNo(0),
         });
 
-        return Task.FromResult(new Decision("ranking", answers, DecisionUsage.None));
+        return Task.FromResult(new Decision("ranking", answers, new DecisionUsage(0, 0)));
     }
 
     private Answer Chosen(string id, Question.Choice choice)

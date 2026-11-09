@@ -79,7 +79,7 @@ public sealed class IssueOrderingTests : EditorTest
             return new Decision("blamer", request.Questions.ToDictionary(q => q.Key, _ =>
             {
                 return (Answer)new Answer.YesNo(request.State.Contains(word, StringComparison.Ordinal) ? 1 : 0);
-            }), DecisionUsage.None);
+            }), new DecisionUsage(0, 0));
         }
     }
 }

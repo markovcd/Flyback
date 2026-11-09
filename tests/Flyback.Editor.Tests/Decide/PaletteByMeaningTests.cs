@@ -104,7 +104,7 @@ public sealed class PaletteByMeaningTests : EditorTest
         public string? Unavailable(DecisionConfig config) => null;
 
         public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel) =>
-            Task.FromResult(new Decision("k", request.Questions.ToDictionary(q => q.Key, q => (Answer)Chosen((Question.Choice)q.Value)), DecisionUsage.None));
+            Task.FromResult(new Decision("k", request.Questions.ToDictionary(q => q.Key, q => (Answer)Chosen((Question.Choice)q.Value)), new DecisionUsage(0, 0)));
 
         private static Answer.Chosen Chosen(Question.Choice choice)
         {

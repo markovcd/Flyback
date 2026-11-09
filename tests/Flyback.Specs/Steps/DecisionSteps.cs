@@ -204,7 +204,7 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
         public string? Unavailable(DecisionConfig config) => null;
 
         public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel) =>
-            Task.FromResult(new Decision("meaning", request.Questions.ToDictionary(q => q.Key, q => Chosen(request.State, config.Values, (Question.Choice)q.Value)), DecisionUsage.None));
+            Task.FromResult(new Decision("meaning", request.Questions.ToDictionary(q => q.Key, q => Chosen(request.State, config.Values, (Question.Choice)q.Value)), new DecisionUsage(0, 0)));
 
         private Answer Chosen(string state, SettingValues values, Question.Choice choice)
         {
@@ -240,6 +240,6 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
             Task.FromResult(new Decision("blaming", request.Questions.ToDictionary(q => q.Key, _ =>
             {
                 return (Answer)new Answer.YesNo(request.State.Contains(module, StringComparison.Ordinal) ? 1 : 0);
-            }), DecisionUsage.None));
+            }), new DecisionUsage(0, 0)));
     }
 }

@@ -42,7 +42,15 @@ static async Task Run(string sln, string outFile)
                 ISymbol sym = null;
                 switch (node)
                 {
-                    case SimpleNameSyntax n: sym = sm.GetSymbolInfo(n).Symbol; break;
+                    case SimpleNameSyntax n:
+                    {
+                        var info = sm.GetSymbolInfo(n);
+                        sym = info.Symbol;
+                        // nameof(Type.Method), which the IL backend's reflection lookups use, names a method group.
+                        if (sym == null && info.CandidateReason == CandidateReason.MemberGroup)
+                            foreach (var candidate in info.CandidateSymbols) Mark(candidate);
+                        break;
+                    }
                     case ObjectCreationExpressionSyntax o: sym = sm.GetSymbolInfo(o).Symbol; break;
                     case ImplicitObjectCreationExpressionSyntax io: sym = sm.GetSymbolInfo(io).Symbol; break;
                     case ConstructorInitializerSyntax ci: sym = sm.GetSymbolInfo(ci).Symbol; break;

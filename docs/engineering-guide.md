@@ -916,7 +916,7 @@ A member that only tests call is a test of nothing real: either the app should u
 ### An engine test
 
 Build a patch with `PatchBuilder`, compile it, evaluate it, assert on a register.
-There is no test-only patch DSL; tests use the same builder the presets do.
+There is no test-only patch DSL; `PatchBuilder` lives in `src/` beside the patch it builds.
 
 ```csharp
 private static float Heard(params (int Port, float Value)[] knobs)

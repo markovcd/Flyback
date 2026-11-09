@@ -1,6 +1,10 @@
 namespace Flyback.Core.Graph;
 
-/// <summary>Small helper for assembling patches in code, used by the presets and by tests.</summary>
+/// <summary>Small helper for assembling patches in code.</summary>
+/// <remarks>
+/// The app adds modules only at a coordinate; adding them unplaced, <see cref="Wire"/> and
+/// <see cref="Build"/> are the seam the tests build patches through.
+/// </remarks>
 /// <param name="modules">
 /// Which catalog the type ids mean, defaulting to the installed one. A preset
 /// that uses a plugin's modules must be handed the catalog containing them,
@@ -58,11 +62,7 @@ internal sealed class PatchBuilder(ModuleCatalog? modules = null)
     /// language and the Tidy button use (ADR-0044), run once as the patch is handed
     /// over.
     /// </summary>
-    /// <remarks>
-    /// Here rather than at the picker, so every route to a preset gets the same placed
-    /// patch and it is placed before any history opens on it. The layout is
-    /// idempotent, so a caller that arranges again gets the same answer.
-    /// </remarks>
+    /// <remarks>The layout is idempotent, so a caller that arranges again gets the same answer.</remarks>
     public Patch Build()
     {
         PatchLayout.Arrange(Patch, catalog);

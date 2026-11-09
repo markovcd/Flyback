@@ -76,7 +76,7 @@ public class IssueTriageTests
             return Task.FromResult(new Decision("blaming", request.Questions.ToDictionary(q => q.Key, _ =>
             {
                 return (Answer)new Answer.YesNo(request.State.Contains(word, StringComparison.OrdinalIgnoreCase) ? 1 : 0);
-            }), DecisionUsage.None));
+            }), new DecisionUsage(0, 0)));
         }
     }
 }
