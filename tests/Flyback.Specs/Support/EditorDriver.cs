@@ -1146,6 +1146,8 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     /// The clock moves on the UI thread's timers, and headless fires those only while a
     /// dispatch is waiting on the thread, so each look waits there rather than beside it.
     /// Both are read in one dispatch: the jobs run after each, so two reads can straddle a change.
+    /// A read is taken before the jobs its dispatch then runs, so a slow job can carry a look past
+    /// <paramref name="cap"/> with the change it made unread; only a look begun after the cap gives up.
     /// </remarks>
     public void WaitForClock(Func<double, bool, bool> arrived, TimeSpan cap)
     {
@@ -1162,7 +1164,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
 
             if (arrived(clock, paused)) return;
 
-            if (DateTime.UtcNow > until)
+            if (started > until)
                 throw new TimeoutException(
                     $"Waited {cap.TotalSeconds:0.#} s for the clock over {looks} looks, the longest {longest.TotalSeconds:0.0} s; "
                     + $"the last found it at {clock:0.000} s, {(paused ? "paused" : "playing")}. {ReadWindow(Situation)}");
@@ -1177,23 +1179,8 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
         }
     }
 
-    /// <summary>Waits for the patch to stop by itself, for at most <paramref name="cap"/>, and throws saying where it got to where it did not.</summary>
-    public void WaitForStop(TimeSpan cap)
-    {
-        var until = DateTime.UtcNow + cap;
-
-        while (!Paused)
-        {
-            if (DateTime.UtcNow > until)
-                throw new TimeoutException($"Waited {cap.TotalSeconds:0.#} s for the patch to stop by itself; its clock reads {Clock:0.000} s. {ReadWindow(Situation)}");
-
-            Run(async () =>
-            {
-                await Task.Delay(20);
-                return true;
-            });
-        }
-    }
+    /// <summary>Waits for the patch to pause, for at most <paramref name="cap"/>, and throws saying where it got to where it did not.</summary>
+    public void WaitForStop(TimeSpan cap) => WaitForClock((_, paused) => paused, cap);
 
     /// <summary>Which edge of the full-screen picture the transport waits at, or null while it is not showing.</summary>
     public Avalonia.Layout.VerticalAlignment? TransportEdge => ReadWindow(open =>
