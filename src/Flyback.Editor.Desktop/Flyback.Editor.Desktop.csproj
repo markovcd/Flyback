@@ -72,6 +72,8 @@
       parses it.
     -->
     <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="CHANGELOG.md" Link="CHANGELOG.md" />
+    <!-- promo/banner.png at 1600x900, shared with the web editor's loading screen. SplashWindow shows it. -->
+    <EmbeddedResource Include="..\..\site\static\assets\splash.jpg" LogicalName="splash.jpg" Link="splash.jpg" />
   </ItemGroup>
 
   <!--

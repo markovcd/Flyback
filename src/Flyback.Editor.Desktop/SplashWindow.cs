@@ -1,46 +1,47 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Flyback.Core;
-using Flyback.Editor.Controls;
 using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Desktop;
 
-/// <summary>The mark and the name, up while a slow launch builds its window (<see cref="SlowStart"/>).</summary>
+/// <summary>The banner, up while a slow launch builds its window (<see cref="SlowStart"/>).</summary>
 internal sealed class SplashWindow : Window
 {
+    /// <summary>The site's <c>assets/splash.jpg</c>, which the web editor shows while it loads.</summary>
+    public const string Banner = "splash.jpg";
+
     public SplashWindow()
     {
         Title = GlobalConstants.ApplicationName;
-        Width = 360;
-        Height = 220;
+        Width = 640;
+        Height = 360;
         CanResize = false;
         WindowDecorations = WindowDecorations.None;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Background = new SolidColorBrush(Colors.Window);
 
-        var starting = Text.Quiet("Starting…");
+        using var banner = typeof(SplashWindow).Assembly.GetManifestResourceStream(Banner)!;
 
-        starting.HorizontalAlignment = HorizontalAlignment.Center;
-
-        Content = new StackPanel
+        Content = new Panel
         {
-            Spacing = 10,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
             Children =
             {
-                new LogoMark { Width = 72, Height = 72 },
-                new TextBlock
+                new Image { Source = new Bitmap(banner), Stretch = Stretch.UniformToFill },
+                new Border
                 {
-                    Text = GlobalConstants.ApplicationName,
-                    FontSize = Text.Display,
-                    FontWeight = FontWeight.SemiBold,
                     HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    Margin = new Thickness(0, 0, 0, 28),
+                    Padding = new Thickness(14, 6),
+                    CornerRadius = new CornerRadius(8),
+                    Background = new SolidColorBrush(Colors.Window, 0.9),
+                    Child = Text.Quiet("Starting…"),
                 },
-                starting,
             },
         };
     }

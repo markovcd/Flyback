@@ -18,9 +18,15 @@
     /* Avalonia types through a hidden input; below 16px an iPhone zooms in on it, and no pinch gets back out. */
     .avalonia-input-element { font-size: 16px; }
     /* Shown over the empty page until the editor has drawn; main.js fills the bar and takes it away. */
-    #loading { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-               gap: 20px; background: #16181B; color: #8A909A; font: 13px/1.5 Inter, system-ui, sans-serif; transition: opacity 0.2s; }
-    #loading img { width: 96px; height: 96px; }
+    #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;
+               background: #16181B; color: #8A909A; font: 13px/1.5 Inter, system-ui, sans-serif; transition: opacity 0.2s; }
+    /* The banner covers the page, but never so wide that its middle, the mark and the name, is cut. */
+    #loading .art { width: min(max(100vw, 177.78dvh), 190vw); flex: none; aspect-ratio: 16 / 9;
+                    -webkit-mask-image: linear-gradient(transparent, #000 8%, #000 92%, transparent);
+                    mask-image: linear-gradient(transparent, #000 8%, #000 92%, transparent); }
+    #loading .status { position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%); max-width: calc(100vw - 48px);
+                       display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 20px;
+                       border-radius: 10px; background: color-mix(in srgb, #16181B 90%, transparent); text-align: center; }
     #loading .bar { width: 200px; height: 3px; border-radius: 2px; background: #2A2D34; overflow: hidden; }
     #loading .fill { width: 0; height: 100%; background: #77EA9A; transition: width 0.15s; }
     #loading.gone { opacity: 0; pointer-events: none; }
@@ -29,9 +35,11 @@
 <body>
   <div id="out"></div>
   <div id="loading" role="status">
-    <img src="../assets/logo.svg" alt="">
-    <div class="bar"><div class="fill"></div></div>
-    <div class="said">Loading Flyback</div>
+    <img class="art" src="../assets/splash.jpg" alt="">
+    <div class="status">
+      <div class="bar"><div class="fill"></div></div>
+      <div class="said">Loading Flyback</div>
+    </div>
   </div>
   <script type="module" src="./main.js"></script>
 </body>

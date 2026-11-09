@@ -1,6 +1,8 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
+using Avalonia.Media.Imaging;
 using Shouldly;
 using Xunit;
 
@@ -50,13 +52,15 @@ public sealed class SlowStartTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void The_splash_names_the_program()
+    public void The_splash_shows_the_banner()
     {
         var splash = new SplashWindow();
 
         splash.Show();
 
-        splash.GetLogicalDescendants().OfType<TextBlock>().Select(t => t.Text).ShouldContain("Flyback");
+        splash.Title.ShouldBe("Flyback");
+        var banner = splash.GetLogicalDescendants().OfType<Image>().Single().Source.ShouldBeOfType<Bitmap>();
+        banner.PixelSize.ShouldBe(new PixelSize(1600, 900));
         splash.Close();
     }
 }
