@@ -20,10 +20,10 @@ static async Task Run(string sln, string outFile)
     ws.WorkspaceFailed += (_, e) => { if (e.Diagnostic.Kind == WorkspaceDiagnosticKind.Failure) Console.Error.WriteLine(e.Diagnostic.Message); };
     var solution = await ws.OpenSolutionAsync(sln);
     Console.Error.WriteLine($"projects: {solution.Projects.Count()}");
-    // uses: symbol -> (srcRefs, testRefs list)
-    var srcUse = new ConcurrentDictionary<ISymbol, int>(SymbolEqualityComparer.Default);
-    var testUse = new ConcurrentDictionary<ISymbol, ConcurrentBag<string>>(SymbolEqualityComparer.Default);
-    var decls = new ConcurrentDictionary<ISymbol, (string proj, string loc)>(SymbolEqualityComparer.Default);
+    // Keyed by Key, not by symbol: a project can see another through a compilation of its own, whose symbols are not equal to the declaring one's.
+    var srcUse = new ConcurrentDictionary<string, int>();
+    var testUse = new ConcurrentDictionary<string, ConcurrentBag<string>>();
+    var decls = new ConcurrentDictionary<string, (ISymbol sym, string proj, string loc)>();
 
     foreach (var project in solution.Projects)
     {
@@ -67,8 +67,8 @@ static async Task Run(string sln, string outFile)
                     if (s is IMethodSymbol m && m.AssociatedSymbol != null) s = m.AssociatedSymbol.OriginalDefinition;
                     // self reference: inside own declaration
                     if (s.Locations.Any(l => l.IsInSource && l.SourceTree == tree && node.Span.IntersectsWith(l.SourceSpan)) && node is SimpleNameSyntax && IsDeclId(node)) return;
-                    if (test) testUse.GetOrAdd(s, _ => new()).Add(file + ":" + (tree.GetLineSpan(node.Span).StartLinePosition.Line + 1));
-                    else srcUse.AddOrUpdate(s, 1, (_, v) => v + 1);
+                    if (test) testUse.GetOrAdd(Key(s), _ => new()).Add(file + ":" + (tree.GetLineSpan(node.Span).StartLinePosition.Line + 1));
+                    else srcUse.AddOrUpdate(Key(s), 1, (_, v) => v + 1);
                 }
             }
             if (!test)
@@ -81,7 +81,7 @@ static async Task Run(string sln, string outFile)
                         var s = sm.GetDeclaredSymbol(node);
                         if (s == null || s.IsImplicitlyDeclared) continue;
                         if (s.DeclaredAccessibility == Accessibility.Private) continue;
-                        decls.TryAdd(s.OriginalDefinition, (project.Name, file + ":" + (tree.GetLineSpan(node.Span).StartLinePosition.Line + 1)));
+                        decls.TryAdd(Key(s.OriginalDefinition), (s.OriginalDefinition, project.Name, file + ":" + (tree.GetLineSpan(node.Span).StartLinePosition.Line + 1)));
                     }
                 }
             }
@@ -89,10 +89,11 @@ static async Task Run(string sln, string outFile)
     }
     var lines = new List<string>();
     int unused = 0;
-    foreach (var (s, d) in decls)
+    foreach (var (key, d) in decls)
     {
-        bool src = srcUse.ContainsKey(s);
-        bool tst = testUse.TryGetValue(s, out var bag);
+        var s = d.sym;
+        bool src = srcUse.ContainsKey(key);
+        bool tst = testUse.TryGetValue(key, out var bag);
         if (!src && !tst) { unused++; continue; }
         if (src) continue;
         if (s is IMethodSymbol { MethodKind: MethodKind.PropertyGet or MethodKind.PropertySet or MethodKind.EventAdd or MethodKind.EventRemove }) continue;
@@ -105,6 +106,8 @@ static async Task Run(string sln, string outFile)
     File.WriteAllLines(outFile, lines);
     Console.Error.WriteLine($"decls {decls.Count} unusedEverywhere {unused} testOnly {lines.Count}");
 }
+
+static string Key(ISymbol s) => s.ContainingAssembly?.Name + "|" + (s.GetDocumentationCommentId() ?? s.ToDisplayString());
 
 static bool IsDeclId(SyntaxNode n) => n.Parent switch
 {
