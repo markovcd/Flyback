@@ -8,7 +8,7 @@ namespace Flyback.Editor.PluginPackages;
 internal static class PluginSummary
 {
     /// <summary>What loaded and what did not, as the details of a sound failure.</summary>
-    internal static string Text(PluginCatalog plugins, string? soundFailure, string? assistantSummary)
+    internal static string Text(PluginCatalog plugins, string? soundFailure)
     {
         var lines = new List<string> { plugins.Plugins.Count == 0 ? "No plugins loaded." : "Loaded:" };
 
@@ -27,12 +27,6 @@ internal static class PluginSummary
 
         if (soundFailure is { } failure)
             lines.Add($"Could not open sound: {failure}");
-
-        if (plugins.Assistants.Count > 0)
-        {
-            lines.Add(string.Empty);
-            lines.AddRange(Assistant(plugins, assistantSummary));
-        }
 
         lines.AddRange(plugins.Problems.Select(p => $"Problem: {p}"));
 
@@ -74,20 +68,4 @@ internal static class PluginSummary
         && plugins.Plugins.FirstOrDefault(p => p.Info.Id == info.Id) is { } loaded
             ? Path.GetDirectoryName(loaded.AssemblyPath)
             : null;
-
-    /// <summary>
-    /// Which third party a patch and its pictures would go to (ADR-0033's disclosure),
-    /// and where a key would be kept, but never what it is.
-    /// </summary>
-    /// <remarks>
-    /// An assistant with no store behind it still works; it just forgets between runs,
-    /// and saying so is the difference between that and appearing to have saved one.
-    /// </remarks>
-    internal static string[] Assistant(PluginCatalog plugins, string? assistantSummary) =>
-    [
-        assistantSummary ?? "No assistant is chosen, so nothing is sent anywhere.",
-        plugins.PreferredSecretStore is { } store
-            ? $"Keys are kept by {store.Name}."
-            : "No secret store is installed, so a key lasts only as long as the window.",
-    ];
 }

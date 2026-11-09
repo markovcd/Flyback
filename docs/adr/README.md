@@ -221,7 +221,7 @@ context, decision, consequences.
 | [0133](0133-a-shared-plugin-is-unpublished-until-the-admin-publishes-it.md) | A shared plugin is unpublished until the admin publishes it *(user-directed)* |
 | [0135](0135-a-patch-that-names-a-plugin-you-do-not-have-offers-it.md) | A patch that names a plugin you do not have offers it *(user-directed)* |
 | [0158](0158-a-plugin-loads-only-once-somebody-said-yes-and-never-holds-a-key.md) | A plugin loads only once somebody said yes, and never holds a key *(user-directed)* |
-| [0033](0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md) | Patches may be authored by an agent, behind the plugin boundary *(user-directed; its all-or-nothing prose budget replaced by [0098](0098-the-briefing-has-a-budget-and-a-list-that-outranks-it.md))* |
+| [0033](0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md) | Patches may be authored by an agent, behind the plugin boundary *(user-directed; its all-or-nothing prose budget replaced by [0098](0098-the-briefing-has-a-budget-and-a-list-that-outranks-it.md), the plugin boundary by [0231](0231-assistants-are-built-in-not-plugins.md))* |
 | [0034](0034-settings-in-a-file-the-key-in-the-operating-system.md) | Settings in a file, the key in the operating system's store *(user-directed; the file made the one every setting shares by [0171](0171-every-setting-is-kept-in-one-file.md))* |
 | [0088](0088-a-release-installs-itself-at-the-next-start.md) | A release installs itself at the next start, if its signature says it is ours *(user-directed)* |
 | [0127](0127-the-person-chooses-what-opens-a-flyback-file.md) | The person chooses what opens a Flyback file *(user-directed)* |
@@ -254,6 +254,7 @@ context, decision, consequences.
 | [0201](0201-claude-code-is-not-an-assistant-until-anthropic-says-it-may-be.md) | Claude Code is not an assistant until Anthropic says it may be *(user-directed)* |
 | [0202](0202-a-coding-assistant-the-person-runs-edits-the-open-patch-over-mcp.md) | A coding assistant the person runs edits the open patch over MCP *(user-directed; its tools changed by [0210](0210-the-assistant-edits-the-patchs-text.md))* |
 | [0228](0228-codex-drives-the-editor-over-mcp-and-has-no-plugin.md) | Codex drives the editor over MCP and has no plugin *(user-directed)* |
+| [0231](0231-assistants-are-built-in-not-plugins.md) | Assistants are built in, not plugins *(user-directed)* |
 | [0210](0210-the-assistant-edits-the-patchs-text.md) | The assistant edits the patch's text *(user-directed)* |
 | [0186](0186-a-decision-model-answers-typed-questions-behind-the-plugin-boundary.md) | A decision model answers typed questions behind the plugin boundary *(user-directed)* |
 | [0188](0188-what-every-host-reads-is-a-project-of-its-own.md) | What every host reads is a project of its own *(user-directed)* |

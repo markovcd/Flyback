@@ -1,5 +1,6 @@
-using Flyback.Plugins.Assist;
+using Flyback.Assist;
 using Flyback.Plugins.Decide;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
@@ -137,7 +138,7 @@ public class DecisionsTests
 
         public int Priority => priority;
 
-        public AssistantCredential? Credential => Hosted ? new AssistantCredential("HOSTED_KEY", "") : null;
+        public KeyCredential? Credential => Hosted ? new KeyCredential("HOSTED_KEY", "") : null;
 
         public Uri? Endpoint(SettingValues values) => Hosted ? new Uri("https://hosted.test/v1/systemone") : null;
 

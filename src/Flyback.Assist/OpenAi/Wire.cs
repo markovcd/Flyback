@@ -1,0 +1,425 @@
+using System.Globalization;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
+using Flyback.Plugins.Secrets;
+
+namespace Flyback.Assist.OpenAi;
+
+/// <summary>
+/// The chat-completions wire format, and nothing else.
+/// </summary>
+/// <remarks>
+/// Pure functions over JSON on purpose: this is the part that fails at run time
+/// with a 400 rather than at compile time, so it is the part worth testing
+/// without a network. Everything that decides <em>what</em> to say lives in
+/// <see cref="OpenAiSession"/>; this only decides how to say it.
+/// </remarks>
+internal static class Wire
+{
+    /// <param name="messages"></param>
+    /// <param name="tools">
+    /// What the model may call. An empty list leaves both tool fields out
+    /// altogether rather than sending an empty array: a request with no tools is
+    /// a question rather than a turn of a loop — the ear is asked one — and
+    /// endpoints differ on whether an empty <c>tools</c> beside a
+    /// <c>tool_choice</c> of "auto" is a contradiction worth a 400.
+    /// </param>
+    /// <param name="model"></param>
+    public static JsonObject Request(string model, JsonArray messages, IReadOnlyList<PatchTool> tools)
+    {
+        var request = new JsonObject
+        {
+            ["model"] = model,
+            ["messages"] = messages,
+        };
+
+        if (tools.Count == 0) return request;
+
+        var declared = new JsonArray();
+
+        foreach (var tool in tools)
+        {
+            declared.Add(new JsonObject
+            {
+                ["type"] = "function",
+                ["function"] = new JsonObject
+                {
+                    ["name"] = tool.Name,
+                    ["description"] = tool.Description,
+                    ["parameters"] = Parameters(tool.Schema),
+                },
+            });
+        }
+
+        request["tools"] = declared;
+        request["tool_choice"] = "auto";
+
+        return request;
+    }
+
+    /// <summary>
+    /// A tool's schema is the body of an object schema, so the type is added
+    /// here rather than repeated in every tool. An unparseable one becomes an
+    /// object with no properties, which is refused by the workbench with a
+    /// message rather than by the endpoint with a 400.
+    /// </summary>
+    private static JsonNode Parameters(string schema)
+    {
+        JsonObject body;
+
+        try
+        {
+            body = JsonNode.Parse(schema) as JsonObject ?? [];
+        }
+        catch (JsonException)
+        {
+            body = [];
+        }
+
+        body["type"] = "object";
+        body["properties"] ??= new JsonObject();
+
+        return body;
+    }
+
+    public static JsonObject System(string text) => new()
+    {
+        ["role"] = "system",
+        ["content"] = text,
+    };
+
+    public static JsonObject User(string text) => new()
+    {
+        ["role"] = "user",
+        ["content"] = text,
+    };
+
+    /// <summary>
+    /// The conversation as it is worth keeping: every message but the briefing,
+    /// with every picture and clip replaced by a sentence saying one was there.
+    /// </summary>
+    /// <remarks>
+    /// The briefing is left out because it is the handbook, which is rebuilt for
+    /// every run — a conversation carried on is told the current one, not whatever
+    /// this build said. The media is nearly all of the size and none of it is
+    /// needed to carry on, since the model can render or listen again.
+    /// </remarks>
+    public static JsonArray Kept(JsonArray messages)
+    {
+        var kept = new JsonArray();
+
+        foreach (var message in messages)
+        {
+            if (Role(message) is "system") continue;
+
+            kept.Add(message!.DeepClone());
+        }
+
+        Forget(kept);
+
+        return kept;
+    }
+
+    /// <summary>Replaces every picture and clip in <paramref name="messages"/> with a line saying one was there.</summary>
+    public static void Forget(JsonArray messages)
+    {
+        foreach (var message in messages)
+        {
+            if (message?["content"] is not JsonArray parts) continue;
+
+            for (var i = 0; i < parts.Count; i++)
+            {
+                var type = parts[i]?["type"]?.GetValueKind() == JsonValueKind.String
+                    ? parts[i]!["type"]!.GetValue<string>()
+                    : null;
+
+                if (type is "image_url") parts[i] = Said(PictureNotKept);
+                else if (type is "input_audio") parts[i] = Said(ClipNotKept);
+            }
+        }
+
+        static JsonObject Said(string text) => new() { ["type"] = "text", ["text"] = text };
+    }
+
+    /// <summary>Whose a message is, or null for one that does not say.</summary>
+    public static string? Role(JsonNode? message) =>
+        message?["role"]?.GetValueKind() == JsonValueKind.String ? message["role"]!.GetValue<string>() : null;
+
+    private const string ClipNotKept =
+        "(A clip was played here. It is no longer sent — listen again to hear the patch.)";
+
+    private const string PictureNotKept =
+        "(A picture was shown here. It is no longer sent — render again to see the patch.)";
+
+    /// <summary>
+    /// A picture, as a user turn.
+    /// </summary>
+    /// <remarks>
+    /// It cannot go where it belongs. A <c>tool</c> message in this format
+    /// carries a string and nothing else, so a rendered frame is answered with
+    /// words and then shown on the next turn. Every tool call still gets exactly
+    /// one reply, which is the rule that matters — an unanswered one makes the
+    /// whole next request a 400.
+    /// </remarks>
+    public static JsonObject UserWithPictures(string text, IEnumerable<byte[]> pictures) =>
+        UserWithMedia(text, pictures, []);
+
+    /// <summary>
+    /// Whatever the tools produced that is not words, as one user turn.
+    /// </summary>
+    /// <remarks>
+    /// One message rather than one per medium, because a turn that rendered and
+    /// listened produced one set of observations about one patch.
+    /// <para>
+    /// The two parts are spelled differently and neither spelling is negotiable: a
+    /// picture is an <c>image_url</c> carrying a data URL, and a sound is an
+    /// <c>input_audio</c> carrying bare base64 and a separate <c>format</c>,
+    /// accepted only by the audio models. Sending one to a model that does not take
+    /// it is a 400 naming the parameter.
+    /// </para>
+    /// <para>
+    /// Nothing asks for audio back: that would answer in speech, and the reply this
+    /// loop needs is a function call.
+    /// </para>
+    /// </remarks>
+    public static JsonObject UserWithMedia(
+        string text,
+        IEnumerable<byte[]> pictures,
+        IEnumerable<byte[]> sounds)
+    {
+        var content = new JsonArray { new JsonObject { ["type"] = "text", ["text"] = text } };
+
+        foreach (var picture in pictures)
+        {
+            content.Add(new JsonObject
+            {
+                ["type"] = "image_url",
+                ["image_url"] = new JsonObject
+                {
+                    ["url"] = "data:image/png;base64," + Convert.ToBase64String(picture),
+                },
+            });
+        }
+
+        foreach (var sound in sounds)
+        {
+            content.Add(new JsonObject
+            {
+                ["type"] = "input_audio",
+                ["input_audio"] = new JsonObject
+                {
+                    ["data"] = Convert.ToBase64String(sound),
+                    ["format"] = "wav",
+                },
+            });
+        }
+
+        return new JsonObject { ["role"] = "user", ["content"] = content };
+    }
+
+    public static JsonObject ToolResult(string id, string text) => new()
+    {
+        ["role"] = "tool",
+        ["tool_call_id"] = id,
+        ["content"] = text,
+    };
+
+    /// <summary>
+    /// Reads one response. Anything missing is treated as absent rather than as
+    /// a failure: compatible endpoints differ in what they bother to send, and
+    /// the parts this needs are the parts they all agree on.
+    /// </summary>
+    public static Reply Parse(JsonNode? response)
+    {
+        // Indexed through the array rather than straight at [0]: an endpoint that
+        // answers with no choices at all is answering nothing, and reaching past
+        // the end of a JSON array throws rather than coming back empty-handed.
+        var choices = response?["choices"] as JsonArray;
+        var message = choices is { Count: > 0 } ? choices[0]?["message"] : null;
+        var usage = response?["usage"];
+
+        var calls = new List<Call>();
+
+        if (message?["tool_calls"] is JsonArray asked)
+        {
+            foreach (var call in asked.OfType<JsonObject>())
+            {
+                var id = Blank(call["id"]);
+                var function = call["function"] as JsonObject;
+                var name = Blank(function?["name"]);
+
+                if (id is null || name is null) continue;
+
+                // A string of JSON by the API's own account; an object from some that copy it.
+                var arguments = function!["arguments"] switch
+                {
+                    JsonValue text when text.GetValueKind() == JsonValueKind.String => text.GetValue<string>(),
+                    { } other => other.ToJsonString(),
+                    null => "{}",
+                };
+
+                calls.Add(new Call(id, name, arguments));
+            }
+        }
+
+        return new Reply(
+            Blank(message?["content"]),
+            calls,
+            message?.DeepClone(),
+            Count(usage?["prompt_tokens"]),
+            Count(usage?["prompt_tokens_details"]?["cached_tokens"]),
+            Count(usage?["completion_tokens"]),
+            Blank(response?["model"]));
+    }
+
+    /// <summary>
+    /// How long to leave <paramref name="response"/>'s endpoint alone: forever for an
+    /// account out of credit, which answers 429 like a rate limit and never clears.
+    /// </summary>
+    public static TimeSpan? Wait(KeyedResponse response) =>
+        OutOfCredit(response.Body) ? TimeSpan.MaxValue : RetryAfter(response.Headers);
+
+    private static bool OutOfCredit(string body)
+    {
+        try
+        {
+            return Error(JsonNode.Parse(body)) is JsonObject error
+                && Blank(error["code"]) == "insufficient_quota";
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// How long the endpoint asked to be left alone, or null when it did not say.
+    /// </summary>
+    /// <remarks>
+    /// Three places, because the endpoints this reaches disagree about which to
+    /// use. <c>Retry-After</c> is the standard; <c>retry-after-ms</c> is what
+    /// OpenAI and Azure actually send on a 429 and is the precise one, the wait
+    /// being routinely under the second the standard header rounds to. The reset
+    /// headers are the fallback, and the longer of the two wins.
+    /// </remarks>
+    public static TimeSpan? RetryAfter(HttpResponseHeaders headers)
+    {
+
+        if (headers.TryGetValues("retry-after-ms", out var precise)
+            && double.TryParse(
+                precise.FirstOrDefault(),
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out var milliseconds)
+            && milliseconds is >= 0 and < int.MaxValue)
+        {
+            return TimeSpan.FromMilliseconds(milliseconds);
+        }
+
+        if (headers.RetryAfter is { } asked)
+        {
+            if (asked.Delta is { } delta) return delta;
+            if (asked.Date is { } when) return when - DateTimeOffset.UtcNow;
+        }
+
+        string[] buckets = ["x-ratelimit-reset-tokens", "x-ratelimit-reset-requests"];
+        TimeSpan? longest = null;
+
+        foreach (var bucket in buckets)
+        {
+            if (!headers.TryGetValues(bucket, out var values)) continue;
+            if (Duration(values.FirstOrDefault()) is not { } reset) continue;
+
+            if (longest is null || reset > longest) longest = reset;
+        }
+
+        return longest;
+    }
+
+    private static readonly Regex Parts = new(
+        @"\d+(?:\.\d+)?(?:ms|s|m|h)",
+        RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// A duration written the way a person would — <c>916ms</c>, <c>1.5s</c>,
+    /// <c>1m30s</c> — which is how the reset headers carry one. Parts are summed,
+    /// so the compound forms read correctly.
+    /// </summary>
+    private static TimeSpan? Duration(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return null;
+
+        var total = TimeSpan.Zero;
+        var found = false;
+
+        foreach (var part in Parts.EnumerateMatches(text))
+        {
+            var match = text.AsSpan(part.Index, part.Length);
+            var split = match.Length;
+
+            while (split > 0 && !char.IsAsciiDigit(match[split - 1])) split--;
+
+            if (!double.TryParse(
+                match[..split],
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out var value))
+            {
+                continue;
+            }
+
+            total += match[split..] switch
+            {
+                "ms" => TimeSpan.FromMilliseconds(value),
+                "s" => TimeSpan.FromSeconds(value),
+                "m" => TimeSpan.FromMinutes(value),
+                "h" => TimeSpan.FromHours(value),
+                _ => TimeSpan.Zero,
+            };
+
+            found = true;
+        }
+
+        return found ? total : null;
+    }
+
+    /// <summary>Whatever the endpoint said went wrong, or the status on its own.</summary>
+    public static string Complaint(int status, string body)
+    {
+        try
+        {
+            if (Error(JsonNode.Parse(body)) is { } error)
+            {
+                var message = (error is JsonObject said ? Blank(said["message"]) : Blank(error)) ?? error.ToString();
+                return $"{status}: {message}";
+            }
+        }
+        catch (JsonException)
+        {
+            // Not JSON. Some gateways answer in HTML, which is not worth showing.
+        }
+
+        return body.Length is > 0 and < 300 ? $"{status}: {body}" : $"the endpoint answered {status}.";
+    }
+
+    private static string? Blank(JsonNode? node)
+    {
+        var text = node?.GetValueKind() == JsonValueKind.String ? node.GetValue<string>() : null;
+
+        return string.IsNullOrWhiteSpace(text) ? null : text;
+    }
+
+    private static int Count(JsonNode? node) =>
+        node is JsonValue value && value.TryGetValue<double>(out var count) && double.IsFinite(count)
+            ? (int)Math.Clamp(count, 0, int.MaxValue)
+            : 0;
+
+    /// <summary>
+    /// The <c>error</c> a refusal carries, whether the body is the object, a list of
+    /// one as Google sends, or anything else a gateway makes up.
+    /// </summary>
+    private static JsonNode? Error(JsonNode? body) =>
+        (body is JsonArray { Count: > 0 } several ? several[0] : body) is JsonObject whole ? whole["error"] : null;
+}

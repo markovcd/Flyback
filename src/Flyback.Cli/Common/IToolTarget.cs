@@ -1,6 +1,6 @@
 using System.Text.Json;
+using Flyback.Assist;
 using Flyback.Cli.Models;
-using Flyback.Plugins.Assist;
 
 namespace Flyback.Cli.Common;
 

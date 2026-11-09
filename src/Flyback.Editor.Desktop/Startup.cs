@@ -1,10 +1,10 @@
 using System.Diagnostics;
+using Flyback.Assist;
 using Flyback.Core;
 using Flyback.Editor.Desktop.Updates;
 using Flyback.Editor.PluginPackages;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Updates;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.Editor.Desktop;

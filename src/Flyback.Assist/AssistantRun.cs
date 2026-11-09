@@ -1,10 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using Flyback.Assist;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Assist;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 
 namespace Flyback.Assist;
@@ -43,7 +44,7 @@ internal sealed class AssistantRun : IDisposable
     private readonly SettingValues values;
 
     /// <summary>What sends this conversation, which knows the key well enough to keep it out of it.</summary>
-    private readonly KeyedTransport? keyed;
+    private readonly KeyedClient? keyed;
 
     /// <summary>
     /// The canvas as the workbench last took it in: a copy, since the editor edits
@@ -100,7 +101,7 @@ internal sealed class AssistantRun : IDisposable
 
         provider = assistant.Id;
         values = config.Values;
-        keyed = config.Transport as KeyedTransport;
+        keyed = config.Client as KeyedClient;
 
         // What the workbench may offer is the provider's answer rather than
         // this one's. The shell knows nothing about which model was chosen —
@@ -537,7 +538,7 @@ internal sealed class AssistantRun : IDisposable
     {
         try
         {
-            return Credentials.Elsewhere(assistant, config) ?? assistant.Unavailable(config);
+            return AssistantKeys.Elsewhere(assistant, config) ?? assistant.Unavailable(config);
         }
         catch (Exception ex)
         {

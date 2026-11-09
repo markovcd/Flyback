@@ -1,6 +1,7 @@
+using Flyback.Assist;
 using Flyback.Core.Graph;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
+using Flyback.Plugins.Secrets;
 using Shouldly;
 using Xunit;
 

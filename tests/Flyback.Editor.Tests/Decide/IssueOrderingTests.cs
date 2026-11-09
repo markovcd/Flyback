@@ -1,9 +1,10 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Flyback.Assist;
 using Flyback.Core.Graph;
 using Flyback.Editor.Decide;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;
 
@@ -66,7 +67,7 @@ public sealed class IssueOrderingTests : EditorTest
 
         public int Priority => 0;
 
-        public AssistantCredential? Credential => null;
+        public KeyCredential? Credential => null;
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 

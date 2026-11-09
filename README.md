@@ -345,6 +345,7 @@ src/
   Flyback.Cli            command line tool
   Flyback.Core           patch model, module API and the built-in modules
   Flyback.Engine         compiler, text language, renderers and file formats
+  Flyback.Assist         the assistants, their workbench and conversations
   Flyback.Plugins        plugin host and built-in plugin logic
   Flyback.Ui             the preview, sound device and look the app and the viewer share
   Flyback.Viewer.Desktop the viewer: opens a patch and plays it
@@ -367,8 +368,7 @@ tests/
   Flyback.Cli.Tests             command line tests
   Flyback.Site.Tests            flyback-site's checks and its talk with the site
   Flyback.Plugins.Tests         plugin and runtime behavior tests
-  Flyback.Plugins.OpenAi.Tests  chat-completions session tests
-  Flyback.Plugins.Gemini.Tests  generateContent session tests
+  Flyback.Assist.Tests          the assistants' wire formats, sessions and workbench
 ```
 
 [`docs/engineering-guide.md`](docs/engineering-guide.md) is how the codebase is put together, how its code is written and how its tests are written. See the `docs/adr` folder for the architecture decisions behind it.

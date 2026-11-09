@@ -79,7 +79,7 @@ public sealed class Usage
 
     /// <summary>
     /// Everything Flyback ships, by the id it goes by: its own modules' provider,
-    /// its plugins, the sound backends in them and the assistants they offer.
+    /// its plugins, the sound backends in them and its assistants.
     /// </summary>
     /// <remarks>
     /// Anything else — a plugin somebody wrote, a module it adds, a backend it
@@ -91,11 +91,9 @@ public sealed class Usage
         "flyback",
         "flyback.dpapi",
         "flyback.effects",
-        "flyback.gemini",
         "flyback.keychain",
         "flyback.keyring",
         "flyback.mastering",
-        "flyback.openai",
         "flyback.picture",
         "flyback.voice",
         "linux.io",
@@ -136,13 +134,13 @@ public sealed class Usage
         "Flyback.Plugins",
         "Flyback.Plugins.Dpapi",
         "Flyback.Plugins.Effects",
-        "Flyback.Plugins.Gemini",
+        "Flyback.Assist.Gemini",
         "Flyback.Plugins.Keychain",
         "Flyback.Plugins.Keyring",
         "Flyback.Plugins.LinuxIO",
         "Flyback.Plugins.MacIO",
         "Flyback.Plugins.Mastering",
-        "Flyback.Plugins.OpenAi",
+        "Flyback.Assist.OpenAi",
         "Flyback.Plugins.Picture",
         "Flyback.Plugins.Voice",
         "Flyback.Plugins.WinIO",

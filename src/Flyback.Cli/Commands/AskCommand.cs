@@ -7,9 +7,9 @@ using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using PluginRegistry = Flyback.Cli.Plugins;
 
@@ -136,6 +136,7 @@ internal static class AskCommand
 
             return Run(
                 plugins.Catalog,
+                Assistants.Shipped,
                 about,
                 new AskOptions(
                     words.Length == 0 ? null : string.Join(' ', words),
@@ -163,6 +164,7 @@ internal static class AskCommand
     /// <param name="console">Where a prompt is answered, or null where nobody is there to answer one.</param>
     public static async Task<int> Run(
         PluginCatalog plugins,
+        Assistants assistants,
         AskedPatch about,
         AskOptions options,
         TextWriter output,
@@ -177,23 +179,23 @@ internal static class AskCommand
         var settings = AssistantSettings.Load(settingsPath);
 
         var wanted = options.Provider ?? (string.IsNullOrWhiteSpace(settings.Provider) ? null : settings.Provider);
-        var assistant = wanted is null ? plugins.PreferredAssistant : plugins.Assistant(wanted);
+        var assistant = wanted is null ? assistants.Preferred : assistants.Find(wanted);
 
         if (assistant is null)
         {
             error.WriteLine(AskedPatch.Complaint(wanted is null
-                ? "no assistant is installed."
-                : $"no assistant called '{wanted}' is installed."));
+                ? "this has no assistant."
+                : $"there is no assistant called '{wanted}'."));
 
-            if (plugins.Assistants.Count > 0)
-                error.WriteLine($"Installed: {string.Join(", ", plugins.Assistants.Select(a => a.Id))}.");
+            if (assistants.Count > 0)
+                error.WriteLine($"There are: {string.Join(", ", assistants.All.Select(a => a.Id))}.");
 
             return Exit.Failed;
         }
 
         if (Values(settings.Of(assistant.Id), options.Set, error) is not { } values) return Exit.Failed;
 
-        var config = new AssistantConfig(new Credentials(plugins.PreferredSecretStore).Transport(assistant, values), values);
+        var config = new AssistantConfig(new Credentials(plugins.PreferredSecretStore).Client(assistant, values), values);
 
         if (AssistantRun.Unready(assistant, config) is { } excuse)
         {

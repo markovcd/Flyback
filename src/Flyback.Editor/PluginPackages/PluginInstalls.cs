@@ -1,6 +1,5 @@
 using Avalonia.Platform.Storage;
 using Flyback.Core.Graph;
-using Flyback.Editor.Assist;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Hubs;
 using Flyback.Editor.Notices;
@@ -29,7 +28,6 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
     private readonly SiteAccess site;
     private readonly EditorHost host;
     private readonly Playback playback;
-    private readonly ChosenAssistant chosenAssistant;
     private readonly Reactions reactions;
     private readonly Usage usage;
 
@@ -55,7 +53,6 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
         SiteAccess site,
         Playback playback,
         IDialog dialog,
-        ChosenAssistant chosenAssistant,
         PluginHubFactory pluginHubs,
         PluginInstallerFactory installers,
         Reactions reactions,
@@ -73,7 +70,6 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
         this.site = site;
         this.host = host;
         this.playback = playback;
-        this.chosenAssistant = chosenAssistant;
     }
 
     public Task On(PluginsMissing notice) => OfferMissingAsync(notice.Load, notice.Reopen);
@@ -124,16 +120,6 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
             refused = null;
             Awaited = [];
         }
-    }
-
-    /// <summary>The folder of the plugin whose assistant Ask sends a patch to, and what to say of it, or null where none is chosen.</summary>
-    private (string Assembly, string Said)? Assisting()
-    {
-        if (chosenAssistant.Value is null) return null;
-        if (plugins.Provider(chosenAssistant.Value) is not { } info) return null;
-        if (plugins.Plugins.FirstOrDefault(p => p.Info.Id == info.Id) is not { } loaded) return null;
-
-        return (Path.GetFileNameWithoutExtension(loaded.AssemblyPath), string.Join(Environment.NewLine, PluginSummary.Assistant(plugins, chosenAssistant.Summary)));
     }
 
     /// <summary>
@@ -229,11 +215,7 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
         var (run, troubles) = PluginSummary.Run(plugins, pluginFolder ?? PluginHost.DefaultDirectory, playback.Sound);
         using var hub = pluginHubs.Create(
             site,
-            () =>
-            {
-                var assisting = Assisting();
-                return Task.Run(() => InstalledPlugins(assisting, troubles));
-            },
+            () => Task.Run(() => InstalledPlugins(troubles)),
             (plugin, downloaded) => InstallFromSiteAsync(site!, plugin, downloaded),
             plugin => ShowInstalledAsync(site, plugin), wanted, run);
 
@@ -406,9 +388,8 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
     /// Every plugin this run loaded, and every one waiting for the next start, read
     /// from its folder. Reads assemblies, so it is kept off the UI thread.
     /// </summary>
-    /// <param name="assisting">The folder of the plugin Ask sends a patch to, and what to say of it, or null for none.</param>
     /// <param name="troubles">What went wrong this run, by plugin folder. A folder in it that loaded nothing is listed too.</param>
-    private IReadOnlyList<HubInstalled> InstalledPlugins((string Assembly, string Said)? assisting, IReadOnlyDictionary<string, string>? troubles = null)
+    private IReadOnlyList<HubInstalled> InstalledPlugins(IReadOnlyDictionary<string, string>? troubles = null)
     {
         troubles ??= new Dictionary<string, string>();
 
@@ -433,13 +414,12 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
                 plugin = plugin with { Name = loaded.Info.Name, Description = plugin.Description.Length > 0 ? plugin.Description : loaded.Info.Description };
 
             waiting.Remove(plugin.Assembly, out var next);
-            var said = assisting is { } a && string.Equals(a.Assembly, assembly, StringComparison.OrdinalIgnoreCase) ? a.Said : null;
             var home = Path.GetDirectoryName(loaded.AssemblyPath) is { } at ? PluginSummary.Folder(at) : null;
             var trouble = home is not null && troubles.TryGetValue(home, out var wrong) ? wrong : null;
 
             if (home is not null) unexplained.Remove(home);
 
-            listed.Add(new HubInstalled(plugin, next?.Description.Version, Loaded: true, described?.Preview?.Bytes, removing.Contains(plugin.Assembly), said, trouble));
+            listed.Add(new HubInstalled(plugin, next?.Description.Version, Loaded: true, described?.Preview?.Bytes, removing.Contains(plugin.Assembly), trouble));
         }
 
         // A plugin that loaded nothing has no row of its own otherwise.

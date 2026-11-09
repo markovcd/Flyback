@@ -1,6 +1,5 @@
 using System.Text.Json.Nodes;
 using Flyback.Assist;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;

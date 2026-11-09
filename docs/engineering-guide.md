@@ -72,7 +72,7 @@ Flyback.Editor.Android .apk                Editor under Avalonia.Android; not bu
 A project's namespace is its assembly name: `Flyback.Ui`,
 `Flyback.Editor`, `Flyback.Editor.Desktop`, `Flyback.Editor.Web`, `Flyback.Engine`. A folder
 adds a sub-namespace (`Flyback.Engine.Render`); nothing else does. The one exception is
-the source the plugins share: `src/plugins/Shared/Surveys` is `Flyback.Plugins.Surveys`
+the source the plugins share: `src/plugins/Shared/Surveys` is `Flyback.Assist.Surveys`
 in whichever plugin compiles it, since it is a folder and not a project.
 
 ---
@@ -379,10 +379,10 @@ registry:
 void AddAudioOutput(IAudioOutput output);
 void AddModules(ModuleProvider provider, IReadOnlyList<NodeDef> modules);
 void AddPresets(IReadOnlyList<PatchPreset> presets);
-void AddPatchAssistant(IPatchAssistant assistant);
 void AddSecretStore(ISecretStore store);
 void AddMidiInput(IMidiInput input);
 void AddAudioInput(IAudioInput input);
+void AddDecisionModel(IDecisionModel model);
 ```
 
 A new kind of extension is a new method. Existing plugins only call the
@@ -403,7 +403,7 @@ ExcludeAssets="runtime"`.
 `allowed-plugins.json` in the data folder allows, and only while every file in it
 hashes as it did; a Debug build loads everything. A secret store registers only
 from a shipped plugin or one allowed with `--secrets`. An assistant gets an
-`IAssistantTransport` that sends a body for it and hands back what came back; the
+`IKeyedClient` that sends a body for it and hands back what came back; the
 host builds each request and puts the key on it for one origin, so the assistant
 never holds the key or a request that carries it.
 
@@ -459,20 +459,27 @@ folder out from under it.
 | Dpapi, Keychain, Keyring | Where an API key is kept ([0034](adr/0034-settings-in-a-file-the-key-in-the-operating-system.md)) | `ProtectedData` in Dpapi |
 | Picture, Voice, Effects, Mastering | Modules and presets | none |
 | SystemOne | A decision model over HTTP, the Decision server: whatever server it is given, such as a laya-serve ([0186](adr/0186-a-decision-model-answers-typed-questions-behind-the-plugin-boundary.md)) | none: hand-written JSON over HTTP |
-| OpenAi, Gemini | Patch assistants ([0033](adr/0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md), [0066](adr/0066-a-second-wire-format-so-one-model-can-hear.md)) | none: hand-written JSON over HTTP |
 
-OpenAi and Gemini share `src/plugins/Shared/Surveys`, the survey loop over each one's `IModelProbe`, as
-source each compiles in rather than a project it references ([0161](adr/0161-a-turn-is-the-hosts-and-a-provider-writes-only-its-format.md)).
 LinuxIO and AndroidIO share `src/plugins/Shared/Audio`, the thread a blocking device is written or read
 on; MacIO and AndroidIO share `src/plugins/Shared/Midi`, the reader that cuts a stream of MIDI bytes
 into messages, since a CoreMIDI packet and an Android delivery hold more than one message.
+
+Assistants are not plugins ([0231](adr/0231-assistants-are-built-in-not-plugins.md)).
+`Flyback.Assist` holds both wire formats, chat completions in `OpenAi/` (any compatible
+endpoint, a local runtime included) and generateContent in `Gemini/`
+([0066](adr/0066-a-second-wire-format-so-one-model-can-hear.md)), with the survey loop
+over each one's `IModelProbe` in `Surveys/`. `Assistants.Shipped` is the list a host
+offers, in the order a fresh install prefers them; the editor gets it through
+`EditorSetup.Assistants` and flyback-cli passes it to `ask` and `probe`. The key still
+never reaches an assistant: it sends over the `IKeyedClient` the host builds for one
+origin ([0158](adr/0158-a-plugin-loads-only-once-somebody-said-yes-and-never-holds-a-key.md)).
 
 An assistant never touches the patch directly. Everything it does goes through
 `PatchWorkbench`, which is the tool surface, the limits and the senses (looking
 at a frame, hearing a clip). It is a facade: `WorkingPatch` holds the patch and
 the handles its modules answer to, `ToolTable` says what each tool is and which
 class runs it, and the edits, reports, senses and measurements are a class
-apiece beside them in `Flyback.Plugins/Assist`. The two session loops in `OpenAiSession` and
+apiece beside them in `Flyback.Assist`. The two session loops in `OpenAiSession` and
 `GeminiSession` are similar on purpose and stay separate; the reason is in
 `GeminiSession.cs`'s header.
 
@@ -831,14 +838,15 @@ changed: saved patches name it.
 | `Flyback.Cli.Tests` | Commands run in-process | |
 | `Flyback.Site.Tests` | flyback-site's checks, and its commands against a stand-in site | |
 | `Flyback.Plugins.Tests` | The host, every shipped module and preset | Loads real plugins off disk |
-| `Flyback.Plugins.OpenAi.Tests`, `.Gemini.Tests`, `.SystemOne.Tests` | Wire translation and sessions | Reference the plugin directly: translation is pure |
+| `Flyback.Assist.Tests` | Both assistants' wire translation and sessions, and `PatchWorkbench` | References `Flyback.Assist` directly: translation is pure |
+| `Flyback.Plugins.SystemOne.Tests` | The Decision server's wire | References the plugin directly |
 | `Flyback.Plugins.Drawings.Tests` | The Path and Shape modules' reader and drawing | References the plugin directly |
 | `Flyback.Plugins.WinIO.Tests` | The ASIO output, against `FakeAsioDriver`, a driver's vtable in memory | References the plugin directly; runs anywhere |
 | `Flyback.Plugins.LinuxIO.Tests` | What the JACK output offers, against a stand-in for the server | References the plugin directly; runs anywhere |
 | `Flyback.Ui.Testing` | The headless harness: `UiTest`, the Avalonia xunit adapter | Not a test project |
 | `Flyback.Plugins.Testing` | What plugin-facing tests share: `LoopbackDevice`, a sound card the test is the thread of; `Canned`, an endpoint with scripted answers; `JackDaemon`, a JACK server to play into | Not a test project |
 | `Flyback.Core.Benchmarks` | BenchmarkDotNet | Not a test project |
-| `Flyback.Plugins.Sample`, `.FakeAssistant`, `.FakeDecider` | Plugins the tests load | Not test projects |
+| `Flyback.Plugins.Sample`, `.FakeDecider` | Plugins the tests load | Not test projects |
 
 A test goes in the project that owns the behavior, not the one that is convenient.
 
@@ -1018,10 +1026,10 @@ the editor (`FakePresetSite`).
   lets the test be the audio thread (`Pump(frames)`); `LoopbackOutput` is the
   backend a host starts it through.
 - An HTTP endpoint is `Canned : HttpMessageHandler`, handing back scripted
-  `CannedAnswer`s under a keyless `KeyedTransport`.
+  `CannedAnswer`s under a keyless `KeyedClient`.
 - A CLI command is a function of two `StringWriter`s returning an exit code.
-- A whole assistant is `Flyback.Plugins.FakeAssistant`, a real plugin that replays
-  a script of tool calls through `PatchWorkbench`.
+- A whole assistant is a scripted `IPatchAssistant` handed to the editor as
+  `new Assistants([assistant])`, replaying tool calls through `PatchWorkbench`.
 - A temp folder is a field and `IDisposable`:
 
 ```csharp

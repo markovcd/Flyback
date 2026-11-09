@@ -34,8 +34,7 @@
     <InternalsVisibleTo Include="Flyback.Core.Benchmarks" />
     <InternalsVisibleTo Include="Flyback.Plugins.Tests" />
     <InternalsVisibleTo Include="Flyback.Plugins.Drawings.Tests" />
-    <InternalsVisibleTo Include="Flyback.Plugins.Gemini.Tests" />
-    <InternalsVisibleTo Include="Flyback.Plugins.OpenAi.Tests" />
+    <InternalsVisibleTo Include="Flyback.Assist.Tests" />
     <InternalsVisibleTo Include="Flyback.Editor.Tests" />
     <InternalsVisibleTo Include="Flyback.Ui.Tests" />
     <InternalsVisibleTo Include="Flyback.Viewer.Desktop.Tests" />

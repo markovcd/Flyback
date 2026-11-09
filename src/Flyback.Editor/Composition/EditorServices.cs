@@ -1,4 +1,5 @@
 using System.Net;
+using Flyback.Assist;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
@@ -22,9 +23,9 @@ using Flyback.Editor.Tutorials;
 using Flyback.Editor.Windows;
 using Flyback.Engine.Compile;
 using Flyback.Host;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Secrets;
 using Flyback.Ui.Audio;
 using Flyback.Ui.Controls;
 using Microsoft.Extensions.DependencyInjection;
@@ -88,6 +89,7 @@ internal static class EditorServices
         services.AddSingleton<IIlCompilerSetup>(setup.Launch);
         services.AddSingleton(setup.Usage);
         services.AddSingleton(setup.Plugins);
+        services.AddSingleton(setup.Assistants);
 
         // Long enough for a plugin to download. The site packs a preset with brotli; a page's browser unpacks for itself.
         var site = services.AddHttpClient(SiteAccess.Client, http => http.Timeout = TimeSpan.FromMinutes(5));

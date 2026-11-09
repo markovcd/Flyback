@@ -147,22 +147,6 @@ public sealed class PluginHubTests : EditorTest
         All<StackPanel>(hub.View).ShouldNotContain(p => p.Name == "pluginProblems");
     }
 
-    /// <summary>The plugin Ask sends a patch to wears the assistant's glyph, which says where it goes.</summary>
-    [AvaloniaFact]
-    public void The_plugin_the_assistant_sends_to_is_marked_and_says_so()
-    {
-        using var site = new FakePluginSite(new Shared("r1", "Ripple"));
-        const string said = "Ask sends the patch and pictures of it to Echoes.";
-        var (hub, _) = Open(site, installed: [Echoes with { Assisting = said }, Grain]);
-
-        var rows = All<StackPanel>(hub.View).Single(p => p.Name == "installedPlugins").Children;
-        var glyph = All<Border>(rows[0]).Single(t => t.Name == "pluginAssisting");
-
-        ToolTip.GetTip(glyph).ShouldBe(said);
-        All<Border>(rows[1]).ShouldNotContain(t => t.Name == "pluginAssisting");
-        Names(hub.View, "installedPlugins").ShouldBe(["Echoes", "Grain"]);
-    }
-
     [AvaloniaFact]
     public void An_installed_plugin_names_its_id_and_the_provider_a_patch_records()
     {

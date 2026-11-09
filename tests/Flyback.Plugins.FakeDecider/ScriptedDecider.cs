@@ -1,5 +1,5 @@
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.FakeDecider;
@@ -20,7 +20,7 @@ public sealed class ScriptedDecider(IReadOnlyDictionary<string, Answer>? script 
 
     public int Priority => -100;
 
-    public AssistantCredential? Credential => null;
+    public KeyCredential? Credential => null;
 
     /// <summary>What each question id is answered with.</summary>
     public IReadOnlyDictionary<string, Answer> Script { get; } = script ?? new Dictionary<string, Answer>();

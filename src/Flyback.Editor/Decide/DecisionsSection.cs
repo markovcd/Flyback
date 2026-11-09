@@ -1,10 +1,11 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Flyback.Assist;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Settings;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Flyback.Ui.Controls;
 
@@ -314,8 +315,8 @@ internal sealed class DecisionsSection : ISettingsSection
         var origin = Origin(model);
 
         var transport = model.Credential is { } credential && !string.IsNullOrWhiteSpace(key.Entered)
-            ? new KeyedTransport(key.Entered, origin, credential)
-            : decisions.Credentials.Transport(Decisions.Account(model), model.Credential, origin);
+            ? new KeyedClient(key.Entered, origin, credential)
+            : decisions.Credentials.Client(Decisions.Account(model), model.Credential, origin);
 
         return new DecisionConfig(transport, form.Values, decisions.Store.FolderOf(model));
     }
@@ -325,7 +326,7 @@ internal sealed class DecisionsSection : ISettingsSection
     {
         try
         {
-            return model.Endpoint(form.Values) is { IsAbsoluteUri: true } address ? KeyedTransport.OriginOf(address) : null;
+            return model.Endpoint(form.Values) is { IsAbsoluteUri: true } address ? KeyedClient.OriginOf(address) : null;
         }
         catch
         {

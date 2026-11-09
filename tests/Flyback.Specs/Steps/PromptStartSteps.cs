@@ -1,7 +1,7 @@
+using Flyback.Assist;
 using Flyback.Core.Graph;
 using Flyback.Editor.Assist;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using Flyback.Specs.Support;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,7 +33,8 @@ public sealed class PromptStartSteps(EditorDriver editor, PatchContext context) 
 
         editor.Setup = editor.Setup with
         {
-            Plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, [], [assistant]),
+            Plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, []),
+            Assistants = new([assistant]),
         };
 
         editor.Services = services => services.AddSingleton(new AssistantSettingRepository(folders, settings));

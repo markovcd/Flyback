@@ -13,7 +13,6 @@ using Flyback.Editor.Controls;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Shell;
 using Flyback.Editor.Statistics;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui.Controls;
@@ -588,8 +587,8 @@ internal sealed class AssistantPanel : UserControl
         var config = settings.Configured();
         var excuse = chosenAssistant.Value is not null
             ? (config is null ? null : AssistantRun.Unready(chosenAssistant.Value, config))
-            : plugins.Assistants.Count == 0
-                ? "No assistant plugin is installed. See the status bar for where plugins are looked for."
+            : chosenAssistant.Offered.Count == 0
+                ? "This window has no assistant."
                 : "No assistant is selected. Pick one in Settings.";
 
         blocked = excuse;

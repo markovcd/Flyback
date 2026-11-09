@@ -143,7 +143,7 @@ Nothing stops an assembly holding more than one plugin class, and each is instan
 
 ## 4. What you can contribute
 
-`IPluginRegistry` has eight methods. New kinds of extension arrive as new methods, so a plugin compiled against an older contract keeps working.
+`IPluginRegistry` has seven methods. New kinds of extension arrive as new methods, so a plugin compiled against an older contract keeps working.
 
 | Method | Contributes | Must not, when registering |
 |---|---|---|
@@ -151,10 +151,9 @@ Nothing stops an assembly holding more than one plugin class, and each is instan
 | `AddPresets` | Patches in the preset gallery | — |
 | `AddAudioOutput` | A sound backend | Open a device |
 | `AddSecretStore` | Somewhere the OS holds a secret, honored only from a plugin Flyback ships or one allowed with `--secrets` | Read or write one |
-| `AddPatchAssistant` | Something that can author a patch, sending over the `IAssistantTransport` it is handed: the host puts the key on requests to the one origin it was entered for, and the assistant never holds it | Open a connection, or need a credential present |
 | `AddMidiInput` | A MIDI backend | Open a device, or list the ones plugged in |
 | `AddAudioInput` | A sound input backend, which a Line In listens through | Open a device, or list the ones plugged in |
-| `AddDecisionModel` | Something that answers typed questions about some text with probabilities, sending over the transport it is handed as an assistant does | Load a model, open a connection, or need a credential or a file present |
+| `AddDecisionModel` | Something that answers typed questions about some text with probabilities, sending over the `IKeyedClient` it is handed: the host puts the key on requests to the one origin it was entered for, and the model never holds it | Load a model, open a connection, or need a credential or a file present |
 
 A single plugin may call several. The Voice plugin adds eleven modules and four presets; a platform plugin such as WinIO adds a sound backend and a MIDI input and nothing else. Every kind is keyed by an id, and an id registered twice is refused to both, whichever plugins it comes from, so no folder can stand in for a plugin it shares an id with.
 

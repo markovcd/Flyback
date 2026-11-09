@@ -1,6 +1,5 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Midi;
@@ -37,8 +36,6 @@ internal sealed class ModuleCollector : IPluginRegistry
     public void AddAudioOutput(IAudioOutput output) { }
 
     public void AddPresets(IReadOnlyList<PatchPreset> presets) { }
-
-    public void AddPatchAssistant(IPatchAssistant assistant) { }
 
     public void AddSecretStore(ISecretStore store) { }
 

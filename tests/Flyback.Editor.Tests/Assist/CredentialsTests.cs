@@ -1,4 +1,4 @@
-using Flyback.Plugins.Assist;
+using Flyback.Assist;
 using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;
@@ -374,12 +374,12 @@ public class CredentialsTests
 
         credentials.Accept(Account, "sk-typed", "https://api.example.test", keep: false);
 
-        var here = new AssistantConfig(credentials.Transport(assistant, Pointing("https://api.example.test/v1")), Pointing("https://api.example.test/v1"));
-        var moved = new AssistantConfig(credentials.Transport(assistant, Pointing("http://localhost:11434/v1")), Pointing("http://localhost:11434/v1"));
+        var here = new AssistantConfig(credentials.Client(assistant, Pointing("https://api.example.test/v1")), Pointing("https://api.example.test/v1"));
+        var moved = new AssistantConfig(credentials.Client(assistant, Pointing("http://localhost:11434/v1")), Pointing("http://localhost:11434/v1"));
 
-        Credentials.Elsewhere(assistant, here).ShouldBeNull();
-        moved.Transport.Origin.ShouldBe("https://api.example.test");
-        Credentials.Elsewhere(assistant, moved).ShouldBe(
+        AssistantKeys.Elsewhere(assistant, here).ShouldBeNull();
+        moved.Client.Origin.ShouldBe("https://api.example.test");
+        AssistantKeys.Elsewhere(assistant, moved).ShouldBe(
             "The key was entered for https://api.example.test, and this is set to send to http://localhost:11434. Enter it again to send it there.");
     }
 
@@ -393,13 +393,13 @@ public class CredentialsTests
         {
             var credentials = new Credentials(null);
             var assistant = new Pointed(variable);
-            var remote = new AssistantConfig(credentials.Transport(assistant, Pointing("http://192.0.2.10:11434/v1")), Pointing("http://192.0.2.10:11434/v1"));
+            var remote = new AssistantConfig(credentials.Client(assistant, Pointing("http://192.0.2.10:11434/v1")), Pointing("http://192.0.2.10:11434/v1"));
 
-            remote.Transport.HasKey.ShouldBeFalse();
-            Credentials.Elsewhere(assistant, remote).ShouldNotBeNull().ShouldStartWith($"{variable} is not sent to http://192.0.2.10:11434: over plain http");
+            remote.Client.HasKey.ShouldBeFalse();
+            AssistantKeys.Elsewhere(assistant, remote).ShouldNotBeNull().ShouldStartWith($"{variable} is not sent to http://192.0.2.10:11434: over plain http");
 
-            credentials.Transport(assistant, Pointing("http://localhost:11434/v1")).HasKey.ShouldBeTrue();
-            credentials.Transport(assistant, Pointing("https://api.example.test/v1")).HasKey.ShouldBeTrue();
+            credentials.Client(assistant, Pointing("http://localhost:11434/v1")).HasKey.ShouldBeTrue();
+            credentials.Client(assistant, Pointing("https://api.example.test/v1")).HasKey.ShouldBeTrue();
         }
         finally
         {
@@ -415,10 +415,10 @@ public class CredentialsTests
         try
         {
             var assistant = new Pointed(variable);
-            var config = new AssistantConfig(new Credentials(null).Transport(assistant, Pointing("https://api.example.test/v1")), Pointing("https://api.example.test/v1"));
+            var config = new AssistantConfig(new Credentials(null).Client(assistant, Pointing("https://api.example.test/v1")), Pointing("https://api.example.test/v1"));
 
-            config.Transport.HasKey.ShouldBeFalse();
-            Credentials.Elsewhere(assistant, config).ShouldNotBeNull().ShouldStartWith($"{variable} is not sent: it is an admin key");
+            config.Client.HasKey.ShouldBeFalse();
+            AssistantKeys.Elsewhere(assistant, config).ShouldNotBeNull().ShouldStartWith($"{variable} is not sent: it is an admin key");
         }
         finally
         {
@@ -449,9 +449,7 @@ public class CredentialsTests
 
         public string Name => "Pointed";
 
-        public int Priority => 0;
-
-        public AssistantCredential Credential { get; } = new(variable, "");
+        public KeyCredential Credential { get; } = new(variable, "");
 
         public Uri Endpoint(SettingValues values) => new(values.Text(AssistantSchema.EndpointKey));
 

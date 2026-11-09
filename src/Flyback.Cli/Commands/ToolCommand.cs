@@ -2,13 +2,13 @@ using System.CommandLine;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Flyback.Assist;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using PluginRegistry = Flyback.Cli.Plugins;
 

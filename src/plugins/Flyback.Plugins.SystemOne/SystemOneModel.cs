@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.SystemOne;
@@ -24,7 +24,7 @@ public sealed class SystemOneModel : IDecisionModel
     /// <summary>Below a model that runs here, which answers without sending anything anywhere.</summary>
     public int Priority => 10;
 
-    public AssistantCredential? Credential { get; } = new(
+    public KeyCredential? Credential { get; } = new(
         "DECISION_SERVER_KEY",
         "Only for a server that asks for one; a laya-serve needs none.");
 
@@ -58,8 +58,8 @@ public sealed class SystemOneModel : IDecisionModel
 
         var body = SystemOneWire.Request(request, config.Values.Text(ModelKey));
 
-        var answer = await AssistantPost.Send(
-            config.Transport,
+        var answer = await KeyedPost.Send(
+            config.Client,
             endpoint,
             body,
             response => response.Headers.RetryAfter?.Delta,

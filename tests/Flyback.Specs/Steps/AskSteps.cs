@@ -8,9 +8,9 @@ using Flyback.Cli.Models;
 using Flyback.Core.Graph;
 using Flyback.Editor.Assist;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Reqnroll;
 using Shouldly;
@@ -40,7 +40,7 @@ public sealed class AskSteps : IDisposable
 
     private IDecisionModel? reader;
 
-    private PluginCatalog Catalog => new([], [], NodeCatalog.BuiltIn, Presets.All, [], [Assistant], decisionModels: reader is null ? null : [reader]);
+    private PluginCatalog Catalog => new([], [], NodeCatalog.BuiltIn, Presets.All, [], decisionModels: reader is null ? null : [reader]);
 
     public void Dispose() => folder.Delete(recursive: true);
 
@@ -71,6 +71,7 @@ public sealed class AskSteps : IDisposable
 
         code = await AskCommand.Run(
             Catalog,
+            new Assistants([Assistant]),
             about,
             new AskOptions(idea, null, [], false, false, null, false, null, Expand: true),
             output,
@@ -120,6 +121,7 @@ public sealed class AskSteps : IDisposable
 
         code = await AskCommand.Run(
             Catalog,
+            new Assistants([Assistant]),
             about,
             new AskOptions(message, null, [], false, json, null, false, null),
             output,
@@ -227,9 +229,7 @@ public sealed class AskSteps : IDisposable
 
         public string Name => "Remembering";
 
-        public int Priority => 0;
-
-        public AssistantCredential Credential => new("FLYBACK_REMEMBERING_KEY", "No key is needed.");
+        public KeyCredential Credential => new("FLYBACK_REMEMBERING_KEY", "No key is needed.");
 
         public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 
@@ -303,7 +303,7 @@ public sealed class AskSteps : IDisposable
 
         public int Priority => 0;
 
-        public AssistantCredential? Credential => null;
+        public KeyCredential? Credential => null;
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 

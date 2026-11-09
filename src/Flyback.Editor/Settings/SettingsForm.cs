@@ -8,7 +8,7 @@ using Flyback.Ui.Controls;
 namespace Flyback.Editor.Settings;
 
 /// <summary>
-/// A plugin's settings, drawn from what the plugin says it has — an assistant's
+/// A provider's settings, drawn from what it says it has: an assistant's
 /// (ADR-0069) or a sound backend's (ADR-0085).
 /// </summary>
 /// <remarks>

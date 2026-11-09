@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Flyback.Plugins.Assist;
+using Flyback.Assist;
 using Flyback.Plugins.Settings;
 
 namespace Flyback.Assist;

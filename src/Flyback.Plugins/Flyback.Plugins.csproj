@@ -34,8 +34,7 @@
     <InternalsVisibleTo Include="Flyback.Editor.Desktop.Tests" />
     <InternalsVisibleTo Include="Flyback.Cli.Tests" />
     <InternalsVisibleTo Include="Flyback.Site.Tests" />
-    <InternalsVisibleTo Include="Flyback.Plugins.Gemini.Tests" />
-    <InternalsVisibleTo Include="Flyback.Plugins.OpenAi.Tests" />
+    <InternalsVisibleTo Include="Flyback.Assist.Tests" />
     <InternalsVisibleTo Include="Flyback.Plugins.WinIO.Tests" />
     <InternalsVisibleTo Include="Flyback.Plugins.LinuxIO.Tests" />
     <InternalsVisibleTo Include="Flyback.Plugins.SystemOne.Tests" />
@@ -64,10 +63,6 @@
     <InternalsVisibleTo Include="Flyback.Plugins.Voice" />
     <InternalsVisibleTo Include="Flyback.Plugins.Effects" />
     <InternalsVisibleTo Include="Flyback.Plugins.Mastering" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Assist\priority-modules.txt" LogicalName="priority-modules.txt" />
   </ItemGroup>
 
   <ItemGroup>

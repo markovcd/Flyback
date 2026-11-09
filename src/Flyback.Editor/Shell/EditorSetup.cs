@@ -1,3 +1,4 @@
+using Flyback.Assist;
 using Flyback.Editor.Statistics;
 using Flyback.Plugins.Hosting;
 
@@ -27,4 +28,7 @@ public sealed record EditorSetup
 
     /// <summary>The plugins loaded before any window existed, already installed in the module catalog.</summary>
     internal PluginCatalog Plugins { get; init; } = PluginCatalog.Empty;
+
+    /// <summary>The assistants the window offers; none unless the host says otherwise.</summary>
+    internal Assistants Assistants { get; init; } = Assistants.None;
 }

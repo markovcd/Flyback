@@ -26,4 +26,4 @@ The SDK is the one Flyback builds on (.NET 10); an older one does not count, and
 - Whether authoring needs its own tool (`write_plugin`) or the assistant uses the file tools it already has; and where it may write, given a plugin loads only once somebody allows it (ADR-0158). A plugin it builds is never loaded without that yes.
 - Web editor and viewer have no SDK and no folder to build in; the answer there says authoring is a desktop thing.
 
-Nothing here was run; it is from reading `src/Flyback.Plugins/Assist/` and the README's `pack-plugin` section.
+Nothing here was run; it is from reading `src/Flyback.Assist/` and the README's `pack-plugin` section.

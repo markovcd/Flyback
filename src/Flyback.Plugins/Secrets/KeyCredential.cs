@@ -1,0 +1,27 @@
+using Flyback.Plugins.Settings;
+
+namespace Flyback.Plugins.Secrets;
+
+/// <summary>
+/// What a provider says about the key it needs, which the host holds and the
+/// plugin never sees a place to store.
+/// </summary>
+/// <remarks>
+/// Apart from <see cref="SettingField"/> because it is the one part of a
+/// provider's configuration that must not become one (ADR-0034): the host reads
+/// the variable, draws the box, and puts the key on requests itself
+/// (<see cref="IKeyedClient"/>).
+/// </remarks>
+/// <param name="EnvironmentVariable">
+/// The variable this provider is conventionally given its key in. The shell reads
+/// it, not the plugin.
+/// </param>
+/// <param name="Help">One line saying where a key comes from, shown under the field.</param>
+public sealed record KeyCredential(string EnvironmentVariable, string Help)
+{
+    /// <summary>The request header the key goes in.</summary>
+    internal string Header { get; init; } = "Authorization";
+
+    /// <summary>What goes before the key in <see cref="Header"/>, or null for the key alone.</summary>
+    internal string? Scheme { get; init; } = "Bearer";
+}

@@ -1,15 +1,16 @@
 using System.CommandLine;
 using System.Text.Json.Nodes;
-using Reqnroll;
-using Shouldly;
+using Flyback.Assist;
 using Flyback.Cli.Common;
 using Flyback.Plugins;
-using Flyback.Plugins.Assist;
+using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
-
-using PluginRegistry = Flyback.Cli.Plugins;
 using Flyback.Specs.Support;
+using Reqnroll;
+using Shouldly;
+using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Specs.Steps;
 
@@ -86,7 +87,7 @@ public sealed class PluginTrustSteps : IDisposable
             new PluginTrust(true, ShippedList.Beside(PluginHost.DefaultDirectory), PluginAllowances.None));
     }
 
-    [When("two plugins offer an assistant under the same id")]
+    [When("two plugins offer a decision model under the same id")]
     public void WhenTwins() => catalog = PluginHost.LoadTypes(typeof(FirstTwin), typeof(SecondTwin));
 
     [Then("the copied plugin runs")]
@@ -119,7 +120,7 @@ public sealed class PluginTrustSteps : IDisposable
     public void ThenStoreOffered() => catalog.SecretStores.ShouldHaveSingleItem().Id.ShouldBe("dpapi");
 
     [Then("neither is offered")]
-    public void ThenNeither() => catalog.Assistants.ShouldBeEmpty();
+    public void ThenNeither() => catalog.DecisionModels.ShouldBeEmpty();
 
     [Then("both are named as the reason")]
     public void ThenBothNamed()
@@ -140,7 +141,7 @@ public sealed class PluginTrustSteps : IDisposable
 
         credentials.Accept(assistant.Id, "sk-secret", Entered!, keep: false);
 
-        var transport = credentials.Transport(assistant, SettingValues.None, new AuthorizationRecorder(carried));
+        var transport = credentials.Client(assistant, SettingValues.None, new AuthorizationRecorder(carried));
 
         await transport.Send(new Uri(Entered + "/v1/models"), null, CancellationToken.None);
         await transport.Send(new Uri(elsewhere + "/v1/models"), null, CancellationToken.None);
@@ -201,14 +202,14 @@ public sealed class PluginTrustSteps : IDisposable
     {
         public PluginInfo Info { get; } = new("test.first", "First twin");
 
-        public void Register(IPluginRegistry registry) => registry.AddPatchAssistant(new Twin("https://twin.test"));
+        public void Register(IPluginRegistry registry) => registry.AddDecisionModel(new TwinModel());
     }
 
     public sealed class SecondTwin : IFlybackPlugin
     {
         public PluginInfo Info { get; } = new("test.second", "Second twin");
 
-        public void Register(IPluginRegistry registry) => registry.AddPatchAssistant(new Twin("https://twin.test"));
+        public void Register(IPluginRegistry registry) => registry.AddDecisionModel(new TwinModel());
     }
 
     private sealed class Twin(string origin) : IPatchAssistant
@@ -217,9 +218,7 @@ public sealed class PluginTrustSteps : IDisposable
 
         public string Name => "Twin";
 
-        public int Priority => 0;
-
-        public AssistantCredential Credential { get; } = new("FLYBACK_SPECS_TWIN_KEY", "");
+        public KeyCredential Credential { get; } = new("FLYBACK_SPECS_TWIN_KEY", "");
 
         public Uri Endpoint(SettingValues values) => new(origin + "/v1");
 
@@ -230,6 +229,23 @@ public sealed class PluginTrustSteps : IDisposable
         public string? Unavailable(AssistantConfig config) => null;
 
         public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => throw new NotSupportedException();
+    }
+
+    private sealed class TwinModel : IDecisionModel
+    {
+        public string Id => "twin";
+
+        public string Name => "Twin";
+
+        public int Priority => 0;
+
+        public KeyCredential? Credential { get; } = new("FLYBACK_SPECS_TWIN_KEY", "");
+
+        public IReadOnlyList<SettingField> Form(SettingValues values) => [];
+
+        public string? Unavailable(DecisionConfig config) => null;
+
+        public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel) => throw new NotSupportedException();
     }
 
 }

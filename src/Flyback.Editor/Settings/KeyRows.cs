@@ -2,8 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Flyback.Assist;
 using Flyback.Core;
-using Flyback.Plugins.Assist;
+using Flyback.Plugins.Secrets;
 using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Settings;
@@ -42,7 +43,7 @@ internal sealed class KeyRows
 
     private string? account;
 
-    private AssistantCredential? credential;
+    private KeyCredential? credential;
 
     /// <param name="name">What the key box is called, for finding it; its keep box is the same with <c>keep</c> before it.</param>
     public KeyRows(Credentials credentials, string? name = null)
@@ -103,7 +104,7 @@ internal sealed class KeyRows
     /// where <paramref name="needs"/> is null.
     /// </summary>
     /// <param name="advice">Said after the credential's own help while there is no key.</param>
-    public void Show(string? filedUnder, AssistantCredential? needs, string advice = "")
+    public void Show(string? filedUnder, KeyCredential? needs, string advice = "")
     {
         account = filedUnder;
         credential = needs;

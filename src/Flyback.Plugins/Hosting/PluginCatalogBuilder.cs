@@ -84,7 +84,6 @@ internal sealed class PluginCatalogBuilder
             registry.Modules,
             registry.Presets,
             problems,
-            Unclashed(registry.Assistants, a => a.Id, "assistant"),
             Unclashed(registry.SecretStores, s => s.Id, "secret store"),
             Unclashed(registry.MidiInputs, i => i.Id, "MIDI input"),
             providers,

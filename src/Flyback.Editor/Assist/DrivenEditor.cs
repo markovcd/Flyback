@@ -1,8 +1,8 @@
 using Avalonia.Threading;
+using Flyback.Assist;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Shell;
 using Flyback.Host.Driving;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.Editor.Assist;

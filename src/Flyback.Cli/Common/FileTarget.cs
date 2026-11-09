@@ -1,7 +1,7 @@
 using System.Text.Json;
+using Flyback.Assist;
 using Flyback.Cli.Commands;
 using Flyback.Cli.Models;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.Cli.Common;

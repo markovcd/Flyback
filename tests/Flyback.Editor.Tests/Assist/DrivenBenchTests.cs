@@ -1,9 +1,9 @@
 using System.Text.Json;
+using Flyback.Assist;
 using Flyback.Core.Graph;
 using Flyback.Editor.Assist;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
-using Flyback.Plugins.Assist;
 using Shouldly;
 using Xunit;
 

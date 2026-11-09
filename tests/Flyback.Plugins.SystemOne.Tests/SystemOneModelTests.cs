@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.Json.Nodes;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Flyback.Plugins.Testing;
 using Shouldly;
@@ -25,9 +25,9 @@ public class SystemOneModelTests
     private DecisionConfig Config(Canned canned, string? key = "test-key-not-real", SettingValues? values = null)
     {
         values ??= Served;
-        var origin = KeyedTransport.OriginOf(model.Endpoint(values)!);
+        var origin = KeyedClient.OriginOf(model.Endpoint(values)!);
 
-        return new DecisionConfig(new KeyedTransport(key, origin, model.Credential!, canned), values, null);
+        return new DecisionConfig(new KeyedClient(key, origin, model.Credential!, canned), values, null);
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public class SystemOneModelTests
     {
         var values = SettingValues.None.With(SystemOneModel.EndpointKey, "ftp://example.test");
 
-        model.Unavailable(new DecisionConfig(KeyedTransport.None, values, null)).ShouldNotBeNull().ShouldContain("not an http");
+        model.Unavailable(new DecisionConfig(KeyedClient.None, values, null)).ShouldNotBeNull().ShouldContain("not an http");
     }
 
     [Theory]

@@ -1,4 +1,4 @@
-using Flyback.Plugins.Assist;
+using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
@@ -32,12 +32,12 @@ public sealed class PluginTrustTests : IDisposable
     [Fact]
     public void A_folder_nobody_allowed_is_not_loaded_and_says_how_to_allow_it()
     {
-        var folder = CopiedIn("FakeAssistant", "Rehearsed");
+        var folder = CopiedIn("FakeDecider", "Scripted");
 
         var catalog = PluginHost.Load(Plugins, Checked());
 
         catalog.Plugins.ShouldBeEmpty();
-        catalog.Assistants.ShouldBeEmpty();
+        catalog.DecisionModels.ShouldBeEmpty();
 
         var problem = catalog.Problems.ShouldHaveSingleItem();
         problem.Folder.ShouldBe(folder);
@@ -48,36 +48,36 @@ public sealed class PluginTrustTests : IDisposable
     [Fact]
     public void A_build_that_checks_nothing_loads_the_same_folder()
     {
-        CopiedIn("FakeAssistant", "Rehearsed");
+        CopiedIn("FakeDecider", "Scripted");
 
         var catalog = PluginHost.Load(Plugins, PluginTrust.Unchecked);
 
-        catalog.Plugins.ShouldHaveSingleItem().Info.Id.ShouldBe("flyback.rehearsed");
+        catalog.Plugins.ShouldHaveSingleItem().Info.Id.ShouldBe("flyback.scripted-decider");
         catalog.Problems.ShouldBeEmpty();
     }
 
     [Fact]
     public void An_allowed_folder_loads_until_a_file_in_it_changes()
     {
-        var folder = CopiedIn("FakeAssistant", "Rehearsed");
+        var folder = CopiedIn("FakeDecider", "Scripted");
 
         Allowances.Allow(folder, secrets: false);
 
         Checked().Judge(folder).ShouldBe(new PluginVerdict(PluginStanding.Allowed, false, null));
 
-        File.AppendAllText(Path.Combine(folder, "Flyback.Plugins.FakeAssistant.dll"), "tampered");
+        File.AppendAllText(Path.Combine(folder, "Flyback.Plugins.FakeDecider.dll"), "tampered");
 
         var catalog = PluginHost.Load(Plugins, Checked());
 
         catalog.Plugins.ShouldBeEmpty();
         catalog.Problems.ShouldHaveSingleItem().Message
-            .ShouldStartWith("Flyback.Plugins.FakeAssistant.dll has changed since this plugin was allowed");
+            .ShouldStartWith("Flyback.Plugins.FakeDecider.dll has changed since this plugin was allowed");
     }
 
     [Fact]
     public void A_file_added_to_an_allowed_folder_is_a_change_too()
     {
-        var folder = CopiedIn("FakeAssistant", "Rehearsed");
+        var folder = CopiedIn("FakeDecider", "Scripted");
 
         Allowances.Allow(folder, secrets: false);
         File.WriteAllText(Path.Combine(folder, "Extra.dll"), "anything");
@@ -88,7 +88,7 @@ public sealed class PluginTrustTests : IDisposable
     [Fact]
     public void A_name_starting_with_a_dot_is_not_part_of_what_was_allowed()
     {
-        var folder = CopiedIn("FakeAssistant", "Rehearsed");
+        var folder = CopiedIn("FakeDecider", "Scripted");
 
         Allowances.Allow(folder, secrets: false);
         File.WriteAllText(Path.Combine(folder, ".DS_Store"), "Finder was here");
@@ -99,7 +99,7 @@ public sealed class PluginTrustTests : IDisposable
     [Fact]
     public void A_denied_folder_is_not_loaded_again()
     {
-        var folder = CopiedIn("FakeAssistant", "Rehearsed");
+        var folder = CopiedIn("FakeDecider", "Scripted");
 
         Allowances.Allow(folder, secrets: false);
         Allowances.Deny(folder).ShouldBeTrue();
@@ -123,16 +123,16 @@ public sealed class PluginTrustTests : IDisposable
     [Fact]
     public void A_shipped_folder_whose_file_was_replaced_is_not_loaded()
     {
-        var folder = CopiedIn("FakeAssistant", "FakeAssistant");
+        var folder = CopiedIn("FakeDecider", "FakeDecider");
         var list = ShippedList.Parse(string.Concat(
-            PluginFiles.Of(folder).Hashes.Select(f => $"{f.Value}  FakeAssistant/{f.Key}\n")));
+            PluginFiles.Of(folder).Hashes.Select(f => $"{f.Value}  FakeDecider/{f.Key}\n")));
 
-        File.AppendAllText(Path.Combine(folder, "Flyback.Plugins.FakeAssistant.dll"), "tampered");
+        File.AppendAllText(Path.Combine(folder, "Flyback.Plugins.FakeDecider.dll"), "tampered");
 
         var verdict = new PluginTrust(true, list, Allowances).Judge(folder);
 
         verdict.Standing.ShouldBe(PluginStanding.Changed);
-        verdict.Reason.ShouldBe("Flyback.Plugins.FakeAssistant.dll is not as Flyback shipped it, so this plugin is not loaded.");
+        verdict.Reason.ShouldBe("Flyback.Plugins.FakeDecider.dll is not as Flyback shipped it, so this plugin is not loaded.");
     }
 
     [Fact]
@@ -160,16 +160,16 @@ public sealed class PluginTrustTests : IDisposable
     }
 
     [Fact]
-    public void Two_plugins_offering_one_assistant_both_lose_it()
+    public void Two_plugins_offering_one_decision_model_both_lose_it()
     {
         var catalog = PluginHost.LoadTypes(typeof(FirstTwin), typeof(SecondTwin));
 
         catalog.Plugins.Count.ShouldBe(2);
-        catalog.Assistants.ShouldBeEmpty();
+        catalog.DecisionModels.ShouldBeEmpty();
         catalog.Problems.Select(p => p.ToString()).ShouldBe(
         [
-            "test.first: assistant 'twin' is registered by Second twin as well, so neither is used.",
-            "test.second: assistant 'twin' is registered by First twin as well, so neither is used.",
+            "test.first: decision model 'twin' is registered by Second twin as well, so neither is used.",
+            "test.second: decision model 'twin' is registered by First twin as well, so neither is used.",
         ]);
     }
 
@@ -186,7 +186,7 @@ public sealed class PluginTrustTests : IDisposable
     [Fact]
     public void Folders_a_package_installed_are_adopted_once_per_plugins_folder()
     {
-        var installed = CopiedIn("FakeAssistant", "Installed");
+        var installed = CopiedIn("FakeDecider", "Installed");
         var copied = CopiedIn("Sample", "Copied");
 
         File.WriteAllText(Path.Combine(installed, PluginPackage.MarkerName), "abc\n");
@@ -196,7 +196,7 @@ public sealed class PluginTrustTests : IDisposable
         Checked().Judge(installed).Standing.ShouldBe(PluginStanding.Allowed);
         Checked().Judge(copied).Standing.ShouldBe(PluginStanding.NotAllowed);
 
-        var later = CopiedIn("FakeAssistant", "Later");
+        var later = CopiedIn("FakeDecider", "Later");
         File.WriteAllText(Path.Combine(later, PluginPackage.MarkerName), "abc\n");
 
         Allowances.Adopt(Plugins);
@@ -207,7 +207,7 @@ public sealed class PluginTrustTests : IDisposable
     [Fact]
     public void A_broken_list_allows_nothing()
     {
-        var folder = CopiedIn("FakeAssistant", "Rehearsed");
+        var folder = CopiedIn("FakeDecider", "Scripted");
 
         File.WriteAllText(Allowances.File, "{ not json");
 
@@ -248,14 +248,14 @@ public sealed class PluginTrustTests : IDisposable
     {
         public PluginInfo Info { get; } = new("test.first", "First twin");
 
-        public void Register(IPluginRegistry registry) => registry.AddPatchAssistant(new Twin());
+        public void Register(IPluginRegistry registry) => registry.AddDecisionModel(new Twin());
     }
 
     public sealed class SecondTwin : IFlybackPlugin
     {
         public PluginInfo Info { get; } = new("test.second", "Second twin");
 
-        public void Register(IPluginRegistry registry) => registry.AddPatchAssistant(new Twin());
+        public void Register(IPluginRegistry registry) => registry.AddDecisionModel(new Twin());
     }
 
     public sealed class FirstStore : IFlybackPlugin
@@ -272,7 +272,7 @@ public sealed class PluginTrustTests : IDisposable
         public void Register(IPluginRegistry registry) => registry.AddSecretStore(new Store());
     }
 
-    private sealed class Twin : IPatchAssistant
+    private sealed class Twin : IDecisionModel
     {
         public string Id => "twin";
 
@@ -280,17 +280,13 @@ public sealed class PluginTrustTests : IDisposable
 
         public int Priority => int.MaxValue;
 
-        public AssistantCredential Credential { get; } = new("TWIN_KEY", "");
-
-        public Uri Endpoint(SettingValues values) => new("https://twin.test/");
+        public KeyCredential? Credential { get; } = new("TWIN_KEY", "");
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 
-        public AssistantSenses Senses(SettingValues values) => default;
+        public string? Unavailable(DecisionConfig config) => null;
 
-        public string? Unavailable(AssistantConfig config) => null;
-
-        public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => throw new NotSupportedException();
+        public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel) => throw new NotSupportedException();
     }
 
     private sealed class Store : ISecretStore

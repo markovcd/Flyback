@@ -8,6 +8,8 @@
 
 ### Assistant
 
+- The chat-completions and Gemini assistants are part of Flyback rather than plugins, and a plugin can no longer add one. The plugins window no longer marks the plugin the assistant sends to. Plugins that keep a key, such as a decision model, rebuild against the renamed `IKeyedClient`, `KeyedClient` and `KeyCredential`.
+
 ### Editor
 
 - The status bar shows the sound's oversampling as a short "2×" beside five rungs that light the further ahead of real time the sound renders, instead of a line of text. Before them a short level bar shows how close the sound peaks to clipping, after the Volume: the warning color within 3 dB of full scale, red on a clip, with a dot that stays lit after a clip until clicked. The rungs turn the color scheme's new warning color when the sound only just keeps up and red when it falls behind; the exact speed is in their tip, or said on a tap.

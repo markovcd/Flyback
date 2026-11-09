@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using Flyback.Assist;
 using Flyback.Core.Graph;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Canvas;
@@ -11,8 +12,8 @@ using Flyback.Editor.Composition;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
@@ -37,14 +38,12 @@ public class StartWithPromptTests : EditorTest
 
         public string Name => "Briefing";
 
-        public int Priority => 0;
-
         public bool NeedsKey => false;
 
         public AssistantSchema Schema { get; } =
             new("briefing", [new AssistantModel("briefing")], "NONE", "none needed");
 
-        public AssistantCredential Credential => Schema.Credential;
+        public KeyCredential Credential => Schema.Credential;
 
         public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 
@@ -79,10 +78,10 @@ public class StartWithPromptTests : EditorTest
     private MainWindow Open(Briefing? assistant)
     {
         var folders = new EditorFolders();
-        var catalog = new PluginCatalog([], [], NodeCatalog.BuiltIn, [.. Presets.All], [], assistant is null ? [] : [assistant]);
+        var catalog = new PluginCatalog([], [], NodeCatalog.BuiltIn, [.. Presets.All], []);
 
         return Open(
-            setup: new EditorSetup { Folders = folders, Plugins = catalog },
+            setup: new EditorSetup { Folders = folders, Plugins = catalog, Assistants = assistant is null ? Assistants.None : new([assistant]) },
             replace: services => services.AddSingleton(
                 new AssistantSettingRepository(folders, new AssistantSettings { Provider = assistant?.Id ?? string.Empty })));
     }

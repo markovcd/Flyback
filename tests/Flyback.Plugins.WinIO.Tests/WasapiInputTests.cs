@@ -1,5 +1,4 @@
 using Flyback.Core.Graph;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Midi;
@@ -84,8 +83,6 @@ public sealed class WasapiInputTests
         public void AddModules(ModuleProvider provider, IReadOnlyList<NodeDef> modules) { }
 
         public void AddPresets(IReadOnlyList<PatchPreset> presets) { }
-
-        public void AddPatchAssistant(IPatchAssistant assistant) { }
 
         public void AddSecretStore(ISecretStore store) { }
 

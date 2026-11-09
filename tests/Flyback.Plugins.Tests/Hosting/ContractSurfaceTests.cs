@@ -40,14 +40,14 @@ public class ContractSurfaceTests
         ["Flyback.Core.Graph.PatchControl"] = "Patch.Controls, saved in the patch file.",
         ["Flyback.Core.Graph.ControlLink"] = "A socket's link to a panel knob, saved in its module's state.",
         ["Flyback.Core.Graph.Step"] = "What StepsExtra.Set fills a sequencer with.",
+        ["Flyback.Core.Graph.Patch"] = "PatchPreset.Build's result: a positional record's shape is public as one piece, and a plugin hands its presets over as PatchPresets.",
         ["Flyback.Core.Graph.ModuleCatalog"] = "PatchPreset.Build's parameter: a positional record's shape is public as one piece, and a plugin hands its presets over as PatchPresets.",
         ["Flyback.Core.Graph.PartLevel"] = "ArrangementExtra's default, one part's level in one section.",
         ["Flyback.Core.Graph.SongPart"] = "SongExtra's default, one named part of the Song and its levels.",
         ["Flyback.Plugins.Midi.MidiAction"] = "MidiMessage.Action's type, which a MIDI input plugin builds a message with.",
         ["Flyback.Plugins.Decide.IPreparedModel"] = "The only way a decision model that runs here gets its files: the host downloads them, so the plugin never reaches the network (ADR-0186).",
         ["Flyback.Plugins.Decide.ModelFile"] = "What IPreparedModel.Needs lists.",
-        ["Flyback.Plugins.Assist.Listener"] = "AssistantSenses.Hearing's type, named by an assistant that reports its senses without AssistantSchema.",
-        ["Flyback.Plugins.Settings.SettingField+Switch"] = "A field kind a plugin's settings form is built from; the forms in the box are AssistantSchema's.",
+        ["Flyback.Plugins.Settings.SettingField+Switch"] = "A field kind a plugin's settings form is built from.",
     };
 
     private static readonly Assembly[] Contract = [typeof(NodeDef).Assembly, typeof(IFlybackPlugin).Assembly];
@@ -210,7 +210,6 @@ public class ContractSurfaceTests
         ["Flyback.Core.Graph.PatchControl"] = "Patch.Controls, saved in the patch file.",
         ["Flyback.Core.Graph.KeyboardScale"] = "Patch.Keyboard, saved in the patch file.",
         ["Flyback.Core.Graph.ControlLink"] = "Saved in a module's state.",
-        ["Flyback.Plugins.Assist.ModelReport"] = "What Survey keeps in the settings file.",
     };
 
     /// <summary>

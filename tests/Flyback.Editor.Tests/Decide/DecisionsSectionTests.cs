@@ -3,15 +3,16 @@ using System.Security.Cryptography;
 using System.Text;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Flyback.Assist;
 using Flyback.Core.Graph;
 using Flyback.Editor.Decide;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.FakeDecider;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
@@ -231,13 +232,13 @@ public sealed class DecisionsSectionTests : EditorTest
 
         public int Priority => 0;
 
-        public AssistantCredential? Credential { get; } = new("HOSTED_DECISION_KEY_NOT_SET", "Get one somewhere.");
+        public KeyCredential? Credential { get; } = new("HOSTED_DECISION_KEY_NOT_SET", "Get one somewhere.");
 
         public Uri Endpoint(SettingValues values) => new("https://hosted.test/v1/systemone");
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 
-        public string? Unavailable(DecisionConfig config) => config.Transport.HasKey ? null : "No key yet.";
+        public string? Unavailable(DecisionConfig config) => config.Client.HasKey ? null : "No key yet.";
 
         public Task<Decision> DecideAsync(DecisionRequest request, DecisionConfig config, CancellationToken cancel) => throw new NotSupportedException();
     }
@@ -251,7 +252,7 @@ public sealed class DecisionsSectionTests : EditorTest
 
         public int Priority => 0;
 
-        public AssistantCredential? Credential => null;
+        public KeyCredential? Credential => null;
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [new SettingField.Text("model", "Model")];
 
@@ -270,7 +271,7 @@ public sealed class DecisionsSectionTests : EditorTest
 
         public int Priority => 0;
 
-        public AssistantCredential? Credential => null;
+        public KeyCredential? Credential => null;
 
         public IReadOnlyList<ModelFile> Needs { get; } =
             [new(new Uri("https://models.test/w.bin"), "w.bin", Convert.ToHexStringLower(SHA256.HashData(Weights.Body)), Weights.Body.Length)];

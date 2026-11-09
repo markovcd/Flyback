@@ -1,6 +1,6 @@
 using System.Reflection;
+using Flyback.Assist;
 using Flyback.Core;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;

@@ -7,7 +7,6 @@ using Avalonia.Media.Imaging;
 using Avalonia.Media.Immutable;
 using Flyback.Assist;
 using Flyback.Editor.Controls;
-using Flyback.Plugins.Assist;
 using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 

@@ -1,5 +1,4 @@
 using Flyback.Core.Graph;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Midi;
@@ -14,7 +13,6 @@ namespace Flyback.Plugins.Hosting;
 internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegistry
 {
     private readonly List<IAudioOutput> audioOutputs = [];
-    private readonly List<IPatchAssistant> assistants = [];
     private readonly List<ISecretStore> secretStores = [];
     private readonly List<IMidiInput> midiInputs = [];
     private readonly List<IAudioInput> audioInputs = [];
@@ -33,8 +31,6 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
 
     public IReadOnlyList<IAudioOutput> AudioOutputs => audioOutputs;
 
-    public IReadOnlyList<IPatchAssistant> Assistants => assistants;
-
     public IReadOnlyList<ISecretStore> SecretStores => secretStores;
 
     public IReadOnlyList<IMidiInput> MidiInputs => midiInputs;
@@ -48,10 +44,10 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
 
     /// <summary>How far everything had got, to undo a plugin's registration back to.</summary>
     public readonly record struct Checkpoint(
-        ModuleCatalog Modules, int Offered, int Presets, int AudioOutputs, int Assistants, int SecretStores, int MidiInputs, int AudioInputs, int DecisionModels, int Problems);
+        ModuleCatalog Modules, int Offered, int Presets, int AudioOutputs, int SecretStores, int MidiInputs, int AudioInputs, int DecisionModels, int Problems);
 
     public Checkpoint Mark() => new(
-        Modules, offered.Count, presets.Count, audioOutputs.Count, assistants.Count, secretStores.Count, midiInputs.Count, audioInputs.Count, decisionModels.Count, problems.Count);
+        Modules, offered.Count, presets.Count, audioOutputs.Count, secretStores.Count, midiInputs.Count, audioInputs.Count, decisionModels.Count, problems.Count);
 
     public IEnumerable<NodeDef> OfferedSince(Checkpoint mark) => offered.Skip(mark.Offered);
 
@@ -62,7 +58,6 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
         offered.RemoveRange(mark.Offered, offered.Count - mark.Offered);
         presets.RemoveRange(mark.Presets, presets.Count - mark.Presets);
         Trim(audioOutputs, mark.AudioOutputs);
-        Trim(assistants, mark.Assistants);
         Trim(secretStores, mark.SecretStores);
         Trim(midiInputs, mark.MidiInputs);
         Trim(audioInputs, mark.AudioInputs);
@@ -124,12 +119,6 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
     {
         audioOutputs.Add(output);
         providers[output] = Source;
-    }
-
-    public void AddPatchAssistant(IPatchAssistant assistant)
-    {
-        assistants.Add(assistant);
-        providers[assistant] = Source;
     }
 
     public void AddSecretStore(ISecretStore store)

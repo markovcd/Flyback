@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Flyback.Assist;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Gallery;
@@ -161,11 +162,11 @@ internal sealed class Toolbar
 
     /// <param name="document">What Undo and Redo have behind and ahead of them.</param>
     /// <param name="presets">The preset slot, first on the bar.</param>
-    /// <param name="plugins">Whether any assistant plugin is installed.</param>
+    /// <param name="assistants">Whether this window has an assistant.</param>
     /// <param name="recording">Whether a take is running, which no other patch may be opened under.</param>
     /// <param name="host">Whether the editor is in a page, whose bar has none of what a page cannot do.</param>
     /// <param name="settings">Whether the buttons are labeled.</param>
-    public Toolbar(Document document, PresetSlot presets, PluginCatalog plugins, Reactions reactions, IDialog dialog, RecordingState recording, EditorHost host, CanvasSection settings)
+    public Toolbar(Document document, PresetSlot presets, Assistants assistants, Reactions reactions, IDialog dialog, RecordingState recording, EditorHost host, CanvasSection settings)
     {
         var full = !host.InPage;
 
@@ -198,8 +199,6 @@ internal sealed class Toolbar
         About.Click += async (_, _) => await Controls.About.Show(dialog);
         Home.Click += (_, _) => host.Home?.Invoke();
 
-        var assistants = plugins.Assistants.Count > 0;
-
         // A locked canvas says why in its tip, and that is wasted unless a
         // disabled button is still allowed to show it. The same for a patch with
         // no picture to swap in, and for a side column the canvas is standing in.
@@ -225,11 +224,11 @@ internal sealed class Toolbar
             modifiers = KeyModifiers.None;
         };
 
-        Assistant.IsEnabled = assistants;
-        ToolTip.SetTip(Assistant, assistants
+        Assistant.IsEnabled = assistants.Count > 0;
+        ToolTip.SetTip(Assistant, assistants.Count > 0
             ? "Describe a patch and have one built. Nothing is sent until you ask, and what "
               + "comes back is an edit Ctrl+Z takes off again."
-            : "No assistant plugin is installed. See About for where plugins are looked for.");
+            : "This window has no assistant.");
 
         // What is done to the patch, in the order it is done: pick one, open or
         // save one, take an edit back. Tidy sits with undo and redo rather than

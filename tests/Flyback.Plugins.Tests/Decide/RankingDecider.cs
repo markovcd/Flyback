@@ -1,5 +1,6 @@
-using Flyback.Plugins.Assist;
+using Flyback.Assist;
 using Flyback.Plugins.Decide;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.Tests.Decide;
@@ -18,7 +19,7 @@ internal sealed class RankingDecider(params (string Label, double P)[] favored) 
 
     public int Priority => 0;
 
-    public AssistantCredential? Credential => null;
+    public KeyCredential? Credential => null;
 
     public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 

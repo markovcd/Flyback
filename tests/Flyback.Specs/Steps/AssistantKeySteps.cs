@@ -1,6 +1,6 @@
 using Flyback.Assist;
 using Flyback.Core.Graph;
-using Flyback.Plugins.Assist;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Flyback.Specs.Support;
 using Reqnroll;
@@ -42,7 +42,7 @@ public sealed class AssistantKeySteps : IDisposable
     [When("the assistant sends a request there")]
     public async Task WhenSent()
     {
-        var transport = credentials.Transport(Assistant, SettingValues.None, new AuthorizationRecorder(carried));
+        var transport = credentials.Client(Assistant, SettingValues.None, new AuthorizationRecorder(carried));
 
         await transport.Send(new Uri(Assistant.Origin + "/v1/models"), null, CancellationToken.None);
     }
@@ -56,9 +56,9 @@ public sealed class AssistantKeySteps : IDisposable
     [Then("the assistant says the key is not sent over plain http")]
     public void ThenItSaysWhy()
     {
-        var config = new AssistantConfig(credentials.Transport(Assistant, SettingValues.None), SettingValues.None);
+        var config = new AssistantConfig(credentials.Client(Assistant, SettingValues.None), SettingValues.None);
 
-        Credentials.Elsewhere(Assistant, config).ShouldNotBeNull().ShouldContain("plain http");
+        AssistantKeys.Elsewhere(Assistant, config).ShouldNotBeNull().ShouldContain("plain http");
     }
 
     [Given("a conversation with an assistant that has a key")]
@@ -67,7 +67,7 @@ public sealed class AssistantKeySteps : IDisposable
     [When("a message with the key in it is sent")]
     public async Task WhenTheKeyIsInTheMessage()
     {
-        var config = new AssistantConfig(new KeyedTransport(Key, "https://assistant.test", new AssistantCredential("", "")), SettingValues.None);
+        var config = new AssistantConfig(new KeyedClient(Key, "https://assistant.test", new KeyCredential("", "")), SettingValues.None);
 
         using var run = new AssistantRun(listening.ShouldNotBeNull(), config, NodeCatalog.BuiltIn, new Patch());
 
@@ -91,9 +91,7 @@ public sealed class AssistantKeySteps : IDisposable
 
         public string Name => "Sending";
 
-        public int Priority => 0;
-
-        public AssistantCredential Credential { get; } = new(variable, "");
+        public KeyCredential Credential { get; } = new(variable, "");
 
         public Uri Endpoint(SettingValues values) => new(origin + "/v1");
 

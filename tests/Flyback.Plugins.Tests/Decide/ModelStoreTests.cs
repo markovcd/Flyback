@@ -1,8 +1,9 @@
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
-using Flyback.Plugins.Assist;
+using Flyback.Assist;
 using Flyback.Plugins.Decide;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
@@ -121,7 +122,7 @@ public sealed class ModelStoreTests : IDisposable
 
         public int Priority => 0;
 
-        public AssistantCredential? Credential => null;
+        public KeyCredential? Credential => null;
 
         public IReadOnlyList<ModelFile> Needs => files;
 

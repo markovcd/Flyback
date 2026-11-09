@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    The host's side of a conversation with an assistant: the run, the session the
-    editor's column and flyback-cli ask both drive, and how a conversation is saved
-    with its patch. Kept out of Flyback.Plugins, which a plugin is compiled against
-    and which holds only the contract and what the contract needs (ADR-0169).
+    Everything about the assistant: the workbench it edits a patch through, the turn,
+    the assistants Flyback has (OpenAI-compatible and Gemini), the session the editor's
+    column and flyback-cli ask both drive, and how a conversation is saved with its
+    patch. None of it is plugin contract (ADR-0231).
   -->
   <PropertyGroup>
     <RootNamespace>Flyback.Assist</RootNamespace>
@@ -28,6 +28,12 @@
     <InternalsVisibleTo Include="Flyback.Editor.Desktop.Tests" />
     <InternalsVisibleTo Include="Flyback.Cli.Tests" />
     <InternalsVisibleTo Include="Flyback.Specs" />
+    <InternalsVisibleTo Include="Flyback.Assist.Tests" />
+    <InternalsVisibleTo Include="Flyback.Plugins.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="priority-modules.txt" LogicalName="priority-modules.txt" />
   </ItemGroup>
 
 </Project>

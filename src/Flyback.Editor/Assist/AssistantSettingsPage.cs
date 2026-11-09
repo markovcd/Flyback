@@ -1,10 +1,11 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Flyback.Assist;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Secrets;
 using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Assist;
@@ -17,7 +18,6 @@ namespace Flyback.Editor.Assist;
 internal sealed class AssistantSettingsPage
 {
     private readonly ChosenAssistant chosenAssistant;
-    private readonly PluginCatalog plugins;
     private readonly Credentials credentials;
     private readonly AssistantSettingRepository settingsRepository;
     private readonly IAssistantEditor editor;
@@ -123,7 +123,6 @@ internal sealed class AssistantSettingsPage
 
     public AssistantSettingsPage(
         ChosenAssistant chosenAssistant,
-        PluginCatalog plugins,
         Credentials credentials,
         AssistantSettingRepository settingsRepository,
         IAssistantEditor editor,
@@ -132,7 +131,6 @@ internal sealed class AssistantSettingsPage
     {
         this.driven = driven;
         this.chosenAssistant = chosenAssistant;
-        this.plugins = plugins;
         this.credentials = credentials;
         this.settingsRepository = settingsRepository;
         this.editor = editor;
@@ -159,7 +157,7 @@ internal sealed class AssistantSettingsPage
         // The list before what is chosen in it, and both before the handler that
         // watches it: a box with no rows in it cannot be told which row to show,
         // and a selection made now is a restoration rather than a choice.
-        providerBox.ItemsSource = new[] { NoProvider }.Concat(plugins.Assistants.Select(a => a.Name)).ToList();
+        providerBox.ItemsSource = new[] { NoProvider }.Concat(chosenAssistant.Offered.All.Select(a => a.Name)).ToList();
 
         ShowProviderForm();
 
@@ -206,9 +204,9 @@ internal sealed class AssistantSettingsPage
         providerBox.SelectionChanged += (_, _) =>
         {
             // Row 0 is always "None"; a real provider is one row below its own
-            // place in plugins.Assistants because of it.
+            // place in the offered list because of it.
             var row = providerBox.SelectedIndex;
-            if (row < 0 || row > plugins.Assistants.Count) return;
+            if (row < 0 || row > chosenAssistant.Offered.Count) return;
 
             chosenAssistant.Choose(row);
 
@@ -335,7 +333,7 @@ internal sealed class AssistantSettingsPage
     {
         providerBox.SelectedIndex = chosenAssistant.Value is null
             ? 0
-            : plugins.Assistants
+            : chosenAssistant.Offered.All
                 .Select((a, i) => (a, i))
                 .Where(pair => pair.a.Id == chosenAssistant.Value.Id)
                 .Select(pair => pair.i + 1)
@@ -379,7 +377,7 @@ internal sealed class AssistantSettingsPage
             settingsRepository.Current.Provider = chosenAssistant.Value.Id;
             settingsRepository.Current.Remember(chosenAssistant.Value.Id, form.Values);
 
-            if (key.Take(KeyedTransport.OriginOf(chosenAssistant.Value, form.Values)) is { } said) editor.Report(said, null);
+            if (key.Take(AssistantKeys.OriginOf(chosenAssistant.Value, form.Values)) is { } said) editor.Report(said, null);
         }
 
         try
@@ -403,7 +401,7 @@ internal sealed class AssistantSettingsPage
     /// </summary>
     public AssistantConfig? Configured() =>
         chosenAssistant.Value is { } assistant
-            ? new AssistantConfig(credentials.Transport(assistant, form.Values), form.Values)
+            ? new AssistantConfig(credentials.Client(assistant, form.Values), form.Values)
             : null;
 
     /// <summary>The model the chosen provider's form is set to, or null where its form names none.</summary>
@@ -437,13 +435,13 @@ internal sealed class AssistantSettingsPage
     /// hand, since a key typed here is not saved until Save and may under
     /// ADR-0034 never be written down at all.
     /// </summary>
-    private IAssistantTransport? KeyOnTheForm()
+    private IKeyedClient? KeyOnTheForm()
     {
         if (chosenAssistant.Value is not { } assistant) return null;
 
         var transport = string.IsNullOrWhiteSpace(key.Entered)
-            ? credentials.Transport(assistant, form.Values)
-            : new KeyedTransport(key.Entered, KeyedTransport.OriginOf(assistant, form.Values), assistant.Credential);
+            ? credentials.Client(assistant, form.Values)
+            : new KeyedClient(key.Entered, AssistantKeys.OriginOf(assistant, form.Values), assistant.Credential);
 
         return transport.HasKey ? transport : null;
     }

@@ -15,7 +15,7 @@ internal static class Vault
     /// <summary>
     /// Mixed into the protection, and in public source: it keeps nothing from another
     /// program running as the same user. What does is that no plugin is handed a key
-    /// (IAssistantTransport) and no folder loads unasked (PluginTrust).
+    /// (IKeyedClient) and no folder loads unasked (PluginTrust).
     /// </summary>
     private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("Flyback.Assist.v1");
 

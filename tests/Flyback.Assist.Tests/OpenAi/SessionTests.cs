@@ -1,0 +1,800 @@
+using System.Net;
+using System.Text.Json.Nodes;
+using Flyback.Assist;
+using Flyback.Assist.OpenAi;
+using Flyback.Core.Graph;
+using Flyback.Plugins.Secrets;
+using Flyback.Plugins.Testing;
+using Shouldly;
+using Xunit;
+
+namespace Flyback.Assist.Tests.OpenAi;
+
+/// <summary>
+/// How a turn ends, driven by canned replies rather than by an endpoint.
+/// </summary>
+/// <remarks>
+/// A turn ends with a patch proposed, with the model having stopped talking, or with
+/// the person having canceled — all three ordinary. The workbench is a copy, so the
+/// two that reach no proposal have changed nothing anyone can see, which is why
+/// nothing here answers one by asking again.
+/// </remarks>
+public class SessionTests
+{
+    /// <summary>
+    /// A gray field — the smallest patch that compiles cleanly, and so the
+    /// smallest one that may be proposed.
+    /// </summary>
+    private static readonly (string Name, string Arguments)[] Building =
+    [
+        ("write_patch", """{"source":"let knob1 = value(value: 0.5)"}"""),
+        // The Output is already there, and the text calls it out.
+        ("edit_patch", """{"edits":[{"find":"let knob1 = value(value: 0.5)","replace":"let knob1 = value(value: 0.5)\nknob1 |> out.color"}]}"""),
+    ];
+
+    /// <summary>
+    /// The smallest patch that actually sounds. The clock is not decoration: an
+    /// oscillator accumulates how far its 'in' has moved, so one without it is
+    /// silent whatever its freq says — and silence comes back as a sentence
+    /// rather than as a WAV.
+    /// </summary>
+    private static readonly (string Name, string Arguments)[] Sounding =
+    [
+        ("write_patch", """{"source":"let tone1 = t |> sine(freq: 440)"}"""),
+        ("edit_patch", """{"edits":[{"find":"let tone1 = t |> sine(freq: 440)","replace":"let tone1 = t |> sine(freq: 440)\ntone1 |> out.left"}]}"""),
+    ];
+
+    /// <summary>
+    /// The quiet failure. Nothing reaches the editor until <c>propose</c>, so a
+    /// model that builds a patch and then signs off leaves the person looking at
+    /// the patch they already had — one did exactly this, and told them they
+    /// were "set to further refine" a patch that was not on their canvas.
+    /// </summary>
+    [Fact]
+    public async Task Building_and_stopping_without_offering_it_is_pointed_out()
+    {
+        var (events, sent) = await Run(
+            Asking(Building),
+            Prose("You're now set to further refine the patch as needed."),
+            Prose("It is ready to refine."));
+
+        events.OfType<PatchEvent.Proposed>().ShouldBeEmpty();
+        events.OfType<PatchEvent.Did>().ShouldContain(d => d.Summary.Contains("canvas still shows"));
+
+        // Asked once to propose what it built, and told to the person when that
+        // changes nothing.
+        sent.Count.ShouldBe(3);
+        sent[2].ToJsonString().ShouldContain("did not propose it");
+    }
+
+    /// <summary>
+    /// A turn that only asked a question says nothing of the sort. There is
+    /// nothing waiting to be offered, so the canvas is not out of date and
+    /// saying it were would be noise on every question anybody asks.
+    /// </summary>
+    [Fact]
+    public async Task A_question_with_nothing_built_is_left_alone()
+    {
+        var (events, sent) = await Run(Prose("Which key should it be in?"));
+
+        sent.Count.ShouldBe(1);
+        events.OfType<PatchEvent.Did>().ShouldBeEmpty();
+        events.OfType<PatchEvent.Said>().ShouldHaveSingleItem();
+    }
+
+    /// <summary>And a turn that did offer its work has nothing to warn about.</summary>
+    [Fact]
+    public async Task A_turn_that_proposed_says_nothing_about_the_canvas()
+    {
+        var (events, _) = await Run(
+            Asking(Building),
+            Asking(("propose", """{"summary":"a flat gray field"}""")));
+
+        events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
+        events.OfType<PatchEvent.Did>().ShouldNotContain(d => d.Summary.Contains("canvas still shows"));
+    }
+
+    [Fact]
+    public async Task A_patch_it_proposes_is_offered_to_the_person()
+    {
+        var (events, _) = await Run(
+            Asking(Building),
+            Asking(("propose", """{"summary":"a flat gray field"}""")));
+
+        var proposed = events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
+
+        proposed.Summary.ShouldBe("a flat gray field");
+        proposed.Patch.Nodes.Count.ShouldBe(2);
+        events.OfType<PatchEvent.Failed>().ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// A second message is asked of the same conversation, carrying everything
+    /// the first one said and built.
+    /// </summary>
+    [Fact]
+    public async Task A_second_message_keeps_the_first_ones_history()
+    {
+        var canned = new Canned(
+            new CannedAnswer(Asking(Building)),
+            new CannedAnswer(Prose("Done. Gray enough?")),
+            new CannedAnswer(Asking(("propose", """{"summary":"a flat gray field"}"""))));
+
+        var workbench = new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false);
+
+        using var session = new OpenAiSession(
+            workbench,
+            new AssistantChoices("some-model"),
+            "https://nowhere.invalid/v1",
+            new KeyedClient(null, null, new KeyCredential("", ""), canned));
+
+        await Drain(session, "make a gray field");
+        var second = await Drain(session, "yes, propose it");
+
+        second.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem()
+            .Patch.Nodes.Count.ShouldBe(2, "it proposed the patch the first message built");
+
+        // Both messages are in the last request, and so is what it said between
+        // them. A session that started over would have sent one.
+        var sent = canned.Sent[^1].ToJsonString();
+
+        sent.ShouldContain("make a gray field");
+        sent.ShouldContain("Gray enough?");
+        sent.ShouldContain("yes, propose it");
+    }
+
+    /// <summary>
+    /// A proposal belongs to the turn that made it. The workbench remembers one
+    /// until it is told otherwise, so a conversation carrying on past a proposal
+    /// would hand the same patch over again — as the answer to a message that
+    /// only asked a question.
+    /// </summary>
+    [Fact]
+    public async Task A_proposal_is_not_offered_a_second_time_by_the_next_message()
+    {
+        var canned = new Canned(
+            new CannedAnswer(Asking(Building)),
+            new CannedAnswer(Asking(("propose", """{"summary":"a flat gray field"}"""))),
+            new CannedAnswer(Prose("It is the one I just offered you.")));
+
+        var workbench = new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false);
+
+        using var session = new OpenAiSession(
+            workbench,
+            new AssistantChoices("some-model"),
+            "https://nowhere.invalid/v1",
+            new KeyedClient(null, null, new KeyCredential("", ""), canned));
+
+        (await Drain(session, "make a gray field")).OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
+
+        var second = await Drain(session, "what did you build?");
+
+        second.OfType<PatchEvent.Proposed>().ShouldBeEmpty();
+        second.OfType<PatchEvent.Said>().ShouldHaveSingleItem();
+
+        // The patch itself is still there to carry on from — only the offer was
+        // taken back.
+        workbench.Snapshot().Nodes.Count.ShouldBe(2);
+    }
+
+    /// <summary>
+    /// A question is an answer. A model that stops to ask something has ended
+    /// its turn on purpose, and the turn ends there — no proposal, no failure,
+    /// and nothing sent back arguing with it.
+    /// </summary>
+    /// <remarks>
+    /// A model may stop to ask a question instead of proposing a patch.
+    /// </remarks>
+    [Fact]
+    public async Task A_model_that_stops_to_ask_something_is_left_to_stop()
+    {
+        var (events, sent) = await Run(
+            Asking(Building),
+            Prose("Should the field be gray, or did you want it to move?"));
+
+        events.OfType<PatchEvent.Said>().Select(s => s.Text)
+            .ShouldContain(text => text.Contains("did you want it to move", StringComparison.Ordinal));
+
+        events.OfType<PatchEvent.Proposed>().ShouldBeEmpty();
+        events.OfType<PatchEvent.Failed>().ShouldBeEmpty();
+
+        // Two requests: the one that built and the one that asked. Nothing
+        // followed the question, because the next thing to happen is the person
+        // answering it.
+        sent.Count.ShouldBe(2);
+    }
+
+    /// <summary>
+    /// The same, without even a question. It is asked once to propose what it
+    /// built, and stopping again is its to do.
+    /// </summary>
+    [Fact]
+    public async Task A_model_that_will_not_propose_is_asked_only_once()
+    {
+        var (events, sent) = await Run(
+            Asking(Building),
+            Prose("I would rather not."),
+            Prose("Still no."));
+
+        events.OfType<PatchEvent.Proposed>().ShouldBeEmpty();
+        events.OfType<PatchEvent.Failed>().ShouldBeEmpty();
+
+        sent.Count.ShouldBe(3);
+    }
+
+    /// <summary>
+    /// A turn whose whole content is prose still reaches the transcript. It is
+    /// the only thing that turn produced, and with nothing arguing back it is
+    /// the only thing the person has to answer.
+    /// </summary>
+    [Fact]
+    public async Task What_it_said_before_stopping_still_reaches_the_transcript()
+    {
+        var (events, _) = await Run(Prose("Thinking about it."));
+
+        events.OfType<PatchEvent.Said>().Select(s => s.Text).ShouldBe(["Thinking about it."]);
+    }
+
+    /// <summary>
+    /// Prose in the middle of working is not stopping. A model that says what it
+    /// is about to do and then does it carries on, because the turn ends on
+    /// having nothing left to ask for rather than on having spoken.
+    /// </summary>
+    [Fact]
+    public async Task Saying_something_while_still_working_does_not_end_the_turn()
+    {
+        var (events, sent) = await Run(
+            Talking("Adding the field now.", Building),
+            Asking(("propose", """{"summary":"a flat gray field"}""")));
+
+        events.OfType<PatchEvent.Said>().ShouldHaveSingleItem();
+        events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
+        sent.Count.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task An_endpoint_that_refuses_costs_the_turn_rather_than_throwing()
+    {
+        var canned = new Canned(Refusing(
+            HttpStatusCode.Unauthorized,
+            """{"error":{"message":"Incorrect API key provided."}}"""));
+
+        var events = await Drive(canned);
+
+        events.OfType<PatchEvent.Failed>().ShouldHaveSingleItem()
+            .Message.ShouldContain("Incorrect API key provided.");
+
+        // Not worth a second go. A key that is wrong is wrong again in a second.
+        canned.Sent.Count.ShouldBe(1);
+    }
+
+    /// <summary>A proxy's error page, or a reply cut off on the way, arrives as a 200 all the same.</summary>
+    [Theory]
+    [InlineData("<html><body><h1>502 Bad Gateway</h1></body></html>")]
+    [InlineData("{\"choices\":[{\"message\":{\"content\":\"hal")]
+    [InlineData("")]
+    public async Task A_success_that_is_not_json_costs_the_turn_and_says_so(string body)
+    {
+        var canned = new Canned(Refusing(HttpStatusCode.OK, body));
+
+        var events = await Drive(canned);
+
+        events.OfType<PatchEvent.Failed>().ShouldHaveSingleItem().Message.ShouldBe("nowhere.invalid answered with something that is not JSON.");
+    }
+
+    // --- being told to wait -------------------------------------------------
+
+    /// <summary>
+    /// A conversation that resends a large briefing every turn hits the tokens
+    /// per minute limit as a matter of course, and the endpoint says how long it
+    /// wants — under a second, usually. Losing the whole turn over that wastes
+    /// everything the run has already paid for.
+    /// </summary>
+    [Fact]
+    public async Task A_rate_limit_is_waited_out_rather_than_failing_the_turn()
+    {
+        var canned = new Canned(
+            Limited("Rate limit reached for gpt-4o ... Please try again in 916ms."),
+            new CannedAnswer(Asking(Building)),
+            new CannedAnswer(Asking(("propose", """{"summary":"a flat gray field"}"""))));
+
+        var events = await Drive(canned);
+
+        events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem()
+            .Summary.ShouldBe("a flat gray field");
+
+        events.OfType<PatchEvent.Failed>().ShouldBeEmpty();
+
+        // Three requests for two turns: the refused one was sent again, whole,
+        // inside the turn that was refused rather than costing it.
+        canned.Sent.Count.ShouldBe(3);
+        canned.Sent[0].ToJsonString().ShouldBe(canned.Sent[1].ToJsonString());
+    }
+
+    [Fact]
+    public async Task A_rate_limit_that_will_not_clear_is_reported_rather_than_waited_on_forever()
+    {
+        var canned = new Canned(Limited("Rate limit reached for gpt-4o."));
+
+        var events = await Drive(canned);
+
+        events.OfType<PatchEvent.Failed>().ShouldHaveSingleItem()
+            .Message.ShouldContain("Rate limit reached");
+
+        // Tried, but a bounded number of times.
+        canned.Sent.Count.ShouldBe(5);
+    }
+
+    /// <summary>
+    /// A limit that clears further out than the session will wait is a quota
+    /// rather than a hiccup. Saying so beats a panel that sits still for a
+    /// minute and then fails anyway.
+    /// </summary>
+    [Fact]
+    public async Task A_wait_longer_than_the_session_will_sit_out_is_reported_at_once()
+    {
+        var canned = new Canned(new CannedAnswer(
+            """{"error":{"message":"Rate limit reached."}}""",
+            HttpStatusCode.TooManyRequests,
+            [("retry-after-ms", "600000")]));
+
+        var events = await Drive(canned);
+
+        events.OfType<PatchEvent.Failed>().ShouldHaveSingleItem()
+            .Message.ShouldContain("Rate limit reached");
+
+        canned.Sent.Count.ShouldBe(1);
+    }
+
+    /// <summary>
+    /// An account out of credit answers 429 as a rate limit does, and no wait clears it.
+    /// </summary>
+    [Fact]
+    public async Task An_account_out_of_credit_is_reported_at_once()
+    {
+        var canned = new Canned(new CannedAnswer(
+            """{"error":{"message":"You have no credits remaining.","type":"insufficient_quota","code":"insufficient_quota"}}""",
+            HttpStatusCode.TooManyRequests));
+
+        var events = await Drive(canned);
+
+        events.OfType<PatchEvent.Failed>().ShouldHaveSingleItem()
+            .Message.ShouldContain("no credits remaining");
+
+        canned.Sent.Count.ShouldBe(1);
+    }
+
+    /// <summary>
+    /// The frames ride back in a user message, which says whose it is: a model that
+    /// thinks the person sent them thanks them and waits instead of proposing.
+    /// </summary>
+    [Fact]
+    public async Task Rendered_frames_say_they_come_from_Flyback()
+    {
+        var canned = new Canned(
+            new CannedAnswer(Asking(Building)),
+            new CannedAnswer(Asking(("render", """{"times":[0.5]}"""))),
+            new CannedAnswer(Asking(("propose", """{"summary":"a flat gray field"}"""))));
+
+        using var session = new OpenAiSession(
+            new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: true),
+            new AssistantChoices("some-model"),
+            "https://nowhere.invalid/v1",
+            new KeyedClient(null, null, new KeyCredential("", ""), canned));
+
+        await Drain(session, "make a gray field");
+
+        canned.Sent[2]["messages"]!.AsArray()
+            .Last(message => message!["role"]!.GetValue<string>() == "user")!
+            .ToJsonString().ShouldContain(OpenAiSession.Shown);
+    }
+
+    /// <summary>
+    /// A sound goes to a second model on its own, and never into the conversation.
+    /// </summary>
+    /// <remarks>
+    /// Both halves are the point: the models that take a sound require every request to
+    /// carry one, so a conversation driven by one is refused on its first turn, and
+    /// they do not take a picture besides. Asked on its own, the ear answers one
+    /// question about one sound and the WAV is sent once.
+    /// </remarks>
+    [Fact]
+    public async Task A_sound_goes_to_the_ear_alone_and_never_into_the_conversation()
+    {
+        var (events, sent) = await Listening(
+            Asking(Sounding),
+            Asking(("listen", """{"seconds":0.5}""")),
+            Prose("A steady mid tone, clean, with no movement in it."),
+            Asking(("propose", """{"summary":"a sine at 440"}""")));
+
+        var heard = events.OfType<PatchEvent.Heard>().ShouldHaveSingleItem();
+        heard.Wav.Length.ShouldBeGreaterThan(44);
+
+        var toTheEar = sent.Where(r => r["model"]!.GetValue<string>() == Ears).ShouldHaveSingleItem();
+
+        // Asked as a question rather than as a turn of a loop: no tools, so
+        // nothing can come back but the words.
+        toTheEar["tools"].ShouldBeNull();
+        toTheEar["tool_choice"].ShouldBeNull();
+
+        var sound = toTheEar["messages"]!.AsArray()
+            .Select(m => m!["content"])
+            .OfType<JsonArray>()
+            .SelectMany(content => content)
+            .Where(part => part!["type"]!.GetValue<string>() == "input_audio")
+            .ToArray()
+            .ShouldHaveSingleItem();
+
+        // Bare base64, with no data URL around it. A picture is spelled the
+        // other way and the two are not interchangeable.
+        var data = sound!["input_audio"]!["data"]!.GetValue<string>();
+
+        sound["input_audio"]!["format"]!.GetValue<string>().ShouldBe("wav");
+        data.ShouldNotStartWith("data:");
+        Convert.FromBase64String(data).Length.ShouldBe(heard.Wav.Length);
+
+        // And not one byte of it in the conversation, on any turn.
+        sent.Where(r => r["model"]!.GetValue<string>() != Ears)
+            .ShouldAllBe(r => !r.ToJsonString().Contains("input_audio"));
+    }
+
+    /// <summary>
+    /// What the ear said comes back as the answer to the tool call, because that
+    /// is the only way the model driving this ever learns it.
+    /// </summary>
+    [Fact]
+    public async Task What_the_ear_heard_is_what_answers_the_call()
+    {
+        var (events, sent) = await Listening(
+            Asking(Sounding),
+            Asking(("listen", """{"seconds":0.5}""")),
+            Prose("A steady mid tone, clean, with no buzz on it."),
+            Asking(("propose", """{"summary":"a sine at 440"}""")));
+
+        var answer = sent[^1]["messages"]!.AsArray()
+            .Where(m => m!["role"]!.GetValue<string>() == "tool")
+            .Select(m => m!["content"]!.GetValue<string>())
+            .Single(text => text.Contains("dBFS", StringComparison.Ordinal));
+
+        // Both halves: what was measured here, and what was heard there.
+        answer.ShouldContain("peak -6");
+        answer.ShouldContain("no buzz on it");
+
+        events.OfType<PatchEvent.Heard>().ShouldHaveSingleItem()
+            .Caption.ShouldContain("no buzz on it");
+    }
+
+    /// <summary>
+    /// The ear is told nothing about the patch — not what it is, not what the model was
+    /// hoping to hear.
+    /// </summary>
+    /// <remarks>
+    /// A model told what it is listening for echoes that expectation back regardless of
+    /// the clip: asked to listen for a kickdrum and a hihat, it duly reports one over
+    /// three steady tones. A description that could not have come back wrong is not
+    /// evidence.
+    /// </remarks>
+    [Fact]
+    public async Task The_ear_is_never_told_what_it_is_supposed_to_hear()
+    {
+        var (_, sent) = await Listening(
+            Asking(Sounding),
+            Asking(("listen", """{"seconds":0.5,"note":"checking the kickdrum and the hihat"}""")),
+            Prose("One steady low tone and nothing else."),
+            Asking(("propose", """{"summary":"a sine at 440"}""")));
+
+        var asked = sent.Single(r => r["model"]!.GetValue<string>() == Ears).ToJsonString();
+
+        asked.ShouldNotContain("kickdrum");
+        asked.ShouldNotContain("hihat");
+    }
+
+    /// <summary>
+    /// Crest is the measurement that catches a listener agreeing with a
+    /// description of drums over a clip that has none: a steady tone cannot
+    /// measure like something with hits in it, whatever anybody says about it.
+    /// </summary>
+    [Fact]
+    public async Task What_the_samples_say_goes_back_beside_what_the_ear_says()
+    {
+        var (events, _) = await Listening(
+            Asking(Sounding),
+            Asking(("listen", """{"seconds":0.5}""")),
+            Prose("Thumping drums throughout."),
+            Asking(("propose", """{"summary":"a sine at 440"}""")));
+
+        var heard = events.OfType<PatchEvent.Heard>().ShouldHaveSingleItem();
+
+        // A sine is about 3 dB of crest, and the reply says so beside the
+        // figure — which is what makes "thumping drums" checkable from here.
+        heard.Caption.ShouldContain("crest 3.");
+        heard.Caption.ShouldContain("12 dB or more");
+        heard.Caption.ShouldContain("Measured from the samples, not heard");
+    }
+
+    /// <summary>
+    /// An ear that will not answer costs the description, not the turn. The
+    /// sound was rendered and its levels are already measured, so there is
+    /// something true to carry on from.
+    /// </summary>
+    [Fact]
+    public async Task An_ear_that_fails_is_a_sentence_rather_than_the_end_of_the_run()
+    {
+        var canned = new Canned(
+            new CannedAnswer(Asking(Sounding)),
+            new CannedAnswer(Asking(("listen", """{"seconds":0.5}"""))),
+            new CannedAnswer("""{"error":{"message":"that model is not available here."}}""", HttpStatusCode.NotFound),
+            new CannedAnswer(Asking(("propose", """{"summary":"a sine at 440"}"""))));
+
+        var events = await Drive(canned, hearing: true);
+
+        events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
+        events.OfType<PatchEvent.Failed>().ShouldBeEmpty();
+
+        var heard = events.OfType<PatchEvent.Heard>().ShouldHaveSingleItem();
+
+        heard.Caption.ShouldContain("not available here");
+        heard.Caption.ShouldContain("peak -6", Case.Sensitive);
+    }
+
+    /// <summary>
+    /// Nothing asks for audio back, from either model. This is a tool loop, and
+    /// the ear is asked what it hears rather than asked to speak.
+    /// </summary>
+    [Fact]
+    public async Task Nothing_ever_asks_a_model_to_answer_in_sound()
+    {
+        var (_, sent) = await Listening(
+            Asking(Sounding),
+            Asking(("listen", """{"seconds":0.5}""")),
+            Prose("A steady mid tone."),
+            Asking(("propose", """{"summary":"a sine at 440"}""")));
+
+        foreach (var request in sent)
+        {
+            request["modalities"].ShouldBeNull();
+            request["audio"].ShouldBeNull();
+        }
+    }
+
+    // --- putting it away ----------------------------------------------------
+
+    /// <summary>
+    /// A conversation saved and taken up by another session is the same
+    /// conversation — told this run's briefing rather than the one it began with,
+    /// since the handbook is rebuilt for every run.
+    /// </summary>
+    [Fact]
+    public async Task A_saved_conversation_is_carried_on_after_this_runs_own_briefing()
+    {
+        var first = new Canned(new CannedAnswer(Prose("Which key should it be in?")));
+        string saved;
+
+        using (var session = Session(first))
+        {
+            await Drain(session, "make a bass line");
+            saved = session.Save();
+        }
+
+        JsonNode.Parse(saved)!.AsArray().Select(Wire.Role).ShouldNotContain("system");
+
+        var second = new Canned(new CannedAnswer(Prose("D minor it is.")));
+        using var carried = Session(second);
+
+        carried.Take(saved).ShouldBeTrue();
+        await Drain(carried, "D minor");
+
+        second.Sent[0]["messages"]!.AsArray().Select(Wire.Role)
+            .ShouldBe(["system", "user", "assistant", "user"]);
+    }
+
+    [Fact]
+    public void A_saved_conversation_leaves_the_briefing_and_the_pictures_out()
+    {
+        var messages = new JsonArray
+        {
+            Wire.System("the handbook"),
+            Wire.User("a gray field"),
+            Wire.UserWithPictures("Here is what that looked like.", [new byte[] { 1, 2, 3 }]),
+        };
+
+        var kept = Wire.Kept(messages).ToJsonString();
+
+        kept.ShouldNotContain("the handbook");
+        kept.ShouldNotContain("image_url");
+        kept.ShouldContain("render again");
+    }
+
+    [Theory]
+    [InlineData("not a conversation")]
+    [InlineData("""{"role":"user"}""")]
+    [InlineData("""[{"content":"no role"}]""")]
+    [InlineData("""[{"role":"system","content":"a second briefing"}]""")]
+    public void Something_that_is_not_a_conversation_is_not_taken_up(string saved)
+    {
+        using var session = Session(new Canned(new CannedAnswer(Prose("hello"))));
+
+        session.Take(saved).ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// A stop between two calls of one batch still answers every call, since one
+    /// left unanswered makes every later request a 400 and ends the conversation.
+    /// </summary>
+    [Fact]
+    public async Task A_stop_in_the_middle_of_a_batch_still_answers_every_call()
+    {
+        var canned = new Canned(
+            new CannedAnswer(Asking(("describe_patch", "{}"), ("describe_patch", "{}"), ("describe_patch", "{}"))),
+            new CannedAnswer(Prose("ok")));
+
+        using var session = Session(canned);
+        using var stop = new CancellationTokenSource();
+
+        await foreach (var happened in ((IPatchSession)session).Ask("look", stop.Token))
+        {
+            if (happened is PatchEvent.Did) await stop.CancelAsync();
+        }
+
+        await Drain(session, "carry on");
+
+        var results = canned.Sent[^1]["messages"]!.AsArray()
+            .Where(message => message?["role"]?.GetValue<string>() == "tool")
+            .Select(message => message!["content"]!.GetValue<string>())
+            .ToList();
+
+        results.Count.ShouldBe(3);
+        results.Skip(1).ShouldAllBe(result => result.Contains("stopped"));
+    }
+
+    /// <summary>
+    /// Proposing ends the turn, so what came after it in the same batch is answered
+    /// and not run: run, it would change the patch after the proposal was checked.
+    /// </summary>
+    [Fact]
+    public async Task Calls_after_a_proposal_in_one_batch_are_answered_and_not_run()
+    {
+        var canned = new Canned(
+            new CannedAnswer(Asking(Building)),
+            new CannedAnswer(Asking(
+                ("propose", """{"summary":"a flat gray field"}"""),
+                ("edit_patch", """{"edits":[{"find":"knob1 |> out.color","replace":""}]}"""))),
+            new CannedAnswer(Prose("ok")));
+
+        using var session = Session(canned);
+
+        var first = await Drain(session, "make a gray field");
+        await Drain(session, "thanks");
+
+        first.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem().Patch.Nodes.Count.ShouldBe(2);
+        canned.Sent[^1].ToJsonString().ShouldContain("already proposed");
+    }
+
+    private static OpenAiSession Session(Canned canned) => new(
+        new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false),
+        new AssistantChoices("some-model"),
+        "https://nowhere.invalid/v1",
+        new KeyedClient(null, null, new KeyCredential("", ""), canned));
+
+    // --- driving it ---------------------------------------------------------
+
+    private static async Task<(List<PatchEvent> Events, List<JsonNode> Sent)> Run(params string[] replies)
+    {
+        var canned = new Canned([.. replies.Select(r => new CannedAnswer(r))]);
+        return (await Drive(canned), canned.Sent);
+    }
+
+    private static async Task<(List<PatchEvent> Events, List<JsonNode> Sent)> Listening(
+        params string[] replies)
+    {
+        var canned = new Canned([.. replies.Select(r => new CannedAnswer(r))]);
+        return (await Drive(canned, hearing: true), canned.Sent);
+    }
+
+    /// <summary>The model that listens, which is never the one being driven.</summary>
+    private const string Ears = "some-ear";
+
+    /// <summary>One message put to a session that may be asked another.</summary>
+    private static async Task<List<PatchEvent>> Drain(IPatchSession session, string instruction)
+    {
+        var events = new List<PatchEvent>();
+
+        await foreach (var happened in session.Ask(instruction, TestContext.Current.CancellationToken))
+            events.Add(happened);
+
+        return events;
+    }
+
+    private static async Task<List<PatchEvent>> Drive(Canned canned, bool hearing = false)
+    {
+        // Always the borrowed ear here. No model this format reaches both takes
+        // a sound and drives a conversation — the whole of ADR-0047.
+        var workbench = new PatchWorkbench(
+            NodeCatalog.BuiltIn,
+            new Patch(),
+            vision: false,
+            hearing ? Listener.Another : Listener.None);
+
+        using var session = new OpenAiSession(
+            workbench,
+            new AssistantChoices(
+                "some-model",
+                Hearing: hearing,
+                EarModel: hearing ? Ears : null),
+            "https://nowhere.invalid/v1",
+            new KeyedClient(null, null, new KeyCredential("", ""), canned));
+
+        var events = new List<PatchEvent>();
+
+        await foreach (var happened in ((IPatchSession)session).Ask("make something", TestContext.Current.CancellationToken))
+            events.Add(happened);
+
+        return events;
+    }
+
+    // --- canned replies -----------------------------------------------------
+
+    private static string Prose(string text) => new JsonObject
+    {
+        ["choices"] = new JsonArray
+        {
+            new JsonObject
+            {
+                ["message"] = new JsonObject { ["role"] = "assistant", ["content"] = text },
+            },
+        },
+    }.ToJsonString();
+
+    private static string Asking(params (string Name, string Arguments)[] calls) =>
+        Talking(null, calls);
+
+    /// <summary>Tool calls with a word about them, which is how a model narrates.</summary>
+    private static string Talking(string? said, params (string Name, string Arguments)[] calls)
+    {
+        var asked = new JsonArray();
+
+        for (var i = 0; i < calls.Length; i++)
+        {
+            asked.Add(new JsonObject
+            {
+                ["id"] = "call_" + i,
+                ["type"] = "function",
+                ["function"] = new JsonObject
+                {
+                    ["name"] = calls[i].Name,
+                    ["arguments"] = calls[i].Arguments,
+                },
+            });
+        }
+
+        return new JsonObject
+        {
+            ["choices"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["message"] = new JsonObject
+                    {
+                        ["role"] = "assistant",
+                        ["content"] = said,
+                        ["tool_calls"] = asked,
+                    },
+                },
+            },
+        }.ToJsonString();
+    }
+
+    /// <summary>One canned answer, with whatever the endpoint would have said around it.</summary>
+
+    /// <summary>
+    /// Refused, and asking to be tried again almost immediately — the shape of a
+    /// real 429, whose wait is routinely under the second that the standard
+    /// header would have to round to. Milliseconds so the tests do not sleep.
+    /// </summary>
+    private static CannedAnswer Limited(string message) => new(
+        new JsonObject { ["error"] = new JsonObject { ["message"] = message } }.ToJsonString(),
+        HttpStatusCode.TooManyRequests,
+        [("retry-after-ms", "1")]);
+
+    private static CannedAnswer Refusing(HttpStatusCode status, string body) => new(body, status);
+}

@@ -100,7 +100,7 @@ public class DecisionPluginTests
 
         public int Priority => 0;
 
-        public Flyback.Plugins.Assist.AssistantCredential? Credential => null;
+        public Flyback.Plugins.Secrets.KeyCredential? Credential => null;
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 

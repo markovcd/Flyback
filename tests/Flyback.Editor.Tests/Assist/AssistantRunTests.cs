@@ -3,7 +3,7 @@ using System.Text.Json;
 using Flyback.Assist;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Assist;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
@@ -44,7 +44,7 @@ public class AssistantRunTests
     private const string Key = "sk-proj-abcdefghijklmnop";
 
     private static AssistantConfig Keyed =>
-        new(new KeyedTransport(Key, "https://assistant.test", new AssistantCredential("", "")), SettingValues.None);
+        new(new KeyedClient(Key, "https://assistant.test", new KeyCredential("", "")), SettingValues.None);
 
     [Fact]
     public async Task A_message_with_the_key_in_it_is_not_sent()
@@ -867,12 +867,10 @@ public class AssistantRunTests
 
         public string Name => "Conversing";
 
-        public int Priority => 0;
-
         public AssistantSchema Schema { get; } =
             new("scripted", [new AssistantModel("scripted")], "NONE", "none needed");
 
-        public AssistantCredential Credential => Schema.Credential;
+        public KeyCredential Credential => Schema.Credential;
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => Schema.Form(values);
 
@@ -978,12 +976,10 @@ public class AssistantRunTests
 
         public string Name => "Scripted";
 
-        public int Priority => 0;
-
         public AssistantSchema Schema { get; init; } =
             new("scripted", [new AssistantModel("scripted")], "NONE", "none needed");
 
-        public AssistantCredential Credential => Schema.Credential;
+        public KeyCredential Credential => Schema.Credential;
 
         public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 

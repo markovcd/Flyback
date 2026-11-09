@@ -1,10 +1,11 @@
+using Flyback.Assist;
 using Flyback.Cli.Commands;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
@@ -358,11 +359,11 @@ public sealed class ProbeCommandTests : IDisposable
             ? assistants
             : [new Surveyable("one", "ONE_KEY"), new Surveyable("two", "TWO_KEY")];
 
-        var plugins = new PluginCatalog(
-            [], [], NodeCatalog.BuiltIn, Presets.All, [], installed);
+        var plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, []);
 
         var code = await ProbeCommand.Run(
             plugins,
+            new Assistants(installed),
             new ProbeOptions(options.Provider, [], false, false, options.Dry, false, options.Keys, options.Yes),
             said,
             complained,
@@ -407,11 +408,9 @@ public sealed class ProbeCommandTests : IDisposable
 
         public string Name => char.ToUpperInvariant(id[0]) + id[1..];
 
-        public int Priority => 0;
-
         public bool Asked { get; private set; }
 
-        public AssistantCredential Credential => new(variable, "A key from somewhere.");
+        public KeyCredential Credential => new(variable, "A key from somewhere.");
 
         public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 
@@ -447,9 +446,7 @@ public sealed class ProbeCommandTests : IDisposable
 
         public string Name => "Mute";
 
-        public int Priority => 0;
-
-        public AssistantCredential Credential => new("MUTE_KEY", "A key from somewhere.");
+        public KeyCredential Credential => new("MUTE_KEY", "A key from somewhere.");
 
         public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 

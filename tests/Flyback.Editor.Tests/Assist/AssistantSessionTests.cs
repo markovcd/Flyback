@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Flyback.Assist;
 using Flyback.Core.Graph;
-using Flyback.Plugins.Assist;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
@@ -101,7 +101,7 @@ public sealed class AssistantSessionTests
     {
         using var session = Begun();
 
-        var other = new AssistantConfig(AssistantConfig.Unset.Transport, new SettingValues([new("model", "other")]));
+        var other = new AssistantConfig(AssistantConfig.Unset.Client, new SettingValues([new("model", "other")]));
 
         session.Spent(assistant, other).ShouldNotBeNull().ShouldContain("settings changed");
     }
@@ -151,9 +151,7 @@ public sealed class AssistantSessionTests
 
         public string Name => "Talking";
 
-        public int Priority => 0;
-
-        public AssistantCredential Credential => new("FLYBACK_TALKING_KEY", "No key is needed.");
+        public KeyCredential Credential => new("FLYBACK_TALKING_KEY", "No key is needed.");
 
         public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 

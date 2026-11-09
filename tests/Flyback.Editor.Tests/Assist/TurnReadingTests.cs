@@ -1,8 +1,8 @@
 using System.Runtime.CompilerServices;
 using Flyback.Assist;
 using Flyback.Core.Graph;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
@@ -128,7 +128,7 @@ public sealed class TurnReadingTests
 
         public int Priority => 0;
 
-        public AssistantCredential? Credential => null;
+        public KeyCredential? Credential => null;
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 
@@ -153,9 +153,7 @@ public sealed class TurnReadingTests
 
         public string Name => "Echoing";
 
-        public int Priority => 0;
-
-        public AssistantCredential Credential => new("FLYBACK_ECHOING_KEY", "No key is needed.");
+        public KeyCredential Credential => new("FLYBACK_ECHOING_KEY", "No key is needed.");
 
         public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 

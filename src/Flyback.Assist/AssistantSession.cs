@@ -1,7 +1,8 @@
 using System.Runtime.CompilerServices;
+using Flyback.Assist;
 using Flyback.Core.Graph;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
+using Flyback.Plugins.Secrets;
 
 namespace Flyback.Assist;
 
@@ -98,7 +99,7 @@ internal sealed class AssistantSession(ITranscript transcript, string? logFolder
     public async IAsyncEnumerable<PatchEvent> Ask(string message, [EnumeratorCancellation] CancellationToken cancel = default)
     {
         var run = Run ?? throw new InvalidOperationException("Begin a conversation before asking anything in it.");
-        var scrubbed = Config?.Transport is KeyedTransport keyed ? keyed.Scrubbed(message)! : message;
+        var scrubbed = Config?.Client is KeyedClient keyed ? keyed.Scrubbed(message)! : message;
 
         transcript.Put(new Spoken(new TranscriptLine(Voice.You, message), "you", scrubbed));
         log.Write("you", scrubbed);

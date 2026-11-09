@@ -1,5 +1,5 @@
+using Flyback.Assist;
 using Flyback.Core.Graph;
-using Flyback.Plugins.Assist;
 
 namespace Flyback.Assist;
 

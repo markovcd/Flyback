@@ -9,8 +9,8 @@ using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
@@ -291,13 +291,13 @@ public sealed class AskCommandTests : IDisposable
     }
 
     [Fact]
-    public async Task An_assistant_that_is_not_installed_is_refused_naming_those_that_are()
+    public async Task An_assistant_that_does_not_exist_is_refused_naming_those_that_do()
     {
         var (code, _, complained) = await Ask("field.fbk", "a gray field", options => options with { Provider = "nobody" });
 
         code.ShouldBe(Exit.Failed);
         complained.ShouldContain("no assistant called 'nobody'");
-        complained.ShouldContain("Installed: scripted.");
+        complained.ShouldContain("There are: scripted.");
     }
 
     [Fact]
@@ -368,9 +368,9 @@ public sealed class AskCommandTests : IDisposable
 
     private string Path(string name) => System.IO.Path.Combine(folder.FullName, name);
 
-    private PluginCatalog Catalog() => new([], [], NodeCatalog.BuiltIn, Presets.All, [], [assistant]);
+    private static PluginCatalog Catalog() => new([], [], NodeCatalog.BuiltIn, Presets.All, []);
 
-    private (int Code, string Complained) Run(params string[] args)
+    private static (int Code, string Complained) Run(params string[] args)
     {
         using var complained = new StringWriter();
 
@@ -405,6 +405,7 @@ public sealed class AskCommandTests : IDisposable
 
         var code = await AskCommand.Run(
             plugins,
+            new Assistants([assistant]),
             about,
             adjust?.Invoke(options) ?? options,
             said,
@@ -437,9 +438,7 @@ public sealed class AskCommandTests : IDisposable
 
         public string Name => "Scripted";
 
-        public int Priority => 0;
-
-        public AssistantCredential Credential => new("FLYBACK_SCRIPTED_KEY", "No key is needed.");
+        public KeyCredential Credential => new("FLYBACK_SCRIPTED_KEY", "No key is needed.");
 
         public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 

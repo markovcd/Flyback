@@ -1,5 +1,5 @@
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Secrets;
 
 namespace Flyback.Plugins.Decide;
 
@@ -63,9 +63,9 @@ internal sealed class Decisions(
     public DecisionConfig Config(IDecisionModel model, string? use = null)
     {
         var values = settings.Of(model.Id, use);
-        var origin = Quietly(() => model.Endpoint(values)) is { IsAbsoluteUri: true } address ? KeyedTransport.OriginOf(address) : null;
+        var origin = Quietly(() => model.Endpoint(values)) is { IsAbsoluteUri: true } address ? KeyedClient.OriginOf(address) : null;
 
-        return new DecisionConfig(credentials.Transport(Account(model), model.Credential, origin, network), values, store.FolderOf(model));
+        return new DecisionConfig(credentials.Client(Account(model), model.Credential, origin, network), values, store.FolderOf(model));
     }
 
     /// <summary>Why the chosen model cannot answer now, or null when it can.</summary>

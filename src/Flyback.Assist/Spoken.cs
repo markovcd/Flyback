@@ -1,4 +1,4 @@
-using Flyback.Plugins.Assist;
+using Flyback.Assist;
 
 namespace Flyback.Assist;
 

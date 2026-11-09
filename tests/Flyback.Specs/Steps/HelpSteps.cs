@@ -1,10 +1,10 @@
 using System.CommandLine;
+using Flyback.Assist;
+using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
+using Flyback.Plugins.Hosting;
 using Reqnroll;
 using Shouldly;
-using Flyback.Core.Graph;
-using Flyback.Plugins.Assist;
-using Flyback.Plugins.Hosting;
 
 using Flyback.Cli.Common;
 using PluginRegistry = Flyback.Cli.Plugins;

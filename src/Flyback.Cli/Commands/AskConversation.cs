@@ -4,7 +4,6 @@ using Flyback.Assist;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core.Graph;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
 
 namespace Flyback.Cli.Commands;

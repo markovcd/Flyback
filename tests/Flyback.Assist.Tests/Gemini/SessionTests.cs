@@ -1,0 +1,623 @@
+using System.Net;
+using System.Text.Json.Nodes;
+using Flyback.Assist;
+using Flyback.Assist.Gemini;
+using Flyback.Core.Graph;
+using Flyback.Plugins.Secrets;
+using Flyback.Plugins.Testing;
+using Shouldly;
+using Xunit;
+
+namespace Flyback.Assist.Tests.Gemini;
+
+/// <summary>
+/// How a turn ends, and where a clip goes, driven by canned replies rather than
+/// by an endpoint.
+/// </summary>
+/// <remarks>
+/// The endings are the same three the other adapter has and are checked the same
+/// way. What is new here is the ear: this is the first adapter where the model
+/// building the patch can be played it, so most of what follows is about the
+/// sound arriving in the conversation rather than in a second request.
+/// </remarks>
+public class SessionTests
+{
+    /// <summary>
+    /// A gray field — the smallest patch that compiles cleanly, and so the
+    /// smallest one that may be proposed.
+    /// </summary>
+    private static readonly (string Name, string Arguments)[] Building =
+    [
+        ("write_patch", """{"source":"let knob1 = value(value: 0.5)"}"""),
+        // The Output is already there, and the text calls it out.
+        ("edit_patch", """{"edits":[{"find":"let knob1 = value(value: 0.5)","replace":"let knob1 = value(value: 0.5)\nknob1 |> out.color"}]}"""),
+    ];
+
+    /// <summary>
+    /// The smallest patch that actually sounds. The clock is not decoration: an
+    /// oscillator accumulates how far its 'in' has moved, so one without it is
+    /// silent whatever its freq says — and silence comes back as a sentence
+    /// rather than as a WAV.
+    /// </summary>
+    private static readonly (string Name, string Arguments)[] Sounding =
+    [
+        ("write_patch", """{"source":"let tone1 = t |> sine(freq: 440)"}"""),
+        ("edit_patch", """{"edits":[{"find":"let tone1 = t |> sine(freq: 440)","replace":"let tone1 = t |> sine(freq: 440)\ntone1 |> out.left"}]}"""),
+    ];
+
+    /// <summary>
+    /// Wired to the speakers and silent anyway. Legal, compiling, and nothing at
+    /// all — the failure the compiler cannot see and the ear exists for.
+    /// </summary>
+    /// <remarks>
+    /// A knob at zero rather than at any other value, and the difference is not
+    /// pedantry: a constant is DC, the blocker removes it, and removing it
+    /// leaves a decaying thump that measures around -11 dBFS. Silent on purpose
+    /// takes a signal that is actually zero.
+    /// </remarks>
+    private static readonly (string Name, string Arguments)[] Mute =
+    [
+        ("write_patch", """{"source":"let knob1 = value(value: 0)\nknob1 |> out.left"}"""),
+    ];
+
+    // --- the endings --------------------------------------------------------
+
+    /// <summary>
+    /// Nothing reaches the editor until <c>propose</c>, so a model that builds a
+    /// patch and then signs off leaves the person looking at the patch they
+    /// already had.
+    /// </summary>
+    [Fact]
+    public async Task Building_and_stopping_without_offering_it_is_pointed_out()
+    {
+        var (events, sent) = await Run(
+            Asking(Building),
+            Prose("You're now set to further refine the patch as needed."),
+            Prose("It is ready to refine."));
+
+        events.OfType<PatchEvent.Proposed>().ShouldBeEmpty();
+        events.OfType<PatchEvent.Did>().ShouldContain(d => d.Summary.Contains("canvas still shows"));
+
+        // Asked once to propose what it built, and told to the person when that
+        // changes nothing.
+        sent.Count.ShouldBe(3);
+        sent[2].ToJsonString().ShouldContain("did not propose it");
+    }
+
+    [Fact]
+    public async Task A_question_with_nothing_built_is_left_alone()
+    {
+        var (events, sent) = await Run(Prose("Which key should it be in?"));
+
+        sent.Count.ShouldBe(1);
+        events.OfType<PatchEvent.Did>().ShouldBeEmpty();
+        events.OfType<PatchEvent.Said>().ShouldHaveSingleItem();
+    }
+
+    [Fact]
+    public async Task A_patch_it_proposes_is_offered_to_the_person()
+    {
+        var (events, _) = await Run(
+            Asking(Building),
+            Asking(("propose", """{"summary":"a flat gray field"}""")));
+
+        var proposed = events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
+
+        proposed.Summary.ShouldBe("a flat gray field");
+        proposed.Patch.Nodes.Count.ShouldBe(2);
+        events.OfType<PatchEvent.Failed>().ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// Every call is answered, in the order it arrived. An answer out of order
+    /// is answering the wrong call, because a functionResponse carries a name
+    /// and nothing else to match on.
+    /// </summary>
+    [Fact]
+    public async Task Every_call_is_answered_in_the_order_it_was_made()
+    {
+        var (_, sent) = await Run(
+            Asking(Building),
+            Asking(("propose", """{"summary":"a flat gray field"}""")));
+
+        var answers = sent[1]["contents"]!.AsArray()
+            .Last(content => content!["role"]!.GetValue<string>() == "user")!["parts"]!
+            .AsArray()
+            .Select(part => part!["functionResponse"]?["name"]?.GetValue<string>())
+            .ToArray();
+
+        answers.ShouldBe(["write_patch", "edit_patch"]);
+    }
+
+    /// <summary>
+    /// A second message carries everything the first one said and built, and the
+    /// briefing is not among it — it rides beside the conversation, so growing
+    /// history never pushes it out of place.
+    /// </summary>
+    [Fact]
+    public async Task A_second_message_keeps_the_first_ones_history()
+    {
+        var canned = new Canned(
+            new CannedAnswer(Asking(Building)),
+            new CannedAnswer(Prose("Done. Gray enough?")),
+            new CannedAnswer(Asking(("propose", """{"summary":"a flat gray field"}"""))));
+
+        using var session = Session(canned);
+
+        await Drain(session, "make a gray field");
+        await Drain(session, "yes, propose it");
+
+        var last = canned.Sent[^1];
+        var turns = last["contents"]!.AsArray();
+
+        turns.Count.ShouldBeGreaterThan(4);
+        turns[0]!["parts"]![0]!["text"]!.GetValue<string>().ShouldBe("make a gray field");
+        last["systemInstruction"]!["parts"]![0]!["text"]!.GetValue<string>().ShouldNotBeNullOrEmpty();
+    }
+
+    /// <summary>The model is named in the path here, not in the body.</summary>
+    [Fact]
+    public async Task The_model_is_asked_for_by_url()
+    {
+        var canned = new Canned(new CannedAnswer(Prose("Hello.")));
+
+        using var session = Session(canned);
+
+        await Drain(session, "hello");
+
+        canned.Requests[0].RequestUri!.ToString().ShouldBe(
+            "https://nowhere.invalid/v1beta/models/gemini-test:generateContent");
+        canned.Sent[0]["model"].ShouldBeNull();
+    }
+
+    // --- the ear ------------------------------------------------------------
+
+    /// <summary>
+    /// The whole point of this adapter. A clip goes into the conversation as an
+    /// ordinary part, addressed to the model that is building the patch — no
+    /// second model, no second request, no description written by somebody who
+    /// was not there.
+    /// </summary>
+    [Fact]
+    public async Task A_clip_goes_to_the_model_that_is_building_the_patch()
+    {
+        var (events, sent) = await Listening(
+            Asking(Sounding),
+            Asking(("listen", """{"seconds":0.5}""")),
+            Asking(("propose", """{"summary":"a sine at 440"}""")));
+
+        events.OfType<PatchEvent.Heard>().ShouldHaveSingleItem();
+        events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
+
+        var parts = sent[^1]["contents"]!.AsArray()
+            .Last(content => content!["role"]!.GetValue<string>() == "user")!["parts"]!
+            .AsArray();
+
+        Named(parts, "functionResponse", "name").ShouldContain("listen");
+        Named(parts, "inlineData", "mimeType").ShouldContain("audio/wav");
+        parts.Select(part => part?["text"]?.GetValue<string>())
+            .ShouldContain(GeminiSession.Caption(0, 1));
+    }
+
+    /// <summary>
+    /// And nothing is asked of anybody else. A second request per listen is what
+    /// the other adapter pays and this one does not.
+    /// </summary>
+    [Fact]
+    public async Task Nobody_else_is_asked_to_listen()
+    {
+        var (_, sent) = await Listening(
+            Asking(Sounding),
+            Asking(("listen", """{"seconds":0.5}""")),
+            Asking(("propose", """{"summary":"a sine at 440"}""")));
+
+        // Four calls, one listen, one propose: four exchanges and not five.
+        sent.Count.ShouldBe(3);
+
+        foreach (var request in sent)
+        {
+            request.ToJsonString().ShouldNotContain("listening on behalf of");
+        }
+    }
+
+    /// <summary>
+    /// What the samples say goes back whether or not anybody heard it, and it is
+    /// the only thing in the loop that can contradict the model's own ears.
+    /// </summary>
+    [Fact]
+    public async Task What_the_samples_say_goes_back_with_the_clip()
+    {
+        var (events, _) = await Listening(
+            Asking(Sounding),
+            Asking(("listen", """{"seconds":0.5}""")),
+            Asking(("propose", """{"summary":"a sine at 440"}""")));
+
+        var heard = events.OfType<PatchEvent.Heard>().ShouldHaveSingleItem();
+
+        // A sine is about 3 dB of crest, and the reply says so beside the
+        // figure — which is what makes "thumping drums" checkable at all.
+        heard.Caption.ShouldContain("crest 3.");
+        heard.Caption.ShouldContain("12 dB or more");
+    }
+
+    /// <summary>
+    /// Silence is never played to anybody. A model handed two seconds of nothing
+    /// concludes the tool is broken rather than the patch.
+    /// </summary>
+    [Fact]
+    public async Task Silence_is_a_sentence_rather_than_a_clip()
+    {
+        var (events, sent) = await Listening(
+            Asking(Mute),
+            Asking(("listen", """{"seconds":0.5}""")),
+            Prose("Nothing there — I'll wire it to something that moves."));
+
+        events.OfType<PatchEvent.Heard>().ShouldBeEmpty();
+        events.OfType<PatchEvent.Did>().ShouldContain(d => d.Summary.Contains("silence"));
+
+        sent[^1].ToJsonString().ShouldNotContain("audio/wav");
+    }
+
+    /// <summary>
+    /// A model nobody wrote down falls back to the arrangement ADR-0047 built:
+    /// a second model, played the clip on its own, answering in words. The
+    /// endpoint is fixed here, so a stranger is a model newer than the table
+    /// rather than a different service — but it is still a model this cannot
+    /// promise takes a sound.
+    /// </summary>
+    [Fact]
+    public async Task A_driver_that_cannot_hear_borrows_an_ear()
+    {
+        var canned = new Canned(
+            new CannedAnswer(Asking(Sounding)),
+            new CannedAnswer(Asking(("listen", """{"seconds":0.5}"""))),
+            new CannedAnswer(Prose("One steady low tone and nothing else.")),
+            new CannedAnswer(Asking(("propose", """{"summary":"a sine at 440"}"""))));
+
+        var events = await Drive(canned, Listener.Another, ownEars: false, ear: "some-ear");
+
+        events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
+
+        // The clip went to the ear on its own, and what came back to the driver
+        // is words rather than the sound.
+        canned.Requests.Select(r => r.RequestUri!.ToString()).ShouldContain(url => url.Contains("models/some-ear:"));
+
+        var told = canned.Sent[^1].ToJsonString();
+
+        told.ShouldContain("one steady low tone and nothing else");
+        told.ShouldNotContain("audio/wav");
+    }
+
+    /// <summary>
+    /// An ear that will not answer costs the description, not the turn. The
+    /// sound was rendered and its levels are already measured, so there is
+    /// something true to carry on from.
+    /// </summary>
+    [Fact]
+    public async Task An_ear_that_fails_is_a_sentence_rather_than_the_end_of_the_run()
+    {
+        var canned = new Canned(
+            new CannedAnswer(Asking(Sounding)),
+            new CannedAnswer(Asking(("listen", """{"seconds":0.5}"""))),
+            new CannedAnswer("""{"error":{"message":"that model is not available here."}}""", HttpStatusCode.NotFound),
+            new CannedAnswer(Asking(("propose", """{"summary":"a sine at 440"}"""))));
+
+        var events = await Drive(canned, Listener.Another, ownEars: false, ear: "some-ear");
+
+        events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
+        events.OfType<PatchEvent.Failed>().ShouldBeEmpty();
+
+        var heard = events.OfType<PatchEvent.Heard>().ShouldHaveSingleItem();
+
+        heard.Caption.ShouldContain("not available here");
+        heard.Caption.ShouldContain("peak -6", Case.Sensitive);
+    }
+
+    // --- what it costs and what it survives ---------------------------------
+
+    [Fact]
+    public async Task What_a_turn_cost_is_reported_including_what_it_thought()
+    {
+        var canned = new Canned(new CannedAnswer(Spending(Prose("Hello."))));
+
+        using var session = Session(canned);
+
+        var events = await Drain(session, "hello");
+        var cost = events.OfType<PatchEvent.Cost>().ShouldHaveSingleItem();
+
+        cost.Input.ShouldBe(9000);
+        cost.CacheRead.ShouldBe(8000);
+        cost.Output.ShouldBe(940);
+    }
+
+    /// <summary>
+    /// A rate limit that clears quickly is absorbed silently. It is an ordinary
+    /// event on a conversation that resends a large briefing every turn, and
+    /// losing the turn over a wait of a second would be absurd.
+    /// </summary>
+    [Fact]
+    public async Task A_rate_limit_that_clears_quickly_costs_nothing_but_time()
+    {
+        var canned = new Canned(
+            new CannedAnswer(
+                """{"error":{"message":"overloaded","details":[{"retryDelay":"0.001s"}]}}""",
+                HttpStatusCode.TooManyRequests),
+            new CannedAnswer(Prose("Hello.")));
+
+        using var session = Session(canned);
+
+        var events = await Drain(session, "hello");
+
+        events.OfType<PatchEvent.Failed>().ShouldBeEmpty();
+        events.OfType<PatchEvent.Said>().ShouldHaveSingleItem();
+    }
+
+    /// <summary>
+    /// A refusal that will still be a refusal in a second's time ends the turn
+    /// and not the window, saying what the endpoint said.
+    /// </summary>
+    [Fact]
+    public async Task A_bad_request_costs_the_turn_and_says_why()
+    {
+        var canned = new Canned(new CannedAnswer(
+            """{"error":{"message":"Unknown name \"parameters\"."}}""",
+            HttpStatusCode.BadRequest));
+
+        using var session = Session(canned);
+
+        var events = await Drain(session, "hello");
+
+        events.OfType<PatchEvent.Failed>().ShouldHaveSingleItem()
+            .Message.ShouldContain("Unknown name");
+    }
+
+    /// <summary>A proxy's error page, or a reply cut off on the way, arrives as a 200 all the same.</summary>
+    [Theory]
+    [InlineData("<html><body><h1>502 Bad Gateway</h1></body></html>")]
+    [InlineData("{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"hal")]
+    [InlineData("")]
+    public async Task A_success_that_is_not_json_costs_the_turn_and_says_so(string body)
+    {
+        using var session = Session(new Canned(new CannedAnswer(body)));
+
+        var events = await Drain(session, "hello");
+
+        events.OfType<PatchEvent.Failed>().ShouldHaveSingleItem().Message.ShouldBe("nowhere.invalid answered with something that is not JSON.");
+    }
+
+    // --- putting it away ----------------------------------------------------
+
+    /// <summary>
+    /// A conversation saved and taken up by another session is the same
+    /// conversation: the next request carries every turn before it.
+    /// </summary>
+    [Fact]
+    public async Task A_saved_conversation_is_carried_on_by_another_session()
+    {
+        var first = new Canned(new CannedAnswer(Prose("Which key should it be in?")));
+        string saved;
+
+        using (var session = Session(first))
+        {
+            await Drain(session, "make a bass line");
+            saved = session.Save();
+        }
+
+        var second = new Canned(new CannedAnswer(Prose("D minor it is.")));
+        using var carried = Session(second);
+
+        carried.Take(saved).ShouldBeTrue();
+        await Drain(carried, "D minor");
+
+        var turns = second.Sent[0]["contents"]!.AsArray();
+
+        turns.Count.ShouldBe(3);
+        turns[0]!["parts"]![0]!["text"]!.GetValue<string>().ShouldBe("make a bass line");
+        turns[1]!["role"]!.GetValue<string>().ShouldBe("model");
+        turns[2]!["parts"]![0]!["text"]!.GetValue<string>().ShouldBe("D minor");
+    }
+
+    /// <summary>
+    /// The clip is most of a saved conversation's size and none of what it needs,
+    /// so it is left out and said to have been there. The answer to the call stays:
+    /// a call handed back without one is refused.
+    /// </summary>
+    [Fact]
+    public async Task A_saved_conversation_leaves_the_clips_out()
+    {
+        var canned = new Canned(
+            new CannedAnswer(Asking(Sounding)),
+            new CannedAnswer(Asking(("listen", """{"seconds":0.5}"""))),
+            new CannedAnswer(Prose("A steady tone.")));
+
+        using var session = Session(canned, Listener.Itself, ownEars: true);
+
+        await Drain(session, "a tone");
+
+        var saved = session.Save();
+
+        saved.ShouldNotContain("inlineData");
+        saved.ShouldContain("listen again");
+        saved.ShouldContain("functionResponse");
+    }
+
+    [Theory]
+    [InlineData("not a conversation")]
+    [InlineData("""{"role":"user"}""")]
+    [InlineData("""[{"parts":[]}]""")]
+    public void Something_that_is_not_a_conversation_is_not_taken_up(string saved)
+    {
+        using var session = Session(new Canned(new CannedAnswer(Prose("hello"))));
+
+        session.Take(saved).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void The_assistant_carries_on_what_a_session_saved_and_nothing_else()
+    {
+        var assistant = new GeminiAssistant();
+        var bench = new PatchWorkbench(NodeCatalog.BuiltIn, new Patch());
+        var config = AssistantConfig.Unset;
+
+        using var carried = assistant.Resume(bench, config, "[]");
+
+        carried.ShouldNotBeNull();
+        assistant.Resume(bench, config, "not a conversation").ShouldBeNull();
+    }
+
+    // --- driving it ---------------------------------------------------------
+
+    /// <summary>
+    /// One field out of each part, as plain strings.
+    /// </summary>
+    /// <remarks>
+    /// Read out before asserting because Shouldly's predicate is an expression
+    /// tree, and a null-conditional cannot appear in one — which is the whole of
+    /// why this is a method rather than a lambda at each call.
+    /// </remarks>
+    private static string?[] Named(JsonArray parts, string part, string field) =>
+        [.. parts.Select(each => each?[part]?[field]?.GetValue<string>())];
+
+    private const string Driver = "gemini-test";
+
+    private static async Task<(List<PatchEvent> Events, List<JsonNode> Sent)> Run(params string[] replies)
+    {
+        var canned = new Canned([.. replies.Select(r => new CannedAnswer(r))]);
+
+        return (await Drive(canned, Listener.None, ownEars: false), canned.Sent);
+    }
+
+    private static async Task<(List<PatchEvent> Events, List<JsonNode> Sent)> Listening(
+        params string[] replies)
+    {
+        var canned = new Canned([.. replies.Select(r => new CannedAnswer(r))]);
+
+        return (await Drive(canned, Listener.Itself, ownEars: true), canned.Sent);
+    }
+
+    /// <summary>One message put to a session that may be asked another.</summary>
+    private static async Task<List<PatchEvent>> Drain(IPatchSession session, string instruction)
+    {
+        var events = new List<PatchEvent>();
+
+        await foreach (var happened in session.Ask(instruction, TestContext.Current.CancellationToken))
+            events.Add(happened);
+
+        return events;
+    }
+
+    private static async Task<List<PatchEvent>> Drive(
+        Canned canned,
+        Listener hearing,
+        bool ownEars,
+        string? ear = null)
+    {
+        using var session = Session(canned, hearing, ownEars, ear);
+
+        return await Drain(session, "make something");
+    }
+
+    /// <summary>
+    /// A stop between two calls of one batch still answers every call: a model turn
+    /// left without its function responses is refused on the next request.
+    /// </summary>
+    [Fact]
+    public async Task A_stop_in_the_middle_of_a_batch_still_answers_every_call()
+    {
+        var canned = new Canned(
+            new CannedAnswer(Asking(("describe_patch", "{}"), ("describe_patch", "{}"), ("describe_patch", "{}"))),
+            new CannedAnswer(Prose("ok")));
+
+        using var session = Session(canned);
+        using var stop = new CancellationTokenSource();
+
+        await foreach (var happened in ((IPatchSession)session).Ask("look", stop.Token))
+        {
+            if (happened is PatchEvent.Did) await stop.CancelAsync();
+        }
+
+        await Drain(session, "carry on");
+
+        var sent = canned.Sent[^1].ToJsonString();
+
+        sent.Split("functionResponse").Length.ShouldBe(4, "three calls, three answers");
+        sent.ShouldContain("stopped");
+    }
+
+    private static GeminiSession Session(
+        Canned canned,
+        Listener hearing = Listener.None,
+        bool ownEars = false,
+        string? ear = null)
+    {
+        var workbench = new PatchWorkbench(
+            NodeCatalog.BuiltIn,
+            new Patch(),
+            vision: false,
+            hearing);
+
+        return new GeminiSession(
+            workbench,
+            new AssistantChoices(
+                Driver,
+                Hearing: hearing is not Listener.None,
+                EarModel: ear),
+            "https://nowhere.invalid/v1beta",
+            new KeyedClient(null, null, new KeyCredential("", ""), canned),
+            thinking: null,
+            ownEars);
+    }
+
+    // --- canned replies -----------------------------------------------------
+
+    private static string Prose(string text) => Talking(text);
+
+    private static string Asking(params (string Name, string Arguments)[] calls) => Talking(null, calls);
+
+    /// <summary>Tool calls with a word about them, which is how a model narrates.</summary>
+    private static string Talking(string? said, params (string Name, string Arguments)[] calls)
+    {
+        var parts = new JsonArray();
+
+        if (said is not null) parts.Add(new JsonObject { ["text"] = said });
+
+        foreach (var (name, arguments) in calls)
+        {
+            parts.Add(new JsonObject
+            {
+                ["functionCall"] = new JsonObject
+                {
+                    ["name"] = name,
+                    ["args"] = JsonNode.Parse(arguments),
+                },
+            });
+        }
+
+        return new JsonObject
+        {
+            ["candidates"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["content"] = new JsonObject { ["role"] = "model", ["parts"] = parts },
+                },
+            },
+        }.ToJsonString();
+    }
+
+    /// <summary>The same answer, with what it cost attached.</summary>
+    private static string Spending(string reply)
+    {
+        var body = JsonNode.Parse(reply)!;
+
+        body["usageMetadata"] = new JsonObject
+        {
+            ["promptTokenCount"] = 9000,
+            ["cachedContentTokenCount"] = 8000,
+            ["candidatesTokenCount"] = 40,
+            ["thoughtsTokenCount"] = 900,
+        };
+
+        return body.ToJsonString();
+    }
+}

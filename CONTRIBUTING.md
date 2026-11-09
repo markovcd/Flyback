@@ -62,8 +62,7 @@ tests/
   Flyback.Ui.Testing            the headless test harness (not a test project)
   Flyback.Cli.Tests             command line tests
   Flyback.Plugins.Tests         plugin and runtime behavior tests
-  Flyback.Plugins.OpenAi.Tests  chat-completions session tests
-  Flyback.Plugins.Gemini.Tests  generateContent session tests
+  Flyback.Assist.Tests          the assistants' wire formats, sessions and workbench
 ```
 
 A passing run still has something to say. Rank it by duration and look at the top of the list:

@@ -1,5 +1,4 @@
 using Flyback.Core.Graph;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Midi;
@@ -14,11 +13,6 @@ internal sealed class PluginCatalog
         new([], [], NodeCatalog.BuiltIn, Engine.Graph.Presets.All, []);
 
     /// <param name="problems">What went wrong on the way, one entry per plugin that could not be loaded or was refused.</param>
-    /// <param name="assistants">
-    /// Last and optional so that every call written before assistants existed
-    /// still compiles — the same courtesy the registry interface extends to
-    /// plugins.
-    /// </param>
     /// <param name="plugins">Everything that loaded, whether or not it registered anything.</param>
     /// <param name="audioOutputs">The sound backends offered, in no particular order — priority is asked for later.</param>
     /// <param name="modules">The engine's catalog with every plugin's modules added to it.</param>
@@ -32,7 +26,6 @@ internal sealed class PluginCatalog
         ModuleCatalog modules,
         IReadOnlyList<PatchPreset> presets,
         IReadOnlyList<PluginProblem> problems,
-        IReadOnlyList<IPatchAssistant>? assistants = null,
         IReadOnlyList<ISecretStore>? secretStores = null,
         IReadOnlyList<IMidiInput>? midiInputs = null,
         IReadOnlyDictionary<object, PluginInfo>? providers = null,
@@ -50,7 +43,6 @@ internal sealed class PluginCatalog
         Modules = modules;
         Presets = [.. PresetOrder.Of(presets)];
         Problems = problems;
-        Assistants = assistants ?? [];
         SecretStores = secretStores ?? [];
         MidiInputs = midiInputs ?? [];
         AudioInputs = audioInputs ?? [];
@@ -74,9 +66,6 @@ internal sealed class PluginCatalog
 
     public IReadOnlyList<IAudioOutput> AudioOutputs { get; }
 
-    /// <summary>Everything installed that could author a patch.</summary>
-    public IReadOnlyList<IPatchAssistant> Assistants { get; }
-
     /// <summary>Everywhere installed that the operating system will hold a secret.</summary>
     public IReadOnlyList<ISecretStore> SecretStores { get; }
 
@@ -91,7 +80,8 @@ internal sealed class PluginCatalog
 
     /// <summary>
     /// The decision model to offer: highest priority, ties broken on id. Null when none is
-    /// installed. Not filtered by whether it can answer, for the reason <see cref="PreferredAssistant"/> is not.
+    /// installed. Not filtered by whether it can answer: that depends on a configuration this
+    /// catalog has never seen, and a model with no key yet is still the one to offer.
     /// </summary>
     public IDecisionModel? PreferredDecisionModel => DecisionModels
         .OrderByDescending(m => m.Priority)
@@ -120,7 +110,7 @@ internal sealed class PluginCatalog
     public IReadOnlyList<PluginProblem> Problems { get; }
 
     /// <summary>
-    /// The plugin that registered a backend, an assistant, a secret store or a decision model, or
+    /// The plugin that registered a backend, a secret store or a decision model, or
     /// null for anything this catalog did not see registered.
     /// </summary>
     /// <remarks>
@@ -165,25 +155,6 @@ internal sealed class PluginCatalog
         .OrderByDescending(i => i.Priority)
         .ThenBy(i => i.Id, StringComparer.Ordinal)
         .FirstOrDefault();
-
-    /// <summary>
-    /// The assistant to offer: highest priority, ties broken on id so the choice is the
-    /// same on every run. Null when none is installed.
-    /// </summary>
-    /// <remarks>
-    /// Deliberately not filtered by whether it can actually run, unlike
-    /// <see cref="PreferredAudioOutput"/>: that depends on a configuration this
-    /// catalog has never seen, and an assistant with no key yet is still the one to
-    /// put in front of somebody.
-    /// </remarks>
-    public IPatchAssistant? PreferredAssistant => Assistants
-        .OrderByDescending(a => a.Priority)
-        .ThenBy(a => a.Id, StringComparer.Ordinal)
-        .FirstOrDefault();
-
-    /// <summary>The assistant a setting names, or null when it is no longer installed.</summary>
-    public IPatchAssistant? Assistant(string id) =>
-        Assistants.FirstOrDefault(a => string.Equals(a.Id, id, StringComparison.Ordinal));
 
     /// <summary>
     /// Where a secret should be kept here: supported, highest priority, ties

@@ -1,7 +1,6 @@
 using System.Reflection;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Tests.Assist;
 using Shouldly;
 using Xunit;
 
@@ -76,7 +75,7 @@ public class ContractVersionTests
         var plugins = typeof(IFlybackPlugin).Assembly.GetName().Version;
 
         core.ShouldBe(plugins);
-        core.ShouldNotBe(typeof(PatchWorkbenchTests).Assembly.GetName().Version);
+        core.ShouldNotBe(typeof(ContractVersionTests).Assembly.GetName().Version);
     }
 
     [Fact]

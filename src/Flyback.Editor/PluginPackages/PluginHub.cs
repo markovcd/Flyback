@@ -426,7 +426,6 @@ internal sealed class PluginHub : IDisposable
         List<Control> marks = [];
 
         if (plugin.Trouble is { } trouble) marks.Add(Mark("pluginTrouble", ink => Glyphs.Warning(16, ink), Colors.Fault, trouble));
-        if (plugin.Assisting is { } said) marks.Add(Mark("pluginAssisting", ink => Glyphs.Spark(16, ink), Colors.Attention, said));
 
         var row = Row(plugin.Plugin, Picture(plugin.Picture), Installed(plugin), marks: marks);
 

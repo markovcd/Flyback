@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using Flyback.Plugins.Assist;
+using Flyback.Assist;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 
 namespace Flyback.Specs.Support;
@@ -26,11 +27,9 @@ internal sealed class BriefingAssistant : IPatchAssistant, IPatchSession
 
     public string Name => "Briefing";
 
-    public int Priority => 0;
-
     public bool NeedsKey => false;
 
-    public AssistantCredential Credential => schema.Credential;
+    public KeyCredential Credential => schema.Credential;
 
     public Uri Endpoint(SettingValues values) => new("https://assistant.test/");
 

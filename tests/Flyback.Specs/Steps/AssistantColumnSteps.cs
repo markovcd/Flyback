@@ -5,7 +5,6 @@ using Avalonia.Media;
 using Flyback.Assist;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Controls;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Settings;
 using Flyback.Specs.Support;
 using Flyback.Ui.Testing;

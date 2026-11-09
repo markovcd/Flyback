@@ -1,4 +1,4 @@
-using Flyback.Plugins.Assist;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.Decide;
@@ -8,8 +8,7 @@ namespace Flyback.Plugins.Decide;
 /// rather than with prose: one of a list, a level on a scale, or yes or no.
 /// </summary>
 /// <remarks>
-/// Kept apart from <see cref="IPatchAssistant"/> because it writes nothing and is
-/// asked from inside other features, where an answer is a number to compare with a
+/// It writes nothing and is asked from inside other features, where an answer is a number to compare with a
 /// threshold. Registering one costs nothing: a model is loaded, or an endpoint
 /// reached, on the first <see cref="DecideAsync"/>.
 /// </remarks>
@@ -25,7 +24,7 @@ public interface IDecisionModel
     int Priority { get; }
 
     /// <summary>Where this one's key comes from, or null for one that needs none. The host holds it (ADR-0034).</summary>
-    AssistantCredential? Credential { get; }
+    KeyCredential? Credential { get; }
 
     /// <summary>Where a model configured this way sends its requests, or null for one that runs here.</summary>
     Uri? Endpoint(SettingValues values) => null;

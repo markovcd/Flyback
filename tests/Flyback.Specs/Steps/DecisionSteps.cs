@@ -1,11 +1,12 @@
 using System.CommandLine;
 using System.Text.Json.Nodes;
+using Flyback.Assist;
 using Flyback.Cli.Common;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Decide;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Flyback.Specs.Support;
 using Reqnroll;
@@ -197,7 +198,7 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
 
         public int Priority => 0;
 
-        public AssistantCredential? Credential => null;
+        public KeyCredential? Credential => null;
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [new SettingField.Text("model", "Model")];
 
@@ -230,7 +231,7 @@ public sealed class DecisionSteps(EditorDriver editor) : IDisposable
 
         public int Priority => 0;
 
-        public AssistantCredential? Credential => null;
+        public KeyCredential? Credential => null;
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 

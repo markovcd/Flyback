@@ -1,10 +1,11 @@
 using System.CommandLine;
 using System.Text.Json;
+using Flyback.Assist;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Secrets;
 using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;
@@ -75,6 +76,7 @@ internal static class ProbeCommand
 
         command.SetAction((result, cancellation) => Run(
             plugins.Catalog,
+            Assistants.Shipped,
             new ProbeOptions(
                 result.GetValue(provider),
                 result.GetValue(model) ?? [],
@@ -103,6 +105,7 @@ internal static class ProbeCommand
     /// </param>
     public static async Task<int> Run(
         PluginCatalog plugins,
+        Assistants assistants,
         ProbeOptions options,
         TextWriter output,
         TextWriter error,
@@ -117,44 +120,44 @@ internal static class ProbeCommand
         // opinion about it.
         var credentials = new Credentials(plugins.PreferredSecretStore);
 
-        if (options.Keys) return Keys(plugins, credentials, output);
+        if (options.Keys) return Keys(assistants, credentials, output);
 
-        if (Everyone(plugins, options.Provider))
+        if (Everyone(assistants, options.Provider))
         {
-            if (plugins.Assistants.Count == 0)
+            if (assistants.Count == 0)
             {
-                error.WriteLine("No assistant is installed.");
+                error.WriteLine("This has no assistant.");
 
                 return Exit.Failed;
             }
 
-            if (plugins.Assistants.Any(one => Ready(one, credentials))
+            if (assistants.All.Any(one => Ready(one, credentials))
                 && !Agreed(options, asking, output, error))
             {
                 return Exit.Failed;
             }
 
-            return await Each(plugins, settings, credentials, options, output, error, settingsPath, cancel).ConfigureAwait(false);
+            return await Each(assistants, settings, credentials, options, output, error, settingsPath, cancel).ConfigureAwait(false);
         }
 
         // The named one, then the one this machine was left on, then whichever
-        // the catalog would put in front of somebody. The middle is what makes
+        // comes first. The middle is what makes
         // a bare `probe` mean "the one I am using" — deliberately not "every one
         // I have a key for", because every question here is billed and a bare
         // command should not fan out across providers on its own.
         var wanted = options.Provider
             ?? (string.IsNullOrWhiteSpace(settings.Provider) ? null : settings.Provider);
 
-        var assistant = wanted is null ? plugins.PreferredAssistant : plugins.Assistant(wanted);
+        var assistant = wanted is null ? assistants.Preferred : assistants.Find(wanted);
 
         if (assistant is null)
         {
             error.WriteLine(wanted is null
-                ? "No assistant is installed."
-                : $"No assistant called '{wanted}' is installed.");
+                ? "This has no assistant."
+                : $"There is no assistant called '{wanted}'.");
 
-            if (plugins.Assistants.Count > 0)
-                error.WriteLine($"Installed: {string.Join(", ", plugins.Assistants.Select(a => a.Id))}.");
+            if (assistants.Count > 0)
+                error.WriteLine($"There are: {string.Join(", ", assistants.All.Select(a => a.Id))}.");
 
             return Exit.Failed;
         }
@@ -241,13 +244,12 @@ internal static class ProbeCommand
     /// Whether <c>--provider</c> named the whole lot rather than one of them.
     /// </summary>
     /// <remarks>
-    /// An installed assistant actually called <c>all</c> wins, because a plugin
-    /// that took the name is a real thing somebody can point at and this is only
-    /// a word.
+    /// An assistant actually called <c>all</c> wins, because it is a real thing
+    /// somebody can point at and this is only a word.
     /// </remarks>
-    private static bool Everyone(PluginCatalog plugins, string? provider) =>
+    private static bool Everyone(Assistants assistants, string? provider) =>
         string.Equals(provider, "all", StringComparison.OrdinalIgnoreCase)
-        && plugins.Assistant("all") is null;
+        && assistants.Find("all") is null;
 
     /// <summary>
     /// Every provider that can be asked and has a key, one after another.
@@ -258,7 +260,7 @@ internal static class ProbeCommand
     /// written down as it finishes, so a later refusal cannot cost an earlier answer.
     /// </remarks>
     private static async Task<int> Each(
-        PluginCatalog plugins,
+        Assistants assistants,
         AssistantSettings settings,
         Credentials credentials,
         ProbeOptions options,
@@ -270,7 +272,7 @@ internal static class ProbeCommand
         var any = false;
         var first = true;
 
-        foreach (var assistant in plugins.Assistants.OrderBy(a => a.Id, StringComparer.Ordinal))
+        foreach (var assistant in assistants.All.OrderBy(a => a.Id, StringComparer.Ordinal))
         {
             if (!first) output.WriteLine();
 
@@ -310,9 +312,9 @@ internal static class ProbeCommand
         // and not kept: that one lives in the window's memory and dies with it.
         var variable = assistant.Credential.EnvironmentVariable;
         var values = settings.Of(assistant.Id);
-        var config = new AssistantConfig(credentials.Transport(assistant, values), values);
+        var config = new AssistantConfig(credentials.Client(assistant, values), values);
 
-        if (assistant.NeedsKey && !config.Transport.HasKey)
+        if (assistant.NeedsKey && !config.Client.HasKey)
         {
             error.WriteLine($"No key for {assistant.Name}.");
 
@@ -328,7 +330,7 @@ internal static class ProbeCommand
             return Exit.Failed;
         }
 
-        if (Credentials.Elsewhere(assistant, config) is { } elsewhere)
+        if (AssistantKeys.Elsewhere(assistant, config) is { } elsewhere)
         {
             error.WriteLine(elsewhere);
 
@@ -412,7 +414,7 @@ internal static class ProbeCommand
     /// all, which separates "you have no key" from "this program could never see the
     /// one you have".
     /// </remarks>
-    private static int Keys(PluginCatalog plugins, Credentials credentials, TextWriter output)
+    private static int Keys(Assistants assistants, Credentials credentials, TextWriter output)
     {
         output.WriteLine(credentials.Store is { } store
             ? $"Keys kept by {store.Name}."
@@ -420,7 +422,7 @@ internal static class ProbeCommand
 
         output.WriteLine();
 
-        foreach (var assistant in plugins.Assistants.OrderBy(a => a.Id, StringComparer.Ordinal))
+        foreach (var assistant in assistants.All.OrderBy(a => a.Id, StringComparer.Ordinal))
         {
             var variable = assistant.Credential.EnvironmentVariable;
 

@@ -1,0 +1,65 @@
+using Flyback.Core.Graph;
+
+namespace Flyback.Assist;
+
+/// <summary>
+/// One thing that happened while an assistant was working.
+/// </summary>
+/// <remarks>
+/// A closed set, because the shell has to be able to show a run without knowing
+/// whose provider produced it. Anything a particular provider does that does not
+/// fit one of these is that provider's business and does not reach the window.
+/// </remarks>
+public abstract record PatchEvent
+{
+    private PatchEvent()
+    {
+    }
+
+    /// <summary>A fragment of prose as it arrives. Append it; do not replace what is there.</summary>
+    public sealed record Said(string Text) : PatchEvent;
+
+    /// <summary>An edit that has already been made to the working patch.</summary>
+    public sealed record Did(string Summary) : PatchEvent;
+
+    /// <summary>Handbook text it looked up: a module, a search of the catalog or a preset.</summary>
+    internal sealed record Read(string Text) : PatchEvent;
+
+    /// <summary>A frame it drew and looked at, as PNG bytes.</summary>
+    public sealed record Saw(byte[] Png, string Caption) : PatchEvent;
+
+    /// <summary>
+    /// A stretch of sound it rendered and listened to, as a WAV file.
+    /// </summary>
+    /// <remarks>
+    /// Separate from <see cref="Saw"/> for the reason the two payloads are
+    /// separate on <see cref="ToolOutcome"/>: a window shows a picture and can
+    /// only offer to play a sound, so a panel that could not tell them apart
+    /// would have to guess which it had been handed.
+    /// </remarks>
+    internal sealed record Heard(byte[] Wav, string Caption) : PatchEvent;
+
+    /// <summary>
+    /// The finished patch, laid out and copied. The turn is over; nothing has
+    /// reached the editor.
+    /// </summary>
+    public sealed record Proposed(Patch Patch, string Summary) : PatchEvent;
+
+    /// <summary>
+    /// What the turn cost, as the provider reports it. <paramref name="CacheRead"/>
+    /// is worth showing on its own: the module handbook is a large stable prefix,
+    /// and a cache that has quietly stopped being hit is expensive rather than
+    /// broken, so nothing else would surface it.
+    /// </summary>
+    public sealed record Cost(int Input, int CacheRead, int Output) : PatchEvent
+    {
+        /// <summary>The model that answered, as the provider named it, or null where it did not.</summary>
+        internal string? Model { get; init; }
+    }
+
+    /// <summary>
+    /// It could not finish. A value rather than an exception, so a provider that
+    /// fails cannot take the window down with it.
+    /// </summary>
+    public sealed record Failed(string Message) : PatchEvent;
+}

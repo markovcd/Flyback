@@ -1,7 +1,7 @@
 using System.Text.Json;
+using Flyback.Assist;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Assist;
 
 namespace Flyback.Editor.Assist;
 
