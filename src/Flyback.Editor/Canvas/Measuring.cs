@@ -17,8 +17,8 @@ namespace Flyback.Editor.Canvas;
 /// <remarks>
 /// On a copy of the patch and off the UI thread, so editing carries on while it runs;
 /// an edit made meanwhile leaves the result out of date the moment it lands. Asking
-/// again while it runs stops it, and while its labels are fresh takes them down. Not
-/// in a page, where a pass of seconds on the one thread a page has would hang it.
+/// again while it runs stops it, and while its labels are fresh takes them down. Only
+/// where <see cref="EditorHost.Measures"/>.
 /// </remarks>
 internal sealed class Measuring : IReactTo<MeasureAsked>, IReactTo<DocumentArrived>, IReactTo<FilesMoved>, IDisposable
 {
@@ -108,7 +108,7 @@ internal sealed class Measuring : IReactTo<MeasureAsked>, IReactTo<DocumentArriv
     {
         var seconds = window ?? settings.MeasureSeconds;
 
-        if (host.InPage) return null;
+        if (!host.Measures) return null;
 
         if (running is { } busy)
         {

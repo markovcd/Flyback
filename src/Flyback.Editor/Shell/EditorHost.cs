@@ -25,6 +25,12 @@ public sealed record EditorHost
     public bool OnDevice { get; init; }
 
     /// <summary>
+    /// Measure is offered: not in a page, whose one thread a pass of seconds would hang,
+    /// and not on a phone or tablet.
+    /// </summary>
+    internal bool Measures => !InPage && !OnDevice;
+
+    /// <summary>
     /// Flyback updates itself here (ADR-0088), so Settings offers the switch for it. Unset where
     /// nothing in Flyback does: a phone, a page, a Microsoft Store copy.
     /// </summary>

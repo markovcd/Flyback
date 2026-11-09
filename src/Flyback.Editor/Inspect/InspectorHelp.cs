@@ -13,16 +13,17 @@ internal static class InspectorHelp
     /// </summary>
     /// <param name="dragToPan">Whether the left button pans and the right one selects (ADR-0182).</param>
     /// <param name="scroll">What a scroll does, settled for the host (ADR-0217, ADR-0226).</param>
-    internal static IReadOnlyList<HelpGroup> Shortcuts(bool inPage, bool fingers, bool dragToPan = false, CanvasScroll scroll = CanvasScroll.Zoom)
+    /// <param name="measures">Whether the host offers Measure, which a phone or tablet does not.</param>
+    internal static IReadOnlyList<HelpGroup> Shortcuts(bool inPage, bool fingers, bool dragToPan = false, CanvasScroll scroll = CanvasScroll.Zoom, bool measures = true)
     {
-        List<HelpGroup> groups = fingers ? FingerGroups(inPage) : KeyGroups(inPage, dragToPan, scroll);
+        List<HelpGroup> groups = fingers ? FingerGroups(inPage, measures) : KeyGroups(inPage, dragToPan, scroll, measures);
         groups.RemoveAll(g => g.Rows.Count == 0);
         return groups;
     }
 
     private static HelpRow Row(string title, string detail = "", string keys = "") => new(title, detail, keys);
 
-    private static List<HelpGroup> KeyGroups(bool inPage, bool dragToPan, CanvasScroll scroll) =>
+    private static List<HelpGroup> KeyGroups(bool inPage, bool dragToPan, CanvasScroll scroll, bool measures) =>
     [
         new("Getting started",
         [
@@ -44,9 +45,12 @@ internal static class InspectorHelp
             Row("Randomize the knobs", "Throws the die at the end of the panel.", "Ctrl+Shift+K"),
             Row("Full-screen picture", "Also a double-click on the picture. Esc gives the window back.", "F11"),
             Row("Live patching", "The patch over the full-screen picture: modules that fade while untouched, or text with F2. Tab over a full-screen picture puts the modules on or off.", "Shift+F11"),
-            .. inPage ? [] : new[]
+            .. inPage || !measures ? [] : new[]
             {
                 Row("Measure", "Runs the patch for a few seconds and pins what each output carries beside it. Again hides them.", "Ctrl+Shift+M"),
+            },
+            .. inPage ? [] : new[]
+            {
                 Row("Record", "Writes what the patch is doing to a file, knobs and all, as it happens. Starts and stops.", "Ctrl+R"),
             },
         ]),
@@ -99,7 +103,7 @@ internal static class InspectorHelp
         ]),
     ];
 
-    private static List<HelpGroup> FingerGroups(bool inPage) =>
+    private static List<HelpGroup> FingerGroups(bool inPage, bool measures) =>
     [
         new("Getting started",
         [
@@ -117,7 +121,9 @@ internal static class InspectorHelp
             ? []
             :
             [
-                Row("Measure", "Beside Record, runs the patch for a few seconds and pins what each output carries beside it. Again hides them."),
+                .. measures
+                    ? new[] { Row("Measure", "Beside Record, runs the patch for a few seconds and pins what each output carries beside it. Again hides them.") }
+                    : [],
                 Row("Record", "At the right of the row along the foot of the window, writes what the patch is doing to a file, knobs and all, as it happens."),
             ]),
         new("Patching",

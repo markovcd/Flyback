@@ -30,6 +30,8 @@ public sealed class DeviceSettingsTests : EditorTest
     [AvaloniaTheory]
     [InlineData("Files", "fileOpener")]
     [InlineData("Canvas", "dragToPan")]
+    [InlineData("Canvas", "measureWindow")]
+    [InlineData("Canvas", "measurePicture")]
     [InlineData("Full screen", "fullScreenOn")]
     [InlineData("Recording", "videoFormat")]
     [InlineData("Recording", "soundFormat")]

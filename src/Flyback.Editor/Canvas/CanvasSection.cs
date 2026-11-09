@@ -190,19 +190,23 @@ internal sealed class CanvasSection : ISettingsSection
         View.Children.Add(SettingRows.Heading("Plugin modules"));
         View.Children.Add(pluginSkins);
         View.Children.Add(animateSkins);
-        View.Children.Add(SettingRows.Heading("Measure"));
 
-        ToolTip.SetTip(measureWindow,
-            "How long Measure runs the patch for, from the playhead. Longer catches a slow LFO's turns "
-            + "and a delay filling; it only takes longer.");
+        if (host.Measures)
+        {
+            View.Children.Add(SettingRows.Heading("Measure"));
 
-        View.Children.Add(InspectorRows.Field("Measure for", measureWindow));
+            ToolTip.SetTip(measureWindow,
+                "How long Measure runs the patch for, from the playhead. Longer catches a slow LFO's turns "
+                + "and a delay filling; it only takes longer.");
 
-        ToolTip.SetTip(measurePicture,
-            "How finely Measure looks at the picture: Small is a 32 by 18 grid, Medium 64 by 36, "
-            + "Large 128 by 72. Larger shows more detail; it only takes longer.");
+            View.Children.Add(InspectorRows.Field("Measure for", measureWindow));
 
-        View.Children.Add(InspectorRows.Field("Grid", measurePicture));
+            ToolTip.SetTip(measurePicture,
+                "How finely Measure looks at the picture: Small is a 32 by 18 grid, Medium 64 by 36, "
+                + "Large 128 by 72. Larger shows more detail; it only takes longer.");
+
+            View.Children.Add(InspectorRows.Field("Grid", measurePicture));
+        }
 
         Show();
     }

@@ -44,6 +44,7 @@ internal sealed class EditorView : Border
     private readonly WindowHolder holder;
     private readonly TouchTips touchTips;
     private readonly bool inPage;
+    private readonly bool measures;
 
     private TopLevel? host;
 
@@ -68,6 +69,7 @@ internal sealed class EditorView : Border
         EditorHost editorHost)
     {
         inPage = editorHost.InPage;
+        measures = editorHost.Measures;
         this.document = document;
         this.patchOpening = patchOpening;
         this.report = report;
@@ -285,7 +287,7 @@ internal sealed class EditorView : Border
 
             // With Shift, leaving Command+M to the Mac's Minimize.
             case Key.M when again:
-                if (!inPage) reactions.Raise(new MeasureAsked());
+                if (measures) reactions.Raise(new MeasureAsked());
                 e.Handled = true;
                 break;
 

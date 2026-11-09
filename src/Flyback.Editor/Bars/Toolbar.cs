@@ -267,7 +267,7 @@ internal sealed class Toolbar
         if (full)
         {
             patchwork.Children.Add(ToolbarButtons.Separator());
-            patchwork.Children.Add(Measure);
+            if (host.Measures) patchwork.Children.Add(Measure);
             patchwork.Children.Add(Record);
         }
 

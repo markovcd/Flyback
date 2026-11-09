@@ -18,6 +18,7 @@
 - The splash on a slow start and the web editor's loading screen show the Flyback banner.
 - A group's panel has a die that randomizes the knobs of every module in the box, as one undo step.
 - The module die and the menu say randomize instead of roll.
+- The phone and tablet editors leave out Measure.
 
 ### Viewer
 
