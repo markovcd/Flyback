@@ -82,6 +82,12 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
     /// <summary>The factor and the rungs together, with the exact figures as their tip.</summary>
     private readonly StackPanel headroom;
 
+    /// <summary>How close the sound comes to clipping, left of the oversampling.</summary>
+    public LevelBar Level { get; } = new() { Name = "soundLevel", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0), IsVisible = false };
+
+    /// <summary>How many buffers had clipped when the clip dot was last cleared.</summary>
+    private long clearedAt;
+
     /// <summary>How long a step down in oversampling stays marked.</summary>
     private static readonly TimeSpan SteppedFor = TimeSpan.FromSeconds(4);
 
@@ -161,7 +167,17 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
         // A touch screen shows no tip, so a tap says the figures on the report line.
         headroom.Tapped += (_, _) => report.Say(Figures());
 
-        Grid.SetColumn(headroom, 2);
+        // A tap or click clears a clip, and says what the level was.
+        Level.Tapped += (_, _) =>
+        {
+            report.Say(LevelFigures());
+            clearedAt = playback.SoundClipped;
+            ShowLevel();
+        };
+
+        var sound = new StackPanel { Orientation = Orientation.Horizontal, Children = { Level, headroom } };
+
+        Grid.SetColumn(sound, 2);
         Grid.SetColumn(status, 3);
         Grid.SetColumn(rule, 4);
         Grid.SetColumn(letter, 5);
@@ -173,7 +189,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
         bar.Children.Add(Tutorial);
         bar.Children.Add(report);
         bar.Children.Add(Compiling);
-        bar.Children.Add(headroom);
+        bar.Children.Add(sound);
         bar.Children.Add(status);
         bar.Children.Add(rule);
         bar.Children.Add(letter);
@@ -191,8 +207,12 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
 
         var ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(250) };
         ticker.Tick += (_, _) => Update();
-        View.AttachedToVisualTree += (_, _) => ticker.Start();
-        View.DetachedFromVisualTree += (_, _) => ticker.Stop();
+        // A level read four times a second jumps, so the meter has a quicker clock of its own.
+        var meter = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(40) };
+        meter.Tick += (_, _) => ShowLevel();
+
+        View.AttachedToVisualTree += (_, _) => { ticker.Start(); meter.Start(); };
+        View.DetachedFromVisualTree += (_, _) => { ticker.Stop(); meter.Stop(); };
     }
 
     /// <summary>Opens the tutorials' column beside the canvas, first on the bar where a newcomer looks for help.</summary>
@@ -223,7 +243,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
         var backend = playback.SoundBackend is { } through ? $"   |   {through}" : "";
 
         // Nothing is shown of the sound of a patch that has none.
-        headroom.IsVisible = playback.HasSound;
+        headroom.IsVisible = Level.IsVisible = playback.HasSound;
 
         if (playback.HasSound) ShowHeadroom();
 
@@ -259,6 +279,35 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
 
         // Written while closed only, so an open tip holds still to be read.
         if (!ToolTip.GetIsOpen(headroom)) ToolTip.SetTip(headroom, Figures());
+    }
+
+    /// <summary>The level bar as the sound plays now, with its exact figures as the tip.</summary>
+    internal void ShowLevel()
+    {
+        if (!Level.IsVisible) return;
+
+        var clipped = playback.SoundClipped;
+
+        // A clip counted before this sound began is not this sound's.
+        if (clipped < clearedAt) clearedAt = clipped;
+
+        Level.Show(SoundLevel.Decibels(playback.SoundPeak), clipped > clearedAt, DateTime.UtcNow);
+
+        if (!ToolTip.GetIsOpen(Level)) ToolTip.SetTip(Level, LevelFigures());
+    }
+
+    /// <summary>The exact figures behind the level bar.</summary>
+    private string LevelFigures()
+    {
+        var peak = Level.Held;
+        var clips = playback.SoundClipped - clearedAt;
+        var said = double.IsNegativeInfinity(peak)
+            ? "Silent"
+            : string.Create(CultureInfo.InvariantCulture, $"Peak {peak:0.0} dB");
+
+        return clips > 0
+            ? string.Create(CultureInfo.InvariantCulture, $"{said}; clipped in {clips} buffers since last cleared. Click to clear.")
+            : $"{said}; no clipping.";
     }
 
     /// <summary>The exact figures behind the rungs.</summary>

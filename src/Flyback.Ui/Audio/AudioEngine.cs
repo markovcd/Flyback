@@ -78,6 +78,12 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
 
     public double Speed => current.IsRunning ? Volatile.Read(ref speed) : 0;
 
+    private readonly PeakMeter meter = new();
+
+    public float Peak => current.IsRunning ? meter.Peak : 0;
+
+    public long Clipped => meter.Clipped;
+
     public string? RunsOn => Volatile.Read(ref activeState).Program switch
     {
         { Ops.Length: 0 } => null,
@@ -481,9 +487,11 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
 
         var level = Volatile.Read(ref gain);
 
-        if (level >= 1f) return;
+        if (level < 1f)
+            for (var i = 0; i < buffer.Length; i++) buffer[i] *= level;
 
-        for (var i = 0; i < buffer.Length; i++) buffer[i] *= level;
+        // After the Volume, so the meter shows what reaches the speakers.
+        meter.Take(buffer, buffer.Length / 2d / current.SampleRate);
     }
 
     /// <summary>

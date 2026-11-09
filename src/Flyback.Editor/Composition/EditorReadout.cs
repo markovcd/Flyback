@@ -49,6 +49,8 @@ internal sealed class EditorReadout(
             ["soundCores"] = sound.Cores,
             ["soundOversample"] = sound.Oversample,
             ["soundSpeed"] = Math.Round(sound.Speed, 2),
+            ["soundPeak"] = SoundLevel.Decibels(sound.Peak) is var peak && double.IsFinite(peak) ? Math.Round(peak, 1) : null,
+            ["soundClipped"] = sound.Clipped,
             ["soundHeadroom"] = SoundHeadroom.Word(SoundHeadroom.Of(sound.Speed, sound.Oversample)),
             ["canvasPaints"] = painted,
             ["canvasPaintMilliseconds"] = Math.Round(lastPaint.TotalMilliseconds, 2),

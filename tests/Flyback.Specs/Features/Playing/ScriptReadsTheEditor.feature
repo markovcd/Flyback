@@ -14,6 +14,7 @@ Feature: A script reads how the editor is doing without looking at it
     Then the script is told the sound runs on "IL"
     And the script is told the sound renders faster than real time
     And the script is told the sound has "plenty" of headroom
+    And the script is told how loud the sound peaks, with no clipping
 
   Scenario: An editor started on the interpreter says so
     Given a 220 Hz sine is playing

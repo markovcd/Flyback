@@ -29,5 +29,12 @@ public sealed class ReadoutSteps(EditorDriver editor)
     [Then("the script is told the sound has {string} of headroom")]
     public void ThenHeadroom(string word) => ((string?)Told["soundHeadroom"]).ShouldBe(word);
 
+    [Then("the script is told how loud the sound peaks, with no clipping")]
+    public void ThenPeak()
+    {
+        ((double?)Told["soundPeak"]).ShouldNotBeNull().ShouldBeLessThanOrEqualTo(0);
+        ((long)Told["soundClipped"]!).ShouldBe(0);
+    }
+
     private JsonObject Told => told ?? throw new InvalidOperationException("No script has asked the editor yet.");
 }
