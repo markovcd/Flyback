@@ -6,6 +6,7 @@ using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Hubs;
+using Flyback.Editor.Knobs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Settings;
 using Flyback.Ui.Controls;
@@ -228,6 +229,18 @@ internal sealed class GroupInspector(
                     : $"Switch the {switching} modules in this box off, passing what is patched "
                       + "into it straight through  (Ctrl+B)",
                 editor.Edits.SwitchSelected);
+
+        // Every module in the box, as Ctrl+Shift+D does with the box selected.
+        var rolling = ModuleDie.Count(editor.History.Patch, editor.Selection.Nodes);
+
+        if (rolling > 0)
+            Act(
+                "randomize-group",
+                Glyphs.Dice(),
+                rolling > 1
+                    ? $"Randomize the {rolling} knobs in this box; Ctrl+Z goes back  (Ctrl+Shift+D)"
+                    : "Randomize the one knob in this box; Ctrl+Z goes back  (Ctrl+Shift+D)",
+                () => editor.Reactions.Raise(new ModulesRollAsked()));
 
         Act(
             group.Collapsed ? "open-group" : "close-group",

@@ -8,6 +8,9 @@ using Avalonia.VisualTree;
 using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
+using Flyback.Editor.Knobs;
+using Flyback.Editor.Settings;
+using Flyback.Host;
 using Shouldly;
 using Xunit;
 
@@ -284,6 +287,7 @@ public class GroupInspectorTests : EditorTest
     /// </summary>
     [AvaloniaTheory]
     [InlineData("switch-group")]
+    [InlineData("randomize-group")]
     [InlineData("open-group")]
     [InlineData("keep-group")]
     [InlineData("ungroup")]
@@ -305,6 +309,39 @@ public class GroupInspectorTests : EditorTest
         icon.Stroke.ShouldNotBeNull("the stroke follows the button's own foreground");
 
         Tip(window, name).Length.ShouldBeGreaterThan(8);
+    }
+
+    /// <summary>
+    /// The box's die moves the knobs of every module in it, as one undo step,
+    /// and leaves a wired input where it is.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_die_randomizes_every_module_in_the_box_as_one_undo_step()
+    {
+        var window = Open(out var group);
+        var editor = Editor(window);
+        var die = Service<ModuleDie>(window);
+
+        Service<OutputSettingRepository>(window).Current.Randomize = new RandomizeSettings { Amount = 1, GlideSeconds = 0 };
+        die.Random = new Random(3);
+
+        var before = group.Members.ToDictionary(id => id, id => editor.History.Patch.Find(id)!.InputValues.ToArray());
+        var knobs = ModuleDie.Count(editor.History.Patch, group.Members.Select(id => editor.History.Patch.Find(id)!));
+
+        knobs.ShouldBeGreaterThan(0);
+        Tip(window, "randomize-group").ShouldContain($"{knobs} knobs in this box");
+
+        Press(window, "randomize-group");
+
+        var sine = group.Members.Select(id => editor.History.Patch.Find(id)!).Single(n => n.TypeId == "osc.sine");
+        var wired = editor.History.Patch.Connections.Single(c => c.TargetNode == sine.Id).TargetPort;
+
+        sine.InputValues.ShouldNotBe(before[sine.Id]);
+        sine.InputValues[wired].ShouldBe(before[sine.Id][wired]);
+
+        editor.History.Undo().ShouldBeTrue();
+
+        foreach (var (id, values) in before) editor.History.Patch.Find(id)!.InputValues.ShouldBe(values);
     }
 
     /// <summary>

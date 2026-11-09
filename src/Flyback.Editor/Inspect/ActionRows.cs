@@ -67,7 +67,7 @@ internal static class ActionRows
                 editor.Edits.SwitchSelected);
         }
 
-        var rolling = editor.Selection.Nodes.Sum(n => ModuleDie.Rollable(editor.History.Patch, n).Count());
+        var rolling = ModuleDie.Count(editor.History.Patch, editor.Selection.Nodes);
 
         if (rolling > 0)
             Act(

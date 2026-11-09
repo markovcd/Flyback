@@ -43,6 +43,9 @@ internal sealed class ModuleDie(
         }
     }
 
+    /// <summary>How many knobs a roll of <paramref name="nodes"/> moves.</summary>
+    public static int Count(Patch patch, IEnumerable<NodeInstance> nodes) => nodes.Sum(node => Rollable(patch, node).Count());
+
     /// <summary>Rolls every knob of its own on the selected modules, as one edit.</summary>
     public void Roll()
     {
