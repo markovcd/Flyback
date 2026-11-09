@@ -487,11 +487,11 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
 
         var level = Volatile.Read(ref gain);
 
+        // The level as it reaches the speakers, the clips as the patch made them.
+        meter.Take(buffer, buffer.Length / 2d / current.SampleRate, level);
+
         if (level < 1f)
             for (var i = 0; i < buffer.Length; i++) buffer[i] *= level;
-
-        // After the Volume, so the meter shows what reaches the speakers.
-        meter.Take(buffer, buffer.Length / 2d / current.SampleRate);
     }
 
     /// <summary>

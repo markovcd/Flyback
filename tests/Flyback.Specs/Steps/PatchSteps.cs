@@ -291,6 +291,14 @@ public sealed class PatchSteps(PatchContext context)
         context.HighestFrequency = frequency;
     }
 
+    // A full-scale sine is clipped as it starts, while the DC blocker settles.
+    [Given("a {float} Hz sine is playing at half scale")]
+    public void GivenAHalfScaleSine(float frequency)
+    {
+        GivenASine(frequency);
+        context.SetInput("tone", "amp", 0.5f);
+    }
+
     [Given("a {float} Hz sine is heard with it")]
     public void GivenASineWithIt(float frequency)
     {

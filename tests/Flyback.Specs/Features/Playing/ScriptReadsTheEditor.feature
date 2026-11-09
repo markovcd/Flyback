@@ -5,7 +5,7 @@ Feature: A script reads how the editor is doing without looking at it
   question instead of reading the status bar off a screenshot.
 
   Scenario: The script is told the sound runs as IL, and how fast
-    Given a 220 Hz sine is playing
+    Given a 220 Hz sine is playing at half scale
     And the speakers play whatever they are handed
     And the patch is open in the editor
     And the patch is playing
