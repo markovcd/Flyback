@@ -27,6 +27,7 @@
     #loading .status { position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%); max-width: calc(100vw - 48px);
                        display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 20px;
                        border-radius: 10px; background: color-mix(in srgb, #16181B 90%, transparent); text-align: center; }
+    #loading .said:empty { display: none; }
     #loading .bar { width: 200px; height: 3px; border-radius: 2px; background: #2A2D34; overflow: hidden; }
     #loading .fill { width: 0; height: 100%; background: #77EA9A; transition: width 0.15s; }
     #loading.gone { opacity: 0; pointer-events: none; }
@@ -38,7 +39,7 @@
     <img class="art" src="../assets/splash.jpg" alt="">
     <div class="status">
       <div class="bar"><div class="fill"></div></div>
-      <div class="said">Loading</div>
+      <div class="said"></div>
     </div>
   </div>
   <script type="module" src="./main.js"></script>

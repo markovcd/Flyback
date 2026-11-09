@@ -45,7 +45,6 @@ function downloaded(done, total) {
   loadedShare = Math.max(loadedShare, done / Math.max(total, 1));
   loadingFill.style.width = `${Math.round(100 * loadedShare)}%`;
   if (done >= total && !document.documentElement.dataset.editor) {
-    loadingSaid.textContent = 'Starting';
     tooLong ??= setTimeout(() => {
       if (startingError !== null) failed(startingError);
       else if (!document.documentElement.dataset.editor) loadingSaid.textContent = 'Flyback is taking too long to start. Reloading the page may help.';

@@ -1,10 +1,7 @@
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Flyback.Core;
-using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Desktop;
@@ -27,22 +24,6 @@ internal sealed class SplashWindow : Window
 
         using var banner = typeof(SplashWindow).Assembly.GetManifestResourceStream(Banner)!;
 
-        Content = new Panel
-        {
-            Children =
-            {
-                new Image { Source = new Bitmap(banner), Stretch = Stretch.UniformToFill },
-                new Border
-                {
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Bottom,
-                    Margin = new Thickness(0, 0, 0, 28),
-                    Padding = new Thickness(14, 6),
-                    CornerRadius = new CornerRadius(8),
-                    Background = new SolidColorBrush(Colors.Window, 0.9),
-                    Child = Text.Quiet("Starting…"),
-                },
-            },
-        };
+        Content = new Image { Source = new Bitmap(banner), Stretch = Stretch.UniformToFill };
     }
 }
