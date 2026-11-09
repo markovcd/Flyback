@@ -16,7 +16,7 @@ public sealed class DevicePluginsTests : EditorTest
 
     private MainWindow Open(bool onDevice)
     {
-        var window = NewMainWindow(new EditorSetup { Host = new() { OnDevice = onDevice, PresetSite = Root } });
+        var window = NewMainWindow(new EditorSetup { Host = new() { Place = onDevice ? EditorPlace.Device : EditorPlace.Desktop, PresetSite = Root } });
 
         window.Show();
         Settle(window);

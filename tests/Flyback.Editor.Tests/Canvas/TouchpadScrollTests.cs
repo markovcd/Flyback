@@ -201,7 +201,7 @@ public class TouchpadScrollTests : EditorTest
     [AvaloniaFact]
     public void The_help_names_the_scroll_and_the_pinch_where_a_scroll_pans()
     {
-        var rows = InspectorHelp.Shortcuts(inPage: false, fingers: false, scroll: CanvasScroll.Pan).SelectMany(g => g.Rows).ToList();
+        var rows = InspectorHelp.Shortcuts(new EditorHost(), fingers: false, scroll: CanvasScroll.Pan).SelectMany(g => g.Rows).ToList();
 
         rows.Single(r => r.Title == "Pan").Keys.ShouldBe("Scroll");
         rows.Single(r => r.Title == "Zoom").Detail.ShouldContain("Pinch");
@@ -211,7 +211,7 @@ public class TouchpadScrollTests : EditorTest
     [AvaloniaFact]
     public void The_help_on_a_Mac_names_the_wheel_for_zoom_and_the_trackpad_for_pan()
     {
-        var rows = InspectorHelp.Shortcuts(inPage: false, fingers: false, scroll: CanvasScroll.Auto).SelectMany(g => g.Rows).ToList();
+        var rows = InspectorHelp.Shortcuts(new EditorHost(), fingers: false, scroll: CanvasScroll.Auto).SelectMany(g => g.Rows).ToList();
 
         rows.Single(r => r.Title == "Pan").Detail.ShouldContain("trackpad");
         rows.Single(r => r.Title == "Zoom").Keys.ShouldBe("Wheel");

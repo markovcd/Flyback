@@ -245,7 +245,7 @@ internal sealed class UnsavedWork(
         try
         {
             // Not in a page, which has nowhere to save to.
-            return await AskAsync(about, question, offerSave: !host.InPage, mark: Badge(Colors.Attention, ink => Glyphs.Save(24, ink))) switch
+            return await AskAsync(about, question, offerSave: host.OpensFiles, mark: Badge(Colors.Attention, ink => Glyphs.Save(24, ink))) switch
             {
                 // A canceled save picker is a canceled close: somebody who thought
                 // better of where has not agreed to lose the patch.

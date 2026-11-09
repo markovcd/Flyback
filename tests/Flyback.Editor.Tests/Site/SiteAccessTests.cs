@@ -16,7 +16,7 @@ public sealed class SiteAccessTests
     [Fact]
     public void A_page_asks_its_site_for_presets_but_never_for_plugins_to_install()
     {
-        using var provider = EditorServices.Provider(new EditorSetup { Host = new() { InPage = true, PresetSite = Root } });
+        using var provider = EditorServices.Provider(new EditorSetup { Host = new() { Place = EditorPlace.Page, PresetSite = Root } });
         var page = provider.GetRequiredService<SiteAccess>();
 
         page.Presets().ShouldNotBeNull();

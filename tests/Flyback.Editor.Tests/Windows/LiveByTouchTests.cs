@@ -100,7 +100,7 @@ public class LiveByTouchTests : EditorTest
     public void In_a_page_live_patching_asks_for_the_whole_screen_and_gives_it_back()
     {
         var asked = new List<bool>();
-        var window = NewMainWindow(new EditorSetup { Host = new() { InPage = true, WholeScreen = asked.Add } });
+        var window = NewMainWindow(new EditorSetup { Host = new() { Place = EditorPlace.Page, WholeScreen = asked.Add } });
         window.Show();
         Settle(window);
 
@@ -115,7 +115,7 @@ public class LiveByTouchTests : EditorTest
     public void A_picture_the_host_draws_goes_behind_the_editor_with_nothing_opaque_over_it()
     {
         var moved = new List<bool>();
-        var window = NewMainWindow(new EditorSetup { Host = new() { InPage = true, PictureBehind = moved.Add } });
+        var window = NewMainWindow(new EditorSetup { Host = new() { Place = EditorPlace.Page, PictureBehind = moved.Add } });
         window.Show();
         Settle(window);
 

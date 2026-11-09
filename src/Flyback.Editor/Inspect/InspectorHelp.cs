@@ -1,5 +1,6 @@
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Hubs;
+using Flyback.Editor.Shell;
 
 namespace Flyback.Editor.Inspect;
 
@@ -8,22 +9,20 @@ internal static class InspectorHelp
 {
     /// <summary>
     /// What the panel lists with nothing selected: every gesture the canvas has,
-    /// in groups. A page has no files, settings or recording to name, and a finger
-    /// has no keys.
+    /// in groups, naming only what the host offers. A finger has no keys.
     /// </summary>
     /// <param name="dragToPan">Whether the left button pans and the right one selects (ADR-0182).</param>
     /// <param name="scroll">What a scroll does, settled for the host (ADR-0217, ADR-0226).</param>
-    /// <param name="measures">Whether the host offers Measure, which a phone or tablet does not.</param>
-    internal static IReadOnlyList<HelpGroup> Shortcuts(bool inPage, bool fingers, bool dragToPan = false, CanvasScroll scroll = CanvasScroll.Zoom, bool measures = true)
+    internal static IReadOnlyList<HelpGroup> Shortcuts(EditorHost host, bool fingers, bool dragToPan = false, CanvasScroll scroll = CanvasScroll.Zoom)
     {
-        List<HelpGroup> groups = fingers ? FingerGroups(inPage, measures) : KeyGroups(inPage, dragToPan, scroll, measures);
+        List<HelpGroup> groups = fingers ? FingerGroups(host) : KeyGroups(host, dragToPan, scroll);
         groups.RemoveAll(g => g.Rows.Count == 0);
         return groups;
     }
 
     private static HelpRow Row(string title, string detail = "", string keys = "") => new(title, detail, keys);
 
-    private static List<HelpGroup> KeyGroups(bool inPage, bool dragToPan, CanvasScroll scroll, bool measures) =>
+    private static List<HelpGroup> KeyGroups(EditorHost host, bool dragToPan, CanvasScroll scroll) =>
     [
         new("Getting started",
         [
@@ -31,28 +30,26 @@ internal static class InspectorHelp
             Row("Edit a module", "Select it to change its values. Double-click its name in the panel to rename it."),
             Row("Edit as text", "The patch as text to edit, diff and generate. Again shows the canvas.", "F2"),
             Row("Build the text", "Puts the text back on the canvas as a patch.", "Ctrl+Enter"),
-            .. inPage ? [] : new[]
+            .. host.OpensFiles ? new[]
             {
                 Row("Open", "Also on the toolbar.", "Ctrl+O"),
                 Row("Save", "Also on the toolbar.", "Ctrl+S"),
-                Row("Preview size and renderer", "In Settings, on the toolbar."),
-            },
+            } : [],
+            .. host.SettingsWindow ? new[] { Row("Preview size and renderer", "In Settings, on the toolbar.") } : [],
         ]),
-        new(inPage ? "Run" : "Run and record",
+        new(host.Records ? "Run and record" : "Run",
         [
             Row("Pause / play", "Pauses the patch, and plays it on.", "Ctrl+P"),
             Row("Knob panel", "Shows the knobs under the canvas, and hides them again.", "Ctrl+K"),
             Row("Randomize the knobs", "Throws the die at the end of the panel.", "Ctrl+Shift+K"),
             Row("Full-screen picture", "Also a double-click on the picture. Esc gives the window back.", "F11"),
             Row("Live patching", "The patch over the full-screen picture: modules that fade while untouched, or text with F2. Tab over a full-screen picture puts the modules on or off.", "Shift+F11"),
-            .. inPage || !measures ? [] : new[]
-            {
-                Row("Measure", "Runs the patch for a few seconds and pins what each output carries beside it. Again hides them.", "Ctrl+Shift+M"),
-            },
-            .. inPage ? [] : new[]
-            {
-                Row("Record", "Writes what the patch is doing to a file, knobs and all, as it happens. Starts and stops.", "Ctrl+R"),
-            },
+            .. host.Measures
+                ? new[] { Row("Measure", "Runs the patch for a few seconds and pins what each output carries beside it. Again hides them.", "Ctrl+Shift+M") }
+                : [],
+            .. host.Records
+                ? new[] { Row("Record", "Writes what the patch is doing to a file, knobs and all, as it happens. Starts and stops.", "Ctrl+R") }
+                : [],
         ]),
         new("Patching",
         [
@@ -103,29 +100,25 @@ internal static class InspectorHelp
         ]),
     ];
 
-    private static List<HelpGroup> FingerGroups(bool inPage, bool measures) =>
+    private static List<HelpGroup> FingerGroups(EditorHost host) =>
     [
         new("Getting started",
         [
             Row("Add a module", "Hold a finger on bare canvas, or tap + on the toolbar, to add a module there. Tap the box at the top of the list to narrow it by name."),
             Row("Edit a module", "Tap it to edit its values here; Bypass, Duplicate and Delete are under its name, and More has the rest, renaming it among them."),
             Row("Side button", "In a narrow window, on the toolbar, it shows this panel in the canvas's place, and the canvas again."),
-            .. inPage ? [] : new[]
-            {
-                Row("Open and Save", "On the toolbar."),
-                Row("Preview size and renderer", "In Settings, on the toolbar."),
-            },
+            .. host.OpensFiles ? new[] { Row("Open and Save", "On the toolbar.") } : [],
+            .. host.SettingsWindow ? new[] { Row("Preview size and renderer", "In Settings, on the toolbar.") } : [],
         ]),
         new("Run and record",
-        inPage
-            ? []
-            :
-            [
-                .. measures
-                    ? new[] { Row("Measure", "Beside Record, runs the patch for a few seconds and pins what each output carries beside it. Again hides them.") }
-                    : [],
-                Row("Record", "At the right of the row along the foot of the window, writes what the patch is doing to a file, knobs and all, as it happens."),
-            ]),
+        [
+            .. host.Measures
+                ? new[] { Row("Measure", "Beside Record, runs the patch for a few seconds and pins what each output carries beside it. Again hides them.") }
+                : [],
+            .. host.Records
+                ? new[] { Row("Record", "At the right of the row along the foot of the window, writes what the patch is doing to a file, knobs and all, as it happens.") }
+                : [],
+        ]),
         new("Patching",
         [
             Row("Patch a wire", "Drag from a socket into another, or onto bare canvas to add a module already plugged in. A fingertip beside a socket lands on it."),

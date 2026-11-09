@@ -167,8 +167,6 @@ internal sealed class Toolbar
     /// <param name="settings">Whether the buttons are labeled.</param>
     public Toolbar(Document document, PresetSlot presets, Assistants assistants, Reactions reactions, IDialog dialog, RecordingState recording, EditorHost host, CanvasSection settings)
     {
-        var full = !host.InPage;
-
         this.document = document;
         this.recording = recording;
         FollowHistory();
@@ -236,9 +234,9 @@ internal sealed class Toolbar
 
         if (host.Home is not null) patchwork.Children.Add(Home);
         patchwork.Children.Add(presets.View);
-        if (!full) patchwork.Children.Add(Viewer);
+        if (host.OffersViewer) patchwork.Children.Add(Viewer);
 
-        if (full)
+        if (host.OpensFiles)
         {
             patchwork.Children.Add(Open);
             patchwork.Children.Add(Save);
@@ -256,7 +254,7 @@ internal sealed class Toolbar
         patchwork.Children.Add(Redo);
         patchwork.Children.Add(Tidy);
         patchwork.Children.Add(ToolbarButtons.Separator());
-        if (full) patchwork.Children.Add(Assistant);
+        if (host.Assists) patchwork.Children.Add(Assistant);
         patchwork.Children.Add(Code);
         patchwork.Children.Add(Knobs);
         patchwork.Children.Add(Keys);
@@ -264,24 +262,19 @@ internal sealed class Toolbar
         patchwork.Children.Add(Side);
         patchwork.Children.Add(Transport);
 
-        if (full)
-        {
-            patchwork.Children.Add(ToolbarButtons.Separator());
-            if (host.Measures) patchwork.Children.Add(Measure);
-            patchwork.Children.Add(Record);
-        }
+        if (host.Measures || host.Records) patchwork.Children.Add(ToolbarButtons.Separator());
+        if (host.Measures) patchwork.Children.Add(Measure);
+        if (host.Records) patchwork.Children.Add(Record);
 
         // The other end of the bar, because none of these is about the patch:
         // they are the program itself, and a thing reached for once a session
         // does not belong in the path of the things reached for constantly.
         var program = ToolbarButtons.Group();
 
-        // A page has only its own few settings (PageSettings), and no plugins or About.
-        // A device has only the plugins linked into it, so nothing to install or update.
         program.Children.Add(Settings);
 
-        if (full && !host.OnDevice) program.Children.Add(Plugins);
-        if (full) program.Children.Add(About);
+        if (host.InstallsPlugins) program.Children.Add(Plugins);
+        if (host.ShowsAbout) program.Children.Add(About);
 
         // Left to right, rather than the program group docked to the far edge —
         // everything reached from the toolbar sits together at the near side instead

@@ -192,7 +192,7 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
 
     public Task On(SettingsAsked notice)
     {
-        if (!host.InPage) return Task.CompletedTask;
+        if (host.SettingsWindow) return Task.CompletedTask;
 
         // From the gear, or from the menu it has folded into.
         Flyout.ShowAt(toolbar.Settings.IsVisible ? toolbar.Settings : toolbar.Overflow.More);

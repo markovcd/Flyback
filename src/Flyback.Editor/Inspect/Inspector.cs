@@ -51,8 +51,7 @@ internal sealed class Inspector
     private readonly HashSet<string> openShortcuts = ["Getting started"];
 
     /// <summary>Whether the editor is in a page, which has no files, settings or recording for the help to name.</summary>
-    private readonly bool inPage;
-    private readonly bool measures;
+    private readonly EditorHost host;
 
     /// <summary>Whether a finger has touched the canvas, so the help names what a finger does.</summary>
     private bool fingers;
@@ -82,8 +81,7 @@ internal sealed class Inspector
         this.groups = groups;
         this.levelPanel = levelPanel;
         this.levels = levels;
-        inPage = host.InPage;
-        measures = host.Measures;
+        this.host = host;
         Panel = surface.Panel;
         Wash = surface.Wash;
         PlateHost = surface.PlateHost;
@@ -237,7 +235,7 @@ internal sealed class Inspector
             }
             else
             {
-                Panel.Children.Add(ShortcutList.Of(InspectorHelp.Shortcuts(inPage, fingers, editor.Gestures.DragToPan, editor.Gestures.ScrollMode, measures), openShortcuts));
+                Panel.Children.Add(ShortcutList.Of(InspectorHelp.Shortcuts(host, fingers, editor.Gestures.DragToPan, editor.Gestures.ScrollMode), openShortcuts));
             }
 
             return;

@@ -29,7 +29,7 @@ internal sealed class PageApp : Application
 
         var plugins = PluginHost.LoadLinked(typeof(PageApp).Assembly).Install();
 
-        var provider = EditorServices.Provider(new EditorSetup { Plugins = plugins, Host = new() { InPage = true, PresetSite = PageSite.Root, Home = PageSite.Home, WholeScreen = PageScreen.Take, PictureBehind = PageScreen.PictureBehind, ScrollPans = PagePlatform.OnMac(), ScrollIsMouse = PagePlatform.ScrollIsMouse } }, services =>
+        var provider = EditorServices.Provider(new EditorSetup { Plugins = plugins, Host = new() { Place = EditorPlace.Page, PresetSite = PageSite.Root, Home = PageSite.Home, WholeScreen = PageScreen.Take, PictureBehind = PageScreen.PictureBehind, ScrollPans = PagePlatform.OnMac(), ScrollIsMouse = PagePlatform.ScrollIsMouse } }, services =>
         {
             services.AddSingleton<Func<IGpuPreview>>(sp => () => new CanvasPreview(
                 sp.GetRequiredService<IDialog>(),

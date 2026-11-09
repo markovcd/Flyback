@@ -4,6 +4,7 @@ using Flyback.Specs.Support;
 using Reqnroll;
 using Reqnroll.UnitTestProvider;
 using Shouldly;
+using Flyback.Editor.Shell;
 
 namespace Flyback.Specs.Steps;
 
@@ -25,7 +26,7 @@ public sealed partial class ShortcutHelpSteps(IUnitTestRuntimeProvider runtime)
     {
         named.ShouldNotBeEmpty();
 
-        var listed = InspectorHelp.Shortcuts(inPage: false, fingers: false)
+        var listed = InspectorHelp.Shortcuts(new EditorHost(), fingers: false)
             .SelectMany(group => group.Rows)
             .SelectMany(row => row.Keys.Split(" / "))
             .ToHashSet(StringComparer.Ordinal);

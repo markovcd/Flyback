@@ -43,8 +43,7 @@ internal sealed class EditorView : Border
     private readonly Reactions reactions;
     private readonly WindowHolder holder;
     private readonly TouchTips touchTips;
-    private readonly bool inPage;
-    private readonly bool measures;
+    private readonly EditorHost editorHost;
 
     private TopLevel? host;
 
@@ -68,8 +67,7 @@ internal sealed class EditorView : Border
         TouchTips touchTips,
         EditorHost editorHost)
     {
-        inPage = editorHost.InPage;
-        measures = editorHost.Measures;
+        this.editorHost = editorHost;
         this.document = document;
         this.patchOpening = patchOpening;
         this.report = report;
@@ -281,13 +279,13 @@ internal sealed class EditorView : Border
             // shortcuts, and guarded the same way a click on a disabled
             // button already is: see TakeRecording.ToggleAsync.
             case Key.R:
-                if (!inPage) reactions.Raise(new RecordAsked());
+                if (editorHost.Records) reactions.Raise(new RecordAsked());
                 e.Handled = true;
                 break;
 
             // With Shift, leaving Command+M to the Mac's Minimize.
             case Key.M when again:
-                if (measures) reactions.Raise(new MeasureAsked());
+                if (editorHost.Measures) reactions.Raise(new MeasureAsked());
                 e.Handled = true;
                 break;
 
@@ -311,12 +309,12 @@ internal sealed class EditorView : Border
             // Saving is one gesture here — the picker is where a name is
             // chosen — so there is no second key for saving under another one.
             case Key.O:
-                if (!inPage) reactions.Raise(new OpenAsked());
+                if (editorHost.OpensFiles) reactions.Raise(new OpenAsked());
                 e.Handled = true;
                 break;
 
             case Key.S:
-                if (!inPage) reactions.Raise(new SaveAsked());
+                if (editorHost.OpensFiles) reactions.Raise(new SaveAsked());
                 e.Handled = true;
                 break;
         }

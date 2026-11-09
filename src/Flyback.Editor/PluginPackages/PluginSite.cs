@@ -14,7 +14,7 @@ internal sealed class PluginSite(HttpClient http, Uri root)
 
     /// <summary>What the plugins window asks for shared plugins, or null where there is no site, or a page or a device, which install none.</summary>
     public static PluginSite? For(SiteAccess site, EditorHost host) =>
-        site.Root is null || host.InPage || host.OnDevice ? null : new PluginSite(site.Http, site.Root);
+        site.Root is null || !host.InstallsPlugins ? null : new PluginSite(site.Http, site.Root);
 
     /// <summary>
     /// The <paramref name="page"/>th page of published plugins that build for this system

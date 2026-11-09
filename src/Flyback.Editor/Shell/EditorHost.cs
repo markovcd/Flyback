@@ -4,12 +4,38 @@ namespace Flyback.Editor.Shell;
 /// <remarks>Left unset, it is a desktop window that reaches no network, tells the operating system nothing and offers no restart.</remarks>
 public sealed record EditorHost
 {
-    /// <summary>
-    /// The editor is in a browser page (ADR-0162): nothing is opened, saved or recorded,
-    /// there is no assistant, plugins or About, settings are a few in a panel of their own,
-    /// and the picture stays put, drawn at 480 x 270.
-    /// </summary>
-    public bool InPage { get; init; }
+    /// <summary>Where the editor runs. A feature asks the capability below that it needs, not this.</summary>
+    public EditorPlace Place { get; init; }
+
+    /// <summary>In a browser page: one thread, WebGL, the browser's storage and no file system.</summary>
+    internal bool InPage => Place == EditorPlace.Page;
+
+    /// <summary>On a phone or tablet: one screen, and no other program to start or hand files to.</summary>
+    internal bool OnDevice => Place == EditorPlace.Device;
+
+    /// <summary>Open and Save, and the offer to save before work is lost.</summary>
+    internal bool OpensFiles => Place != EditorPlace.Page;
+
+    /// <summary>Record, which writes a take to a file.</summary>
+    internal bool Records => Place != EditorPlace.Page;
+
+    /// <summary>Measure, which only a desktop offers: a page's one thread would hang on it.</summary>
+    internal bool Measures => Place == EditorPlace.Desktop;
+
+    /// <summary>The assistant.</summary>
+    internal bool Assists => Place != EditorPlace.Page;
+
+    /// <summary>The About box.</summary>
+    internal bool ShowsAbout => Place != EditorPlace.Page;
+
+    /// <summary>The plugins window, which a device lacks because its plugins are linked in.</summary>
+    internal bool InstallsPlugins => Place == EditorPlace.Desktop;
+
+    /// <summary>The settings window; a page has a few settings in a panel of their own instead.</summary>
+    internal bool SettingsWindow => Place != EditorPlace.Page;
+
+    /// <summary>The View it button, which leaves the editor for the page's player.</summary>
+    internal bool OffersViewer => Place == EditorPlace.Page;
 
     /// <summary>The site the gallery lists shared presets from and the plugins window shared plugins.</summary>
     public Uri? PresetSite { get; init; }
@@ -17,18 +43,6 @@ public sealed record EditorHost
     /// <summary>What the Files section tells the operating system.</summary>
     public FileTypes? FileTypes { get; init; }
 
-    /// <summary>
-    /// A phone or tablet (ADR-0184): one screen, every press a finger's, and no other program
-    /// to start or to hand files to, so Settings leaves out what only a desktop acts on. Its
-    /// plugins are linked in, so there is no plugins window and nothing missing is offered.
-    /// </summary>
-    public bool OnDevice { get; init; }
-
-    /// <summary>
-    /// Measure is offered: not in a page, whose one thread a pass of seconds would hang,
-    /// and not on a phone or tablet.
-    /// </summary>
-    internal bool Measures => !InPage && !OnDevice;
 
     /// <summary>
     /// Flyback updates itself here (ADR-0088), so Settings offers the switch for it. Unset where

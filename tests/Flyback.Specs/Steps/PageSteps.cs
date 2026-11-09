@@ -8,7 +8,7 @@ using Shouldly;
 
 namespace Flyback.Specs.Steps;
 
-/// <summary>The editor as a browser page holds it: <c>EditorHost.InPage</c>.</summary>
+/// <summary>The editor as a browser page holds it: <c>EditorPlace.Page</c>.</summary>
 [Binding]
 public sealed class PageSteps(EditorDriver editor, PatchContext context, HandedViewer viewer)
 {
@@ -20,7 +20,7 @@ public sealed class PageSteps(EditorDriver editor, PatchContext context, HandedV
     [Given("the editor is in a page")]
     public void GivenInAPage()
     {
-        editor.Setup = editor.Setup with { Host = editor.Setup.Host with { InPage = true, Home = () => homed++ } };
+        editor.Setup = editor.Setup with { Host = editor.Setup.Host with { Place = EditorPlace.Page, Home = () => homed++ } };
         editor.Services += services =>
         {
             services.AddSingleton<IViewer>(viewer);

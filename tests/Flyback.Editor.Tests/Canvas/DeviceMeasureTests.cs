@@ -22,7 +22,7 @@ public sealed class DeviceMeasureTests : EditorTest
         b.Add("osc.sine", 0, 0, (1, 3f));
         b.Add(NodeCatalog.OutputTypeId, 700, 0);
 
-        var window = NewMainWindow(new EditorSetup { Host = new() { OnDevice = onDevice } });
+        var window = NewMainWindow(new EditorSetup { Host = new() { Place = onDevice ? EditorPlace.Device : EditorPlace.Desktop } });
 
         window.Show();
         Settle(window);
@@ -65,9 +65,9 @@ public sealed class DeviceMeasureTests : EditorTest
     [InlineData(false)]
     public void The_help_leaves_out_Measure_where_it_is_not_offered(bool fingers)
     {
-        Titles(InspectorHelp.Shortcuts(inPage: false, fingers, measures: true)).ShouldContain("Measure");
-        Titles(InspectorHelp.Shortcuts(inPage: false, fingers, measures: false)).ShouldNotContain("Measure");
-        Titles(InspectorHelp.Shortcuts(inPage: false, fingers, measures: false)).ShouldContain("Record");
+        Titles(InspectorHelp.Shortcuts(new EditorHost(), fingers)).ShouldContain("Measure");
+        Titles(InspectorHelp.Shortcuts(new EditorHost { Place = EditorPlace.Device }, fingers)).ShouldNotContain("Measure");
+        Titles(InspectorHelp.Shortcuts(new EditorHost { Place = EditorPlace.Device }, fingers)).ShouldContain("Record");
     }
 
     private static string[] Titles(IReadOnlyList<HelpGroup> groups) => [.. groups.SelectMany(g => g.Rows).Select(r => r.Title)];

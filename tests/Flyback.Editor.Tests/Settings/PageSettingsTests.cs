@@ -30,7 +30,7 @@ public sealed class PageSettingsTests : EditorTest
     private MainWindow Open()
     {
         var window = NewMainWindow(
-            new EditorSetup { Host = new() { InPage = true } },
+            new EditorSetup { Host = new() { Place = EditorPlace.Page } },
             services => services.AddSingleton<IBrowserStore>(browser));
 
         window.Show();

@@ -4,6 +4,7 @@ using Flyback.Core.Graph;
 using Flyback.Editor.Composition;
 using Flyback.Editor.Inspect;
 using Shouldly;
+using Flyback.Editor.Shell;
 
 namespace Flyback.Editor.Tests.Inspect;
 
@@ -69,9 +70,9 @@ public class ShortcutListTests : EditorTest
     [AvaloniaFact]
     public void A_finger_has_no_keys_to_name_and_a_page_has_no_files()
     {
-        InspectorHelp.Shortcuts(inPage: false, fingers: true).SelectMany(g => g.Rows).ShouldAllBe(r => r.Keys.Length == 0);
+        InspectorHelp.Shortcuts(new EditorHost(), fingers: true).SelectMany(g => g.Rows).ShouldAllBe(r => r.Keys.Length == 0);
 
-        InspectorHelp.Shortcuts(inPage: true, fingers: false)
+        InspectorHelp.Shortcuts(new EditorHost { Place = EditorPlace.Page }, fingers: false)
             .SelectMany(g => g.Rows)
             .Select(r => r.Title)
             .ShouldNotContain("Save");
@@ -81,7 +82,7 @@ public class ShortcutListTests : EditorTest
     public void Drag_to_pan_is_what_the_help_names()
     {
         string Keys(bool dragToPan, string title) =>
-            InspectorHelp.Shortcuts(inPage: false, fingers: false, dragToPan).SelectMany(g => g.Rows).Single(r => r.Title == title).Keys;
+            InspectorHelp.Shortcuts(new EditorHost(), fingers: false, dragToPan).SelectMany(g => g.Rows).Single(r => r.Title == title).Keys;
 
         Keys(dragToPan: false, "Pan").ShouldBe("Middle-drag");
         Keys(dragToPan: false, "Select").ShouldBe("Drag");

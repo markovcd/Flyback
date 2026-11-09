@@ -15,7 +15,7 @@ public sealed class DeviceSettingsTests : EditorTest
 {
     private MainWindow Open(bool onDevice)
     {
-        var window = NewMainWindow(new EditorSetup { Host = new() { OnDevice = onDevice } });
+        var window = NewMainWindow(new EditorSetup { Host = new() { Place = onDevice ? EditorPlace.Device : EditorPlace.Desktop } });
 
         window.Show();
         Settle(window);

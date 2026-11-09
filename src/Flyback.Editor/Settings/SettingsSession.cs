@@ -30,7 +30,7 @@ internal sealed class SettingsSession(
     private RestartOffer? offer;
 
     /// <summary>A page has its own few settings instead, in <see cref="PageSettings"/>.</summary>
-    public Task On(SettingsAsked notice) => host.InPage ? Task.CompletedTask : ShowAsync();
+    public Task On(SettingsAsked notice) => host.SettingsWindow ? ShowAsync() : Task.CompletedTask;
 
     /// <summary>Shows all sections, then saves their drafts or restores the last saved values.</summary>
     private async Task ShowAsync()

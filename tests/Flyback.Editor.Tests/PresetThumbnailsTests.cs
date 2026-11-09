@@ -8,6 +8,7 @@ using Flyback.Engine.Render;
 using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
+using Flyback.Editor.Shell;
 
 namespace Flyback.Editor.Tests;
 
@@ -201,7 +202,7 @@ public sealed class PresetThumbnailsTests : IDisposable
     {
         var preset = Counted();
 
-        var tile = await new PresetThumbnails(PluginCatalog.Empty, host: new() { InPage = true }).Of(preset, TestContext.Current.CancellationToken);
+        var tile = await new PresetThumbnails(PluginCatalog.Empty, host: new() { Place = EditorPlace.Page }).Of(preset, TestContext.Current.CancellationToken);
 
         builds.ShouldBe(0);
         tile.Words.ShouldBe(Thumbnail.Unavailable.Words);
@@ -216,7 +217,7 @@ public sealed class PresetThumbnailsTests : IDisposable
 
         var tile = await new PresetThumbnails(
             PluginCatalog.Empty,
-            host: new() { InPage = true },
+            host: new() { Place = EditorPlace.Page },
             shelf: Stilled(preset, StillIndex.ThisBuild, still)).Of(preset, TestContext.Current.CancellationToken);
 
         builds.ShouldBe(0);

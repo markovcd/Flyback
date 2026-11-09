@@ -22,7 +22,7 @@ public sealed class ShortWindowTests : EditorTest
     [InlineData("status")]
     public void The_bars_along_the_bottom_stay_on_top_of_a_short_page(string bar)
     {
-        var window = Open(setup: new EditorSetup { Host = new() { InPage = true } });
+        var window = Open(setup: new EditorSetup { Host = new() { Place = EditorPlace.Page } });
 
         window.MinHeight = 0;
         window.Width = 770;

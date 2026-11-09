@@ -32,7 +32,7 @@ internal static class DeviceEditor
         {
             Plugins = plugins,
             Folders = folders,
-            Host = new() { PresetSite = Site.PresetSite.Built, Relaunch = relaunch, OnDevice = true },
+            Host = new() { PresetSite = Site.PresetSite.Built, Relaunch = relaunch, Place = EditorPlace.Device },
             Launch = new() { Interpreted = interpreted, SoundCores = soundCores },
         }, services =>
         {
