@@ -319,9 +319,10 @@ FROM site-source AS site-editor
 RUN --mount=type=cache,id=nuget-site-editor,target=/root/.nuget/packages \
     Version="${VERSION}" dotnet publish src/Flyback.Editor.Web -c Release -p:RunAOTCompilation=true -o /out/editor -nologo -v:q
 
-# The desktop editor beside the stills command embeds the changelog and the icons.
+# The desktop editor beside the stills command embeds the changelog, the icons and the splash.
 FROM site-source AS site-stills
 COPY CHANGELOG.md flyback.ico flyback.icns flyback.png ./
+COPY site/static/assets/splash.jpg site/static/assets/
 COPY scripts/stills.sh scripts/
 RUN --mount=type=cache,id=nuget-site-stills,target=/root/.nuget/packages \
     Version="${VERSION}" ./scripts/stills.sh /out/stills
