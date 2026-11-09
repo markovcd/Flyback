@@ -36,7 +36,7 @@ public sealed class StatusCountTests : EditorTest
 
         panel.IsVisible.ShouldBeTrue();
 
-        // A sine at Volume 1 peaks near full scale and never past it.
+        // Half scale, since a full-scale sine is clipped as it starts, while the DC blocker settles.
         Pump(() =>
         {
             speakers.Pump();
@@ -45,7 +45,7 @@ public sealed class StatusCountTests : EditorTest
         }, window);
 
         bar.Sound.Level.IsVisible.ShouldBeTrue();
-        bar.Sound.Level.Level.ShouldBeGreaterThan(-3);
+        bar.Sound.Level.Level.ShouldBeInRange(-9, -3);
         bar.Sound.Level.ClipLit.ShouldBeFalse();
         (ToolTip.GetTip(bar.Sound.Level) as string ?? "").ShouldMatch(@"^Peak -?\d+\.\d dB; no clipping\.$");
         oversample.Text.ShouldBe("2×");
@@ -88,7 +88,7 @@ public sealed class StatusCountTests : EditorTest
     {
         var builder = new PatchBuilder();
         var sine = builder.Add("osc.sine", (1, 220f));
-        var output = builder.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        var output = builder.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
 
         return builder.Wire(sine, 0, output, sound ? NodeCatalog.OutputLeftPort : NodeCatalog.OutputColorPort).Build();
     }
