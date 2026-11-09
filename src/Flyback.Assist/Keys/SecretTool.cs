@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using Flyback.Core;
 
-namespace Flyback.Plugins.Keyring;
+namespace Flyback.Assist.Keys;
 
 /// <summary>
 /// The part that actually talks to the keyring. Kept in its own file so that loading

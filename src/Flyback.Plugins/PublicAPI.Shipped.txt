@@ -51,7 +51,6 @@ Flyback.Plugins.IPluginRegistry.AddAudioOutput(Flyback.Plugins.Audio.IAudioOutpu
 Flyback.Plugins.IPluginRegistry.AddMidiInput(Flyback.Plugins.Midi.IMidiInput! input) -> void
 Flyback.Plugins.IPluginRegistry.AddModules(Flyback.Core.Graph.ModuleProvider! provider, System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.NodeDef!>! modules) -> void
 Flyback.Plugins.IPluginRegistry.AddPresets(System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PatchPreset!>! presets) -> void
-Flyback.Plugins.IPluginRegistry.AddSecretStore(Flyback.Plugins.Secrets.ISecretStore! store) -> void
 Flyback.Plugins.Midi.IMidiInput
 Flyback.Plugins.Midi.IMidiInput.Id.get -> string!
 Flyback.Plugins.Midi.IMidiInput.IsSupported.get -> bool
@@ -107,14 +106,6 @@ Flyback.Plugins.PluginInfo.Name.get -> string!
 Flyback.Plugins.PluginInfo.Name.init -> void
 Flyback.Plugins.PluginInfo.PluginInfo(string! Id, string! Name, string! Description = "") -> void
 Flyback.Plugins.PresetText
-Flyback.Plugins.Secrets.ISecretStore
-Flyback.Plugins.Secrets.ISecretStore.Forget(string! account) -> void
-Flyback.Plugins.Secrets.ISecretStore.Id.get -> string!
-Flyback.Plugins.Secrets.ISecretStore.IsSupported.get -> bool
-Flyback.Plugins.Secrets.ISecretStore.Keep(string! account, string! secret) -> void
-Flyback.Plugins.Secrets.ISecretStore.Name.get -> string!
-Flyback.Plugins.Secrets.ISecretStore.Priority.get -> int
-Flyback.Plugins.Secrets.ISecretStore.Recall(string! account) -> string?
 Flyback.Plugins.Settings.SettingField
 Flyback.Plugins.Settings.SettingField.Deconstruct(out string! Key, out string! Label) -> void
 Flyback.Plugins.Settings.SettingField.Key.get -> string!

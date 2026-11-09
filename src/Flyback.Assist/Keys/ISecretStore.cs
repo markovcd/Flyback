@@ -1,4 +1,4 @@
-namespace Flyback.Plugins.Secrets;
+namespace Flyback.Assist.Keys;
 
 /// <summary>
 /// Somewhere the operating system will hold a secret for us.

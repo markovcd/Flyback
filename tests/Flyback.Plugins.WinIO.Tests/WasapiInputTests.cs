@@ -1,7 +1,6 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Midi;
-using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
@@ -83,7 +82,6 @@ public sealed class WasapiInputTests
 
         public void AddPresets(IReadOnlyList<PatchPreset> presets) { }
 
-        public void AddSecretStore(ISecretStore store) { }
 
         public void AddMidiInput(IMidiInput input) { }
 

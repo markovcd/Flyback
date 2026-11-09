@@ -1,6 +1,4 @@
-using Flyback.Plugins.Secrets;
-
-namespace Flyback.Plugins.Dpapi;
+namespace Flyback.Assist.Keys;
 
 /// <summary>
 /// A secret store backed by Windows' own data protection, keyed to the account
@@ -12,7 +10,7 @@ namespace Flyback.Plugins.Dpapi;
 /// can turn it into a key again — which is the whole reason to delegate rather
 /// than encrypt something with a key we would also have to ship.
 /// </remarks>
-public sealed class DpapiSecretStore : ISecretStore
+internal sealed class DpapiSecretStore : ISecretStore
 {
     public string Id => "dpapi";
 

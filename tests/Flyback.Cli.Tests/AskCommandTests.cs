@@ -408,6 +408,7 @@ public sealed class AskCommandTests : IDisposable
             plugins,
             new Assistants([assistant]),
             DecisionModels.None,
+            SecretStores.None,
             about,
             adjust?.Invoke(options) ?? options,
             said,

@@ -1,6 +1,4 @@
-using Flyback.Plugins.Secrets;
-
-namespace Flyback.Plugins.Keyring;
+namespace Flyback.Assist.Keys;
 
 /// <summary>
 /// A secret store backed by the Secret Service — the D-Bus interface GNOME Keyring and
@@ -8,7 +6,7 @@ namespace Flyback.Plugins.Keyring;
 /// cryptography, which is the point of delegating: the keyring decides how a secret is
 /// held, and unlocks with the login the person has already done.
 /// </summary>
-public sealed class KeyringSecretStore : ISecretStore
+internal sealed class KeyringSecretStore : ISecretStore
 {
     public string Id => "secret-service";
 

@@ -18,12 +18,6 @@ internal sealed class PluginCatalogBuilder
 
     public IReadOnlyList<PluginProblem> Problems => problems;
 
-    /// <summary>Whether the plugins added next may register a secret store.</summary>
-    public bool Secrets
-    {
-        set => registry.Secrets = value;
-    }
-
     public void Problem(PluginProblem problem) => problems.Add(problem);
 
     /// <summary>Puts <paramref name="folder"/> on every problem from the <paramref name="since"/>th on.</summary>
@@ -84,7 +78,6 @@ internal sealed class PluginCatalogBuilder
             registry.Modules,
             registry.Presets,
             problems,
-            Unclashed(registry.SecretStores, s => s.Id, "secret store"),
             Unclashed(registry.MidiInputs, i => i.Id, "MIDI input"),
             providers,
             Unclashed(registry.AudioInputs, i => i.Id, "audio input"));

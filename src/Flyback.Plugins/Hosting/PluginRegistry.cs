@@ -1,7 +1,6 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Midi;
-using Flyback.Plugins.Secrets;
 
 namespace Flyback.Plugins.Hosting;
 
@@ -12,7 +11,6 @@ namespace Flyback.Plugins.Hosting;
 internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegistry
 {
     private readonly List<IAudioOutput> audioOutputs = [];
-    private readonly List<ISecretStore> secretStores = [];
     private readonly List<IMidiInput> midiInputs = [];
     private readonly List<IAudioInput> audioInputs = [];
 
@@ -22,14 +20,9 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
     /// <summary>Whoever is registering right now, for blaming in messages.</summary>
     public PluginInfo Source { get; set; } = new("", "");
 
-    /// <summary>Whether whoever is registering right now may register a secret store.</summary>
-    public bool Secrets { get; set; } = true;
-
     public IReadOnlyDictionary<object, PluginInfo> Providers => providers;
 
     public IReadOnlyList<IAudioOutput> AudioOutputs => audioOutputs;
-
-    public IReadOnlyList<ISecretStore> SecretStores => secretStores;
 
     public IReadOnlyList<IMidiInput> MidiInputs => midiInputs;
 
@@ -41,10 +34,10 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
 
     /// <summary>How far everything had got, to undo a plugin's registration back to.</summary>
     public readonly record struct Checkpoint(
-        ModuleCatalog Modules, int Offered, int Presets, int AudioOutputs, int SecretStores, int MidiInputs, int AudioInputs, int Problems);
+        ModuleCatalog Modules, int Offered, int Presets, int AudioOutputs, int MidiInputs, int AudioInputs, int Problems);
 
     public Checkpoint Mark() => new(
-        Modules, offered.Count, presets.Count, audioOutputs.Count, secretStores.Count, midiInputs.Count, audioInputs.Count, problems.Count);
+        Modules, offered.Count, presets.Count, audioOutputs.Count, midiInputs.Count, audioInputs.Count, problems.Count);
 
     public IEnumerable<NodeDef> OfferedSince(Checkpoint mark) => offered.Skip(mark.Offered);
 
@@ -55,7 +48,6 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
         offered.RemoveRange(mark.Offered, offered.Count - mark.Offered);
         presets.RemoveRange(mark.Presets, presets.Count - mark.Presets);
         Trim(audioOutputs, mark.AudioOutputs);
-        Trim(secretStores, mark.SecretStores);
         Trim(midiInputs, mark.MidiInputs);
         Trim(audioInputs, mark.AudioInputs);
         problems.RemoveRange(mark.Problems, problems.Count - mark.Problems);
@@ -115,20 +107,6 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
     {
         audioOutputs.Add(output);
         providers[output] = Source;
-    }
-
-    public void AddSecretStore(ISecretStore store)
-    {
-        if (!Secrets)
-        {
-            problems.Add(new PluginProblem(
-                Source.Id,
-                $"secret store '{store.Id}' is refused: only a plugin Flyback ships, or one allowed with `flyback-cli plugin allow --secrets`, may keep keys."));
-            return;
-        }
-
-        secretStores.Add(store);
-        providers[store] = Source;
     }
 
     public void AddMidiInput(IMidiInput input)

@@ -1,7 +1,6 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Midi;
-using Flyback.Plugins.Secrets;
 
 namespace Flyback.Plugins;
 
@@ -30,11 +29,6 @@ public interface IPluginRegistry
     /// </summary>
     void AddPresets(IReadOnlyList<PatchPreset> presets);
 
-    /// <summary>
-    /// Offers somewhere the operating system will hold a secret. Registering it
-    /// must not read or write one.
-    /// </summary>
-    void AddSecretStore(ISecretStore store);
 
     /// <summary>
     /// Offers a way of hearing what is plugged in. Registering it must not open

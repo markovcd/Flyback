@@ -1,5 +1,6 @@
 using Flyback.Assist;
 using Flyback.Assist.Decide;
+using Flyback.Assist.Keys;
 using Flyback.Editor.Statistics;
 using Flyback.Plugins.Hosting;
 
@@ -35,4 +36,7 @@ public sealed record EditorSetup
 
     /// <summary>The decision models offered; none unless the shell hands Flyback's over.</summary>
     internal DecisionModels DecisionModels { get; init; } = DecisionModels.None;
+
+    /// <summary>Where keys may be kept; none unless the shell hands the operating system's over.</summary>
+    internal SecretStores SecretStores { get; init; } = SecretStores.None;
 }

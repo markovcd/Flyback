@@ -75,7 +75,7 @@ internal static class ProbeCommand
         };
 
         command.SetAction((result, cancellation) => Run(
-            plugins.Catalog,
+            plugins.SecretStores,
             Assistants.Shipped,
             new ProbeOptions(
                 result.GetValue(provider),
@@ -104,7 +104,7 @@ internal static class ProbeCommand
     /// to know; what to do about it is here.
     /// </param>
     public static async Task<int> Run(
-        PluginCatalog plugins,
+        SecretStores stores,
         Assistants assistants,
         ProbeOptions options,
         TextWriter output,
@@ -118,7 +118,7 @@ internal static class ProbeCommand
         // Built once and used for both paths, so that what --keys reports is
         // literally what the probe would go on to use rather than a second
         // opinion about it.
-        var credentials = new Credentials(plugins.PreferredSecretStore);
+        var credentials = new Credentials(stores.Preferred);
 
         if (options.Keys) return Keys(assistants, credentials, output);
 

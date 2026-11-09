@@ -65,13 +65,13 @@ public abstract class AssistantPanelTest : EditorTest
         AssistantSettings? saved = null,
         string? logs = null,
         AssistantConversation? conversation = null,
-        PluginCatalog? plugins = null)
+        SecretStores? stores = null)
     {
         var folders = Kept with { ConversationLogFolder = logs };
 
         return Column(Open(
             Presets.Plasma(NodeCatalog.BuiltIn),
-            new EditorSetup { Plugins = plugins ?? PluginCatalog.Empty, Assistants = assistants ?? Assistants.None, Folders = folders },
+            new EditorSetup { Assistants = assistants ?? Assistants.None, SecretStores = stores ?? SecretStores.None, Folders = folders },
             services =>
             {
                 services.AddSingleton(new AssistantSettingRepository(folders, saved ?? new AssistantSettings()));

@@ -54,7 +54,7 @@ internal static class DecideCommand
         };
 
         command.SetAction((result, cancellation) => Run(
-            plugins.Catalog,
+            plugins.SecretStores,
             plugins.DecisionModels,
             new DecideOptions(
                 result.GetValue(state),
@@ -90,7 +90,7 @@ internal static class DecideCommand
     /// <param name="asking">Where the download question is answered, or null where nobody can answer it.</param>
     /// <param name="http">What downloads go over, for the tests.</param>
     public static async Task<int> Run(
-        PluginCatalog plugins,
+        SecretStores stores,
         DecisionModels models,
         DecideOptions options,
         TextReader input,
@@ -106,7 +106,7 @@ internal static class DecideCommand
         var decisions = new Decisions(
             models.All,
             settings,
-            new Credentials(plugins.PreferredSecretStore),
+            new Credentials(stores.Preferred),
             new ModelStore(modelsRoot ?? ModelStore.DefaultRoot));
 
         if (options.Use is { } unknown && !DecisionUse.All.ContainsKey(unknown))

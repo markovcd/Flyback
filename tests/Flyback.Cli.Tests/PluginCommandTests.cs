@@ -45,17 +45,6 @@ public sealed class PluginCommandTests : IDisposable
         output.ShouldContain($"Allowed Mine in {mine}, as its 1 file stand now.");
 
         Folders()[0].GetProperty("standing").GetString().ShouldBe("allowed");
-        Folders()[0].GetProperty("secrets").GetBoolean().ShouldBeFalse();
-    }
-
-    [Fact]
-    public void Keeping_keys_is_allowed_only_when_asked_for()
-    {
-        CopiedIn("Mine");
-
-        Run("plugin", "allow", "Mine", "--secrets").Code.ShouldBe(Exit.Ok);
-
-        Folders()[0].GetProperty("secrets").GetBoolean().ShouldBeTrue();
     }
 
     [Fact]

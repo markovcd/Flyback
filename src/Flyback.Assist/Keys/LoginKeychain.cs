@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using Flyback.Core;
 
-namespace Flyback.Plugins.Keychain;
+namespace Flyback.Assist.Keys;
 
 /// <summary>
 /// The part that actually talks to macOS. Kept in its own file so that loading the

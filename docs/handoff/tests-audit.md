@@ -48,7 +48,7 @@ found this week was fixed in the harness the same day, in the open.
   and `GalleryChoice.cs` (240 each), `Ui/Controls/GpuPreviewSurface.cs` (296),
   `Flyback.Gpu` (1,243 across `Gl.cs`, `WglContext.cs`, `EglContext.cs`,
   `GpuReadback.cs`; `GpuRenderTests` only, which skips without Mesa),
-  `Keyring/SecretTool.cs` (107; its output parsing has no fixture, and would
+  `Flyback.Assist/Keys/SecretTool.cs` (107; its output parsing has no fixture, and would
   need a seam for the process it runs).
 
 ## Order

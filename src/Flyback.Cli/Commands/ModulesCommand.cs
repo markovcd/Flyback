@@ -51,7 +51,7 @@ internal static class ModulesCommand
             var output = result.InvocationConfiguration.Output;
 
             if (result.GetValue(find) is { } phrase)
-                return await FindAsync(plugins.Catalog, plugins.DecisionModels, NodeCatalog.Current, phrase, result.GetValue(json), output, result.InvocationConfiguration.Error, cancel, result.GetValue(settings));
+                return await FindAsync(plugins.SecretStores, plugins.DecisionModels, NodeCatalog.Current, phrase, result.GetValue(json), output, result.InvocationConfiguration.Error, cancel, result.GetValue(settings));
 
             return result.GetValue(module) is { } wanted
                 ? Describe(
@@ -65,7 +65,7 @@ internal static class ModulesCommand
     /// <summary>The modules <paramref name="phrase"/> describes, by meaning, with how likely each is.</summary>
     /// <param name="settingsPath">Somewhere other than the usual place, for the tests.</param>
     public static async Task<int> FindAsync(
-        PluginCatalog plugins,
+        SecretStores stores,
         DecisionModels models,
         ModuleCatalog catalog,
         string phrase,
@@ -79,7 +79,7 @@ internal static class ModulesCommand
         var decisions = new Decisions(
             models.All,
             DecisionSettings.Load(settingsPath),
-            new Credentials(plugins.PreferredSecretStore),
+            new Credentials(stores.Preferred),
             new ModelStore(modelsRoot ?? ModelStore.DefaultRoot));
 
         var candidates = catalog.All.Where(d => !NodeCatalog.IsSink(d.TypeId) && !ExpressionFusion.Retired(d)).ToList();

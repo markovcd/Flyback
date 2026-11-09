@@ -379,7 +379,6 @@ registry:
 void AddAudioOutput(IAudioOutput output);
 void AddModules(ModuleProvider provider, IReadOnlyList<NodeDef> modules);
 void AddPresets(IReadOnlyList<PatchPreset> presets);
-void AddSecretStore(ISecretStore store);
 void AddMidiInput(IMidiInput input);
 void AddAudioInput(IAudioInput input);
 ```
@@ -400,12 +399,11 @@ ExcludeAssets="runtime"`.
 ([0158](adr/0158-a-plugin-loads-only-once-somebody-said-yes-and-never-holds-a-key.md)).
 `PluginTrust` loads a folder the build listed in `plugins.sha256`, or one
 `allowed-plugins.json` in the data folder allows, and only while every file in it
-hashes as it did; a Debug build loads everything. A secret store registers only
-from a shipped plugin or one allowed with `--secrets`.
+hashes as it did; a Debug build loads everything.
 
 **Nothing throws.** A bad folder, a folder nobody allowed, a duplicate id or a
-refused module becomes a `PluginProblem` in the catalog. A backend or
-secret store id registered twice is refused to both; a plugin id is the first
+refused module becomes a `PluginProblem` in the catalog. A backend id
+registered twice is refused to both; a plugin id is the first
 one's. Folders are read in ordinal order so two runs agree.
 
 **Module refusals** are `ModuleCatalog`'s, in Core. A provider is refused for a
@@ -452,22 +450,24 @@ folder out from under it.
 |---|---|---|
 | WinIO, MacIO, LinuxIO | Sound and MIDI per platform ([0063](adr/0063-one-plugin-per-platform-for-sound-and-midi.md)) | `NAudio.Wasapi` for WASAPI in WinIO; ASIO and the others are hand-written P/Invoke |
 | AndroidIO | Sound and MIDI on Android, linked into `Flyback.Editor.Android` rather than loaded from a folder ([0184](adr/0184-the-editor-runs-on-android-with-its-plugins-linked-in.md)) | none |
-| Dpapi, Keychain, Keyring | Where an API key is kept ([0034](adr/0034-settings-in-a-file-the-key-in-the-operating-system.md)) | `ProtectedData` in Dpapi |
 | Picture, Voice, Effects, Mastering | Modules and presets | none |
 
 LinuxIO and AndroidIO share `src/plugins/Shared/Audio`, the thread a blocking device is written or read
 on; MacIO and AndroidIO share `src/plugins/Shared/Midi`, the reader that cuts a stream of MIDI bytes
 into messages, since a CoreMIDI packet and an Android delivery hold more than one message.
 
-Assistants and decision models are not plugins
-([0231](adr/0231-assistants-are-built-in-not-plugins.md)). `Flyback.Assist` holds both
+Assistants, decision models and secret stores are not plugins
+([0231](adr/0231-assistants-are-built-in-not-plugins.md), [0233](adr/0233-secret-stores-are-built-in.md)). `Flyback.Assist` holds both
 assistant wire formats, chat completions in `OpenAi/` (any compatible endpoint, a local
 runtime included) and generateContent in `Gemini/`
 ([0066](adr/0066-a-second-wire-format-so-one-model-can-hear.md)), with the survey loop
 over each one's `IModelProbe` in `Surveys/`; the decision models, the Decision server
 among them, in `Decide/` ([0186](adr/0186-a-decision-model-answers-typed-questions-behind-the-plugin-boundary.md));
-and the keyed client both send over in `Keys/`. `Assistants.Shipped` and
-`DecisionModels.Shipped` are what a host offers; the editor gets them through
+and in `Keys/` the keyed client both send over and the secret stores a key is kept in,
+the operating system's own: Windows data protection, the macOS Keychain and the Linux
+Secret Service ([0034](adr/0034-settings-in-a-file-the-key-in-the-operating-system.md)), with
+`ProtectedData` the one package. `Assistants.Shipped`,
+`DecisionModels.Shipped` and `SecretStores.Shipped` are what a host offers; the editor gets them through
 `EditorSetup` and flyback-cli through its `Plugins`. Neither ever holds a key: each sends
 over the `IKeyedClient` the host builds for one origin
 ([0158](adr/0158-a-plugin-loads-only-once-somebody-said-yes-and-never-holds-a-key.md)).

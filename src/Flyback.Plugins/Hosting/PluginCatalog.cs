@@ -1,7 +1,6 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Midi;
-using Flyback.Plugins.Secrets;
 
 namespace Flyback.Plugins.Hosting;
 
@@ -16,7 +15,6 @@ internal sealed class PluginCatalog
     /// <param name="audioOutputs">The sound backends offered, in no particular order — priority is asked for later.</param>
     /// <param name="modules">The engine's catalog with every plugin's modules added to it.</param>
     /// <param name="presets">Patches to start from, the engine's and each plugin's, in any order.</param>
-    /// <param name="secretStores">The places a key may be kept, or none where nothing can keep one.</param>
     /// <param name="midiInputs">The ways of hearing what is plugged in, or none where there is no such way.</param>
     /// <param name="providers">Who registered each of the above, for <see cref="Provider"/>.</param>
     internal PluginCatalog(
@@ -25,7 +23,6 @@ internal sealed class PluginCatalog
         ModuleCatalog modules,
         IReadOnlyList<PatchPreset> presets,
         IReadOnlyList<PluginProblem> problems,
-        IReadOnlyList<ISecretStore>? secretStores = null,
         IReadOnlyList<IMidiInput>? midiInputs = null,
         IReadOnlyDictionary<object, PluginInfo>? providers = null,
         IReadOnlyList<IAudioInput>? audioInputs = null)
@@ -41,7 +38,6 @@ internal sealed class PluginCatalog
         Modules = modules;
         Presets = [.. PresetOrder.Of(presets)];
         Problems = problems;
-        SecretStores = secretStores ?? [];
         MidiInputs = midiInputs ?? [];
         AudioInputs = audioInputs ?? [];
     }
@@ -62,9 +58,6 @@ internal sealed class PluginCatalog
     public IReadOnlyList<LoadedPlugin> Plugins { get; }
 
     public IReadOnlyList<IAudioOutput> AudioOutputs { get; }
-
-    /// <summary>Everywhere installed that the operating system will hold a secret.</summary>
-    public IReadOnlyList<ISecretStore> SecretStores { get; }
 
     /// <summary>Every way installed of hearing what is plugged in.</summary>
     public IReadOnlyList<IMidiInput> MidiInputs { get; }
@@ -90,7 +83,7 @@ internal sealed class PluginCatalog
     public IReadOnlyList<PluginProblem> Problems { get; }
 
     /// <summary>
-    /// The plugin that registered a backend, a secret store or a decision model, or
+    /// The plugin that registered a backend, or
     /// null for anything this catalog did not see registered.
     /// </summary>
     /// <remarks>
@@ -136,31 +129,7 @@ internal sealed class PluginCatalog
         .ThenBy(i => i.Id, StringComparer.Ordinal)
         .FirstOrDefault();
 
-    /// <summary>
-    /// Where a secret should be kept here: supported, highest priority, ties
-    /// broken on id. Null when nothing installed can hold one — in which case a
-    /// key is used for the session and then forgotten, which the panel says
-    /// rather than appearing to have saved something.
-    /// </summary>
-    public ISecretStore? PreferredSecretStore => SecretStores
-        .Where(Supported)
-        .OrderByDescending(s => s.Priority)
-        .ThenBy(s => s.Id, StringComparer.Ordinal)
-        .FirstOrDefault();
-
     /// <summary>A store that throws while answering whether it works here has answered no.</summary>
-    private static bool Supported(ISecretStore store)
-    {
-        try
-        {
-            return store.IsSupported;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
     /// <summary>
     /// How to hear what is plugged in here: supported, highest priority, ties broken on
     /// id. <see cref="NoMidiInput"/> where nothing installed can listen, in which case

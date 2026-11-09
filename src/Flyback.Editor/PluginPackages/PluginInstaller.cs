@@ -164,7 +164,7 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
             Directory.Move(unpacking, staged);
 
             // The click that got here is the yes, for the files it unpacked and no others.
-            allowances?.Allow(new PluginAllowance(Path.Combine(folder, assembly), assembly, package.Signer?.Key, false, PluginFiles.Of(staged)));
+            allowances?.Allow(new PluginAllowance(Path.Combine(folder, assembly), assembly, package.Signer?.Key, PluginFiles.Of(staged)));
 
             // Installing again takes back a removal.
             File.Delete(Path.Combine(Pending, RemovePrefix + package.Description(build).Assembly));

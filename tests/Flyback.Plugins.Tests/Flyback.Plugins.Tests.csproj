@@ -35,9 +35,6 @@
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.WinIO\Flyback.Plugins.WinIO.csproj" FolderName="WinIO" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.MacIO\Flyback.Plugins.MacIO.csproj" FolderName="MacIO" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.LinuxIO\Flyback.Plugins.LinuxIO.csproj" FolderName="LinuxIO" />
-    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Dpapi\Flyback.Plugins.Dpapi.csproj" FolderName="Dpapi" />
-    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Keychain\Flyback.Plugins.Keychain.csproj" FolderName="Keychain" />
-    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Keyring\Flyback.Plugins.Keyring.csproj" FolderName="Keyring" />
     <PluginProject Include="..\Flyback.Plugins.Sample\Flyback.Plugins.Sample.csproj" FolderName="Sample" />
     <PluginProject Include="..\Flyback.Plugins.Bare\Flyback.Plugins.Bare.csproj" FolderName="Bare" />
     <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" FolderName="Picture" />

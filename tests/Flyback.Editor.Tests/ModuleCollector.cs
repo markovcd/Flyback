@@ -1,8 +1,8 @@
+using Flyback.Assist.Keys;
 using Flyback.Core.Graph;
 using Flyback.Plugins;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Midi;
-using Flyback.Plugins.Secrets;
 
 namespace Flyback.Editor.Tests;
 
@@ -36,7 +36,6 @@ internal sealed class ModuleCollector : IPluginRegistry
 
     public void AddPresets(IReadOnlyList<PatchPreset> presets) { }
 
-    public void AddSecretStore(ISecretStore store) { }
 
     public void AddMidiInput(IMidiInput input) { }
 

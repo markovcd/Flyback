@@ -220,9 +220,9 @@ context, decision, consequences.
 | [0134](0134-a-plugin-declares-its-modules-and-is-refused-for-one-it-did-not.md) | A plugin declares its modules, and is refused for one it did not *(user-directed)* |
 | [0133](0133-a-shared-plugin-is-unpublished-until-the-admin-publishes-it.md) | A shared plugin is unpublished until the admin publishes it *(user-directed)* |
 | [0135](0135-a-patch-that-names-a-plugin-you-do-not-have-offers-it.md) | A patch that names a plugin you do not have offers it *(user-directed)* |
-| [0158](0158-a-plugin-loads-only-once-somebody-said-yes-and-never-holds-a-key.md) | A plugin loads only once somebody said yes, and never holds a key *(user-directed)* |
+| [0158](0158-a-plugin-loads-only-once-somebody-said-yes-and-never-holds-a-key.md) | A plugin loads only once somebody said yes, and never holds a key *(user-directed; the secret store grant removed by [0233](0233-secret-stores-are-built-in.md))* |
 | [0033](0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md) | Patches may be authored by an agent, behind the plugin boundary *(user-directed; its all-or-nothing prose budget replaced by [0098](0098-the-briefing-has-a-budget-and-a-list-that-outranks-it.md), the plugin boundary by [0231](0231-assistants-are-built-in-not-plugins.md))* |
-| [0034](0034-settings-in-a-file-the-key-in-the-operating-system.md) | Settings in a file, the key in the operating system's store *(user-directed; the file made the one every setting shares by [0171](0171-every-setting-is-kept-in-one-file.md))* |
+| [0034](0034-settings-in-a-file-the-key-in-the-operating-system.md) | Settings in a file, the key in the operating system's store *(user-directed; the file made the one every setting shares by [0171](0171-every-setting-is-kept-in-one-file.md), the stores built in by [0233](0233-secret-stores-are-built-in.md))* |
 | [0088](0088-a-release-installs-itself-at-the-next-start.md) | A release installs itself at the next start, if its signature says it is ours *(user-directed)* |
 | [0127](0127-the-person-chooses-what-opens-a-flyback-file.md) | The person chooses what opens a Flyback file *(user-directed)* |
 | [0120](0120-every-change-passes-the-gate-a-release-passes.md) | Every change passes the gate a release passes |
@@ -258,6 +258,7 @@ context, decision, consequences.
 | [0210](0210-the-assistant-edits-the-patchs-text.md) | The assistant edits the patch's text *(user-directed)* |
 | [0186](0186-a-decision-model-answers-typed-questions-behind-the-plugin-boundary.md) | A decision model answers typed questions behind the plugin boundary *(user-directed; the plugin boundary superseded by [0232](0232-decision-models-are-built-in-and-the-keyed-client-leaves-the-contract.md))* |
 | [0232](0232-decision-models-are-built-in-and-the-keyed-client-leaves-the-contract.md) | Decision models are built in, and the keyed client leaves the contract *(user-directed)* |
+| [0233](0233-secret-stores-are-built-in.md) | Secret stores are built in *(user-directed)* |
 | [0188](0188-what-every-host-reads-is-a-project-of-its-own.md) | What every host reads is a project of its own *(user-directed)* |
 | [0206](0206-the-gate-has-a-ten-minute-time-budget.md) | The gate has a ten-minute time budget *(user-directed)* |
 | [0207](0207-mutation-testing-plants-bugs-in-each-commits-diff.md) | Mutation testing plants bugs in each commit's diff *(user-directed)* |

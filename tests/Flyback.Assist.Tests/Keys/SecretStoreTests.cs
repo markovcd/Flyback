@@ -1,10 +1,9 @@
+using Flyback.Assist.Keys;
 using Flyback.Core;
-using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Secrets;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Plugins.Tests.Secrets;
+namespace Flyback.Assist.Tests.Keys;
 
 /// <summary>
 /// The stores that keep a key between runs. This is the one place where a bug
@@ -28,29 +27,24 @@ public class SecretStoreTests
 
     private const string Unavailable = "nothing installed on this machine can hold a secret, or its keyring is locked.";
 
-    private static PluginCatalog Shipped() => ShippedPlugins.Loaded;
-
-    private static ISecretStore Store(string id) => Shipped().SecretStores.Single(s => s.Id == id);
+    private static ISecretStore Store(string id) => SecretStores.Shipped.All.Single(s => s.Id == id);
 
     /// <summary>
     /// The store this machine would actually use, or null where nothing
     /// installed can hold a key — which is a real answer on a Linux machine with
     /// no keyring, and the one the panel turns into "for this window only".
     /// </summary>
-    private static ISecretStore? Here => Shipped().PreferredSecretStore;
+    private static ISecretStore? Here => SecretStores.Shipped.Preferred;
 
     [Theory]
     [MemberData(nameof(PlatformStores))]
-    public void A_store_in_a_plugin_reaches_the_catalog(string id)
+    public void Every_platform_store_is_offered(string id)
     {
-        var catalog = Shipped();
-
-        catalog.Problems.ShouldBeEmpty();
-        catalog.SecretStores.Select(s => s.Id).ShouldContain(id);
+        SecretStores.Shipped.All.Select(s => s.Id).ShouldContain(id);
     }
 
     /// <summary>
-    /// All three plugins load everywhere; only the stores are tied to one
+    /// All three are offered everywhere; only the stores are tied to one
     /// system. Asserted in the direction that is knowable, the way the sound
     /// backends are: the Linux one also depends on whether the machine has a
     /// keyring at all, and a test that decided that for itself would be
@@ -68,7 +62,7 @@ public class SecretStoreTests
     [Fact]
     public void Being_asked_whether_it_works_here_never_throws()
     {
-        foreach (var store in Shipped().SecretStores)
+        foreach (var store in SecretStores.Shipped.All)
             Should.NotThrow(() => store.IsSupported);
     }
 
@@ -155,7 +149,7 @@ public class SecretStoreTests
     /// A store for another operating system refuses when it is asked to work,
     /// rather than half-working against a folder or a program that means
     /// something else here. The guard this pins is the only thing standing
-    /// between a plugin that loads everywhere — which is the point of
+    /// between a store offered everywhere — which is the point of
     /// <see cref="ISecretStore.IsSupported"/> — and one that would write a key
     /// somewhere nobody meant.
     /// </summary>

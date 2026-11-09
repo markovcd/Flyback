@@ -138,6 +138,7 @@ internal static class AskCommand
                 plugins.Catalog,
                 Assistants.Shipped,
                 plugins.DecisionModels,
+                plugins.SecretStores,
                 about,
                 new AskOptions(
                     words.Length == 0 ? null : string.Join(' ', words),
@@ -167,6 +168,7 @@ internal static class AskCommand
         PluginCatalog plugins,
         Assistants assistants,
         DecisionModels decisionModels,
+        SecretStores stores,
         AskedPatch about,
         AskOptions options,
         TextWriter output,
@@ -197,7 +199,7 @@ internal static class AskCommand
 
         if (Values(settings.Of(assistant.Id), options.Set, error) is not { } values) return Exit.Failed;
 
-        var config = new AssistantConfig(new Credentials(plugins.PreferredSecretStore).Client(assistant, values), values);
+        var config = new AssistantConfig(new Credentials(stores.Preferred).Client(assistant, values), values);
 
         if (AssistantRun.Unready(assistant, config) is { } excuse)
         {
@@ -245,7 +247,7 @@ internal static class AskCommand
             logFolder,
             output,
             error,
-            new Decisions(decisionModels.All, DecisionSettings.Load(settingsPath), new Credentials(plugins.PreferredSecretStore), new ModelStore(ModelStore.DefaultRoot)));
+            new Decisions(decisionModels.All, DecisionSettings.Load(settingsPath), new Credentials(stores.Preferred), new ModelStore(ModelStore.DefaultRoot)));
 
         if (message is not null)
         {

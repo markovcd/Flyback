@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
 using Flyback.Assist;
+using Flyback.Assist.Keys;
 using Flyback.Core.Graph;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Notices;
@@ -750,10 +751,9 @@ public sealed class AssistantPanelHandbookTests : AssistantPanelTest
     public void Saving_again_with_nothing_changed_does_not_repeat_the_key_saved_message()
     {
         var store = new FakeSecretStore();
-        var plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, [.. Presets.All], [], [store]);
         var messages = new List<string>();
 
-        var window = Showing(With(new Deaf()), new AssistantSettings(), plugins: plugins);
+        var window = Showing(With(new Deaf()), new AssistantSettings(), stores: new SecretStores([store]));
         var panel = All<AssistantPanel>(window).Single();
 
         Service<ReportLine>(window).Said += (_, message) => messages.Add(message);

@@ -940,7 +940,6 @@ static Flyback.Core.Compile.MidiNote.operator ==(Flyback.Core.Compile.MidiNote l
 static Flyback.Core.Compile.Slot.Scalar(int register) -> Flyback.Core.Compile.Slot
 static Flyback.Core.Compile.Slot.operator !=(Flyback.Core.Compile.Slot left, Flyback.Core.Compile.Slot right) -> bool
 static Flyback.Core.Compile.Slot.operator ==(Flyback.Core.Compile.Slot left, Flyback.Core.Compile.Slot right) -> bool
-static Flyback.Core.GlobalConstants.DataFolder.get -> string!
 static Flyback.Core.Graph.ChoiceOption.operator !=(Flyback.Core.Graph.ChoiceOption left, Flyback.Core.Graph.ChoiceOption right) -> bool
 static Flyback.Core.Graph.ChoiceOption.operator ==(Flyback.Core.Graph.ChoiceOption left, Flyback.Core.Graph.ChoiceOption right) -> bool
 static Flyback.Core.Graph.Connection.operator !=(Flyback.Core.Graph.Connection? left, Flyback.Core.Graph.Connection? right) -> bool

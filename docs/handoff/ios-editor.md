@@ -34,7 +34,7 @@ both. Nothing here was run; it is read from the code and from what iOS is known 
    `AVAudioSession` category chosen so the silent switch and other apps' playback behave.
    Line In needs `NSMicrophoneUsageDescription`; MIDI is CoreMIDI, which `Flyback.Plugins.MacIO`
    already speaks on a Mac and may share.
-5. **Keys.** `Flyback.Plugins.Keychain` is the macOS secret store (ADR-0034); iOS has the same
+5. **Keys.** `KeychainSecretStore` in `Flyback.Assist/Keys` is the macOS secret store (ADR-0034); iOS has the same
    Security framework, so the assistant's key may reuse it.
 6. **Plugins.** As on Android, linked in: nothing loads a folder of assemblies, and an app
    store forbids fetching new code besides.

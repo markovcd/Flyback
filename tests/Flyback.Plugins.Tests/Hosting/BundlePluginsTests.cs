@@ -39,14 +39,13 @@ public sealed class BundlePluginsTests : IDisposable
     {
         var speech = Folder(Shipped, "Flyback.Plugins.Speech");
         File.WriteAllText(Path.Combine(MacOs, ShippedList.FileName), "");
-        Allowances.Allow(speech, secrets: true);
+        Allowances.Allow(speech);
 
         BundlePlugins.MoveOut(Shipped, Installed, Allowances);
 
         var moved = Path.Combine(Installed, "Flyback.Plugins.Speech");
         Allowances.For(speech).ShouldBeNull();
         var allowed = Allowances.For(moved).ShouldNotBeNull();
-        allowed.Secrets.ShouldBeTrue();
         PluginFiles.Of(moved).Changed(allowed.Files).ShouldBeNull();
     }
 

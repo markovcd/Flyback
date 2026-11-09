@@ -227,12 +227,10 @@ public sealed class DecideCommandTests : IDisposable
         var said = new StringWriter();
         var complained = new StringWriter();
 
-        var plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, []);
-
         using var http = new HttpClient(network);
 
         var code = await DecideCommand.Run(
-            plugins,
+            SecretStores.None,
             new DecisionModels(models.Length > 0 ? models : [new Echo()]),
             new DecideOptions(options.State, options.Ask, options.Model, options.YesNo, options.Choice, options.Choices, null, [], options.Status, options.Prepare, options.Yes, options.Json)
             {

@@ -9,7 +9,7 @@ public static class GlobalConstants
     internal const int SampleRate = 48_000;
 
     /// <summary>Where Flyback keeps its settings and plugins, under the user's application data.</summary>
-    public static string DataFolder => Path.Combine(
+    internal static string DataFolder => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         ApplicationName);
 }

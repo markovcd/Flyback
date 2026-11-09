@@ -171,7 +171,6 @@ internal static class PluginHost
 
         if (verdict.Loads)
         {
-            catalog.Secrets = verdict.Secrets;
             LoadEntries(entries, catalog, collectible);
         }
         else

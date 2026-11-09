@@ -4,7 +4,7 @@ Input from outside (a patch, a bundle, an upload, a flag) is checked where it en
 
 ## Secrets stay out of everything a person or a machine reads
 
-An API key, a token or a signing key never goes in source, a committed config, a log, an error message, a test fixture, a snapshot, a commit message or a reply. A user's key lives in the operating system's store through a secret-store plugin, never in a settings file (ADR-0034), and an assistant never holds it: the host puts it on each request for one origin (ADR-0158).
+An API key, a token or a signing key never goes in source, a committed config, a log, an error message, a test fixture, a snapshot, a commit message or a reply. A user's key lives in the operating system's own store, never in a settings file (ADR-0034, ADR-0233), and an assistant never holds it: the host puts it on each request for one origin (ADR-0158).
 
 - A test that needs a key uses a fake one made for the test.
 - A local build that needs `RELEASE_SIGNING_KEY` makes a throwaway local key (the `release-key` skill). Never ask for the real one.

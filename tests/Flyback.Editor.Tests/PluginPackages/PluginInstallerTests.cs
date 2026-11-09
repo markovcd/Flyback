@@ -347,7 +347,6 @@ public sealed class PluginInstallerTests : IDisposable
 
             allowed.Assembly.ShouldBe(Packages.Folder);
             allowed.Signer.ShouldBe(PackageSigner.Of(Packages.Key).Key);
-            allowed.Secrets.ShouldBeFalse("keeping keys is asked for apart from installing");
             new PluginTrust(true, ShippedList.Empty, allowances).Judge(Installed()).Standing.ShouldBe(PluginStanding.Allowed);
 
             new PluginInstaller(plugins, [], checkKeys: true, allowances).Remove(Packages.Folder);

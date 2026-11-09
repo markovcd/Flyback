@@ -164,7 +164,7 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 
 | Say | Means | Code | Not |
 |---|---|---|---|
-| **plugin** | A folder under `plugins/` holding one class that registers modules, presets, sound or MIDI backends or secret stores. | `IFlybackPlugin` | extension, add-on |
+| **plugin** | A folder under `plugins/` holding one class that registers modules, presets, or sound or MIDI backends. | `IFlybackPlugin` | extension, add-on |
 | **provider**, **provider id** | Who a plugin's modules belong to, and the prefix of their type ids. | `ModuleProvider` | vendor, namespace |
 | **contract** | What a plugin is compiled against, with a version of its own. | `PluginContractVersion` in Directory.Build.props | API alone, SDK |
 | **plugin problem** | A plugin, or a part of one, that was refused, and why. | `PluginProblem` | error, failure |

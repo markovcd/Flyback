@@ -143,14 +143,13 @@ Nothing stops an assembly holding more than one plugin class, and each is instan
 
 ## 4. What you can contribute
 
-`IPluginRegistry` has six methods. New kinds of extension arrive as new methods, so a plugin compiled against an older contract keeps working.
+`IPluginRegistry` has five methods. New kinds of extension arrive as new methods, so a plugin compiled against an older contract keeps working.
 
 | Method | Contributes | Must not, when registering |
 |---|---|---|
 | `AddModules` | Modules in the palette, keyed by a provider | — |
 | `AddPresets` | Patches in the preset gallery | — |
 | `AddAudioOutput` | A sound backend | Open a device |
-| `AddSecretStore` | Somewhere the OS holds a secret, honored only from a plugin Flyback ships or one allowed with `--secrets` | Read or write one |
 | `AddMidiInput` | A MIDI backend | Open a device, or list the ones plugged in |
 | `AddAudioInput` | A sound input backend, which a Line In listens through | Open a device, or list the ones plugged in |
 
@@ -658,7 +657,7 @@ Remove the old folder first: copying over it keeps files the new build no longer
 
 `plugin list` says which folders are allowed to load and why the others are not: `"standing": "allowed"` and `"loads": true` once allowed, `not-allowed` or `changed` with the file named and the command that fixes it otherwise. `flyback-cli modules` then lists your provider among the others, with a count of its modules; `modules <type id>` prints one module's sockets, help, ranges and extras as the editor will show them.
 
-`plugin allow --secrets` lets the plugin register a secret store, which holds every assistant key typed from then on, and `plugin deny` takes the yes back. The yes is kept in the data folder, never in `plugins/`.
+`plugin deny` takes the yes back. The yes is kept in the data folder, never in `plugins/`.
 
 To ship a plugin in the box instead, add a line to `Flyback.Editor.Desktop.csproj` and the build lays it out for you, with the list of its files that lets it load:
 
@@ -689,9 +688,9 @@ Given a project, or a folder holding one, `pack-plugin` runs `dotnet publish` on
 The package is a zip with a folder per system (`win`, `osx`, `linux`, or `any` for a build that is the same everywhere, used where there is no folder for the system itself) and nothing else. There is no manifest to write. The dialog reads the plugin assembly's own metadata without running any of it:
 
 - its name, version, author and description, from `<Product>`, `<Version>`, `<Authors>` and `<Description>` in your project;
-- its tags, from an `AssemblyMetadata` item named `Tags`, split at commas and semicolons (Flyback's own say what they work on, `sound`, `picture`, `midi`, `effects`, `ai` or `secrets`, and the system they need, if any);
+- its tags, from an `AssemblyMetadata` item named `Tags`, split at commas and semicolons (Flyback's own say what they work on, `sound`, `picture`, `midi` or `effects`, and the system they need, if any);
 - its preview, from a PNG or WebP of up to 1 MB embedded as `preview.png` or `preview.webp`, which `flyback-cli render --preset "Pond" --at 1 --size 640x360 -o preview.png` makes from your own preset;
-- what it adds (modules, presets, a sound output, a MIDI input, an assistant, a secret store), from the `IPluginRegistry` methods your code calls;
+- what it adds (modules, presets, a sound output, a sound input, a MIDI input), from the `IPluginRegistry` methods your code calls;
 - its modules, by name, from its `FlybackModule` declarations;
 - what it reaches (the network, files, other programs, the registry, native code, code it loads while running), from what any assembly in the build names.
 
@@ -737,10 +736,9 @@ A broken, missing or hostile plugin is a note in the plugins window, never a pro
 | A provider claiming ids that already exist | Refused: it could answer for modules saved patches mean something else by |
 | Two plugins with one `Info.Id` | The second is ignored |
 | A preset name already offered | The later preset is ignored |
-| A sound backend, sound input, MIDI input, assistant or secret store id registered twice | Refused to both, and each is named |
+| A sound backend, sound input or MIDI input id registered twice | Refused to both, and each is named |
 | A folder nobody allowed, in a Release build | Not loaded, and listed as not yet allowed with the command that allows it |
 | An allowed or shipped folder with a file changed since | Not loaded, naming the file |
-| A secret store from a plugin not allowed to keep keys | Refused, and the plugin loads without it |
 | A stray host-owned dll in your folder | Ignored, and the host's copy used |
 | A folder under `plugins/` whose name starts with a dot | Never scanned |
 | A package's plugin sharing an id with one shipped or copied in | The package's is ignored |

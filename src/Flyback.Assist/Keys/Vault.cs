@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Flyback.Core;
 
-namespace Flyback.Plugins.Dpapi;
+namespace Flyback.Assist.Keys;
 
 /// <summary>
 /// The part that actually talks to Windows. Kept in its own file so that

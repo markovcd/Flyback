@@ -2,8 +2,8 @@ Feature: A plugin runs only once somebody said yes, and never holds a key
   A folder dropped into plugins/ is a stranger's code until somebody allows it,
   by installing its package or with flyback-cli plugin allow, and only while its
   files are as they were then. flyback-cli plugin deny takes that back, and
-  flyback-cli plugin list says which folders load and why the others do not. An assistant a plugin offers is handed a way to send,
-  never the key it sends with.
+  flyback-cli plugin list says which folders load and why the others do not. An assistant is handed a way to send, never the key it
+  sends with.
 
   Scenario: A plugin folder copied in by hand does not run until it is allowed
     Given a plugin folder copied in by hand
@@ -45,17 +45,8 @@ Feature: A plugin runs only once somebody said yes, and never holds a key
     When Flyback loads the plugins it was built with, allowing nothing
     Then every one of them runs
 
-  Scenario: An allowed plugin keeps no keys unless it was allowed to
-    Given a secret store plugin copied in by hand
-    When flyback-cli allows the copied plugin
-    And Flyback loads its plugins
-    Then its secret store is refused
-    When flyback-cli allows the copied plugin to keep keys
-    And Flyback loads its plugins
-    Then its secret store is offered
-
-  Scenario: Two plugins offering one secret store are both refused it
-    When two plugins offer a secret store under the same id
+  Scenario: Two plugins offering one MIDI input are both refused it
+    When two plugins offer a MIDI input under the same id
     Then neither is offered
     And both are named as the reason
 

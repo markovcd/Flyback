@@ -32,7 +32,7 @@ internal sealed class PluginTrust(bool check, ShippedList shipped, PluginAllowan
 
     public PluginVerdict Judge(string folder)
     {
-        if (!check) return new PluginVerdict(PluginStanding.Unchecked, true, null);
+        if (!check) return new PluginVerdict(PluginStanding.Unchecked, null);
 
         var name = Path.GetFileName(Path.TrimEndingDirectorySeparator(folder));
         var files = PluginFiles.Of(folder);
@@ -43,15 +43,14 @@ internal sealed class PluginTrust(bool check, ShippedList shipped, PluginAllowan
         var fromBuild = built is null ? null : files.Changed(built);
 
         if (allowed is not null && fromAllowance is null)
-            return new PluginVerdict(PluginStanding.Allowed, allowed.Secrets || (built is not null && fromBuild is null), null);
+            return new PluginVerdict(PluginStanding.Allowed, null);
 
-        if (built is not null && fromBuild is null) return new PluginVerdict(PluginStanding.Shipped, true, null);
+        if (built is not null && fromBuild is null) return new PluginVerdict(PluginStanding.Shipped, null);
 
         if (allowed is not null)
         {
             return new PluginVerdict(
                 PluginStanding.Changed,
-                false,
                 $"{fromAllowance} has changed since this plugin was allowed, so it is not loaded. {Command(folder)} allows it as it is now.");
         }
 
@@ -59,13 +58,11 @@ internal sealed class PluginTrust(bool check, ShippedList shipped, PluginAllowan
         {
             return new PluginVerdict(
                 PluginStanding.Changed,
-                false,
                 $"{fromBuild} is not as Flyback shipped it, so this plugin is not loaded.");
         }
 
         return new PluginVerdict(
             PluginStanding.NotAllowed,
-            false,
             $"not yet allowed, so not loaded. Install it from its package, or {Command(folder)} allows it.");
     }
 

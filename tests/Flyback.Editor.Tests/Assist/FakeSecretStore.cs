@@ -1,4 +1,4 @@
-using Flyback.Plugins.Secrets;
+using Flyback.Assist.Keys;
 
 namespace Flyback.Editor.Tests.Assist;
 

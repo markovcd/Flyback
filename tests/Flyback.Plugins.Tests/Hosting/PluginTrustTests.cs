@@ -1,6 +1,5 @@
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Secrets;
-using Flyback.Plugins.Settings;
+using Flyback.Plugins.Midi;
 using Shouldly;
 using Xunit;
 
@@ -59,9 +58,9 @@ public sealed class PluginTrustTests : IDisposable
     {
         var folder = CopiedIn("Bare", "Scripted");
 
-        Allowances.Allow(folder, secrets: false);
+        Allowances.Allow(folder);
 
-        Checked().Judge(folder).ShouldBe(new PluginVerdict(PluginStanding.Allowed, false, null));
+        Checked().Judge(folder).ShouldBe(new PluginVerdict(PluginStanding.Allowed, null));
 
         File.AppendAllText(Path.Combine(folder, "Flyback.Plugins.Bare.dll"), "tampered");
 
@@ -77,7 +76,7 @@ public sealed class PluginTrustTests : IDisposable
     {
         var folder = CopiedIn("Bare", "Scripted");
 
-        Allowances.Allow(folder, secrets: false);
+        Allowances.Allow(folder);
         File.WriteAllText(Path.Combine(folder, "Extra.dll"), "anything");
 
         Checked().Judge(folder).Standing.ShouldBe(PluginStanding.Changed);
@@ -88,7 +87,7 @@ public sealed class PluginTrustTests : IDisposable
     {
         var folder = CopiedIn("Bare", "Scripted");
 
-        Allowances.Allow(folder, secrets: false);
+        Allowances.Allow(folder);
         File.WriteAllText(Path.Combine(folder, ".DS_Store"), "Finder was here");
 
         Checked().Judge(folder).Standing.ShouldBe(PluginStanding.Allowed);
@@ -99,7 +98,7 @@ public sealed class PluginTrustTests : IDisposable
     {
         var folder = CopiedIn("Bare", "Scripted");
 
-        Allowances.Allow(folder, secrets: false);
+        Allowances.Allow(folder);
         Allowances.Deny(folder).ShouldBeTrue();
         Allowances.Deny(folder).ShouldBeFalse();
 
@@ -115,7 +114,6 @@ public sealed class PluginTrustTests : IDisposable
 
         catalog.Problems.ShouldBeEmpty();
         catalog.Plugins.Count.ShouldBe(ShippedPlugins.Loaded.Plugins.Count);
-        catalog.SecretStores.ShouldNotBeEmpty("a shipped plugin may keep keys");
     }
 
     [Fact]
@@ -134,42 +132,16 @@ public sealed class PluginTrustTests : IDisposable
     }
 
     [Fact]
-    public void An_allowed_plugin_without_the_grant_keeps_no_keys()
+    public void Two_plugins_offering_one_midi_input_both_lose_it()
     {
-        var folder = CopiedIn("Dpapi", "Keys");
-
-        Allowances.Allow(folder, secrets: false);
-
-        var catalog = PluginHost.Load(Plugins, Checked());
-
-        catalog.Plugins.ShouldHaveSingleItem();
-        catalog.SecretStores.ShouldBeEmpty();
-        catalog.Problems.ShouldHaveSingleItem().Message.ShouldContain("secret store 'dpapi' is refused");
-    }
-
-    [Fact]
-    public void An_allowed_plugin_with_the_grant_keeps_keys()
-    {
-        var folder = CopiedIn("Dpapi", "Keys");
-
-        Allowances.Allow(folder, secrets: true);
-
-        PluginHost.Load(Plugins, Checked()).SecretStores.ShouldHaveSingleItem().Id.ShouldBe("dpapi");
-    }
-
-
-    [Fact]
-    public void Two_plugins_offering_one_secret_store_both_lose_it()
-    {
-        var catalog = PluginHost.LoadTypes(typeof(FirstStore), typeof(SecondStore));
+        var catalog = PluginHost.LoadTypes(typeof(FirstInput), typeof(SecondInput));
 
         catalog.Plugins.Count.ShouldBe(2);
-        catalog.SecretStores.ShouldBeEmpty();
-        catalog.PreferredSecretStore.ShouldBeNull();
+        catalog.MidiInputs.ShouldBeEmpty();
         catalog.Problems.Select(p => p.ToString()).ShouldBe(
         [
-            "test.first-store: secret store 'grabby' is registered by Second store as well, so neither is used.",
-            "test.second-store: secret store 'grabby' is registered by First store as well, so neither is used.",
+            "test.first-input: MIDI input 'twin' is registered by Second input as well, so neither is used.",
+            "test.second-input: MIDI input 'twin' is registered by First input as well, so neither is used.",
         ]);
     }
 
@@ -234,41 +206,32 @@ public sealed class PluginTrustTests : IDisposable
         return to;
     }
 
-
-
-    public sealed class FirstStore : IFlybackPlugin
+    public sealed class FirstInput : IFlybackPlugin
     {
-        public PluginInfo Info { get; } = new("test.first-store", "First store");
+        public PluginInfo Info { get; } = new("test.first-input", "First input");
 
-        public void Register(IPluginRegistry registry) => registry.AddSecretStore(new Store());
+        public void Register(IPluginRegistry registry) => registry.AddMidiInput(new Input());
     }
 
-    public sealed class SecondStore : IFlybackPlugin
+    public sealed class SecondInput : IFlybackPlugin
     {
-        public PluginInfo Info { get; } = new("test.second-store", "Second store");
+        public PluginInfo Info { get; } = new("test.second-input", "Second input");
 
-        public void Register(IPluginRegistry registry) => registry.AddSecretStore(new Store());
+        public void Register(IPluginRegistry registry) => registry.AddMidiInput(new Input());
     }
 
-
-    private sealed class Store : ISecretStore
+    private sealed class Input : IMidiInput
     {
-        public string Id => "grabby";
+        public string Id => "twin";
 
-        public string Name => "Grabby";
+        public string Name => "Twin";
 
-        public int Priority => int.MaxValue;
+        public int Priority => 0;
 
         public bool IsSupported => true;
 
-        public void Keep(string account, string secret)
-        {
-        }
+        public IReadOnlyList<MidiPortInfo> Ports => [];
 
-        public string? Recall(string account) => null;
-
-        public void Forget(string account)
-        {
-        }
+        public IMidiPort Open(string port, MidiCallback deliver) => throw new NotSupportedException();
     }
 }

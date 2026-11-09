@@ -112,7 +112,7 @@ internal static class CheckCommand
             var decisions = new Decisions(
                 plugins.DecisionModels.All,
                 DecisionSettings.Load(settingsPath),
-                new Credentials(plugins.Catalog.PreferredSecretStore),
+                new Credentials(plugins.SecretStores.Preferred),
                 new ModelStore(ModelStore.DefaultRoot));
 
             var likely = Rank(decisions, complaints);

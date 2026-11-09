@@ -18,16 +18,10 @@ internal static class PluginCommand
             Description = $"The plugin's folder: a path, or a name under {PluginHost.DirectoryName}/ beside this program.",
         };
 
-        var secrets = new Option<bool>("--secrets")
-        {
-            Description = "Let it register a secret store, which holds every assistant key typed from then on.",
-        };
-
-        var allow = new Command("allow", "Load a plugin folder from the next start, as its files stand now.") { folder, secrets };
+        var allow = new Command("allow", "Load a plugin folder from the next start, as its files stand now.") { folder };
 
         allow.SetAction(result => Allow(
             Resolve(result.GetRequiredValue(folder), plugins.Directory),
-            result.GetValue(secrets),
             plugins.Trust().Allowances,
             result.InvocationConfiguration.Output,
             result.InvocationConfiguration.Error));
@@ -88,7 +82,7 @@ internal static class PluginCommand
         return !Directory.Exists(folder) && Directory.Exists(named) ? Path.GetFullPath(named) : Path.GetFullPath(folder);
     }
 
-    public static int Allow(string folder, bool secrets, PluginAllowances allowances, TextWriter output, TextWriter error)
+    public static int Allow(string folder, PluginAllowances allowances, TextWriter output, TextWriter error)
     {
         if (!Directory.Exists(folder) || PluginHost.EntryAssemblies(folder).Count == 0)
         {
@@ -100,7 +94,7 @@ internal static class PluginCommand
 
         try
         {
-            allowed = allowances.Allow(folder, secrets);
+            allowed = allowances.Allow(folder);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -109,9 +103,7 @@ internal static class PluginCommand
         }
 
         output.WriteLine($"Allowed {allowed.Assembly} in {allowed.Folder}, as its {Writing.Count(allowed.Files.Hashes.Count, "file")} stand now.");
-        output.WriteLine(secrets
-            ? "  It may keep keys. It loads at the next start."
-            : "  It loads at the next start. A secret store it registers is refused without --secrets.");
+        output.WriteLine("  It loads at the next start.");
 
         return Exit.Ok;
     }
@@ -161,7 +153,6 @@ internal static class PluginCommand
                         folder = r.Folder,
                         standing = Word(r.Verdict.Standing).Replace(' ', '-'),
                         loads = r.Verdict.Loads,
-                        secrets = r.Verdict.Loads && r.Verdict.Secrets,
                         reason = r.Verdict.Reason,
                     }),
                 },
@@ -180,9 +171,7 @@ internal static class PluginCommand
 
         foreach (var (folder, verdict) in rows)
         {
-            var keys = verdict.Loads && verdict.Secrets ? ", may keep keys" : string.Empty;
-
-            output.WriteLine($"  {Path.GetFileName(folder).PadRight(width)}  {Word(verdict.Standing)}{keys}");
+            output.WriteLine($"  {Path.GetFileName(folder).PadRight(width)}  {Word(verdict.Standing)}");
 
             if (verdict.Reason is { } reason) output.WriteLine($"  {new string(' ', width)}  {reason}");
         }

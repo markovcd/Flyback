@@ -1,6 +1,4 @@
-using Flyback.Plugins.Secrets;
-
-namespace Flyback.Plugins.Keychain;
+namespace Flyback.Assist.Keys;
 
 /// <summary>
 /// A secret store backed by the login keychain, unlocked by the login the
@@ -12,7 +10,7 @@ namespace Flyback.Plugins.Keychain;
 /// ship. What goes in is what comes out; the keychain decides everything about
 /// how it is held.
 /// </remarks>
-public sealed class KeychainSecretStore : ISecretStore
+internal sealed class KeychainSecretStore : ISecretStore
 {
     public string Id => "keychain";
 

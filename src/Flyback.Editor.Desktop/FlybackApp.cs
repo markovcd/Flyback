@@ -7,6 +7,7 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Flyback.Assist;
 using Flyback.Assist.Decide;
+using Flyback.Assist.Keys;
 using Flyback.Core;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Composition;
@@ -139,7 +140,7 @@ public sealed class FlybackApp : Application
     /// <summary>Builds the editor's window and makes it the main one; the lifetime shows it, or the caller does once it is running.</summary>
     private (ServiceProvider Provider, MainWindow Window) Open(IClassicDesktopStyleApplicationLifetime desktop, Usage usage)
     {
-        var setup = ThisMachine.Setup(usage) with { Launch = launch.Editor, Plugins = launch.Plugins, Assistants = Assistants.Shipped, DecisionModels = DecisionModels.Shipped };
+        var setup = ThisMachine.Setup(usage) with { Launch = launch.Editor, Plugins = launch.Plugins, Assistants = Assistants.Shipped, DecisionModels = DecisionModels.Shipped, SecretStores = SecretStores.Shipped };
         var provider = EditorServices.Provider(setup);
         menu.Serve(provider);
         var window = provider.Window();

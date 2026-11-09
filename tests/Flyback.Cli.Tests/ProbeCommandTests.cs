@@ -359,10 +359,8 @@ public sealed class ProbeCommandTests : IDisposable
             ? assistants
             : [new Surveyable("one", "ONE_KEY"), new Surveyable("two", "TWO_KEY")];
 
-        var plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, Presets.All, []);
-
         var code = await ProbeCommand.Run(
-            plugins,
+            SecretStores.None,
             new Assistants(installed),
             new ProbeOptions(options.Provider, [], false, false, options.Dry, false, options.Keys, options.Yes),
             said,

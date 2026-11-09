@@ -223,7 +223,8 @@
         "dependencies": {
           "Flyback.Core": "[0.1.0-dev, )",
           "Flyback.Engine": "[0.1.0-dev, )",
-          "Flyback.Plugins": "[0.1.0-dev, )"
+          "Flyback.Plugins": "[0.1.0-dev, )",
+          "System.Security.Cryptography.ProtectedData": "[10.0.14, )"
         }
       },
       "flyback.core": {
@@ -247,6 +248,12 @@
           "Flyback.Assist": "[0.1.0-dev, )",
           "Flyback.Plugins": "[0.1.0-dev, )"
         }
+      },
+      "System.Security.Cryptography.ProtectedData": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.14, )",
+        "resolved": "10.0.14",
+        "contentHash": "UuaBUHgmtc9h6CMxaQqFDDJxkS5JVy7XEB+DbtCvD68GFcVM9/AccuNwFpARx8nwCnvjaxzoOBjG3gPz32P1Eg=="
       },
       "xunit.v3.extensibility.core": {
         "type": "CentralTransitive",

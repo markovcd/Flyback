@@ -1,4 +1,5 @@
 using Flyback.Assist.Decide;
+using Flyback.Assist.Keys;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.Cli;
@@ -13,8 +14,12 @@ namespace Flyback.Cli;
 /// </remarks>
 /// <param name="trust">Which folders load, for <c>plugin list</c>; <see cref="PluginTrust.For"/> the directory unless a test says otherwise.</param>
 /// <param name="decisionModels">The decision models offered; Flyback's unless a test says otherwise.</param>
-internal sealed class Plugins(Func<PluginCatalog> load, string directory, TextWriter? report, Func<PluginTrust>? trust = null, DecisionModels? decisionModels = null)
+/// <param name="secretStores">Where keys may be kept; the operating system's unless a test says otherwise.</param>
+internal sealed class Plugins(Func<PluginCatalog> load, string directory, TextWriter? report, Func<PluginTrust>? trust = null, DecisionModels? decisionModels = null, SecretStores? secretStores = null)
 {
+    /// <summary>Where the commands keep and find keys.</summary>
+    public SecretStores SecretStores => secretStores ?? SecretStores.Shipped;
+
     /// <summary>The decision models the commands ask.</summary>
     public DecisionModels DecisionModels => decisionModels ?? DecisionModels.Shipped;
 

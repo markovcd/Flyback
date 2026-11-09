@@ -5,7 +5,7 @@ using Flyback.Assist.Keys;
 using Flyback.Cli.Common;
 using Flyback.Plugins;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Secrets;
+using Flyback.Plugins.Midi;
 using Flyback.Plugins.Settings;
 using Flyback.Specs.Support;
 using Reqnroll;
@@ -39,9 +39,6 @@ public sealed class PluginTrustSteps : IDisposable
     [Given("a plugin folder copied in by hand")]
     public void GivenCopied() => CopyIn("Figures");
 
-    [Given("a secret store plugin copied in by hand")]
-    public void GivenStoreCopied() => CopyIn("Dpapi");
-
     [When("Flyback loads its plugins")]
     public void WhenLoaded() => catalog = PluginHost.Load(Plugins, new PluginTrust(true, ShippedList.Beside(Plugins), Allowances));
 
@@ -50,9 +47,6 @@ public sealed class PluginTrustSteps : IDisposable
 
     [When("flyback-cli allows the copied plugin")]
     public void WhenAllowed() => _ = Cli("plugin", "allow", Folder);
-
-    [When("flyback-cli allows the copied plugin to keep keys")]
-    public void WhenAllowedKeys() => _ = Cli("plugin", "allow", Folder, "--secrets");
 
     [When("flyback-cli denies the copied plugin")]
     public void WhenDenied() => _ = Cli("plugin", "deny", Folder);
@@ -87,7 +81,7 @@ public sealed class PluginTrustSteps : IDisposable
             new PluginTrust(true, ShippedList.Beside(PluginHost.DefaultDirectory), PluginAllowances.None));
     }
 
-    [When("two plugins offer a secret store under the same id")]
+    [When("two plugins offer a MIDI input under the same id")]
     public void WhenTwins() => catalog = PluginHost.LoadTypes(typeof(FirstTwin), typeof(SecondTwin));
 
     [Then("the copied plugin runs")]
@@ -109,18 +103,8 @@ public sealed class PluginTrustSteps : IDisposable
         catalog.Plugins.Select(p => Path.GetDirectoryName(p.AssemblyPath)).Distinct().Count().ShouldBe(shipped);
     }
 
-    [Then("its secret store is refused")]
-    public void ThenStoreRefused()
-    {
-        catalog.SecretStores.ShouldBeEmpty();
-        Problem().ShouldContain("secret store 'dpapi' is refused");
-    }
-
-    [Then("its secret store is offered")]
-    public void ThenStoreOffered() => catalog.SecretStores.ShouldHaveSingleItem().Id.ShouldBe("dpapi");
-
     [Then("neither is offered")]
-    public void ThenNeither() => catalog.SecretStores.ShouldBeEmpty();
+    public void ThenNeither() => catalog.MidiInputs.ShouldBeEmpty();
 
     [Then("both are named as the reason")]
     public void ThenBothNamed()
@@ -202,14 +186,14 @@ public sealed class PluginTrustSteps : IDisposable
     {
         public PluginInfo Info { get; } = new("test.first", "First twin");
 
-        public void Register(IPluginRegistry registry) => registry.AddSecretStore(new TwinStore());
+        public void Register(IPluginRegistry registry) => registry.AddMidiInput(new TwinInput());
     }
 
     public sealed class SecondTwin : IFlybackPlugin
     {
         public PluginInfo Info { get; } = new("test.second", "Second twin");
 
-        public void Register(IPluginRegistry registry) => registry.AddSecretStore(new TwinStore());
+        public void Register(IPluginRegistry registry) => registry.AddMidiInput(new TwinInput());
     }
 
     private sealed class Twin(string origin) : IPatchAssistant
@@ -231,7 +215,7 @@ public sealed class PluginTrustSteps : IDisposable
         public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => throw new NotSupportedException();
     }
 
-    private sealed class TwinStore : ISecretStore
+    private sealed class TwinInput : IMidiInput
     {
         public string Id => "twin";
 
@@ -241,10 +225,8 @@ public sealed class PluginTrustSteps : IDisposable
 
         public bool IsSupported => true;
 
-        public void Keep(string account, string secret) { }
+        public IReadOnlyList<MidiPortInfo> Ports => [];
 
-        public string? Recall(string account) => null;
-
-        public void Forget(string account) { }
+        public IMidiPort Open(string port, MidiCallback deliver) => throw new NotSupportedException();
     }
 }

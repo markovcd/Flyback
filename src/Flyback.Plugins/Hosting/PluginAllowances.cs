@@ -35,7 +35,7 @@ internal sealed class PluginAllowances(string file)
     }
 
     /// <summary>Says yes to <paramref name="folder"/> as it stands now.</summary>
-    public PluginAllowance Allow(string folder, bool secrets) => Allow(Allowance(folder, secrets));
+    public PluginAllowance Allow(string folder) => Allow(Allowance(folder));
 
     /// <summary>Keeps <paramref name="allowance"/> in place of whatever was allowed for its folder.</summary>
     public PluginAllowance Allow(PluginAllowance allowance)
@@ -77,7 +77,7 @@ internal sealed class PluginAllowances(string file)
         {
             var installed = PluginHost.Folders(root)
                 .Where(folder => System.IO.File.Exists(Path.Combine(folder, PluginPackage.MarkerName)))
-                .Select(folder => Allowance(folder, secrets: false))
+                .Select(Allowance)
                 .Where(a => !plugins.Any(p => string.Equals(p.Folder, a.Folder, PathComparison)));
 
             Write([.. adopted, root], [.. plugins, .. installed]);
@@ -88,7 +88,7 @@ internal sealed class PluginAllowances(string file)
         }
     }
 
-    private static PluginAllowance Allowance(string folder, bool secrets)
+    private static PluginAllowance Allowance(string folder)
     {
         var entry = PluginHost.EntryAssemblies(folder).FirstOrDefault();
         var key = Path.Combine(folder, PluginPackage.KeyMarkerName);
@@ -98,7 +98,6 @@ internal sealed class PluginAllowances(string file)
             Normal(folder),
             entry is null ? Path.GetFileName(Normal(folder)) : Path.GetFileNameWithoutExtension(entry),
             signer,
-            secrets,
             PluginFiles.Of(folder));
     }
 
@@ -146,7 +145,6 @@ internal sealed class PluginAllowances(string file)
                 ["folder"] = a.Folder,
                 ["assembly"] = a.Assembly,
                 ["signer"] = a.Signer,
-                ["secrets"] = a.Secrets,
                 ["files"] = files,
             });
         }
@@ -173,7 +171,6 @@ internal sealed class PluginAllowances(string file)
             folder,
             entry["assembly"]?.GetValue<string>() ?? Path.GetFileName(folder),
             entry["signer"]?.GetValue<string>(),
-            entry["secrets"]?.GetValue<bool>() ?? false,
             PluginFiles.From(files
                 .Where(f => f.Value is JsonValue)
                 .Select(f => KeyValuePair.Create(f.Key, f.Value!.GetValue<string>()))));
