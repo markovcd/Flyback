@@ -187,9 +187,10 @@ public sealed class PluginHubTests : EditorTest
     {
         using var site = new FakePluginSite(new Shared("r1", "Ripple", Tags: ["water"]), new Shared("s1", "Shimmer", Modules: ["Tape"]));
         var (hub, _) = Open(site);
+        var asked = site.Asked;
 
         hub.Search.Text = "tape";
-        Pump(() => site.Asked.Count > 1 && Names(hub.View, "sitePlugins").Count() == 1);
+        Pump(() => asked.Count > 1 && Names(hub.View, "sitePlugins").Count() == 1);
 
         Names(hub.View, "installedPlugins").ShouldBe(["Echoes"]);
         Names(hub.View, "sitePlugins").ShouldBe(["Shimmer"]);

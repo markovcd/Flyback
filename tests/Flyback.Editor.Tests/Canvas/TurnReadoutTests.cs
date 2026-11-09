@@ -97,7 +97,7 @@ public class TurnReadoutTests : EditorTest
     [AvaloniaFact]
     public void The_readout_says_where_the_turn_began_and_by_how_much_it_moved()
     {
-        var number = new PortSpec("freq", PortKind.Scalar);
+        var number = new PortSpec("freq");
 
         TurnReadout.Change(new TurnReadout.Turn("freq", "Sine", number, 1.46f, 0.8f, -4, 4, WellState.Turn)).ShouldBe("was 0.8 · +0.66");
         TurnReadout.Change(new TurnReadout.Turn("freq", "Sine", number, 0.5f, 0.8f, -4, 4, WellState.Turn)).ShouldBe("was 0.8 · −0.3");
@@ -116,7 +116,7 @@ public class TurnReadoutTests : EditorTest
     {
         var spec = NodeCatalog.Get(NodeCatalog.SineTypeId)!.Inputs[1];
         var turns = new[] { WellState.Turn, WellState.Focus }
-            .SelectMany(state => new[] { true, false }.SelectMany(finger => new string?[] { null, "1" }
+            .SelectMany(state => new[] { true, false }.SelectMany(finger => new[] { null, "1" }
                 .Select(typed => new TurnReadout.Turn("freq", "Sine", spec, 1, 1, 0, 2, state, typed, finger))));
 
         foreach (var turn in turns)

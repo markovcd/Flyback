@@ -42,7 +42,7 @@ public class PatchWorkbenchMissTests
 
         offered.Ok.ShouldBeFalse();
         offered.Text.ShouldContain("last edit did not go through");
-        offered.Text.ShouldContain("not in the patch's text", Case.Insensitive);
+        offered.Text.ShouldContain("not in the patch's text");
         bench.HasProposal.ShouldBeFalse();
     }
 

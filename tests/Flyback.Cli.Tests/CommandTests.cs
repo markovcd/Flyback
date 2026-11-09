@@ -326,9 +326,11 @@ public class CommandTests
     {
         using var directory = new Scratch();
 
+        var file = directory.File($"out{extension}");
+
         var (code, output, _) = Run((o, e) => RenderCommand.Run(
             Preset("Drone"),
-            new RenderOptions(directory.File($"out{extension}"), 64, 36, Seconds: 1d, Fps: 8d, Loudness: true),
+            new RenderOptions(file, 64, 36, Seconds: 1d, Fps: 8d, Loudness: true),
             e,
             output: o));
 
@@ -341,8 +343,10 @@ public class CommandTests
     {
         using var directory = new Scratch();
 
+        var still = directory.File("out.png");
+
         var (_, output, _) = Run((o, e) => RenderCommand.Run(
-            Preset("Drone"), new RenderOptions(directory.File("out.png"), 64, 36, Loudness: true), e, output: o));
+            Preset("Drone"), new RenderOptions(still, 64, 36, Loudness: true), e, output: o));
 
         output.ShouldContain("no sound to measure");
     }
@@ -473,8 +477,10 @@ public class CommandTests
     {
         using var directory = new Scratch();
 
+        var gif = directory.File("out.gif");
+
         var (code, _, error) = Run((_, e) => RenderCommand.Run(
-            Preset("Plasma"), new RenderOptions(directory.File("out.gif"), 64, 36), e));
+            Preset("Plasma"), new RenderOptions(gif, 64, 36), e));
 
         code.ShouldBe(Exit.Failed);
         error.ShouldContain(".png");
@@ -728,10 +734,11 @@ public class CommandTests
     public void The_GPU_and_the_interpreter_together_are_refused()
     {
         using var directory = new Scratch();
+        var still = directory.File("out.png");
 
         var (code, _, error) = Run((_, e) => RenderCommand.Run(
             Preset("Plasma"),
-            new RenderOptions(directory.File("out.png"), 64, 36, Interpreted: true, Backend: PictureBackend.Gpu),
+            new RenderOptions(still, 64, 36, Interpreted: true, Backend: PictureBackend.Gpu),
             e,
             cancellation: TestContext.Current.CancellationToken));
 
@@ -1262,12 +1269,13 @@ public class CommandTests
     public void A_preset_is_packed_and_checked_by_its_name(string[] args, int exit, string said)
     {
         using var scratch = new Scratch();
+        var packed = scratch.File("preset.fbkb").FullName;
 
         var output = new StringWriter();
         var error = new StringWriter();
 
         var code = Program.Run(
-            [.. args.Select(arg => string.Format(System.Globalization.CultureInfo.InvariantCulture, arg, scratch.File("preset.fbkb").FullName))],
+            [.. args.Select(arg => string.Format(System.Globalization.CultureInfo.InvariantCulture, arg, packed))],
             new PluginRegistry(() => PluginCatalog.Empty, "nowhere", null),
             new InvocationConfiguration { Output = output, Error = error });
 
@@ -1396,8 +1404,11 @@ public class CommandTests
         var file = scratch.File("shown.fbk");
         File.WriteAllText(file.FullName, PatchIO.ToJson(patch, NodeCatalog.BuiltIn));
 
-        var prose = Run((o, e) => PackCommand.Run(file, scratch.File("prose.fbkb"), e, o));
-        var json = Run((o, e) => PackCommand.Run(file, scratch.File("json.fbkb"), e, o, json: true));
+        var proseFile = scratch.File("prose.fbkb");
+        var jsonFile = scratch.File("json.fbkb");
+
+        var prose = Run((o, e) => PackCommand.Run(file, proseFile, e, o));
+        var json = Run((o, e) => PackCommand.Run(file, jsonFile, e, o, json: true));
 
         json.Code.ShouldBe(prose.Code);
 

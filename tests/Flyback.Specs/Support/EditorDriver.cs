@@ -1376,7 +1376,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     /// <summary>Makes the open patch's own text the document, as opening it from a <c>.fbks</c> would.</summary>
     public void TakeTextAsDocument() => DoWindow((_, _) =>
     {
-        var document = Service<Flyback.Editor.Hubs.Document>();
+        var document = Service<Document>();
         document.TakeSource(document.AsText());
     });
 

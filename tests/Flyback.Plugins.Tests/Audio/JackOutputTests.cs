@@ -53,10 +53,12 @@ public class JackOutputTests(JackServerFixture server) : IClassFixture<JackServe
         TestCategory.Jack.Require(server.Available, server.Why);
 
         using var device = server.Output.Create(AudioFormat.Default, Unconnected);
-        using var heard = new ManualResetEventSlim();
+        // Never disposed: a callback on another thread may still signal it after the test ends.
+        var heard = new ManualResetEventSlim();
         var samples = 0;
 
-        device.SampleRate.ShouldBeGreaterThan(0);
+        var rate = device.SampleRate;
+        rate.ShouldBeGreaterThan(0);
         device.Latency.ShouldBeGreaterThan(TimeSpan.Zero);
         device.IsRunning.ShouldBeFalse();
 
@@ -64,7 +66,7 @@ public class JackOutputTests(JackServerFixture server) : IClassFixture<JackServe
         {
             buffer.Fill(0.25f);
 
-            if (Interlocked.Add(ref samples, buffer.Length) >= device.SampleRate) heard.Set();
+            if (Interlocked.Add(ref samples, buffer.Length) >= rate) heard.Set();
         });
 
         // A second of audio, drawn at the server's pace, takes a second.
@@ -86,7 +88,7 @@ public class JackOutputTests(JackServerFixture server) : IClassFixture<JackServe
 
         for (var round = 0; round < 2; round++)
         {
-            using var heard = new ManualResetEventSlim();
+            var heard = new ManualResetEventSlim();
 
             device.Start(buffer =>
             {
@@ -111,21 +113,22 @@ public class JackOutputTests(JackServerFixture server) : IClassFixture<JackServe
         TestCategory.Jack.Require(server.Available, server.Why);
 
         using var done = new CancellationTokenSource();
+        var stopping = done.Token;
         var churn = Task.Factory.StartNew(() =>
         {
             var kept = new List<byte[]>();
 
-            while (!done.IsCancellationRequested)
+            while (!stopping.IsCancellationRequested)
             {
                 kept.Add(new byte[32_000]);
                 if (kept.Count > 1000) kept.Clear();
             }
-        }, done.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+        }, stopping, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
         for (var round = 0; round < 20; round++)
         {
             using var device = server.Output.Create(AudioFormat.Default, Unconnected);
-            using var inside = new ManualResetEventSlim();
+            var inside = new ManualResetEventSlim();
 
             device.Start(buffer =>
             {

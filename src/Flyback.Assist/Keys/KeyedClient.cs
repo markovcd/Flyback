@@ -61,7 +61,8 @@ internal sealed class KeyedClient : IKeyedClient, IEquatable<KeyedClient>
         // A turn at high effort is minutes, and a survey asks a list of models several
         // questions each. Cancellation is what stops either; the timeout is a backstop
         // for a connection that has died without saying so.
-        // ReSharper disable once ShortLivedHttpClient: the handler is shared and pooled; only this thin client is made per request.
+        // The handler is shared and pooled; only this thin client is made per request.
+        // ReSharper disable once ShortLivedHttpClient
         using var client = new HttpClient(network, disposeHandler: false);
         client.Timeout = TimeSpan.FromMinutes(10);
         using var response = await client.SendAsync(request, cancel).ConfigureAwait(false);

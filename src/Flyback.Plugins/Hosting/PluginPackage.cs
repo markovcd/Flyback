@@ -188,6 +188,8 @@ internal sealed class PluginPackage
 
             try
             {
+                // Of opens each file before it returns.
+                // ReSharper disable once AccessToDisposedClosure
                 description = PluginDescription.Of(files.Select(f =>
                     (f.Path, (Func<Stream>)(() => new MemoryStream(ReadAll(zip.Entries[f.Index], limits.Unpacked), writable: false)))));
             }

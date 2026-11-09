@@ -174,8 +174,6 @@ internal static class NodeSkin
     /// <summary>The square a cut repeats on, in graph units.</summary>
     private const double Tile = 8;
 
-    private const double CutWidth = 1;
-
     /// <summary>
     /// How strongly a cut shows: faint, because it covers the whole body and the
     /// labels are read over it.

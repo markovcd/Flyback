@@ -47,7 +47,15 @@ internal sealed class ThumbnailStore(string folder)
                 // Each tag takes a byte at least, so a count the file cannot hold is a damaged file.
                 if (count > file.Length - file.Position) return null;
 
-                string[]? tags = count < 0 ? null : [.. Enumerable.Range(0, count).Select(_ => reader.ReadString())];
+                string[]? tags = null;
+
+                if (count >= 0)
+                {
+                    tags = new string[count];
+
+                    for (var i = 0; i < count; i++) tags[i] = reader.ReadString();
+                }
+
                 var reaches = reader.ReadSByte();
                 byte[]? frame = null;
 

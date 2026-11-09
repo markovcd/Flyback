@@ -108,12 +108,13 @@ internal sealed class Decisions(
 
         using var late = CancellationTokenSource.CreateLinkedTokenSource(cancel);
         late.CancelAfter(Deadline);
+        var deadline = late.Token;
 
         try
         {
             // Off the caller's thread: a model that runs here may work before its first await.
             var config = Config(model, use);
-            var decision = await Task.Run(() => model.DecideAsync(request, config, late.Token), late.Token).ConfigureAwait(false);
+            var decision = await Task.Run(() => model.DecideAsync(request, config, deadline), deadline).ConfigureAwait(false);
             Problem = null;
             return decision;
         }

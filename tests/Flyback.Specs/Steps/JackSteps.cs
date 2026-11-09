@@ -36,7 +36,8 @@ public sealed class JackSteps(IUnitTestRuntimeProvider runtime) : IDisposable
         device = output.Create(new AudioFormat(48000, 2, 30), SettingValues.None.With("connect", "none"));
 
         var wanted = (long)seconds * device.SampleRate * 2;
-        using var enough = new ManualResetEventSlim();
+        // Never disposed: a callback on another thread may still signal it after the test ends.
+        var enough = new ManualResetEventSlim();
 
         device.Start(buffer =>
         {

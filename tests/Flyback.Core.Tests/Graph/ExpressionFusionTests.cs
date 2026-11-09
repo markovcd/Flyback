@@ -256,6 +256,24 @@ public class ExpressionFusionTests
         Formula(Of(fused, Expression).ShouldHaveSingleItem()).ShouldBe("fract(a * 60) * 2 - 1");
     }
 
+    /// <summary>A fold that would write a call its formula already makes stays apart, since the formula would compute it once.</summary>
+    [Fact]
+    public void A_module_whose_call_the_formula_already_makes_stands_on_its_own()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var sine = b.Add("math.sin");
+        b.Wire(coord, 0, sine, 0);
+        var outer = b.Add(Expression);
+        outer.SetState("expression", new System.Text.Json.Nodes.JsonObject { ["formula"] = "a + sin(b)" });
+        b.Wire(sine, 0, outer, 0).Wire(coord, 0, outer, 1);
+        Shown(b, outer);
+
+        var fused = Fused(b.Patch);
+
+        Of(fused, Expression).Select(Formula).Order().ShouldBe(["a + sin(b)", "sin(a)"]);
+    }
+
     /// <summary>No shipped engine preset keeps a Maths module an Expression stands for.</summary>
     [Fact]
     public void No_shipped_preset_keeps_a_retired_module()

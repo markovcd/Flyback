@@ -550,11 +550,10 @@ internal static class ExpressionFusion
     /// </summary>
     private static int Repeats(Term term)
     {
-        var seen = new HashSet<string>();
-        var repeats = 0;
+        var calls = new List<string>();
 
         Key(term);
-        return repeats;
+        return calls.Count - calls.Distinct(StringComparer.Ordinal).Count();
 
         string Key(Term part)
         {
@@ -567,7 +566,7 @@ internal static class ExpressionFusion
                 _ => "?",
             };
 
-            if (part is Call && !seen.Add(key)) repeats++;
+            if (part is Call) calls.Add(key);
 
             return key;
         }

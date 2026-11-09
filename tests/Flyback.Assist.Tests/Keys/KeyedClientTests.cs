@@ -122,7 +122,8 @@ public sealed class KeyedClientTests
         cancel.CancelAfter(TimeSpan.FromSeconds(30));
 
         using var elsewhere = new Loopback(_ => "HTTP/1.1 200 OK\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
-        using var provider = new Loopback(_ => $"HTTP/1.1 302 Found\r\nLocation: {elsewhere.Address}stolen\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+        var stolen = new Uri(elsewhere.Address, "stolen");
+        using var provider = new Loopback(_ => $"HTTP/1.1 302 Found\r\nLocation: {stolen}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
 
         var credential = new KeyCredential("KEY", "") { Header = "x-goog-api-key", Scheme = null };
         var transport = new KeyedClient("g-secret", KeyedClient.OriginOf(provider.Address), credential);

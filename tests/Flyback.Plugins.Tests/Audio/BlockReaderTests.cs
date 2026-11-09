@@ -12,7 +12,8 @@ public class BlockReaderTests
     [Fact]
     public void It_opens_on_its_own_thread_delivers_what_was_read_and_closes_there_once_stopped()
     {
-        using var heard = new SemaphoreSlim(0);
+        // Never disposed: a callback on another thread may still signal it after the test ends.
+        var heard = new SemaphoreSlim(0);
         var openedOn = 0;
         var deliveredOn = 0;
         var closedOn = 0;
@@ -46,7 +47,7 @@ public class BlockReaderTests
     [Fact]
     public void An_empty_read_delivers_nothing_and_reading_carries_on()
     {
-        using var readAgain = new SemaphoreSlim(0);
+        var readAgain = new SemaphoreSlim(0);
         var reads = 0;
         var delivered = 0;
 
@@ -67,7 +68,7 @@ public class BlockReaderTests
     [Fact]
     public void A_refused_read_ends_the_thread_and_closes_the_input()
     {
-        using var closed = new ManualResetEventSlim();
+        var closed = new ManualResetEventSlim();
 
         var reader = BlockReader.Start(_ => { }, _ => new BlockSource(new float[8], _ => -1, closed.Set));
 
@@ -92,8 +93,8 @@ public class BlockReaderTests
     [Fact]
     public void Opening_is_told_when_it_is_no_longer_wanted()
     {
-        using var asking = new ManualResetEventSlim();
-        using var answered = new ManualResetEventSlim();
+        var asking = new ManualResetEventSlim();
+        var answered = new ManualResetEventSlim();
         var stillWanted = true;
         var delivered = false;
 
@@ -119,9 +120,9 @@ public class BlockReaderTests
     [Fact]
     public void A_hung_reader_left_behind_never_reaches_the_reader_after_it()
     {
-        using var hung = new ManualResetEventSlim();
-        using var release = new ManualResetEventSlim();
-        using var firstClosed = new ManualResetEventSlim();
+        var hung = new ManualResetEventSlim();
+        var release = new ManualResetEventSlim();
+        var firstClosed = new ManualResetEventSlim();
         var firstThread = 0;
 
         var first = BlockReader.Start(

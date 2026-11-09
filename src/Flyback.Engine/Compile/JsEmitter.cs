@@ -302,6 +302,7 @@ internal static class JsEmitter
         for (var s = 0; s < bounds.Count; s++)
         {
             var (from, to) = bounds[s];
+            var stretch = s;
             var locals = new SortedSet<int>();
             var loads = new HashSet<int>();
             var written = new HashSet<int>();
@@ -338,7 +339,7 @@ internal static class JsEmitter
             var stores = new SortedSet<int>(written.Where(register =>
                 outputs.Contains(register)
                 || readEarly.Contains(register)
-                || (readBy.TryGetValue(register, out var by) && by.Any(other => other != s))));
+                || (readBy.TryGetValue(register, out var by) && by.Any(other => other != stretch))));
 
             stretchesOut.Add(new Stretch(from, to, locals, loads, stores, lines, cells, constants));
         }

@@ -148,7 +148,7 @@ public class TouchWellTests : EditorTest
         var (editor, sine, freq) = Board();
         var at = Well(editor, sine, freq);
 
-        Tap(editor, at, 1_000);
+        Tap(editor, at);
         Tap(editor, at, 1_200);
 
         editor.WellFocus.Typed.ShouldBe(string.Empty);

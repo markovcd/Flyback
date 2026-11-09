@@ -241,6 +241,19 @@ public sealed class PresetThumbnailsTests : IDisposable
         Directory.GetFiles(folder).ShouldHaveSingleItem("nothing is left half written");
     }
 
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(0)]
+    [InlineData(2)]
+    public void A_kept_thumbnail_keeps_its_tags(int count)
+    {
+        string[]? tags = count < 0 ? null : [.. Enumerable.Range(0, count).Select(i => $"tag{i}")];
+
+        new ThumbnailStore(folder).Keep("abc", new Thumbnail(null, "words", Tags: tags));
+
+        new ThumbnailStore(folder).Find("abc").ShouldNotBeNull().Tags.ShouldBe(tags);
+    }
+
     [Fact]
     public void A_kept_thumbnail_that_cannot_be_read_is_none()
     {

@@ -47,6 +47,8 @@ resharper_null_coalescing_condition_is_always_not_null_according_to_api_contract
 dotnet_diagnostic.CA1707.severity = none
 # An expected array is built once, for the one call that checks it.
 dotnet_diagnostic.CA1861.severity = none
+# A test's fake clock or switch is a local it moves on purpose, read through the lambda it handed over.
+resharper_access_to_modified_closure_highlighting = hint
 
 [tests/Flyback.Ui.Testing/Headless/**.cs]
 # Avalonia.Headless.XUnit's own source, kept in its own namespace so tests use it as they would the package.

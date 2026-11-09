@@ -133,7 +133,7 @@ public class LiveByTouchTests : EditorTest
         Click(window, Tool(window, "liveLeave"));
 
         moved.ShouldBe([true, false]);
-        box.Background.ShouldBe(Avalonia.Media.Brushes.Black, "the picture's box has its ground back");
+        box.Background.ShouldBe(Brushes.Black, "the picture's box has its ground back");
     }
 
     [AvaloniaFact]

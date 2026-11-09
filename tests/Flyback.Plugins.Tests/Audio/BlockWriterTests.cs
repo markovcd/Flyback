@@ -12,7 +12,8 @@ public class BlockWriterTests
     [Fact]
     public void It_fills_and_writes_until_stopped_then_closes_on_its_own_thread()
     {
-        using var written = new SemaphoreSlim(0);
+        // Never disposed: a callback on another thread may still signal it after the test ends.
+        var written = new SemaphoreSlim(0);
         var writerThread = 0;
         var closedOn = 0;
         var filled = 0;
@@ -74,8 +75,8 @@ public class BlockWriterTests
     [Fact]
     public void A_partial_write_hears_that_it_is_no_longer_wanted()
     {
-        using var asked = new ManualResetEventSlim();
-        using var stopped = new ManualResetEventSlim();
+        var asked = new ManualResetEventSlim();
+        var stopped = new ManualResetEventSlim();
         var stillWanted = true;
 
         var writer = BlockWriter.Start(
@@ -105,9 +106,9 @@ public class BlockWriterTests
     [Fact]
     public void A_hung_writer_left_behind_never_reaches_the_writer_after_it()
     {
-        using var hung = new ManualResetEventSlim();
-        using var release = new ManualResetEventSlim();
-        using var firstClosed = new ManualResetEventSlim();
+        var hung = new ManualResetEventSlim();
+        var release = new ManualResetEventSlim();
+        var firstClosed = new ManualResetEventSlim();
         var firstThread = 0;
 
         var first = BlockWriter.Start(

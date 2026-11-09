@@ -818,7 +818,7 @@ internal sealed class AssistantPanel : UserControl
         var wanted = composer.Message;
         if (string.IsNullOrWhiteSpace(wanted)) return;
 
-        var fresh = Conversation(chosenAssistant.Value, config);
+        var begun = Conversation(chosenAssistant.Value, config);
 
         if (preface is { } note) transcript.Put(Voice.Note, note);
         preface = null;
@@ -838,7 +838,7 @@ internal sealed class AssistantPanel : UserControl
             {
                 // A document arrived while this ran and took the conversation
                 // with it (Open). What is still on its way is about that one.
-                if (!ReferenceEquals(fresh, session.Run)) break;
+                if (!ReferenceEquals(begun, session.Run)) break;
 
                 // The tallies move as the workbench is driven, and an edit that
                 // lands is the strongest sign of all that this is alive.
@@ -847,7 +847,7 @@ internal sealed class AssistantPanel : UserControl
                 if (happened is PatchEvent.Cost) ShowSpent();
             }
 
-            if (ReferenceEquals(fresh, session.Run))
+            if (ReferenceEquals(begun, session.Run))
             {
                 Deliver();
                 Settle();

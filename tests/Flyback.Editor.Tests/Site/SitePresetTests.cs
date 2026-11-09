@@ -193,9 +193,10 @@ public sealed class SitePresetTests : EditorTest
 
         All<RadioButton>(window).Single(r => (string?)r.Tag == "stolen").IsChecked = true;
         Press(All<Button>(window).Single(b => b.Name == "send"));
-        Pump(() => site.Reports.Count == 1 && Status(tiles)!.StartsWith("Reported", StringComparison.Ordinal));
+        var reports = site.Reports;
+        Pump(() => reports.Count == 1 && Status(tiles)!.StartsWith("Reported", StringComparison.Ordinal));
 
-        site.Reports.ShouldHaveSingleItem().Path.ShouldBe("/api/v1/presets/a/reports");
+        reports.ShouldHaveSingleItem().Path.ShouldBe("/api/v1/presets/a/reports");
         Status(tiles).ShouldBe("Reported “Aurora” to the preset site's admin.");
         All<TextBlock>(tiles).Single(t => t.Name == "site-status").IsVisible.ShouldBeTrue();
     }

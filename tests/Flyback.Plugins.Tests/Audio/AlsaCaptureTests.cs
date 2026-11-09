@@ -57,7 +57,8 @@ public class AlsaCaptureTests
         Assert.SkipUnless(Alsa().IsSupported, "libasound is not installed here");
 
         using var capture = Alsa().Create(AudioFormat.Default, SettingValues.None);
-        using var heard = new ManualResetEventSlim();
+        // Never disposed: a callback on another thread may still signal it after the test ends.
+        var heard = new ManualResetEventSlim();
         var frames = 0;
 
         try
