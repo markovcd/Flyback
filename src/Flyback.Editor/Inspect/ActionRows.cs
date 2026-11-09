@@ -35,7 +35,7 @@ internal static class ActionRows
     };
 
     /// <summary>
-    /// What can be done to the selected module: switched, rolled, grouped, its boxes
+    /// What can be done to the selected module: switched, randomized, grouped, its boxes
     /// opened or closed, duplicated and deleted, in that order so the
     /// destructive button is at the far end of the row.
     /// </summary>
@@ -74,8 +74,8 @@ internal static class ActionRows
                 "roll-module",
                 Glyphs.Dice(),
                 rolling > 1
-                    ? $"Roll these {rolling} knobs somewhere new; Ctrl+Z goes back  (Ctrl+Shift+D)"
-                    : "Roll this knob somewhere new; Ctrl+Z goes back  (Ctrl+Shift+D)",
+                    ? $"Randomize these {rolling} knobs; Ctrl+Z goes back  (Ctrl+Shift+D)"
+                    : "Randomize this knob; Ctrl+Z goes back  (Ctrl+Shift+D)",
                 () => editor.Reactions.Raise(new ModulesRollAsked()));
 
         // Grouping comes ahead of deleting, so the destructive button is at the far

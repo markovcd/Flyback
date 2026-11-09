@@ -1,6 +1,6 @@
-Feature: A module's knobs can be rolled
+Feature: A module's knobs can be randomized
   Somebody exploring a module sends its knobs somewhere new at once, and steps back
-  through the rolls with undo. A wired input, or one on a panel knob, stays put.
+  through the results with undo. A wired input, or one on a panel knob, stays put.
 
   Specified by ADR-0209.
 
@@ -10,15 +10,15 @@ Feature: A module's knobs can be rolled
     And the patch is open in the editor
     And the sine is selected
 
-  Scenario: Rolling moves the sine's own knobs and leaves the wired one and the panel's
-    When the selection's knobs are rolled
+  Scenario: Randomizing moves the sine's own knobs and leaves the wired one and the panel's
+    When the selection's knobs are randomized
     Then the sine's "amp" has moved from 1
     And the sine's "bias" has moved from 0
     And the sine's "phase" still rests at 0
     And the sine's "freq" still rests at 1
 
-  Scenario: Undo takes a roll back, and redo puts it back again
-    When the selection's knobs are rolled
+  Scenario: Undo takes a randomize back, and redo puts it back again
+    When the selection's knobs are randomized
     And the sine's "amp" is noted
     And that is undone
     Then the sine's "amp" still rests at 1

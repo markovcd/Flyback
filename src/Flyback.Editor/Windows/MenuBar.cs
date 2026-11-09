@@ -112,8 +112,8 @@ internal sealed class MenuBar
             Pressing("Record", Key.R),
             Pressing("Measure", Key.M, KeyModifiers.Shift),
             new NativeMenuItemSeparator(),
-            Pressing("Roll the Panel's Knobs", Key.K, KeyModifiers.Shift),
-            Pressing("Roll the Selected Modules' Knobs", Key.D, KeyModifiers.Shift)));
+            Pressing("Randomize the Panel's Knobs", Key.K, KeyModifiers.Shift),
+            Pressing("Randomize the Selected Modules' Knobs", Key.D, KeyModifiers.Shift)));
 
         if (Mac)
         {

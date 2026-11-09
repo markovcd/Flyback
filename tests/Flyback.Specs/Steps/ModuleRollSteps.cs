@@ -31,7 +31,7 @@ public sealed class ModuleRollSteps(PatchContext context, EditorDriver editor)
     [Given("the sine is selected")]
     public void GivenSelected() => editor.Select(context.Node("sine").Id);
 
-    [When("the selection's knobs are rolled")]
+    [When("the selection's knobs are randomized")]
     public void WhenRolled()
     {
         editor.RollModulesOnASeededDie();

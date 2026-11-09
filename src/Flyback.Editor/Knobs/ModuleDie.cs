@@ -68,8 +68,8 @@ internal sealed class ModuleDie(
         if (rolled.Count == 0)
         {
             report.Say(editor.Selection.Count == 0
-                ? "Select a module to roll its knobs."
-                : "Nothing to roll: every input here is wired, on a panel knob, or has no knob.");
+                ? "Select a module to randomize its knobs."
+                : "Nothing to randomize: every input here is wired, on a panel knob, or has no knob.");
             return;
         }
 
@@ -79,6 +79,6 @@ internal sealed class ModuleDie(
         foreach (var pick in rolled) reactions.Raise(new InputTurned(pick));
         reactions.Raise(new InputLetGo(rolled[^1]));
 
-        report.Say(rolled.Count == 1 ? "Rolled one knob. Ctrl+Z takes it back." : $"Rolled {rolled.Count} knobs. Ctrl+Z takes them back.");
+        report.Say(rolled.Count == 1 ? "Randomized one knob. Ctrl+Z takes it back." : $"Randomized {rolled.Count} knobs. Ctrl+Z takes them back.");
     }
 }
