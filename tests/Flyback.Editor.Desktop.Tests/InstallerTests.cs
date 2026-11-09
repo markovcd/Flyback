@@ -79,6 +79,7 @@ public sealed class InstallerTests : IDisposable
     {
         Should.Throw<IOException>(() => Installer.Install(Payload, Installed, copying: file =>
         {
+            // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local: failing on one file is the hook's whole job.
             if (file == "Flyback.Gpu.dll") throw new IOException("disk full");
         }));
 

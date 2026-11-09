@@ -14,7 +14,7 @@ public class EasyDrumTests
 {
     private const string Drum = "flyback.easy.drummer";
 
-    private const int Bpm = 1, Swing = 2, Trigger = 3, Velocity = 4, Tune = 5, Decay = 6, Tone = 7, Drive = 8, Pan = 9;
+    private const int Bpm = 1, Swing = 2, Trigger = 3, Decay = 6, Pan = 9;
 
     private const int Left = 0, Right = 1, Env = 2;
 

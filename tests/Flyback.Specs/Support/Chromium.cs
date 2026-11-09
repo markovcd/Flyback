@@ -15,6 +15,9 @@ internal sealed partial class Chromium : IDisposable
     /// <summary>How long the browser may take to say where its DevTools listen.</summary>
     private static readonly TimeSpan Starting = TimeSpan.FromSeconds(30);
 
+    /// <summary>Asks a browser's debugging endpoint for its pages.</summary>
+    private static readonly HttpClient Http = new();
+
     /// <summary>
     /// Root in a container runs Chromium only unsandboxed, and the only pages it opens are
     /// the ones <see cref="PageServer"/> serves on loopback. The fake microphone and its
@@ -106,8 +109,7 @@ internal sealed partial class Chromium : IDisposable
     /// <summary>The DevTools address of the page the browser opened with.</summary>
     private static Uri BlankPage(Uri browser)
     {
-        using var http = new HttpClient();
-        var targets = JsonNode.Parse(http.GetStringAsync(new Uri(browser, "/json/list")).Result)!.AsArray();
+        var targets = JsonNode.Parse(Http.GetStringAsync(new Uri(browser, "/json/list")).Result)!.AsArray();
 
         var page = targets.Single(target => (string?)target!["type"] == "page")!;
         return new Uri((string)page["webSocketDebuggerUrl"]!);

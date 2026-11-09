@@ -227,10 +227,13 @@ internal sealed unsafe class MetalDevice : IDisposable
             texture, ObjC.Sel("replaceRegion:mipmapLevel:withBytes:bytesPerRow:"), region, 0, bytes, (nuint)bytesPerRow);
     }
 
+    /// <summary>A resource's options word for <paramref name="storage"/>, which Metal keeps from bit 4.</summary>
+    private static nuint ResourceOptions(nuint storage) => storage << 4;
+
     /// <summary>A buffer both the processor and the GPU reach, of <paramref name="length"/> bytes.</summary>
     public IntPtr Buffer(int length) =>
         ((delegate* unmanaged<IntPtr, IntPtr, nuint, nuint, IntPtr>)ObjC.MsgSend)(
-            device, ObjC.Sel("newBufferWithLength:options:"), (nuint)Math.Max(length, 16), StorageShared << 4);
+            device, ObjC.Sel("newBufferWithLength:options:"), (nuint)Math.Max(length, 16), ResourceOptions(StorageShared));
 
     /// <summary>Where a buffer's bytes are, for the processor.</summary>
     public static IntPtr Contents(IntPtr buffer) => ObjC.Send(buffer, "contents");
@@ -348,6 +351,8 @@ internal sealed unsafe class MetalDevice : IDisposable
         ObjC.Release(device);
     }
 
+    // Metal reads these, not C#: each is the native struct, field for field.
+    // ReSharper disable NotAccessedPositionalProperty.Local
     [StructLayout(LayoutKind.Sequential)]
     private readonly record struct Origin(nuint X, nuint Y, nuint Z);
 
@@ -359,4 +364,5 @@ internal sealed unsafe class MetalDevice : IDisposable
 
     [StructLayout(LayoutKind.Sequential)]
     private readonly record struct ClearColor(double Red, double Green, double Blue, double Alpha);
+    // ReSharper restore NotAccessedPositionalProperty.Local
 }

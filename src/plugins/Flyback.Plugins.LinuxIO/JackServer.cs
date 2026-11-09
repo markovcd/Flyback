@@ -58,7 +58,8 @@ internal static class JackServer
     {
         try
         {
-            using var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified) { Blocking = false };
+            using var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+            socket.Blocking = false;
 
             socket.Connect(new UnixDomainSocketEndPoint(path));
             return true;

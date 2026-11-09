@@ -13,8 +13,6 @@ internal sealed class FakeAssistantEditor(Patch current) : IAssistantEditor
     /// <summary>How many times a patch was put on the canvas.</summary>
     public int Applied { get; private set; }
 
-    public List<string> Reported { get; } = [];
-
     /// <summary>
     /// The text the patch is written in, as a document the text owns would say; null while
     /// the canvas owns the patch, which a proposal does not change.
@@ -32,7 +30,7 @@ internal sealed class FakeAssistantEditor(Patch current) : IAssistantEditor
         Applied++;
     }
 
-    public void Report(string message, string? detail) => Reported.Add(message);
+    public void Report(string message, string? detail) { }
 
     public ISampleLibrary? Samples => null;
 

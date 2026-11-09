@@ -164,22 +164,22 @@ internal sealed class InstrumentLibrary
 
     private sealed class TrackFile
     {
-        public string? Name { get; set; }
+        public string? Name { get; init; }
 
-        public int Channel { get; set; }
+        public int Channel { get; init; }
 
-        public string? Kind { get; set; }
+        public string? Kind { get; init; }
 
-        public string? Short { get; set; }
+        public string? Short { get; init; }
     }
 
     private sealed class PageFile
     {
-        public string? Name { get; set; }
+        public string? Name { get; init; }
 
-        public string? Kind { get; set; }
+        public string? Kind { get; init; }
 
         /// <summary>Knob name to controller number, in the instrument's order.</summary>
-        public Dictionary<string, int>? Controls { get; set; }
+        public Dictionary<string, int>? Controls { get; init; }
     }
 }

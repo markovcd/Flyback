@@ -670,14 +670,14 @@ public sealed class AssistantPanelHandbookTests : AssistantPanelTest
         var host = Settings(window);
 
         All<SelectableTextBlock>(host).Single(t => t.Name == "priorityFile").Text
-            .ShouldBe(Path.Combine(Path.GetDirectoryName(settingsPath)!, "priority-modules.txt"));
+            .ShouldBe(Path.Combine(Path.GetDirectoryName(SettingsPath)!, "priority-modules.txt"));
     }
 
     [AvaloniaFact]
     public void Past_the_budget_the_modules_off_the_list_are_undescribed()
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
-        File.WriteAllText(Path.Combine(Path.GetDirectoryName(settingsPath)!, "priority-modules.txt"), "osc.string");
+        Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
+        File.WriteAllText(Path.Combine(Path.GetDirectoryName(SettingsPath)!, "priority-modules.txt"), "osc.string");
 
         var window = Showing(
             With(new Deaf()),

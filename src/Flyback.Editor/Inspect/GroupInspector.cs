@@ -263,7 +263,7 @@ internal sealed class GroupInspector(
         // else's group going, and the name is the only warning there is.
         var keep = Act("keep-group", Glyphs.Keep(), !named
             ? "The module list calls a kept group by its name — double-click the title above to give it one."
-            : palette.Groups?.Named(group.Name) is not null
+            : palette.Groups.Named(group.Name) is not null
                 ? $"Replaces the “{group.Name}” already in the module list. It will ask first."
                 : $"Keeps “{group.Name}” under Groups in the module list, ready to add again.",
             () => Keep(group, actions));

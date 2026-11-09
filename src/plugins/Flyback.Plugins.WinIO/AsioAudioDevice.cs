@@ -136,7 +136,7 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
                 ? $"the driver is at {own} Hz and cannot be set to {SampleRate} Hz; restart Flyback to play at {own} Hz."
                 : $"the driver cannot play at {SampleRate} Hz.");
 
-        var (_, outputs) = driver.Channels();
+        var outputs = driver.OutputChannels();
 
         if (outputs < 1) throw new InvalidOperationException("the driver has no outputs.");
 
@@ -180,7 +180,7 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
         block = new float[frames * 2];
         tellReady = driver.OutputReady() == Asio.Ok;
 
-        var (_, latency) = driver.Latencies();
+        var latency = driver.OutputLatency();
         Latency = TimeSpan.FromSeconds((latency > 0 ? latency : frames) / (double)SampleRate);
 
         running = true;

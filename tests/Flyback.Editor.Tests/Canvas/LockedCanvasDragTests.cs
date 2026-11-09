@@ -12,12 +12,12 @@ namespace Flyback.Editor.Tests.Canvas;
 /// </summary>
 public class LockedCanvasDragTests : EditorTest
 {
-    private static Patch Pair(out NodeInstance source, out NodeInstance sink)
+    private static Patch Pair(out NodeInstance source)
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
         source = builder.Add("value", 0, 0);
-        sink = builder.Add(NodeCatalog.OutputTypeId, 420, 0);
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 420, 0);
 
         builder.Wire(source, 0, sink, NodeCatalog.OutputLeftPort);
 
@@ -27,7 +27,7 @@ public class LockedCanvasDragTests : EditorTest
     [AvaloniaFact]
     public void A_module_moves_on_a_locked_canvas()
     {
-        var (editor, window) = Editing(Pair(out var source, out _));
+        var (editor, window) = Editing(Pair(out var source));
 
         editor.History.Locked = true;
 
@@ -40,7 +40,7 @@ public class LockedCanvasDragTests : EditorTest
     [AvaloniaFact]
     public void Moving_a_module_on_a_locked_canvas_leaves_no_step_to_undo()
     {
-        var (editor, window) = Editing(Pair(out var source, out _));
+        var (editor, window) = Editing(Pair(out var source));
 
         editor.History.Locked = true;
 

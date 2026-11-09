@@ -172,4 +172,29 @@ public class InstrumentProfileTests
 
         field.Fallback.ShouldBe("midi:syntakt");
     }
+
+    /// <summary>With nothing conducting, a fresh Clock In follows the first instrument that is not the computer keyboard.</summary>
+    [Fact]
+    public void Without_a_conductor_a_fresh_clock_in_follows_the_first_instrument()
+    {
+        var field = MidiClockExtra.FieldsFor(
+            [
+                new MidiSource(MidiSources.Keyboard, "Computer keyboard"),
+                new MidiSource("midi:launchkey-mini", "Launchkey Mini"),
+                new MidiSource("midi:syntakt", "Syntakt"),
+            ]).OfType<ExtraField.Choice>().Single();
+
+        field.Fallback.ShouldBe("midi:launchkey-mini");
+    }
+
+    /// <summary>With no instrument plugged in, or none listed at all, a fresh Clock In follows the computer keyboard.</summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void With_no_instrument_a_fresh_clock_in_follows_the_keyboard(bool keyboardListed)
+    {
+        MidiSource[] sources = keyboardListed ? [new MidiSource(MidiSources.Keyboard, "Computer keyboard")] : [];
+
+        MidiClockExtra.FieldsFor(sources).OfType<ExtraField.Choice>().Single().Fallback.ShouldBe(MidiSources.Keyboard);
+    }
 }

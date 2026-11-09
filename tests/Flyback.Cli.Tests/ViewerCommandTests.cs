@@ -36,7 +36,7 @@ public sealed class ViewerCommandTests : IDisposable
     }
 
     /// <summary>A program that writes each argument it got on a line of its own and exits with <paramref name="code"/>.</summary>
-    private string Script(int code)
+    private void Script(int code)
     {
         string path;
 
@@ -53,8 +53,6 @@ public sealed class ViewerCommandTests : IDisposable
         }
 
         ViewerCommand.Beside = () => path;
-
-        return path;
     }
 
     private string[] Arrived() => File.Exists(record) ? File.ReadAllLines(record) : [];

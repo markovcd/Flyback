@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Flyback.Engine.Render;
 
 /// <summary>
@@ -69,6 +71,8 @@ internal static class RelayCrew
         for (var i = 0; i < Boards; i++) Interlocked.CompareExchange(ref Posted[i], null, relay);
     }
 
+    /// <summary>A helper thread's body: it takes legs for as long as the process lives.</summary>
+    [DoesNotReturn]
     private static void Help()
     {
         var idle = 0;

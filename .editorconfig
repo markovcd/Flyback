@@ -36,9 +36,18 @@ resharper_unused_method_return_value_global_highlighting = hint
 resharper_unused_auto_property_accessor_global_highlighting = hint
 # Sample and knob values are compared exactly on purpose.
 resharper_compare_of_floats_by_equality_operator_highlighting = hint
+# A record read from JSON, a command line or a plugin can hold null where its
+# annotations say none, and the checks on it are input validation (the outside-input skill).
+resharper_condition_is_always_true_or_false_according_to_nullable_api_contract_highlighting = hint
+resharper_conditional_access_qualifier_is_non_nullable_according_to_api_contract_highlighting = hint
+resharper_null_coalescing_condition_is_always_not_null_according_to_api_contract_highlighting = hint
 
 [tests/**.cs]
 # Test names are sentences.
 dotnet_diagnostic.CA1707.severity = none
 # An expected array is built once, for the one call that checks it.
 dotnet_diagnostic.CA1861.severity = none
+
+[tests/Flyback.Ui.Testing/Headless/**.cs]
+# Avalonia.Headless.XUnit's own source, kept in its own namespace so tests use it as they would the package.
+resharper_check_namespace_highlighting = none

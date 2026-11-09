@@ -190,7 +190,6 @@ internal static class DrumModule
     /// </summary>
     private static (Slot Age, Slot Started) Struck(Emitter em, Slot trigger)
     {
-        var zero = em.Constant(0f);
         var one = em.Constant(1f);
 
         var step = em.Interval();

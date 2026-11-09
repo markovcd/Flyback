@@ -67,7 +67,7 @@ public abstract record ModuleSkin
     /// </summary>
     /// <remarks>
     /// A palette rather than a thing beside one: a grain is a second channel over
-    /// the first, and everything a <see cref="Palette"/> says still holds. What it
+    /// the first, and everything a <see cref="ModuleSkin.Palette"/> says still holds. What it
     /// buys is a module that is still telling you whose it is in a grayscale
     /// screenshot, at a zoom where no mark resolves, and to somebody who cannot
     /// separate two hues — none of which a color alone survives.

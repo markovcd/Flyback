@@ -206,7 +206,8 @@ public sealed class RenderPresetsTests : IDisposable
 
         File.WriteAllText(Path.Combine(media, done + ".done"), "");
 
-        using var site = new HttpClient(new Site(asked, Sound, done, waiting)) { BaseAddress = new Uri("http://site/") };
+        using var site = new HttpClient(new Site(asked, Sound, done, waiting));
+        site.BaseAddress = new Uri("http://site/");
         var render = new PresetRender(new FakeTools(), new MediaWriter(media));
 
         await RenderPresetsCommand.Pass(site, render, TextWriter.Null, TextWriter.Null, TestContext.Current.CancellationToken);
@@ -221,7 +222,8 @@ public sealed class RenderPresetsTests : IDisposable
         var asked = new List<string>();
         string[] waiting = ["a", "b", "c"];
 
-        using var site = new HttpClient(new Site(asked, Sound, waiting)) { BaseAddress = new Uri("http://site/") };
+        using var site = new HttpClient(new Site(asked, Sound, waiting));
+        site.BaseAddress = new Uri("http://site/");
         var render = new PresetRender(new FakeTools(), new MediaWriter(media));
 
         await RenderPresetsCommand.Pass(site, render, TextWriter.Null, TextWriter.Null, TestContext.Current.CancellationToken, limit: 2);
@@ -270,7 +272,8 @@ public sealed class RenderPresetsTests : IDisposable
     public async Task An_upload_sends_each_file_by_the_name_the_site_takes_and_done_last()
     {
         var uploads = new Uploads();
-        using var site = new HttpClient(uploads) { BaseAddress = new Uri("http://site/") };
+        using var site = new HttpClient(uploads);
+        site.BaseAddress = new Uri("http://site/");
 
         (await new PresetRender(new FakeTools(), new MediaUpload(site)).Render("abc", Patch(Picture + Sound), TestContext.Current.CancellationToken))
             .ShouldBeNull();
@@ -290,7 +293,8 @@ public sealed class RenderPresetsTests : IDisposable
     public async Task An_upload_of_a_failed_render_says_why()
     {
         var uploads = new Uploads();
-        using var site = new HttpClient(uploads) { BaseAddress = new Uri("http://site/") };
+        using var site = new HttpClient(uploads);
+        site.BaseAddress = new Uri("http://site/");
 
         await new PresetRender(new FakeTools { FailOn = "still.png" }, new MediaUpload(site)).Render("abc", Patch(Picture), TestContext.Current.CancellationToken);
 

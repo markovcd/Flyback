@@ -18,11 +18,11 @@ namespace Flyback.Editor.Tests.Canvas;
 /// </summary>
 public class SocketKnobTests : EditorTest
 {
-    private static Patch Chain(out NodeInstance clock, out NodeInstance osc)
+    private static Patch Chain(out NodeInstance osc)
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        clock = builder.Add("time", 0, 0);
+        var clock = builder.Add("time", 0, 0);
         osc = builder.Add("osc.sine", 300, 0);
         var sink = builder.Add(NodeCatalog.OutputTypeId, 700, 0);
 
@@ -67,7 +67,7 @@ public class SocketKnobTests : EditorTest
     [AvaloniaFact]
     public void Dragging_up_on_an_unpatched_input_raises_its_value()
     {
-        var patch = Chain(out _, out var osc);
+        var patch = Chain(out var osc);
         var (editor, window) = Editing(patch);
         var port = Turnable(patch, osc);
         var was = osc.InputValues[port];
@@ -80,7 +80,7 @@ public class SocketKnobTests : EditorTest
     [AvaloniaFact]
     public void Dragging_down_lowers_it()
     {
-        var patch = Chain(out _, out var osc);
+        var patch = Chain(out var osc);
         var (editor, window) = Editing(patch);
         var port = Turnable(patch, osc);
         var was = osc.InputValues[port];
@@ -93,7 +93,7 @@ public class SocketKnobTests : EditorTest
     [AvaloniaFact]
     public void A_whole_turn_is_one_step_to_undo()
     {
-        var patch = Chain(out _, out var osc);
+        var patch = Chain(out var osc);
         var (editor, window) = Editing(patch);
         var port = Turnable(patch, osc);
         var was = osc.InputValues[port];
@@ -113,7 +113,7 @@ public class SocketKnobTests : EditorTest
     [AvaloniaFact]
     public void Escape_puts_the_value_back()
     {
-        var patch = Chain(out _, out var osc);
+        var patch = Chain(out var osc);
         var (editor, window) = Editing(patch);
         var port = Turnable(patch, osc);
         var was = osc.InputValues[port];
@@ -131,7 +131,7 @@ public class SocketKnobTests : EditorTest
     [AvaloniaFact]
     public void A_patched_input_is_not_turned()
     {
-        var patch = Chain(out _, out var osc);
+        var patch = Chain(out var osc);
         var (editor, window) = Editing(patch);
         var was = osc.InputValues[0];
 
@@ -143,7 +143,7 @@ public class SocketKnobTests : EditorTest
     [AvaloniaFact]
     public void The_hand_coming_off_is_announced_once()
     {
-        var patch = Chain(out _, out var osc);
+        var patch = Chain(out var osc);
         var (editor, window) = Editing(patch);
         var port = Turnable(patch, osc);
 
@@ -161,7 +161,7 @@ public class SocketKnobTests : EditorTest
     [AvaloniaFact]
     public void The_left_button_on_an_input_still_draws_a_wire_rather_than_turning()
     {
-        var patch = Chain(out _, out var osc);
+        var patch = Chain(out var osc);
         var (editor, window) = Editing(patch);
         var port = Turnable(patch, osc);
         var was = osc.InputValues[port];

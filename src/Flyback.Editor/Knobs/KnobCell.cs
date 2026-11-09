@@ -30,7 +30,6 @@ internal sealed class KnobCell
     private readonly ControlsPanel panel;
     private readonly PatchControl control;
     private readonly int count;
-    private readonly StackPanel body;
     private Point? pressed;
     private bool dragging;
     private readonly TextBlock name;
@@ -118,7 +117,7 @@ internal sealed class KnobCell
         footer.Children.Add(dot);
         footer.Children.Add(midi);
 
-        body = new StackPanel
+        var body = new StackPanel
         {
             Width = Width,
             Spacing = 1,

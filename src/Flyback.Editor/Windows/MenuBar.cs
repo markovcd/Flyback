@@ -260,7 +260,7 @@ internal sealed class MenuBar
     private void Press(KeyGesture gesture)
     {
         var top = holder.Instance;
-        var focused = top.FocusManager?.GetFocusedElement();
+        var focused = top.FocusManager.GetFocusedElement();
 
         if (focused is not null && InMenu(focused)) focused = worked;
 

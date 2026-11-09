@@ -258,7 +258,8 @@ public sealed class WebViewerSteps(Session session, PatchContext context, IUnitT
 
         var worst = desktop.Zip(heard, (a, b) => Math.Abs(a - b)).Max();
         var parted = desktop.Zip(heard, (a, b) => Math.Abs(a - b)).ToList().FindIndex(off => off > 1f / 32768f);
-        worst.ShouldBeLessThanOrEqualTo(1f / 32768f, $"the two part at {parted / 2 / (double)GlobalConstants.SampleRate:0.#####} seconds");
+        var frame = parted / 2;
+        worst.ShouldBeLessThanOrEqualTo(1f / 32768f, $"the two part at {frame / (double)GlobalConstants.SampleRate:0.#####} seconds");
     }
 
     [Then("it is not the sound with the knob where it rests")]

@@ -107,7 +107,8 @@ public sealed class SiteSteps
     private async Task Pass(bool stillOnly)
     {
         var text = patch.StartsWith('{');
-        using var site = new HttpClient(new Site(Waiting, text ? "preset.fbk" : "preset.fbks", patch, sent)) { BaseAddress = new Uri("https://presets.example.org/") };
+        using var site = new HttpClient(new Site(Waiting, text ? "preset.fbk" : "preset.fbks", patch, sent));
+        site.BaseAddress = new Uri("https://presets.example.org/");
 
         await RenderPresetsCommand.Pass(site, new PresetRender(new StandIn(), new MediaUpload(site), stillOnly), TextWriter.Null, TextWriter.Null, CancellationToken.None);
     }
@@ -139,7 +140,8 @@ public sealed class SiteSteps
     [When("flyback-site sends the folder to the preset site")]
     public async Task WhenTheFolderIsSent()
     {
-        using var site = new HttpClient(new Site(Waiting, "preset.fbk", "{}", sent)) { BaseAddress = new Uri("https://presets.example.org/") };
+        using var site = new HttpClient(new Site(Waiting, "preset.fbk", "{}", sent));
+        site.BaseAddress = new Uri("https://presets.example.org/");
 
         try
         {

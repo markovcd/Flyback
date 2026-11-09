@@ -84,7 +84,7 @@ internal sealed class MeasuredRows(MeasureLabels measured)
         picture.HorizontalAlignment = HorizontalAlignment.Left;
 
         picture.PointerEntered += (_, _) => { held = false; Show(); };
-        picture.PointerExited += (_, e) => { if (e.Pointer.Captured != picture) { held = null; Show(); } };
+        picture.PointerExited += (_, e) => { if (!ReferenceEquals(e.Pointer.Captured, picture)) { held = null; Show(); } };
         picture.PointerPressed += (_, e) =>
         {
             e.Pointer.Capture(picture);

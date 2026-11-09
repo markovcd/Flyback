@@ -41,7 +41,8 @@ public sealed class SiteAnswerTests
     [Fact]
     public async Task A_site_answering_an_error_is_not_a_preset_taken_down()
     {
-        using var site = new FakePresetSite(new Posted("a1", "Nebula")) { Answering = System.Net.HttpStatusCode.BadGateway };
+        using var site = new FakePresetSite(new Posted("a1", "Nebula"));
+        site.Answering = System.Net.HttpStatusCode.BadGateway;
 
         await Should.ThrowAsync<HttpRequestException>(() => site.Site().FindAsync("a1", CancellationToken.None));
     }

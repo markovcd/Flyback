@@ -30,18 +30,18 @@ public abstract class AssistantPanelTest : EditorTest
     /// Where a panel under test writes settings to, so pressing the real Save
     /// button in a test cannot land on the machine's own <c>assistant.json</c>.
     /// </summary>
-    private protected readonly string settingsPath = Path.Combine(
+    private protected readonly string SettingsPath = Path.Combine(
         Path.GetTempPath(),
         "flyback-panel-settings-" + Guid.NewGuid().ToString("N"),
         "settings.json");
 
-    private protected EditorFolders Kept => new() { SettingsPath = settingsPath };
+    private protected EditorFolders Kept => new() { SettingsPath = SettingsPath };
 
     public override void Dispose()
     {
         base.Dispose();
 
-        var folder = Path.GetDirectoryName(settingsPath);
+        var folder = Path.GetDirectoryName(SettingsPath);
 
         if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
 

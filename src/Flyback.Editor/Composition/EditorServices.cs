@@ -136,7 +136,7 @@ internal static class EditorServices
 
         services.AddPart<AssistantSettingRepository>();
         services.AddPart<AssistantRunFactory>();
-        services.AddSingleton(sp => new Credentials(setup.SecretStores.Preferred));
+        services.AddSingleton(_ => new Credentials(setup.SecretStores.Preferred));
         services.AddPart<AssistantConversation>();
         services.AddSingleton<IPatchConversation>(sp => sp.GetRequiredService<AssistantConversation>());
 

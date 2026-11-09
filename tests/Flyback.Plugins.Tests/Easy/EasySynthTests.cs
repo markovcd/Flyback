@@ -14,9 +14,9 @@ public class EasySynthTests
 {
     private const string Synth = "flyback.easy.synth";
 
-    private const int Pitch = 1, Gate = 2, Velocity = 3, Octave = 4, Glide = 5, Sub = 6, Noise = 7;
-    private const int Attack = 8, Decay = 9, Sustain = 10, Release = 11, Bright = 12, Resonance = 13, Sweep = 14;
-    private const int Lfo1Rate = 15, Lfo1Depth = 16, Lfo2Rate = 17, Lfo2Depth = 18, Drive = 19, Pan = 20;
+    private const int Pitch = 1, Gate = 2, Octave = 4, Glide = 5, Sub = 6;
+    private const int Sustain = 10, Release = 11;
+    private const int Lfo1Rate = 15, Pan = 20;
 
     private const int Left = 0, Right = 1, Env = 2, Lfo = 3;
 

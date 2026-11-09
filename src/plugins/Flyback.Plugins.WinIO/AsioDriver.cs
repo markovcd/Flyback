@@ -37,18 +37,18 @@ internal sealed unsafe class AsioDriver(IntPtr instance) : IDisposable
 
     public int Stop() => Call(8);
 
-    public (int Inputs, int Outputs) Channels()
+    public int OutputChannels()
     {
         int inputs = 0, outputs = 0;
         ((delegate* unmanaged[Thiscall]<IntPtr, int*, int*, int>)Slot(9))(instance, &inputs, &outputs);
-        return (inputs, outputs);
+        return outputs;
     }
 
-    public (int Input, int Output) Latencies()
+    public int OutputLatency()
     {
         int input = 0, output = 0;
         ((delegate* unmanaged[Thiscall]<IntPtr, int*, int*, int>)Slot(10))(instance, &input, &output);
-        return (input, output);
+        return output;
     }
 
     /// <summary>The block size the driver prefers, in frames, which its own control panel sets.</summary>

@@ -17,17 +17,17 @@ public sealed class PluginSummaryTests
 
     private static readonly string Sound = PluginSummary.Folder(Path.Combine(Plugins, "WinIO"));
 
-    private static readonly PluginInfo WinIO = new("win.io", "Windows sound");
+    private static readonly PluginInfo WindowsSound = new("win.io", "Windows sound");
 
     private static readonly FakeOutput Wasapi = new();
 
     private static PluginCatalog Catalog(params PluginProblem[] problems) => new(
-        [new LoadedPlugin(WinIO, Path.Combine(Sound, "Flyback.Plugins.WinIO.dll"))],
+        [new LoadedPlugin(WindowsSound, Path.Combine(Sound, "Flyback.Plugins.WinIO.dll"))],
         [Wasapi],
         NodeCatalog.BuiltIn,
         [],
         problems,
-        providers: new Dictionary<object, PluginInfo> { [Wasapi] = WinIO });
+        providers: new Dictionary<object, PluginInfo> { [Wasapi] = WindowsSound });
 
     [Fact]
     public void A_problem_is_blamed_on_the_folder_it_came_from()

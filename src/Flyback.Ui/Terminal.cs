@@ -51,7 +51,7 @@ internal static partial class Terminal
     /// </remarks>
     public static void Release()
     {
-        if (OperatingSystem.IsWindows()) FreeConsole();
+        if (OperatingSystem.IsWindows()) _ = FreeConsole();
     }
 
     [LibraryImport("kernel32.dll", SetLastError = true)]

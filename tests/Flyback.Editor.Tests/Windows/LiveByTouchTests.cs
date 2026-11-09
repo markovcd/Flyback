@@ -4,6 +4,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Composition;
@@ -126,7 +127,7 @@ public class LiveByTouchTests : EditorTest
         for (Visual? at = box; at is not null; at = Avalonia.VisualTree.VisualExtensions.GetVisualParent(at))
         {
             var ground = at switch { Panel p => p.Background, Border b => b.Background, Avalonia.Controls.Primitives.TemplatedControl t => t.Background, _ => null };
-            (ground is null || ground == Avalonia.Media.Brushes.Transparent).ShouldBeTrue($"{at.GetType().Name} hides the picture");
+            (ground is null || ReferenceEquals(ground, Brushes.Transparent)).ShouldBeTrue($"{at.GetType().Name} hides the picture");
         }
 
         Click(window, Tool(window, "liveLeave"));

@@ -44,11 +44,10 @@ public class ExpressionFusionTests
         return node;
     }
 
-    private static NodeInstance Shown(PatchBuilder b, NodeInstance what)
+    private static void Shown(PatchBuilder b, NodeInstance what)
     {
         var sink = b.Add(NodeCatalog.OutputTypeId);
         b.Wire(what, 0, sink, NodeCatalog.OutputColorPort);
-        return sink;
     }
 
     [Fact]

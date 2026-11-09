@@ -39,7 +39,11 @@ public sealed partial class ClipLevelsTests
     {
         var samples = new float[Rate * NodeCatalog.AudioChannels];
 
-        for (var i = 0; i < samples.Length; i++) samples[i] = (float)Math.Pow(0.9993, i / 2);
+        for (var i = 0; i < samples.Length; i++)
+        {
+            var frame = i / 2;
+            samples[i] = (float)Math.Pow(0.9993, frame);
+        }
 
         ClipLevels.Silent(samples).ShouldBeTrue();
     }

@@ -78,11 +78,9 @@ internal static class PushDefaultsCommand
             }
 
             // Quoted, as a browser sends them: the Worker's form parser takes no bare field name.
-            using var form = new MultipartFormDataContent
-            {
-                { new ByteArrayContent(bytes), "\"file\"", "\"" + file.Name.Replace("\"", "", StringComparison.Ordinal) + "\"" },
-                { new StringContent(Checks.ToJson(check)), "\"check\"" },
-            };
+            using var form = new MultipartFormDataContent();
+            form.Add(new ByteArrayContent(bytes), "\"file\"", "\"" + file.Name.Replace("\"", "", StringComparison.Ordinal) + "\"");
+            form.Add(new StringContent(Checks.ToJson(check)), "\"check\"");
 
             try
             {

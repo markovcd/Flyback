@@ -98,14 +98,10 @@ public class StartWithPromptTests : EditorTest
 
     private static TextBox Words(MainWindow window) => All<TextBox>(window).Single(b => b.Name == "prompt-text");
 
-    private static Button Press(MainWindow window, string name)
+    private static void Press(MainWindow window, string name)
     {
-        var button = All<Button>(window).Single(b => b.Name == name);
-
-        Press(button);
+        Press(All<Button>(window).Single(b => b.Name == name));
         Settle(window);
-
-        return button;
     }
 
     [AvaloniaFact]

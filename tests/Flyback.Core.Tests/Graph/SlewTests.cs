@@ -28,7 +28,7 @@ public class SlewTests
     [Fact]
     public void It_keeps_one_cell_of_its_own()
     {
-        var patch = Wired(out _);
+        var patch = Wired();
         patch.CompileForAudio(Modules).Program.UnitCount.ShouldBe(3);
     }
 
@@ -96,7 +96,7 @@ public class SlewTests
     [Fact]
     public void On_the_picture_it_is_a_wire()
     {
-        var patch = Wired(out _, NodeCatalog.OutputColorPort, (Rise, 0f));
+        var patch = Wired(NodeCatalog.OutputColorPort, (Rise, 0f));
         var program = patch.CompileForVideo(Modules).Program;
         var registers = program.AllocateRegisters();
 
@@ -111,7 +111,7 @@ public class SlewTests
 
     private static float[] Through(float[] signal, params (int Port, float Value)[] knobs)
     {
-        var patch = Wired(out _, NodeCatalog.OutputLeftPort, knobs);
+        var patch = Wired(NodeCatalog.OutputLeftPort, knobs);
         var program = patch.CompileForAudio(Modules).Program;
 
         var state = new DelayState(program.DelayLengths, Rate, program.PhaseCount, program.UnitCount);
@@ -128,7 +128,7 @@ public class SlewTests
     }
 
     private static Patch Wired(
-        out NodeInstance sink, int into = NodeCatalog.OutputLeftPort, params (int Port, float Value)[] knobs)
+        int into = NodeCatalog.OutputLeftPort, params (int Port, float Value)[] knobs)
     {
         var patch = new Patch();
 
@@ -136,7 +136,7 @@ public class SlewTests
         var slew = NodeInstance.Create(Modules.Require(NodeCatalog.SlewTypeId), 0, 0);
         foreach (var (port, value) in knobs) slew.InputValues[port] = value;
 
-        sink = NodeInstance.Create(Modules.Require(NodeCatalog.OutputTypeId), 0, 0);
+        var sink = NodeInstance.Create(Modules.Require(NodeCatalog.OutputTypeId), 0, 0);
         sink.InputValues[NodeCatalog.OutputVolumePort] = 1f;
 
         patch.Nodes.Add(coord);

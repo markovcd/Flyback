@@ -142,7 +142,6 @@ internal sealed class InspectorFold
         plate.ShowAside(aside);
 
         var band = plate.Band;
-        var tall = plateHost.Bounds.Height;
 
         if (layout == PlateLayout.Wide)
         {

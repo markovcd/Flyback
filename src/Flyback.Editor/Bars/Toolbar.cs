@@ -336,7 +336,8 @@ internal sealed class Toolbar
 
         View.SizeChanged += (_, e) => Overflow.Fit(e.NewSize.Width);
 
-        labeled =
+        // Every button with a legend under its symbol.
+        ContentControl[] labeled =
         [
             presets.Button, Viewer, Open, Save, Add, Frame, SelectAll, Paste, Undo, Redo, Tidy,
             Assistant, Code, Knobs, Keys, Swap, Side, Transport, Measure, Record, Settings, Plugins, About,
@@ -350,9 +351,6 @@ internal sealed class Toolbar
         Label(settings.ToolbarLabels);
         settings.ToolbarLabelsShown += Label;
     }
-
-    /// <summary>Every button with a legend under its symbol.</summary>
-    private readonly ContentControl[] labeled;
 
     /// <summary>Whether the settings ask for legends; the bar drops them while the window is too narrow.</summary>
     public bool Labeled { get; private set; }

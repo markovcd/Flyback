@@ -72,12 +72,13 @@ public class QrCodeTests : EditorTest
         var drawn = Frame(window);
         var scale = drawn.GetLength(0) / (double)side;
         var modules = new bool[29, 29];
+        var half = module / 2;
 
         for (var row = 0; row < 29; row++)
             for (var column = 0; column < 29; column++)
             {
-                var x = (int)(((quiet + column) * module + module / 2) * scale);
-                var y = (int)(((quiet + row) * module + module / 2) * scale);
+                var x = (int)(((quiet + column) * module + half) * scale);
+                var y = (int)(((quiet + row) * module + half) * scale);
 
                 modules[row, column] = drawn[x, y];
             }

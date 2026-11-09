@@ -114,6 +114,34 @@ public sealed class McpServerTests : IDisposable
     }
 
     [Fact]
+    public async Task A_call_with_no_params_is_invalid_params()
+    {
+        var answer = await Ask("tools/call");
+
+        answer["error"]!["code"]!.GetValue<int>().ShouldBe(-32602);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(7)]
+    public async Task A_call_without_a_tool_name_is_invalid_params(object? name)
+    {
+        var parameters = new JsonObject { ["arguments"] = new JsonObject() };
+        parameters["name"] = name switch
+        {
+            string text => JsonValue.Create(text),
+            int number => JsonValue.Create(number),
+            _ => null,
+        };
+
+        var answer = await Ask("tools/call", parameters);
+
+        answer["error"]!["code"]!.GetValue<int>().ShouldBe(-32602);
+        answer["error"]!["message"]!.GetValue<string>().ShouldContain("tool's name");
+    }
+
+    [Fact]
     public async Task Arguments_that_are_not_an_object_are_invalid_params()
     {
         var answer = await Ask("tools/call", new JsonObject { ["name"] = "describe_patch", ["arguments"] = new JsonArray() });

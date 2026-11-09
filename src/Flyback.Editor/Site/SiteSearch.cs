@@ -17,7 +17,7 @@ internal sealed class SiteSearch<T>(
     string silent) : IDisposable
 {
     /// <summary>How long typing has to stop for before the site is asked.</summary>
-    public static readonly TimeSpan Typing = TimeSpan.FromMilliseconds(250);
+    public static TimeSpan Typing => TimeSpan.FromMilliseconds(250);
 
     private int page;
     private CancellationTokenSource? asking;

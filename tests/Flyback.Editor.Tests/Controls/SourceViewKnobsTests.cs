@@ -363,7 +363,7 @@ public class SourceViewKnobsTests : SourceViewTest
 
         // And none of that was the box being left: it is still the thing being
         // typed into, which is the whole point of the test.
-        window.FocusManager?.GetFocusedElement().ShouldBe(box);
+        window.FocusManager.GetFocusedElement().ShouldBe(box);
     }
 
     /// <summary>

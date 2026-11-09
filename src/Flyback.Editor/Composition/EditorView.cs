@@ -415,7 +415,7 @@ internal sealed class EditorView : Border
     /// anybody is composing.
     /// </remarks>
     private bool Typing =>
-        host?.FocusManager?.GetFocusedElement() is TextBox
+        host?.FocusManager.GetFocusedElement() is TextBox
         || document is { ShowingCode: true, Owned: true };
 
     /// <summary>
@@ -450,15 +450,17 @@ internal sealed class EditorView : Border
                 ? DragDropEffects.Copy
                 : DragDropEffects.None);
 
-        top.AddHandler(DragDrop.DropEvent, async (_, e) =>
-        {
-            // Only the first: one editor holds one patch, and a picker never
-            // offers more than that either.
-            if (e.DataTransfer.TryGetFiles()?.OfType<IStorageFile>().FirstOrDefault() is not { } file) return;
+        top.AddHandler(DragDrop.DropEvent, OnDrop);
+    }
 
-            e.Handled = true;
+    private async void OnDrop(object? sender, DragEventArgs e)
+    {
+        // Only the first: one editor holds one patch, and a picker never
+        // offers more than that either.
+        if (e.DataTransfer.TryGetFiles()?.OfType<IStorageFile>().FirstOrDefault() is not { } file) return;
 
-            await patchOpening.OpenActivatedFileAsync(file);
-        });
+        e.Handled = true;
+
+        await patchOpening.OpenActivatedFileAsync(file);
     }
 }

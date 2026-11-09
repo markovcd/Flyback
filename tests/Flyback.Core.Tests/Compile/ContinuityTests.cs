@@ -41,8 +41,8 @@ public class ContinuityTests
     private static CompiledPatch Audio(PatchBuilder builder) =>
         builder.Patch.CompileForAudio().Program;
 
-    /// <summary>Two buffers, with <paramref name="edit"/> compiled and swapped in between.</summary>
-    private static (float[] First, float[] Second) Across(
+    /// <summary>The buffer after <paramref name="edit"/> is compiled and swapped in, one buffer of <paramref name="before"/> in.</summary>
+    private static float[] Across(
         CompiledPatch before,
         Func<CompiledPatch> edit)
     {
@@ -58,7 +58,7 @@ public class ContinuityTests
         var second = new float[Frames * 2];
         renderer.Render(after, second, carried);
 
-        return (first, second);
+        return second;
     }
 
     private static float[] Left(float[] buffer) =>
@@ -82,7 +82,7 @@ public class ContinuityTests
         var (edited, time, sink) = Playing();
         var before = Audio(edited);
 
-        var (_, second) = Across(before, () =>
+        var second = Across(before, () =>
         {
             var added = edited.Add("osc.sine", 0, 0, (1, 300f));
 
@@ -93,7 +93,7 @@ public class ContinuityTests
 
         var (untouched, _, _) = Playing();
         var alone = Audio(untouched);
-        var (_, reference) = Across(alone, () => alone);
+        var reference = Across(alone, () => alone);
 
         Left(second).ShouldBe(Left(reference), tolerance: 1e-6);
     }
@@ -106,7 +106,7 @@ public class ContinuityTests
     public void The_tone_under_that_test_is_actually_sounding()
     {
         var (builder, _, _) = Playing();
-        var (_, second) = Across(Audio(builder), () => Audio(builder));
+        var second = Across(Audio(builder), () => Audio(builder));
 
         Left(second).Max(Math.Abs).ShouldBeGreaterThan(0.5f);
     }

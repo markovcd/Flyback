@@ -132,7 +132,8 @@ public class MidiDeviceTests
     {
         var backend = new FakeMidiInput("Test Keyboard");
         var now = 0d;
-        using var hub = new MidiHub(backend) { Now = () => now };
+        using var hub = new MidiHub(backend);
+        hub.Now = () => now;
         var block = Following(Device);
 
         hub.Follow(block);

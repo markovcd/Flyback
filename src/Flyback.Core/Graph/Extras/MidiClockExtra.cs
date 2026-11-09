@@ -38,10 +38,13 @@ public sealed record MidiClockExtra : NodeExtra
 
     private static string Conductor(IReadOnlyList<MidiSource> sources)
     {
-        return (sources.FirstOrDefault(source => source.Conducts) is { Id: not null } conductor
-                   ? conductor
-                   : sources.FirstOrDefault(source => source.Id != MidiSources.Keyboard)).Id
-               ?? MidiSources.Keyboard;
+        foreach (var source in sources)
+            if (source.Conducts) return source.Id;
+
+        foreach (var source in sources)
+            if (source.Id != MidiSources.Keyboard) return source.Id;
+
+        return MidiSources.Keyboard;
     }
 
     /// <summary>

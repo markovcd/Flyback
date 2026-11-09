@@ -109,7 +109,11 @@ public sealed class KnobArrangement : Panel
 
         return new Size(width, height);
 
-        double Top(int row) => row * (slotHeight + LineSpacing) + row / fixedGrid.Rows * (BankSpacing - LineSpacing);
+        double Top(int row)
+        {
+            var bank = row / fixedGrid.Rows;
+            return row * (slotHeight + LineSpacing) + bank * (BankSpacing - LineSpacing);
+        }
     }
 
     private IEnumerable<Control> Visible() => Children.Where(child => child.IsVisible);

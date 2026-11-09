@@ -181,11 +181,7 @@ public class DeskTests
             return this;
         }
 
-        public Rig Knob(int port, float value)
-        {
-            desk.InputValues[port] = value;
-            return this;
-        }
+        public void Knob(int port, float value) => desk.InputValues[port] = value;
     }
 
     private static (double Left, double Right) Heard(Action<Rig> set, int left = Left, int right = Right)

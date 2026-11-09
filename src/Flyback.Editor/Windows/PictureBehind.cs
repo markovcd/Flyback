@@ -47,7 +47,7 @@ internal sealed class PictureBehind(Action<bool> move)
 
     private void Clear(Visual visual)
     {
-        if (Ground(visual) is not { } ground || ground == Brushes.Transparent) return;
+        if (Ground(visual) is not { } ground || ReferenceEquals(ground, Brushes.Transparent)) return;
 
         cleared.Add((visual, ground));
         SetGround(visual, Brushes.Transparent);
