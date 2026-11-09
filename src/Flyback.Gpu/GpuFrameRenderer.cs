@@ -490,14 +490,14 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
         if (resolution.Width <= 0 || resolution.Height <= 0) return null;
 
         if (Draw(gl, resolution, time, live) is { } failure) return failure;
-        if (Smooth(gl, resolution, out var shown) is { } unsmoothed) return unsmoothed;
+        if (Smooth(gl, resolution, out var smoothed) is { } unsmoothed) return unsmoothed;
 
         // Before the blit, while the frame is still the whole picture rather than
         // a letterboxed corner of a control. A recording wants what the patch
         // drew, not what the window happened to be shaped like.
-        if (Capture is { } sink) readback.Capture(gl, shown.Framebuffer, resolution, shown.EightBit, sink);
+        if (Capture is { } sink) readback.Capture(gl, smoothed.Framebuffer, resolution, smoothed.EightBit, sink);
 
-        DrawBlit(gl, framebuffer, control, resolution, shown.Texture);
+        DrawBlit(gl, framebuffer, control, resolution, smoothed.Texture);
 
         // The framebuffer especially: Avalonia hands us one and expects it back.
         Restore(gl, framebuffer);
@@ -519,8 +519,8 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
         var failure = Draw(gl, resolution, time, live);
 
         if (failure is null)
-            failure = Smooth(gl, resolution, out var shown)
-                ?? readback.Read(gl, shown.Framebuffer, resolution, shown.EightBit, rgba);
+            failure = Smooth(gl, resolution, out var smoothed)
+                ?? readback.Read(gl, smoothed.Framebuffer, resolution, smoothed.EightBit, rgba);
 
         Restore(gl, 0);
 
@@ -528,9 +528,9 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     }
 
     /// <summary>The frame to show and read back: the history as drawn, or that smoothed or halved. Null on success.</summary>
-    private string? Smooth(IGl gl, SurfaceSize resolution, out (int Framebuffer, int Texture, bool EightBit) shown)
+    private string? Smooth(IGl gl, SurfaceSize resolution, out (int Framebuffer, int Texture, bool EightBit) smoothed)
     {
-        shown = (framebuffers[read], textures[read], EightBitFeedback);
+        smoothed = (framebuffers[read], textures[read], EightBitFeedback);
 
         if (size != resolution)
         {
@@ -542,7 +542,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
             if (smoothing.Draw(gl, textures[read], resolution) is { } failure) return failure;
         }
 
-        shown = (smoothing.Framebuffer, smoothing.Texture, true);
+        smoothed = (smoothing.Framebuffer, smoothing.Texture, true);
 
         return null;
     }

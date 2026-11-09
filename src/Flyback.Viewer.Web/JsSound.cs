@@ -99,18 +99,18 @@ internal sealed partial class JsSound : IDisposable
     /// only in its constants, on the same memory and live values, and says whether it could.
     /// The engine keeps the script it has optimized, where a new one starts cold.
     /// </summary>
-    public bool Retune(CompiledPatch program, DelayState? memory, LiveValues live, AudioRenderer renderer)
+    public bool Retune(CompiledPatch program, DelayState? delays, LiveValues values, AudioRenderer playing)
     {
-        if (!ReferenceEquals(memory, this.memory)
-            || !ReferenceEquals(live, this.live)
-            || !ReferenceEquals(renderer, this.renderer)
+        if (!ReferenceEquals(delays, memory)
+            || !ReferenceEquals(values, live)
+            || !ReferenceEquals(playing, renderer)
             || !program.TableArray.Select(table => table.Samples).SequenceEqual(tables, ReferenceEqualityComparer.Instance)
             || JsEmitter.Emit(program) != source)
         {
             return false;
         }
 
-        JsRetune(id, [.. JsEmitter.Constants(program)]);
+        JsRetune(id, [.. JsEmitter.ConstantsOf(program)]);
         return true;
     }
 

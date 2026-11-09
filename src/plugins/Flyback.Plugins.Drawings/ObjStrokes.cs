@@ -134,7 +134,7 @@ internal static class ObjStrokes
                 var trail = new List<Vector3> { vertices[start] };
                 var at = start;
 
-                while (around[at].FirstOrDefault(next => !walked.Contains(Key(at, next)), -1) is var next and >= 0)
+                while (around[at].FirstOrDefault(candidate => !walked.Contains(Key(at, candidate)), -1) is var next and >= 0)
                 {
                     walked.Add(Key(at, next));
                     trail.Add(vertices[next]);

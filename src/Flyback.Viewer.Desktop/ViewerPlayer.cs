@@ -60,10 +60,10 @@ internal sealed class ViewerPlayer : IDisposable
         LineIn lineIn,
         WallClock clock)
     {
-        var (opened, device, options, takeover) = launch;
+        var (opened, device, chosen, takeover) = launch;
 
-        this.options = options;
-        this.preview = options.Video ? preview : null;
+        this.options = chosen;
+        this.preview = chosen.Video ? preview : null;
         Audio = audio;
         this.compiler = compiler;
         this.midi = midi;
@@ -75,23 +75,23 @@ internal sealed class ViewerPlayer : IDisposable
 
         Patch = patch;
 
-        audio.Aspect = SynthRenderer.AspectOf(options.Size.Width, options.Size.Height);
-        audio.Oversample = options.Oversample;
-        SoundCores.Wanted = options.SoundCores;
-        new LiveOversample(audio, () => options.StepDown, message => Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {message}")).Start();
+        audio.Aspect = SynthRenderer.AspectOf(chosen.Size.Width, chosen.Size.Height);
+        audio.Oversample = chosen.Oversample;
+        SoundCores.Wanted = chosen.SoundCores;
+        new LiveOversample(audio, () => chosen.StepDown, message => Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {message}")).Start();
         lineIn.Trouble += message => Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {message}");
 
         this.transport = transport;
-        transport.Volume = options.Volume;
+        transport.Volume = chosen.Volume;
 
         CompiledPatch? picture = null;
 
         if (this.preview is { } surface)
         {
-            surface.Resolution = options.Size;
-            surface.Use(options.Gpu ? PreviewBackend.Gpu : PreviewBackend.Cpu);
-            surface.FrameRate = options.FrameRate;
-            surface.Smoothing = options.Smoothing;
+            surface.Resolution = chosen.Size;
+            surface.Use(chosen.Gpu ? PreviewBackend.Gpu : PreviewBackend.Cpu);
+            surface.FrameRate = chosen.FrameRate;
+            surface.Smoothing = chosen.Smoothing;
 
             using var traced = StallTrace.Step("CompileForVideo");
 
@@ -119,14 +119,14 @@ internal sealed class ViewerPlayer : IDisposable
         // A key going down while the clock is stopped is a change with no time behind it.
         if (this.preview is { } redrawn) midi.Played += redrawn.Refresh;
 
-        Sounding = device is not null && !options.NoAudio && Sound.VolumeIsUp(patch);
-        transport.Mute(options.Mute);
+        Sounding = device is not null && !chosen.NoAudio && Sound.VolumeIsUp(patch);
+        transport.Mute(chosen.Mute);
 
-        if (options.From > 0) transport.SeekTo(options.From);
+        if (chosen.From > 0) transport.SeekTo(chosen.From);
 
-        if (options.Paused) transport.Pause();
+        if (chosen.Paused) transport.Pause();
 
-        Looped = options.Loop is not null;
+        Looped = chosen.Loop is not null;
     }
 
     /// <summary>The sound engine, for the tests that read its clock and its blocks.</summary>

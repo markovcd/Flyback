@@ -9,20 +9,20 @@ namespace Flyback.Plugins.Testing;
 /// </summary>
 public sealed class LoopbackDevice : IAudioDevice
 {
-    private AudioCallback? fill;
+    private AudioCallback? filling;
 
     public int SampleRate => GlobalConstants.SampleRate;
 
-    public bool IsRunning => fill is not null;
+    public bool IsRunning => filling is not null;
 
     public TimeSpan Latency { get; set; }
 
     /// <summary>Whether whoever opened the device let it go.</summary>
     public bool Disposed { get; private set; }
 
-    public void Start(AudioCallback fill) => this.fill = fill;
+    public void Start(AudioCallback fill) => filling = fill;
 
-    public void Stop() => fill = null;
+    public void Stop() => filling = null;
 
     public void Dispose()
     {
@@ -42,5 +42,5 @@ public sealed class LoopbackDevice : IAudioDevice
 
     /// <summary>Has <paramref name="buffer"/> filled by whatever started the device.</summary>
     public void Fill(Span<float> buffer) =>
-        (fill ?? throw new InvalidOperationException("nothing started the device"))(buffer);
+        (filling ?? throw new InvalidOperationException("nothing started the device"))(buffer);
 }

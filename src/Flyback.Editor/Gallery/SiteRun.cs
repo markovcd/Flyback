@@ -216,7 +216,7 @@ internal sealed class SiteRun : IDisposable
 
         report.Click += async (_, _) =>
         {
-            if (await ReportView.AskAsync(dialog, preset.Name, (reason, details, cancel) => site.ReportAsync(preset, reason, details, cancel)) is not { } said) return;
+            if (await ReportView.AskAsync(dialog, preset.Name, (reason, details, token) => site.ReportAsync(preset, reason, details, token)) is not { } said) return;
 
             status.Text = said;
             status.IsVisible = true;

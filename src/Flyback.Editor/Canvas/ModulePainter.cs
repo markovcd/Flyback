@@ -418,7 +418,7 @@ internal sealed class ModulePainter(
             ? ink(center.Y, RowInk, ValueFade, CanvasText.ValueBrush)
             : ink(center.Y, RowInk, 0, glass.SeeThrough ? ValueWell.GlassInk : ValueWell.Ink);
 
-        KnobChip.Draw(context, bounds, center, port.Format(found.At(control.Value)), KnobChoice.Tag(place), brush);
+        KnobChip.Draw(context, bounds, center, port.Format(found.At(control.Value)), KnobChoice.TagOf(place), brush);
         return true;
     }
 }

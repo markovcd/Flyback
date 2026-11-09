@@ -104,14 +104,14 @@ internal sealed partial class PageSound : UnplayedSound
         JsEdit(PatchIO.ToJson(patch), aspect);
     }
 
-    public override void Listen(CompiledPatch drawn, LiveValues watching)
+    public override void Listen(CompiledPatch drawn, LiveValues live)
     {
         Tell();
-        Watch(watching, drawn.Taps);
+        Watch(live, drawn.Taps);
 
         var readings = JsRead(this.watching);
 
-        for (var i = 0; i < readings.Length && i < watched.Length; i++) watching.Set(watched[i], (float)readings[i]);
+        for (var i = 0; i < readings.Length && i < watched.Length; i++) live.Set(watched[i], (float)readings[i]);
 
         var at = watched.Length;
 
@@ -147,12 +147,12 @@ internal sealed partial class PageSound : UnplayedSound
     }
 
     /// <summary>
-    /// Names the Meters <paramref name="watching"/> reads and the charts <paramref name="taps"/>
+    /// Names the Meters <paramref name="live"/> reads and the charts <paramref name="taps"/>
     /// draws to the worker, when they are not the ones it was last told.
     /// </summary>
-    private void Watch(LiveValues watching, IReadOnlyList<TapSpec> taps)
+    private void Watch(LiveValues live, IReadOnlyList<TapSpec> taps)
     {
-        var keys = watching.Keys.Where(MeterSignals.Is).ToArray();
+        var keys = live.Keys.Where(MeterSignals.Is).ToArray();
         (Guid Node, float Window, ChartKind Chart)[] charts = [.. taps.Select(tap => (tap.Node, tap.Window, tap.Chart))];
 
         if (keys.AsSpan().SequenceEqual(watched) && charts.AsSpan().SequenceEqual(charted)) return;

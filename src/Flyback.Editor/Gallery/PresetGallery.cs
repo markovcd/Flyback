@@ -100,14 +100,14 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
                 var tiles = new WrapPanel { ItemSpacing = 10, LineSpacing = 10 };
 
                 foreach (var preset in run)
-                    tiles.Children.Add(Tile(preset, section, thumbnails, pointedAt, choice, closing.Token).Button);
+                    tiles.Children.Add(Tile(preset, section, pointedAt, choice, closing.Token).Button);
 
                 gallery.Children.Add(heading);
                 gallery.Children.Add(tiles);
                 choice.Add(section, heading, count, tiles);
             }
 
-            if (yours is not null) Yours(gallery, yours, thumbnails, pointedAt, choice, closing.Token);
+            if (yours is not null) Yours(gallery, yours, pointedAt, choice, closing.Token);
 
             choice.Apply();
             choice.Choose(showing);
@@ -188,7 +188,6 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
     private void Yours(
         StackPanel gallery,
         YourPresets yours,
-        PresetThumbnails thumbnails,
         Action<PointedTile?>? pointedAt,
         GalleryChoice choice,
         CancellationToken closing)
@@ -202,27 +201,27 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
         gallery.Children.Add(tiles);
         choice.Add(YoursHeading, heading, count, tiles);
 
-        Fill();
+        FillCard();
 
         // Every change rebuilds the run from what is saved rather than editing
         // it, so a preset saved over another is one tile, in its place.
-        void Fill()
+        void FillCard()
         {
             choice.Drop(tiles);
             tiles.Children.Clear();
 
-            if (!yours.PickOnly) tiles.Children.Add(KeepCard(yours, Fill));
+            if (!yours.PickOnly) tiles.Children.Add(KeepCard(yours, FillCard));
 
             foreach (var preset in yours.All())
             {
-                var card = Tile(preset, YoursHeading, thumbnails, pointedAt, choice, closing);
+                var card = Tile(preset, YoursHeading, pointedAt, choice, closing);
 
                 if (!yours.PickOnly) Removable(card, preset, () =>
                 {
                     // Whatever is being tried may be the one going.
                     pointedAt?.Invoke(null);
                     yours.Remove(preset);
-                    Fill();
+                    FillCard();
                 });
 
                 tiles.Children.Add(card.Button);
@@ -438,7 +437,6 @@ internal sealed class PresetGallery(PresetThumbnails thumbnails, IDialog dialog,
     private PresetCard Tile(
         PatchPreset preset,
         string section,
-        PresetThumbnails thumbnails,
         Action<PointedTile?>? pointedAt,
         GalleryChoice choice,
         CancellationToken closing)

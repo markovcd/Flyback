@@ -95,7 +95,7 @@ internal sealed class FullScreenSection : ISettingsSection
 
         fullScreenMonitors = [.. screens.Select(s => MonitorPlacement.Describe(s)!)];
 
-        List<string> rows =
+        List<string> lines =
         [
             "Same monitor",
             "Another monitor",
@@ -108,11 +108,11 @@ internal sealed class FullScreenSection : ISettingsSection
         if (current.FullScreenMonitor is { } away && chosen is null)
         {
             fullScreenMonitors.Add(away);
-            rows.Add($"{away.Name ?? "Monitor"} · {away.Width}×{away.Height} · not plugged in");
+            lines.Add($"{away.Name ?? "Monitor"} · {away.Width}×{away.Height} · not plugged in");
             chosen = fullScreenMonitors.Count - 1;
         }
 
-        fullScreenOn.ItemsSource = rows;
+        fullScreenOn.ItemsSource = lines;
         fullScreenOn.SelectedIndex = current.FullScreen switch
         {
             FullScreenOn.OtherMonitor => 1,

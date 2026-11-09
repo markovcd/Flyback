@@ -162,7 +162,7 @@ internal sealed class InspectorHeader : Border
     /// <summary>The name, renamed by a double-tap where it can be, as the plate's is.</summary>
     private TextBlock NameText(string text, IBrush ink, bool renames)
     {
-        var name = new TextBlock
+        var title = new TextBlock
         {
             Name = "header-name",
             Text = text,
@@ -173,16 +173,16 @@ internal sealed class InspectorHeader : Border
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
 
-        if (!renames) return name;
+        if (!renames) return title;
 
-        name.Cursor = NameBox.Renaming;
-        name.DoubleTapped += (_, e) =>
+        title.Cursor = NameBox.Renaming;
+        title.DoubleTapped += (_, e) =>
         {
             e.Handled = true;
             Rename();
         };
 
-        return name;
+        return title;
     }
 
     /// <summary>Puts a box where the header's name is, as a double-click does on the plate.</summary>

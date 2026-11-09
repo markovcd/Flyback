@@ -94,9 +94,9 @@ internal sealed class MidiStream(MidiCallback deliver)
         _ => 2,
     };
 
-    private void Deliver(byte status, byte first, byte second)
+    private void Deliver(byte kind, byte data1, byte data2)
     {
-        if (MidiMessages.Of(status, first, second) is not { } message) return;
+        if (MidiMessages.Of(kind, data1, data2) is not { } message) return;
 
         try
         {

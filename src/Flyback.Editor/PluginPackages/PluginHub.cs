@@ -237,8 +237,8 @@ internal sealed class PluginHub : IDisposable
 
     private void ShowInstalled()
     {
-        var search = Search.Text?.Trim();
-        var shown = installed.Where(p => p.Plugin.Matches(search, tag)).OrderBy(p => p.Plugin.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+        var query = Search.Text?.Trim();
+        var shown = installed.Where(p => p.Plugin.Matches(query, tag)).OrderBy(p => p.Plugin.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
 
         installedRows.Children.Clear();
 
@@ -281,12 +281,12 @@ internal sealed class PluginHub : IDisposable
     {
         if (site is null || plugin.Preview is null || closing.IsCancellationRequested) return;
 
-        if (!previews.TryGetValue(plugin.Id, out var fetching))
-            previews[plugin.Id] = fetching = site.PreviewAsync(plugin, closing.Token);
+        if (!previews.TryGetValue(plugin.Id, out var preview))
+            previews[plugin.Id] = preview = site.PreviewAsync(plugin, closing.Token);
 
         try
         {
-            if (await fetching is { } bytes && Image(bytes) is { } image) into.Child = image;
+            if (await preview is { } bytes && Image(bytes) is { } image) into.Child = image;
         }
         catch (OperationCanceledException)
         {

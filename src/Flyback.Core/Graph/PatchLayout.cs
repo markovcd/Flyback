@@ -185,7 +185,7 @@ internal static class PatchLayout
     /// </param>
     /// <remarks>
     /// A drawing wider than the canvas is narrowed by shutting the fewest boxes
-    /// <see cref="Worst"/> picks, since an open group has no slack to squeeze
+    /// <see cref="WorstGroup"/> picks, since an open group has no slack to squeeze
     /// (ADR-0092). If it still does not fit, nothing moves:
     /// <see cref="NodeInstance.X"/> clamps to the canvas and would pile the far
     /// edges up, so the caller reports it instead.
@@ -294,7 +294,7 @@ internal static class PatchLayout
 
         if (Settle(blocks, middle)) return new Pass(true, null);
 
-        return new Pass(false, Worst(blocks, open, size));
+        return new Pass(false, WorstGroup(blocks, open, size));
     }
 
     /// <summary>
@@ -401,7 +401,7 @@ internal static class PatchLayout
     /// one x.
     /// </para>
     /// </remarks>
-    private static NodeGroup? Worst(
+    private static NodeGroup? WorstGroup(
         List<Block> blocks,
         List<(NodeGroup Group, int Block)> open,
         Metrics size)
@@ -862,13 +862,13 @@ internal static class PatchLayout
             // which opening the column out then turns into a gap as tall as both.
             for (var c = 1; c < columns.Count; c++)
             {
-                Settle(columns[c], into);
+                SettleColumn(columns[c], into);
                 Reindex();
             }
 
             for (var c = columns.Count - 2; c >= 0; c--)
             {
-                Settle(columns[c], outOf);
+                SettleColumn(columns[c], outOf);
                 Reindex();
             }
         }
@@ -884,7 +884,7 @@ internal static class PatchLayout
         // neighbouring column. A block with no neighbours there has no wish, and
         // keeps the place it had — the standard treatment, and the one that
         // stops an unwired socket dragging a whole column about.
-        void Settle(List<int> column, ILookup<int, Link> neighbours)
+        void SettleColumn(List<int> column, ILookup<int, Link> neighbours)
         {
             var wish = new Dictionary<int, double>();
 

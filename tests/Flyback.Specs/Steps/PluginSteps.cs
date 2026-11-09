@@ -85,7 +85,7 @@ public sealed class PluginSteps
     public void GivenAnEasyDrum() => PlayBoth(Drum());
 
     [Given("an Easy Drum playing {string}")]
-    public void GivenAnEasyDrumPlaying(string sound) => PlayBoth(Drum(("sound", sound)));
+    public void GivenAnEasyDrumPlaying(string kind) => PlayBoth(Drum(("sound", kind)));
 
     [Given("an Easy Drum on Trigger with nothing wired")]
     public void GivenAnEasyDrumOnTrigger() => PlayBoth(Drum(("rhythm", "trigger")));

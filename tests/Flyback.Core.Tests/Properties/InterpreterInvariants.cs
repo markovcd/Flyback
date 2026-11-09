@@ -45,14 +45,14 @@ public class InterpreterInvariants
         OpCode.Clamp, OpCode.Mix, OpCode.Smoothstep, OpCode.Noise3,
     ];
 
-    public static TheoryData<OpCode> Unary => [.. UnaryOps];
+    public static TheoryData<OpCode> UnaryCodes => [.. UnaryOps];
 
-    public static TheoryData<OpCode> Binary => [.. BinaryOps];
+    public static TheoryData<OpCode> BinaryCodes => [.. BinaryOps];
 
-    public static TheoryData<OpCode> Ternary => [.. TernaryOps];
+    public static TheoryData<OpCode> TernaryCodes => [.. TernaryOps];
 
     [Theory]
-    [MemberData(nameof(Unary))]
+    [MemberData(nameof(UnaryCodes))]
     public void Unary_ops_never_produce_a_non_finite_value(OpCode code)
     {
         var machine = Machine.Unary(code);
@@ -62,7 +62,7 @@ public class InterpreterInvariants
     }
 
     [Theory]
-    [MemberData(nameof(Binary))]
+    [MemberData(nameof(BinaryCodes))]
     public void Binary_ops_never_produce_a_non_finite_value(OpCode code)
     {
         var machine = Machine.Binary(code);
@@ -72,7 +72,7 @@ public class InterpreterInvariants
     }
 
     [Theory]
-    [MemberData(nameof(Ternary))]
+    [MemberData(nameof(TernaryCodes))]
     public void Ternary_ops_never_produce_a_non_finite_value(OpCode code)
     {
         var machine = Machine.Ternary(code);

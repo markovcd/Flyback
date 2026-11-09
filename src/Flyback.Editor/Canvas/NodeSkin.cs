@@ -130,9 +130,9 @@ internal static class NodeSkin
     /// </remarks>
     public static IBrush Cut(GrainCut cut, Color over)
     {
-        var cutBrushes = NodeSkin.cutBrushes ??= [];
+        var cache = NodeSkin.cutBrushes ??= [];
 
-        if (cutBrushes.TryGetValue((cut, over), out var kept)) return kept;
+        if (cache.TryGetValue((cut, over), out var kept)) return kept;
 
         var ink = Colors.Contrast(over, !Colors.Light(over));
         var pen = new ImmutablePen(new ImmutableSolidColorBrush(ink, CutOpacity));
@@ -152,7 +152,7 @@ internal static class NodeSkin
             DestinationRect = new RelativeRect(0, 0, Tile, Tile, RelativeUnit.Absolute),
         };
 
-        cutBrushes[(cut, over)] = made;
+        cache[(cut, over)] = made;
 
         return made;
     }

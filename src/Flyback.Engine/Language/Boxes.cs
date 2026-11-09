@@ -23,8 +23,8 @@ internal sealed class Boxes(Patch patch, Issues issues, SourceSites sites)
     private readonly List<(string Name, Guid Id, List<Guid> Members, Value? Result)> calls = [];
 
     /// <summary>A block of a group has been read, having placed <paramref name="made"/>.</summary>
-    /// <param name="troubled">Whether something in the block was refused, which leaves the box no say about its size.</param>
-    public void Block(string? name, Site where, IEnumerable<Guid> made, bool troubled)
+    /// <param name="hasTrouble">Whether something in the block was refused, which leaves the box no say about its size.</param>
+    public void Block(string? name, Site where, IEnumerable<Guid> made, bool hasTrouble)
     {
         // A name opened again is the same group, which is how a printing says one
         // whose modules do not come out next to each other.
@@ -38,7 +38,7 @@ internal sealed class Boxes(Patch patch, Issues issues, SourceSites sites)
 
         boxes[index].Members.AddRange(made);
 
-        if (troubled) this.troubled.Add(index);
+        if (hasTrouble) troubled.Add(index);
         opened.Add((where, index));
     }
 

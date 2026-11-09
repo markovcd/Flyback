@@ -288,10 +288,10 @@ internal sealed class FullScreenPreview(
 
             for (var i = 0; i < columns.RowDefinitions.Count; i++)
             {
-                var row = columns.RowDefinitions[i];
+                var gridRow = columns.RowDefinitions[i];
 
-                row.MinHeight = 0;
-                row.Height = i == keepRow ? Everything : None;
+                gridRow.MinHeight = 0;
+                gridRow.Height = i == keepRow ? Everything : None;
             }
 
             if (host.WholeScreen is { } whole) whole(true);

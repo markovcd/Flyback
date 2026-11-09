@@ -310,7 +310,7 @@ internal sealed class PanelKnobs : IKnobRequests, IReactTo<PatchCompiled>, IReac
     }
 
     /// <summary>Every set of knobs over a picture: the window's own, and the other monitor's while it has one.</summary>
-    private IEnumerable<StageKnobs> Stages => Away is { } away ? [Stage, away] : [Stage];
+    private IEnumerable<StageKnobs> Stages => Away is { } other ? [Stage, other] : [Stage];
 
     /// <summary>
     /// Puts the knobs over the picture where it is full screen, they are wanted and
@@ -320,7 +320,7 @@ internal sealed class PanelKnobs : IKnobRequests, IReactTo<PatchCompiled>, IReac
     {
         Stage.IsVisible = OverPicture && Stage.Any;
 
-        if (Away is { } away) away.IsVisible = away.Any;
+        if (Away is { } other) other.IsVisible = other.Any;
     }
 
     public Task On(PatchCompiled notice)

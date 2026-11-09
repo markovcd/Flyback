@@ -44,8 +44,8 @@ public class JsProgramTests
         var (before, after) = SineTurned();
 
         JsEmitter.Emit(after).ShouldBe(JsEmitter.Emit(before));
-        JsEmitter.Constants(after).ShouldNotBe(JsEmitter.Constants(before));
-        JsEmitter.Constants(after).ShouldContain(331d);
+        JsEmitter.ConstantsOf(after).ShouldNotBe(JsEmitter.ConstantsOf(before));
+        JsEmitter.ConstantsOf(after).ShouldContain(331d);
     }
 
     /// <summary>A script handed a turned knob's constants as it plays sounds as the interpreter playing the turned program on.</summary>

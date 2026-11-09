@@ -23,7 +23,7 @@ internal sealed class EditorTarget(string name) : IToolTarget, IAsyncDisposable
 
     public Delivery Delivery => Delivery.Proposal;
 
-    public void Greet(string client) => greeting = client;
+    public void Greet(string clientName) => greeting = clientName;
 
     public Task<ToolAnswered> Call(string tool, JsonElement arguments, CancellationToken cancel) =>
         Over(channel => channel.Call(tool, arguments, cancel), cancel);

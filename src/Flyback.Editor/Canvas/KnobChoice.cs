@@ -49,7 +49,7 @@ internal sealed class KnobChoice(CanvasHistory history, CanvasSelection selectio
                     : others.Count == 0 ? "free"
                     : Socket(others[0].Node, others[0].Port) + (others.Count > 1 ? $" +{others.Count - 1}" : "");
 
-                rows.Add(new Row(Tag(i), $"{knob.Name} · {said}", others.Count > 0 && knob.Id != linked, knob.Id, Current: knob.Id == linked));
+                rows.Add(new Row(TagOf(i), $"{knob.Name} · {said}", others.Count > 0 && knob.Id != linked, knob.Id, Current: knob.Id == linked));
             }
 
             if (!patch.ControlsFull) rows.Add(new Row("+", "New knob", false, null));
@@ -60,7 +60,7 @@ internal sealed class KnobChoice(CanvasHistory history, CanvasSelection selectio
     }
 
     /// <summary>What a knob is called on a socket's chip: its place on the panel.</summary>
-    public static string Tag(int index) => "K" + (index + 1).ToString(CultureInfo.InvariantCulture);
+    public static string TagOf(int index) => "K" + (index + 1).ToString(CultureInfo.InvariantCulture);
 
     /// <summary>Opens the list for a socket, on the knob it follows if it follows one.</summary>
     public void Open(SocketPick pick)
@@ -166,10 +166,10 @@ internal sealed class KnobChoice(CanvasHistory history, CanvasSelection selectio
 
             if (i == Index) context.DrawRectangle(Picked, PickedEdge, row.Deflate(0.75), 6, 6);
 
-            var tag = Text(rows[i].Tag, MonoBold, 12, Bright, 24);
+            var tag = Formatted(rows[i].Tag, MonoBold, 12, Bright, 24);
             context.DrawText(tag, new Point(row.Left + 10, row.Center.Y - tag.Height / 2));
 
-            var text = Text(rows[i].Text, Typeface.Default, 12.5, rows[i].Taken ? Dim : Light, row.Width - 54);
+            var text = Formatted(rows[i].Text, Typeface.Default, 12.5, rows[i].Taken ? Dim : Light, row.Width - 54);
             context.DrawText(text, new Point(row.Left + 44, row.Center.Y - text.Height / 2));
         }
     }
@@ -177,7 +177,7 @@ internal sealed class KnobChoice(CanvasHistory history, CanvasSelection selectio
     private static string Socket(NodeInstance node, int port) =>
         NodeCatalog.Get(node.TypeId) is { } def && port < def.Inputs.Count ? $"{def.Inputs[port].Name} · {node.Title(def)}" : "a socket";
 
-    private static FormattedText Text(string text, Typeface face, double size, IBrush brush, double width) =>
+    private static FormattedText Formatted(string text, Typeface face, double size, IBrush brush, double width) =>
         new(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, face, size, brush)
         {
             MaxTextWidth = width,

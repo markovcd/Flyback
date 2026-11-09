@@ -401,16 +401,16 @@ public sealed class UnsavedDialogTests : EditorTest
 
         var dialog = Asking(window);
 
-        Click(window, empty);
+        ClickAt(window, empty);
         editor.Selection.Focused?.Id.ShouldBe(selected, "the click should have stopped at the sheet");
 
         Press(Named<Button>(dialog, "cancel"));
         Dispatcher.UIThread.RunJobs();
 
-        Click(window, empty);
+        ClickAt(window, empty);
         editor.Selection.Focused.ShouldBeNull("and reached the canvas once the question was gone");
 
-        void Click(Window on, Point at)
+        void ClickAt(Window on, Point at)
         {
             on.MouseDown(at, MouseButton.Left);
             on.MouseUp(at, MouseButton.Left);

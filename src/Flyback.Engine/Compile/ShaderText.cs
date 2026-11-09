@@ -429,7 +429,7 @@ internal static class ShaderText
             if (op.Out < 0 || op.Out >= registers || !Carries(op.Code)) continue;
 
             arithmetic[op.Out] = true;
-            wide[op.Out] = op.Code is OpCode.LoadT || Carried(op).Any(Wide);
+            wide[op.Out] = op.Code is OpCode.LoadT || CarriedBy(op).Any(Wide);
         }
 
         for (var i = patch.Ops.Length - 1; i >= 0; i--)
@@ -438,7 +438,7 @@ internal static class ShaderText
 
             IEnumerable<int> fed =
                 op.Code is OpCode.Mod && Wide(op.A) ? [op.B]
-                : Wide(op.Out) && Carries(op.Code) ? Carried(op)
+                : Wide(op.Out) && Carries(op.Code) ? CarriedBy(op)
                 : [];
 
             foreach (var register in fed)
@@ -454,7 +454,7 @@ internal static class ShaderText
             or OpCode.Div or OpCode.Phase;
 
         // A delay's time and an allpass's gain decide nothing about the size of what passes.
-        static int[] Carried(Op op) => op.Code switch
+        static int[] CarriedBy(Op op) => op.Code switch
         {
             OpCode.Add or OpCode.Sub or OpCode.Mul or OpCode.Div => [op.A, op.B],
             OpCode.Phase => [op.A, op.B, op.C],

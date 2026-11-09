@@ -48,17 +48,17 @@ internal sealed class AssistantConversation : IPatchConversation
         unsaved = false;
     }
 
-    public void Begin(SavedConversation? resuming, Patch current)
+    public void Begin(SavedConversation? resuming, Patch patch)
     {
         Waiting = null;
-        anchored = PatchShape.Of(current);
+        anchored = PatchShape.Of(patch);
 
         if (resuming is null) settled = null;
     }
 
-    public void Rebase(Patch current) => anchored = PatchShape.Of(current);
+    public void Rebase(Patch patch) => anchored = PatchShape.Of(patch);
 
-    public bool WaitingMoved(Patch current) => Moved(anchored, current);
+    public bool WaitingMoved(Patch patch) => Moved(anchored, patch);
 
     public void Settle(SavedConversation conversation)
     {

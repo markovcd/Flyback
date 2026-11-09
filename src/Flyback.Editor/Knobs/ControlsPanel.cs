@@ -66,8 +66,8 @@ internal sealed class ControlsPanel : Border
     public RollCell Roll => roll;
 
     /// <summary>Shows how a randomize is set: its reach, its glide, its controller and how many steps back holds.</summary>
-    public void ShowRoll(double amount, double glide, MidiBinding? trigger, int backs, bool learning) =>
-        roll.Show(amount, glide, trigger, backs, learning);
+    public void ShowRoll(double amount, double glide, MidiBinding? trigger, int backs, bool isLearning) =>
+        roll.Show(amount, glide, trigger, backs, isLearning);
 
     /// <summary>A knob is being turned on screen: its id and where it now is.</summary>
     public event Action<Guid, float>? Turning;

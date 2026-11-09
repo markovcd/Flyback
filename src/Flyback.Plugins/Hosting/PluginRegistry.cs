@@ -30,22 +30,22 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
 
 
     /// <summary>Every module offered, accepted or not, in order.</summary>
-    private readonly List<NodeDef> offered = [];
+    private readonly List<NodeDef> offeredModules = [];
 
     /// <summary>How far everything had got, to undo a plugin's registration back to.</summary>
     public readonly record struct Checkpoint(
         ModuleCatalog Modules, int Offered, int Presets, int AudioOutputs, int MidiInputs, int AudioInputs, int Problems);
 
     public Checkpoint Mark() => new(
-        Modules, offered.Count, presets.Count, audioOutputs.Count, midiInputs.Count, audioInputs.Count, problems.Count);
+        Modules, offeredModules.Count, presets.Count, audioOutputs.Count, midiInputs.Count, audioInputs.Count, problems.Count);
 
-    public IEnumerable<NodeDef> OfferedSince(Checkpoint mark) => offered.Skip(mark.Offered);
+    public IEnumerable<NodeDef> OfferedSince(Checkpoint mark) => offeredModules.Skip(mark.Offered);
 
     /// <summary>Forgets everything registered since <paramref name="mark"/>, and the problems it caused.</summary>
     public void Restore(Checkpoint mark)
     {
         Modules = mark.Modules;
-        offered.RemoveRange(mark.Offered, offered.Count - mark.Offered);
+        offeredModules.RemoveRange(mark.Offered, offeredModules.Count - mark.Offered);
         presets.RemoveRange(mark.Presets, presets.Count - mark.Presets);
         Trim(audioOutputs, mark.AudioOutputs);
         Trim(midiInputs, mark.MidiInputs);
@@ -93,7 +93,7 @@ internal sealed class PluginRegistry(List<PluginProblem> problems) : IPluginRegi
 
     public void AddModules(ModuleProvider provider, IReadOnlyList<NodeDef> modules)
     {
-        offered.AddRange(modules);
+        offeredModules.AddRange(modules);
 
         var added = Modules.With(provider, modules);
 

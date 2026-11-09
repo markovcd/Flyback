@@ -277,7 +277,7 @@ internal sealed class GalleryLayout
         choice.Narrowed += Refresh;
         choice.Changed += Describe;
 
-        Arrange(narrow: false);
+        Arrange(isNarrow: false);
         Refresh();
     }
 
@@ -291,27 +291,27 @@ internal sealed class GalleryLayout
     ];
 
     /// <summary>Puts the columns, the filter box and the button where a window this wide wants them.</summary>
-    private void Arrange(bool narrow)
+    private void Arrange(bool isNarrow)
     {
-        if (this.narrow == narrow) return;
+        if (narrow == isNarrow) return;
 
-        this.narrow = narrow;
+        narrow = isNarrow;
 
         var typing = choice.Box.IsFocused;
 
-        Move(choice.Box, narrow ? boxNarrow : boxWide);
-        Move(use, narrow ? useNarrow : useWide);
+        Move(choice.Box, isNarrow ? boxNarrow : boxWide);
+        Move(use, isNarrow ? useNarrow : useWide);
 
-        grid.ColumnDefinitions = narrow ? new ColumnDefinitions("*") : new ColumnDefinitions($"{SideWidth},*,{DetailWidth}");
-        grid.RowDefinitions = narrow ? new RowDefinitions("Auto,*,Auto") : new RowDefinitions("*");
+        grid.ColumnDefinitions = isNarrow ? new ColumnDefinitions("*") : new ColumnDefinitions($"{SideWidth},*,{DetailWidth}");
+        grid.RowDefinitions = isNarrow ? new RowDefinitions("Auto,*,Auto") : new RowDefinitions("*");
 
-        side.IsVisible = detail.IsVisible = !narrow;
-        bar.IsVisible = foot.IsVisible = narrow;
+        side.IsVisible = detail.IsVisible = !isNarrow;
+        bar.IsVisible = foot.IsVisible = isNarrow;
 
         Grid.SetColumn(side, 0);
         Grid.SetColumn(detail, 2);
-        Grid.SetColumn(cards, narrow ? 0 : 1);
-        Grid.SetRow(cards, narrow ? 1 : 0);
+        Grid.SetColumn(cards, isNarrow ? 0 : 1);
+        Grid.SetRow(cards, isNarrow ? 1 : 0);
         Grid.SetRow(foot, 2);
 
         if (typing) Dispatcher.UIThread.Post(() => choice.Box.Focus());

@@ -108,7 +108,7 @@ internal static class ScriptRun
             File.WriteAllText(path("run.mjs"), Runner);
 
             // The turned program's constants as JSON numbers, and the frame they are handed over at; none, and it is never retuned.
-            var constants = turned is { } t ? $"[{string.Join(',', JsEmitter.Constants(t.Program).Select(k => k.ToString("R", CultureInfo.InvariantCulture)))}]" : "[]";
+            var constants = turned is { } t ? $"[{string.Join(',', JsEmitter.ConstantsOf(t.Program).Select(k => k.ToString("R", CultureInfo.InvariantCulture)))}]" : "[]";
             File.WriteAllText(path("turned.json"), constants);
 
             NodeJs.Run(path("run.mjs"), path("heap.bin"), path("layout.json"), path("program.js"), path("out.bin"),

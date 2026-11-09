@@ -261,7 +261,7 @@ public static class PatchPrinter
         value.Contains(LineBreak) ? null : Quotable(value.Replace('\n', LineBreak));
 
     /// <summary>A panel knob's statement, under the word the text calls it by.</summary>
-    public static string PanelLine(PatchControl control, string word) => Writer.PanelLine(control, word);
+    public static string PanelLine(PatchControl control, string word) => Writer.WritePanelLine(control, word);
 
     /// <summary>
     /// The word for a panel knob the text has none for yet: its label where that
@@ -571,19 +571,19 @@ public static class PatchPrinter
                     .ToHashSet())
                 .ToList();
 
-            var done = new HashSet<int>();
+            var seen = new HashSet<int>();
             var order = new List<Part>();
             Guid? writing = null;
 
-            while (done.Count < placing.Count)
+            while (seen.Count < placing.Count)
             {
                 var ready = Enumerable.Range(0, placing.Count)
-                    .Where(i => !done.Contains(i) && reads[i].IsSubsetOf(done))
+                    .Where(i => !seen.Contains(i) && reads[i].IsSubsetOf(seen))
                     .ToList();
 
                 var next = ready.Where(i => Home(placing[i]) == writing).DefaultIfEmpty(ready[0]).First();
 
-                done.Add(next);
+                seen.Add(next);
                 order.Add(placing[next]);
                 writing = Home(placing[next]);
             }
@@ -1148,9 +1148,9 @@ public static class PatchPrinter
         }
 
         /// <summary>A panel knob's statement: where it rests, and what it is labeled and follows where that is said.</summary>
-        private string Panel(PatchControl control) => PanelLine(control, plan.Panel[control.Id]);
+        private string Panel(PatchControl control) => WritePanelLine(control, plan.Panel[control.Id]);
 
-        internal static string PanelLine(PatchControl control, string word)
+        internal static string WritePanelLine(PatchControl control, string word)
         {
             var line = new StringBuilder($"panel {word} = {PatchValueWriter.Number(control.Value)}");
 

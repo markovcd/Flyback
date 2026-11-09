@@ -269,7 +269,7 @@ internal sealed class FilesSection : ISettingsSection
                 AllowMultiple = false,
             });
 
-            if (folders is [{ } picked] && picked.TryGetLocalPath() is { } path) libraryBox.Text = path;
+            if (folders is [{ } picked] && picked.TryGetLocalPath() is { } chosen) libraryBox.Text = chosen;
         };
 
         var row = InspectorRows.Row("*,Auto", InspectorRows.SettingsGutter);

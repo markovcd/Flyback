@@ -210,14 +210,14 @@ internal sealed class PresetSlot
     {
         var named = Ordered().FirstOrDefault(preset => preset.Name == current);
 
-        var gallery = this.gallery.Build(
+        var built = this.gallery.Build(
             [.. plugins.Presets],
             named,
             pointedAt: audition.PointedAt,
             yours: Yours()?.ToPickFrom(),
             use: "Open on this one");
 
-        var chosen = await dialog.Show("Startup patch", gallery.Tiles, fill: true, wide: true);
+        var chosen = await dialog.Show("Startup patch", built.Tiles, fill: true, wide: true);
 
         audition.PointedAt(null);
 
@@ -699,7 +699,7 @@ internal sealed class PresetSlot
         try
         {
             Patch patch;
-            string? conversation = null;
+            string? savedConversation = null;
 
             if (PatchFileKinds.Bundled(fileName))
             {
@@ -714,7 +714,7 @@ internal sealed class PresetSlot
 
                 files.Became(name, beside: null, new BundleFiles(bundle.Files, files.SoundFolder, files.PictureFolder), Shared(reopen));
                 patch = bundle.Patch;
-                conversation = bundle.Conversation;
+                savedConversation = bundle.Conversation;
             }
             else
             {
@@ -736,7 +736,7 @@ internal sealed class PresetSlot
 
             playback.Show(patch);
             document.DropSource();
-            this.conversation.Open(conversation);
+            this.conversation.Open(savedConversation);
 
             // Read into text where it was picked from the text view, as a preset is.
             if (document.ShowingCode) document.ReadIntoText();

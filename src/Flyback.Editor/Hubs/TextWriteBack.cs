@@ -372,13 +372,13 @@ internal sealed class TextWriteBack : IReactTo<InputTurned>, IReactTo<InputLetGo
     {
         var patch = editor.History.Patch;
 
-        Put(document.Map.Description(PatchPrinter.Description(patch.Description)));
-        Put(document.Map.Author(PatchPrinter.Author(patch.Author)));
-        Put(document.Map.Tags(PatchPrinter.Tags(patch.Tags)));
-        Put(document.Map.Length(PatchPrinter.Length(patch.Length)));
-        Put(document.Map.Keyboard(PatchPrinter.Keyboard(patch.Keyboard)));
+        PutChange(document.Map.Description(PatchPrinter.Description(patch.Description)));
+        PutChange(document.Map.Author(PatchPrinter.Author(patch.Author)));
+        PutChange(document.Map.Tags(PatchPrinter.Tags(patch.Tags)));
+        PutChange(document.Map.Length(PatchPrinter.Length(patch.Length)));
+        PutChange(document.Map.Keyboard(PatchPrinter.Keyboard(patch.Keyboard)));
 
-        void Put(Change? change)
+        void PutChange(Change? change)
         {
             if (change is { } edit && source.Apply(edit)) document.Rewritten();
         }

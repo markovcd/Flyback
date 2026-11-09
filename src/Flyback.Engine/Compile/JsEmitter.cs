@@ -240,7 +240,7 @@ internal static class JsEmitter
     }
 
     /// <summary>The values the script's constants read, in the order of the ops that load them.</summary>
-    public static IEnumerable<double> Constants(CompiledPatch program) =>
+    public static IEnumerable<double> ConstantsOf(CompiledPatch program) =>
         program.Ops.Where(op => op.Code == OpCode.Const).Select(op => (double)op.K);
 
     /// <summary>A number the way the script reads it back as the same double.</summary>

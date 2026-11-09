@@ -103,10 +103,10 @@ internal sealed class InspectorFold
         // A pinned plate would leave a short panel no room for its rows.
         if (IsCompact) return PlateLayout.Narrow;
 
-        var rows = plate is null ? [] : PlateActions.Rows(plate);
-        var needed = RowChrome + rows.Sum(row => row.Count) * ButtonRoom + Math.Max(0, rows.Count - 1) * ModulePlate.GroupGap;
+        var actionRows = plate is null ? [] : PlateActions.Rows(plate);
+        var needed = RowChrome + actionRows.Sum(row => row.Count) * ButtonRoom + Math.Max(0, actionRows.Count - 1) * ModulePlate.GroupGap;
 
-        return rows.Count > 0 && reading.Bounds.Width >= needed ? PlateLayout.Wide : PlateLayout.Narrow;
+        return actionRows.Count > 0 && reading.Bounds.Width >= needed ? PlateLayout.Wide : PlateLayout.Narrow;
     }
 
     private void Fold()

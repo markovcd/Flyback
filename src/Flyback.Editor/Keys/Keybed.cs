@@ -95,25 +95,25 @@ internal sealed class Keybed : Border
     /// <summary>The keys on the row, left to right.</summary>
     public IReadOnlyList<ScreenKey> Row { get; private set; } = [];
 
-    /// <summary>Lays <paramref name="keys"/> out left to right, the lowest first, letting go of whatever was held.</summary>
-    public void Lay(IReadOnlyList<ScreenKey> keys)
+    /// <summary>Lays <paramref name="laid"/> out left to right, the lowest first, letting go of whatever was held.</summary>
+    public void Lay(IReadOnlyList<ScreenKey> laid)
     {
         Release();
 
         row.Children.Clear();
         row.ColumnDefinitions.Clear();
         this.keys.Clear();
-        Row = keys;
-        lowest.Text = keys.Count > 0 ? keys[0].Name : string.Empty;
+        Row = laid;
+        lowest.Text = laid.Count > 0 ? laid[0].Name : string.Empty;
 
-        var whites = keys.Count(key => !key.Sharp);
+        var whites = laid.Count(key => !key.Sharp);
 
         for (var column = 0; column < whites * Span; column++)
             row.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
 
         var placed = 0;
 
-        foreach (var key in keys)
+        foreach (var key in laid)
         {
             var control = Key(key);
 

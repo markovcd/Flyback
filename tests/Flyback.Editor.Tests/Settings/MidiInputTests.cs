@@ -516,8 +516,8 @@ public class MidiInputTests : EditorTest
 
         Select(window, midi);
 
-        Pick(Offering(window, "D#")!, "D");
-        Pick(Offering(window, "dorian")!, "dorian");
+        PickId(Offering(window, "D#")!, "D");
+        PickId(Offering(window, "dorian")!, "dorian");
 
         All<NodeEditor>(window).Single().History.Patch.Keyboard.ShouldBe(new KeyboardScale(2, "dorian"));
 
@@ -526,7 +526,7 @@ public class MidiInputTests : EditorTest
 
         Held(preview, MidiSignal.Pitch).ShouldBe(53d);
 
-        void Pick(ComboBox box, string id)
+        void PickId(ComboBox box, string id)
         {
             box.SelectedItem = box.ItemsSource!.Cast<ChoiceOption>().Single(option => option.Id == id);
             Settle(window);

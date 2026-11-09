@@ -23,7 +23,7 @@ public sealed unsafe class JackAudioDevice : IAudioDevice
     private IntPtr right;
     private GCHandle self;
     private float[] block = [];
-    private AudioCallback? fill;
+    private AudioCallback? filling;
     private volatile bool running;
 
     public JackAudioDevice(bool connectToSystem)
@@ -52,7 +52,7 @@ public sealed unsafe class JackAudioDevice : IAudioDevice
 
         try
         {
-            this.fill = fill;
+            filling = fill;
             block = new float[Math.Max(64, (int)LibJack.BufferSize(client)) * 2];
             self = GCHandle.Alloc(this);
 
@@ -129,7 +129,7 @@ public sealed unsafe class JackAudioDevice : IAudioDevice
         }
 
         left = right = IntPtr.Zero;
-        fill = null;
+        filling = null;
 
         if (self.IsAllocated) self.Free();
     }
@@ -157,7 +157,7 @@ public sealed unsafe class JackAudioDevice : IAudioDevice
 
         try
         {
-            if (running && fill is { } deliver)
+            if (running && filling is { } deliver)
             {
                 var capacity = block.Length / 2;
 

@@ -362,9 +362,9 @@ internal sealed class PatchFiles
     /// <summary><see cref="Pack"/> with the patch and its conversation taken now, to write on a worker.</summary>
     private Func<Stream, BundleReport> Packing()
     {
-        var (patch, bytes, modules, conversation) = (editor.History.Patch, Bytes(), plugins.Modules, this.conversation.ConversationToSave());
+        var (patch, bytes, modules, kept) = (editor.History.Patch, Bytes(), plugins.Modules, this.conversation.ConversationToSave());
 
-        return archive => PatchBundle.Write(archive, patch, bytes, modules, conversation);
+        return archive => PatchBundle.Write(archive, patch, bytes, modules, kept);
     }
 
     /// <summary>

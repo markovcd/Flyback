@@ -246,9 +246,9 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
 
         if (renderer is null)
         {
-            if (AttachGl(canvas!) is { Length: > 0 } refused)
+            if (AttachGl(canvas!) is { Length: > 0 } refusal)
             {
-                Fail(refused);
+                Fail(refusal);
                 return;
             }
 

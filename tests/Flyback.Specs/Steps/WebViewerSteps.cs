@@ -484,8 +484,8 @@ public sealed class WebViewerSteps(Session session, PatchContext context, IUnitT
     /// <summary>Runs the web viewer's build under Node with <paramref name="arguments"/>, and answers what it printed.</summary>
     private string Hear(params string[] arguments)
     {
-        var (exit, printed, said) = Run(arguments);
-        exit.ShouldBe(0, said);
+        var (exit, printed, told) = Run(arguments);
+        exit.ShouldBe(0, told);
 
         return printed;
     }

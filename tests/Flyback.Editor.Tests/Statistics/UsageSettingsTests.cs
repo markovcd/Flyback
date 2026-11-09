@@ -31,9 +31,9 @@ public sealed class UsageSettingsTests : EditorTest
         if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
     }
 
-    private MainWindow Open(string? settingsPath = null, Usage? usage = null)
+    private MainWindow Open(string? path = null, Usage? usage = null)
     {
-        var window = NewMainWindow(new EditorSetup { Folders = new() { SettingsPath = settingsPath }, Usage = usage ?? Usage.Off });
+        var window = NewMainWindow(new EditorSetup { Folders = new() { SettingsPath = path }, Usage = usage ?? Usage.Off });
 
         window.Show();
         Settle(window);

@@ -1584,9 +1584,9 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
     }
 
     /// <summary>Types into the text view a keystroke at a time.</summary>
-    public void TypeInText(string said) => DoWindow((open, _) =>
+    public void TypeInText(string text) => DoWindow((open, _) =>
     {
-        foreach (var letter in said)
+        foreach (var letter in text)
         {
             open.KeyTextInput(letter.ToString());
             Dispatcher.UIThread.RunJobs();

@@ -33,7 +33,7 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
     private float[] block = [];
     private int frames;
     private bool tellReady;
-    private AudioCallback? fill;
+    private AudioCallback? filling;
     private volatile bool running;
 
     /// <summary>Set once the driver stopped answering; it is let go of when it does answer, and never started again.</summary>
@@ -96,7 +96,7 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
             // A driver that asked to be reset, or stopped some other way, is let go first.
             Teardown();
 
-            this.fill = fill;
+            filling = fill;
             thread = new AsioThread(patience);
 
             try
@@ -234,7 +234,7 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
         }
 
         halves = [];
-        fill = null;
+        filling = null;
 
         Interlocked.CompareExchange(ref playing, null, this);
     }
@@ -247,7 +247,7 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
     {
         lock (gate)
         {
-            if (!running || fill is not { } again) return;
+            if (!running || filling is not { } again) return;
 
             Teardown();
 
@@ -271,7 +271,7 @@ internal sealed unsafe class AsioAudioDevice(AudioFormat format, Func<AsioDriver
 
         try
         {
-            if (running && fill is { } deliver) deliver(chunk);
+            if (running && filling is { } deliver) deliver(chunk);
             else chunk.Clear();
         }
         catch

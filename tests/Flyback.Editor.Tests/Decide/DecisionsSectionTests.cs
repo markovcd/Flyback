@@ -270,7 +270,7 @@ public sealed class DecisionsSectionTests : EditorTest
         public KeyCredential? Credential => null;
 
         public IReadOnlyList<ModelFile> Needs { get; } =
-            [new(new Uri("https://models.test/w.bin"), "w.bin", Convert.ToHexStringLower(SHA256.HashData(Weights.Body)), Weights.Body.Length)];
+            [new(new Uri("https://models.test/w.bin"), "w.bin", Convert.ToHexStringLower(SHA256.HashData(Weights.Bytes)), Weights.Bytes.Length)];
 
         public bool Prepared(string folder) => File.Exists(Path.Combine(folder, "w.bin"));
 
@@ -283,9 +283,9 @@ public sealed class DecisionsSectionTests : EditorTest
 
     private sealed class Weights : HttpMessageHandler
     {
-        public static readonly byte[] Body = Encoding.ASCII.GetBytes("weights");
+        public static readonly byte[] Bytes = Encoding.ASCII.GetBytes("weights");
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancel) =>
-            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(Body) });
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(Bytes) });
     }
 }

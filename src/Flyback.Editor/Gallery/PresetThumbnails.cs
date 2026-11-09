@@ -251,9 +251,9 @@ internal sealed class PresetThumbnails
             var (patch, samples, pictures) = PresetLibrary.Open(preset, saved, modules);
             var (kind, pixels) = PresetStill.Draw(patch, samples, pictures, program => compiler?.Compile(program, IlLane.AuditionPicture));
 
-            var said = Tile(new StillEntry(preset.Name, preset.Kind, kind, null, patch.Description, patch.Author, patch.Tags, patch.Reaches().Sound));
+            var tile = Tile(new StillEntry(preset.Name, preset.Kind, kind, null, patch.Description, patch.Author, patch.Tags, patch.Reaches().Sound));
 
-            return said with { Pixels = pixels };
+            return tile with { Pixels = pixels };
         }
         catch (Exception)
         {

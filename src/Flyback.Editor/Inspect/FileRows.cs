@@ -82,14 +82,14 @@ internal sealed class FileRows(IFilePickers pickers, TextWriteBack writeBack, Pa
 
         choose.Click += async (_, _) =>
         {
-            var files = await pickers.Open(new FilePickerOpenOptions
+            var chosen = await pickers.Open(new FilePickerOpenOptions
             {
                 Title = kind.Choose,
                 AllowMultiple = false,
                 FileTypeFilter = [new FilePickerFileType(kind.Described) { Patterns = kind.Patterns, MimeTypes = kind.MimeTypes }],
             });
 
-            if (files.Count == 0 || await store(files[0]) is not { } picked) return;
+            if (chosen.Count == 0 || await store(chosen[0]) is not { } picked) return;
 
             // The shape of the panel has not changed, so it is not rebuilt — the
             // one row that did is written here, the way a knob writes its own.

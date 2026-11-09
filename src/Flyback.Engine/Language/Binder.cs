@@ -657,7 +657,7 @@ public sealed class Binder
             .Where(n => !before.Contains(n.Id) && !wiring.IsShared(n.Id))
             .Select(n => n.Id);
 
-        boxes.Block(boxName, new Site(statement.Line, statement.Column), made, troubled: issues.Count > said);
+        boxes.Block(boxName, new Site(statement.Line, statement.Column), made, hasTrouble: issues.Count > said);
     }
 
     // --- expressions ---------------------------------------------------------
@@ -804,7 +804,7 @@ public sealed class Binder
                 if (left is Formulas.Operand a && right is Formulas.Operand b)
                     return Formulas.Fold(binary.Operator, a.Figure, b.Figure, binary.Line, binary.Column, issues);
 
-                return Fit(new Formulas.Operation(Formulas.Sign(binary.Operator), left, right, binary.Line, binary.Column));
+                return Fit(new Formulas.Operation(Formulas.SignOf(binary.Operator), left, right, binary.Line, binary.Column));
             }
 
             default:
@@ -820,7 +820,7 @@ public sealed class Binder
         // Each reference to a panel knob is a distinct formula input.
         if (value is Dial) return new Formulas.Signal(value, (Guid.NewGuid(), 0));
 
-        if (Formulas.From(value) is { } from) return new Formulas.Signal(value, from);
+        if (Formulas.SourceOf(value) is { } from) return new Formulas.Signal(value, from);
 
         issues.Complain(IssueCode.NotASignal, line, column, "this is not a signal, so nothing can be wired from it.");
         return null;
@@ -852,7 +852,7 @@ public sealed class Binder
     /// <summary>An operation placed as a module and read as one signal, so the operation around it has a socket to spare.</summary>
     private Formulas.Term? Settled(Formulas.Term term) =>
         term is not Formulas.Operation operation ? term
-        : Expression(operation) is { } placed && Formulas.From(placed) is { } from ? new Formulas.Signal(placed, from)
+        : Expression(operation) is { } placed && Formulas.SourceOf(placed) is { } from ? new Formulas.Signal(placed, from)
         : null;
 
     /// <summary>Places an operation as an Expression module carrying its formula.</summary>
@@ -1677,12 +1677,12 @@ public sealed class Binder
                 $"'{macro.Name}' takes {parameters.Count} arguments and {parameters.Count + extra} were given.");
         }
 
-        var missing = Enumerable.Range(0, parameters.Count).Where(p => !given[p] && parameters[p].Default is null).ToList();
+        var unset = Enumerable.Range(0, parameters.Count).Where(p => !given[p] && parameters[p].Default is null).ToList();
 
-        if (sound && missing.Count > 0)
+        if (sound && unset.Count > 0)
         {
             return Refused(IssueCode.DefArity, call,
-                $"'{macro.Name}' needs {string.Join(" and ", missing.Select(p => $"'{parameters[p].Name}'"))}.");
+                $"'{macro.Name}' needs {string.Join(" and ", unset.Select(p => $"'{parameters[p].Name}'"))}.");
         }
 
         // Bound in the order written, since that is the order a call's modules are named in.

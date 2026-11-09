@@ -76,10 +76,10 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
             else Forget();
         };
 
-        knobs.View.Roll.Tuned += (amount, glide) =>
+        knobs.View.Roll.Tuned += (amount, seconds) =>
         {
             Wanted.Amount = amount;
-            Wanted.GlideSeconds = glide;
+            Wanted.GlideSeconds = seconds;
         };
 
         knobs.View.Roll.TuneEnded += Save;

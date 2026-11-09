@@ -9,7 +9,7 @@ namespace Flyback.Assist.Tests.Decide;
 /// <summary>Which model a feature's question goes to, and that a question never takes the feature down with it.</summary>
 public class DecisionsTests
 {
-    private static readonly DecisionRequest Asked = DecisionRequest.One("s", "q", new Question.YesNo("Is it?"));
+    private static readonly DecisionRequest Sample = DecisionRequest.One("s", "q", new Question.YesNo("Is it?"));
 
     private static Decisions With(DecisionSettings settings, params IDecisionModel[] models) =>
         new(models, settings, new Credentials(null), new ModelStore(Path.Combine(Path.GetTempPath(), "flyback-no-models")));
@@ -38,7 +38,7 @@ public class DecisionsTests
         var local = new Model("local");
         var decisions = With(new DecisionSettings { Model = DecisionSettings.Off }, local);
 
-        (await decisions.Ask(DecisionUse.Turns, Asked, TestContext.Current.CancellationToken)).ShouldBeNull();
+        (await decisions.Ask(DecisionUse.Turns, Sample, TestContext.Current.CancellationToken)).ShouldBeNull();
 
         local.Asked.ShouldBe(0);
         decisions.Problem.ShouldBe("No decision model is in use.");
@@ -49,7 +49,7 @@ public class DecisionsTests
     {
         var decisions = With(new DecisionSettings(), new Model("local") { Throws = new InvalidOperationException("the weights are gone") });
 
-        (await decisions.Ask(DecisionUse.Turns, Asked, TestContext.Current.CancellationToken)).ShouldBeNull();
+        (await decisions.Ask(DecisionUse.Turns, Sample, TestContext.Current.CancellationToken)).ShouldBeNull();
 
         decisions.Problem.ShouldBe("local: the weights are gone");
     }
@@ -60,7 +60,7 @@ public class DecisionsTests
         var local = new Model("local") { Refuses = "No key yet." };
         var decisions = With(new DecisionSettings(), local);
 
-        (await decisions.Ask(DecisionUse.Turns, Asked, TestContext.Current.CancellationToken)).ShouldBeNull();
+        (await decisions.Ask(DecisionUse.Turns, Sample, TestContext.Current.CancellationToken)).ShouldBeNull();
 
         local.Asked.ShouldBe(0);
         decisions.Problem.ShouldBe("No key yet.");
@@ -71,7 +71,7 @@ public class DecisionsTests
     {
         var decisions = With(new DecisionSettings(), new Model("local"));
 
-        (await decisions.Ask(DecisionUse.Turns, Asked, TestContext.Current.CancellationToken))!.Answers["q"].ShouldBe(new Answer.YesNo(0.75));
+        (await decisions.Ask(DecisionUse.Turns, Sample, TestContext.Current.CancellationToken))!.Answers["q"].ShouldBe(new Answer.YesNo(0.75));
         decisions.Problem.ShouldBeNull();
     }
 
@@ -84,8 +84,8 @@ public class DecisionsTests
         settings.Remember("local", DecisionUse.Modules, new SettingValues([new("model", "typed")]));
         var decisions = With(settings, local);
 
-        await decisions.Ask(DecisionUse.Modules, Asked, TestContext.Current.CancellationToken);
-        await decisions.Ask(DecisionUse.Turns, Asked, TestContext.Current.CancellationToken);
+        await decisions.Ask(DecisionUse.Modules, Sample, TestContext.Current.CancellationToken);
+        await decisions.Ask(DecisionUse.Turns, Sample, TestContext.Current.CancellationToken);
 
         local.Values.Select(v => v.Text("model")).ShouldBe(["typed", "plain"]);
         local.Values.ShouldAllBe(v => v.Text("endpoint") == "here");

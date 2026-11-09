@@ -71,9 +71,9 @@ internal sealed class Formula
     {
         var lowered = new Dictionary<string, Slot>();
 
-        return Lower(root);
+        return LowerTerm(root);
 
-        Slot Lower(Term term)
+        Slot LowerTerm(Term term)
         {
             var key = term.ToString();
             if (lowered.TryGetValue(key, out var done)) return done;
@@ -99,7 +99,7 @@ internal sealed class Formula
             for (var port = 0; port < inputs.Length; port++)
             {
                 var spec = call.Module.Inputs[port];
-                var slot = port < call.Arguments.Count ? Lower(call.Arguments[port]) : em.Constant(spec.Default);
+                var slot = port < call.Arguments.Count ? LowerTerm(call.Arguments[port]) : em.Constant(spec.Default);
 
                 inputs[port] = spec.Kind == PortKind.Any ? slot : em.Coerce(slot, spec.Width);
             }
@@ -232,8 +232,8 @@ internal sealed class Formula
 
                     foreach (var argument in call.Arguments.Concat(call.Module.Inputs.Skip(call.Arguments.Count).Select(port => (Term)new Literal(port.Default))))
                     {
-                        if (Spell(argument, summing: false) is not { } spelled) return null;
-                        arguments.Add(spelled);
+                        if (Spell(argument, summing: false) is not { } spelledArgument) return null;
+                        arguments.Add(spelledArgument);
                     }
 
                     return new Graph.Infix.Call(name, arguments);

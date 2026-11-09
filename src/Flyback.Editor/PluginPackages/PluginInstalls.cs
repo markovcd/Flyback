@@ -211,13 +211,13 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
     /// <param name="wanted">What a patch was short of, listed first, or null for an ordinary opening.</param>
     public async Task ShowAsync(IReadOnlyList<SitePlugin>? wanted = null)
     {
-        var site = PluginSite.For(this.site, host);
+        var pluginSite = PluginSite.For(site, host);
         var (run, troubles) = PluginSummary.Run(plugins, pluginFolder ?? PluginHost.DefaultDirectory, playback.Sound);
         using var hub = pluginHubs.Create(
-            site,
+            pluginSite,
             () => Task.Run(() => InstalledPlugins(troubles)),
-            (plugin, downloaded) => InstallFromSiteAsync(site!, plugin, downloaded),
-            plugin => ShowInstalledAsync(site, plugin), wanted, run);
+            (plugin, downloaded) => InstallFromSiteAsync(pluginSite!, plugin, downloaded),
+            plugin => ShowInstalledAsync(pluginSite, plugin), wanted, run);
 
         // Read before the window goes up, so the rows do not arrive above whatever is showing.
         await hub.RereadAsync();
@@ -243,13 +243,13 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
         return MissingPlugins.StillNeeded(Awaited, had);
     }
 
-    private async Task<string?> InstallFromSiteAsync(PluginSite site, SitePlugin plugin, Action downloaded)
+    private async Task<string?> InstallFromSiteAsync(PluginSite pluginSite, SitePlugin plugin, Action downloaded)
     {
         PluginPackage package;
 
         try
         {
-            var bytes = await site.DownloadAsync(plugin, CancellationToken.None);
+            var bytes = await pluginSite.DownloadAsync(plugin, CancellationToken.None);
 
             package = await Task.Run(() => PluginPackage.ReadAsync(new MemoryStream(bytes, writable: false)));
         }
@@ -270,7 +270,7 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
     /// site has a newer build and a way to remove it.
     /// </summary>
     /// <returns>What became of it, or null where nothing did.</returns>
-    private async Task<string?> ShowInstalledAsync(PluginSite? site, HubInstalled plugin)
+    private async Task<string?> ShowInstalledAsync(PluginSite? pluginSite, HubInstalled plugin)
     {
         var assembly = plugin.Plugin.Assembly;
         var loaded = plugins.Plugins.FirstOrDefault(p =>
@@ -288,18 +288,18 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
 
             // Waiting for the next start, which moves it here.
             var waiting = installer?.Replacing(assembly);
-            var folder = pluginFolder is null ? null : Path.Combine(pluginFolder, assembly);
+            var target = pluginFolder is null ? null : Path.Combine(pluginFolder, assembly);
 
-            if (waiting is not null || folder is null || !Directory.Exists(folder)) return (folder, waiting, waiting?.Description);
+            if (waiting is not null || target is null || !Directory.Exists(target)) return (target, waiting, waiting?.Description);
 
             // Installed, and refused this run.
-            var there = PluginInstaller.Installed(folder);
+            var there = PluginInstaller.Installed(target);
 
-            return (folder, there, there?.Description ?? PluginDescription.OfFolder(folder));
+            return (target, there, there?.Description ?? PluginDescription.OfFolder(target));
         });
 
         // Not waited for: a site that is down takes seconds to say so.
-        var newer = NewerAsync(site, plugin);
+        var newer = NewerAsync(pluginSite, plugin);
         var (folder, fromPackage, described) = await reading;
 
         var removal = plugin.Removing ? "It is removed at the next start already."
@@ -334,7 +334,7 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>, IReactTo<PluginsM
         return result switch
         {
             // No site row here to stop saying Downloading…, so nothing to tell.
-            PluginAnswer.Download => await InstallFromSiteAsync(site!, (await newer)!, () => { }),
+            PluginAnswer.Download => await InstallFromSiteAsync(pluginSite!, (await newer)!, () => { }),
             PluginAnswer.Remove => Remove(installer!, assembly, plugin.Plugin.Name),
             _ => null,
         };

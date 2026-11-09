@@ -47,9 +47,9 @@ public sealed class CanvasSettingsTests : EditorTest
         ModuleSkins.Animated = true;
     }
 
-    private MainWindow Open(string? settingsPath = null)
+    private MainWindow Open(string? path = null)
     {
-        var window = NewMainWindow(new EditorSetup { Folders = new() { SettingsPath = settingsPath } });
+        var window = NewMainWindow(new EditorSetup { Folders = new() { SettingsPath = path } });
 
         window.Show();
         Settle(window);

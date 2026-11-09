@@ -300,7 +300,7 @@ internal sealed class GalleryChoice
     /// <summary>Chooses the card of <paramref name="preset"/>, where it has one showing.</summary>
     public void Choose(PatchPreset? preset)
     {
-        if (preset is not null && listed.FirstOrDefault(card => card.Preset == preset) is { } card) Choose(card);
+        if (preset is not null && listed.FirstOrDefault(entry => entry.Preset == preset) is { } card) Choose(card);
     }
 
     public void Choose(PresetCard? card)

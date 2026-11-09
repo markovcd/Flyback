@@ -133,18 +133,18 @@ internal sealed class LevelShelves
             {
                 var others = listed.Skip(i).ToList();
                 label = Text($"+{others.Count}", room);
-                shelves.Add(OnBox(string.Join(", ", others.Select(o => o.Name)), [.. others.SelectMany(o => o.Members).Distinct()], new Rect(x, y, label.Width + ChipPadding * 2, NodeGeometry.GroupHandleHeight), label));
+                shelves.Add(ShelfOnBox(string.Join(", ", others.Select(o => o.Name)), [.. others.SelectMany(o => o.Members).Distinct()], new Rect(x, y, label.Width + ChipPadding * 2, NodeGeometry.GroupHandleHeight), label));
                 break;
             }
 
-            shelves.Add(OnBox(name, members, new Rect(x, y, width, NodeGeometry.GroupHandleHeight), label));
+            shelves.Add(ShelfOnBox(name, members, new Rect(x, y, width, NodeGeometry.GroupHandleHeight), label));
             x += width + ChipGap;
         }
 
         return shelves;
     }
 
-    private static Shelf OnBox(string name, IReadOnlyList<Guid> members, Rect chip, FormattedText label) =>
+    private static Shelf ShelfOnBox(string name, IReadOnlyList<Guid> members, Rect chip, FormattedText label) =>
         new(name, members, chip, label, chip.TopLeft, chip.TopLeft, 0, OnBox: true);
 
     /// <summary>An outermost chip redrawn at a size that reads zoomed far out, standing on the same line.</summary>

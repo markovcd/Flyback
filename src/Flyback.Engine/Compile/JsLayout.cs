@@ -45,7 +45,7 @@ internal static class JsLayout
             ["traceLength"] = DelayState.TraceSamples,
 
             // JSON has no NaN or infinities, so those go as the text the script reads back with Number.
-            ["constants"] = new JsonArray([.. JsEmitter.Constants(program).Select(value => double.IsFinite(value)
+            ["constants"] = new JsonArray([.. JsEmitter.ConstantsOf(program).Select(value => double.IsFinite(value)
                 ? (JsonNode)value
                 : double.IsNaN(value) ? "NaN" : value > 0 ? "Infinity" : "-Infinity")]),
             ["tables"] = new JsonArray([.. program.TableArray.Select(table => (JsonNode)new JsonArray(

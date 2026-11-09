@@ -48,7 +48,7 @@ public sealed unsafe class CoreAudioCapture(AudioFormat format, string? uid = nu
     private GCHandle self;
 
     private IntPtr queue;
-    private AudioCaptureCallback? deliver;
+    private AudioCaptureCallback? delivering;
 
     /// <summary>Cleared before the queue stops, so a buffer arriving meanwhile is neither heard nor handed back.</summary>
     private volatile bool listening;
@@ -71,7 +71,7 @@ public sealed unsafe class CoreAudioCapture(AudioFormat format, string? uid = nu
                 throw new InvalidOperationException(
                     "macOS is not letting Flyback use the microphone; allow it in System Settings, Privacy & Security, Microphone.");
 
-            this.deliver = deliver;
+            delivering = deliver;
             self = GCHandle.Alloc(this);
 
             try
@@ -108,7 +108,7 @@ public sealed unsafe class CoreAudioCapture(AudioFormat format, string? uid = nu
             queue = IntPtr.Zero;
         }
 
-        deliver = null;
+        delivering = null;
 
         if (self.IsAllocated) self.Free();
     }
@@ -194,7 +194,7 @@ public sealed unsafe class CoreAudioCapture(AudioFormat format, string? uid = nu
         {
             if (GCHandle.FromIntPtr(context).Target is not CoreAudioCapture capture || !capture.listening) return;
 
-            if (buffer->AudioData != IntPtr.Zero && capture.deliver is { } deliver)
+            if (buffer->AudioData != IntPtr.Zero && capture.delivering is { } deliver)
             {
                 var samples = (int)(buffer->AudioDataByteSize / sizeof(float));
 

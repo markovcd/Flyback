@@ -20,7 +20,7 @@ internal static class Figures
     public const int Rate = GlobalConstants.SampleRate;
 
     /// <summary>Sixty frames a second, which is what the pen's segments are measured against.</summary>
-    public const double Frame = 1d / 60d;
+    public const double FrameSeconds = 1d / 60d;
 
     public static ModuleCatalog Catalog => ShippedPlugins.Loaded.Modules;
 
@@ -95,12 +95,12 @@ internal static class Figures
             var registers = program.AllocateRegisters();
 
             program.Evaluate(x, y, clock, registers, default, aspect: aspect, planes: planes);
-            clock += Figures.Frame;
+            clock += Figures.FrameSeconds;
 
             return registers[program.OutputBase];
         }
 
-        public void Skip(int frames) => clock += frames * Figures.Frame;
+        public void Skip(int frames) => clock += frames * Figures.FrameSeconds;
     }
 
     /// <summary>High for the first <paramref name="high"/> samples, then low.</summary>

@@ -533,11 +533,11 @@ internal sealed class ShellLayout(
     {
         if (fullScreen.IsFullScreen) return;
         var panel = knobs.View;
-        if (ControlsRow is { } row && shown != panel.IsVisible)
+        if (ControlsRow is { } gridRow && shown != panel.IsVisible)
         {
-            if (!shown && panel.IsVisible) controlsShare = row.Height;
-            row.MinHeight = shown ? 60d : 0d;
-            row.Height = shown ? controlsShare : new GridLength(0);
+            if (!shown && panel.IsVisible) controlsShare = gridRow.Height;
+            gridRow.MinHeight = shown ? 60d : 0d;
+            gridRow.Height = shown ? controlsShare : new GridLength(0);
         }
         panel.IsVisible = shown;
         controlsSplitter.IsVisible = shown;
@@ -550,13 +550,13 @@ internal sealed class ShellLayout(
     {
         if (work is null) return;
 
-        var row = work.RowDefinitions[2];
-        if (row.Height.IsAbsolute && row.Height.Value > SequencePane.StripHeight && sequenceSplitter.IsVisible) sequenceShare = row.Height;
+        var gridRow = work.RowDefinitions[2];
+        if (gridRow.Height.IsAbsolute && gridRow.Height.Value > SequencePane.StripHeight && sequenceSplitter.IsVisible) sequenceShare = gridRow.Height;
 
         var open = sequence.HasSong && !sequence.Collapsed;
 
-        row.MinHeight = open ? 90 : 0;
-        row.Height = !sequence.HasSong ? new GridLength(0) : sequence.Collapsed ? new GridLength(SequencePane.StripHeight) : sequenceShare;
+        gridRow.MinHeight = open ? 90 : 0;
+        gridRow.Height = !sequence.HasSong ? new GridLength(0) : sequence.Collapsed ? new GridLength(SequencePane.StripHeight) : sequenceShare;
         sequenceSplitter.IsVisible = open;
     }
 
@@ -579,7 +579,7 @@ internal sealed class ShellLayout(
         sequenceShare = new GridLength(saved.SequenceHeight, GridUnitType.Pixel);
         sequence.Collapsed = saved.SequenceCollapsed;
         LaySequence();
-        if (ControlsRow is { } row && knobs.View.IsVisible) row.Height = controlsShare;
+        if (ControlsRow is { } gridRow && knobs.View.IsVisible) gridRow.Height = controlsShare;
         ShowControls(saved.ControlsOpen);
         toolbar.Swap.IsChecked = saved.Swapped && toolbar.Swap.IsEnabled;
         if (narrow) sideBeforeNarrow = saved.SideOpen;

@@ -231,12 +231,12 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
     }
 
     /// <summary>Writing to the author, which the bar's last glyph opens (ADR-0136).</summary>
-    private async Task WriteToTheAuthorAsync(HttpClient http, Uri root, Playback playback)
+    private async Task WriteToTheAuthorAsync(HttpClient http, Uri root, Playback played)
     {
         usage.Count(Used.Letter);
 
         // Built once and both shown and sent, so what was read is what goes.
-        var about = SiteLetters.About(plugins, playback.Sound);
+        var about = SiteLetters.About(plugins, played.Sound);
 
         var said = await dialog.Show<string?>(
             LetterView.Title,

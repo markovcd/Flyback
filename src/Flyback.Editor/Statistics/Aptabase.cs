@@ -52,7 +52,7 @@ internal sealed class Aptabase : IUsageSink, IDisposable
     };
 
     private readonly HttpClient http;
-    private readonly string sessionId = SessionId();
+    private readonly string sessionId = NewSessionId();
     private readonly Body.Info info;
 
     /// <summary>Events posted and not yet answered, for <see cref="Drain"/> to wait on.</summary>
@@ -62,7 +62,7 @@ internal sealed class Aptabase : IUsageSink, IDisposable
     {
         this.http = http;
         info = new Body.Info(
-            OsName(),
+            HostOsName(),
             Environment.OSVersion.Version.ToString(3),
             version,
             $"flyback@{version}",
@@ -212,7 +212,7 @@ internal sealed class Aptabase : IUsageSink, IDisposable
     /// number after it. Made here and nowhere else — it is not written down, so a
     /// restart is another run and there is nothing to join the two by (ADR-0094).
     /// </summary>
-    private static string SessionId()
+    private static string NewSessionId()
     {
         var began = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
@@ -220,7 +220,7 @@ internal sealed class Aptabase : IUsageSink, IDisposable
             .ToString(CultureInfo.InvariantCulture);
     }
 
-    private static string OsName()
+    private static string HostOsName()
     {
         if (OperatingSystem.IsWindows()) return "Windows";
         if (OperatingSystem.IsMacOS()) return "macOS";

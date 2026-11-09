@@ -748,7 +748,7 @@ internal sealed class AssistantPanel : UserControl
     private string? Restarting(AssistantConfig config)
     {
         if (session.Run is not { } run) return conversation.Waiting is not { } waiting ? string.Empty : Unresumable(waiting, config);
-        if (session.Spent(chosenAssistant.Value!, config) is { } spent) return spent;
+        if (session.Spent(chosenAssistant.Value!, config) is { } used) return used;
 
         return run.Reshaped(editor.Current)
             ? "The modules or wires changed underneath, so this is a new conversation about the patch on screen."
@@ -818,7 +818,7 @@ internal sealed class AssistantPanel : UserControl
         var wanted = composer.Message;
         if (string.IsNullOrWhiteSpace(wanted)) return;
 
-        var conversation = Conversation(chosenAssistant.Value, config);
+        var fresh = Conversation(chosenAssistant.Value, config);
 
         if (preface is { } note) transcript.Put(Voice.Note, note);
         preface = null;
@@ -838,7 +838,7 @@ internal sealed class AssistantPanel : UserControl
             {
                 // A document arrived while this ran and took the conversation
                 // with it (Open). What is still on its way is about that one.
-                if (!ReferenceEquals(conversation, session.Run)) break;
+                if (!ReferenceEquals(fresh, session.Run)) break;
 
                 // The tallies move as the workbench is driven, and an edit that
                 // lands is the strongest sign of all that this is alive.
@@ -847,7 +847,7 @@ internal sealed class AssistantPanel : UserControl
                 if (happened is PatchEvent.Cost) ShowSpent();
             }
 
-            if (ReferenceEquals(conversation, session.Run))
+            if (ReferenceEquals(fresh, session.Run))
             {
                 Deliver();
                 Settle();

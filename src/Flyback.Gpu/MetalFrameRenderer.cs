@@ -360,12 +360,12 @@ internal sealed unsafe class MetalFrameRenderer(MetalDevice device, bool overlap
 
             if (!late) Settle();
 
-            var shown = late ? sent!.Value : now;
-            var error = MetalDevice.Wait(shown.Commands);
+            var frame = late ? sent!.Value : now;
+            var error = MetalDevice.Wait(frame.Commands);
 
-            if (error is null) ReadBack(shown.Readback, resolution, destination, stride);
+            if (error is null) ReadBack(frame.Readback, resolution, destination, stride);
 
-            if (late) ObjC.Release(shown.Commands);
+            if (late) ObjC.Release(frame.Commands);
 
             if (overlapped)
             {

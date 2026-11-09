@@ -181,13 +181,13 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// </remarks>
     internal string? BeginCapture(IFrameSink sink)
     {
-        if (active is not ICapturedPreview gpu)
+        if (active is not ICapturedPreview captured)
             return "The picture is being drawn on the processor, which is too slow to record from.";
 
-        if (gpu.CaptureUnavailable is { } why) return why;
+        if (captured.CaptureUnavailable is { } why) return why;
 
         capturing = sink;
-        gpu.Capture = sink;
+        captured.Capture = sink;
 
         return null;
     }
@@ -197,7 +197,7 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     {
         capturing = null;
 
-        if (active is ICapturedPreview gpu) gpu.Capture = null;
+        if (active is ICapturedPreview captured) captured.Capture = null;
     }
 
     /// <summary>

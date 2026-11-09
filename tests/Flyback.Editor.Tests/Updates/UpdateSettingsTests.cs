@@ -31,11 +31,11 @@ public sealed class UpdateSettingsTests : EditorTest
         if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
     }
 
-    private MainWindow Open(string? settingsPath = null, string? note = null, ReleaseNotes? whatsNew = null, bool updatesItself = true)
+    private MainWindow Open(string? path = null, string? note = null, ReleaseNotes? whatsNew = null, bool updatesItself = true)
     {
         var window = NewMainWindow(new EditorSetup
         {
-            Folders = new() { SettingsPath = settingsPath },
+            Folders = new() { SettingsPath = path },
             Launch = new() { OpeningNote = note, WhatsNew = whatsNew },
             Host = new() { UpdatesItself = updatesItself },
         });

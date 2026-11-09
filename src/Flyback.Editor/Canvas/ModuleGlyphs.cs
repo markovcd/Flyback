@@ -40,9 +40,9 @@ internal static class ModuleGlyphs
     /// </summary>
     private static Geometry? Given(string data)
     {
-        var parsed = ModuleGlyphs.parsed ??= [];
+        var cache = ModuleGlyphs.parsed ??= [];
 
-        if (parsed.TryGetValue(data, out var kept)) return kept;
+        if (cache.TryGetValue(data, out var kept)) return kept;
 
         Geometry? read;
 
@@ -55,7 +55,7 @@ internal static class ModuleGlyphs
             read = null;
         }
 
-        parsed[data] = read;
+        cache[data] = read;
 
         return read;
     }

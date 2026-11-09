@@ -44,13 +44,13 @@ internal sealed class DrivenBench(
     {
         Proposed = null;
 
-        var bench = Bench();
+        var current = Bench();
 
-        bench.Reopen();
+        current.Reopen();
 
-        var outcome = await bench.InvokeAsync(tool, arguments, cancel).ConfigureAwait(true);
+        var outcome = await current.InvokeAsync(tool, arguments, cancel).ConfigureAwait(true);
 
-        if (outcome.Ok && bench.Edits > 0) unproposed = true;
+        if (outcome.Ok && current.Edits > 0) unproposed = true;
 
         if (meanwhile is { } changed)
         {
@@ -58,20 +58,20 @@ internal sealed class DrivenBench(
             outcome = outcome with { Text = $"{changed}\n\n{outcome.Text}" };
         }
 
-        return bench.HasProposal ? Deliver(bench, outcome) : outcome;
+        return current.HasProposal ? Deliver(current, outcome) : outcome;
     }
 
     /// <summary>Puts the proposal on the canvas, with whatever the person changed meanwhile.</summary>
-    private ToolOutcome Deliver(PatchWorkbench bench, ToolOutcome outcome)
+    private ToolOutcome Deliver(PatchWorkbench working, ToolOutcome outcome)
     {
-        var merged = MergedProposal.Of(PatchIO.Read(seen!, modules).Patch, editor.Current, bench.Snapshot(), bench.Text);
+        var merged = MergedProposal.Of(PatchIO.Read(seen!, modules).Patch, editor.Current, working.Snapshot(), working.Text);
 
         editor.Apply(merged.Patch, merged.Text);
 
-        Proposed = bench.ProposalSummary;
+        Proposed = working.ProposalSummary;
 
         // A canvas that owns its patch keeps no text, and the bench's still says exactly what it holds.
-        Over(bench.Save().Handles, merged.Text ?? editor.Text);
+        Over(working.Save().Handles, merged.Text ?? editor.Text);
 
         return ToolOutcome.Fine($"{outcome.Text} It is on the person's canvas now. {Applied(merged)}");
     }
@@ -96,8 +96,8 @@ internal sealed class DrivenBench(
         return Over(bench?.Save().Handles, editor.Text);
     }
 
-    /// <summary>What the person changed on the canvas since <paramref name="bench"/> took it up, in its handles.</summary>
-    private string Changed(PatchWorkbench bench)
+    /// <summary>What the person changed on the canvas since <paramref name="working"/> took it up, in its handles.</summary>
+    private string Changed(PatchWorkbench working)
     {
         var was = PatchIO.Read(seen!, modules).Patch;
         var now = editor.Current;
@@ -110,7 +110,7 @@ internal sealed class DrivenBench(
 
         return carried.Count == 0
             ? "The person moved or changed something on the canvas since your last call; describe_patch shows it as it stands now."
-            : $"The person changed on the canvas since your last call: {bench.Told(carried)}.";
+            : $"The person changed on the canvas since your last call: {working.Told(carried)}.";
     }
 
     /// <summary>A workbench over the canvas as it stands, written in <paramref name="text"/>, which is also what <c>reset</c> goes back to.</summary>

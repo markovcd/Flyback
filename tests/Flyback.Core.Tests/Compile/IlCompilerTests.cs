@@ -101,7 +101,7 @@ public class IlCompilerTests
     [Fact]
     public async Task Nothing_is_built_while_it_is_off()
     {
-        using var compiler = Interpreted();
+        using var compiler = InterpretedCompiler();
         var program = Plasma(0.5f);
 
         compiler.Submit(program, IlLane.Sound);
@@ -159,7 +159,7 @@ public class IlCompilerTests
     [Fact]
     public void Nothing_is_compiled_on_the_spot_while_it_is_off()
     {
-        using var compiler = Interpreted();
+        using var compiler = InterpretedCompiler();
         var program = Plasma(0.5f);
 
         compiler.Compile(program, IlLane.AuditionPicture);
@@ -277,7 +277,7 @@ public class IlCompilerTests
     [Fact]
     public void Nothing_waits_while_it_is_off()
     {
-        using var compiler = Interpreted();
+        using var compiler = InterpretedCompiler();
 
         Open(compiler, Plasma(0.5f)).Waiting.ShouldBeFalse();
     }
@@ -287,7 +287,7 @@ public class IlCompilerTests
         public bool Interpreted => true;
     }
 
-    private static IlCompiler Interpreted() => new(new Off());
+    private static IlCompiler InterpretedCompiler() => new(new Off());
 
     /// <summary>
     /// A cue's patience, long enough that these tests read its parts and never its clock:

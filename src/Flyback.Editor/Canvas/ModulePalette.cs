@@ -324,8 +324,8 @@ public sealed class ModulePalette : UserControl
     /// opening it and typing narrows it — which is the fast way to reach a
     /// module and the only reason the filter is the first thing in it.
     /// </summary>
-    /// <param name="typing">False on a touch screen, where the filter box waits to be tapped.</param>
-    public void Reset(bool typing = true)
+    /// <param name="startTyping">False on a touch screen, where the filter box waits to be tapped.</param>
+    public void Reset(bool startTyping = true)
     {
         // Read off the disk again on the way open, which is the only moment
         // anybody could notice it happening. So a group kept a minute ago is on
@@ -342,12 +342,12 @@ public sealed class ModulePalette : UserControl
         // filtered, or with a row still asking whether to remove itself.
         Fill();
 
-        this.typing = typing;
-        Focusable = !typing;
+        typing = startTyping;
+        Focusable = !startTyping;
 
         // Held by the list itself otherwise, since the flyout hands its first
         // focusable control the focus on the way open.
-        if (typing)
+        if (startTyping)
         {
             filter.Focus();
             filter.SelectAll();

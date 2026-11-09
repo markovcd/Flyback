@@ -171,7 +171,7 @@ internal sealed class CanvasSection : ISettingsSection
             + "ballpoint blue on cream. A scheme "
             + "of your own is a .json file in the schemes folder beside the settings.");
 
-        Schemes(report: false);
+        Schemes(announce: false);
 
         View.Children.Add(SettingRows.Heading("Look"));
         View.Children.Add(InspectorRows.Field("Colors", colorScheme));
@@ -312,19 +312,19 @@ internal sealed class CanvasSection : ISettingsSection
     /// <summary>Looks again for schemes, so one put in the folder since is offered.</summary>
     public void Opening()
     {
-        Schemes(report: true);
+        Schemes(announce: true);
         Show();
     }
 
     /// <summary>Lists the shipped schemes and the folder's, and says what was wrong with any file there.</summary>
-    private void Schemes(bool report)
+    private void Schemes(bool announce)
     {
         var library = SchemeLibrary.Load(schemeFolder);
 
         schemes = [.. library.Schemes.Select(scheme => scheme.Name)];
         colorScheme.ItemsSource = schemes;
 
-        if (report && library.Problems.Count > 0)
+        if (announce && library.Problems.Count > 0)
             this.report($"A color scheme in the schemes folder has a problem: {library.Problems[0]}", string.Join('\n', library.Problems));
     }
 

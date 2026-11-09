@@ -121,7 +121,7 @@ internal static class OrbitModule
     }
 
     /// <summary>The c the orbit is taken under, where it starts, and whether it is a Julia orbit.</summary>
-    private readonly record struct Point(Slot Cx, Slot Cy, Slot StartX, Slot StartY, bool Julia);
+    private readonly record struct Point(Slot Cx, Slot Cy, Slot StartX, Slot StartY, bool IsJulia);
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {
@@ -170,7 +170,7 @@ internal static class OrbitModule
 
         // Cells begin at nought, which is a Mandelbrot orbit's start but not a
         // Julia orbit's, so the first evaluation takes the start point instead.
-        if (point.Julia)
+        if (point.IsJulia)
         {
             var held = em.HasMemory();
 
@@ -222,7 +222,7 @@ internal static class OrbitModule
         var zero = em.Constant(0f);
         var one = em.Constant(1f);
 
-        var (px, py) = point.Julia
+        var (px, py) = point.IsJulia
             ? Escape.Plane(em, node[0], node[1], zero, zero, zero, JuliaModule.Span)
             : Escape.Plane(em, node[0], node[1], em.Constant(MandelbrotModule.Middle), zero, zero, MandelbrotModule.Span);
 
@@ -231,7 +231,7 @@ internal static class OrbitModule
 
         // A Mandelbrot orbit is drawn from c, its first step from nought and the
         // one point on its plane it is the orbit of.
-        var (startX, startY) = point.Julia ? (point.StartX, point.StartY) : (point.Cx, point.Cy);
+        var (startX, startY) = point.IsJulia ? (point.StartX, point.StartY) : (point.Cx, point.Cy);
         var (fromX, fromY) = (startX, startY);
 
         for (var step = 1; step < Steps; step++)

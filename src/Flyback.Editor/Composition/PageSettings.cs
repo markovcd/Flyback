@@ -163,10 +163,10 @@ internal sealed class PageSettings : IReactTo<SettingsAsked>, IReactTo<Touched>
             oversample.SelectedIndex = Math.Max(0, AudioRenderer.Oversamples.ToList().IndexOf(settings.Current.Oversample));
         };
 
-        dragToPan.IsCheckedChanged += (_, _) => Change(settings => settings.DragToPan = dragToPan.IsChecked == true);
-        scroll.SelectionChanged += (_, _) => Change(settings => settings.Scroll = (CanvasScroll)Math.Max(scroll.SelectedIndex, 0));
-        compactModules.IsCheckedChanged += (_, _) => Change(settings => settings.CompactModules = compactModules.IsChecked == true);
-        endless.IsCheckedChanged += (_, _) => Change(settings => settings.Endless = endless.IsChecked == true);
+        dragToPan.IsCheckedChanged += (_, _) => Change(page => page.DragToPan = dragToPan.IsChecked == true);
+        scroll.SelectionChanged += (_, _) => Change(page => page.Scroll = (CanvasScroll)Math.Max(scroll.SelectedIndex, 0));
+        compactModules.IsCheckedChanged += (_, _) => Change(page => page.CompactModules = compactModules.IsChecked == true);
+        endless.IsCheckedChanged += (_, _) => Change(page => page.Endless = endless.IsChecked == true);
 
         transportEdge.SelectionChanged += (_, _) =>
         {

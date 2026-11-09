@@ -60,15 +60,15 @@ public class WireLiftTests : EditorTest
         NodeInstance Fed,
         NodeInstance Spare)
     {
-        public NodeEditor Editor => EditorTest.Editor(Window);
+        public NodeEditor Canvas => EditorTest.Editor(Window);
 
-        public Patch Patch => Editor.History.Patch;
+        public Patch Patch => Canvas.History.Patch;
 
         /// <summary>Wires the Sine into the first Add and records it, so a drag is the next edit.</summary>
         public Board Wired()
         {
             Patch.Connect(Source.Id, 0, Fed.Id, 0);
-            Editor.History.Record();
+            Canvas.History.Record();
             return this;
         }
 
@@ -76,7 +76,7 @@ public class WireLiftTests : EditorTest
         public Board AlsoWired()
         {
             Patch.Connect(Source.Id, 0, Spare.Id, 0);
-            Editor.History.Record();
+            Canvas.History.Record();
             return this;
         }
     }
@@ -224,7 +224,7 @@ public class WireLiftTests : EditorTest
 
         Drag(board.Window, Output(board.Source), Output(board.Source), RawInputModifiers.Control);
 
-        var editor = board.Editor;
+        var editor = board.Canvas;
         var bare = OnWindow(board.Window, editor.GraphToScreen.Invert().Transform(new Point(40, editor.Bounds.Height - 40)));
 
         board.Window.MouseDown(bare, MouseButton.Left);
@@ -256,7 +256,7 @@ public class WireLiftTests : EditorTest
     public void A_re_sourced_wire_dropped_on_bare_canvas_asks_for_a_source()
     {
         var board = Open().Wired();
-        var editor = board.Editor;
+        var editor = board.Canvas;
         var bare = editor.GraphToScreen.Invert().Transform(
             new Point(40, editor.Bounds.Height - 40));
 
@@ -283,7 +283,7 @@ public class WireLiftTests : EditorTest
     public void Re_sourcing_a_wire_is_one_undo()
     {
         var board = Open().Wired();
-        var editor = board.Editor;
+        var editor = board.Canvas;
 
         Drag(board.Window, Output(board.Source), Output(board.Other), RawInputModifiers.Control);
 
@@ -315,7 +315,7 @@ public class WireLiftTests : EditorTest
     public void A_wire_put_back_where_it_was_is_not_an_edit()
     {
         var board = Open();
-        var editor = board.Editor;
+        var editor = board.Canvas;
 
         // Two wires that arrive with the patch rather than being drawn, so the
         // history opens on them, and the one lifted is not the last in the list.

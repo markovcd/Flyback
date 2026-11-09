@@ -56,7 +56,7 @@ public sealed unsafe class CoreAudioDevice(AudioFormat format, string? uid = nul
     private GCHandle self;
 
     private IntPtr unit;
-    private AudioCallback? fill;
+    private AudioCallback? filling;
     private volatile bool running;
 
     /// <summary>
@@ -74,7 +74,7 @@ public sealed unsafe class CoreAudioDevice(AudioFormat format, string? uid = nul
     {
         if (unit != IntPtr.Zero) return;
 
-        this.fill = fill;
+        filling = fill;
         self = GCHandle.Alloc(this);
 
         try
@@ -109,7 +109,7 @@ public sealed unsafe class CoreAudioDevice(AudioFormat format, string? uid = nul
         }
 
         running = false;
-        fill = null;
+        filling = null;
 
         if (self.IsAllocated) self.Free();
     }
@@ -291,7 +291,7 @@ public sealed unsafe class CoreAudioDevice(AudioFormat format, string? uid = nul
 
             var samples = new Span<float>((void*)output.Data, (int)(output.DataByteSize / sizeof(float)));
 
-            if (GCHandle.FromIntPtr(context).Target is not CoreAudioDevice device || device.fill is not { } deliver)
+            if (GCHandle.FromIntPtr(context).Target is not CoreAudioDevice device || device.filling is not { } deliver)
             {
                 samples.Clear();
                 return AudioToolbox.NoError;

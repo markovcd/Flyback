@@ -23,7 +23,7 @@ internal static class Formulas
     internal sealed record Operation(char Sign, Term Left, Term? Right, int Line, int Column) : Term;
 
     /// <summary>The sign an operator is written with in a formula.</summary>
-    public static char Sign(TokenKind op) => op switch
+    public static char SignOf(TokenKind op) => op switch
     {
         TokenKind.Plus => '+',
         TokenKind.Minus => '-',
@@ -57,11 +57,11 @@ internal static class Formulas
     }
 
     /// <summary>The output a value is read from, where it is a signal.</summary>
-    public static (Guid Node, int Port)? From(Value value) => value switch
+    public static (Guid Node, int Port)? SourceOf(Value value) => value switch
     {
         Placed placed => (placed.Id, 0),
         Socket socket => (socket.Id, socket.Port),
-        Several { Items.Count: > 0 } several => From(several.Items[0]),
+        Several { Items.Count: > 0 } several => SourceOf(several.Items[0]),
         _ => null,
     };
 

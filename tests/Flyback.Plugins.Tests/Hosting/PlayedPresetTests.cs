@@ -110,7 +110,7 @@ public class PlayedPresetTests
 
         Loudest(left).ShouldBeGreaterThan(0.05f);
         Loudest(right).ShouldBeGreaterThan(0.05f);
-        Pitch(left[(Rate / 10)..]).ShouldBe(220f, 220f * 0.02f);
+        PitchOf(left[(Rate / 10)..]).ShouldBe(220f, 220f * 0.02f);
     }
 
     [Theory]
@@ -118,7 +118,7 @@ public class PlayedPresetTests
     [InlineData(57f, 220f)]
     public void The_note_played_is_the_pitch_heard(float note, float hz)
     {
-        Pitch(Play(Rate / 2, new Held(1, note)).Left[(Rate / 10)..]).ShouldBe(hz, hz * 0.02f);
+        PitchOf(Play(Rate / 2, new Held(1, note)).Left[(Rate / 10)..]).ShouldBe(hz, hz * 0.02f);
     }
 
     /// <summary>A chord is its notes summed: four voices at once, none of them taking another's place.</summary>
@@ -211,7 +211,7 @@ public class PlayedPresetTests
     private static float Loudest(float[] samples) => samples.Max(MathF.Abs);
 
     /// <summary>The frequency whose period best matches the signal to itself.</summary>
-    private static float Pitch(float[] signal)
+    private static float PitchOf(float[] signal)
     {
         var scores = new double[Rate / 40 + 2];
         var best = 0;
