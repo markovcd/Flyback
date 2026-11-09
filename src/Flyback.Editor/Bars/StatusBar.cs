@@ -5,7 +5,6 @@ using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Media.Immutable;
 using Avalonia.Threading;
 using Flyback.Editor.Controls;
 using Flyback.Editor.Hubs;
@@ -68,34 +67,8 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
         Margin = new Thickness(8, 0, 0, 0),
     };
 
-    /// <summary>The oversampling factor, short, beside the rungs.</summary>
-    private readonly TextBlock oversample = new()
-    {
-        Name = "soundOversample",
-        FontSize = Text.Body,
-        VerticalAlignment = VerticalAlignment.Center,
-    };
-
-    /// <summary>How far ahead of real time the sound is worked out.</summary>
-    public HeadroomRungs Rungs { get; } = new() { Name = "soundRungs", VerticalAlignment = VerticalAlignment.Center };
-
-    /// <summary>The factor and the rungs together, with the exact figures as their tip.</summary>
-    private readonly StackPanel headroom;
-
-    /// <summary>How close the sound comes to clipping, left of the oversampling.</summary>
-    public LevelBar Level { get; } = new() { Name = "soundLevel", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0), IsVisible = false };
-
-    /// <summary>How many buffers had clipped when the clip dot was last cleared.</summary>
-    private long clearedAt;
-
-    /// <summary>How long a step down in oversampling stays marked.</summary>
-    private static readonly TimeSpan SteppedFor = TimeSpan.FromSeconds(4);
-
-    private static readonly IBrush SteppedInk = new ImmutableSolidColorBrush(Colors.Attention);
-    private static readonly IBrush BehindInk = new ImmutableSolidColorBrush(Colors.Fault);
-
-    private int lastOversample;
-    private DateTime steppedUntil;
+    /// <summary>The sound's level, oversampling and speed rungs.</summary>
+    public SoundStatus Sound { get; }
 
     /// <summary>Said in the report's place while a patch just opened is compiled, before it starts.</summary>
     public Shimmer Compiling { get; } = new("Compiling…");
@@ -153,31 +126,9 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
         Grid.SetColumn(Tutorial, 0);
         Grid.SetColumn(report, 1);
         Grid.SetColumn(Compiling, 1);
-        headroom = new StackPanel
-        {
-            Name = "soundHeadroom",
-            Orientation = Orientation.Horizontal,
-            Spacing = 5,
-            Margin = new Thickness(8, 0, 0, 0),
-            Background = Brushes.Transparent,
-            IsVisible = false,
-            Children = { oversample, Rungs },
-        };
+        Sound = new SoundStatus(playback, report);
 
-        // A touch screen shows no tip, so a tap says the figures on the report line.
-        headroom.Tapped += (_, _) => report.Say(Figures());
-
-        // A tap or click clears a clip, and says what the level was.
-        Level.Tapped += (_, _) =>
-        {
-            report.Say(LevelFigures());
-            clearedAt = playback.SoundClipped;
-            ShowLevel();
-        };
-
-        var sound = new StackPanel { Orientation = Orientation.Horizontal, Children = { Level, headroom } };
-
-        Grid.SetColumn(sound, 2);
+        Grid.SetColumn(Sound.View, 2);
         Grid.SetColumn(status, 3);
         Grid.SetColumn(rule, 4);
         Grid.SetColumn(letter, 5);
@@ -189,7 +140,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
         bar.Children.Add(Tutorial);
         bar.Children.Add(report);
         bar.Children.Add(Compiling);
-        bar.Children.Add(sound);
+        bar.Children.Add(Sound.View);
         bar.Children.Add(status);
         bar.Children.Add(rule);
         bar.Children.Add(letter);
@@ -209,7 +160,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
         ticker.Tick += (_, _) => Update();
         // A level read four times a second jumps, so the meter has a quicker clock of its own.
         var meter = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(40) };
-        meter.Tick += (_, _) => ShowLevel();
+        meter.Tick += (_, _) => Sound.ShowLevel();
 
         View.AttachedToVisualTree += (_, _) => { ticker.Start(); meter.Start(); };
         View.DetachedFromVisualTree += (_, _) => { ticker.Stop(); meter.Stop(); };
@@ -242,10 +193,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
         var renderer = preview.Renderer is { } name ? $"   |   {name}" : "";
         var backend = playback.SoundBackend is { } through ? $"   |   {through}" : "";
 
-        // Nothing is shown of the sound of a patch that has none.
-        headroom.IsVisible = Level.IsVisible = playback.HasSound;
-
-        if (playback.HasSound) ShowHeadroom();
+        Sound.Update();
 
         var sound = playback.HasSound ? "   |   " : "";
 
@@ -256,69 +204,6 @@ internal sealed class StatusBar : IReactTo<PatchStarting>, IReactTo<CanvasSaid>
         status.Text = string.Create(
             CultureInfo.InvariantCulture,
             $"{sound}{preview.FramesPerSecond:0} fps{renderer}{backend}");
-    }
-
-    /// <summary>The oversampling and the rungs, marked for a few seconds after a step down.</summary>
-    private void ShowHeadroom()
-    {
-        var factor = playback.Oversample;
-        var now = DateTime.UtcNow;
-
-        if (factor < lastOversample) steppedUntil = now + SteppedFor;
-        lastOversample = factor;
-
-        var speed = playback.SoundSpeed;
-        var state = SoundHeadroom.Of(speed, factor);
-        var stepped = now < steppedUntil;
-
-        oversample.Text = string.Create(CultureInfo.InvariantCulture, $"{factor}×");
-        if (state == Headroom.Behind) oversample.Foreground = BehindInk;
-        else if (stepped) oversample.Foreground = SteppedInk;
-        else oversample.ClearValue(TextBlock.ForegroundProperty);
-        Rungs.Show(SoundHeadroom.Shown(speed, state), state, stepped);
-
-        // Written while closed only, so an open tip holds still to be read.
-        if (!ToolTip.GetIsOpen(headroom)) ToolTip.SetTip(headroom, Figures());
-    }
-
-    /// <summary>The level bar as the sound plays now, with its exact figures as the tip.</summary>
-    internal void ShowLevel()
-    {
-        if (!Level.IsVisible) return;
-
-        var clipped = playback.SoundClipped;
-
-        // A clip counted before this sound began is not this sound's.
-        if (clipped < clearedAt) clearedAt = clipped;
-
-        Level.Show(SoundLevel.Decibels(playback.SoundPeak), clipped > clearedAt, DateTime.UtcNow);
-
-        if (!ToolTip.GetIsOpen(Level)) ToolTip.SetTip(Level, LevelFigures());
-    }
-
-    /// <summary>The exact figures behind the level bar.</summary>
-    private string LevelFigures()
-    {
-        var peak = Level.Held;
-        var clips = playback.SoundClipped - clearedAt;
-        var said = double.IsNegativeInfinity(peak)
-            ? "Silent"
-            : string.Create(CultureInfo.InvariantCulture, $"Peak {peak:0.0} dB");
-
-        return clips > 0
-            ? string.Create(CultureInfo.InvariantCulture, $"{said}; clipped in {clips} buffers since last cleared. Click to clear.")
-            : $"{said}; no clipping.";
-    }
-
-    /// <summary>The exact figures behind the rungs.</summary>
-    private string Figures()
-    {
-        var factor = OversamplingText.Of(playback.Oversample);
-        var speed = playback.SoundSpeed;
-
-        return speed > 0
-            ? string.Create(CultureInfo.InvariantCulture, $"Sound renders {speed:0.00}× faster than it plays, with {factor}.")
-            : $"Sound with {factor}; how fast it renders is not timed yet.";
     }
 
     private static Button Glyph(string name, Control glyph, string tip)

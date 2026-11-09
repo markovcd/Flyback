@@ -31,7 +31,7 @@ public sealed class StatusCountTests : EditorTest
         {
             speakers.Pump();
             bar.Update();
-            return bar.Rungs.Lit > 0;
+            return bar.Sound.Rungs.Lit > 0;
         }, window);
 
         panel.IsVisible.ShouldBeTrue();
@@ -40,14 +40,14 @@ public sealed class StatusCountTests : EditorTest
         Pump(() =>
         {
             speakers.Pump();
-            bar.ShowLevel();
-            return double.IsFinite(bar.Level.Level);
+            bar.Sound.ShowLevel();
+            return double.IsFinite(bar.Sound.Level.Level);
         }, window);
 
-        bar.Level.IsVisible.ShouldBeTrue();
-        bar.Level.Level.ShouldBeGreaterThan(-3);
-        bar.Level.ClipLit.ShouldBeFalse();
-        (ToolTip.GetTip(bar.Level) as string ?? "").ShouldMatch(@"^Peak -?\d+\.\d dB; no clipping\.$");
+        bar.Sound.Level.IsVisible.ShouldBeTrue();
+        bar.Sound.Level.Level.ShouldBeGreaterThan(-3);
+        bar.Sound.Level.ClipLit.ShouldBeFalse();
+        (ToolTip.GetTip(bar.Sound.Level) as string ?? "").ShouldMatch(@"^Peak -?\d+\.\d dB; no clipping\.$");
         oversample.Text.ShouldBe("2×");
         (ToolTip.GetTip(panel) as string ?? "").ShouldMatch(@"^Sound renders \d+\.\d\d× faster than it plays, with 2× oversampling\.$");
         (count.Text ?? "").ShouldNotContain("oversampling");
@@ -76,7 +76,7 @@ public sealed class StatusCountTests : EditorTest
         }
 
         All<StackPanel>(window).Single(panel => panel.Name == "soundHeadroom").IsVisible.ShouldBeFalse();
-        bar.Level.IsVisible.ShouldBeFalse();
+        bar.Sound.Level.IsVisible.ShouldBeFalse();
         (count.Text ?? "").ShouldNotContain("oversampling");
     }
 

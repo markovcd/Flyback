@@ -1266,7 +1266,7 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
         bar.Update();
         var panel = Named<StackPanel>(open, "soundHeadroom");
 
-        return (panel.IsVisible, Named<TextBlock>(open, "soundOversample").Text ?? string.Empty, bar.Rungs.Lit, ToolTip.GetTip(panel) as string ?? string.Empty);
+        return (panel.IsVisible, Named<TextBlock>(open, "soundOversample").Text ?? string.Empty, bar.Sound.Rungs.Lit, ToolTip.GetTip(panel) as string ?? string.Empty);
     });
 
     private static Slider Volume(MainWindow window) =>
