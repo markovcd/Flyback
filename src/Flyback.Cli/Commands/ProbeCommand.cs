@@ -5,7 +5,6 @@ using Flyback.Assist.Keys;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core;
-using Flyback.Plugins.Hosting;
 using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;

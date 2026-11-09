@@ -286,7 +286,7 @@ internal sealed class ShellLayout(
         root.Children.Add(columns);
 
         // Above the panels, which hit-test past their clip where a short page cuts them off.
-        foreach (var bar in new Control[] { toolbar.View, statusBar.View, row.View, keys.View }) bar.ZIndex = 1;
+        foreach (var bar in new[] { toolbar.View, statusBar.View, row.View, keys.View }) bar.ZIndex = 1;
         fullScreen.ShowPreview = ShowPreview;
         return root;
     }
@@ -473,7 +473,7 @@ internal sealed class ShellLayout(
 
     public void BuildRightPanel(Grid grid, int column)
     {
-        previewBox = fullScreen.PreviewBox = new Border { Background = Flyback.Ui.Controls.Colors.Letterbox, Child = preview, Focusable = true };
+        previewBox = fullScreen.PreviewBox = new Border { Background = Colors.Letterbox, Child = preview, Focusable = true };
         KeyboardNavigation.SetIsTabStop(previewBox, false);
         PictureTaps.Attach(previewBox, () =>
         {

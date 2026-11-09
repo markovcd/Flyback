@@ -101,7 +101,7 @@ internal sealed class StepBar(SocketFocus focus, CanvasSelection selection, View
     private static readonly Typeface Bold = new(Typeface.Default.FontFamily, weight: FontWeight.SemiBold);
     private static readonly IBrush Fill = new ImmutableSolidColorBrush(Colors.Node);
     private static readonly IPen Edge = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Blend(Colors.Separator, Colors.Inactive, 0.5)));
-    private static readonly IImmutableBrush LitFill = new ImmutableSolidColorBrush(Flyback.Ui.Controls.Colors.Attention);
+    private static readonly IImmutableBrush LitFill = new ImmutableSolidColorBrush(Colors.Attention);
     private static readonly IPen LitEdge = new ImmutablePen(LitFill);
     private static readonly IBrush Light = new ImmutableSolidColorBrush(Colors.Bright);
     private static readonly IBrush Dark = new ImmutableSolidColorBrush(Colors.Edge);

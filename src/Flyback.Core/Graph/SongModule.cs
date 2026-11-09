@@ -30,7 +30,7 @@ internal static class SongModule
             {
                 Help = "What it steps across: Time without a wire, or a Tempo's beats.",
             },
-            new PortSpec("rate", PortKind.Scalar, 0.125f, 0f, 4f)
+            new PortSpec("rate", PortKind.Scalar, 0.125f, 0f)
             {
                 Knee = 0.05f,
                 Help = "Sections for each unit of 'in': sections a second on Time, or 1/16 on beats for four bars of four.",

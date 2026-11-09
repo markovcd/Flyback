@@ -217,7 +217,7 @@ internal sealed class SettingsSession(
                 Padding = new Thickness(16),
                 Child = new ScrollViewer
                 {
-                    HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
+                    HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
                     Content = section.View,
                 },
             },

@@ -35,7 +35,7 @@ internal sealed class CanvasGlass(SocketDial dial, SocketFocus focus)
     private static readonly IPen EdgeDark = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromArgb(220, 0, 0, 0)), 1.5);
 
     /// <summary>Over a live picture, the light line inside a module's edge.</summary>
-    private static readonly IPen EdgeLight = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromArgb(150, 255, 255, 255)), 1);
+    private static readonly IPen EdgeLight = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromArgb(150, 255, 255, 255)));
 
     /// <summary>
     /// Over a live picture, a dark line just outside <paramref name="bounds"/> and a light one

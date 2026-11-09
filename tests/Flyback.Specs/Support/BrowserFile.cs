@@ -17,13 +17,13 @@ public class BrowserFile : DispatchProxy
     /// <summary>A picked file called <paramref name="name"/> holding <paramref name="bytes"/>.</summary>
     public static IStorageFile Of(string name, byte[] bytes)
     {
-        var file = Create<IStorageFile, BrowserFile>();
-        var proxy = (BrowserFile)(object)file;
+        object made = Create<IStorageFile, BrowserFile>();
+        var proxy = (BrowserFile)made;
 
         proxy.name = name;
         proxy.bytes = bytes;
 
-        return file;
+        return (IStorageFile)made;
     }
 
     protected override object? Invoke(MethodInfo? targetMethod, object?[]? args) => targetMethod?.Name switch

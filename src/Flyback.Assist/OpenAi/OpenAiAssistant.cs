@@ -1,5 +1,4 @@
-﻿using Flyback.Assist;
-using Flyback.Assist.Keys;
+﻿using Flyback.Assist.Keys;
 using Flyback.Assist.Surveys;
 using Flyback.Plugins.Settings;
 

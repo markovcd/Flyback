@@ -151,7 +151,7 @@ public class InterpreterInvariants
 
         machine.Run(far, 0.3f, 0.7f).ShouldBe(machine.Run(0f, 0.3f, 0.7f));
         machine.Run(0.3f, far, 0.7f).ShouldBe(machine.Run(0.3f, 0f, 0.7f));
-        machine.Run(0.3f, 0.7f, far).ShouldBe(machine.Run(0.3f, 0.7f, 0f));
+        machine.Run(0.3f, 0.7f, far).ShouldBe(machine.Run(0.3f, 0.7f));
     }
 
     /// <summary>

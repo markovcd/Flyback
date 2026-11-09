@@ -123,7 +123,7 @@ public class LiveByTouchTests : EditorTest
         GoLive(window);
 
         moved.ShouldBe([true]);
-        for (Avalonia.Visual? at = box; at is not null; at = Avalonia.VisualTree.VisualExtensions.GetVisualParent(at))
+        for (Visual? at = box; at is not null; at = Avalonia.VisualTree.VisualExtensions.GetVisualParent(at))
         {
             var ground = at switch { Panel p => p.Background, Border b => b.Background, Avalonia.Controls.Primitives.TemplatedControl t => t.Background, _ => null };
             (ground is null || ground == Avalonia.Media.Brushes.Transparent).ShouldBeTrue($"{at.GetType().Name} hides the picture");

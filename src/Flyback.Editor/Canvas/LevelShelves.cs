@@ -31,7 +31,7 @@ internal sealed class LevelShelves
 
     private static readonly IBrush ChipFill = new ImmutableSolidColorBrush(Colors.Separator, 0.35);
     private static readonly IBrush ChipFillSelected = new ImmutableSolidColorBrush(Colors.Attention, 0.35);
-    private static readonly IPen Rule = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Separator, 0.6), 1);
+    private static readonly IPen Rule = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Separator, 0.6));
 
     /// <summary>The bands the text's levels make, or none while the canvas owns the patch.</summary>
     public Func<IReadOnlyList<LayoutBand>> Bands { get; set; } = () => [];

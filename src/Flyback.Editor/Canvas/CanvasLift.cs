@@ -28,7 +28,7 @@ internal sealed class CanvasLift(CanvasGestures gestures, CanvasSelection select
         OffsetX = 1,
         OffsetY = 5,
         Blur = 12,
-        Color = Flyback.Ui.Controls.Colors.Press(strength),
+        Color = Ui.Controls.Colors.Press(strength),
     });
 
     /// <summary>Whether a module is held up: picked itself, or standing behind a box that is.</summary>

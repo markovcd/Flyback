@@ -5,7 +5,6 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Flyback.Editor.Hubs;
-using Flyback.Editor.Shell;
 using Flyback.Ui;
 using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;

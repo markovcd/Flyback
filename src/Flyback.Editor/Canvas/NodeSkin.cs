@@ -135,7 +135,7 @@ internal static class NodeSkin
         if (cutBrushes.TryGetValue((cut, over), out var kept)) return kept;
 
         var ink = Colors.Contrast(over, !Colors.Light(over));
-        var pen = new ImmutablePen(new ImmutableSolidColorBrush(ink, CutOpacity), CutWidth);
+        var pen = new ImmutablePen(new ImmutableSolidColorBrush(ink, CutOpacity));
 
         var made = new DrawingBrush(
             cut == GrainCut.Beaded

@@ -1,4 +1,3 @@
-using Flyback.Assist;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
@@ -38,7 +37,7 @@ public class AssistantSensesTests
                 {
                     data.Add(id, null, null, hearing, vision);
 
-                    foreach (var model in new string?[] { null, "found-blind", "found-hearing" })
+                    foreach (var model in new[] { null, "found-blind", "found-hearing" })
                         data.Add(id, Surveyed, model, hearing, vision);
                 }
 

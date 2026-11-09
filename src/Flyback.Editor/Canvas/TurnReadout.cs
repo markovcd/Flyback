@@ -215,7 +215,7 @@ internal static class TurnReadout
 
         using (var sink = caret.Open())
         {
-            sink.BeginFigure(new Point(x - 7, foot), true);
+            sink.BeginFigure(new Point(x - 7, foot));
             sink.LineTo(new Point(x, tip));
             sink.LineTo(new Point(x + 7, foot));
             sink.EndFigure(false);
@@ -253,8 +253,8 @@ internal static class TurnReadout
         return formatted;
     }
 
-    private static readonly Typeface Mono = new(Flyback.Ui.Controls.Text.Mono);
-    private static readonly Typeface MonoBold = new(Flyback.Ui.Controls.Text.Mono, weight: FontWeight.SemiBold);
+    private static readonly Typeface Mono = new(Ui.Controls.Text.Mono);
+    private static readonly Typeface MonoBold = new(Ui.Controls.Text.Mono, weight: FontWeight.SemiBold);
     private static readonly Typeface SansBold = new(Typeface.Default.FontFamily, weight: FontWeight.SemiBold);
 
     private static readonly IBrush Ground = new ImmutableSolidColorBrush(Colors.Edge, 0.96);

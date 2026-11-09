@@ -1,11 +1,6 @@
 using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Headless;
-using Avalonia.Headless.XUnit;
-using Avalonia.LogicalTree;
-using Avalonia.Media.Imaging;
-using Avalonia.VisualTree;
 using Flyback.Assist;
 using Flyback.Assist.Keys;
 using Flyback.Core.Graph;
@@ -15,11 +10,8 @@ using Flyback.Editor.Notices;
 using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
-using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
 using Microsoft.Extensions.DependencyInjection;
-using Shouldly;
-using Xunit;
 
 namespace Flyback.Editor.Tests.Assist;
 

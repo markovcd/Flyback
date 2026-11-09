@@ -302,7 +302,7 @@ internal sealed class CanvasSection : ISettingsSection
     public string? Restarts =>
         colorScheme.SelectedItem is string picked
         && !string.Equals(picked, saved.ColorScheme, StringComparison.OrdinalIgnoreCase)
-        && !string.Equals(picked, Flyback.Ui.Controls.Colors.Current.Name, StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(picked, Ui.Controls.Colors.Current.Name, StringComparison.OrdinalIgnoreCase)
             ? "use the new colors"
             : null;
 

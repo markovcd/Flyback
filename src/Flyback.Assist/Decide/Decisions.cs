@@ -1,5 +1,4 @@
 using Flyback.Assist.Keys;
-using Flyback.Plugins.Hosting;
 
 namespace Flyback.Assist.Decide;
 

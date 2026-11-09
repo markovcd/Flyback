@@ -1,7 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.Assist;
 using Flyback.Assist.Decide;
 using Flyback.Assist.Keys;
 using Flyback.Editor.Controls;

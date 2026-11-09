@@ -185,7 +185,7 @@ internal sealed class KnobChoice(CanvasHistory history, CanvasSelection selectio
             Trimming = TextTrimming.CharacterEllipsis,
         };
 
-    private static readonly Typeface MonoBold = new(Flyback.Ui.Controls.Text.Mono, weight: FontWeight.Bold);
+    private static readonly Typeface MonoBold = new(Ui.Controls.Text.Mono, weight: FontWeight.Bold);
     private static readonly IBrush Ground = new ImmutableSolidColorBrush(Colors.Edge, 0.96);
     private static readonly IPen Edge = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Lift(0.30)));
     private static readonly IBrush Picked = new ImmutableSolidColorBrush(Colors.Separator);

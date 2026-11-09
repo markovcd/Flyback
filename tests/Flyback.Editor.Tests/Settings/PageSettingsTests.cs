@@ -117,7 +117,7 @@ public sealed class PageSettingsTests : EditorTest
 
         Shoot(window, "page-live-settings.png");
         Editor(window).GlassOpacity.ShouldBe(0.4, 1e-9);
-        Flyback.Host.LivePatchingLook.Parse(browser.Kept[Flyback.Host.LivePatchingLook.Section]).ModuleOpacity.ShouldBe(40);
+        Host.LivePatchingLook.Parse(browser.Kept[Host.LivePatchingLook.Section]).ModuleOpacity.ShouldBe(40);
 
         var next = Open();
         Editor(next).GlassOpacity.ShouldBe(0.4, 1e-9);
@@ -135,11 +135,11 @@ public sealed class PageSettingsTests : EditorTest
         Picker(window, "pageTransportEdge").SelectedIndex = 1;
         Settle(window);
 
-        Service<Flyback.Editor.Settings.OutputSettingRepository>(window).Current.Transport.ShouldBe(Flyback.Host.TransportEdge.Bottom);
-        Flyback.Editor.Settings.PageOutput.Parse(browser.Kept[Flyback.Editor.Settings.PageOutput.Section]).Transport.ShouldBe(Flyback.Host.TransportEdge.Bottom);
+        Service<Flyback.Editor.Settings.OutputSettingRepository>(window).Current.Transport.ShouldBe(Host.TransportEdge.Bottom);
+        Flyback.Editor.Settings.PageOutput.Parse(browser.Kept[Flyback.Editor.Settings.PageOutput.Section]).Transport.ShouldBe(Host.TransportEdge.Bottom);
 
         var next = Open();
-        Service<Flyback.Editor.Settings.OutputSettingRepository>(next).Current.Transport.ShouldBe(Flyback.Host.TransportEdge.Bottom);
+        Service<Flyback.Editor.Settings.OutputSettingRepository>(next).Current.Transport.ShouldBe(Host.TransportEdge.Bottom);
     }
 
     [AvaloniaFact]
@@ -151,11 +151,11 @@ public sealed class PageSettingsTests : EditorTest
         Picker(window, "pageOversample").SelectedIndex = 3;
         Settle(window);
 
-        Service<Flyback.Ui.Audio.IAudioEngine>(window).Oversample.ShouldBe(8);
+        Service<Ui.Audio.IAudioEngine>(window).Oversample.ShouldBe(8);
         Flyback.Editor.Settings.PageOutput.Parse(browser.Kept[Flyback.Editor.Settings.PageOutput.Section]).Oversample.ShouldBe(8);
 
         var next = Open();
-        Service<Flyback.Ui.Audio.IAudioEngine>(next).Oversample.ShouldBe(8);
+        Service<Ui.Audio.IAudioEngine>(next).Oversample.ShouldBe(8);
         PressGear(next);
         Picker(next, "pageOversample").SelectedIndex.ShouldBe(3);
     }
@@ -169,8 +169,8 @@ public sealed class PageSettingsTests : EditorTest
     {
         var read = Flyback.Editor.Settings.PageOutput.Parse(kept);
 
-        read.Transport.ShouldBe(Flyback.Host.TransportEdge.Top);
-        read.Oversample.ShouldBe(Flyback.Engine.Render.AudioRenderer.DefaultOversample);
+        read.Transport.ShouldBe(Host.TransportEdge.Top);
+        read.Oversample.ShouldBe(Engine.Render.AudioRenderer.DefaultOversample);
     }
 
     [AvaloniaFact]

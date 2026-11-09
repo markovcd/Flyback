@@ -48,8 +48,8 @@ internal static class KnobChip
     private static FormattedText Text(string text, Typeface face, double size, IBrush brush) =>
         new(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, face, size, brush);
 
-    private static readonly Typeface Mono = new(Flyback.Ui.Controls.Text.Mono);
-    private static readonly Typeface MonoBold = new(Flyback.Ui.Controls.Text.Mono, weight: FontWeight.SemiBold);
+    private static readonly Typeface Mono = new(Ui.Controls.Text.Mono);
+    private static readonly Typeface MonoBold = new(Ui.Controls.Text.Mono, weight: FontWeight.SemiBold);
     private static readonly IBrush ChipFill = new ImmutableSolidColorBrush(Colors.Separator);
     private static readonly IBrush Light = new ImmutableSolidColorBrush(Colors.Bright);
 }

@@ -52,13 +52,13 @@ internal static class HarmonographModule
             {
                 Help = "How hard a strike swings them: the chord's loudness and the line's darkness.",
             },
-            new PortSpec("speed", PortKind.Scalar, 0.4f, 0.05f, 4f) { Help = "The pen's turns a second." },
+            new PortSpec("speed", PortKind.Scalar, 0.4f, 0.05f) { Help = "The pen's turns a second." },
             new PortSpec("pitch", PortKind.Scalar, 220f, 20f, 4000f)
             {
                 Knee = 20f,
                 Help = "In hertz: the pendulums' rate for the chord.",
             },
-            new PortSpec("ratio", PortKind.Scalar, 1.5f, 0.5f, 4f)
+            new PortSpec("ratio", PortKind.Scalar, 1.5f, 0.5f)
             {
                 Help = "The second pendulum against the first: a fifth at 1.5, an octave at 2.",
             },

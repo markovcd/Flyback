@@ -29,7 +29,7 @@ internal sealed class SourceCompletionItem(Completion offered, int order) : ICom
             new TextBlock
             {
                 Text = offered.Kind.ToString().ToLowerInvariant(),
-                FontSize = Flyback.Ui.Controls.Text.Small,
+                FontSize = Ui.Controls.Text.Small,
                 Foreground = new SolidColorBrush(Colors.Inactive),
                 VerticalAlignment = VerticalAlignment.Center,
             },

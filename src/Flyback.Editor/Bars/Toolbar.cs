@@ -12,7 +12,6 @@ using Flyback.Editor.Gallery;
 using Flyback.Editor.Hubs;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Shell;
-using Flyback.Plugins.Hosting;
 using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 

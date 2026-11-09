@@ -1,14 +1,9 @@
-using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Flyback.Assist;
 using Flyback.Core.Graph;
-using Flyback.Editor.Assist;
-using Flyback.Editor.Shell;
 using Flyback.Engine.Graph;
-using Flyback.Plugins.Settings;
-using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
 

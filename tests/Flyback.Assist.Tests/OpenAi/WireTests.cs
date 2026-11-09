@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Flyback.Assist;
 using Flyback.Assist.OpenAi;
 using Shouldly;
 using Xunit;

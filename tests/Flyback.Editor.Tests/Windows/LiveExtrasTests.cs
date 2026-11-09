@@ -190,7 +190,7 @@ public class LiveExtrasTests : EditorTest
         Select(window, quantiser);
         Click(window, ExtrasButton(window));
 
-        while (!editor.View.Overview) editor.View.ZoomBy(new Avalonia.Point(0, 0), 0.8);
+        while (!editor.View.Overview) editor.View.ZoomBy(new Point(0, 0), 0.8);
         Settle(window);
 
         extras.IsOpen.ShouldBeFalse("the card shuts as the rows go");

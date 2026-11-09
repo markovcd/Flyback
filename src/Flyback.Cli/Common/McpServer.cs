@@ -27,7 +27,7 @@ internal sealed class McpServer(PluginCatalog plugins, IToolTarget target, strin
     /// <summary>A key given twice is refused while parsing rather than thrown on first read.</summary>
     private static readonly JsonDocumentOptions Strict = new() { AllowDuplicateProperties = false };
 
-    private readonly Lazy<Flyback.Assist.PatchWorkbench> blank = new(() =>
+    private readonly Lazy<Assist.PatchWorkbench> blank = new(() =>
         ToolCommand.Bench(plugins, Engine.Graph.Presets.Empty(plugins.Modules), settingsPath, delivery: target.Delivery));
 
     /// <summary>Answers each message on <paramref name="input"/> until it ends.</summary>
@@ -150,10 +150,10 @@ internal sealed class McpServer(PluginCatalog plugins, IToolTarget target, strin
 
     private async Task<JsonObject> Call(JsonNode id, JsonObject? parameters, CancellationToken cancel)
     {
-        if ((parameters?["name"] as JsonValue)?.TryGetValue(out string? tool) != true || string.IsNullOrEmpty(tool))
+        if (parameters?["name"] is not JsonValue name || !name.TryGetValue(out string? tool) || string.IsNullOrEmpty(tool))
             return Error(id, InvalidParams, "tools/call needs the tool's name.");
 
-        if (parameters!["arguments"] is not null and not JsonObject)
+        if (parameters["arguments"] is not null and not JsonObject)
             return Error(id, InvalidParams, "a tool's arguments are a JSON object.");
 
         if (tool == Say) return await Said(id, parameters["arguments"] as JsonObject, cancel).ConfigureAwait(false);

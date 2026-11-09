@@ -1,4 +1,3 @@
-using Flyback.Assist;
 using Flyback.Assist.OpenAi;
 using Flyback.Plugins.Settings;
 using Shouldly;

@@ -150,8 +150,8 @@ internal sealed class SongRows : Control
 
     private void DrawRuler(DrawingContext context)
     {
-        var faint = new Pen(new SolidColorBrush(Colors.Grid), 1);
-        var bar = new Pen(new SolidColorBrush(Colors.GridMajor), 1);
+        var faint = new Pen(new SolidColorBrush(Colors.Grid));
+        var bar = new Pen(new SolidColorBrush(Colors.GridMajor));
         var label = new SolidColorBrush(Colors.Muted);
 
         context.FillRectangle(new SolidColorBrush(Colors.Canvas), new Rect(RowLayout.NameWidth, 0, Layout.Window, RowLayout.RulerHeight));
@@ -213,18 +213,18 @@ internal sealed class SongRows : Control
         var end = Layout.X(levels.Count);
         context.FillRectangle(new SolidColorBrush(Colors.Label), new Rect(end - 2.5, top + inset - 2, 5, row - 2 * inset + 4));
 
-        context.DrawLine(new Pen(new SolidColorBrush(Colors.Separator), 1), new Point(RowLayout.NameWidth, top + row - 0.5), new Point(Bounds.Width, top + row - 0.5));
+        context.DrawLine(new Pen(new SolidColorBrush(Colors.Separator)), new Point(RowLayout.NameWidth, top + row - 0.5), new Point(Bounds.Width, top + row - 0.5));
     }
 
     private void DrawNames(DrawingContext context)
     {
         var column = new Rect(0, 0, RowLayout.NameWidth, Bounds.Height);
         context.FillRectangle(new SolidColorBrush(Colors.Panel), column);
-        context.DrawLine(new Pen(new SolidColorBrush(Colors.Edge), 1), new Point(RowLayout.NameWidth - 0.5, 0), new Point(RowLayout.NameWidth - 0.5, Bounds.Height));
+        context.DrawLine(new Pen(new SolidColorBrush(Colors.Edge)), new Point(RowLayout.NameWidth - 0.5, 0), new Point(RowLayout.NameWidth - 0.5, Bounds.Height));
 
         var ink = new SolidColorBrush(Colors.Label);
         var muted = new SolidColorBrush(Colors.Muted);
-        var outline = new Pen(new SolidColorBrush(Colors.Outline), 1);
+        var outline = new Pen(new SolidColorBrush(Colors.Outline));
 
         for (var p = 0; p < parts.Count; p++)
         {

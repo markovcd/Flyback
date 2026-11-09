@@ -26,7 +26,7 @@ internal static class SocketDiamond
 
         using (var sink = diamond.Open())
         {
-            sink.BeginFigure(new Point(center.X, center.Y - Reach), true);
+            sink.BeginFigure(new Point(center.X, center.Y - Reach));
             sink.LineTo(new Point(center.X + Reach, center.Y));
             sink.LineTo(new Point(center.X, center.Y + Reach));
             sink.LineTo(new Point(center.X - Reach, center.Y));

@@ -16,10 +16,10 @@ internal static class ScaleModule
         TypeId, "Scale 3D", DrawingsPlugin.Category,
         [
             ..Space3D.Point(),
-            new PortSpec("scale", PortKind.Scalar, 1f, -4f, 4f) { Help = "Every axis at once." },
-            new PortSpec("sx", PortKind.Scalar, 1f, -4f, 4f) { Help = "Across alone. Negative mirrors it." },
-            new PortSpec("sy", PortKind.Scalar, 1f, -4f, 4f) { Help = "Up alone. Negative mirrors it." },
-            new PortSpec("sz", PortKind.Scalar, 1f, -4f, 4f) { Help = "Depth alone. Negative mirrors it." },
+            new PortSpec("scale", PortKind.Scalar, 1f) { Help = "Every axis at once." },
+            new PortSpec("sx", PortKind.Scalar, 1f) { Help = "Across alone. Negative mirrors it." },
+            new PortSpec("sy", PortKind.Scalar, 1f) { Help = "Up alone. Negative mirrors it." },
+            new PortSpec("sz", PortKind.Scalar, 1f) { Help = "Depth alone. Negative mirrors it." },
         ],
         [.. Space3D.Point("Across, scaled.", "Up, scaled.", "Toward the viewer, scaled.")],
         (em, node) =>

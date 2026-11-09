@@ -9,7 +9,7 @@ namespace Flyback.Core.Tests.Graph;
 /// </summary>
 public class TypedValueTests
 {
-    private static PortSpec Shown(PortDisplay display) => new("x", PortKind.Scalar) { Display = display };
+    private static PortSpec Shown(PortDisplay display) => new("x") { Display = display };
 
     [Theory]
     [InlineData("0.9", 0.9f)]

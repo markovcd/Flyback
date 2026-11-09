@@ -51,7 +51,7 @@ public class GpuRenderTests
     [InlineData("-3000000000")]
     [InlineData("100000000000000000000")]
     public void The_GPU_draws_noise_far_out_as_the_processor_does(string z) =>
-        Agrees(Engine.Language.PatchLanguage.Build($"clouds(z: {z}, scale: 1.4) |> out.color", NodeCatalog.BuiltIn).Patch!);
+        Agrees(Engine.Language.PatchLanguage.Build($"clouds(z: {z}, scale: 1.4) |> out.color", NodeCatalog.BuiltIn).Patch);
 
     /// <summary>A value carried round per pixel, which on the GPU is a float target ping-ponged beside the history.</summary>
     [Fact]

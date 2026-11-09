@@ -57,7 +57,7 @@ public class LivePatchingSettingsTests : OutputSettingsTest
         var window = Open(SettingsPath);
         var live = Service<LivePatching>(window);
 
-        var document = Service<Flyback.Editor.Hubs.Document>(window);
+        var document = Service<Document>(window);
         document.TakeSource(document.AsText());
         live.Toggle();
         Settle(window);
@@ -81,7 +81,7 @@ public class LivePatchingSettingsTests : OutputSettingsTest
 
         Set(window, dialog => All<ComboBox>(dialog).Single(c => c.Name == "textWakes").SelectedIndex = 1);
 
-        var document = Service<Flyback.Editor.Hubs.Document>(window);
+        var document = Service<Document>(window);
         document.TakeSource(document.AsText());
         live.Toggle();
         Settle(window);
@@ -102,7 +102,7 @@ public class LivePatchingSettingsTests : OutputSettingsTest
 
         Set(window, dialog => All<ComboBox>(dialog).Single(c => c.Name == "textWakes").SelectedIndex = 1);
 
-        var document = Service<Flyback.Editor.Hubs.Document>(window);
+        var document = Service<Document>(window);
         document.TakeSource(document.AsText());
         live.Toggle();
         Settle(window);
@@ -129,7 +129,7 @@ public class LivePatchingSettingsTests : OutputSettingsTest
 
         Set(window, dialog => All<ComboBox>(dialog).Single(c => c.Name == "textWakes").SelectedIndex = 1);
 
-        var document = Service<Flyback.Editor.Hubs.Document>(window);
+        var document = Service<Document>(window);
         document.TakeSource(document.AsText());
         Play(window);
         live.Toggle();

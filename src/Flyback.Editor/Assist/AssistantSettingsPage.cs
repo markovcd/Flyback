@@ -5,7 +5,6 @@ using Flyback.Assist;
 using Flyback.Assist.Keys;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Shell;
-using Flyback.Plugins.Hosting;
 using Flyback.Ui.Controls;
 
 namespace Flyback.Editor.Assist;

@@ -3,7 +3,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
-using Flyback.Assist;
 using Flyback.Assist.Keys;
 using Flyback.Plugins.Settings;
 using Shouldly;

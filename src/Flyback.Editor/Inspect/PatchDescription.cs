@@ -124,7 +124,7 @@ internal sealed class PatchDescription(Func<Patch> patch, CaretFollow caret, Act
         };
 
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { cancel, save } };
-        var hint = Text.Quiet("Enter saves · Esc cancels", Text.Small);
+        var hint = Text.Quiet("Enter saves · Esc cancels");
         hint.VerticalAlignment = VerticalAlignment.Center;
         hint.Margin = new Thickness(0, 0, 8, 0);
 

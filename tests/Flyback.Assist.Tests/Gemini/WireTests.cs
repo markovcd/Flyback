@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json.Nodes;
-using Flyback.Assist;
 using Flyback.Assist.Gemini;
 using Flyback.Core.Graph;
 using Shouldly;
