@@ -1398,24 +1398,8 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : Head
         && canvas.GetVisualParent() != Service<FullScreenPreview>().Columns);
 
     /// <summary>Double-clicks the picture, which gives it the whole window.</summary>
-    /// <remarks>
-    /// The tap and the double tap a double-click is recognized as, raised on the picture.
-    /// Headless clicks are stamped when they are injected, so on a busy machine the second
-    /// can land past the double-click time.
-    /// </remarks>
     public void FullScreen() =>
-        DoWindow((open, _) =>
-        {
-            var preview = open.GetVisualDescendants().OfType<PreviewHost>().Single();
-            var at = new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 2);
-            var pointer = new Pointer(Pointer.GetNextFreeId(), PointerType.Mouse, isPrimary: true);
-            var released = new PointerEventArgs(
-                InputElement.PointerReleasedEvent, preview, pointer, preview, at, 0,
-                new PointerPointProperties(), KeyModifiers.None);
-
-            preview.RaiseEvent(new TappedEventArgs(InputElement.TappedEvent, released));
-            preview.RaiseEvent(new TappedEventArgs(InputElement.DoubleTappedEvent, released));
-        });
+        DoWindow((open, _) => UiTest.DoubleClick(open.GetVisualDescendants().OfType<PreviewHost>().Single()));
 
     /// <summary>How many times the picture has been tapped, so each tap lands apart from the last.</summary>
     private int pictureTaps;

@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -78,6 +79,23 @@ public abstract class UiTest : IDisposable
 
     /// <summary>Presses a button the way a click would, without a pointer.</summary>
     public static void Press(Button button) => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+    /// <summary>Double-clicks the middle of a control, raised as the tap and the double tap it is recognized as.</summary>
+    /// <remarks>
+    /// Headless clicks are stamped when they are injected, so on a loaded runner two of them
+    /// can land past the double-click time and be read as two single clicks.
+    /// </remarks>
+    public static void DoubleClick(Control control)
+    {
+        var at = new Point(control.Bounds.Width / 2, control.Bounds.Height / 2);
+        var pointer = new Pointer(Pointer.GetNextFreeId(), PointerType.Mouse, isPrimary: true);
+        var released = new PointerEventArgs(
+            InputElement.PointerReleasedEvent, control, pointer, control, at, 0,
+            new PointerPointProperties(), KeyModifiers.None);
+
+        control.RaiseEvent(new TappedEventArgs(InputElement.TappedEvent, released));
+        control.RaiseEvent(new TappedEventArgs(InputElement.DoubleTappedEvent, released));
+    }
 
     /// <summary>Runs layout to completion, after something has changed the tree.</summary>
     public static void Settle(Window window)
