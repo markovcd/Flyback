@@ -75,7 +75,7 @@ internal sealed class LivePatching : IReactTo<ViewChanged>, IReactTo<OwnershipCh
     /// <summary>Whether it is the patch's text that is over the picture, which takes the keys typed.</summary>
     public bool Coding => lifted == source;
 
-    /// <summary>Whether the line saying text wants a keyboard is showing: text over the picture, and no key pressed yet.</summary>
+    /// <summary>Whether the line saying text wants a keyboard is showing: text over the picture, and no key pressed yet; tests read it back.</summary>
     internal bool KeyboardHinted => keyboardHint.IsVisible;
 
     /// <summary>
@@ -123,7 +123,7 @@ internal sealed class LivePatching : IReactTo<ViewChanged>, IReactTo<OwnershipCh
         overlay.PatchOver = IsOn;
     }
 
-    /// <summary>The fading of the patch while nothing touches it.</summary>
+    /// <summary>The fading of the patch while nothing touches it; tests read it back.</summary>
     internal IdleFade Fade => fade;
 
     /// <summary>How the patch looks over the picture, and when it fades.</summary>

@@ -48,7 +48,7 @@ internal sealed class StepBar(SocketFocus focus, CanvasSelection selection, View
         return null;
     }
 
-    /// <summary>The middle of the button labeled <paramref name="label"/> on screen, while the bar shows.</summary>
+    /// <summary>The middle of the button labeled <paramref name="label"/> on screen, while the bar shows; only tests call it.</summary>
     public Point? Center(string label) =>
         Box is { } box && Array.IndexOf(Labels, label) is var index and >= 0 ? Button(box, index).Center : null;
 

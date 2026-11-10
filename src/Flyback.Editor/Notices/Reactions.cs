@@ -107,6 +107,7 @@ internal sealed class Reactions(IServiceProvider? provider = null) : IDisposable
     public IDisposable Add<T>(Func<T, Task> on, int priority = 0) where T : INotice => Add(new Reaction<T>(on, priority));
 
     /// <inheritdoc cref="Add{T}(IReactTo{T})"/>
+    /// <remarks>Only tests call it.</remarks>
     public IDisposable Add<T>(Action<T> on, int priority = 0) where T : INotice => Add<T>(
         notice =>
         {

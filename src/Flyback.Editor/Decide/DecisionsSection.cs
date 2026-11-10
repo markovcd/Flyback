@@ -153,7 +153,7 @@ internal sealed class DecisionsSection : ISettingsSection
         ShowModel();
     }
 
-    /// <summary>Picks the use the form is shown for, by the picker's own wording; <see cref="EveryUse"/> for the model's own settings.</summary>
+    /// <summary>Picks the use the form is shown for, by the picker's own wording; <see cref="EveryUse"/> for the model's own settings; only tests call it.</summary>
     internal void ShowUse(string wording) => useBox.SelectedItem = wording;
 
     public void Save()

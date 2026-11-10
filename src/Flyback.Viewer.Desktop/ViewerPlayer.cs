@@ -132,7 +132,7 @@ internal sealed class ViewerPlayer : IDisposable
     /// <summary>The sound engine, for the tests that read its clock and its blocks.</summary>
     internal AudioEngine Audio { get; }
 
-    /// <summary>Completes once the patch opened here runs compiled, which is when it starts to play.</summary>
+    /// <summary>Completes once the patch opened here runs compiled, which is when it starts to play; only tests call it.</summary>
     internal Task Compiled() => compiler.Settled();
 
     /// <summary>Whether a sound device is running, or will be once play resumes.</summary>

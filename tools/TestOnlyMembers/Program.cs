@@ -49,6 +49,9 @@ static async Task Run(string sln, string outFile)
                         // nameof(Type.Method), which the IL backend's reflection lookups use, names a method group.
                         if (sym == null && info.CandidateReason == CandidateReason.MemberGroup)
                             foreach (var candidate in info.CandidateSymbols) Mark(candidate);
+                        // A type handed to the container as a type argument is built by it.
+                        if (sym is INamedTypeSymbol built && n.Parent is TypeArgumentListSyntax)
+                            foreach (var constructor in built.InstanceConstructors) Mark(constructor);
                         break;
                     }
                     case ObjectCreationExpressionSyntax o: sym = sm.GetSymbolInfo(o).Symbol; break;
@@ -68,7 +71,12 @@ static async Task Run(string sln, string outFile)
                     // self reference: inside own declaration
                     if (s.Locations.Any(l => l.IsInSource && l.SourceTree == tree && node.Span.IntersectsWith(l.SourceSpan)) && node is SimpleNameSyntax && IsDeclId(node)) return;
                     if (test) testUse.GetOrAdd(Key(s), _ => new()).Add(file + ":" + (tree.GetLineSpan(node.Span).StartLinePosition.Line + 1));
-                    else srcUse.AddOrUpdate(Key(s), 1, (_, v) => v + 1);
+                    else
+                    {
+                        srcUse.AddOrUpdate(Key(s), 1, (_, v) => v + 1);
+                        // A member used is its type used, as an extension method's class is.
+                        if (s.ContainingType is { } owner) srcUse.AddOrUpdate(Key(owner.OriginalDefinition), 1, (_, v) => v + 1);
+                    }
                 }
             }
             if (!test)
@@ -99,6 +107,7 @@ static async Task Run(string sln, string outFile)
         if (s is IMethodSymbol { MethodKind: MethodKind.PropertyGet or MethodKind.PropertySet or MethodKind.EventAdd or MethodKind.EventRemove }) continue;
         if (s is IMethodSymbol { IsOverride: true } || s is IPropertySymbol { IsOverride: true }) continue;
         if (Implements(s)) continue;
+        if (CalledFromOutside(s)) continue;
         var kind = s.Kind == SymbolKind.Method ? ((IMethodSymbol)s).MethodKind.ToString() : s.Kind.ToString();
         lines.Add($"{d.proj}\t{kind}\t{s.DeclaredAccessibility}\t{s.ToDisplayString(SymbolDisplayFormat.CSharpShortErrorMessageFormat)}\t{s.ContainingType?.ToDisplayString() ?? s.ContainingNamespace.ToDisplayString()}\t{d.loc}\t{bag.Count}\t{string.Join(" | ", bag.Select(Path.GetFileName).Distinct().Take(3))}");
     }
@@ -108,6 +117,14 @@ static async Task Run(string sln, string outFile)
 }
 
 static string Key(ISymbol s) => s.ContainingAssembly?.Name + "|" + (s.GetDocumentationCommentId() ?? s.ToDisplayString());
+
+// What the runtime reaches without a call in src: an entry point's class, a plugin's class, an enum's values.
+static bool CalledFromOutside(ISymbol s) => s switch
+{
+    INamedTypeSymbol type => type.GetMembers("Main").Any(m => m.IsStatic) || type.AllInterfaces.Any(i => i.Name == "IFlybackPlugin"),
+    IFieldSymbol { ContainingType.TypeKind: TypeKind.Enum } => true,
+    _ => false,
+};
 
 static bool IsDeclId(SyntaxNode n) => n.Parent switch
 {

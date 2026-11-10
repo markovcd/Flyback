@@ -197,13 +197,6 @@ internal sealed class PluginHub : IDisposable
 
     public StackPanel View { get; }
 
-    /// <summary>Reads what is installed and asks the site for its first page.</summary>
-    public async Task LoadAsync()
-    {
-        await RereadAsync();
-        await AskSiteAsync();
-    }
-
     /// <summary>Asks the site for the first page of what matches.</summary>
     public Task AskSiteAsync() => AskAsync(fresh: true);
 

@@ -40,10 +40,10 @@ public class PatchesTests
     [Fact]
     public void A_bundle_is_told_from_a_patch_by_extension_whatever_its_case()
     {
-        Patches.Bundled(new FileInfo("song" + PatchBundle.Extension)).ShouldBeTrue();
-        Patches.Bundled(new FileInfo("song" + PatchBundle.Extension.ToUpperInvariant())).ShouldBeTrue();
-        Patches.Bundled(new FileInfo("song.fbk")).ShouldBeFalse();
-        Patches.Bundled(new FileInfo("song")).ShouldBeFalse();
+        PatchFile.Bundled(new FileInfo("song" + PatchBundle.Extension)).ShouldBeTrue();
+        PatchFile.Bundled(new FileInfo("song" + PatchBundle.Extension.ToUpperInvariant())).ShouldBeTrue();
+        PatchFile.Bundled(new FileInfo("song.fbk")).ShouldBeFalse();
+        PatchFile.Bundled(new FileInfo("song")).ShouldBeFalse();
     }
 
     /// <summary>

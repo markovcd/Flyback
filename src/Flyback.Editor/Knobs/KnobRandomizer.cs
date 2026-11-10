@@ -105,7 +105,7 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
     /// <summary>Runs something after a while, on the UI thread; by hand in a test.</summary>
     public Action<TimeSpan, Action> After { get; set; } = (delay, act) => DispatcherTimer.RunOnce(act, delay);
 
-    /// <summary>Whether knobs are still on their way.</summary>
+    /// <summary>Whether knobs are still on their way; tests read it back.</summary>
     public bool Gliding => gliding is not null;
 
     private RandomizeSettings Wanted => settings.Current.Randomize;

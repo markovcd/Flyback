@@ -99,6 +99,7 @@ internal sealed class MainWindow : Window
     public void Start() => view.Start();
 
     /// <inheritdoc cref="EditorView.ClearPresetSelection"/>
+    /// <remarks>Only tests call it.</remarks>
     internal void ClearPresetSelection() => view.ClearPresetSelection();
 
     // The editing session as opposed to the patch: undo and redo from wherever the

@@ -60,7 +60,7 @@ public sealed class PluginHubTests : EditorTest
 
         var window = Show(content, width: 700);
         Attach(container, window);
-        _ = hub.LoadAsync();
+        _ = Load(hub);
         Pump(() => Names(hub.View, "sitePlugins").Any() || Status(hub, "siteStatus") is not ("" or "Looking…"));
         Settle(window);
 
@@ -300,7 +300,7 @@ public sealed class PluginHubTests : EditorTest
 
         var window = Show(hub.View, width: 700);
         Attach(container, window);
-        _ = hub.LoadAsync();
+        _ = Load(hub);
         Pump(() => Status(hub, "siteStatus")!.Contains("did not answer"));
         Settle(window);
 
@@ -403,6 +403,13 @@ public sealed class PluginHubTests : EditorTest
         Settle(window);
 
         return window;
+    }
+
+    /// <summary>What the plugins dialog does on opening: reads what is installed, then asks the site.</summary>
+    private static async Task Load(PluginHub hub)
+    {
+        await hub.RereadAsync();
+        await hub.AskSiteAsync();
     }
 
     private static PluginPackage Picture() => PluginPackage.ReadAsync(new MemoryStream(Packages.For("win", "osx", "linux"))).Result;

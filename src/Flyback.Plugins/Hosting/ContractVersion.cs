@@ -39,7 +39,7 @@ internal static class ContractVersion
     public static string? Refusal(Assembly plugin) =>
         Reason(plugin.GetReferencedAssemblies()) is { } reason ? Ignored(reason) : null;
 
-    /// <summary>The same question about one reference.</summary>
+    /// <summary>The same question about one reference; only tests call it.</summary>
     public static string? Refusal(AssemblyName reference, Version offered) =>
         Reason(reference, offered) is { } reason ? Ignored(reason) : null;
 

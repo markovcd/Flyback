@@ -76,7 +76,7 @@ internal static class ToolbarButtons
         button.Height = shown ? 42 : 30;
     }
 
-    /// <summary>The legend a button prints, or null for one that has none.</summary>
+    /// <summary>The legend a button prints, or null for one that has none; only tests call it.</summary>
     internal static string? LegendOf(ContentControl button) =>
         button.Content is StackPanel { Children: [_, TextBlock legend] } ? legend.Text : null;
 

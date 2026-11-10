@@ -19,9 +19,6 @@ internal static class Patches
         return open.Patch;
     }
 
-    /// <summary>Whether a path names a bundle rather than a patch.</summary>
-    public static bool Bundled(FileInfo file) => PatchFile.Bundled(file);
-
     /// <summary>Whether a path names the patch written as text rather than as a document.</summary>
     public static bool Sourced(FileInfo file) => PatchFile.Sourced(file);
 

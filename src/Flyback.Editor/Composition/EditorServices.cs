@@ -69,7 +69,7 @@ internal static class EditorServices
         return Build(new ServiceCollection().AddEditor(setup ?? new EditorSetup()), replace, validate);
     }
 
-    /// <summary>The canvas's services alone, without the rest of the editor.</summary>
+    /// <summary>The canvas's services alone, without the rest of the editor; only tests call it.</summary>
     public static ServiceProvider CanvasProvider(Action<IServiceCollection>? replace = null, bool validate = false) =>
         Build(new ServiceCollection().AddCanvas(), replace, validate);
 

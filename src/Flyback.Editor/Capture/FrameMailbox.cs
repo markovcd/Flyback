@@ -29,7 +29,7 @@ internal sealed class FrameMailbox
         consuming = new byte[bytes];
     }
 
-    /// <summary>Frames published, whether or not anyone collected them.</summary>
+    /// <summary>Frames published, whether or not anyone collected them; tests read it back.</summary>
     public long Published => Volatile.Read(ref published);
 
     /// <summary>Where the producer writes. The same array until <see cref="Publish"/>.</summary>

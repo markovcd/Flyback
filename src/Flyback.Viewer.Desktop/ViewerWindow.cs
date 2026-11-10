@@ -177,7 +177,7 @@ internal sealed class ViewerWindow : Window
     /// <summary>The player behind the window, for whoever drives it.</summary>
     internal ViewerPlayer Player { get; }
 
-    /// <summary>The picture's surface, or null for a run with no picture.</summary>
+    /// <summary>The picture's surface, or null for a run with no picture; tests read it back.</summary>
     internal PreviewHost? Preview => preview;
 
     /// <summary>The transport over the picture, or null for a run that asked for none.</summary>

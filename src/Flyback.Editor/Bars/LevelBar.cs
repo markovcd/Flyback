@@ -37,7 +37,7 @@ internal sealed class LevelBar : Control
         Height = Dot;
     }
 
-    /// <summary>The level, in dB, now.</summary>
+    /// <summary>The level, in dB, now; tests read it back.</summary>
     public double Level => level;
 
     /// <summary>The loudest level of the last <see cref="HoldFor"/>, in dB.</summary>

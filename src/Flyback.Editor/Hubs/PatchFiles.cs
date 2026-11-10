@@ -166,7 +166,7 @@ internal sealed class PatchFiles
     /// <summary>What a restart opens to bring the document back, or null where nothing names it: a file on disk or a preset the site shared.</summary>
     public Reopen? Reopen { get; private set; }
 
-    /// <summary>Whether the document is a bundle, which is what the next save offers first.</summary>
+    /// <summary>Whether the document is a bundle, which is what the next save offers first; tests read it back.</summary>
     public bool IsBundle => bundled;
 
     /// <summary>

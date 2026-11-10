@@ -67,7 +67,7 @@ internal sealed class Measuring : IReactTo<MeasureAsked>, IReactTo<DocumentArriv
         return Task.CompletedTask;
     }
 
-    /// <summary>Whether a measurement is under way.</summary>
+    /// <summary>Whether a measurement is under way; tests read it back.</summary>
     public bool Running => running is not null;
 
     /// <summary>What pressing Measure would do now.</summary>

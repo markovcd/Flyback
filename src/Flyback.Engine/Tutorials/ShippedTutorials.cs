@@ -17,7 +17,7 @@ internal static class ShippedTutorials
         string.Equals(t.Id, name, StringComparison.OrdinalIgnoreCase)
         || string.Equals(t.Title, name, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>The ids of every tutorial file the assembly carries, listed in <see cref="Order"/> or not.</summary>
+    /// <summary>The ids of every tutorial file the assembly carries, listed in <see cref="Order"/> or not; tests read it back.</summary>
     internal static IEnumerable<string> Carried => typeof(ShippedTutorials).Assembly
         .GetManifestResourceNames()
         .Where(n => n.StartsWith(Prefix, StringComparison.Ordinal))

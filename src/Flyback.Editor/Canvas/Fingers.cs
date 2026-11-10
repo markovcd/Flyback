@@ -105,7 +105,7 @@ internal sealed class Fingers
         holdTimer.Tick += (_, _) => Held();
     }
 
-    /// <summary>How many fingers are on the canvas.</summary>
+    /// <summary>How many fingers are on the canvas; tests read it back.</summary>
     public int Count => down.Count;
 
     public void Down(Control on, IPointer pointer, Point screen, ulong time)

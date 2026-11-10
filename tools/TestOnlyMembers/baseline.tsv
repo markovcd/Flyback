@@ -6,7 +6,6 @@ Flyback.Core	Ordinary	Public	PictureExtra.Set(NodeInstance, string)	Flyback.Core
 Flyback.Core	Ordinary	Public	SampleExtra.Set(NodeInstance, string)	Flyback.Core.Graph.Extras.SampleExtra
 Flyback.Core	Property	Public	LoadedMidi.Notes	Flyback.Core.Compile.LoadedMidi
 Flyback.Core	Property	Public	LoadedMidi.Seconds	Flyback.Core.Compile.LoadedMidi
-Flyback.Engine	Constructor	Public	IlCompiler.IlCompiler(IIlCompilerSetup?)	Flyback.Engine.Compile.IlCompiler
 Flyback.Engine	Ordinary	Public	IlProgram.Compile(CompiledPatch, IlParts, int)	Flyback.Engine.Compile.IlProgram
 Flyback.Engine	Ordinary	Public	MovieRenderer.Render(Stream, CompiledPatch, CompiledPatch?, MovieSettings, IProgress<double>?, CancellationToken)	Flyback.Engine.Render.MovieRenderer
 Flyback.Engine	Property	Public	ImageLibrary.Count	Flyback.Engine.Render.ImageLibrary
@@ -16,16 +15,8 @@ Flyback.Core	Ordinary	Public	PatchBuilder.Add(string, params (int Port, float Va
 Flyback.Core	Ordinary	Public	PatchBuilder.Build()	Flyback.Core.Graph.PatchBuilder
 Flyback.Core	Ordinary	Public	PatchBuilder.Wire(NodeInstance, int, NodeInstance, int)	Flyback.Core.Graph.PatchBuilder
 Flyback.Assist	Property	Internal	AssistantConfig.Unset	Flyback.Assist.AssistantConfig
-Flyback.Assist	Property	Internal	DecisionConfig.Unset	Flyback.Assist.Decide.DecisionConfig
 Flyback.Assist	Property	Public	Decisions.None	Flyback.Assist.Decide.Decisions
-Flyback.Cli	NamedType	Internal	Program	Flyback.Cli
-Flyback.Cli	Ordinary	Public	Patches.Bundled(FileInfo)	Flyback.Cli.Common.Patches
-Flyback.Core	Ordinary	Internal	Patch.SoleOutgoingFrom(Guid, int)	Flyback.Core.Graph.Patch
-Flyback.Editor	Constructor	Public	AssistantSettingRepository.AssistantSettingRepository(EditorFolders, AssistantSettings?)	Flyback.Editor.Assist.AssistantSettingRepository
-Flyback.Editor	Constructor	Public	PresetThumbnails.PresetThumbnails(PluginCatalog, IlCompiler?, EditorFolders?, EditorHost?, PresetLibrary?, IStillShelf?)	Flyback.Editor.Gallery.PresetThumbnails
-Flyback.Editor	Constructor	Public	ReportLine.ReportLine()	Flyback.Editor.ReportLine
 Flyback.Editor	Field	Internal	StepList.InsertHeightForTests	Flyback.Editor.Inspect.StepList
-Flyback.Editor	Field	Public	MeasurePictureSize.Large	Flyback.Editor.Canvas.MeasurePictureSize
 Flyback.Editor	Ordinary	Internal	DecisionsSection.ShowUse(string)	Flyback.Editor.Decide.DecisionsSection
 Flyback.Editor	Ordinary	Internal	Inspector.TurnPictures()	Flyback.Editor.Inspect.Inspector
 Flyback.Editor	Ordinary	Internal	MainWindow.ClearPresetSelection()	Flyback.Editor.Composition.MainWindow
@@ -34,7 +25,6 @@ Flyback.Editor	Ordinary	Internal	Recovery.Abandon()	Flyback.Editor.Files.Recover
 Flyback.Editor	Ordinary	Internal	ToolbarButtons.LegendOf(ContentControl)	Flyback.Editor.Controls.ToolbarButtons
 Flyback.Editor	Ordinary	Public	AssistantPanel.ConversationToSave()	Flyback.Editor.Assist.AssistantPanel
 Flyback.Editor	Ordinary	Public	EditorServices.CanvasProvider(Action<IServiceCollection>?, bool)	Flyback.Editor.Composition.EditorServices
-Flyback.Editor	Ordinary	Public	PluginHub.LoadAsync()	Flyback.Editor.PluginPackages.PluginHub
 Flyback.Editor	Ordinary	Public	PresetThumbnails.IsAsked(PatchPreset)	Flyback.Editor.Gallery.PresetThumbnails
 Flyback.Editor	Ordinary	Public	Reactions.Add<T>(Action<T>, int)	Flyback.Editor.Notices.Reactions
 Flyback.Editor	Ordinary	Public	Recovery.Keep(RecoveredWork?)	Flyback.Editor.Files.Recovery
@@ -63,13 +53,10 @@ Flyback.Plugins	Ordinary	Public	ContractVersion.Refusal(AssemblyName, Version)	F
 Flyback.Plugins	Ordinary	Public	IAudioCapture.Stop()	Flyback.Plugins.Audio.IAudioCapture
 Flyback.Plugins	Ordinary	Public	PluginTrust.Shipped(string)	Flyback.Plugins.Hosting.PluginTrust
 Flyback.Plugins	Property	Public	IAudioCapture.SampleRate	Flyback.Plugins.Audio.IAudioCapture
-Flyback.Plugins.WinIO	NamedType	Public	WinIOPlugin	Flyback.Plugins.WinIO
 Flyback.Ui	Constructor	Public	StallStep.StallStep(string, long)	Flyback.Ui.StallStep
-Flyback.Ui	NamedType	Public	GraphicsDrivers	Flyback.Ui
 Flyback.Ui	Property	Internal	StageKnobs.Knobs	Flyback.Ui.Controls.StageKnobs
 Flyback.Ui	Property	Internal	TuckedAway.DotsOpacity	Flyback.Ui.Controls.TuckedAway
 Flyback.Ui	Property	Public	LineIn.IsListening	Flyback.Ui.Audio.LineIn
 Flyback.Ui	Property	Public	StatsOverlay.Said	Flyback.Ui.Controls.StatsOverlay
-Flyback.Viewer.Desktop	NamedType	Internal	Program	Flyback.Viewer.Desktop
 Flyback.Viewer.Desktop	Ordinary	Internal	ViewerPlayer.Compiled()	Flyback.Viewer.Desktop.ViewerPlayer
 Flyback.Viewer.Desktop	Property	Internal	ViewerWindow.Preview	Flyback.Viewer.Desktop.ViewerWindow

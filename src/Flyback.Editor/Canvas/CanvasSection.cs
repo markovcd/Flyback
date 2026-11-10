@@ -310,7 +310,7 @@ internal sealed class CanvasSection : ISettingsSection
             ? "use the new colors"
             : null;
 
-    /// <summary>The name of the color scheme the editor starts in next time, as last saved.</summary>
+    /// <summary>The name of the color scheme the editor starts in next time, as last saved; tests read it back.</summary>
     internal string ColorScheme => saved.ColorScheme;
 
     /// <summary>Looks again for schemes, so one put in the folder since is offered.</summary>

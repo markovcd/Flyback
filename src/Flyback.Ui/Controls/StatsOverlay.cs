@@ -72,7 +72,7 @@ public sealed class StatsOverlay : Border
         };
     }
 
-    /// <summary>What the line says now.</summary>
+    /// <summary>What the line says now; tests read it back.</summary>
     public string Said => line.Text ?? string.Empty;
 
     /// <summary>Shows the line, or puts it away.</summary>

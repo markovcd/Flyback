@@ -70,7 +70,7 @@ public class SystemOneModelTests
     public void With_no_endpoint_set_it_asks_a_laya_serve_on_this_machine()
     {
         model.Endpoint(SettingValues.None).ShouldBe(new Uri("http://localhost:8000/v1/systemone"));
-        model.Unavailable(DecisionConfig.Unset).ShouldBeNull();
+        model.Unavailable(new DecisionConfig(KeyedClient.None, SettingValues.None, null)).ShouldBeNull();
     }
 
     [Fact]

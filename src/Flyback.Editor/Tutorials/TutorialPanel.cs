@@ -59,7 +59,7 @@ internal sealed class TutorialPanel : UserControl, IReactTo<PatchChanged>
     /// <summary>What the patch still lacks for the step being worked on, or null where it lacks nothing or nothing is checked.</summary>
     public string? Hint { get; private set; }
 
-    /// <summary>Whether each step of <see cref="Taking"/> has been done.</summary>
+    /// <summary>Whether each step of <see cref="Taking"/> has been done; tests read it back.</summary>
     public IReadOnlyList<bool> Done => met;
 
     public Task On(PatchChanged notice)

@@ -68,7 +68,7 @@ internal static class ModuleGlyphs
     public static Geometry? OfCategory(string category) =>
         ByCategory.TryGetValue(category, out var family) ? Given(family) : null;
 
-    /// <summary>The type ids that have a mark of their own.</summary>
+    /// <summary>The type ids that have a mark of their own; tests read it back.</summary>
     public static IEnumerable<string> Named => Own.Keys;
 
     /// <summary>Several modules drawn as one: two blocks inside a frame of corners.</summary>

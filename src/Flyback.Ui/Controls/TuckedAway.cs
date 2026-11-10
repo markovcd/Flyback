@@ -178,7 +178,7 @@ public abstract class TuckedAway : Border
     /// <summary>The dots, for the tests that steer a pointer at them.</summary>
     internal Control Dots { get; }
 
-    /// <summary>How solid the dots are now.</summary>
+    /// <summary>How solid the dots are now; tests read it back.</summary>
     internal double DotsOpacity => Dots.Opacity;
 
     /// <summary>Whether the contents are showing.</summary>

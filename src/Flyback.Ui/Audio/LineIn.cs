@@ -43,7 +43,7 @@ internal sealed class LineIn : IDisposable
     /// <summary>The device would not open, or stopped. Said out loud because the patch goes on naming a Line In that is now silent.</summary>
     public event Action<string>? Trouble;
 
-    /// <summary>Whether a device is open and listening.</summary>
+    /// <summary>Whether a device is open and listening; tests read it back.</summary>
     public bool IsListening => capture is { IsRunning: true };
 
     /// <summary>Opens or closes the device to match what the playing sound reads.</summary>

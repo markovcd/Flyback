@@ -135,7 +135,7 @@ public class AutoRemapInspectorTests : EditorTest
         window.MouseUp(to, MouseButton.Left);
         Settle(window);
 
-        Editor(window).History.Patch.SoleOutgoingFrom(remap.Id, 0).ShouldNotBeNull();
+        Editor(window).History.Patch.Connections.Count(c => c.SourceNode == remap.Id && c.SourcePort == 0).ShouldBe(1);
         Outlined(window).ShouldBe([false, false, true, true]);
     }
 }

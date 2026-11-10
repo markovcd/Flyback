@@ -136,7 +136,7 @@ internal sealed class RollCell
 
     public Control Root { get; }
 
-    /// <summary>The flyout holding the amount, the glide and the controller button.</summary>
+    /// <summary>The flyout holding the amount, the glide and the controller button; tests read it back.</summary>
     internal Flyout Settings => settings;
 
     /// <param name="steps">How many randomizes back can step through.</param>

@@ -145,7 +145,7 @@ internal sealed class PresetThumbnails
         }, cancel);
     }
 
-    /// <summary>Whether <paramref name="preset"/>'s thumbnail has been asked for.</summary>
+    /// <summary>Whether <paramref name="preset"/>'s thumbnail has been asked for; only tests call it.</summary>
     public bool IsAsked(PatchPreset preset) => drawn.ContainsKey(preset);
 
     /// <summary>

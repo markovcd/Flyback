@@ -78,7 +78,7 @@ internal sealed class Recovery : IDisposable
     /// Replaces what is kept with <paramref name="work"/>. Written beside the file and
     /// moved over it, so a crash in the middle of writing leaves the last whole one.
     /// </summary>
-    /// <remarks>Safe from any thread; the latest call to be made wins, whichever finishes last.</remarks>
+    /// <remarks>Safe from any thread; the latest call to be made wins, whichever finishes last. Only tests call it.</remarks>
     public void Keep(RecoveredWork? work) => Later(work)();
 
     /// <summary>
@@ -176,7 +176,7 @@ internal sealed class Recovery : IDisposable
         Delete(Path.ChangeExtension(path, LockExtension));
     }
 
-    /// <summary>Lets go of the lock and leaves the snapshot where it is, which is what a crash does.</summary>
+    /// <summary>Lets go of the lock and leaves the snapshot where it is, which is what a crash does; only tests call it.</summary>
     internal void Abandon() => held.Dispose();
 
     /// <summary>A window closing: whatever it was asked about has been answered, so nothing is kept.</summary>

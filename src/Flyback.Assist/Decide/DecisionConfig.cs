@@ -7,8 +7,4 @@ namespace Flyback.Assist.Decide;
 /// <param name="Client">What to send requests over, which signs them (ADR-0158).</param>
 /// <param name="Values">Every setting this model declared, as it stands.</param>
 /// <param name="Folder">Where the host keeps this model's files, or null where it keeps none.</param>
-public sealed record DecisionConfig(IKeyedClient Client, SettingValues Values, string? Folder)
-{
-    /// <summary>Nothing configured.</summary>
-    internal static DecisionConfig Unset { get; } = new(KeyedClient.None, SettingValues.None, null);
-}
+public sealed record DecisionConfig(IKeyedClient Client, SettingValues Values, string? Folder);

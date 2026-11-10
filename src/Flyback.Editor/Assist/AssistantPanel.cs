@@ -270,7 +270,7 @@ internal sealed class AssistantPanel : UserControl
     /// "No longer about it" is the rule a message already follows: a module or wire
     /// changed underneath a conversation starts a new one (see <see cref="Restarting"/>), so
     /// saving the old one with it would only bring back, next time, a conversation
-    /// that could not honestly go on.
+    /// that could not honestly go on. Only tests call it.
     /// </remarks>
     public string? ConversationToSave() => conversation.ConversationToSave();
 
@@ -278,6 +278,7 @@ internal sealed class AssistantPanel : UserControl
     /// Whether there is a turn in the conversation that saving the patch would keep
     /// and closing it would lose.
     /// </summary>
+    /// <remarks>Tests read it back.</remarks>
     public bool ConversationUnsaved => conversation.ConversationUnsaved;
 
     // --- starting from a prompt -----------------------------------------------

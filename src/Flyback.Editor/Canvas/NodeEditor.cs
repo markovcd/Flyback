@@ -166,7 +166,7 @@ internal sealed class NodeEditor
     /// <summary>The graph-to-control matrix, for a test asking where a socket ended up on the control.</summary>
     internal Matrix GraphToScreen => View.GraphToScreen;
 
-    /// <summary>How opaque a module's fill is drawn: see-through over the picture, unless its value is in hand.</summary>
+    /// <summary>How opaque a module's fill is drawn: see-through over the picture, unless its value is in hand; only tests call it.</summary>
     internal double FillOpacity(Guid node) => glass.FillOpacity(node);
 
     /// <summary>Whether the patch is drawn over the picture, for live patching.</summary>

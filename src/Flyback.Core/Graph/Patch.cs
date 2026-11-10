@@ -626,26 +626,6 @@ public sealed class Patch
         Connections.FirstOrDefault(c => c.TargetNode == node && c.TargetPort == port);
 
     /// <summary>
-    /// The one wire leaving an output, or null where none does or several do.
-    /// Not quite the mirror of <see cref="IncomingTo"/>: an input takes at most
-    /// one wire, an output fans out.
-    /// </summary>
-    internal Connection? SoleOutgoingFrom(Guid node, int port)
-    {
-        Connection? only = null;
-
-        foreach (var wire in Connections)
-        {
-            if (wire.SourceNode != node || wire.SourcePort != port) continue;
-            if (only is not null) return null;
-
-            only = wire;
-        }
-
-        return only;
-    }
-
-    /// <summary>
     /// Which halves of the Output have anything wired into them: whether there
     /// is a picture to see, and whether there is a sound to hear.
     /// </summary>

@@ -15,6 +15,6 @@ namespace Flyback.Assist;
 /// <param name="Values">Every setting this provider declared, as it stands.</param>
 public sealed record AssistantConfig(IKeyedClient Client, SettingValues Values)
 {
-    /// <summary>Nothing configured, which is what a provider is asked about before anybody has.</summary>
+    /// <summary>Nothing configured, which is what a provider is asked about before anybody has; tests read it back.</summary>
     internal static AssistantConfig Unset { get; } = new(KeyedClient.None, SettingValues.None);
 }

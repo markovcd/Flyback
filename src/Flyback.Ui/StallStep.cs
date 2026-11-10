@@ -14,7 +14,7 @@ internal readonly struct StallStep : IDisposable
         started = StallTrace.On ? Stopwatch.GetTimestamp() : 0;
     }
 
-    /// <summary>A step that began at <paramref name="started"/> on the <see cref="Stopwatch"/> clock.</summary>
+    /// <summary>A step that began at <paramref name="started"/> on the <see cref="Stopwatch"/> clock; only tests call it.</summary>
     public StallStep(string name, long started)
     {
         this.name = name;

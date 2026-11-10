@@ -21,7 +21,7 @@ internal sealed class Decisions(
     /// <summary>How long a feature waits for an answer before carrying on without one.</summary>
     public static readonly TimeSpan Deadline = TimeSpan.FromSeconds(10);
 
-    /// <summary>No model: every question answers null.</summary>
+    /// <summary>No model: every question answers null; tests read it back.</summary>
     public static Decisions None { get; } = new([], new DecisionSettings { Model = DecisionSettings.Off }, new Credentials(null), new ModelStore(null));
 
     public IReadOnlyList<IDecisionModel> Models => models;
