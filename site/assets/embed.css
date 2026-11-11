@@ -77,7 +77,7 @@
 .flyback-embed .fe-play:hover { color: var(--attention-ink); background: var(--attention-hover); }
 .flyback-embed.playing .fe-play { background: transparent; color: var(--attention); }
 
-.flyback-embed .fe-body { display: flex; gap: 14px; padding: 12px 16px 14px 6px; overflow-x: auto; }
+.flyback-embed .fe-body { display: flex; gap: 6px; padding: 12px 16px 14px 0; overflow-x: auto; }
 
 .flyback-embed .fe-lines, .flyback-embed .fe-code {
   margin: 0;
@@ -85,8 +85,9 @@
   white-space: pre;
 }
 
-.flyback-embed .fe-lines { flex: none; min-width: 2ch; color: var(--normalled); text-align: right; user-select: none; }
-.flyback-embed .fe-code { color: var(--label); background: none; border: 0; padding: 0; }
+/* The numbers stay put while a wide line scrolls under them. */
+.flyback-embed .fe-lines { position: sticky; left: 0; z-index: 1; flex: none; min-width: calc(2ch + 17px); padding: 0 8px; border-right: 1px solid var(--separator); background: var(--canvas); color: var(--normalled); text-align: right; user-select: none; }
+.flyback-embed .fe-code { flex: none; overflow: visible; max-width: none; color: var(--label); background: none; border: 0; padding: 0; }
 
 .flyback-embed .t-com { color: var(--normalled); font-style: italic; }
 .flyback-embed .t-key { color: var(--code-keyword); font-weight: 600; }
@@ -131,7 +132,7 @@
 
 .flyback-player.side { top: 0; right: 0; bottom: 0; width: 440px; border-left: 1px solid var(--separator); }
 .flyback-player.side .fp-box { height: 100%; border: 0; }
-.flyback-player.side iframe { height: calc(440px * 0.5625 + 128px); }
+.flyback-player.side iframe { flex: 1 1 auto; height: auto; min-height: 0; }
 html.flyback-side-open { margin-right: 440px; }
 
 @media (max-width: 640px) {

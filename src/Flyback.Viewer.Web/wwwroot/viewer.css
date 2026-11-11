@@ -620,9 +620,23 @@ body.embed .transport #play { width: 40px; height: 40px; }
 body.embed .transport #edit { width: auto; padding: 0 12px; font-size: 13px; }
 body.embed #volume { width: 72px; }
 
+/* Narrow, as docked beside a page or on a phone: the same one row, with 44 px targets. */
 @media (max-width: 640px) {
-  body.embed .transport { display: grid; padding: 6px 12px 10px; }
-  body.embed .transport #edit { grid-area: 3 / 1 / 4 / -1; justify-self: end; height: 36px; }
-  body.embed .transport button:not(#play, #edit) { width: 44px; height: 44px; }
-  body.embed .transport #play { width: 52px; height: 52px; }
+  body.embed .transport { display: flex; padding: 6px 8px; gap: 4px; }
+  body.embed .transport > * { grid-area: auto; }
+  body.embed .transport button:not(#play) { width: 44px; height: 44px; border-radius: 10px; }
+  body.embed .transport #play { width: 48px; height: 48px; }
+  body.embed #clock { margin-left: 4px; min-width: 36px; text-align: left; font-size: 12px; }
+  body.embed #volume { display: block; width: 64px; }
 }
+
+@media (max-width: 419px) {
+  body.embed #volume { display: none; }
+}
+
+/* With something under the transport the picture keeps 16:9; without, it takes the height. */
+body.embed .stage:has(.embed-foot:not([hidden])) main { flex: none; aspect-ratio: 16 / 9; }
+
+.embed-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; }
+.embed-foot .by { color: var(--muted); font-size: 13px; }
+.embed-foot #edit { height: 36px; padding: 0 12px; font-size: 13px; }

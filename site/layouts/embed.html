@@ -27,8 +27,8 @@
 
   <main>
     <h2 id="try">Try it</h2>
-    <p>This is the Sidebands preset as it would sit in a blog post. Play opens it over the page.</p>
-<pre data-flyback="FM bell">
+    <p>This is the Sidebands preset, its numbers rounded, as it would sit in a blog post. Play opens it over the page.</p>
+<pre data-flyback="Sidebands">
 // Frequency modulation built by hand: one sine into another's phase, the amount
 // struck and left to fall, and an Analyzer on what comes out.
 
@@ -39,7 +39,7 @@ tags "synthesis"
 // Every two seconds, and nothing sustained: the note is all decay, which lets the
 // partials be watched leaving.
 let strike = pulse(freq: 0.5, width: 0.1)
-               |&gt; adsr(gate: _, attack: 1.995262ms, decay: 1.49968483s, sustain: 0, release: 301.9952ms)
+               |&gt; adsr(gate: _, attack: 2ms, decay: 1.5s, sustain: 0, release: 300ms)
 
 // How hard the next strike bends the carrier, wandering between a mellow note and a
 // clangorous one so no two strikes are the same bell.
@@ -55,7 +55,7 @@ let modulator = sine(freq: root * 3.5)
 let voice     = sine(freq: root, phase: modulator * (strike * depth)) * strike
 
 voice |&gt; out.left
-analyzer(voice, window: 50.11873ms, range: 72) |&gt; out.color
+analyzer(voice, window: 50ms, range: 72) |&gt; out.color
 
 out.volume = 0.3
 </pre>
@@ -76,7 +76,7 @@ left |&gt; out.left
 right |&gt; out.right
 
 // Thirty milliseconds of phosphor: a few turns of the knot.
-beam(x: left, y: right, persistence: 29.99853ms, intensity: 1.2) |&gt; out.color
+beam(x: left, y: right, persistence: 30ms, intensity: 1.2) |&gt; out.color
 
 out.volume = 0.2
 </pre>

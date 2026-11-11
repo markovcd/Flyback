@@ -15,6 +15,12 @@ let looped = params.has('loop');
 const embedded = params.has('embed');
 document.body.classList.toggle('embed', embedded);
 
+/** Under the transport of a narrow embed: who made the patch, and Open in Flyback where the editor is deployed. */
+const foot = Object.assign(document.createElement('div'), { className: 'embed-foot', hidden: true });
+const by = Object.assign(document.createElement('span'), { className: 'by' });
+foot.append(by);
+if (embedded) document.querySelector('.stage').append(foot);
+
 /** Playing a file rather than a shipped preset. */
 const preview = params.has('file') || embedded;
 
@@ -857,6 +863,18 @@ async function openEmbedded() {
   await openBytes(file, bytes);
 }
 
+/** Open in Flyback sits in a wide embed's transport, and under a narrow one's. */
+function placeEdit() {
+  (narrow.matches ? foot : document.querySelector('.transport')).append(ui.edit);
+  fillFoot();
+}
+
+function fillFoot() {
+  by.textContent = info?.author ? `by ${info.author}` : '';
+  by.hidden = !by.textContent;
+  foot.hidden = !narrow.matches || (by.hidden && ui.edit.hidden);
+}
+
 /** Tells the page around the frame whether the patch plays, so its Play button can say Pause. */
 let told = null;
 function tell() {
@@ -1039,6 +1057,7 @@ function paint() {
     ui.status.append(span);
   }
 
+  if (embedded) fillFoot();
   tell();
 }
 
@@ -1234,7 +1253,8 @@ if (embedded) {
   // The page around the frame draws the title and the close button, and plays or pauses from its own.
   ui.edit.textContent = 'Open in Flyback';
   ui.edit.title = 'Open this patch in the web editor, in a tab of its own';
-  document.querySelector('.transport').append(ui.edit);
+  placeEdit();
+  narrow.addEventListener('change', placeEdit);
 
   window.addEventListener('message', ({ source: from, data }) => {
     if (from !== window.parent || data?.flyback !== 'toggle' || info === null) return;
