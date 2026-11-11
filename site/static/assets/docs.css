@@ -1,0 +1,27 @@
+/* The two guides, rendered from docs/: long prose, tables and code in the page's column. */
+
+.guide main { max-width: 52rem; }
+.guide main h2 { margin-top: 56px; }
+.guide main h2:first-child, .guide main > :first-child { margin-top: 0; }
+.guide main h3 { margin-top: 36px; }
+.guide main h4 { margin-top: 28px; }
+.guide main > hr { display: none; }
+.guide main img { max-width: 100%; height: auto; border-radius: var(--radius); }
+.guide main pre { max-width: 100%; }
+.guide main table { min-width: 0; }
+.guide main th, .guide main td { text-align: left; vertical-align: top; padding: 8px 12px; border-bottom: 1px solid var(--separator); }
+.guide main blockquote { margin: 18px 0 0; padding: 4px 16px; border-left: 2px solid var(--separator); color: var(--muted); }
+.guide main a { overflow-wrap: anywhere; }
+
+.guide nav.toc a { min-height: 44px; display: flex; align-items: center; }
+@media (max-width: 999px) {
+  .guide nav.toc ol { max-height: 19rem; overflow-y: auto; }
+}
+
+.docs-index { display: grid; gap: 16px; padding: 40px 0 96px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 720px) { .docs-index { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.docs-index a.card { display: block; padding: 20px; background: var(--panel); border: 1px solid var(--separator); border-radius: var(--radius); color: var(--label); text-decoration: none; min-height: 44px; }
+.docs-index a.card:hover { background: var(--node); border-color: var(--attention); }
+.docs-index a.card h2 { font-size: 20px; margin: 0 0 8px; }
+.docs-index a.card p { margin: 0; }
+.docs-index a.card .where { display: block; margin-top: 14px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }

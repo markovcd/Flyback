@@ -1,0 +1,40 @@
+{{ define "main" -}}
+<div class="page">
+
+<div class="canvas">
+  <div class="wrap">
+    <header class="doc-head">
+      <p class="eyebrow">Documentation</p>
+      <h1>Read how it works.</h1>
+      <p class="lede">The text language that builds a patch, the guide to writing a plugin, the tutorials and what changed in each release.</p>
+    </header>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="docs-index">
+    <a class="card" href="docs/language.html">
+      <h2>Language reference</h2>
+      <p>The text language: the pipe rule, naming, sugar, the panel, groups and cycles, with every shipped preset written out.</p>
+      <span class="where">Read it here</span>
+    </a>
+    <a class="card" href="docs/plugin-guide.html">
+      <h2>Plugin guide</h2>
+      <p>Writing a plugin: the project file, the entry point, modules that remember, presets, sound and MIDI backends, packaging and testing.</p>
+      <span class="where">Read it here</span>
+    </a>
+    <a class="card" href="tutorials.html">
+      <h2>Tutorials</h2>
+      <p>Short videos that build a patch from nothing, one idea at a time.</p>
+      <span class="where">Watch them here</span>
+    </a>
+    <a class="card" href="https://github.com/markovcd/Flyback/blob/main/CHANGELOG.md">
+      <h2>Changelog</h2>
+      <p>What changed in each release.</p>
+      <span class="where">On GitHub</span>
+    </a>
+  </div>
+</div>
+
+</div>
+{{- end }}

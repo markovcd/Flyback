@@ -1,0 +1,47 @@
+{{ define "main" -}}
+{{- $up := partial "up.html" . -}}
+{{- $other := cond (eq .Params.eyebrow "Plugin guide") "language.html" "plugin-guide.html" -}}
+{{- $otherName := cond (eq .Params.eyebrow "Plugin guide") "Language reference" "Plugin guide" -}}
+<div class="page">
+
+<div class="canvas">
+  <div class="wrap">
+    <header class="doc-head">
+      <p class="eyebrow">{{ .Params.eyebrow }}</p>
+      <h1>{{ .Params.heading }}</h1>
+      <p class="lede">{{ .Description }}</p>
+      <div class="actions">
+        <a class="button primary" href="{{ $other }}">{{ $otherName }}</a>
+        <a class="button" href="{{ $up }}docs.html">All the docs</a>
+      </div>
+    </header>
+  </div>
+</div>
+
+<div class="wrap">
+<div class="doc guide">
+
+  <nav class="toc" aria-label="Contents">
+    <p>Contents</p>
+    <ol>
+      {{- range .Fragments.Headings }}
+        {{- if eq .Level 2 }}
+      <li><a href="#{{ .ID }}">{{ .Title | safeHTML }}</a></li>
+        {{- else }}
+          {{- range .Headings }}
+      <li><a href="#{{ .ID }}">{{ .Title | safeHTML }}</a></li>
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    </ol>
+  </nav>
+
+  <main>
+{{ .Content }}
+  </main>
+
+</div>
+</div>
+
+</div>
+{{- end }}

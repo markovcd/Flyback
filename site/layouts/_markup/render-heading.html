@@ -1,0 +1,4 @@
+{{- /* The page head states the guide's title, so the file's own h1 is left out. */ -}}
+{{- if gt .Level 1 -}}
+<h{{ .Level }} id="{{ .Anchor }}">{{ .Text | safeHTML }}</h{{ .Level }}>
+{{- end -}}

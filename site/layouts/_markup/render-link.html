@@ -1,0 +1,24 @@
+{{- /*
+  A link in a guide, written for the file as it reads on GitHub: another guide becomes
+  its site page, anything else in the repo its file or folder on GitHub, and an address
+  or an anchor stays as it is.
+*/ -}}
+{{- $dest := .Destination -}}
+{{- $href := $dest -}}
+{{- if not (findRE `^(#|[a-z][a-z0-9+.-]*:)` $dest) -}}
+  {{- $parts := split $dest "#" -}}
+  {{- $file := index $parts 0 -}}
+  {{- $anchor := "" -}}
+  {{- if gt (len $parts) 1 }}{{ $anchor = printf "#%s" (index $parts 1) }}{{ end -}}
+  {{- $repo := path.Join "docs" $file -}}
+  {{- if eq $repo "docs/language.md" -}}
+    {{- $href = printf "language.html%s" $anchor -}}
+  {{- else if eq $repo "docs/plugin-guide.md" -}}
+    {{- $href = printf "plugin-guide.html%s" $anchor -}}
+  {{- else -}}
+    {{- $kind := "blob" -}}
+    {{- if or (strings.HasSuffix $file "/") (not (path.Ext $file)) }}{{ $kind = "tree" }}{{ end -}}
+    {{- $href = printf "https://github.com/markovcd/Flyback/%s/main/%s%s" $kind $repo $anchor -}}
+  {{- end -}}
+{{- end -}}
+<a href="{{ $href }}"{{ with .Title }} title="{{ . }}"{{ end }}>{{ .Text | safeHTML }}</a>

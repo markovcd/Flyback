@@ -6,9 +6,10 @@
       <a href="{{ $up }}tutorials.html"{{ if eq .Params.nav "tutorials" }} aria-current="page"{{ end }}>Tutorials</a>
       <a href="{{ $up }}presets.html"{{ if eq .Params.nav "presets" }} aria-current="page"{{ end }}>Presets</a>
       <a href="{{ $up }}shared-plugins.html"{{ if eq .Params.nav "plugins" }} aria-current="page"{{ end }}>Plugins</a>
+      <a href="{{ $up }}docs.html"{{ if eq .Params.nav "docs" }} aria-current="page"{{ end }}>Docs</a>
       <span class="sep" aria-hidden="true"></span>
-      <a href="https://github.com/markovcd/Flyback">GitHub</a>
-      <a href="https://www.youtube.com/@FlybackModular">YouTube</a>
+      <a class="optional" href="https://github.com/markovcd/Flyback">GitHub</a>
+      <a class="optional" href="https://www.youtube.com/@FlybackModular">YouTube</a>
     </nav>
     <a class="download" href="{{ $up }}download.html"{{ if eq .Params.nav "download" }} aria-current="page"{{ end }}>Download</a>
   </div>

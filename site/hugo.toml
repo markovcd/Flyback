@@ -19,3 +19,65 @@ disableHugoGeneratorInject = true
 [[module.mounts]]
 source = "../src/Flyback.Ui/Controls/Schemes"
 target = "data/schemes"
+
+# The two guides are read where they live: docs/ is mounted, not copied, and the
+# layouts below render them in the site's look. The default mounts of content and
+# static are named again because a mount of either replaces them.
+[[module.mounts]]
+source = "content"
+target = "content"
+
+[[module.mounts]]
+source = "static"
+target = "static"
+
+[[module.mounts]]
+source = "../docs/language.md"
+target = "content/docs/language.md"
+
+[[module.mounts]]
+source = "../docs/plugin-guide.md"
+target = "content/docs/plugin-guide.md"
+
+# The pictures the plugin guide shows, at the path it names them by.
+[[module.mounts]]
+source = "../docs/images"
+target = "static/docs/images"
+
+# The guides have no front matter of their own, since they read on GitHub as they are.
+[[cascade]]
+title = "The Flyback language — Flyback"
+description = "The Flyback text language: a pipeline syntax that builds a patch, with the rules, the sugar, the panel, groups, cycles and every shipped preset written out."
+canonical = true
+nav = "docs"
+layout = "docs-guide"
+styles = ["pages.css", "docs.css"]
+scripts = ["site.js"]
+[cascade.params]
+eyebrow = "Language reference"
+heading = "The Flyback language"
+sibling = "docs/plugin-guide"
+[cascade.params.share]
+type = "article"
+title = "The Flyback language"
+description = "The Flyback text language: a pipeline syntax that builds a patch, with the rules, the sugar, the panel, groups, cycles and every shipped preset written out."
+[cascade.target]
+path = "/docs/language"
+
+[[cascade]]
+title = "Authoring Flyback plugins — Flyback"
+description = "How to write a Flyback plugin: the project file, the entry point, modules, presets, sound and MIDI backends, packaging and testing."
+canonical = true
+nav = "docs"
+layout = "docs-guide"
+styles = ["pages.css", "docs.css"]
+scripts = ["site.js"]
+[cascade.params]
+eyebrow = "Plugin guide"
+heading = "Authoring Flyback plugins"
+[cascade.params.share]
+type = "article"
+title = "Authoring Flyback plugins"
+description = "How to write a Flyback plugin: the project file, the entry point, modules, presets, sound and MIDI backends, packaging and testing."
+[cascade.target]
+path = "/docs/plugin-guide"
