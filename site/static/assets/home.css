@@ -34,16 +34,12 @@
 /* The preset's own picture at 16:9, until asked for the preset playing in the viewer (site.js). */
 .hero .live img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; }
 .hero .live iframe { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; max-height: 88vh; border: 0; background: var(--window); }
-/* The viewer needs its picture and its transport row on a phone: its own height, not the photograph's. */
-@media (max-width: 639px) { .hero .live iframe { aspect-ratio: auto; height: 540px; } }
 /* The phone's toolbar is two rows tall, taller than the page's scroll padding. */
 @media (max-width: 640px) { .hero .editor { scroll-margin-top: 32px; } }
-/* Clicked: the figure takes the page's width, text above. The viewer's own header, transport row and description share the box with its picture, so the height is the picture's 16:9 plus those, and on a wide screen no more than the window. */
+/* Clicked: the figure takes the page's width, text above. The embedded viewer is its picture at 16:9 and one transport row, and under a narrow one a line for the author and Open in Flyback. */
 .hero.playing .wrap { grid-template-columns: minmax(0, 1fr); gap: 40px; }
-.hero.playing .live iframe { aspect-ratio: auto; max-height: none; height: calc(min(100vw - 32px, 1116px) * 0.5625 + 490px); }
-@media (min-width: 672px) {
-  .hero.playing .live iframe { height: min(calc(min(100vw - 32px, 1116px) * 0.5625 + 265px), max(100vh - 120px, 560px)); }
-}
+.hero.playing .live iframe { aspect-ratio: auto; max-height: none; height: calc(min(100vw - 32px, 1116px) * 0.5625 + 64px); }
+@media (max-width: 639px) { .hero.playing .live iframe { height: calc((100vw - 34px) * 0.5625 + 112px); } }
 
 /* ---- at a glance ---- */
 .glance { padding: 56px 0 0; }

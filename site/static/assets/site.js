@@ -137,11 +137,24 @@
       e.preventDefault();
       if (holder.querySelector("iframe")) return;
 
+      var src = new URL("assets/flyback-theme.fbks", location.href).href;
       var frame = document.createElement("iframe");
-      frame.src = link.href;
       frame.title = "Flyback Theme, playing in the browser";
       frame.allow = "autoplay; fullscreen";
       frame.addEventListener("load", function () { frame.focus({ preventScroll: true }); });
+
+      // The player with the picture and one transport row, carrying the preset's text; the whole viewer if the text cannot be had.
+      fetch(src).then(function (r) {
+        if (!r.ok) throw new Error(r.status);
+        return r.text();
+      }).then(function (text) {
+        var bytes = new TextEncoder().encode(text), binary = "";
+        for (var i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+        var carried = btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+        frame.src = new URL("viewer/?embed&title=Flyback%20Theme", location.href).href + "#fbks=" + carried;
+      }).catch(function () {
+        frame.src = link.href;
+      });
 
       [].slice.call(holder.childNodes).forEach(function (node) { holder.removeChild(node); });
       holder.appendChild(frame);

@@ -39,6 +39,11 @@ target = "content/docs/language.md"
 source = "../docs/plugin-guide.md"
 target = "content/docs/plugin-guide.md"
 
+# The hero plays Flyback Theme from its own text, fetched when it is clicked.
+[[module.mounts]]
+source = "../src/plugins/Flyback.Plugins.Effects/FlybackTheme.fbks"
+target = "static/assets/flyback-theme.fbks"
+
 # The pictures the plugin guide shows, at the path it names them by.
 [[module.mounts]]
 source = "../docs/images"
