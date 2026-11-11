@@ -160,8 +160,8 @@ internal static class Glyphs
         "M1.5,1.5 L14.5,1.5 L14.5,14.5 L1.5,14.5 Z", "M4.5,8 A3.5,3.5 0 1 1 11.5,8 A3.5,3.5 0 1 1 4.5,8 Z");
 
     /// <summary>A square in the frame — what the record button becomes once a take is running.</summary>
-    public static Control Stop() => Inked(
-        "M1.5,1.5 L14.5,1.5 L14.5,14.5 L1.5,14.5 Z", "M5,5 L11,5 L11,11 L5,11 Z");
+    public static Control Stop(double size = Box, IBrush? ink = null) => Inked(
+        "M1.5,1.5 L14.5,1.5 L14.5,14.5 L1.5,14.5 Z", "M5,5 L11,5 L11,11 L5,11 Z", size, ink);
 
     /// <summary>A bar and a triangle pointing at it — skip to the start, on every deck.</summary>
     public static Control Rewind() =>

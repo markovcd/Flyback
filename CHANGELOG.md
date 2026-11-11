@@ -21,6 +21,7 @@
 - The module die and the menu say randomize instead of roll.
 - The phone and tablet editors leave out Measure.
 - The phone and tablet editors leave out Record and its settings.
+- The Record button turns red while a take is recording.
 
 ### Viewer
 

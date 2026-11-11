@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Flyback.Assist;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
@@ -35,8 +36,11 @@ internal sealed class Toolbar
     private readonly Document document;
     private readonly RecordingState recording;
 
-    /// <summary>Whether the record button shows the square, swapped only when that changes.</summary>
-    private bool recordShowsStop;
+    /// <summary>Whether the record button shows the square, and in the fault red, redrawn only when that changes.</summary>
+    private (bool Stop, bool Red) recordLook;
+
+    /// <summary>The square while a take is running: the one red every scheme shares.</summary>
+    private static readonly IBrush RecordingInk = new ImmutableSolidColorBrush(Colors.Fault);
 
     /// <summary>What the layout button does to the canvas, which is what it says by default.</summary>
     public const string TidyTip =
@@ -422,12 +426,12 @@ internal sealed class Toolbar
         Open.IsEnabled = !recording.Running;
         Record.IsEnabled = notice.Mode is TakeMode.Ready or TakeMode.Counting or TakeMode.Recording;
 
-        var stop = notice.Mode is TakeMode.Counting or TakeMode.Recording;
+        var look = (Stop: notice.Mode is TakeMode.Counting or TakeMode.Recording, Red: notice.Mode is TakeMode.Recording);
 
-        if (stop != recordShowsStop)
+        if (look != recordLook)
         {
-            recordShowsStop = stop;
-            ToolbarButtons.SetIcon(Record, stop ? Glyphs.Stop() : Glyphs.Record());
+            recordLook = look;
+            ToolbarButtons.SetIcon(Record, look.Red ? Glyphs.Stop(ink: RecordingInk) : look.Stop ? Glyphs.Stop() : Glyphs.Record());
         }
 
         ToolTip.SetTip(Record, notice.Mode switch
