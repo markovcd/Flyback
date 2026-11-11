@@ -52,10 +52,10 @@ public sealed class EmbedSteps(IUnitTestRuntimeProvider runtime) : IDisposable
             <!doctype html>
             <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Host</title></head>
             <body><p>Someone's post.</p>
-            {(opens.StartsWith('#') ? $"""<div id="{WebUtility.HtmlEncode(opens[1..])}"><p id="held">What the element held.</p></div>""" : "")}
             <pre data-flyback="{WebUtility.HtmlEncode(preset)}" data-opens="{WebUtility.HtmlEncode(opens)}">
             {WebUtility.HtmlEncode(text)}
             </pre>
+            {(opens.StartsWith('#') ? $"""<div id="{WebUtility.HtmlEncode(opens[1..])}"><p id="held">What the element held.</p></div>""" : "")}
             <script src="/embed.js" async></script></body></html>
             """));
 
