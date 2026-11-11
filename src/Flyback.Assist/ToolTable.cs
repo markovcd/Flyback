@@ -184,7 +184,9 @@ internal sealed class ToolTable(
 
             Does("describe_preset", catalog.DescribePreset,
                 "Reads one of the presets in the list at the end of the briefing, written in the "
-                + "Flyback language, to see how it is built. It does not touch the patch on the bench.",
+                + "Flyback language, to see how a technique in it is done. Read it for a trick, never for "
+                + "a patch to copy, and leave the preset in the genre asked for unread unless the person "
+                + "named it. It does not touch the patch on the bench.",
                 [PresetName],
                 offered: readsPresets),
         ];

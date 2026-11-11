@@ -9,6 +9,7 @@
 ### Assistant
 
 - The chat-completions and Gemini assistants are part of Flyback rather than plugins, and a plugin can no longer add one. The plugins window no longer marks the plugin the assistant sends to. The Decision server is part of Flyback too, and a plugin can no longer add a decision model. So are the Windows, macOS and Linux key stores, and a plugin can no longer add one, so the plugin contract is modules, presets and sound and MIDI backends. `flyback-cli plugin allow --secrets` is gone, since no plugin keeps keys.
+- The assistant, and a program driving the editor over MCP, are told to read presets only for their techniques and to leave unread the preset in the genre asked for, unless the person names it.
 
 ### Editor
 

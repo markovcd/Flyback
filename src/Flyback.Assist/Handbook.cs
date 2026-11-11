@@ -484,10 +484,16 @@ internal static class Handbook
         # Presets
 
         Whole patches that are already built, the ones this instrument ships and
-        whatever the person has saved. `describe_preset` gives one in the
-        language, to read how it works — how a filter is made out of what there
-        is, how a picture is tied to a tune. Take the idea and build what was
-        asked for; do not hand a preset back as the answer.
+        whatever the person has saved. They are here to learn techniques from,
+        never to answer with. `describe_preset` gives one in the language, to
+        read how a trick is done: how a filter is made out of what there is, how
+        a picture is tied to a tune.
+
+        Do not read a preset whose description matches what was asked for (a
+        request for a genre does not open the preset in that genre) unless the
+        person named it. What you build shares no more with any preset than a
+        technique: its modules, tune, rhythm and picture are its own. If it has
+        come out like a preset, change it before you `propose`.
 
         """.ReplaceLineEndings(Newline);
 
