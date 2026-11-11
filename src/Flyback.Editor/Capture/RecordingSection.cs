@@ -118,9 +118,8 @@ internal sealed class RecordingSection : ISettingsSection
     };
 
     /// <param name="files">The patch's files, whose MP3 samples are read through the ffmpeg chosen here.</param>
-    public RecordingSection(IFilePickers pickers, OutputSettingRepository settings, PatchFiles files, EditorHost host)
+    public RecordingSection(IFilePickers pickers, OutputSettingRepository settings, PatchFiles files)
     {
-        onDevice = host.OnDevice;
         this.pickers = pickers;
         this.settings = settings;
         this.files = files;
@@ -139,14 +138,8 @@ internal sealed class RecordingSection : ISettingsSection
         BuildEncodingRows();
     }
 
-    /// <summary>A device runs no ffmpeg, so its takes are the two formats written here and the encoder rows are left out.</summary>
-    private readonly bool onDevice;
-
     /// <summary>Looks for ffmpeg afresh, since it may have been installed, moved or taken away since.</summary>
-    public void Opening()
-    {
-        if (!onDevice) _ = ShowFfmpegAsync();
-    }
+    public void Opening() => _ = ShowFfmpegAsync();
 
     public void Start()
     {
@@ -191,8 +184,8 @@ internal sealed class RecordingSection : ISettingsSection
         into.CountInSeconds = CountIns[Math.Max(countIn.SelectedIndex, 0)];
         into.RewindBeforeTake = rewindBeforeTake.IsChecked == true;
 
-        into.VideoFormat = onDevice ? ClipFormats.MotionJpegAvi.Id : Takes.Chosen(ClipFormats.Pictures, videoFormat).Id;
-        into.SoundFormat = onDevice ? ClipFormats.Wav.Id : Takes.Chosen(ClipFormats.Sounds, soundFormat).Id;
+        into.VideoFormat = Takes.Chosen(ClipFormats.Pictures, videoFormat).Id;
+        into.SoundFormat = Takes.Chosen(ClipFormats.Sounds, soundFormat).Id;
 
         // Trimmed, because a path pasted in with a space on the end is a
         // path nobody meant and one File.Exists would refuse.
@@ -312,12 +305,9 @@ internal sealed class RecordingSection : ISettingsSection
         row.Children.Add(browse);
 
         rows.Children.Add(SettingRows.Heading("Files"));
-        if (!onDevice) rows.Children.Add(InspectorRows.Field("Video format", videoFormat));
+        rows.Children.Add(InspectorRows.Field("Video format", videoFormat));
         rows.Children.Add(InspectorRows.Field("Frame rate", frameRate));
         rows.Children.Add(InspectorRows.Field("Quality", jpegQuality));
-
-        if (onDevice) return;
-
         rows.Children.Add(InspectorRows.Field("Sound format", soundFormat));
         rows.Children.Add(SettingRows.Heading("Encoder"));
         rows.Children.Add(row);

@@ -24,7 +24,7 @@ public sealed class EditorPlaceTests : EditorTest
 
     [AvaloniaTheory]
     [InlineData(EditorPlace.Desktop, "files record measure assistant about plugins settings-window")]
-    [InlineData(EditorPlace.Device, "files record assistant about settings-window")]
+    [InlineData(EditorPlace.Device, "files assistant about settings-window")]
     [InlineData(EditorPlace.Page, "viewer")]
     public void Each_place_offers_what_it_can(EditorPlace place, string offers) =>
         Offers(new EditorHost { Place = place }).ShouldBe(offers);

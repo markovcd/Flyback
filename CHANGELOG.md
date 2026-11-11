@@ -19,6 +19,7 @@
 - A group's panel has a die that randomizes the knobs of every module in the box, as one undo step.
 - The module die and the menu say randomize instead of roll.
 - The phone and tablet editors leave out Measure.
+- The phone and tablet editors leave out Record and its settings.
 
 ### Viewer
 

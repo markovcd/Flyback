@@ -33,24 +33,9 @@ public sealed class DeviceSettingsTests : EditorTest
     [InlineData("Canvas", "measureWindow")]
     [InlineData("Canvas", "measurePicture")]
     [InlineData("Full screen", "fullScreenOn")]
-    [InlineData("Recording", "videoFormat")]
-    [InlineData("Recording", "soundFormat")]
-    [InlineData("Recording", "ffmpeg")]
     public void A_device_leaves_out_what_only_a_desktop_acts_on(string tab, string row)
     {
         Named(OpenSettings(Open(onDevice: false), tab)).ShouldContain(row);
         Named(OpenSettings(Open(onDevice: true), tab)).ShouldNotContain(row);
-    }
-
-    [AvaloniaFact]
-    public void A_device_takes_the_formats_written_here()
-    {
-        var window = Open(onDevice: true);
-
-        CloseSettings(window, OpenSettings(window, "Recording"));
-
-        var current = Service<OutputSettingRepository>(window).Current;
-        current.VideoFormat.ShouldBe(Engine.Render.ClipFormats.MotionJpegAvi.Id);
-        current.SoundFormat.ShouldBe(Engine.Render.ClipFormats.Wav.Id);
     }
 }

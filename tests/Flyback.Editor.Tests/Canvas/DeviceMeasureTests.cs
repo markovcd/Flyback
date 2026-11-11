@@ -67,7 +67,6 @@ public sealed class DeviceMeasureTests : EditorTest
     {
         Titles(InspectorHelp.Shortcuts(new EditorHost(), fingers)).ShouldContain("Measure");
         Titles(InspectorHelp.Shortcuts(new EditorHost { Place = EditorPlace.Device }, fingers)).ShouldNotContain("Measure");
-        Titles(InspectorHelp.Shortcuts(new EditorHost { Place = EditorPlace.Device }, fingers)).ShouldContain("Record");
     }
 
     private static string[] Titles(IReadOnlyList<HelpGroup> groups) => [.. groups.SelectMany(g => g.Rows).Select(r => r.Title)];

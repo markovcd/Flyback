@@ -193,7 +193,7 @@ internal static class EditorServices
         services.AddPart<PictureSection>();
         services.AddPart<FullScreenSection>();
         services.AddPart<SoundSection>();
-        services.AddPart<RecordingSection>();
+        if (setup.Host.Records) services.AddPart<RecordingSection>();
         services.AddPart<PlayingSection>();
         services.AddPart<CanvasSection>();
         services.AddPart<FilesSection>();

@@ -16,8 +16,8 @@ public sealed record EditorHost
     /// <summary>Open and Save, and the offer to save before work is lost.</summary>
     internal bool OpensFiles => Place != EditorPlace.Page;
 
-    /// <summary>Record, which writes a take to a file.</summary>
-    internal bool Records => Place != EditorPlace.Page;
+    /// <summary>Record, which writes a take to a file, and its settings: only a desktop offers them.</summary>
+    internal bool Records => Place == EditorPlace.Desktop;
 
     /// <summary>Measure, which only a desktop offers: a page's one thread would hang on it.</summary>
     internal bool Measures => Place == EditorPlace.Desktop;
