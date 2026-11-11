@@ -31,6 +31,7 @@ jobs:
         run: |
           set -x
           docker exec $(docker ps -qf name=buildx_buildkit) cat /etc/resolv.conf || true
+          mkdir -p diag
           printf 'FROM mcr.microsoft.com/dotnet/sdk:10.0.403\nRUN cat /etc/resolv.conf; getent ahosts archive.ubuntu.com | head -2 || echo FAIL-ubuntu; getent ahosts security.ubuntu.com | head -2 || echo FAIL-sec; getent ahosts registry.npmjs.org | head -2 || echo FAIL-npm; getent ahosts azure.archive.ubuntu.com | head -2 || echo FAIL-azure; timeout 90 apt-get update 2>&1 | tail -6; true\n' > diag/Dockerfile
           docker buildx build --progress plain --no-cache diag 2>&1 | tail -60
           docker buildx build --progress plain --no-cache --network host diag 2>&1 | tail -30
