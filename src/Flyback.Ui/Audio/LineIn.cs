@@ -94,6 +94,16 @@ internal sealed class LineIn : IDisposable
 
             feed.Clear();
             opened.Start(heard => feed.Write(heard, opened.Channels));
+
+            // The feed is played at the sound's rate as it stands, so any other would change its pitch.
+            if (opened.SampleRate != format.SampleRate)
+            {
+                opened.Dispose();
+                feed.Clear();
+                Refuse($"A Line In is silent: {input.Name} listens at {opened.SampleRate} Hz, not the {format.SampleRate} Hz the sound plays at.");
+                return;
+            }
+
             capture = opened;
         }
         catch (Exception ex)

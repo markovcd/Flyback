@@ -51,7 +51,6 @@ Flyback.Plugins	Ordinary	Internal	PluginHost.LoadTypes(params Type[])	Flyback.Pl
 Flyback.Plugins	Ordinary	Public	ContractVersion.Refusal(AssemblyName, Version)	Flyback.Plugins.Hosting.ContractVersion
 Flyback.Plugins	Ordinary	Public	IAudioCapture.Stop()	Flyback.Plugins.Audio.IAudioCapture
 Flyback.Plugins	Ordinary	Public	PluginTrust.Shipped(string)	Flyback.Plugins.Hosting.PluginTrust
-Flyback.Plugins	Property	Public	IAudioCapture.SampleRate	Flyback.Plugins.Audio.IAudioCapture
 Flyback.Ui	Constructor	Public	StallStep.StallStep(string, long)	Flyback.Ui.StallStep
 Flyback.Ui	Property	Internal	StageKnobs.Knobs	Flyback.Ui.Controls.StageKnobs
 Flyback.Ui	Property	Internal	TuckedAway.DotsOpacity	Flyback.Ui.Controls.TuckedAway

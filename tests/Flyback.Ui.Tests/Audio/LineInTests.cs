@@ -26,7 +26,7 @@ public class LineInTests
     {
         private AudioCaptureCallback? deliver;
 
-        public int SampleRate => GlobalConstants.SampleRate;
+        public int SampleRate { get; init; } = GlobalConstants.SampleRate;
 
         public int Channels => 2;
 
@@ -223,6 +223,21 @@ public class LineInTests
         for (var frame = 500; frame < Frames; frame++) sum += played[frame * 2] * played[frame * 2];
 
         Math.Sqrt(sum / (Frames - 500)).ShouldBe(0.5 / Math.Sqrt(2), 0.03);
+    }
+
+    /// <summary>What it hears is played at the sound's rate, so a device at another rate would change its pitch.</summary>
+    [Fact]
+    public void A_microphone_at_another_rate_is_said_and_let_go()
+    {
+        var microphone = new Microphone { SampleRate = GlobalConstants.SampleRate / 2 };
+        using var rig = new Rig(microphone);
+
+        rig.Play(ThroughLineIn());
+        rig.Line.Follow();
+
+        rig.Said.ShouldHaveSingleItem().ShouldContain($"{GlobalConstants.SampleRate / 2} Hz");
+        rig.Line.IsListening.ShouldBeFalse();
+        microphone.Closed.ShouldBe(1);
     }
 
     [Fact]
