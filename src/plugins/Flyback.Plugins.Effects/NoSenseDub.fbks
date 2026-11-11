@@ -181,9 +181,9 @@ group "Bass" {
         d: d_minor,
         formula: "mix(a, b, c) + 33 + d * 5")
     |> note(note: _)
-    |> slew(rise: 19.95262ms, fall: 19.95262ms)
+    |> slew(rise: 20ms, fall: 20ms)
   let bass_envelope = bass_gate
-    |> adsr(gate: _, attack: 3.162278ms, decay: 251.18863ms, release: 50.11873ms)
+    |> adsr(gate: _, attack: 3.16ms, decay: 250ms, release: 50ms)
   // A sine with a little saw, driven for the harmonics a small speaker can play, and a
   // filter that opens with each note's thump.
   let bass_tone = sine(freq: bass_pitch) - saw(freq: bass_pitch) * 0.5 |> drive(drive: 5)
@@ -216,11 +216,11 @@ group "Organ" {
     |> adsr(
         gate: _,
         attack: 1ms,
-        decay: Decay_knob(39.81072ms..501.18722ms),
+        decay: Decay_knob(40ms..501.18722ms),
         sustain: 0,
         release: 10ms)
   let organ_gate = keys.gate
-    |> adsr(gate: _, attack: 3.162278ms, sustain: 1, release: 31.62278ms)
+    |> adsr(gate: _, attack: 3.16ms, sustain: 1, release: 31.6ms)
 }
 
 group "Knobs" {
@@ -229,8 +229,8 @@ group "Knobs" {
   // milliseconds of Slew takes the steps out of a controller's hundred and twenty-
   // eight values. Pluck is how many times over the envelope opens the filter.
   let knob_cutoff = exp(
-      slew(in: Cutoff(0..1), rise: 31.62278ms, fall: 31.62278ms) * 3.67) * 150
-  let pluck = slew(in: Pluck(0..1), rise: 31.62278ms, fall: 31.62278ms) * 6
+      slew(in: Cutoff(0..1), rise: 31.6ms, fall: 31.6ms) * 3.67) * 150
+  let pluck = slew(in: Pluck(0..1), rise: 31.6ms, fall: 31.6ms) * 6
 }
 
 group "Organ" {
@@ -243,7 +243,7 @@ group "Organ" {
         cutoff: min(knob_cutoff * (percussion * pluck + 1) * 2, 11000),
         resonance: Resonance(0.05..0.85))
   let organ = organ_tone * organ_gate * keys.velocity * 0.8
-  let organ_loudness = organ |> meter(window: 79.43282ms, scale: 0.15)
+  let organ_loudness = organ |> meter(window: 80ms, scale: 0.15)
 }
 
 group "Picture: Rings" {

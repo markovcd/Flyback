@@ -13,6 +13,6 @@ left |> out.left
 right |> out.right
 
 // Thirty milliseconds of phosphor: a few turns of the knot.
-beam(x: left, y: right, persistence: 29.99853ms, intensity: 1.2) |> out.color
+beam(x: left, y: right, persistence: 30ms, intensity: 1.2) |> out.color
 
 out.volume = 0.2

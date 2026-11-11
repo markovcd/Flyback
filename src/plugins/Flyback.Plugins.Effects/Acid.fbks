@@ -46,7 +46,7 @@ group "Arrangement" {
         11.3 17.6 21.8 21.8 22.85 22.85 14.45 17.6 26 26 6.05 17.6 26 26 24.95 11.3 ]
   // The knob gets there over six seconds and comes back over three, so it is turned
   // rather than set.
-  let knob = parts.part_5 |> slew(rise: 6.0255955s, fall: 3.0199516s)
+  let knob = parts.part_5 |> slew(rise: 6s, fall: 3s)
   // The kick and the closed hats, out only for the breakdown; the clap; the open hat
   // and the crash, which come with a drop; and which sections build. A build's second
   // half is a ramp, and its last bar has no kick and no bass, so the drop lands on a
@@ -131,9 +131,9 @@ group "Acid Line" {
   // The cutoff is in octaves over 180 Hz: the knob, the envelope by as much as the
   // knob allows, and the accent on top.
   let accented = line_gate |> smoothstep(edge0: 0.75, edge1: 0.95)
-  let accent = accented * envelope |> slew(rise: 5.011873ms, fall: 251.18863ms)
+  let accent = accented * envelope |> slew(rise: 5ms, fall: 250ms)
   let cutoff = pow(2, knob_octaves + envelope * envelope_depth + accent * 0.9) * 180
-  let amp_gate = line_gate |> slew(rise: 1.995262ms, fall: 31.62278ms)
+  let amp_gate = line_gate |> slew(rise: 2ms, fall: 31.6ms)
 }
 
 group "Picture: Geometry" {
@@ -217,11 +217,11 @@ group "Answer" {
         E4%0 E4%0 E4 E4%0 E4%0 G4%0 G4%0.7 A4%0.7 A4%0 C5%0 C5 A4%0.7 A4%0 G4%0.7 A4
         A4%0 ]
   let answer_pitch = answer_line + root |> note(note: _)
-  let answer_envelope = answer_line.gate |> decay(trigger: _, decay: 177.82794ms, curve: 0.7)
+  let answer_envelope = answer_line.gate |> decay(trigger: _, decay: 178ms, curve: 0.7)
   let answer_open = hand |> remap(in_low: 0, out_high: 1.5)
   let answer_tone = pulse(freq: answer_pitch, amp: 0.8)
     |> filter(cutoff: pow(2, answer_envelope * 3 + answer_open) * 300, resonance: 0.8)
-  let answer_gate = answer_line.gate |> slew(rise: 1.995262ms, fall: 31.62278ms)
+  let answer_gate = answer_line.gate |> slew(rise: 2ms, fall: 31.6ms)
   let answer_grit = answer_tone * answer_gate |> drive(drive: 3)
   let answer = answer_grit * parts.part_2
 }
@@ -251,7 +251,7 @@ group "Pad" {
       mix: 0.8,
       amp: 0.5) + saw(freq: pad_third, amp: 0.3) + saw(freq: pad_fifth, amp: 0.3)
     |> filter(cutoff: pad_open)
-  let pad_level = parts.part_3 |> slew(rise: 501.18722ms, fall: 1.9952624s)
+  let pad_level = parts.part_3 |> slew(rise: 500ms, fall: 2s)
   let pad = pad_tone * duck.gain * pad_level |> chorus(rate: 0.2, depth: 0.7, mix: 0.6)
 }
 
@@ -357,7 +357,7 @@ group "Master" {
         threshold: -14,
         ratio: 2,
         attack: 10ms,
-        release: 125.89255ms,
+        release: 126ms,
         makeup: 5)
   let eq = compressor
     |> eq(
@@ -370,7 +370,7 @@ group "Master" {
         high_gain: 2)
   let width = eq |> width(left: _, right: eq.right, width: 1.15, mono_below: 150)
   let limiter = width
-    |> limiter(left: _, right: width.right, ceiling: -0.5, release: 50.11873ms)
+    |> limiter(left: _, right: width.right, ceiling: -0.5, release: 50ms)
 }
 
 limiter |> out.left

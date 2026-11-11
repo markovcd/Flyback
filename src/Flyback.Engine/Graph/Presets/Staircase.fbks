@@ -19,7 +19,7 @@ let stair = hold(in: height, trigger: clock)
 // note is this.
 let pitch = tune(in: stair) [ A C D E G ]
 
-triangle(freq: pitch) * (clock |> adsr(gate: _, attack: 3.019952ms, decay: 120.22644ms, sustain: 0.2, release: 60.25595ms))
+triangle(freq: pitch) * (clock |> adsr(gate: _, attack: 3ms, decay: 120ms, sustain: 0.2, release: 60ms))
   |> out.left
 
 out.volume = 0.5

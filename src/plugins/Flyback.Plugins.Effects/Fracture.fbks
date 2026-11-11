@@ -136,7 +136,7 @@ group "Bass" {
   let bass_line = beats
     |> notes(rate: 0.5) [ F1 F1 F1 F1 F1 F1 G#1 G#1 D#1 D#1 D#1 D#1 C#1 C#1 D#1 D#1 ]
     |> math.mix(a: _, b: second_line, t: second)
-  let bass_pitch = bass_line |> slew(rise: 31.62278ms, fall: 31.62278ms) |> note(note: _)
+  let bass_pitch = bass_line |> slew(rise: 31.6ms, fall: 31.6ms) |> note(note: _)
   let reese_saws = saw(freq: bass_pitch * 2, amp: 0.6) + saw(freq: bass_pitch * 2.025, amp: 0.6)
     |> filter(cutoff: bass_open, resonance: 0.35)
     |> phaser(rate: 0.15, depth: 0.8, feedback: 0.5, mix: 0.6)
@@ -215,9 +215,9 @@ group "Lead" {
     |> notes(rate: 1, gate_length: 0.9, shape: 0.06) [
         F5 F5%0 G#5 G#5%0 C6 C6%0 A#5 G#5 G5 G5%0 A#5 A#5%0 D#6 D#6%0 C#6 A#5 C6 C6%0
         C6%0 A#5 G#5 G#5%0 D#5 D#5%0 G5 G5%0 G5%0 D#5 G5 G#5 A#5 C6 ]
-  let tongue = lead_line.gate |> slew(rise: 7.943284ms, fall: 158.48931ms)
+  let tongue = lead_line.gate |> slew(rise: 8ms, fall: 160ms)
   let lead_stroke = tongue * second
-  let lead_pitch = lead_line |> slew(rise: 63.09573ms, fall: 63.09573ms) |> note(note: _)
+  let lead_pitch = lead_line |> slew(rise: 63ms, fall: 63ms) |> note(note: _)
   let lead = (
       triangle(
           freq: lead_pitch,
@@ -336,7 +336,7 @@ group "Master" {
         threshold: -14,
         ratio: 2,
         attack: 10ms,
-        release: 125.89255ms,
+        release: 126ms,
         makeup: 6)
   let eq = compressor
     |> eq(
@@ -352,7 +352,7 @@ group "Master" {
         high_gain: 2.5)
   let width = eq |> width(left: _, right: eq.right, width: 1.15, mono_below: 150)
   let limiter = width
-    |> limiter(left: _, right: width.right, ceiling: -0.5, release: 50.11873ms)
+    |> limiter(left: _, right: width.right, ceiling: -0.5, release: 50ms)
 }
 
 limiter |> out.left

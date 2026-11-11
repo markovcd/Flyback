@@ -512,7 +512,7 @@ public class LanguageTests
           let bassGate = math.mix(verseBass.gate, chorusBass.gate, form) * band.part_3
           let bassHz   = math.mix(verseBass, chorusBass, form) + root + 33 |> note(note: _)
 
-          let accent = bassGate |> slew(rise: 25.1188643ms, fall: 25.1188643ms)
+          let accent = bassGate |> slew(rise: 25ms, fall: 25ms)
 
           let pluck = (bassGate |> adsr(gate: _, attack: 1ms, decay: 126ms, sustain: 0.4, release: 63ms)) * accent
 
@@ -575,7 +575,7 @@ public class LanguageTests
                                in_3: padFifth, level_3: 0.9)
                            |> filter(cutoff: padTone, resonance: 0)
 
-          let padLevel = (band.part_5 |> slew(rise: 2.51188643s, fall: 2.51188643s)) * duck.gain
+          let padLevel = (band.part_5 |> slew(rise: 2.5s, fall: 2.5s)) * duck.gain
           let padL = padToneL * padLevel
           let padR = padToneR * padLevel
         }

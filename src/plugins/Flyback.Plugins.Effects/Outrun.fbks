@@ -230,13 +230,13 @@ group "Lead" {
     |> notes(rate: 2, gate_length: 0.85, shape: 0.06) [
         E5 E5%0 E5 F5 E5 E5%0 D5 D5%0 B4 B4%0 D5 D5%0 F5 E5 D5 D5%0 E5 E5%0 E5 E5%0 B4
         B4%0 A4 B4 C5 C5%0 B4 B4%0 A4 A4%0 E4 A4%0.8 ]
-  let lead_pitch = lead_line |> slew(rise: 39.81072ms, fall: 39.81072ms) |> note(note: _)
+  let lead_pitch = lead_line |> slew(rise: 40ms, fall: 40ms) |> note(note: _)
   let lead_tone = saw(
       freq: lead_pitch,
       phase: sine(freq: 5.5, amp: 0.15),
       amp: 0.7) + pulse(freq: lead_pitch * 1.006, width: 0.4, amp: 0.5)
     |> filter(cutoff: 3400, resonance: 0.35)
-  let tongue = lead_line.gate |> slew(rise: 3.162278ms, fall: 63.09573ms)
+  let tongue = lead_line.gate |> slew(rise: 3.16ms, fall: 63ms)
   let lead = lead_tone * tongue * parts.part_6
 }
 
@@ -283,7 +283,7 @@ group "Pad" {
       amp: 0.5) + saw(freq: third, amp: 0.35) + saw(freq: fifth, amp: 0.3)
     |> filter(cutoff: pad_open)
   let pad_gate = beats |> values() [ 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 0 ]
-    |> slew(rise: 5.011873ms, fall: 39.81072ms)
+    |> slew(rise: 5ms, fall: 40ms)
     |> math.mix(a: 1, b: _, t: parts.part_5)
   let pad_level = swell |> remap(in_low: 0, out_low: 1, out_high: 0.6)
   let pad = pad_tone * pad_gate * pad_level |> chorus(rate: 0.2, depth: 0.7, mix: 0.6)

@@ -24,7 +24,7 @@ let key   = field |> remap(0..1, 45..69) |> quantiser(hold: beat) [ C D E G A ]
 // inside its own beat and the next one lands on a note starting.
 let pitch = key |> note(note: _)
 sine(freq: pitch)
-  * (beat |> adsr(gate: _, attack: 3.98107ms, decay: 141.25375ms, sustain: 0, release: 31.62278ms))
+  * (beat |> adsr(gate: _, attack: 4ms, decay: 140ms, sustain: 0, release: 31.6ms))
   |> out.left
 
 // Eye: the snapped note as a hue, one turn of the wheel to the octave, so a note is

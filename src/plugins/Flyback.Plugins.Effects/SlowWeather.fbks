@@ -63,7 +63,7 @@ group "Visitor: Call" {
   let call_pitch = call_notes.random
     |> notes(rate: 7, gate_length: 1, shape: 0.5) [ F3 G3 A3 C4 D4 F4 G4 ]
     |> note(note: _)
-    |> slew(rise: 354.8134ms, fall: 354.8134ms)
+    |> slew(rise: 355ms, fall: 355ms)
   let call_vibrato = call_pitch * (1 + 0.012 * sine(freq: 5.3) * call_swell)
   let call = sine(
       freq: call_vibrato,
@@ -124,7 +124,7 @@ group "Visitor: Music Box" {
   let music_box = string(
       trigger: pluck,
       freq: box_pitch,
-      decay: chime_decay(150.00002ms..5s),
+      decay: chime_decay(150ms..5s),
       brightness: 0.3)
 }
 
@@ -283,7 +283,7 @@ group "Bell" {
 group "Bell Follower" {
   let bell_size = abs(bell_voice) * 0.000100016594
   let bell_held = bell_follower + bell_size
-  let bell_level = bell_held |> slew(rise: 316.22777ms, fall: 3.981072s)
+  let bell_level = bell_held |> slew(rise: 316ms, fall: 4s)
   let pad_duck = 1 - bell_level * 1.6 |> clamp(low: 0.3)
 }
 
@@ -321,7 +321,7 @@ group "Wind" {
   // whose center is a voltage is wind; the resonance makes it whistle.
   let melody_size = abs(melody.bus_left) * 0.000100016594
   let melody_held = wind_follower + melody_size
-  let melody_level = melody_held |> slew(rise: 501.18722ms, fall: 5.011872s)
+  let melody_level = melody_held |> slew(rise: 500ms, fall: 5s)
   let wind_level = 1 - melody_level * 2.2 |> clamp(low: 0.1)
   let wind = hiss(
       level: wind_level * wander(rate: 0.029, seed: 5, low: 0.25),

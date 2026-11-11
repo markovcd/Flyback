@@ -12,7 +12,7 @@ let twin  = note(root.note, cents: 9)
 // One envelope for both, opened by one pulse: the two ears are the same note, and
 // only the tuning of it differs.
 let shape = pulse(freq: 1.5, width: 0.3)
-              |> adsr(gate: _, attack: 10ms, decay: 125.89255ms, sustain: 0.4, release: 158.48931ms)
+              |> adsr(gate: _, attack: 10ms, decay: 126ms, sustain: 0.4, release: 160ms)
 
 saw(freq: root, amp: 0.7) * shape |> out.left
 saw(freq: twin, amp: 0.7) * shape |> out.right

@@ -14,7 +14,7 @@ tone |> out.left
 // 0 below the middle of the frame and 1 above it, which picks between the two
 // charts. The mix takes its second color where t is 1, so the Probe is up.
 let split = y |> step()
-color.mix(scope(tone, window: 25.11886ms), probe(tone, window: 25.11886ms), split)
+color.mix(scope(tone, window: 25ms), probe(tone, window: 25ms), split)
   |> out.color
 
 out.volume = 0.3

@@ -98,7 +98,7 @@ group "Bass" {
   // The bass takes sixteen partials to reach up into the filter's range; the chord's
   // eight already do. The bass two octaves up is the harmonograph's root.
   let roots = notes(rate: 0.0625, gate_length: 1) [ D2 D#2 A1 G#1 ]
-  let bass_pitch = roots |> note(note: _) |> slew(rise: 6.309574s, fall: 6.309574s)
+  let bass_pitch = roots |> note(note: _) |> slew(rise: 6.3s, fall: 6.3s)
   let bass = overtones(
       spectrum: mist,
       freq: bass_pitch,
@@ -112,7 +112,7 @@ group "Bass" {
 group "Middle" {
   let middle_pitch = notes(rate: 0.0625, gate_length: 1) [ D4 D#4 D#4 D#4 ]
     |> note(note: _, cents: -4)
-    |> slew(rise: 4.4668357s, fall: 4.4668357s)
+    |> slew(rise: 4.5s, fall: 4.5s)
   let middle = overtones(
       spectrum: mist,
       freq: middle_pitch,
@@ -142,7 +142,7 @@ group "Chords" {
         persist: 0.8,
         size: 1.3)
   let swell = swell_gate
-    |> adsr(gate: _, attack: 3.1622777s, sustain: 1, release: 1.9952624s)
+    |> adsr(gate: _, attack: 3.16s, sustain: 1, release: 2s)
   let chords = harmonograph * swell
   let chords_right = harmonograph.right * swell
 }
@@ -205,7 +205,7 @@ group "Picture" {
 group "Low" {
   let low_pitch = notes(rate: 0.0625, gate_length: 1) [ A3 A#3 A3 G#3 ]
     |> note(note: _, cents: 5)
-    |> slew(rise: 3.981072s, fall: 3.981072s)
+    |> slew(rise: 4s, fall: 4s)
   let low = overtones(
       spectrum: mist,
       freq: low_pitch,
@@ -217,7 +217,7 @@ group "Low" {
 group "High" {
   let high_pitch = notes(rate: 0.0625, gate_length: 1) [ F#4 G4 C5 C5 ]
     |> note(note: _, cents: 3)
-    |> slew(rise: 5.011872s, fall: 5.011872s)
+    |> slew(rise: 5s, fall: 5s)
   let high = overtones(
       spectrum: mist,
       freq: high_pitch,

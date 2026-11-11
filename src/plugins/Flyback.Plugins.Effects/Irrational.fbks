@@ -57,7 +57,7 @@ def dot(at, level, turn, orbit, smallest, largest) = {
 
 group "Picture" {
   let (ring_1, ring_2, ring_3, ring_4, ring_5, ring_6, ring_7) =
-    for size in [0.86, 0.76666665, 0.67333335, 0.58000004, 0.48666668, 0.39333335, 0.3] {
+    for size in [0.86, 0.76666665, 0.67333335, 0.58, 0.48666668, 0.39333335, 0.3] {
       ring(coord, size)
     }
 }
@@ -70,10 +70,10 @@ group "The seven speeds" {
       (orbit_1(0..0.12516667), 2.1),
       (orbit_2(0..0.13356903), 2.55),
       (orbit_3(0..0.14195535), 3),
-      (orbit_4(0..0.15037268), 3.4499998),
-      (orbit_5(0..0.15877429), 3.8999999),
+      (orbit_4(0..0.15037268), 3.45),
+      (orbit_5(0..0.15877429), 3.9),
       (orbit_6(0..0.16721943), 4.35),
-      (orbit_7(0..0.17560093), 4.7999997)] {
+      (orbit_7(0..0.17560093), 4.8)] {
     let turn = time * speed
     (turn, turn |> stroke(curve: curve))
   }
@@ -104,13 +104,13 @@ group "The passes" {
 group "Picture" {
   let (dot_1, dot_2, dot_3, dot_4, dot_5, dot_6, dot_7) =
     for (stroke, turn, orbit, smallest, largest) in [
-        (stroke_1, turn_1, 0.86, 0.03375, 0.120000005),
-        (stroke_2, turn_2, 0.76666665, 0.031050002, 0.11040001),
+        (stroke_1, turn_1, 0.86, 0.03375, 0.12),
+        (stroke_2, turn_2, 0.76666665, 0.03105, 0.1104),
         (stroke_3, turn_3, 0.67333335, 0.02835, 0.1008),
-        (stroke_4, turn_4, 0.58000004, 0.02565, 0.09120001),
-        (stroke_5, turn_5, 0.48666668, 0.022950001, 0.0816),
-        (stroke_6, turn_6, 0.39333335, 0.02025, 0.072000004),
-        (stroke_7, turn_7, 0.3, 0.01755, 0.06240001)] {
+        (stroke_4, turn_4, 0.58, 0.02565, 0.0912),
+        (stroke_5, turn_5, 0.48666668, 0.02295, 0.0816),
+        (stroke_6, turn_6, 0.39333335, 0.02025, 0.072),
+        (stroke_7, turn_7, 0.3, 0.01755, 0.0624)] {
       dot(coord, stroke * (passing * 0.5 + 0.5), turn, orbit, smallest, largest)
     }
   let (meet_1, meet_2, meet_3, meet_4, meet_5, meet_6) = for (pass, turn, orbit) in [
@@ -120,7 +120,7 @@ group "Picture" {
       (pass_4, turn_5, 0.53333336),
       (pass_5, turn_6, 0.44),
       (pass_6, turn_7, 0.3466667)] {
-    dot(coord, pass * 0.8, turn, orbit, 0.022499999, 0.080000006)
+    dot(coord, pass * 0.8, turn, orbit, 0.0225, 0.08)
   }
 }
 
@@ -134,13 +134,13 @@ group "Voices" {
       level: stroke_1,
       ratio: 2,
       index: 0.42) * 0.78 + bell(freq: note(
-          note: E3), level: stroke_2, ratio: 2, index: 0.38) * 0.85999995 + bell(freq: note(), level: stroke_3, ratio: 2, index: 0.33999997) * 0.93999994 + bell(freq: note(note: C4), level: stroke_4, ratio: 2, index: 0.29999998) * 1.02
+          note: E3), level: stroke_2, ratio: 2, index: 0.38) * 0.86 + bell(freq: note(), level: stroke_3, ratio: 2, index: 0.34) * 0.94 + bell(freq: note(note: C4), level: stroke_4, ratio: 2, index: 0.3) * 1.02
   let chord = bells + bell(
       freq: note(note: E4),
       level: stroke_5,
       ratio: 3,
-      index: 0.26) * 1.0999999 + bell(freq: note(
-          note: G4), level: stroke_6, ratio: 3, index: 0.22) * 1.18 + bell(freq: note(note: C5), level: stroke_7, ratio: 3, index: 0.17999999) * 1.26
+      index: 0.26) * 1.1 + bell(freq: note(
+          note: G4), level: stroke_6, ratio: 3, index: 0.22) * 1.18 + bell(freq: note(note: C5), level: stroke_7, ratio: 3, index: 0.18) * 1.26
 
   // Half a second and five sixths of one, which are not a ratio of each other, so
   // the repeats interleave rather than doubling up. Then one hall, whose second
@@ -191,10 +191,10 @@ group "Picture" {
     |> ink(mask: dot_1, g: 0.6, b: 0.28)
     |> ink(mask: dot_2, r: 0.9083333, g: 0.60833335, b: 0.38333333)
     |> ink(mask: dot_3, r: 0.81666666, g: 0.6166667, b: 0.48666668)
-    |> ink(mask: dot_4, r: 0.725, g: 0.625, b: 0.59000003)
+    |> ink(mask: dot_4, r: 0.725, g: 0.625, b: 0.59)
     |> ink(mask: dot_5, r: 0.6333333, g: 0.6333334, b: 0.6933334)
     |> ink(mask: dot_6, r: 0.5416666, g: 0.6416667, b: 0.7966666)
-    |> ink(mask: dot_7, r: 0.45, g: 0.65000004, b: 0.9)
+    |> ink(mask: dot_7, r: 0.45, g: 0.65, b: 0.9)
     |> ink(mask: meet_1, g: 0.95, b: 0.82)
     |> ink(mask: meet_2, g: 0.95, b: 0.82)
     |> ink(mask: meet_3, g: 0.95, b: 0.82)

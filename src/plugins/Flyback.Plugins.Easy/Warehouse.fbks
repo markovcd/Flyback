@@ -79,9 +79,9 @@ group "Arrangement" {
       0 0 0 0 0 0 0 1 1 1 0 0 |
       0.4 0.4 0.4 0.4 0.75 0.4 0.4 0.75 0.75 0.4 0.4 0.4 |
       0.1 0.12 0.18 0.25 0.28 0.2 0.3 0.35 0.35 0.25 0.15 0.1 ]
-  let bass_open = music_parts.part_7 |> slew(rise: 3.981072s, fall: 1.9952624s)
+  let bass_open = music_parts.part_7 |> slew(rise: 4s, fall: 2s)
   // The knobs are slewed, so a knob turned while it plays glides rather than steps.
-  let echo = slew(in: Echo_knob(0..0.6), rise: 30.19952ms, fall: 30.19952ms)
+  let echo = slew(in: Echo_knob(0..0.6), rise: 30ms, fall: 30ms)
   // What happens to the hook in each section: how much of it is thrown into its echo,
   // how much goes into the room, how hard it is driven, and where the noise washes
   // down.
@@ -90,7 +90,7 @@ group "Arrangement" {
       0 0 0 0 0.25 0.7 0.45 0.2 0.3 0 0 0 |
       0 0 0 0 0.15 0 0.1 0.35 0.45 0 0 0 |
       0 0 0 1 0 1 0 1 0 0 0 0 ]
-  let swing = slew(in: Swing(0..1), rise: 30.19952ms, fall: 30.19952ms)
+  let swing = slew(in: Swing(0..1), rise: 30ms, fall: 30ms)
 }
 
 group "Picture" {
@@ -182,9 +182,9 @@ group "Bass" {
       velocity: 0.9,
       sub: 0.5,
       attack: 1ms,
-      decay: 354.8134ms,
+      decay: 355ms,
       sustain: 0.5,
-      release: 63.09573ms,
+      release: 63ms,
       bright: 0.15,
       resonance: 0.1,
       sweep: bass_open,
@@ -206,7 +206,7 @@ group "Chords" {
     synth(
         pitch: pitch,
         gate: stab_steps.gate,
-        decay: 199.52624ms,
+        decay: 200ms,
         sustain: stab_sustain,
         release: stab_release,
         bright: 0.6,
@@ -243,15 +243,15 @@ group "Chords" {
   let sparse_hook = notes(rate: 4.133333, gate_length: 0.6) [
       A4 ~ ~ A4 ~ ~ C5 ~ ~ ~ E5 ~ D5 ~ C5 ~ A4 ~ ~ A4 ~ ~ D5 ~ ~ ~ E5 ~ D5 C5 B4 ~ ]
   let hook_or_climbing_gate = hook.gate + (climbing_hook.gate - hook.gate) * climbing
-  let hook_level = music_parts.part_4 |> slew(rise: 50.11873ms, fall: 3.981072s)
+  let hook_level = music_parts.part_4 |> slew(rise: 50ms, fall: 4s)
   let organ = synth(
       pitch: hook_or_climbing + (sparse_hook - hook) * climbing.else,
       gate: hook_or_climbing_gate + (sparse_hook.gate - hook.gate) * climbing.else,
       velocity: hook_level,
       octave: music_parts.part_5,
-      decay: 301.9952ms,
+      decay: 300ms,
       sustain: 0.35,
-      release: 199.52624ms,
+      release: 200ms,
       bright: music_parts.part_6,
       sweep: 0.3,
       lfo1_depth: 0.15,
@@ -299,7 +299,7 @@ group "Mix" {
         right: music.right,
         key: kick.env,
         depth: Pump(0..0.9),
-        release: 181.97008ms)
+        release: 180ms)
 }
 
 group "Wash" {

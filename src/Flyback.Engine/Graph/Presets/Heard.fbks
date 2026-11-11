@@ -8,11 +8,11 @@ tags "drums" "patterns"
 // the drum is: the length of a kick is the envelope's, never the gate's.
 let voiced = sine(freq: 70)
                * (pulse(freq: 2, width: 0.08)
-                    |> adsr(gate: _, attack: 2.511887ms, decay: 125.89255ms, sustain: 0, release: 100ms))
+                    |> adsr(gate: _, attack: 2.5ms, decay: 126ms, sustain: 0, release: 100ms))
 
 // The wire this patch is about: a signal on its way to the speakers, read by
 // something that hands the picture a number for it.
-let heard = meter(voiced, window: 31.62278ms)
+let heard = meter(voiced, window: 31.6ms)
 
 voiced |> out.left
 

@@ -81,8 +81,8 @@ group "Kick" {
 
   // Two envelopes and a sine, which is the whole of a kick drum: one shapes how
   // loud it is, the shorter one what pitch it is.
-  let kickLevel = kickGate |> adsr(gate: _, attack: 1.258925ms, decay: 239.8833ms, sustain: 0, release: 79.43282ms)
-  let sweep     = kickGate |> adsr(gate: _, attack: 501.1873us, decay: 44.66836ms, sustain: 0, release: 15.848934ms)
+  let kickLevel = kickGate |> adsr(gate: _, attack: 1.26ms, decay: 240ms, sustain: 0, release: 80ms)
+  let sweep     = kickGate |> adsr(gate: _, attack: 500us, decay: 45ms, sustain: 0, release: 16ms)
 
   let kickFreq = sweep |> remap(0..1, 46..200)
   // Past the rails and held to them, so the top of each cycle is flat: the knock a
@@ -124,7 +124,7 @@ group "Snare" {
   let snareGate = math.mix(snareHit, hatSeq.gate, filling)
   let snareHard = math.mix(snareSeq, ramp, filling) |> hold(trigger: snareGate)
 
-  let snareLevel = snareGate |> adsr(gate: _, attack: 501.1873us, decay: 158.48931ms, sustain: 0, release: 63.09573ms)
+  let snareLevel = snareGate |> adsr(gate: _, attack: 500us, decay: 160ms, sustain: 0, release: 63ms)
 
   // The wires are the noise with its bottom and its top taken off, and the shell
   // is a sine under them that is gone sooner: the envelope squared.
@@ -151,9 +151,9 @@ group "Bass" {
 
   // The gate is as high as the note is loud, so smoothed it is the accent, and the
   // envelope times it opens the filter as well as the note.
-  let accent = bassGate |> slew(rise: 25.1188643ms, fall: 25.1188643ms)
+  let accent = bassGate |> slew(rise: 25ms, fall: 25ms)
 
-  let pluck = (bassGate |> adsr(gate: _, attack: 1ms, decay: 125.89255ms, sustain: 0.4, release: 63.09573ms)) * accent
+  let pluck = (bassGate |> adsr(gate: _, attack: 1ms, decay: 126ms, sustain: 0.4, release: 63ms)) * accent
 
   // The filter rings, and its cutoff runs from seventy hertz with the envelope
   // shut to as far up as the song has got.
@@ -190,13 +190,13 @@ group "Strings" {
   let firstTuned = firstArp |> tune(transpose: root) [ C D E F G G# A B ]
   let firstPlucked = string(trigger: firstArp.gate,
                             freq: firstTuned,
-                            decay: 707.94577ms)
+                            decay: 700ms)
 
   let secondTuned = secondArp |> tune(transpose: root) [ C D E F G G# A B ]
   let secondStrike = secondArp.gate * band.part_4
   let secondPlucked = string(trigger: secondStrike,
                              freq: secondTuned,
-                             decay: 707.94577ms)
+                             decay: 700ms)
 
   let firstString  = (firstPlucked |> filter(cutoff: stringTone, resonance: 0)) * 2.2
   let secondString = (secondPlucked |> filter(cutoff: stringTone, resonance: 0)) * 2.2
@@ -234,7 +234,7 @@ group "Pad" {
 
   // A chord that cuts out is a mistake and one that swells is not, so its level
   // gets where the lane says over a couple of seconds.
-  let padLevel = (band.part_5 |> slew(rise: 2.51188643s, fall: 2.51188643s)) * duck.gain
+  let padLevel = (band.part_5 |> slew(rise: 2.5s, fall: 2.5s)) * duck.gain
   let padL = padToneL * padLevel
   let padR = padToneR * padLevel
 }
@@ -272,8 +272,8 @@ group "Lead" {
 
   // Plucked in the verse and sung in the chorus.
   let leadEnvSustain = form |> remap(0..1, 0.3..0.7)
-  let leadEnv = leadGate |> adsr(gate: _, attack: 3.162278ms, decay: 112.20185ms,
-                                 sustain: leadEnvSustain, release: 141.25375ms)
+  let leadEnv = leadGate |> adsr(gate: _, attack: 3.16ms, decay: 112ms,
+                                 sustain: leadEnvSustain, release: 140ms)
 
   // Left and right differ in which saw they carry and in nothing else, which is
   // where the width comes from. The envelope opens the lowpass, so a note starts

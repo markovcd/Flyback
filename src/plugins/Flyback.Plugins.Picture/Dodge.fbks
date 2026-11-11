@@ -136,7 +136,7 @@ group "Sound" {
   let sound = 0.5 * string(
       trigger: keys_in.trigger,
       freq: pitch,
-      decay: 3.981072s,
+      decay: 4s,
       brightness: 0.45) + 0.2 * sine(freq: chime_pitch, amp: step(
           0,
           rows) * (1 - step(

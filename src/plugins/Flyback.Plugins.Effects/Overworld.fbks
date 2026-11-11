@@ -111,7 +111,7 @@ group "Arrangement" {
         0 0 0 0 0 0 0 0 0 1 0 0 0 |
         0 0 0 1 0 0 1 0 0 0 1 1 0 ]
   let key_change = step(10.5, parts.section) * 2
-  let arp_open = parts.part_5 |> slew(rise: 3.981072s, fall: 1s)
+  let arp_open = parts.part_5 |> slew(rise: 4s, fall: 1s)
 }
 
 group "Snare" {
@@ -381,7 +381,7 @@ group "Lead" {
         F5@4 A5@2 C6@2 B5@4 F#5@2 D#5@2 ]
   let melody = verse_or_chorus + tunes.part_3 * night_tune
   let lead_on = tunes + tunes.part_2 + tunes.part_3 + tunes.part_4
-    |> slew(rise: 5.011873ms, fall: 5.011873ms)
+    |> slew(rise: 5ms, fall: 5ms)
   let lead_width = tunes.part_2 * 0.15 + tunes.part_3 * 0.25 + tunes.part_4 * -0.125 + 0.25 + sine(
       freq: 0.3,
       amp: 0.04)
@@ -425,9 +425,9 @@ group "Lead" {
   let solo_note = arp_note + step(0.5, fract(beats * 0.5)) * 12 + 12
   let lead_note = melody + key_change + tunes.part_4 * solo_note
   let lead_pitch = lead_note |> note(note: _)
-  let lead_late = lead_note |> slew(rise: 3.162278ms, fall: 3.162278ms)
+  let lead_late = lead_note |> slew(rise: 3.16ms, fall: 3.16ms)
   let strike = step(0.2, abs(lead_note - lead_late))
-    |> decay(trigger: _, decay: 251.18863ms, curve: 0.5)
+    |> decay(trigger: _, decay: 250ms, curve: 0.5)
   let lead_level = lead_on * (strike * 0.5 + 0.5)
   let lead = pulse(
       freq: lead_pitch * (sine(freq: 6) * (lead_on * (1 - strike)) * 0.012 + 1),
@@ -528,7 +528,7 @@ group "Desk" {
         bus_left: music.bus_left,
         bus_right: music.bus_right)
   let ducked = music_space
-    |> duck(left: _, right: music_space.right, key: kick, depth: 0.4, attack: 3.162278ms)
+    |> duck(left: _, right: music_space.right, key: kick, depth: 0.4, attack: 3.16ms)
 }
 
 group "Hats" {
@@ -581,7 +581,7 @@ group "Master" {
         high_freq: 10000,
         high_gain: 1.5)
   let width = eq |> width(left: _, right: eq.right, width: 1.35, mono_below: 160)
-  let limiter = width |> limiter(left: _, right: width.right, release: 50.11873ms)
+  let limiter = width |> limiter(left: _, right: width.right, release: 50ms)
 }
 
 group "Picture: Tube" {

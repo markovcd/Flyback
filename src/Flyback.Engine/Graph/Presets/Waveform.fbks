@@ -22,6 +22,6 @@ voice |> out.left
 
 // About thirty milliseconds, three cycles and a bit: enough to see the shape
 // repeat. Two faders are up at once and reach 1.4, so scale leaves room for both.
-scope(voice, window: 30.19952ms, scale: 1.5) |> out.color
+scope(voice, window: 30ms, scale: 1.5) |> out.color
 
 out.volume = 0.25

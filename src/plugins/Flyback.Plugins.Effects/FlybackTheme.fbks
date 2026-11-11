@@ -226,13 +226,13 @@ group "Lead" {
     |> notes(rate: 2, gate_length: 0.9, shape: 0.06) [
         E5@2 A5 G5 E5@2 D5 C5 C5 D5 E5@2 F5 E5@0.5 E5%0@2.5 A5@3 G5 E5@2 D5 E5 E5@5
         E5%0@3 ]
-  let hook_pitch = hook |> slew(rise: 39.81072ms, fall: 39.81072ms) |> note(note: _)
+  let hook_pitch = hook |> slew(rise: 40ms, fall: 40ms) |> note(note: _)
   let lead_tone = saw(
       freq: hook_pitch,
       phase: sine(freq: 5.2, amp: 0.12),
       amp: 0.5) + saw(freq: hook_pitch * 1.006, amp: 0.5)
     |> filter(cutoff: 3400, resonance: 0.3)
-  let lead_gate = hook.gate |> slew(rise: 3.162278ms, fall: 63.09573ms)
+  let lead_gate = hook.gate |> slew(rise: 3.16ms, fall: 63ms)
   let lead = lead_tone * lead_gate * parts.part_6
 }
 
@@ -336,8 +336,8 @@ group "Master" {
         right: master_desk.right,
         threshold: -10,
         ratio: 2,
-        attack: 31.62278ms,
-        release: 125.89255ms,
+        attack: 31.6ms,
+        release: 126ms,
         makeup: 8)
   let eq = compressor
     |> eq(
@@ -350,7 +350,7 @@ group "Master" {
         high_freq: 6000,
         high_gain: 6)
   let width = eq |> width(left: _, right: eq.right, width: 1.25, mono_below: 150)
-  let limiter = width |> limiter(left: _, right: width.right, release: 50.11873ms)
+  let limiter = width |> limiter(left: _, right: width.right, release: 50ms)
 }
 
 group "Picture: Tube" {
