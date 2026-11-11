@@ -24,3 +24,12 @@ Feature: A patch embedded on someone's page
     Given a page on a phone embeds the preset "Sidebands" to open "side"
     When the embedded patch's Play button is clicked
     Then the web viewer opens over the page, playing the embedded patch with its sound heard
+
+  @unmeasured
+  Scenario: A patch embedded to open in an element of the page plays there
+    Given a page embeds the preset "Sidebands" to open in its element "#picture"
+    When the embedded patch's Play button is clicked
+    Then the web viewer plays in that element, replacing what it held, with its sound heard
+    And the embedded patch's button says "Pause"
+    When the embedded patch's Pause button is clicked
+    Then the embedded patch's button says "Play"

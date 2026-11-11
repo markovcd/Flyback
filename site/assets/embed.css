@@ -143,3 +143,7 @@ html.flyback-side-open { margin-right: 440px; }
   .flyback-embed .fe-play { height: 36px; padding: 0 12px 0 10px; border-radius: 18px; font-size: 13px; }
   .flyback-embed .fe-copy { width: 44px; height: 44px; }
 }
+
+/* Playing in an element of the page: the picture at 16:9 and one transport row. */
+.flyback-player.inline { position: static; container-type: inline-size; width: 100%; }
+.flyback-player.inline iframe { height: calc(100cqw * 0.5625 + 64px); }

@@ -38,6 +38,9 @@ public sealed class EmbedSteps(IUnitTestRuntimeProvider runtime) : IDisposable
     [Given("a page on a phone embeds the preset {string} to open {string}")]
     public void GivenAnEmbedOnAPhone(string preset, string opens) => Embed(preset, opens, phone: true);
 
+    [Given("a page embeds the preset {string} to open in its element {string}")]
+    public void GivenAnEmbedInAnElement(string preset, string element) => Embed(preset, element, phone: false);
+
     private void Embed(string preset, string opens, bool phone)
     {
         BuiltSite.Need(runtime);
@@ -49,6 +52,7 @@ public sealed class EmbedSteps(IUnitTestRuntimeProvider runtime) : IDisposable
             <!doctype html>
             <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Host</title></head>
             <body><p>Someone's post.</p>
+            {(opens.StartsWith('#') ? $"""<div id="{WebUtility.HtmlEncode(opens[1..])}"><p id="held">What the element held.</p></div>""" : "")}
             <pre data-flyback="{WebUtility.HtmlEncode(preset)}" data-opens="{WebUtility.HtmlEncode(opens)}">
             {WebUtility.HtmlEncode(text)}
             </pre>
@@ -98,7 +102,21 @@ public sealed class EmbedSteps(IUnitTestRuntimeProvider runtime) : IDisposable
     [Then("the web viewer opens docked beside the page, playing the embedded patch with its sound heard")]
     public void ThenBesideThePage() => ThenOpens("side");
 
-    private void ThenOpens(string where)
+    [Then("the web viewer plays in that element, replacing what it held, with its sound heard")]
+    public void ThenInTheElement()
+    {
+        Heard();
+
+        ((bool?)Page.Evaluate("document.querySelector('#picture .flyback-player.inline iframe') !== null")).ShouldBe(true);
+        ((bool?)Page.Evaluate("getComputedStyle(document.querySelector('#held')).display === 'none'")).ShouldBe(true);
+        ((bool?)Page.Evaluate("document.querySelector('.flyback-player.overlay, .flyback-player.side') === null")).ShouldBe(true);
+        ((bool?)Page.Evaluate("document.querySelector('.fp-close') === null")).ShouldBe(true);
+    }
+
+    [When("the embedded patch's Pause button is clicked")]
+    public void WhenPauseIsClicked() => Click(".flyback-embed .fe-play");
+
+    private void Heard()
     {
         Page.Until($"{Viewer}.status().error || ({Viewer}.status().sound && {Viewer}.status().time > 0.25)", "the embedded player was not heard", Opening);
 
@@ -106,6 +124,11 @@ public sealed class EmbedSteps(IUnitTestRuntimeProvider runtime) : IDisposable
         ((string?)status["error"]).ShouldBeNull();
         ((bool?)status["playing"]).ShouldBe(true);
         ((string?)status["held"]).ShouldBeNull();
+    }
+
+    private void ThenOpens(string where)
+    {
+        Heard();
 
         ((bool?)Page.Evaluate($"document.querySelector('.flyback-player').classList.contains({JsonSerializer.Serialize(where)})")).ShouldBe(true);
         ((bool?)Page.Evaluate("document.documentElement.classList.contains('flyback-side-open')")).ShouldBe(where == "side");

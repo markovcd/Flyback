@@ -2,8 +2,12 @@
 // highlighted, read-only code block with Copy and Play; Play opens the web viewer in a
 // frame over the page or docked on its right, as the block's data-opens says
 // ("overlay", the default, or "side"). A narrow screen always gets the overlay.
+// A data-opens naming an element of the page ("#picture") plays in that element
+// instead: the player replaces what it holds, at its width, with no overlay and no
+// close button, and the block's Play button pauses and plays it.
 //
 //   <pre data-flyback="FM bell" data-opens="side">...patch text...</pre>
+//   <pre data-flyback="FM bell" data-opens="#picture">...patch text...</pre>
 //   <script src="https://flybackmodular.app/embed.js" async></script>
 (function () {
   "use strict";
@@ -55,11 +59,13 @@
   function build(pre) {
     const text = tidy(pre.textContent);
     const title = pre.getAttribute("data-flyback") || "Flyback patch";
-    const side = pre.getAttribute("data-opens") === "side";
+    const opens = pre.getAttribute("data-opens") || "";
+    const side = opens === "side";
+    const into = opens.startsWith("#") ? opens : "";
 
     const block = make("figure", "flyback-embed");
     block.setAttribute("aria-label", title);
-    block.flyback = { text, title, side };
+    block.flyback = { text, title, side, into };
 
     const head = make("div", "fe-head", icons.mark);
     const name = make("span", "fe-title");
@@ -117,8 +123,11 @@
   function open(block) {
     close();
 
-    const { text, title, side } = block.flyback;
+    const { text, title, side, into } = block.flyback;
     const docked = side && !narrow.matches;
+    const place = into && document.querySelector(into);
+
+    if (place) return openIn(block, place);
 
     const player = make("div", "flyback-player " + (docked ? "side" : "overlay"));
     const box = make("div", "fp-box");
@@ -154,12 +163,32 @@
     shut.focus();
   }
 
+  /** Plays in an element of the page, which gives up what it holds until the player is closed. */
+  function openIn(block, place) {
+    const { text, title } = block.flyback;
+
+    const player = make("div", "flyback-player inline");
+    const frame = document.createElement("iframe");
+    frame.title = title;
+    frame.allow = "autoplay; fullscreen";
+    frame.src = origin + "/viewer/?embed&title=" + encodeURIComponent(title) + "#fbks=" + carry(text);
+    player.append(frame);
+
+    const held = [...place.children];
+    held.forEach(node => { node.style.display = "none"; });
+    place.append(player);
+
+    current = { block, player, frame, held };
+    show(block, false);
+  }
+
   function close() {
     if (!current) return;
 
-    const { block, player } = current;
+    const { block, player, held } = current;
     current = null;
     player.remove();
+    if (held) held.forEach(node => { node.style.display = ""; });
     document.documentElement.classList.remove("flyback-side-open");
     show(block, null);
     block.flyback.play.focus();
@@ -174,11 +203,11 @@
 
     const data = event.data || {};
     if (data.flyback === "playing") show(current.block, data.playing === true);
-    else if (data.flyback === "close") close();
+    else if (data.flyback === "close" && !current.held) close();
   });
 
   document.addEventListener("keydown", event => {
-    if (event.key === "Escape" && current) close();
+    if (event.key === "Escape" && current && !current.held) close();
   });
 
   // A docked player that no longer fits becomes the overlay.

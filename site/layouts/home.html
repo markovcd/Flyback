@@ -86,7 +86,7 @@
 
     <div class="twosinks">
       <div class="as-text">
-        <pre data-flyback="Plasma">// The same patch, as text.
+        <pre data-flyback="Plasma" data-opens="#plasma-picture">// The same patch, as text.
 let across = x |> sine(freq: 0.8, phase: t * 0.11)
 let down   = y |> sine(freq: 0.9, phase: t * -0.07)
 let round  = rings(freq: 1.1, offset: t * -0.13)
@@ -98,7 +98,7 @@ let b = field |> sine(freq: 0.2, phase: 0.2, amp: 0.42, bias: 0.5)
 
 color.rgb(r: r, g: g, b: b) |> out.color</pre>
       </div>
-      <div class="window">
+      <div class="window" id="plasma-picture">
         <video data-autoplay muted loop playsinline preload="none" poster="assets/shots/preview-plasma.webp" width="960" height="540"
                aria-label="The Plasma patch rendering: soft blobs of deep blue, cream and amber drifting and cycling slowly.">
           <source src="assets/clips/plasma.mp4" type="video/mp4">
