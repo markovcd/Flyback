@@ -1,0 +1,87 @@
+{{ define "main" -}}
+<div class="page">
+
+<div class="canvas">
+  <div class="wrap">
+    <header class="doc-head">
+      <p class="eyebrow">Get started</p>
+      <h1>Download it, or run it from source.</h1>
+      <p class="lede">Releases are built for Windows x64, macOS on Apple silicon, Linux x64 and Android on arm64.</p>
+      <div class="actions">
+        <a class="button primary" href="https://github.com/markovcd/Flyback/releases/latest">Download the latest release</a>
+        <a class="button" href="tutorials.html">Start the tutorials</a>
+      </div>
+    </header>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="split">
+      <div>
+        <h3>From a release</h3>
+        <p>Each <a href="https://github.com/markovcd/Flyback/releases">release</a> has a self-contained folder per
+        platform, with the app, the command line tool, the viewer and the plugins side by side. There is nothing to install:
+        unpack it and run <code>Flyback</code>.</p>
+        <p>Or let <a href="https://github.com/markovcd/Flyback/blob/main/install.sh">the install script</a> fetch the
+        latest release for your platform, check its signature and put it in place, with the command line tool and the
+        viewer on your <code>PATH</code>. It runs in a terminal on Linux and macOS and in Git Bash on Windows:</p>
+<pre><code>curl -fsSL https://raw.githubusercontent.com/markovcd/Flyback/main/install.sh | bash</code></pre>
+        <p>On macOS a zip downloaded in a browser will not open: the app is not notarized, so it is "damaged". Install it with the script above, or run
+        <code>xattr -cr Flyback.app &amp;&amp; codesign --force --deep --sign - Flyback.app</code> on the unpacked app.</p>
+        <p>Run it again to update. <code>bash -s -- --uninstall</code> in place of <code>bash</code> removes Flyback and
+        everything the script added.</p>
+        <p>After that it keeps itself up to date: a new release is downloaded in the background and installed the
+        next time Flyback starts, and only if it is signed with Flyback's release key. The window that opens then
+        shows what changed since the version it replaced. Turn it off under <strong>Settings → Privacy</strong>.</p>
+        <p>If you switch it on, it also counts how it is used, in coarse bands: the version, the operating system, which of its own
+        plugins loaded and which sound backend opened, roughly how big the machine is, how many of each kind of
+        module a playing patch holds, whether an assistant was asked and which, and at the end of a run, which
+        kinds of module were picked, how long it lasted, which of the editor's features it used and how fast the
+        picture drew. A crash sends the kind of error and where it happened, never the message. No patch,
+        nothing typed, and nothing that identifies you or your machine: two runs cannot be told apart from one.
+        It is off until you tick it under <strong>Settings → Privacy</strong>.</p>
+        <p>To open <code>.fbk</code>, <code>.fbkb</code> and <code>.fbks</code> files by double-click, pick the editor
+        or the viewer under <strong>Settings → Files</strong>; each kind then shows an icon of its own. A <code>.fbkp</code> plugin always opens in the editor,
+        which shows what the plugin is, adds and reaches, and installs it if you say so. On macOS the build is <code>Flyback.app</code>, which
+        always receives them and passes them on to the viewer if that is the choice. The command
+        line tool and the viewer are inside it, in <code>Flyback.app/Contents/MacOS</code>.</p>
+        <p>The same tab sets a library folder. A sound or a picture a patch names that is not beside the patch is
+        looked for there, and one chosen from it is named from it, so the patch finds it on any machine with the
+        same library.</p>
+        <p><a class="button" href="tutorials.html" style="margin-top: 10px">Watch the tutorials →</a></p>
+      </div>
+      <div>
+        <h3>From source</h3>
+        <p>You need the .NET 10 SDK. A build from source can also target Windows on Arm (<code>win-arm64</code>)
+        and Intel Macs (<code>osx-x64</code>), which the releases do not include.</p>
+<pre><code>git clone https://github.com/markovcd/Flyback
+cd Flyback
+dotnet run --project src/Flyback.Editor.Desktop -c Release</code></pre>
+        <h3>From the command line</h3>
+<pre><code>flyback-cli render nebula.fbk -o nebula.png --size 1920x1080 --at 2.5
+flyback-cli render drone.fbk -o drone.mp4 --seconds 30 --fps 30
+flyback-cli render --preset "Plasma" -o plasma.png --at 1
+flyback-cli check nebula.fbk --strict
+flyback-cli check nebula.fbk --triage --json
+flyback-cli compare nebula.fbk nebula-ported.fbk
+flyback-cli measure nebula.fbk LFO Mixer.out --seconds 10
+flyback-cli print nebula.fbk -o nebula.fbks
+flyback-cli print --preset "Whole band"
+flyback-cli pack --preset "Mycelium" -o mycelium.fbkb
+flyback-cli save --preset "Acid" -o acid.fbk
+flyback-cli shot --preset "Flyback Theme" -o theme.png --at 30.3
+flyback-cli shot drone.fbks -o drone.png --crop
+flyback-cli ask drone.fbk "slower, and warmer"
+flyback-cli tool connect drone.fbk --args '{"from": "lfo", "to": "filter1", "to_port": "cutoff"}'
+claude mcp add -s user flyback -- flyback-cli mcp --editor
+flyback-cli modules --find "a mirror maze of shards"
+flyback-cli tutorial first-patch mine.fbks
+flyback-cli decide "make the bass slower" --yes-no "Does this ask for an edit?" --json
+flyback-viewer nebula.fbk --size 1080p
+flyback-cli viewer --preset "No Sense Dub" --hidden --for 10</code></pre>
+      </div>
+    </div>
+</div>
+
+</div>
+{{- end }}

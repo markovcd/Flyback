@@ -1,0 +1,4 @@
+/* The install page: two columns of install text under the page head. */
+.split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; padding: 8px 0 72px; }
+@media (min-width: 960px) { .split { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; } }
+.split h3:first-child { margin-top: 0; }

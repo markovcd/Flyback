@@ -556,3 +556,11 @@
 
   document.querySelectorAll(".section-rule, .doc main h2").forEach(function (head) { heads.observe(head); });
 })();
+
+// Anchors that left the home page go to the page that holds them now (id to page); #start stays on the home page.
+(function () {
+  if (document.body.getAttribute("data-page") !== "home") return;
+  var moved = {};
+  var id = location.hash.slice(1);
+  if (Object.prototype.hasOwnProperty.call(moved, id)) location.replace(moved[id] + "#" + id);
+})();

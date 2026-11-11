@@ -116,8 +116,3 @@
 .get-started > .section-head { flex: 1 1 360px; min-width: 0; }
 .get-started .actions { display: flex; flex-wrap: wrap; gap: 12px; }
 @media (max-width: 559px) { .get-started { padding: 24px 20px; } }
-
-/* ---- CLI and start ---- */
-.split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; margin-top: 36px; }
-@media (min-width: 960px) { .split { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; } }
-.split h3:first-child { margin-top: 0; }

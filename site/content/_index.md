@@ -7,6 +7,7 @@ share:
   title: "Flyback — one patch, a picture and a sound"
   description: "A patchable video and audio synthesizer for Windows, macOS and Linux."
 nav: overview
+page: home
 styles: [home.css]
 schema: |
   {
