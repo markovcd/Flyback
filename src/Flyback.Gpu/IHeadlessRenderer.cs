@@ -15,6 +15,6 @@ internal interface IHeadlessRenderer : IFrameRenderer, IDisposable
     /// <summary>Clears the feedback history, so the next frame starts from black.</summary>
     void Reset();
 
-    /// <summary>How each frame's edges are smoothed before it is read back: Off or Fast (ADR-0215); tests read it back.</summary>
+    /// <summary>How each frame's edges are smoothed before it is read back: Off or Fast (ADR-0215).</summary>
     Smoothing Smoothing { get; set; }
 }

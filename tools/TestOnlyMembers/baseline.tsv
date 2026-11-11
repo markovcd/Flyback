@@ -47,7 +47,6 @@ Flyback.Editor	Property	Public	PatchFiles.IsBundle	Flyback.Editor.Hubs.PatchFile
 Flyback.Editor	Property	Public	TutorialPanel.Done	Flyback.Editor.Tutorials.TutorialPanel
 Flyback.Engine	Property	Internal	ShippedTutorials.Carried	Flyback.Engine.Tutorials.ShippedTutorials
 Flyback.Gpu	Property	Public	IHeadlessRenderer.Description	Flyback.Gpu.IHeadlessRenderer
-Flyback.Gpu	Property	Public	IHeadlessRenderer.Smoothing	Flyback.Gpu.IHeadlessRenderer
 Flyback.Plugins	Ordinary	Internal	PluginHost.LoadTypes(params Type[])	Flyback.Plugins.Hosting.PluginHost
 Flyback.Plugins	Ordinary	Public	ContractVersion.Refusal(AssemblyName, Version)	Flyback.Plugins.Hosting.ContractVersion
 Flyback.Plugins	Ordinary	Public	IAudioCapture.Stop()	Flyback.Plugins.Audio.IAudioCapture

@@ -401,7 +401,7 @@ internal static class RenderCommand
 
         if (refused) return Exit.Failed;
 
-        IFrameRenderer frames = new SmoothedFrames(gpu is null ? new SynthRenderer() : gpu, options.Smoothing);
+        var frames = Frames(gpu, options.Smoothing);
 
         if (!options.Interpreted)
         {
@@ -506,6 +506,15 @@ internal static class RenderCommand
         }
 
         return null;
+    }
+
+    /// <summary>What draws the frames: the GPU smooths its own, as the preview's does; the processor's are smoothed after.</summary>
+    internal static IFrameRenderer Frames(IHeadlessRenderer? gpu, Smoothing smoothing)
+    {
+        if (gpu is null) return new SmoothedFrames(new SynthRenderer(), smoothing);
+
+        gpu.Smoothing = smoothing;
+        return gpu;
     }
 
     /// <summary>Metal on Apple's machines, unless FLYBACK_CGL asks for OpenGL there; OpenGL everywhere else (ADR-0214).</summary>
