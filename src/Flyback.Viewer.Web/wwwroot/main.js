@@ -11,8 +11,15 @@ const params = new URLSearchParams(location.search);
 /** Whether the patch's length plays round and round; the Loop button flips it. */
 let looped = params.has('loop');
 
+/** In a frame embed.js opened on another site: the picture and the transport, the patch carried in the address's #fbks. */
+const embedded = params.has('embed');
+document.body.classList.toggle('embed', embedded);
+
 /** Playing a file rather than a shipped preset. */
-const preview = params.has('file');
+const preview = params.has('file') || embedded;
+
+/** The most patch text an embed's address may carry. */
+const EMBED_LIMIT = 512 * 1024;
 
 /** The sizes offered: the editor's own, up to 1080p. */
 const SIZES = [[320, 180], [480, 270], [640, 360], [960, 540], [1280, 720], [1920, 1080], [1024, 768]];
@@ -824,6 +831,41 @@ async function openUrl(url, name) {
   await openBytes(file, bytes);
 }
 
+/** Opens the patch text embed.js wrote into the address's #fbks as base64url, or says why not. */
+async function openEmbedded() {
+  const carried = new URLSearchParams(location.hash.slice(1)).get('fbks') ?? '';
+  let bytes = null;
+
+  if (carried.length <= Math.ceil(EMBED_LIMIT * 4 / 3)) {
+    try {
+      bytes = Uint8Array.from(atob(carried.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+    } catch {
+      bytes = null;
+    }
+  }
+
+  if (bytes === null || bytes.length === 0) {
+    error = carried.length === 0 ? 'No patch came with this address.' : 'The patch in this address is too long or garbled.';
+    ui.cover.hidden = false;
+    ui.cover.textContent = error;
+    paint();
+    return;
+  }
+
+  const file = 'embedded.fbks';
+  source = { file, bytes };
+  await openBytes(file, bytes);
+}
+
+/** Tells the page around the frame whether the patch plays, so its Play button can say Pause. */
+let told = null;
+function tell() {
+  if (!embedded || window.parent === window || playing() === told) return;
+
+  told = playing();
+  window.parent.postMessage({ flyback: 'playing', playing: told }, '*');
+}
+
 /** Opens a file dropped or picked here, which only this page has. */
 async function openLocal(file) {
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -908,7 +950,7 @@ function offerSize(w, h) {
 function remember(changes) {
   const next = new URLSearchParams(location.search);
   for (const [key, value] of Object.entries(changes)) next.set(key, value);
-  history.replaceState(null, '', `?${next}`);
+  history.replaceState(null, '', `?${next}${location.hash}`);
 }
 
 function seekBy(seconds) {
@@ -996,6 +1038,8 @@ function paint() {
     span.textContent = ` ${text}`;
     ui.status.append(span);
   }
+
+  tell();
 }
 
 function frame() {
@@ -1186,7 +1230,25 @@ fetch(editorUrl(), { method: 'HEAD' }).then(response => { ui.edit.hidden = !resp
 setInterval(paint, 250);
 requestAnimationFrame(frame);
 
-if (params.has('file')) {
+if (embedded) {
+  // The page around the frame draws the title and the close button, and plays or pauses from its own.
+  ui.edit.textContent = 'Open in Flyback';
+  ui.edit.title = 'Open this patch in the web editor, in a tab of its own';
+  document.querySelector('.transport').append(ui.edit);
+
+  window.addEventListener('message', ({ source: from, data }) => {
+    if (from !== window.parent || data?.flyback !== 'toggle' || info === null) return;
+    if (playing()) pause();
+    else play();
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !document.fullscreenElement) window.parent.postMessage({ flyback: 'close' }, '*');
+  });
+
+  await openEmbedded();
+  if (info !== null) await play();
+} else if (params.has('file')) {
   await openUrl(params.get('file'), params.get('name') ?? undefined);
 } else {
   const wanted = params.get('preset') ?? 'Beat you can see';

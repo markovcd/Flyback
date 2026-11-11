@@ -14,6 +14,7 @@ public sealed partial class SiteColorSteps(IUnitTestRuntimeProvider runtime)
 {
 
     private string root = string.Empty;
+    private string? embedded;
     private readonly List<string> strays = [];
     private readonly List<string> themeColors = [];
 
@@ -37,6 +38,14 @@ public sealed partial class SiteColorSteps(IUnitTestRuntimeProvider runtime)
                         root = at.Value;
                         text = text.Remove(at.Index, at.Length);
                     }
+                    else if (name == "assets/embed.css")
+                    {
+                        // Pages on other sites have no site.css, so embed.css carries the same variables in its own scope.
+                        var at = Scoped().Match(text);
+                        at.Success.ShouldBeTrue("embed.css has no block of the site's variables.");
+                        embedded = at.Groups["body"].Value;
+                        text = text.Remove(at.Index, at.Length);
+                    }
                     Collect(name, text, CssColor());
                     break;
                 case ".html":
@@ -55,6 +64,8 @@ public sealed partial class SiteColorSteps(IUnitTestRuntimeProvider runtime)
     public void ThenColorsComeFromOnePlace()
     {
         strays.ShouldBeEmpty("Name a color in site.css's :root and use its var(): " + Environment.NewLine + string.Join(Environment.NewLine, strays));
+        embedded.ShouldNotBeNull("The built site has no assets/embed.css.");
+        embedded.ShouldBe(Root().Match(root).Groups["body"].Value, "embed.css's variables are site.css's :root, word for word.");
 
         var site = Declared().Matches(root).ToDictionary(m => m.Groups["name"].Value, m => m.Groups["value"].Value.Trim());
         var scheme = JsonNode.Parse(File.ReadAllText(Path.Combine(Repository.Root, "src", "Flyback.Ui", "Controls", "Schemes", "phosphor.json")))!;
@@ -88,8 +99,11 @@ public sealed partial class SiteColorSteps(IUnitTestRuntimeProvider runtime)
     private static string Variable(string key) =>
         Kebab().Replace(key.Replace("module", "node", StringComparison.Ordinal), "-$1").ToLowerInvariant();
 
-    [GeneratedRegex(@":root\s*\{[^}]*\}")]
+    [GeneratedRegex(@":root\s*\{(?<body>[^}]*)\}")]
     private static partial Regex Root();
+
+    [GeneratedRegex(@"\.flyback-embed, \.flyback-player\s*\{(?<body>[^}]*)\}")]
+    private static partial Regex Scoped();
 
     [GeneratedRegex(@"--(?<name>[a-z-]+):\s*(?<value>[^;]+);")]
     private static partial Regex Declared();

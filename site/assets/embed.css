@@ -1,0 +1,144 @@
+/*
+  What embed.js draws on another site: a code block and the player it opens.
+  Every rule is scoped to the two, so the host page's own styles are left alone,
+  and the colors are the website's, carried here in the scope's variables.
+*/
+
+.flyback-embed, .flyback-player {
+{{ partial "palette.css" . }}}
+
+.flyback-embed, .flyback-player, .flyback-embed *, .flyback-player * { box-sizing: border-box; }
+
+.flyback-embed {
+  margin: 1.5em 0;
+  border: 1px solid var(--separator);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--canvas);
+  color: var(--label);
+  font: 400 14px/1.4 var(--sans);
+  text-align: left;
+}
+
+.flyback-embed.playing { border-color: var(--attention); }
+
+.flyback-embed .fe-head, .flyback-player .fp-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 6px 0 14px;
+  background: var(--toolbar);
+  border-bottom: 1px solid var(--separator);
+}
+
+.flyback-embed svg, .flyback-player svg { flex: none; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.flyback-embed svg.solid, .flyback-player svg.solid { fill: currentColor; stroke: none; }
+.flyback-embed .fe-mark, .flyback-player .fp-mark { width: 14px; height: 14px; color: var(--attention); }
+
+.flyback-embed .fe-title, .flyback-player .fp-title { color: var(--bright); font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.flyback-player .fp-title { font-size: 14px; }
+.flyback-embed .fe-kind { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.flyback-embed.playing .fe-kind { color: var(--attention); }
+.flyback-embed .fe-gap, .flyback-player .fp-gap { flex: 1 1 0; }
+
+.flyback-embed button, .flyback-player button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.flyback-embed button:hover, .flyback-player button:hover { color: var(--bright); }
+.flyback-embed button:focus-visible, .flyback-player button:focus-visible { outline: 2px solid var(--attention); outline-offset: 2px; }
+
+.flyback-embed .fe-copy { width: 30px; height: 30px; }
+.flyback-embed .fe-copy.copied { color: var(--attention); }
+
+.flyback-embed .fe-play {
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px 0 8px;
+  border: 1px solid var(--attention);
+  border-radius: 14px;
+  background: var(--attention);
+  color: var(--attention-ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.flyback-embed .fe-play svg { width: 14px; height: 14px; }
+.flyback-embed .fe-play:hover { color: var(--attention-ink); background: var(--attention-hover); }
+.flyback-embed.playing .fe-play { background: transparent; color: var(--attention); }
+
+.flyback-embed .fe-body { display: flex; gap: 14px; padding: 12px 16px 14px 6px; overflow-x: auto; }
+
+.flyback-embed .fe-lines, .flyback-embed .fe-code {
+  margin: 0;
+  font: 400 13px/21px var(--mono);
+  white-space: pre;
+}
+
+.flyback-embed .fe-lines { flex: none; min-width: 2ch; color: var(--normalled); text-align: right; user-select: none; }
+.flyback-embed .fe-code { color: var(--label); background: none; border: 0; padding: 0; }
+
+.flyback-embed .t-com { color: var(--normalled); font-style: italic; }
+.flyback-embed .t-key { color: var(--code-keyword); font-weight: 600; }
+.flyback-embed .t-pipe { color: var(--code-pipe); font-weight: 600; }
+.flyback-embed .t-sink { color: var(--code-sink); }
+.flyback-embed .t-dom { color: var(--code-domain); }
+.flyback-embed .t-sock { color: var(--code-socket); }
+.flyback-embed .t-mod { color: var(--code-module); }
+.flyback-embed .t-num { color: var(--code-number); }
+.flyback-embed .t-str { color: var(--code-text); }
+
+/* The player: over the page, or docked on its right. */
+
+.flyback-player { position: fixed; z-index: 2147483000; color: var(--label); font: 400 14px/1.4 var(--sans); }
+
+.flyback-player.overlay {
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--edge) 78%, transparent);
+}
+
+.flyback-player .fp-box {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--window);
+  border: 1px solid var(--outline);
+}
+
+.flyback-player.overlay .fp-box { width: min(960px, 100%); border-radius: 10px; }
+
+.flyback-player .fp-close { width: 32px; height: 32px; color: var(--label); }
+.flyback-player .fp-close svg { width: 18px; height: 18px; }
+
+.flyback-player iframe { display: block; width: 100%; border: 0; background: var(--edge); }
+
+/* The picture at 16:9 and the transport under it, never taller than the window. */
+.flyback-player.overlay iframe { height: min(calc(min(960px, 100vw - 34px) * 0.5625 + 62px), calc(100dvh - 76px)); }
+
+.flyback-player.side { top: 0; right: 0; bottom: 0; width: 440px; border-left: 1px solid var(--separator); }
+.flyback-player.side .fp-box { height: 100%; border: 0; }
+.flyback-player.side iframe { height: calc(440px * 0.5625 + 128px); }
+html.flyback-side-open { margin-right: 440px; }
+
+@media (max-width: 640px) {
+  .flyback-player.overlay { align-items: flex-start; padding: 56px 0 0; }
+  .flyback-player.overlay .fp-box { border-radius: 0; border-left: 0; border-right: 0; }
+  .flyback-player.overlay iframe { height: min(calc(100vw * 0.5625 + 128px), calc(100dvh - 100px)); }
+  .flyback-player .fp-close { width: 44px; height: 44px; }
+  .flyback-embed .fe-play { height: 36px; padding: 0 12px 0 10px; border-radius: 18px; font-size: 13px; }
+  .flyback-embed .fe-copy { width: 44px; height: 44px; }
+}

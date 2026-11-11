@@ -607,3 +607,22 @@ input[type="range"] { accent-color: var(--attention); cursor: pointer; }
   #about-pane .sizer label { font-size: 14px; }
   #about-pane #size { height: 44px; border-radius: 12px; }
 }
+
+/* In a frame embed.js opened: the page around it has the title and the close button. */
+
+body.embed { grid-template-rows: minmax(0, 1fr); }
+body.embed > header, body.embed .notes-home, body.embed #sheet { display: none !important; }
+body.embed .body { display: flex; flex-direction: column; }
+body.embed .stage { flex: 1 1 0; }
+body.embed .transport { gap: 8px; padding: 8px 12px; border-bottom: 0; }
+body.embed .transport button { width: 36px; height: 36px; border-radius: 10px; }
+body.embed .transport #play { width: 40px; height: 40px; }
+body.embed .transport #edit { width: auto; padding: 0 12px; font-size: 13px; }
+body.embed #volume { width: 72px; }
+
+@media (max-width: 640px) {
+  body.embed .transport { display: grid; padding: 6px 12px 10px; }
+  body.embed .transport #edit { grid-area: 3 / 1 / 4 / -1; justify-self: end; height: 36px; }
+  body.embed .transport button:not(#play, #edit) { width: 44px; height: 44px; }
+  body.embed .transport #play { width: 52px; height: 52px; }
+}

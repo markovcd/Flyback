@@ -25,6 +25,8 @@
 
 ### Viewer
 
+- Two lines of HTML put a patch's highlighted code on any web page, with a Play button that opens the web viewer over the page or beside it.
+
 ### Command line
 
 - `flyback-cli render` draws on the GPU through Metal on a Mac, where it drew on the processor.

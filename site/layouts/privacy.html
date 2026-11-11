@@ -69,6 +69,9 @@
       </ul>
       <p>To keep the site from being flooded, it counts requests per network address for one hour and then deletes
         the count. The site sets no cookies for visitors and runs no analytics.</p>
+      <p>A page elsewhere that <a href="embed.html">embeds a patch</a> loads its script and stylesheet from this site,
+        and the web viewer once someone presses Play. The patch's text reaches the viewer in the part of the address
+        after <code>#</code>, which the browser never sends, so the site never sees it.</p>
     </section>
 
     <section id="usage">

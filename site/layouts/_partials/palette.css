@@ -1,0 +1,68 @@
+  color-scheme: dark;
+
+  /* surfaces, darkest first */
+  --edge: {{ .grounds.edge }};
+  --outline: {{ .grounds.outline }};
+  --window: {{ .grounds.window }};
+  --canvas: {{ .grounds.canvas }};
+  --panel: {{ .grounds.panel }};
+  --toolbar: {{ .grounds.toolbar }};
+  --grid: {{ .grounds.grid }};
+  --grid-major: {{ .grounds.gridMajor }};
+  --node: {{ .grounds.module }};
+  --node-selected: {{ .grounds.moduleSelected }};
+  --separator: {{ .grounds.separator }};
+
+  /* text */
+  --bright: {{ .text.bright }};
+  --label: {{ .text.label }};
+  --value: {{ .text.value }};
+  --muted: {{ .text.muted }};
+  --normalled: {{ .text.normalled }};
+
+  /* the one color that means "look here" */
+  --attention: {{ .accent }};
+  --attention-edge: #4BB874;
+  --attention-hover: #A4F3BC;
+  --attention-dim: #24573A;
+  --attention-ink: #133D24;
+
+  /* module families, borrowed to color a heading or a card's edge */
+  --sink: #E05A5A;
+  --source: #4A9EDE;
+  --oscillator: #4FC387;
+  --sequencer: #D8B04A;
+  --maths: #7E8694;
+  --space: #B484E0;
+  --pattern: #E0A84A;
+  --tint: #E06AB8;
+  --feedback: #3FC8C8;
+  --form: #7A8CE8;
+  --note: #A8CE52;
+  --shaping: #D87A48;
+  --echo: #3EA0B0;
+  --reading: #92A8C8;
+  --routing: #C09C88;
+
+  --beam-core: #FFF3DC;
+
+  /* the text view's colors, from Flyback.xshd */
+  --code-keyword: #3FC8C8;
+  --code-pipe: #E06AB8;
+  --code-sink: #E05A5A;
+  --code-domain: #4A9EDE;
+  --code-socket: #A8CE52;
+  --code-module: #B484E0;
+  --code-number: #E0A84A;
+  --code-text: #4FC387;
+
+  /* the site's own */
+  --titlebar: #1F1F1F;
+  --scrim: rgba(16, 16, 16, 0.97);
+
+  --sans: "IBM Plex Sans", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", "Cascadia Mono", Consolas, Menlo, "DejaVu Sans Mono", ui-monospace, monospace;
+
+  --radius: 4px;
+  --gutter: 16px;
+  --measure: 46rem;

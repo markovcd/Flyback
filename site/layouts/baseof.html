@@ -35,6 +35,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 {{- with resources.Get "site.css" | resources.ExecuteAsTemplate "assets/site.css" $scheme }}{{ .Publish }}{{ end }}
+{{- with resources.Get "embed.css" | resources.ExecuteAsTemplate "assets/embed.css" $scheme }}{{ .Publish }}{{ end }}
 <link rel="stylesheet" href="{{ $up }}assets/site.css">
 {{- range .Params.styles }}
 <link rel="stylesheet" href="{{ $up }}assets/{{ . }}">
@@ -51,6 +52,8 @@
 {{ block "main" . }}{{ end }}
 
 {{ partial "footer.html" . }}
+{{- /* site.js's pages show code, which highlight.js colors. */}}
+{{ if in .Params.scripts "site.js" }}<script src="{{ $up }}assets/highlight.js"></script>{{ end }}
 {{ range .Params.scripts }}
 <script src="{{ $up }}assets/{{ . }}"></script>
 {{- end }}
