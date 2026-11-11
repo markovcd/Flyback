@@ -539,3 +539,20 @@
     });
   });
 })();
+
+// A beam sweeps once along each section head's hairline (the home page's rules, the inner pages' h2 rules) as it scrolls into view.
+// Nothing runs under reduced motion, and the beam is a pseudo-element, so no layout moves.
+(function () {
+  if (!("IntersectionObserver" in window)) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  var heads = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add("sweep");
+      heads.unobserve(entry.target);
+    });
+  }, { threshold: 1 });
+
+  document.querySelectorAll(".section-rule, .doc main h2").forEach(function (head) { heads.observe(head); });
+})();

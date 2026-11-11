@@ -188,6 +188,20 @@ strong { color: var(--bright); font-weight: 600; }
 .section-rule a { margin-left: auto; padding: 10px 0; letter-spacing: 0.1em; color: var(--attention); }
 .section-rule + h2 { margin-top: 28px; }
 
+/* site.js adds .sweep once, as the head scrolls into view: a short segment runs along the hairline. */
+.section-rule, .doc main h2 { position: relative; }
+.section-rule.sweep::after, .doc main h2.sweep::before {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--attention) 60%, var(--beam-core)) no-repeat;
+  background-size: 120px 100%;
+  animation: beam-sweep 600ms ease-out both;
+}
+.doc main h2.sweep::before { bottom: auto; top: -1px; }
+@keyframes beam-sweep {
+  from { background-position: -120px 0; }
+  to { background-position: calc(100% + 120px) 0; }
+}
+
 .hairline-panel { background: var(--panel); border: 1px solid var(--separator); border-radius: var(--radius); }
 .hairline-panel.deep { background: var(--edge); }
 
