@@ -141,10 +141,16 @@
       frame.src = link.href;
       frame.title = "Flyback Theme, playing in the browser";
       frame.allow = "autoplay; fullscreen";
-      frame.addEventListener("load", function () { frame.focus(); });
+      frame.addEventListener("load", function () { frame.focus({ preventScroll: true }); });
 
       [].slice.call(holder.childNodes).forEach(function (node) { holder.removeChild(node); });
       holder.appendChild(frame);
+
+      var hero = holder.closest(".hero");
+      if (hero) hero.classList.add("playing");
+      var calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var figure = holder.closest("figure");
+      requestAnimationFrame(function () { figure.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "start" }); });
     });
   });
 })();
