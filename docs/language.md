@@ -20,7 +20,7 @@ Source files are `.fbks`, beside the `.fbk` document they build into and the
 
 ## 1. Hello
 
-```
+```fbks {play="Hello"}
 // Three drifting sine fields summed and read through a cosine palette.
 
 let across = x |> sine(freq: 0.8, phase: t * 0.11)
@@ -638,7 +638,7 @@ and none of the Song's own outputs; anything else, or a level before any name, i
 A patch's knob panel is written as the knobs it has, a line each, and a socket
 follows one by naming it where a number would go:
 
-```
+```fbks {play="Panel"}
 panel cutoff = 0.4, label: "Filter cutoff", cc: 21, channel: 2, device: "midi:elektron-syntakt"
 panel level  = 0.8
 
@@ -770,7 +770,7 @@ worth the list of what each pass ends with
 loops when the patch plays: the patch is the modules the passes placed, the
 same as the copies written out.
 
-```
+```fbks {play="Voices in a loop"}
 let voices = for (pitch, level) in [(A2, 0.5), (E3, 0.3), (A3, 0.2)] {
   sine(freq: note(pitch), amp: level)
 }
@@ -860,7 +860,7 @@ group "Bass" {
 
 A pipeline cannot express a loop, so the back-wire does:
 
-```
+```fbks {play="Integrator"}
 // An integrator: each evaluation adds a little of the source to what it held.
 
 let sum = square(freq: 110) * 0.06 |> add(a: _)
@@ -1057,7 +1057,7 @@ The Output, alone. An empty file.
 
 ### Plasma — [`Presets.Plasma`](../src/Flyback.Engine/Graph/Presets/Plasma.fbks)
 
-```
+```fbks {play="Plasma"}
 description "Three drifting sine fields summed and read through a cosine palette — the hello world of video synths."
 
 let across = x |> sine(freq: 0.8, phase: t * 0.11)
@@ -1074,7 +1074,7 @@ rgb(r: r, g: g, b: b) |> out.color
 
 ### Kaleidoscope — [`Presets.Kaleidoscope`](../src/Flyback.Engine/Graph/Presets/Kaleidoscope.fbks)
 
-```
+```fbks {play="Kaleidoscope"}
 description "Rotating wedges filled with clouds that boil over time."
 
 rotate(angle: t * 0.15)
@@ -1089,7 +1089,7 @@ times.
 
 ### Grid — [`Presets.Grid`](../src/Flyback.Engine/Graph/Presets/Grid.fbks)
 
-```
+```fbks {play="Grid"}
 description "Tile, mirror and polar in a row, so what each one does to the plane is"
   "separable."
 
@@ -1110,7 +1110,7 @@ by name for the hue. That is the fan-out the preset draws with two wires.
 
 ### Feedback tunnel — [`Presets.FeedbackTunnel`](../src/Flyback.Engine/Graph/Presets/FeedbackTunnel.fbks)
 
-```
+```fbks {play="Feedback tunnel"}
 description "Each frame re-read slightly rotated, scaled and dimmed, with fresh rings"
   "on top."
 
@@ -1133,7 +1133,7 @@ is the module's *third* port.
 
 ### Three channels — [`Presets.ThreeChannels`](../src/Flyback.Engine/Graph/Presets/ThreeChannels.fbks)
 
-```
+```fbks {play="Three channels"}
 description "One field read three times, a little apart: a color is three signals, and"
   "here they disagree."
 
@@ -1154,7 +1154,7 @@ outside.
 
 ### Trails — [`Presets.Trails`](../src/Flyback.Engine/Graph/Presets/Trails.fbks)
 
-```
+```fbks {play="Trails"}
 description "A dot on a looping path and a Trails keeping where it has been, so a point"
   "draws a ribbon."
 
@@ -1174,7 +1174,7 @@ Smoothstep's edges are the wrong way round on purpose, which reads it backwards.
 
 ### Loop — [`Presets.Loop`](../src/Flyback.Engine/Graph/Presets/Loop.fbks)
 
-```
+```fbks {play="Loop"}
 description "A wire running backwards: a lowpass built from an add and a multiply, with"
   "its one number swept."
 
@@ -1192,7 +1192,7 @@ are what make this a filter that comes out as loud as it went in.
 
 ### Two channels — [`Presets.TwoChannels`](../src/Flyback.Engine/Graph/Presets/TwoChannels.fbks)
 
-```
+```fbks {play="Two channels"}
 description "Stereo from one voice: left and right fed differently rather than panned."
 
 let root  = note(A2)
@@ -1211,7 +1211,7 @@ which is the whole trick — nine cents of detune on the same note number.
 
 ### Staircase — [`Presets.Staircase`](../src/Flyback.Engine/Graph/Presets/Staircase.fbks)
 
-```
+```fbks {play="Staircase"}
 description "A slope caught six times a second by a Sample & Hold, which makes steps,"
   "and steps are a tune."
 
@@ -1232,7 +1232,7 @@ is caught on the same edge that plucks it.
 
 ### Heads or tails — [`Presets.HeadsOrTails`](../src/Flyback.Engine/Graph/Presets/HeadsOrTails.fbks)
 
-```
+```fbks {play="Heads or tails"}
 description "One riff and a coin for every note: heads plays it on the left, tails an"
   "octave down on the right, and the odds drift."
 
@@ -1252,7 +1252,7 @@ the riff plays on exactly one side.
 
 ### Drone — [`Presets.Drone`](../src/Flyback.Engine/Graph/Presets/Drone.fbks)
 
-```
+```fbks {play="Drone"}
 description "One slow oscillator setting both the hue of the image and the tremolo on"
   "the tone."
 
@@ -1273,7 +1273,7 @@ twice.
 
 ### Sequence — [`Presets.Sequence`](../src/Flyback.Engine/Graph/Presets/Sequence.fbks)
 
-```
+```fbks {play="Sequence"}
 description "One sequencer heard and seen at once: the steps are the tune and the"
   "color."
 
@@ -1301,7 +1301,7 @@ The preset is a `for` loop over four voices in C#. It is a `def` here — and it
 is the patch that decides `def` must be able to hand back more than one thing,
 since a voice contributes a tone, a tint, and one fader that opens both.
 
-```
+```fbks {play="Four voices"}
 description "Four faders that are one signal each, opening a voice and a band together."
 
 def voice(pitch, bands, hue, rate, phase) = {
@@ -1331,7 +1331,7 @@ into it always says which of its three sockets it means.
 
 ### Heard — [`Presets.Heard`](../src/Flyback.Engine/Graph/Presets/Heard.fbks)
 
-```
+```fbks {play="Heard"}
 description "A drum the picture listens to rather than being told about, through a"
   "Meter."
 
@@ -1358,7 +1358,7 @@ by as much as a room does.
 
 ### Duck — [`Presets.Duck`](../src/Flyback.Engine/Graph/Presets/Duck.fbks)
 
-```
+```fbks {play="Duck"}
 description "A pad that gets out of the way each time the kick hits, on a Scope drawing"
   "how far."
 
@@ -1381,7 +1381,7 @@ rather than the pad, so a dip is a line falling rather than a waveform thinning.
 
 ### Waveform — [`Presets.Waveform`](../src/Flyback.Engine/Graph/Presets/Waveform.fbks)
 
-```
+```fbks {play="Waveform"}
 description "Sine, triangle, square and saw faded one into the next, on a Scope drawing"
   "the shape being heard."
 
@@ -1405,7 +1405,7 @@ last.
 
 ### Sidebands — [`Presets.Sidebands`](../src/Flyback.Engine/Graph/Presets/Sidebands.fbks)
 
-```
+```fbks {play="Sidebands"}
 description "One sine bending another's phase at audio rate, on an Analyzer showing the"
   "partials that grows."
 
@@ -1429,7 +1429,7 @@ other: the language has no idea that one side of it is a pitch.
 
 ### Ahead and behind — [`Presets.AheadAndBehind`](../src/Flyback.Engine/Graph/Presets/AheadAndBehind.fbks)
 
-```
+```fbks {play="Ahead and behind"}
 description "A Probe and a Scope on one signal, which is the only way to see how they"
   "differ."
 
@@ -1452,7 +1452,7 @@ become the edge.
 
 ### Lissajous — [`Presets.Lissajous`](../src/Flyback.Engine/Graph/Presets/Lissajous.fbks)
 
-```
+```fbks {play="Lissajous"}
 description "Two sines a fifth apart, left against right on a Beam: a knot that turns"
   "because the fifth is a little sharp."
 
@@ -1471,7 +1471,7 @@ being heard. Three cycles across against two up is a fifth's knot.
 
 ### Ring scan — [`Presets.RingScan`](../src/Flyback.Engine/Graph/Presets/RingScan.fbks)
 
-```
+```fbks {play="Ring scan"}
 description "A loop swept round a field at audio rate, so the picture is the waveform."
 
 let bands = rings(freq: 4)
@@ -1490,7 +1490,7 @@ out.volume = 0.25
 
 ### In key — [`Presets.InKey`](../src/Flyback.Engine/Graph/Presets/InKey.fbks)
 
-```
+```fbks {play="In key"}
 description "One cloud field snapped to a pentatonic: heard as a melody, seen as the"
   "terraces it was cut into."
 
@@ -1518,7 +1518,7 @@ arithmetic involving a signal emits an Expression.** That is what keeps
 
 ### Nebula — [`Presets.Nebula`](../src/Flyback.Engine/Graph/Presets/Nebula.fbks)
 
-```
+```fbks {play="Nebula"}
 description "Everything the video side can do, folded, warped and trailing its own"
   "frames."
 
@@ -1548,7 +1548,7 @@ The showcase, and the stress test: a whole song, a hundred and sixty-four
 modules in fifteen groups. It is also the patch that argues hardest for `group`,
 since the C# builds it that way already.
 
-```
+```fbks {play="Whole band"}
 description "A whole song from the engine's own modules: seven parts in a room, twelve"
   "phrases, one picture."
 

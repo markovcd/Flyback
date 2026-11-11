@@ -44,4 +44,7 @@
 </div>
 
 </div>
+{{- if strings.Contains .Content "data-flyback" }}
+<script src="{{ $up }}embed.js" async></script>
+{{- end }}
 {{- end }}

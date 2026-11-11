@@ -1,6 +1,10 @@
-{{- /* A fence with no language is the text language, which site.js colors; the guides write it that way. */ -}}
+{{- /* A fence with no language is the text language, which site.js colors; the guides write it that way. A fence opened `fbks {play="Title"}` is a whole patch: embed.js gives it Copy and Play, beside the page when it runs past 16 lines. */ -}}
 {{- $lang := .Type -}}
-{{- if or (eq $lang "") (eq $lang "fbks") -}}
+{{- $play := .Attributes.play -}}
+{{- if and $play (eq $lang "fbks") -}}
+{{- $side := gt (len (split (strings.TrimSpace .Inner) "\n")) 16 -}}
+<pre data-flyback="{{ $play }}"{{ if $side }} data-opens="side"{{ end }}>{{ .Inner }}</pre>
+{{- else if or (eq $lang "") (eq $lang "fbks") -}}
 <pre><code class="fbks">{{ .Inner }}</code></pre>
 {{- else -}}
 <pre><code class="language-{{ $lang }}">{{ .Inner }}</code></pre>

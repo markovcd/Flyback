@@ -492,3 +492,11 @@ nav.toc a:hover { color: var(--bright); border-left-color: var(--attention); bac
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* The embedded player on this site's own pages takes the Faceplate corners. */
+body .flyback-embed { border-radius: 4px; }
+body .flyback-embed .fe-play { border-radius: 3px; }
+body .flyback-player .fp-box { border-radius: 4px; }
+@media (max-width: 640px) {
+  body .flyback-player.overlay .fp-box { border-radius: 0; }
+}
