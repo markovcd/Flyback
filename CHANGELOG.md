@@ -30,9 +30,7 @@
 
 ### Installing
 
-### Plugins
-
-- A sound input's capture no longer has `Stop`; disposing it lets go of the device.
+- For plugin authors: a sound input's capture no longer has `Stop`; disposing it lets go of the device.
 
 ### Performance
 
