@@ -17,10 +17,7 @@ public interface IAudioCapture : IDisposable
 
     /// <summary>
     /// Starts calling <paramref name="deliver"/> on the capture thread, once for each buffer,
-    /// until <see cref="Stop"/> or disposal. Throws if the device cannot be opened.
+    /// until disposal, which lets go of the device. Throws if the device cannot be opened.
     /// </summary>
     void Start(AudioCaptureCallback deliver);
-
-    /// <summary>Stops calling the callback it was started with, and lets go of the device.</summary>
-    void Stop();
 }

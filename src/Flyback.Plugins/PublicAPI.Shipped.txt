@@ -17,7 +17,6 @@ Flyback.Plugins.Audio.IAudioCapture.Channels.get -> int
 Flyback.Plugins.Audio.IAudioCapture.IsRunning.get -> bool
 Flyback.Plugins.Audio.IAudioCapture.SampleRate.get -> int
 Flyback.Plugins.Audio.IAudioCapture.Start(Flyback.Plugins.Audio.AudioCaptureCallback! deliver) -> void
-Flyback.Plugins.Audio.IAudioCapture.Stop() -> void
 Flyback.Plugins.Audio.IAudioDevice
 Flyback.Plugins.Audio.IAudioDevice.IsRunning.get -> bool
 Flyback.Plugins.Audio.IAudioDevice.Latency.get -> System.TimeSpan

@@ -82,7 +82,7 @@ public class AlsaCaptureTests
         capture.SampleRate.ShouldBe(AudioFormat.Default.SampleRate);
         Volatile.Read(ref frames).ShouldBeGreaterThan(0);
 
-        capture.Stop();
+        capture.Dispose();
 
         capture.IsRunning.ShouldBeFalse();
     }

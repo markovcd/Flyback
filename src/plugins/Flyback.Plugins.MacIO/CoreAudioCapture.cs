@@ -88,12 +88,10 @@ public sealed unsafe class CoreAudioCapture(AudioFormat format, string? uid = nu
         }
     }
 
-    public void Stop()
+    public void Dispose()
     {
         lock (gate) Close();
     }
-
-    public void Dispose() => Stop();
 
     private void Close()
     {

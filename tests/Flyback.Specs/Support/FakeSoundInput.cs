@@ -25,7 +25,5 @@ public sealed class FakeSoundInput : IAudioInput, IAudioCapture
 
     public void Start(AudioCaptureCallback deliver) => IsRunning = true;
 
-    public void Stop() => IsRunning = false;
-
-    public void Dispose() => Stop();
+    public void Dispose() => IsRunning = false;
 }

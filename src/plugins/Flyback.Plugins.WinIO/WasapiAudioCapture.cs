@@ -50,7 +50,7 @@ public sealed class WasapiAudioCapture(AudioFormat format, string? endpoint = nu
 
     private WasapiRecorder? recorder;
 
-    /// <summary>Cleared by <see cref="Stop"/> or by Windows ending the stream, so a late packet goes nowhere.</summary>
+    /// <summary>Cleared by <see cref="Dispose"/> or by Windows ending the stream, so a late packet goes nowhere.</summary>
     private volatile bool listening;
 
     public int SampleRate { get; } = format.SampleRate;
@@ -105,7 +105,7 @@ public sealed class WasapiAudioCapture(AudioFormat format, string? endpoint = nu
         }
     }
 
-    public void Stop()
+    public void Dispose()
     {
         lock (gate)
         {
@@ -126,8 +126,6 @@ public sealed class WasapiAudioCapture(AudioFormat format, string? endpoint = nu
             }
         }
     }
-
-    public void Dispose() => Stop();
 
     /// <summary>
     /// The endpoint that was asked for, or the default recording device where it is unplugged,

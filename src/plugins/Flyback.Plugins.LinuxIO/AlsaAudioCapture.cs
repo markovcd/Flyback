@@ -91,13 +91,11 @@ public sealed class AlsaAudioCapture(AudioFormat format, string? device = null) 
         reader = BlockReader.Start(deliver, _ => source);
     }
 
-    public void Stop()
+    public void Dispose()
     {
         reader?.Stop();
         reader = null;
     }
-
-    public void Dispose() => Stop();
 
     /// <summary>
     /// Reads one block and returns how many samples arrived, or a negative number once the

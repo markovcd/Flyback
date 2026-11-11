@@ -43,16 +43,11 @@ public class LineInTests
             Opened++;
         }
 
-        public void Stop()
-        {
-            IsRunning = false;
-            deliver = null;
-        }
-
         public void Dispose()
         {
             Closed++;
-            Stop();
+            IsRunning = false;
+            deliver = null;
         }
 
         public void Say(float[] interleaved) => deliver!(interleaved);

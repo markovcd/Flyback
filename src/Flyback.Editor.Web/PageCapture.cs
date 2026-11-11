@@ -26,13 +26,11 @@ internal sealed partial class PageCapture(int sampleRate) : IAudioCapture
         JsListen(true);
     }
 
-    public void Stop()
+    public void Dispose()
     {
         IsRunning = false;
         JsListen(false);
     }
-
-    public void Dispose() => Stop();
 
     /// <summary>Has <paramref name="say"/> called with a sentence whenever the microphone will not open or stops.</summary>
     internal static void OnTrouble(Action<string> say) => JsOnTrouble(say);

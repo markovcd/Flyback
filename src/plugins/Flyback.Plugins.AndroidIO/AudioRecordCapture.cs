@@ -27,13 +27,11 @@ public sealed class AudioRecordCapture(AudioFormat format) : IAudioCapture
         reader = BlockReader.Start(deliver, Listen);
     }
 
-    public void Stop()
+    public void Dispose()
     {
         reader?.Stop();
         reader = null;
     }
-
-    public void Dispose() => Stop();
 
     /// <summary>Waits for the microphone to be allowed, then opens it; null where it was refused or will not open.</summary>
     private BlockSource? Listen(Func<bool> wanted)
