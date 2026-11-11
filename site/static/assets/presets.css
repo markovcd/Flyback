@@ -5,7 +5,6 @@
 /* The page head sits on the canvas band, as the Pages site's do. */
 .canvas + main { padding-top: 32px; }
 [data-page="shelf"] main { padding-bottom: 80px; }
-.shelf-head .actions { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 12px; }
 
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px 0 24px; }
 
@@ -14,46 +13,54 @@ input[type="search"], input[type="text"], input[type="password"], input[type="fi
   color: var(--bright);
   background: var(--canvas);
   border: 1px solid var(--separator);
-  border-radius: 5px;
-  padding: 10px 12px;
+  border-radius: 3px;
+  padding: 10px 12px; min-height: 44px;
 }
 input[type="search"] { flex: 1 1 260px; min-width: 0; }
 input:focus-visible { outline: 2px solid var(--attention); outline-offset: 1px; }
 input[type="file"]::file-selector-button {
   font: 600 14px/1 var(--sans); color: var(--bright);
-  background: var(--node); border: 1px solid var(--edge); border-radius: 4px;
+  background: var(--node); border: 1px solid var(--separator); border-radius: 3px;
   padding: 8px 12px; margin-right: 12px; cursor: pointer;
 }
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
-  font: 500 13px/1 var(--sans);
-  color: var(--label); background: var(--node);
-  border: 1px solid var(--edge); border-radius: 999px;
-  padding: 6px 11px; cursor: pointer; text-decoration: none;
+  font: 500 11.5px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--label); background: transparent;
+  border: 1px solid var(--separator); border-radius: 3px;
+  padding: 8px 10px; cursor: pointer; text-decoration: none;
 }
 .chip:hover { background: var(--node-selected); color: var(--bright); }
-.chip[aria-pressed="true"] { background: var(--attention); color: var(--edge); border-color: var(--attention-edge); }
+.chip[aria-pressed="true"] { background: var(--attention); color: var(--attention-ink); border-color: var(--attention); }
 .chip small { color: var(--muted); margin-left: 4px; }
 .chip[aria-pressed="true"] small { color: var(--attention-ink); }
 
 /* A run of cards under a heading: the shared presets, then the shipped ones under the editor's headings. */
 .run { margin-bottom: 40px; }
-.run h2 { margin: 0 0 14px; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; color: var(--muted); }
+.run h2 {
+  margin: 0 0 18px; padding-bottom: 14px; border-bottom: 1px solid var(--separator);
+  font: 500 12px/1.4 var(--mono); letter-spacing: 0.14em; color: var(--muted);
+}
 .run h2 small { font-size: inherit; font-weight: 500; margin-left: 8px; }
 .run .pager { padding: 24px 0 0; }
 
 .shelf { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); }
 
-.card.preset { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+.card.preset { padding: 0; overflow: hidden; border-top-width: 1px; display: flex; flex-direction: column; }
 .card.preset > header, .card.preset > .body { padding: 0 16px; }
 .card.preset > header { margin: 14px 0 6px; }
+.card.preset > header { font-weight: 500; }
 .card.preset > header a { color: var(--bright); text-decoration: none; }
 .card.preset > header a:hover { color: var(--attention); }
 .card.preset > .body { flex: 1; display: flex; flex-direction: column; gap: 10px; padding-bottom: 16px; }
 .card.preset p { margin: 0; color: var(--label); }
-.card.preset .by { font-size: 13px; color: var(--muted); }
-.card.preset .foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); }
+.card.preset .by { font: 12px/1.5 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.card.preset .foot {
+  margin: auto -16px -16px; padding: 10px 16px; border-top: 1px solid var(--separator);
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font: 12px/1.5 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+}
 .card.preset .foot .buttons { display: flex; gap: 6px; }
 .card.preset .lacks { font-size: 13px; color: var(--muted); }
 
@@ -62,10 +69,10 @@ input[type="file"]::file-selector-button {
 .frame img, .frame video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .frame .waiting {
   position: absolute; inset: 0; display: grid; place-items: center;
-  font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--normalled);
+  font: 500 12px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--normalled);
 }
 
-.button.small { padding: 8px 12px; font-size: 13.5px; }
+.button.small { padding: 8px 12px; font-size: 13.5px; min-height: 44px; }
 
 .pager { display: flex; justify-content: center; align-items: center; gap: 14px; padding: 32px 0 80px; color: var(--muted); font-size: 14px; }
 .pager button[disabled] { opacity: 0.4; cursor: default; }
@@ -76,9 +83,9 @@ button.button { cursor: pointer; }
 /* One preset. */
 .preset-page { display: grid; gap: 32px; padding: 40px 0 96px; }
 @media (min-width: 960px) { .preset-page { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: start; } }
-.preset-page .frame { border: 1px solid var(--edge); border-radius: 8px; }
+.preset-page .frame { border: 1px solid var(--separator); border-radius: var(--radius); }
 .preset-page h1 { font-size: clamp(30px, 4.4vw, 44px); }
-.preset-page .facts { margin: 18px 0 0; font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.preset-page .facts { margin: 18px 0 0; font: 12px/1.5 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 18px; }
 .preset-page .actions { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 12px; }
 .preset-page .lacks { margin: 14px 0 0; font-size: 14px; color: var(--muted); }
 .preset-page .card.track { margin-top: 20px; }
@@ -86,10 +93,10 @@ button.button { cursor: pointer; }
 /* Submitting. */
 .submit { max-width: var(--measure); padding: 8px 0 96px; }
 .submit form { display: grid; gap: 20px; margin-top: 28px; }
-.submit label { display: grid; gap: 8px; font-size: 14px; font-weight: 600; color: var(--bright); }
-.submit label .quiet { font-weight: 400; }
+.submit label { display: grid; gap: 8px; font: 500 12px/1.4 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--bright); }
+.submit label .quiet { font: 400 14px/1.4 var(--sans); letter-spacing: 0; text-transform: none; }
 .submit dl { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 18px; font-size: 15px; }
-.submit dt { color: var(--muted); }
+.submit dt { color: var(--muted); font: 12px/1.8 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
 .submit dd { margin: 0; color: var(--label); }
 .status { min-height: 1.5em; font-size: 14.5px; }
 .status.bad { color: var(--sink); }
@@ -97,11 +104,11 @@ button.button { cursor: pointer; }
 /* Admin mode. */
 .badge {
   display: inline-block; margin-left: 10px; vertical-align: middle;
-  font: 700 11px/1 var(--sans); letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--edge); background: var(--attention); border-radius: 3px; padding: 4px 6px;
+  font: 600 11px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--attention-ink); background: var(--attention); border-radius: 3px; padding: 4px 6px;
 }
 .preset-page .badge { margin: 12px 0 0; }
-.badge.built-in { color: var(--label); background: var(--node); box-shadow: inset 0 0 0 1px var(--edge); }
+.badge.built-in { color: var(--label); background: var(--node); box-shadow: inset 0 0 0 1px var(--separator); }
 .card.preset.unpublished .frame { opacity: 0.45; }
 .admin-tools { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 10px; border-top: 1px dashed var(--edge); }
 .preset-page .admin-tools { margin-top: 20px; padding-top: 16px; }
@@ -113,12 +120,12 @@ button.button { cursor: pointer; }
 .report-form { display: grid; gap: 14px; max-width: 520px; padding-top: 14px; border-top: 1px dashed var(--edge); }
 .report-form p { margin: 0; }
 .report-form fieldset { margin: 0; padding: 0; border: 0; display: grid; gap: 8px; }
-.report-form legend { font-size: 14px; font-weight: 600; color: var(--bright); margin-bottom: 8px; }
+.report-form legend { font: 500 12px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--bright); margin-bottom: 8px; }
 .report-form label { display: flex; align-items: center; gap: 8px; font-size: 14.5px; color: var(--label); cursor: pointer; }
 .report-form .actions { margin-top: 0; }
 textarea {
   font: 400 15px/1.4 var(--sans); color: var(--bright); background: var(--canvas);
-  border: 1px solid var(--separator); border-radius: 5px; padding: 10px 12px; resize: vertical;
+  border: 1px solid var(--separator); border-radius: 3px; padding: 10px 12px; resize: vertical;
 }
 textarea:focus-visible { outline: 2px solid var(--attention); outline-offset: 1px; }
 .reports { display: grid; gap: 12px; max-width: var(--measure); padding: 0 0 96px; }
@@ -131,15 +138,19 @@ textarea:focus-visible { outline: 2px solid var(--attention); outline-offset: 1p
 .report-card .foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); }
 
 /* Stars: read on every card, given on a preset's or plugin's own page. */
-.stars { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.stars { display: inline-flex; align-items: center; gap: 8px; font: 12px var(--mono); letter-spacing: 0.06em; color: var(--muted); }
 .stars .row, .rate .row { color: var(--separator); letter-spacing: 1px; }
 .stars .on, .rate .on { color: var(--attention); }
 .rate { margin-top: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
 .rate .row { display: inline-flex; }
 .rate button {
   font: 400 24px/1 var(--sans); color: inherit; background: none; border: 0;
-  padding: 2px; cursor: pointer;
+  padding: 10px 4px; min-height: 44px; cursor: pointer;
 }
 .rate button:focus-visible { outline: 2px solid var(--attention); outline-offset: 1px; border-radius: 3px; }
 .rate button[disabled] { cursor: default; }
 .rate .said { margin: 0; font-size: 14px; color: var(--muted); }
+
+.card.preset .foot .button, .card.preset .foot .buttons { text-transform: none; letter-spacing: 0; font-family: var(--sans); }
+.card.preset .foot { flex-wrap: wrap; }
+.card.preset .foot > span:first-child { white-space: nowrap; }

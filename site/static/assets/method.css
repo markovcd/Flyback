@@ -1,12 +1,8 @@
-.doc main ul, .doc main ol:not(.steps) { padding-left: 20px; }
-.doc main li { margin: 6px 0; }
-.chart { margin: 28px 0 0; }
 .chart svg { display: block; width: 100%; height: auto; }
-.chart figcaption { margin-top: 10px; font-size: 13px; color: var(--muted); }
 .chart .bar { fill: var(--separator); }
 .chart .bar.after { fill: var(--attention); }
 .chart .bar.partial { fill: var(--grid-major); }
 .chart .band { fill: var(--panel); }
 .chart .axis { stroke: var(--separator); }
-.chart text { fill: var(--muted); font-size: 12px; font-family: inherit; }
+.chart text { fill: var(--muted); font-size: 12px; font-family: var(--mono); }
 .chart text.value { fill: var(--label); }

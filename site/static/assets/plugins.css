@@ -2,23 +2,27 @@
 
 main > .note:first-child { max-width: var(--measure); margin: 0 0 24px; }
 
-.card.plugin { display: flex; flex-direction: column; overflow: hidden; }
+.card.plugin { display: flex; flex-direction: column; overflow: hidden; border-top-width: 1px; }
 .card.plugin > .frame { margin: -16px -18px 14px; }
 .card.plugin .frame img, .plugin-page .frame img, #received .frame img { object-fit: contain; }
 .card.plugin > header a { color: var(--bright); text-decoration: none; }
 .card.plugin > header a:hover { color: var(--attention); }
 .card.plugin > .body { flex: 1; display: flex; flex-direction: column; gap: 10px; }
 .card.plugin p { margin: 0; color: var(--label); }
-.card.plugin .foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); }
+.card.plugin .foot {
+  margin: auto -18px -18px; padding: 10px 18px; border-top: 1px solid var(--separator);
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font: 12px/1.5 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+}
 
-.facts { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.facts { font: 12px/1.5 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px; }
 
 span.chip { cursor: default; }
-span.chip:hover { background: var(--node); color: var(--label); }
+span.chip:hover { background: transparent; color: var(--label); }
 .chip.reach { color: var(--attention); border-color: var(--attention-dim); }
 
 dl.said { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px 18px; font-size: 14.5px; }
-dl.said dt { color: var(--muted); }
+dl.said dt { color: var(--muted); font: 12px/1.8 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
 dl.said dd { margin: 0; color: var(--label); min-width: 0; }
 .hash { font-size: 12.5px; overflow-wrap: anywhere; }
 
@@ -26,11 +30,11 @@ dl.said dd { margin: 0; color: var(--label); min-width: 0; }
 .plugin-page { display: grid; gap: 32px; padding: 40px 0 96px; }
 @media (min-width: 960px) { .plugin-page { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
 .plugin-page h1 { font-size: clamp(30px, 4.4vw, 44px); }
-.plugin-page .facts { margin-top: 18px; font-size: 14px; }
+.plugin-page .facts { margin-top: 18px; }
 .plugin-page .actions { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 12px; }
 .plugin-page .card .quiet { margin: 16px 0 0; font-size: 13.5px; }
 .plugin-page .side { display: grid; gap: 20px; min-width: 0; }
-.plugin-page .frame, #received .frame { border: 1px solid var(--edge); border-radius: 8px; }
+.plugin-page .frame, #received .frame { border: 1px solid var(--separator); border-radius: var(--radius); }
 
 #received { margin-top: 24px; }
 
@@ -38,3 +42,4 @@ dl.said dd { margin: 0; color: var(--label); min-width: 0; }
 .plugin-page .badge { margin: 20px 0 0; }
 .plugin-page .admin-tools { margin-top: 16px; padding-top: 16px; }
 .card.plugin p.modules { font-size: 13.5px; color: var(--muted); }
+.card.plugin .foot .button { text-transform: none; letter-spacing: 0; font-family: var(--sans); }

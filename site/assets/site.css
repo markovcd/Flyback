@@ -412,7 +412,7 @@ figcaption { font-size: 13.5px; color: var(--muted); margin-top: 12px; line-heig
 .note {
   background: var(--panel);
   border: 1px solid var(--separator);
-  border-left: 3px solid var(--attention);
+  border-top: 2px solid var(--attention);
   border-radius: var(--radius);
   padding: 14px 18px;
   margin: 24px 0 0;

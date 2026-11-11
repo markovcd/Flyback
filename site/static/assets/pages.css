@@ -1,0 +1,28 @@
+/* What the inner pages share: the page head and the long-form prose, in the Faceplate look. */
+
+.doc-head { padding: 56px 0 36px; }
+.doc-head h1 { font-size: clamp(32px, 4.6vw, 48px); line-height: 1.08; max-width: 22ch; }
+.doc-head .lede { max-width: 42rem; }
+.doc-head .eyebrow { padding-top: 14px; border-top: 1px solid var(--separator); min-width: 7rem; }
+.doc-head .actions, .shelf-head .actions { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 12px; }
+.canvas { border-bottom: 1px solid var(--separator); }
+
+.doc main h2 {
+  margin-top: 0; padding-top: 14px; border-top: 1px solid var(--separator);
+  font-size: clamp(24px, 2.8vw, 30px);
+}
+.doc main h3 { font-size: 17px; }
+.doc section h2 .num { margin-bottom: 8px; }
+nav.toc { padding: 14px 16px; background: var(--panel); border: 1px solid var(--separator); border-radius: var(--radius); }
+nav.toc a { font-family: var(--sans); border-left-color: var(--grid-major); }
+.doc main ul, .doc main ol:not(.steps) { padding-left: 20px; }
+.doc main li { margin: 6px 0; }
+.doc .scroll { border-radius: var(--radius); }
+.doc figure.chart, .patch-fig {
+  padding: 14px; background: var(--edge); border: 1px solid var(--separator); border-radius: var(--radius);
+}
+.doc figcaption {
+  margin: 12px -14px -14px; padding: 10px 14px; border-top: 1px solid var(--separator);
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+}
+.doc main > section:last-child { padding-bottom: 8px; }
