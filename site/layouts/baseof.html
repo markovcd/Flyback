@@ -33,7 +33,7 @@
 <link rel="icon" href="{{ $up }}assets/logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 {{- with resources.Get "site.css" | resources.ExecuteAsTemplate "assets/site.css" $scheme }}{{ .Publish }}{{ end }}
 <link rel="stylesheet" href="{{ $up }}assets/site.css">
 {{- range .Params.styles }}
