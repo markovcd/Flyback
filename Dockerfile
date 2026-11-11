@@ -97,14 +97,8 @@ RUN apt-get update \
 COPY scripts/install-hugo.sh /tmp/install-hugo.sh
 RUN /tmp/install-hugo.sh /usr/local/bin && rm /tmp/install-hugo.sh
 
-# Everything a change has to get past, up to the tests.
-FROM tools AS built
-ARG CONFIGURATION
-
-# The Worker's tests are part of the gate: nothing past here is built if they fail.
-COPY --from=worker /tested /tmp/worker-tested
-
-# What only the tests need.
+# What only the tests need. It sits in tools, whose layers the gate reads from
+# GitHub's cache, so a gate run does not depend on Ubuntu's archive.
 #
 # jackd runs the dummy-driver server the JACK output's tests play into. Without it they
 # skip themselves.
@@ -120,6 +114,13 @@ RUN apt-get update \
  && apt-get install --yes --no-install-recommends nodejs jackd2 \
       gnome-keyring libsecret-tools dbus libnss3 unzip \
  && rm -rf /var/lib/apt/lists/*
+
+# Everything a change has to get past, up to the tests.
+FROM tools AS built
+ARG CONFIGURATION
+
+# The Worker's tests are part of the gate: nothing past here is built if they fail.
+COPY --from=worker /tested /tmp/worker-tested
 
 # A container has no sound card, so ALSA's default device is its null one, which
 # captures silence: the capture test then opens and reads it rather than skipping.
