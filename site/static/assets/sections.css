@@ -1,0 +1,65 @@
+/* Sections shared by the home page and the pages its sections moved to: a numbered head, then the work. */
+.band { padding: 96px 0 0; }
+.band:last-child { padding-bottom: 96px; }
+.section-head > h2, .section-head > p { max-width: 44rem; }
+.section-head > p { color: var(--label); }
+.band .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+
+/* ---- one graph, two sinks ---- */
+.diagram { margin-top: 36px; }
+.diagram .shot { border: 0; border-radius: 0; }
+
+.three-up { margin-top: 32px; }
+
+/* ---- presets: stills in a grid ---- */
+.stills { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 40px; }
+@media (min-width: 640px) { .stills { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1040px) { .stills { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.still { margin: 0; }
+.still img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; background: black; }
+
+/* ---- clips and tracks ---- */
+.clips { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 40px; }
+@media (min-width: 760px) { .clips { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.clip { margin: 0; }
+.clip video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: black; }
+.listen { margin-top: 56px; }
+.listen h3 { margin: 0; font-size: 22px; }
+.listen > p { max-width: 44rem; }
+.tracks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 24px; }
+@media (min-width: 960px) { .tracks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.track { display: flex; flex-direction: column; }
+.track .body { flex: 1; display: flex; flex-direction: column; }
+.track .body > p { font-size: 14.5px; color: var(--muted); margin: 0 0 16px; flex: 1; }
+.player audio { width: 100%; height: 36px; }
+
+/* ---- features ---- */
+.modules { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 40px; }
+@media (min-width: 640px) { .modules { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1040px) { .modules { grid-template-columns: repeat(3, 1fr); } }
+
+/* ---- tour ---- */
+.tour { display: flex; flex-direction: column; gap: 80px; margin-top: 48px; }
+.stop { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px 48px; align-items: start; }
+@media (min-width: 960px) {
+  .stop { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
+  .stop > div { display: contents; }
+  .stop > figure { grid-column: 1 / -1; }
+}
+/* A tall picture sits beside its text rather than under it. */
+@media (min-width: 960px) {
+  .stop.side { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); }
+  .stop.side > div { display: block; }
+  .stop.side > figure { grid-column: 2; grid-row: 1; margin-top: 0; }
+}
+.stop img.natural { width: auto; max-width: 100%; }
+.stop h3 { margin-top: 0; font-size: 22px; }
+.stop figure { margin: 20px 0 0; }
+.stop p { margin-top: 0; }
+@media (max-width: 959px) { .stop p { margin-top: 12px; } }
+
+#assistant { --family: var(--space); }
+#clips { --family: var(--feedback); }
+#gallery { --family: var(--tint); }
+#features { --family: var(--oscillator); }
+#tour { --family: var(--source); }

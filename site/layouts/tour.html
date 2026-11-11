@@ -1,0 +1,191 @@
+{{ define "main" -}}
+<div class="page">
+
+<div class="canvas">
+  <div class="wrap">
+    <header class="doc-head">
+      <p class="eyebrow">Tour</p>
+      <h1>A tour of Flyback.</h1>
+      <p class="lede">What the editor does, module by module, and the app itself in five screenshots.</p>
+      <div class="actions">
+        <a class="button primary" href="https://github.com/markovcd/Flyback/releases/latest">Download the latest release</a>
+        <a class="button" href="presets.html">Play a preset in the browser</a>
+      </div>
+    </header>
+  </div>
+</div>
+
+<main>
+
+<section class="band" id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-rule"><span class="num">01</span><span>Features</span></div>
+      <h2>Everything is a module, and every module is a few sockets.</h2>
+    </div>
+
+    <div class="modules">
+      <article class="card" style="--accent: var(--source)">
+        <header>Patch editor</header>
+        <div class="body"><p>Right-click the canvas or press <kbd>Space</kbd> to add a module where you are pointing.
+        Drag from a socket to wire it, drag a wire off to unplug it, drag an unpatched input's value up or down to turn it,
+        and group modules into boxes.
+        <kbd>Ctrl</kbd>+<kbd>B</kbd> switches one off, passing what is patched into it straight through.</p></div>
+      </article>
+      <article class="card" style="--accent: var(--oscillator)">
+        <header>Fourteen families</header>
+        <div class="body"><p>Sources, oscillators, patterns, forms, geometry, color, maths, pitch, timing, shaping,
+        time effects, feedback, measurement and routing modules, with a preset for each family.</p></div>
+      </article>
+      <article class="card" style="--accent: var(--feedback)">
+        <header>Feedback</header>
+        <div class="body"><p>Read the previous frame back in, or wire a module into itself. A loop is a delay:
+        a filter or a comb for the ears, a trail or a tunnel for the eyes.</p></div>
+      </article>
+      <article class="card" style="--accent: var(--space)">
+        <header>A text language</header>
+        <div class="body"><p>Press <kbd>F2</kbd> and the patch is text you can edit, diff and generate. It
+        builds back to exactly the same program and saves as <code>.fbks</code>. A <code>for</code> loop
+        stamps out a voice for every note of a list.</p></div>
+      </article>
+      <article class="card" style="--accent: var(--note)">
+        <header>Play it</header>
+        <div class="body"><p>MIDI input on Windows, macOS and Linux, with chords played down one chain of polyphonic wires. With no controller,
+        the computer keyboard is the instrument, and on a phone or a tablet a row of keys under the canvas is. Knobs follow a MIDI controller too, and a Clock In keeps the
+        whole patch to a drum machine's tempo and Start button. <a href="tutorials/syntakt.html">Set up an Elektron
+        Syntakt →</a></p></div>
+      </article>
+      <article class="card" style="--accent: var(--reading)">
+        <header>Record and render</header>
+        <div class="body"><p>Record a live take, knobs and all, with <kbd>Ctrl</kbd>+<kbd>R</kbd>.
+        For repeatable exports use <code>flyback-cli render</code>, which draws on the GPU with no window. MP4, WebM, MOV, MP3, M4A and FLAC
+        where ffmpeg is installed; AVI and WAV are written by Flyback itself and need nothing.</p></div>
+      </article>
+      <article class="card" style="--accent: var(--tint)">
+        <header>Assistant</header>
+        <div class="body"><p>Describe a patch and have one built, looked at and listened to, over any
+        chat-completions endpoint or Gemini, or by your own Claude Code or Codex. What comes back is an edit you can undo.
+        <a href="assistant.html">How it works.</a></p></div>
+      </article>
+      <article class="card" style="--accent: var(--sequencer)">
+        <header>Plugins</header>
+        <div class="body"><p>Modules, presets, sound backends and assistants all load from a folder. The
+        Picture, Voice, Effects and Mastering modules ship as plugins themselves. <a href="https://github.com/markovcd/Flyback/blob/main/docs/plugin-guide.md">Write your own.</a></p></div>
+      </article>
+      <article class="card" style="--accent: var(--shaping)">
+        <header>Share</header>
+        <div class="body"><p>Presets and plugins people make go on the <a href="presets.html">preset site</a>,
+        with a picture and a sound of each. The gallery in the app lists them, and one click downloads and
+        opens one. A plugin is a signed package, installed from the same window.</p></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="tour">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-rule"><span class="num">02</span><span>A look around</span></div>
+      <h2>Screenshots from the app.</h2>
+    </div>
+
+    <div class="tour">
+      <div class="stop side">
+        <div>
+          <h3>Edit a module on the inspector</h3>
+          <p>Select a module to see its description and a slider for every socket that is not wired.
+          A wired socket names the socket at the other end, <em>patched from Time.t</em>, and its
+          outputs are listed under the sliders with what each feeds. Hover a
+          socket for what it does. Values change the running patch as you drag. A selected group
+          shows the same rows for the sockets on its edge.</p>
+        </div>
+        <figure>
+          <div class="window">
+            <a class="zoom" href="assets/shots/plasma-inspector.webp">
+              <img loading="lazy" src="assets/shots/plasma-inspector.webp" width="499" height="767"
+                   alt="The preview and, under it, the inspector with a Sine selected: its in patched from Coordinates.x, sliders for freq, amp and bias, phase patched from Expression.out, and under Outputs, out patched to field.a.">
+            </a>
+          </div>
+        </figure>
+      </div>
+
+      <div class="stop flip">
+        <div>
+          <h3>Switch to text with F2</h3>
+          <p>The text view prints the patch in the language, in the same colors the canvas uses for each kind of
+          module. Edit it and press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> to build it back into a patch.</p>
+        </div>
+        <figure>
+          <div class="window">
+            <a class="zoom" href="assets/shots/plasma-code.webp">
+              <img loading="lazy" src="assets/shots/plasma-code.webp" width="1440" height="286"
+                   alt="The text view: the Plasma patch as nine lines of text with syntax colors, from let across = x piped into a sine to color.rgb piped into out.color, beside its blue, cream and amber picture.">
+            </a>
+          </div>
+        </figure>
+      </div>
+
+      <div class="stop">
+        <div>
+          <h3>Keep big patches readable with groups</h3>
+          <p>The Whole band preset is a hundred and sixty-two modules in fourteen boxes: a clock, the song, seven
+          instruments, a room, a mixing desk and three for the picture. Double-click a box to look inside, and press <kbd>Ctrl</kbd>+<kbd>G</kbd> to
+          make your own.</p>
+        </div>
+        <figure>
+          <div class="window">
+            <a class="zoom" href="assets/shots/whole-band.webp">
+              <img loading="lazy" src="assets/shots/whole-band.webp" width="936" height="528"
+                   alt="The Whole band patch shut into boxes named Clock, Song, Kick, Hats, Snare, Bass, Strings, Pad, Lead, Room, Desk, Picture: Geometry, Picture: Color and Picture: Feedback, with a Noise module named hiss beside the clock, wired into the Output.">
+            </a>
+          </div>
+        </figure>
+      </div>
+
+      <div class="stop flip">
+        <div>
+          <h3>Perform with knobs</h3>
+          <p>Press <kbd>Ctrl</kbd>+<kbd>K</kbd> for the knob panel under the canvas. A knob moves every socket
+          linked to it, each over its own range, without rebuilding the patch, so it can be turned mid-take and
+          the recording keeps the move. Learn a MIDI controller for one, or bind it by name to a knob on an
+          instrument Flyback knows. The die at the end of the panel, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd>
+          or a learned controller button or pad randomizes every knob not held, gliding there, and Back under it
+          goes back, counting how many times it can; right-click or hold the die for how far and how slowly. A knob can be played as a switch, which flips between two settings, or a button, on only while
+          held, from the screen or a controller's button or pad. Full screen and the viewer keep the knobs behind
+          the dots at the bottom of the picture, and <kbd>Shift</kbd>+<kbd>F11</kbd> puts the patch over a
+          full-screen picture, as modules or as text, to keep patching while it plays in front of people.</p>
+        </div>
+        <figure>
+          <a class="zoom" href="assets/shots/knob-panel.webp">
+            <img class="shot natural" loading="lazy" src="assets/shots/knob-panel.webp" width="690" height="117"
+                 alt="The knob panel of Slow weather: six knobs named Echo Level, Chime Decay, Reverb Space, Visual Warp, Color Shift and Trails Spin, each a ring of green dots lit up to its value, and a plus button to add another.">
+          </a>
+        </figure>
+      </div>
+
+      <div class="stop">
+        <div>
+          <h3>Start from a preset</h3>
+          <p>The first toolbar button opens a gallery of every preset, built-in, from plugins, your own and
+          those shared on the preset site, each card showing what it draws and whether it makes sound, picture
+          or both. Filter by name, author, tag or topic, rest the pointer on a card to see and hear it, and
+          double-click to open it. With an assistant set up, the top card takes an idea instead and starts an
+          empty patch with the assistant building it.</p>
+        </div>
+        <figure>
+          <div class="window">
+            <a class="zoom" href="assets/shots/presets-list.webp">
+              <img loading="lazy" src="assets/shots/presets-list.webp" width="1280" height="980"
+                   alt="The preset gallery, Start from a preset, in three columns. On the left, a Filter presets box, the sections All presets, Blank, One idea and more, Works with Sound or Picture, and topics. In the middle, a Describe it instead box, then tiles: BLANK over Empty, and ONE IDEA over Before and after, Captions, Echo chamber and more, each with a frame of what it draws or a speaker for one only heard. On the right, Empty chosen, larger, with its description, its topics and a Use this preset button.">
+            </a>
+          </div>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+</div>
+{{- end }}

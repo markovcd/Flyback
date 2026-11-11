@@ -8,7 +8,7 @@ share:
   description: "A patchable video and audio synthesizer for Windows, macOS and Linux."
 nav: overview
 page: home
-styles: [home.css]
+styles: [sections.css, home.css]
 schema: |
   {
     "@context": "https://schema.org",

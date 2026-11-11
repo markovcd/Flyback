@@ -1,0 +1,65 @@
+{{ define "main" -}}
+<div class="page">
+
+<div class="canvas" id="assistant">
+  <div class="wrap">
+    <header class="doc-head">
+      <p class="eyebrow">Built in</p>
+      <h1>Say what you want. The assistant patches it, then looks and listens.</h1>
+      <p>The assistant lives in a column beside the patch, and it is not a chat box that hands you something
+      to paste. It works the patch as text: it writes a new one in the text language, or changes the lines an
+      edit is in and leaves the rest, your comments included, and every edit comes back with what the
+      compiler makes of it. It
+      renders a strip of frames to see the motion, not one still. Given a model that can hear, it listens to
+      a few seconds of the sound, with the levels measured beside what it heard, so a patch that compiles
+      but plays nothing does not get past it. It is told what every module does and what every preset is,
+      and can read a preset in full for the idea in it. A short ask, like "make it darker", can be written
+      out first: Expand beside Send turns it into the full request, in the box, saying what keeps the patch
+      itself, what changes and what stays, for you to edit before sending.</p>
+      <p>Or bring your own. Turn on Settings → Assistant → "Let a program on this computer edit the open patch",
+      add <code>flyback-cli mcp --editor</code> to Claude Code or Codex, and it gets the same tools over MCP:
+      its edits land on the canvas, each one you can undo, and the column shows every call it makes.</p>
+    </header>
+  </div>
+</div>
+
+<main>
+
+<section class="band">
+  <div class="wrap">
+    <figure class="framed diagram">
+      <a class="zoom" href="assets/shots/assistant.webp">
+        <img class="shot" loading="lazy" src="assets/shots/assistant.webp" width="1054" height="822"
+             alt="The assistant's column beside the canvas. Asked for a slow kick drum that makes the rings flash, it wrote a patch and proposed it; asked to make it slower and warmer, it set the tempo and the hue and proposed that. Each answer sits in the column's history with the steps it took folded away.">
+      </a>
+      <figcaption class="caption-strip"><span>Two turns: a patch built and handed over, then changed on request. Each lands on the canvas as one edit.</span></figcaption>
+    </figure>
+
+    <div class="three-up">
+      <div>
+        <h3>An edit, not a paste</h3>
+        <p>When a turn ends, what it built lands on the canvas as one edit, and <kbd>Ctrl</kbd>+<kbd>Z</kbd>
+        takes the whole thing back. Say <em>now make it slower</em> and it carries on from where it left off.
+        The conversation is saved beside the patch it is about.</p>
+      </div>
+      <div>
+        <h3>Any model, your key or your own sign-in</h3>
+        <p>Any endpoint that speaks chat completions, from OpenAI to a local Ollama, or Google's Gemini,
+        whose models hear the patch themselves. The key stays in the operating system's secret store, and
+        nothing is sent until you press Ask. Or bring Claude Code or Codex over MCP, and the plan you are
+        already signed in to pays: no key at all.</p>
+      </div>
+      <div>
+        <h3>Made the same way</h3>
+        <p>Flyback itself is written entirely by agents, with a person directing the work and deciding what
+        ships. The assistant is handed what they were: a compiler that says what is wrong and where, a
+        renderer that needs no window, and a language a patch can be written in.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+</div>
+{{- end }}

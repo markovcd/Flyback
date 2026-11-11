@@ -3,8 +3,9 @@
   <div class="wrap">
     <a class="brand" href="{{ or $up "./" }}"><img src="{{ $up }}assets/logo.svg" alt=""><span>Flyback</span></a>
     <nav aria-label="Site">
+      <a href="{{ $up }}tour.html"{{ if or (eq .Params.nav "tour") (eq .Params.nav "assistant") }} aria-current="page"{{ end }}>Tour</a>
+      <a href="{{ $up }}presets.html"{{ if or (eq .Params.nav "presets") (eq .Params.nav "watch") }} aria-current="page"{{ end }}>Presets</a>
       <a href="{{ $up }}tutorials.html"{{ if eq .Params.nav "tutorials" }} aria-current="page"{{ end }}>Tutorials</a>
-      <a href="{{ $up }}presets.html"{{ if eq .Params.nav "presets" }} aria-current="page"{{ end }}>Presets</a>
       <a href="{{ $up }}shared-plugins.html"{{ if eq .Params.nav "plugins" }} aria-current="page"{{ end }}>Plugins</a>
       <a href="{{ $up }}docs.html"{{ if eq .Params.nav "docs" }} aria-current="page"{{ end }}>Docs</a>
       <span class="sep" aria-hidden="true"></span>

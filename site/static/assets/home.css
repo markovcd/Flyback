@@ -29,90 +29,46 @@
 .hero .editor { margin: 0; }
 .hero .editor > .window { border: 0; border-radius: 0; }
 .hero .live { position: relative; }
-.hero .live .try[hidden] { display: none; }
 .hero .live .try { position: absolute; z-index: 1; left: 50%; top: 50%; transform: translate(-50%, -50%); }
-/* The photograph of the editor, until asked for the editor itself (site.js). */
+/* The photograph of the editor, until asked for the preset playing in the viewer (site.js). */
 .hero .live iframe { display: block; width: 100%; height: auto; aspect-ratio: 1442 / 939; max-height: 88vh; border: 0; background: var(--window); }
+/* The viewer needs its picture and its transport row on a phone: its own height, not the photograph's. */
+@media (max-width: 639px) { .hero .live iframe { aspect-ratio: auto; height: 540px; } }
 
 /* ---- at a glance ---- */
 .glance { padding: 56px 0 0; }
 .at-a-glance { margin: 0; }
 
-/* ---- sections: a numbered head, then the work ---- */
-.band { padding: 96px 0 0; }
+/* ---- sections ---- */
 #start { padding-bottom: 96px; }
-.section-head > h2, .section-head > p { max-width: 44rem; }
-.section-head > p { color: var(--label); }
-/* The one link in a head is a touch target too. */
-#gallery .section-rule a { display: inline-flex; align-items: center; min-height: 44px; padding: 0; }
 #how { --family: var(--source); }
-#gallery { --family: var(--tint); }
-#assistant { --family: var(--space); }
-#clips { --family: var(--feedback); }
-#features { --family: var(--oscillator); }
-#tour { --family: var(--source); }
+#presets { --family: var(--tint); }
+#built-in { --family: var(--space); }
 #start { --family: var(--sequencer); }
 
 /* ---- one graph, two sinks ---- */
-.diagram { margin-top: 36px; }
-.diagram .shot { border: 0; border-radius: 0; }
 .twosinks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; margin-top: 28px; align-items: start; }
 @media (min-width: 1000px) { .twosinks { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; } }
 .as-text pre { margin: 0; }
-.three-up { margin-top: 32px; }
 .three-up > :nth-child(1) { --family: var(--source); }
 .three-up > :nth-child(2) { --family: var(--oscillator); }
 .three-up > :nth-child(3) { --family: var(--pattern); }
 
-/* ---- presets: stills in a grid ---- */
-.stills { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 40px; }
-@media (min-width: 640px) { .stills { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (min-width: 1040px) { .stills { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.still { margin: 0; }
-.still img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; background: black; }
+/* ---- presets: the eight stills in one row, each a link that plays it ---- */
+.stills.row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 640px) { .stills.row { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 1040px) { .stills.row { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+.stills.row .caption-strip { padding: 8px 10px; }
+.still a { display: block; }
 
-/* ---- clips and tracks ---- */
-.clips { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 40px; }
-@media (min-width: 760px) { .clips { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.clip { margin: 0; }
-.clip video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: black; }
-.listen { margin-top: 56px; }
-.listen h3 { margin: 0; font-size: 22px; }
-.listen > p { max-width: 44rem; }
-.tracks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 24px; }
-@media (min-width: 960px) { .tracks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.track { display: flex; flex-direction: column; }
-.track .body { flex: 1; display: flex; flex-direction: column; }
-.track .body > p { font-size: 14.5px; color: var(--muted); margin: 0 0 16px; flex: 1; }
-.player audio { width: 100%; height: 36px; }
-
-/* ---- features ---- */
-.modules { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 40px; }
-@media (min-width: 640px) { .modules { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1040px) { .modules { grid-template-columns: repeat(3, 1fr); } }
-
-/* ---- tour ---- */
-.tour { display: flex; flex-direction: column; gap: 80px; margin-top: 48px; }
-.stop { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px 48px; align-items: start; }
-@media (min-width: 960px) {
-  .stop { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
-  .stop > div { display: contents; }
-  .stop > figure { grid-column: 1 / -1; }
-}
-/* A tall picture sits beside its text rather than under it. */
-@media (min-width: 960px) {
-  .stop.side { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); }
-  .stop.side > div { display: block; }
-  .stop.side > figure { grid-column: 2; grid-row: 1; margin-top: 0; }
-}
-.stop img.natural { width: auto; max-width: 100%; }
-.stop h3 { margin-top: 0; font-size: 22px; }
-.stop figure { margin: 20px 0 0; }
-.stop p { margin-top: 0; }
-@media (max-width: 959px) { .stop p { margin-top: 12px; } }
+/* ---- the assistant teaser ---- */
+.teaser .diagram { max-width: 720px; }
 
 /* ---- download band: one hairline panel, the head at left ---- */
 .get-started { display: flex; flex-wrap: wrap; gap: 32px; align-items: center; justify-content: space-between; padding: 40px; }
 .get-started > .section-head { flex: 1 1 360px; min-width: 0; }
 .get-started .actions { display: flex; flex-wrap: wrap; gap: 12px; }
 @media (max-width: 559px) { .get-started { padding: 24px 20px; } }
+
+/* ---- hero: the play button and the editor link ---- */
+.hero .caption-strip a { margin-left: auto; display: inline-flex; align-items: center; min-height: 44px; margin-top: -10px; margin-bottom: -10px; color: var(--attention); }

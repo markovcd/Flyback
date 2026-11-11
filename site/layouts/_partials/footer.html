@@ -3,7 +3,10 @@
   <div class="wrap">
     <span class="brand-foot"><img src="{{ $up }}assets/logo.svg" alt="">Flyback · MIT License · by <img src="{{ $up }}assets/potato-smasher.svg" alt="">Potato Smasher</span>
     <a href="{{ or $up "./" }}"{{ if eq .Params.nav "overview" }} aria-current="page"{{ end }}>Overview</a>
+    <a href="{{ $up }}tour.html"{{ if eq .Params.nav "tour" }} aria-current="page"{{ end }}>Tour</a>
+    <a href="{{ $up }}assistant.html"{{ if eq .Params.nav "assistant" }} aria-current="page"{{ end }}>Assistant</a>
     <a href="{{ $up }}tutorials.html"{{ if eq .Params.nav "tutorials" }} aria-current="page"{{ end }}>Tutorials</a>
+    <a href="{{ $up }}watch.html"{{ if eq .Params.nav "watch" }} aria-current="page"{{ end }}>Watch and listen</a>
     <a href="{{ $up }}docs/plugin-guide.html">Plugin guide</a>
     <a href="{{ $up }}docs/language.html">Language reference</a>
     <a href="https://github.com/markovcd/Flyback/blob/main/CHANGELOG.md">Changelog</a>

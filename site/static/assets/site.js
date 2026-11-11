@@ -201,52 +201,28 @@
   }
 })();
 
-// The editor itself takes the place of its photograph when asked, on a screen wide
-// enough to patch on; a phone opens it in a tab. The button shows only where the
-// editor is served: a site built without it answers 404 there, and elsewhere
-// (Pages pointing at the preset site) the answer is opaque and taken as there.
+// The hero's play button and "Play it in the browser" swap the photograph for the preset playing
+// in the web viewer, in place. The viewer is not requested until then. Without this script both
+// links open the viewer in the tab.
 (function () {
-  var play = document.querySelector("[data-play-editor]");
-  document.querySelectorAll("a[data-editor]").forEach(function (link) {
-    fetch(link.href, { method: "HEAD", mode: "no-cors" }).then(function (r) {
-      if (r.ok || r.type === "opaque") {
-        link.hidden = false;
-        if (play) play.hidden = false;
-      }
-    }).catch(function () {});
+  var links = document.querySelectorAll("a[data-play]");
+  var holder = document.querySelector(".hero .live");
+  if (!links.length || !holder) return;
 
+  links.forEach(function (link) {
     link.addEventListener("click", function (e) {
-      if (window.innerWidth < 900) return;
       e.preventDefault();
+      if (holder.querySelector("iframe")) return;
 
       var frame = document.createElement("iframe");
       frame.src = link.href;
-      frame.title = "The Flyback editor";
-      frame.allow = "fullscreen; autoplay; microphone";
+      frame.title = "Flyback Theme, playing in the browser";
+      frame.allow = "autoplay; fullscreen";
       frame.addEventListener("load", function () { frame.focus(); });
 
-      var holder = link.parentNode;
-      var photograph = [].slice.call(holder.childNodes);
-      photograph.forEach(function (node) { holder.removeChild(node); });
+      [].slice.call(holder.childNodes).forEach(function (node) { holder.removeChild(node); });
       holder.appendChild(frame);
-
-      // The editor's logo asks for the photograph back.
-      function closed(message) {
-        if (message.source !== frame.contentWindow || !message.data || message.data.flyback !== "close-editor") return;
-        window.removeEventListener("message", closed);
-        holder.removeChild(frame);
-        photograph.forEach(function (node) { holder.appendChild(node); });
-      }
-      window.addEventListener("message", closed);
     });
-  });
-
-  // The hero's second button asks for the same swap; a phone follows its link to the editor.
-  if (play) play.addEventListener("click", function (e) {
-    var link = document.querySelector("a[data-editor]");
-    if (!link || window.innerWidth < 900) return;
-    e.preventDefault();
-    link.click();
   });
 })();
 
@@ -560,7 +536,13 @@
 // Anchors that left the home page go to the page that holds them now (id to page); #start stays on the home page.
 (function () {
   if (document.body.getAttribute("data-page") !== "home") return;
-  var moved = {};
+  var moved = {
+    assistant: "assistant.html",
+    tour: "tour.html",
+    features: "tour.html",
+    clips: "watch.html",
+    gallery: "watch.html"
+  };
   var id = location.hash.slice(1);
   if (Object.prototype.hasOwnProperty.call(moved, id)) location.replace(moved[id] + "#" + id);
 })();
