@@ -12,13 +12,16 @@ namespace Flyback.Specs.Steps;
 [Binding]
 public sealed partial class ShortcutHelpSteps(IUnitTestRuntimeProvider runtime)
 {
+    private static readonly string[] Pages = ["/", "/tour.html", "/assistant.html"];
+
     private IReadOnlyList<string> named = [];
 
     [When("the keys named on the website are read")]
     public void WhenRead()
     {
         BuiltSite.Need(runtime);
-        named = [.. Shortcut().Matches(SiteFiles.Read("/")).Select(match => Tag().Replace(match.Value, "")).Distinct()];
+        named = [.. Pages.SelectMany(page => Shortcut().Matches(SiteFiles.Read(page)))
+            .Select(match => Tag().Replace(match.Value, "")).Distinct()];
     }
 
     [Then("each of them is listed in the editor's shortcut help")]
