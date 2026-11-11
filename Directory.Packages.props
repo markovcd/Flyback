@@ -23,17 +23,17 @@
 
   <!-- The shell: Avalonia, and the two controls it does not come with. -->
   <ItemGroup>
-    <PackageVersion Include="Avalonia" Version="12.1.5" />
+    <PackageVersion Include="Avalonia" Version="12.1.6" />
     <PackageVersion Include="Avalonia.Android" Version="12.1.3" />
-    <PackageVersion Include="Avalonia.Browser" Version="12.1.5" />
-    <PackageVersion Include="Avalonia.Desktop" Version="12.1.5" />
-    <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.1.5" />
-    <PackageVersion Include="Avalonia.Headless" Version="12.1.5" />
+    <PackageVersion Include="Avalonia.Browser" Version="12.1.6" />
+    <PackageVersion Include="Avalonia.Desktop" Version="12.1.6" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.1.6" />
+    <PackageVersion Include="Avalonia.Headless" Version="12.1.6" />
     <PackageVersion Include="Avalonia.iOS" Version="12.1.4" />
-    <PackageVersion Include="Avalonia.Native" Version="12.1.5" />
-    <PackageVersion Include="Avalonia.Skia" Version="12.1.5" />
-    <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.5" />
-    <PackageVersion Include="Avalonia.Win32" Version="12.1.5" />
+    <PackageVersion Include="Avalonia.Native" Version="12.1.6" />
+    <PackageVersion Include="Avalonia.Skia" Version="12.1.6" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.6" />
+    <PackageVersion Include="Avalonia.Win32" Version="12.1.6" />
 
     <!--
       Both are built for Avalonia 12 and versioned by their own authors rather
@@ -46,25 +46,25 @@
       The editor in a browser: the natives Avalonia.Browser brings are older than
       the managed SkiaSharp and HarfBuzzSharp the editor resolves.
     -->
-    <PackageVersion Include="SkiaSharp.NativeAssets.WebAssembly" Version="4.148.0" />
-    <PackageVersion Include="HarfBuzzSharp.NativeAssets.WebAssembly" Version="14.2.0" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.WebAssembly" Version="4.156.0" />
+    <PackageVersion Include="HarfBuzzSharp.NativeAssets.WebAssembly" Version="14.4.0.100" />
 
     <!-- The viewer, held to the same Skia and HarfBuzz as the editor it shares a folder with. -->
-    <PackageVersion Include="SkiaSharp" Version="4.154.0" />
-    <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="4.154.0" />
-    <PackageVersion Include="HarfBuzzSharp" Version="14.2.1.400" />
-    <PackageVersion Include="HarfBuzzSharp.NativeAssets.Linux" Version="14.2.1.400" />
+    <PackageVersion Include="SkiaSharp" Version="4.156.0" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="4.156.0" />
+    <PackageVersion Include="HarfBuzzSharp" Version="14.4.0.100" />
+    <PackageVersion Include="HarfBuzzSharp.NativeAssets.Linux" Version="14.4.0.100" />
 
     <!-- The editor's container and its HTTP clients (ADR-0150): the runtime's own, versioned with it. -->
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.14" />
   </ItemGroup>
 
   <!-- The command line, the preset site, and the two platform plugins that need something. -->
   <ItemGroup>
     <PackageVersion Include="NAudio.Wasapi" Version="3.3.0" />
-    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.14" />
-    <PackageVersion Include="System.CommandLine" Version="2.0.14" />
+    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="11.0.0" />
+    <PackageVersion Include="System.CommandLine" Version="3.0.0" />
   </ItemGroup>
 
   <!-- Runs in the compiler and ships in nothing, which is what ADR-0019 allows Core. -->
@@ -77,13 +77,13 @@
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageVersion Include="CsCheck" Version="5.0.1" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.12.0" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.5.2" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.5.2" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.5.3" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.5.3" />
     <PackageVersion Include="Reqnroll.xunit.v3" Version="3.3.4" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="Verify.XunitV3" Version="33.3.4" />
-    <PackageVersion Include="xunit.v3" Version="4.0.2" />
-    <PackageVersion Include="xunit.v3.extensibility.core" Version="4.0.2" />
+    <PackageVersion Include="xunit.v3" Version="4.0.3" />
+    <PackageVersion Include="xunit.v3.extensibility.core" Version="4.0.3" />
   </ItemGroup>
 
 </Project>
