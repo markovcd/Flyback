@@ -1,0 +1,36 @@
+# Throwaway: why apt inside docker build cannot resolve *.ubuntu.com on GitHub's runners.
+name: Diag DNS
+on:
+  push:
+    branches: [diag/ubuntu-dns]
+permissions:
+  contents: read
+jobs:
+  dns:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Host
+        run: |
+          set -x
+          cat /etc/resolv.conf; resolvectl status || true
+          cat /run/systemd/resolve/resolv.conf || true
+          for h in archive.ubuntu.com security.ubuntu.com azure.archive.ubuntu.com registry.npmjs.org; do getent ahosts $h | head -3 || echo "FAIL host $h"; done
+          for s in 168.63.129.16 8.8.8.8 1.1.1.1; do for h in archive.ubuntu.com security.ubuntu.com; do dig +time=3 +tries=1 @$s $h A +short | head -2 || true; dig +time=3 +tries=1 @$s $h AAAA +short | head -2 || true; done; done
+          grep -rh '^URIs\|^deb ' /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null | head
+          timeout 60 sudo apt-get update 2>&1 | tail -5 || true
+      - name: Docker run
+        run: |
+          set -x
+          docker run --rm ubuntu:24.04 sh -c 'cat /etc/resolv.conf; getent ahosts archive.ubuntu.com | head -2 || echo FAIL; getent ahosts registry.npmjs.org | head -2 || echo FAIL; timeout 60 apt-get update 2>&1 | tail -4' || true
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Buildx RUN
+        run: |
+          set -x
+          docker exec $(docker ps -qf name=buildx_buildkit) cat /etc/resolv.conf || true
+          printf 'FROM mcr.microsoft.com/dotnet/sdk:10.0.403\nRUN cat /etc/resolv.conf; getent ahosts archive.ubuntu.com | head -2 || echo FAIL-ubuntu; getent ahosts security.ubuntu.com | head -2 || echo FAIL-sec; getent ahosts registry.npmjs.org | head -2 || echo FAIL-npm; getent ahosts azure.archive.ubuntu.com | head -2 || echo FAIL-azure; timeout 90 apt-get update 2>&1 | tail -6; true\n' > diag/Dockerfile
+          docker buildx build --progress plain --no-cache diag 2>&1 | tail -60
+          docker buildx build --progress plain --no-cache --network host diag 2>&1 | tail -30
