@@ -630,8 +630,9 @@ body.embed #volume { width: 72px; }
   body.embed #volume { display: block; width: 64px; }
 }
 
+/* A phone's frame: its own volume keys stand in for the slider and the mute button. */
 @media (max-width: 419px) {
-  body.embed #volume { display: none; }
+  body.embed #volume, body.embed #mute, body.embed #length { display: none; }
 }
 
 /* With something under the transport the picture keeps 16:9; without, it takes the height. */
