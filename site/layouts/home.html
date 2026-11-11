@@ -3,31 +3,27 @@
 
 <section class="promo canvas" aria-label="Flyback in fifteen seconds">
   <div class="wrap">
-    <figure class="ad">
-      <video data-autoplay muted loop playsinline preload="auto" poster="assets/shots/ad-poster.webp" width="1280" height="720"
-             aria-label="Flyback in fifteen seconds: a beam drawing a sawtooth as it is heard, a patch of modules, a tunnel of patterns, and the logo with the words One patch. A picture and a sound.">
-        <source src="assets/clips/ad.mp4" type="video/mp4">
-      </video>
-      <button type="button" class="sound" aria-pressed="false">
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h3l4-3.5v11L6 12H3z"/><path class="off" d="m13 8 4 4m0-4-4 4"/></svg>
-        <span>Sound on</span>
-      </button>
+    <figure class="ad framed">
+      <div class="stage">
+        <video data-autoplay muted loop playsinline preload="auto" poster="assets/shots/ad-poster.webp" width="1280" height="720"
+               aria-label="Flyback in fifteen seconds: a beam drawing a sawtooth as it is heard, a patch of modules, a tunnel of patterns, and the logo with the words One patch. A picture and a sound.">
+          <source src="assets/clips/ad.mp4" type="video/mp4">
+        </video>
+        <button type="button" class="sound" aria-pressed="false">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h3l4-3.5v11L6 12H3z"/><path class="off" d="m13 8 4 4m0-4-4 4"/></svg>
+          <span>Sound on</span>
+        </button>
+      </div>
+      <figcaption class="caption-strip"><span class="name">Promo video</span><span>Fifteen seconds</span><span>Plays on its own, sound one click away</span></figcaption>
     </figure>
   </div>
 </section>
 
 <section class="hero canvas">
-  <div class="wall" aria-hidden="true">
-    <div><img src="assets/shots/preview-acid.webp" alt=""><img src="assets/shots/preview-in-key.webp" alt=""><img src="assets/shots/preview-waveform.webp" alt=""><img src="assets/shots/preview-nebula.webp" alt=""><img src="assets/shots/preview-whole-band.webp" alt=""></div>
-    <div><img src="assets/shots/preview-marble.webp" alt=""><img src="assets/shots/preview-four-forms.webp" alt=""><img src="assets/shots/preview-acid.webp" alt=""><img src="assets/shots/preview-in-key.webp" alt=""><img src="assets/shots/preview-waveform.webp" alt=""></div>
-    <div><img src="assets/shots/preview-ring-scan.webp" alt=""><img src="assets/shots/preview-tut-t1.webp" alt=""><img src="assets/shots/preview-marble.webp" alt=""><img src="assets/shots/preview-four-forms.webp" alt=""><img src="assets/shots/preview-acid.webp" alt=""></div>
-    <div><img src="assets/shots/preview-euclid-kit.webp" alt=""><img src="assets/shots/preview-feedback-tunnel.webp" alt=""><img src="assets/shots/preview-ring-scan.webp" alt=""><img src="assets/shots/preview-tut-t1.webp" alt=""><img src="assets/shots/preview-marble.webp" alt=""></div>
-    <div><img src="assets/shots/preview-tut-t3.webp" alt=""><img src="assets/shots/preview-plasma.webp" alt=""><img src="assets/shots/preview-euclid-kit.webp" alt=""><img src="assets/shots/preview-feedback-tunnel.webp" alt=""><img src="assets/shots/preview-ring-scan.webp" alt=""></div>
-  </div>
   <div class="wrap">
     <div class="intro">
-      <p class="eyebrow">A patchable synthesizer for Windows, macOS and Linux</p>
-      <h1>One patch.<br><span class="sweep">A picture and a sound.</span></h1>
+      <p class="eyebrow">Flyback / patchable synthesizer</p>
+      <h1>One patch.<br>A picture and a sound.</h1>
       <p class="lede">Flyback is a modular synthesizer where the same patch draws on the screen and plays
       through the speakers. Wire oscillators, patterns, geometry and feedback together, and watch and hear
       the result change as you turn a knob. Or say what you want: the assistant built into the editor wires
@@ -37,12 +33,12 @@
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3v10M5.5 8.5 10 13l4.5-4.5M4 17h12"/></svg>
           Download the latest release
         </a>
-        <a class="button" href="tutorials.html">Start the tutorials</a>
+        <a class="button" href="editor/?preset=Flyback%20Theme" data-play-editor hidden>Play it in the browser</a>
       </div>
-      <p class="platforms">Releases are built for Windows x64, macOS on Apple silicon, Linux x64 and Android on arm64. MIT licensed.</p>
+      <p class="platforms">A patchable synthesizer for Windows, macOS and Linux. Releases are built for Windows x64, macOS on Apple silicon, Linux x64 and Android on arm64. MIT licensed.</p>
     </div>
 
-    <figure>
+    <figure class="framed editor">
       <div class="window live">
         <a class="button primary try" href="editor/?preset=Flyback%20Theme" data-editor hidden>
           <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6 4.5v11l9-5.5z"/></svg>
@@ -53,22 +49,26 @@
                alt="The Flyback window with the Flyback Theme preset: two hundred and one modules in named boxes wired across the canvas, the Picture: Scope box selected with its patched sockets listed in the inspector, and in the preview the word FLYBACK in pixel letters on an oscilloscope, between a green sawtooth trace and a pink sine.">
         </a>
       </div>
+      <figcaption class="caption-strip"><span class="name">Flyback Theme</span><span>The editor</span><span>Picture and sound</span></figcaption>
     </figure>
   </div>
 </section>
 
-<svg class="saw" viewBox="0 0 720 10" preserveAspectRatio="none" aria-hidden="true">
-  <defs>
-    <linearGradient id="sweep" x1="0" x2="1"><stop offset="0" class="sweep-from"/><stop offset="0.5" class="sweep-via"/><stop offset="1" class="sweep-to"/></linearGradient>
-    <pattern id="saw" width="24" height="10" patternUnits="userSpaceOnUse"><path d="M0 9 L24 1.5 L24 9" fill="none" stroke="url(#sweep)" stroke-width="1.4"/></pattern>
-  </defs>
-  <rect width="720" height="10" fill="url(#saw)" opacity="0.6"/>
-</svg>
+<section class="glance" aria-label="At a glance">
+  <div class="wrap">
+    <dl class="at-a-glance">
+      <div><dt>Runs on</dt><dd>Windows, macOS, Linux, Android and the browser</dd></div>
+      <div><dt>Modules</dt><dd>Fourteen families, a preset for each</dd></div>
+      <div><dt>Presets</dt><dd>More than forty, single ideas to whole tracks</dd></div>
+      <div><dt>License</dt><dd>MIT, source on GitHub</dd></div>
+    </dl>
+  </div>
+</section>
 
 <section class="band" id="how">
   <div class="wrap">
     <div class="section-head">
-      <p class="eyebrow">How it works</p>
+      <div class="section-rule"><span class="num">01</span><span>Signal path</span></div>
       <h2>Wire it once. The screen draws it and the speakers play it.</h2>
       <p>Every module has sockets, and a wire carries a signal from one socket to another. Whatever reaches
       the Output's <code>color</code> is drawn, and whatever reaches its <code>left</code> and
@@ -77,12 +77,12 @@
       at the same moment.</p>
     </div>
 
-    <figure class="diagram">
+    <figure class="framed diagram">
       <a class="zoom" href="assets/shots/patch-plasma.webp">
         <img class="shot" loading="lazy" src="assets/shots/patch-plasma.webp" width="2144" height="692"
              alt="The Plasma patch on the canvas: Coordinates x and y each feed a Sine, Time goes through three Expressions into the two Sines' phases and a Rings' offset, an Expression reading a + b + c + d * 0.15 sums the three fields with the clock, and three Sines a tenth of a turn apart read the sum as red, green and blue into an RGB wired into the Output.">
       </a>
-      <figcaption>The Plasma preset on the canvas: fourteen modules and nineteen wires.</figcaption>
+      <figcaption class="caption-strip"><span>The Plasma preset on the canvas: fourteen modules and nineteen wires.</span></figcaption>
     </figure>
 
     <div class="twosinks">
@@ -107,18 +107,18 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
       </div>
     </div>
 
-    <div class="facts">
-      <div class="fact">
+    <div class="three-up">
+      <div>
         <h3>Picture and sound share one patch</h3>
         <p>Wire a signal into the Output's <code>color</code> and you see it. Wire it into <code>left</code> and
         you hear it. A slow oscillator can set the hue of the image and the tremolo on the tone at the same time.</p>
       </div>
-      <div class="fact">
+      <div>
         <h3>Sockets have sensible defaults</h3>
         <p>Position inputs are already connected to Coordinates and time inputs to Time, so an oscillator starts
         oscillating as soon as you place it, before you draw a single wire.</p>
       </div>
-      <div class="fact">
+      <div>
         <h3>Every edit recompiles, live</h3>
         <p>The preview draws on the GPU where it can, and the sound keeps playing while you patch. A toolbar
         button swaps the preview and the canvas for a bigger picture. Undo takes
@@ -128,10 +128,34 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
   </div>
 </section>
 
+<section class="band" id="gallery">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-rule"><span class="num">02</span><span>Presets</span><a href="presets.html">All presets, playable here</a></div>
+      <h2>What the presets look like.</h2>
+      <p>Flyback ships with more than forty presets, from single ideas to whole tracks. These clips were
+      rendered with <code>flyback-cli render</code>, and so are the stills: each is one frame of a preset. Click one
+      for the whole frame.</p>
+    </div>
+
+    <div class="stills">
+      <figure class="still framed"><a class="zoom" href="assets/shots/preview-whole-band.webp"><img loading="lazy" src="assets/shots/preview-whole-band.webp" width="888" height="500" alt="A star of green and yellow rings, with orange and violet lines round it."></a><figcaption class="caption-strip"><span class="name">Whole band</span><span>A whole song from the engine's own modules, and one picture every part moves.</span></figcaption></figure>
+      <figure class="still framed"><a class="zoom" href="assets/shots/preview-acid.webp"><img loading="lazy" src="assets/shots/preview-acid.webp" width="888" height="500" alt="A ring of blue, green and orange fragments round a dark center."></a><figcaption class="caption-strip"><span class="name">Acid</span><span>A 303 line through a resonant filter into two delays.</span></figcaption></figure>
+      <figure class="still framed"><a class="zoom" href="assets/shots/preview-marble.webp"><img loading="lazy" src="assets/shots/preview-marble.webp" width="888" height="500" alt="Gray and lilac veins like polished stone."></a><figcaption class="caption-strip"><span class="name">Marble</span><span>A fractal bent by a fractal, which is stone.</span></figcaption></figure>
+      <figure class="still framed"><a class="zoom" href="assets/shots/preview-four-forms.webp"><img loading="lazy" src="assets/shots/preview-four-forms.webp" width="888" height="500" alt="A circle, a rounded square, a hexagon and a star in coral on black, round an almost closed ring."></a><figcaption class="caption-strip"><span class="name">Four forms</span><span>Four shapes on a turning ring round a filling arc.</span></figcaption></figure>
+      <figure class="still framed"><a class="zoom" href="assets/shots/preview-ring-scan.webp"><img loading="lazy" src="assets/shots/preview-ring-scan.webp" width="888" height="500" alt="Green concentric rings with a pale looping trace in the middle."></a><figcaption class="caption-strip"><span class="name">Ring scan</span><span>A loop swept round a field at audio rate, so the picture is the waveform.</span></figcaption></figure>
+      <figure class="still framed"><a class="zoom" href="assets/shots/preview-in-key.webp"><img loading="lazy" src="assets/shots/preview-in-key.webp" width="888" height="500" alt="Soft terraces of ochre, green and teal."></a><figcaption class="caption-strip"><span class="name">In key</span><span>A cloud field snapped to a pentatonic scale: a melody, and the terraces it was cut into.</span></figcaption></figure>
+      <figure class="still framed"><a class="zoom" href="assets/shots/preview-euclid-kit.webp"><img loading="lazy" src="assets/shots/preview-euclid-kit.webp" width="888" height="500" alt="An orange ring on black with a green clock hand."></a><figcaption class="caption-strip"><span class="name">Euclid kit</span><span>Four Euclidean rhythms, drawn as a clock hand and a ring the kick pushes.</span></figcaption></figure>
+      <figure class="still framed"><a class="zoom" href="assets/shots/preview-waveform.webp"><img loading="lazy" src="assets/shots/preview-waveform.webp" width="888" height="500" alt="A green waveform on a dark grid, halfway between a triangle and a square."></a><figcaption class="caption-strip"><span class="name">Waveform</span><span>Sine, triangle, square and saw faded one into the next, on a Scope drawing the shape being heard.</span></figcaption></figure>
+    </div>
+
+      </div>
+</section>
+
 <section class="band panel" id="assistant">
   <div class="wrap">
     <div class="section-head">
-      <p class="eyebrow" style="color: var(--tint)">Built in</p>
+      <div class="section-rule"><span class="num">03</span><span>Built in</span></div>
       <h2>Say what you want. The assistant patches it, then looks and listens.</h2>
       <p>The assistant lives in a column beside the patch, and it is not a chat box that hands you something
       to paste. It works the patch as text: it writes a new one in the text language, or changes the lines an
@@ -148,29 +172,29 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
       its edits land on the canvas, each one you can undo, and the column shows every call it makes.</p>
     </div>
 
-    <figure class="diagram">
+    <figure class="framed diagram">
       <a class="zoom" href="assets/shots/assistant.webp">
         <img class="shot" loading="lazy" src="assets/shots/assistant.webp" width="1054" height="822"
              alt="The assistant's column beside the canvas. Asked for a slow kick drum that makes the rings flash, it wrote a patch and proposed it; asked to make it slower and warmer, it set the tempo and the hue and proposed that. Each answer sits in the column's history with the steps it took folded away.">
       </a>
-      <figcaption>Two turns: a patch built and handed over, then changed on request. Each lands on the canvas as one edit.</figcaption>
+      <figcaption class="caption-strip"><span>Two turns: a patch built and handed over, then changed on request. Each lands on the canvas as one edit.</span></figcaption>
     </figure>
 
-    <div class="facts">
-      <div class="fact">
+    <div class="three-up">
+      <div>
         <h3>An edit, not a paste</h3>
         <p>When a turn ends, what it built lands on the canvas as one edit, and <kbd>Ctrl</kbd>+<kbd>Z</kbd>
         takes the whole thing back. Say <em>now make it slower</em> and it carries on from where it left off.
         The conversation is saved beside the patch it is about.</p>
       </div>
-      <div class="fact">
+      <div>
         <h3>Any model, your key or your own sign-in</h3>
         <p>Any endpoint that speaks chat completions, from OpenAI to a local Ollama, or Google's Gemini,
         whose models hear the patch themselves. The key stays in the operating system's secret store, and
         nothing is sent until you press Ask. Or bring Claude Code or Codex over MCP, and the plan you are
         already signed in to pays: no key at all.</p>
       </div>
-      <div class="fact">
+      <div>
         <h3>Made the same way</h3>
         <p>Flyback itself is written entirely by agents, with a person directing the work and deciding what
         ships. The assistant is handed what they were: a compiler that says what is wrong and where, a
@@ -180,42 +204,27 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
   </div>
 </section>
 
-<section class="band" id="gallery">
+<section class="band" id="clips">
   <div class="wrap">
     <div class="section-head">
-      <p class="eyebrow" style="color: var(--tint)">Gallery</p>
-      <h2>What the presets look like.</h2>
-      <p>Flyback ships with more than forty presets, from single ideas to whole tracks. These clips were
-      rendered with <code>flyback-cli render</code>, and so are the stills: each is one frame of a preset. Click one
-      for the whole frame.</p>
+      <div class="section-rule"><span class="num">04</span><span>Clips and tracks</span></div>
     </div>
 
-    <div class="clips">
-      <figure class="clip">
+<div class="clips">
+      <figure class="clip framed">
         <video data-autoplay muted loop playsinline preload="none" poster="assets/shots/preview-nebula.webp" width="960" height="540"
                aria-label="Nebula: a kaleidoscopic flower of orange and magenta petals folding and trailing.">
           <source src="assets/clips/nebula.mp4" type="video/mp4">
         </video>
-        <figcaption><strong>Nebula</strong> Everything the video side can do: folded, warped and trailing its own frames.</figcaption>
+        <figcaption class="caption-strip"><span class="name">Nebula</span><span>Everything the video side can do: folded, warped and trailing its own frames.</span></figcaption>
       </figure>
-      <figure class="clip">
+      <figure class="clip framed">
         <video data-autoplay muted loop playsinline preload="none" poster="assets/shots/preview-feedback-tunnel.webp" width="960" height="540"
                aria-label="Feedback tunnel: orange rings receding into a dark tunnel.">
           <source src="assets/clips/feedback-tunnel.mp4" type="video/mp4">
         </video>
-        <figcaption><strong>Feedback tunnel</strong> Each frame read back slightly rotated, scaled and dimmed, with fresh rings on top.</figcaption>
+        <figcaption class="caption-strip"><span class="name">Feedback tunnel</span><span>Each frame read back slightly rotated, scaled and dimmed, with fresh rings on top.</span></figcaption>
       </figure>
-    </div>
-
-    <div class="stills">
-      <figure class="still"><a class="zoom" href="assets/shots/preview-whole-band.webp"><img loading="lazy" src="assets/shots/preview-whole-band.webp" width="888" height="500" alt="A star of green and yellow rings, with orange and violet lines round it."></a><figcaption><strong>Whole band</strong>A whole song from the engine's own modules, and one picture every part moves.</figcaption></figure>
-      <figure class="still"><a class="zoom" href="assets/shots/preview-acid.webp"><img loading="lazy" src="assets/shots/preview-acid.webp" width="888" height="500" alt="A ring of blue, green and orange fragments round a dark center."></a><figcaption><strong>Acid</strong>A 303 line through a resonant filter into two delays.</figcaption></figure>
-      <figure class="still"><a class="zoom" href="assets/shots/preview-marble.webp"><img loading="lazy" src="assets/shots/preview-marble.webp" width="888" height="500" alt="Gray and lilac veins like polished stone."></a><figcaption><strong>Marble</strong>A fractal bent by a fractal, which is stone.</figcaption></figure>
-      <figure class="still"><a class="zoom" href="assets/shots/preview-four-forms.webp"><img loading="lazy" src="assets/shots/preview-four-forms.webp" width="888" height="500" alt="A circle, a rounded square, a hexagon and a star in coral on black, round an almost closed ring."></a><figcaption><strong>Four forms</strong>Four shapes on a turning ring round a filling arc.</figcaption></figure>
-      <figure class="still"><a class="zoom" href="assets/shots/preview-ring-scan.webp"><img loading="lazy" src="assets/shots/preview-ring-scan.webp" width="888" height="500" alt="Green concentric rings with a pale looping trace in the middle."></a><figcaption><strong>Ring scan</strong>A loop swept round a field at audio rate, so the picture is the waveform.</figcaption></figure>
-      <figure class="still"><a class="zoom" href="assets/shots/preview-in-key.webp"><img loading="lazy" src="assets/shots/preview-in-key.webp" width="888" height="500" alt="Soft terraces of ochre, green and teal."></a><figcaption><strong>In key</strong>A cloud field snapped to a pentatonic scale: a melody, and the terraces it was cut into.</figcaption></figure>
-      <figure class="still"><a class="zoom" href="assets/shots/preview-euclid-kit.webp"><img loading="lazy" src="assets/shots/preview-euclid-kit.webp" width="888" height="500" alt="An orange ring on black with a green clock hand."></a><figcaption><strong>Euclid kit</strong>Four Euclidean rhythms, drawn as a clock hand and a ring the kick pushes.</figcaption></figure>
-      <figure class="still"><a class="zoom" href="assets/shots/preview-waveform.webp"><img loading="lazy" src="assets/shots/preview-waveform.webp" width="888" height="500" alt="A green waveform on a dark grid, halfway between a triangle and a square."></a><figcaption><strong>Waveform</strong>Sine, triangle, square and saw faded one into the next, on a Scope drawing the shape being heard.</figcaption></figure>
     </div>
 
     <div class="listen">
@@ -258,7 +267,7 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
         <iframe src="https://www.youtube-nocookie.com/embed/VmR1MZmdpeM" title="Overworld" loading="lazy"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-        <figcaption><strong>Overworld</strong> Two minutes forty-six, with sound.</figcaption>
+        <figcaption class="caption-strip"><span class="name">Overworld</span><span>Two minutes forty-six, with sound.</span></figcaption>
       </figure>
       <p class="quiet" style="margin-top: 32px">Mycelium runs ninety-six bars. One sequencer arranges the six
       sections, the picture is driven by the signals that drive the sound, and one of the voices is the picture
@@ -267,7 +276,7 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
         <iframe src="https://www.youtube-nocookie.com/embed/Lmc5TDjP7ns" title="Mycelium" loading="lazy"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-        <figcaption><strong>Mycelium</strong> Three minutes fifty-two, with sound.</figcaption>
+        <figcaption class="caption-strip"><span class="name">Mycelium</span><span>Three minutes fifty-two, with sound.</span></figcaption>
       </figure>
       <p class="quiet" style="margin-top: 32px">Fracture is drum and bass at a hundred and seventy. The break is
       synthesized rather than sampled and then chopped anyway, by bending the clock it reads, and the picture is
@@ -276,7 +285,7 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
         <iframe src="https://www.youtube-nocookie.com/embed/5IkmvaaXOxU" title="Fracture" loading="lazy"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-        <figcaption><strong>Fracture</strong> Three minutes six, with sound.</figcaption>
+        <figcaption class="caption-strip"><span class="name">Fracture</span><span>Three minutes six, with sound.</span></figcaption>
       </figure>
       <p class="quiet" style="margin-top: 32px">Acid is a 303 line with accents and slides, through a four-pole
       filter into two delays, over a galloping bass, for a hundred and twenty-eight bars of intro, builds and
@@ -285,7 +294,7 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
         <iframe src="https://www.youtube-nocookie.com/embed/WldwTIrmRt4" title="Acid" loading="lazy"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-        <figcaption><strong>Acid</strong> Four minutes four, with sound.</figcaption>
+        <figcaption class="caption-strip"><span class="name">Acid</span><span>Four minutes four, with sound.</span></figcaption>
       </figure>
       <p class="quiet" style="margin-top: 32px">More tracks go up on the
       <a href="https://www.youtube.com/@FlybackModular">Flyback channel on YouTube</a>.</p>
@@ -296,7 +305,7 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
 <section class="band panel" id="features">
   <div class="wrap">
     <div class="section-head">
-      <p class="eyebrow" style="color: var(--oscillator)">Features</p>
+      <div class="section-rule"><span class="num">05</span><span>Features</span></div>
       <h2>Everything is a module, and every module is a few sockets.</h2>
     </div>
 
@@ -361,7 +370,7 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
 <section class="band" id="tour">
   <div class="wrap">
     <div class="section-head">
-      <p class="eyebrow" style="color: var(--source)">A look around</p>
+      <div class="section-rule"><span class="num">06</span><span>A look around</span></div>
       <h2>Screenshots from the app.</h2>
     </div>
 
@@ -461,11 +470,18 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
   </div>
 </section>
 
-<section class="band panel" id="start">
+<section class="band" id="start">
   <div class="wrap">
-    <div class="section-head">
-      <p class="eyebrow" style="color: var(--sequencer)">Get started</p>
-      <h2>Download it, or run it from source.</h2>
+    <div class="hairline-panel get-started">
+      <div class="section-head">
+        <div class="section-rule"><span class="num">07</span><span>Get started</span></div>
+        <h2>Download it, or run it from source.</h2>
+        <p class="quiet">Releases are built for Windows x64, macOS on Apple silicon, Linux x64 and Android on arm64.</p>
+      </div>
+      <div class="actions">
+        <a class="button primary" href="https://github.com/markovcd/Flyback/releases/latest">Download the latest release</a>
+        <a class="button" href="tutorials.html">Start the tutorials</a>
+      </div>
     </div>
 
     <div class="split">

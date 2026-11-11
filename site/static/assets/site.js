@@ -206,9 +206,13 @@
 // editor is served: a site built without it answers 404 there, and elsewhere
 // (Pages pointing at the preset site) the answer is opaque and taken as there.
 (function () {
+  var play = document.querySelector("[data-play-editor]");
   document.querySelectorAll("a[data-editor]").forEach(function (link) {
     fetch(link.href, { method: "HEAD", mode: "no-cors" }).then(function (r) {
-      if (r.ok || r.type === "opaque") link.hidden = false;
+      if (r.ok || r.type === "opaque") {
+        link.hidden = false;
+        if (play) play.hidden = false;
+      }
     }).catch(function () {});
 
     link.addEventListener("click", function (e) {
@@ -235,6 +239,14 @@
       }
       window.addEventListener("message", closed);
     });
+  });
+
+  // The hero's second button asks for the same swap; a phone follows its link to the editor.
+  if (play) play.addEventListener("click", function (e) {
+    var link = document.querySelector("a[data-editor]");
+    if (!link || window.innerWidth < 900) return;
+    e.preventDefault();
+    link.click();
   });
 })();
 
