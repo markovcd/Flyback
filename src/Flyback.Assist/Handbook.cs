@@ -630,6 +630,8 @@ internal static class Handbook
 
         if (undescribed.Count > 0) text.Append(Unexplained);
 
+        Index(text, modules);
+
         // Catalog order, not sorted: it is already deterministic (built-ins in
         // declaration order, then each plugin in load order) and re-sorting here
         // would be one more thing that could quietly stop matching itself.
@@ -642,6 +644,27 @@ internal static class Handbook
         }
 
         return text.ToString();
+    }
+
+    /// <summary>
+    /// Every module's type id by category, ahead of the long list, so a reader that
+    /// stops partway still knows what there is.
+    /// </summary>
+    private static void Index(StringBuilder text, ModuleCatalog modules)
+    {
+        text.Append("By category:").Append('\n').Append('\n');
+
+        var listed = modules.All.Where(def => !ExpressionFusion.Retired(def)).ToArray();
+
+        foreach (var category in modules.Categories)
+        {
+            var ids = listed.Where(def => def.Category == category).Select(def => def.TypeId).ToArray();
+            if (ids.Length == 0) continue;
+
+            text.Append("- ").Append(category).Append(": ").AppendJoin(", ", ids).Append('\n');
+        }
+
+        text.Append('\n');
     }
 
     /// <summary>

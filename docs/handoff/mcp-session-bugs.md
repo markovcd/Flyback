@@ -53,8 +53,8 @@ Everything below came from driving `flyback-cli mcp --editor` for an hour and a 
 
 ## The briefing (Medium)
 
-28. **It is about 70 KB.** The session read only its first two-thirds and missed the whole Mastering plugin, built a Drive hack, and asked for modules that already exist. A short index of modules by category at the top would have pointed straight at them. `assistant-request-cost.md` already wants a smaller briefing.
-29. **`speak` wasn't in the part that was read.** It turned up only through `describe_patch` after the user added one.
+28. **Partly fixed:** an index of every module's type id by category now comes before the long list, a third of the way in, so a reader that stops early still knows what exists. The size itself is [assistant-request-cost.md](assistant-request-cost.md)'s measured plan. As found: **It is about 70 KB.** The session read only its first two-thirds and missed the whole Mastering plugin, built a Drive hack, and asked for modules that already exist. A short index of modules by category at the top would have pointed straight at them. `assistant-request-cost.md` already wants a smaller briefing.
+29. **Fixed** by 28's index. As found: **`speak` wasn't in the part that was read.** It turned up only through `describe_patch` after the user added one.
 
 ## Editor (Low)
 
@@ -72,7 +72,7 @@ The same patch, reopened in an editor and a `flyback-cli` built from source.
 33. **Fixed.** The Loudness module counted the first evaluation after a seek, a loop or a measurement started partway in as lasting the whole jump, and that share never left its windows: on the pentagram patch, measured from 60 s, momentary read +7.8 LUFS where `render --loudness` read -14.6 before the Output's volume. A jump in the clock now counts as no time, and each evaluation's share leaves the window exactly as it came in. The same patch now reads -14.3 momentary.
 
 34. **Fixed.** A `flyback-cli` built in Debug or Release has no plugins beside it, so its own briefing named only the built-in modules. With the editor open, `mcp` now asks the editor for its briefing and hands the client that; with none, or an editor too old to answer, it falls back to its own.
-35. **`#` comments are refused now** (`//` starts one; `#` is a sharp). A saved patch, preset or conversation with `#` comments needs the upgrade step the `saved-data` skill asks for, if there isn't one yet.
+35. **Not needed:** ADR-0224 refuses `#` outright by Arek's choice, with a message naming `//`, and before 1.0 no upgrade step is owed (the `saved-data` skill). As found: **`#` comments are refused now** (`//` starts one; `#` is a sharp). A saved patch, preset or conversation with `#` comments needs the upgrade step the `saved-data` skill asks for, if there isn't one yet.
 
 ## Found on `main` at `51107f9d` (Low)
 
