@@ -46,12 +46,10 @@ Everything below came from driving `flyback-cli mcp --editor` for an hour and a 
 
 ## Modules and their descriptions (Low)
 
-27 changes how saved patches sound, which is Arek's call.
-
 24. **Fixed:** an Arrangement's and a Song's description and `fade` say that a level written `>` glides across its section, so `0 >0.25 >0.5 >0.75 >1` fades a part in over four. As found: **There's no plain way to fade in over several sections.** A Slew starts settled (25), and Fade's `from` and `to` only span 0..1 of its level. Fading a pad in over four bars took an Expression on `section + progress`.
 25. **Fixed:** the Slew's description says it starts where `in` is, and points at a gliding level for a fade-in. As found: **Slew starts settled.** Fed a constant from the first sample it never rises from 0, and neither the module nor the briefing says so.
 26. **Fixed:** `drift` says it arrives at a new value every 1/`rate` seconds. As found: **Noise's `drift` has no stated speed.** At `rate: 0.047` it barely moved in a minute, and nothing says how `rate` maps to how far and how fast drift wanders.
-27. **A Note Sequencer's rest drops `out` to note 0** (8 Hz). That's harmless while the gate is shut, but a Slew or a long release after it sweeps down on every rest. Holding the last note may be the better rest.
+27. **Fixed:** a rest holds the nearest sounding note before it, round the end of the pattern; Arek chose this over note 0. As found: **A Note Sequencer's rest drops `out` to note 0** (8 Hz). That's harmless while the gate is shut, but a Slew or a long release after it sweeps down on every rest. Holding the last note may be the better rest.
 
 ## The briefing (Medium)
 

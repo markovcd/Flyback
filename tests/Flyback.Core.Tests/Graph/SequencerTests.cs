@@ -154,6 +154,39 @@ public class SequencerTests
         readings[3].Gate.ShouldBe(1f, 1e-5f, "the note after");
     }
 
+    /// <summary>
+    /// A note's release rings on through the rest after it, so the rest has to
+    /// keep that note's pitch rather than drop to note 0.
+    /// </summary>
+    [Fact]
+    public void A_rest_in_a_note_sequence_holds_the_note_before_it()
+    {
+        Step[] notes = [new(60f), new(0f, Volume: 0f), new(0f, Volume: 0f), new(67f)];
+
+        var readings = Run(Notes, EveryStepMidpoint(4), notes, ("gate length", 1f));
+
+        readings[1].Value.ShouldBe(60f, 1e-4f);
+        readings[2].Value.ShouldBe(60f, 1e-4f);
+        readings[2].Gate.ShouldBe(0f);
+        readings[3].Value.ShouldBe(67f, 1e-4f);
+    }
+
+    [Fact]
+    public void A_rest_at_the_top_of_a_note_sequence_holds_the_last_note_round_the_loop()
+    {
+        Step[] notes = [new(0f, Volume: 0f), new(62f), new(65f)];
+
+        Run(Notes, [Midpoint(0)], notes)[0].Value.ShouldBe(65f, 1e-4f);
+    }
+
+    [Fact]
+    public void A_note_sequence_of_nothing_but_rests_keeps_its_own_notes()
+    {
+        Step[] notes = [new(48f, Volume: 0f), new(50f, Volume: 0f)];
+
+        Run(Notes, EveryStepMidpoint(2), notes).Select(r => r.Value).ShouldBe([48f, 50f]);
+    }
+
     /// <summary>Between the two ends volume is a level, which makes it a velocity.</summary>
     [Fact]
     public void A_note_turned_part_way_up_opens_the_gate_part_way()

@@ -4,6 +4,8 @@
 
 ### Modules
 
+- A Note Sequencer's rest keeps the note before it on 'out' instead of dropping to note 0, so a glide or a long release after it stays on pitch. Patches with rests may sound different.
+
 ### Presets
 
 ### Assistant

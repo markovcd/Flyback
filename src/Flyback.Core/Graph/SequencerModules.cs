@@ -218,7 +218,7 @@ internal static class SequencerModules
         yield return StepSequencer(
             "seq.notes", "Note Sequencer", DefaultRiff, PortDisplay.Note, (0f, 127f),
             "Step sequence of notes.",
-            "The note, as a pitch source.") with
+            "The note, as a pitch source. A rest holds the note before it.") with
         { Words = "step sequencer of notes, melody" };
 
         yield return StepSequencer(
@@ -266,7 +266,7 @@ internal static class SequencerModules
             Num("gate", 0f, 0f, 1f) with { Help = "Open while a step plays, to shape note timing." },
             Num("index", 0f, 0f, 1f) with { Help = "Which step is playing, as a fraction of the pattern, for pattern control and display." },
         ],
-        EmitSequence,
+        display == PortDisplay.Note ? EmitNotes : EmitSequence,
         description)
         {
             Extras = [new StepsExtra(new StepSpec(notes, display, range))],
@@ -364,7 +364,15 @@ internal static class SequencerModules
     /// lengths costs no ops at all, however uneven they are.
     /// </para>
     /// </remarks>
-    private static Slot[] EmitSequence(Emitter em, EmitContext node)
+    private static Slot[] EmitSequence(Emitter em, EmitContext node) => EmitSequence(em, node, holdRests: false);
+
+    /// <summary>
+    /// A rest keeps the note before it on 'out', so a voice's release and glide
+    /// stay on pitch instead of falling to note 0.
+    /// </summary>
+    private static Slot[] EmitNotes(Emitter em, EmitContext node) => EmitSequence(em, node, holdRests: true);
+
+    private static Slot[] EmitSequence(Emitter em, EmitContext node, bool holdRests)
     {
         var notes = node.Steps;
 
@@ -381,6 +389,8 @@ internal static class SequencerModules
         for (var s = 0; s < count; s++) starts[s + 1] = starts[s] + notes[s].Length;
 
         var total = starts[count];
+
+        var pitches = holdRests ? Held(notes) : [.. notes.Select(n => n.Value)];
 
         // How far the input has traveled, counted in steps. Modulo is floored,
         // so an input running backwards runs the sequence backwards rather than
@@ -443,7 +453,7 @@ internal static class SequencerModules
         {
             var window = em.Sub(edges[s], edges[s + 1]);
 
-            var here = em.Mul(window, em.Constant(notes[s].Value));
+            var here = em.Mul(window, em.Constant(pitches[s]));
             var sounds = em.Mul(window, em.Constant(notes[s].Volume));
 
             (value, open) = s == 0 ? (here, sounds) : (em.Add(value, here), em.Add(open, sounds));
@@ -495,6 +505,29 @@ internal static class SequencerModules
             em.Mul(em.Mul(open, opening), closing),
             which,
         ];
+    }
+
+    /// <summary>
+    /// Each step's value, a rest taking the nearest sounding step before it, round
+    /// the end of the pattern if need be. A pattern of nothing but rests keeps its own.
+    /// </summary>
+    private static float[] Held(IReadOnlyList<Step> notes)
+    {
+        var values = notes.Select(n => n.Value).ToArray();
+        var last = -1;
+        for (var s = notes.Count - 1; s >= 0 && last < 0; s--)
+            if (notes[s].Volume != 0f) last = s;
+
+        if (last < 0) return values;
+
+        var held = notes[last].Value;
+        for (var s = 0; s < notes.Count; s++)
+        {
+            if (notes[s].Volume != 0f) held = notes[s].Value;
+            else values[s] = held;
+        }
+
+        return values;
     }
 
     /// <summary>Each part's level in the section playing (see <see cref="SectionLevels"/>).</summary>
