@@ -4,9 +4,29 @@
 
 ### Modules
 
-- A Note Sequencer's rest keeps the note before it on 'out' instead of dropping to note 0, so a glide or a long release after it stays on pitch. Patches with rests may sound different.
-
 ### Presets
+
+### Assistant
+
+### Editor
+
+### Viewer
+
+### Command line
+
+### Installing
+
+### Performance
+
+### Fixes
+
+## 0.14.0 — 2026-11-12
+
+91 commits since 0.13.0.
+
+### Modules
+
+- A Note Sequencer's rest keeps the note before it on 'out' instead of dropping to note 0, so a glide or a long release after it stays on pitch. Patches with rests may sound different.
 
 ### Assistant
 
@@ -23,11 +43,9 @@
 - The splash on a slow start and the web editor's loading screen show the Flyback banner.
 - A group's panel has a die that randomizes the knobs of every module in the box, as one undo step.
 - The module die and the menu say randomize instead of roll.
-- The phone and tablet editors leave out Measure.
-- The phone and tablet editors leave out Record and its settings.
+- The phone and tablet editors leave out Measure, and Record and its settings.
 - The Record button turns red while a take is recording.
 - The assistant column's note that nothing is set up to send to is drawn in the warning color, not the accent.
-- The toolbar's menu of folded buttons lists only what is folded now: once opened, it kept the list from the first time, so a phone turned sideways offered buttons back on the bar again, with stale checkmarks.
 
 ### Viewer
 
@@ -49,6 +67,7 @@
 
 - `flyback-cli mcp --editor` started by Claude's desktop app finds the open editor on a Mac.
 - `flyback-cli mcp --editor` finds the editor again after it closes and reopens, and a call the client gives up on stops in the editor and frees it for the next one. A program turned away is told which program holds the editor.
+- The toolbar's menu of folded buttons lists only what is folded now: once opened, it kept the list from the first time, so a phone turned sideways offered buttons back on the bar again, with stale checkmarks.
 
 ## 0.13.0 — 2026-11-07
 
